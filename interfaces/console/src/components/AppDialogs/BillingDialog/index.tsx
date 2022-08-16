@@ -65,7 +65,7 @@ const BillingDialog = ({
     const handleIsPaymentSuccess = (id: string) => {
         if (id) {
             attachPaymentWithCustomer({
-                variables: { customerId: "cus_MFTZKUVOGtI2fU", paymentId: id },
+                variables: { paymentId: id },
             });
         }
     };

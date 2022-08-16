@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
     Typography,
     OutlinedInput,
@@ -30,6 +30,11 @@ const useStyles = makeStyles(() => ({
     },
 }));
 
+const getSelected = (list: any) => {
+    if (list.length > 1) return list[0].value;
+    return "no_payment_method_Set";
+};
+
 interface IPaymentProps {
     title: string;
     paymentMethodData: any;
@@ -41,7 +46,12 @@ const PaymentCard = ({
     onAddPaymentMethod,
 }: IPaymentProps) => {
     const classes = useStyles();
-    const [paymentMethod, setPaymentMethod] = React.useState("None set up.");
+    const [paymentMethod, setPaymentMethod] = React.useState("");
+
+    useEffect(() => {
+        setPaymentMethod(getSelected(paymentMethodData));
+    }, [paymentMethodData]);
+
     const _isDarkMod = useRecoilValue(isDarkmode);
 
     const handleChange = (event: SelectChangeEvent) => {
@@ -89,7 +99,7 @@ const PaymentCard = ({
                     }}
                     className={classes.selectStyle}
                 >
-                    {paymentMethodData.map(({ id, value }: any) => (
+                    {paymentMethodData.map(({ id, value, label }: any) => (
                         <MenuItem
                             key={id}
                             value={value}
@@ -99,11 +109,15 @@ const PaymentCard = ({
                             }}
                         >
                             <Stack direction="row" spacing={1}>
-                                <Typography variant="body1">{value}</Typography>
+                                <Typography variant="body1">{label}</Typography>
                                 <Button
                                     variant="text"
                                     onClick={onAddPaymentMethod}
                                     sx={{
+                                        display:
+                                            value === "no_payment_method_Set"
+                                                ? "block"
+                                                : "none",
                                         textTransform: "none",
                                         color: colors.primaryMain,
                                         ":hover": {

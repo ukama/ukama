@@ -88,14 +88,6 @@ export class CreateCustomerDto {
     @Field()
     email: string;
 }
-@InputType()
-export class AttachPaymentDto {
-    @Field()
-    customerId: string;
-
-    @Field()
-    paymentId: string;
-}
 
 @ObjectType()
 export class StripePaymentMethods {

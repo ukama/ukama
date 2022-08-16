@@ -342,8 +342,8 @@ mutation updateUserRoaming($data: UpdateUserServiceInput!) {
     }
 }
 
-query GetStripeCustomer($id: String!) {
-    getStripeCustomer(id: $id) {
+query GetStripeCustomer {
+    getStripeCustomer {
         id
         name
         email
@@ -358,8 +358,21 @@ mutation CreateCustomer($name: String!, $email: String!) {
     }
 }
 
-mutation AttachPaymentWithCustomer($customerId: String!, $paymentId: String!) {
-    attachPaymentWithCustomer(
-        data: { customerId: $customerId, paymentId: $paymentId }
-    )
+mutation AttachPaymentWithCustomer($paymentId: String!) {
+    attachPaymentWithCustomer(paymentId: $paymentId)
+}
+
+query RetrivePaymentMethods {
+    retrivePaymentMethods {
+        id
+        brand
+        cvc_check
+        country
+        exp_month
+        exp_year
+        funding
+        last4
+        type
+        created
+    }
 }

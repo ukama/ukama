@@ -18,13 +18,6 @@ export const NodeAppLogs = [
         note: "It's working ",
     },
 ];
-export const PaymentCards = [
-    {
-        id: 1,
-        label: "no_payment_method_Set",
-        value: "None set up.",
-    },
-];
 
 export const SpecsDocsData = [
     { id: 1, title: "PDF with Technical Specs", readingTime: "2 min read" },

@@ -1,9 +1,12 @@
 import Stripe from "stripe";
 import { Service } from "typedi";
 import { STRIP_SK } from "../../../constants";
+import { parseCookie } from "../../../common";
 import { StripePaymentMethods } from "../types";
+import { Context } from "../../../common/types";
+import { getStripeIdByUserId } from "../../../utils";
 import { Authentication } from "../../../common/Authentication";
-import { Resolver, Query, UseMiddleware, Arg } from "type-graphql";
+import { Resolver, Query, UseMiddleware, Ctx } from "type-graphql";
 
 @Service()
 @Resolver()
@@ -11,17 +14,19 @@ export class RetrivePaymentMethodsResolver {
     @Query(() => [StripePaymentMethods])
     @UseMiddleware(Authentication)
     async retrivePaymentMethods(
-        @Arg("id")
-        id: string
+        @Ctx() ctx: Context
     ): Promise<StripePaymentMethods[]> {
         const stripe = new Stripe(STRIP_SK, {
             typescript: true,
             apiVersion: "2022-08-01",
         });
         const pm: Stripe.ApiList<Stripe.PaymentMethod> =
-            await stripe.customers.listPaymentMethods(id, {
-                type: "card",
-            });
+            await stripe.customers.listPaymentMethods(
+                getStripeIdByUserId(parseCookie(ctx).orgId),
+                {
+                    type: "card",
+                }
+            );
         const list: StripePaymentMethods[] = [];
         for (const ele of pm.data) {
             if (ele.card) {
@@ -29,7 +34,11 @@ export class RetrivePaymentMethodsResolver {
                     id: ele.id,
                     type: ele.type,
                     created: ele.created,
-                    brand: ele.card?.brand,
+                    brand: ele.card?.brand
+                        .toLowerCase()
+                        .replace(/\w/, firstLetter =>
+                            firstLetter.toUpperCase()
+                        ),
                     last4: ele.card?.last4,
                     funding: ele.card?.funding,
                     exp_year: ele.card?.exp_year,

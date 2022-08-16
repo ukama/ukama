@@ -85,11 +85,6 @@ export type ApiMethodDataDto = {
   type: Api_Method_Type;
 };
 
-export type AttachPaymentDto = {
-  customerId: Scalars['String'];
-  paymentId: Scalars['String'];
-};
-
 export type AttachedNodes = {
   __typename?: 'AttachedNodes';
   nodeId: Scalars['String'];
@@ -396,7 +391,7 @@ export type MutationAddUserArgs = {
 
 
 export type MutationAttachPaymentWithCustomerArgs = {
-  data: AttachPaymentDto;
+  paymentId: Scalars['String'];
 };
 
 
@@ -609,6 +604,7 @@ export type Query = {
   getUser: GetUserDto;
   getUsersByOrg: Array<GetUsersDto>;
   getUsersDataUsage: Array<GetUserDto>;
+  retrivePaymentMethods: Array<StripePaymentMethods>;
 };
 
 
@@ -652,11 +648,6 @@ export type QueryGetNodeStatusArgs = {
 };
 
 
-export type QueryGetStripeCustomerArgs = {
-  id: Scalars['String'];
-};
-
-
 export type QueryGetUserArgs = {
   userId: Scalars['String'];
 };
@@ -671,6 +662,20 @@ export type StripeCustomer = {
   email: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
+};
+
+export type StripePaymentMethods = {
+  __typename?: 'StripePaymentMethods';
+  brand: Scalars['String'];
+  country?: Maybe<Scalars['String']>;
+  created: Scalars['Float'];
+  cvc_check?: Maybe<Scalars['String']>;
+  exp_month: Scalars['Float'];
+  exp_year: Scalars['Float'];
+  funding: Scalars['String'];
+  id: Scalars['String'];
+  last4: Scalars['String'];
+  type: Scalars['String'];
 };
 
 export type Subscription = {
@@ -933,9 +938,7 @@ export type UpdateUserRoamingMutationVariables = Exact<{
 
 export type UpdateUserRoamingMutation = { __typename?: 'Mutation', updateUserRoaming: { __typename?: 'OrgUserSimDto', iccid: string, isPhysical: boolean, ukama: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', data: boolean } }, carrier: { __typename?: 'UserServicesDto', services: { __typename?: 'UserSimServices', data: boolean } } } };
 
-export type GetStripeCustomerQueryVariables = Exact<{
-  id: Scalars['String'];
-}>;
+export type GetStripeCustomerQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetStripeCustomerQuery = { __typename?: 'Query', getStripeCustomer: { __typename?: 'StripeCustomer', id: string, name: string, email: string } };
@@ -949,12 +952,16 @@ export type CreateCustomerMutationVariables = Exact<{
 export type CreateCustomerMutation = { __typename?: 'Mutation', createCustomer: { __typename?: 'StripeCustomer', id: string, name: string, email: string } };
 
 export type AttachPaymentWithCustomerMutationVariables = Exact<{
-  customerId: Scalars['String'];
   paymentId: Scalars['String'];
 }>;
 
 
 export type AttachPaymentWithCustomerMutation = { __typename?: 'Mutation', attachPaymentWithCustomer: boolean };
+
+export type RetrivePaymentMethodsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RetrivePaymentMethodsQuery = { __typename?: 'Query', retrivePaymentMethods: Array<{ __typename?: 'StripePaymentMethods', id: string, brand: string, cvc_check?: string | null, country?: string | null, exp_month: number, exp_year: number, funding: string, last4: string, type: string, created: number }> };
 
 
 export const GetDataUsageDocument = gql`
@@ -2162,8 +2169,8 @@ export type UpdateUserRoamingMutationHookResult = ReturnType<typeof useUpdateUse
 export type UpdateUserRoamingMutationResult = Apollo.MutationResult<UpdateUserRoamingMutation>;
 export type UpdateUserRoamingMutationOptions = Apollo.BaseMutationOptions<UpdateUserRoamingMutation, UpdateUserRoamingMutationVariables>;
 export const GetStripeCustomerDocument = gql`
-    query GetStripeCustomer($id: String!) {
-  getStripeCustomer(id: $id) {
+    query GetStripeCustomer {
+  getStripeCustomer {
     id
     name
     email
@@ -2183,11 +2190,10 @@ export const GetStripeCustomerDocument = gql`
  * @example
  * const { data, loading, error } = useGetStripeCustomerQuery({
  *   variables: {
- *      id: // value for 'id'
  *   },
  * });
  */
-export function useGetStripeCustomerQuery(baseOptions: Apollo.QueryHookOptions<GetStripeCustomerQuery, GetStripeCustomerQueryVariables>) {
+export function useGetStripeCustomerQuery(baseOptions?: Apollo.QueryHookOptions<GetStripeCustomerQuery, GetStripeCustomerQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetStripeCustomerQuery, GetStripeCustomerQueryVariables>(GetStripeCustomerDocument, options);
       }
@@ -2235,10 +2241,8 @@ export type CreateCustomerMutationHookResult = ReturnType<typeof useCreateCustom
 export type CreateCustomerMutationResult = Apollo.MutationResult<CreateCustomerMutation>;
 export type CreateCustomerMutationOptions = Apollo.BaseMutationOptions<CreateCustomerMutation, CreateCustomerMutationVariables>;
 export const AttachPaymentWithCustomerDocument = gql`
-    mutation AttachPaymentWithCustomer($customerId: String!, $paymentId: String!) {
-  attachPaymentWithCustomer(
-    data: {customerId: $customerId, paymentId: $paymentId}
-  )
+    mutation AttachPaymentWithCustomer($paymentId: String!) {
+  attachPaymentWithCustomer(paymentId: $paymentId)
 }
     `;
 export type AttachPaymentWithCustomerMutationFn = Apollo.MutationFunction<AttachPaymentWithCustomerMutation, AttachPaymentWithCustomerMutationVariables>;
@@ -2256,7 +2260,6 @@ export type AttachPaymentWithCustomerMutationFn = Apollo.MutationFunction<Attach
  * @example
  * const [attachPaymentWithCustomerMutation, { data, loading, error }] = useAttachPaymentWithCustomerMutation({
  *   variables: {
- *      customerId: // value for 'customerId'
  *      paymentId: // value for 'paymentId'
  *   },
  * });
@@ -2268,3 +2271,46 @@ export function useAttachPaymentWithCustomerMutation(baseOptions?: Apollo.Mutati
 export type AttachPaymentWithCustomerMutationHookResult = ReturnType<typeof useAttachPaymentWithCustomerMutation>;
 export type AttachPaymentWithCustomerMutationResult = Apollo.MutationResult<AttachPaymentWithCustomerMutation>;
 export type AttachPaymentWithCustomerMutationOptions = Apollo.BaseMutationOptions<AttachPaymentWithCustomerMutation, AttachPaymentWithCustomerMutationVariables>;
+export const RetrivePaymentMethodsDocument = gql`
+    query RetrivePaymentMethods {
+  retrivePaymentMethods {
+    id
+    brand
+    cvc_check
+    country
+    exp_month
+    exp_year
+    funding
+    last4
+    type
+    created
+  }
+}
+    `;
+
+/**
+ * __useRetrivePaymentMethodsQuery__
+ *
+ * To run a query within a React component, call `useRetrivePaymentMethodsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRetrivePaymentMethodsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRetrivePaymentMethodsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useRetrivePaymentMethodsQuery(baseOptions?: Apollo.QueryHookOptions<RetrivePaymentMethodsQuery, RetrivePaymentMethodsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RetrivePaymentMethodsQuery, RetrivePaymentMethodsQueryVariables>(RetrivePaymentMethodsDocument, options);
+      }
+export function useRetrivePaymentMethodsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RetrivePaymentMethodsQuery, RetrivePaymentMethodsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RetrivePaymentMethodsQuery, RetrivePaymentMethodsQueryVariables>(RetrivePaymentMethodsDocument, options);
+        }
+export type RetrivePaymentMethodsQueryHookResult = ReturnType<typeof useRetrivePaymentMethodsQuery>;
+export type RetrivePaymentMethodsLazyQueryHookResult = ReturnType<typeof useRetrivePaymentMethodsLazyQuery>;
+export type RetrivePaymentMethodsQueryResult = Apollo.QueryResult<RetrivePaymentMethodsQuery, RetrivePaymentMethodsQueryVariables>;
