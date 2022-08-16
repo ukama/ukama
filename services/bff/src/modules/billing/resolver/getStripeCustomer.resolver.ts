@@ -3,6 +3,7 @@ import { Service } from "typedi";
 import { StripeCustomer } from "../types";
 import { Resolver, Query, UseMiddleware, Arg } from "type-graphql";
 import { Authentication } from "../../../common/Authentication";
+import { STRIP_SK } from "../../../constants";
 
 @Service()
 @Resolver()
@@ -13,13 +14,10 @@ export class GetStripeCustomerResolver {
         @Arg("id")
         id: string
     ): Promise<StripeCustomer> {
-        const stripe = new Stripe(
-            "sk_test_51LN9vGHBOiFTwZOs0zrb6CkarnlRRocpGSoIZa3jL7vtMeolNjrzf7PAL3hMDHQZENnxIvbw8X7Bfx5CxsUfVfyu00HIVQCYAm",
-            {
-                typescript: true,
-                apiVersion: "2022-08-01",
-            }
-        );
+        const stripe = new Stripe(STRIP_SK, {
+            typescript: true,
+            apiVersion: "2022-08-01",
+        });
         const customer: any = await stripe.customers.retrieve(id);
         return {
             id: customer.id,

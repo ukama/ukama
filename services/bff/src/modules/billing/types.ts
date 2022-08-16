@@ -96,3 +96,36 @@ export class AttachPaymentDto {
     @Field()
     paymentId: string;
 }
+
+@ObjectType()
+export class StripePaymentMethods {
+    @Field()
+    id: string;
+
+    @Field()
+    brand: string;
+
+    @Field({ nullable: true })
+    cvc_check?: string;
+
+    @Field({ nullable: true })
+    country?: string;
+
+    @Field()
+    exp_month: number;
+
+    @Field()
+    exp_year: number;
+
+    @Field()
+    funding: string;
+
+    @Field()
+    last4: string;
+
+    @Field()
+    type: string;
+
+    @Field()
+    created: number;
+}
