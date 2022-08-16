@@ -5,9 +5,10 @@ import {
     CardElement,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { Button, Stack, useTheme } from "@mui/material";
+import { Button, CircularProgress, Stack, useTheme } from "@mui/material";
 import { HorizontalContainerJustify } from "../../../styles";
 interface ICheckoutForm {
+    loading: boolean;
     isPaymentOnly: boolean;
     handleBackAction: Function;
     handleCloseAction: Function;
@@ -15,15 +16,19 @@ interface ICheckoutForm {
 }
 
 interface IPaymentForm {
+    loading: boolean;
     isPaymentOnly: boolean;
     handleBackAction: Function;
     handleCloseAction: Function;
     handleIsPaymentSuccess: Function;
 }
 
-const stripePromise = loadStripe("pk_test_6pRNASCoBOKtIshFeQd4XMUh");
+const stripePromise = loadStripe(
+    "pk_test_51LN9vGHBOiFTwZOsILdYKGAyT3JpOJt55PLXT7RgcwMrezgETce1GDYP3iEFIQCy6OsgS51Z0B1lVorApjBwqkMu001gz6uBbS"
+);
 
 const CheckoutForm = ({
+    loading,
     isPaymentOnly,
     handleBackAction,
     handleCloseAction,
@@ -48,8 +53,10 @@ const CheckoutForm = ({
                     type: "card",
                     card: cardElement,
                 })
-                .then(res => {
-                    if (!res.error) handleIsPaymentSuccess();
+                .then((res: any) => {
+                    if (!res.error) {
+                        handleIsPaymentSuccess(res.paymentMethod.id);
+                    }
                 });
         }
     };
@@ -101,30 +108,34 @@ const CheckoutForm = ({
                         Close
                     </Button>
 
-                    <button
-                        type="submit"
-                        disabled={!stripe || !elements}
-                        style={{
-                            fontSize: 16,
-                            width: "100%",
-                            height: "42px",
-                            border: "none",
-                            color: "white",
-                            borderRadius: 4,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            paddingLeft: "8px",
-                            paddingRight: "8px",
-                            fontFamily: "Rubik",
-                            letterSpacing: "0.4px",
-                            textTransform: "uppercase",
-                            backgroundColor: theme.palette.primary.main,
-                            boxShadow:
-                                "0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px rgb(0 0 0 / 14%), 0px 1px 5px rgb(0 0 0 / 12%)",
-                        }}
-                    >
-                        Submit payment information
-                    </button>
+                    {loading ? (
+                        <CircularProgress />
+                    ) : (
+                        <button
+                            type="submit"
+                            disabled={!stripe || !elements}
+                            style={{
+                                fontSize: 16,
+                                width: "100%",
+                                height: "42px",
+                                border: "none",
+                                color: "white",
+                                borderRadius: 4,
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                paddingLeft: "8px",
+                                paddingRight: "8px",
+                                fontFamily: "Rubik",
+                                letterSpacing: "0.4px",
+                                textTransform: "uppercase",
+                                backgroundColor: theme.palette.primary.main,
+                                boxShadow:
+                                    "0px 3px 1px -2px rgb(0 0 0 / 20%), 0px 2px 2px rgb(0 0 0 / 14%), 0px 1px 5px rgb(0 0 0 / 12%)",
+                            }}
+                        >
+                            Submit payment information
+                        </button>
+                    )}
                 </Stack>
             </HorizontalContainerJustify>
         </form>
@@ -132,6 +143,7 @@ const CheckoutForm = ({
 };
 
 const PaymentForm = ({
+    loading,
     isPaymentOnly,
     handleBackAction,
     handleCloseAction,
@@ -140,6 +152,7 @@ const PaymentForm = ({
     return (
         <Elements stripe={stripePromise}>
             <CheckoutForm
+                loading={loading}
                 isPaymentOnly={isPaymentOnly}
                 handleBackAction={handleBackAction}
                 handleCloseAction={handleCloseAction}

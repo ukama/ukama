@@ -41,6 +41,7 @@ const Billing = () => {
 
     const { data: currentBill, loading: currenBillLoading } =
         useGetCurrentBillQuery();
+
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
 
@@ -58,7 +59,7 @@ const Billing = () => {
     };
 
     const handlePaymentSuccess = () => {
-        /* TODO: Handle payment success */
+        /** */
     };
 
     const handleViewPdf = () => {
@@ -192,7 +193,7 @@ const Billing = () => {
                     isOpen={isBilling.isShow}
                     handleCloseAction={handleDialogClose}
                     initPaymentFlow={isBilling.isOnlypaymentFlow}
-                    handleSuccessAction={() => handlePaymentSuccess()}
+                    handleSuccessAction={handlePaymentSuccess}
                 />
             )}
         </Box>

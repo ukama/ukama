@@ -85,6 +85,11 @@ export type ApiMethodDataDto = {
   type: Api_Method_Type;
 };
 
+export type AttachPaymentDto = {
+  customerId: Scalars['String'];
+  paymentId: Scalars['String'];
+};
+
 export type AttachedNodes = {
   __typename?: 'AttachedNodes';
   nodeId: Scalars['String'];
@@ -116,6 +121,11 @@ export type BillResponse = {
 export type ConnectedUserDto = {
   __typename?: 'ConnectedUserDto';
   totalUser: Scalars['String'];
+};
+
+export type CreateCustomerDto = {
+  email: Scalars['String'];
+  name: Scalars['String'];
 };
 
 export type CurrentBillDto = {
@@ -363,6 +373,8 @@ export type Mutation = {
   __typename?: 'Mutation';
   addNode: AddNodeResponse;
   addUser: UserResDto;
+  attachPaymentWithCustomer: Scalars['Boolean'];
+  createCustomer: StripeCustomer;
   deactivateUser: DeactivateResponse;
   deleteNode: DeleteNodeRes;
   deleteUser: ActivateUserResponse;
@@ -380,6 +392,16 @@ export type MutationAddNodeArgs = {
 
 export type MutationAddUserArgs = {
   data: UserInputDto;
+};
+
+
+export type MutationAttachPaymentWithCustomerArgs = {
+  data: AttachPaymentDto;
+};
+
+
+export type MutationCreateCustomerArgs = {
+  data: CreateCustomerDto;
 };
 
 
@@ -583,6 +605,7 @@ export type Query = {
   getNodeAppsVersionLogs: Array<NodeAppsVersionLogsResponse>;
   getNodeStatus: GetNodeStatusRes;
   getNodesByOrg: OrgNodeResponseDto;
+  getStripeCustomer: StripeCustomer;
   getUser: GetUserDto;
   getUsersByOrg: Array<GetUsersDto>;
   getUsersDataUsage: Array<GetUserDto>;
@@ -629,6 +652,11 @@ export type QueryGetNodeStatusArgs = {
 };
 
 
+export type QueryGetStripeCustomerArgs = {
+  id: Scalars['String'];
+};
+
+
 export type QueryGetUserArgs = {
   userId: Scalars['String'];
 };
@@ -636,6 +664,13 @@ export type QueryGetUserArgs = {
 
 export type QueryGetUsersDataUsageArgs = {
   data: DataUsageInputDto;
+};
+
+export type StripeCustomer = {
+  __typename?: 'StripeCustomer';
+  email: Scalars['String'];
+  id: Scalars['String'];
+  name: Scalars['String'];
 };
 
 export type Subscription = {
@@ -897,6 +932,29 @@ export type UpdateUserRoamingMutationVariables = Exact<{
 
 
 export type UpdateUserRoamingMutation = { __typename?: 'Mutation', updateUserRoaming: { __typename?: 'OrgUserSimDto', iccid: string, isPhysical: boolean, ukama: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', data: boolean } }, carrier: { __typename?: 'UserServicesDto', services: { __typename?: 'UserSimServices', data: boolean } } } };
+
+export type GetStripeCustomerQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type GetStripeCustomerQuery = { __typename?: 'Query', getStripeCustomer: { __typename?: 'StripeCustomer', id: string, name: string, email: string } };
+
+export type CreateCustomerMutationVariables = Exact<{
+  name: Scalars['String'];
+  email: Scalars['String'];
+}>;
+
+
+export type CreateCustomerMutation = { __typename?: 'Mutation', createCustomer: { __typename?: 'StripeCustomer', id: string, name: string, email: string } };
+
+export type AttachPaymentWithCustomerMutationVariables = Exact<{
+  customerId: Scalars['String'];
+  paymentId: Scalars['String'];
+}>;
+
+
+export type AttachPaymentWithCustomerMutation = { __typename?: 'Mutation', attachPaymentWithCustomer: boolean };
 
 
 export const GetDataUsageDocument = gql`
@@ -2103,3 +2161,110 @@ export function useUpdateUserRoamingMutation(baseOptions?: Apollo.MutationHookOp
 export type UpdateUserRoamingMutationHookResult = ReturnType<typeof useUpdateUserRoamingMutation>;
 export type UpdateUserRoamingMutationResult = Apollo.MutationResult<UpdateUserRoamingMutation>;
 export type UpdateUserRoamingMutationOptions = Apollo.BaseMutationOptions<UpdateUserRoamingMutation, UpdateUserRoamingMutationVariables>;
+export const GetStripeCustomerDocument = gql`
+    query GetStripeCustomer($id: String!) {
+  getStripeCustomer(id: $id) {
+    id
+    name
+    email
+  }
+}
+    `;
+
+/**
+ * __useGetStripeCustomerQuery__
+ *
+ * To run a query within a React component, call `useGetStripeCustomerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStripeCustomerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetStripeCustomerQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetStripeCustomerQuery(baseOptions: Apollo.QueryHookOptions<GetStripeCustomerQuery, GetStripeCustomerQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetStripeCustomerQuery, GetStripeCustomerQueryVariables>(GetStripeCustomerDocument, options);
+      }
+export function useGetStripeCustomerLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetStripeCustomerQuery, GetStripeCustomerQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetStripeCustomerQuery, GetStripeCustomerQueryVariables>(GetStripeCustomerDocument, options);
+        }
+export type GetStripeCustomerQueryHookResult = ReturnType<typeof useGetStripeCustomerQuery>;
+export type GetStripeCustomerLazyQueryHookResult = ReturnType<typeof useGetStripeCustomerLazyQuery>;
+export type GetStripeCustomerQueryResult = Apollo.QueryResult<GetStripeCustomerQuery, GetStripeCustomerQueryVariables>;
+export const CreateCustomerDocument = gql`
+    mutation CreateCustomer($name: String!, $email: String!) {
+  createCustomer(data: {name: $name, email: $email}) {
+    id
+    name
+    email
+  }
+}
+    `;
+export type CreateCustomerMutationFn = Apollo.MutationFunction<CreateCustomerMutation, CreateCustomerMutationVariables>;
+
+/**
+ * __useCreateCustomerMutation__
+ *
+ * To run a mutation, you first call `useCreateCustomerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCustomerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCustomerMutation, { data, loading, error }] = useCreateCustomerMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *      email: // value for 'email'
+ *   },
+ * });
+ */
+export function useCreateCustomerMutation(baseOptions?: Apollo.MutationHookOptions<CreateCustomerMutation, CreateCustomerMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCustomerMutation, CreateCustomerMutationVariables>(CreateCustomerDocument, options);
+      }
+export type CreateCustomerMutationHookResult = ReturnType<typeof useCreateCustomerMutation>;
+export type CreateCustomerMutationResult = Apollo.MutationResult<CreateCustomerMutation>;
+export type CreateCustomerMutationOptions = Apollo.BaseMutationOptions<CreateCustomerMutation, CreateCustomerMutationVariables>;
+export const AttachPaymentWithCustomerDocument = gql`
+    mutation AttachPaymentWithCustomer($customerId: String!, $paymentId: String!) {
+  attachPaymentWithCustomer(
+    data: {customerId: $customerId, paymentId: $paymentId}
+  )
+}
+    `;
+export type AttachPaymentWithCustomerMutationFn = Apollo.MutationFunction<AttachPaymentWithCustomerMutation, AttachPaymentWithCustomerMutationVariables>;
+
+/**
+ * __useAttachPaymentWithCustomerMutation__
+ *
+ * To run a mutation, you first call `useAttachPaymentWithCustomerMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAttachPaymentWithCustomerMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [attachPaymentWithCustomerMutation, { data, loading, error }] = useAttachPaymentWithCustomerMutation({
+ *   variables: {
+ *      customerId: // value for 'customerId'
+ *      paymentId: // value for 'paymentId'
+ *   },
+ * });
+ */
+export function useAttachPaymentWithCustomerMutation(baseOptions?: Apollo.MutationHookOptions<AttachPaymentWithCustomerMutation, AttachPaymentWithCustomerMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AttachPaymentWithCustomerMutation, AttachPaymentWithCustomerMutationVariables>(AttachPaymentWithCustomerDocument, options);
+      }
+export type AttachPaymentWithCustomerMutationHookResult = ReturnType<typeof useAttachPaymentWithCustomerMutation>;
+export type AttachPaymentWithCustomerMutationResult = Apollo.MutationResult<AttachPaymentWithCustomerMutation>;
+export type AttachPaymentWithCustomerMutationOptions = Apollo.BaseMutationOptions<AttachPaymentWithCustomerMutation, AttachPaymentWithCustomerMutationVariables>;

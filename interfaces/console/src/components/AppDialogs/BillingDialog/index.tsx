@@ -12,9 +12,12 @@ import { useState } from "react";
 import ChoosePlan from "./ChoosePlan";
 import PaymentForm from "./PaymentForm";
 import CustomizePref from "./CustomizePref";
+import { useSetRecoilState } from "recoil";
+import { snackbarMessage } from "../../../recoil";
 import CloseIcon from "@mui/icons-material/Close";
 import { BillingDialogList } from "../../../constants";
 import { HorizontalContainerJustify } from "../../../styles";
+import { useAttachPaymentWithCustomerMutation } from "../../../generated";
 
 interface IBillingDialog {
     isOpen: boolean;
@@ -29,6 +32,25 @@ const BillingDialog = ({
     handleCloseAction,
     handleSuccessAction,
 }: IBillingDialog) => {
+    const setSnackbarMessage = useSetRecoilState(snackbarMessage);
+
+    const [
+        attachPaymentWithCustomer,
+        { loading: attachPaymentWithCustomerLoading },
+    ] = useAttachPaymentWithCustomerMutation({
+        onCompleted: () => {
+            handleFlowChange(flow + 1);
+        },
+        onError: () => {
+            setSnackbarMessage({
+                id: "pm-link-failed",
+                message: "Failed to link payment method",
+                type: "error",
+                show: true,
+            });
+        },
+    });
+
     const [flow, setFlow] = useState(initPaymentFlow ? 2 : 0);
     const handleFlowChange = (i: number) => {
         if (flow === 2) handleSuccessAction();
@@ -40,7 +62,13 @@ const BillingDialog = ({
         handleCloseAction();
     };
 
-    const handleIsPaymentSuccess = () => handleFlowChange(flow + 1);
+    const handleIsPaymentSuccess = (id: string) => {
+        if (id) {
+            attachPaymentWithCustomer({
+                variables: { customerId: "cus_MFTZKUVOGtI2fU", paymentId: id },
+            });
+        }
+    };
 
     return (
         <Dialog
@@ -74,6 +102,7 @@ const BillingDialog = ({
                     <PaymentForm
                         handleCloseAction={handleClose}
                         isPaymentOnly={initPaymentFlow}
+                        loading={attachPaymentWithCustomerLoading}
                         handleIsPaymentSuccess={handleIsPaymentSuccess}
                         handleBackAction={() => handleFlowChange(flow - 1)}
                     />

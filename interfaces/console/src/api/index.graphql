@@ -341,3 +341,25 @@ mutation updateUserRoaming($data: UpdateUserServiceInput!) {
         }
     }
 }
+
+query GetStripeCustomer($id: String!) {
+    getStripeCustomer(id: $id) {
+        id
+        name
+        email
+    }
+}
+
+mutation CreateCustomer($name: String!, $email: String!) {
+    createCustomer(data: { name: $name, email: $email }) {
+        id
+        name
+        email
+    }
+}
+
+mutation AttachPaymentWithCustomer($customerId: String!, $paymentId: String!) {
+    attachPaymentWithCustomer(
+        data: { customerId: $customerId, paymentId: $paymentId }
+    )
+}
