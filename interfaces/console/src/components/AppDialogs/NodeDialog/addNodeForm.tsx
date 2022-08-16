@@ -148,6 +148,10 @@ const AddNodeForm = ({
     useEffect(() => {
         if (attachedAmplierNode.length == 0) {
             setShowInitialAmplifierNode(false);
+            setAttachedAmplierNode([
+                ...attachedAmplierNode,
+                { nodeId: "", name: "" },
+            ]);
         }
     }, [attachedAmplierNode]);
     return (
@@ -228,7 +232,7 @@ const AddNodeForm = ({
                 </Grid>
             )}
             {nodeType == "TOWER" && showInitialAmplifierNode == false && (
-                <Grid item xs={12} sx={{ pt: 2 }}>
+                <Grid item xs={12}>
                     <Button
                         variant="text"
                         startIcon={<AddIcon />}
