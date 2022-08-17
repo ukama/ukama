@@ -122,6 +122,7 @@ export const GET_BILL_HISTORY = `
             date
             totalUsage
             subtotal
+            invoice
         }
     }
 `;

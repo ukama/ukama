@@ -6,12 +6,19 @@ import { BillHistoryDto, CurrentBillDto } from "../../modules/billing/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
+import AWS from "aws-sdk";
+import fs from "fs";
+const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
+});
 import {
     NodeAppResponse,
     NodeDto,
     NodeAppsVersionLogsResponse,
 } from "../../modules/node/types";
 import { GetUserDto } from "../../modules/user/types";
+import { createInvoice } from "../../config/createInvoice";
 
 function randomArray<T>(
     minLength: number,
@@ -92,14 +99,32 @@ const currentBill = (): CurrentBillDto => {
         subtotal: subtotal,
     };
 };
+const uploadInvoiceToS3 = (pdfFile: any) => {
+    const fileContent = fs.readFileSync(pdfFile);
+    const params = {
+        Bucket: `${process.env.AWS_S3_BUCKET_NAME}`,
+        Key: "cat.pdf",
+        Body: fileContent,
+    };
 
+    return s3.upload(params, function (err: any, data: any) {
+        if (err) {
+            throw err;
+        }
+        return `${data?.Location}`;
+    });
+};
 const billHistory = (): BillHistoryDto => {
     const totalUsage = defaultCasual.integer(1, 10);
     const subtotal = totalUsage * 3;
+    const invoiceUrl = uploadInvoiceToS3(
+        createInvoice(totalUsage, subtotal, "invoice.pdf")
+    );
     return {
         id: defaultCasual._uuid(),
         date: defaultCasual.date("MM-DD-2021"),
         description: `Bill for month`,
+        invoice: invoiceUrl,
         totalUsage,
         subtotal: subtotal,
     };

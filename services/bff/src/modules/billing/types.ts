@@ -57,6 +57,9 @@ export class BillHistoryDto {
     totalUsage: number;
 
     @Field()
+    invoice: unknown;
+
+    @Field()
     subtotal: number;
 }
 
