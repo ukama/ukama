@@ -103,7 +103,7 @@ const uploadInvoiceToS3 = (pdfFile: any) => {
     const fileContent = fs.readFileSync(pdfFile);
     const params = {
         Bucket: `${process.env.AWS_S3_BUCKET_NAME}`,
-        Key: "cat.pdf",
+        Key: "invoice.pdf",
         Body: fileContent,
     };
 
