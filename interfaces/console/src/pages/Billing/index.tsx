@@ -159,26 +159,8 @@ const Billing = () => {
                                                     currentBill?.getCurrentBill
                                                         ?.bill
                                                 }
+                                                totalAmount={totalCurrentBill}
                                             />
-
-                                            <div
-                                                style={{
-                                                    width: "100%",
-                                                    display: "flex",
-                                                    justifyContent: "flex-end",
-                                                }}
-                                            >
-                                                <Typography
-                                                    variant={"h6"}
-                                                    sx={{
-                                                        width: "20%",
-                                                        position: "relative",
-                                                        right: 50,
-                                                    }}
-                                                >
-                                                    {`$ ${totalCurrentBill}`}
-                                                </Typography>
-                                            </div>
                                         </>
                                     ) : (
                                         <Stack

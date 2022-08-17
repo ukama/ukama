@@ -3,7 +3,6 @@ import {
     TableRow,
     TableBody,
     TableCell,
-    TableHead,
     Typography,
     Link,
     TableContainer,
@@ -23,6 +22,7 @@ interface SimpleDataTableInterface {
     columns: ColumnsWithOptions[];
     isHistoryTab?: boolean;
     handleViewPdf?: any;
+    totalAmount?: number;
 }
 
 const SimpleDataTable = ({
@@ -30,15 +30,9 @@ const SimpleDataTable = ({
     dataset,
     maxHeight,
     isHistoryTab = false,
-    setSelectedRows,
-    selectedRows = [],
-    rowSelection = false,
+    totalAmount,
 }: SimpleDataTableInterface) => {
     const _isDarkMode = useRecoilValue(isDarkmode);
-    const onRowSelection = (id: number) => {
-        setSelectedRows && setSelectedRows([...selectedRows, id]);
-    };
-
     return (
         <TableContainer
             sx={{
@@ -47,34 +41,33 @@ const SimpleDataTable = ({
             }}
         >
             <Table stickyHeader>
-                <TableHead>
-                    <TableRow>
-                        {columns?.map(column => (
-                            <TableCell
-                                key={column.id}
-                                align={column.align}
-                                style={{
-                                    padding: "0px 16px 12px 16px",
-                                    fontSize: "0.875rem",
-                                    minWidth: column.minWidth,
-                                }}
-                            >
-                                <b>{column.label}</b>
-                            </TableCell>
-                        ))}
-                        {isHistoryTab && (
-                            <TableCell
-                                style={{
-                                    padding: "0px 16px 12px 16px",
-                                    fontStyle: "600",
-                                    fontWeight: "600",
-                                }}
-                            >
-                                Invoice
-                            </TableCell>
-                        )}
-                    </TableRow>
-                </TableHead>
+                <TableRow>
+                    {columns?.map(column => (
+                        <TableCell
+                            key={column.id}
+                            align={column.align}
+                            style={{
+                                padding: "0px 16px 12px 16px",
+                                fontSize: "0.875rem",
+                                minWidth: column.minWidth,
+                            }}
+                        >
+                            <b>{column.label}</b>
+                        </TableCell>
+                    ))}
+                    {isHistoryTab && (
+                        <TableCell
+                            style={{
+                                padding: "0px 16px 12px 16px",
+                                fontStyle: "600",
+                                fontWeight: "600",
+                            }}
+                        >
+                            Invoice
+                        </TableCell>
+                    )}
+                </TableRow>
+
                 <TableBody>
                     {dataset?.map((row: any) => (
                         <TableRow
@@ -89,9 +82,6 @@ const SimpleDataTable = ({
                                         : colors.hoverColor08,
                                 },
                             }}
-                            selected={selectedRows.includes(row.id)}
-                            role={rowSelection ? "checkbox" : "row"}
-                            onClick={() => onRowSelection(row.id)}
                         >
                             {columns?.map(
                                 (column: ColumnsWithOptions, index: number) => (
@@ -112,7 +102,13 @@ const SimpleDataTable = ({
                                 )
                             )}
                             {isHistoryTab && (
-                                <TableCell>
+                                <TableCell
+                                    sx={{
+                                        "&:last-child th, &:last-child td": {
+                                            border: 0,
+                                        },
+                                    }}
+                                >
                                     <a
                                         href={"https://docdro.id/J2v6TJO"}
                                         target="_blank"
@@ -134,6 +130,23 @@ const SimpleDataTable = ({
                             )}
                         </TableRow>
                     ))}
+                    {isHistoryTab !== true && (
+                        <TableRow
+                            sx={{
+                                "&:last-child th, &:last-child td": {
+                                    borderBottom: 0,
+                                },
+                            }}
+                        >
+                            <TableCell colSpan={2} />
+                            <TableCell>
+                                <b>
+                                    {"$"}
+                                    {totalAmount}
+                                </b>
+                            </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
             </Table>
         </TableContainer>
