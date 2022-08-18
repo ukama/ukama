@@ -255,7 +255,7 @@ const Header = ({
                                 }}
                                 onClick={() =>
                                     window.open(
-                                        "https://docs.dev.ukama.com/docs/intro",
+                                        "https://docs.pr.dev.ukama.com/docs/Console/Users",
                                         "_target"
                                     )
                                 }
