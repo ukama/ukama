@@ -8,38 +8,39 @@ import {
     PaymentCard,
 } from "../../components";
 import "../../i18n/i18n";
-import React, { useState } from "react";
-import { useRecoilValue } from "recoil";
-import { RoundedCard } from "../../styles";
-import { isSkeltonLoading, isDarkmode } from "../../recoil";
-import { PaymentCards } from "../../constants/stubData";
-import colors from "../../theme/colors";
 import {
     CurrentBillColumns,
     historyyBilling,
 } from "../../constants/tableColumns";
-import { NoBillYet } from "../../assets/svg";
-import { BillingTabs } from "../../constants";
-
-import {
-    Box,
-    Grid,
-    Tabs,
-    Typography,
-    Stack,
-    Tab,
-    AlertColor,
-} from "@mui/material";
 import {
     useGetBillHistoryQuery,
     useGetCurrentBillQuery,
+    useRetrivePaymentMethodsQuery,
 } from "../../generated";
+import {
+    AlertColor,
+    Tabs,
+    Tab,
+    Grid,
+    Typography,
+    Stack,
+    Box,
+} from "@mui/material";
+import { useState } from "react";
+import colors from "../../theme/colors";
+import { useRecoilValue } from "recoil";
+import { RoundedCard } from "../../styles";
+import { NoBillYet } from "../../assets/svg";
+import { SelectItemType } from "../../types";
+import { BillingTabs } from "../../constants";
+import { isSkeltonLoading, isDarkmode } from "../../recoil";
+
 const Billing = () => {
     const [isBilling, setIsBilling] = useState({
         isShow: false,
         isOnlypaymentFlow: false,
     });
-    const [billingAlert, setBillingAlert] = useState({
+    const [billingAlert] = useState({
         type: "info",
         btnText: "Enter now →",
         title: "Set up your payment information securely at any time.",
@@ -49,21 +50,35 @@ const Billing = () => {
 
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [cardsList, setCardsList] = useState<SelectItemType[]>([
+        { id: "1", value: "no_payment_method_Set", label: "None set up." },
+    ]);
     const { data: billingHistoryRes, loading: billingHistoryLoading } =
         useGetBillHistoryQuery();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
 
     const { data: currentBill, loading: currenBillLoading } =
         useGetCurrentBillQuery();
-    const handleTabChange = (event: React.SyntheticEvent, value: any) =>
-        setTab(value);
+
+    const { refetch: refetchPM } = useRetrivePaymentMethodsQuery({
+        onCompleted: res => {
+            if (res) {
+                const list: SelectItemType[] = [];
+                for (const element of res.retrivePaymentMethods) {
+                    list.push({
+                        id: element.id,
+                        value: element.id,
+                        label: `${element.brand} - ending in ${element.last4}`,
+                    });
+                }
+                setCardsList(prev => [...list, ...prev]);
+            }
+        },
+    });
+
+    const handleTabChange = (_: any, value: any) => setTab(value);
 
     const handleAlertAction = () => {
-        setBillingAlert(prev => ({
-            ...prev,
-            type: "error",
-            title: "Service will be paused unless you set up your payment information.",
-        }));
         setIsBilling({ isShow: true, isOnlypaymentFlow: false });
     };
 
@@ -72,7 +87,7 @@ const Billing = () => {
     };
 
     const handlePaymentSuccess = () => {
-        /* TODO: Handle payment success */
+        refetchPM();
     };
 
     const handleViewPdf = () => {
@@ -82,6 +97,7 @@ const Billing = () => {
     const addPaymentMethod = () => {
         setIsBilling({ isShow: true, isOnlypaymentFlow: true });
     };
+
     const totalCurrentBill: number | undefined =
         currentBill?.getCurrentBill?.bill.reduce(
             (totalCurrentBill, currentItem) =>
@@ -140,7 +156,7 @@ const Billing = () => {
                                 <RoundedCard>
                                     <PaymentCard
                                         title={"Payment settings"}
-                                        paymentMethodData={PaymentCards}
+                                        paymentMethodData={cardsList}
                                         onAddPaymentMethod={addPaymentMethod}
                                     />
                                 </RoundedCard>
@@ -266,7 +282,7 @@ const Billing = () => {
                     isOpen={isBilling.isShow}
                     handleCloseAction={handleDialogClose}
                     initPaymentFlow={isBilling.isOnlypaymentFlow}
-                    handleSuccessAction={() => handlePaymentSuccess()}
+                    handleSuccessAction={handlePaymentSuccess}
                 />
             )}
         </Box>

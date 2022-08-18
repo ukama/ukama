@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
     Typography,
     OutlinedInput,
     Box,
     FormControl,
     SelectChangeEvent,
+    Button,
     MenuItem,
     Select,
+    Stack,
     InputLabel,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
@@ -28,14 +30,28 @@ const useStyles = makeStyles(() => ({
     },
 }));
 
+const getSelected = (list: any) => {
+    if (list.length > 1) return list[0].value;
+    return "no_payment_method_Set";
+};
+
 interface IPaymentProps {
     title: string;
     paymentMethodData: any;
     onAddPaymentMethod: any;
 }
-const PaymentCard = ({ title, paymentMethodData }: IPaymentProps) => {
+const PaymentCard = ({
+    title,
+    paymentMethodData,
+    onAddPaymentMethod,
+}: IPaymentProps) => {
     const classes = useStyles();
-    const [paymentMethod, setPaymentMethod] = React.useState("None set up.");
+    const [paymentMethod, setPaymentMethod] = React.useState("");
+
+    useEffect(() => {
+        setPaymentMethod(getSelected(paymentMethodData));
+    }, [paymentMethodData]);
+
     const _isDarkMod = useRecoilValue(isDarkmode);
 
     const handleChange = (event: SelectChangeEvent) => {
@@ -60,7 +76,6 @@ const PaymentCard = ({ title, paymentMethodData }: IPaymentProps) => {
                     variant="outlined"
                     onChange={handleChange}
                     IconComponent={() => null}
-                    inputProps={{ readOnly: true }}
                     sx={{
                         "& legend": { width: "135px" },
                     }}
@@ -84,7 +99,7 @@ const PaymentCard = ({ title, paymentMethodData }: IPaymentProps) => {
                     }}
                     className={classes.selectStyle}
                 >
-                    {paymentMethodData.map(({ id, value }: any) => (
+                    {paymentMethodData.map(({ id, value, label }: any) => (
                         <MenuItem
                             key={id}
                             value={value}
@@ -93,7 +108,29 @@ const PaymentCard = ({ title, paymentMethodData }: IPaymentProps) => {
                                 p: "6px 16px",
                             }}
                         >
-                            <Typography variant="body1">{value}</Typography>
+                            <Stack direction="row" spacing={1}>
+                                <Typography variant="body1">{label}</Typography>
+                                <Button
+                                    variant="text"
+                                    onClick={onAddPaymentMethod}
+                                    sx={{
+                                        display:
+                                            value === "no_payment_method_Set"
+                                                ? "block"
+                                                : "none",
+                                        textTransform: "none",
+                                        color: colors.primaryMain,
+                                        ":hover": {
+                                            color: theme =>
+                                                theme.palette.text.primary,
+                                        },
+                                    }}
+                                >
+                                    <Typography variant="body1">
+                                        {"Enter now"}
+                                    </Typography>
+                                </Button>
+                            </Stack>
                         </MenuItem>
                     ))}
                 </Select>

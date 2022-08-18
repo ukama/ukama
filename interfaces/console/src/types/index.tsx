@@ -32,7 +32,7 @@ export type HeaderMenuItemType = {
 };
 
 export type SelectItemType = {
-    id: number;
+    id: number | string;
     label: string;
     value: string;
 };

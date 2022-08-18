@@ -5,7 +5,7 @@ import {
     TableCell,
     TableHead,
     Typography,
-    Link,
+    Button,
     TableContainer,
 } from "@mui/material";
 import { useRecoilValue } from "recoil";
@@ -29,8 +29,10 @@ const SimpleDataTable = ({
     columns,
     dataset,
     maxHeight,
+
     isHistoryTab = false,
     setSelectedRows,
+    handleViewPdf,
     selectedRows = [],
     rowSelection = false,
 }: SimpleDataTableInterface) => {
@@ -119,16 +121,18 @@ const SimpleDataTable = ({
                                         rel="noreferrer"
                                         style={{ textDecoration: "none" }}
                                     >
-                                        <Link
-                                            href="https://docdro.id/J2v6TJO"
-                                            underline="none"
-                                            target="_blank"
-                                            rel="noreferrer"
+                                        <Button
+                                            variant="text"
+                                            sx={{
+                                                color: colors.primaryMain,
+                                                textTransform: "capitalize",
+                                            }}
+                                            onClick={handleViewPdf}
                                         >
                                             <Typography variant="body2">
-                                                {"View as PDF"}
+                                                View as PDF
                                             </Typography>
-                                        </Link>
+                                        </Button>
                                     </a>
                                 </TableCell>
                             )}
