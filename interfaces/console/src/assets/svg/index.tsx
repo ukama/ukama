@@ -1,3 +1,4 @@
+export { Doc } from "./Doc";
 export { Logo } from "./Logo";
 export { CpuIcon } from "./CpuIcon";
 export { DataUsage } from "./DataUsage";

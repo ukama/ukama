@@ -27,6 +27,7 @@ import ExitToAppOutlined from "@mui/icons-material/ExitToAppOutlined";
 import { Settings, Notifications, AccountCircle } from "@mui/icons-material";
 import { useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, user, pageName } from "../../recoil";
+import { Doc } from "../../assets/svg";
 
 const popupStyle = {
     background: "none",
@@ -225,6 +226,44 @@ const Header = ({
                     >
                         <Typography variant="h5">{_pageName}</Typography>
                     </LoadingWrapper>
+                    {_pageName === "Users" && (
+                        <Stack
+                            spacing={1}
+                            direction="row"
+                            alignItems={"center"}
+                        >
+                            <Divider
+                                orientation="vertical"
+                                sx={{
+                                    height: "20px",
+                                    borderWidth: "1px",
+                                    borderColor: "#4d4d4d",
+                                }}
+                            />
+                            <IconButton
+                                sx={{
+                                    width: "54px",
+                                    height: "auto",
+                                    cursor: "pointer",
+                                    ":hover": {
+                                        svg: {
+                                            path: {
+                                                fill: "#2190F6 !important",
+                                            },
+                                        },
+                                    },
+                                }}
+                                onClick={() =>
+                                    window.open(
+                                        "https://docs.dev.ukama.com/docs/intro",
+                                        "_target"
+                                    )
+                                }
+                            >
+                                <Doc />
+                            </IconButton>
+                        </Stack>
+                    )}
 
                     <Box component="div" sx={{ flexGrow: 1 }} />
 
