@@ -31,7 +31,7 @@ const BillingAlerts = ({
                         textTransform: "none",
                         color: colors.primaryMain,
                         ":hover": {
-                            color: theme => theme.palette.text.primary,
+                            textDecoration: "underline",
                         },
                     }}
                     onClick={() => onActionClick()}

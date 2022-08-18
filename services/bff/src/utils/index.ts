@@ -209,3 +209,12 @@ export const linkNodes = (nodes: NodeObj[], rootNodeId: string): LinkNodes => {
     }
     return nodesLinkingObj;
 };
+
+export const getStripeIdByUserId = (uid: string): string => {
+    switch (uid) {
+        case "d0a36c51-6a66-4187-b786-72a9e09bf7a4":
+            return "cus_MFTZKUVOGtI2fU";
+        default:
+            return "cus_MFTZKUVOGtI2fU";
+    }
+};

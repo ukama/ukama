@@ -2,6 +2,8 @@ import { registerEnumType } from "type-graphql";
 
 export const PORT = process.env.PORT;
 export const DEV_URL = process.env.API_URL;
+export const STRIP_SK =
+    "sk_test_51LN9vGHBOiFTwZOs0zrb6CkarnlRRocpGSoIZa3jL7vtMeolNjrzf7PAL3hMDHQZENnxIvbw8X7Bfx5CxsUfVfyu00HIVQCYAm";
 export const BASE_URL = `http://localhost:${PORT}`;
 export const HEADER = {
     headers: {

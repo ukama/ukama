@@ -12,16 +12,16 @@ import {
     OutlinedInput,
     Divider,
 } from "@mui/material";
-import React, { Fragment, useEffect, useState } from "react";
 import { colors } from "../../../theme";
 import { IMaskInput } from "react-imask";
 import { makeStyles } from "@mui/styles";
 import AddIcon from "@mui/icons-material/Add";
 import { Node_Type } from "../../../generated";
 import { globalUseStyles } from "../../../styles";
-import { MASK_BY_TYPE, MASK_PLACEHOLDERS, NODE_TYPE } from "../../../constants";
-import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import React, { Fragment, useEffect, useState } from "react";
 import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import { MASK_BY_TYPE, MASK_PLACEHOLDERS, NODE_TYPE } from "../../../constants";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
