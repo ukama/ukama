@@ -15,6 +15,7 @@ import { makeStyles } from "@mui/styles";
 import { useRecoilValue } from "recoil";
 import { isDarkmode } from "../../recoil";
 import colors from "../../theme/colors";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 const useStyles = makeStyles(() => ({
     "&.MuiFormHelperText-root.Mui-error": {
         color: "red",
@@ -27,6 +28,9 @@ const useStyles = makeStyles(() => ({
         width: "100%",
         height: "48px",
         paddingBottom: "55px",
+        "& .MuiInput-underline:hover:not(.Mui-disabled):before": {
+            BorderColor: "grey",
+        },
     },
 }));
 
@@ -56,6 +60,7 @@ const PaymentCard = ({
 
     const handleChange = (event: SelectChangeEvent) => {
         setPaymentMethod(event.target.value as string);
+        console.log(event.target.value);
     };
     return (
         <Box>
@@ -75,10 +80,20 @@ const PaymentCard = ({
                     value={paymentMethod}
                     variant="outlined"
                     onChange={handleChange}
-                    IconComponent={() => null}
                     sx={{
                         "& legend": { width: "135px" },
                     }}
+                    IconComponent={(props: any) => (
+                        <i
+                            {...props}
+                            className={`material-icons ${props.className}`}
+                        >
+                            {paymentMethod ===
+                            "no_payment_method_Set" ? null : (
+                                <ArrowDropDownIcon />
+                            )}
+                        </i>
+                    )}
                     input={
                         <OutlinedInput
                             notched
