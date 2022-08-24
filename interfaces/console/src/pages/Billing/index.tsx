@@ -71,7 +71,7 @@ const Billing = () => {
                         label: `${element.brand} - ending in ${element.last4}`,
                     });
                 }
-                setCardsList(prev => [...list, ...prev]);
+                setCardsList(() => [...list]);
             }
         },
     });
@@ -168,16 +168,14 @@ const Billing = () => {
                                         showSecondaryButton={false}
                                     />
                                     {totalCurrentBill !== undefined || null ? (
-                                        <>
-                                            <SimpleDataTable
-                                                columns={CurrentBillColumns}
-                                                dataset={
-                                                    currentBill?.getCurrentBill
-                                                        ?.bill
-                                                }
-                                                totalAmount={totalCurrentBill}
-                                            />
-                                        </>
+                                        <SimpleDataTable
+                                            columns={CurrentBillColumns}
+                                            dataset={
+                                                currentBill?.getCurrentBill
+                                                    ?.bill
+                                            }
+                                            totalAmount={totalCurrentBill}
+                                        />
                                     ) : (
                                         <Stack
                                             direction="column"

@@ -68,7 +68,7 @@ const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
         return (
             <IMaskInput
                 {...other}
-                overwrite
+                lazy={false}
                 unmask={false}
                 mask={MASK_BY_TYPE[props.name]}
                 placeholder={MASK_PLACEHOLDERS[props.name]}
