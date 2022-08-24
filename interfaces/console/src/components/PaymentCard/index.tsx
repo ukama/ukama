@@ -10,6 +10,7 @@ import {
     Select,
     Stack,
     InputLabel,
+    Divider,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { useRecoilValue } from "recoil";
@@ -57,6 +58,12 @@ const PaymentCard = ({
     const handleChange = (event: SelectChangeEvent) => {
         setPaymentMethod(event.target.value as string);
     };
+    const isDiable = () =>
+        paymentMethodData.length === 1 &&
+        paymentMethodData[0].value === "no_payment_method_Set"
+            ? true
+            : false;
+
     return (
         <Box>
             <Typography variant="h6" sx={{ pb: 3 }}>
@@ -78,6 +85,16 @@ const PaymentCard = ({
                     IconComponent={() => null}
                     sx={{
                         "& legend": { width: "135px" },
+                        "& #add-payment-method": {
+                            color: `${colors.primaryMain} !important`,
+                            "-webkit-text-fill-color": `${colors.primaryMain} !important`,
+                            ":hover": {
+                                color: theme =>
+                                    `${theme.palette.text.primary} !important`,
+                                "-webkit-text-fill-color": theme =>
+                                    `${theme.palette.text.primary} !important`,
+                            },
+                        },
                     }}
                     input={
                         <OutlinedInput
@@ -87,6 +104,7 @@ const PaymentCard = ({
                             id="outlined-age-always-notched"
                         />
                     }
+                    disabled={isDiable()}
                     MenuProps={{
                         disablePortal: false,
                         PaperProps: {
@@ -112,27 +130,42 @@ const PaymentCard = ({
                                 <Typography variant="body1">{label}</Typography>
                                 <Button
                                     variant="text"
+                                    disabled={false}
+                                    id="add-payment-method"
                                     onClick={onAddPaymentMethod}
                                     sx={{
+                                        typography: "body1",
                                         display:
                                             value === "no_payment_method_Set"
                                                 ? "block"
                                                 : "none",
                                         textTransform: "none",
-                                        color: colors.primaryMain,
-                                        ":hover": {
-                                            color: theme =>
-                                                theme.palette.text.primary,
-                                        },
                                     }}
                                 >
-                                    <Typography variant="body1">
-                                        {"Enter now"}
-                                    </Typography>
+                                    Enter now
                                 </Button>
                             </Stack>
                         </MenuItem>
                     ))}
+                    {!isDiable() && (
+                        <>
+                            <Divider />
+                            <Button
+                                variant="text"
+                                sx={{
+                                    padding: "6px 16px",
+                                    typography: "body1",
+                                    textTransform: "none",
+                                }}
+                                onClick={e => {
+                                    onAddPaymentMethod();
+                                    e.stopPropagation();
+                                }}
+                            >
+                                Add new payment method
+                            </Button>
+                        </>
+                    )}
                 </Select>
             </FormControl>
             <Typography
