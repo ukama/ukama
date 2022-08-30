@@ -25,6 +25,7 @@ import {
     Typography,
     Stack,
     Box,
+    SelectChangeEvent,
 } from "@mui/material";
 import { useState } from "react";
 import colors from "../../theme/colors";
@@ -47,7 +48,7 @@ const Billing = () => {
     });
     const [tab, setTab] = useState<number>(0);
     const _isDarkmode = useRecoilValue(isDarkmode);
-
+    const [selectedPM, setSelectedPM] = useState("");
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [cardsList, setCardsList] = useState<SelectItemType[]>([
@@ -62,7 +63,7 @@ const Billing = () => {
 
     const { refetch: refetchPM } = useRetrivePaymentMethodsQuery({
         onCompleted: res => {
-            if (res) {
+            if (res && res.retrivePaymentMethods.length > 0) {
                 const list: SelectItemType[] = [];
                 for (const element of res.retrivePaymentMethods) {
                     list.push({
@@ -72,6 +73,7 @@ const Billing = () => {
                     });
                 }
                 setCardsList(() => [...list]);
+                setSelectedPM(list[0].value);
             }
         },
     });
@@ -96,6 +98,10 @@ const Billing = () => {
 
     const addPaymentMethod = () => {
         setIsBilling({ isShow: true, isOnlypaymentFlow: true });
+    };
+
+    const onChangePM = (event: SelectChangeEvent) => {
+        setSelectedPM(event.target.value as string);
     };
 
     const totalCurrentBill: number | undefined =
@@ -155,6 +161,8 @@ const Billing = () => {
                             <Grid xs={12} md={7} item>
                                 <RoundedCard>
                                     <PaymentCard
+                                        selectedPM={selectedPM}
+                                        onChangePM={onChangePM}
                                         title={"Payment settings"}
                                         paymentMethodData={cardsList}
                                         onAddPaymentMethod={addPaymentMethod}

@@ -11,7 +11,6 @@ interface ICheckoutForm {
     loading: boolean;
     isPaymentOnly: boolean;
     handleBackAction: Function;
-    handleCloseAction: Function;
     handleIsPaymentSuccess: Function;
 }
 
@@ -19,7 +18,6 @@ interface IPaymentForm {
     loading: boolean;
     isPaymentOnly: boolean;
     handleBackAction: Function;
-    handleCloseAction: Function;
     handleIsPaymentSuccess: Function;
 }
 
@@ -31,7 +29,6 @@ const CheckoutForm = ({
     loading,
     isPaymentOnly,
     handleBackAction,
-    handleCloseAction,
     handleIsPaymentSuccess,
 }: ICheckoutForm) => {
     const theme = useTheme();
@@ -98,19 +95,10 @@ const CheckoutForm = ({
                 >
                     Back
                 </Button>
-
-                <Stack direction={"row"} alignItems="center" spacing={2}>
-                    <Button
-                        variant={"text"}
-                        color={"primary"}
-                        onClick={() => handleCloseAction()}
-                    >
-                        Close
-                    </Button>
-
-                    {loading ? (
-                        <CircularProgress />
-                    ) : (
+                {loading ? (
+                    <CircularProgress />
+                ) : (
+                    <Stack direction={"row"} alignItems="center" spacing={2}>
                         <button
                             type="submit"
                             disabled={!stripe || !elements}
@@ -135,8 +123,8 @@ const CheckoutForm = ({
                         >
                             Submit payment information
                         </button>
-                    )}
-                </Stack>
+                    </Stack>
+                )}
             </HorizontalContainerJustify>
         </form>
     );
@@ -146,7 +134,6 @@ const PaymentForm = ({
     loading,
     isPaymentOnly,
     handleBackAction,
-    handleCloseAction,
     handleIsPaymentSuccess,
 }: IPaymentForm) => {
     return (
@@ -155,7 +142,6 @@ const PaymentForm = ({
                 loading={loading}
                 isPaymentOnly={isPaymentOnly}
                 handleBackAction={handleBackAction}
-                handleCloseAction={handleCloseAction}
                 handleIsPaymentSuccess={handleIsPaymentSuccess}
             />
         </Elements>

@@ -100,7 +100,6 @@ const BillingDialog = ({
                 {flow === 1 && <CustomizePref />}
                 {flow === 2 && (
                     <PaymentForm
-                        handleCloseAction={handleClose}
                         isPaymentOnly={initPaymentFlow}
                         loading={attachPaymentWithCustomerLoading}
                         handleIsPaymentSuccess={handleIsPaymentSuccess}
@@ -127,28 +126,20 @@ const BillingDialog = ({
                             Back
                         </Button>
 
-                        <Stack
-                            spacing={2}
-                            direction={"row"}
-                            alignItems="center"
-                        >
-                            <Button
-                                color={"primary"}
-                                variant={flow === 3 ? "contained" : "text"}
-                                onClick={() => handleClose()}
+                        {flow !== 3 && (
+                            <Stack
+                                spacing={2}
+                                direction={"row"}
+                                alignItems="center"
                             >
-                                Close
-                            </Button>
-
-                            {flow !== 3 && (
                                 <Button
                                     variant="contained"
                                     onClick={() => handleFlowChange(flow + 1)}
                                 >
                                     Next
                                 </Button>
-                            )}
-                        </Stack>
+                            </Stack>
+                        )}
                     </HorizontalContainerJustify>
                 </DialogActions>
             )}
