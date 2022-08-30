@@ -1,10 +1,8 @@
-import React, { useEffect } from "react";
 import {
     Typography,
     OutlinedInput,
     Box,
     FormControl,
-    SelectChangeEvent,
     Button,
     MenuItem,
     Select,
@@ -31,33 +29,24 @@ const useStyles = makeStyles(() => ({
     },
 }));
 
-const getSelected = (list: any) => {
-    if (list.length > 1) return list[0].value;
-    return "no_payment_method_Set";
-};
-
 interface IPaymentProps {
     title: string;
+    onChangePM: any;
+    selectedPM: string;
     paymentMethodData: any;
     onAddPaymentMethod: any;
 }
 const PaymentCard = ({
     title,
+    onChangePM,
+    selectedPM,
     paymentMethodData,
     onAddPaymentMethod,
 }: IPaymentProps) => {
     const classes = useStyles();
-    const [paymentMethod, setPaymentMethod] = React.useState("");
-
-    useEffect(() => {
-        setPaymentMethod(getSelected(paymentMethodData));
-    }, [paymentMethodData]);
 
     const _isDarkMod = useRecoilValue(isDarkmode);
 
-    const handleChange = (event: SelectChangeEvent) => {
-        setPaymentMethod(event.target.value as string);
-    };
     const isDiable = () =>
         paymentMethodData.length === 1 &&
         paymentMethodData[0].value === "no_payment_method_Set"
@@ -69,7 +58,6 @@ const PaymentCard = ({
             <Typography variant="h6" sx={{ pb: 3 }}>
                 {title}
             </Typography>
-
             <FormControl variant="outlined" className={classes.formControl}>
                 <InputLabel
                     shrink
@@ -79,9 +67,9 @@ const PaymentCard = ({
                     PAYMENT METHOD
                 </InputLabel>
                 <Select
-                    value={paymentMethod}
+                    value={selectedPM}
                     variant="outlined"
-                    onChange={handleChange}
+                    onChange={onChangePM}
                     IconComponent={() => null}
                     sx={{
                         "& legend": { width: "135px" },
@@ -148,7 +136,7 @@ const PaymentCard = ({
                         </MenuItem>
                     ))}
                     {!isDiable() && (
-                        <>
+                        <Box>
                             <Divider />
                             <Button
                                 variant="text"
@@ -164,7 +152,7 @@ const PaymentCard = ({
                             >
                                 Add new payment method
                             </Button>
-                        </>
+                        </Box>
                     )}
                 </Select>
             </FormControl>
