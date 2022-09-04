@@ -18,7 +18,7 @@ HOST = $(shell gcc -dumpmachine)
 
 TARGET_EXEC = msgClient
 
-UKAMA_OS     = ../../nodes/ukamaOS/
+UKAMA_OS     = ../../../nodes/ukamaOS/
 VENDOR_DIR   = $(UKAMA_OS)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
 VENDOR_INC   = $(VENDOR_BUILD)/include/
