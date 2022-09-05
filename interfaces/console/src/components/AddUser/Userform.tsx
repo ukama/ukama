@@ -1,16 +1,19 @@
 import {
     Grid,
     Stack,
+    Radio,
     Switch,
     TextField,
+    Paper,
     Button,
     Typography,
 } from "@mui/material";
 import * as Yup from "yup";
 import { Formik } from "formik";
-import { useState } from "react";
+import React, { useState } from "react";
 import { ESIM_FORM_SCHEMA } from "../../helpers/formValidators";
 import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
+import colors from "../../theme/colors";
 interface IUserform {
     description: string;
     handleClose: Function;
@@ -29,6 +32,11 @@ const Userform = ({
 }: IUserform) => {
     const gclasses = globalUseStyles();
     const [status, setStatus] = useState<boolean>(true);
+    const [selectedValue, setSelectedValue] = useState("a");
+
+    const handleChangeRadio = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSelectedValue(event.target.value);
+    };
 
     return (
         <Formik
@@ -63,7 +71,7 @@ const Userform = ({
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 value={values.name}
-                                sx={{ mb: 1 }}
+                                sx={{ mb: 1 / 2 }}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
                                     classes: {
@@ -73,6 +81,54 @@ const Userform = ({
                                 helperText={touched.name && errors.name}
                                 error={touched.name && Boolean(errors.name)}
                             />
+                        </Grid>
+                        <Grid
+                            item
+                            xs={12}
+                            container
+                            spacing={2}
+                            sx={{ mb: 1 / 2 }}
+                        >
+                            <Grid item xs={6}>
+                                <Paper variant="outlined" sx={{}}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={1}
+                                        alignItems="center"
+                                    >
+                                        <Radio
+                                            checked={selectedValue === "a"}
+                                            onChange={handleChangeRadio}
+                                            value="a"
+                                            name="radio-buttons"
+                                            inputProps={{ "aria-label": "A" }}
+                                        />
+                                        <Typography variant="body1">
+                                            eSIM (2 left)
+                                        </Typography>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={6}>
+                                <Paper variant="outlined">
+                                    <Stack
+                                        direction="row"
+                                        spacing={1}
+                                        alignItems="center"
+                                    >
+                                        <Radio
+                                            checked={selectedValue === "b"}
+                                            onChange={handleChangeRadio}
+                                            value="b"
+                                            name="radio-buttons"
+                                            inputProps={{ "aria-label": "B" }}
+                                        />
+                                        <Typography variant="body1">
+                                            Physical SIM (3 left)
+                                        </Typography>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
@@ -94,13 +150,17 @@ const Userform = ({
                                 error={touched.email && Boolean(errors.email)}
                             />
                         </Grid>
+
                         <Grid item xs={12}>
                             <ContainerJustifySpaceBtw
                                 sx={{ alignItems: "end" }}
                             >
                                 <Stack display="flex" alignItems="flex-start">
-                                    <Typography variant="caption">
-                                        ROAMING
+                                    <Typography
+                                        variant="caption"
+                                        sx={{ color: colors.black38 }}
+                                    >
+                                        ALLOW ROAMING
                                     </Typography>
                                     <Typography variant="body1">
                                         Roaming allows user to do xyz. Insert
@@ -126,7 +186,7 @@ const Userform = ({
                                     Cancel
                                 </Button>
                                 <Button variant="contained" type="submit">
-                                    ADD USER
+                                    NEXT
                                 </Button>
                             </Stack>
                         </Grid>

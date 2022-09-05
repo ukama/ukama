@@ -9,7 +9,6 @@ import {
 import ESimQR from "./ESimQR";
 import { useState } from "react";
 import Userform from "./Userform";
-import ChooseSim from "./ChooseSim";
 import CloseIcon from "@mui/icons-material/Close";
 import { CenterContainer } from "../../styles";
 import PhysicalSimFlow from "./PhysicalSimFlow";
@@ -32,7 +31,7 @@ const getDescription = (id: number, addUserName?: any) => {
         case 0:
             return "What SIM do you want to assign to this user?";
         case 1:
-            return "Add user xyz. They will be emailed the SIM installation link/QR code shortly after.";
+            return "Start accessing high quality and fast data now. You’ll be able to add more users to the network later.";
         case 2:
             return `You have successfully added ${addUserName} as a user to your network, and an eSIM installation invitation has been sent out to them. If they would rather install now, have them scan the QR code below.`;
         case 3:
@@ -104,9 +103,14 @@ const AddUser = ({
             </Stack>
             <DialogContent sx={{ overflowX: "hidden" }}>
                 {flow === 0 && (
-                    <ChooseSim
-                        description={getDescription(0)}
-                        handleSimType={handleAction}
+                    // <ChooseSim
+                    //     description={getDescription(0)}
+                    //     handleSimType={handleAction}
+                    // />
+                    <Userform
+                        handleClose={handleClose}
+                        description={getDescription(1)}
+                        handleSimInstallation={handleEsimInstallation}
                     />
                 )}
                 {simType == "eSIM" && !iSeSimAdded && (
