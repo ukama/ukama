@@ -3,15 +3,12 @@ import {
     Dialog,
     IconButton,
     DialogTitle,
-    CircularProgress,
     DialogContent,
 } from "@mui/material";
 import ESimQR from "./ESimQR";
-import { useState } from "react";
 import Userform from "./Userform";
 import CloseIcon from "@mui/icons-material/Close";
-import { CenterContainer } from "../../styles";
-import PhysicalSimFlow from "./PhysicalSimFlow";
+import { useState } from "react";
 interface IAddUser {
     isOpen: boolean;
     isPsimAdded: boolean;
@@ -52,24 +49,9 @@ const AddUser = ({
     addedUserName,
     loading = false,
     handleEsimInstallation,
-    step,
-    handlePhysicalSimInstallationFlow2,
-    handlePhysicalSimInstallationFlow1,
 }: IAddUser) => {
-    const [flow, setFlow] = useState(0);
-    const [simType, setSimType] = useState("");
+    const [selectedSimType, setSelectedSimType] = useState("eSim");
 
-    const handleAction = ({ type = simType }: { type?: string }) => {
-        switch (flow) {
-            case 0:
-                setSimType(type);
-                setFlow(flow + 1);
-                break;
-            case 1:
-                setFlow(2);
-                break;
-        }
-    };
     const getTitle = (esimSuccess: boolean, type: any) => {
         if (esimSuccess || isPsimAdded) {
             return "Add User Succesful";
@@ -77,7 +59,9 @@ const AddUser = ({
             return `Add User${type && ` - ${type}`}`;
         }
     };
-
+    const getSimType = (sim: any) => {
+        setSelectedSimType(sim);
+    };
     return (
         <Dialog
             fullWidth
@@ -92,7 +76,7 @@ const AddUser = ({
                 justifyContent="space-between"
             >
                 <DialogTitle>
-                    {!loading && getTitle(iSeSimAdded, simType)}
+                    {!loading && getTitle(iSeSimAdded, selectedSimType)}
                 </DialogTitle>
                 <IconButton
                     onClick={() => handleClose()}
@@ -102,54 +86,14 @@ const AddUser = ({
                 </IconButton>
             </Stack>
             <DialogContent sx={{ overflowX: "hidden" }}>
-                {flow === 0 && (
-                    // <ChooseSim
-                    //     description={getDescription(0)}
-                    //     handleSimType={handleAction}
-                    // />
-                    <Userform
-                        handleClose={handleClose}
-                        description={getDescription(1)}
-                        handleSimInstallation={handleEsimInstallation}
-                    />
-                )}
-                {simType == "eSIM" && !iSeSimAdded && (
-                    <>
-                        {loading ? (
-                            <CenterContainer>
-                                <CircularProgress />
-                            </CenterContainer>
-                        ) : (
-                            <Userform
-                                handleClose={handleClose}
-                                description={getDescription(1)}
-                                handleSimInstallation={handleEsimInstallation}
-                            />
-                        )}
-                    </>
-                )}
-                {simType == "Physical SIM" && !iSeSimAdded && (
-                    <>
-                        {loading ? (
-                            <CenterContainer>
-                                <CircularProgress />
-                            </CenterContainer>
-                        ) : (
-                            <PhysicalSimFlow
-                                handleClose={handleClose}
-                                step={step}
-                                handlePhysicalSimInstallationFlow1={
-                                    handlePhysicalSimInstallationFlow1
-                                }
-                                handlePhysicalSimInstallationFlow2={
-                                    handlePhysicalSimInstallationFlow2
-                                }
-                            />
-                        )}
-                    </>
-                )}
+                <Userform
+                    getSimType={getSimType}
+                    handleClose={handleClose}
+                    description={getDescription(1)}
+                    handleSimInstallation={handleEsimInstallation}
+                />
 
-                {iSeSimAdded && (
+                {iSeSimAdded && selectedSimType == "eSim" && (
                     <ESimQR
                         description={getDescription(2, addedUserName)}
                         qrCodeId={qrCodeId}

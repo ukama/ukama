@@ -18,6 +18,9 @@ interface IUserform {
     description: string;
     handleClose: Function;
     handleSimInstallation: Function;
+    eSimLeft?: number;
+    physicalSimLeft?: number;
+    getSimType: any;
 }
 const eSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
 const initialeEsimFormValue = {
@@ -28,14 +31,20 @@ const initialeEsimFormValue = {
 const Userform = ({
     handleClose,
     description,
+    eSimLeft,
+    physicalSimLeft,
     handleSimInstallation,
+    getSimType,
 }: IUserform) => {
     const gclasses = globalUseStyles();
     const [status, setStatus] = useState<boolean>(true);
-    const [selectedValue, setSelectedValue] = useState("a");
+    const [selectedSimType, setSelectedSimType] = useState("eSim");
 
-    const handleChangeRadio = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSelectedValue(event.target.value);
+    const handleSimTypeChange = (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        setSelectedSimType(event.target.value);
+        getSimType(event.target.value);
     };
 
     return (
@@ -43,7 +52,7 @@ const Userform = ({
             validationSchema={eSimFormSchema}
             initialValues={initialeEsimFormValue}
             onSubmit={async values =>
-                handleSimInstallation({ ...values, status })
+                handleSimInstallation({ ...values, status, selectedSimType })
             }
         >
             {({
@@ -97,14 +106,16 @@ const Userform = ({
                                         alignItems="center"
                                     >
                                         <Radio
-                                            checked={selectedValue === "a"}
-                                            onChange={handleChangeRadio}
-                                            value="a"
-                                            name="radio-buttons"
-                                            inputProps={{ "aria-label": "A" }}
+                                            checked={selectedSimType === "eSim"}
+                                            onChange={handleSimTypeChange}
+                                            value="eSim"
+                                            name="eSim"
+                                            inputProps={{
+                                                "aria-label": "eSim",
+                                            }}
                                         />
                                         <Typography variant="body1">
-                                            eSIM (2 left)
+                                            {`eSIM (${eSimLeft || 0} left) `}
                                         </Typography>
                                     </Stack>
                                 </Paper>
@@ -117,14 +128,21 @@ const Userform = ({
                                         alignItems="center"
                                     >
                                         <Radio
-                                            checked={selectedValue === "b"}
-                                            onChange={handleChangeRadio}
-                                            value="b"
-                                            name="radio-buttons"
-                                            inputProps={{ "aria-label": "B" }}
+                                            checked={
+                                                selectedSimType ===
+                                                "physicalSim"
+                                            }
+                                            onChange={handleSimTypeChange}
+                                            value="physicalSim"
+                                            name="physicalSim"
+                                            inputProps={{
+                                                "aria-label": "PhysicalSim",
+                                            }}
                                         />
                                         <Typography variant="body1">
-                                            Physical SIM (3 left)
+                                            {`   Physical SIM (${
+                                                physicalSimLeft || 0
+                                            } left) `}
                                         </Typography>
                                     </Stack>
                                 </Paper>
