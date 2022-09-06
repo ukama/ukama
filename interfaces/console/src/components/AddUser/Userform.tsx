@@ -20,7 +20,10 @@ interface IUserform {
     handleSimInstallation: Function;
     eSimLeft?: number;
     physicalSimLeft?: number;
-    getSimType: any;
+    handleGoBack?: any;
+    getSimType?: any;
+    title?: string;
+    handleNext?: any;
 }
 const eSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
 const initialeEsimFormValue = {
@@ -30,10 +33,13 @@ const initialeEsimFormValue = {
 
 const Userform = ({
     handleClose,
+    handleGoBack,
+    handleNext,
     description,
     eSimLeft,
     physicalSimLeft,
     handleSimInstallation,
+    title,
     getSimType,
 }: IUserform) => {
     const gclasses = globalUseStyles();
@@ -65,6 +71,9 @@ const Userform = ({
             }) => (
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={2}>
+                        <Grid item xs={12} mb={1}>
+                            <Typography variant="h6">{title}</Typography>
+                        </Grid>
                         <Grid item xs={12} mb={1}>
                             <Typography variant="body1">
                                 {description}
@@ -194,18 +203,22 @@ const Userform = ({
                             </ContainerJustifySpaceBtw>
                             <Stack
                                 direction="row"
-                                justifyContent="flex-end"
+                                justifyContent="space-between"
                                 mt={1}
                             >
                                 <Button
                                     sx={{ mr: 2, justifyItems: "center" }}
-                                    onClick={() => handleClose()}
+                                    onClick={handleGoBack}
                                 >
-                                    Cancel
+                                    BACK
                                 </Button>
-                                <Button variant="contained" type="submit">
-                                    NEXT
-                                </Button>
+                                <Stack direction="row" spacing={3}>
+                                    <Button variant="text">SKIP</Button>
+
+                                    <Button variant="contained" type="submit">
+                                        NEXT
+                                    </Button>
+                                </Stack>
                             </Stack>
                         </Grid>
                     </Grid>

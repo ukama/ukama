@@ -19,6 +19,7 @@ import UserSettings from "./UserSettings";
 import NodeStatItem from "./NodeStatItem";
 import NodeRadioTab from "./NodeRadioTab";
 import BillingAlerts from "./BillingAlerts";
+import NetworkSetup from "./NetworkSetup";
 import AlertSettings from "./AlertSettings";
 import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
@@ -28,6 +29,7 @@ import ApexLineChart from "./ApexLineChart";
 import NodeNetworkTab from "./NodeNetworkTab";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
+import OnBoardingFlow from "./OnBoardingFlow";
 import ConsoleSettings from "./ConsoleSettings";
 import NodeOverviewTab from "./NodeOverviewTab";
 import NodeSoftwareTab from "./NodeSoftwareTab";
@@ -70,6 +72,7 @@ export {
     StatsCard,
     NodeDialog,
     TimeFilter,
+    NetworkSetup,
     NodeStatus,
     StatusCard,
     SplitButton,
@@ -109,6 +112,7 @@ export {
     GraphTitleWrapper,
     NodeStatsContainer,
     ApexStackAreaChart,
+    OnBoardingFlow,
     SoftwareUpdateModal,
     DataTableWithOptions,
     NodeAppDetailsDialog,
