@@ -50,7 +50,7 @@ const AddUser = ({
     loading = false,
     handleEsimInstallation,
 }: IAddUser) => {
-    const [selectedSimType, setSelectedSimType] = useState("eSim");
+    const [selectedSimType, setSelectedSimType] = useState<any>();
 
     const getTitle = (esimSuccess: boolean, type: any) => {
         if (esimSuccess || isPsimAdded) {
@@ -60,6 +60,7 @@ const AddUser = ({
         }
     };
     const getSimType = (sim: any) => {
+        if (!sim) return;
         setSelectedSimType(sim);
     };
     return (

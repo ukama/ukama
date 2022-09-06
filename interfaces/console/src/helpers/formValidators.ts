@@ -5,6 +5,7 @@ const emailValidatonRule = Yup.string()
     .email("Please enter a valid email.");
 // const iccidValidator = Yup.string().required("Iccid is required.");
 const iccidValidator = Yup.string()
+    .required("Iccid is required.")
     .required()
     .matches(/^[0-9]+$/, "Must be only digits")
     .min(18, "Iccid must be 18 digits")
@@ -15,6 +16,7 @@ const securitycodeValidator = Yup.string().required(
 const ESIM_FORM_SCHEMA = {
     email: emailValidatonRule,
     name: nameValidationRule,
+    simiccid: iccidValidator,
 };
 const PHYSICAL_SIM_FORM_SCHEMA = {
     iccid: iccidValidator,

@@ -16,12 +16,13 @@ import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
 import colors from "../../theme/colors";
 interface IUserform {
     description: string;
-    handleClose: Function;
+    handleClose?: any;
     handleSimInstallation: Function;
     eSimLeft?: number;
     physicalSimLeft?: number;
     handleGoBack?: any;
     getSimType?: any;
+    handleSkip?: any;
     title?: string;
     handleNext?: any;
 }
@@ -29,12 +30,14 @@ const eSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
 const initialeEsimFormValue = {
     name: "",
     email: "",
+    simiccid: "",
 };
 
 const Userform = ({
     handleClose,
     handleGoBack,
     handleNext,
+    handleSkip,
     description,
     eSimLeft,
     physicalSimLeft,
@@ -157,6 +160,34 @@ const Userform = ({
                                 </Paper>
                             </Grid>
                         </Grid>
+                        {selectedSimType === "physicalSim" && (
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    id="simiccid"
+                                    name="simiccid"
+                                    label="SIM ICCID"
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    value={values.simiccid}
+                                    sx={{ mb: 1 }}
+                                    InputLabelProps={{ shrink: true }}
+                                    InputProps={{
+                                        classes: {
+                                            input: gclasses.inputFieldStyle,
+                                        },
+                                    }}
+                                    helperText={
+                                        touched.simiccid && errors.simiccid
+                                    }
+                                    error={
+                                        touched.simiccid &&
+                                        Boolean(errors.simiccid)
+                                    }
+                                />
+                            </Grid>
+                        )}
+
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
@@ -213,7 +244,9 @@ const Userform = ({
                                     BACK
                                 </Button>
                                 <Stack direction="row" spacing={3}>
-                                    <Button variant="text">SKIP</Button>
+                                    <Button variant="text" onClick={handleSkip}>
+                                        SKIP
+                                    </Button>
 
                                     <Button variant="contained" type="submit">
                                         NEXT

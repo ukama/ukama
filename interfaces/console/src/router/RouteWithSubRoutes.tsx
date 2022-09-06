@@ -15,7 +15,11 @@ const RouteWithSubRoutes = (route: IRoute) => {
 
     const routesWithLayout = (props: any) =>
         route.private &&
-        route.component && <route.component {...props} routes={route.routes} />;
+        route.component && (
+            <Layout>
+                <route.component {...props} routes={route.routes} />
+            </Layout>
+        );
 
     const getRouteByType = (props: any) =>
         route.isFullScreen ? fullScreenRoute(props) : routesWithLayout(props);

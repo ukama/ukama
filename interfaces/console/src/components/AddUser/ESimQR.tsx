@@ -3,21 +3,35 @@ import {
     Accordion,
     Typography,
     AccordionSummary,
+    Button,
     AccordionDetails,
 } from "@mui/material";
 import { colors } from "../../theme";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import QRCode from "qrcode.react";
+import { useHistory } from "react-router-dom";
 import { useState } from "react";
 interface IESimQR {
     qrCodeId: any;
     description: string;
+    isOnBoarding?: boolean;
+    title?: string;
 }
 
-const ESimQR = ({ description, qrCodeId }: IESimQR) => {
+const ESimQR = ({
+    description,
+    qrCodeId,
+    isOnBoarding = false,
+    title,
+}: IESimQR) => {
     const [showQrCode, setShowQrCode] = useState(false);
+    const history = useHistory();
+
     return (
         <Grid container mb={2}>
+            <Grid item xs={12}>
+                <Typography variant="h6">{title}</Typography>
+            </Grid>
             <Grid item xs={12}>
                 <Typography variant="body1">{description}</Typography>
             </Grid>
@@ -58,6 +72,16 @@ const ESimQR = ({ description, qrCodeId }: IESimQR) => {
                     </AccordionDetails>
                 </Accordion>
             </Grid>
+            {isOnBoarding && (
+                <Grid item xs={12} container justifyContent="flex-end">
+                    <Button
+                        variant="contained"
+                        onClick={() => history.push("/")}
+                    >
+                        FINISH SETUP
+                    </Button>
+                </Grid>
+            )}
         </Grid>
     );
 };
