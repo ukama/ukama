@@ -22,6 +22,7 @@
 int read_config_from_env(Config **config){
 
 	char *ip=NULL, *port=NULL;
+	char *login=NULL, *passwd=NULL;
 
 	if ((ip = getenv(ENV_MSG_CLIENT_IP)) == NULL ||
 		(port = getenv(ENV_MSG_CLIENT_PORT)) == NULL) {
@@ -29,7 +30,14 @@ int read_config_from_env(Config **config){
 				  ENV_MSG_CLIENT_IP, ENV_MSG_CLIENT_PORT);
 		return FALSE;
 	}
-	
+
+	if ((login = getenv(ENV_MSG_CLIENT_AMQP_LOGIN)) == NULL ||
+		(passwd = getenv(ENV_MSG_CLIENT_AMQP_PASSWD)) == NULL) {
+		log_error("%s and/or %s env variables not defined",
+				  ENV_MSG_CLIENT_AMQP_LOGIN, ENV_MSG_CLIENT_AMQP_PASSWD);
+		return FALSE;
+	}
+
 	*config = (Config *)calloc(1, sizeof(Config));
 	if (*config == NULL) {
 		log_error("Memory allocation failure: %d", sizeof(Config));
@@ -39,6 +47,8 @@ int read_config_from_env(Config **config){
 	(*config)->logLevel = getenv(ENV_MSG_CLIENT_LOG_LEVEL);
 	(*config)->ip       = strdup(ip);
 	(*config)->port     = strdup(port);
+	(*config)->login    = strdup(login);
+	(*config)->passwd   = strdup(passwd);
 
 	if (!(*config)->logLevel) {
 		log_debug("Log level not defined, setting to default: DEBUG");

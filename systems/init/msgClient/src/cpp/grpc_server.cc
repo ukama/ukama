@@ -31,13 +31,17 @@ class EventsServiceImpl final : public EventListener::Service {
 								 const RegistationRequest *request,
 								 Response *reply) {
 	
-	  // request->name();
+	// request->name();
 	// request->ip();
 	// request->port();
 
 	  return Status::Ok;
   }
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * run_grpc_server -- run GRPC server on given address (host:port)
@@ -64,3 +68,7 @@ void run_grpc_server(char *address) {
 	// responsible for shutting down the server for this call to ever return.
 	server->Wait();
 }
+
+#ifdef __cplusplus
+}
+#endif

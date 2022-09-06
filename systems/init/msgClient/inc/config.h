@@ -18,12 +18,17 @@
 #define ENV_MSG_CLIENT_IP        "MSG_CLIENT_IP"
 #define ENV_MSG_CLIENT_PORT      "MSG_CLIENT_PORT"
 
+#define ENV_MSG_CLIENT_AMQP_LOGIN  "MSG_CLIENT_AMQP_LOGIN"
+#define ENV_MSG_CLIENT_AMQP_PASSWD "MSG_CLIENT_AMQP_PASSWD"
+
 /* Struct to various env variables and runtime config parameters */
 typedef struct {
 
 	char *logLevel; /* Log level */
 	char *ip;       /* IP bind */
 	char *port;     /* Port listen */
+	char *login;    /* AMQP login */
+	char *passwd;   /* AMQP password */
 } Config;
 
 void print_config(Config *config);
