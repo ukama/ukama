@@ -4,9 +4,10 @@ const emailValidatonRule = Yup.string()
     .required("Email is required.")
     .email("Please enter a valid email.");
 // const iccidValidator = Yup.string().required("Iccid is required.");
+
 const iccidValidator = Yup.string()
-    .required("Iccid is required.")
-    .required()
+    .notRequired()
+    .nullable()
     .matches(/^[0-9]+$/, "Must be only digits")
     .min(18, "Iccid must be 18 digits")
     .max(18, "Iccid must be 18 digits");

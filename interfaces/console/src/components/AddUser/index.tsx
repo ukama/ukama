@@ -52,11 +52,11 @@ const AddUser = ({
 }: IAddUser) => {
     const [selectedSimType, setSelectedSimType] = useState<any>();
 
-    const getTitle = (esimSuccess: boolean, type: any) => {
+    const getTitle = (esimSuccess: boolean) => {
         if (esimSuccess || isPsimAdded) {
             return "Add User Succesful";
         } else {
-            return `Add User${type && ` - ${type}`}`;
+            return `Add User`;
         }
     };
     const getSimType = (sim: any) => {
@@ -76,9 +76,7 @@ const AddUser = ({
                 alignItems="center"
                 justifyContent="space-between"
             >
-                <DialogTitle>
-                    {!loading && getTitle(iSeSimAdded, selectedSimType)}
-                </DialogTitle>
+                <DialogTitle>{!loading && getTitle(iSeSimAdded)}</DialogTitle>
                 <IconButton
                     onClick={() => handleClose()}
                     sx={{ position: "relative", right: 8 }}
@@ -98,6 +96,7 @@ const AddUser = ({
                     <ESimQR
                         description={getDescription(2, addedUserName)}
                         qrCodeId={qrCodeId}
+                        handleClose={handleClose}
                     />
                 )}
             </DialogContent>

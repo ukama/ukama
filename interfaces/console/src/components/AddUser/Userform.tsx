@@ -24,7 +24,7 @@ interface IUserform {
     getSimType?: any;
     handleSkip?: any;
     title?: string;
-    handleNext?: any;
+    isAddUser?: boolean;
 }
 const eSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
 const initialeEsimFormValue = {
@@ -36,7 +36,7 @@ const initialeEsimFormValue = {
 const Userform = ({
     handleClose,
     handleGoBack,
-    handleNext,
+    isAddUser = true,
     handleSkip,
     description,
     eSimLeft,
@@ -234,18 +234,30 @@ const Userform = ({
                             </ContainerJustifySpaceBtw>
                             <Stack
                                 direction="row"
-                                justifyContent="space-between"
+                                justifyContent={
+                                    !isAddUser ? "space-between" : "flex-end"
+                                }
                                 mt={1}
                             >
-                                <Button
-                                    sx={{ mr: 2, justifyItems: "center" }}
-                                    onClick={handleGoBack}
-                                >
-                                    BACK
-                                </Button>
+                                {!isAddUser && (
+                                    <Button
+                                        sx={{ mr: 2, justifyItems: "center" }}
+                                        onClick={handleGoBack}
+                                    >
+                                        BACK
+                                    </Button>
+                                )}
+
                                 <Stack direction="row" spacing={3}>
-                                    <Button variant="text" onClick={handleSkip}>
-                                        SKIP
+                                    <Button
+                                        variant="text"
+                                        onClick={
+                                            !isAddUser
+                                                ? handleSkip
+                                                : handleClose
+                                        }
+                                    >
+                                        {!isAddUser ? "SKIP" : " CANCEL"}
                                     </Button>
 
                                     <Button variant="contained" type="submit">

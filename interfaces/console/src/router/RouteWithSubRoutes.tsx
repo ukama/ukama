@@ -1,10 +1,13 @@
 import Layout from "../layout";
 import { IRoute } from "./config";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { FullscreenContainer } from "../styles";
 import { Redirect, Route } from "react-router-dom";
-
 const RouteWithSubRoutes = (route: IRoute) => {
+    let checkIfNewUser: any;
+    useEffect(() => {
+        checkIfNewUser = localStorage["newUser"];
+    }, []);
     const fullScreenRoute = (props: any) =>
         route.private &&
         route.component && (
@@ -15,11 +18,14 @@ const RouteWithSubRoutes = (route: IRoute) => {
 
     const routesWithLayout = (props: any) =>
         route.private &&
-        route.component && (
+        route.component &&
+        (checkIfNewUser == undefined ? (
             <Layout>
                 <route.component {...props} routes={route.routes} />
             </Layout>
-        );
+        ) : (
+            <route.component {...props} routes={route.routes} />
+        ));
 
     const getRouteByType = (props: any) =>
         route.isFullScreen ? fullScreenRoute(props) : routesWithLayout(props);

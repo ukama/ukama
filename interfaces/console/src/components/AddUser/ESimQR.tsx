@@ -16,12 +16,14 @@ interface IESimQR {
     description: string;
     isOnBoarding?: boolean;
     title?: string;
+    handleClose?: any;
 }
 
 const ESimQR = ({
     description,
     qrCodeId,
     isOnBoarding = false,
+    handleClose,
     title,
 }: IESimQR) => {
     const [showQrCode, setShowQrCode] = useState(false);
@@ -76,9 +78,11 @@ const ESimQR = ({
                 <Grid item xs={12} container justifyContent="flex-end">
                     <Button
                         variant="contained"
-                        onClick={() => history.push("/")}
+                        onClick={() =>
+                            isOnBoarding ? history.push("/") : handleClose
+                        }
                     >
-                        FINISH SETUP
+                        {isOnBoarding ? "FINISH SETUP" : "CLOSE"}
                     </Button>
                 </Grid>
             )}

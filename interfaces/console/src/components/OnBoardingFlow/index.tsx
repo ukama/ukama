@@ -44,6 +44,7 @@ const OnBoardingFlow = ({
                         "Start accessing high quality and fast data now. You’ll be able to add more users to the network later."
                     }
                     handleSimInstallation={handleSimData}
+                    isAddUser={false}
                 />
             );
         case 3:
