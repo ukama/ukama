@@ -54,8 +54,6 @@
 #define STATE_UPDATE_STR     "update"
 #define STATE_EXPIRED_STR    "expired"
 
-
-
 static int free_stop;
 #define FREE( ... ) Free( &free_stop , __VA_ARGS__ , &free_stop )
 
@@ -132,10 +130,11 @@ typedef struct _routing_key {
 	ObjectState state;  /* State of the object. */
 } AMQPRoutingKey;
 
+
 WAMQPConn *init_amqp_connection(char *host, char *port, char *login,
 								char *passwd);
 void close_amqp_connection(WAMQPConn *conn);
 int publish_amqp_event(WAMQPConn *conn, char *exchange, MsgClientEvent event,
-					   char *name);
+					   char *name, void *data);
 
 #endif /* MSG_CLIENT_AMQP_H */

@@ -484,16 +484,16 @@ static int object_type(MsgClientEvent event) {
  *
  */
 int publish_amqp_event(WAMQPConn *conn, char *exchange,
-					   MsgClientEvent event, char *name) {
+					   MsgClientEvent event, char *name,
+					   void *data) {
 
 	/* THREAD? XXX - Think about me*/
 	char *key=NULL;
 	WAMQPProp prop;
-	void *buff=NULL;
 	int ret;
 
 	/* Sanity check */
-	if (conn==NULL) {
+	if (conn==NULL || data==NULL) {
 		return FALSE;
 	}
 
@@ -515,7 +515,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange,
 
 	/* Step-3: protobuf msg. */
 	if (object_type(event) == OBJECT_SERVICE) {
-
+		
 	} else if (object_type(event) == OBJECT_NONE) {
 		log_error("Invalid event type: %d", event);
 		free(key);
@@ -525,7 +525,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange,
 	/* Step-4: send the message to AMQP broker */
 	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
 							 amqp_cstring_bytes(key), 0, 0, &prop,
-							 amqp_cstring_bytes(buff));
+							 amqp_cstring_bytes(data));
 	if (ret < 0) {
 		ret = FALSE;
 		log_error("Error sending AMQP message. Error: %s",
@@ -535,7 +535,6 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange,
 		log_debug("AMQP message successfully sent to exchange");
 	}
 
-	free(buff);
 	free(key);
 
 	return ret;
