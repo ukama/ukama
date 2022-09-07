@@ -17,7 +17,6 @@ const OnBoardingFlow = ({
         setstep(step + 1);
     };
 
-    // function for going to previous step by decreasing step state by 1
     const prevStep = () => {
         setstep(step - 1);
     };
@@ -58,7 +57,12 @@ const OnBoardingFlow = ({
             );
 
         default:
-            return <div className="App"></div>;
+            return (
+                <NetworkSetup
+                    nextStep={nextStep}
+                    networkData={handleNetworkSetup}
+                />
+            );
     }
 };
 

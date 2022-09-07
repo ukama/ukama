@@ -28,6 +28,10 @@ const ESimQR = ({
 }: IESimQR) => {
     const [showQrCode, setShowQrCode] = useState(false);
     const history = useHistory();
+    const goToConsole = () => {
+        history.push("/");
+        localStorage.removeItem("newUser");
+    };
 
     return (
         <Grid container mb={2}>
@@ -79,7 +83,7 @@ const ESimQR = ({
                     <Button
                         variant="contained"
                         onClick={() =>
-                            isOnBoarding ? history.push("/") : handleClose
+                            isOnBoarding ? goToConsole : handleClose
                         }
                     >
                         {isOnBoarding ? "FINISH SETUP" : "CLOSE"}
