@@ -23,6 +23,8 @@ export class UserInputDto {
 export class UserFistVisitInputDto {
     @Field()
     firstVisit: boolean;
+    @Field()
+    email: string;
 }
 @ObjectType()
 export class UserFistVisitResDto {
