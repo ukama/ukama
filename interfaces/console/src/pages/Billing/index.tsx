@@ -61,22 +61,25 @@ const Billing = () => {
     const { data: currentBill, loading: currenBillLoading } =
         useGetCurrentBillQuery();
 
-    const { refetch: refetchPM } = useRetrivePaymentMethodsQuery({
-        onCompleted: res => {
-            if (res && res.retrivePaymentMethods.length > 0) {
-                const list: SelectItemType[] = [];
-                for (const element of res.retrivePaymentMethods) {
-                    list.push({
-                        id: element.id,
-                        value: element.id,
-                        label: `${element.brand} - ending in ${element.last4}`,
-                    });
+    const { refetch: refetchPM, loading: isRetrivePMLoading } =
+        useRetrivePaymentMethodsQuery({
+            onCompleted: res => {
+                if (res && res.retrivePaymentMethods.length > 0) {
+                    const list: SelectItemType[] = [];
+                    for (const element of res.retrivePaymentMethods) {
+                        list.push({
+                            id: element.id,
+                            value: element.id,
+                            label: `${element.brand} - ending in ${element.last4}`,
+                        });
+                    }
+                    setCardsList(() => [...list]);
+                    setSelectedPM(list[0].value);
+                } else {
+                    setSelectedPM("no_payment_method_Set");
                 }
-                setCardsList(() => [...list]);
-                setSelectedPM(list[0].value);
-            }
-        },
-    });
+            },
+        });
 
     const handleTabChange = (_: any, value: any) => setTab(value);
 
@@ -96,9 +99,8 @@ const Billing = () => {
         //handle-pdf-vieew
     };
 
-    const addPaymentMethod = () => {
+    const addPaymentMethod = () =>
         setIsBilling({ isShow: true, isOnlypaymentFlow: true });
-    };
 
     const onChangePM = (event: SelectChangeEvent) => {
         setSelectedPM(event.target.value as string);
@@ -110,14 +112,23 @@ const Billing = () => {
                 (totalCurrentBill = totalCurrentBill + currentItem.subtotal),
             0
         );
+
+    const isShowSetupPaymentAlert = () =>
+        (!selectedPM || selectedPM === "no_payment_method_Set") &&
+        !isRetrivePMLoading
+            ? true
+            : false;
+
     return (
         <Box>
-            <BillingAlerts
-                title={billingAlert.title}
-                btnText={billingAlert.btnText}
-                onActionClick={handleAlertAction}
-                type={billingAlert.type as AlertColor}
-            />
+            {isShowSetupPaymentAlert() && (
+                <BillingAlerts
+                    title={billingAlert.title}
+                    btnText={billingAlert.btnText}
+                    onActionClick={handleAlertAction}
+                    type={billingAlert.type as AlertColor}
+                />
+            )}
             <LoadingWrapper isLoading={_isSkeltonLoading} height={"300px"}>
                 <Box component="div">
                     <Tabs
