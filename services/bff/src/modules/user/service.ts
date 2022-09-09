@@ -112,9 +112,15 @@ export class UserService implements IUserService {
         cookie: ParsedCookie
     ): Promise<UserFistVisitResDto> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
+            type: API_METHOD_TYPE.PUT,
             path: `${SERVER.UPDATE_USER_FIRST_VISIT}/${cookie.orgId}`,
-            body: { ...req },
+            body: {
+                schema_id: cookie.orgId,
+                state: "active",
+                traits: {
+                    ...req,
+                },
+            },
             headers: cookie.header,
         });
         if (checkError(res)) throw new Error(res.description || res.message);

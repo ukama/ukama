@@ -22,12 +22,12 @@ export class UserInputDto {
 @InputType()
 export class UserFistVisitInputDto {
     @Field()
-    iSfirstVisit: boolean;
+    firstVisit: boolean;
 }
 @ObjectType()
 export class UserFistVisitResDto {
     @Field()
-    iSfirstVisit: boolean;
+    firstVisit: boolean;
 }
 @ObjectType()
 export class ActivateUserResponse {
