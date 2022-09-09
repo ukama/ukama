@@ -373,6 +373,7 @@ export type Mutation = {
   deactivateUser: DeactivateResponse;
   deleteNode: DeleteNodeRes;
   deleteUser: ActivateUserResponse;
+  updateFirstVisit: UserFistVisitResDto;
   updateNode: OrgNodeDto;
   updateUser: UserResDto;
   updateUserRoaming: OrgUserSimDto;
@@ -412,6 +413,11 @@ export type MutationDeleteNodeArgs = {
 
 export type MutationDeleteUserArgs = {
   userId: Scalars['String'];
+};
+
+
+export type MutationUpdateFirstVisitArgs = {
+  data: UserFistVisitInputDto;
 };
 
 
@@ -713,6 +719,16 @@ export type UserDataUsageDto = {
   dataUsedBytes?: Maybe<Scalars['String']>;
 };
 
+export type UserFistVisitInputDto = {
+  email: Scalars['String'];
+  firstVisit: Scalars['Boolean'];
+};
+
+export type UserFistVisitResDto = {
+  __typename?: 'UserFistVisitResDto';
+  firstVisit: Scalars['Boolean'];
+};
+
 export type UserInputDto = {
   email: Scalars['String'];
   name: Scalars['String'];
@@ -849,6 +865,13 @@ export type AddUserMutationVariables = Exact<{
 
 
 export type AddUserMutation = { __typename?: 'Mutation', addUser: { __typename?: 'UserResDto', name: string, email: string, iccid?: string | null, id: string } };
+
+export type UpdateFirstVisitMutationVariables = Exact<{
+  data: UserFistVisitInputDto;
+}>;
+
+
+export type UpdateFirstVisitMutation = { __typename?: 'Mutation', updateFirstVisit: { __typename?: 'UserFistVisitResDto', firstVisit: boolean } };
 
 export type DeleteNodeMutationVariables = Exact<{
   id: Scalars['String'];
@@ -1665,6 +1688,39 @@ export function useAddUserMutation(baseOptions?: Apollo.MutationHookOptions<AddU
 export type AddUserMutationHookResult = ReturnType<typeof useAddUserMutation>;
 export type AddUserMutationResult = Apollo.MutationResult<AddUserMutation>;
 export type AddUserMutationOptions = Apollo.BaseMutationOptions<AddUserMutation, AddUserMutationVariables>;
+export const UpdateFirstVisitDocument = gql`
+    mutation updateFirstVisit($data: UserFistVisitInputDto!) {
+  updateFirstVisit(data: $data) {
+    firstVisit
+  }
+}
+    `;
+export type UpdateFirstVisitMutationFn = Apollo.MutationFunction<UpdateFirstVisitMutation, UpdateFirstVisitMutationVariables>;
+
+/**
+ * __useUpdateFirstVisitMutation__
+ *
+ * To run a mutation, you first call `useUpdateFirstVisitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateFirstVisitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateFirstVisitMutation, { data, loading, error }] = useUpdateFirstVisitMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateFirstVisitMutation(baseOptions?: Apollo.MutationHookOptions<UpdateFirstVisitMutation, UpdateFirstVisitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateFirstVisitMutation, UpdateFirstVisitMutationVariables>(UpdateFirstVisitDocument, options);
+      }
+export type UpdateFirstVisitMutationHookResult = ReturnType<typeof useUpdateFirstVisitMutation>;
+export type UpdateFirstVisitMutationResult = Apollo.MutationResult<UpdateFirstVisitMutation>;
+export type UpdateFirstVisitMutationOptions = Apollo.BaseMutationOptions<UpdateFirstVisitMutation, UpdateFirstVisitMutationVariables>;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($id: String!) {
   deleteNode(id: $id) {

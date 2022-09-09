@@ -3,11 +3,14 @@ import { IRoute } from "./config";
 import { Suspense, useEffect } from "react";
 import { FullscreenContainer } from "../styles";
 import { Redirect, Route } from "react-router-dom";
+
 const RouteWithSubRoutes = (route: IRoute) => {
     let checkIfNewUser: any;
+
     useEffect(() => {
         checkIfNewUser = localStorage["newUser"];
     }, []);
+
     const fullScreenRoute = (props: any) =>
         route.private &&
         route.component && (

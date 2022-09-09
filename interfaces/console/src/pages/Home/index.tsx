@@ -32,6 +32,7 @@ import {
     useAddUserMutation,
     useGetDataBillQuery,
     useGetDataUsageQuery,
+    useUpdateFirstVisitMutation,
     useUpdateNodeMutation,
     useGetUsersByOrgQuery,
     GetUserDto,
@@ -165,7 +166,7 @@ const Home = () => {
             });
         },
     });
-
+    const [updateFirstVisit] = useUpdateFirstVisitMutation();
     const [addUser, { loading: addUserLoading }] = useAddUserMutation({
         onCompleted: res => {
             if (res?.addUser) {
@@ -192,6 +193,16 @@ const Home = () => {
             }
         },
     });
+    useEffect(() => {
+        updateFirstVisit({
+            variables: {
+                data: {
+                    email: "brackley@ukama.com",
+                    firstVisit: false,
+                },
+            },
+        });
+    }, []);
 
     const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
         useGetEsimQrLazyQuery();

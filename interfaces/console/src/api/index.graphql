@@ -42,7 +42,6 @@ query getBillHistory {
         subtotal
     }
 }
-# Write your query or mutation here
 query getCurrentBill {
     getCurrentBill {
         bill {
@@ -178,6 +177,11 @@ mutation addUser($data: UserInputDto!) {
         email
         iccid
         id
+    }
+}
+mutation updateFirstVisit($data: UserFistVisitInputDto!) {
+    updateFirstVisit(data: $data) {
+        firstVisit
     }
 }
 
