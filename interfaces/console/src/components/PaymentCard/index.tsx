@@ -116,22 +116,6 @@ const PaymentCard = ({
                         >
                             <Stack direction="row" spacing={1}>
                                 <Typography variant="body1">{label}</Typography>
-                                <Button
-                                    variant="text"
-                                    disabled={false}
-                                    id="add-payment-method"
-                                    onClick={onAddPaymentMethod}
-                                    sx={{
-                                        typography: "body1",
-                                        display:
-                                            value === "no_payment_method_Set"
-                                                ? "block"
-                                                : "none",
-                                        textTransform: "none",
-                                    }}
-                                >
-                                    Enter now
-                                </Button>
                             </Stack>
                         </MenuItem>
                     ))}
