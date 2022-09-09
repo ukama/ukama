@@ -6,8 +6,10 @@ import {
     GetUserDto,
     ActivateUserResponse,
     GetUsersDto,
+    UserFistVisitResDto,
     UpdateUserServiceInput,
     UserResDto,
+    UserFistVisitInputDto,
     OrgUserSimDto,
     GetESimQRCodeInput,
     ESimQRCodeRes,
@@ -104,6 +106,20 @@ export class UserService implements IUserService {
         });
         if (checkError(res)) throw new Error(res.description || res.message);
         return UserMapper.dtoToAddUserDto(res);
+    };
+    updateFirstVisit = async (
+        req: UserFistVisitInputDto,
+        cookie: ParsedCookie
+    ): Promise<UserFistVisitResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.POST,
+            path: `${SERVER.UPDATE_USER_FIRST_VISIT}/${cookie.orgId}`,
+            body: { ...req },
+            headers: cookie.header,
+        });
+        if (checkError(res)) throw new Error(res.description || res.message);
+        console.log("KRATOS", res);
+        return res;
     };
     deleteUser = async (
         userId: string,

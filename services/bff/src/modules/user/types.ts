@@ -19,7 +19,16 @@ export class UserInputDto {
     @Field({ nullable: true })
     status: boolean;
 }
-
+@InputType()
+export class UserFistVisitInputDto {
+    @Field()
+    iSfirstVisit: boolean;
+}
+@ObjectType()
+export class UserFistVisitResDto {
+    @Field()
+    iSfirstVisit: boolean;
+}
 @ObjectType()
 export class ActivateUserResponse {
     @Field()
