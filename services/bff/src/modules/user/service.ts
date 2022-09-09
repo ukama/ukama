@@ -6,8 +6,10 @@ import {
     GetUserDto,
     ActivateUserResponse,
     GetUsersDto,
+    UserFistVisitResDto,
     UpdateUserServiceInput,
     UserResDto,
+    UserFistVisitInputDto,
     OrgUserSimDto,
     GetESimQRCodeInput,
     ESimQRCodeRes,
@@ -105,6 +107,28 @@ export class UserService implements IUserService {
         if (checkError(res)) throw new Error(res.description || res.message);
         return UserMapper.dtoToAddUserDto(res);
     };
+    updateFirstVisit = async (
+        req: UserFistVisitInputDto,
+        cookie: ParsedCookie
+    ): Promise<UserFistVisitResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.UPDATE_USER_FIRST_VISIT}/${cookie.orgId}`,
+            body: JSON.stringify({
+                schema_id: "default",
+                state: "active",
+                traits: {
+                    ...req,
+                },
+            }),
+            headers: { "Content-Type": "application/json" },
+        });
+        if (checkError(res)) throw new Error(res.description || res.message);
+        return {
+            firstVisit: res?.traits?.firstVisit,
+        };
+    };
+
     deleteUser = async (
         userId: string,
         cookie: ParsedCookie
