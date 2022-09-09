@@ -23,6 +23,8 @@
 #include "config.h"
 #include "log.h"
 
+#include "ugrpc.h"
+
 #define VERSION "0.0.1"
 
 typedef struct {
