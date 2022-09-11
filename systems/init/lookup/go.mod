@@ -2,7 +2,7 @@ module github.com/ukama/ukama/services/bootstrap/lookup
 
 go 1.17
 
-replace github.com/ukama/ukama/services/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../../services/common
 
 replace github.com/ukama/ukama/services/bootstrap/lookup => ./
 

@@ -1,4 +1,4 @@
-include ../../config.mk
+#include ../../config.mk
 
 .PHONY: integration.test test build lint deps 
 
@@ -23,7 +23,7 @@ integration.test:
 
 
 integration.build:
-	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+	#env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 
 
 

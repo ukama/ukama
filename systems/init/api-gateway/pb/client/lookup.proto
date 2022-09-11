@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package lookup;
+
+option go_package = "./pb/client/";
+
+service LookupSerivce {
+
+    // Service registation and de-registration
+    rpc RegisterService(RegisterRequest) returns (RegisterResponse) {}
+    rpc UnRegisterService(UnRegisterRequest) returns (UnRegisterResponse) {}
+}
+
+// RegisterService
+message RegisterRequest {
+    string name = 1;
+    string ip = 2;
+    string port = 3;
+}
+
+message RegisterResponse {
+    int64  status = 1;
+    string uuid   = 2;
+    string error  = 3;
+}
+
+// UnRegisterService
+message UnRegisterRequest {
+    string name = 1;
+    string uuid = 2;
+}
+
+message UnRegisterResponse {
+    int64  status = 1;
+    string error  = 2;
+}
