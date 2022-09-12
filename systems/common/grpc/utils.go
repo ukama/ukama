@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/ukama/ukama/systems/common/config"
-
 	"google.golang.org/grpc"
 
 	"github.com/sirupsen/logrus"

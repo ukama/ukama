@@ -20,7 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
 	github.com/ukama/ukama/services/common v0.0.0-20220427143511-d37bb6fc8f9f
-	github.com/wI2L/fizz v0.18.1
+	github.com/wI2L/fizz v0.22.0
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.10
 )

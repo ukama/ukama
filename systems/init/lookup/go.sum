@@ -743,6 +743,8 @@ github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtX
 github.com/vektra/mockery/v2 v2.12.2/go.mod h1:8vf4KDDUptfkyypzdHLuE7OE2xA7Gdt60WgIS8PgD+U=
 github.com/wI2L/fizz v0.18.1 h1:7MHZ9Q+6TFjgI00xJtypVX5ah4tyOZWSfrNrk6KGUxI=
 github.com/wI2L/fizz v0.18.1/go.mod h1:CMxMR1amz8id9wr2YUpONf+F/F9hW1cqRXxVNNuWVxE=
+github.com/wI2L/fizz v0.22.0 h1:mgRA+uUdESvgsIeBFkMSS/MEIQ4EZ4I2xyRxnCqkhJY=
+github.com/wI2L/fizz v0.22.0/go.mod h1:CMxMR1amz8id9wr2YUpONf+F/F9hW1cqRXxVNNuWVxE=
 github.com/wagslane/go-rabbitmq v0.8.1/go.mod h1:SDjKDyaWPAA8eCQfmTns9TSAkz8tsKRS7c6d5ak3pNg=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=
