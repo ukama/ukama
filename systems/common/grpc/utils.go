@@ -2,9 +2,10 @@ package grpc
 
 import (
 	"context"
+
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 
 	"google.golang.org/grpc"
 

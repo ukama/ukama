@@ -9,7 +9,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/systems/common/sql"
 )
 
 // Common properties for all configs.
@@ -166,7 +166,6 @@ func DefaultDatabaseName(name string) Database {
 		SslEnabled: false,
 	}
 }
-
 
 func DefaultForwardConfig() Forward {
 	return Forward{
