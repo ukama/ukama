@@ -98,7 +98,7 @@ export class UserService implements IUserService {
 
         return {
             email: res?.traits.email,
-            isFirstVisit: res?.traits.firstVisit,
+            isFirstVisit: res?.traits.firstVisit || true,
         };
     };
     getUsersByOrg = async (cookie: ParsedCookie): Promise<GetUsersDto[]> => {
