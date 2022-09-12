@@ -1,4 +1,4 @@
-SUBDIRS := $(wildcard cloud/*/.)  $(wildcard bootstrap/*/.)  $(wildcard common/.) 
+SUBDIRS := $(wildcard init/*/.) $(wildcard common/.)
 
 build: $(SUBDIRS)	
 $(SUBDIRS):
