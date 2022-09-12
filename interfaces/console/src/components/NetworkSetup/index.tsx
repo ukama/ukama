@@ -12,14 +12,17 @@ import React, { useState } from "react";
 import { globalUseStyles } from "../../styles";
 import * as Yup from "yup";
 import { Formik } from "formik";
-const networkSetupFrom = {
-    networkName: "",
-};
+import { NETWORK_NAME_SCHEMA_VALIDATOR } from "../../helpers/formValidators";
+const eSimFormSchema = Yup.object(NETWORK_NAME_SCHEMA_VALIDATOR);
+
 interface INetworkTypes {
     nextStep: Function;
     networkData: any;
 }
-const nameWorkValidation = Yup.string().required("Network name is required.");
+const initialeNetworkSetupFormValue = {
+    name: "",
+};
+
 const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
     const [networkType, setNetworkType] = useState("personal");
     const gclasses = globalUseStyles();
@@ -30,6 +33,7 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
     };
     const handleNetworksetup = (value: any) => {
         networkData(value);
+
         nextStep();
     };
     const backToSignUp = () => {
@@ -41,8 +45,8 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
     return (
         <Box sx={{ pb: 2 }}>
             <Formik
-                initialValues={networkSetupFrom}
-                validationSchema={nameWorkValidation}
+                initialValues={initialeNetworkSetupFormValue}
+                validationSchema={eSimFormSchema}
                 onSubmit={async values =>
                     handleNetworksetup({ ...values, networkType })
                 }
@@ -116,30 +120,25 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
                             <Grid item xs={12} sx={{ mt: 2, mb: 2 }}>
                                 <TextField
                                     fullWidth
-                                    id="networkName"
-                                    name="networkName"
+                                    id="name"
+                                    name="name"
                                     label="NETWORK NAME"
-                                    sx={{ mb: 2 }}
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    value={values.name}
+                                    sx={{ mb: 1 / 2 }}
                                     InputLabelProps={{ shrink: true }}
                                     InputProps={{
                                         classes: {
                                             input: gclasses.inputFieldStyle,
                                         },
                                     }}
-                                    onBlur={handleBlur}
-                                    value={values.networkName}
-                                    onChange={handleChange}
-                                    helperText={
-                                        touched.networkName &&
-                                        errors.networkName
-                                    }
-                                    error={
-                                        touched.networkName &&
-                                        Boolean(errors.networkName)
-                                    }
+                                    helperText={touched.name && errors.name}
+                                    error={touched.name && Boolean(errors.name)}
                                 />
                             </Grid>
                         </Grid>
+
                         <Stack direction="row" justifyContent="space-between">
                             <Button variant="text" onClick={backToSignUp}>
                                 BACK TO SIGN UP

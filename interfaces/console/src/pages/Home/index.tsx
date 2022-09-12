@@ -32,7 +32,7 @@ import {
     useAddUserMutation,
     useGetDataBillQuery,
     useGetDataUsageQuery,
-    useUpdateFirstVisitMutation,
+    useGetAccountDetailsQuery,
     useUpdateNodeMutation,
     useGetUsersByOrgQuery,
     GetUserDto,
@@ -57,6 +57,7 @@ import {
     GetNetworkStatusSSubscription,
     useUpdateUserRoamingMutation,
 } from "../../generated";
+import { useHistory } from "react-router-dom";
 import {
     user,
     isFirstVisit,
@@ -86,6 +87,7 @@ const userInit = {
     status: false,
 };
 const Home = () => {
+    const history = useHistory();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
@@ -166,7 +168,13 @@ const Home = () => {
             });
         },
     });
-    const [updateFirstVisit] = useUpdateFirstVisitMutation();
+
+    const { data: account } = useGetAccountDetailsQuery();
+    useEffect(() => {
+        if (account?.getAccountDetails?.isFirstVisit) {
+            history.push("/onBoarding");
+        }
+    }, []);
     const [addUser, { loading: addUserLoading }] = useAddUserMutation({
         onCompleted: res => {
             if (res?.addUser) {
@@ -193,16 +201,6 @@ const Home = () => {
             }
         },
     });
-    useEffect(() => {
-        updateFirstVisit({
-            variables: {
-                data: {
-                    email: "brackley@ukama.com",
-                    firstVisit: false,
-                },
-            },
-        });
-    }, []);
 
     const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
         useGetEsimQrLazyQuery();

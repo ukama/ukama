@@ -23,8 +23,6 @@ export class UserInputDto {
 export class UserFistVisitInputDto {
     @Field()
     firstVisit: boolean;
-    @Field()
-    email: string;
 }
 @ObjectType()
 export class UserFistVisitResDto {
@@ -67,7 +65,14 @@ export class GetUserDto {
     @Field()
     dataUsage: string;
 }
+@ObjectType()
+export class GetAccountDetailsDto {
+    @Field()
+    email: string;
 
+    @Field()
+    isFirstVisit?: boolean;
+}
 @ObjectType()
 export class GetUsersDto {
     @Field()

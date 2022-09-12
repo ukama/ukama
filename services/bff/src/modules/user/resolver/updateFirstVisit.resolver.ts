@@ -22,7 +22,7 @@ export class updateFirstVisitResolver {
             parseCookie(ctx)
         );
         await this.userService.updateFirstVisit(
-            { firstVisit: data.firstVisit, email: data.email },
+            { firstVisit: data.firstVisit },
             parseCookie(ctx)
         );
         return user;

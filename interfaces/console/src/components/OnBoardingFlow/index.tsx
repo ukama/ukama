@@ -7,10 +7,12 @@ import ESimQR from "../../components/AddUser/ESimQR";
 interface IOnBoardingFlow {
     handleNetworkSetup: Function;
     handleEsimInstallation: Function;
+    goToConsole: Function;
 }
 const OnBoardingFlow = ({
     handleEsimInstallation,
     handleNetworkSetup,
+    goToConsole,
 }: IOnBoardingFlow) => {
     const [step, setstep] = useState(1);
     const nextStep = () => {
@@ -51,8 +53,9 @@ const OnBoardingFlow = ({
                 <ESimQR
                     title={`Add user successful `}
                     description={`You have successfully added [Name] as a user to your network, and an eSIM installation invitation has been sent out to them. To install now, scan the QR code below.`}
-                    qrCodeId={`123`}
+                    qrCodeId={`testUser`}
                     isOnBoarding={true}
+                    goToConsole={goToConsole}
                 />
             );
 

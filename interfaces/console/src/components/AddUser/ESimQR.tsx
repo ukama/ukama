@@ -9,7 +9,6 @@ import {
 import { colors } from "../../theme";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import QRCode from "qrcode.react";
-import { useHistory } from "react-router-dom";
 import { useState } from "react";
 interface IESimQR {
     qrCodeId: any;
@@ -17,6 +16,7 @@ interface IESimQR {
     isOnBoarding?: boolean;
     title?: string;
     handleClose?: any;
+    goToConsole?: any;
 }
 
 const ESimQR = ({
@@ -24,14 +24,10 @@ const ESimQR = ({
     qrCodeId,
     isOnBoarding = false,
     handleClose,
+    goToConsole,
     title,
 }: IESimQR) => {
     const [showQrCode, setShowQrCode] = useState(false);
-    const history = useHistory();
-    const goToConsole = () => {
-        history.push("/");
-        localStorage.removeItem("newUser");
-    };
 
     return (
         <Grid container mb={2}>
@@ -78,18 +74,15 @@ const ESimQR = ({
                     </AccordionDetails>
                 </Accordion>
             </Grid>
-            {isOnBoarding && (
-                <Grid item xs={12} container justifyContent="flex-end">
-                    <Button
-                        variant="contained"
-                        onClick={() =>
-                            isOnBoarding ? goToConsole : handleClose
-                        }
-                    >
-                        {isOnBoarding ? "FINISH SETUP" : "CLOSE"}
-                    </Button>
-                </Grid>
-            )}
+
+            <Grid item xs={12} container justifyContent="flex-end">
+                <Button
+                    variant="contained"
+                    onClick={isOnBoarding ? goToConsole : handleClose}
+                >
+                    {isOnBoarding ? "FINISH SETUP" : "CLOSE"}
+                </Button>
+            </Grid>
         </Grid>
     );
 };

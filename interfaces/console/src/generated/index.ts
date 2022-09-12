@@ -236,6 +236,12 @@ export enum Graphs_Tab {
   Resources = 'RESOURCES'
 }
 
+export type GetAccountDetailsDto = {
+  __typename?: 'GetAccountDetailsDto';
+  email: Scalars['String'];
+  isFirstVisit: Scalars['Boolean'];
+};
+
 export type GetESimQrCodeInput = {
   simId: Scalars['String'];
   userId: Scalars['String'];
@@ -591,6 +597,7 @@ export type ParsedCookie = {
 
 export type Query = {
   __typename?: 'Query';
+  getAccountDetails: GetAccountDetailsDto;
   getAlerts: AlertsResponse;
   getBillHistory: Array<BillHistoryDto>;
   getConnectedUsers: ConnectedUserDto;
@@ -720,7 +727,6 @@ export type UserDataUsageDto = {
 };
 
 export type UserFistVisitInputDto = {
-  email: Scalars['String'];
   firstVisit: Scalars['Boolean'];
 };
 
@@ -946,6 +952,11 @@ export type GetUsersDataUsageSSubscriptionVariables = Exact<{ [key: string]: nev
 
 
 export type GetUsersDataUsageSSubscription = { __typename?: 'Subscription', getUsersDataUsage: { __typename?: 'GetUserDto', id: string, name: string, email: string, dataPlan: string, dataUsage: string } };
+
+export type GetAccountDetailsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAccountDetailsQuery = { __typename?: 'Query', getAccountDetails: { __typename?: 'GetAccountDetailsDto', email: string, isFirstVisit: boolean } };
 
 export type GetNodeStatusQueryVariables = Exact<{
   data: GetNodeStatusInput;
@@ -2143,6 +2154,41 @@ export function useGetUsersDataUsageSSubscription(baseOptions?: Apollo.Subscript
       }
 export type GetUsersDataUsageSSubscriptionHookResult = ReturnType<typeof useGetUsersDataUsageSSubscription>;
 export type GetUsersDataUsageSSubscriptionResult = Apollo.SubscriptionResult<GetUsersDataUsageSSubscription>;
+export const GetAccountDetailsDocument = gql`
+    query getAccountDetails {
+  getAccountDetails {
+    email
+    isFirstVisit
+  }
+}
+    `;
+
+/**
+ * __useGetAccountDetailsQuery__
+ *
+ * To run a query within a React component, call `useGetAccountDetailsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAccountDetailsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAccountDetailsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAccountDetailsQuery(baseOptions?: Apollo.QueryHookOptions<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>(GetAccountDetailsDocument, options);
+      }
+export function useGetAccountDetailsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>(GetAccountDetailsDocument, options);
+        }
+export type GetAccountDetailsQueryHookResult = ReturnType<typeof useGetAccountDetailsQuery>;
+export type GetAccountDetailsLazyQueryHookResult = ReturnType<typeof useGetAccountDetailsLazyQuery>;
+export type GetAccountDetailsQueryResult = Apollo.QueryResult<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>;
 export const GetNodeStatusDocument = gql`
     query getNodeStatus($data: GetNodeStatusInput!) {
   getNodeStatus(data: $data) {

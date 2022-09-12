@@ -49,7 +49,7 @@ export const routes = {
     Users: getRouteObject("/users", "Users", true),
     Settings: getRouteObject("/settings", "Settings", true, true),
     Billing: getRouteObject("/billing", "Billing", true),
-    OnBoarding: getRouteObject("/onBoarding", "OnBoarding"),
+    OnBoarding: getRouteObject("/OnBoarding", "OnBoarding", true, true),
     //Public Routes//
     Error: getRouteObject("/*", "ErrorPage", true, true),
     //

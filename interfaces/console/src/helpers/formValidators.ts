@@ -1,5 +1,9 @@
 import * as Yup from "yup";
 const nameValidationRule = Yup.string().required("Name is required.");
+const networkNameValidationRule = Yup.string().required(
+    "Network name is required."
+);
+
 const emailValidatonRule = Yup.string()
     .required("Email is required.")
     .email("Please enter a valid email.");
@@ -19,8 +23,15 @@ const ESIM_FORM_SCHEMA = {
     name: nameValidationRule,
     simiccid: iccidValidator,
 };
+const NETWORK_NAME_SCHEMA_VALIDATOR = {
+    name: networkNameValidationRule,
+};
 const PHYSICAL_SIM_FORM_SCHEMA = {
     iccid: iccidValidator,
     securityCode: securitycodeValidator,
 };
-export { ESIM_FORM_SCHEMA, PHYSICAL_SIM_FORM_SCHEMA };
+export {
+    ESIM_FORM_SCHEMA,
+    NETWORK_NAME_SCHEMA_VALIDATOR,
+    PHYSICAL_SIM_FORM_SCHEMA,
+};

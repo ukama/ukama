@@ -320,6 +320,12 @@ query getNode($nodeId: String!) {
         }
     }
 }
+query getAccountDetails {
+    getAccountDetails {
+        email
+        isFirstVisit
+    }
+}
 
 query getNodeStatus($data: GetNodeStatusInput!) {
     getNodeStatus(data: $data) {

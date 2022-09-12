@@ -33,7 +33,7 @@ export const SERVER = {
     GET_TEMPERATURE_METRICS: `${BASE_URL}/metrics/temperature`,
     GET_IO_METRICS: `${BASE_URL}/metrics/io`,
     GET_MEMORY_USAGE_METRICS: `${BASE_URL}/metrics/memory`,
-    UPDATE_USER_FIRST_VISIT: `https://kratos-admin.dev.ukama.com/admin/identities`,
+    GET_IDENTITY: `https://kratos-admin.dev.ukama.com/admin/identities`,
 };
 
 export const getMetricUri = (
