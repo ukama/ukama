@@ -4,15 +4,23 @@ import withOnBoardingFlowWrapperHOC from "../withOnBoardingFlowWrapperHOC";
 import { NetworkSetup } from "../../components";
 import Userform from "../../components/AddUser/Userform";
 import ESimQR from "../../components/AddUser/ESimQR";
+import { CircularProgress, Grid } from "@mui/material";
+
 interface IOnBoardingFlow {
     handleNetworkSetup: Function;
     handleEsimInstallation: Function;
     goToConsole: Function;
+    qrCodeId: string | undefined;
+    name: string | undefined;
+    simAdded: boolean;
 }
 const OnBoardingFlow = ({
     handleEsimInstallation,
     handleNetworkSetup,
+    qrCodeId,
     goToConsole,
+    name,
+    simAdded = false,
 }: IOnBoardingFlow) => {
     const [step, setstep] = useState(1);
     const nextStep = () => {
@@ -49,14 +57,18 @@ const OnBoardingFlow = ({
                 />
             );
         case 3:
-            return (
+            return simAdded ? (
                 <ESimQR
                     title={`Add user successful `}
-                    description={`You have successfully added [Name] as a user to your network, and an eSIM installation invitation has been sent out to them. To install now, scan the QR code below.`}
-                    qrCodeId={`testUser`}
+                    description={`You have successfully added ${name} as a user to your network, and an eSIM installation invitation has been sent out to them. To install now, scan the QR code below.`}
+                    qrCodeId={qrCodeId}
                     isOnBoarding={true}
                     goToConsole={goToConsole}
                 />
+            ) : (
+                <Grid container justifyContent={"center"}>
+                    <CircularProgress />
+                </Grid>
             );
 
         default:

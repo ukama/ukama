@@ -1,7 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { OnBoardingFlow } from "../../components";
 import { useHistory } from "react-router-dom";
-
 import {
     useGetAccountDetailsQuery,
     useAddUserMutation,
@@ -13,6 +12,8 @@ import { snackbarMessage } from "../../recoil";
 const OnBoarding = () => {
     const history = useHistory();
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
+    const [userData, setUserData] = useState<any>();
+    const [simAdded, setSimAdded] = useState<boolean>();
     const { data: account } = useGetAccountDetailsQuery();
     const [updateFirstVisit, { loading: updateVisitLoading }] =
         useUpdateFirstVisitMutation({
@@ -24,6 +25,10 @@ const OnBoarding = () => {
         });
 
     const [addUser] = useAddUserMutation({
+        onCompleted: res => {
+            setUserData(res?.addUser);
+            setSimAdded(true);
+        },
         onError: err => {
             if (err?.message) {
                 setNodeToastNotification({
@@ -69,6 +74,9 @@ const OnBoarding = () => {
             handleEsimInstallation={handleEsimInstallation}
             handleNetworkSetup={handleNetworkSetup}
             goToConsole={goToConsole}
+            qrCodeId={userData?.iccid || ""}
+            name={userData?.name || ""}
+            simAdded={simAdded}
         />
     );
 };

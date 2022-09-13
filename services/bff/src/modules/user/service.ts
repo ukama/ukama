@@ -137,16 +137,17 @@ export class UserService implements IUserService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
             path: `${SERVER.GET_IDENTITY}/${cookie.orgId}`,
-            body: JSON.stringify({
+            body: {
                 schema_id: "default",
                 state: "active",
                 traits: {
-                    email: getUser?.traits?.email,
+                    email: "test@ukama.com",
                     ...req,
                 },
-            }),
+            },
             headers: cookie.header,
         });
+
         if (checkError(res)) throw new Error(res.description || res.message);
         return {
             firstVisit: res?.traits?.firstVisit,
