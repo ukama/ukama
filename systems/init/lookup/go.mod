@@ -1,14 +1,14 @@
-module github.com/ukama/ukama/services/bootstrap/lookup
+module github.com/ukama/ukama/systems/init/lookup
 
 go 1.17
 
-replace github.com/ukama/ukama/services/common => ../../../services/common
+replace github.com/ukama/ukama/systems/common => ../../../systems/common
 
-replace github.com/ukama/ukama/services/bootstrap/lookup => ./
+replace github.com/ukama/ukama/systems/init/lookup => ./
 
-//replace github.com/ukama/ukama/services/bootstrap/lookup/internal/db => ./internal/db
+//replace github.com/ukama/ukama/systems/init/lookup/internal/db => ./internal/db
 
-//replace github.com/ukama/ukama/services/bootstrap/lookup/internal/rest => ./internal/rest
+//replace github.com/ukama/ukama/systems/init/lookup/internal/rest => ./internal/rest
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -19,7 +19,7 @@ require (
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
-	github.com/ukama/ukama/services/common v0.0.0-20220427143511-d37bb6fc8f9f
+	github.com/ukama/ukama/systems/common v0.0.0-20220427143511-d37bb6fc8f9f
 	github.com/wI2L/fizz v0.22.0
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.10

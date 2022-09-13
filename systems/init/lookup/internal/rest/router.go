@@ -10,12 +10,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
 
-	"github.com/ukama/ukama/services/bootstrap/lookup/cmd/version"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
-	"github.com/ukama/ukama/services/common/rest"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/rest"
+	sr "github.com/ukama/ukama/systems/common/srvcrouter"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
+	"github.com/ukama/ukama/systems/init/lookup/internal"
+	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 )
 
 const NodeIdParamName = "node"

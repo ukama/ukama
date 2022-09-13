@@ -3,7 +3,7 @@ include ../../config.mk
 .PHONY: integration.test test build lint deps 
 
 build: integration.build
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/services/bootstrap/lookup/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/lookup cmd/lookup/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/init/lookup/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/lookup cmd/lookup/main.go
 
 test:
 	go test -v ./...

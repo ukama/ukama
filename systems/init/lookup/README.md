@@ -1,4 +1,4 @@
-# Node Lookup Service for Bootstrap system
+# Node Lookup Service for init system
 
 This service provides a Rest api to query Lookup DB. 
 

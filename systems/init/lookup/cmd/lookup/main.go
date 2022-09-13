@@ -3,17 +3,17 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/services/bootstrap/lookup/cmd/version"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal/rest"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	sr "github.com/ukama/ukama/systems/common/srvcrouter"
+	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
+	"github.com/ukama/ukama/systems/init/lookup/internal"
+	"github.com/ukama/ukama/systems/init/lookup/internal/db"
+	"github.com/ukama/ukama/systems/init/lookup/internal/rest"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/sql"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/sql"
 )
 
 func main() {

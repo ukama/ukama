@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
 )
 
 type Config struct {

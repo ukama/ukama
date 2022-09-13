@@ -9,8 +9,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/ukama"
 )
 
 type TestConfig struct {

@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"github.com/gin-contrib/cors"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
-	"github.com/ukama/ukama/services/bootstrap/lookup/mocks"
-	"github.com/ukama/ukama/services/common/rest"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/init/lookup/internal"
+	"github.com/ukama/ukama/systems/init/lookup/internal/db"
+	"github.com/ukama/ukama/systems/init/lookup/mocks"
 
 	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"
