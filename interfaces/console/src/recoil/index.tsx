@@ -4,12 +4,14 @@ import {
     isDarkmode,
     isFirstVisit,
     isSkeltonLoading,
+    networkName,
     snackbarMessage,
 } from "./atom";
 import {
     withUser,
     withPageName,
     withIsDarkMod,
+    withNetworkName,
     withIsFirstVisit,
     withSnackbarMessage,
     withIsSkeltonLoading,
@@ -20,6 +22,8 @@ export {
     withUser,
     pageName,
     isDarkmode,
+    withNetworkName,
+    networkName,
     withPageName,
     isFirstVisit,
     withIsDarkMod,

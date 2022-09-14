@@ -42,7 +42,7 @@ const OnBoarding = () => {
     });
     useEffect(() => {
         if (!account?.getAccountDetails?.isFirstVisit) {
-            history.push("/");
+            history.push("/home");
         }
     }, [updateVisitLoading]);
 

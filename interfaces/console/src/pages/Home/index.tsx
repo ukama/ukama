@@ -172,7 +172,7 @@ const Home = () => {
     const { data: account } = useGetAccountDetailsQuery();
     useEffect(() => {
         if (account?.getAccountDetails?.isFirstVisit) {
-            history.push("/onBoarding");
+            history.push("/");
         }
     }, []);
     const [addUser, { loading: addUserLoading }] = useAddUserMutation({

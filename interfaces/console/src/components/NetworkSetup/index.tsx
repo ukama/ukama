@@ -10,22 +10,24 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { globalUseStyles } from "../../styles";
+import { networkName, user } from "../../recoil";
 import * as Yup from "yup";
 import { Formik } from "formik";
 import { NETWORK_NAME_SCHEMA_VALIDATOR } from "../../helpers/formValidators";
+import { useSetRecoilState, useRecoilValue } from "recoil";
 const eSimFormSchema = Yup.object(NETWORK_NAME_SCHEMA_VALIDATOR);
 
 interface INetworkTypes {
     nextStep: Function;
     networkData: any;
 }
-const initialeNetworkSetupFormValue = {
-    name: "",
-};
 
 const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
     const [networkType, setNetworkType] = useState("personal");
     const gclasses = globalUseStyles();
+    const setNetworkNames = useSetRecoilState(networkName);
+    const getNetworkName = useRecoilValue(networkName);
+    const getUser = useRecoilValue(user);
     const handleSimTypeChange = (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
@@ -33,19 +35,19 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
     };
     const handleNetworksetup = (value: any) => {
         networkData(value);
-
         nextStep();
+        setNetworkNames(value.name);
     };
     const backToSignUp = () => {
         window.location.replace(
-            `${process.env.REACT_APP_AUTH_URL}/auth/registration`
+            `${process.env.REACT_APP_AUTH_URL}/logout?goTo=signUp&name=${getUser?.name}&email=${getUser?.email}`
         );
     };
 
     return (
         <Box sx={{ pb: 2 }}>
             <Formik
-                initialValues={initialeNetworkSetupFormValue}
+                initialValues={{ name: getNetworkName ? getNetworkName : "" }}
                 validationSchema={eSimFormSchema}
                 onSubmit={async values =>
                     handleNetworksetup({ ...values, networkType })

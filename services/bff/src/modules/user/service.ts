@@ -141,7 +141,7 @@ export class UserService implements IUserService {
                 schema_id: "default",
                 state: "active",
                 traits: {
-                    email: "test@ukama.com",
+                    email: getUser?.traits?.email,
                     ...req,
                 },
             },
