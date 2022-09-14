@@ -4,6 +4,7 @@ import {
     Radio,
     Switch,
     TextField,
+    Box,
     Paper,
     Button,
     Typography,
@@ -14,6 +15,11 @@ import React, { useState } from "react";
 import { ESIM_FORM_SCHEMA } from "../../helpers/formValidators";
 import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
 import colors from "../../theme/colors";
+interface IUser {
+    id: string;
+    name: string;
+    email: string;
+}
 interface IUserform {
     description: string;
     handleClose?: any;
@@ -25,16 +31,13 @@ interface IUserform {
     handleSkip?: any;
     title?: string;
     isAddUser?: boolean;
+    currentUser?: IUser | null;
 }
 const eSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
-const initialeEsimFormValue = {
-    name: "",
-    email: "",
-    simiccid: "",
-};
 
 const Userform = ({
     handleClose,
+    currentUser,
     handleGoBack,
     isAddUser = true,
     handleSkip,
@@ -59,7 +62,11 @@ const Userform = ({
     return (
         <Formik
             validationSchema={eSimFormSchema}
-            initialValues={initialeEsimFormValue}
+            initialValues={{
+                name: currentUser ? currentUser.name : "",
+                email: currentUser ? currentUser.email : "",
+                simiccid: "",
+            }}
             onSubmit={async values =>
                 handleSimInstallation({ ...values, status, selectedSimType })
             }
@@ -74,14 +81,13 @@ const Userform = ({
             }) => (
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={2}>
-                        <Grid item xs={12} mb={1}>
+                        <Box sx={{ pl: 2 }}>
                             <Typography variant="h6">{title}</Typography>
-                        </Grid>
-                        <Grid item xs={12} mb={1}>
+
                             <Typography variant="body1">
                                 {description}
                             </Typography>
-                        </Grid>
+                        </Box>
 
                         <Grid item xs={12}>
                             <TextField

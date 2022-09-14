@@ -95,10 +95,12 @@ export class UserService implements IUserService {
 
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(res.Messages);
-
         return {
             email: res?.traits.email,
-            isFirstVisit: res?.traits.firstVisit || true,
+            isFirstVisit:
+                res.traits.firstVisit == undefined
+                    ? true
+                    : res.traits.firstVisit,
         };
     };
     getUsersByOrg = async (cookie: ParsedCookie): Promise<GetUsersDto[]> => {
@@ -142,12 +144,12 @@ export class UserService implements IUserService {
                 state: "active",
                 traits: {
                     email: getUser?.traits?.email,
+                    name: getUser?.traits?.name,
                     ...req,
                 },
             },
             headers: cookie.header,
         });
-
         if (checkError(res)) throw new Error(res.description || res.message);
         return {
             firstVisit: res?.traits?.firstVisit,

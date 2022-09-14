@@ -13,13 +13,18 @@ interface IOnBoardingFlow {
     qrCodeId: string | undefined;
     name: string | undefined;
     simAdded: boolean;
+    currentUser: any;
+    handleSkip: Function;
 }
+
 const OnBoardingFlow = ({
     handleEsimInstallation,
     handleNetworkSetup,
     qrCodeId,
     goToConsole,
     name,
+    handleSkip,
+    currentUser,
     simAdded = false,
 }: IOnBoardingFlow) => {
     const [step, setstep] = useState(1);
@@ -47,7 +52,8 @@ const OnBoardingFlow = ({
             return (
                 <Userform
                     title={`Connect to the network`}
-                    handleSkip={nextStep}
+                    currentUser={currentUser}
+                    handleSkip={handleSkip}
                     handleGoBack={prevStep}
                     description={
                         "Start accessing high quality and fast data now. You’ll be able to add more users to the network later."

@@ -6,23 +6,24 @@ import {
     useAddUserMutation,
     useUpdateFirstVisitMutation,
 } from "../../generated";
-import { useSetRecoilState } from "recoil";
-import { snackbarMessage } from "../../recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { snackbarMessage, user } from "../../recoil";
 
 const OnBoarding = () => {
     const history = useHistory();
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
+
+    const getUser = useRecoilValue(user);
     const [userData, setUserData] = useState<any>();
     const [simAdded, setSimAdded] = useState<boolean>();
     const { data: account } = useGetAccountDetailsQuery();
-    const [updateFirstVisit, { loading: updateVisitLoading }] =
-        useUpdateFirstVisitMutation({
-            onCompleted: res => {
-                if (res) {
-                    window.location.reload();
-                }
-            },
-        });
+    const [updateFirstVisit] = useUpdateFirstVisitMutation({
+        onCompleted: res => {
+            if (res) {
+                window.location.reload();
+            }
+        },
+    });
 
     const [addUser] = useAddUserMutation({
         onCompleted: res => {
@@ -40,12 +41,12 @@ const OnBoarding = () => {
             }
         },
     });
+
     useEffect(() => {
-        if (!account?.getAccountDetails?.isFirstVisit) {
+        if (account?.getAccountDetails.isFirstVisit == false) {
             history.push("/home");
         }
-    }, [updateVisitLoading]);
-
+    }, [account?.getAccountDetails.isFirstVisit]);
     const handleEsimInstallation = (values: any) => {
         addUser({
             variables: {
@@ -59,6 +60,15 @@ const OnBoarding = () => {
     };
     const handleNetworkSetup = () => {
         //handle network installation
+    };
+    const handleSkip = () => {
+        updateFirstVisit({
+            variables: {
+                data: {
+                    firstVisit: false,
+                },
+            },
+        });
     };
     const goToConsole = () => {
         updateFirstVisit({
@@ -77,6 +87,8 @@ const OnBoarding = () => {
             qrCodeId={userData?.iccid || ""}
             name={userData?.name || ""}
             simAdded={simAdded}
+            currentUser={getUser}
+            handleSkip={handleSkip}
         />
     );
 };
