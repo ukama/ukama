@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package ukama.lookup.v1;
+
+import "validator.proto";
+
+service LookupService {
+
+    /* Orgs */
+    rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);
+    rpc UpdateOrg(UpdateOrgRequest) returns (UpdateOrgResponse);
+    
+    /* Nodes */
+    rpc AddNodeForOrg(AddNodeRequest) returns (AddNodeResponse);
+    rpc GetNodeForOrg(GetNodeRequest) returns (GetNodeResponse);
+    rpc DeleteNodeForOrg(DeleteNodeRequest) returns (DeleteNodeResponse);
+
+
+    /* System */
+    rpc GetSystemForOrg(GetSystemRequest) returns (GetSystemResponse);
+    rpc UpdateSystemForOrg(UpdateSystemRequest) returns (UpdateSystemResponse);
+    rpc DeleteSystemForOrg(DeleteSystemRequest) returns (DeleteSystemResponse);
+
+}
+
+
+message AddOrgRequest {
+    string orgName = 1 [(validator.field) = {string_not_empty: true}];
+    string certificate = 2 [(validator.field) = {string_not_empty: true}];
+    string ip = 3  [(validator.field) = {string_not_empty: true}];
+}
+
+message AddOrgResponse {
+
+}
+
+message UpdateOrgRequest {
+    string orgName = 1  [(validator.field) = {string_not_empty: true}];
+    string certificate = 2;
+    string ip = 3;
+}
+
+message UpdateOrgResponse {
+    string orgName = 1  [(validator.field) = {string_not_empty: true}];
+}
+
+message GetOrgRequest {
+    string orgName = 1  [(validator.field) = {string_not_empty: true}];
+}
+
+message GetOrgResponse {
+    string orgName = 1  [(validator.field) = {string_not_empty: true}];
+    string certificate = 2;
+    string ip = 3;
+
+}
+
+message AddNodeRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
+    string orgName = 2 ;
+}
+
+message AddNodeResponse {
+
+}
+
+message GetNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
+    string orgName = 2 [(validator.field) = {string_not_empty: true}];
+}
+
+message GetNodeResponse {
+    string nodeId = 1;
+    string orgName = 2;
+    string certificate = 3;
+    string ip = 4;  
+}
+
+message DeleteNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
+    string orgName = 2 [(validator.field) = {string_not_empty: true}];
+}
+
+message DeleteNodeResponse {
+
+}
+
+message GetSystemRequest{
+    string systemName = 1 [(validator.field) = {string_not_empty: true}];
+    string orgName = 2 [(validator.field) = {string_not_empty: true}];
+}
+
+message GetSystemResponse {
+    string systemName = 1;
+    string orgName = 2;
+    string systemId = 3;
+    string certificate = 4;
+    string ip = 5;
+    int32 port = 6;
+}
+
+message UpdateSystemRequest{
+    string systemName = 1 [(validator.field) = {string_not_empty: true}];
+    string orgName = 2 [(validator.field) = {string_not_empty: true}];
+    string systemId = 3;
+    string certificate = 4;
+    string ip = 5;
+    int32 port = 6;
+}
+
+message UpdateSystemResponse {
+}
+
+message DeleteSystemRequest{
+    string systemName = 1 [(validator.field) = {string_not_empty: true}];
+    string orgName = 2 [(validator.field) = {string_not_empty: true}];
+    string systemId = 3;
+}
+
+message DeleteSystemResponse {
+
+}
