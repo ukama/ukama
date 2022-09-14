@@ -11,9 +11,9 @@ import (
 	"github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/init/lookup/internal"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
-	"github.com/ukama/ukamaX/cloud/hss/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -22,18 +22,18 @@ type LookupServer struct {
 	systemRepo     db.SystemRepo
 	orgRepo        db.OrgRepo
 	nodeRepo       db.NodeRepo
-	queuePub       msgbus.QPub
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	pb.UnimplementedLookupServiceServer
 }
 
-func NewLookupServer(nodeRepo db.NodeRepo, queuePub msgbus.QPub) *LookupServer {
+func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo) *LookupServer {
 	seed := time.Now().UTC().UnixNano()
 	return &LookupServer{
 		nodeRepo:       nodeRepo,
-		queuePub:       queuePub,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		orgRepo:        orgRepo,
+		systemRepo:     systemRepo,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 	}
 }
@@ -159,7 +159,7 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemRequest) (*pb.GetSystemResponse, error) {
 	logrus.Infof("Requesting System %s info for org  %s", req.GetSystemName(), req.GetOrgName())
 
-	org, err := l.orgRepo.GetByName(req.OrgName)
+	_, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.OrgName, err.Error())
 	}

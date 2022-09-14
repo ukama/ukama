@@ -3,52 +3,40 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/services/bootstrap/lookup/cmd/version"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
-	"github.com/ukama/ukama/services/bootstrap/lookup/internal/rest"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	"github.com/num30/config"
+	uconf "github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/metrics"
+	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
+	"github.com/ukama/ukama/systems/init/lookup/internal"
+	"github.com/ukama/ukama/systems/init/lookup/internal/db"
+	"github.com/ukama/ukama/systems/init/lookup/internal/server"
+	"gopkg.in/yaml.v3"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/services/common/config"
+	ugrpc "github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/sql"
+	generated "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	"google.golang.org/grpc"
 )
+
+var serviceConfig *internal.Config
 
 func main() {
 	ccmd.ProcessVersionArgument("lookup", os.Args, version.Version)
 
 	/* Log level */
 	logrus.SetLevel(logrus.TraceLevel)
-
 	log.Infof("Starting the lookup service")
 
 	initConfig()
-	if internal.ServiceConf.DebugMode {
-		log.Infof("Service running in debug mode")
-	}
-	log.Infof("")
 
-	rs := sr.NewServiceRouter(internal.ServiceConf.ServiceRouter)
+	metrics.StartMetricsServer(serviceConfig.Metrics)
 
-	d := initDb()
+	db := initDb()
 
-	ext := make(chan error)
-
-	r := rest.NewRouter(internal.ServiceConf, rs, db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
-	go r.Run(ext)
-
-	/* Register service */
-	if err := rs.RegisterService(internal.ServiceConf.ApiIf); err != nil {
-		logrus.Errorf("Exiting the bootstarp service.")
-		return
-	}
-
-	perr := <-ext
-	if perr != nil {
-		panic(perr)
-	}
+	runGrpcServer(db)
 
 	logrus.Infof("Exiting service %s", internal.ServiceName)
 
@@ -56,8 +44,8 @@ func main() {
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
-	d := sql.NewDb(internal.ServiceConf.DB, internal.ServiceConf.DebugMode)
-	err := d.Init(&db.Org{}, &db.Node{})
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+	err := d.Init(&db.Org{}, &db.Node{}, &db.System{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -66,6 +54,31 @@ func initDb() sql.Db {
 
 func initConfig() {
 	log.Infof("Initializing config")
-	internal.ServiceConf = internal.NewConfig()
-	config.LoadConfig(internal.ServiceName, internal.ServiceConf)
+	serviceConfig = &internal.Config{
+		DB: &uconf.Database{
+			DbName: internal.ServiceName,
+		},
+	}
+
+	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
+	if err != nil {
+		log.Fatal("Error reading config ", err)
+	} else if serviceConfig.DebugMode {
+		b, err := yaml.Marshal(serviceConfig)
+		if err != nil {
+			logrus.Infof("Config:\n%s", string(b))
+		}
+	}
+
+	internal.IsDebugMode = serviceConfig.DebugMode
+}
+
+func runGrpcServer(d sql.Db) {
+	//instanceId := os.Getenv("POD_NAME")
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
+		generated.RegisterLookupServiceServer(s, srv)
+	})
+
+	grpcServer.StartServer()
 }

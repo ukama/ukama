@@ -42,9 +42,9 @@ func (s *systemRepo) Get(sys string) (*System, error) {
 
 func (s *systemRepo) Delete(sys string, orgId uint) error {
 	var system System
-	result := s.Db.GetGormDb().Preload(clause.Associations).First(&system, "name = ?", strings.ToLower(sys))
+	result := s.Db.GetGormDb().Preload(clause.Associations).Delete(&system, "name = ?", strings.ToLower(sys))
 	if result.Error != nil {
-		return nil, result.Error
+		return result.Error
 	}
-	return &system, nil
+	return nil
 }

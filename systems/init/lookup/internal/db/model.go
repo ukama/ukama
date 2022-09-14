@@ -18,6 +18,7 @@ type Org struct {
 	Certificate string
 	Ip          pgtype.Inet `gorm:"type:inet"`
 	Nodes       []Node
+	Systems		[]System
 }
 
 type System struct {

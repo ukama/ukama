@@ -21,21 +21,27 @@ require (
 	github.com/jackc/pgtype v1.11.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/mwitkow/go-proto-validators v0.3.2
+	github.com/num30/config v0.0.6
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
 	github.com/ukama/ukama/services/bootstrap/lookup v0.0.0-20220909103841-dd001a1af00e
+	github.com/ukama/ukama/services/cloud/node v0.0.0-20220909103841-dd001a1af00e
 	github.com/ukama/ukama/services/common v0.0.0-20220519145952-e0b3dc741aed
 	github.com/ukama/ukamaX/cloud/hss v0.0.0-20220425182032-2c377df948f4
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.28.0
+	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
+	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.3.5
 	gorm.io/gorm v1.23.5
+	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/creasty/defaults v1.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -88,7 +94,6 @@ require (
 	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukama/services/cloud/node v0.0.0-20220909103841-dd001a1af00e // indirect
 	github.com/ukama/ukamaX/common v0.0.0-20211015093708-cd6e230254b5 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
@@ -100,5 +105,4 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
