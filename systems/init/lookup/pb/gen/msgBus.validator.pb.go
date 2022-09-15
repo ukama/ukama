@@ -33,10 +33,8 @@ func (this *InitResponse) Validate() error {
 	return nil
 }
 func (this *PublishMsgRequest) Validate() error {
-	for _, item := range this.RoutingKey {
-		if item == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("RoutingKey", fmt.Errorf(`value '%v' must not be an empty string`, item))
-		}
+	if this.RoutingKey == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("RoutingKey", fmt.Errorf(`value '%v' must not be an empty string`, this.RoutingKey))
 	}
 	if this.Msg != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Msg); err != nil {

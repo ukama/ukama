@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/init/lookup
 
-go 1.17
+go 1.18
 
 replace github.com/ukama/ukama/services/common => ../../../services/common
 

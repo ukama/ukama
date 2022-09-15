@@ -65,17 +65,17 @@ func (m *MsgBusClient) Init() error {
 }
 
 // TODO: Check if we require specific function for each Message type.
-func (m *MsgBusClient) PublishRequest(routes []string, msg protoreflect.ProtoMessage) error {
+func (m *MsgBusClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	any, err := anypb.New(msg)
+	anyMsg, err := anypb.New(msg)
 	if err != nil {
 		return err
 	}
 
-	_, err = m.client.PusblishMsg(ctx, &pb.PublishMsgRequest{RoutingKey: routes, Msg: any})
+	_, err = m.client.PusblishMsg(ctx, &pb.PublishMsgRequest{RoutingKey: route, Msg: anyMsg})
 	if err != nil {
 		return err
 	}

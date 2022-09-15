@@ -12,7 +12,7 @@ service MsgBus {
     rpc Initialize(InitRequest) returns (InitResponse);
     
     rpc PusblishMsg(PublishMsgRequest) returns (PublishMsgResponse);
-    
+
 }
 
 
@@ -27,7 +27,7 @@ message InitResponse {
 }
 
 message PublishMsgRequest {
-    repeated string routingKey = 1 [(validator.field) = {string_not_empty: true}];
+    string routingKey = 1 [(validator.field) = {string_not_empty: true}];
     google.protobuf.Any msg = 2;
 }
 

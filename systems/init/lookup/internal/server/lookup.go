@@ -57,6 +57,12 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
+	route := l.baseRoutingKey.SetActionCreate().SetObject("organization").MustBuild()
+	err = l.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
 	return &pb.AddOrgResponse{}, nil
 }
 
@@ -81,6 +87,12 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
+	route := l.baseRoutingKey.SetActionUpdate().SetObject("organization").MustBuild()
+	err = l.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
 	return &pb.UpdateOrgResponse{}, nil
 }
 
@@ -96,6 +108,12 @@ func (l *LookupServer) GetOrg(ctx context.Context, req *pb.GetOrgRequest) (*pb.G
 		OrgName:     req.OrgName,
 		Certificate: org.Certificate,
 		Ip:          org.Ip.IPNet.IP.String(),
+	}
+
+	route := l.baseRoutingKey.SetActionDelete().SetObject("organization").MustBuild()
+	err = l.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return resp, nil
@@ -118,6 +136,12 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to add node id %s to %s org. Error %s",
 			req.NodeId, req.OrgName, err.Error())
+	}
+
+	route := l.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild()
+	err = l.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.AddNodeResponse{}, nil
@@ -156,6 +180,11 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid org name %s. Error %s", req.OrgName, err.Error())
 	}
 
+	route := l.baseRoutingKey.SetActionDelete().SetObject("node").MustBuild()
+	err = l.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.DeleteNodeResponse{}, nil
 }
 
@@ -211,6 +240,12 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 			req.SystemName, req.OrgName, err.Error())
 	}
 
+	route := l.baseRoutingKey.SetActionUpdate().SetObject("system").MustBuild()
+	err = l.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
 	return &pb.UpdateSystemResponse{}, nil
 }
 
@@ -226,6 +261,12 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to Delete system %s to %s org. Error %s",
 			req.SystemName, req.OrgName, err.Error())
+	}
+
+	route := l.baseRoutingKey.SetActionDelete().SetObject("system").MustBuild()
+	err = l.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.DeleteSystemResponse{}, nil
