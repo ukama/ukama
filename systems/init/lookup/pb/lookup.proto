@@ -17,7 +17,6 @@ service LookupService {
     rpc GetNodeForOrg(GetNodeRequest) returns (GetNodeResponse);
     rpc DeleteNodeForOrg(DeleteNodeRequest) returns (DeleteNodeResponse);
 
-
     /* System */
     rpc GetSystemForOrg(GetSystemRequest) returns (GetSystemResponse);
     rpc UpdateSystemForOrg(UpdateSystemRequest) returns (UpdateSystemResponse);

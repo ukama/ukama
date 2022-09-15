@@ -14,6 +14,7 @@ import (
 	"github.com/ukama/ukama/systems/init/lookup/internal"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	mb "github.com/ukama/ukama/systems/init/lookup/pkg/msgBusClient"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -22,17 +23,19 @@ type LookupServer struct {
 	systemRepo     db.SystemRepo
 	orgRepo        db.OrgRepo
 	nodeRepo       db.NodeRepo
+	msgbus         mb.MsgBusClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	pb.UnimplementedLookupServiceServer
 }
 
-func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo) *LookupServer {
+func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus *mb.MsgBusClient) *LookupServer {
 	seed := time.Now().UTC().UnixNano()
 	return &LookupServer{
 		nodeRepo:       nodeRepo,
 		orgRepo:        orgRepo,
 		systemRepo:     systemRepo,
+		msgbus:         *msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 	}

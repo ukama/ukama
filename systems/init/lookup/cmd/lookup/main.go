@@ -18,6 +18,7 @@ import (
 	ugrpc "github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/sql"
 	generated "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	mb "github.com/ukama/ukama/systems/init/lookup/pkg/msgBusClient"
 	"google.golang.org/grpc"
 )
 
@@ -74,9 +75,11 @@ func initConfig() {
 }
 
 func runGrpcServer(d sql.Db) {
-	//instanceId := os.Getenv("POD_NAME")
+	instanceId := os.Getenv("POD_NAME")
+
+	mbClient := mb.NewMsgBusClient(serviceConfig.Timeout, internal.ServiceName, instanceId, serviceConfig.Queue.Uri)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
+		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
 		generated.RegisterLookupServiceServer(s, srv)
 	})
 

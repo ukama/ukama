@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package ukama.lookup.v1;
+
+import "validator.proto";
+import "google/protobuf/any.proto";
+
+service MsgBus {
+
+    rpc Initialize(InitRequest) returns (InitResponse);
+    
+    rpc PusblishMsg(PublishMsgRequest) returns (PublishMsgResponse);
+    
+}
+
+
+message InitRequest {
+    string serviceName = 1 [(validator.field) = {string_not_empty: true}];
+    string queueURI = 2 [(validator.field) = {string_not_empty: true}];
+    string instanceId = 3  [(validator.field) = {string_not_empty: true}];
+}
+
+message InitResponse {
+
+}
+
+message PublishMsgRequest {
+    repeated string routingKey = 1 [(validator.field) = {string_not_empty: true}];
+    google.protobuf.Any msg = 2;
+}
+
+message PublishMsgResponse {
+
+}

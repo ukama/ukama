@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"time"
+
 	uconf "github.com/ukama/ukama/services/common/config"
 )
 
@@ -10,4 +12,5 @@ type Config struct {
 	Grpc             *uconf.Grpc     `default:"{}"`
 	Queue            *uconf.Queue    `default:"{}"`
 	Metrics          *uconf.Metrics  `default:"{}"`
+	Timeout          time.Duration
 }
