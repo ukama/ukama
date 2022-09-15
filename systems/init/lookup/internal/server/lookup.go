@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/goombaio/namegenerator"
 	"github.com/jackc/pgtype"
 	"github.com/sirupsen/logrus"
@@ -17,6 +19,7 @@ import (
 	mb "github.com/ukama/ukama/systems/init/lookup/pkg/msgBusClient"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 type LookupServer struct {
@@ -32,10 +35,10 @@ type LookupServer struct {
 func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus *mb.MsgBusClient) *LookupServer {
 	seed := time.Now().UTC().UnixNano()
 	return &LookupServer{
-		nodeRepo:       nodeRepo,
-		orgRepo:        orgRepo,
-		systemRepo:     systemRepo,
-		msgbus:         *msgBus,
+		nodeRepo:   nodeRepo,
+		orgRepo:    orgRepo,
+		systemRepo: systemRepo,
+		//msgbus:         *msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 	}
@@ -46,13 +49,18 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 
 	var orgIp pgtype.Inet
 
+	err := orgIp.Set(req.Ip)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid ip for Org %s. Error %s", req.OrgName, err.Error())
+	}
+
 	org := &db.Org{
 		Name:        req.GetOrgName(),
 		Certificate: req.GetCertificate(),
 		Ip:          orgIp,
 	}
 
-	err := l.orgRepo.Upsert(org)
+	err = l.orgRepo.Upsert(org)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -69,7 +77,7 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
 	logrus.Infof("Updating Organization %s", req.OrgName)
 
-	var orgIp *pgtype.Inet
+	var orgIp pgtype.Inet
 
 	err := orgIp.Set(req.Ip)
 	if err != nil {
@@ -79,7 +87,7 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 	org := &db.Org{
 		Name:        req.GetOrgName(),
 		Certificate: req.GetCertificate(),
-		Ip:          *orgIp,
+		Ip:          orgIp,
 	}
 
 	err = l.orgRepo.Upsert(org)
@@ -150,6 +158,11 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
 	logrus.Infof("Updating node %s for org  %s", req.GetNodeId(), req.GetOrgName())
 
+	_, err := l.orgRepo.GetByName(req.OrgName)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
 	nodeId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, invalidNodeIdError(req.NodeId, err)
@@ -196,14 +209,14 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.OrgName, err.Error())
 	}
 
-	system, err := l.systemRepo.Get(req.GetSystemName())
+	system, err := l.systemRepo.GetByName(req.GetSystemName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
 	return &pb.GetSystemResponse{
 		SystemName:  system.Name,
-		SystemId:    system.Id,
+		SystemId:    system.Uuid,
 		Certificate: system.Certificate,
 		Ip:          system.Ip.IPNet.IP.String(),
 		Port:        system.Port,
@@ -214,12 +227,29 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
 	logrus.Infof("Updating System %s for org  %s", req.GetSystemName(), req.GetOrgName())
 
+	var sysIp pgtype.Inet
+	sysId := uuid.New().String()
+
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.OrgName, err.Error())
 	}
 
-	var sysIp *pgtype.Inet
+	system, err := l.systemRepo.GetByName(req.GetSystemName())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logrus.Debugf("No system with name %s found. Error %s", req.SystemName, err.Error())
+		} else {
+			return nil, status.Errorf(codes.Internal, "Something worng with db. Error %s", err.Error())
+		}
+	}
+
+	_, err = uuid.Parse(system.Uuid)
+	if err == nil {
+		sysId = system.Uuid
+	}
+
+	req.SystemId = sysId
 
 	err = sysIp.Set(req.Ip)
 	if err != nil {
@@ -229,10 +259,13 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 	sys := &db.System{
 		Name:        strings.ToLower(req.SystemName),
 		Certificate: req.Certificate,
-		Ip:          *sysIp,
+		Uuid:        sysId,
+		Ip:          sysIp,
 		Port:        req.Port,
 		OrgID:       org.ID,
 	}
+
+	logrus.Debugf("System details: %+v", sys)
 
 	err = l.systemRepo.AddOrUpdate(sys)
 	if err != nil {
@@ -254,7 +287,7 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.OrgName, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "System not found. Error %s", req.OrgName, err.Error())
 	}
 
 	err = l.systemRepo.Delete(req.SystemName, org.ID)

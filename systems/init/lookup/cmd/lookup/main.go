@@ -71,13 +71,16 @@ func initConfig() {
 		}
 	}
 
+	log.Debugf("\nService: %s DB Config: %+v", internal.ServiceName, serviceConfig.DB)
+
 	internal.IsDebugMode = serviceConfig.DebugMode
 }
 
 func runGrpcServer(d sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
+	//instanceId := os.Getenv("POD_NAME")
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.Timeout, internal.ServiceName, instanceId, serviceConfig.Queue.Uri)
+	var mbClient *mb.MsgBusClient
+	//mbClient = mb.NewMsgBusClient(serviceConfig.Timeout, internal.ServiceName, instanceId, serviceConfig.Queue.Uri)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
 		generated.RegisterLookupServiceServer(s, srv)

@@ -18,13 +18,13 @@ type Org struct {
 	Certificate string
 	Ip          pgtype.Inet `gorm:"type:inet"`
 	Nodes       []Node
-	Systems		[]System
+	Systems     []System
 }
 
 type System struct {
 	gorm.Model
-	Name        string `gorm:"uniqueIndex"`
-	Id          string `gorm:"type:uuid"`
+	Name        string `gorm:"type:string;uniqueIndex:name_idx_case_insensetive,expression:lower(name);not null"`
+	Uuid        string `gorm:"type:uuid"`
 	Certificate string
 	Ip          pgtype.Inet `gorm:"type:inet"`
 	Port        int32
