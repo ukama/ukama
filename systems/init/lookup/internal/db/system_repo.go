@@ -9,9 +9,8 @@ import (
 
 type SystemRepo interface {
 	AddOrUpdate(sys *System) error
-	//Get(sys string) (*System, error)
 	Delete(sys string, orgId uint) error
-	GetByName(name string) (*System, error)
+	GetByName(sys string) (*System, error)
 }
 
 type systemRepo struct {
@@ -27,19 +26,10 @@ func NewSystemRepo(db sql.Db) *systemRepo {
 func (s *systemRepo) AddOrUpdate(sys *System) error {
 	d := s.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "lower(name::text)", Raw: true}},
-		DoUpdates: clause.AssignmentColumns([]string{"uuid", "certificate", "ip", "port", "org_id"}),
+		DoUpdates: clause.AssignmentColumns([]string{"uuid", "certificate", "ip", "port", "org_id", "deleted_at"}),
 	}).Create(sys)
 	return d.Error
 }
-
-// func (s *systemRepo) Get(sys string) (*System, error) {
-// 	var system System
-// 	result := s.Db.GetGormDb().Preload(clause.Associations).First(&system, "name = ?", strings.ToLower(sys))
-// 	if result.Error != nil {
-// 		return nil, result.Error
-// 	}
-// 	return &system, nil
-// }
 
 func (s *systemRepo) Delete(sys string, orgId uint) error {
 	var system System
@@ -50,8 +40,11 @@ func (s *systemRepo) Delete(sys string, orgId uint) error {
 	return nil
 }
 
-func (s *systemRepo) GetByName(name string) (*System, error) {
+func (s *systemRepo) GetByName(sys string) (*System, error) {
 	system := &System{}
-	d := s.Db.GetGormDb().Where(&System{Name: name}).First(&system)
-	return system, d.Error
+	result := s.Db.GetGormDb().Preload(clause.Associations).First(system, "name = ?", strings.ToLower(sys))
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return system, nil
 }

@@ -110,6 +110,7 @@ message UpdateSystemRequest{
 }
 
 message UpdateSystemResponse {
+    string systemId = 1; 
 }
 
 message DeleteSystemRequest{

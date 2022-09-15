@@ -238,15 +238,17 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 	system, err := l.systemRepo.GetByName(req.GetSystemName())
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.Debugf("No system with name %s found. Error %s", req.SystemName, err.Error())
+			logrus.Debugf("No system with name %s found. Error %s", req.GetSystemName(), err.Error())
 		} else {
 			return nil, status.Errorf(codes.Internal, "Something worng with db. Error %s", err.Error())
 		}
 	}
 
-	_, err = uuid.Parse(system.Uuid)
-	if err == nil {
-		sysId = system.Uuid
+	if system != nil {
+		_, err = uuid.Parse(system.Uuid)
+		if err == nil {
+			sysId = system.Uuid
+		}
 	}
 
 	req.SystemId = sysId
@@ -279,7 +281,10 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.UpdateSystemResponse{}, nil
+	return &pb.UpdateSystemResponse{
+		SystemId: req.SystemId,
+	}, nil
+
 }
 
 func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {
