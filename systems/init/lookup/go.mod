@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/init/lookup
 
-go 1.18
+go 1.19
 
 replace github.com/ukama/ukama/services/common => ../../../services/common
 
@@ -16,6 +16,7 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.3.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/jackc/pgconn v1.12.1
 	github.com/jackc/pgtype v1.11.0
@@ -50,7 +51,6 @@ require (
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect

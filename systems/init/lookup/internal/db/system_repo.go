@@ -9,7 +9,7 @@ import (
 
 type SystemRepo interface {
 	AddOrUpdate(sys *System) error
-	Delete(sys string, orgId uint) error
+	Delete(sys string) error
 	GetByName(sys string) (*System, error)
 }
 
@@ -31,7 +31,7 @@ func (s *systemRepo) AddOrUpdate(sys *System) error {
 	return d.Error
 }
 
-func (s *systemRepo) Delete(sys string, orgId uint) error {
+func (s *systemRepo) Delete(sys string) error {
 	var system System
 	result := s.Db.GetGormDb().Preload(clause.Associations).Delete(&system, "name = ?", strings.ToLower(sys))
 	if result.Error != nil {

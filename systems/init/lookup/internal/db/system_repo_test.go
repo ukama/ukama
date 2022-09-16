@@ -2,13 +2,12 @@ package db_test
 
 import (
 	extsql "database/sql"
-	"log"
 	"regexp"
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgtype"
 	int_db "github.com/ukama/ukama/systems/init/lookup/internal/db"
-
-	"github.com/ukama/ukama/services/common/ukama"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -16,56 +15,30 @@ import (
 	"gorm.io/gorm"
 )
 
-type UkamaDbMock struct {
-	GormDb *gorm.DB
-}
+func Test_systemRepo_Get(t *testing.T) {
 
-func (u UkamaDbMock) Init(model ...interface{}) error {
-	panic("implement me")
-}
-
-func (u UkamaDbMock) Connect() error {
-	panic("implement me")
-}
-
-func (u UkamaDbMock) GetGormDb() *gorm.DB {
-	return u.GormDb
-}
-
-func (u UkamaDbMock) InitDB() error {
-	return nil
-}
-
-func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error) error {
-	log.Fatal("implement me")
-	return nil
-}
-
-func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) (err error) {
-	log.Fatal("implement me")
-	return nil
-}
-
-func Test_nodeRepo_Get(t *testing.T) {
-
-	t.Run("NodeExist", func(t *testing.T) {
+	t.Run("SystemExist", func(t *testing.T) {
 		// Arrange
+		const name = "sys"
 		const uuidStr = "51fbba62-c79f-11eb-b8bc-0242ac130003"
-		const orgId = uint(15)
+		const ip = "0.0.0.0"
+		const certs = "ukama_certs"
+		const port = 101
+
+		var dIp pgtype.Inet
+		err := dIp.Set(ip)
+		assert.NoError(t, err)
 
 		var db *extsql.DB
-		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		id := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		rows := sqlmock.NewRows([]string{"name", "uuid", "certificate", "ip", "port"}).
+			AddRow(name, uuidStr, certs, dIp, port)
 
-		rows := sqlmock.NewRows([]string{"node_id", "orgid"}).
-			AddRow(uuidStr, orgId)
-
-		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(id).
+		mock.ExpectQuery(`^SELECT.*systems.*`).
+			WithArgs(name).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -77,14 +50,14 @@ func Test_nodeRepo_Get(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := int_db.NewNodeRepo(&UkamaDbMock{
+		r := int_db.NewSystemRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		assert.NoError(t, err)
 
 		// Act
-		node, err := r.Get(id)
+		node, err := r.GetByName(name)
 
 		// Assert
 		assert.NoError(t, err)
@@ -96,11 +69,11 @@ func Test_nodeRepo_Get(t *testing.T) {
 
 }
 
-func Test_nodeRepo_Delete(t *testing.T) {
+func Test_systemRepo_Delete(t *testing.T) {
 
-	t.Run("DeleteNode", func(t *testing.T) {
+	t.Run("DeleteSystem", func(t *testing.T) {
 
-		id := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		const name = "sys"
 
 		var db *extsql.DB
 		var err error
@@ -110,7 +83,7 @@ func Test_nodeRepo_Delete(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg(), id).
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg(), name).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
@@ -124,14 +97,14 @@ func Test_nodeRepo_Delete(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := int_db.NewNodeRepo(&UkamaDbMock{
+		r := int_db.NewSystemRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Delete(id)
+		err = r.Delete(name)
 
 		// Assert
 		assert.NoError(t, err)
@@ -142,22 +115,27 @@ func Test_nodeRepo_Delete(t *testing.T) {
 
 }
 
-func Test_nodeRepo_Add(t *testing.T) {
+func Test_systemRepo_Add(t *testing.T) {
 
-	t.Run("AddNode", func(t *testing.T) {
+	t.Run("AddSystem", func(t *testing.T) {
 		// Arrange
-		//const uuidStr = "51fbba62-c79f-11eb-b8bc-0242ac130003"
+		const ip = "0.0.0.0"
 		const orgId = uint(15)
 
-		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		var dIp pgtype.Inet
+		err := dIp.Set(ip)
+		assert.NoError(t, err)
 
-		node := int_db.Node{
-			NodeID: nid.StringLowercase(),
-			OrgID:  orgId,
+		system := int_db.System{
+			Name:        "sys",
+			Certificate: "sys_certs",
+			Ip:          dIp,
+			Port:        100,
+			Uuid:        uuid.New().String(),
+			OrgID:       orgId,
 		}
 
 		var db *extsql.DB
-		var err error
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -165,7 +143,7 @@ func Test_nodeRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), node.NodeID, node.OrgID).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
@@ -179,14 +157,14 @@ func Test_nodeRepo_Add(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := int_db.NewNodeRepo(&UkamaDbMock{
+		r := int_db.NewSystemRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		assert.NoError(t, err)
 
 		// Act
-		err = r.AddOrUpdate(&node)
+		err = r.AddOrUpdate(&system)
 
 		// Assert
 		assert.NoError(t, err)

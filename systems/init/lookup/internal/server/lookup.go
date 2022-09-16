@@ -290,12 +290,12 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {
 	logrus.Infof("Deleting System %s from org  %s", req.GetSystemName(), req.GetOrgName())
 
-	org, err := l.orgRepo.GetByName(req.OrgName)
+	_, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "System not found. Error %s", req.OrgName, err.Error())
 	}
 
-	err = l.systemRepo.Delete(req.SystemName, org.ID)
+	err = l.systemRepo.Delete(req.SystemName)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to Delete system %s to %s org. Error %s",
 			req.SystemName, req.OrgName, err.Error())

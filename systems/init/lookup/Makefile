@@ -15,8 +15,8 @@ gen:
 	protoc -I ./pb -I ../../../services/common/pb -I ../../../services/common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
 					  msgBus.proto
 					  
-	#mockery --all --recursive --dir ./pkg
-	#mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
+	mockery --all --recursive --dir ./internal
+	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm pb/gen/*.go
