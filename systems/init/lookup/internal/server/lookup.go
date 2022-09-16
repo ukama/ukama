@@ -26,7 +26,7 @@ type LookupServer struct {
 	systemRepo     db.SystemRepo
 	orgRepo        db.OrgRepo
 	nodeRepo       db.NodeRepo
-	msgbus         mb.MsgBusClient
+	msgbus         *mb.MsgBusClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	pb.UnimplementedLookupServiceServer
@@ -35,10 +35,10 @@ type LookupServer struct {
 func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus *mb.MsgBusClient) *LookupServer {
 	seed := time.Now().UTC().UnixNano()
 	return &LookupServer{
-		nodeRepo:   nodeRepo,
-		orgRepo:    orgRepo,
-		systemRepo: systemRepo,
-		//msgbus:         *msgBus,
+		nodeRepo:       nodeRepo,
+		orgRepo:        orgRepo,
+		systemRepo:     systemRepo,
+		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 	}
@@ -188,6 +188,11 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 		return nil, invalidNodeIdError(req.NodeId, err)
 	}
 
+	_, err = l.orgRepo.GetByName(req.OrgName)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
 	err = l.nodeRepo.Delete(nodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid org name %s. Error %s", req.OrgName, err.Error())
@@ -292,7 +297,7 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 
 	_, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "System not found. Error %s", req.OrgName, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "System not found. Error %s", err.Error())
 	}
 
 	err = l.systemRepo.Delete(req.SystemName)
