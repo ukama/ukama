@@ -8,11 +8,10 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	confr "github.com/num30/config"
-	"github.com/ukama/ukama/services/cloud/org/pkg/queue"
 	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc/credentials/insecure"
-	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -29,7 +28,7 @@ type TestConfig struct {
 
 var tConfig *TestConfig
 
-var testNodeId = ukama.NewVirtualNodeI
+var testNodeId = ukama.NewVirtualNodeId("HomeNode")
 
 func init() {
 	tConfig = &TestConfig{}
@@ -59,25 +58,18 @@ func Test_FullFlow(t *testing.T) {
 
 	// Contact the server and print out its response.
 	t.Run("AddOrg", func(t *testing.T) {
-		r, err := c.AddOrg(ctx, &pb.AddOrgRequest{
-				Name:        orgName,
-				Certificate: certs,
-				Ip:          ip,
-			})
-
+		_, err := c.AddOrg(ctx, &pb.AddOrgRequest{
+			OrgName:     orgName,
+			Certificate: certs,
+			Ip:          ip,
+		})
 		assert.NoError(t, err)
-	})
 
-	t.Run("GetOrg", func(t *testing.T) {
-		r, err := c.Get(ctx, &pb.GetOrgRequest{Name: orgName})
-		if assert.NoError(t, err) {
-			assert.Equal(t, orgName, r.OrgName)
-		}
 	})
 
 	t.Run("UpdatedOrg", func(T *testing.T) {
-		r, err := c.Get(ctx, &pb.UpdateOrgRequest{
-			Name:        orgName,
+		_, err := c.UpdateOrg(ctx, &pb.UpdateOrgRequest{
+			OrgName:     orgName,
 			Certificate: certs,
 			Ip:          "127.0.0.1",
 		})
@@ -86,18 +78,17 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("AddNode", func(t *testing.T) {
-		r, err := c.AddNodeForOrg(ctx, &pb.AddNodeRequest{
-			NodeID: testNodeId.String(),
-			OrgName: orgName	
+		_, err := c.AddNodeForOrg(ctx, &pb.AddNodeRequest{
+			NodeId:  testNodeId.String(),
+			OrgName: orgName,
 		})
-
-		assert.NoError(t, err) 
+		assert.NoError(t, err)
 	})
 
 	t.Run("GetNode", func(t *testing.T) {
 		r, err := c.GetNodeForOrg(ctx, &pb.GetNodeRequest{
-			NodeId: testNodeId.String(),
-			OrgName: orgName
+			NodeId:  testNodeId.String(),
+			OrgName: orgName,
 		})
 
 		if assert.NoError(t, err) {
@@ -106,49 +97,52 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("DeleteNode", func(T *testing.T) {
-		r, err := c.DeleteNodeForOrg(ctx, &pb.DeleteNodeRequest{
-			NodeId: testNodeId.String(),
+		_, err := c.DeleteNodeForOrg(ctx, &pb.DeleteNodeRequest{
+			NodeId:  testNodeId.String(),
 			OrgName: orgName,
 		})
-
-		assert.NoError(t, err) 
+		assert.NoError(t, err)
 	})
 
 	t.Run("AddSystem", func(t *testing.T) {
 		r, err := c.UpdateSystemForOrg(ctx, &pb.UpdateSystemRequest{
-			SystemName: sysName,
-			OrgName: orgName,
+			SystemName:  sysName,
+			OrgName:     orgName,
 			Certificate: certs,
 			Ip:          "127.0.0.1",
-			Port: 100
+			Port:        100,
 		})
+		assert.NoError(t, err)
 
-		assert.NoError(t, err) 
+		_, err = uuid.Parse(r.SystemId)
+		assert.NoError(t, err)
 	})
 
 	t.Run("GetSystem", func(t *testing.T) {
 		r, err := c.GetSystemForOrg(ctx, &pb.GetSystemRequest{
 			SystemName: sysName,
-			OrgName: orgName
+			OrgName:    orgName,
 		})
 
 		if assert.NoError(t, err) {
 			assert.Equal(t, strings.ToLower(sysName), r.SystemName)
 		}
+
+		_, err = uuid.Parse(r.SystemId)
+		assert.NoError(t, err)
 	})
 
 	t.Run("DeleteSystem", func(T *testing.T) {
-		r, err := c.DeleteSystemForOrg(ctx, &pb.DeleteSystemRequest{
+		_, err := c.DeleteSystemForOrg(ctx, &pb.DeleteSystemRequest{
 			SystemName: sysName,
-			OrgName: orgName
+			OrgName:    orgName,
 		})
-
-		assert.NoError(t, err) 
+		assert.NoError(t, err)
 	})
 
 }
 
-func CreateLookupClient() (*grpc.ClientConn, pb.OrgServiceClient, error) {
+func CreateLookupClient() (*grpc.ClientConn, pb.LookupServiceClient, error) {
 	logrus.Infoln("Connecting to Lookup ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
