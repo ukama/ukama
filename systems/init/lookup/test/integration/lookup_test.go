@@ -4,88 +4,159 @@
 package integration
 
 import (
-	"net/http"
-
-	"github.com/go-resty/resty/v2"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/suite"
+	"context"
+	"fmt"
+	"github.com/google/uuid"
+	confr "github.com/num30/config"
+	"github.com/ukama/ukama/services/cloud/org/pkg/queue"
 	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/services/common/msgbus"
+	"google.golang.org/grpc/credentials/insecure"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	"google.golang.org/grpc"
 )
 
 type TestConfig struct {
-	LookupHost string
+	ServiceHost string        `default:"localhost:9090"`
+	Queue       *config.Queue `default:"{}"`
 }
 
-type IntegrationTestSuite struct {
-	suite.Suite
-	config *TestConfig
+var tConfig *TestConfig
+
+var testNodeId = ukama.NewVirtualNodeI
+
+func init() {
+	tConfig = &TestConfig{}
+	r := confr.NewConfReader("integration")
+	r.Read(tConfig)
+
+	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	logrus.Infof("%+v", tConfig)
 }
 
-func (t *IntegrationTestSuite) SetupSuite() {
-	t.config = loadConfig()
-}
+func Test_FullFlow(t *testing.T) {
+	orgName := fmt.Sprintf("lookup-integration-self-test-%d", time.Now().Unix())
+	const certs = "ukama_certs"
+	const ip = "0.0.0.0"
+	const sysName = "sys"
+	// connect to Grpc service
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
 
-func loadConfig() *TestConfig {
-	testConf := &TestConfig{
-		LookupHost: "http://lookup",
+	logrus.Infoln("Connecting to service ", tConfig.ServiceHost)
+	conn, c, err := CreateLookupClient()
+	defer conn.Close()
+	if err != nil {
+		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
+		return
 	}
 
-	logrus.Info("Expected config ", "integration.yaml", " or env vars")
-	config.LoadConfig("integration", testConf)
-	logrus.Infof("%+v", testConf)
+	// Contact the server and print out its response.
+	t.Run("AddOrg", func(t *testing.T) {
+		r, err := c.AddOrg(ctx, &pb.AddOrgRequest{
+				Name:        orgName,
+				Certificate: certs,
+				Ip:          ip,
+			})
 
-	return testConf
+		assert.NoError(t, err)
+	})
+
+	t.Run("GetOrg", func(t *testing.T) {
+		r, err := c.Get(ctx, &pb.GetOrgRequest{Name: orgName})
+		if assert.NoError(t, err) {
+			assert.Equal(t, orgName, r.OrgName)
+		}
+	})
+
+	t.Run("UpdatedOrg", func(T *testing.T) {
+		r, err := c.Get(ctx, &pb.UpdateOrgRequest{
+			Name:        orgName,
+			Certificate: certs,
+			Ip:          "127.0.0.1",
+		})
+		assert.NoError(t, err)
+
+	})
+
+	t.Run("AddNode", func(t *testing.T) {
+		r, err := c.AddNodeForOrg(ctx, &pb.AddNodeRequest{
+			NodeID: testNodeId.String(),
+			OrgName: orgName	
+		})
+
+		assert.NoError(t, err) 
+	})
+
+	t.Run("GetNode", func(t *testing.T) {
+		r, err := c.GetNodeForOrg(ctx, &pb.GetNodeRequest{
+			NodeId: testNodeId.String(),
+			OrgName: orgName
+		})
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, testNodeId.StringLowercase(), r.NodeId)
+		}
+	})
+
+	t.Run("DeleteNode", func(T *testing.T) {
+		r, err := c.DeleteNodeForOrg(ctx, &pb.DeleteNodeRequest{
+			NodeId: testNodeId.String(),
+			OrgName: orgName,
+		})
+
+		assert.NoError(t, err) 
+	})
+
+	t.Run("AddSystem", func(t *testing.T) {
+		r, err := c.UpdateSystemForOrg(ctx, &pb.UpdateSystemRequest{
+			SystemName: sysName,
+			OrgName: orgName,
+			Certificate: certs,
+			Ip:          "127.0.0.1",
+			Port: 100
+		})
+
+		assert.NoError(t, err) 
+	})
+
+	t.Run("GetSystem", func(t *testing.T) {
+		r, err := c.GetSystemForOrg(ctx, &pb.GetSystemRequest{
+			SystemName: sysName,
+			OrgName: orgName
+		})
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, strings.ToLower(sysName), r.SystemName)
+		}
+	})
+
+	t.Run("DeleteSystem", func(T *testing.T) {
+		r, err := c.DeleteSystemForOrg(ctx, &pb.DeleteSystemRequest{
+			SystemName: sysName,
+			OrgName: orgName
+		})
+
+		assert.NoError(t, err) 
+	})
+
 }
 
-func (i *IntegrationTestSuite) Test_LookuApi() {
-	client := resty.New()
-	nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+func CreateLookupClient() (*grpc.ClientConn, pb.OrgServiceClient, error) {
+	logrus.Infoln("Connecting to Lookup ", tConfig.ServiceHost)
+	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, nil, err
+	}
 
-	i.Run("Ping", func() {
-		resp, err := client.R().
-			EnableTrace().
-			Get(i.config.LookupHost + "/ping")
-
-		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusOK, resp.StatusCode())
-		i.Assert().NotEmpty(resp.String())
-	})
-
-	const orgName = "lookub-test-org-1"
-	i.Run("AddOrg", func() {
-		resp, err := client.R().
-			EnableTrace().
-			SetBody(`{	"certificate":"cert", "ip": "127.0.0.1"	}`).
-			Post(i.config.LookupHost + "?looking_to=add_org&org=" + orgName)
-
-		logrus.Info("Response: ", resp.String())
-		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusOK, resp.StatusCode())
-		i.Assert().NotEmpty(resp.String())
-	})
-
-	i.Run("AddDevice", func() {
-		resp, err := client.R().
-			EnableTrace().
-			Post(i.config.LookupHost + "/orgs/node?looking_to=add_node&org=" + orgName + "&node=" + nodeId.String())
-
-		logrus.Info("Response: ", resp.String())
-		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusOK, resp.StatusCode())
-		i.Assert().NotEmpty(resp.String())
-	})
-
-	i.Run("GetDevice", func() {
-		resp, err := client.R().
-			EnableTrace().
-			Get(i.config.LookupHost + "/orgs/node?looking_for=org_credentials&org=" + orgName + "+&node=" + nodeId.String())
-
-		logrus.Info("Response: ", resp.String())
-		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusOK, resp.StatusCode())
-		i.Assert().Contains(resp.String(), "127.0.0.1")
-		i.Assert().Contains(resp.String(), "certificate")
-	})
-
+	c := pb.NewLookupServiceClient(conn)
+	return conn, c, nil
 }
