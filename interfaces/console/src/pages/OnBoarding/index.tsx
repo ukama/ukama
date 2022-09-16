@@ -24,7 +24,6 @@ const OnBoarding = () => {
             }
         },
     });
-
     const [addUser] = useAddUserMutation({
         onCompleted: res => {
             setUserData(res?.addUser);

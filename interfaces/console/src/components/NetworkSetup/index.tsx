@@ -8,7 +8,7 @@ import {
     Stack,
     Radio,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { globalUseStyles } from "../../styles";
 import { networkName, user } from "../../recoil";
 import * as Yup from "yup";
@@ -28,6 +28,9 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
     const setNetworkNames = useSetRecoilState(networkName);
     const getNetworkName = useRecoilValue(networkName);
     const getUser = useRecoilValue(user);
+    useEffect(() => {
+        setNetworkNames("");
+    }, []);
     const handleSimTypeChange = (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
