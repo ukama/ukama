@@ -47,10 +47,9 @@ func (r *Lookup) getContext(requester string) (context.Context, context.CancelFu
 	return ctx, cancel
 }
 
-func (r *Lookup) AddOrg(orgName string, user *pb.User, simToken string, requesterId string) (*pb.AddOrgResponse, error) {
-	, error) {
-	ctx, cancel := r.getContext(requesterId)
+func (r *Lookup) AddOrg(orgName *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	return r.client.AddOrg(ctx, &pb.AddOrgRequest{Org: orgName, User: user, SimToken: simToken})
+	return r.client.AddOrg(ctx, &pb.AddOrgRequest{})
 }

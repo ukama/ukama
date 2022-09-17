@@ -77,14 +77,24 @@ func (r *Router) init() {
 	init := r.f.Group("/", "Init", "Init system")
 
 	lookup := init.Group("lookup", "lookup", "looking for credentials")
-	lookup.GET("/:org", nil, tonic.Handler(r.Handler, http.StatusOK))
-	lookup.PUT("/:org", tonic.Handler(r.Handler, http.StatusCreated))
+	lookup.GET("/:org", nil, tonic.Handler(r.getOrgHandler, http.StatusOK))
+	lookup.PUT("/:org", tonic.Handler(r.putOrgHandler, http.StatusCreated))
 	lookup.GET("/:org/:node", tonic.Handler(r.Handler, http.StatusOK))
 	lookup.PUT("/:org/:node", tonic.Handler(r.Handler, http.StatusCreated))
 	lookup.DELTE("/:org/:node", tonic.Handler(r.Handler, http.StatusOK))
 	lookup.GET("/:org/:system", tonic.Handler(r.Handler, http.StatusOK))
 	lookup.PUT("/:org/:system", tonic.Handler(r.Handler, http.StatusCreated))
 	lookup.DELTE("/:org/:system", tonic.Handler(r.Handler, http.StatusOK))
+}
+
+func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*GetOrgResponse, error) {
+
+	return &GetOrgResponse{}, nil
+}
+
+func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) error {
+
+	return  nil
 }
 
 func (r *Router) Handler(c *gin.Context, req *GetNodeRequest) error {
