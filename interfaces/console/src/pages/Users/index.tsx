@@ -11,6 +11,7 @@ import {
     GetUserDto,
     GetUsersDto,
     useAddUserMutation,
+    useGetAccountDetailsQuery,
     useGetUserLazyQuery,
     useGetUsersByOrgQuery,
     useUpdateUserMutation,
@@ -27,7 +28,7 @@ import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
-
+import { useHistory } from "react-router-dom";
 const userInit = {
     id: "",
     name: "",
@@ -42,6 +43,7 @@ const userInit = {
 };
 
 const User = () => {
+    const history = useHistory();
     const [users, setUsers] = useState<GetUsersDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [simDialog, setSimDialog] = useState({
@@ -271,7 +273,12 @@ const User = () => {
             },
         });
     };
-
+    const { data: account } = useGetAccountDetailsQuery();
+    useEffect(() => {
+        if (account?.getAccountDetails?.isFirstVisit) {
+            history.push("/");
+        }
+    }, []);
     const handleEsimInstallation = (eSimData: UserInputDto) => {
         if (eSimData) {
             addUser({

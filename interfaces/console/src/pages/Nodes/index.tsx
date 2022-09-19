@@ -23,6 +23,7 @@ import {
     useGetNodeLazyQuery,
     useGetNodeStatusQuery,
     useGetNodesByOrgLazyQuery,
+    useGetAccountDetailsQuery,
     useGetMetricsByTabLazyQuery,
     useGetNodeAppsVersionLogsQuery,
     useGetMetricsByTabSSubscription,
@@ -44,7 +45,7 @@ import { useRecoilValue, useSetRecoilState } from "recoil";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 import React, { useCallback, useEffect, useState } from "react";
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
-
+import { useHistory } from "react-router-dom";
 let abortController = new AbortController();
 
 const NODE_INIT = {
@@ -56,6 +57,7 @@ const NODE_INIT = {
 
 const Nodes = () => {
     const classes = globalUseStyles();
+    const history = useHistory();
     const [selectedTab, setSelectedTab] = useState(0);
     const getFirstMetricCallPayload = (nodeId: string) =>
         getMetricPayload({
@@ -143,7 +145,12 @@ const Nodes = () => {
                 show: true,
             }),
     });
-
+    const { data: account } = useGetAccountDetailsQuery();
+    useEffect(() => {
+        if (account?.getAccountDetails?.isFirstVisit) {
+            history.push("/");
+        }
+    }, []);
     const [
         getNode,
         {

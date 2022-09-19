@@ -27,7 +27,7 @@ interface IUserform {
     eSimLeft?: number;
     physicalSimLeft?: number;
     handleGoBack?: any;
-    getSimType?: any;
+    getSimType: Function;
     handleSkip?: any;
     title?: string;
     isAddUser?: boolean;
