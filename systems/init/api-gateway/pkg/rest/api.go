@@ -27,31 +27,31 @@ type DeleteNodeRequest struct {
 }
 
 type GetNodeRequest struct {
-	OrgName string `json:"org" validate:"required"`
-	NodeId  string `json:"node" validate:"required"`
+	OrgName string `path:"org" validate:"required"`
+	NodeId  string `path:"node" validate:"required"`
 }
 
 type AddSystemRequest struct {
 	OrgName     string `path:"org" validate:"required"`
-	sysName     string `path:"system" validate:"required"`
+	SysName     string `path:"system" validate:"required"`
 	Ip          string `json:"ip" validate:"required"`
 	Certificate string `json:"certificate" validate:"required"`
-	Port        int32  `json:"certificate" validate:"required"`
+	Port        int32  `json:"port" validate:"required"`
 }
 
 type AddSystemResponse struct {
-	systemUiid string `json:"uuid"`
+	SystemUiid string `json:"uuid"`
 }
 
 type GetSystemRequest struct {
 	OrgName string `path:"org" validate:"required"`
-	sysName string `path:"system" validate:"required"`
+	SysName string `path:"system" validate:"required"`
 }
 
 type GetSystemResponse struct {
 	OrgName     string `json:"org"`
-	systemName  string `json:"system"`
-	systemUiid  string `json:"uuid"`
+	SystemName  string `json:"system"`
+	SystemUiid  string `json:"uuid"`
 	Ip          string `json:"ip"`
 	Certificate string `json:"certificate"`
 	Port        string `json:"port"`
@@ -59,5 +59,5 @@ type GetSystemResponse struct {
 
 type DeleteSystemRequest struct {
 	OrgName string `path:"org" validate:"required"`
-	sysName string `path:"system" validate:"required"`
+	SysName string `path:"system" validate:"required"`
 }
