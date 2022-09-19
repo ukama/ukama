@@ -11,6 +11,7 @@ service LookupService {
     /* Orgs */
     rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);
     rpc UpdateOrg(UpdateOrgRequest) returns (UpdateOrgResponse);
+    rpc GetOrg(GetOrgRequest) returns (GetOrgResponse);
     
     /* Nodes */
     rpc AddNodeForOrg(AddNodeRequest) returns (AddNodeResponse);

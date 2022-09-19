@@ -25,6 +25,7 @@ type LookupServiceClient interface {
 	// Orgs
 	AddOrg(ctx context.Context, in *AddOrgRequest, opts ...grpc.CallOption) (*AddOrgResponse, error)
 	UpdateOrg(ctx context.Context, in *UpdateOrgRequest, opts ...grpc.CallOption) (*UpdateOrgResponse, error)
+	GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*GetOrgResponse, error)
 	// Nodes
 	AddNodeForOrg(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
 	GetNodeForOrg(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
@@ -55,6 +56,15 @@ func (c *lookupServiceClient) AddOrg(ctx context.Context, in *AddOrgRequest, opt
 func (c *lookupServiceClient) UpdateOrg(ctx context.Context, in *UpdateOrgRequest, opts ...grpc.CallOption) (*UpdateOrgResponse, error) {
 	out := new(UpdateOrgResponse)
 	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.LookupService/UpdateOrg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *lookupServiceClient) GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*GetOrgResponse, error) {
+	out := new(GetOrgResponse)
+	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.LookupService/GetOrg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +132,7 @@ type LookupServiceServer interface {
 	// Orgs
 	AddOrg(context.Context, *AddOrgRequest) (*AddOrgResponse, error)
 	UpdateOrg(context.Context, *UpdateOrgRequest) (*UpdateOrgResponse, error)
+	GetOrg(context.Context, *GetOrgRequest) (*GetOrgResponse, error)
 	// Nodes
 	AddNodeForOrg(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
 	GetNodeForOrg(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
@@ -142,6 +153,9 @@ func (UnimplementedLookupServiceServer) AddOrg(context.Context, *AddOrgRequest) 
 }
 func (UnimplementedLookupServiceServer) UpdateOrg(context.Context, *UpdateOrgRequest) (*UpdateOrgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrg not implemented")
+}
+func (UnimplementedLookupServiceServer) GetOrg(context.Context, *GetOrgRequest) (*GetOrgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrg not implemented")
 }
 func (UnimplementedLookupServiceServer) AddNodeForOrg(context.Context, *AddNodeRequest) (*AddNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddNodeForOrg not implemented")
@@ -206,6 +220,24 @@ func _LookupService_UpdateOrg_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LookupServiceServer).UpdateOrg(ctx, req.(*UpdateOrgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LookupService_GetOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LookupServiceServer).GetOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.lookup.v1.LookupService/GetOrg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LookupServiceServer).GetOrg(ctx, req.(*GetOrgRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -332,6 +364,10 @@ var LookupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateOrg",
 			Handler:    _LookupService_UpdateOrg_Handler,
+		},
+		{
+			MethodName: "GetOrg",
+			Handler:    _LookupService_GetOrg_Handler,
 		},
 		{
 			MethodName: "AddNodeForOrg",
