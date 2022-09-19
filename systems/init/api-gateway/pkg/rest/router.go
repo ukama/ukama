@@ -7,20 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/uber/jaeger-client-go/config"
+	"github.com/ukama/ukama/services/common/config"
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/services/common/rest"
 	"github.com/ukama/ukama/systems/init/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"
+	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 )
 
 const NodeIdParamName = "node"
 
 type Router struct {
 	f       *fizz.Fizz
-	port    int
 	clients *Clients
 	config  *RouterConfig
 }
@@ -78,13 +78,13 @@ func (r *Router) init() {
 
 	lookup := init.Group("lookup", "lookup", "looking for credentials")
 	lookup.GET("/:org", nil, tonic.Handler(r.getOrgHandler, http.StatusOK))
-	lookup.PUT("/:org", tonic.Handler(r.putOrgHandler, http.StatusCreated))
-	lookup.GET("/:org/:node", tonic.Handler(r.Handler, http.StatusOK))
-	lookup.PUT("/:org/:node", tonic.Handler(r.Handler, http.StatusCreated))
-	lookup.DELTE("/:org/:node", tonic.Handler(r.Handler, http.StatusOK))
-	lookup.GET("/:org/:system", tonic.Handler(r.Handler, http.StatusOK))
-	lookup.PUT("/:org/:system", tonic.Handler(r.Handler, http.StatusCreated))
-	lookup.DELTE("/:org/:system", tonic.Handler(r.Handler, http.StatusOK))
+	lookup.PUT("/:org", nil, tonic.Handler(r.putOrgHandler, http.StatusCreated))
+	lookup.GET("/:org/:node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
+	lookup.PUT("/:org/:node", nil, tonic.Handler(r.putNodeHandler, http.StatusCreated))
+	lookup.DELETE("/:org/:node", nil, tonic.Handler(r.deleteNodeHandler, http.StatusOK))
+	lookup.GET("/:org/:system", nil, tonic.Handler(r.getSystemHandler, http.StatusOK))
+	lookup.PUT("/:org/:system", nil, tonic.Handler(r.putSystemHandler, http.StatusCreated))
+	lookup.DELETE("/:org/:system", nil, tonic.Handler(r.deleteSystemHandler, http.StatusOK))
 }
 
 func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*GetOrgResponse, error) {
@@ -92,11 +92,75 @@ func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*GetOrgRespo
 	return &GetOrgResponse{}, nil
 }
 
-func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) error {
+func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pb.AddOrgResponse, error) {
+	org := c.Param("org")
 
-	return  nil
+	return r.clients.l.AddOrg(&pb.AddOrgRequest{
+		OrgName:     org,
+		Certificate: req.Certificate,
+		Ip:          req.Ip,
+	})
 }
 
-func (r *Router) Handler(c *gin.Context, req *GetNodeRequest) error {
+func (r *Router) putNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.AddNodeResponse, error) {
+	org := c.Param("org")
+	node := c.Param("node")
 
+	return r.clients.l.AddNodeForOrg(&pb.AddNodeRequest{
+		OrgName: org,
+		NodeId:  node,
+	})
+}
+
+func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNodeResponse, error) {
+	org := c.Param("org")
+	node := c.Param("node")
+
+	return r.clients.l.GetNodeForOrg(&pb.GetNodeRequest{
+		OrgName: org,
+		NodeId:  node,
+	})
+}
+
+func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
+	org := c.Param("org")
+	node := c.Param("node")
+
+	return r.clients.l.DeleteNodeForOrg(&pb.DeleteNodeRequest{
+		OrgName: org,
+		NodeId:  node,
+	})
+}
+
+func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.UpdateSystemResponse, error) {
+	org := c.Param("org")
+	sys := c.Param("system")
+
+	return r.clients.l.UpdateSystemForOrg(&pb.UpdateSystemRequest{
+		OrgName:     org,
+		SystemName:  sys,
+		Certificate: req.Certificate,
+		Ip:          req.Ip,
+		Port:        req.Port,
+	})
+}
+
+func (r *Router) getSystemHandler(c *gin.Context, req *GetSystemRequest) (*pb.GetSystemResponse, error) {
+	org := c.Param("org")
+	sys := c.Param("system")
+
+	return r.clients.l.GetSystemForOrg(&pb.GetSystemRequest{
+		OrgName:    org,
+		SystemName: sys,
+	})
+}
+
+func (r *Router) deleteSystemHandler(c *gin.Context, req *DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {
+	org := c.Param("org")
+	sys := c.Param("system")
+
+	return r.clients.l.DeleteSystemForOrg(&pb.DeleteSystemRequest{
+		OrgName:    org,
+		SystemName: sys,
+	})
 }

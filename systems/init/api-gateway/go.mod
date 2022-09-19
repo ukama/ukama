@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/init/api-gateway
 
-go 1.19
+go 1.18
 
 replace github.com/ukama/ukama/services/common => ../../../services/common
 

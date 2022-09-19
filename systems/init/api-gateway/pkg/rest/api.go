@@ -7,10 +7,10 @@ type AddOrgRequest struct {
 }
 
 type GetOrgRequest struct {
-	OrgName     string `path:"org" validate:"required"`
+	OrgName string `path:"org" validate:"required"`
 }
 
-typeGetOrgResponse struct {
+type GetOrgResponse struct {
 	OrgName     string `json:"org"`
 	Ip          string `json:"ip"`
 	Certificate string `json:"certificate"`
@@ -36,7 +36,7 @@ type AddSystemRequest struct {
 	sysName     string `path:"system" validate:"required"`
 	Ip          string `json:"ip" validate:"required"`
 	Certificate string `json:"certificate" validate:"required"`
-	Port        string `json:"certificate" validate:"required"`
+	Port        int32  `json:"certificate" validate:"required"`
 }
 
 type AddSystemResponse struct {

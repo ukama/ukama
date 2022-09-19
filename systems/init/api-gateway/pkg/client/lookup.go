@@ -8,13 +8,12 @@ import (
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 )
 
 type Lookup struct {
 	conn    *grpc.ClientConn
-	client  pb.UserServiceClient
 	timeout time.Duration
+	client  pb.LookupServiceClient
 	host    string
 }
 
@@ -40,16 +39,58 @@ func (r *Lookup) Close() {
 	r.conn.Close()
 }
 
-func (r *Lookup) getContext(requester string) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
-	md := metadata.Pairs("x-requester", requester)
-	ctx = metadata.NewOutgoingContext(ctx, md)
-	return ctx, cancel
-}
-
-func (r *Lookup) AddOrg(orgName *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (l *Lookup) AddOrg(req *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
 	defer cancel()
 
-	return r.client.AddOrg(ctx, &pb.AddOrgRequest{})
+	return l.client.AddOrg(ctx, req)
+}
+
+func (l *Lookup) GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error) {
+	// ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	// defer cancel()
+
+	return nil, nil
+}
+
+func (l *Lookup) AddNodeForOrg(req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.AddNodeForOrg(ctx, req)
+}
+
+func (l *Lookup) GetNodeForOrg(req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.GetNodeForOrg(ctx, req)
+}
+
+func (l *Lookup) DeleteNodeForOrg(req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.DeleteNodeForOrg(ctx, req)
+}
+
+func (l *Lookup) UpdateSystemForOrg(req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.UpdateSystemForOrg(ctx, req)
+}
+
+func (l *Lookup) GetSystemForOrg(req *pb.GetSystemRequest) (*pb.GetSystemResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.GetSystemForOrg(ctx, req)
+}
+
+func (l *Lookup) DeleteSystemForOrg(req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.DeleteSystemForOrg(ctx, req)
 }
