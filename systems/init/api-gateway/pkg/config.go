@@ -22,10 +22,7 @@ type Kratos struct {
 
 type GrpcEndpoints struct {
 	Timeout time.Duration
-	Network string
-	Users   string
-	Org     string
-	Node    string
+	Lookup  string
 }
 
 type HttpEndpoints struct {
@@ -45,10 +42,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Network: "network:9190",
-			Users:   "users:9090",
-			Org:     "org:9090",
-			Node:    "node:9090",
+			Lookup:  "0.0.0.0:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

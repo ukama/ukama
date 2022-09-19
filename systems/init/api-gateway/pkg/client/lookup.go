@@ -47,9 +47,10 @@ func (l *Lookup) AddOrg(req *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
 }
 
 func (l *Lookup) GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error) {
-	// ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
 
+	return l.client.GetOrg(ctx, req)
 	return nil, nil
 }
 

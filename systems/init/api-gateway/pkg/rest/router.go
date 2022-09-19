@@ -15,9 +15,10 @@ import (
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	"github.com/wI2L/fizz/openapi"
 )
 
-const NodeIdParamName = "node"
+const ORG_URL_PARAMETER = "org"
 
 type Router struct {
 	f       *fizz.Fizz
@@ -38,6 +39,7 @@ type Clients struct {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
+	c.l = client.Newlookup(endpoints.Lookup, endpoints.Timeout)
 	return c
 }
 
@@ -47,6 +49,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		clients: clients,
 		config:  config,
 	}
+
 	if !config.debugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -73,23 +76,39 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.ServiceName, version.Version, r.config.debugMode)
-	init := r.f.Group("/", "Init", "Init system")
+	const org = "/lookup/orgs/" + ":" + ORG_URL_PARAMETER
 
-	lookup := init.Group("lookup", "lookup", "looking for credentials")
-	lookup.GET("/:org", nil, tonic.Handler(r.getOrgHandler, http.StatusOK))
-	lookup.PUT("/:org", nil, tonic.Handler(r.putOrgHandler, http.StatusCreated))
-	lookup.GET("/:org/:node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
-	lookup.PUT("/:org/:node", nil, tonic.Handler(r.putNodeHandler, http.StatusCreated))
-	lookup.DELETE("/:org/:node", nil, tonic.Handler(r.deleteNodeHandler, http.StatusOK))
-	lookup.GET("/:org/:system", nil, tonic.Handler(r.getSystemHandler, http.StatusOK))
-	lookup.PUT("/:org/:system", nil, tonic.Handler(r.putSystemHandler, http.StatusCreated))
-	lookup.DELETE("/:org/:system", nil, tonic.Handler(r.deleteSystemHandler, http.StatusOK))
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.ServiceName, version.Version, r.config.debugMode)
+	lookup := r.f.Group("/", "lookup", "looking for credentials")
+
+	orgs := lookup.Group(org, "Orgs", "looking for orgs credentials")
+	orgs.GET("", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getOrgHandler, http.StatusOK))
+	orgs.PUT("", formatDoc("Add or Update Orgs Credential", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
+
+	// nodes := orgs.Group("/nodes", "Nodes", "Orgs credentials for Node")
+	// nodes.GET("/:node", formatDoc("Get Orgs credential for Node", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
+	// nodes.PUT("/:node", formatDoc("Add Node to Org", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
+	// nodes.DELETE("/:node", formatDoc("Delete Node from Org", ""), tonic.Handler(r.deleteNodeHandler, http.StatusOK))
+
+	// systems := orgs.Group("/systems", "Systems", "Orgs System credentials")
+	// systems.GET("/:system", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSystemHandler, http.StatusOK))
+	// systems.PUT("/:system", formatDoc("Add or Update System credential for Org", ""), tonic.Handler(r.putSystemHandler, http.StatusCreated))
+	// systems.DELETE("/:system", formatDoc("Delete System credential for Org", ""), tonic.Handler(r.deleteSystemHandler, http.StatusOK))
 }
 
-func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*GetOrgResponse, error) {
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
+}
 
-	return &GetOrgResponse{}, nil
+func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pb.GetOrgResponse, error) {
+	org := c.Param("org")
+
+	return r.clients.l.GetOrg(&pb.GetOrgRequest{
+		OrgName: org,
+	})
 }
 
 func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pb.AddOrgResponse, error) {
