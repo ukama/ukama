@@ -14,7 +14,6 @@ import {
 } from "../../constants/tableColumns";
 import {
     useGetBillHistoryQuery,
-    useGetAccountDetailsQuery,
     useGetCurrentBillQuery,
     useRetrivePaymentMethodsQuery,
 } from "../../generated";
@@ -35,7 +34,7 @@ import { RoundedCard } from "../../styles";
 import { NoBillYet } from "../../assets/svg";
 import { SelectItemType } from "../../types";
 import { BillingTabs } from "../../constants";
-import { isSkeltonLoading, isDarkmode } from "../../recoil";
+import { isSkeltonLoading, user, isDarkmode } from "../../recoil";
 import { useHistory } from "react-router-dom";
 const Billing = () => {
     const history = useHistory();
@@ -59,12 +58,13 @@ const Billing = () => {
     const { data: billingHistoryRes, loading: billingHistoryLoading } =
         useGetBillHistoryQuery();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const { data: account } = useGetAccountDetailsQuery();
+    const { has_logged_once } = useRecoilValue(user);
+
     useEffect(() => {
-        if (account?.getAccountDetails?.isFirstVisit) {
+        if (has_logged_once == "true") {
             history.push("/");
         }
-    }, []);
+    }, [has_logged_once]);
     const { data: currentBill, loading: currenBillLoading } =
         useGetCurrentBillQuery();
 

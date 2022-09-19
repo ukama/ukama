@@ -32,7 +32,6 @@ import {
     useAddUserMutation,
     useGetDataBillQuery,
     useGetDataUsageQuery,
-    useGetAccountDetailsQuery,
     useUpdateNodeMutation,
     useGetUsersByOrgQuery,
     GetUserDto,
@@ -90,7 +89,7 @@ const Home = () => {
     const history = useHistory();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
-    const { id: orgId = "" } = useRecoilValue(user);
+    const { id: orgId = "", has_logged_once } = useRecoilValue(user);
     const [users, setUsers] = useState<GetUsersDto[]>([]);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
@@ -169,12 +168,6 @@ const Home = () => {
         },
     });
 
-    const { data: account } = useGetAccountDetailsQuery();
-    useEffect(() => {
-        if (account?.getAccountDetails?.isFirstVisit) {
-            history.push("/");
-        }
-    }, []);
     const [addUser, { loading: addUserLoading }] = useAddUserMutation({
         onCompleted: res => {
             if (res?.addUser) {
@@ -246,7 +239,11 @@ const Home = () => {
             },
         }
     );
-
+    useEffect(() => {
+        if (has_logged_once == "true") {
+            history.push("/");
+        }
+    }, [has_logged_once]);
     const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
         onCompleted: res => {
             if (res?.updateNode) {

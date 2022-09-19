@@ -11,7 +11,6 @@ import {
     GetUserDto,
     GetUsersDto,
     useAddUserMutation,
-    useGetAccountDetailsQuery,
     useGetUserLazyQuery,
     useGetUsersByOrgQuery,
     useUpdateUserMutation,
@@ -27,7 +26,7 @@ import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
 import { useRecoilValue, useSetRecoilState } from "recoil";
-import { isSkeltonLoading, snackbarMessage } from "../../recoil";
+import { isSkeltonLoading, snackbarMessage, user } from "../../recoil";
 import { useHistory } from "react-router-dom";
 const userInit = {
     id: "",
@@ -58,6 +57,8 @@ const User = () => {
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
+    const { has_logged_once } = useRecoilValue(user);
+
     const [serviceStatusIndicator, setServiceStatusIndicator] = useState<any>();
     const [deactivateUserDialog, setDeactivateUserDialog] = useState({
         isShow: false,
@@ -273,12 +274,12 @@ const User = () => {
             },
         });
     };
-    const { data: account } = useGetAccountDetailsQuery();
+
     useEffect(() => {
-        if (account?.getAccountDetails?.isFirstVisit) {
+        if (has_logged_once == "true") {
             history.push("/");
         }
-    }, []);
+    }, [has_logged_once]);
     const handleEsimInstallation = (eSimData: UserInputDto) => {
         if (eSimData) {
             addUser({

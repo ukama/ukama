@@ -3,11 +3,8 @@ import { IRoute } from "./config";
 import { Suspense } from "react";
 import { FullscreenContainer } from "../styles";
 import { Redirect, Route } from "react-router-dom";
-import { useGetAccountDetailsQuery } from "../generated";
 
 const RouteWithSubRoutes = (route: IRoute) => {
-    const { data: user } = useGetAccountDetailsQuery();
-
     const fullScreenRoute = (props: any) =>
         route.private &&
         route.component && (
@@ -18,14 +15,11 @@ const RouteWithSubRoutes = (route: IRoute) => {
 
     const routesWithLayout = (props: any) =>
         route.private &&
-        route.component &&
-        (user?.getAccountDetails?.isFirstVisit ? (
-            <route.component {...props} routes={route.routes} />
-        ) : (
+        route.component && (
             <Layout>
                 <route.component {...props} routes={route.routes} />
             </Layout>
-        ));
+        );
 
     const getRouteByType = (props: any) =>
         route.isFullScreen ? fullScreenRoute(props) : routesWithLayout(props);

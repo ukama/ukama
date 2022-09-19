@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { OnBoardingFlow } from "../../components";
 import { useHistory } from "react-router-dom";
 import {
-    useGetAccountDetailsQuery,
     useAddUserMutation,
     useUpdateFirstVisitMutation,
 } from "../../generated";
@@ -12,15 +11,17 @@ import { snackbarMessage, user } from "../../recoil";
 const OnBoarding = () => {
     const history = useHistory();
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
-
+    const setUser = useSetRecoilState(user);
     const getUser = useRecoilValue(user);
     const [userData, setUserData] = useState<any>();
     const [simAdded, setSimAdded] = useState<boolean>();
-    const { data: account } = useGetAccountDetailsQuery();
     const [updateFirstVisit] = useUpdateFirstVisitMutation({
         onCompleted: res => {
             if (res) {
-                window.location.reload();
+                setUser({
+                    ...getUser,
+                    has_logged_once: `${res.updateFirstVisit.firstVisit}`,
+                });
             }
         },
     });
@@ -40,12 +41,11 @@ const OnBoarding = () => {
             }
         },
     });
-
     useEffect(() => {
-        if (account?.getAccountDetails.isFirstVisit == false) {
+        if (getUser.has_logged_once == "false") {
             history.push("/home");
         }
-    }, [account?.getAccountDetails.isFirstVisit]);
+    }, [getUser]);
     const handleEsimInstallation = (values: any) => {
         addUser({
             variables: {

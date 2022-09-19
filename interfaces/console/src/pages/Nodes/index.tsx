@@ -23,7 +23,6 @@ import {
     useGetNodeLazyQuery,
     useGetNodeStatusQuery,
     useGetNodesByOrgLazyQuery,
-    useGetAccountDetailsQuery,
     useGetMetricsByTabLazyQuery,
     useGetNodeAppsVersionLogsQuery,
     useGetMetricsByTabSSubscription,
@@ -44,7 +43,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 import React, { useCallback, useEffect, useState } from "react";
-import { isSkeltonLoading, snackbarMessage } from "../../recoil";
+import { isSkeltonLoading, snackbarMessage, user } from "../../recoil";
 import { useHistory } from "react-router-dom";
 let abortController = new AbortController();
 
@@ -79,6 +78,7 @@ const Nodes = () => {
     const [isAddNode, setIsAddNode] = useState(false);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [nodeAppDetails, setNodeAppDetails] = useState<any>();
+    const { has_logged_once } = useRecoilValue(user);
     const [isNodeUpdate, setIsNodeUpdate] = useState<boolean>(false);
     const [isSwitchOffRF, setIsSwitchOffRF] = useState<boolean>(false);
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
@@ -145,12 +145,11 @@ const Nodes = () => {
                 show: true,
             }),
     });
-    const { data: account } = useGetAccountDetailsQuery();
     useEffect(() => {
-        if (account?.getAccountDetails?.isFirstVisit) {
+        if (has_logged_once == "true") {
             history.push("/");
         }
-    }, []);
+    }, [has_logged_once]);
     const [
         getNode,
         {
