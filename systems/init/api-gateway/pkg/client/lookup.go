@@ -35,6 +35,15 @@ func Newlookup(host string, timeout time.Duration) *Lookup {
 	}
 }
 
+func NewLookupFromClient(lookupClient pb.LookupServiceClient) *Lookup {
+	return &Lookup{
+		host:    "localhost",
+		timeout: 1 * time.Second,
+		conn:    nil,
+		client:  lookupClient,
+	}
+}
+
 func (r *Lookup) Close() {
 	r.conn.Close()
 }

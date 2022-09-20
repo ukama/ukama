@@ -34,7 +34,18 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	l *client.Lookup
+	l lookup
+}
+
+type lookup interface {
+	AddOrg(req *pb.AddOrgRequest) (*pb.AddOrgResponse, error)
+	GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error)
+	AddNodeForOrg(req *pb.AddNodeRequest) (*pb.AddNodeResponse, error)
+	GetNodeForOrg(req *pb.GetNodeRequest) (*pb.GetNodeResponse, error)
+	DeleteNodeForOrg(req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error)
+	UpdateSystemForOrg(req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error)
+	GetSystemForOrg(req *pb.GetSystemRequest) (*pb.GetSystemResponse, error)
+	DeleteSystemForOrg(req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -76,7 +87,7 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	const org = "/lookup/orgs/" + ":" + ORG_URL_PARAMETER
+	const org = "lookup/orgs/" + ":" + ORG_URL_PARAMETER
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.ServiceName, version.Version, r.config.debugMode)
 	lookup := r.f.Group("/", "lookup", "looking for credentials")
