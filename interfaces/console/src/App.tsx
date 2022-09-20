@@ -37,17 +37,12 @@ const App = () => {
         const id = new URLSearchParams(window.location.search).get("id");
         const name = new URLSearchParams(window.location.search).get("name");
         const email = new URLSearchParams(window.location.search).get("email");
-        const has_logged_once = new URLSearchParams(window.location.search).get(
-            "firstVisit"
-        );
-        if (id && name && email && has_logged_once) {
-            _setUser({ id, name, email, has_logged_once });
+
+        if (id && name && email) {
+            _setUser({ id, name, email });
             window.history.pushState(null, "", "/");
         }
-        if (
-            (id && name && email && has_logged_once) ||
-            (_user.id && _user.name && _user.email && _user.has_logged_once)
-        ) {
+        if ((id && name && email) || (_user.id && _user.name && _user.email)) {
             setPage(getTitleFromPath(window.location.pathname));
 
             if (
@@ -71,7 +66,6 @@ const App = () => {
 
         setSkeltonLoading(false);
     }, []);
-
     const handleGoToLogin = () => {
         setPage("Home");
         window.location.replace(process.env.REACT_APP_AUTH_URL || "");

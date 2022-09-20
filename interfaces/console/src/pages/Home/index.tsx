@@ -239,11 +239,11 @@ const Home = () => {
             },
         }
     );
-    useEffect(() => {
-        if (has_logged_once == "true") {
-            history.push("/");
-        }
-    }, [has_logged_once]);
+    // useEffect(() => {
+    //     if (has_logged_once == true) {
+    //         history.push("/");
+    //     }
+    // }, [has_logged_once]);
     const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
         onCompleted: res => {
             if (res?.updateNode) {

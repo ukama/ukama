@@ -2,25 +2,35 @@ import { useEffect, useState } from "react";
 import { OnBoardingFlow } from "../../components";
 import { useHistory } from "react-router-dom";
 import {
+    useGetAccountDetailsQuery,
     useAddUserMutation,
     useUpdateFirstVisitMutation,
 } from "../../generated";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { snackbarMessage, user } from "../../recoil";
+import { CircularProgress } from "@mui/material";
+import { CenterContainer } from "../../styles";
 
 const OnBoarding = () => {
     const history = useHistory();
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
-    const setUser = useSetRecoilState(user);
-    const getUser = useRecoilValue(user);
     const [userData, setUserData] = useState<any>();
     const [simAdded, setSimAdded] = useState<boolean>();
+    const setUser = useSetRecoilState(user);
+    const getUser = useRecoilValue(user);
+    const { data: _user, loading } = useGetAccountDetailsQuery();
+    useEffect(() => {
+        setUser({
+            ...getUser,
+            has_logged_once: _user?.getAccountDetails.isFirstVisit,
+        });
+    }, [loading]);
     const [updateFirstVisit] = useUpdateFirstVisitMutation({
         onCompleted: res => {
             if (res) {
                 setUser({
                     ...getUser,
-                    has_logged_once: `${res.updateFirstVisit.firstVisit}`,
+                    has_logged_once: res.updateFirstVisit.firstVisit,
                 });
             }
         },
@@ -41,11 +51,13 @@ const OnBoarding = () => {
             }
         },
     });
+
     useEffect(() => {
-        if (getUser.has_logged_once == "false") {
+        if (getUser.has_logged_once == false) {
             history.push("/home");
         }
-    }, [getUser]);
+    }, [getUser.has_logged_once]);
+
     const handleEsimInstallation = (values: any) => {
         addUser({
             variables: {
@@ -78,17 +90,27 @@ const OnBoarding = () => {
             },
         });
     };
+
     return (
-        <OnBoardingFlow
-            handleEsimInstallation={handleEsimInstallation}
-            handleNetworkSetup={handleNetworkSetup}
-            goToConsole={goToConsole}
-            qrCodeId={userData?.iccid || ""}
-            name={userData?.name || ""}
-            simAdded={simAdded}
-            currentUser={getUser}
-            handleSkip={handleSkip}
-        />
+        <>
+            {loading && (
+                <CenterContainer>
+                    <CircularProgress />
+                </CenterContainer>
+            )}
+            {!loading && getUser.has_logged_once == true && (
+                <OnBoardingFlow
+                    handleEsimInstallation={handleEsimInstallation}
+                    handleNetworkSetup={handleNetworkSetup}
+                    goToConsole={goToConsole}
+                    qrCodeId={userData?.iccid || ""}
+                    name={userData?.name || ""}
+                    simAdded={simAdded}
+                    currentUser={getUser}
+                    handleSkip={handleSkip}
+                />
+            )}
+        </>
     );
 };
 export default OnBoarding;
