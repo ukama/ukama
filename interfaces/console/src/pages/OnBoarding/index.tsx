@@ -93,11 +93,12 @@ const OnBoarding = () => {
 
     return (
         <>
-            {loading && (
-                <CenterContainer>
-                    <CircularProgress />
-                </CenterContainer>
-            )}
+            {loading ||
+                (getUser.has_logged_once == undefined && (
+                    <CenterContainer>
+                        <CircularProgress />
+                    </CenterContainer>
+                ))}
             {!loading && getUser.has_logged_once == true && (
                 <OnBoardingFlow
                     handleEsimInstallation={handleEsimInstallation}
