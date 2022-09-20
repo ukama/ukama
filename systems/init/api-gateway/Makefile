@@ -2,7 +2,7 @@ include ../../../services/config.mk
 
 .PHONY: build deps lint gen clean integration.test test
 
-build:
+build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 go build  -ldflags '-X github.com/ukama/ukama/systems/init/api-gateway/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/api-gateway cmd/main.go
 
