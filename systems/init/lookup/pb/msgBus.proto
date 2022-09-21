@@ -17,9 +17,11 @@ service MsgBus {
 
 
 message InitRequest {
-    string serviceName = 1 [(validator.field) = {string_not_empty: true}];
-    string queueURI = 2 [(validator.field) = {string_not_empty: true}];
-    string instanceId = 3  [(validator.field) = {string_not_empty: true}];
+    string systemName = 1 [(validator.field) = {string_not_empty: true}];
+    string serviceName = 2 [(validator.field) = {string_not_empty: true}];
+    string queueURI = 3 [(validator.field) = {string_not_empty: true}];
+    string instanceId = 4  [(validator.field) = {string_not_empty: true}];
+    repeated string routes = 5 ;
 }
 
 message InitResponse {

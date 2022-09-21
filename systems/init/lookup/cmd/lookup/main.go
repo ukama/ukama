@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serviceConfig *internal.Config
+var serviceConfig = internal.NewConfig()
 
 func main() {
 	ccmd.ProcessVersionArgument("lookup", os.Args, version.Version)
@@ -77,10 +77,13 @@ func initConfig() {
 }
 
 func runGrpcServer(d sql.Db) {
-	//instanceId := os.Getenv("POD_NAME")
+	instanceId := os.Getenv("POD_NAME")
 
-	var mbClient *mb.MsgBusClient
-	//mbClient = mb.NewMsgBusClient(serviceConfig.Timeout, internal.ServiceName, instanceId, serviceConfig.Queue.Uri)
+	//var mbClient *mb.MsgBusClient
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
+		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListnerRoutes)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
 		generated.RegisterLookupServiceServer(s, srv)

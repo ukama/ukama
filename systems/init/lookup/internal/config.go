@@ -13,4 +13,13 @@ type Config struct {
 	Queue            *uconf.Queue    `default:"{}"`
 	Metrics          *uconf.Metrics  `default:"{}"`
 	Timeout          time.Duration
+	MsgClient        *uconf.MsgClient `default:"{}"`
+}
+
+func NewConfig() *Config {
+	return &Config{
+		MsgClient: &uconf.MsgClient{
+			ListnerRoutes: []string{""},
+		},
+	}
 }

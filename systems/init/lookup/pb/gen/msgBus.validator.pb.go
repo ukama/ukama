@@ -18,6 +18,9 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *InitRequest) Validate() error {
+	if this.SystemName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SystemName", fmt.Errorf(`value '%v' must not be an empty string`, this.SystemName))
+	}
 	if this.ServiceName == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("ServiceName", fmt.Errorf(`value '%v' must not be an empty string`, this.ServiceName))
 	}
