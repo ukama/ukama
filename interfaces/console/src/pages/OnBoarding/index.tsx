@@ -20,10 +20,11 @@ const OnBoarding = () => {
     const getUser = useRecoilValue(user);
     const { data: _user, loading } = useGetAccountDetailsQuery();
     useEffect(() => {
-        setUser({
-            ...getUser,
-            has_logged_once: _user?.getAccountDetails.isFirstVisit,
-        });
+        if (!loading)
+            setUser({
+                ...getUser,
+                has_logged_once: _user?.getAccountDetails.isFirstVisit,
+            });
     }, [loading]);
     const [updateFirstVisit] = useUpdateFirstVisitMutation({
         onCompleted: res => {
@@ -99,7 +100,7 @@ const OnBoarding = () => {
                         <CircularProgress />
                     </CenterContainer>
                 ))}
-            {!loading && getUser.has_logged_once == true && (
+            {getUser.has_logged_once == true && (
                 <OnBoardingFlow
                     handleEsimInstallation={handleEsimInstallation}
                     handleNetworkSetup={handleNetworkSetup}
