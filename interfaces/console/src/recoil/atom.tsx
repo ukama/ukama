@@ -25,6 +25,11 @@ const pageName = atom({
     default: "Home",
     effects_UNSTABLE: [persistAtom],
 });
+const networkName = atom({
+    key: "networkName",
+    default: "",
+    effects_UNSTABLE: [persistAtom],
+});
 
 const snackbarMessage = atom({
     key: "snackbarMessage",
@@ -33,7 +38,7 @@ const snackbarMessage = atom({
 
 const user = atom({
     key: "user",
-    default: { id: "", name: "", email: "" },
+    default: { id: "", name: "", email: "", has_logged_once: true },
     effects_UNSTABLE: [persistAtom],
 });
 
@@ -43,5 +48,6 @@ export {
     isDarkmode,
     isFirstVisit,
     snackbarMessage,
+    networkName,
     isSkeltonLoading,
 };

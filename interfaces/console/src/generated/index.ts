@@ -236,6 +236,12 @@ export enum Graphs_Tab {
   Resources = 'RESOURCES'
 }
 
+export type GetAccountDetailsDto = {
+  __typename?: 'GetAccountDetailsDto';
+  email: Scalars['String'];
+  isFirstVisit: Scalars['Boolean'];
+};
+
 export type GetESimQrCodeInput = {
   simId: Scalars['String'];
   userId: Scalars['String'];
@@ -373,6 +379,7 @@ export type Mutation = {
   deactivateUser: DeactivateResponse;
   deleteNode: DeleteNodeRes;
   deleteUser: ActivateUserResponse;
+  updateFirstVisit: UserFistVisitResDto;
   updateNode: OrgNodeDto;
   updateUser: UserResDto;
   updateUserRoaming: OrgUserSimDto;
@@ -412,6 +419,11 @@ export type MutationDeleteNodeArgs = {
 
 export type MutationDeleteUserArgs = {
   userId: Scalars['String'];
+};
+
+
+export type MutationUpdateFirstVisitArgs = {
+  data: UserFistVisitInputDto;
 };
 
 
@@ -585,6 +597,7 @@ export type ParsedCookie = {
 
 export type Query = {
   __typename?: 'Query';
+  getAccountDetails: GetAccountDetailsDto;
   getAlerts: AlertsResponse;
   getBillHistory: Array<BillHistoryDto>;
   getConnectedUsers: ConnectedUserDto;
@@ -711,6 +724,15 @@ export type UserDataUsageDto = {
   __typename?: 'UserDataUsageDto';
   dataAllowanceBytes?: Maybe<Scalars['String']>;
   dataUsedBytes?: Maybe<Scalars['String']>;
+};
+
+export type UserFistVisitInputDto = {
+  firstVisit: Scalars['Boolean'];
+};
+
+export type UserFistVisitResDto = {
+  __typename?: 'UserFistVisitResDto';
+  firstVisit: Scalars['Boolean'];
 };
 
 export type UserInputDto = {
@@ -850,6 +872,13 @@ export type AddUserMutationVariables = Exact<{
 
 export type AddUserMutation = { __typename?: 'Mutation', addUser: { __typename?: 'UserResDto', name: string, email: string, iccid?: string | null, id: string } };
 
+export type UpdateFirstVisitMutationVariables = Exact<{
+  data: UserFistVisitInputDto;
+}>;
+
+
+export type UpdateFirstVisitMutation = { __typename?: 'Mutation', updateFirstVisit: { __typename?: 'UserFistVisitResDto', firstVisit: boolean } };
+
 export type DeleteNodeMutationVariables = Exact<{
   id: Scalars['String'];
 }>;
@@ -923,6 +952,11 @@ export type GetUsersDataUsageSSubscriptionVariables = Exact<{ [key: string]: nev
 
 
 export type GetUsersDataUsageSSubscription = { __typename?: 'Subscription', getUsersDataUsage: { __typename?: 'GetUserDto', id: string, name: string, email: string, dataPlan: string, dataUsage: string } };
+
+export type GetAccountDetailsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetAccountDetailsQuery = { __typename?: 'Query', getAccountDetails: { __typename?: 'GetAccountDetailsDto', email: string, isFirstVisit: boolean } };
 
 export type GetNodeStatusQueryVariables = Exact<{
   data: GetNodeStatusInput;
@@ -1665,6 +1699,39 @@ export function useAddUserMutation(baseOptions?: Apollo.MutationHookOptions<AddU
 export type AddUserMutationHookResult = ReturnType<typeof useAddUserMutation>;
 export type AddUserMutationResult = Apollo.MutationResult<AddUserMutation>;
 export type AddUserMutationOptions = Apollo.BaseMutationOptions<AddUserMutation, AddUserMutationVariables>;
+export const UpdateFirstVisitDocument = gql`
+    mutation updateFirstVisit($data: UserFistVisitInputDto!) {
+  updateFirstVisit(data: $data) {
+    firstVisit
+  }
+}
+    `;
+export type UpdateFirstVisitMutationFn = Apollo.MutationFunction<UpdateFirstVisitMutation, UpdateFirstVisitMutationVariables>;
+
+/**
+ * __useUpdateFirstVisitMutation__
+ *
+ * To run a mutation, you first call `useUpdateFirstVisitMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateFirstVisitMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateFirstVisitMutation, { data, loading, error }] = useUpdateFirstVisitMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateFirstVisitMutation(baseOptions?: Apollo.MutationHookOptions<UpdateFirstVisitMutation, UpdateFirstVisitMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateFirstVisitMutation, UpdateFirstVisitMutationVariables>(UpdateFirstVisitDocument, options);
+      }
+export type UpdateFirstVisitMutationHookResult = ReturnType<typeof useUpdateFirstVisitMutation>;
+export type UpdateFirstVisitMutationResult = Apollo.MutationResult<UpdateFirstVisitMutation>;
+export type UpdateFirstVisitMutationOptions = Apollo.BaseMutationOptions<UpdateFirstVisitMutation, UpdateFirstVisitMutationVariables>;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($id: String!) {
   deleteNode(id: $id) {
@@ -2087,6 +2154,41 @@ export function useGetUsersDataUsageSSubscription(baseOptions?: Apollo.Subscript
       }
 export type GetUsersDataUsageSSubscriptionHookResult = ReturnType<typeof useGetUsersDataUsageSSubscription>;
 export type GetUsersDataUsageSSubscriptionResult = Apollo.SubscriptionResult<GetUsersDataUsageSSubscription>;
+export const GetAccountDetailsDocument = gql`
+    query getAccountDetails {
+  getAccountDetails {
+    email
+    isFirstVisit
+  }
+}
+    `;
+
+/**
+ * __useGetAccountDetailsQuery__
+ *
+ * To run a query within a React component, call `useGetAccountDetailsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAccountDetailsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAccountDetailsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetAccountDetailsQuery(baseOptions?: Apollo.QueryHookOptions<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>(GetAccountDetailsDocument, options);
+      }
+export function useGetAccountDetailsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>(GetAccountDetailsDocument, options);
+        }
+export type GetAccountDetailsQueryHookResult = ReturnType<typeof useGetAccountDetailsQuery>;
+export type GetAccountDetailsLazyQueryHookResult = ReturnType<typeof useGetAccountDetailsLazyQuery>;
+export type GetAccountDetailsQueryResult = Apollo.QueryResult<GetAccountDetailsQuery, GetAccountDetailsQueryVariables>;
 export const GetNodeStatusDocument = gql`
     query getNodeStatus($data: GetNodeStatusInput!) {
   getNodeStatus(data: $data) {

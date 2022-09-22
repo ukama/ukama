@@ -26,8 +26,8 @@ import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
 import { useRecoilValue, useSetRecoilState } from "recoil";
-import { isSkeltonLoading, snackbarMessage } from "../../recoil";
-
+import { isSkeltonLoading, snackbarMessage, user } from "../../recoil";
+import { useHistory } from "react-router-dom";
 const userInit = {
     id: "",
     name: "",
@@ -42,6 +42,7 @@ const userInit = {
 };
 
 const User = () => {
+    const history = useHistory();
     const [users, setUsers] = useState<GetUsersDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [simDialog, setSimDialog] = useState({
@@ -56,6 +57,8 @@ const User = () => {
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
+    const { has_logged_once } = useRecoilValue(user);
+
     const [serviceStatusIndicator, setServiceStatusIndicator] = useState<any>();
     const [deactivateUserDialog, setDeactivateUserDialog] = useState({
         isShow: false,
@@ -228,8 +231,9 @@ const User = () => {
         });
     };
 
-    const handleSimInstallation = () => setShowInstallSim(true);
-
+    const handleSimInstallation = () => {
+        setShowInstallSim(true);
+    };
     const handleSimInstallationClose = () => {
         setShowInstallSim(false);
         setSimFlow(1);
@@ -272,6 +276,11 @@ const User = () => {
         });
     };
 
+    useEffect(() => {
+        if (has_logged_once == "true") {
+            history.push("/");
+        }
+    }, [has_logged_once]);
     const handleEsimInstallation = (eSimData: UserInputDto) => {
         if (eSimData) {
             addUser({

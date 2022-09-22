@@ -5,6 +5,7 @@ import {
     isFirstVisit,
     isSkeltonLoading,
     snackbarMessage,
+    networkName,
     user,
 } from "./atom";
 
@@ -22,7 +23,10 @@ const withIsFirstVisit = selector({
     key: "withIsFirstVisit",
     get: ({ get }) => get(isFirstVisit),
 });
-
+const withNetworkName = selector({
+    key: "withNetworkName",
+    get: ({ get }) => get(networkName),
+});
 const withIsDarkMod = selector({
     key: "withIsDarkMod",
     get: ({ get }) => get(isDarkmode),
@@ -39,6 +43,7 @@ const withUser = selector({
 
 export {
     withUser,
+    withNetworkName,
     withPageName,
     withIsDarkMod,
     withIsFirstVisit,

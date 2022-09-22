@@ -42,5 +42,7 @@ const colors = {
     nightGrey9: "#272727",
     nightGrey12: "#2E2E2E",
     nightGrey16: "#383838",
+    darkGreen05:
+        "linear-gradient(0deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)), #121212",
 };
 export default colors;

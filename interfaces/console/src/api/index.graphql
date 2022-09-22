@@ -42,7 +42,6 @@ query getBillHistory {
         subtotal
     }
 }
-# Write your query or mutation here
 query getCurrentBill {
     getCurrentBill {
         bill {
@@ -180,6 +179,11 @@ mutation addUser($data: UserInputDto!) {
         id
     }
 }
+mutation updateFirstVisit($data: UserFistVisitInputDto!) {
+    updateFirstVisit(data: $data) {
+        firstVisit
+    }
+}
 
 mutation deleteNode($id: String!) {
     deleteNode(id: $id) {
@@ -314,6 +318,12 @@ query getNode($nodeId: String!) {
             state
             name
         }
+    }
+}
+query getAccountDetails {
+    getAccountDetails {
+        email
+        isFirstVisit
     }
 }
 

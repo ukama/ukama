@@ -27,16 +27,17 @@ import {
     Box,
     SelectChangeEvent,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import colors from "../../theme/colors";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { NoBillYet } from "../../assets/svg";
 import { SelectItemType } from "../../types";
 import { BillingTabs } from "../../constants";
-import { isSkeltonLoading, isDarkmode } from "../../recoil";
-
+import { isSkeltonLoading, user, isDarkmode } from "../../recoil";
+import { useHistory } from "react-router-dom";
 const Billing = () => {
+    const history = useHistory();
     const [isBilling, setIsBilling] = useState({
         isShow: false,
         isOnlypaymentFlow: false,
@@ -57,7 +58,13 @@ const Billing = () => {
     const { data: billingHistoryRes, loading: billingHistoryLoading } =
         useGetBillHistoryQuery();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+    const { has_logged_once } = useRecoilValue(user);
 
+    useEffect(() => {
+        if (has_logged_once == "true") {
+            history.push("/");
+        }
+    }, [has_logged_once]);
     const { data: currentBill, loading: currenBillLoading } =
         useGetCurrentBillQuery();
 

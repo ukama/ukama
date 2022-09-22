@@ -19,7 +19,16 @@ export class UserInputDto {
     @Field({ nullable: true })
     status: boolean;
 }
-
+@InputType()
+export class UserFistVisitInputDto {
+    @Field()
+    firstVisit: boolean;
+}
+@ObjectType()
+export class UserFistVisitResDto {
+    @Field()
+    firstVisit: boolean;
+}
 @ObjectType()
 export class ActivateUserResponse {
     @Field()
@@ -56,7 +65,14 @@ export class GetUserDto {
     @Field()
     dataUsage: string;
 }
+@ObjectType()
+export class GetAccountDetailsDto {
+    @Field()
+    email: string;
 
+    @Field()
+    isFirstVisit?: boolean;
+}
 @ObjectType()
 export class GetUsersDto {
     @Field()

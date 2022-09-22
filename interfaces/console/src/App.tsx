@@ -33,11 +33,11 @@ const App = () => {
     const resetData = useResetRecoilState(user);
     const resetPageName = useResetRecoilState(pageName);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
-
     useEffect(() => {
         const id = new URLSearchParams(window.location.search).get("id");
         const name = new URLSearchParams(window.location.search).get("name");
         const email = new URLSearchParams(window.location.search).get("email");
+
         if (id && name && email) {
             _setUser({ id, name, email });
             window.history.pushState(null, "", "/");
@@ -66,7 +66,6 @@ const App = () => {
 
         setSkeltonLoading(false);
     }, []);
-
     const handleGoToLogin = () => {
         setPage("Home");
         window.location.replace(process.env.REACT_APP_AUTH_URL || "");

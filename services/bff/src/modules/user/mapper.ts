@@ -9,6 +9,7 @@ import {
     GetUsersDto,
     OrgUserDto,
     OrgUserResponse,
+    GetAccountDetailsDto,
     OrgUsersResponse,
 } from "./types";
 import { MetricServiceValueRes } from "../../common/types";

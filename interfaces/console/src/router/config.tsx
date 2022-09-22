@@ -29,7 +29,7 @@ const Loader = (
 
 const getRouteObject = (
     path = "/",
-    component = "Home",
+    component = "OnBoarding",
     isPrivate = true,
     isFullScreen = false
 ) => {
@@ -44,12 +44,12 @@ const getRouteObject = (
 };
 
 export const routes = {
-    Root: getRouteObject("/", "Home", true),
+    Root: getRouteObject("/home", "Home", true),
     Nodes: getRouteObject("/nodes", "Nodes", true),
     Users: getRouteObject("/users", "Users", true),
     Settings: getRouteObject("/settings", "Settings", true, true),
     Billing: getRouteObject("/billing", "Billing", true),
-
+    OnBoarding: getRouteObject("/", "OnBoarding", true, true),
     //Public Routes//
     Error: getRouteObject("/*", "ErrorPage", true, true),
     //

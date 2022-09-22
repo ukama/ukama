@@ -6,9 +6,12 @@ import {
     GetUserDto,
     ActivateUserResponse,
     GetUsersDto,
+    UserFistVisitResDto,
     UpdateUserServiceInput,
     UserResDto,
+    UserFistVisitInputDto,
     OrgUserSimDto,
+    GetAccountDetailsDto,
     GetESimQRCodeInput,
     ESimQRCodeRes,
 } from "./types";
@@ -81,6 +84,25 @@ export class UserService implements IUserService {
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return UserMapper.dtoToUserDto(res);
     };
+    getAccountDetails = async (
+        cookie: ParsedCookie
+    ): Promise<GetAccountDetailsDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.GET_IDENTITY}/${cookie.orgId}`,
+            headers: cookie.header,
+        });
+
+        if (checkError(res)) throw new Error(res.message);
+        if (!res) throw new HTTP404Error(res.Messages);
+        return {
+            email: res?.traits.email,
+            isFirstVisit:
+                res.traits.firstVisit == undefined
+                    ? true
+                    : res.traits.firstVisit,
+        };
+    };
     getUsersByOrg = async (cookie: ParsedCookie): Promise<GetUsersDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -105,6 +127,35 @@ export class UserService implements IUserService {
         if (checkError(res)) throw new Error(res.description || res.message);
         return UserMapper.dtoToAddUserDto(res);
     };
+    updateFirstVisit = async (
+        req: UserFistVisitInputDto,
+        cookie: ParsedCookie
+    ): Promise<UserFistVisitResDto> => {
+        const getUser = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.GET_IDENTITY}/${cookie.orgId}`,
+            headers: cookie.header,
+        });
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.GET_IDENTITY}/${cookie.orgId}`,
+            body: {
+                schema_id: "default",
+                state: "active",
+                traits: {
+                    email: getUser?.traits?.email,
+                    name: getUser?.traits?.name,
+                    ...req,
+                },
+            },
+            headers: cookie.header,
+        });
+        if (checkError(res)) throw new Error(res.description || res.message);
+        return {
+            firstVisit: res?.traits?.firstVisit,
+        };
+    };
+
     deleteUser = async (
         userId: string,
         cookie: ParsedCookie

@@ -56,6 +56,7 @@ import {
     GetNetworkStatusSSubscription,
     useUpdateUserRoamingMutation,
 } from "../../generated";
+import { useHistory } from "react-router-dom";
 import {
     user,
     isFirstVisit,
@@ -86,8 +87,9 @@ const userInit = {
 };
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+    const history = useHistory();
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
-    const { id: orgId = "" } = useRecoilValue(user);
+    const { id: orgId = "", has_logged_once } = useRecoilValue(user);
     const [users, setUsers] = useState<GetUsersDto[]>([]);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
@@ -237,7 +239,11 @@ const Home = () => {
             },
         }
     );
-
+    useEffect(() => {
+        if (has_logged_once == true) {
+            history.push("/");
+        }
+    }, []);
     const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
         onCompleted: res => {
             if (res?.updateNode) {
