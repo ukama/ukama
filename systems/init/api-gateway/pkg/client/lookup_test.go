@@ -34,6 +34,23 @@ func TestLookupClient_AddOrg(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestLookupClient_UpdateOrg(t *testing.T) {
+	lc := &mocks.LookupServiceClient{}
+	orgReq := &pb.UpdateOrgRequest{
+		OrgName:     org,
+		Certificate: "updated_certs",
+	}
+
+	lc.On("UpdateOrg", mock.Anything, orgReq).Return(&pb.UpdateOrgResponse{}, nil)
+
+	l := &Lookup{
+		client: lc,
+	}
+
+	_, err := l.UpdateOrg(orgReq)
+	assert.NoError(t, err)
+}
+
 func TestLookupClient_GetOrg(t *testing.T) {
 	lc := &mocks.LookupServiceClient{}
 	orgReq := &pb.GetOrgRequest{
@@ -59,10 +76,9 @@ func TestLookupClient_GetOrg(t *testing.T) {
 	}
 }
 
-func TestLookupClient_UpdateSystemForOrg(t *testing.T) {
+func TestLookupClient_AddSystemForOrg(t *testing.T) {
 	lc := &mocks.LookupServiceClient{}
-	sysId := uuid.New().String()
-	sysReq := &pb.UpdateSystemRequest{
+	sysReq := &pb.AddSystemRequest{
 		SystemName:  sys,
 		OrgName:     org,
 		Certificate: "certs",
@@ -70,19 +86,34 @@ func TestLookupClient_UpdateSystemForOrg(t *testing.T) {
 		Port:        100,
 	}
 
-	lc.On("UpdateSystemForOrg", mock.Anything, sysReq).Return(&pb.UpdateSystemResponse{
-		SystemId: sysId,
-	}, nil)
+	lc.On("AddSystemForOrg", mock.Anything, sysReq).Return(&pb.AddSystemResponse{}, nil)
 
 	l := &Lookup{
 		client: lc,
 	}
 
-	resp, err := l.UpdateSystemForOrg(sysReq)
-	if assert.NoError(t, err) {
-		lc.AssertExpectations(t)
-		assert.Contains(t, resp.SystemId, sysId)
+	_, err := l.AddSystemForOrg(sysReq)
+	assert.NoError(t, err)
+}
+
+func TestLookupClient_UpdateSystemForOrg(t *testing.T) {
+	lc := &mocks.LookupServiceClient{}
+	sysReq := &pb.UpdateSystemRequest{
+		SystemName:  sys,
+		OrgName:     org,
+		Certificate: "update_certs",
+		Ip:          "127.0.0.1",
+		Port:        101,
 	}
+
+	lc.On("UpdateSystemForOrg", mock.Anything, sysReq).Return(&pb.UpdateSystemResponse{}, nil)
+
+	l := &Lookup{
+		client: lc,
+	}
+
+	_, err := l.UpdateSystemForOrg(sysReq)
+	assert.NoError(t, err)
 }
 
 func TestLookupClient_GetSystemForOrg(t *testing.T) {

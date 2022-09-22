@@ -39,10 +39,12 @@ type Clients struct {
 
 type lookup interface {
 	AddOrg(req *pb.AddOrgRequest) (*pb.AddOrgResponse, error)
+	UpdateOrg(req *pb.UpdateOrgRequest) (*pb.UpdateOrgResponse, error)
 	GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error)
 	AddNodeForOrg(req *pb.AddNodeRequest) (*pb.AddNodeResponse, error)
 	GetNodeForOrg(req *pb.GetNodeForOrgRequest) (*pb.GetNodeResponse, error)
 	DeleteNodeForOrg(req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error)
+	AddSystemForOrg(req *pb.AddSystemRequest) (*pb.AddSystemResponse, error)
 	UpdateSystemForOrg(req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error)
 	GetSystemForOrg(req *pb.GetSystemRequest) (*pb.GetSystemResponse, error)
 	DeleteSystemForOrg(req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error)
@@ -87,14 +89,15 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	const org = "lookup/orgs/" + ":" + ORG_URL_PARAMETER
+	const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.ServiceName, version.Version, r.config.debugMode)
-	lookup := r.f.Group("/", "lookup", "looking for credentials")
+	v1 := r.f.Group("/v1", "Init system ", "Init system version v1")
 
-	orgs := lookup.Group(org, "Orgs", "looking for orgs credentials")
+	orgs := v1.Group(org, "Orgs", "looking for orgs credentials")
 	orgs.GET("", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getOrgHandler, http.StatusOK))
-	orgs.PUT("", formatDoc("Add or Update Orgs Credential", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
+	orgs.PUT("", formatDoc("Add Org and Credential", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
+	orgs.PATCH("", formatDoc("Update Orgs Credential", ""), tonic.Handler(r.patchOrgHandler, http.StatusOK))
 
 	nodes := orgs.Group("/nodes", "Nodes", "Orgs credentials for Node")
 	nodes.GET("/:node", formatDoc("Get Orgs credential for Node", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
@@ -105,6 +108,7 @@ func (r *Router) init() {
 	systems.GET("/:system", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSystemHandler, http.StatusOK))
 	systems.PUT("/:system", formatDoc("Add or Update System credential for Org", ""), tonic.Handler(r.putSystemHandler, http.StatusCreated))
 	systems.DELETE("/:system", formatDoc("Delete System credential for Org", ""), tonic.Handler(r.deleteSystemHandler, http.StatusOK))
+	systems.PATCH("/:system", formatDoc("Update System Credential", ""), tonic.Handler(r.patchSystemHandler, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -126,6 +130,16 @@ func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pb.AddOrgRe
 	org := c.Param("org")
 
 	return r.clients.l.AddOrg(&pb.AddOrgRequest{
+		OrgName:     org,
+		Certificate: req.Certificate,
+		Ip:          req.Ip,
+	})
+}
+
+func (r *Router) patchOrgHandler(c *gin.Context, req *UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
+	org := c.Param("org")
+
+	return r.clients.l.UpdateOrg(&pb.UpdateOrgRequest{
 		OrgName:     org,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
@@ -162,7 +176,20 @@ func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*pb.
 	})
 }
 
-func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.UpdateSystemResponse, error) {
+func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.AddSystemResponse, error) {
+	org := c.Param("org")
+	sys := c.Param("system")
+
+	return r.clients.l.AddSystemForOrg(&pb.AddSystemRequest{
+		OrgName:     org,
+		SystemName:  sys,
+		Certificate: req.Certificate,
+		Ip:          req.Ip,
+		Port:        req.Port,
+	})
+}
+
+func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
 	org := c.Param("org")
 	sys := c.Param("system")
 

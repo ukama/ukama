@@ -62,7 +62,7 @@ func TestRouter_PingRoute(t *testing.T) {
 
 func TestRouter_GetOrg_NotFound(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/lookup/orgs/org-name", nil)
+	req, _ := http.NewRequest("GET", "/v1/orgs/org-name", nil)
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -82,7 +82,7 @@ func TestRouter_GetOrg_NotFound(t *testing.T) {
 
 func TestRouter_GetOrg(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/lookup/orgs/org-name", nil)
+	req, _ := http.NewRequest("GET", "/v1/orgs/org-name", nil)
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -107,7 +107,7 @@ func TestRouter_GetOrg(t *testing.T) {
 
 func TestRouter_AddOrg(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/lookup/orgs/org-name",
+	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name",
 		strings.NewReader(`{"Certificate": "helloOrg","Ip": "0.0.0.0"}`))
 
 	m := &lmocks.LookupServiceClient{}
@@ -132,10 +132,37 @@ func TestRouter_AddOrg(t *testing.T) {
 
 }
 
+func TestRouter_UpdateOrg(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/v1/orgs/org-name",
+		strings.NewReader(`{"Certificate": "updated_certs","Ip": "127.0.0.1"}`))
+
+	m := &lmocks.LookupServiceClient{}
+
+	org := &pb.UpdateOrgRequest{
+		OrgName:     "org-name",
+		Certificate: "updated_certs",
+		Ip:          "127.0.0.1",
+	}
+	m.On("UpdateOrg", mock.Anything, org).Return(&pb.UpdateOrgResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		l: client.NewLookupFromClient(m),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
+
+}
+
 func TestRouter_GetNode(t *testing.T) {
 	nodeId := ukama.NewVirtualNodeId("homenode").String()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/lookup/orgs/org-name/nodes/"+nodeId, nil)
+	req, _ := http.NewRequest("GET", "/v1/orgs/org-name/nodes/"+nodeId, nil)
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -167,7 +194,7 @@ func TestRouter_GetNode(t *testing.T) {
 func TestRouter_AddNode(t *testing.T) {
 	nodeId := ukama.NewVirtualNodeId("homenode").String()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/lookup/orgs/org-name/nodes/"+nodeId, nil)
+	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name/nodes/"+nodeId, nil)
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -193,7 +220,7 @@ func TestRouter_AddNode(t *testing.T) {
 func TestRouter_DeleteNode(t *testing.T) {
 	nodeId := ukama.NewVirtualNodeId("homenode").String()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/lookup/orgs/org-name/nodes/"+nodeId, nil)
+	req, _ := http.NewRequest("DELETE", "/v1/orgs/org-name/nodes/"+nodeId, nil)
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -220,7 +247,7 @@ func TestRouter_GetSystem(t *testing.T) {
 	sys := "sys"
 	sysId := uuid.New().String()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/lookup/orgs/org-name/systems/"+sys, nil)
+	req, _ := http.NewRequest("GET", "/v1/orgs/org-name/systems/"+sys, nil)
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -254,14 +281,13 @@ func TestRouter_GetSystem(t *testing.T) {
 
 func TestRouter_AddSystem(t *testing.T) {
 	sys := "sys"
-	sysId := uuid.New().String()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/lookup/orgs/org-name/systems/"+sys,
+	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name/systems/"+sys,
 		strings.NewReader(`{ "org":"org-name", "system":"sys", "ip":"0.0.0.0", "certificate":"certs", "port":100}`))
 
 	m := &lmocks.LookupServiceClient{}
 
-	sysReq := &pb.UpdateSystemRequest{
+	sysReq := &pb.AddSystemRequest{
 		SystemName:  sys,
 		OrgName:     "org-name",
 		Certificate: "certs",
@@ -269,9 +295,7 @@ func TestRouter_AddSystem(t *testing.T) {
 		Port:        100,
 	}
 
-	m.On("UpdateSystemForOrg", mock.Anything, sysReq).Return(&pb.UpdateSystemResponse{
-		SystemId: sysId,
-	}, nil)
+	m.On("AddSystemForOrg", mock.Anything, sysReq).Return(&pb.AddSystemResponse{}, nil)
 
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
@@ -283,13 +307,42 @@ func TestRouter_AddSystem(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusCreated, w.Code)
 	m.AssertExpectations(t)
-	assert.Contains(t, w.Body.String(), strings.ToLower(sysId))
+}
+
+func TestRouter_UpdateSystem(t *testing.T) {
+	sys := "sys"
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/v1/orgs/org-name/systems/"+sys,
+		strings.NewReader(`{ "ip":"127.0.0.1", "certificate":"updated_certs", "port":101}`))
+
+	m := &lmocks.LookupServiceClient{}
+
+	sysReq := &pb.UpdateSystemRequest{
+		SystemName:  sys,
+		OrgName:     "org-name",
+		Certificate: "updated_certs",
+		Ip:          "127.0.0.1",
+		Port:        101,
+	}
+
+	m.On("UpdateSystemForOrg", mock.Anything, sysReq).Return(&pb.UpdateSystemResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		l: client.NewLookupFromClient(m),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
 }
 
 func TestRouter_DeleteSystem(t *testing.T) {
 	sys := "sys"
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/lookup/orgs/org-name/systems/"+sys, nil)
+	req, _ := http.NewRequest("DELETE", "/v1/orgs/org-name/systems/"+sys, nil)
 
 	m := &lmocks.LookupServiceClient{}
 

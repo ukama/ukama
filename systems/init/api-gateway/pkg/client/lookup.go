@@ -55,6 +55,13 @@ func (l *Lookup) AddOrg(req *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
 	return l.client.AddOrg(ctx, req)
 }
 
+func (l *Lookup) UpdateOrg(req *pb.UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.UpdateOrg(ctx, req)
+}
+
 func (l *Lookup) GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
 	defer cancel()
@@ -81,6 +88,13 @@ func (l *Lookup) DeleteNodeForOrg(req *pb.DeleteNodeRequest) (*pb.DeleteNodeResp
 	defer cancel()
 
 	return l.client.DeleteNodeForOrg(ctx, req)
+}
+
+func (l *Lookup) AddSystemForOrg(req *pb.AddSystemRequest) (*pb.AddSystemResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
+	defer cancel()
+
+	return l.client.AddSystemForOrg(ctx, req)
 }
 
 func (l *Lookup) UpdateSystemForOrg(req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
