@@ -60,7 +60,6 @@ func (l *Lookup) GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error) {
 	defer cancel()
 
 	return l.client.GetOrg(ctx, req)
-	return nil, nil
 }
 
 func (l *Lookup) AddNodeForOrg(req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
