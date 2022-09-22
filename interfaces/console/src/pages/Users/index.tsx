@@ -231,8 +231,9 @@ const User = () => {
         });
     };
 
-    const handleSimInstallation = () => setShowInstallSim(true);
-
+    const handleSimInstallation = () => {
+        setShowInstallSim(true);
+    };
     const handleSimInstallationClose = () => {
         setShowInstallSim(false);
         setSimFlow(1);

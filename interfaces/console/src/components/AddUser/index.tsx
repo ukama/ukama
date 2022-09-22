@@ -8,12 +8,12 @@ import {
 import ESimQR from "./ESimQR";
 import Userform from "./Userform";
 import CloseIcon from "@mui/icons-material/Close";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 interface IAddUser {
     isOpen: boolean;
     isPsimAdded: boolean;
     handleClose: Function;
-    loading?: boolean;
+    loading: boolean;
     qrCodeId: any;
     addedUserName: any;
     iSeSimAdded: boolean;
@@ -50,8 +50,7 @@ const AddUser = ({
     loading = false,
     handleEsimInstallation,
 }: IAddUser) => {
-    const [selectedSimType, setSelectedSimType] = useState<any>();
-
+    const [step, setstep] = useState(1);
     const getTitle = (esimSuccess: boolean) => {
         if (esimSuccess || isPsimAdded) {
             return "Add User Succesful";
@@ -61,7 +60,45 @@ const AddUser = ({
     };
     const getSimType = (sim: any) => {
         if (!sim) return;
-        setSelectedSimType(sim);
+        // setSelectedSimType(sim);
+    };
+    useEffect(() => {
+        if (iSeSimAdded) {
+            setstep(step + 1);
+        }
+    }, [iSeSimAdded]);
+    const getAddUserComponent = (step: number) => {
+        switch (step) {
+            case 1:
+                return (
+                    <Userform
+                        getSimType={getSimType}
+                        loading={loading}
+                        handleClose={handleClose}
+                        description={getDescription(1)}
+                        handleSimInstallation={handleEsimInstallation}
+                    />
+                );
+            case 2:
+                return (
+                    <ESimQR
+                        description={getDescription(2, addedUserName)}
+                        qrCodeId={qrCodeId}
+                        handleClose={handleClose}
+                    />
+                );
+
+            default:
+                return (
+                    <Userform
+                        getSimType={getSimType}
+                        loading={loading}
+                        handleClose={handleClose}
+                        description={getDescription(1)}
+                        handleSimInstallation={handleEsimInstallation}
+                    />
+                );
+        }
     };
     return (
         <Dialog
@@ -85,20 +122,7 @@ const AddUser = ({
                 </IconButton>
             </Stack>
             <DialogContent sx={{ overflowX: "hidden" }}>
-                <Userform
-                    getSimType={getSimType}
-                    handleClose={handleClose}
-                    description={getDescription(1)}
-                    handleSimInstallation={handleEsimInstallation}
-                />
-
-                {iSeSimAdded && selectedSimType == "eSim" && (
-                    <ESimQR
-                        description={getDescription(2, addedUserName)}
-                        qrCodeId={qrCodeId}
-                        handleClose={handleClose}
-                    />
-                )}
+                {getAddUserComponent(step)}
             </DialogContent>
         </Dialog>
     );
