@@ -48,8 +48,7 @@ message UpdateOrgRequest {
     string ip = 3;
 }
 
-message UpdateOrgResponse {
-    string orgName = 1  [(validator.field) = {string_not_empty: true}];
+message UpdateOrgResponse { 
 }
 
 message GetOrgRequest {

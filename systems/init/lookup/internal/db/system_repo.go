@@ -33,16 +33,13 @@ func (s *systemRepo) Add(sys *System) error {
 }
 
 func (s *systemRepo) Update(sys *System) error {
-	d := s.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "lower(name::text)", Raw: true}},
-		DoUpdates: clause.AssignmentColumns([]string{"certificate", "ip", "port", "deleted_at"}),
-	}).Updates(sys)
+	d := s.Db.GetGormDb().Where(&System{Name: sys.Name}).Updates(sys)
 	return d.Error
 }
 
 func (s *systemRepo) Delete(sys string) error {
 	var system System
-	result := s.Db.GetGormDb().Preload(clause.Associations).Delete(&system, "name = ?", strings.ToLower(sys))
+	result := s.Db.GetGormDb().Preload(clause.Associations).Unscoped().Delete(&system, "name = ?", strings.ToLower(sys))
 	if result.Error != nil {
 		return result.Error
 	}

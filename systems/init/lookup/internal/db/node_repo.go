@@ -25,7 +25,7 @@ func NewNodeRepo(db sql.Db) *nodeRepo {
 func (r *nodeRepo) AddOrUpdate(node *Node) error {
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "lower(node_id::text)", Raw: true}},
-		DoUpdates: clause.AssignmentColumns([]string{"org_id", "deleted_at"}),
+		DoUpdates: clause.AssignmentColumns([]string{"org_id"}),
 	}).Create(node)
 	return d.Error
 }
@@ -41,7 +41,7 @@ func (r *nodeRepo) Get(nodeId ukama.NodeID) (*Node, error) {
 
 func (r *nodeRepo) Delete(nodeId ukama.NodeID) error {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).Delete(&node, "node_id = ?", nodeId.StringLowercase())
+	result := r.Db.GetGormDb().Unscoped().Preload(clause.Associations).Delete(&node, "node_id = ?", nodeId.StringLowercase())
 	if result.Error != nil {
 		return result.Error
 	}

@@ -31,11 +31,7 @@ func (r *orgRepo) Add(org *Org) error {
 }
 
 func (r *orgRepo) Update(org *Org) error {
-	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "name"}},
-		DoUpdates: clause.AssignmentColumns([]string{"certificate", "ip"}),
-	}).Updates(org)
-
+	d := r.Db.GetGormDb().Where(&Org{Name: org.Name}).Updates(org)
 	return d.Error
 }
 
