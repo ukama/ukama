@@ -8,7 +8,8 @@ import (
 )
 
 type SystemRepo interface {
-	AddOrUpdate(sys *System) error
+	Add(sys *System) error
+	Update(sys *System) error
 	Delete(sys string) error
 	GetByName(sys string) (*System, error)
 }
@@ -23,11 +24,19 @@ func NewSystemRepo(db sql.Db) *systemRepo {
 	}
 }
 
-func (s *systemRepo) AddOrUpdate(sys *System) error {
+func (s *systemRepo) Add(sys *System) error {
 	d := s.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "lower(name::text)", Raw: true}},
-		DoUpdates: clause.AssignmentColumns([]string{"uuid", "certificate", "ip", "port", "org_id", "deleted_at"}),
+		DoNothing: true,
 	}).Create(sys)
+	return d.Error
+}
+
+func (s *systemRepo) Update(sys *System) error {
+	d := s.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "lower(name::text)", Raw: true}},
+		DoUpdates: clause.AssignmentColumns([]string{"certificate", "ip", "port", "deleted_at"}),
+	}).Updates(sys)
 	return d.Error
 }
 

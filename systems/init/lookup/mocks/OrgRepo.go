@@ -12,6 +12,20 @@ type OrgRepo struct {
 	mock.Mock
 }
 
+// Add provides a mock function with given fields: org
+func (_m *OrgRepo) Add(org *db.Org) error {
+	ret := _m.Called(org)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Org) error); ok {
+		r0 = rf(org)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetByName provides a mock function with given fields: name
 func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
 	ret := _m.Called(name)
@@ -35,8 +49,8 @@ func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
 	return r0, r1
 }
 
-// Upsert provides a mock function with given fields: org
-func (_m *OrgRepo) Upsert(org *db.Org) error {
+// Update provides a mock function with given fields: org
+func (_m *OrgRepo) Update(org *db.Org) error {
 	ret := _m.Called(org)
 
 	var r0 error

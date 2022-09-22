@@ -117,7 +117,7 @@ func Test_systemRepo_Delete(t *testing.T) {
 
 func Test_systemRepo_Add(t *testing.T) {
 
-	t.Run("AddSystem", func(t *testing.T) {
+	t.Run("Add", func(t *testing.T) {
 		// Arrange
 		const ip = "0.0.0.0"
 		const orgId = uint(15)
@@ -164,7 +164,7 @@ func Test_systemRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.AddOrUpdate(&system)
+		err = r.Add(&system)
 
 		// Assert
 		assert.NoError(t, err)

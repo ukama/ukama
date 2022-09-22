@@ -115,7 +115,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("AddSystem", func(t *testing.T) {
-		r, err := c.UpdateSystemForOrg(ctx, &pb.UpdateSystemRequest{
+		_, err := c.AddSystemForOrg(ctx, &pb.AddSystemRequest{
 			SystemName:  sysName,
 			OrgName:     orgName,
 			Certificate: certs,
@@ -123,8 +123,16 @@ func Test_FullFlow(t *testing.T) {
 			Port:        100,
 		})
 		assert.NoError(t, err)
+	})
 
-		_, err = uuid.Parse(r.SystemId)
+	t.Run("UpdateSystem", func(t *testing.T) {
+		_, err := c.UpdateSystemForOrg(ctx, &pb.UpdateSystemRequest{
+			SystemName:  sysName,
+			OrgName:     orgName,
+			Certificate: certs,
+			Ip:          "127.0.0.2",
+			Port:        101,
+		})
 		assert.NoError(t, err)
 	})
 

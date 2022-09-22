@@ -34,6 +34,7 @@ type LookupServiceClient interface {
 	DeleteNodeForOrg(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
 	// System
 	GetSystemForOrg(ctx context.Context, in *GetSystemRequest, opts ...grpc.CallOption) (*GetSystemResponse, error)
+	AddSystemForOrg(ctx context.Context, in *AddSystemRequest, opts ...grpc.CallOption) (*AddSystemResponse, error)
 	UpdateSystemForOrg(ctx context.Context, in *UpdateSystemRequest, opts ...grpc.CallOption) (*UpdateSystemResponse, error)
 	DeleteSystemForOrg(ctx context.Context, in *DeleteSystemRequest, opts ...grpc.CallOption) (*DeleteSystemResponse, error)
 }
@@ -118,6 +119,15 @@ func (c *lookupServiceClient) GetSystemForOrg(ctx context.Context, in *GetSystem
 	return out, nil
 }
 
+func (c *lookupServiceClient) AddSystemForOrg(ctx context.Context, in *AddSystemRequest, opts ...grpc.CallOption) (*AddSystemResponse, error) {
+	out := new(AddSystemResponse)
+	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.LookupService/AddSystemForOrg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *lookupServiceClient) UpdateSystemForOrg(ctx context.Context, in *UpdateSystemRequest, opts ...grpc.CallOption) (*UpdateSystemResponse, error) {
 	out := new(UpdateSystemResponse)
 	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.LookupService/UpdateSystemForOrg", in, out, opts...)
@@ -152,6 +162,7 @@ type LookupServiceServer interface {
 	DeleteNodeForOrg(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
 	// System
 	GetSystemForOrg(context.Context, *GetSystemRequest) (*GetSystemResponse, error)
+	AddSystemForOrg(context.Context, *AddSystemRequest) (*AddSystemResponse, error)
 	UpdateSystemForOrg(context.Context, *UpdateSystemRequest) (*UpdateSystemResponse, error)
 	DeleteSystemForOrg(context.Context, *DeleteSystemRequest) (*DeleteSystemResponse, error)
 	mustEmbedUnimplementedLookupServiceServer()
@@ -184,6 +195,9 @@ func (UnimplementedLookupServiceServer) DeleteNodeForOrg(context.Context, *Delet
 }
 func (UnimplementedLookupServiceServer) GetSystemForOrg(context.Context, *GetSystemRequest) (*GetSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSystemForOrg not implemented")
+}
+func (UnimplementedLookupServiceServer) AddSystemForOrg(context.Context, *AddSystemRequest) (*AddSystemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddSystemForOrg not implemented")
 }
 func (UnimplementedLookupServiceServer) UpdateSystemForOrg(context.Context, *UpdateSystemRequest) (*UpdateSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSystemForOrg not implemented")
@@ -348,6 +362,24 @@ func _LookupService_GetSystemForOrg_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LookupService_AddSystemForOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddSystemRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LookupServiceServer).AddSystemForOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.lookup.v1.LookupService/AddSystemForOrg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LookupServiceServer).AddSystemForOrg(ctx, req.(*AddSystemRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LookupService_UpdateSystemForOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateSystemRequest)
 	if err := dec(in); err != nil {
@@ -422,6 +454,10 @@ var LookupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSystemForOrg",
 			Handler:    _LookupService_GetSystemForOrg_Handler,
+		},
+		{
+			MethodName: "AddSystemForOrg",
+			Handler:    _LookupService_AddSystemForOrg_Handler,
 		},
 		{
 			MethodName: "UpdateSystemForOrg",

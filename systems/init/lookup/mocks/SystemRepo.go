@@ -12,8 +12,8 @@ type SystemRepo struct {
 	mock.Mock
 }
 
-// AddOrUpdate provides a mock function with given fields: sys
-func (_m *SystemRepo) AddOrUpdate(sys *db.System) error {
+// Add provides a mock function with given fields: sys
+func (_m *SystemRepo) Add(sys *db.System) error {
 	ret := _m.Called(sys)
 
 	var r0 error
@@ -61,6 +61,20 @@ func (_m *SystemRepo) GetByName(sys string) (*db.System, error) {
 	}
 
 	return r0, r1
+}
+
+// Update provides a mock function with given fields: sys
+func (_m *SystemRepo) Update(sys *db.System) error {
+	ret := _m.Called(sys)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.System) error); ok {
+		r0 = rf(sys)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 type mockConstructorTestingTNewSystemRepo interface {

@@ -76,6 +76,36 @@ func (_m *LookupServiceClient) AddOrg(ctx context.Context, in *gen.AddOrgRequest
 	return r0, r1
 }
 
+// AddSystemForOrg provides a mock function with given fields: ctx, in, opts
+func (_m *LookupServiceClient) AddSystemForOrg(ctx context.Context, in *gen.AddSystemRequest, opts ...grpc.CallOption) (*gen.AddSystemResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.AddSystemResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddSystemRequest, ...grpc.CallOption) *gen.AddSystemResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddSystemResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddSystemRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteNodeForOrg provides a mock function with given fields: ctx, in, opts
 func (_m *LookupServiceClient) DeleteNodeForOrg(ctx context.Context, in *gen.DeleteNodeRequest, opts ...grpc.CallOption) (*gen.DeleteNodeResponse, error) {
 	_va := make([]interface{}, len(opts))

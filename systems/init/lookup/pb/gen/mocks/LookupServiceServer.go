@@ -60,6 +60,29 @@ func (_m *LookupServiceServer) AddOrg(_a0 context.Context, _a1 *gen.AddOrgReques
 	return r0, r1
 }
 
+// AddSystemForOrg provides a mock function with given fields: _a0, _a1
+func (_m *LookupServiceServer) AddSystemForOrg(_a0 context.Context, _a1 *gen.AddSystemRequest) (*gen.AddSystemResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.AddSystemResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddSystemRequest) *gen.AddSystemResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddSystemResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddSystemRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteNodeForOrg provides a mock function with given fields: _a0, _a1
 func (_m *LookupServiceServer) DeleteNodeForOrg(_a0 context.Context, _a1 *gen.DeleteNodeRequest) (*gen.DeleteNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)

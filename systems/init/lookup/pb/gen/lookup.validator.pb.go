@@ -106,6 +106,24 @@ func (this *GetSystemRequest) Validate() error {
 func (this *GetSystemResponse) Validate() error {
 	return nil
 }
+func (this *AddSystemRequest) Validate() error {
+	if this.SystemName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SystemName", fmt.Errorf(`value '%v' must not be an empty string`, this.SystemName))
+	}
+	if this.OrgName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+	}
+	if this.Certificate == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Certificate", fmt.Errorf(`value '%v' must not be an empty string`, this.Certificate))
+	}
+	if this.Ip == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Ip", fmt.Errorf(`value '%v' must not be an empty string`, this.Ip))
+	}
+	return nil
+}
+func (this *AddSystemResponse) Validate() error {
+	return nil
+}
 func (this *UpdateSystemRequest) Validate() error {
 	if this.SystemName == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SystemName", fmt.Errorf(`value '%v' must not be an empty string`, this.SystemName))

@@ -6,7 +6,8 @@ import (
 )
 
 type OrgRepo interface {
-	Upsert(org *Org) error
+	Add(org *Org) error
+	Update(org *Org) error
 	GetByName(name string) (*Org, error)
 }
 
@@ -20,11 +21,20 @@ func NewOrgRepo(db sql.Db) *orgRepo {
 	}
 }
 
-func (r *orgRepo) Upsert(org *Org) error {
+func (r *orgRepo) Add(org *Org) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "name"}},
+		DoNothing: true,
+	}).Create(org)
+
+	return d.Error
+}
+
+func (r *orgRepo) Update(org *Org) error {
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "name"}},
 		DoUpdates: clause.AssignmentColumns([]string{"certificate", "ip"}),
-	}).Create(org)
+	}).Updates(org)
 
 	return d.Error
 }
