@@ -1,5 +1,5 @@
 import "../../i18n/i18n";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import withOnBoardingFlowWrapperHOC from "../withOnBoardingFlowWrapperHOC";
 import { NetworkSetup } from "../../components";
 import Userform from "../../components/AddUser/Userform";
@@ -14,6 +14,7 @@ interface IOnBoardingFlow {
     simAdded: boolean;
     currentUser: any;
     handleSkip: Function;
+    loading: boolean;
 }
 
 const OnBoardingFlow = ({
@@ -24,6 +25,7 @@ const OnBoardingFlow = ({
     name,
     handleSkip,
     currentUser,
+    loading = false,
     simAdded = false,
 }: IOnBoardingFlow) => {
     const [step, setstep] = useState(1);
@@ -37,13 +39,14 @@ const OnBoardingFlow = ({
         setstep(step - 1);
     };
     const handleSimData = (data: any) => {
-        if (simAdded) {
-            setstep(step + 1);
-        }
-
         handleEsimInstallation(data);
     };
 
+    useEffect(() => {
+        if (simAdded) {
+            setstep(step + 1);
+        }
+    }, [simAdded]);
     switch (step) {
         case 1:
             return (
@@ -60,6 +63,7 @@ const OnBoardingFlow = ({
                     currentUser={currentUser}
                     handleSkip={handleSkip}
                     handleGoBack={prevStep}
+                    loading={loading}
                     description={
                         "Start accessing high quality and fast data now. You’ll be able to add more users to the network later."
                     }

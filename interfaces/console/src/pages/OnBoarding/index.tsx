@@ -36,7 +36,7 @@ const OnBoarding = () => {
             }
         },
     });
-    const [addUser] = useAddUserMutation({
+    const [addUser, { loading: addUserloading }] = useAddUserMutation({
         onCompleted: res => {
             setUserData(res?.addUser);
             setSimAdded(true);
@@ -94,13 +94,12 @@ const OnBoarding = () => {
 
     return (
         <>
-            {loading ||
-                (getUser.has_logged_once == undefined && (
-                    <CenterContainer>
-                        <CircularProgress />
-                    </CenterContainer>
-                ))}
-            {getUser.has_logged_once == true && (
+            {loading && (
+                <CenterContainer>
+                    <CircularProgress />
+                </CenterContainer>
+            )}
+            {!loading && getUser.has_logged_once == true && (
                 <OnBoardingFlow
                     handleEsimInstallation={handleEsimInstallation}
                     handleNetworkSetup={handleNetworkSetup}
@@ -110,6 +109,7 @@ const OnBoarding = () => {
                     simAdded={simAdded}
                     currentUser={getUser}
                     handleSkip={handleSkip}
+                    loading={addUserloading}
                 />
             )}
         </>

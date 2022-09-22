@@ -8,6 +8,7 @@ import {
     Paper,
     Button,
     Typography,
+    CircularProgress,
 } from "@mui/material";
 import * as Yup from "yup";
 import { Formik } from "formik";
@@ -32,6 +33,7 @@ interface IUserform {
     title?: string;
     isAddUser?: boolean;
     currentUser?: IUser | null;
+    loading?: boolean;
 }
 const eSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
 
@@ -47,6 +49,7 @@ const Userform = ({
     handleSimInstallation,
     title,
     getSimType,
+    loading = false,
 }: IUserform) => {
     const gclasses = globalUseStyles();
     const [status, setStatus] = useState<boolean>(true);
@@ -266,8 +269,26 @@ const Userform = ({
                                         {!isAddUser ? "SKIP" : " CANCEL"}
                                     </Button>
 
-                                    <Button variant="contained" type="submit">
-                                        NEXT
+                                    <Button
+                                        variant="contained"
+                                        type="submit"
+                                        disabled={loading}
+                                        sx={{
+                                            disabled: {
+                                                color: colors.primaryLight,
+                                            },
+                                        }}
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <CircularProgress size={14} />
+                                                <Typography variant="body1">
+                                                    NEXT
+                                                </Typography>
+                                            </>
+                                        ) : (
+                                            "NEXT"
+                                        )}
                                     </Button>
                                 </Stack>
                             </Stack>
