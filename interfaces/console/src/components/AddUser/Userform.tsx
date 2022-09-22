@@ -250,6 +250,7 @@ const Userform = ({
                             >
                                 {!isAddUser && (
                                     <Button
+                                        disabled={loading}
                                         sx={{ mr: 2, justifyItems: "center" }}
                                         onClick={handleGoBack}
                                     >
@@ -260,6 +261,7 @@ const Userform = ({
                                 <Stack direction="row" spacing={3}>
                                     <Button
                                         variant="text"
+                                        disabled={loading}
                                         onClick={
                                             !isAddUser
                                                 ? handleSkip
