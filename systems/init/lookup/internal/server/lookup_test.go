@@ -146,11 +146,44 @@ func TestLookupServer_GetNode(t *testing.T) {
 		OrgID:  org.ID,
 	}
 
+	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
+
+	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient)
+	resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: nodeStr})
+
+	assert.NoError(t, err)
+	assert.Equal(t, nodeStr, resp.NodeId)
+	orgRepo.AssertExpectations(t)
+}
+
+func TestLookupServer_GetNodeForOrg(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	nodeRepo := &mocks.NodeRepo{}
+	msgbusClient := &mb.MsgBusClient{}
+
+	nodeStr := testNodeId.StringLowercase()
+
+	var orgIp pgtype.Inet
+	const ip = "0.0.0.0"
+	err := orgIp.Set(ip)
+	assert.NoError(t, err)
+
+	org := &db.Org{
+		Name:        "ukama",
+		Certificate: "ukama_certs",
+		Ip:          orgIp,
+	}
+
+	node := &db.Node{
+		NodeID: nodeStr,
+		OrgID:  org.ID,
+	}
+
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
 
 	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient)
-	resp, err := s.GetNodeForOrg(context.TODO(), &pb.GetNodeRequest{NodeId: nodeStr, OrgName: "ukama"})
+	resp, err := s.GetNodeForOrg(context.TODO(), &pb.GetNodeForOrgRequest{NodeId: nodeStr, OrgName: "ukama"})
 
 	assert.NoError(t, err)
 	assert.Equal(t, nodeStr, resp.NodeId)

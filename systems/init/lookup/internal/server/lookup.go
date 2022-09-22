@@ -155,8 +155,28 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 	return &pb.AddNodeResponse{}, nil
 }
 
-func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
-	logrus.Infof("Updating node %s for org  %s", req.GetNodeId(), req.GetOrgName())
+func (l *LookupServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
+	logrus.Infof("Get node %s.", req.GetNodeId())
+
+	nodeId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, invalidNodeIdError(req.NodeId, err)
+	}
+
+	node, err := l.nodeRepo.Get(nodeId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	return &pb.GetNodeResponse{
+		NodeId:      node.NodeID,
+		OrgName:     node.Org.Name,
+		Certificate: node.Org.Certificate,
+	}, nil
+}
+
+func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeForOrgRequest) (*pb.GetNodeResponse, error) {
+	logrus.Infof("Get node %s for org %s.", req.GetNodeId(), req.GetOrgName())
 
 	_, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
@@ -170,7 +190,7 @@ func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeRequest
 
 	node, err := l.nodeRepo.Get(nodeId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org")
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
 	return &pb.GetNodeResponse{
@@ -216,7 +236,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 
 	system, err := l.systemRepo.GetByName(req.GetSystemName())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org")
+		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
 
 	return &pb.GetSystemResponse{

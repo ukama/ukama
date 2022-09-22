@@ -64,7 +64,7 @@ func (this *AddNodeRequest) Validate() error {
 func (this *AddNodeResponse) Validate() error {
 	return nil
 }
-func (this *GetNodeRequest) Validate() error {
+func (this *GetNodeForOrgRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
@@ -74,6 +74,12 @@ func (this *GetNodeRequest) Validate() error {
 	return nil
 }
 func (this *GetNodeResponse) Validate() error {
+	return nil
+}
+func (this *GetNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *DeleteNodeRequest) Validate() error {

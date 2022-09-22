@@ -106,8 +106,8 @@ func (_m *LookupServiceServer) DeleteSystemForOrg(_a0 context.Context, _a1 *gen.
 	return r0, r1
 }
 
-// GetNodeForOrg provides a mock function with given fields: _a0, _a1
-func (_m *LookupServiceServer) GetNodeForOrg(_a0 context.Context, _a1 *gen.GetNodeRequest) (*gen.GetNodeResponse, error) {
+// GetNode provides a mock function with given fields: _a0, _a1
+func (_m *LookupServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeRequest) (*gen.GetNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *gen.GetNodeResponse
@@ -121,6 +121,29 @@ func (_m *LookupServiceServer) GetNodeForOrg(_a0 context.Context, _a1 *gen.GetNo
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetNodeForOrg provides a mock function with given fields: _a0, _a1
+func (_m *LookupServiceServer) GetNodeForOrg(_a0 context.Context, _a1 *gen.GetNodeForOrgRequest) (*gen.GetNodeResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetNodeResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeForOrgRequest) *gen.GetNodeResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetNodeResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeForOrgRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

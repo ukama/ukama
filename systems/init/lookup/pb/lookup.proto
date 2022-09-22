@@ -14,8 +14,13 @@ service LookupService {
     rpc GetOrg(GetOrgRequest) returns (GetOrgResponse);
     
     /* Nodes */
+
+    /* For Node bootstarping */
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+
+    /* For other systems and debigging purpose */
     rpc AddNodeForOrg(AddNodeRequest) returns (AddNodeResponse);
-    rpc GetNodeForOrg(GetNodeRequest) returns (GetNodeResponse);
+    rpc GetNodeForOrg(GetNodeForOrgRequest) returns (GetNodeResponse);
     rpc DeleteNodeForOrg(DeleteNodeRequest) returns (DeleteNodeResponse);
 
     /* System */
@@ -66,7 +71,7 @@ message AddNodeResponse {
 
 }
 
-message GetNodeRequest{
+message GetNodeForOrgRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}];
     string orgName = 2 [(validator.field) = {string_not_empty: true}];
 }
@@ -76,6 +81,10 @@ message GetNodeResponse {
     string orgName = 2;
     string certificate = 3;
     string ip = 4;  
+}
+
+message GetNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
 }
 
 message DeleteNodeRequest{

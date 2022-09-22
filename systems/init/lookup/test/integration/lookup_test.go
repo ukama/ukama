@@ -85,10 +85,20 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("GetNode", func(t *testing.T) {
-		r, err := c.GetNodeForOrg(ctx, &pb.GetNodeRequest{
+	t.Run("GetNodeForOrg", func(t *testing.T) {
+		r, err := c.GetNodeForOrg(ctx, &pb.GetNodeForOrgRequest{
 			NodeId:  testNodeId.String(),
 			OrgName: orgName,
+		})
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, testNodeId.StringLowercase(), r.NodeId)
+		}
+	})
+
+	t.Run("GetNode", func(t *testing.T) {
+		r, err := c.GetNode(ctx, &pb.GetNodeRequest{
+			NodeId: testNodeId.String(),
 		})
 
 		if assert.NoError(t, err) {

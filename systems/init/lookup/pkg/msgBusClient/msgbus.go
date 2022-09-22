@@ -6,7 +6,6 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/sirupsen/logrus"
 
@@ -81,18 +80,18 @@ func (m *MsgBusClient) Init() error {
 // TODO: Check if we require specific function for each Message type.
 func (m *MsgBusClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	// defer cancel()
 
-	anyMsg, err := anypb.New(msg)
-	if err != nil {
-		return err
-	}
+	// anyMsg, err := anypb.New(msg)
+	// if err != nil {
+	// 	return err
+	// }
 
-	_, err = m.client.PusblishMsg(ctx, &pb.PublishMsgRequest{RoutingKey: route, Msg: anyMsg})
-	if err != nil {
-		return err
-	}
+	// _, err = m.client.PusblishMsg(ctx, &pb.PublishMsgRequest{RoutingKey: route, Msg: anyMsg})
+	// if err != nil {
+	// 	return err
+	// }
 	logrus.Debugf("Published:\n Message: %v  \n Key: %s \n ", msg, route)
 	return nil
 

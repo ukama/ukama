@@ -26,9 +26,11 @@ type LookupServiceClient interface {
 	AddOrg(ctx context.Context, in *AddOrgRequest, opts ...grpc.CallOption) (*AddOrgResponse, error)
 	UpdateOrg(ctx context.Context, in *UpdateOrgRequest, opts ...grpc.CallOption) (*UpdateOrgResponse, error)
 	GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*GetOrgResponse, error)
-	// Nodes
+	// For Node bootstarping
+	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
+	// For other systems and debigging purpose
 	AddNodeForOrg(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
-	GetNodeForOrg(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
+	GetNodeForOrg(ctx context.Context, in *GetNodeForOrgRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
 	DeleteNodeForOrg(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
 	// System
 	GetSystemForOrg(ctx context.Context, in *GetSystemRequest, opts ...grpc.CallOption) (*GetSystemResponse, error)
@@ -71,6 +73,15 @@ func (c *lookupServiceClient) GetOrg(ctx context.Context, in *GetOrgRequest, opt
 	return out, nil
 }
 
+func (c *lookupServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
+	out := new(GetNodeResponse)
+	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.LookupService/GetNode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *lookupServiceClient) AddNodeForOrg(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error) {
 	out := new(AddNodeResponse)
 	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.LookupService/AddNodeForOrg", in, out, opts...)
@@ -80,7 +91,7 @@ func (c *lookupServiceClient) AddNodeForOrg(ctx context.Context, in *AddNodeRequ
 	return out, nil
 }
 
-func (c *lookupServiceClient) GetNodeForOrg(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
+func (c *lookupServiceClient) GetNodeForOrg(ctx context.Context, in *GetNodeForOrgRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
 	out := new(GetNodeResponse)
 	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.LookupService/GetNodeForOrg", in, out, opts...)
 	if err != nil {
@@ -133,9 +144,11 @@ type LookupServiceServer interface {
 	AddOrg(context.Context, *AddOrgRequest) (*AddOrgResponse, error)
 	UpdateOrg(context.Context, *UpdateOrgRequest) (*UpdateOrgResponse, error)
 	GetOrg(context.Context, *GetOrgRequest) (*GetOrgResponse, error)
-	// Nodes
+	// For Node bootstarping
+	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
+	// For other systems and debigging purpose
 	AddNodeForOrg(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
-	GetNodeForOrg(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
+	GetNodeForOrg(context.Context, *GetNodeForOrgRequest) (*GetNodeResponse, error)
 	DeleteNodeForOrg(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
 	// System
 	GetSystemForOrg(context.Context, *GetSystemRequest) (*GetSystemResponse, error)
@@ -157,10 +170,13 @@ func (UnimplementedLookupServiceServer) UpdateOrg(context.Context, *UpdateOrgReq
 func (UnimplementedLookupServiceServer) GetOrg(context.Context, *GetOrgRequest) (*GetOrgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrg not implemented")
 }
+func (UnimplementedLookupServiceServer) GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNode not implemented")
+}
 func (UnimplementedLookupServiceServer) AddNodeForOrg(context.Context, *AddNodeRequest) (*AddNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddNodeForOrg not implemented")
 }
-func (UnimplementedLookupServiceServer) GetNodeForOrg(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
+func (UnimplementedLookupServiceServer) GetNodeForOrg(context.Context, *GetNodeForOrgRequest) (*GetNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodeForOrg not implemented")
 }
 func (UnimplementedLookupServiceServer) DeleteNodeForOrg(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error) {
@@ -242,6 +258,24 @@ func _LookupService_GetOrg_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LookupService_GetNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LookupServiceServer).GetNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.lookup.v1.LookupService/GetNode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LookupServiceServer).GetNode(ctx, req.(*GetNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LookupService_AddNodeForOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddNodeRequest)
 	if err := dec(in); err != nil {
@@ -261,7 +295,7 @@ func _LookupService_AddNodeForOrg_Handler(srv interface{}, ctx context.Context, 
 }
 
 func _LookupService_GetNodeForOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNodeRequest)
+	in := new(GetNodeForOrgRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -273,7 +307,7 @@ func _LookupService_GetNodeForOrg_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: "/ukama.lookup.v1.LookupService/GetNodeForOrg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LookupServiceServer).GetNodeForOrg(ctx, req.(*GetNodeRequest))
+		return srv.(LookupServiceServer).GetNodeForOrg(ctx, req.(*GetNodeForOrgRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -368,6 +402,10 @@ var LookupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrg",
 			Handler:    _LookupService_GetOrg_Handler,
+		},
+		{
+			MethodName: "GetNode",
+			Handler:    _LookupService_GetNode_Handler,
 		},
 		{
 			MethodName: "AddNodeForOrg",
