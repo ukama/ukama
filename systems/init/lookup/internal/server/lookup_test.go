@@ -32,7 +32,7 @@ func TestLookupServer_AddOrg(t *testing.T) {
 		Ip:          orgIp,
 	}
 
-	orgRepo.On("Upsert", org).Return(nil).Once()
+	orgRepo.On("Add", org).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, nil, msgbusClient)
 	_, err = s.AddOrg(context.TODO(), &pb.AddOrgRequest{OrgName: "ukama", Certificate: "ukama_certs", Ip: "0.0.0.0"})
@@ -56,7 +56,7 @@ func TestLookupServer_UpdateOrg(t *testing.T) {
 		Ip:          orgIp,
 	}
 
-	orgRepo.On("Upsert", org).Return(nil).Once()
+	orgRepo.On("Update", org).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, nil, msgbusClient)
 	_, err = s.UpdateOrg(context.TODO(), &pb.UpdateOrgRequest{OrgName: "ukama", Certificate: "ukama_certs", Ip: "0.0.0.0"})
@@ -272,15 +272,13 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 
 	system := &db.System{
 		Name:        "sys",
-		Uuid:        uuid.New().String(),
 		Certificate: "ukama_certs",
 		Ip:          orgIp,
 		Port:        100,
 	}
 
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	systemRepo.On("GetByName", system.Name).Return(system, nil).Once()
-	systemRepo.On("AddOrUpdate", system).Return(nil).Once()
+	systemRepo.On("Update", system).Return(nil).Once()
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient)
 	_, err = s.UpdateSystemForOrg(context.TODO(), &pb.UpdateSystemRequest{SystemName: system.Name, OrgName: "ukama", Certificate: "ukama_certs", Ip: ip, Port: 100})
 
