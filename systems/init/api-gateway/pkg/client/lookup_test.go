@@ -157,7 +157,7 @@ func TestLookupClient_AddNodeForOrg(t *testing.T) {
 func TestLookupClient_GetNodeForOrg(t *testing.T) {
 	lc := &mocks.LookupServiceClient{}
 	nodeId := ukama.NewVirtualNodeId("homenode").String()
-	nodeReq := &pb.GetNodeRequest{
+	nodeReq := &pb.GetNodeForOrgRequest{
 		OrgName: org,
 		NodeId:  nodeId,
 	}

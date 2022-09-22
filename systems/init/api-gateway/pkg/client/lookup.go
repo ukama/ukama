@@ -69,7 +69,7 @@ func (l *Lookup) AddNodeForOrg(req *pb.AddNodeRequest) (*pb.AddNodeResponse, err
 	return l.client.AddNodeForOrg(ctx, req)
 }
 
-func (l *Lookup) GetNodeForOrg(req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
+func (l *Lookup) GetNodeForOrg(req *pb.GetNodeForOrgRequest) (*pb.GetNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
 	defer cancel()
 

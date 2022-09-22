@@ -139,7 +139,7 @@ func TestRouter_GetNode(t *testing.T) {
 
 	m := &lmocks.LookupServiceClient{}
 
-	nodeReq := &pb.GetNodeRequest{
+	nodeReq := &pb.GetNodeForOrgRequest{
 		OrgName: "org-name",
 		NodeId:  nodeId,
 	}

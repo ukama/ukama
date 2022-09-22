@@ -41,7 +41,7 @@ type lookup interface {
 	AddOrg(req *pb.AddOrgRequest) (*pb.AddOrgResponse, error)
 	GetOrg(req *pb.GetOrgRequest) (*pb.GetOrgResponse, error)
 	AddNodeForOrg(req *pb.AddNodeRequest) (*pb.AddNodeResponse, error)
-	GetNodeForOrg(req *pb.GetNodeRequest) (*pb.GetNodeResponse, error)
+	GetNodeForOrg(req *pb.GetNodeForOrgRequest) (*pb.GetNodeResponse, error)
 	DeleteNodeForOrg(req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error)
 	UpdateSystemForOrg(req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error)
 	GetSystemForOrg(req *pb.GetSystemRequest) (*pb.GetSystemResponse, error)
@@ -146,7 +146,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNod
 	org := c.Param("org")
 	node := c.Param("node")
 
-	return r.clients.l.GetNodeForOrg(&pb.GetNodeRequest{
+	return r.clients.l.GetNodeForOrg(&pb.GetNodeForOrgRequest{
 		OrgName: org,
 		NodeId:  node,
 	})
