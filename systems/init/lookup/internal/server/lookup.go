@@ -238,6 +238,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 
 	return &pb.GetSystemResponse{
 		SystemName:  system.Name,
+		SystemId:    system.Uuid,
 		Certificate: system.Certificate,
 		Ip:          system.Ip.IPNet.IP.String(),
 		Port:        system.Port,

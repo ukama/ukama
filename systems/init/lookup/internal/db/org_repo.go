@@ -2,7 +2,6 @@ package db
 
 import (
 	"github.com/ukama/ukama/services/common/sql"
-	"gorm.io/gorm/clause"
 )
 
 type OrgRepo interface {
@@ -22,10 +21,8 @@ func NewOrgRepo(db sql.Db) *orgRepo {
 }
 
 func (r *orgRepo) Add(org *Org) error {
-	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "name"}},
-		DoNothing: true,
-	}).Create(org)
+
+	d := r.Db.GetGormDb().Create(org)
 
 	return d.Error
 }

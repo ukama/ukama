@@ -25,10 +25,7 @@ func NewSystemRepo(db sql.Db) *systemRepo {
 }
 
 func (s *systemRepo) Add(sys *System) error {
-	d := s.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "lower(name::text)", Raw: true}},
-		DoNothing: true,
-	}).Create(sys)
+	d := s.Db.GetGormDb().Create(sys)
 	return d.Error
 }
 

@@ -103,11 +103,10 @@ message GetSystemRequest{
 
 message GetSystemResponse {
     string systemName = 1;
-    string orgName = 2;
-    string systemId = 3;
-    string certificate = 4;
-    string ip = 5;
-    int32 port = 6;
+    string systemId = 2;
+    string certificate = 3;
+    string ip = 4;
+    int32 port = 5;
 }
 
 message AddSystemRequest{

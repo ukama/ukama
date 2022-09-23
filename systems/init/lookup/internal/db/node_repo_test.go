@@ -110,7 +110,7 @@ func Test_nodeRepo_Delete(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg(), id).
+		mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(id).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
