@@ -80,6 +80,9 @@ type ServiceApiIf struct {
 	F    Forward `json:"forward"`
 }
 
+/*
+Messaging systems URI
+*/
 type Queue struct {
 	Uri string `default:"amqp://guest:guest@localhost:5672"` // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
 }
@@ -96,6 +99,16 @@ type Grpc struct {
 type GrpcService struct {
 	Host    string        `default:"localhost:9090"`
 	Timeout time.Duration `default:"3s"`
+}
+
+/*
+Message Client for a system which talks to MsgBus
+*/
+type MsgClient struct {
+	Host          string        `default:"localhost:9091"`
+	Timeout       time.Duration `default:"3s"`
+	RetryCount    int8          `default:"3"`
+	ListnerRoutes []string
 }
 
 type Metrics struct {
@@ -166,7 +179,6 @@ func DefaultDatabaseName(name string) Database {
 		SslEnabled: false,
 	}
 }
-
 
 func DefaultForwardConfig() Forward {
 	return Forward{

@@ -1,6 +1,9 @@
 package msgbus
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	TYPE_EVENT         = "event"
@@ -14,6 +17,14 @@ const (
 )
 
 type RoutingKey string
+
+func (k RoutingKey) String() string {
+	return string(k)
+}
+
+func (k RoutingKey) StringLowercase() string {
+	return strings.ToLower(k.String())
+}
 
 /*
  * AMQP Routing key:
