@@ -134,6 +134,7 @@ func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pb.AddOrgRe
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 	})
+
 }
 
 func (r *Router) patchOrgHandler(c *gin.Context, req *UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
@@ -187,6 +188,7 @@ func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.Ad
 		Ip:          req.Ip,
 		Port:        req.Port,
 	})
+
 }
 
 func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {

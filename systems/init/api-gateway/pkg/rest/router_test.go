@@ -259,7 +259,6 @@ func TestRouter_GetSystem(t *testing.T) {
 	m.On("GetSystemForOrg", mock.Anything, sysReq).Return(&pb.GetSystemResponse{
 		SystemName:  sys,
 		SystemId:    sysId,
-		OrgName:     "org-name",
 		Certificate: "helloOrg",
 		Ip:          "0.0.0.0",
 		Port:        100,

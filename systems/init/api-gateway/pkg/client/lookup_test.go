@@ -126,7 +126,6 @@ func TestLookupClient_GetSystemForOrg(t *testing.T) {
 	sysResp := &pb.GetSystemResponse{
 		SystemName:  sys,
 		SystemId:    sysId,
-		OrgName:     "org-name",
 		Certificate: "certs",
 		Ip:          "0.0.0.0",
 		Port:        100,
