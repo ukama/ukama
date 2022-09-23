@@ -23,7 +23,6 @@ func NewOrgRepo(db sql.Db) *orgRepo {
 func (r *orgRepo) Add(org *Org) error {
 
 	d := r.Db.GetGormDb().Create(org)
-
 	return d.Error
 }
 

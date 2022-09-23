@@ -80,6 +80,11 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 		Certificate: req.GetCertificate(),
 	}
 
+	_, err := l.orgRepo.GetByName(req.OrgName)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
 	if req.Ip != "" {
 		err := org.Ip.Set(req.Ip)
 		if err != nil {
@@ -87,7 +92,7 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 		}
 	}
 
-	err := l.orgRepo.Update(org)
+	err = l.orgRepo.Update(org)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -134,7 +139,7 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.OrgName, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid Org  %s. Error %s", req.OrgName, err.Error())
 	}
 
 	err = l.nodeRepo.AddOrUpdate(&db.Node{NodeID: id.StringLowercase(), OrgID: org.ID})
@@ -228,7 +233,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 
 	_, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.OrgName, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid Org %s. Error %s", req.OrgName, err.Error())
 	}
 
 	system, err := l.systemRepo.GetByName(req.GetSystemName())
@@ -254,7 +259,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.OrgName, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid Org %s. Error %s", req.OrgName, err.Error())
 	}
 
 	err = sysIp.Set(req.Ip)
@@ -275,8 +280,9 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 
 	err = l.systemRepo.Add(sys)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to add system %s to %s org. Error %s",
-			req.SystemName, req.OrgName, err.Error())
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "system")
+		}
 	}
 
 	route := l.baseRoutingKey.SetActionUpdate().SetObject("system").MustBuild()
@@ -294,7 +300,12 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 
 	_, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid system %s. Error %s", req.GetSystemName(), err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	_, err = l.systemRepo.GetByName(req.SystemName)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
 
 	sys := &db.System{
