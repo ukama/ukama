@@ -23,10 +23,7 @@ func NewNodeRepo(db sql.Db) *nodeRepo {
 }
 
 func (r *nodeRepo) AddOrUpdate(node *Node) error {
-	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "lower(node_id::text)", Raw: true}},
-		DoUpdates: clause.AssignmentColumns([]string{"org_id"}),
-	}).Create(node)
+	d := r.Db.GetGormDb().Create(node)
 	return d.Error
 }
 

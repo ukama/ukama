@@ -139,13 +139,12 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid Org  %s. Error %s", req.OrgName, err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
 	err = l.nodeRepo.AddOrUpdate(&db.Node{NodeID: id.StringLowercase(), OrgID: org.ID})
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to add node id %s to %s org. Error %s",
-			req.NodeId, req.OrgName, err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
 	route := l.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild()
