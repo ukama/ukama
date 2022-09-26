@@ -176,8 +176,6 @@ func (l *LookupServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb
 		Ip:          node.Org.Ip.IPNet.String(),
 	}, nil
 
-	logrus.Info("Node Response: %v", resp)
-
 	return resp, err
 }
 
