@@ -169,11 +169,16 @@ func (l *LookupServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	return &pb.GetNodeResponse{
+	resp, err := &pb.GetNodeResponse{
 		NodeId:      node.NodeID,
 		OrgName:     node.Org.Name,
 		Certificate: node.Org.Certificate,
+		Ip:          node.Org.Ip.IPNet.String(),
 	}, nil
+
+	logrus.Info("Node Response: %v", resp)
+
+	return resp, err
 }
 
 func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeForOrgRequest) (*pb.GetNodeResponse, error) {
@@ -198,6 +203,7 @@ func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeForOrgR
 		NodeId:      node.NodeID,
 		OrgName:     node.Org.Name,
 		Certificate: node.Org.Certificate,
+		Ip:          node.Org.Ip.IPNet.String(),
 	}, nil
 }
 
