@@ -19,15 +19,13 @@ import (
 // Before running test for the first time you have to create a test account in Identity manager and provide email and password for it
 
 type TestConfig struct {
-	ApiUrl string
+	ServiceHost string `default:"localhost:8080"`
 }
 
 var testConf *TestConfig
 
 func init() {
-	testConf = &TestConfig{
-		ApiUrl: "http://0.0.0.0:8080",
-	}
+	testConf = &TestConfig{}
 
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: BASEDOMAIN")
 	config.LoadConfig("integration", testConf)
@@ -136,5 +134,5 @@ func Test_LookupClientApi(t *testing.T) {
 }
 
 func getApiUrl() string {
-	return testConf.ApiUrl
+	return testConf.ServiceHost
 }
