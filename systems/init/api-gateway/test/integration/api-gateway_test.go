@@ -43,7 +43,7 @@ func Test_LookupClientApi(t *testing.T) {
 	t.Run("GetOrgNotFound", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Get(getApiUrl() + "/lookup/orgs/someOrgWhichDoesnotExist")
+			Get(getApiUrl() + "/v1/orgs/someOrgWhichDoesnotExist")
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusNotFound, resp.StatusCode())
@@ -55,7 +55,7 @@ func Test_LookupClientApi(t *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			SetBody(strings.NewReader(`{"Certificate": "helloOrg","Ip": "0.0.0.0"}`)).
-			Put(getApiUrl() + "/lookup/orgs/" + org)
+			Put(getApiUrl() + "/v1/orgs/" + org)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusCreated, resp.StatusCode())
@@ -66,7 +66,7 @@ func Test_LookupClientApi(t *testing.T) {
 	t.Run("GetOrg", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Get(getApiUrl() + "/lookup/orgs/" + org)
+			Get(getApiUrl() + "/v1/orgs/" + org)
 
 		assert.NoError(t, err)
 		assert.Equal(tt, http.StatusOK, resp.StatusCode())
@@ -75,7 +75,7 @@ func Test_LookupClientApi(t *testing.T) {
 	t.Run("AddNode", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Put(getApiUrl() + "/lookup/orgs/" + org + "/nodes/" + nodeId)
+			Put(getApiUrl() + "/v1/orgs/" + org + "/nodes/" + nodeId)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusCreated, resp.StatusCode())
@@ -85,7 +85,7 @@ func Test_LookupClientApi(t *testing.T) {
 	t.Run("GetNodes", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Get(getApiUrl() + "/lookup/orgs/" + org + "/nodes/" + nodeId)
+			Get(getApiUrl() + "/v1/orgs/" + org + "/nodes/" + nodeId)
 		assert.NoError(t, err)
 		assert.Equal(tt, http.StatusOK, resp.StatusCode())
 		fmt.Println("Response: ", resp.String())
@@ -94,7 +94,7 @@ func Test_LookupClientApi(t *testing.T) {
 	t.Run("DeleteNode", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Delete(getApiUrl() + "/lookup/orgs/" + org + "/nodes/" + nodeId)
+			Delete(getApiUrl() + "/v1/orgs/" + org + "/nodes/" + nodeId)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusOK, resp.StatusCode())
@@ -105,7 +105,7 @@ func Test_LookupClientApi(t *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			SetBody(strings.NewReader(`{ "org":"org-name", "system":"sys", "ip":"0.0.0.0", "certificate":"certs", "port":100}`)).
-			Put(getApiUrl() + "/lookup/orgs/" + org + "/systems/" + system)
+			Put(getApiUrl() + "/v1/orgs/" + org + "/systems/" + system)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusCreated, resp.StatusCode())
@@ -116,7 +116,7 @@ func Test_LookupClientApi(t *testing.T) {
 	t.Run("GetSystems", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Get(getApiUrl() + "/lookup/orgs/" + org + "/systems/" + system)
+			Get(getApiUrl() + "/v1/orgs/" + org + "/systems/" + system)
 		assert.NoError(t, err)
 		assert.Equal(tt, http.StatusOK, resp.StatusCode())
 		fmt.Println("Response: ", resp.String())
@@ -125,7 +125,7 @@ func Test_LookupClientApi(t *testing.T) {
 	t.Run("DeleteSystems", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Delete(getApiUrl() + "/lookup/orgs/" + org + "/systems/" + system)
+			Delete(getApiUrl() + "/v1/orgs/" + org + "/systems/" + system)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusOK, resp.StatusCode())
