@@ -11,6 +11,7 @@ replace github.com/ukama/ukama/systems/init/lookup => ../lookup
 require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/ukama/ukama/services/common v0.0.0-20220519145952-e0b3dc741aed
