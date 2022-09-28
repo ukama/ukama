@@ -3,14 +3,14 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/services/common/metrics"
+	"github.com/ukama/ukama/systems/common/metrics"
 
 	"github.com/ukama/ukama/systems/init/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg/rest"
 
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/services/common/config"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	"github.com/ukama/ukama/systems/common/config"
 )
 
 var svcConf = pkg.NewConfig()

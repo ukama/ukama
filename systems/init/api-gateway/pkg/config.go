@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
 )
 
 type Config struct {

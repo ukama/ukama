@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	mocks "github.com/ukama/ukama/systems/init/lookup/mocks"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"

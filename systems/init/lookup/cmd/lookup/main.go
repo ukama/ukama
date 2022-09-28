@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/num30/config"
-	uconf "github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/metrics"
+	uconf "github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
 	"github.com/ukama/ukama/systems/init/lookup/internal"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
@@ -14,9 +14,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	ugrpc "github.com/ukama/ukama/services/common/grpc"
-	"github.com/ukama/ukama/services/common/sql"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	mb "github.com/ukama/ukama/systems/init/lookup/pkg/msgBusClient"
 	"google.golang.org/grpc"

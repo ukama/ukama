@@ -10,8 +10,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/ukama/ukama/services/common/rest"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"

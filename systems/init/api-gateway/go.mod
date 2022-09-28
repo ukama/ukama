@@ -2,7 +2,7 @@ module github.com/ukama/ukama/systems/init/api-gateway
 
 go 1.18
 
-replace github.com/ukama/ukama/services/common => ../../../services/common
+replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/init/api-gateway => ./
 
@@ -16,7 +16,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
-	github.com/ukama/ukama/services/common v0.0.0-20220909103841-dd001a1af00e
+	github.com/ukama/ukama/systems/common v0.0.0-20220909103841-dd001a1af00e
 	github.com/ukama/ukama/systems/init/lookup v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220425182032-2c377df948f4
 	github.com/wI2L/fizz v0.18.1

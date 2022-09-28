@@ -2,13 +2,9 @@ module github.com/ukama/ukama/systems/init/lookup
 
 go 1.19
 
-replace github.com/ukama/ukama/services/common => ../../../services/common
+replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/init/lookup => ./
-
-//replace github.com/ukama/ukama/services/bootstrap/lookup/internal/db => ./internal/db
-
-//replace github.com/ukama/ukama/services/bootstrap/lookup/internal/rest => ./internal/rest
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -25,10 +21,7 @@ require (
 	github.com/num30/config v0.0.6
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
-	github.com/ukama/ukama/services/bootstrap/lookup v0.0.0-20220909103841-dd001a1af00e
-	github.com/ukama/ukama/services/cloud/node v0.0.0-20220909103841-dd001a1af00e
-	github.com/ukama/ukama/services/common v0.0.0-20220519145952-e0b3dc741aed
-	github.com/ukama/ukamaX/cloud/hss v0.0.0-20220425182032-2c377df948f4
+	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.28.0
@@ -94,6 +87,7 @@ require (
 	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
+	github.com/ukama/ukama/services/common v0.0.0-20220922172835-f28bb9fd0ea5 // indirect
 	github.com/ukama/ukamaX/common v0.0.0-20211015093708-cd6e230254b5 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect

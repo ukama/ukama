@@ -3,7 +3,7 @@ package internal
 import (
 	"time"
 
-	uconf "github.com/ukama/ukama/services/common/config"
+	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {

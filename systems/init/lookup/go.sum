@@ -663,6 +663,8 @@ github.com/ukama/ukama/services/bootstrap/lookup v0.0.0-20220909103841-dd001a1af
 github.com/ukama/ukama/services/bootstrap/lookup v0.0.0-20220909103841-dd001a1af00e/go.mod h1:gu89XnT6o7PplcdJwSbB0S1hzJ2t+YvVKECU9mxNss4=
 github.com/ukama/ukama/services/cloud/node v0.0.0-20220909103841-dd001a1af00e h1:POwn4A/klSUo8vcDb5YJW4K25HaKRc0mO8XCI8t2nBc=
 github.com/ukama/ukama/services/cloud/node v0.0.0-20220909103841-dd001a1af00e/go.mod h1:WpOUtKcdSCmFwFzAyxaWOWKT9WDpncNK5jLOPEiICtQ=
+github.com/ukama/ukama/services/common v0.0.0-20220922172835-f28bb9fd0ea5 h1:+bC1ZoDLHRz/uHjS5xsVuILbaKoy/sjzjIkt8V8lv88=
+github.com/ukama/ukama/services/common v0.0.0-20220922172835-f28bb9fd0ea5/go.mod h1:T+hegK8kz/D53X9CXDI9o2DO66Lu2zxjtDPifrygO9k=
 github.com/ukama/ukamaX/cloud/hss v0.0.0-20220425182032-2c377df948f4 h1:NlRES/Ze98dy61QWmzqNeaOBl5H0L5EHoW22cluTbM8=
 github.com/ukama/ukamaX/cloud/hss v0.0.0-20220425182032-2c377df948f4/go.mod h1:0Gk0fGtj+C9dLfm9hCCSHLDzYLSMA755P44xDu/pF/g=
 github.com/ukama/ukamaX/common v0.0.0-20211015093708-cd6e230254b5 h1:3ERlih1zutAb9pw1FEROQD6499/aPxXL/89y1qMAFL8=

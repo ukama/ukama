@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz"
 
-	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/init/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"
