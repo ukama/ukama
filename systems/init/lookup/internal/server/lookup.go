@@ -288,7 +288,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		}
 	}
 
-	route := l.baseRoutingKey.SetActionUpdate().SetObject("system").MustBuild()
+	route := l.baseRoutingKey.SetActionCreate().SetObject("system").MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
