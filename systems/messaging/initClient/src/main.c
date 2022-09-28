@@ -31,7 +31,8 @@ typedef struct {
 	Config             *config;
 } State;
 
-extern int start_web_services(Config *config, UInst *webtInst);
+extern int start_web_services(Config *config, UInst *webtInst); /*network.c */
+extern int send_request_to_init(ReqType reqType, Config *config); /* init.c */
 
 /* Global */
 State *state=NULL; 
@@ -46,9 +47,10 @@ void usage() {
 	fprintf(stdout, "Options:\n");
 	fprintf(stdout, "--h, --help     this menu\n");
 	fprintf(stdout, "--V, --version  Version\n");
-	fprintf(stdout, "Environment variables are: \n");
-	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n",
+	fprintf(stdout, "Environment variable used are: \n");
+	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n",
 			ENV_INIT_CLIENT_LOG_LEVEL,
+			ENV_INIT_CLIENT_SYSTEM_ORG,
 			ENV_INIT_CLIENT_SYSTEM_NAME,
 			ENV_INIT_CLIENT_SYSTEM_ADDR,
 			ENV_INIT_CLIENT_SYSTEM_PORT,
@@ -97,7 +99,7 @@ void signal_term_handler(void) {
 
 	exit(1);
 }
- 
+
 /*
  *  catch_sigterm -- setup SIGTERM catch
  *
@@ -121,17 +123,15 @@ void catch_sigterm(void) {
  * Look for environment variables
  * signal handling and graceful exit if SIGTERM
  * setup client webinstance for /ping
- * register the 'system' to the init system at INIT_SYSTEM_ADDR/PORT using
- *   config tuple of <name:addr:port>
+ * register the 'system' to the init system at INIT_SYSTEM_ADDR/PORT etc
  * send periodic health, config update, restart, de-reg
  * run GRPC server to:
  *   - handle queries from other services about particular system (via init)
  */
 int main (int argc, char *argv[]) {
 
-	int exitStatus=0;
+  int exitStatus=0;
 	char *debug=DEF_LOG_LEVEL;
-	char address[MAX_BUFFER_SIZE] = {0};
 	struct _u_instance webInst;
 	Config *config=NULL;
 
@@ -192,8 +192,12 @@ int main (int argc, char *argv[]) {
 	}
 
 	/* Step-3: system registration with init */
-	
-	
+	if (send_request_to_init(REQ_REGISTER, config) != TRUE) {
+	  log_error("Error registrating with the init system");
+		exitStatus = 1;
+		goto exit_program;
+	}
+
 	/* Wait here for ever. XXX */
 
 	log_debug("initClient running ...");
