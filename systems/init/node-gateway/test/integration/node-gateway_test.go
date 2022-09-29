@@ -6,8 +6,8 @@ package integration
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"net/http"
 	"testing"
 
