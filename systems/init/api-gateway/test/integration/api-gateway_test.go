@@ -57,8 +57,14 @@ func Test_LookupClientApi(t *testing.T) {
 			SetBody(strings.NewReader(`{"Certificate": "helloOrg","Ip": "0.0.0.0"}`)).
 			Put(getApiUrl() + "/v1/orgs/" + org)
 
-		if assert.NoError(t, err) {
-			assert.Equal(tt, http.StatusCreated, resp.StatusCode())
+		if err != nil {
+			if assert.Error(t, err) {
+				assert.Equal(tt, http.StatusCreated, resp.StatusCode())
+			}
+		} else {
+			if assert.NoError(t, err) {
+				assert.Equal(tt, http.StatusConflict, resp.StatusCode())
+			}
 		}
 
 	})
