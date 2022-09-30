@@ -29,7 +29,8 @@ type HttpEndpoints struct {
 func NewConfig() *Config {
 	defaultCors := cors.DefaultConfig()
 	defaultCors.AllowWildcard = true
-
+	defaultCors.AllowOrigins = []string{"http://localhost", "https://localhost"}
+	
 	return &Config{
 		BaseConfig: config.BaseConfig{
 			DebugMode: false,
