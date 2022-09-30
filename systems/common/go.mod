@@ -1,8 +1,8 @@
-module github.com/ukama/ukama/systems/common
+module github.com/ukama/ukama/services/common
 
 go 1.18
 
-replace github.com/ukama/ukama/systems/common => ./
+replace github.com/ukama/ukama/services/common => ./
 
 require (
 	github.com/gin-contrib/cors v1.3.0

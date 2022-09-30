@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
 )
 
 func TestGetNodeIdFromPath(t *testing.T) {

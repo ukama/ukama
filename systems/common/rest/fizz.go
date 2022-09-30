@@ -13,7 +13,7 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/penglongli/gin-metrics/ginmetrics"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/rest/swagger"
+	"github.com/ukama/ukama/services/common/rest/swagger"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )

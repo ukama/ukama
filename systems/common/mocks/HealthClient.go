@@ -7,7 +7,7 @@ import (
 
 	grpc "google.golang.org/grpc"
 
-	health "github.com/ukama/ukama/systems/common/pb/gen/health"
+	health "github.com/ukama/ukama/services/common/pb/gen/health"
 
 	mock "github.com/stretchr/testify/mock"
 )

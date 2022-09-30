@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/errors"
+	"github.com/ukama/ukama/services/common/errors"
 
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
