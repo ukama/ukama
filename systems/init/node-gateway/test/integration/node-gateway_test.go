@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -36,10 +35,21 @@ func Test_LookupClientApi(t *testing.T) {
 
 	client := resty.New()
 
-	t.Run("GetNodeNotFound", func(tt *testing.T) {
+	t.Run("GetNodeBadRequest", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			Get(getApiUrl() + "/v1/nodes/someNodeWhichDoesNotExist")
+
+		if assert.NoError(t, err) {
+			assert.Equal(tt, http.StatusBadRequest, resp.StatusCode())
+			assert.Contains(tt, resp.String(), "Error invalid length")
+		}
+	})
+
+	t.Run("GetNodeNotFound", func(tt *testing.T) {
+		resp, err := client.R().
+			EnableTrace().
+			Get(getApiUrl() + "/v1/nodes/" + nodeId)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusNotFound, resp.StatusCode())
@@ -47,14 +57,14 @@ func Test_LookupClientApi(t *testing.T) {
 		}
 	})
 
-	t.Run("GetNode", func(tt *testing.T) {
-		resp, err := client.R().
-			EnableTrace().
-			Get(getApiUrl() + "/v1/nodes/" + nodeId)
-		assert.NoError(t, err)
-		assert.Equal(tt, http.StatusOK, resp.StatusCode())
-		fmt.Println("Response: ", resp.String())
-	})
+	// t.Run("GetNode", func(tt *testing.T) {
+	// 	resp, err := client.R().
+	// 		EnableTrace().
+	// 		Get(getApiUrl() + "/v1/nodes/" + nodeId)
+	// 	assert.NoError(t, err)
+	// 	assert.Equal(tt, http.StatusOK, resp.StatusCode())
+	// 	fmt.Println("Response: ", resp.String())
+	// })
 }
 
 func getApiUrl() string {
