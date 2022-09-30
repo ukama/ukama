@@ -5,13 +5,13 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 
 	"google.golang.org/grpc"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/systems/common/sql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

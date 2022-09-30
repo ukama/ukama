@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	health "github.com/ukama/ukama/services/common/pb/gen/health"
+	health "github.com/ukama/ukama/systems/common/pb/gen/health"
 	metadata "google.golang.org/grpc/metadata"
 
 	mock "github.com/stretchr/testify/mock"

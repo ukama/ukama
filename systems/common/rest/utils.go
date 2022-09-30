@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
