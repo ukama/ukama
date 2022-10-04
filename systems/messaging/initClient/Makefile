@@ -2,10 +2,11 @@
 # All rights reserved.
 
 #
-# Makefile for the Mesh (server)
+# Makefile for the system initClient
+#
 #
 
-include ../../nodes/ukamaOS/config.mk
+include ../../../nodes/ukamaOS/config.mk
 
 # some generic defs.
 CC   = gcc
@@ -16,9 +17,9 @@ XGXX = g++
 
 HOST = $(shell gcc -dumpmachine)
 
-TARGET_EXEC = mesh
+TARGET_EXEC = initClient
 
-UKAMA_OS     = ../../nodes/ukamaOS/
+UKAMA_OS     = ../../../nodes/ukamaOS/
 VENDOR_DIR   = $(UKAMA_OS)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
 VENDOR_INC   = $(VENDOR_BUILD)/include/
@@ -46,8 +47,8 @@ CFLAGS+=-I./inc
 CFLAGS+=-D_REENTRANT
 CFLAGS+=-DTEST_EMBED_CERT
 
-LDFLAGS+=-L${VENDOR_LIB} 
-LDFLAGS+=-L${VENDOR_LIB64}
+LDFLAGS+=-L$(VENDOR_LIB)
+LDFLAGS+=-L$(VENDOR_LIB64)
 
 # Libraries needed.
 ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
@@ -59,7 +60,6 @@ LIBS+=-luuid
 LIBS+=-lpthread
 LIBS+=-ltoml
 LIBS+=-lprotobuf-c
-LIBS+=-lrabbitmq
 
 # Soruce files.
 CFILES   = $(wildcard ./src/*.c)
@@ -67,14 +67,14 @@ OBJFILES = $(CFILES:.c=.o)
 
 .PHONY: $(TARGET_EXEC)
 
-mesh: $(TARGET_EXEC)
+initClient: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
 	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
-	$(MAKE) -C $(VENDOR_DIR) $@
+#	$(MAKE) -C $(VENDOR_DIR) $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -83,3 +83,4 @@ all: $(TARGET_EXEC)
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES);
+
