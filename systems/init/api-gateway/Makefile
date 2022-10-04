@@ -1,4 +1,4 @@
-include ../../../services/config.mk
+include ../../config.mk
 
 .PHONY: build deps lint gen clean integration.test test
 
