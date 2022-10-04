@@ -1,9 +1,0 @@
-node.mesh {
-    errors         # show errors
-    log            # enable query logs
-    health
-    grpc . 10.10.0.5:9090
-}
-#.:53 {
-#    forward . 8.8.8.8
-#}
