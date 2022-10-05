@@ -17,7 +17,7 @@ service UserService {
 
     // deletes user and IMSI that is assigend to him
     rpc Delete (DeleteRequest) returns (DeleteResponse);
-    
+
     // lists all users for organization
     rpc List(ListRequest) returns (ListResponse);
 

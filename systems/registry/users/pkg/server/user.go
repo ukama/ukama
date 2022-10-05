@@ -5,19 +5,19 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/ukama/ukama/services/cloud/users/pkg"
-	"github.com/ukama/ukama/services/cloud/users/pkg/db"
-	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/registry/users/pkg"
+	"github.com/ukama/ukama/systems/registry/users/pkg/db"
+	"github.com/ukama/ukama/systems/registry/users/pkg/sims"
 
 	uuid2 "github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	hsspb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
-	pb "github.com/ukama/ukama/services/cloud/users/pb/gen"
-	pbclient "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
-	"github.com/ukama/ukama/services/common/errors"
-	"github.com/ukama/ukama/services/common/grpc"
-	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/systems/common/errors"
+	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/sql"
+	hsspb "github.com/ukama/ukama/systems/registry/hss/pb/gen"
+	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+	pbclient "github.com/ukama/ukama/systems/registry/users/pb/gen/simmgr"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -495,11 +495,11 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 }
 func generateQrcode(qrcodeId string, qrcodeName string) string {
 
-	qrcode,err := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
-	if err!=nil{
-		fmt.Printf("Could not generate qrcode :,%v",err)
+	qrcode, err := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
+	if err != nil {
+		fmt.Printf("Could not generate qrcode :,%v", err)
 	}
-	
+
 	encodedData := base64.StdEncoding.EncodeToString(qrcode)
 	return encodedData
 }

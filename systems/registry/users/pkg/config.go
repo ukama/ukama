@@ -3,7 +3,7 @@ package pkg
 import (
 	"time"
 
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {

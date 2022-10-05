@@ -5,25 +5,25 @@ import (
 	"io"
 	"os"
 
-	"github.com/ukama/ukama/services/cloud/users/pkg/server"
-	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
-	"github.com/ukama/ukama/services/common/metrics"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/registry/users/pkg/server"
+	"github.com/ukama/ukama/systems/registry/users/pkg/sims"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/ukama/ukama/services/cloud/users/pkg"
+	"github.com/ukama/ukama/systems/registry/users/pkg"
 
-	"github.com/ukama/ukama/services/cloud/users/cmd/version"
+	"github.com/ukama/ukama/systems/registry/users/cmd/version"
 
-	"github.com/ukama/ukama/services/cloud/users/pkg/db"
+	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/cloud/users/pb/gen"
-	pbclient "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/services/common/config"
-	ugrpc "github.com/ukama/ukama/services/common/grpc"
-	"github.com/ukama/ukama/services/common/sql"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	"github.com/ukama/ukama/systems/common/config"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/registry/users/pb/gen"
+	pbclient "github.com/ukama/ukama/systems/registry/users/pb/gen/simmgr"
 	"google.golang.org/grpc"
 )
 

@@ -2,8 +2,9 @@ package sims
 
 import (
 	"fmt"
-	"github.com/ukama/ukama/services/cloud/users/pb/gen/mocks"
 	"testing"
+
+	"github.com/ukama/ukama/systems/registry/users/pb/gen/mocks"
 
 	"github.com/stretchr/testify/assert"
 )
