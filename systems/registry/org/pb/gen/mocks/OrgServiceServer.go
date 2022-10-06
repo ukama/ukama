@@ -6,7 +6,7 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
-	gen "github.com/ukama/ukama/services/cloud/org/pb/gen"
+	gen "github.com/ukama/ukama/systems/registry/org/pb/gen"
 
 	testing "testing"
 )

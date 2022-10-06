@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	confr "github.com/num30/config"
-	"github.com/ukama/ukama/services/cloud/org/pkg/queue"
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/registry/org/pkg/queue"
 	"google.golang.org/grpc/credentials/insecure"
 	"os"
 	"testing"
@@ -18,7 +18,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukama/services/cloud/org/pb/gen"
+	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"google.golang.org/grpc"
 )
 

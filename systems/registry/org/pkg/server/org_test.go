@@ -2,15 +2,16 @@ package server
 
 import (
 	"context"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	bstmock "github.com/ukama/ukama/services/bootstrap/client/mocks"
-	"github.com/ukama/ukama/services/cloud/org/mocks"
-	pb "github.com/ukama/ukama/services/cloud/org/pb/gen"
-	"github.com/ukama/ukama/services/cloud/org/pkg/db"
-	"github.com/ukama/ukama/services/common/msgbus/stub"
-	"testing"
+	"github.com/ukama/ukama/systems/common/msgbus/stub"
+	"github.com/ukama/ukama/systems/registry/org/mocks"
+	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	"github.com/ukama/ukama/systems/registry/org/pkg/db"
 )
 
 var testDeviceGatewayHost = "1.1.1.1"

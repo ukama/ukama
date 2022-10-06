@@ -4,7 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	db "github.com/ukama/ukama/services/cloud/org/pkg/db"
+	db "github.com/ukama/ukama/systems/registry/org/pkg/db"
 
 	testing "testing"
 )

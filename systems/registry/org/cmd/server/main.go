@@ -1,28 +1,29 @@
 package main
 
 import (
-	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
-	pb "github.com/ukama/ukama/services/cloud/org/pb/gen"
-	"github.com/ukama/ukama/services/cloud/org/pkg/server"
-	"github.com/ukama/ukama/services/common/metrics"
-	"github.com/ukama/ukama/services/common/msgbus"
 	"os"
 
-	"github.com/ukama/ukama/services/cloud/org/pkg"
+	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	"github.com/ukama/ukama/systems/registry/org/pkg/server"
+
+	"github.com/ukama/ukama/systems/registry/org/pkg"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ukama/ukama/services/cloud/org/cmd/version"
+	"github.com/ukama/ukama/systems/registry/org/cmd/version"
 
-	"github.com/ukama/ukama/services/cloud/org/pkg/db"
+	"github.com/ukama/ukama/systems/registry/org/pkg/db"
 
 	"github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	uconf "github.com/ukama/ukama/services/common/config"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	uconf "github.com/ukama/ukama/systems/common/config"
 
-	ugrpc "github.com/ukama/ukama/services/common/grpc"
-	"github.com/ukama/ukama/services/common/sql"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/sql"
 	"google.golang.org/grpc"
 )
 

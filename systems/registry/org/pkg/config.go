@@ -2,7 +2,7 @@ package pkg
 
 import (
 	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {

@@ -3,15 +3,15 @@ package main
 import (
 	"os"
 
-	sig "github.com/ukama/ukama/services/common/signal"
+	sig "github.com/ukama/ukama/systems/common/signal"
 
 	"github.com/num30/config"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/cloud/org/cmd/version"
-	"github.com/ukama/ukama/services/cloud/org/pkg"
-	"github.com/ukama/ukama/services/cloud/org/pkg/queue"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/services/common/metrics"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/registry/org/cmd/version"
+	"github.com/ukama/ukama/systems/registry/org/pkg"
+	"github.com/ukama/ukama/systems/registry/org/pkg/queue"
 )
 
 const serviceName = pkg.ServiceName + "-listener"
