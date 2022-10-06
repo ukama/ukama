@@ -2,18 +2,19 @@ package server
 
 import (
 	"context"
-	"gorm.io/gorm"
 	"testing"
 
+	"gorm.io/gorm"
+
 	bstmock "github.com/ukama/ukama/services/bootstrap/client/mocks"
-	mocks "github.com/ukama/ukama/services/cloud/network/mocks"
-	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
-	"github.com/ukama/ukama/services/cloud/network/pkg/db"
-	"github.com/ukama/ukama/services/common/msgbus/stub"
+	"github.com/ukama/ukama/systems/common/msgbus/stub"
+	mocks "github.com/ukama/ukama/systems/registry/network/mocks"
+	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 )
 
 var testNodeId = ukama.NewVirtualNodeId("HomeNode")

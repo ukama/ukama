@@ -6,8 +6,8 @@ package db
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/sql"
 	"testing"
 )
 

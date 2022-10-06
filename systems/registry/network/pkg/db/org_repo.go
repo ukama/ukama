@@ -2,13 +2,14 @@ package db
 
 import (
 	"fmt"
-	"github.com/ukama/ukama/services/common/errors"
+
+	"github.com/ukama/ukama/systems/common/errors"
 
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/services/common/validation"
+	"github.com/ukama/ukama/systems/common/validation"
 
-	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/systems/common/sql"
 )
 
 type OrgRepo interface {

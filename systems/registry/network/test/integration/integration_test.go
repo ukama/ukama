@@ -7,20 +7,20 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/slices"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/slices"
 	"google.golang.org/grpc/credentials/insecure"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	rconf "github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	"google.golang.org/grpc"
 )
 

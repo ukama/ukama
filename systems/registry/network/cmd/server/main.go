@@ -4,24 +4,24 @@ import (
 	"os"
 
 	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
-	"github.com/ukama/ukama/services/common/metrics"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/msgbus"
 
-	db2 "github.com/ukama/ukama/services/cloud/network/pkg/db"
+	db2 "github.com/ukama/ukama/systems/registry/network/pkg/db"
 
-	"github.com/ukama/ukama/services/cloud/network/cmd/version"
-	"github.com/ukama/ukama/services/cloud/network/pkg"
+	"github.com/ukama/ukama/systems/registry/network/cmd/version"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
 
-	generated "github.com/ukama/ukama/services/cloud/network/pb/gen"
+	generated "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
-	"github.com/ukama/ukama/services/cloud/network/pkg/server"
+	"github.com/ukama/ukama/systems/registry/network/pkg/server"
 
 	confr "github.com/num30/config"
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/services/common/config"
-	ugrpc "github.com/ukama/ukama/services/common/grpc"
-	"github.com/ukama/ukama/services/common/sql"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	"github.com/ukama/ukama/systems/common/config"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/sql"
 	"google.golang.org/grpc"
 )
 

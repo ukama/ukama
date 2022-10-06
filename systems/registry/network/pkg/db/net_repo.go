@@ -2,10 +2,11 @@ package db
 
 import (
 	"fmt"
-	"github.com/ukama/ukama/services/cloud/network/pkg"
 
-	"github.com/ukama/ukama/services/common/sql"
-	"github.com/ukama/ukama/services/common/validation"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
+
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/validation"
 	"gorm.io/gorm"
 )
 

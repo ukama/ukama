@@ -2,21 +2,22 @@ package server
 
 import (
 	"context"
+
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 
 	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
-	"github.com/ukama/ukama/services/cloud/network/pkg"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
 
-	db2 "github.com/ukama/ukama/services/cloud/network/pkg/db"
-	"github.com/ukama/ukama/services/common/grpc"
+	"github.com/ukama/ukama/systems/common/grpc"
+	db2 "github.com/ukama/ukama/systems/registry/network/pkg/db"
 
-	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
+	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/sql"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

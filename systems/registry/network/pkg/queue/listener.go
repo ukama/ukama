@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ukama/ukama/services/cloud/network/pkg"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
 
 	"github.com/streadway/amqp"
 
@@ -17,9 +17,9 @@ import (
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
-	"github.com/ukama/ukama/services/common/msgbus"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
+	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	"google.golang.org/grpc"
 )
 

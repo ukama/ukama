@@ -4,8 +4,8 @@ import (
 	sql2 "database/sql"
 	"strings"
 
-	"github.com/ukama/ukama/services/common/sql"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

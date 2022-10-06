@@ -4,15 +4,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/ukama/ukama/services/cloud/network/pkg"
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
 
-	"github.com/ukama/ukama/services/cloud/network/cmd/version"
+	"github.com/ukama/ukama/systems/registry/network/cmd/version"
 
 	rconf "github.com/num30/config"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/cloud/network/pkg/queue"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	"github.com/ukama/ukama/systems/registry/network/pkg/queue"
 )
 
 const ServiceName = "network-listener"
