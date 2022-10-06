@@ -3,8 +3,8 @@ package db
 import (
 	"strings"
 
-	"github.com/ukama/ukama/services/common/sql"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"

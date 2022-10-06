@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -19,9 +19,9 @@ import (
 	"github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukama/services/cloud/node/pb/gen"
-	uconf "github.com/ukama/ukama/services/common/config"
-	commonpb "github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
+	uconf "github.com/ukama/ukama/systems/common/config"
+	commonpb "github.com/ukama/ukama/systems/common/pb/gen/ukamaos/mesh"
+	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )

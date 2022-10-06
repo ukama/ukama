@@ -5,11 +5,11 @@ import (
 
 	"github.com/num30/config"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/cloud/node/cmd/version"
-	"github.com/ukama/ukama/services/cloud/node/pkg"
-	"github.com/ukama/ukama/services/cloud/node/pkg/queue"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/services/common/metrics"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/registry/node/cmd/version"
+	"github.com/ukama/ukama/systems/registry/node/pkg"
+	"github.com/ukama/ukama/systems/registry/node/pkg/queue"
 )
 
 const serviceName = pkg.ServiceName + "-listener"

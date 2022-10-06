@@ -4,15 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ukama/ukama/services/common/msgbus/stub"
+	"github.com/ukama/ukama/systems/common/msgbus/stub"
 
-	mocks "github.com/ukama/ukama/services/cloud/node/mocks"
-	pb "github.com/ukama/ukama/services/cloud/node/pb/gen"
-	"github.com/ukama/ukama/services/cloud/node/pkg/db"
+	mocks "github.com/ukama/ukama/systems/registry/node/mocks"
+	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 )
 
 var testNodeId = ukama.NewVirtualNodeId("HomeNode")

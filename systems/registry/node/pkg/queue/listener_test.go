@@ -6,11 +6,11 @@ import (
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	pb "github.com/ukama/ukama/services/cloud/node/pb/gen"
-	pbmocks "github.com/ukama/ukama/services/cloud/node/pb/gen/mocks"
-	"github.com/ukama/ukama/services/common/msgbus"
-	"github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/pb/gen/ukamaos/mesh"
+	"github.com/ukama/ukama/systems/common/ukama"
+	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	pbmocks "github.com/ukama/ukama/systems/registry/node/pb/gen/mocks"
 	"google.golang.org/protobuf/proto"
 )
 
