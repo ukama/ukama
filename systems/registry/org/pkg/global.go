@@ -1,6 +1,7 @@
 package pkg
 
 const ServiceName = "org"
+const SystemName = "Registry"
 
 var IsDebugMode bool = false
 
