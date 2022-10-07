@@ -6,7 +6,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 
-	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
+	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 
@@ -24,25 +24,24 @@ import (
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	orgRepo         db2.OrgRepo
-	nodeRepo        db2.NodeRepo
-	netRepo         db2.NetRepo
-	bootstrapClient bootstrap.Client
+	orgRepo  db2.OrgRepo
+	nodeRepo db2.NodeRepo
+	netRepo  db2.NetRepo
+	// bootstrapClient bootstrap.Client
 
 	queuePub       msgbus.QPub
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewNetworkServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo, bootstrapClient bootstrap.Client,
-	publisher msgbus.QPub) *NetworkServer {
+func NewNetworkServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo, publisher msgbus.QPub) *NetworkServer {
 
 	return &NetworkServer{
-		orgRepo:         orgRepo,
-		nodeRepo:        nodeRepo,
-		netRepo:         netRepo,
-		bootstrapClient: bootstrapClient,
-		queuePub:        publisher,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		orgRepo:  orgRepo,
+		nodeRepo: nodeRepo,
+		netRepo:  netRepo,
+		// bootstrapClient: bootstrapClient,
+		queuePub:       publisher,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
@@ -143,7 +142,8 @@ func (r *NetworkServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*p
 	// adding node to DB and bootstrap in transaction
 	// Rollback trans if bootstrap fails to add a node
 	err = r.nodeRepo.Add(node, func() error {
-		return r.bootstrapClient.AddNode(network.Org.Name, node.NodeID)
+		// return r.bootstrapClient.AddNode(network.Org.Name, node.NodeID)
+		return nil
 	})
 
 	if err != nil {

@@ -29,7 +29,7 @@ gen:
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
-	rm pb/generated/*.go
+	rm pb/gen/*.go
 
 
 # integration tests

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
+	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/msgbus"
 
@@ -61,9 +61,9 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	bootstrapCl := bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth))
+	// bootstrapCl := bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth))
 	if svcConf.Debug.DisableBootstrap {
-		bootstrapCl = bootstrap.DummyBootstrapClient{}
+		// bootstrapCl = bootstrap.DummyBootstrapClient{}
 	}
 
 	pub, err := msgbus.NewQPub(svcConf.Queue.Uri, pkg.ServiceName, pkg.InstanceId)
@@ -74,7 +74,7 @@ func runGrpcServer(gormdb sql.Db) {
 	regServer := server.NewNetworkServer(db2.NewOrgRepo(gormdb),
 		db2.NewNodeRepo(gormdb),
 		db2.NewNetRepo(gormdb),
-		bootstrapCl,
+		// bootstrapCl,
 		pub)
 
 	grpcServer := ugrpc.NewGrpcServer(svcConf.Grpc, func(s *grpc.Server) {
