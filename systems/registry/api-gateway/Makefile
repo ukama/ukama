@@ -22,7 +22,7 @@ gen:
 	mockery --all --recursive
 
 clean:
-	rm pb/generated/*.go
+	rm pb/gen/*.go
 
 # integration tests
 

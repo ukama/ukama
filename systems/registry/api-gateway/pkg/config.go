@@ -16,6 +16,10 @@ type Config struct {
 	Metrics           config.Metrics `mapstructure:"metrics"`
 }
 
+type Kratos struct {
+	Url string
+}
+
 type GrpcEndpoints struct {
 	Timeout time.Duration
 	Network string
