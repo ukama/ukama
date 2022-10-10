@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/registry/users/pkg"
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 	"github.com/ukama/ukama/systems/registry/users/pkg/sims"
@@ -37,20 +36,18 @@ type UserService struct {
 	simManagerName string
 	simRepo        db.SimcardRepo
 	simProvider    sims.SimProvider
-	queuePub       msgbus.QPub
 	kratosClient   pkg.KratosClient
 }
 
 func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, simRepo db.SimcardRepo,
 	simProvider sims.SimProvider, simManager pbclient.SimManagerServiceClient, simManagerName string,
-	queuePub msgbus.QPub, kratosClient pkg.KratosClient) *UserService {
+	kratosClient pkg.KratosClient) *UserService {
 	return &UserService{userRepo: userRepo,
 		imsiService:    imsiProvider,
 		simRepo:        simRepo,
 		simManager:     simManager,
 		simManagerName: simManagerName,
 		simProvider:    simProvider,
-		queuePub:       queuePub,
 		kratosClient:   kratosClient,
 	}
 }
@@ -507,7 +504,7 @@ func generateQrcode(qrcodeId string, qrcodeName string) string {
 func (u *UserService) sendEmailToUser(ctx context.Context, email string, name string, iccid string) error {
 	logrus.Infof("Sending email to %s", email)
 	logrus.Infof("Getting qr code")
-	resp, err := u.simManager.GetQrCode(ctx, &pbclient.GetQrCodeRequest{
+	_, err := u.simManager.GetQrCode(ctx, &pbclient.GetQrCodeRequest{
 		Iccid: iccid,
 	})
 	if err != nil {
@@ -522,26 +519,11 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		return fmt.Errorf("missing `x-requester` header in request")
 	}
 
-	neworkOwner, err := u.kratosClient.GetAccountName(noId)
+	_, err = u.kratosClient.GetAccountName(noId)
 	if err != nil {
 		return errors.Wrap(err, "failed to get network owner name")
 	}
 
-	logrus.Infof("Publishing queue message")
-	err = u.queuePub.PublishToQueue("mailer", &msgbus.MailMessage{
-		To:           email,
-		TemplateName: "users-qr-code",
-		Values: map[string]any{
-			"Name":         name,
-			"networkOwner": neworkOwner,
-			"Qr":           generateQrcode(resp.QrCode, name),
-			"QrCodeLink":   resp.QrCode,
-		},
-	})
-
-	if err != nil {
-		return errors.Wrap(err, "failed to send email")
-	}
 	return nil
 }
 

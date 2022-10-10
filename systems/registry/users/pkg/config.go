@@ -13,7 +13,6 @@ type Config struct {
 	HssHost           string
 	SimManager        SimManager
 	SimTokenKey       string
-	Queue             config.Queue
 	KratoAdminUrl     string
 	Metrics           config.Metrics
 }
@@ -45,9 +44,6 @@ func NewConfig() *Config {
 		},
 		KratoAdminUrl: "localhost",
 		SimTokenKey:   "11111111111111111111111111111111",
-		Queue: config.Queue{
-			Uri: "amqp://guest:guest@localhost:5672",
-		},
-		Metrics: *config.DefaultMetrics(),
+		Metrics:       *config.DefaultMetrics(),
 	}
 }

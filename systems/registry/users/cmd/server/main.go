@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/registry/users/pkg/server"
 	"github.com/ukama/ukama/systems/registry/users/pkg/sims"
 	"google.golang.org/grpc/credentials/insecure"
@@ -66,18 +65,12 @@ func runGrpcServer(gormdb sql.Db) {
 	simPool, pcon := NewIccidPool(serviceConfig.SimManager)
 	defer pcon.Close()
 
-	pub, err := msgbus.NewQPub(serviceConfig.Queue.Uri, pkg.ServiceName, pkg.InstanceId)
-	if err != nil {
-		log.Fatalf("Failed to create publisher. Error: %v", err)
-	}
-
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
 		pkg.NewImsiClientProvider(serviceConfig.HssHost),
 		db.NewSimcardRepo(gormdb),
 		sims.NewSimProvider(serviceConfig.SimTokenKey, simPool),
 		simMgr,
 		serviceConfig.SimManager.Name+":"+serviceConfig.SimManager.Host,
-		pub,
 		pkg.NewKratosClient(serviceConfig.KratoAdminUrl),
 	)
 
