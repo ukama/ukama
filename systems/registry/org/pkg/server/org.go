@@ -6,7 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
+
+	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
@@ -19,18 +20,19 @@ type OrgServer struct {
 	pb.UnimplementedOrgServiceServer
 	orgRepo db.OrgRepo
 
-	bootstrapClient bootstrap.Client
+	// bootstrapClient bootstrap.Client
 	deviceGatewayIp string
 
 	queuePub msgbus.QPub
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, bootstrapClient bootstrap.Client,
+// func NewOrgServer(orgRepo db.OrgRepo, bootstrapClient bootstrap.Client,
+func NewOrgServer(orgRepo db.OrgRepo,
 	deviceGatewayIp string, publisher msgbus.QPub) *OrgServer {
 
 	return &OrgServer{
-		orgRepo:         orgRepo,
-		bootstrapClient: bootstrapClient,
+		orgRepo: orgRepo,
+		// bootstrapClient: bootstrapClient,
 		deviceGatewayIp: deviceGatewayIp,
 		queuePub:        publisher,
 	}
@@ -53,7 +55,8 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 		Certificate: generateCertificate(),
 	}
 	err = r.orgRepo.Add(org, func() error {
-		return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.deviceGatewayIp)
+		// return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.deviceGatewayIp)
+		return nil
 	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")

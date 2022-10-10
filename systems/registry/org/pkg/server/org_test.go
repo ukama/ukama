@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	bstmock "github.com/ukama/ukama/services/bootstrap/client/mocks"
+
+	// bstmock "github.com/ukama/ukama/services/bootstrap/client/mocks"
 	"github.com/ukama/ukama/systems/common/msgbus/stub"
 	"github.com/ukama/ukama/systems/registry/org/mocks"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
@@ -31,10 +32,11 @@ func TestOrgServer_AddOrg(t *testing.T) {
 			return f[0]()
 		}).Once()
 
-	bootstrapClient := &bstmock.Client{}
-	bootstrapClient.On("AddOrUpdateOrg", orgName, mock.Anything, testDeviceGatewayHost).Return(nil)
+	// bootstrapClient := &bstmock.Client{}
+	// bootstrapClient.On("AddOrUpdateOrg", orgName, mock.Anything, testDeviceGatewayHost).Return(nil)
 
-	s := NewOrgServer(orgRepo, bootstrapClient, testDeviceGatewayHost, pub)
+	// s := NewOrgServer(orgRepo, bootstrapClient, testDeviceGatewayHost, pub)
+	s := NewOrgServer(orgRepo, testDeviceGatewayHost, pub)
 
 	// Act
 	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
@@ -46,7 +48,7 @@ func TestOrgServer_AddOrg(t *testing.T) {
 	assert.Equal(t, orgName, res.Org.Name)
 	assert.Equal(t, ownerId, res.Org.Owner)
 	orgRepo.AssertExpectations(t)
-	bootstrapClient.AssertExpectations(t)
+	// bootstrapClient.AssertExpectations(t)
 }
 
 func TestNetworkServer_GetOrg(t *testing.T) {
@@ -56,7 +58,8 @@ func TestNetworkServer_GetOrg(t *testing.T) {
 	pub := &stub.QPubStub{}
 	orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
 
-	s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	// s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	s := NewOrgServer(orgRepo, testDeviceGatewayHost, pub)
 	org, err := s.Get(context.TODO(), &pb.GetRequest{Name: orgName})
 	assert.NoError(t, err)
 	assert.Equal(t, orgName, org.GetOrg().GetName())
@@ -66,7 +69,8 @@ func TestNetworkServer_GetOrg(t *testing.T) {
 func TestNetworkServer_AddOrg_fails_without_owner_id(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 	pub := &stub.QPubStub{}
-	s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	// s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	s := NewOrgServer(orgRepo, testDeviceGatewayHost, pub)
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
 		Org: &pb.Organization{Name: testOrgName},
 	})
@@ -77,7 +81,8 @@ func TestNetworkServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
 	orgName := "org-1"
 	orgRepo := &mocks.OrgRepo{}
 	pub := &stub.QPubStub{}
-	s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	// s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	s := NewOrgServer(orgRepo, testDeviceGatewayHost, pub)
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
 		Org: &pb.Organization{Name: orgName},
 	})

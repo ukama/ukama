@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
+	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
@@ -73,10 +73,10 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 
-	bootstrapCl := bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(*svcConf.BootstrapAuth))
-	if svcConf.Debug.DisableBootstrap {
-		bootstrapCl = bootstrap.DummyBootstrapClient{}
-	}
+	// bootstrapCl := bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(*svcConf.BootstrapAuth))
+	// if svcConf.Debug.DisableBootstrap {
+	// bootstrapCl = bootstrap.DummyBootstrapClient{}
+	// }
 
 	pub, err := msgbus.NewQPub(svcConf.Queue.Uri, pkg.ServiceName, pkg.InstanceId)
 	if err != nil {
@@ -84,7 +84,7 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
-		bootstrapCl,
+		// bootstrapCl,
 		svcConf.DeviceGatewayHost,
 		pub)
 
