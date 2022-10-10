@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	// bstmock "github.com/ukama/ukama/services/bootstrap/client/mocks"
-	"github.com/ukama/ukama/systems/common/msgbus/stub"
+
 	mocks "github.com/ukama/ukama/systems/registry/network/mocks"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
@@ -27,13 +27,14 @@ func TestNetworkServer_UpdateNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := createNetRepoMock()
-	pub := stub.QPubStub{}
 
 	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeAttributes) bool {
 		return *ns.State == db.Onboarded
 	}), mock.Anything).Return(nil).Once()
+
 	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo, pub)
+	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
+
 	_, err := s.UpdateNode(context.TODO(), &pb.UpdateNodeRequest{
 		NodeId: testNodeId.String(),
 		Node: &pb.Node{
@@ -52,7 +53,6 @@ func TestNetworkServer_AddNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := createNetRepoMock()
-	pub := &stub.QPubStub{}
 
 	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
 		return n.State == db.Pending && n.NodeID == nodeId && n.NetworkID == testNetId
@@ -61,8 +61,9 @@ func TestNetworkServer_AddNode(t *testing.T) {
 	}).Once()
 	// bootstrapClient := &bstmock.Client{}
 	// bootstrapClient.On("AddNode", testOrgName, nodeId).Return(nil)
+
 	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, bootstrapClient, pub)
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo, pub)
+	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
 
 	// Act
 	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
@@ -103,15 +104,16 @@ func TestNetworkServer_GetNodes(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := &mocks.NetRepo{}
-	pub := &stub.QPubStub{}
 
 	const NodeName0 = "NodeName0"
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{
 		{NodeID: nodeUuid1.String(), State: db.Undefined, Name: NodeName0, Network: &db.Network{Org: &db.Org{Name: orgName}}},
 		{NodeID: nodeUuid2.String(), State: db.Pending, Name: "NodeNeme2", Network: &db.Network{Org: &db.Org{Name: orgName}}},
 	}, nil).Once()
+
 	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo, pub)
+	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
+
 	resp, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
 		OrgName: orgName,
 	})
@@ -130,11 +132,11 @@ func TestNetworkServer_GetNodesReturnsEmptyList(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := &mocks.NetRepo{}
-	pub := &stub.QPubStub{}
 
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{}, nil).Once()
+
 	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo, pub)
+	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
 
 	// act
 	res, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
@@ -183,7 +185,6 @@ func Test_List(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := &mocks.NetRepo{}
-	pub := &stub.QPubStub{}
 
 	queryRes := map[string]map[string]map[db.NodeType]int{
 		"a": {
@@ -205,8 +206,9 @@ func Test_List(t *testing.T) {
 	}
 
 	netRepo.On("List").Return(queryRes, nil).Once()
+
 	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo, pub)
+	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
 
 	// act
 	res, err := s.List(context.TODO(), &pb.ListRequest{})

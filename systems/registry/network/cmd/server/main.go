@@ -5,7 +5,6 @@ import (
 
 	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/msgbus"
 
 	db2 "github.com/ukama/ukama/systems/registry/network/pkg/db"
 
@@ -62,20 +61,15 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 	// bootstrapCl := bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth))
-	if svcConf.Debug.DisableBootstrap {
-		// bootstrapCl = bootstrap.DummyBootstrapClient{}
-	}
-
-	pub, err := msgbus.NewQPub(svcConf.Queue.Uri, pkg.ServiceName, pkg.InstanceId)
-	if err != nil {
-		log.Fatalf("Failed to create publisher. Error: %v", err)
-	}
+	// if svcConf.Debug.DisableBootstrap {
+	// bootstrapCl = bootstrap.DummyBootstrapClient{}
+	// }
 
 	regServer := server.NewNetworkServer(db2.NewOrgRepo(gormdb),
 		db2.NewNodeRepo(gormdb),
 		db2.NewNetRepo(gormdb),
-		// bootstrapCl,
-		pub)
+	// bootstrapCl,
+	)
 
 	grpcServer := ugrpc.NewGrpcServer(svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterNetworkServiceServer(s, regServer)

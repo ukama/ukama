@@ -28,19 +28,15 @@ type NetworkServer struct {
 	nodeRepo db2.NodeRepo
 	netRepo  db2.NetRepo
 	// bootstrapClient bootstrap.Client
-
-	queuePub       msgbus.QPub
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewNetworkServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo, publisher msgbus.QPub) *NetworkServer {
-
+func NewNetworkServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo) *NetworkServer {
 	return &NetworkServer{
 		orgRepo:  orgRepo,
 		nodeRepo: nodeRepo,
 		netRepo:  netRepo,
 		// bootstrapClient: bootstrapClient,
-		queuePub:       publisher,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
@@ -190,12 +186,13 @@ func (r *NetworkServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeReques
 	resp := &pb.DeleteNodeResponse{
 		NodeId: req.NodeId,
 	}
-	r.pubEvent(resp, r.baseRoutingKey.SetActionDelete().SetObject("node").MustBuild())
+
+	// publish event before returning resp
 
 	return resp, nil
 }
 
-func (n *NetworkServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
+func (r *NetworkServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
 	logrus.Infof("Updating the node  %v", req.GetNodeId())
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
@@ -203,12 +200,12 @@ func (n *NetworkServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReques
 		return nil, invalidNodeIdError(req.GetNodeId(), err)
 	}
 	st := pbNodeStateToDb(req.GetNode().GetState())
-	err = n.nodeRepo.Update(nodeId, &db2.NodeAttributes{
+	err = r.nodeRepo.Update(nodeId, &db2.NodeAttributes{
 		State: &st,
 		Name:  &req.Node.Name,
 	})
 	if err != nil {
-		duplErr := n.processNodeDuplErrors(err, req.GetNode().GetName(), req.NodeId)
+		duplErr := r.processNodeDuplErrors(err, req.GetNode().GetName(), req.NodeId)
 		if duplErr != nil {
 			return nil, duplErr
 		}
@@ -223,7 +220,8 @@ func (n *NetworkServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReques
 			State:  req.Node.State,
 		},
 	}
-	n.pubEvent(resp, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+
+	// publish event before returning resp
 
 	return resp, nil
 }
@@ -282,17 +280,10 @@ func (r *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	}
 
 	resp := &pb.DeleteResponse{}
-	r.pubEvent(resp, r.baseRoutingKey.SetActionDelete().SetObject("network").MustBuild())
-	return resp, nil
-}
 
-func (r *NetworkServer) pubEvent(payload any, key string) {
-	go func() {
-		err := r.queuePub.Publish(payload, key)
-		if err != nil {
-			logrus.Errorf("Failed to publish event. Error %s", err.Error())
-		}
-	}()
+	// publish event before returning resp
+
+	return resp, nil
 }
 
 func (n *NetworkServer) processNodeDuplErrors(err error, nodeName string, nodeId string) error {
@@ -304,6 +295,7 @@ func (n *NetworkServer) processNodeDuplErrors(err error, nodeName string, nodeId
 			return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
 		}
 	}
+
 	return nil
 }
 
