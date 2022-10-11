@@ -12,8 +12,7 @@ type Config struct {
 	// BootstrapAuth     *bootstrap.AuthConfig `default:"{}"`
 	BootstrapUrl string
 	// this host will be sent to bootstrap service
-	DeviceGatewayHost string        // should be an IP
-	Queue             *config.Queue `default:"{}"`
+	DeviceGatewayHost string // should be an IP
 	// debugMode shoule be enabled to allow bypyssing bootstrap
 	// Debug   *bootstrap.DebugConf `default:"{}"`
 	Metrics *config.Metrics `default:"{}"`

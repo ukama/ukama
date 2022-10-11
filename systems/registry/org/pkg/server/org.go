@@ -9,7 +9,6 @@ import (
 
 	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -21,20 +20,17 @@ type OrgServer struct {
 	orgRepo db.OrgRepo
 
 	// bootstrapClient bootstrap.Client
-	deviceGatewayIp string
-
-	queuePub msgbus.QPub
+	nodeGatewayIP string
 }
 
 // func NewOrgServer(orgRepo db.OrgRepo, bootstrapClient bootstrap.Client,
 func NewOrgServer(orgRepo db.OrgRepo,
-	deviceGatewayIp string, publisher msgbus.QPub) *OrgServer {
+	nodeGatewayIP string) *OrgServer {
 
 	return &OrgServer{
 		orgRepo: orgRepo,
 		// bootstrapClient: bootstrapClient,
-		deviceGatewayIp: deviceGatewayIp,
-		queuePub:        publisher,
+		nodeGatewayIP: nodeGatewayIP,
 	}
 }
 
@@ -55,7 +51,7 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 		Certificate: generateCertificate(),
 	}
 	err = r.orgRepo.Add(org, func() error {
-		// return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.deviceGatewayIp)
+		// return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.nodeGatewayIP)
 		return nil
 	})
 	if err != nil {
@@ -64,10 +60,7 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 
 	orgResp := &pb.Organization{Name: req.GetOrg().GetName(), Owner: req.GetOrg().GetOwner()}
 
-	r.pubEventAsync(&msgbus.OrgCreatedBody{
-		Name:  orgResp.Name,
-		Owner: orgResp.Owner,
-	}, msgbus.OrgCreatedRoutingKey)
+	// pub event async
 
 	return &pb.AddResponse{
 		Org: orgResp,
@@ -96,20 +89,12 @@ func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Dele
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	r.pubEventAsync(&pb.Organization{Name: req.GetName()}, msgbus.OrgDeletedRoutingKey)
+	// publish event async
+
 	return &pb.DeleteResponse{}, nil
 }
 
 func generateCertificate() string {
 	logrus.Warning("Certificate generation is not yet implemented")
 	return base64.StdEncoding.EncodeToString([]byte("Test certificate"))
-}
-
-func (r *OrgServer) pubEventAsync(payload any, key msgbus.RoutingKey) {
-	go func() {
-		err := r.queuePub.Publish(payload, string(key))
-		if err != nil {
-			logrus.Errorf("Failed to publish event. Error %s", err.Error())
-		}
-	}()
 }

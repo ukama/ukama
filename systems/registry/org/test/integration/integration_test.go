@@ -6,15 +6,12 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
-	confr "github.com/num30/config"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/registry/org/pkg/queue"
-	"google.golang.org/grpc/credentials/insecure"
-	"os"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	confr "github.com/num30/config"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -23,8 +20,7 @@ import (
 )
 
 type TestConfig struct {
-	ServiceHost string        `default:"localhost:9090"`
-	Queue       *config.Queue `default:"{}"`
+	ServiceHost string `default:"localhost:9090"`
 }
 
 var tConfig *TestConfig
@@ -105,7 +101,7 @@ func Test_Listener(t *testing.T) {
 	}
 
 	// Act
-	err = sendMessageToQueue(ownerId)
+	// err = sendMessageToQueue(ownerId)
 
 	// Assert
 	assert.NoError(t, err)
@@ -133,22 +129,22 @@ func CreateOrgClient() (*grpc.ClientConn, pb.OrgServiceClient, error) {
 	return conn, c, nil
 }
 
-func sendMessageToQueue(ownerId string) error {
-	logrus.Info("Sending message to queue")
+// func sendMessageToQueue(ownerId string) error {
+// logrus.Info("Sending message to queue")
 
-	rabbit, err := msgbus.NewQPub(tConfig.Queue.Uri, "network-listener-integration-test", os.Getenv("POD_NAME"))
-	if err != nil {
-		logrus.Errorf("could not create rabbitmq client %+v", err)
-		return err
-	}
+// rabbit, err := msgbus.NewQPub(tConfig.Queue.Uri, "network-listener-integration-test", os.Getenv("POD_NAME"))
+// if err != nil {
+// logrus.Errorf("could not create rabbitmq client %+v", err)
+// return err
+// }
 
-	err = rabbit.Publish(&queue.UserRegisteredBody{
-		Id:    ownerId,
-		Email: "org-integration-test@gmail.com",
-	}, string(msgbus.UserRegisteredRoutingKey))
-	if err != nil {
-		logrus.Errorf("could not publish message %+v", err)
-	}
+// err = rabbit.Publish(&queue.UserRegisteredBody{
+// Id:    ownerId,
+// Email: "org-integration-test@gmail.com",
+// }, string(msgbus.UserRegisteredRoutingKey))
+// if err != nil {
+// logrus.Errorf("could not publish message %+v", err)
+// }
 
-	return err
-}
+// return err
+// }

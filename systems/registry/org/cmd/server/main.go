@@ -5,7 +5,6 @@ import (
 
 	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg/server"
 
@@ -68,6 +67,7 @@ func initDb() sql.Db {
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
+
 	return d
 }
 
@@ -78,15 +78,9 @@ func runGrpcServer(gormdb sql.Db) {
 	// bootstrapCl = bootstrap.DummyBootstrapClient{}
 	// }
 
-	pub, err := msgbus.NewQPub(svcConf.Queue.Uri, pkg.ServiceName, pkg.InstanceId)
-	if err != nil {
-		log.Fatalf("Failed to create publisher. Error: %v", err)
-	}
-
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		// bootstrapCl,
-		svcConf.DeviceGatewayHost,
-		pub)
+		svcConf.DeviceGatewayHost)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)
