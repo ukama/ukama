@@ -21,16 +21,14 @@ import (
 
 type NodeServer struct {
 	nodeRepo       db.NodeRepo
-	queuePub       msgbus.QPub
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	pb.UnimplementedNodeServiceServer
 }
 
-func NewNodeServer(nodeRepo db.NodeRepo, queuePub msgbus.QPub) *NodeServer {
+func NewNodeServer(nodeRepo db.NodeRepo) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 	return &NodeServer{nodeRepo: nodeRepo,
-		queuePub:       queuePub,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 	}
@@ -55,7 +53,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	n.pubEvent(req, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+	// publish event and return
 
 	return &pb.AttachNodesResponse{}, nil
 }
@@ -71,7 +69,7 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	n.pubEvent(req, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+	// publish event and return
 
 	return &pb.DetachNodeResponse{}, nil
 }
@@ -96,10 +94,8 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 		NodeId: req.GetNodeId(),
 		State:  req.State,
 	}
-	n.pubEvent(&msgbus.NodeUpdateBody{
-		NodeId: req.GetNodeId(),
-		State:  req.GetState().String(),
-	}, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+
+	// publish event and return
 
 	return resp, nil
 }
@@ -134,10 +130,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 		return resp, nil
 	}
 
-	n.pubEvent(&msgbus.NodeUpdateBody{
-		NodeId: req.GetNodeId(),
-		Name:   req.Name,
-	}, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+	// publish event and return
 
 	return &pb.UpdateNodeResponse{
 		Node: dbNodeToPbNode(und),
@@ -225,15 +218,6 @@ func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Del
 
 func invalidNodeIdError(nodeId string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
-}
-
-func (n *NodeServer) pubEvent(payload any, key string) {
-	go func() {
-		err := n.queuePub.Publish(payload, key)
-		if err != nil {
-			logrus.Errorf("Failed to publish event. Error %s", err.Error())
-		}
-	}()
 }
 
 func pbNodeStateToDb(state pb.NodeState) db.NodeState {

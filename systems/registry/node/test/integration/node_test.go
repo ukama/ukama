@@ -11,16 +11,13 @@ import (
 
 	"github.com/ukama/ukama/systems/common/ukama"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	uconf "github.com/ukama/ukama/systems/common/config"
-	commonpb "github.com/ukama/ukama/systems/common/pb/gen/ukamaos/mesh"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
@@ -52,8 +49,7 @@ func init() {
 
 type TestConfig struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-	ServiceHost      string       `default:"localhost:9090"`
-	Queue            *uconf.Queue `default:{}`
+	ServiceHost      string `default:"localhost:9090"`
 }
 
 func Test_FullFlow(t *testing.T) {
@@ -62,6 +58,7 @@ func Test_FullFlow(t *testing.T) {
 
 	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
 	conn, err := grpc.DialContext(ctx, tConfig.ServiceHost, grpc.WithInsecure(), grpc.WithBlock())
+
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
 		return
@@ -203,7 +200,6 @@ func Test_Listener(t *testing.T) {
 	}
 
 	// Act
-	err = sendMessageToQueue(nodeId)
 
 	// Assert
 	assert.NoError(t, err)
@@ -228,20 +224,20 @@ func CreateRegistryClient() (*grpc.ClientConn, pb.NodeServiceClient, error) {
 	return conn, c, nil
 }
 
-func sendMessageToQueue(nodeId string) error {
-	rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
+// func sendMessageToQueue(nodeId string) error {
+// rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
 
-	if err != nil {
-		return err
-	}
+// if err != nil {
+// return err
+// }
 
-	message, err := proto.Marshal(&commonpb.Link{NodeId: &nodeId, Ip: proto.String("1.1.1.1")})
-	if err != nil {
-		return err
-	}
-	err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, msgbus.DeviceConnectedRoutingKey, "topic")
-	return err
-}
+// message, err := proto.Marshal(&commonpb.Link{NodeId: &nodeId, Ip: proto.String("1.1.1.1")})
+// if err != nil {
+// return err
+// }
+// err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, msgbus.DeviceConnectedRoutingKey, "topic")
+// return err
+// }
 
 func handleResponse(t *testing.T, err error, r interface{}) {
 	fmt.Printf("Response: %v\n", r)

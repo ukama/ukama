@@ -5,7 +5,6 @@ import (
 
 	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 
 	"github.com/num30/config"
@@ -69,14 +68,9 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		pub, err := msgbus.NewQPub(serviceConfig.Queue.Uri, pkg.ServiceName, instanceId)
-		if err != nil {
-			log.Fatalf("Failed to create publisher. Error: %v", err)
-		}
 
-		srv := server.NewNodeServer(db.NewNodeRepo(gormdb), pub)
+		srv := server.NewNodeServer(db.NewNodeRepo(gormdb))
 		generated.RegisterNodeServiceServer(s, srv)
 	})
 
