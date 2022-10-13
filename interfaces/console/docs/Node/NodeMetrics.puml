@@ -1,0 +1,17 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(personAlias, "User")
+Container(consoleAlias, "Console", "ReactJS, Typescript & MUI", "Nodes Page")
+Container(bffAlias, "Console Bff", "NodeJs, Typescript & GraphQl", "Node services")
+Rel_U(bffAlias, bffAlias, "Subscription: metricsByTab")
+Rel_R(bffAlias, bffAlias, "Node lookup utility")
+Rel_L(bffAlias, bffAlias, "Node aggregator utility")
+Container(AuthAlias, "Auth Registery", "Go, Kratos", "Auth services")
+Container(cloudAlias, "Metrics Registery", "Go, Postgres", "Node services")
+
+Rel(personAlias, consoleAlias, "Route", "/nodes")
+Rel(consoleAlias, bffAlias, "Query", "getMetricsByTab")
+Rel_L(bffAlias, AuthAlias, "Session Validation", "/sessions/whoami")
+Rel_D(bffAlias, cloudAlias, "GET", "/nodes/{{NODE_ID}}/metrics/{{METRIC_KEY}}")
+@enduml

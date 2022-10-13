@@ -1,0 +1,23 @@
+@startuml
+skinparam BoxPadding 10
+skinparam roundcorner 10
+skinparam Shadowing false
+skinparam monochrome true
+skinparam ParticipantPadding 60
+skinparam ActorBorderColor  Black
+skinparam sequenceMessageAlign center
+skinparam SequenceBoxBackgroundColor AliceBlue
+
+actor User #Black
+
+User -> Console: (/users)
+Console -> BFF: (mutation updateUserStatus)
+BFF -> "Auth Registery": Validate session
+BFF <-- "Auth Registery": Validate Failed
+Console <-- BFF: Session Validation Failed
+BFF <-- "Auth Registery": Validate success
+BFF --> "User Registery": (PUT /users/{{USER_ID}}/sims/{{SIM_ID}}/services)
+BFF <-- "User Registery": (PUT /users/{{USER_ID}}/sims/{{SIM_ID}}/services response)
+BFF --> Console:  (mutation updateUserStatus response)
+
+@enduml
