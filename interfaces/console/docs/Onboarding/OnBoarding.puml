@@ -1,0 +1,18 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(personAlias, "User")
+Container(consoleAlias, "Console", "ReactJS, Typescript & MUI", "Home")
+Container(consoleOnBoardingAlias, "Console", "ReactJS, Typescript & MUI", "OnBoarding Page")
+Container(bffAlias, "Console Bff", "NodeJs, Typescript & GraphQl", "User services")
+Container(AuthAlias, "Auth Registery", "Go, Kratos", "Auth services")
+Container(cloudAlias, "User Registery", "Go, Postgres", "User services")
+Rel(personAlias, AuthAlias, "{{Check user service for  [firstVisit] to redirect the user}}", "/onBoarding")
+Rel(personAlias, consoleOnBoardingAlias, "firstVisit = True", "/onBoarding")
+Rel(personAlias, consoleAlias, "firstVisit = False", "/home")
+Rel(consoleOnBoardingAlias, consoleAlias, "Create a user then go to console", "/home")
+Rel(consoleOnBoardingAlias, bffAlias, "Mutation", "AddUser")
+Rel(consoleAlias, bffAlias, "Query", "getUsers")
+Rel_R(bffAlias, AuthAlias, "Session Validation", "/sessions/whoami")
+Rel(bffAlias, cloudAlias, "GET", "???")
+@enduml
