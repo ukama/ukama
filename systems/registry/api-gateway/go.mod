@@ -97,6 +97,6 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.4.1 // indirect
+	gorm.io/driver/postgres v1.4.4 // indirect
 	gorm.io/gorm v1.24.0 // indirect
 )

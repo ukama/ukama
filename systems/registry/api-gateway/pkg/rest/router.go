@@ -33,10 +33,9 @@ import (
 const ORG_URL_PARAMETER = "org"
 
 type Router struct {
-	f              *fizz.Fizz
-	authMiddleware AuthMiddleware
-	clients        *Clients
-	config         *RouterConfig
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
 }
 
 type RouterConfig struct {
@@ -49,11 +48,6 @@ type RouterConfig struct {
 type Clients struct {
 	Registry registry
 	User     *client.Users
-}
-
-type AuthMiddleware interface {
-	IsAuthenticated(c *gin.Context)
-	IsAuthorized(c *gin.Context)
 }
 
 type registry interface {
@@ -75,16 +69,12 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(
-	authMiddleware AuthMiddleware,
-	clients *Clients,
-	config *RouterConfig) *Router {
-
+func NewRouter(clients *Clients, config *RouterConfig) *Router {
 	r := &Router{
-		authMiddleware: authMiddleware,
-		clients:        clients,
-		config:         config,
+		clients: clients,
+		config:  config,
 	}
+
 	if !config.debugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -104,6 +94,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 
 func (rt *Router) Run() {
 	logrus.Info("Listening on port ", rt.config.serverConf.Port)
+
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
 		panic(err)
@@ -111,77 +102,38 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.ServiceName, version.Version, r.config.debugMode)
-	authorized := r.f.Group("/", "Authorization", "Requires authorization", r.authMiddleware.IsAuthenticated,
-		r.authMiddleware.IsAuthorized)
+	const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 
-	authorized.Use()
-	{
-		const org = "/orgs/" + ":" + ORG_URL_PARAMETER
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
+	v1 := r.f.Group("/v1", "API gateway", "Registry system version v1")
 
-		// org handler
-		authorized.GET(org, []fizz.OperationOption{}, tonic.Handler(r.orgHandler, http.StatusOK))
+	// org handler
+	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
+	orgs.GET("", []fizz.OperationOption{}, tonic.Handler(r.orgHandler, http.StatusOK))
 
-		// metrics
-		metricsProxy := r.getMetricsProxyHandler()
+	// network
+	nodes := orgs.Group("/nodes", "Nodes", "Nodes operations")
+	nodes.GET("", nil, tonic.Handler(r.getNodesHandler, http.StatusOK))
+	nodes.PUT("/:node", nil, tonic.Handler(r.addNodeHandler, http.StatusCreated))
+	nodes.PATCH("/:node", nil, tonic.Handler(r.updateNodeHandler, http.StatusOK))
+	nodes.GET("/:node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
+	nodes.DELETE("/:node", nil, tonic.Handler(r.deleteNodeHandler, http.StatusOK))
+	nodes.DELETE("/:node/attached/:attachedId", nil, tonic.Handler(r.detachNode, http.StatusOK))
 
-		authorized.GET(org+"/metrics/:metric", []fizz.OperationOption{
-			func(info *openapi.OperationInfo) {
-				info.Description = "For request format refer to nodes/metrics/openapi.json Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-				info.Summary = "Get metrics for a node"
-				info.ID = "GetMetrics"
-			}}, metricsProxy)
-
-		// network
-		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
-		nodes.GET("", nil, tonic.Handler(r.getNodesHandler, http.StatusOK))
-		nodes.PUT("/:node", nil, tonic.Handler(r.addNodeHandler, http.StatusCreated))
-		nodes.PATCH("/:node", nil, tonic.Handler(r.updateNodeHandler, http.StatusOK))
-		nodes.GET("/:node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
-		nodes.DELETE("/:node", nil, tonic.Handler(r.deleteNodeHandler, http.StatusOK))
-		nodes.DELETE("/:node/attached/:attachedId", nil, tonic.Handler(r.detachNode, http.StatusOK))
-
-		nodes.GET("/metrics/openapi.json", []fizz.OperationOption{
-			func(info *openapi.OperationInfo) {
-				info.Summary = "Get metrics endpoint Open API specification"
-			}}, metricsProxy)
-
-		nodes.GET("/:node/metrics/:metric", []fizz.OperationOption{
-			func(info *openapi.OperationInfo) {
-				info.Description = "For request format refer to nodes/metrics/openapi.json Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-				info.Summary = "Get metrics for a node"
-				info.ID = "GetMetrics"
-			}}, metricsProxy)
-
-		nodes.GET("/:node/metrics/:metric/:path", []fizz.OperationOption{
-			func(info *openapi.OperationInfo) {
-				info.Description = "For request format refer to nodes/metrics/openapi.json Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-				info.Summary = "Get metrics for a node"
-			}}, metricsProxy)
-
-		nodes.GET("/metrics", []fizz.OperationOption{
-			func(info *openapi.OperationInfo) {
-				info.Description = "Get list of metrics for a node. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-				info.Summary = "Get metrics list for a node"
-				info.ID = "GetMetricsList"
-			}}, metricsProxy)
-
-		// user's management
-		hss := authorized.Group(org+"/users", "Network Users", "Operations on network users and SIM cards"+
-			"Do not confuse with organization users")
-		hss.GET("", formatDoc("Get list of users", ""), tonic.Handler(r.getUsersHandler, http.StatusOK))
-		hss.POST("", formatDoc("Create new user", ""), tonic.Handler(r.postUsersHandler, http.StatusCreated))
-		hss.DELETE("/:user", formatDoc("Delete user", ""), tonic.Handler(r.deleteUserHandler, http.StatusOK))
-		hss.GET("/:user", formatDoc("Get user info", ""), tonic.Handler(r.getUserHandler, http.StatusOK))
-		hss.PATCH("/:user", formatDoc("Update user's information and deactivates user",
-			"All fields are optional. User could be deactivated by setting isDeactivated flag to true. If a user is deactivated, all his SIM cards are purged. This operation is not recoverable"),
-			tonic.Handler(r.updateUserHandler, http.StatusOK))
-		hss.PUT("/:user/sims/:iccid/services", formatDoc("Enable or disable services for a SIM card", ""),
-			tonic.Handler(r.setSimStatusHandler, http.StatusOK))
-		hss.GET("/:user/sims/:iccid/qr", formatDoc("Get e-sim installation QR code", ""),
-			tonic.Handler(r.getSimQrHandler, http.StatusOK))
-
-	}
+	// user's management
+	hss := orgs.Group("/users", "Network Users", "Operations on network users and SIM cards"+
+		"Do not confuse with organization users")
+	hss.GET("", formatDoc("Get list of users", ""), tonic.Handler(r.getUsersHandler, http.StatusOK))
+	hss.POST("", formatDoc("Create new user", ""), tonic.Handler(r.postUsersHandler, http.StatusCreated))
+	hss.DELETE("/:user", formatDoc("Delete user", ""), tonic.Handler(r.deleteUserHandler, http.StatusOK))
+	hss.GET("/:user", formatDoc("Get user info", ""), tonic.Handler(r.getUserHandler, http.StatusOK))
+	hss.PATCH("/:user", formatDoc("Update user's information and deactivates user",
+		"All fields are optional. User could be deactivated by setting isDeactivated flag to true. If a user is deactivated, all his SIM cards are purged. This operation is not recoverable"),
+		tonic.Handler(r.updateUserHandler, http.StatusOK))
+	hss.PUT("/:user/sims/:iccid/services", formatDoc("Enable or disable services for a SIM card", ""),
+		tonic.Handler(r.setSimStatusHandler, http.StatusOK))
+	hss.GET("/:user/sims/:iccid/qr", formatDoc("Get e-sim installation QR code", ""),
+		tonic.Handler(r.getSimQrHandler, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

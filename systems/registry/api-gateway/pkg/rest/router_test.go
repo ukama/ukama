@@ -59,7 +59,7 @@ func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(NewDebugAuthMiddleware(), testClientSet, routerConfig).f.Engine()
+	r := NewRouter(testClientSet, routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -67,20 +67,6 @@ func TestPingRoute(t *testing.T) {
 	// assert
 	assert.Equal(t, 200, w.Code)
 	assert.Contains(t, w.Body.String(), "pong")
-}
-
-func TestGetOrg_Unauthorized(t *testing.T) {
-	// arrange
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
-
-	r := NewRouter(NewDebugAuthMiddleware(), testClientSet, routerConfig).f.Engine()
-
-	// act
-	r.ServeHTTP(w, req)
-
-	// assert
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestGetOrg_NotFound(t *testing.T) {
@@ -95,7 +81,7 @@ func TestGetOrg_NotFound(t *testing.T) {
 	o.On("Get", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "org not found"))
 	nd := &nodemocks.NodeServiceClient{}
 
-	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+	r := NewRouter(&Clients{
 		Registry: client.NewRegistryFromClient(n, o, nd),
 	}, routerConfig).f.Engine()
 
@@ -126,7 +112,7 @@ func TestGetOrg(t *testing.T) {
 		},
 	}, nil)
 
-	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+	r := NewRouter(&Clients{
 		Registry: client.NewRegistryFromClient(n, o, nd),
 	}, routerConfig).f.Engine()
 
@@ -158,7 +144,7 @@ func TestGetNodes(t *testing.T) {
 			OrgName: "test-org",
 		}, nil)
 
-		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+		r := NewRouter(&Clients{
 			Registry: client.NewRegistryFromClient(m, o, nd),
 		}, routerConfig).f.Engine()
 
@@ -180,7 +166,7 @@ func TestGetNodes(t *testing.T) {
 			Nodes: []*netpb.Node{},
 		}, nil)
 
-		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+		r := NewRouter(&Clients{
 			Registry: client.NewRegistryFromClient(m, o, nd),
 		}, routerConfig).f.Engine()
 
@@ -218,7 +204,7 @@ func TestGetNode(t *testing.T) {
 			}},
 	}, nil)
 
-	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+	r := NewRouter(&Clients{
 		Registry: client.NewRegistryFromClient(m, o, nd),
 	}, routerConfig).f.Engine()
 
@@ -263,7 +249,7 @@ func TestAddNode(t *testing.T) {
 
 	net.On("AddNode", mock.Anything, mock.Anything).Return(&netpb.AddNodeResponse{}, nil)
 
-	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+	r := NewRouter(&Clients{
 		Registry: client.NewRegistryFromClient(net, o, nd),
 	}, routerConfig).f.Engine()
 
@@ -291,7 +277,7 @@ func Test_UpdateNode(t *testing.T) {
 		Node: &nodepb.Node{NodeId: nodeId}}, nil)
 	nd.On("UpdateNode", mock.Anything, mock.Anything).Return(&nodepb.UpdateNodeResponse{}, nil)
 
-	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+	r := NewRouter(&Clients{
 		Registry: client.NewRegistryFromClient(net, o, nd),
 	}, routerConfig).f.Engine()
 
@@ -312,7 +298,7 @@ func Test_HssMethods(t *testing.T) {
 	const simToken = "0000010000000001"
 
 	m := usrmocks.UserServiceClient{}
-	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+	r := NewRouter(&Clients{
 		User: client.NewTestHssFromClient(&m),
 	}, routerConfig).f.Engine()
 
