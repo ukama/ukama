@@ -44,6 +44,7 @@ func initConfig() {
 			DbName: pkg.ServiceName,
 		},
 	}
+
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -59,17 +60,19 @@ func initConfig() {
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
+
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+
 	err := d.Init(&db.Node{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
+
 	return d
 }
 
 func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-
 		srv := server.NewNodeServer(db.NewNodeRepo(gormdb))
 		generated.RegisterNodeServiceServer(s, srv)
 	})

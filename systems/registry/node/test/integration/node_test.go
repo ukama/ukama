@@ -61,6 +61,7 @@ func Test_FullFlow(t *testing.T) {
 
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
+
 		return
 	}
 
@@ -98,13 +99,14 @@ func Test_FullFlow(t *testing.T) {
 		assert.Equal(tt, pb.NodeType_HOME, nodeResp.Node.Type)
 	})
 
-	tNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
-	aNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE)
+	tNodeID := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
+	aNodeID := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE)
+
 	t.Run("AddTowerNodeWithAmplifiers", func(tt *testing.T) {
-		ndToClean = append(ndToClean, tNodeId)
+		ndToClean = append(ndToClean, tNodeID)
 		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
-				NodeId: tNodeId.String(),
+				NodeId: tNodeID.String(),
 				State:  pb.NodeState_UNDEFINED,
 			},
 		})
@@ -112,10 +114,10 @@ func Test_FullFlow(t *testing.T) {
 			assert.FailNow(tt, "AddNode failed", err.Error())
 		}
 
-		ndToClean = append(ndToClean, aNodeId)
+		ndToClean = append(ndToClean, aNodeID)
 		_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
-				NodeId: aNodeId.String(),
+				NodeId: aNodeID.String(),
 				State:  pb.NodeState_UNDEFINED,
 			},
 		})
@@ -124,27 +126,27 @@ func Test_FullFlow(t *testing.T) {
 		}
 
 		_, err = c.AttachNodes(ctx, &pb.AttachNodesRequest{
-			ParentNodeId:    tNodeId.String(),
-			AttachedNodeIds: []string{aNodeId.String()},
+			ParentNodeId:    tNodeID.String(),
+			AttachedNodeIds: []string{aNodeID.String()},
 		})
 		if err != nil {
 			assert.FailNow(tt, "AttachNodes failed", err.Error())
 		}
 
-		resp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: tNodeId.String()})
+		resp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: tNodeID.String()})
 		if assert.NoError(tt, err, "GetNode failed") {
 			assert.NotNil(tt, resp.Node.Attached)
 			assert.Equal(tt, 1, len(resp.Node.Attached))
-			assert.Equal(tt, aNodeId.StringLowercase(), resp.Node.Attached[0].NodeId)
+			assert.Equal(tt, aNodeID.StringLowercase(), resp.Node.Attached[0].NodeId)
 		}
 	})
 
 	t.Run("DetachNode", func(tt *testing.T) {
 		_, err := c.DetachNode(ctx, &pb.DetachNodeRequest{
-			DetachedNodeId: aNodeId.String(),
+			DetachedNodeId: aNodeID.String(),
 		})
 		if assert.NoError(t, err) {
-			resp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: tNodeId.String()})
+			resp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: tNodeID.String()})
 			if assert.NoError(t, err) {
 				assert.Nil(t, resp.Node.Attached)
 			}
@@ -171,30 +173,34 @@ func cleanupNodes(tt *testing.T, c pb.NodeServiceClient, nodes []ukama.NodeID) {
 
 func Test_Listener(t *testing.T) {
 	// Arrange
-	nodeId := "UK-SA2136-HNODE-A1-30DF"
+	nodeID := "UK-SA2136-HNODE-A1-30DF"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	conn, c, err := CreateRegistryClient()
 	defer conn.Close()
+
 	if err != nil {
 		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
+
 		return
 	}
 
 	_, err = c.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{
-		NodeId: nodeId, State: pb.NodeState_UNDEFINED,
+		NodeId: nodeID, State: pb.NodeState_UNDEFINED,
 	}})
+
 	e, ok := status.FromError(err)
 	if ok && e.Code() == codes.AlreadyExists {
 		logrus.Infof("node already exist, err %+v\n", err)
 	} else {
 		assert.NoError(t, err)
+
 		return
 	}
 
-	_, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{NodeId: nodeId, State: pb.NodeState_PENDING})
+	_, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{NodeId: nodeID, State: pb.NodeState_PENDING})
 	if err != nil {
 		assert.FailNow(t, "Failed to update node. Error: %s", err.Error())
 	}
@@ -203,9 +209,12 @@ func Test_Listener(t *testing.T) {
 
 	// Assert
 	assert.NoError(t, err)
+
 	time.Sleep(3 * time.Second)
-	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId})
+
+	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeID})
 	assert.NoError(t, err)
+
 	if err != nil {
 		assert.Equal(t, pb.NodeState_ONBOARDED, nodeResp.Node.State)
 	}
@@ -213,34 +222,25 @@ func Test_Listener(t *testing.T) {
 
 func CreateRegistryClient() (*grpc.ClientConn, pb.NodeServiceClient, error) {
 	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
+
 	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithInsecure())
 	if err != nil {
 		return nil, nil, err
 	}
 
 	c := pb.NewNodeServiceClient(conn)
+
 	return conn, c, nil
 }
 
-// func sendMessageToQueue(nodeId string) error {
-// rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
-
-// if err != nil {
-// return err
-// }
-
-// message, err := proto.Marshal(&commonpb.Link{NodeId: &nodeId, Ip: proto.String("1.1.1.1")})
-// if err != nil {
-// return err
-// }
-// err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, msgbus.DeviceConnectedRoutingKey, "topic")
-// return err
-// }
-
 func handleResponse(t *testing.T, err error, r interface{}) {
+	t.Helper()
+
 	fmt.Printf("Response: %v\n", r)
+
 	if err != nil {
 		assert.FailNow(t, "Request failed: %v\n", err)
 	}

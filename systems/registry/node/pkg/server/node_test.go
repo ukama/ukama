@@ -25,6 +25,7 @@ func TestRegistryServer_GetNode(t *testing.T) {
 	s := NewNodeServer(nodeRepo)
 
 	node, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: testNodeId.String()})
+
 	assert.NoError(t, err)
 	assert.Equal(t, pb.NodeState_PENDING, node.Node.State)
 	assert.Equal(t, pb.NodeType_HOME, node.Node.Type)
@@ -76,7 +77,6 @@ func TestRegistryServer_AddNode(t *testing.T) {
 }
 
 func Test_toDbNodeType(t *testing.T) {
-
 	tests := []struct {
 		nodeId ukama.NodeID
 		want   db.NodeType
