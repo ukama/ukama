@@ -58,7 +58,6 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-
 	simMgr, conn := newSimManagerClient(serviceConfig.SimManager)
 	defer conn.Close()
 
@@ -71,7 +70,6 @@ func runGrpcServer(gormdb sql.Db) {
 		sims.NewSimProvider(serviceConfig.SimTokenKey, simPool),
 		simMgr,
 		serviceConfig.SimManager.Name+":"+serviceConfig.SimManager.Host,
-		pkg.NewKratosClient(serviceConfig.KratoAdminUrl),
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {

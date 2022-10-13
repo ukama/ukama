@@ -13,7 +13,6 @@ type Config struct {
 	HssHost           string
 	SimManager        SimManager
 	SimTokenKey       string
-	KratoAdminUrl     string
 	Metrics           config.Metrics
 }
 
@@ -42,8 +41,8 @@ func NewConfig() *Config {
 			Name:    "SimManager",
 			Timeout: 3 * time.Second,
 		},
-		KratoAdminUrl: "localhost",
-		SimTokenKey:   "11111111111111111111111111111111",
-		Metrics:       *config.DefaultMetrics(),
+
+		SimTokenKey: "11111111111111111111111111111111",
+		Metrics:     *config.DefaultMetrics(),
 	}
 }

@@ -36,19 +36,17 @@ type UserService struct {
 	simManagerName string
 	simRepo        db.SimcardRepo
 	simProvider    sims.SimProvider
-	kratosClient   pkg.KratosClient
 }
 
 func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, simRepo db.SimcardRepo,
 	simProvider sims.SimProvider, simManager pbclient.SimManagerServiceClient, simManagerName string,
-	kratosClient pkg.KratosClient) *UserService {
+) *UserService {
 	return &UserService{userRepo: userRepo,
 		imsiService:    imsiProvider,
 		simRepo:        simRepo,
 		simManager:     simManager,
 		simManagerName: simManagerName,
 		simProvider:    simProvider,
-		kratosClient:   kratosClient,
 	}
 }
 
@@ -511,18 +509,17 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		return errors.Wrap(err, "failed to get qr code")
 	}
 	md, ok := metadata.FromIncomingContext(ctx)
-	var noId string
-	if ok && len(md["x-requester"]) == 1 {
-		noId = md["x-requester"][0]
-	} else {
+
+	if !ok || len(md["x-requester"]) != 1 {
 		logrus.Errorf("Missing `x-requester` header in request")
+
 		return fmt.Errorf("missing `x-requester` header in request")
 	}
 
-	_, err = u.kratosClient.GetAccountName(noId)
-	if err != nil {
-		return errors.Wrap(err, "failed to get network owner name")
-	}
+	// _, err = u.kratosClient.GetAccountName(md["x-requester"][0])
+	// if err != nil {
+	// return errors.Wrap(err, "failed to get network owner name")
+	// }
 
 	return nil
 }
