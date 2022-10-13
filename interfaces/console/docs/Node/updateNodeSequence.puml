@@ -1,0 +1,23 @@
+@startuml
+skinparam BoxPadding 10
+skinparam roundcorner 10
+skinparam Shadowing false
+skinparam monochrome true
+skinparam ParticipantPadding 60
+skinparam ActorBorderColor  Black
+skinparam sequenceMessageAlign center
+skinparam SequenceBoxBackgroundColor AliceBlue
+
+actor User #Black
+
+User -> Console: (/nodes)
+Console -> BFF: (mutation updateNode)
+BFF -> "Auth Registery": Validate session
+BFF <-- "Auth Registery": Validate Failed
+Console <-- BFF: Session Validation Failed
+BFF <-- "Auth Registery": Validate success
+BFF --> "Node Registery": (PATCH /nodes/{{NODE_ID}})
+BFF <-- "Node Registery": (PATCH /nodes/{{NODE_ID}} response)
+BFF --> Console:  (mutation updateNode response)
+
+@enduml

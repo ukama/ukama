@@ -1,0 +1,14 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(personAlias, "User")
+Container(consoleAlias, "Console", "ReactJS, Typescript & MUI", "Users Page")
+Container(bffAlias, "Console Bff", "NodeJs, Typescript & GraphQl", "User services")
+Container(AuthAlias, "Auth Registery", "Go, Kratos", "Auth services")
+Container(cloudAlias, "User Registery", "Go, Postgres", "User services")
+
+Rel(personAlias, consoleAlias, "Route", "/users")
+Rel(consoleAlias, bffAlias, "Mutation", "updateUserStatus")
+Rel_R(bffAlias, AuthAlias, "Session Validation", "/sessions/whoami")
+Rel(bffAlias, cloudAlias, "PUT", "/users/{{USER_ID}}/sims/{{SIM_ID}}/services")
+@enduml
