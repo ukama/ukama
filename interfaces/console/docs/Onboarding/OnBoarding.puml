@@ -2,24 +2,25 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 Person(personAlias, "User")
-Container_Boundary(c1, "onBaording Flow") {
+Container_Boundary(c1, "onBoarding Flow") {
   
 Container(consoleAlias, "Console", "ReactJS, Typescript & MUI", "Home")
+Container(ukamaAuthAlias,"Auth App","ReactJs,Typescript&MUI")
+ContainerDb(KratosDataBaseAlias, "Auth Database","PostgreSQL")
 ContainerDb(DataBaseAlias, "User Database","PostgreSQL")
 Container(consoleOnBoardingAlias, "Console", "ReactJS, Typescript & MUI", "OnBoarding Page")
 Container(bffAlias, "Console Bff", "NodeJs, Typescript & GraphQl", "User services")
 Container(AuthAlias, "Auth Registery", "Go, Kratos", "Auth services")
 Container(cloudAlias, "User Registery", "Go", "User services")
-Rel(personAlias, AuthAlias, "{{Check user service for  [firstVisit] to redirect the user}}", "/onBoarding")
-Rel(personAlias, consoleOnBoardingAlias, "firstVisit = True", "/onBoarding")
-Rel(personAlias, consoleAlias, "firstVisit = False", "/home")
-Rel(consoleOnBoardingAlias, consoleAlias, "Create a user then go to console", "/home")
-Rel(consoleOnBoardingAlias, bffAlias, "Mutation", "AddUser")
-Rel(consoleAlias, bffAlias, "Query", "getUsers")
-Rel_R(bffAlias, AuthAlias, "Session Validation", "/sessions/whoami")
-Rel(bffAlias, cloudAlias, "GET", "getUsers")
-Rel(bffAlias, cloudAlias, "POST", "addUsers")
-Rel(cloudAlias, DataBaseAlias, "POST", "user")
-Rel(DataBaseAlias, cloudAlias, "GET", "user")
+Rel(personAlias, ukamaAuthAlias, "{{Check auth service for  [firstVisit] to redirect the user}}")
+Rel(ukamaAuthAlias, AuthAlias, "{{ return firstVisit from database}}")
+Rel( AuthAlias, ukamaAuthAlias, "{{ return firstVisit from database}}")
+Rel(ukamaAuthAlias, consoleOnBoardingAlias, "{{Check user service for  [firstVisit=true] to redirect the user}}", "/onBoarding")
+Rel( ukamaAuthAlias, consoleAlias, "{{Check user service for  [firstVisit=false] to redirect the user}}", "/home")
+Rel( AuthAlias, KratosDataBaseAlias, "get user details")
+Rel( consoleOnBoardingAlias, bffAlias, "Mutation","addUser")
+Rel( consoleAlias, bffAlias, " Query","getUser")
+Rel( bffAlias , cloudAlias, " Query","getUser")
+Rel(cloudAlias,DataBaseAlias,"user")
 }
 @enduml
