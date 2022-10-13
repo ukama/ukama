@@ -30,6 +30,7 @@ import (
 	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
+const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
 
 type Router struct {

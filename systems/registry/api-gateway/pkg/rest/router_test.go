@@ -72,7 +72,7 @@ func TestPingRoute(t *testing.T) {
 func TestGetOrg_NotFound(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
+	req, _ := http.NewRequest("GET", "/v1/orgs/org-name", nil)
 	req.Header.Set("token", "bearer 123")
 
 	n := &netmocks.NetworkServiceClient{}
@@ -97,7 +97,7 @@ func TestGetOrg(t *testing.T) {
 	// arrange
 	const orgName = "org-name"
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/orgs/"+orgName, nil)
+	req, _ := http.NewRequest("GET", "/v1/orgs/"+orgName, nil)
 	req.Header.Set("token", "bearer 123")
 
 	n := &netmocks.NetworkServiceClient{}
@@ -127,7 +127,7 @@ func TestGetOrg(t *testing.T) {
 
 func TestGetNodes(t *testing.T) {
 	// arrange
-	req, _ := http.NewRequest("GET", "/orgs/test-org/nodes", nil)
+	req, _ := http.NewRequest("GET", "/v1/orgs/test-org/nodes", nil)
 	req.Header.Set("token", "bearer 123")
 	nodeId := ukama.NewVirtualNodeId("homenode")
 
@@ -188,7 +188,7 @@ func TestGetNode(t *testing.T) {
 
 	// arrange
 	nodeId := ukama.NewVirtualNodeId("homenode")
-	req, _ := http.NewRequest("GET", "/orgs/test-org/nodes/"+nodeId.String(), nil)
+	req, _ := http.NewRequest("GET", "/v1/orgs/test-org/nodes/"+nodeId.String(), nil)
 	req.Header.Set("token", "bearer 123")
 
 	w := httptest.NewRecorder()
@@ -227,7 +227,7 @@ func TestGetNode(t *testing.T) {
 func TestAddNode(t *testing.T) {
 	// arrange
 	nodeId := ukama.NewVirtualNodeId("homenode").String()
-	req, _ := http.NewRequest("PUT", "/orgs/test-org/nodes/"+nodeId, strings.NewReader(`{ "name": "test-name" }`))
+	req, _ := http.NewRequest("PUT", "/v1/orgs/test-org/nodes/"+nodeId, strings.NewReader(`{ "name": "test-name" }`))
 	req.Header.Set("token", "bearer 123")
 
 	w := httptest.NewRecorder()
@@ -265,7 +265,7 @@ func TestAddNode(t *testing.T) {
 
 func Test_UpdateNode(t *testing.T) {
 	nodeId := ukama.NewVirtualNodeId("homenode").String()
-	req, _ := http.NewRequest("PATCH", "/orgs/test-org/nodes/"+nodeId, strings.NewReader(`{ "name": "test-name" }`))
+	req, _ := http.NewRequest("PATCH", "/v1/orgs/test-org/nodes/"+nodeId, strings.NewReader(`{ "name": "test-name" }`))
 	req.Header.Set("token", "bearer 123")
 
 	w := httptest.NewRecorder()
@@ -320,7 +320,7 @@ func Test_HssMethods(t *testing.T) {
 			Iccid: "0000000000000000001",
 		}, nil)
 
-		req, _ := http.NewRequest("POST", "/orgs/"+orgName+"/users", bytes.NewReader(body))
+		req, _ := http.NewRequest("POST", "/v1/orgs/"+orgName+"/users", bytes.NewReader(body))
 		req.Header.Set("token", "bearer 123")
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
@@ -338,7 +338,7 @@ func Test_HssMethods(t *testing.T) {
 		m = usrmocks.UserServiceClient{}
 		m.On("Add", mock.Anything, mock.Anything).Return(nil, status.Error(codes.PermissionDenied, "some err"))
 
-		req, _ := http.NewRequest("POST", "/orgs/"+orgName+"/users", bytes.NewReader(body))
+		req, _ := http.NewRequest("POST", "/v1/orgs/"+orgName+"/users", bytes.NewReader(body))
 		req.Header.Set("token", "bearer 123")
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
@@ -355,7 +355,7 @@ func Test_HssMethods(t *testing.T) {
 		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *userspb.DeleteRequest) bool {
 			return r.UserId == userUuid
 		})).Return(&userspb.DeleteResponse{}, nil)
-		req, _ := http.NewRequest("DELETE", "/orgs/"+orgName+"/users/"+userUuid, nil)
+		req, _ := http.NewRequest("DELETE", "/v1/orgs/"+orgName+"/users/"+userUuid, nil)
 		req.Header.Set("token", "bearer 123")
 		w := httptest.NewRecorder()
 
@@ -381,7 +381,7 @@ func Test_HssMethods(t *testing.T) {
 			},
 		}, nil)
 
-		req, _ := http.NewRequest("GET", "/orgs/"+orgName+"/users", nil)
+		req, _ := http.NewRequest("GET", "/v1/orgs/"+orgName+"/users", nil)
 		req.Header.Set("token", "bearer 123")
 		w := httptest.NewRecorder()
 
@@ -423,7 +423,7 @@ func Test_HssMethods(t *testing.T) {
 			assert.FailNow(t, "error marshaling request", err.Error())
 		}
 
-		req, _ := http.NewRequest("PATCH", "/orgs/"+orgName+"/users/"+userUuid, bytes.NewReader(updBody))
+		req, _ := http.NewRequest("PATCH", "/v1/orgs/"+orgName+"/users/"+userUuid, bytes.NewReader(updBody))
 		req.Header.Set("token", "bearer 123")
 		w := httptest.NewRecorder()
 
