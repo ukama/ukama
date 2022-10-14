@@ -34,6 +34,7 @@ func (g gutiRepo) Update(guti *Guti) error {
 			if err != nil {
 				return errors.Wrap(err, "failed get guti count")
 			}
+
 			if count > 0 {
 				return fmt.Errorf(GutiNotUpdatedErr)
 			}
@@ -44,13 +45,16 @@ func (g gutiRepo) Update(guti *Guti) error {
 			}
 
 			guti.CreatedAt = time.Now().UTC()
+
 			return tx.Create(guti).Error
 		})
+
 	return err
 }
 
 func (g gutiRepo) GetImis(guti string) (string, error) {
 	res := Guti{}
 	r := g.db.GetGormDb().First(&res, guti)
+
 	return res.Imsi, r.Error
 }

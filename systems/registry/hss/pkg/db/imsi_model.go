@@ -13,7 +13,7 @@ type Org struct {
 	Imsis []Imsi
 }
 
-// Represents record in HSS db
+// Represents record in HSS db.
 type Imsi struct {
 	gorm.Model
 	OrgID uint `gorm:"not null"`
@@ -38,7 +38,7 @@ type Imsi struct {
 }
 
 // Tracking Area Identity (TAI)
-// Assumption: one IMIS can have only one tracking area
+// Assumption: one IMIS can have only one tracking area.
 type Tai struct {
 	gorm.Model
 	ImsiID          uint      `gorm:"uniqueIndex:tai_imsi_unique_idx;not null"`

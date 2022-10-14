@@ -10,6 +10,7 @@ func makeUserOrgExist(db *gorm.DB, orgName string) (*Org, error) {
 	org := Org{
 		Name: orgName,
 	}
+
 	d := db.First(&org, "name = ?", orgName)
 	if d.Error != nil {
 		if sql.IsNotFoundError(d.Error) {
@@ -22,5 +23,6 @@ func makeUserOrgExist(db *gorm.DB, orgName string) (*Org, error) {
 			return nil, errors.Wrap(d.Error, "error finding the org")
 		}
 	}
+
 	return &org, nil
 }

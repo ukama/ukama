@@ -32,6 +32,7 @@ func (s *ImsiService) Get(c context.Context, r *pb.GetImsiRequest) (*pb.GetImsiR
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
+
 	resp := &pb.GetImsiResponse{Imsi: &pb.ImsiRecord{
 		Imsi: sub.Imsi,
 		Key:  sub.Key,
@@ -58,12 +59,14 @@ func (s *ImsiService) Add(c context.Context, a *pb.AddImsiRequest) (*pb.AddImsiR
 	if err != nil {
 		return nil, err
 	}
-	err = s.imsiRepo.Add(a.Org, dbSub)
 
+	err = s.imsiRepo.Add(a.Org, dbSub)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
+
 	s.subscriber.ImsiAdded(a.Org, a.Imsi)
+
 	return &pb.AddImsiResponse{}, err
 }
 
@@ -82,15 +85,17 @@ func (s *ImsiService) Update(c context.Context, req *pb.UpdateImsiRequest) (*pb.
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
+
 	s.subscriber.ImsiUpdated(imsi.Org.Name, req.Imsi)
+
 	return &pb.UpdateImsiResponse{}, nil
 }
 
 func (s *ImsiService) Delete(c context.Context, req *pb.DeleteImsiRequest) (resp *pb.DeleteImsiResponse, err error) {
 	var delImsi *db.Imsi
+
 	switch req.IdOneof.(type) {
 	case *pb.DeleteImsiRequest_Imsi:
-
 		delImsi, err = s.imsiRepo.GetByImsi(req.GetImsi())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "imsi")
@@ -123,8 +128,8 @@ func (s *ImsiService) Delete(c context.Context, req *pb.DeleteImsiRequest) (resp
 	}
 
 	s.subscriber.ImsiDeleted(delImsi.Org.Name, delImsi.Imsi)
-	return &pb.DeleteImsiResponse{}, nil
 
+	return &pb.DeleteImsiResponse{}, nil
 }
 
 func (s *ImsiService) AddGuti(c context.Context, req *pb.AddGutiRequest) (*pb.AddGutiResponse, error) {
@@ -141,14 +146,17 @@ func (s *ImsiService) AddGuti(c context.Context, req *pb.AddGutiRequest) (*pb.Ad
 		MTmsi:           req.Guti.Mtmsi,
 		DeviceUpdatedAt: time.Unix(int64(req.UpdatedAt), 0),
 	})
+
 	if err != nil {
 		if err.Error() == db.GutiNotUpdatedErr {
 			return nil, status.Errorf(codes.AlreadyExists, err.Error())
 		}
+
 		return nil, grpc.SqlErrorToGrpc(err, "guti")
 	}
 
 	s.subscriber.GutiAdded(imsi.Org.Name, req.Imsi, req.Guti)
+
 	return &pb.AddGutiResponse{}, nil
 }
 
@@ -168,9 +176,12 @@ func (s *ImsiService) UpdateTai(c context.Context, req *pb.UpdateTaiRequest) (*p
 		if err.Error() == db.TaiNotUpdatedErr {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
+
 		return nil, grpc.SqlErrorToGrpc(err, "tai")
 	}
+
 	s.subscriber.TaiUpdated(imsi.Org.Name, req)
+
 	return &pb.UpdateTaiResponse{}, nil
 }
 
@@ -178,6 +189,7 @@ func grpcImsiToDb(sub *pb.ImsiRecord, orgName string) (*db.Imsi, error) {
 	userId, err := uuid.Parse(sub.UserId)
 	if err != nil {
 		logrus.Errorf("Error parsing uuid %s. Error: %s", sub.UserId, err)
+
 		return nil, fmt.Errorf("error parsing uuid")
 	}
 

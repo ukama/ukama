@@ -42,29 +42,26 @@ func initConfig() {
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
+
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+
 	err := d.Init(&db.Org{}, &db.Imsi{}, &db.Guti{}, &db.Tai{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
+
 	return d
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	reqGenerator, err := pkg.NewDeviceFeederReqGenerator(serviceConfig.Queue.Uri)
-	if err != nil {
-		log.Fatalf("Failed to create device feeder request generator. Error: %v", err)
-	}
-
 	// hss service
-	subs := server.NewHssEventsSubscribers(pkg.NewHssNotifications(serviceConfig.Queue), reqGenerator)
+	subs := server.NewHssEventsSubscribers()
 	imsiService := server.NewImsiService(db.NewImsiRepo(gormdb), db.NewGutiRepo(gormdb), subs)
 
 	// users service
-
 	rpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterImsiServiceServer(s, imsiService)
 	})
-	rpcServer.StartServer()
 
+	rpcServer.StartServer()
 }

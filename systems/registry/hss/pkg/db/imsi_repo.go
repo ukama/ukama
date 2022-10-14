@@ -43,11 +43,13 @@ func (r *imsiRepo) Add(orgName string, imsi *Imsi) error {
 	}
 	imsi.Org = org
 	d := r.db.GetGormDb().Create(imsi)
+
 	return d.Error
 }
 
 func (r *imsiRepo) Update(imsiToUpdate string, imsi *Imsi) error {
 	d := r.db.GetGormDb().Where("imsi=?", imsiToUpdate).Updates(imsi)
+
 	return d.Error
 }
 
@@ -73,6 +75,7 @@ func (r *imsiRepo) GetByImsi(imsi string) (*Imsi, error) {
 
 func (r *imsiRepo) GetImsiByUserUuid(userUuid uuid.UUID) ([]*Imsi, error) {
 	var imsis []*Imsi
+
 	result := r.db.GetGormDb().Preload(clause.Associations).Where("user_uuid=?", userUuid).Find(&imsis)
 	if result.Error != nil {
 		return nil, result.Error
@@ -97,6 +100,7 @@ func (r *imsiRepo) DeleteByUserId(user uuid.UUID, nestedFunc ...func(*gorm.DB) e
 // ReplaceTai removes all TAI record for IMSI and adds new ones
 func (r *imsiRepo) UpdateTai(imsi string, tai Tai) error {
 	var imsiM Imsi
+
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		err := tx.Model(&Imsi{}).Where("imsi=?", imsi).First(&imsiM).Error
 		if err != nil {
@@ -104,10 +108,12 @@ func (r *imsiRepo) UpdateTai(imsi string, tai Tai) error {
 		}
 
 		var count int64
+
 		err = tx.Model(&tai).Where("imsi_id = ? and device_updated_at >= ?", imsiM.ID, tai.DeviceUpdatedAt).Count(&count).Error
 		if err != nil {
 			return errors.Wrap(err, "error getting tai count")
 		}
+
 		if count > 0 {
 			return fmt.Errorf(TaiNotUpdatedErr)
 		}
@@ -118,10 +124,12 @@ func (r *imsiRepo) UpdateTai(imsi string, tai Tai) error {
 		}
 
 		tai.ImsiID = imsiM.ID
+
 		err = tx.Create(&tai).Error
 		if err != nil {
 			return errors.Wrap(err, "error adding tai")
 		}
+
 		return nil
 	})
 }

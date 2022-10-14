@@ -8,7 +8,6 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                config.Database
 	Grpc              config.Grpc
-	Queue             config.Queue
 	Metrics           config.Metrics
 }
 
@@ -21,9 +20,6 @@ func NewConfig() *Config {
 			Username:   "postgres",
 			Port:       5432,
 			SslEnabled: false,
-		},
-		Queue: config.Queue{
-			Uri: "amqp://guest:guest@localhost:5672",
 		},
 		Grpc: config.Grpc{
 			Port: 9090,

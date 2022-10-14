@@ -20,12 +20,13 @@ const testOrg = "testOrg"
 func Test_Add(t *testing.T) {
 	// Arrange
 	imsiRepo := mocks.ImsiRepo{}
+
 	imsiRepo.On("Add", testOrg, mock.Anything).Return(nil)
 
+	var actualImsi string
 	gutiRepo := mocks.GutiRepo{}
 
 	sub := mocks.HssSubscriber{}
-	var actualImsi string
 	sub.On("ImsiAdded", testOrg, mock.MatchedBy(func(i *pb.ImsiRecord) bool {
 		actualImsi = i.Imsi
 		return true
@@ -34,11 +35,11 @@ func Test_Add(t *testing.T) {
 	is := server.NewImsiService(&imsiRepo, &gutiRepo, server.NewHssEventsSubscribers(&sub))
 
 	// Act
-	userId := uuid.New()
+	userID := uuid.New()
 	_, err := is.Add(context.TODO(), &pb.AddImsiRequest{
 		Imsi: &pb.ImsiRecord{
 			Imsi:   testImsi,
-			UserId: userId.String(),
+			UserId: userID.String(),
 			Apn: &pb.Apn{
 				Name: "apn",
 			},
@@ -52,6 +53,7 @@ func Test_Add(t *testing.T) {
 	// assert
 	assert.NoError(t, err)
 	assert.Equal(t, testImsi, actualImsi)
+
 	sub.AssertExpectations(t)
 	imsiRepo.AssertExpectations(t)
 }
@@ -87,10 +89,10 @@ func Test_Delete(t *testing.T) {
 
 func Test_DeleteByIccid(t *testing.T) {
 	// Arrange
-	userId := uuid.New()
+	userID := uuid.New()
 	imsiRepo := mocks.ImsiRepo{}
 	imsiRepo.On("Delete", testImsi).Return(nil)
-	imsiRepo.On("GetImsiByUserUuid", userId).Return([]*db.Imsi{{Imsi: testImsi, UserUuid: userId, Org: &db.Org{Name: testOrg}}}, nil)
+	imsiRepo.On("GetImsiByUserUuid", userID).Return([]*db.Imsi{{Imsi: testImsi, UserUuid: userID, Org: &db.Org{Name: testOrg}}}, nil)
 
 	gutiRepo := mocks.GutiRepo{}
 
@@ -102,7 +104,7 @@ func Test_DeleteByIccid(t *testing.T) {
 	// Act
 	_, err := is.Delete(context.TODO(), &pb.DeleteImsiRequest{
 		IdOneof: &pb.DeleteImsiRequest_UserId{
-			UserId: userId.String(),
+			UserId: userID.String(),
 		},
 	})
 
