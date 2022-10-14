@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
@@ -18,19 +17,11 @@ import (
 type OrgServer struct {
 	pb.UnimplementedOrgServiceServer
 	orgRepo db.OrgRepo
-
-	// bootstrapClient bootstrap.Client
-	nodeGatewayIP string
 }
 
-// func NewOrgServer(orgRepo db.OrgRepo, bootstrapClient bootstrap.Client,
-func NewOrgServer(orgRepo db.OrgRepo,
-	nodeGatewayIP string) *OrgServer {
-
+func NewOrgServer(orgRepo db.OrgRepo) *OrgServer {
 	return &OrgServer{
 		orgRepo: orgRepo,
-		// bootstrapClient: bootstrapClient,
-		nodeGatewayIP: nodeGatewayIP,
 	}
 }
 
@@ -51,6 +42,8 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 		Certificate: generateCertificate(),
 	}
 	err = r.orgRepo.Add(org, func() error {
+		// We need to wrap this call into a transaction to add or update the org in the new init system.
+		// see an example with the legacy interface below.
 		// return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.nodeGatewayIP)
 		return nil
 	})
