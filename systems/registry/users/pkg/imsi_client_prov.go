@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// ImsiClientProvider  creates an IMSI client and connects to service upon first request to it
+// ImsiClientProvider  creates an IMSI client and connects to service upon first request to it.
 type ImsiClientProvider interface {
 	GetClient() (pb.ImsiServiceClient, error)
 }
@@ -36,10 +36,12 @@ func (i *imsiClientProvider) GetClient() (pb.ImsiServiceClient, error) {
 
 		conn, err := grpc.DialContext(ctx, i.hssHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
+			cancel()
 			log.Fatalf("Failed to connect to hss service %s. Error: %v", i.hssHost, err)
 		}
 
 		i.imsiService = pb.NewImsiServiceClient(conn)
 	}
+
 	return i.imsiService, nil
 }

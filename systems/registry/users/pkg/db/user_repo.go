@@ -102,6 +102,7 @@ func (u *userRepo) GetByOrg(orgName string) ([]User, error) {
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return users, nil
 }
 
@@ -147,8 +148,10 @@ func (u *userRepo) Update(user *User) (*User, error) {
 	if d.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
+
 	if d.Error != nil {
 		return nil, d.Error
 	}
+
 	return user, nil
 }

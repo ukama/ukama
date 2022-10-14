@@ -27,22 +27,26 @@ func NewSimcardRepo(db sql.Db) *simcardRepo {
 
 func (s *simcardRepo) Add(sim *Simcard) error {
 	d := s.db.GetGormDb().Create(sim)
+
 	return d.Error
 }
 
 func (s *simcardRepo) Delete(iccid string) error {
 	d := s.db.GetGormDb().Delete(&Simcard{Iccid: iccid})
+
 	return d.Error
 }
 
 func (s *simcardRepo) DeleteByUser(userUuid uuid.UUID) error {
 	d := s.db.GetGormDb().Exec("delete from simcards where user_id in ( select id from users where uuid  = ?)", userUuid)
+
 	return d.Error
 }
 
 func (s *simcardRepo) Get(iccid string) (*Simcard, error) {
 	var sim Simcard
 	d := s.db.GetGormDb().Preload(clause.Associations).Where("iccid = ?", iccid).First(&sim)
+
 	return &sim, d.Error
 }
 
@@ -69,5 +73,6 @@ func (s *simcardRepo) UpdateServices(ukama *Service, carrier *Service, nested ..
 
 		return nil
 	})
+
 	return err
 }

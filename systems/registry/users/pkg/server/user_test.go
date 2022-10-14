@@ -56,6 +56,7 @@ func Test_AddInternal(t *testing.T) {
 	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
 	md := metadata.Pairs("x-requester", tesRequesterId)
 	ctx := metadata.NewIncomingContext(context.TODO(), md)
+
 	// Act
 	addResp, err := srv.AddInternal(ctx, &pb.AddInternalRequest{
 		Org:  testOrg,
@@ -285,6 +286,7 @@ func Test_AddValidation(t *testing.T) {
 				Org:  testOrg,
 				User: test.user,
 			}
+
 			err := r.Validate()
 			assertValidationErr(tt, err, test.expectErr, test.errContains)
 		})
@@ -371,6 +373,7 @@ func Test_UpdateValidation(t *testing.T) {
 					Name:  test.user.Name,
 				},
 			}
+
 			err := ru.Validate()
 			assertValidationErr(tt, err, test.expectErr, test.errContains)
 		})

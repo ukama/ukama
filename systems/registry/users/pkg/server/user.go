@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 
 	"github.com/ukama/ukama/systems/registry/users/pkg"
@@ -22,8 +21,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
-
-	qrcode "github.com/skip2/go-qrcode"
 )
 
 const uuidParsingError = "Error parsing UUID"
@@ -51,8 +48,9 @@ func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, s
 }
 
 func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	iccid := ""
 	var err error
+
+	iccid := ""
 	isPhysical := false
 
 	if len(req.SimToken) != 0 {
@@ -77,8 +75,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		return nil, err
 	}
 
-	return &pb.AddResponse{User: dbUsersToPbUsers(user),
-		Iccid: iccid}, nil
+	return &pb.AddResponse{User: dbUsersToPbUsers(user), Iccid: iccid}, nil
 }
 
 func (u *UserService) AddInternal(ctx context.Context, req *pb.AddInternalRequest) (*pb.AddInternalResponse, error) {
@@ -87,10 +84,7 @@ func (u *UserService) AddInternal(ctx context.Context, req *pb.AddInternalReques
 		return nil, err
 	}
 
-	return &pb.AddInternalResponse{
-		User:  dbUsersToPbUsers(user),
-		Iccid: req.Iccid,
-	}, nil
+	return &pb.AddInternalResponse{User: dbUsersToPbUsers(user), Iccid: req.Iccid}, nil
 }
 
 func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, iccid string, isPhysicalSim bool, org string) (*db.User, error) {
@@ -100,20 +94,22 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 		Phone: reqUser.Phone,
 		Uuid:  uuid2.New(),
 	}, org, func(usr *db.User, tx *gorm.DB) error {
-
 		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 
 		isOverLimit, err := db.NewUserRepo(txDb).IsOverTheLimit(org)
 		if err != nil {
 			logrus.Errorf("Error while checking if user is over limit: %v", err)
+
 			return status.Errorf(codes.Internal, "Internal error")
 		}
+
 		if isOverLimit {
 			return status.Errorf(codes.PermissionDenied, "limit of sim cards reached")
 		}
 
 		// call get sim info to make sure the ICCID exist
 		var sim *pbclient.GetSimInfoResponse
+
 		sim, err = u.simManager.GetSimInfo(ctx, &pbclient.GetSimInfoRequest{
 			Iccid: iccid,
 		})
@@ -142,6 +138,7 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 				},
 			},
 		})
+
 		if err != nil {
 			return errors.Wrap(err, "failed to add simcard")
 		}
@@ -151,6 +148,7 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 		if err != nil {
 			return errors.Wrap(err, "failed to connect to hss")
 		}
+
 		_, err = s.Add(ctx, &hsspb.AddImsiRequest{
 			Imsi: &hsspb.ImsiRecord{
 				Imsi:   sim.Imsi,
@@ -159,9 +157,11 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 			},
 			Org: org,
 		})
+
 		if err != nil {
 			return errors.Wrap(err, "failed to add imsi")
 		}
+
 		return nil
 	})
 	// end of transaction
@@ -176,6 +176,7 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
+
 	return user, nil
 }
 
@@ -194,14 +195,15 @@ func (u *UserService) List(ctx context.Context, req *pb.ListRequest) (*pb.ListRe
 }
 
 func (u *UserService) GenerateSimToken(ctx context.Context, in *pb.GenerateSimTokenRequest) (*pb.GenerateSimTokenResponse, error) {
-	iccid := ""
 	var err error
+
+	iccid := ""
+
 	if in.FromPool {
 		iccid, err = u.simProvider.GetICCIDFromPool()
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "iccid")
 		}
-
 	} else {
 		if len(in.Iccid) == 0 {
 			return nil, status.Errorf(codes.InvalidArgument, "iccid is required when fromPool is false")
@@ -214,10 +216,7 @@ func (u *UserService) GenerateSimToken(ctx context.Context, in *pb.GenerateSimTo
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &pb.GenerateSimTokenResponse{
-		SimToken: token,
-	}, nil
-
+	return &pb.GenerateSimTokenResponse{SimToken: token}, nil
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -225,6 +224,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
+
 	user, err := u.userRepo.Get(uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
@@ -237,20 +237,19 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 		u.pullUsage(ctx, simCard)
 	}
 
-	return &pb.GetResponse{
-		User: dbUsersToPbUsers(user),
-		Sim:  simCard,
-	}, nil
+	return &pb.GetResponse{User: dbUsersToPbUsers(user), Sim: simCard}, nil
 }
 
 func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) {
 	logrus.Infof("Get sim card status for %s", simCard.Iccid)
+
 	r, err := u.simManager.GetSimStatus(ctx, &pbclient.GetSimStatusRequest{
 		Iccid: simCard.Iccid,
 	})
 
 	if err != nil {
 		logrus.Errorf("Error getting sim status. Error: %s", err.Error())
+
 		return
 	}
 
@@ -264,6 +263,7 @@ func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) 
 
 	default:
 		logrus.Errorf("Unknown sim status %s", r.Status.String())
+
 		simCard.Carrier.Status = pb.SimStatus_UNKNOWN
 	}
 }
@@ -311,6 +311,7 @@ func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequ
 			Iccid: req.Iccid,
 		}
 	}
+
 	u.updateService(req.Ukama, ukamaS)
 
 	carrierS := sim.GetServices(db.ServiceTypeCarrier)
@@ -320,6 +321,7 @@ func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequ
 			Iccid: req.Iccid,
 		}
 	}
+
 	u.updateService(req.Carrier, carrierS)
 
 	err = u.simRepo.UpdateServices(ukamaS, carrierS, func() error {
@@ -338,21 +340,22 @@ func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequ
 				return err
 			}
 		}
+
 		return nil
 	})
+
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	return &pb.SetSimStatusResponse{
-		Sim: dbSimcardsToPbSimcards(*sim),
-	}, nil
+	return &pb.SetSimStatusResponse{Sim: dbSimcardsToPbSimcards(*sim)}, nil
 }
 
 func (u *UserService) updateService(req *pb.SetSimStatusRequest_SetServices, ukamaS *db.Service) {
 	if req == nil {
 		return
 	}
+
 	if req.GetSms() != nil {
 		ukamaS.Sms = req.GetSms().GetValue()
 	}
@@ -386,8 +389,10 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 		if err != nil {
 			return grpc.SqlErrorToGrpc(err, "sim")
 		}
+
 		return nil
 	})
+
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
@@ -396,7 +401,6 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 }
 
 func (u *UserService) terminateSimCard(ctx context.Context, sim db.Simcard) {
-
 	logrus.Infof("Terminating sim. Iccid %s", sim.Iccid)
 
 	_, err := u.simManager.TerminateSim(ctx, &pbclient.TerminateSimRequest{
@@ -448,17 +452,19 @@ func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUser
 	return &pb.DeactivateUserResponse{}, nil
 }
 
-func (u *UserService) deleteImsiFromHss(ctx context.Context, userId string) error {
+func (u *UserService) deleteImsiFromHss(ctx context.Context, userID string) error {
 	// Delete imsi record from HSS
 	s, err := u.imsiService.GetClient()
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to hss")
 	}
+
 	_, err = s.Delete(ctx, &hsspb.DeleteImsiRequest{
 		IdOneof: &hsspb.DeleteImsiRequest_UserId{
-			UserId: userId,
+			UserId: userID,
 		},
 	})
+
 	return err
 }
 
@@ -466,20 +472,21 @@ func (u *UserService) GetQrCode(ctx context.Context, req *pb.GetQrCodeRequest) (
 	resp, err := u.simManager.GetQrCode(ctx, &pbclient.GetQrCodeRequest{
 		Iccid: req.Iccid,
 	})
-	return &pb.GetQrCodeResponse{
-		QrCode: resp.QrCode,
-	}, err
+
+	return &pb.GetQrCodeResponse{QrCode: resp.QrCode}, err
 }
 
-// add usage to simcard. In case of error, simcard is not updated silently
+// add usage to simcard. In case of error, simcard is not updated silently.
 func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 	logrus.Infof("Get sim card usage for %s", simCard.Iccid)
+
 	r, err := u.simManager.GetUsage(ctx, &pbclient.GetUsageRequest{
 		Iccid: simCard.Iccid,
 	})
 
 	if err != nil {
 		logrus.Errorf("Error getting sim status. Error: %s", err.Error())
+
 		return
 	}
 
@@ -488,26 +495,18 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 		DataUsedBytes:      r.DataUsageInBytes,
 	}
 }
-func generateQrcode(qrcodeId string, qrcodeName string) string {
-
-	qrcode, err := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
-	if err != nil {
-		fmt.Printf("Could not generate qrcode :,%v", err)
-	}
-
-	encodedData := base64.StdEncoding.EncodeToString(qrcode)
-	return encodedData
-}
 
 func (u *UserService) sendEmailToUser(ctx context.Context, email string, name string, iccid string) error {
 	logrus.Infof("Sending email to %s", email)
 	logrus.Infof("Getting qr code")
+
 	_, err := u.simManager.GetQrCode(ctx, &pbclient.GetQrCodeRequest{
 		Iccid: iccid,
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to get qr code")
 	}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 
 	if !ok || len(md["x-requester"]) != 1 {
@@ -515,11 +514,6 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 
 		return fmt.Errorf("missing `x-requester` header in request")
 	}
-
-	// _, err = u.kratosClient.GetAccountName(md["x-requester"][0])
-	// if err != nil {
-	// return errors.Wrap(err, "failed to get network owner name")
-	// }
 
 	return nil
 }
@@ -556,6 +550,7 @@ func dbusersToPbUsers(users []db.User) []*pb.User {
 	for _, u := range users {
 		res = append(res, dbUsersToPbUsers(&u))
 	}
+
 	return res
 }
 

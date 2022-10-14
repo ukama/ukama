@@ -24,7 +24,7 @@ type User struct {
 	Deactivated bool
 }
 
-// storage for service statuses
+// storage for service statuses.
 type Service struct {
 	gorm.Model
 	Iccid string `gorm:"uniqueIndex:iccid_type_unique,where:deleted_at is null"`

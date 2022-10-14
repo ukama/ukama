@@ -6,9 +6,10 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/ukama/ukama/systems/common/config"
 	"testing"
 	"time"
+
+	"github.com/ukama/ukama/systems/common/config"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,6 @@ func init() {
 	config.LoadConfig("integration", testConf)
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	logrus.Infof("%+v", testConf)
-
 }
 
 func Test_UserService(t *testing.T) {
@@ -48,9 +48,11 @@ func Test_UserService(t *testing.T) {
 	defer cancel()
 
 	logrus.Infoln("Connecting to service ", testConf.UsersHost)
+
 	conn, err := grpc.DialContext(ctx, testConf.UsersHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
+
 		return
 	}
 	defer conn.Close()
@@ -63,6 +65,7 @@ func Test_UserService(t *testing.T) {
 	testIccid := testConf.Iccid
 
 	simToken := ""
+
 	t.Run("GenerateSimToken", func(tt *testing.T) {
 		r, err := c.GenerateSimToken(ctx, &pb.GenerateSimTokenRequest{Iccid: testIccid, FromPool: false})
 		if !assert.NoError(tt, err) {
@@ -87,9 +90,11 @@ func Test_UserService(t *testing.T) {
 			t.FailNow()
 		}
 	})
+
 	defer cleanupUser(c, addResp)
 
 	var esimUsr *pb.AddResponse
+
 	t.Run("AddUserWithESim", func(tt *testing.T) {
 		esimUsr, err = c.Add(ctx, &pb.AddRequest{
 			User: &pb.User{
@@ -105,6 +110,7 @@ func Test_UserService(t *testing.T) {
 			t.FailNow()
 		}
 	})
+
 	defer cleanupUser(c, esimUsr)
 
 	// todo: test limit
@@ -119,6 +125,7 @@ func Test_UserService(t *testing.T) {
 	})
 
 	getResp := &pb.GetResponse{}
+
 	t.Run("get", func(tt *testing.T) {
 		getResp, err = c.Get(ctx, &pb.GetRequest{UserId: addResp.User.Uuid})
 		if handleResponse(tt, err, getResp) {
@@ -139,6 +146,7 @@ func Test_UserService(t *testing.T) {
 		})
 		if !assert.NoError(tt, err) {
 			assert.FailNow(tt, "update test failed")
+
 			return
 		}
 
@@ -172,6 +180,7 @@ func Test_UserService(t *testing.T) {
 		})
 		if !assert.NoError(tt, err) {
 			assert.FailNow(tt, "DeactivateUser test failed")
+
 			return
 		}
 
@@ -200,27 +209,33 @@ func Test_UserService(t *testing.T) {
 
 func cleanupUser(c pb.UserServiceClient, addResp ...*pb.AddResponse) {
 	logrus.Info("Cleaning up")
+
 	for _, rsp := range addResp {
 		if rsp != nil && rsp.User != nil {
 			r := *rsp
 
 			logrus.Info("Deleting user: ", r.User.Uuid, " Iccid: ", r.Iccid)
+
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
+
 			_, err := c.Delete(ctx, &pb.DeleteRequest{UserId: rsp.User.Uuid})
 			if err != nil {
 				if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
 					return
 				}
+
 				logrus.Errorf("Failed to delete user %s: %v", r.User.Uuid, err)
 			}
 		}
 	}
-
 }
 
-// return false if error is not nil
+// return false if error is not nil.
 func handleResponse(t *testing.T, err error, r interface{}) bool {
+	t.Helper()
+
 	fmt.Printf("Response: %v\n", r)
+
 	return assert.NoErrorf(t, err, "Request failed: %v\n", err)
 }

@@ -41,7 +41,6 @@ func NewConfig() *Config {
 			Name:    "SimManager",
 			Timeout: 3 * time.Second,
 		},
-
 		SimTokenKey: "11111111111111111111111111111111",
 		Metrics:     *config.DefaultMetrics(),
 	}

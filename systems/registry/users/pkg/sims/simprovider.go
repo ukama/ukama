@@ -41,6 +41,7 @@ func (i simProvider) GetICCIDWithCode(simCode string) (string, error) {
 	}
 
 	var simToken SimToken
+
 	err = json.Unmarshal([]byte(str), &simToken)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to unmarshal sim token")
@@ -52,10 +53,12 @@ func (i simProvider) GetICCIDWithCode(simCode string) (string, error) {
 func (i simProvider) GetICCIDFromPool() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	resp, err := i.simPool.PopIccid(ctx, &pbclient.PopIccidRequest{})
 	if err != nil {
 		return "", err
 	}
+
 	return resp.Iccid, nil
 }
 
@@ -64,12 +67,12 @@ func (i simProvider) GetSimToken(iccid string) (string, error) {
 		ICCID: iccid,
 	}
 
-	tokenJson, err := json.Marshal(token)
+	tokenJSON, err := json.Marshal(token)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to marshal sim token")
 	}
 
-	return encrypt(string(tokenJson), i.key)
+	return encrypt(string(tokenJSON), i.key)
 }
 
 func encrypt(plaintext string, key string) (string, error) {
@@ -93,6 +96,7 @@ func encrypt(plaintext string, key string) (string, error) {
 	}
 
 	b := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
+
 	return base64.StdEncoding.EncodeToString(b), nil
 }
 
@@ -101,6 +105,7 @@ func decrypt(base64Str string, key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	c, err := aes.NewCipher([]byte(key)[:32])
 	if err != nil {
 		return "", err
@@ -118,5 +123,6 @@ func decrypt(base64Str string, key string) (string, error) {
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
 	o, err := gcm.Open(nil, nonce, ciphertext, nil)
+
 	return string(o), err
 }

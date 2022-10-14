@@ -49,11 +49,14 @@ func initConfig() {
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
+
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+
 	err := d.Init(&db.Org{}, &db.Simcard{}, &db.User{}, &db.Service{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
+
 	return d
 }
 
@@ -73,7 +76,6 @@ func runGrpcServer(gormdb sql.Db) {
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
-
 		gen.RegisterUserServiceServer(s, userService)
 	})
 
@@ -82,13 +84,17 @@ func runGrpcServer(gormdb sql.Db) {
 
 func NewIccidPool(conf pkg.SimManager) (pbclient.SimPoolClient, io.Closer) {
 	log.Info("Connecting to simPool")
+
 	conn := createGrpcConn(conf)
+
 	return pbclient.NewSimPoolClient(conn), conn
 }
 
 func newSimManagerClient(conf pkg.SimManager) (client pbclient.SimManagerServiceClient, connection io.Closer) {
 	log.Info("Connecting to sim manager")
+
 	conn := createGrpcConn(conf)
+
 	return pbclient.NewSimManagerServiceClient(conn), conn
 }
 
@@ -101,13 +107,13 @@ func createGrpcConn(conf pkg.SimManager) *grpc.ClientConn {
 
 	log.Infoln("Connecting to service ", conf.Host)
 
-	conn, err := grpc.DialContext(ctx, conf.Host, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithConnectParams(
-			grpc.ConnectParams{
-				MinConnectTimeout: conf.Timeout,
-			}))
+	conn, err := grpc.DialContext(ctx, conf.Host, grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithConnectParams(grpc.ConnectParams{MinConnectTimeout: conf.Timeout}))
 	if err != nil {
+		cancel()
 		log.Fatalf("Failed to connect to service %s. Error: %v", conf.Host, err)
 	}
+
 	return conn
 }
