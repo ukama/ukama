@@ -12,7 +12,6 @@ Container(bffAlias, "Console Bff", "NodeJs, Typescript & GraphQl", "User service
 Container(AuthAlias, "Auth Registery", "Go, Kratos", "Auth services")
 Container(cloudAlias, "User Registery", "Go", "User services")
 Rel(personAlias, ukamaAuthAlias, "{{Check auth service for  [firstVisit] to redirect the user}}")
-Rel(ukamaAuthAlias, bffAlias, "[set orgId]")
 Rel(bffAlias, AuthAlias,"Return firstVisit from collection")
 Rel(ukamaAuthAlias, consoleOnBoardingAlias, "{{Check user service for  [firstVisit=true] to redirect the user}}", "/onBoarding")
 Rel( ukamaAuthAlias, consoleAlias, "{{Check user service for  [firstVisit=false] to redirect the user}}", "/home")
