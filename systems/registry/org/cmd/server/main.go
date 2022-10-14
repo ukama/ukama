@@ -30,8 +30,11 @@ var svcConf *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	pkg.InstanceId = os.Getenv("POD_NAME")
+
 	initConfig()
+
 	orgDb := initDb()
+
 	metrics.StartMetricsServer(svcConf.Metrics)
 
 	runGrpcServer(orgDb)
@@ -42,6 +45,7 @@ func initConfig() {
 	svcConf = &pkg.Config{
 		DB: &uconf.Database{DbName: pkg.ServiceName},
 	}
+
 	// We change only DB name. Rest of the fields is set by default.
 	svcConf.DB.DbName = pkg.ServiceName
 
@@ -63,6 +67,7 @@ func initDb() sql.Db {
 	log.Infof("Initializing Database")
 
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
+
 	err := d.Init(&db.Org{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)

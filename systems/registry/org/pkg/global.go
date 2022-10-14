@@ -3,6 +3,6 @@ package pkg
 const ServiceName = "org"
 const SystemName = "Registry"
 
-var IsDebugMode bool = false
+var IsDebugMode = false
 
 var InstanceId = ServiceName + "-debug"

@@ -27,6 +27,7 @@ func NewOrgServer(orgRepo db.OrgRepo) *OrgServer {
 
 func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	logrus.Infof("Adding org %v", req)
+
 	if len(req.GetOrg().GetOwner()) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "owner id cannot be empty")
 	}
@@ -41,12 +42,14 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 		Owner:       owner,
 		Certificate: generateCertificate(),
 	}
+
 	err = r.orgRepo.Add(org, func() error {
 		// We need to wrap this call into a transaction to add or update the org in the new init system.
 		// see an example with the legacy interface below.
 		// return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.nodeGatewayIP)
 		return nil
 	})
+
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -55,28 +58,27 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 
 	// pub event async
 
-	return &pb.AddResponse{
-		Org: orgResp,
-	}, nil
+	return &pb.AddResponse{Org: orgResp}, nil
 }
 
 func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	logrus.Infof("Getting org %v", req)
+
 	org, err := r.orgRepo.GetByName(req.GetName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	return &pb.GetResponse{
-		Org: &pb.Organization{
-			Owner: org.Owner.String(),
-			Name:  org.Name,
-		},
+	return &pb.GetResponse{Org: &pb.Organization{
+		Owner: org.Owner.String(),
+		Name:  org.Name,
+	},
 	}, nil
 }
 
 func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	logrus.Infof("Deleting org %v", req)
+
 	err := r.orgRepo.Delete(req.GetName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
@@ -89,5 +91,6 @@ func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Dele
 
 func generateCertificate() string {
 	logrus.Warning("Certificate generation is not yet implemented")
+
 	return base64.StdEncoding.EncodeToString([]byte("Test certificate"))
 }
