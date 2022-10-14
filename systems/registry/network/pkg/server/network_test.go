@@ -79,6 +79,7 @@ func TestNetworkServer_AddNode(t *testing.T) {
 
 func createNetRepoMock() *mocks.NetRepo {
 	netRepo := &mocks.NetRepo{}
+
 	netRepo.On("Get", testOrgName, testNetName).
 		Return(&db.Network{
 			Model: gorm.Model{ID: testNetId},
@@ -87,6 +88,7 @@ func createNetRepoMock() *mocks.NetRepo {
 				Name:  testOrgName,
 				Model: gorm.Model{ID: 101},
 			}}, nil).Once()
+
 	return netRepo
 }
 
@@ -141,7 +143,6 @@ func TestNetworkServer_GetNodesReturnsEmptyList(t *testing.T) {
 }
 
 func Test_toDbNodeType(t *testing.T) {
-
 	tests := []struct {
 		nodeId ukama.NodeID
 		want   db.NodeType
@@ -163,6 +164,7 @@ func Test_toDbNodeType(t *testing.T) {
 			want:   db.NodeTypeUnknown,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.nodeId.String(), func(t *testing.T) {
 
@@ -206,6 +208,7 @@ func Test_List(t *testing.T) {
 	// assert
 	if assert.NoError(t, err) && assert.NotNil(t, res.Orgs) {
 		var a, b *pb.ListResponse_Org
+
 		for _, org := range res.Orgs {
 			switch org.Name {
 			case "a":
@@ -219,6 +222,7 @@ func Test_List(t *testing.T) {
 		assert.Len(t, a.GetNetworks(), 2)
 
 		var n1, n2 *pb.ListResponse_Network
+
 		if a.GetNetworks()[0].GetName() == "n1" {
 			n1 = a.GetNetworks()[0]
 			n2 = a.GetNetworks()[1]

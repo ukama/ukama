@@ -6,20 +6,18 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
+	"testing"
+	"time"
+
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/slices"
 	"google.golang.org/grpc/credentials/insecure"
-	"os"
-	"testing"
-	"time"
 
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	rconf "github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -29,7 +27,9 @@ var tConfig *TestConfig
 func init() {
 	// load config
 	tConfig = &TestConfig{}
+
 	reader := rconf.NewConfReader("integration")
+
 	err := reader.Read(tConfig)
 	if err != nil {
 		logrus.Fatalf("Failed to read config: %v", err)
@@ -46,15 +46,18 @@ type TestConfig struct {
 
 func Test_FullFlow(t *testing.T) {
 	const networkName = "test-network"
+
 	orgName := fmt.Sprintf("network-integration-self-test-org-%d", time.Now().Unix())
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+
 	conn, err := grpc.DialContext(ctx, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
+
 		return
 	}
 
@@ -72,11 +75,13 @@ func Test_FullFlow(t *testing.T) {
 			Name:    networkName,
 			OrgName: orgName,
 		})
+
 		handleResponse(tt, err, r)
 	})
 
 	t.Run("AddAndUpdateNode", func(tt *testing.T) {
 		nodeName := "HomeNodeX"
+
 		addResp, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
 				NodeId: node.String(),
@@ -86,6 +91,7 @@ func Test_FullFlow(t *testing.T) {
 			OrgName: orgName,
 			Network: networkName,
 		})
+
 		if handleResponse(tt, err, addResp) {
 			assert.NotNil(tt, addResp.Node)
 			assert.Equal(tt, nodeName, addResp.Node.Name)
@@ -94,6 +100,7 @@ func Test_FullFlow(t *testing.T) {
 		r, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: node.String(), Node: &pb.Node{
 			State: pb.NodeState_ONBOARDED,
 		}})
+
 		handleResponse(tt, err, r)
 
 		// add second node
@@ -106,6 +113,7 @@ func Test_FullFlow(t *testing.T) {
 			OrgName: orgName,
 			Network: networkName,
 		})
+
 		handleResponse(tt, err, add2)
 
 		nodeResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
@@ -121,11 +129,11 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("DeleteNode", func(tt *testing.T) {
 		r, err = c.DeleteNode(ctx, &pb.DeleteNodeRequest{NodeId: nodeToDelete.String()})
 		handleResponse(tt, err, r)
-
 	})
 
 	t.Run("GetNodes", func(tt *testing.T) {
 		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
+
 		handleResponse(t, err, nodesResp)
 
 		// we added 2 node and deleted 1
@@ -134,6 +142,7 @@ func Test_FullFlow(t *testing.T) {
 			for _, n := range nodesResp.Nodes {
 				if node.String() == n.NodeId {
 					cont = true
+
 					break
 				}
 			}
@@ -142,98 +151,114 @@ func Test_FullFlow(t *testing.T) {
 	})
 }
 
-func Test_Listener(t *testing.T) {
-	// Arrange
-	org := fmt.Sprintf("network-listener-integration-test-%d", time.Now().Unix())
-	nodeId := "UK-INTEGR-HNODE-A1-NETT"
-	netName := "default"
-	nodeName := "network-listener-integration"
+// func Test_Listener(t *testing.T) {
+// // Arrange
+// org := fmt.Sprintf("network-listener-integration-test-%d", time.Now().Unix())
+// nodeID := "UK-INTEGR-HNODE-A1-NETT"
+// netName := "default"
+// nodeName := "network-listener-integration"
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+// defer cancel()
 
-	rabbit, err := msgbus.NewQPub(tConfig.Queue.Uri, "network-listener-integration-test", os.Getenv("POD_NAME"))
-	if err != nil {
-		assert.NoErrorf(t, err, "could not create rabbitmq client %+v", err)
-		return
-	}
+// rabbit, err := msgbus.NewQPub(tConfig.Queue.Uri, "network-listener-integration-test", os.Getenv("POD_NAME"))
+// if err != nil {
+// assert.NoErrorf(t, err, "could not create rabbitmq client %+v", err)
 
-	conn, c, err := CreateNetworkClient()
-	defer conn.Close()
-	defer deleteNetworks(t, c, org, netName)
-	if err != nil {
-		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
-		return
-	}
+// return
+// }
 
-	t.Run("NetworkAddedEvent", func(tt *testing.T) {
-		rabbit.Publish(&msgbus.OrgCreatedBody{
-			Name:  org,
-			Owner: uuid.NewString(),
-		}, string(msgbus.OrgCreatedRoutingKey))
+// conn, c, err := CreateNetworkClient()
+// defer conn.Close()
+// defer deleteNetworks(t, c, org, netName)
 
-		time.Sleep(2 * time.Second)
-		nodeResp, err := c.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{
-			NodeId: nodeId, State: pb.NodeState_UNDEFINED,
-		}, OrgName: org,
-			Network: netName})
+// if err != nil {
+// assert.NoErrorf(t, err, "did not connect: %+v\n", err)
 
-		// we want to check that the network is there. If adding node fails that means then network is not read
-		// we will reuse this node in next test
-		if !handleResponse(t, err, nodeResp) {
-			assert.FailNow(tt, "Node should not be added")
-		}
-	})
+// return
+// }
 
-	t.Run("NodeUpdateEvent", func(tt *testing.T) {
-		err := rabbit.Publish(&msgbus.NodeUpdateBody{
-			NodeId: nodeId,
-			State:  pb.NodeState_name[int32(pb.NodeState_ONBOARDED)],
-			Name:   nodeName,
-		}, string(msgbus.NodeUpdatedRoutingKey))
-		if !assert.NoError(tt, err, "Publish failed") {
-			tt.FailNow()
-		}
+// t.Run("NetworkAddedEvent", func(tt *testing.T) {
+// rabbit.Publish(&msgbus.OrgCreatedBody{
+// Name:  org,
+// Owner: uuid.NewString(),
+// }, string(msgbus.OrgCreatedRoutingKey))
 
-		assert.NoError(tt, err)
-		time.Sleep(2 * time.Second)
-		nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{
-			NodeId: nodeId,
-		})
+// time.Sleep(2 * time.Second)
 
-		if handleResponse(tt, err, nodeResp) {
-			assert.Equal(tt, pb.NodeState_ONBOARDED, nodeResp.GetNode().GetState())
-			assert.Equal(tt, nodeName, nodeResp.GetNode().GetName())
-			assert.Equal(tt, netName, nodeResp.GetNetwork().GetName())
-		}
-	})
+// nodeResp, err := c.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{
+// NodeId: nodeID, State: pb.NodeState_UNDEFINED,
+// }, OrgName: org,
+// Network: netName})
 
-}
+// // we want to check that the network is there. If adding node fails that means then network is not read
+// // we will reuse this node in next test
+// if !handleResponse(t, err, nodeResp) {
+// assert.FailNow(tt, "Node should not be added")
+// }
+// })
 
-func CreateNetworkClient() (*grpc.ClientConn, pb.NetworkServiceClient, error) {
-	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
-	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
-	defer cancel()
-	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithInsecure())
-	if err != nil {
-		return nil, nil, err
-	}
+// t.Run("NodeUpdateEvent", func(tt *testing.T) {
+// err := rabbit.Publish(&msgbus.NodeUpdateBody{
+// NodeId: nodeID,
+// State:  pb.NodeState_name[int32(pb.NodeState_ONBOARDED)],
+// Name:   nodeName,
+// }, string(msgbus.NodeUpdatedRoutingKey))
 
-	c := pb.NewNetworkServiceClient(conn)
-	return conn, c, nil
-}
+// if !assert.NoError(tt, err, "Publish failed") {
+// tt.FailNow()
+// }
+
+// assert.NoError(tt, err)
+// time.Sleep(2 * time.Second)
+
+// nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{
+// NodeId: nodeID,
+// })
+
+// if handleResponse(tt, err, nodeResp) {
+// assert.Equal(tt, pb.NodeState_ONBOARDED, nodeResp.GetNode().GetState())
+// assert.Equal(tt, nodeName, nodeResp.GetNode().GetName())
+// assert.Equal(tt, netName, nodeResp.GetNetwork().GetName())
+// }
+// })
+// }
+
+// func CreateNetworkClient() (*grpc.ClientConn, pb.NetworkServiceClient, error) {
+// logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+
+// context, cancel := context.WithTimeout(context.Background(), time.Second*3)
+// defer cancel()
+
+// conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithInsecure())
+// if err != nil {
+// return nil, nil, err
+// }
+
+// c := pb.NewNetworkServiceClient(conn)
+
+// return conn, c, nil
+// }
 
 func handleResponse(t *testing.T, err error, r interface{}) bool {
+	t.Helper()
+
 	fmt.Printf("Response: %v\n", r)
+
 	if err != nil {
 		assert.FailNow(t, "Request failed: %v\n", err)
+
 		return false
 	}
+
 	return true
 }
 
 func deleteNetworks(t *testing.T, c pb.NetworkServiceClient, org string, network string) {
+	t.Helper()
+
 	logrus.Infoln("Deleting network ", network)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 

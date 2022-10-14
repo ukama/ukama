@@ -28,9 +28,13 @@ var svcConf *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	pkg.InstanceId = os.Getenv("POD_NAME")
+
 	initConfig()
+
 	metrics.StartMetricsServer(&svcConf.Metrics)
+
 	networkDb := initDb()
+
 	runGrpcServer(networkDb)
 }
 
@@ -41,10 +45,12 @@ func initConfig() {
 			DbName: pkg.ServiceName,
 		},
 	}
+
 	err := confr.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
 		log.Fatalf("Failed to read config. Error: %v", err)
 	}
+
 	pkg.IsDebugMode = svcConf.DebugMode
 }
 
@@ -52,10 +58,12 @@ func initDb() sql.Db {
 	log.Infof("Initializing Database")
 
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
+
 	err := d.Init(&db2.Org{}, &db2.Network{}, &db2.Site{}, &db2.Node{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
+
 	return d
 }
 
