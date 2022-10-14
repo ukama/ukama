@@ -6,7 +6,7 @@ import "validator.proto";
 
 package ukama.network.v1;
 
-service NetworkService {        
+service NetworkService {
     rpc Add(AddRequest) returns (AddResponse);
     // list all orgs and networks in the network
     rpc List(ListRequest) returns (ListResponse);

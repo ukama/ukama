@@ -1,26 +1,32 @@
-# Node Network
+# Node Network  Registry
 
-Node Network service is responsible for storing user->org->nodes structure
-It exposes gRPC [interface](/network/pb/network.proto#L5).
+user->org->nodes relationships.
 
-### Structure
-- Every node belongs to an organization
-- Every organization belongs to a user (owner)
+## Description
+The Node Network Registry is a sub system that handle various directory operations regarding the user->org->nodes relationships within the Registry System. The relationships is as follows: every node belongs to an organization and every organization belongs to a user (owner).
 
-## Run Locally
+## Service definition
+The Org Registry exposes the following RPC definitions:
 
-- Start postgres
+``` proto
+service NetworkService {
+    rpc Add(AddRequest) returns (AddResponse);
+    // list all orgs and networks in the network
+    rpc List(ListRequest) returns (ListResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
 
-`make postgres`
-  
-- Run network service
+    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
+    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+}
+```
 
-`go run .\cmd\server\main.go`
+## How to use
+### From within the Registry System
+Just grab and instrument the Network client stub and make the desired service calls.
 
-- use [Evans](https://github.com/ktr0731/evans) to connect to service 
+### From outside the Registry System
+Use the Registry System's API Gateway interface to perform the desired RESTful operations. See the Registry System API Gateway documentatiion for more.
 
-`evans repl --proto .\pb\health.proto,.\pb\network.proto --port 9090`
-
-- run set of requests 
-
-` go run .\cmd\test\main.go`
