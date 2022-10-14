@@ -3,9 +3,6 @@ package rest
 import (
 	"fmt"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strings"
 
 	"github.com/ukama/ukama/systems/common/errors"
 
@@ -53,6 +50,7 @@ type Clients struct {
 
 type registry interface {
 	GetOrg(orgName string) (*pborg.Organization, error)
+	AddOrg(orgName string, owner string) (*pborg.Organization, error)
 	Add(orgName string, nodeId string, name string, attachedNodes ...string) (node *pbnode.Node, err error)
 	UpdateNode(orgName string, nodeId string, name string, attachedNodes ...string) (node *pbnode.Node, err error)
 	GetNodes(orgName string) (*pb.GetNodesResponse, error)
@@ -110,7 +108,8 @@ func (r *Router) init() {
 
 	// org handler
 	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
-	orgs.GET("", []fizz.OperationOption{}, tonic.Handler(r.orgHandler, http.StatusOK))
+	orgs.GET("", []fizz.OperationOption{}, tonic.Handler(r.getOrgHandler, http.StatusOK))
+	orgs.PUT("", formatDoc("Add Org", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
 
 	// network
 	nodes := orgs.Group("/nodes", "Nodes", "Nodes operations")
@@ -144,43 +143,20 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-//
-func (r *Router) getMetricsProxyHandler() gin.HandlerFunc {
-	nodeMetricsUrl, err := url.Parse(r.config.httpEndpoints.NodeMetrics)
-	if err != nil {
-		logrus.Fatalf("Failed to parse node metrics endpoint: %s", err)
-	}
-	director := func(req *http.Request) {
-		logrus.Infof("Request %s proxied", req.URL.String())
-		req.URL.Scheme = nodeMetricsUrl.Scheme
-		req.URL.Host = nodeMetricsUrl.Host
-
-		idx := max(strings.Index(req.URL.Path, "/node"), strings.Index(req.URL.Path, "/orgs"))
-		req.URL.Path = req.URL.Path[idx:]
-
-		if _, ok := req.Header["User-Agent"]; !ok {
-			// explicitly disable User-Agent so it's not set to default value
-			req.Header.Set("User-Agent", "")
-		}
-	}
-	proxy := &httputil.ReverseProxy{Director: director}
-	return gin.WrapH(proxy)
-}
-
-func max(a int, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (r *Router) getOrgNameFromRoute(c *gin.Context) string {
 	return c.Param("org")
 }
 
-func (r *Router) orgHandler(c *gin.Context) (*pborg.Organization, error) {
+// Org handlers
+
+func (r *Router) getOrgHandler(c *gin.Context) (*pborg.Organization, error) {
 	orgName := r.getOrgNameFromRoute(c)
 	return r.clients.Registry.GetOrg(orgName)
+}
+
+func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pborg.Organization, error) {
+	orgName := r.getOrgNameFromRoute(c)
+	return r.clients.Registry.AddOrg(orgName, req.Owner)
 }
 
 // Node handlers

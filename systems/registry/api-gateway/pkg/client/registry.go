@@ -94,6 +94,20 @@ func (r *Registry) GetOrg(orgName string) (*pborg.Organization, error) {
 	return res.Org, nil
 }
 
+func (r *Registry) AddOrg(orgName string, owner string) (*pborg.Organization, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	organization := &pborg.Organization{Name: orgName, Owner: owner}
+	res, err := r.orgClient.Add(ctx, &pborg.AddRequest{Org: organization})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Org, nil
+}
+
 func (r *Registry) Add(orgName string, nodeId string, name string, attachedNodes ...string) (node *pbnode.Node, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

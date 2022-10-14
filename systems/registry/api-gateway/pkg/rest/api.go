@@ -5,6 +5,13 @@ import (
 	pbnode "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
+// org group
+
+type AddOrgRequest struct {
+	OrgName string `path:"org" validate:"required"`
+	Owner   string `path:"org" validate:"required"`
+}
+
 // Users group
 
 type GetUserRequest struct {
