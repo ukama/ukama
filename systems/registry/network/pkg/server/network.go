@@ -6,10 +6,6 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 
-	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/registry/network/pkg"
-
 	"github.com/ukama/ukama/systems/common/grpc"
 	db2 "github.com/ukama/ukama/systems/registry/network/pkg/db"
 
@@ -27,8 +23,6 @@ type NetworkServer struct {
 	orgRepo  db2.OrgRepo
 	nodeRepo db2.NodeRepo
 	netRepo  db2.NetRepo
-	// bootstrapClient bootstrap.Client
-	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
 func NewNetworkServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo) *NetworkServer {
@@ -36,8 +30,6 @@ func NewNetworkServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.Ne
 		orgRepo:  orgRepo,
 		nodeRepo: nodeRepo,
 		netRepo:  netRepo,
-		// bootstrapClient: bootstrapClient,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
@@ -138,6 +130,8 @@ func (r *NetworkServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*p
 	// adding node to DB and bootstrap in transaction
 	// Rollback trans if bootstrap fails to add a node
 	err = r.nodeRepo.Add(node, func() error {
+		// We need to wrap this call into a transaction to add the node in the new init system.
+		// see an example with the legacy interface below.
 		// return r.bootstrapClient.AddNode(network.Org.Name, node.NodeID)
 		return nil
 	})

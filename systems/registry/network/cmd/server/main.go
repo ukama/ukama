@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	// bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/systems/common/metrics"
 
 	db2 "github.com/ukama/ukama/systems/registry/network/pkg/db"
@@ -51,6 +50,7 @@ func initConfig() {
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
+
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 	err := d.Init(&db2.Org{}, &db2.Network{}, &db2.Site{}, &db2.Node{})
 	if err != nil {
@@ -60,15 +60,9 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	// bootstrapCl := bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth))
-	// if svcConf.Debug.DisableBootstrap {
-	// bootstrapCl = bootstrap.DummyBootstrapClient{}
-	// }
-
 	regServer := server.NewNetworkServer(db2.NewOrgRepo(gormdb),
 		db2.NewNodeRepo(gormdb),
 		db2.NewNetRepo(gormdb),
-	// bootstrapCl,
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(svcConf.Grpc, func(s *grpc.Server) {

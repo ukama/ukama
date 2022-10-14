@@ -6,8 +6,6 @@ import (
 
 	"gorm.io/gorm"
 
-	// bstmock "github.com/ukama/ukama/services/bootstrap/client/mocks"
-
 	mocks "github.com/ukama/ukama/systems/registry/network/mocks"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
@@ -32,7 +30,6 @@ func TestNetworkServer_UpdateNode(t *testing.T) {
 		return *ns.State == db.Onboarded
 	}), mock.Anything).Return(nil).Once()
 
-	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
 
 	_, err := s.UpdateNode(context.TODO(), &pb.UpdateNodeRequest{
@@ -59,10 +56,7 @@ func TestNetworkServer_AddNode(t *testing.T) {
 	}), mock.Anything).Return(func(o *db.Node, f ...func() error) error {
 		return f[0]()
 	}).Once()
-	// bootstrapClient := &bstmock.Client{}
-	// bootstrapClient.On("AddNode", testOrgName, nodeId).Return(nil)
 
-	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, bootstrapClient, pub)
 	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
 
 	// Act
@@ -80,7 +74,6 @@ func TestNetworkServer_AddNode(t *testing.T) {
 	if assert.NoError(t, err) {
 		assert.Equal(t, "node-1", actNode.Node.Name)
 		nodeRepo.AssertExpectations(t)
-		// bootstrapClient.AssertExpectations(t)
 	}
 }
 
@@ -111,7 +104,6 @@ func TestNetworkServer_GetNodes(t *testing.T) {
 		{NodeID: nodeUuid2.String(), State: db.Pending, Name: "NodeNeme2", Network: &db.Network{Org: &db.Org{Name: orgName}}},
 	}, nil).Once()
 
-	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
 
 	resp, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
@@ -135,7 +127,6 @@ func TestNetworkServer_GetNodesReturnsEmptyList(t *testing.T) {
 
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{}, nil).Once()
 
-	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
 
 	// act
@@ -207,7 +198,6 @@ func Test_List(t *testing.T) {
 
 	netRepo.On("List").Return(queryRes, nil).Once()
 
-	// s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
 
 	// act
