@@ -18,6 +18,6 @@ Rel( rootConsole, consoleAlias, "getAccountDetails returns [firstVisit=false] ",
 BiRel( rootConsole, bffAlias, "/getAccountDetails")
 Rel(bffAlias, AuthAlias,"Return firstVisit from collection")
 Rel( consoleOnBoardingAlias, bffAlias, "Mutation","addUser")
-Rel( bffAlias , cloudAlias, " Query","getUser")
+Rel( bffAlias , cloudAlias, "Query", "addUser")
 }
 @enduml
