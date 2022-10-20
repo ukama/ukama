@@ -1,0 +1,39 @@
+syntax = "proto3";
+option go_package = "pb/gen";
+package ukama.rates.v1;
+service RatesService {
+    rpc GetRates (RatesRequest) returns (RatesResponse) {}
+    rpc GetRate(RateResponse) returns (RatesResponse){}
+}
+message RatesRequest{
+    optional string country = 1;
+}
+message RatesResponse {
+    repeated Rate rates = 1;
+}
+message RateResponse{
+    Rate rate =1;
+}
+message RateRequest{
+    string ratId =1;
+}
+message Rate{
+    int32 id =1;
+    string country=3;
+    string country_on_cronus=4;
+    string network = 5;
+    string network_id_on_cronus=6;
+    string vpmn =7;
+    string imsi=8;
+    string sms_mo=9;
+    string sms_mt =10;
+    string data =11;
+    string  _2g=12;
+    string _3g=13;
+    string lte=14; 
+    string lte_m=15;
+    string apn=16; 
+    string created_at=17;
+    string effective_at=18;
+    string end_at=19;
+}
