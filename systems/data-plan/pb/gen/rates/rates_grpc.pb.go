@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.7
-// source: rates.proto
+// source: pb/gen/rates/rates.proto
 
 package gen
 
@@ -137,5 +137,5 @@ var RatesService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "rates.proto",
+	Metadata: "pb/gen/rates/rates.proto",
 }
