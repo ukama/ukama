@@ -21,6 +21,11 @@ gen rates:
 	protoc --go_out=. --go_opt=paths=source_relative \
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     pb/gen/rates/rates.proto
+gen dataPlan:
+	protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    pb/data-plan.proto
+
 clean:
 	rm pb/gen/*.go
 
