@@ -2,8 +2,7 @@ package db
 
 import (
 	"log"
-
-	"github.com/hellokvn/go-grpc-product-svc/pkg/models"
+	"github.com/ukama/ukama/systems/data-plan/pkg/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

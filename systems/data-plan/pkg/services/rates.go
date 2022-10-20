@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"net/http"
 
+	pb "github.com/ukama/ukama/systems/data-plan/pb"
 	"github.com/ukama/ukama/systems/data-plan/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/pkg/models"
 )
@@ -18,11 +18,11 @@ func (s *Server) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.RatesR
 	var rate models.Rate
 
 	if result := s.H.DB.First(&rate, req.GetCountry()); result.Error != nil {
-		return &pb.FindOneResponse{
-			Status: http.StatusNotFound,
+		return &pb.RatesResponse{
 			Error:  result.Error.Error(),
 		}, nil
 	}
+
 
 	data := &pb.FindOneData{
 		Id:    rate.Id,
@@ -46,7 +46,7 @@ func (s *Server) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.RatesR
 	}
 
 	return &pb.RatesResponse{
-		Data:   data,
+		Rate:   data,
 	}, nil
 }
 
