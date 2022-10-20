@@ -4,8 +4,8 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/registry/org/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/org cmd/server/main.go	
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/registry/org/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/listener cmd/listener/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/org cmd/server/main.go	
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/listener cmd/listener/main.go
 
 test:
 	go test -v ./...
@@ -19,7 +19,7 @@ deps:
 
 gen:
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
- 			  org.proto
+ 			  data-plan.proto
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
