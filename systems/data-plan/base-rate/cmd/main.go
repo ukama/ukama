@@ -5,10 +5,10 @@ import (
 	"log"
 	"net"
 
-	"github.com/ukama/ukama/systems/data-plan/pkg/config"
-	"github.com/ukama/ukama/systems/data-plan/pkg/db"
-	pb "github.com/ukama/ukama/systems/data-plan/pkg/pb"
-	services "github.com/ukama/ukama/systems/data-plan/pkg/services"
+	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/config"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/services"
 	"google.golang.org/grpc"
 )
 
@@ -27,7 +27,7 @@ func main() {
 		log.Fatalln("Failed to listing:", err)
 	}
 
-	fmt.Println("Rates server running on", c.Port)
+	fmt.Println("Rate service running on", c.Port)
 
 	s := services.Server{
 		H: h,

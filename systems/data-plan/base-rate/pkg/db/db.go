@@ -1,8 +1,10 @@
 package db
 
 import (
+	"fmt"
 	"log"
-	"github.com/ukama/ukama/systems/data-plan/pkg/models"
+
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -17,8 +19,9 @@ func Init(url string) Handler {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
+	fmt.Println("Connecte to db")
 	db.AutoMigrate(&models.Rate{})
-	
+	db.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&models.Rate{})
+
 	return Handler{db}
 }

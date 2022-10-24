@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.7
-// source: pb/gen/rates/rates.proto
+// source: pb/rates.proto
 
-package gen
+package pb
 
 import (
 	context "context"
@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RatesServiceClient interface {
 	GetRates(ctx context.Context, in *RatesRequest, opts ...grpc.CallOption) (*RatesResponse, error)
-	GetRate(ctx context.Context, in *RateResponse, opts ...grpc.CallOption) (*RatesResponse, error)
+	GetRate(ctx context.Context, in *RateRequest, opts ...grpc.CallOption) (*RateResponse, error)
 }
 
 type ratesServiceClient struct {
@@ -43,8 +43,8 @@ func (c *ratesServiceClient) GetRates(ctx context.Context, in *RatesRequest, opt
 	return out, nil
 }
 
-func (c *ratesServiceClient) GetRate(ctx context.Context, in *RateResponse, opts ...grpc.CallOption) (*RatesResponse, error) {
-	out := new(RatesResponse)
+func (c *ratesServiceClient) GetRate(ctx context.Context, in *RateRequest, opts ...grpc.CallOption) (*RateResponse, error) {
+	out := new(RateResponse)
 	err := c.cc.Invoke(ctx, "/ukama.rates.v1.RatesService/GetRate", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (c *ratesServiceClient) GetRate(ctx context.Context, in *RateResponse, opts
 // for forward compatibility
 type RatesServiceServer interface {
 	GetRates(context.Context, *RatesRequest) (*RatesResponse, error)
-	GetRate(context.Context, *RateResponse) (*RatesResponse, error)
+	GetRate(context.Context, *RateRequest) (*RateResponse, error)
 	mustEmbedUnimplementedRatesServiceServer()
 }
 
@@ -68,7 +68,7 @@ type UnimplementedRatesServiceServer struct {
 func (UnimplementedRatesServiceServer) GetRates(context.Context, *RatesRequest) (*RatesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRates not implemented")
 }
-func (UnimplementedRatesServiceServer) GetRate(context.Context, *RateResponse) (*RatesResponse, error) {
+func (UnimplementedRatesServiceServer) GetRate(context.Context, *RateRequest) (*RateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRate not implemented")
 }
 func (UnimplementedRatesServiceServer) mustEmbedUnimplementedRatesServiceServer() {}
@@ -103,7 +103,7 @@ func _RatesService_GetRates_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _RatesService_GetRate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RateResponse)
+	in := new(RateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func _RatesService_GetRate_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: "/ukama.rates.v1.RatesService/GetRate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RatesServiceServer).GetRate(ctx, req.(*RateResponse))
+		return srv.(RatesServiceServer).GetRate(ctx, req.(*RateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -137,5 +137,5 @@ var RatesService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pb/gen/rates/rates.proto",
+	Metadata: "pb/rates.proto",
 }

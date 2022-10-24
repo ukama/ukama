@@ -1,9 +1,9 @@
 syntax = "proto3";
-option go_package = "pb/gen";
+option go_package = "pb/";
 package ukama.rates.v1;
 service RatesService {
     rpc GetRates (RatesRequest) returns (RatesResponse) {}
-    rpc GetRate(RateResponse) returns (RatesResponse){}
+    rpc GetRate(RateRequest) returns (RateResponse){}
 }
 message RatesRequest{
     optional string country = 1;
@@ -30,6 +30,7 @@ message Rate{
     string data =11;
     string  _2g=12;
     string _3g=13;
+    string _5g=20;
     string lte=14; 
     string lte_m=15;
     string apn=16; 
