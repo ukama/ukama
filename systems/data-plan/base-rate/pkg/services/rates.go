@@ -64,3 +64,18 @@ func (s *Server) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResp
 	}, nil
 
 }
+
+func (s *Server) UploadRates(ctx context.Context, req *pb.UploadRatesRequest) (*pb.UploadRatesResponse, error) {
+
+	var rate_list *pb.RatesResponse = &pb.RatesResponse{}
+
+	if result := s.H.DB.Find(&rate_list.Rates); result.Error != nil {
+		fmt.Println(result.Error)
+	}
+
+	rates := pb.Rate{}
+
+	fmt.Println(rates)
+
+	return &pb.UploadRatesResponse{}, nil
+}

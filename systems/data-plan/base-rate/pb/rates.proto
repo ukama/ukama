@@ -4,6 +4,7 @@ package ukama.rates.v1;
 service RatesService {
     rpc GetRates (RatesRequest) returns (RatesResponse) {}
     rpc GetRate(RateRequest) returns (RateResponse){}
+    rpc UploadRates(UploadRatesRequest) returns (UploadRatesResponse){}
 }
 message RatesRequest{
     optional string country = 1;
@@ -16,6 +17,13 @@ message RateResponse{
 }
 message RateRequest{
     string rateId =1;
+}
+message UploadRatesRequest {
+    string fileUrl = 1;
+    string effectiveAt = 2;
+}
+message UploadRatesResponse {
+    repeated Rate rate = 1;
 }
 message Rate{
     int32 id =1;
