@@ -19,7 +19,7 @@ message RateRequest{
     string rateId =1;
 }
 message UploadRatesRequest {
-    string fileUrl = 1;
+    string filePath = 1;
     string effectiveAt = 2;
 }
 message UploadRatesResponse {
