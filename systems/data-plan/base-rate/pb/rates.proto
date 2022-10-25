@@ -6,7 +6,10 @@ service RatesService {
     rpc GetRate(RateRequest) returns (RateResponse){}
 }
 message RatesRequest{
-    optional string country = 1;
+    string country = 1;
+    optional string provider =2;
+    optional int32 to  =3;
+    optional  int32 from  =4;
 }
 message RatesResponse {
     repeated Rate rates = 1;
@@ -19,22 +22,20 @@ message RateRequest{
 }
 message Rate{
     int32 id =1;
-    string country=3;
-    string country_on_cronus=4;
-    string network = 5;
-    string network_id_on_cronus=6;
-    string vpmn =7;
-    string imsi=8;
-    string sms_mo=9;
-    string sms_mt =10;
-    string data =11;
-    string  _2g=12;
-    string _3g=13;
-    string _5g=20;
-    string lte=14; 
-    string lte_m=15;
-    string apn=16; 
-    string created_at=17;
-    string effective_at=18;
-    string end_at=19;
+    string country=2;
+    string network = 3;
+    string vpmn =4;
+    string imsi=5;
+    string sms_mo=6;
+    string sms_mt =7;
+    string data =8;
+    string  _2g=9;
+    string _3g=10;
+    string _5g=11;
+    string lte=12; 
+    string lte_m=13;
+    string apn=14; 
+    string created_at=15;
+    string effective_at=16;
+    string end_at=17;
 }
