@@ -62,20 +62,17 @@ func (s *Server) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResp
 	return &pb.RateResponse{
 		Rate: data,
 	}, nil
-
 }
 
 func (s *Server) UploadRates(ctx context.Context, req *pb.UploadRatesRequest) (*pb.UploadRatesResponse, error) {
+	var rate_list *pb.UploadRatesResponse = &pb.UploadRatesResponse{}
 
-	var rate_list *pb.RatesResponse = &pb.RatesResponse{}
-
-	if result := s.H.DB.Find(&rate_list.Rates); result.Error != nil {
+	if result := s.H.DB.Find(&rate_list.Rate); result.Error != nil {
 		fmt.Println(result.Error)
 	}
 
 	rates := pb.Rate{}
+	rate_list.Rate = append(rate_list.Rate, &rates)
 
-	fmt.Println(rates)
-
-	return &pb.UploadRatesResponse{}, nil
+	return rate_list, nil
 }
