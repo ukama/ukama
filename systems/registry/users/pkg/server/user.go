@@ -13,7 +13,8 @@ import (
 	"github.com/ukama/ukama/systems/common/errors"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
-	hsspb "github.com/ukama/ukama/systems/registry/hss/pb/gen"
+
+	// hsspb "github.com/ukama/ukama/systems/registry/hss/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 	pbclient "github.com/ukama/ukama/systems/registry/users/pb/gen/simmgr"
 	"google.golang.org/grpc/codes"
@@ -27,19 +28,19 @@ const uuidParsingError = "Error parsing UUID"
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
-	userRepo       db.UserRepo
-	imsiService    pkg.ImsiClientProvider
+	userRepo db.UserRepo
+	// imsiService    pkg.ImsiClientProvider
 	simManager     pbclient.SimManagerServiceClient
 	simManagerName string
 	simRepo        db.SimcardRepo
 	simProvider    sims.SimProvider
 }
 
-func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, simRepo db.SimcardRepo,
+// func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, simRepo db.SimcardRepo,
+func NewUserService(userRepo db.UserRepo, simRepo db.SimcardRepo,
 	simProvider sims.SimProvider, simManager pbclient.SimManagerServiceClient, simManagerName string,
 ) *UserService {
 	return &UserService{userRepo: userRepo,
-		imsiService:    imsiProvider,
 		simRepo:        simRepo,
 		simManager:     simManager,
 		simManagerName: simManagerName,
@@ -144,23 +145,24 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 		}
 
 		logrus.Infof("Adding new imsi %s", sim.Imsi)
-		s, err := u.imsiService.GetClient()
-		if err != nil {
-			return errors.Wrap(err, "failed to connect to hss")
-		}
 
-		_, err = s.Add(ctx, &hsspb.AddImsiRequest{
-			Imsi: &hsspb.ImsiRecord{
-				Imsi:   sim.Imsi,
-				UserId: usr.Uuid.String(),
-				Apn:    &hsspb.Apn{Name: "default"},
-			},
-			Org: org,
-		})
+		// s, err := u.imsiService.GetClient()
+		// if err != nil {
+		// return errors.Wrap(err, "failed to connect to hss")
+		// }
 
-		if err != nil {
-			return errors.Wrap(err, "failed to add imsi")
-		}
+		// _, err = s.Add(ctx, &hsspb.AddImsiRequest{
+		// Imsi: &hsspb.ImsiRecord{
+		// Imsi:   sim.Imsi,
+		// UserId: usr.Uuid.String(),
+		// Apn:    &hsspb.Apn{Name: "default"},
+		// },
+		// Org: org,
+		// })
+
+		// if err != nil {
+		// return errors.Wrap(err, "failed to add imsi")
+		// }
 
 		return nil
 	})
@@ -454,18 +456,20 @@ func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUser
 
 func (u *UserService) deleteImsiFromHss(ctx context.Context, userID string) error {
 	// Delete imsi record from HSS
-	s, err := u.imsiService.GetClient()
-	if err != nil {
-		return errors.Wrap(err, "failed to connect to hss")
-	}
+	// s, err := u.imsiService.GetClient()
+	// if err != nil {
+	// return errors.Wrap(err, "failed to connect to hss")
+	// }
 
-	_, err = s.Delete(ctx, &hsspb.DeleteImsiRequest{
-		IdOneof: &hsspb.DeleteImsiRequest_UserId{
-			UserId: userID,
-		},
-	})
+	// _, err = s.Delete(ctx, &hsspb.DeleteImsiRequest{
+	// IdOneof: &hsspb.DeleteImsiRequest_UserId{
+	// UserId: userID,
+	// },
+	// })
 
-	return err
+	// return err
+
+	return nil
 }
 
 func (u *UserService) GetQrCode(ctx context.Context, req *pb.GetQrCodeRequest) (*pb.GetQrCodeResponse, error) {

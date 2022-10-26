@@ -10,8 +10,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	hsspb "github.com/ukama/ukama/systems/registry/hss/pb/gen"
-	hssmocks "github.com/ukama/ukama/systems/registry/hss/pb/gen/mocks"
+
+	// hsspb "github.com/ukama/ukama/systems/registry/hss/pb/gen"
+	// hssmocks "github.com/ukama/ukama/systems/registry/hss/pb/gen/mocks"
 	"github.com/ukama/ukama/systems/registry/users/mocks"
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 	mocks2 "github.com/ukama/ukama/systems/registry/users/pb/gen/mocks"
@@ -21,18 +22,19 @@ import (
 )
 
 const testOrg = "org"
-const testImis = "1"
+
+// const testImis = "1"
 const tesRequesterId = "89273897297392"
 
 func Test_AddInternal(t *testing.T) {
 	// Arrange
 	userRepo := &mocks.UserRepo{}
-	hssClient := &hssmocks.ImsiServiceClient{}
+	// hssClient := &hssmocks.ImsiServiceClient{}
 	simRepo := &mocks.SimcardRepo{}
 	simManager := &mocks2.SimManagerServiceClient{}
 	simProvider := &mocks.SimProvider{}
-	hssProv := &mocks.ImsiClientProvider{}
-	hssProv.On("GetClient").Return(hssClient, nil)
+	// hssProv := &mocks.ImsiClientProvider{}
+	// hssProv.On("GetClient").Return(hssClient, nil)
 
 	userRequest := &pb.User{
 		Name:  "Joe",
@@ -45,15 +47,16 @@ func Test_AddInternal(t *testing.T) {
 		Email: userRequest.Email, Phone: userRequest.Phone,
 		Name: userRequest.Name}, nil)
 
-	hssClient.On("Add", mock.MatchedBy(func(n *hsspb.AddImsiRequest) bool {
-		return n.Imsi.Imsi == testImis && n.Imsi.UserId == userUuid.String()
-	})).Return(&hsspb.AddImsiResponse{}, nil)
+	// hssClient.On("Add", mock.MatchedBy(func(n *hsspb.AddImsiRequest) bool {
+	// return n.Imsi.Imsi == testImis && n.Imsi.UserId == userUuid.String()
+	// })).Return(&hsspb.AddImsiResponse{}, nil)
 
 	simManager.On("GetQrCode", mock.Anything, mock.Anything).Return(&pbclient.GetQrCodeResponse{
 		QrCode: "qr",
 	}, nil)
 
-	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+	// srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+	srv := NewUserService(userRepo, simRepo, simProvider, simManager, "simManager")
 	md := metadata.Pairs("x-requester", tesRequesterId)
 	ctx := metadata.NewIncomingContext(context.TODO(), md)
 
@@ -77,11 +80,11 @@ const TEST_SIM_TOKEN = "QQQQQQQQQQQ"
 func Test_Add(t *testing.T) {
 	// Arrange
 	userRepo := &mocks.UserRepo{}
-	hssClient := &hssmocks.ImsiServiceClient{}
+	// hssClient := &hssmocks.ImsiServiceClient{}
 	simRepo := &mocks.SimcardRepo{}
 	simManager := &mocks2.SimManagerServiceClient{}
-	hssProv := &mocks.ImsiClientProvider{}
-	hssProv.On("GetClient").Return(hssClient, nil)
+	// hssProv := &mocks.ImsiClientProvider{}
+	// hssProv.On("GetClient").Return(hssClient, nil)
 
 	userRequest := &pb.User{
 		Name:  "Joe",
@@ -94,9 +97,9 @@ func Test_Add(t *testing.T) {
 		Email: userRequest.Email, Phone: userRequest.Phone,
 		Name: userRequest.Name}, nil)
 
-	hssClient.On("Add", mock.MatchedBy(func(n *hsspb.AddImsiRequest) bool {
-		return n.Imsi.Imsi == testImis && n.Imsi.UserId == userUuid.String()
-	})).Return(&hsspb.AddImsiResponse{}, nil)
+	// hssClient.On("Add", mock.MatchedBy(func(n *hsspb.AddImsiRequest) bool {
+	// return n.Imsi.Imsi == testImis && n.Imsi.UserId == userUuid.String()
+	// })).Return(&hsspb.AddImsiResponse{}, nil)
 
 	simManager.On("GetQrCode", mock.Anything, mock.Anything).Return(&pbclient.GetQrCodeResponse{
 		QrCode: "qr",
@@ -105,7 +108,9 @@ func Test_Add(t *testing.T) {
 	t.Run("WithSimToken", func(tt *testing.T) {
 		simProvider := &mocks.SimProvider{}
 		simProvider.On("GetICCIDWithCode", TEST_SIM_TOKEN).Return(sims.GetDubugIccid(), nil)
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+
+		// srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, simRepo, simProvider, simManager, "simManager")
 		// Act
 		addResp, err := srv.Add(context.Background(), &pb.AddRequest{
 			Org:      testOrg,
@@ -126,7 +131,8 @@ func Test_Add(t *testing.T) {
 		simProvider := &mocks.SimProvider{}
 		simProvider.On("GetICCIDFromPool").Return(sims.GetDubugIccid(), nil)
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		// srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, simRepo, simProvider, simManager, "simManager")
 
 		md := metadata.Pairs("x-requester", tesRequesterId)
 		ctx := metadata.NewIncomingContext(context.TODO(), md)
@@ -148,7 +154,8 @@ func Test_Add(t *testing.T) {
 	t.Run("WithDebugSimToken", func(tt *testing.T) {
 		simProvider := &mocks.SimProvider{}
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		// srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, simRepo, simProvider, simManager, "simManager")
 
 		md := metadata.Pairs("x-requester", tesRequesterId)
 		ctx := metadata.NewIncomingContext(context.TODO(), md)
@@ -172,12 +179,12 @@ func Test_Add(t *testing.T) {
 func Test_Deactivate(t *testing.T) {
 	// Arrange
 	userRepo := &mocks.UserRepo{}
-	hssClient := &hssmocks.ImsiServiceClient{}
+	// hssClient := &hssmocks.ImsiServiceClient{}
 	simRepo := &mocks.SimcardRepo{}
 	simManager := &mocks2.SimManagerServiceClient{}
 	simProvider := &mocks.SimProvider{}
-	hssProv := &mocks.ImsiClientProvider{}
-	hssProv.On("GetClient").Return(hssClient, nil)
+	// hssProv := &mocks.ImsiClientProvider{}
+	// hssProv.On("GetClient").Return(hssClient, nil)
 
 	iccid := sims.GetDubugIccid()
 	userId := uuid.NewString()
@@ -195,15 +202,16 @@ func Test_Deactivate(t *testing.T) {
 		return t.Iccid == iccid
 	})).Return(&pbclient.TerminateSimResponse{}, nil)
 
-	hssClient.On("Delete", mock.Anything, mock.Anything).Return(&hsspb.DeleteImsiResponse{}, nil)
+	// hssClient.On("Delete", mock.Anything, mock.Anything).Return(&hsspb.DeleteImsiResponse{}, nil)
 
-	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+	// srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+	srv := NewUserService(userRepo, simRepo, simProvider, simManager, "simManager")
 
 	_, err := srv.DeactivateUser(context.Background(), &pb.DeactivateUserRequest{
 		UserId: userId,
 	})
 	if assert.NoError(t, err, "Error deactivating user") {
-		hssClient.AssertExpectations(t)
+		// hssClient.AssertExpectations(t)
 		userRepo.AssertExpectations(t)
 	}
 }
@@ -385,7 +393,7 @@ func Test_UpdateServices(t *testing.T) {
 	// Arrange
 	userRepo := &mocks.UserRepo{}
 	simProvider := &mocks.SimProvider{}
-	hssProv := &mocks.ImsiClientProvider{}
+	// hssProv := &mocks.ImsiClientProvider{}
 	testIccid := "890000000000000001"
 
 	simRepo := &mocks.SimcardRepo{}
@@ -406,7 +414,8 @@ func Test_UpdateServices(t *testing.T) {
 	t.Run("UpdateUkama", func(tt *testing.T) {
 		simManager := &mocks2.SimManagerServiceClient{}
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		// srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, simRepo, simProvider, simManager, "simManager")
 		// Act
 		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
 			Iccid: testIccid,
@@ -429,7 +438,8 @@ func Test_UpdateServices(t *testing.T) {
 			return p.Services.Data.GetValue()
 		})).Return(nil, nil)
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		// srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, simRepo, simProvider, simManager, "simManager")
 		// Act
 		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
 			Iccid: testIccid,
@@ -455,7 +465,8 @@ func Test_UpdateServices(t *testing.T) {
 			return p.Services.Data != nil && p.Services.Data.GetValue() == false
 		})).Return(nil, nil)
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		// srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, simRepo, simProvider, simManager, "simManager")
 		// Act
 		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
 			Iccid: testIccid,

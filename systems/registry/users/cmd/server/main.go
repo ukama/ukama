@@ -68,7 +68,7 @@ func runGrpcServer(gormdb sql.Db) {
 	defer pcon.Close()
 
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
-		pkg.NewImsiClientProvider(serviceConfig.HssHost),
+		// pkg.NewImsiClientProvider(serviceConfig.HssHost),
 		db.NewSimcardRepo(gormdb),
 		sims.NewSimProvider(serviceConfig.SimTokenKey, simPool),
 		simMgr,
