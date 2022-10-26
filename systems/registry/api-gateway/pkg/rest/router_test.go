@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/ukama"
-	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
 
@@ -28,7 +26,6 @@ import (
 	nodemocks "github.com/ukama/ukama/systems/registry/node/pb/gen/mocks"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	orgmocks "github.com/ukama/ukama/systems/registry/org/pb/gen/mocks"
-	usrmocks "github.com/ukama/ukama/systems/registry/users/pb/gen/mocks"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -288,150 +285,4 @@ func Test_UpdateNode(t *testing.T) {
 	fmt.Printf("Response: %s\n", w.Body.String())
 	assert.Equal(t, http.StatusOK, w.Code)
 	net.AssertExpectations(t)
-}
-
-func Test_HssMethods(t *testing.T) {
-	// arrange
-	const orgName = "org-name"
-	const userUuid = "93fcb344-c752-411d-9506-e27417224920"
-	const firstName = "Joe"
-	const simToken = "0000010000000001"
-
-	m := usrmocks.UserServiceClient{}
-	r := NewRouter(&Clients{
-		User: client.NewTestHssFromClient(&m),
-	}, routerConfig).f.Engine()
-
-	body, err := json.Marshal(UserRequest{Name: firstName, SimToken: simToken})
-	if err != nil {
-		panic(err)
-	}
-
-	// tests go here
-	t.Run("AddUser", func(t *testing.T) {
-		m = usrmocks.UserServiceClient{}
-		m.On("Add", mock.Anything, mock.MatchedBy(func(r *userspb.AddRequest) bool {
-			return r.User.Name == firstName && r.SimToken == simToken
-		})).Return(&userspb.AddResponse{
-			User: &userspb.User{
-				Name: firstName,
-				Uuid: userUuid,
-			},
-			Iccid: "0000000000000000001",
-		}, nil)
-
-		req, _ := http.NewRequest("POST", "/v1/orgs/"+orgName+"/users", bytes.NewReader(body))
-		req.Header.Set("token", "bearer 123")
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusCreated, w.Code)
-
-		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"uuid":"%s"`, userUuid))
-		m.AssertExpectations(t)
-	})
-
-	t.Run("AddUserReturnsError", func(t *testing.T) {
-		m = usrmocks.UserServiceClient{}
-		m.On("Add", mock.Anything, mock.Anything).Return(nil, status.Error(codes.PermissionDenied, "some err"))
-
-		req, _ := http.NewRequest("POST", "/v1/orgs/"+orgName+"/users", bytes.NewReader(body))
-		req.Header.Set("token", "bearer 123")
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusForbidden, w.Code)
-		assert.Contains(t, w.Body.String(), "some err")
-	})
-
-	t.Run("DeleteUser", func(t *testing.T) {
-		m = usrmocks.UserServiceClient{}
-		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *userspb.DeleteRequest) bool {
-			return r.UserId == userUuid
-		})).Return(&userspb.DeleteResponse{}, nil)
-		req, _ := http.NewRequest("DELETE", "/v1/orgs/"+orgName+"/users/"+userUuid, nil)
-		req.Header.Set("token", "bearer 123")
-		w := httptest.NewRecorder()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
-		m.AssertExpectations(t)
-	})
-
-	t.Run("ListUser", func(t *testing.T) {
-		m = usrmocks.UserServiceClient{}
-		m.On("List", mock.Anything, mock.MatchedBy(func(r *userspb.ListRequest) bool {
-			return r.Org == orgName
-		})).Return(&userspb.ListResponse{
-			Org: orgName,
-			Users: []*userspb.User{
-				{
-					Name: firstName,
-					Uuid: userUuid,
-				},
-			},
-		}, nil)
-
-		req, _ := http.NewRequest("GET", "/v1/orgs/"+orgName+"/users", nil)
-		req.Header.Set("token", "bearer 123")
-		w := httptest.NewRecorder()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, w.Body.String(), userUuid)
-		assert.Contains(t, w.Body.String(), orgName)
-		assert.Contains(t, w.Body.String(), firstName)
-		m.AssertExpectations(t)
-	})
-
-	t.Run("UpdateUser", func(t *testing.T) {
-		const changedName = "changed"
-		m = usrmocks.UserServiceClient{}
-		m.On("DeactivateUser", mock.Anything, mock.MatchedBy(func(r *userspb.DeactivateUserRequest) bool {
-			return r.UserId == userUuid
-		})).Return(&userspb.DeactivateUserResponse{}, nil)
-		m.On("Update", mock.Anything, mock.MatchedBy(func(r *userspb.UpdateRequest) bool {
-			return r.UserId == userUuid && r.User.Name == changedName
-		})).Return(&userspb.UpdateResponse{User: &userspb.User{
-			Name:          changedName,
-			IsDeactivated: true,
-		}}, nil)
-
-		m.On("Get", mock.Anything, mock.MatchedBy(func(r *userspb.GetRequest) bool {
-			return r.UserId == userUuid
-		})).Return(&userspb.GetResponse{User: &userspb.User{
-			Name:          changedName,
-			IsDeactivated: true,
-		}}, nil)
-		updBody, err := json.Marshal(UpdateUserRequest{
-			Name:          changedName,
-			IsDeactivated: true,
-		})
-		if err != nil {
-			assert.FailNow(t, "error marshaling request", err.Error())
-		}
-
-		req, _ := http.NewRequest("PATCH", "/v1/orgs/"+orgName+"/users/"+userUuid, bytes.NewReader(updBody))
-		req.Header.Set("token", "bearer 123")
-		w := httptest.NewRecorder()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
-		m.AssertExpectations(t)
-	})
 }

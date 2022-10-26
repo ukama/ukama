@@ -20,14 +20,14 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/users v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.18.1
-	google.golang.org/grpc v1.50.0
+	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 )
 
@@ -84,7 +84,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.12.0 // indirect
-	github.com/stretchr/objx v0.4.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
@@ -97,6 +97,6 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.4.4 // indirect
-	gorm.io/gorm v1.24.0 // indirect
+	gorm.io/driver/postgres v1.4.5 // indirect
+	gorm.io/gorm v1.24.1-0.20221019064659-5dd2bb482755 // indirect
 )

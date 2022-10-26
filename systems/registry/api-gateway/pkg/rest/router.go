@@ -119,21 +119,6 @@ func (r *Router) init() {
 	nodes.GET("/:node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
 	nodes.DELETE("/:node", nil, tonic.Handler(r.deleteNodeHandler, http.StatusOK))
 	nodes.DELETE("/:node/attached/:attachedId", nil, tonic.Handler(r.detachNode, http.StatusOK))
-
-	// user's management
-	hss := orgs.Group("/users", "Network Users", "Operations on network users and SIM cards"+
-		"Do not confuse with organization users")
-	hss.GET("", formatDoc("Get list of users", ""), tonic.Handler(r.getUsersHandler, http.StatusOK))
-	hss.POST("", formatDoc("Create new user", ""), tonic.Handler(r.postUsersHandler, http.StatusCreated))
-	hss.DELETE("/:user", formatDoc("Delete user", ""), tonic.Handler(r.deleteUserHandler, http.StatusOK))
-	hss.GET("/:user", formatDoc("Get user info", ""), tonic.Handler(r.getUserHandler, http.StatusOK))
-	hss.PATCH("/:user", formatDoc("Update user's information and deactivates user",
-		"All fields are optional. User could be deactivated by setting isDeactivated flag to true. If a user is deactivated, all his SIM cards are purged. This operation is not recoverable"),
-		tonic.Handler(r.updateUserHandler, http.StatusOK))
-	hss.PUT("/:user/sims/:iccid/services", formatDoc("Enable or disable services for a SIM card", ""),
-		tonic.Handler(r.setSimStatusHandler, http.StatusOK))
-	hss.GET("/:user/sims/:iccid/qr", formatDoc("Get e-sim installation QR code", ""),
-		tonic.Handler(r.getSimQrHandler, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -209,7 +194,7 @@ func (r *Router) detachNode(c *gin.Context, req *DetachNodeRequest) (*pbnode.Nod
 	return node, err
 }
 
-// Users handlers
+// Users handlers: all these need to be updated.
 
 func (r *Router) getUsersHandler(c *gin.Context) (*userspb.ListResponse, error) {
 	orgName := r.getOrgNameFromRoute(c)
