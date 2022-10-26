@@ -12,7 +12,7 @@ import (
 )
 
 type Handler struct {
-	 *gorm.DB
+	*gorm.DB
 }
 
 func Init(url string) Handler {
@@ -23,7 +23,6 @@ func Init(url string) Handler {
 		Colorful:                  true,        // Disable color
 	}
 
-	
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
 		loggerConf,
