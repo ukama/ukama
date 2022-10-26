@@ -40,8 +40,7 @@ func (r *RateServer) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.Ra
 			logrus.Error(result.Error)
 			return nil,result.Error
 		}
-
-	} else {
+	} else  {
 		if result := r.RateRepo.Find(&rate_list.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil,result.Error
@@ -61,8 +60,9 @@ isRateIdValid:=validateString(req.GetRateId())
 if !isRateIdValid  {
 	logrus.Infof("Rate Id is not valid: %s", req.GetRateId())
 
-	return nil, fmt.Errorf("RateId must be a number")
+	return nil, status.Errorf(codes.InvalidArgument, "cannot get rate with Id %s", req.GetRateId())
 
+	
 }
 	if !isRequestEmpty(req.GetRateId()) {
 		if result := r.RateRepo.First(&rate, req.RateId); result.Error != nil {
@@ -114,3 +114,4 @@ func validateString(value string)( bool ){
 	}
 	return isString
 }
+
