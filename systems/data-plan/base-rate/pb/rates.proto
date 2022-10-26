@@ -10,6 +10,7 @@ message RatesRequest{
     optional string provider =2;
     optional int32 to  =3;
     optional  int32 from  =4;
+    optional SimType sim_type=5;
 }
 message RatesResponse {
     repeated Rate rates = 1;
@@ -38,4 +39,12 @@ message Rate{
     string created_at=15;
     string effective_at=16;
     string end_at=17;
+    SimType sim_type=19;
+}
+
+enum SimType {
+    INTER_NONE=0;
+    INTER_MNO_DATA=1;
+    INTER_MNO_ALL=2;
+    INTER_UKAMA_ALL=3;
 }

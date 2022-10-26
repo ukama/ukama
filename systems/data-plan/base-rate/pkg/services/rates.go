@@ -2,53 +2,76 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-type Server struct {
-	H db.Handler
+type RateServer struct {
+	RateRepo db.Handler
 	pb.UnimplementedRatesServiceServer
+	
 }
 
-func (s *Server) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.RatesResponse, error) {
+
+func (r *RateServer) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.RatesResponse, error) {
 	logrus.Infof("Get all rates %v", req.GetCountry())
 
 	var rate_list *pb.RatesResponse = &pb.RatesResponse{}
 	if !isRequestEmpty(req.GetCountry(), *req.Provider) {
-		if result := s.H.DB.Where("Country = ? AND Network = ?", req.Country, req.Provider).Find(&rate_list.Rates); result.Error != nil {
+		getRateLog := fmt.Sprintf("Get rates from %s where provider=%s", req.Country,*req.Provider)
+		logrus.Infof(getRateLog)
+
+		if result := r.RateRepo.Where("Country = ? AND Network = ?", req.Country, req.Provider).Find(&rate_list.Rates); result.Error != nil {
 			logrus.Error(result.Error)
+			return nil,result.Error
+
 		}
 
 	} else if !isRequestEmpty(req.GetCountry()) {
 
-		if result := s.H.DB.Where("Country = ? ", req.Country).Find(&rate_list.Rates); result.Error != nil {
+		if result := r.RateRepo.Where("Country = ? ", req.Country).Find(&rate_list.Rates); result.Error != nil {
 			logrus.Error(result.Error)
+			return nil,result.Error
 		}
 
 	} else {
-		if result := s.H.DB.Find(&rate_list.Rates); result.Error != nil {
+		if result := r.RateRepo.Find(&rate_list.Rates); result.Error != nil {
 			logrus.Error(result.Error)
+			return nil,result.Error
 		}
+	
 	}
 
 	return rate_list, nil
 
 }
 
-func (s *Server) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResponse, error) {
-	logrus.Infof("Get rate by Id : %v", req.GetRateId())
+func (r *RateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResponse, error) {
+	logrus.Infof("Get rate by Id : %s", req.GetRateId())
 
 	var rate models.Rate
-	if !isRequestEmpty(req.GetRateId()) {
-		if result := s.H.DB.First(&rate, req.RateId); result.Error != nil {
-			logrus.Error(result.Error)
-		}
-	}
+isRateIdValid:=validateString(req.GetRateId())
+if !isRateIdValid  {
+	logrus.Infof("Rate Id is not valid: %s", req.GetRateId())
 
+	return nil, fmt.Errorf("RateId must be a number")
+
+}
+	if !isRequestEmpty(req.GetRateId()) {
+		if result := r.RateRepo.First(&rate, req.RateId); result.Error != nil {
+			logrus.Error("error getting the rate :" + result.Error.Error())
+			return nil,status.Errorf(codes.NotFound, result.Error.Error())
+		}
+	}else{
+		return nil,fmt.Errorf("invalid arguments as RateId")
+	}
 	data := &pb.Rate{
 		Country:     rate.Country,
 		Network:     rate.Network,
@@ -59,12 +82,14 @@ func (s *Server) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResp
 		Data:        rate.Data,
 		X2G:         rate.X2g,
 		X3G:         rate.X3g,
+		X5G:         rate.X5g,
 		Lte:         rate.Lte,
 		LteM:        rate.Lte_m,
 		Apn:         rate.Apn,
 		CreatedAt:   rate.Created_at,
 		EffectiveAt: rate.Effective_at,
 		EndAt:       rate.End_at,
+		SimType: pb.SimType(rate.SimType),
 	}
 	return &pb.RateResponse{
 		Rate: data,
@@ -78,4 +103,14 @@ func isRequestEmpty(ss ...string) bool {
 		}
 	}
 	return false
+}
+
+func validateString(value string)( bool ){
+	isString :=false
+	if _, err := strconv.Atoi(value); err == nil {
+		isString=true
+	}else{
+		isString=false
+	}
+	return isString
 }
