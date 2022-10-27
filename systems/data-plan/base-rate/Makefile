@@ -3,4 +3,4 @@ gen:
     --go-grpc_out=. --go-grpc_opt=paths=source_relative \
     pb/rates.proto
 server:
-	go run cmd/main.go
+	go run cmd/server/main.go

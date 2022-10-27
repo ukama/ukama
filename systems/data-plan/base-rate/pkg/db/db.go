@@ -1,27 +1,45 @@
 package db
 
 import (
-	"fmt"
 	"log"
+	"os"
+	"time"
 
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/models"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type Handler struct {
-	DB *gorm.DB
+	*gorm.DB
 }
 
 func Init(url string) Handler {
-	db, err := gorm.Open(postgres.Open(url), &gorm.Config{})
+	loggerConf := logger.Config{
+		SlowThreshold:             time.Second, // Slow SQL threshold
+		LogLevel:                  logger.Warn, // Log level
+		IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+		Colorful:                  true,        // Disable color
+	}
+
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		loggerConf,
+	)
+	db, err := gorm.Open(postgres.Open(url), &gorm.Config{
+		Logger:                 newLogger,
+		SkipDefaultTransaction: true,
+	})
 
 	if err != nil {
 		log.Fatalln(err)
+		panic("Database is not connected. Make sure you call Init() first")
 	}
-	fmt.Println("Connecte to db")
-	db.AutoMigrate(&models.Rate{})
-	db.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&models.Rate{})
+	logrus.Infof("Connected to rate db")
+
+	// db.AutoMigrate(&models.Rate{})
+	// db.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(&models.Rate{})
 
 	return Handler{db}
 }

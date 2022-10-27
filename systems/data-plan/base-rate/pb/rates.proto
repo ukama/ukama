@@ -13,7 +13,11 @@ service RatesService {
     rpc UploadBaseRates(UploadBaseRatesRequest) returns (UploadBaseRatesResponse){}
 }
 message RatesRequest{
-    optional string country = 1;
+    string country = 1;
+    optional string provider =2;
+    optional int32 to  =3;
+    optional int32 from  =4;
+    optional SIM_TYPE simType=5;
 }
 message RatesResponse {
     repeated Rate rates = 1;
