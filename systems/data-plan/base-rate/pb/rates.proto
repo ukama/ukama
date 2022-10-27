@@ -1,6 +1,12 @@
 syntax = "proto3";
 option go_package = "pb/";
 package ukama.rates.v1;
+enum SIM_TYPE {
+    INTER_NONE=0;
+    INTER_MNO_DATA=1;
+    INTER_MNO_ALL=2;
+    INTER_UKAMA_ALL=3;
+}
 service RatesService {
     rpc GetRates (RatesRequest) returns (RatesResponse) {}
     rpc GetRate(RateRequest) returns (RateResponse){}
@@ -19,8 +25,9 @@ message RateRequest{
     string rateId =1;
 }
 message UploadRatesRequest {
-    string filePath = 1;
+    string fileURL = 1;
     string effectiveAt = 2;
+    SIM_TYPE sim_type = 3;
 }
 message UploadRatesResponse {
     repeated Rate rate = 1;
