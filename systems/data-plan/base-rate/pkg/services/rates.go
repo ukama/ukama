@@ -10,6 +10,7 @@ import (
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/models"
+	utils "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 )
 
 var region = "us-east-1"
@@ -93,19 +94,19 @@ func (s *Server) UploadRates(ctx context.Context, req *pb.UploadRatesRequest) (*
 	fileUrl := req.FileURL
 	ratesApplicableFrom := req.EffectiveAt
 
-	fetchData(fileUrl, destinationFileName)
+	utils.FetchData(fileUrl, destinationFileName)
 
 	f, err := os.Open(destinationFileName)
-	check(err)
+	utils.Check(err)
 	defer f.Close()
 
 	csvReader := csv.NewReader(f)
 	data, err := csvReader.ReadAll()
-	check(err)
+	utils.Check(err)
 
-	query := createQuery(data, ratesApplicableFrom, sim_type)
+	query := utils.CreateQuery(data, ratesApplicableFrom, sim_type)
 
-	deleteFile(destinationFileName)
+	utils.DeleteFile(destinationFileName)
 
 	s.H.DB.Exec(query)
 

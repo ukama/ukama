@@ -7,18 +7,18 @@ import (
 	"strings"
 )
 
-func check(e error) {
+func Check(e error) {
 	if e != nil {
 		panic(e)
 	}
 }
 
-func deleteFile(fileName string) {
+func DeleteFile(fileName string) {
 	e := os.Remove(fileName)
-	check(e)
+	Check(e)
 }
 
-func fetchData(url string, destinationFileName string) {
+func FetchData(url string, destinationFileName string) {
 	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
@@ -41,7 +41,7 @@ func trimHeader(columnName string) string {
 			" ", "_"), "-", "_"), "2g", "X2g"), "3g", "X3g"), "5g", "X5g")
 }
 
-func createQuery(rows [][]string, effective_at string, sim_type string) string {
+func CreateQuery(rows [][]string, effective_at string, sim_type string) string {
 	headerStr := ""
 	valueStrings := make([]string, 0, len(rows))
 
