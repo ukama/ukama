@@ -27,7 +27,7 @@ message RateRequest{
 message UploadBaseRatesRequest {
     string fileURL = 1;
     string effectiveAt = 2;
-    SIM_TYPE sim_type = 3;
+    SIM_TYPE simType = 3;
 }
 message UploadBaseRatesResponse {
     repeated Rate rate = 1;
@@ -38,17 +38,17 @@ message Rate{
     string network = 5;
     string vpmn =7;
     string imsi=8;
-    string sms_mo=9;
-    string sms_mt =10;
+    string smsMo=9;
+    string smsMt =10;
     string data =11;
     string  _2g=12;
     string _3g=13;
     string _5g=20;
     string lte=14; 
-    string lte_m=15;
+    string lteM=15;
     string apn=16; 
-    string created_at=17;
-    string effective_at=18;
-    string end_at=19;
-    SIM_TYPE sim_type=21;
+    string createdAt=17;
+    string effectiveAt=18;
+    string endAt=19;
+    SIM_TYPE simType=21;
 }

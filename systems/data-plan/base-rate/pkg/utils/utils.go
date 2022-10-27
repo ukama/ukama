@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/iancoleman/strcase"
 )
 
 func Check(e error) {
@@ -36,19 +38,19 @@ func FetchData(url string, destinationFileName string) {
 }
 
 func trimHeader(columnName string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
-		strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(columnName),
-			" ", "_"), "-", "_"), "2g", "X2g"), "3g", "X3g"), "5g", "X5g")
+	return strcase.ToCamel(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
+		strings.ReplaceAll(strings.ToLower(columnName),
+			"-", "_"), "2g", "X2g"), "3g", "X3g"), "5g", "X5g"))
 }
 
-func CreateQuery(rows [][]string, effective_at string, sim_type string) string {
+func CreateQuery(rows [][]string, effectiveAt string, simType string) string {
 	headerStr := ""
 	valueStrings := make([]string, 0, len(rows))
 
 	for _, value := range rows[0] {
 		headerStr = headerStr + trimHeader(value) + ","
 	}
-	headerStr = "(" + headerStr + "effective_at, sim_type)"
+	headerStr = "(" + headerStr + "effectiveAt, simType)"
 
 	for i, row := range rows {
 		if i == 0 {
@@ -59,7 +61,7 @@ func CreateQuery(rows [][]string, effective_at string, sim_type string) string {
 		for _, value := range row {
 			str = str + "'" + strings.ReplaceAll(strings.ReplaceAll(value, "'", ""), ",", "") + "', "
 		}
-		str = str + " '" + effective_at + "', '" + sim_type + "'"
+		str = str + " '" + effectiveAt + "', '" + simType + "'"
 		valueStrings = append(valueStrings, "("+strings.ReplaceAll(str, "''", "NULL")+")")
 	}
 	stmt := fmt.Sprintf("INSERT INTO rates %s VALUES %s", headerStr, strings.Join(valueStrings, ","))
