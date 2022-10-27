@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type RatesServiceClient interface {
 	GetRates(ctx context.Context, in *RatesRequest, opts ...grpc.CallOption) (*RatesResponse, error)
 	GetRate(ctx context.Context, in *RateRequest, opts ...grpc.CallOption) (*RateResponse, error)
-	UploadRates(ctx context.Context, in *UploadRatesRequest, opts ...grpc.CallOption) (*UploadRatesResponse, error)
+	UploadBaseRates(ctx context.Context, in *UploadBaseRatesRequest, opts ...grpc.CallOption) (*UploadBaseRatesResponse, error)
 }
 
 type ratesServiceClient struct {
@@ -53,9 +53,9 @@ func (c *ratesServiceClient) GetRate(ctx context.Context, in *RateRequest, opts 
 	return out, nil
 }
 
-func (c *ratesServiceClient) UploadRates(ctx context.Context, in *UploadRatesRequest, opts ...grpc.CallOption) (*UploadRatesResponse, error) {
-	out := new(UploadRatesResponse)
-	err := c.cc.Invoke(ctx, "/ukama.rates.v1.RatesService/UploadRates", in, out, opts...)
+func (c *ratesServiceClient) UploadBaseRates(ctx context.Context, in *UploadBaseRatesRequest, opts ...grpc.CallOption) (*UploadBaseRatesResponse, error) {
+	out := new(UploadBaseRatesResponse)
+	err := c.cc.Invoke(ctx, "/ukama.rates.v1.RatesService/UploadBaseRates", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (c *ratesServiceClient) UploadRates(ctx context.Context, in *UploadRatesReq
 type RatesServiceServer interface {
 	GetRates(context.Context, *RatesRequest) (*RatesResponse, error)
 	GetRate(context.Context, *RateRequest) (*RateResponse, error)
-	UploadRates(context.Context, *UploadRatesRequest) (*UploadRatesResponse, error)
+	UploadBaseRates(context.Context, *UploadBaseRatesRequest) (*UploadBaseRatesResponse, error)
 	mustEmbedUnimplementedRatesServiceServer()
 }
 
@@ -82,8 +82,8 @@ func (UnimplementedRatesServiceServer) GetRates(context.Context, *RatesRequest) 
 func (UnimplementedRatesServiceServer) GetRate(context.Context, *RateRequest) (*RateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRate not implemented")
 }
-func (UnimplementedRatesServiceServer) UploadRates(context.Context, *UploadRatesRequest) (*UploadRatesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UploadRates not implemented")
+func (UnimplementedRatesServiceServer) UploadBaseRates(context.Context, *UploadBaseRatesRequest) (*UploadBaseRatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadBaseRates not implemented")
 }
 func (UnimplementedRatesServiceServer) mustEmbedUnimplementedRatesServiceServer() {}
 
@@ -134,20 +134,20 @@ func _RatesService_GetRate_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RatesService_UploadRates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UploadRatesRequest)
+func _RatesService_UploadBaseRates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadBaseRatesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RatesServiceServer).UploadRates(ctx, in)
+		return srv.(RatesServiceServer).UploadBaseRates(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.rates.v1.RatesService/UploadRates",
+		FullMethod: "/ukama.rates.v1.RatesService/UploadBaseRates",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RatesServiceServer).UploadRates(ctx, req.(*UploadRatesRequest))
+		return srv.(RatesServiceServer).UploadBaseRates(ctx, req.(*UploadBaseRatesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -168,8 +168,8 @@ var RatesService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RatesService_GetRate_Handler,
 		},
 		{
-			MethodName: "UploadRates",
-			Handler:    _RatesService_UploadRates_Handler,
+			MethodName: "UploadBaseRates",
+			Handler:    _RatesService_UploadBaseRates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

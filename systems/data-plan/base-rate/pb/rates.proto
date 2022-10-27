@@ -10,7 +10,7 @@ enum SIM_TYPE {
 service RatesService {
     rpc GetRates (RatesRequest) returns (RatesResponse) {}
     rpc GetRate(RateRequest) returns (RateResponse){}
-    rpc UploadRates(UploadRatesRequest) returns (UploadRatesResponse){}
+    rpc UploadBaseRates(UploadBaseRatesRequest) returns (UploadBaseRatesResponse){}
 }
 message RatesRequest{
     optional string country = 1;
@@ -24,20 +24,18 @@ message RateResponse{
 message RateRequest{
     string rateId =1;
 }
-message UploadRatesRequest {
+message UploadBaseRatesRequest {
     string fileURL = 1;
     string effectiveAt = 2;
     SIM_TYPE sim_type = 3;
 }
-message UploadRatesResponse {
+message UploadBaseRatesResponse {
     repeated Rate rate = 1;
 }
 message Rate{
     int32 id =1;
     string country=3;
-    string country_on_cronus=4;
     string network = 5;
-    string network_id_on_cronus=6;
     string vpmn =7;
     string imsi=8;
     string sms_mo=9;
@@ -52,4 +50,5 @@ message Rate{
     string created_at=17;
     string effective_at=18;
     string end_at=19;
+    SIM_TYPE sim_type=21;
 }

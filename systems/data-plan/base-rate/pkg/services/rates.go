@@ -13,10 +13,6 @@ import (
 	utils "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 )
 
-var region = "us-east-1"
-var bucket = "telco-rates"
-var destinationFileName = "ratessss.csv"
-
 type Server struct {
 	H db.Handler
 	pb.UnimplementedRatesServiceServer
@@ -89,11 +85,11 @@ func (s *Server) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResp
 	}, nil
 }
 
-func (s *Server) UploadRates(ctx context.Context, req *pb.UploadRatesRequest) (*pb.UploadRatesResponse, error) {
+func (s *Server) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
 	sim_type := req.SimType.String()
 	fileUrl := req.FileURL
 	ratesApplicableFrom := req.EffectiveAt
-
+	destinationFileName := "temp.csv"
 	utils.FetchData(fileUrl, destinationFileName)
 
 	f, err := os.Open(destinationFileName)
@@ -110,7 +106,7 @@ func (s *Server) UploadRates(ctx context.Context, req *pb.UploadRatesRequest) (*
 
 	s.H.DB.Exec(query)
 
-	var rate_list *pb.UploadRatesResponse = &pb.UploadRatesResponse{}
+	var rate_list *pb.UploadBaseRatesResponse = &pb.UploadBaseRatesResponse{}
 
 	if result := s.H.DB.Find(&rate_list.Rate); result.Error != nil {
 		fmt.Println(result.Error)
