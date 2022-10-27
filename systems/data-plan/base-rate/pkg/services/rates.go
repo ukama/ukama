@@ -19,6 +19,7 @@ type RateServer struct {
 
 func (r *RateServer) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.RatesResponse, error) {
 	logrus.Infof("Get all rates %v", req.GetCountry())
+	simType := reqSimTypeToPb(req.SimType.String())
 
 	var rate_list *pb.RatesResponse = &pb.RatesResponse{}
 	if !isRequestEmpty(req.GetCountry(), *req.Provider) {
@@ -38,7 +39,9 @@ func (r *RateServer) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.Ra
 			return nil, result.Error
 		}
 	} else {
-		if result := r.RateRepo.Find(&rate_list.Rates); result.Error != nil {
+
+		fmt.Println(req.SimType)
+		if result := r.RateRepo.Where("sim_type = ? ", simType).Find(&rate_list.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil, result.Error
 		}
@@ -98,4 +101,21 @@ func isRequestEmpty(ss ...string) bool {
 		}
 	}
 	return false
+}
+
+func reqSimTypeToPb(simType string) models.SimType {
+	var pbSimType models.SimType
+	switch simType {
+	case "INTER_MNO_ALL":
+		pbSimType = 2
+	case "INTER_MNO_DATA":
+		pbSimType = 1
+	case "INTER_NONE":
+		pbSimType = 0
+	case "INTER_UKAMA_ALL":
+		pbSimType = 3
+	default:
+		pbSimType = 0
+	}
+	return pbSimType
 }
