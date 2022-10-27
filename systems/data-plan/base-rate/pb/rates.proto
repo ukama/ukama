@@ -54,5 +54,5 @@ message Rate{
     string createdAt=17;
     string effectiveAt=18;
     string endAt=19;
-    SIM_TYPE simType=21;
+    string simType=21;
 }

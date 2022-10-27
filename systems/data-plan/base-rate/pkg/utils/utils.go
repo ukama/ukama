@@ -50,6 +50,7 @@ func CreateQuery(rows [][]string, effectiveAt string, simType string) string {
 	for _, value := range rows[0] {
 		headerStr = headerStr + trimHeader(value) + ","
 	}
+
 	headerStr = "(" + headerStr + "effectiveAt, simType)"
 
 	for i, row := range rows {

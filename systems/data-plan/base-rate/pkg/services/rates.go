@@ -11,51 +11,48 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/models"
 	utils "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
+	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-type RateServer struct {
-	RateRepo db.Handler
+type BaseRateServer struct {
+	BaseRate db.Handler
 	pb.UnimplementedRatesServiceServer
 }
 
-func (r *RateServer) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.RatesResponse, error) {
+func (s *BaseRateServer) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.RatesResponse, error) {
 	logrus.Infof("Get all rates %v", req.GetCountry())
-	simType := reqSimTypeToPb(req.SimType.String())
+	simType := validations.ReqSimTypeToPb(req.SimType.String())
 
-	var rate_list *pb.RatesResponse = &pb.RatesResponse{}
-	if !isRequestEmpty(req.GetCountry(), *req.Provider) {
+	var rateList *pb.RatesResponse = &pb.RatesResponse{}
+
+	if !validations.IsRequestEmpty(req.GetCountry(), *req.Provider) {
 		getRateLog := fmt.Sprintf("Get rates from %s where provider=%s", req.Country, *req.Provider)
 		logrus.Infof(getRateLog)
 
-		if result := r.RateRepo.Where("Country = ? AND Network = ?", req.Country, req.Provider).Find(&rate_list.Rates); result.Error != nil {
+		if result := s.BaseRate.Where("Country = ? AND Network = ?", req.Country, req.Provider).Find(&rateList.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil, result.Error
 
 		}
-
-	} else if !isRequestEmpty(req.GetCountry()) {
-
-		if result := r.RateRepo.Where("Country = ? ", req.Country).Find(&rate_list.Rates); result.Error != nil {
+	} else if !validations.IsRequestEmpty(req.GetCountry()) {
+		if result := s.BaseRate.Where("Country = ? ", req.Country).Find(&rateList.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil, result.Error
 		}
 	} else {
-
-		fmt.Println(req.SimType)
-		if result := r.RateRepo.Where("sim_type = ? ", simType).Find(&rate_list.Rates); result.Error != nil {
+		if result := s.BaseRate.Where("simType = ? ", simType).Find(&rateList.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil, result.Error
 		}
-
 	}
 
-	return rate_list, nil
+	return rateList, nil
 
 }
 
-func (r *RateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResponse, error) {
+func (s *BaseRateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResponse, error) {
 	logrus.Infof("Get rate by Id : %s", req.GetRateId())
 	rateId := req.GetRateId()
 	var rate models.Rate
@@ -64,8 +61,8 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.Rate
 		return &pb.RateResponse{}, status.Error(codes.InvalidArgument, "Please supply valid rateId")
 	}
 
-	if !isRequestEmpty(rateId) {
-		if result := r.RateRepo.First(&rate, req.RateId); result.Error != nil {
+	if !validations.IsRequestEmpty(rateId) {
+		if result := s.BaseRate.First(&rate, req.RateId); result.Error != nil {
 			logrus.Error("error getting the rate :" + result.Error.Error())
 			return nil, status.Errorf(codes.NotFound, result.Error.Error())
 		}
@@ -88,7 +85,7 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.Rate
 		CreatedAt:   rate.CreatedAt,
 		EffectiveAt: rate.EffectiveAt,
 		EndAt:       rate.EndAt,
-		SimType:     pb.SimType(rate.SimType),
+		SimType:     validations.ReqSimTypeToPb(rate.SimType),
 	}
 
 	return &pb.RateResponse{
@@ -96,11 +93,20 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.Rate
 	}, nil
 }
 
-func (s *Server) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
-	simType := req.SimType.String()
+func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
+	logrus.Infof("Upload rates %v", req.GetFileURL())
+
+	if validations.IsRequestEmpty(req.GetFileURL()) ||
+		validations.IsRequestEmpty(req.GetEffectiveAt()) ||
+		validations.IsRequestEmpty(req.GetSimType().String()) {
+		logrus.Infof("Invalid arguments")
+	}
+
 	fileUrl := req.FileURL
 	effectiveAt := req.EffectiveAt
 	destinationFileName := "temp.csv"
+	simType := validations.ReqSimTypeToPb(req.GetSimType().String())
+
 	utils.FetchData(fileUrl, destinationFileName)
 
 	f, err := os.Open(destinationFileName)
@@ -115,41 +121,16 @@ func (s *Server) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesReq
 
 	utils.DeleteFile(destinationFileName)
 
-	s.H.DB.Exec(query)
+	s.BaseRate.Exec(query)
 
 	var rateList *pb.UploadBaseRatesResponse = &pb.UploadBaseRatesResponse{}
 
-	if result := s.H.DB.Find(&rateList.Rate); result.Error != nil {
-		fmt.Println(result.Error)
+	if result := s.BaseRate.Find(&rateList.Rate); result.Error != nil {
+		utils.Check(result.Error)
 	}
 
 	rates := pb.Rate{}
 	rateList.Rate = append(rateList.Rate, &rates)
 
 	return rateList, nil
-}
-func isRequestEmpty(ss ...string) bool {
-	for _, s := range ss {
-		if s == "" {
-			return true
-		}
-	}
-	return false
-}
-
-func reqSimTypeToPb(simType string) models.SimType {
-	var pbSimType models.SimType
-	switch simType {
-	case "INTER_MNO_ALL":
-		pbSimType = 2
-	case "INTER_MNO_DATA":
-		pbSimType = 1
-	case "INTER_NONE":
-		pbSimType = 0
-	case "INTER_UKAMA_ALL":
-		pbSimType = 3
-	default:
-		pbSimType = 0
-	}
-	return pbSimType
 }

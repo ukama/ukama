@@ -29,8 +29,8 @@ func main() {
 
 	fmt.Println("Rate service running on", c.Port)
 
-	s := services.RateServer{
-		RateRepo: h,
+	s := services.BaseRateServer{
+		BaseRate: h,
 	}
 
 	grpcServer := grpc.NewServer()
