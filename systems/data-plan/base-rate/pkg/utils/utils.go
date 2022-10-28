@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/iancoleman/strcase"
 )
 
 func Check(e error) {
@@ -38,9 +36,9 @@ func FetchData(url string, destinationFileName string) {
 }
 
 func trimHeader(columnName string) string {
-	return strcase.ToCamel(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
+	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(
 		strings.ReplaceAll(strings.ToLower(columnName),
-			"-", "_"), "2g", "X2g"), "3g", "X3g"), "5g", "X5g"))
+			" ", "_"), "-", "_"), "2g", "x2g"), "3g", "x3g"), "5g", "x5g")
 }
 
 func CreateQuery(rows [][]string, effectiveAt string, simType string) string {
@@ -51,7 +49,7 @@ func CreateQuery(rows [][]string, effectiveAt string, simType string) string {
 		headerStr = headerStr + trimHeader(value) + ","
 	}
 
-	headerStr = "(" + headerStr + "effectiveAt, simType)"
+	headerStr = "(" + headerStr + "effective_at, sim_type)"
 
 	for i, row := range rows {
 		if i == 0 {

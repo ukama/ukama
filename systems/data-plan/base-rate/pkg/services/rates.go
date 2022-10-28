@@ -74,18 +74,18 @@ func (s *BaseRateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.
 		Network:     rate.Network,
 		Vpmn:        rate.Vpmn,
 		Imsi:        rate.Imsi,
-		SmsMo:       rate.SmsMo,
-		SmsMt:       rate.SmsMt,
+		SmsMo:       rate.Sms_mo,
+		SmsMt:       rate.Sms_mt,
 		Data:        rate.Data,
 		X2G:         rate.X2g,
 		X3G:         rate.X3g,
 		Lte:         rate.Lte,
-		LteM:        rate.LteM,
+		LteM:        rate.Lte_m,
 		Apn:         rate.Apn,
-		CreatedAt:   rate.CreatedAt,
-		EffectiveAt: rate.EffectiveAt,
-		EndAt:       rate.EndAt,
-		SimType:     validations.ReqSimTypeToPb(rate.SimType),
+		CreatedAt:   rate.Created_at,
+		EffectiveAt: rate.Effective_at,
+		EndAt:       rate.End_at,
+		SimType:     validations.ReqSimTypeToPb(rate.Sim_type),
 	}
 
 	return &pb.RateResponse{
@@ -94,7 +94,7 @@ func (s *BaseRateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.
 }
 
 func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
-	logrus.Infof("Upload rates %v", req.GetFileURL())
+	logrus.Infof("Upload base rates %v", req.GetFileURL())
 
 	if validations.IsRequestEmpty(req.GetFileURL()) ||
 		validations.IsRequestEmpty(req.GetEffectiveAt()) ||
@@ -128,7 +128,12 @@ func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 
 	utils.DeleteFile(destinationFileName)
 
-	s.BaseRate.Exec(query)
+	result := s.BaseRate.Exec(query)
+	if result.Error != nil {
+		logrus.Error(result.Error)
+		e := status.Errorf(codes.Internal, "Error inserting data in DB: %v", result.Error)
+		return nil, e
+	}
 
 	var rateList *pb.UploadBaseRatesResponse = &pb.UploadBaseRatesResponse{}
 
