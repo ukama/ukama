@@ -21,12 +21,12 @@ func (r *RateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesReque
 	logrus.Infof("Get all rates %v", req.GetCountry())
 	simType := reqSimTypeToPb(req.SimType.String())
 
-	var rate_list *pb.GetBaseRatesResponse = &pb.GetBaseRatesResponse{}
+	var rateList *pb.GetBaseRatesResponse = &pb.GetBaseRatesResponse{}
 	if !isRequestEmpty(req.GetCountry(), *req.Provider) {
 		getRateLog := fmt.Sprintf("Get rates from %s where provider=%s", req.Country, *req.Provider)
 		logrus.Infof(getRateLog)
 
-		if result := r.RateRepo.Where("Country = ? AND Network = ?", req.Country, req.Provider).Find(&rate_list.Rates); result.Error != nil {
+		if result := r.RateRepo.Where("Country = ? AND Network = ?", req.Country, req.Provider).Find(&rateList.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil, result.Error
 
@@ -34,21 +34,21 @@ func (r *RateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesReque
 
 	} else if !isRequestEmpty(req.GetCountry()) {
 
-		if result := r.RateRepo.Where("Country = ? ", req.Country).Find(&rate_list.Rates); result.Error != nil {
+		if result := r.RateRepo.Where("Country = ? ", req.Country).Find(&rateList.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil, result.Error
 		}
 	} else {
 
 		fmt.Println(req.SimType)
-		if result := r.RateRepo.Where("sim_type = ? ", simType).Find(&rate_list.Rates); result.Error != nil {
+		if result := r.RateRepo.Where("sim_type = ? ", simType).Find(&rateList.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil, result.Error
 		}
 
 	}
 
-	return rate_list, nil
+	return rateList, nil
 
 }
 
