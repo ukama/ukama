@@ -1,4 +1,4 @@
-include ../../../services/config.mk
+include ../../../systems/config.mk
 
 .PHONY: integration.test test build lint deps 
 
@@ -19,7 +19,7 @@ gen:
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
-	rm pb/gen/*.go
+	rm -rf bin/
 
 # Go lint
 lint:
