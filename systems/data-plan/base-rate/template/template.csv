@@ -1,0 +1,9 @@
+Country,Network,VPMN,IMSI,SMS MO,SMS MT,Data,2G,3G,5G,LTE,LTE-M,APN
+The lunar maria,ABC Tel,TLM,1,$0.1,$0.1,$0.1,2G,,,,,Manual entry required
+The lunar maria,Light Tel,TLM,1,$0.2,$0.1,$0.2,2G,,,LTE,,Manual entry required
+The lunar maria,Eagle Tel,TLM,1,$0.1,$0.1,$0.3,2G,3G,,LTE,,Manual entry required
+Montes Apenninus,Power Tel,TMA,1,$0.2,$0.1,$0.2,2G,3G,,LTE,,Manual entry required
+Montes Apenninus,2D Tel,TMA,1,$0.1,$0.1,$0.1,2G,3G,,LTE,,Manual entry required
+Tycho crater,Multi Tel,TTC,1,$0.1,$0.1,$0.4,2G,3G,,LTE,,Manual entry required
+Tycho crater,Connect Tel,TTC,1,$0.1,$0.1,$0.1,2G,3G,,LTE,,Manual entry required
+Tycho crater,OWS Tel,TTC,1,$0.2,$0.1,$0.5,2G,3G,,LTE,,Manual entry required
