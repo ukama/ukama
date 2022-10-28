@@ -1,24 +1,24 @@
 syntax = "proto3";
 option go_package = "pb/";
 package ukama.rates.v1;
-service RatesService {
-    rpc GetRates (RatesRequest) returns (RatesResponse) {}
-    rpc GetRate(RateRequest) returns (RateResponse){}
+service BaseRatesService {
+    rpc GetBaseRates (GetBaseRatesRequest) returns (GetBaseRatesResponse) {}
+    rpc GetBaseRate(GetBaseRateRequest) returns (GetBaseRateResponse){}
 }
-message RatesRequest{
+message GetBaseRatesRequest{
     string country = 1;
     optional string provider =2;
     optional int32 to  =3;
     optional  int32 from  =4;
     optional SimType sim_type=5;
 }
-message RatesResponse {
+message GetBaseRatesResponse {
     repeated Rate rates = 1;
 }
-message RateResponse{
+message GetBaseRateResponse{
     Rate rate =1;
 }
-message RateRequest{
+message GetBaseRateRequest{
     string rateId =1;
 }
 message Rate{

@@ -14,14 +14,14 @@ import (
 
 type RateServer struct {
 	RateRepo db.Handler
-	pb.UnimplementedRatesServiceServer
+	pb.UnimplementedBaseRatesServiceServer
 }
 
-func (r *RateServer) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.RatesResponse, error) {
+func (r *RateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("Get all rates %v", req.GetCountry())
 	simType := reqSimTypeToPb(req.SimType.String())
 
-	var rate_list *pb.RatesResponse = &pb.RatesResponse{}
+	var rate_list *pb.GetBaseRatesResponse = &pb.GetBaseRatesResponse{}
 	if !isRequestEmpty(req.GetCountry(), *req.Provider) {
 		getRateLog := fmt.Sprintf("Get rates from %s where provider=%s", req.Country, *req.Provider)
 		logrus.Infof(getRateLog)
@@ -52,13 +52,13 @@ func (r *RateServer) GetRates(ctx context.Context, req *pb.RatesRequest) (*pb.Ra
 
 }
 
-func (r *RateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.RateResponse, error) {
+func (r *RateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
 	logrus.Infof("Get rate by Id : %s", req.GetRateId())
 	rateId := req.GetRateId()
 	var rate models.Rate
 	if len(req.GetRateId()) == 0 {
 		logrus.Infof("Rate Id is not valid: %s", rateId)
-		return &pb.RateResponse{}, status.Error(codes.InvalidArgument, "Please supply valid rateId")
+		return &pb.GetBaseRateResponse{}, status.Error(codes.InvalidArgument, "Please supply valid rateId")
 	}
 
 	if !isRequestEmpty(rateId) {
@@ -89,7 +89,7 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.RateRequest) (*pb.Rate
 		SimType:     pb.SimType(rate.SimType),
 	}
 
-	return &pb.RateResponse{
+	return &pb.GetBaseRateResponse{
 		Rate: data,
 	}, nil
 

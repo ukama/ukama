@@ -35,7 +35,7 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	pb.RegisterRatesServiceServer(grpcServer, &s)
+	pb.RegisterBaseRatesServiceServer(grpcServer, &s)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalln("Failed to serve:", err)
