@@ -63,8 +63,7 @@ func CreateQuery(rows [][]string, effectiveAt string, simType pb.SimType) string
 		for _, value := range row {
 			str = str + "'" + strings.ReplaceAll(strings.ReplaceAll(value, "'", ""), ",", "") + "', "
 		}
-		fmt.Println("PBSIM", simType)
-		fmt.Println("SIM STR", validations.ReqPbToStr(simType))
+
 		str = str + " '" + effectiveAt + "', '" + validations.ReqPbToStr(simType) + "'"
 		valueStrings = append(valueStrings, "("+strings.ReplaceAll(str, "''", "NULL")+")")
 	}

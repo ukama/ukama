@@ -48,15 +48,9 @@ message Rate{
     string created_at=15;
     string effective_at=16;
     string end_at=17;
-    SimType sim_type=19;
+    string sim_type=19;
 }
 
-// enum SimType {
-//     INTER_NONE="inter_none";
-//     INTER_MNO_DATA="inter_mno_data";
-//     INTER_MNO_ALL="inter_mno_all";
-//     INTER_UKAMA_ALL="inter_ukama_all";
-// }
 enum SimType {
     INTER_NONE=0;
     INTER_MNO_DATA=1;

@@ -23,7 +23,7 @@ type BaseRateServer struct {
 
 func (s *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("Get all rates %v", req.GetCountry())
-	simType := validations.ReqStrTopb(req.SimType.String())
+	simType := validations.ReqPbToStr(req.GetSimType())
 
 	var rateList *pb.GetBaseRatesResponse = &pb.GetBaseRatesResponse{}
 
@@ -42,7 +42,7 @@ func (s *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesR
 			return nil, result.Error
 		}
 	} else {
-		if result := s.BaseRate.Where("sim_type = ? ", validations.ReqPbToStr(simType)).Find(&rateList.Rates); result.Error != nil {
+		if result := s.BaseRate.Where("sim_type = ? ", simType).Find(&rateList.Rates); result.Error != nil {
 			logrus.Error(result.Error)
 			return nil, result.Error
 		}
@@ -86,7 +86,7 @@ func (s *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 		CreatedAt:   rate.Created_at,
 		EffectiveAt: rate.Effective_at,
 		EndAt:       rate.End_at,
-		SimType:     validations.ReqStrTopb(rate.Sim_type),
+		SimType:     rate.Sim_type,
 	}
 
 	return &pb.GetBaseRateResponse{
@@ -141,9 +141,6 @@ func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	if result := s.BaseRate.Find(&rateList.Rate); result.Error != nil {
 		utils.Check(result.Error)
 	}
-
-	rates := pb.Rate{}
-	rateList.Rate = append(rateList.Rate, &rates)
 
 	return rateList, nil
 }
