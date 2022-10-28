@@ -4,6 +4,7 @@ package ukama.rates.v1;
 service BaseRatesService {
     rpc GetBaseRates (GetBaseRatesRequest) returns (GetBaseRatesResponse) {}
     rpc GetBaseRate(GetBaseRateRequest) returns (GetBaseRateResponse){}
+    rpc UploadBaseRates(UploadBaseRatesRequest) returns (UploadBaseRatesResponse){}
 }
 message GetBaseRatesRequest{
     string country = 1;
@@ -20,6 +21,14 @@ message GetBaseRateResponse{
 }
 message GetBaseRateRequest{
     string rateId =1;
+}
+message UploadBaseRatesRequest {
+    string fileURL = 1;
+    string effectiveAt = 2;
+    SimType simType = 3;
+}
+message UploadBaseRatesResponse {
+    repeated Rate rate = 1;
 }
 message Rate{
     int32 id =1;
@@ -42,6 +51,12 @@ message Rate{
     SimType sim_type=19;
 }
 
+// enum SimType {
+//     INTER_NONE="inter_none";
+//     INTER_MNO_DATA="inter_mno_data";
+//     INTER_MNO_ALL="inter_mno_all";
+//     INTER_UKAMA_ALL="inter_ukama_all";
+// }
 enum SimType {
     INTER_NONE=0;
     INTER_MNO_DATA=1;

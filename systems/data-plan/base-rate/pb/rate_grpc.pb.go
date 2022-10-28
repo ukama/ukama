@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type BaseRatesServiceClient interface {
 	GetBaseRates(ctx context.Context, in *GetBaseRatesRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error)
 	GetBaseRate(ctx context.Context, in *GetBaseRateRequest, opts ...grpc.CallOption) (*GetBaseRateResponse, error)
+	UploadBaseRates(ctx context.Context, in *UploadBaseRatesRequest, opts ...grpc.CallOption) (*UploadBaseRatesResponse, error)
 }
 
 type baseRatesServiceClient struct {
@@ -52,12 +53,22 @@ func (c *baseRatesServiceClient) GetBaseRate(ctx context.Context, in *GetBaseRat
 	return out, nil
 }
 
+func (c *baseRatesServiceClient) UploadBaseRates(ctx context.Context, in *UploadBaseRatesRequest, opts ...grpc.CallOption) (*UploadBaseRatesResponse, error) {
+	out := new(UploadBaseRatesResponse)
+	err := c.cc.Invoke(ctx, "/ukama.rates.v1.BaseRatesService/UploadBaseRates", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BaseRatesServiceServer is the server API for BaseRatesService service.
 // All implementations must embed UnimplementedBaseRatesServiceServer
 // for forward compatibility
 type BaseRatesServiceServer interface {
 	GetBaseRates(context.Context, *GetBaseRatesRequest) (*GetBaseRatesResponse, error)
 	GetBaseRate(context.Context, *GetBaseRateRequest) (*GetBaseRateResponse, error)
+	UploadBaseRates(context.Context, *UploadBaseRatesRequest) (*UploadBaseRatesResponse, error)
 	mustEmbedUnimplementedBaseRatesServiceServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedBaseRatesServiceServer) GetBaseRates(context.Context, *GetBas
 }
 func (UnimplementedBaseRatesServiceServer) GetBaseRate(context.Context, *GetBaseRateRequest) (*GetBaseRateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBaseRate not implemented")
+}
+func (UnimplementedBaseRatesServiceServer) UploadBaseRates(context.Context, *UploadBaseRatesRequest) (*UploadBaseRatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadBaseRates not implemented")
 }
 func (UnimplementedBaseRatesServiceServer) mustEmbedUnimplementedBaseRatesServiceServer() {}
 
@@ -120,6 +134,24 @@ func _BaseRatesService_GetBaseRate_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BaseRatesService_UploadBaseRates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadBaseRatesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BaseRatesServiceServer).UploadBaseRates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.rates.v1.BaseRatesService/UploadBaseRates",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BaseRatesServiceServer).UploadBaseRates(ctx, req.(*UploadBaseRatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BaseRatesService_ServiceDesc is the grpc.ServiceDesc for BaseRatesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var BaseRatesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBaseRate",
 			Handler:    _BaseRatesService_GetBaseRate_Handler,
+		},
+		{
+			MethodName: "UploadBaseRates",
+			Handler:    _BaseRatesService_UploadBaseRates_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

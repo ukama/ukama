@@ -3,6 +3,7 @@ module github.com/ukama/ukama/systems/data-plan/base-rate
 go 1.18
 
 require (
+	github.com/iancoleman/strcase v0.2.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/viper v1.13.0
 	google.golang.org/grpc v1.50.1
