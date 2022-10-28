@@ -99,23 +99,30 @@ func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	if validations.IsRequestEmpty(req.GetFileURL()) ||
 		validations.IsRequestEmpty(req.GetEffectiveAt()) ||
 		validations.IsRequestEmpty(req.GetSimType().String()) {
-		logrus.Infof("Invalid arguments")
+		err := status.Errorf(codes.InvalidArgument, "Please supply valid fileURL, effectiveAt and simType.")
+		return nil, err
 	}
 
-	fileUrl := req.FileURL
-	effectiveAt := req.EffectiveAt
+	fileUrl := req.GetFileURL()
+	effectiveAt := req.GetEffectiveAt()
 	destinationFileName := "temp.csv"
 	simType := validations.ReqSimTypeToPb(req.GetSimType().String())
 
 	utils.FetchData(fileUrl, destinationFileName)
 
 	f, err := os.Open(destinationFileName)
-	utils.Check(err)
+	if err != nil {
+		e := status.Errorf(codes.Internal, "Error opening file: %v", err)
+		return nil, e
+	}
 	defer f.Close()
 
 	csvReader := csv.NewReader(f)
 	data, err := csvReader.ReadAll()
-	utils.Check(err)
+	if err != nil {
+		e := status.Errorf(codes.Internal, "Error opening file: %v", err)
+		return nil, e
+	}
 
 	query := utils.CreateQuery(data, effectiveAt, simType)
 
