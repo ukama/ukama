@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -58,13 +59,19 @@ func (s *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 	var rate models.Rate
 	if len(req.GetRateId()) == 0 {
 		logrus.Infof("Rate Id is not valid: %s", rateId)
-		return &pb.GetBaseRateResponse{}, status.Error(codes.InvalidArgument, "Please supply valid rateId")
+		return &pb.GetBaseRateResponse{
+			Status: http.StatusBadRequest,
+			Error:  "Please provide a valid rateId",
+		}, nil
 	}
 
 	if !validations.IsRequestEmpty(rateId) {
 		if result := s.BaseRate.First(&rate, req.RateId); result.Error != nil {
 			logrus.Error("error getting the rate :" + result.Error.Error())
-			return nil, status.Errorf(codes.NotFound, result.Error.Error())
+			return &pb.GetBaseRateResponse{
+				Status: http.StatusNotFound,
+				Error:  fmt.Sprintf("No rate find with Id : %s", rateId),
+			}, nil
 		}
 	} else {
 		return nil, fmt.Errorf("invalid arguments as RateId")
@@ -90,7 +97,8 @@ func (s *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 	}
 
 	return &pb.GetBaseRateResponse{
-		Rate: data,
+		Rate:   data,
+		Status: http.StatusOK,
 	}, nil
 }
 
@@ -100,8 +108,10 @@ func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	if validations.IsRequestEmpty(req.GetFileURL()) ||
 		validations.IsRequestEmpty(req.GetEffectiveAt()) ||
 		validations.IsRequestEmpty(req.GetSimType().String()) {
-		err := status.Errorf(codes.InvalidArgument, "Please supply valid fileURL, effectiveAt and simType.")
-		return nil, err
+		return &pb.UploadBaseRatesResponse{
+			Status: http.StatusBadRequest,
+			Error:  fmt.Sprintf("Please supply valid fileURL, effectiveAt and simType."),
+		}, nil
 	}
 
 	fileUrl := req.GetFileURL()
@@ -132,8 +142,11 @@ func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	result := s.BaseRate.Exec(query)
 	if result.Error != nil {
 		logrus.Error(result.Error)
-		e := status.Errorf(codes.Internal, "Error inserting data in DB: %v", result.Error)
-		return nil, e
+		return &pb.UploadBaseRatesResponse{
+			Status: http.StatusBadRequest,
+			Error:  fmt.Sprintf("Error inserting data in DB: %v", result.Error),
+		}, nil
+
 	}
 
 	var rateList *pb.UploadBaseRatesResponse = &pb.UploadBaseRatesResponse{}

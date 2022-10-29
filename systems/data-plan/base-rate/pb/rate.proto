@@ -18,6 +18,8 @@ message GetBaseRatesResponse {
 }
 message GetBaseRateResponse{
     Rate rate =1;
+    int64 status = 2;
+    string error = 3;
 }
 message GetBaseRateRequest{
     string rateId =1;
@@ -29,6 +31,8 @@ message UploadBaseRatesRequest {
 }
 message UploadBaseRatesResponse {
     repeated Rate rate = 1;
+    int64 status = 2;
+    string error = 3;
 }
 message Rate{
     int32 id =1;
