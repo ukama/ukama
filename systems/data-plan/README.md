@@ -29,7 +29,9 @@ Base rate microservice is responsibe of:
     │   │   │   │   ├── utils
     │   │   │   │   ├── services
     │   │   │   │   └── validations
-    │   │   │   └──  template
+    │   │   │   └──  static
+    |   |   |        ├── digrams
+    │   │   │        └── template
     └── README
 
 ### RPC Function
