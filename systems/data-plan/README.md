@@ -52,9 +52,9 @@ Function take these arguments:
 
 ```js
 {
-    [required] fileUrl string
-    [required] simType string
-    [required] effectiveAt string
+    [required] fileUrl String
+    [required] simType String
+    [required] effectiveAt String
 }
 ```
 
@@ -75,11 +75,11 @@ Function take these arguments:
 
 ```js
 {
-    [required] country string
-    [optional] provider string
+    [required] country String
+    [optional] provider String
     [optional] to DateTime
     [optional] from DateTime
-    [optional] simType string
+    [optional] simType String
 }
 ```
 
@@ -100,7 +100,7 @@ Function take below argument:
 
 ```js
 {
-    [required] rateId int32
+    [required] rateId Int32
 }
 ```
 ________________
