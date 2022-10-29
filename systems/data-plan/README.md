@@ -34,7 +34,10 @@ Base rate microservice is responsibe of:
 
 ### RPC Function
 
-<u>**UploadBaseRates**</u>
+**UploadBaseRates**
+
+<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/static/digrams/UploadBaseRates.png" alt="J" width="500"/>
+
 Upload base rates service provide functionality to populate rates from CV file to DB.
 
 ```proto
@@ -53,7 +56,11 @@ Function take these arguments:
 }
 ```
 
-<u>**GetBaseRates**</u>
+________________
+**GetBaseRates**
+
+<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/static/digrams/GetBaseRates.png" alt="J" width="500"/>
+
 Get base rates service provide functionality to fetch base rates, and filter data on some required and optional arguments.
 
 ```proto
@@ -74,7 +81,11 @@ Function take these arguments:
 }
 ```
 
-<u>**GetBaseRate**</u>
+________________
+**GetBaseRate**
+
+<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/static/digrams/GetBaseRate.png" alt="J" width="500"/>
+
 Get base rate service provide functionality to fetch base rate by base rate id.
 
 ```proto
@@ -90,3 +101,7 @@ Function take below argument:
     [required] rateId int32
 }
 ```
+________________
+
+### How to use?
+
