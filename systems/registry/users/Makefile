@@ -20,9 +20,6 @@ deps:
 gen:
 	protoc -I ./pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
  			  users.proto
-	protoc -I ./pb/client  -I ../../common/pb/dep  --go_out=. --go-grpc_out=. --govalidators_out=. \
-                        --go-grpc_opt=require_unimplemented_servers=true \
-                        sim_manager.proto sim_pool.proto
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 

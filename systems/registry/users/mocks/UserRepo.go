@@ -16,13 +16,13 @@ type UserRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: user, orgName, nestedFunc
-func (_m *UserRepo) Add(user *db.User, orgName string, nestedFunc func(*db.User, *gorm.DB) error) (*db.User, error) {
-	ret := _m.Called(user, orgName, nestedFunc)
+// Add provides a mock function with given fields: user, nestedFunc
+func (_m *UserRepo) Add(user *db.User, nestedFunc func(*db.User, *gorm.DB) error) (*db.User, error) {
+	ret := _m.Called(user, nestedFunc)
 
 	var r0 *db.User
-	if rf, ok := ret.Get(0).(func(*db.User, string, func(*db.User, *gorm.DB) error) *db.User); ok {
-		r0 = rf(user, orgName, nestedFunc)
+	if rf, ok := ret.Get(0).(func(*db.User, func(*db.User, *gorm.DB) error) *db.User); ok {
+		r0 = rf(user, nestedFunc)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.User)
@@ -30,8 +30,8 @@ func (_m *UserRepo) Add(user *db.User, orgName string, nestedFunc func(*db.User,
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*db.User, string, func(*db.User, *gorm.DB) error) error); ok {
-		r1 = rf(user, orgName, nestedFunc)
+	if rf, ok := ret.Get(1).(func(*db.User, func(*db.User, *gorm.DB) error) error); ok {
+		r1 = rf(user, nestedFunc)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -69,50 +69,6 @@ func (_m *UserRepo) Get(_a0 uuid.UUID) (*db.User, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
 		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetByOrg provides a mock function with given fields: orgName
-func (_m *UserRepo) GetByOrg(orgName string) ([]db.User, error) {
-	ret := _m.Called(orgName)
-
-	var r0 []db.User
-	if rf, ok := ret.Get(0).(func(string) []db.User); ok {
-		r0 = rf(orgName)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.User)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(orgName)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// IsOverTheLimit provides a mock function with given fields: orgName
-func (_m *UserRepo) IsOverTheLimit(orgName string) (bool, error) {
-	ret := _m.Called(orgName)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(orgName)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(orgName)
 	} else {
 		r1 = ret.Error(1)
 	}
