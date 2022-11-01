@@ -1,4 +1,4 @@
-include ../../../services/config.mk
+include ../../../systems/config.mk
 
 .PHONY: build deps lint gen clean integration.test test
 
@@ -13,24 +13,20 @@ test:
 lint:
 	golangci-lint run
 
-
 deps:
 	go get github.com/vektra/mockery/v2/.../
-
 
 gen:
 	# check for protos
 	mockery --all --recursive
 
 clean:
-	rm pb/generated/*.go
-
+	rm -rf bin/
 
 # integration tests
 
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
-
 
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
