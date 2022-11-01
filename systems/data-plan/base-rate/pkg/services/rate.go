@@ -13,8 +13,6 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/models"
 	utils "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type BaseRateServer struct {
@@ -108,9 +106,11 @@ func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	if validations.IsRequestEmpty(req.GetFileURL()) ||
 		validations.IsRequestEmpty(req.GetEffectiveAt()) ||
 		validations.IsRequestEmpty(req.GetSimType().String()) {
+		logrus.Infof("Please supply valid fileURL: %s, effectiveAt: %s and simType: %s.",
+			req.GetFileURL(), req.GetEffectiveAt(), req.GetSimType().String())
 		return &pb.UploadBaseRatesResponse{
 			Status: http.StatusBadRequest,
-			Error:  fmt.Sprintf("Please supply valid fileURL, effectiveAt and simType."),
+			Error:  "Please supply valid fileURL, effectiveAt and simType.",
 		}, nil
 	}
 
@@ -119,25 +119,46 @@ func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	destinationFileName := "temp.csv"
 	simType := req.GetSimType()
 
-	utils.FetchData(fileUrl, destinationFileName)
+	fde := utils.FetchData(fileUrl, destinationFileName)
+	if fde != nil {
+		logrus.Infof("Error fetching data: %v", fde.Error())
+		return &pb.UploadBaseRatesResponse{
+			Status: http.StatusInternalServerError,
+			Error:  fmt.Sprintf("Error fetching data from URL: %v", fde.Error()),
+		}, nil
+	}
 
 	f, err := os.Open(destinationFileName)
 	if err != nil {
-		e := status.Errorf(codes.Internal, "Error opening file: %v", err)
-		return nil, e
+		logrus.Infof("Error opening destination file: %v", err.Error())
+		return &pb.UploadBaseRatesResponse{
+			Status: http.StatusInternalServerError,
+			Error:  fmt.Sprintf("Error opening destination file: %v", err.Error()),
+		}, nil
 	}
+
 	defer f.Close()
 
 	csvReader := csv.NewReader(f)
 	data, err := csvReader.ReadAll()
 	if err != nil {
-		e := status.Errorf(codes.Internal, "Error opening file: %v", err)
-		return nil, e
+		logrus.Infof("Error opening file: %v", err.Error())
+		return &pb.UploadBaseRatesResponse{
+			Status: http.StatusInternalServerError,
+			Error:  fmt.Sprintf("Error reading destination file: %s", err.Error()),
+		}, nil
 	}
 
 	query := utils.CreateQuery(data, effectiveAt, simType)
 
-	utils.DeleteFile(destinationFileName)
+	dfe := utils.DeleteFile(destinationFileName)
+	if fde != nil {
+		logrus.Infof("Error while deleting temp file: %s", dfe.Error())
+		return &pb.UploadBaseRatesResponse{
+			Status: http.StatusInternalServerError,
+			Error:  fmt.Sprintf("Error while deleting temp file %s", dfe.Error()),
+		}, nil
+	}
 
 	result := s.BaseRate.Exec(query)
 	if result.Error != nil {
@@ -152,7 +173,11 @@ func (s *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	var rateList *pb.UploadBaseRatesResponse = &pb.UploadBaseRatesResponse{}
 
 	if result := s.BaseRate.Find(&rateList.Rate); result.Error != nil {
-		utils.Check(result.Error)
+		logrus.Infof("Error while reading data from DB, %s", result.Error)
+		return &pb.UploadBaseRatesResponse{
+			Status: http.StatusInternalServerError,
+			Error:  fmt.Sprintf("Error while reading data from DB, %s", result.Error),
+		}, nil
 	}
 
 	return rateList, nil

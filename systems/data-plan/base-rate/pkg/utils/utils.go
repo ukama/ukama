@@ -10,32 +10,30 @@ import (
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 )
 
-func Check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
-func DeleteFile(fileName string) {
+func DeleteFile(fileName string) error {
 	e := os.Remove(fileName)
-	Check(e)
+	if e != nil {
+		return e
+	}
+	return nil
 }
 
-func FetchData(url string, destinationFileName string) {
+func FetchData(url string, destinationFileName string) error {
 	resp, err := http.Get(url)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer resp.Body.Close()
 
 	f, e := os.Create(destinationFileName)
 	if e != nil {
-		panic(e)
+		return e
 	}
 
 	defer f.Close()
 
 	f.ReadFrom(resp.Body)
+	return nil
 }
 
 func trimHeader(columnName string) string {
