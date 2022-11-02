@@ -29,7 +29,7 @@ Base rate microservice is responsibe of:
     │   │   │   │   ├── utils
     │   │   │   │   ├── services
     │   │   │   │   └── validations
-    │   │   │   └──  static
+    │   │   │   └──  docs
     |   |   |        ├── digrams
     │   │   │        └── template
     └── README
@@ -38,7 +38,7 @@ Base rate microservice is responsibe of:
 
 **UploadBaseRates**
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/static/digrams/UploadBaseRates.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/docs/digrams/UploadBaseRates.png" alt="J" width="500"/>
 
 Upload base rates service provide functionality to populate rates from CV file to DB.
 
@@ -61,7 +61,7 @@ Function take these arguments:
 ________________
 **GetBaseRates**
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/static/digrams/GetBaseRates.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/docs/digrams/GetBaseRates.png" alt="J" width="500"/>
 
 Get base rates service provide functionality to fetch base rates, and filter data on some required and optional arguments.
 
@@ -86,7 +86,7 @@ Function take these arguments:
 ________________
 **GetBaseRate**
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/static/digrams/GetBaseRate.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/docs/digrams/GetBaseRate.png" alt="J" width="500"/>
 
 Get base rate service provide functionality to fetch base rate by base rate id.
 
