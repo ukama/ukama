@@ -81,33 +81,6 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 	return &pb.UpdateResponse{User: dbUsersToPbUsers(user)}, nil
 }
 
-func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	uuid, err := uuid2.Parse(req.UserUuid)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	_, err = u.Deactivate(ctx, &pb.DeactivateRequest{
-		UserUuid: req.UserUuid,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	// delete user
-	err = u.userRepo.Delete(uuid, func(uuid uuid2.UUID, tx *gorm.DB) error {
-		// Perform any linked transation
-		return nil
-	})
-
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "user")
-	}
-
-	return &pb.DeleteResponse{}, nil
-}
-
 func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest) (*pb.DeactivateResponse, error) {
 	uuid, err := uuid2.Parse(req.UserUuid)
 	if err != nil {
@@ -134,6 +107,34 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	}
 
 	return &pb.DeactivateResponse{}, nil
+}
+
+func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	uuid, err := uuid2.Parse(req.UserUuid)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	usr, err := u.userRepo.Get(uuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	if !usr.Deactivated {
+		return nil, status.Errorf(codes.FailedPrecondition, "user must be deactivated first")
+	}
+
+	// delete user
+	err = u.userRepo.Delete(uuid, func(uuid uuid2.UUID, tx *gorm.DB) error {
+		// Perform any linked transation
+		return nil
+	})
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	return &pb.DeleteResponse{}, nil
 }
 
 func dbUsersToPbUsers(user *db.User) *pb.User {
