@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // UserRepo declares an interface to manage users.
@@ -60,9 +61,8 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 }
 
 // Update user modified non-empty fields provided by user struct
-// Returned fields are those that were updated
 func (u *userRepo) Update(user *User) (*User, error) {
-	d := u.Db.GetGormDb().Where("uuid = ?", user.Uuid).UpdateColumns(user)
+	d := u.Db.GetGormDb().Clauses(clause.Returning{}).Where("uuid = ?", user.Uuid).Updates(user)
 	if d.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}

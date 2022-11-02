@@ -78,9 +78,7 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	return &pb.UpdateResponse{
-		User: dbUsersToPbUsers(user),
-	}, nil
+	return &pb.UpdateResponse{User: dbUsersToPbUsers(user)}, nil
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
