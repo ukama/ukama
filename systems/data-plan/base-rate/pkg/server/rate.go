@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/goombaio/namegenerator"
@@ -37,6 +39,14 @@ func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 	logrus.Infof("Get rate  %v", req.GetRateId())
 
 rateId:=req.GetRateId()
+
+if  len(strconv.Itoa(int(rateId))) == 0 {
+	logrus.Infof("Rate Id is not valid: %s", rateId)
+	return &pb.GetBaseRateResponse{
+		Status: http.StatusBadRequest,
+		Error:  "Please provide a valid rateId",
+	}, nil
+}
 	rate, err := b.baseRateRepo.GetBaseRate(rateId)
 	if err != nil {
 		logrus.Error("error getting the rate" + err.Error())

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
@@ -71,7 +70,6 @@ func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pub, err := msgbus.NewQPub(serviceConfig.Queue.Uri, pkg.ServiceName, instanceId)
-		fmt.Println("SERVICE CONFIG",serviceConfig.Queue.Uri)
 		if err != nil {
 			log.Fatalf("Failed to create publisher. Error: %v", err)
 		}
