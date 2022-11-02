@@ -50,9 +50,11 @@ message Rate{
     string lte_m=13;
     string apn=14; 
     string created_at=15;
-    string effective_at=16;
-    string end_at=17;
-    string sim_type=19;
+    string deleted_at=16;
+    string updated_at=17;
+    string effective_at=18;
+    string end_at=19;
+    string sim_type=20;
 }
 
 enum SimType {
