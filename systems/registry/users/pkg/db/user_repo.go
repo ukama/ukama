@@ -51,7 +51,7 @@ func (u *userRepo) Add(user *User, nestedFunc func(*User, *gorm.DB) error) (*Use
 func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 	var user User
 
-	result := u.Db.GetGormDb().First(&user, uuid)
+	result := u.Db.GetGormDb().Where("uuid = ?", user.Uuid).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
