@@ -33,6 +33,7 @@ func FetchData(url string, destinationFileName string) error {
 	defer f.Close()
 
 	f.ReadFrom(resp.Body)
+	
 	return nil
 }
 

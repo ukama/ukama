@@ -22,7 +22,7 @@ message GetBaseRateResponse{
     string error = 3;
 }
 message GetBaseRateRequest{
-    string rateId =1;
+    int64 rateId =1;
 }
 message UploadBaseRatesRequest {
     string fileURL = 1;
