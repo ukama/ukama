@@ -10,9 +10,6 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                config.Database
 	Grpc              config.Grpc
-	HssHost           string
-	SimManager        SimManager
-	SimTokenKey       string
 	Metrics           config.Metrics
 }
 
@@ -35,13 +32,6 @@ func NewConfig() *Config {
 		Grpc: config.Grpc{
 			Port: 9090,
 		},
-		HssHost: "localhost:9090",
-		SimManager: SimManager{
-			Host:    "localhost:9090",
-			Name:    "SimManager",
-			Timeout: 3 * time.Second,
-		},
-		SimTokenKey: "11111111111111111111111111111111",
-		Metrics:     *config.DefaultMetrics(),
+		Metrics: *config.DefaultMetrics(),
 	}
 }
