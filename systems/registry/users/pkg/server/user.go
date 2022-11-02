@@ -11,6 +11,7 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -47,7 +48,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	uuid, err := uuid2.Parse(req.UserId)
+	uuid, err := uuid2.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -61,7 +62,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 }
 
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
-	uuid, err := uuid2.Parse(req.UserId)
+	uuid, err := uuid2.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -83,13 +84,13 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	uuid, err := uuid2.Parse(req.UserId)
+	uuid, err := uuid2.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
 	_, err = u.Deactivate(ctx, &pb.DeactivateRequest{
-		UserId: req.UserId,
+		UserUuid: req.UserUuid,
 	})
 
 	if err != nil {
@@ -110,7 +111,7 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 }
 
 func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest) (*pb.DeactivateResponse, error) {
-	uuid, err := uuid2.Parse(req.UserId)
+	uuid, err := uuid2.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -144,5 +145,6 @@ func dbUsersToPbUsers(user *db.User) *pb.User {
 		Phone:         user.Phone,
 		Email:         user.Email,
 		IsDeactivated: user.Deactivated,
+		CreatedAt:     timestamppb.New(user.CreatedAt),
 	}
 }

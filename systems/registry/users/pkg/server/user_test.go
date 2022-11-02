@@ -55,7 +55,7 @@ func TestUserService_Get(t *testing.T) {
 	t.Run("UserFound", func(tt *testing.T) {
 		srv := NewUserService(userRepo)
 
-		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserId: userUUID})
+		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID})
 
 		assert.NoError(t, err)
 		assert.Equal(t, userUUID, user.GetUser().Uuid)
@@ -89,7 +89,7 @@ func TestUserService_Deactivate(t *testing.T) {
 		srv := NewUserService(userRepo)
 
 		_, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
-			UserId: userUUID,
+			UserUuid: userUUID,
 		})
 
 		assert.NoError(t, err, "Error deactivating user")
@@ -283,7 +283,7 @@ func TestUserService_Validation_Update(t *testing.T) {
 
 			// test update request
 			ru := &pb.UpdateRequest{
-				UserId: uuid.NewString(),
+				UserUuid: uuid.NewString(),
 				User: &pb.UserAttributes{
 					Phone: test.user.Phone,
 					Email: test.user.Email,
