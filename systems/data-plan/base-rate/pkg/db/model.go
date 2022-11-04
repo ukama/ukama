@@ -3,6 +3,7 @@ package db
 import (
 	"time"
 
+	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
 	"gorm.io/gorm"
 )
 
@@ -25,32 +26,32 @@ type Rate struct {
 	End_at       time.Time
 	Sim_type     string
 }
-type RateModel struct {
-	gorm.Model
-	Id           int8
-	Country      string
-	Network      string
-	Vpmn         string
-	Imsi         string
-	Sms_mo       string
-	Sms_mt       string
-	Data         string
-	X2g          string
-	X3g          string
-	X5g          string
-	Lte          string
-	Lte_m        string
-	Apn          string
-	Created_at   time.Time
-	Updated_at   time.Time
-	Deleted_at   time.Time
-	Effective_at time.Time
-	End_at       time.Time
-	Sim_type     string
-}
 
-func (r RateModel) ToObject() RateModel {
-	rate := RateModel{
+// type RateModel struct {
+// 	Id           int32
+// 	Country      string
+// 	Network      string
+// 	Vpmn         string
+// 	Imsi         string
+// 	Sms_mo       string
+// 	Sms_mt       string
+// 	Data         string
+// 	X2g          string
+// 	X3g          string
+// 	X5g          string
+// 	Lte          string
+// 	Lte_m        string
+// 	Apn          string
+// 	Created_at   time.Time
+// 	Updated_at   time.Time
+// 	Deleted_at   time.Time
+// 	Effective_at time.Time
+// 	End_at       time.Time
+// 	Sim_type     string
+// }
+
+func (r Rate) ToObject() Rate {
+	rate := Rate{
 		Country:      r.Country,
 		Network:      r.Network,
 		Vpmn:         r.Vpmn,
@@ -70,31 +71,60 @@ func (r RateModel) ToObject() RateModel {
 	return rate
 }
 
-type RateList []*RateModel
+type RateList []*Rate
 
-func (r RateList) ToArray() []RateModel {
-	var rates []RateModel
+func (r Rate) ToPbRate() *pb.Rate {
+
+	rate := &pb.Rate{
+		Id:          int32(r.ID),
+		X2G:         r.X2g,
+		X3G:         r.X3g,
+		X5G:         r.X5g,
+		Lte:         r.Lte,
+		Apn:         r.Apn,
+		Vpmn:        r.Vpmn,
+		Imsi:        r.Imsi,
+		Data:        r.Data,
+		LteM:        r.Lte_m,
+		SmsMo:       r.Sms_mo,
+		SmsMt:       r.Sms_mt,
+		EndAt:       r.End_at.String(),
+		Network:     r.Network,
+		Country:     r.Country,
+		SimType:     r.Sim_type,
+		DeletedAt:   r.DeletedAt.Time.GoString(),
+		CreatedAt:   r.CreatedAt.String(),
+		UpdatedAt:   r.UpdatedAt.String(),
+		EffectiveAt: r.Effective_at.String(),
+	}
+
+	return rate
+}
+
+func (r RateList) ToPbRateArray() []*pb.Rate {
+	var rates []*pb.Rate
 	for _, rate := range r {
-		_rate := RateModel{
-			Id:           rate.Id,
-			X2g:          rate.X2g,
-			X3g:          rate.X3g,
-			Lte:          rate.Lte,
-			Apn:          rate.Apn,
-			Vpmn:         rate.Vpmn,
-			Imsi:         rate.Imsi,
-			Data:         rate.Data,
-			Lte_m:        rate.Lte_m,
-			Sms_mo:       rate.Sms_mo,
-			Sms_mt:       rate.Sms_mt,
-			End_at:       rate.End_at,
-			Network:      rate.Network,
-			Country:      rate.Country,
-			Sim_type:     rate.Sim_type,
-			Deleted_at:   rate.Deleted_at,
-			Created_at:   rate.Created_at,
-			Updated_at:   rate.Updated_at,
-			Effective_at: rate.Effective_at,
+		_rate := &pb.Rate{
+			Id:          int32(rate.ID),
+			X2G:         rate.X2g,
+			X3G:         rate.X3g,
+			X5G:         rate.X5g,
+			Lte:         rate.Lte,
+			Apn:         rate.Apn,
+			Vpmn:        rate.Vpmn,
+			Imsi:        rate.Imsi,
+			Data:        rate.Data,
+			LteM:        rate.Lte_m,
+			SmsMo:       rate.Sms_mo,
+			SmsMt:       rate.Sms_mt,
+			EndAt:       rate.End_at.String(),
+			Network:     rate.Network,
+			Country:     rate.Country,
+			SimType:     rate.Sim_type,
+			DeletedAt:   rate.DeletedAt.Time.String(),
+			CreatedAt:   rate.CreatedAt.String(),
+			UpdatedAt:   rate.UpdatedAt.String(),
+			EffectiveAt: rate.Effective_at.String(),
 		}
 		rates = append(rates, _rate)
 	}

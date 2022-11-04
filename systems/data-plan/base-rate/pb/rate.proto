@@ -2,8 +2,6 @@ syntax = "proto3";
 option go_package = "pb/";
 package ukama.rates.v1;
 
-import "google/protobuf/timestamp.proto";
-
 service BaseRatesService {
     rpc GetBaseRates (GetBaseRatesRequest) returns (GetBaseRatesResponse) {}
     rpc GetBaseRate(GetBaseRateRequest) returns (GetBaseRateResponse){}
@@ -38,7 +36,7 @@ message UploadBaseRatesResponse {
     string error = 3;
 }
 message Rate{
-    // int32 id =1;
+    int32 id =1;
     string country=2;
     string network = 3;
     string vpmn =4;
@@ -52,12 +50,12 @@ message Rate{
     string lte=12; 
     string lte_m=13;
     string apn=14; 
-    // google.protobuf.Timestamp created_at=15;
-    // google.protobuf.Timestamp deleted_at=16;
-    // google.protobuf.Timestamp updated_at=17;
-    google.protobuf.Timestamp effective_at=15;
-    google.protobuf.Timestamp end_at=16;
-    string sim_type=17;
+    string created_at=15;
+    string deleted_at=16;
+    string updated_at=17;
+    string effective_at=18;
+    string end_at=19;
+    string sim_type=20;
 }
 
 enum SimType {

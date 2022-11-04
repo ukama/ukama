@@ -6,7 +6,7 @@ import (
 
 // declare interface so that we can mock it
 type BaseRateRepo interface {
-	GetBaseRate(Id int64) (*RateModel, error)
+	GetBaseRate(Id int64) (*Rate, error)
 	GetBaseRates(country string) (RateList, error)
 	UploadBaseRates(query string) error
 	GetAllBaseRates(effectiveAt string) (RateList, error)
@@ -22,13 +22,13 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 	}
 }
 
-func (u *baseRateRepo) GetBaseRate(rateId int64) (*RateModel, error) {
-	var rate RateModel
+func (u *baseRateRepo) GetBaseRate(rateId int64) (*Rate, error) {
+	var rate *Rate
 	result := u.Db.GetGormDb().First(&rate, "Id=?", rateId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &rate, nil
+	return rate, nil
 }
 
 func (b *baseRateRepo) GetBaseRates(country string) (RateList, error) {
