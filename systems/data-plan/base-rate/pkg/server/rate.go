@@ -52,31 +52,6 @@ func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 	return resp, nil
 }
 
-// func dbRateToPbRate(dbr *db.Rate) *pb.Rate {
-// 	rate := &pb.Rate{
-// 		Country: dbr.Country,
-// 		Network: dbr.Network,
-// 		Vpmn:    dbr.Vpmn,
-// 		Imsi:    dbr.Imsi,
-// 		SmsMo:   dbr.Sms_mo,
-// 		SmsMt:   dbr.Sms_mt,
-// 		Data:    dbr.Data,
-// 		X2G:     dbr.X2g,
-// 		X3G:     dbr.X3g,
-// 		Lte:     dbr.Lte,
-// 		LteM:    dbr.Lte_m,
-// 		Apn:     dbr.Apn,
-// 		// CreatedAt:   dbr.CreatedAt.Format(time.RFC3339),
-// 		// UpdatedAt:   dbr.UpdatedAt.Format(time.RFC3339),
-// 		// DeletedAt:   dbr.DeletedAt.Format(time.RFC3339),
-// 		EffectiveAt: dbr.Effective_at,
-// 		EndAt:       dbr.End_at.String(),
-// 		SimType:     dbr.Sim_type,
-// 	}
-
-// 	return rate
-// }
-
 func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
 
 	country := req.GetCountry()
@@ -90,7 +65,7 @@ func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesR
 	}
 
 	rateList := &pb.GetBaseRatesResponse{
-		Rates: rates.ToPbRateArray(),
+		Rates: rates.ToPbRates(),
 	}
 
 	return rateList, nil
@@ -167,7 +142,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	}
 
 	rateList := &pb.UploadBaseRatesResponse{
-		Rate: rates.ToPbRateArray(),
+		Rate: rates.ToPbRates(),
 	}
 
 	return rateList, nil

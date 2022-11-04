@@ -27,29 +27,6 @@ type Rate struct {
 	Sim_type     string
 }
 
-// type RateModel struct {
-// 	Id           int32
-// 	Country      string
-// 	Network      string
-// 	Vpmn         string
-// 	Imsi         string
-// 	Sms_mo       string
-// 	Sms_mt       string
-// 	Data         string
-// 	X2g          string
-// 	X3g          string
-// 	X5g          string
-// 	Lte          string
-// 	Lte_m        string
-// 	Apn          string
-// 	Created_at   time.Time
-// 	Updated_at   time.Time
-// 	Deleted_at   time.Time
-// 	Effective_at time.Time
-// 	End_at       time.Time
-// 	Sim_type     string
-// }
-
 func (r Rate) ToObject() Rate {
 	rate := Rate{
 		Country:      r.Country,
@@ -92,7 +69,7 @@ func (r Rate) ToPbRate() *pb.Rate {
 		Network:     r.Network,
 		Country:     r.Country,
 		SimType:     r.Sim_type,
-		DeletedAt:   r.DeletedAt.Time.GoString(),
+		DeletedAt:   r.DeletedAt.Time.String(),
 		CreatedAt:   r.CreatedAt.String(),
 		UpdatedAt:   r.UpdatedAt.String(),
 		EffectiveAt: r.Effective_at.String(),
@@ -101,7 +78,7 @@ func (r Rate) ToPbRate() *pb.Rate {
 	return rate
 }
 
-func (r RateList) ToPbRateArray() []*pb.Rate {
+func (r RateList) ToPbRates() []*pb.Rate {
 	var rates []*pb.Rate
 	for _, rate := range r {
 		_rate := &pb.Rate{
