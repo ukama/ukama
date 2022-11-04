@@ -2,15 +2,14 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pb"
 )
 
 // declare interface so that we can mock it
 type BaseRateRepo interface {
-	GetBaseRate(Id int64) (*Rate, error)
-	GetBaseRates(country, network, simType string) ([]*pb.Rate, error)
+	GetBaseRate(Id int64) (*RateModel, error)
+	GetBaseRates(country string) (RateList, error)
 	UploadBaseRates(query string) error
-	GetAllBaseRates(effectiveAt string) ([]*pb.Rate, error)
+	GetAllBaseRates(effectiveAt string) (RateList, error)
 }
 
 type baseRateRepo struct {
@@ -23,8 +22,8 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 	}
 }
 
-func (u *baseRateRepo) GetBaseRate(rateId int64) (*Rate, error) {
-	var rate Rate
+func (u *baseRateRepo) GetBaseRate(rateId int64) (*RateModel, error) {
+	var rate RateModel
 	result := u.Db.GetGormDb().First(&rate, "Id=?", rateId)
 	if result.Error != nil {
 		return nil, result.Error
@@ -32,17 +31,17 @@ func (u *baseRateRepo) GetBaseRate(rateId int64) (*Rate, error) {
 	return &rate, nil
 }
 
-func (b *baseRateRepo) GetBaseRates(network, country, simType string) ([]*pb.Rate, error) {
-	var rates []*pb.Rate
-	result := b.Db.GetGormDb().Where("country = ? AND network = ?", country, network).Find(&rates)
+func (b *baseRateRepo) GetBaseRates(country string) (RateList, error) {
+	var rates RateList
+	result := b.Db.GetGormDb().Where("country", country).Find(&rates)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetAllBaseRates(effectiveAt string) ([]*pb.Rate, error) {
-	var rates []*pb.Rate
+func (b *baseRateRepo) GetAllBaseRates(effectiveAt string) (RateList, error) {
+	var rates RateList
 	result := b.Db.GetGormDb().Where("effective_at", effectiveAt).Find(&rates)
 	if result.Error != nil {
 		return nil, result.Error
