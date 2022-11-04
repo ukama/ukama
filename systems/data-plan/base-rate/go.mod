@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/viper v1.13.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.50.1
@@ -31,6 +30,7 @@ require (
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
+	github.com/spf13/viper v1.13.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	gorm.io/driver/postgres v1.4.5 // indirect

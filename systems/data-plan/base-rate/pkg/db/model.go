@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pb"
 	"gorm.io/gorm"
 )
 
@@ -27,27 +27,6 @@ type Rate struct {
 	Sim_type     string
 }
 
-func (r Rate) ToObject() Rate {
-	rate := Rate{
-		Country:      r.Country,
-		Network:      r.Network,
-		Vpmn:         r.Vpmn,
-		Imsi:         r.Imsi,
-		Sms_mo:       r.Sms_mo,
-		Sms_mt:       r.Sms_mt,
-		Data:         r.Data,
-		X2g:          r.X2g,
-		X3g:          r.X3g,
-		Lte:          r.Lte,
-		Lte_m:        r.Lte_m,
-		Apn:          r.Apn,
-		Effective_at: r.Effective_at,
-		End_at:       r.End_at,
-		Sim_type:     r.Sim_type,
-	}
-	return rate
-}
-
 type RateList []*Rate
 
 func (r Rate) ToPbRate() *pb.Rate {
@@ -65,14 +44,14 @@ func (r Rate) ToPbRate() *pb.Rate {
 		LteM:        r.Lte_m,
 		SmsMo:       r.Sms_mo,
 		SmsMt:       r.Sms_mt,
-		EndAt:       r.End_at.String(),
 		Network:     r.Network,
 		Country:     r.Country,
 		SimType:     r.Sim_type,
-		DeletedAt:   r.DeletedAt.Time.String(),
+		EndAt:       r.End_at.String(),
 		CreatedAt:   r.CreatedAt.String(),
 		UpdatedAt:   r.UpdatedAt.String(),
 		EffectiveAt: r.Effective_at.String(),
+		DeletedAt:   r.DeletedAt.Time.String(),
 	}
 
 	return rate
@@ -94,14 +73,14 @@ func (r RateList) ToPbRates() []*pb.Rate {
 			LteM:        rate.Lte_m,
 			SmsMo:       rate.Sms_mo,
 			SmsMt:       rate.Sms_mt,
-			EndAt:       rate.End_at.String(),
 			Network:     rate.Network,
 			Country:     rate.Country,
 			SimType:     rate.Sim_type,
-			DeletedAt:   rate.DeletedAt.Time.String(),
+			EndAt:       rate.End_at.String(),
 			CreatedAt:   rate.CreatedAt.String(),
 			UpdatedAt:   rate.UpdatedAt.String(),
 			EffectiveAt: rate.Effective_at.String(),
+			DeletedAt:   rate.DeletedAt.Time.String(),
 		}
 		rates = append(rates, _rate)
 	}
