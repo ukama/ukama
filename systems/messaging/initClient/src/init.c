@@ -121,7 +121,7 @@ static void create_url(char *url, Config *config, ReqType reqType) {
 
 	if (reqType == (ReqType)REQ_REGISTER) {
 		/* URL -> host:port/v1/orgs/{org}/systems/{system} */
-		sprintf(url, "%s:%s/%s/%s/%s/%s/%s/",
+		sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
 				config->initSystemAddr,
 				config->initSystemPort,
 				config->initSystemAPIVer,

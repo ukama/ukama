@@ -50,10 +50,10 @@ void usage() {
 	fprintf(stdout, "Environment variable used are: \n");
 	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n",
 			ENV_INIT_CLIENT_LOG_LEVEL,
-			ENV_INIT_CLIENT_SYSTEM_ORG,
-			ENV_INIT_CLIENT_SYSTEM_NAME,
-			ENV_INIT_CLIENT_SYSTEM_ADDR,
-			ENV_INIT_CLIENT_SYSTEM_PORT,
+			ENV_SYSTEM_ORG,
+			ENV_SYSTEM_NAME,
+			ENV_SYSTEM_ADDR,
+			ENV_SYSTEM_PORT,
 			ENV_INIT_SYSTEM_ADDR,
 			ENV_INIT_SYSTEM_PORT);
 }
@@ -131,7 +131,7 @@ void catch_sigterm(void) {
 int main (int argc, char *argv[]) {
 
   int exitStatus=0;
-	char *debug=DEF_LOG_LEVEL;
+	char *debug=DEFAULT_LOG_LEVEL;
 	struct _u_instance webInst;
 	Config *config=NULL;
 

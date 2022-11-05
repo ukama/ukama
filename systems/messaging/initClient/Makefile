@@ -60,6 +60,7 @@ LIBS+=-luuid
 LIBS+=-lpthread
 LIBS+=-ltoml
 LIBS+=-lprotobuf-c
+LIBS+=$(ULFIUS_LIB) $(CURL_LIB)
 
 # Soruce files.
 CFILES   = $(wildcard ./src/*.c)

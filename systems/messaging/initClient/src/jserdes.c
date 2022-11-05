@@ -35,8 +35,8 @@ int serialize_request(Request *request, json_t **json) {
 
 		reg = request->reg;
 
-		json_object_set_new(*json, JSON_IP,          json_string(reg->ip));
-		json_object_set_new(*json, JSON_PORT,        json_string(reg->port));
+		json_object_set_new(*json, JSON_IP,   json_string(reg->ip));
+		json_object_set_new(*json, JSON_PORT, json_integer(atoi(reg->port)));
 		json_object_set_new(*json, JSON_CERTIFICATE, json_string(reg->cert));
 
 		str = json_dumps(*json, 0);

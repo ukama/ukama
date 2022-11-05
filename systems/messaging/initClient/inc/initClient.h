@@ -15,7 +15,10 @@
 #define TRUE  1
 #define FALSE 0
 
-#define DEF_LOG_LEVEL   "DEBUG"
+#define DEFAULT_LOG_LEVEL  "DEBUG"
+#define DEFAULT_SYSTEM_ORG "Ukama"
+#define DEFAULT_API_VER    "v1"
+
 #define MAX_BUFFER_SIZE 1024
 #define MAX_URL_LEN     1024
 
