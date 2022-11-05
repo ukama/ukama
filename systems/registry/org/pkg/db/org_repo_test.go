@@ -97,7 +97,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 }
 
 func Test_OrgRepo_Add(t *testing.T) {
-	t.Run("AddUser", func(t *testing.T) {
+	t.Run("AddOrg", func(t *testing.T) {
 		// Arrange
 		var db *extsql.DB
 
@@ -113,7 +113,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, org.Owner, org.Certificate).
+			WithArgs(org.Name, org.Owner, org.Certificate, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
