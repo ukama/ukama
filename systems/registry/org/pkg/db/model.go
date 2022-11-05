@@ -8,7 +8,6 @@ import (
 )
 
 type Org struct {
-	gorm.Model
 	ID          uint      `gorm:"primaryKey"`
 	Name        string    `gorm:"uniqueIndex"`
 	Owner       uuid.UUID `gorm:"type:uuid"`
