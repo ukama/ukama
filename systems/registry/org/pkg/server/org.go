@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/base64"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -29,7 +28,7 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 	logrus.Infof("Adding org %v", req)
 
 	if len(req.GetOrg().GetOwner()) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "owner id cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "owner uuid cannot be empty")
 	}
 
 	owner, err := uuid.Parse(req.GetOrg().GetOwner())
@@ -38,23 +37,25 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 	}
 
 	org := &db.Org{
-		Name:        req.GetOrg().GetName(),
-		Owner:       owner,
-		Certificate: generateCertificate(),
+		Name:  req.GetOrg().GetName(),
+		Owner: owner,
+		// Certificate: generateCertificate(),
+		Certificate: "ukama_certs",
 	}
 
-	err = r.orgRepo.Add(org, func() error {
-		// We need to wrap this call into a transaction to add or update the org in the new init system.
-		// see an example with the legacy interface below.
-		// return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.nodeGatewayIP)
-		return nil
-	})
+	// err = r.orgRepo.Add(org, func() error {
+	// We need to wrap this call into a transaction to add or update the org in the new init system.
+	// see an example with the legacy interface below.
+	// return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.nodeGatewayIP)
+	// return nil
+	// })
+	err = r.orgRepo.Add(org)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	orgResp := &pb.Organization{Name: req.GetOrg().GetName(), Owner: req.GetOrg().GetOwner()}
+	orgResp := &pb.Organization{Name: org.Name, Owner: org.Owner.String(), Certificate: org.Certificate}
 
 	// pub event async
 
@@ -64,7 +65,7 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	logrus.Infof("Getting org %v", req)
 
-	org, err := r.orgRepo.GetByName(req.GetName())
+	org, err := r.orgRepo.Get(int(req.GetId()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -76,21 +77,15 @@ func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 	}, nil
 }
 
-func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	logrus.Infof("Deleting org %v", req)
+// func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+// logrus.Infof("Deleting org %v", req)
 
-	err := r.orgRepo.Delete(req.GetName())
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org")
-	}
+// err := r.orgRepo.Delete(req.GetName())
+// if err != nil {
+// return nil, grpc.SqlErrorToGrpc(err, "org")
+// }
 
-	// publish event async
+// // publish event async
 
-	return &pb.DeleteResponse{}, nil
-}
-
-func generateCertificate() string {
-	logrus.Warning("Certificate generation is not yet implemented")
-
-	return base64.StdEncoding.EncodeToString([]byte("Test certificate"))
-}
+// return &pb.DeleteResponse{}, nil
+// }

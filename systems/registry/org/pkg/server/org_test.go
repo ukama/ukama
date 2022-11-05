@@ -18,44 +18,42 @@ const testOrgName = "test-org"
 func TestOrgServer_AddOrg(t *testing.T) {
 	// Arrange
 	orgName := "org-1"
-	ownerId := uuid.NewString()
+	ownerUUID := uuid.New()
+	certificate := "ukama_certs"
+
 	orgRepo := &mocks.OrgRepo{}
 
-	// trick to call nested bootstrap call
-	orgRepo.On("Add", mock.Anything, mock.Anything).
-		Return(func(o *db.Org, f ...func() error) error {
-			return f[0]()
-		}).Once()
+	orgRepo.On("Add", mock.Anything).Return(nil).Once()
 
 	s := NewOrgServer(orgRepo)
 
 	// Act
 	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
-		Name: orgName, Owner: ownerId,
-	}})
+		Name: orgName, Owner: ownerUUID.String(), Certificate: certificate}})
 
 	// Assert
 	assert.NoError(t, err)
 	assert.Equal(t, orgName, res.Org.Name)
-	assert.Equal(t, ownerId, res.Org.Owner)
+	assert.Equal(t, ownerUUID.String(), res.Org.Owner)
 	orgRepo.AssertExpectations(t)
 }
 
-func TestNetworkServer_GetOrg(t *testing.T) {
-	orgName := "org-1"
+func TestOrgServer_GetOrg(t *testing.T) {
+	orgID := uint64(0)
 
 	orgRepo := &mocks.OrgRepo{}
 
-	orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
+	orgRepo.On("Get", mock.Anything).Return(&db.Org{ID: uint(orgID)}, nil).Once()
 
 	s := NewOrgServer(orgRepo)
-	org, err := s.Get(context.TODO(), &pb.GetRequest{Name: orgName})
+	orgResp, err := s.Get(context.TODO(), &pb.GetRequest{Id: orgID})
+
 	assert.NoError(t, err)
-	assert.Equal(t, orgName, org.GetOrg().GetName())
+	assert.Equal(t, orgID, orgResp.GetOrg().GetId())
 	orgRepo.AssertExpectations(t)
 }
 
-func TestNetworkServer_AddOrg_fails_without_owner_id(t *testing.T) {
+func TestOrgServer_AddOrg_fails_without_owner_uuid(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 
 	s := NewOrgServer(orgRepo)
@@ -66,13 +64,13 @@ func TestNetworkServer_AddOrg_fails_without_owner_id(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestNetworkServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
-	orgName := "org-1"
+func TestOrgServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
+	owner := "org-1"
 	orgRepo := &mocks.OrgRepo{}
 
 	s := NewOrgServer(orgRepo)
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
-		Org: &pb.Organization{Name: orgName},
+		Org: &pb.Organization{Owner: owner},
 	})
 
 	assert.Error(t, err)
