@@ -5,13 +5,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type Org struct {
-	Id      uint   `gorm:"primaryKey"`
-	Name    string `gorm:"uniqueIndex"`
-	Members []*User
-	OwnerID uint
-}
-
 type User struct {
 	gorm.Model
 	Uuid        uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
@@ -19,6 +12,4 @@ type User struct {
 	Email       string    `gorm:"not null;unique"`
 	Phone       string    `gorm:"not null;unique"`
 	Deactivated bool
-	OwnerOf     []*Org
-	MemberOf    []*Org
 }
