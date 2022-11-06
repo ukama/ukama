@@ -86,11 +86,11 @@ func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 
 func dbOrgsToPbOrgs(org *db.Org) *pb.Organization {
 	return &pb.Organization{
-		Id:          uint64(org.ID),
-		Name:        org.Name,
-		Owner:       org.Owner.String(),
-		Certificate: org.Certificate,
-		// IsDeactivated: org.Deactivated,
-		CreatedAt: timestamppb.New(org.CreatedAt),
+		Id:            uint64(org.ID),
+		Name:          org.Name,
+		Owner:         org.Owner.String(),
+		Certificate:   org.Certificate,
+		IsDeactivated: org.Deactivated,
+		CreatedAt:     timestamppb.New(org.CreatedAt),
 	}
 }

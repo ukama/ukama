@@ -15,6 +15,7 @@ type Org struct {
 	Members     []*User `gorm:"many2many:org_members;"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Deactivated bool
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 

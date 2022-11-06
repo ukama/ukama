@@ -45,5 +45,6 @@ message Organization {
     string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
     string owner = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
     string certificate = 4;
+    bool isDeactivated = 5;
     google.protobuf.Timestamp created_at = 6;
 }
