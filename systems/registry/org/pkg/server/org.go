@@ -11,6 +11,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type OrgServer struct {
@@ -37,10 +38,9 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 	}
 
 	org := &db.Org{
-		Name:  req.GetOrg().GetName(),
-		Owner: owner,
-		// Certificate: generateCertificate(),
-		Certificate: "ukama_certs",
+		Name:        req.GetOrg().GetName(),
+		Owner:       owner,
+		Certificate: req.GetOrg().GetCertificate(),
 	}
 
 	// err = r.orgRepo.Add(org, func() error {
@@ -55,11 +55,9 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	orgResp := &pb.Organization{Name: org.Name, Owner: org.Owner.String(), Certificate: org.Certificate}
-
 	// pub event async
 
-	return &pb.AddResponse{Org: orgResp}, nil
+	return &pb.AddResponse{Org: dbOrgsToPbOrgs(org)}, nil
 }
 
 func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -70,11 +68,7 @@ func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	return &pb.GetResponse{Org: &pb.Organization{
-		Owner: org.Owner.String(),
-		Name:  org.Name,
-	},
-	}, nil
+	return &pb.GetResponse{Org: dbOrgsToPbOrgs(org)}, nil
 }
 
 // func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -89,3 +83,14 @@ func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 
 // return &pb.DeleteResponse{}, nil
 // }
+
+func dbOrgsToPbOrgs(org *db.Org) *pb.Organization {
+	return &pb.Organization{
+		Id:          uint64(org.ID),
+		Name:        org.Name,
+		Owner:       org.Owner.String(),
+		Certificate: org.Certificate,
+		// IsDeactivated: org.Deactivated,
+		CreatedAt: timestamppb.New(org.CreatedAt),
+	}
+}
