@@ -20,7 +20,7 @@ type Org struct {
 
 type User struct {
 	ID   uint      `gorm:"primaryKey"`
-	Uuid uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
+	Uuid uuid.UUID `gorm:"uniqueIndex:uuid_unique;not null;type:uuid"`
 }
 
 type OrgUser struct {
