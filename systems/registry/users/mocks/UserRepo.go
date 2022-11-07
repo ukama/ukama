@@ -16,27 +16,18 @@ type UserRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: user, nestedFunc
-func (_m *UserRepo) Add(user *db.User, nestedFunc func(*db.User, *gorm.DB) error) (*db.User, error) {
-	ret := _m.Called(user, nestedFunc)
+// Add provides a mock function with given fields: user
+func (_m *UserRepo) Add(user *db.User) error {
+	ret := _m.Called(user)
 
-	var r0 *db.User
-	if rf, ok := ret.Get(0).(func(*db.User, func(*db.User, *gorm.DB) error) *db.User); ok {
-		r0 = rf(user, nestedFunc)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.User) error); ok {
+		r0 = rf(user)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.User)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*db.User, func(*db.User, *gorm.DB) error) error); ok {
-		r1 = rf(user, nestedFunc)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Delete provides a mock function with given fields: _a0, nestedFunc

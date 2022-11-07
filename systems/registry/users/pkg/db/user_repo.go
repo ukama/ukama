@@ -7,10 +7,8 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// UserRepo declares an interface to manage users.
-// It is also useful for mocking purposes.
 type UserRepo interface {
-	Add(user *User, nestedFunc func(*User, *gorm.DB) error) (*User, error)
+	Add(user *User) error
 	Get(uuid uuid.UUID) (*User, error)
 	Update(user *User) (*User, error)
 	Delete(uuid uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
@@ -26,27 +24,10 @@ func NewUserRepo(db sql.Db) *userRepo {
 	}
 }
 
-// Add adds a user. Add nestedFunc to execute an action inside a transation
-// if one of the nestedFunc returns error then Add action is rolled back
-func (u *userRepo) Add(user *User, nestedFunc func(*User, *gorm.DB) error) (*User, error) {
-	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		d := tx.Create(user)
+func (u *userRepo) Add(user *User) error {
+	d := u.Db.GetGormDb().Create(user)
 
-		if d.Error != nil {
-			return d.Error
-		}
-
-		if nestedFunc != nil {
-			nestErr := nestedFunc(user, tx)
-			if nestErr != nil {
-				return nestErr
-			}
-		}
-
-		return nil
-	})
-
-	return user, err
+	return d.Error
 }
 
 func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
