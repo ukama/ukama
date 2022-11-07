@@ -42,6 +42,15 @@ func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.Sys
 	}
 }
 
+func (l *LookupServer) getOrg(name string) (*db.Org, error) {
+	org, err := l.orgRepo.GetByName(name)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	return org, nil
+}
+
 func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
 	logrus.Infof("Adding Organization %s", req.OrgName)
 
@@ -69,7 +78,16 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.AddOrgResponse{}, nil
+	dbOrg, err := l.getOrg(org.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AddOrgResponse{
+		OrgName:     dbOrg.Name,
+		Certificate: dbOrg.Certificate,
+		Ip:          dbOrg.Ip.IPNet.String(),
+	}, nil
 }
 
 func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
@@ -103,30 +121,32 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.UpdateOrgResponse{}, nil
+	dbOrg, err := l.getOrg(org.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.UpdateOrgResponse{
+		OrgName:     dbOrg.Name,
+		Certificate: dbOrg.Certificate,
+		Ip:          dbOrg.Ip.IPNet.String(),
+	}, nil
+
 }
 
 func (l *LookupServer) GetOrg(ctx context.Context, req *pb.GetOrgRequest) (*pb.GetOrgResponse, error) {
 	logrus.Infof("Get Organization %s", req.OrgName)
 
-	org, err := l.orgRepo.GetByName(req.OrgName)
+	dbOrg, err := l.getOrg(req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	resp := &pb.GetOrgResponse{
-		OrgName:     req.OrgName,
-		Certificate: org.Certificate,
-		Ip:          org.Ip.IPNet.IP.String(),
-	}
-
-	route := l.baseRoutingKey.SetActionDelete().SetObject("organization").MustBuild()
-	err = l.msgbus.PublishRequest(route, req)
-	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-
-	return resp, nil
+	return &pb.GetOrgResponse{
+		OrgName:     dbOrg.Name,
+		Certificate: dbOrg.Certificate,
+		Ip:          dbOrg.Ip.IPNet.String(),
+	}, nil
 }
 
 func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
@@ -153,7 +173,15 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.AddNodeResponse{}, nil
+	dbNode, err := l.nodeRepo.Get(id)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	return &pb.AddNodeResponse{
+		NodeId:  dbNode.NodeID,
+		OrgName: dbNode.Org.Name,
+	}, nil
 }
 
 func (l *LookupServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
@@ -231,17 +259,28 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 	return &pb.DeleteNodeResponse{}, nil
 }
 
-func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemRequest) (*pb.GetSystemResponse, error) {
-	logrus.Infof("Requesting System %s info for org  %s", req.GetSystemName(), req.GetOrgName())
+func (l *LookupServer) getSystem(name string) (*db.System, error) {
 
-	_, err := l.orgRepo.GetByName(req.OrgName)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid Org %s. Error %s", req.OrgName, err.Error())
-	}
-
-	system, err := l.systemRepo.GetByName(req.GetSystemName())
+	system, err := l.systemRepo.GetByName(name)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "system")
+	}
+	return system, nil
+
+}
+
+func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemRequest) (*pb.GetSystemResponse, error) {
+	logrus.Infof("Requesting System %s info for org  %s", req.GetSystemName(), req.GetOrgName())
+	org := req.GetOrgName()
+
+	_, err := l.orgRepo.GetByName(org)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid Org %s. Error %s", org, err.Error())
+	}
+
+	system, err := l.getSystem(req.GetSystemName())
+	if err != nil {
+		return nil, err
 	}
 
 	return &pb.GetSystemResponse{
@@ -250,6 +289,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		Certificate: system.Certificate,
 		Ip:          system.Ip.IPNet.IP.String(),
 		Port:        system.Port,
+		Health:      system.Health,
 	}, nil
 
 }
@@ -294,8 +334,18 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.AddSystemResponse{}, nil
+	resp, err := l.getSystem(sys.Name)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "system")
+	}
 
+	return &pb.AddSystemResponse{
+		SystemName:  resp.Name,
+		SystemId:    resp.Uuid,
+		Certificate: resp.Certificate,
+		Ip:          resp.Ip.IPNet.IP.String(),
+		Port:        resp.Port,
+	}, nil
 }
 
 func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
@@ -338,8 +388,18 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.UpdateSystemResponse{}, nil
+	dbSystem, err := l.getSystem(sys.Name)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "system")
+	}
 
+	return &pb.UpdateSystemResponse{
+		SystemName:  dbSystem.Name,
+		SystemId:    dbSystem.Uuid,
+		Certificate: dbSystem.Certificate,
+		Ip:          dbSystem.Ip.IPNet.IP.String(),
+		Port:        dbSystem.Port,
+	}, nil
 }
 
 func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {

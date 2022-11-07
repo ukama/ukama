@@ -30,4 +30,5 @@ type System struct {
 	Port        int32
 	OrgID       uint
 	Org         Org
+	Health      uint32 `gorm:"default:100"`
 }

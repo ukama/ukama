@@ -39,7 +39,9 @@ message AddOrgRequest {
 }
 
 message AddOrgResponse {
-
+    string orgName = 1;
+    string certificate = 2;
+    string ip = 3;
 }
 
 message UpdateOrgRequest {
@@ -49,6 +51,9 @@ message UpdateOrgRequest {
 }
 
 message UpdateOrgResponse { 
+    string orgName = 1  [(validator.field) = {string_not_empty: true}];
+    string certificate = 2;
+    string ip = 3;
 }
 
 message GetOrgRequest {
@@ -68,7 +73,8 @@ message AddNodeRequest {
 }
 
 message AddNodeResponse {
-
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
+    string orgName = 2 ;
 }
 
 message GetNodeForOrgRequest{
@@ -107,6 +113,7 @@ message GetSystemResponse {
     string certificate = 3;
     string ip = 4;
     int32 port = 5;
+    uint32 health = 6;
 }
 
 message AddSystemRequest{
@@ -118,7 +125,11 @@ message AddSystemRequest{
 }
 
 message AddSystemResponse {
-
+    string systemName = 1;
+    string systemId = 2;
+    string certificate = 3;
+    string ip = 4;
+    int32 port = 5;
 }
 
 message UpdateSystemRequest{
@@ -130,7 +141,11 @@ message UpdateSystemRequest{
 }
 
 message UpdateSystemResponse {
-
+    string systemName = 1;
+    string systemId = 2;
+    string certificate = 3;
+    string ip = 4;
+    int32 port = 5;
 }
 
 message DeleteSystemRequest{
