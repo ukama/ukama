@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 
 	uuid2 "github.com/google/uuid"
@@ -29,16 +30,16 @@ func NewUserService(userRepo db.UserRepo) *UserService {
 }
 
 func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	user, err := u.userRepo.Add(&db.User{
+	logrus.Infof("Adding user %v", req)
+
+	user := &db.User{
 		Email: req.User.Email,
 		Name:  req.User.Name,
 		Phone: req.User.Phone,
 		Uuid:  uuid2.New(),
-	}, func(usr *db.User, tx *gorm.DB) error {
-		//Perform any required transactions
-		return nil
-	})
-	// end of transaction
+	}
+
+	err := u.userRepo.Add(user)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")

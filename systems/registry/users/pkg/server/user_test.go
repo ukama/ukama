@@ -16,25 +16,21 @@ import (
 
 func TestUserService_Add(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
-	userUUID := uuid.New()
 
 	userRequest := &pb.User{
-		Uuid:  userUUID.String(),
 		Name:  "Joe",
 		Email: "test@example.com",
 		Phone: "12324",
 	}
 
-	userRepo.On("Add", mock.Anything, mock.Anything).Return(&db.User{Uuid: userUUID,
-		Email: userRequest.Email, Phone: userRequest.Phone, Name: userRequest.Name}, nil)
+	userRepo.On("Add", mock.Anything).Return(nil).Once()
 
-	t.Run("NewUser", func(tt *testing.T) {
+	t.Run("AddUser", func(tt *testing.T) {
 		srv := NewUserService(userRepo)
 		addResp, err := srv.Add(context.TODO(), &pb.AddRequest{User: userRequest})
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, addResp.User.Uuid)
-		assert.Equal(t, userUUID.String(), addResp.User.Uuid)
 		assert.Equal(t, userRequest.Name, addResp.User.Name)
 		assert.Equal(t, userRequest.Phone, addResp.User.Phone)
 		assert.Equal(t, userRequest.Email, addResp.User.Email)
