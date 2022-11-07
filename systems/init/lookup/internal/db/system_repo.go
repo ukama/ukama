@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -40,7 +41,13 @@ func (s *systemRepo) Delete(sys string) error {
 	if result.Error != nil {
 		return result.Error
 	}
-	return nil
+
+	if result.RowsAffected > 0 {
+		return nil
+	}
+
+	return fmt.Errorf("%s system missing", sys)
+
 }
 
 func (s *systemRepo) GetByName(sys string) (*System, error) {

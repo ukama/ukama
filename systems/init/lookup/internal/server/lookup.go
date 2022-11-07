@@ -248,7 +248,13 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 
 	err = l.nodeRepo.Delete(nodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid org name %s. Error %s", req.OrgName, err.Error())
+		if strings.Contains(err.Error(), "node missing") {
+			return nil, status.Errorf(codes.NotFound, "Unable to Delete node %s for %s org. Error %s",
+				req.NodeId, req.OrgName, err.Error())
+		} else {
+			return nil, status.Errorf(codes.InvalidArgument, "Unable to Delete node %s for %s org. Error %s",
+				req.NodeId, req.OrgName, err.Error())
+		}
 	}
 
 	route := l.baseRoutingKey.SetActionDelete().SetObject("node").MustBuild()
@@ -275,7 +281,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 
 	_, err := l.orgRepo.GetByName(org)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid Org %s. Error %s", org, err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
 	system, err := l.getSystem(req.GetSystemName())
@@ -302,7 +308,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid Org %s. Error %s", req.OrgName, err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
 	err = sysIp.Set(req.Ip)
@@ -407,13 +413,18 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 
 	_, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "System not found. Error %s", err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
 	err = l.systemRepo.Delete(req.SystemName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Unable to Delete system %s to %s org. Error %s",
-			req.SystemName, req.OrgName, err.Error())
+		if strings.Contains(err.Error(), "system missing") {
+			return nil, status.Errorf(codes.NotFound, "Unable to Delete system %s from %s org. Error %s",
+				req.SystemName, req.OrgName, err.Error())
+		} else {
+			return nil, status.Errorf(codes.InvalidArgument, "Unable to Delete system %s from %s org. Error %s",
+				req.SystemName, req.OrgName, err.Error())
+		}
 	}
 
 	route := l.baseRoutingKey.SetActionDelete().SetObject("system").MustBuild()
