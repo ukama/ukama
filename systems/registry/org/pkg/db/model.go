@@ -25,9 +25,10 @@ type User struct {
 }
 
 type OrgUser struct {
-	OrgID     uint `gorm:"primaryKey"`
-	UserID    uint `gorm:"primaryKey"`
-	CreatedAt time.Time
-	DeletedAt gorm.DeletedAt
+	OrgID       uint `gorm:"primaryKey"`
+	UserID      uint `gorm:"primaryKey"`
+	CreatedAt   time.Time
+	DeletedAt   gorm.DeletedAt
+	Deactivated bool
 	// Role (owner, admin, vendor)
 }
