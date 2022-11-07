@@ -43,21 +43,13 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 		Certificate: req.GetOrg().GetCertificate(),
 	}
 
-	// err = r.orgRepo.Add(org, func() error {
-	// We need to wrap this call into a transaction to add or update the org in the new init system.
-	// see an example with the legacy interface below.
-	// return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.nodeGatewayIP)
-	// return nil
-	// })
 	err = r.orgRepo.Add(org)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	// pub event async
-
-	return &pb.AddResponse{Org: dbOrgsToPbOrgs(org)}, nil
+	return &pb.AddResponse{Org: dbOrgToPbOrg(org)}, nil
 }
 
 func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -68,7 +60,32 @@ func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	return &pb.GetResponse{Org: dbOrgsToPbOrgs(org)}, nil
+	return &pb.GetResponse{Org: dbOrgToPbOrg(org)}, nil
+}
+
+func (r *OrgServer) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) (*pb.GetByOwnerResponse, error) {
+	logrus.Infof("Getting all orgs own by %v", req.GetUserUuid())
+
+	if len(req.GetUserUuid()) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "owner uuid cannot be empty")
+	}
+
+	owner, err := uuid.Parse(req.GetUserUuid())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner uuid. Error %s", err.Error())
+	}
+
+	orgs, err := r.orgRepo.GetByOwner(owner)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "orgs")
+	}
+
+	resp := &pb.GetByOwnerResponse{
+		Owner: req.GetUserUuid(),
+		Orgs:  dbOrgsToPbOrgs(orgs),
+	}
+
+	return resp, nil
 }
 
 // func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -84,7 +101,7 @@ func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 // return &pb.DeleteResponse{}, nil
 // }
 
-func dbOrgsToPbOrgs(org *db.Org) *pb.Organization {
+func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 	return &pb.Organization{
 		Id:            uint64(org.ID),
 		Name:          org.Name,
@@ -93,4 +110,12 @@ func dbOrgsToPbOrgs(org *db.Org) *pb.Organization {
 		IsDeactivated: org.Deactivated,
 		CreatedAt:     timestamppb.New(org.CreatedAt),
 	}
+}
+
+func dbOrgsToPbOrgs(orgs []db.Org) []*pb.Organization {
+	res := []*pb.Organization{}
+	for _, o := range orgs {
+		res = append(res, dbOrgToPbOrg(&o))
+	}
+	return res
 }
