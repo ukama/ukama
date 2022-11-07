@@ -37,7 +37,8 @@ message GetByOwnerRequest{
 }
 
 message GetByOwnerResponse{
-  repeated Organization orgs = 1;
+    string owner = 1 [(validator.field) = {uuid_ver: 0}];
+    repeated Organization orgs = 2;
 }
 
 message Organization {
