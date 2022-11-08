@@ -17,7 +17,7 @@ type OrgRepo interface {
 	// Deactivate(id int) error
 	// Delete(id int) error
 
-	// AddMember()
+	AddMember(org *Org, user *User) (*OrgUser, error)
 	// GetMember()
 	// GetMembers()
 
@@ -30,6 +30,7 @@ type orgRepo struct {
 }
 
 func NewOrgRepo(db sql.Db) OrgRepo {
+	_ = db.GetGormDb().SetupJoinTable(&Org{}, "Members", &OrgUser{})
 	return &orgRepo{
 		Db: db,
 	}
@@ -68,21 +69,23 @@ func (r *orgRepo) GetByOwner(uuid uuid.UUID) ([]Org, error) {
 	return orgs, nil
 }
 
+func (r *orgRepo) AddMember(org *Org, user *User) (*OrgUser, error) {
+	if !validation.IsValidDnsLabelName(org.Name) {
+		return nil, fmt.Errorf("invalid name must be less then 253 " +
+			"characters and consist of lowercase characters with a hyphen")
+	}
+
+	member := &OrgUser{
+		OrgID:  org.ID,
+		UserID: user.ID,
+		Uuid:   user.Uuid,
+	}
+
+	d := r.Db.GetGormDb().Create(member)
+
+	return member, d.Error
+}
+
 // func (r *orgRepo) Delete(name string) error {
-// return r.Db.GetGormDb().Delete(&Org{}, "name = ?", name).Error
-// }
-
-// func (r *orgRepo) AddMember(org *Org, user *User, nestedFunc ...func() error) (err error) {
-// if !validation.IsValidDnsLabelName(org.Name) {
-// return fmt.Errorf("invalid name must be less then 253 " +
-// "characters and consist of lowercase characters with a hyphen")
-// }
-
-// err = r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-// // tx.Create(user)
-// return tx.Create(org)
-// // tx.Create(org_user)
-// }, nestedFunc...)
-
-// return err
+// re,turn r.Db.GetGormDb().Delete(&Org{}, "name = ?", name).Error
 // }

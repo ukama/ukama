@@ -145,16 +145,22 @@ func Test_OrgRepo_Add(t *testing.T) {
 	})
 }
 
-// func Test_OrgRepo_Add(t *testing.T) {
-// t.Run("AddOrg", func(t *testing.T) {
+// func Test_OrgRepo_AddMember(t *testing.T) {
+// t.Run("AddMember", func(t *testing.T) {
 // // Arrange
+// var db *extsql.DB
+
 // org := org_db.Org{
+// ID:          1,
 // Name:        "ukama",
 // Owner:       uuid.New(),
 // Certificate: "ukama_certs",
 // }
 
-// var db *extsql.DB
+// user := org_db.User{
+// ID:   1,
+// Uuid: uuid.New(),
+// }
 
 // db, mock, err := sqlmock.New() // mock sql.DB
 // assert.NoError(t, err)
@@ -162,8 +168,8 @@ func Test_OrgRepo_Add(t *testing.T) {
 // mock.ExpectBegin()
 
 // mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-// WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, org.Owner, org.Certificate).
-// WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+// WithArgs(org.ID, user.ID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+// WillReturnRows(sqlmock.NewRows([]string{"org_id, user_id"}).AddRow(2))
 
 // mock.ExpectCommit()
 
@@ -184,7 +190,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 // assert.NoError(t, err)
 
 // // Act
-// err = r.Add(&org)
+// err = r.AddMember(&org, &user)
 
 // // Assert
 // assert.NoError(t, err)
