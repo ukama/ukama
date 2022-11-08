@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm/clause"
 )
@@ -26,8 +27,14 @@ func NewSystemRepo(db sql.Db) *systemRepo {
 }
 
 func (s *systemRepo) Add(sys *System) error {
-	d := s.Db.GetGormDb().Create(sys)
-	return d.Error
+	result := s.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "name"}},
+		UpdateAll: true,
+	}).Create(sys)
+
+	logrus.Debugf("result is %+V", result)
+
+	return result.Error
 }
 
 func (s *systemRepo) Update(sys *System) error {
