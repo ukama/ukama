@@ -108,45 +108,46 @@ func Test_UserRepo_Add(t *testing.T) {
 	})
 }
 
-// func Test_UserRepo_Delete(t *testing.T) {
-// t.Run("DeleteUser", func(t *testing.T) {
-// var db *extsql.DB
+func Test_UserRepo_Delete(t *testing.T) {
+	t.Run("DeleteUser", func(t *testing.T) {
+		var db *extsql.DB
 
-// var userUUID = uuid.New()
+		var userUUID = uuid.New()
 
-// db, mock, err := sqlmock.New() // mock sql.DB
-// assert.NoError(t, err)
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
 
-// mock.ExpectBegin()
+		mock.ExpectBegin()
 
-// mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(userUUID).
-// WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET`)).
+			WithArgs(sqlmock.AnyArg(), userUUID).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 
-// mock.ExpectCommit()
+		mock.ExpectCommit()
 
-// dialector := postgres.New(postgres.Config{
-// DSN:                  "sqlmock_db_0",
-// DriverName:           "postgres",
-// Conn:                 db,
-// PreferSimpleProtocol: true,
-// })
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
 
-// gdb, err := gorm.Open(dialector, &gorm.Config{})
-// assert.NoError(t, err)
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
 
-// r := org_db.NewUserRepo(&UkamaDbMock{
-// GormDb: gdb,
-// })
+		r := org_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
 
-// assert.NoError(t, err)
+		assert.NoError(t, err)
 
-// // Act
-// err = r.Delete(userUUID)
+		// Act
+		err = r.Delete(userUUID)
 
-// // Assert
-// assert.NoError(t, err)
+		// Assert
+		assert.NoError(t, err)
 
-// err = mock.ExpectationsWereMet()
-// assert.NoError(t, err)
-// })
-// }
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
