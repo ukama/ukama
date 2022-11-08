@@ -45,7 +45,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	return &pb.AddResponse{User: dbUsersToPbUsers(user)}, nil
+	return &pb.AddResponse{User: dbUserToPbUser(user)}, nil
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -59,7 +59,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	return &pb.GetResponse{User: dbUsersToPbUsers(user)}, nil
+	return &pb.GetResponse{User: dbUserToPbUser(user)}, nil
 }
 
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
@@ -79,7 +79,7 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	return &pb.UpdateResponse{User: dbUsersToPbUsers(user)}, nil
+	return &pb.UpdateResponse{User: dbUserToPbUser(user)}, nil
 }
 
 func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest) (*pb.DeactivateResponse, error) {
@@ -138,7 +138,7 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	return &pb.DeleteResponse{}, nil
 }
 
-func dbUsersToPbUsers(user *db.User) *pb.User {
+func dbUserToPbUser(user *db.User) *pb.User {
 	return &pb.User{
 		Uuid:          user.Uuid.String(),
 		Name:          user.Name,
