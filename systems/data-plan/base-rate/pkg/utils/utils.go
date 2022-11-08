@@ -69,7 +69,7 @@ func CreateQuery(rows [][]string, effectiveAt string, simType string) string {
 }
 
 func IsFutureDate(date string) bool {
-	t, err := time.Parse("2006-01-02T15:04:05Z", date)
+	t, err := time.Parse(time.RFC3339, date)
 	if err != nil {
 		return false
 	}
