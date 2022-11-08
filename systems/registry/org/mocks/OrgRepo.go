@@ -28,27 +28,18 @@ func (_m *OrgRepo) Add(org *db.Org) error {
 	return r0
 }
 
-// AddMember provides a mock function with given fields: org, user
-func (_m *OrgRepo) AddMember(org *db.Org, user *db.User) (*db.OrgUser, error) {
-	ret := _m.Called(org, user)
+// AddMember provides a mock function with given fields: member
+func (_m *OrgRepo) AddMember(member *db.OrgUser) error {
+	ret := _m.Called(member)
 
-	var r0 *db.OrgUser
-	if rf, ok := ret.Get(0).(func(*db.Org, *db.User) *db.OrgUser); ok {
-		r0 = rf(org, user)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.OrgUser) error); ok {
+		r0 = rf(member)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.OrgUser)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*db.Org, *db.User) error); ok {
-		r1 = rf(org, user)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Get provides a mock function with given fields: id

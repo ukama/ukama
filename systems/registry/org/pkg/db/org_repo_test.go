@@ -150,16 +150,10 @@ func Test_OrgRepo_AddMember(t *testing.T) {
 		// Arrange
 		var db *extsql.DB
 
-		org := org_db.Org{
-			ID:          1,
-			Name:        "ukama",
-			Owner:       uuid.New(),
-			Certificate: "ukama_certs",
-		}
-
-		user := org_db.User{
-			ID:   1,
-			Uuid: uuid.New(),
+		member := org_db.OrgUser{
+			OrgID:  1,
+			UserID: 1,
+			Uuid:   uuid.New(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -168,7 +162,7 @@ func Test_OrgRepo_AddMember(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(org.ID, user.ID, user.Uuid, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(member.OrgID, member.UserID, member.Uuid, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -190,7 +184,7 @@ func Test_OrgRepo_AddMember(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		_, err = r.AddMember(&org, &user)
+		err = r.AddMember(&member)
 
 		// Assert
 		assert.NoError(t, err)

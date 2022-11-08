@@ -17,7 +17,8 @@ type OrgRepo interface {
 	// Deactivate(id int) error
 	// Delete(id int) error
 
-	AddMember(org *Org, user *User) (*OrgUser, error)
+	AddMember(member *OrgUser) error
+	// GetMember(org *Org, user *User) (*OrgUser, error)
 	// GetMember()
 	// GetMembers()
 
@@ -69,21 +70,10 @@ func (r *orgRepo) GetByOwner(uuid uuid.UUID) ([]Org, error) {
 	return orgs, nil
 }
 
-func (r *orgRepo) AddMember(org *Org, user *User) (*OrgUser, error) {
-	if !validation.IsValidDnsLabelName(org.Name) {
-		return nil, fmt.Errorf("invalid name must be less then 253 " +
-			"characters and consist of lowercase characters with a hyphen")
-	}
-
-	member := &OrgUser{
-		OrgID:  org.ID,
-		UserID: user.ID,
-		Uuid:   user.Uuid,
-	}
-
+func (r *orgRepo) AddMember(member *OrgUser) error {
 	d := r.Db.GetGormDb().Create(member)
 
-	return member, d.Error
+	return d.Error
 }
 
 // func (r *orgRepo) Delete(name string) error {
