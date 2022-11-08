@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm/clause"
 )
@@ -31,8 +30,6 @@ func (s *systemRepo) Add(sys *System) error {
 		Columns:   []clause.Column{{Name: "name"}},
 		UpdateAll: true,
 	}).Create(sys)
-
-	logrus.Debugf("result is %+V", result)
 
 	return result.Error
 }
