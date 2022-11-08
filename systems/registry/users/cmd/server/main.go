@@ -29,9 +29,10 @@ func main() {
 
 	initConfig()
 
-	metrics.StartMetricsServer(&serviceConfig.Metrics)
-
 	usersDb := initDb()
+
+	metrics.StartMetricsServer(serviceConfig.Metrics)
+
 	runGrpcServer(usersDb)
 }
 
@@ -57,7 +58,7 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 	userService := server.NewUserService(db.NewUserRepo(gormdb))
-	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterUserServiceServer(s, userService)
 	})
 
