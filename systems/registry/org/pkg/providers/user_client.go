@@ -10,7 +10,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// UserClientProvider  creates a Users client.
+// UserClientProvider creates a local client to interact with
+// a remote instance of  Users service.
 type UserClientProvider interface {
 	GetClient() (pb.UserServiceClient, error)
 }
@@ -31,11 +32,11 @@ func (u *userClientProvider) GetClient() (pb.UserServiceClient, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		log.Infoln("Connecting to user service ", u.userHost)
+		log.Infoln("Connecting to users service ", u.userHost)
 
 		conn, err := grpc.DialContext(ctx, u.userHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("Failed to connect to user service %s. Error: %v", u.userHost, err)
+			log.Fatalf("Failed to connect to users service %s. Error: %v", u.userHost, err)
 		}
 
 		u.userService = pb.NewUserServiceClient(conn)

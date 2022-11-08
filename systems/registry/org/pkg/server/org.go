@@ -8,7 +8,11 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+
+	userpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
+	pkg "github.com/ukama/ukama/systems/registry/org/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -16,12 +20,16 @@ import (
 
 type OrgServer struct {
 	pb.UnimplementedOrgServiceServer
-	orgRepo db.OrgRepo
+	orgRepo     db.OrgRepo
+	userRepo    db.UserRepo
+	userService pkg.UserClientProvider
 }
 
-func NewOrgServer(orgRepo db.OrgRepo) *OrgServer {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, userService pkg.UserClientProvider) *OrgServer {
 	return &OrgServer{
-		orgRepo: orgRepo,
+		orgRepo:     orgRepo,
+		userRepo:    userRepo,
+		userService: userService,
 	}
 }
 
@@ -88,6 +96,55 @@ func (r *OrgServer) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) (
 	return resp, nil
 }
 
+func (r *OrgServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.AddMemberResponse, error) {
+	// Get the Organization
+	org, err := r.orgRepo.Get(int(req.GetOrgId()))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	// Get the User
+	if len(req.GetUserUuid()) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "owner uuid cannot be empty")
+	}
+
+	userUUID, err := uuid.Parse(req.GetUserUuid())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
+	}
+
+	user, err := r.userRepo.Get(userUUID)
+	if err != nil {
+		logrus.Infof("lookup for remote user %s", userUUID)
+
+		svc, err := r.userService.GetClient()
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = svc.Get(ctx, &userpb.GetRequest{UserUuid: userUUID.String()})
+		if err != nil {
+			return nil, err
+		}
+
+		logrus.Infof("Adding remove user %s to local user repo", userUUID)
+		user = &db.User{Uuid: userUUID}
+
+		err = r.userRepo.Add(user)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "user")
+		}
+	}
+
+	logrus.Infof("Adding member")
+	member, err := r.orgRepo.AddMember(org, user)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "member")
+	}
+
+	return &pb.AddMemberResponse{Member: dbMemberToPbMember(member)}, nil
+}
+
 // func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 // logrus.Infof("Deleting org %v", req)
 
@@ -114,8 +171,19 @@ func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 
 func dbOrgsToPbOrgs(orgs []db.Org) []*pb.Organization {
 	res := []*pb.Organization{}
+
 	for _, o := range orgs {
 		res = append(res, dbOrgToPbOrg(&o))
 	}
+
 	return res
+}
+
+func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
+	return &pb.OrgUser{
+		OrgId:         uint64(member.OrgID),
+		Uuid:          member.Uuid.String(),
+		IsDeactivated: member.Deactivated,
+		CreatedAt:     timestamppb.New(member.CreatedAt),
+	}
 }
