@@ -77,13 +77,18 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-/* 
+/*
  * signal_term_handler -- SIGTERM handling routine. Gracefully exit the process
  *
  */
 void signal_term_handler(void) {
 
 	if (state == NULL) exit(1);
+
+	/* un-register the system */
+	if (send_request_to_init(REQ_UNREGISTER, state->config) != TRUE) {
+		log_error("Error registrating with the init system");
+	}
 
 	if (state->webInst) {
 		ulfius_stop_framework(state->webInst);
@@ -130,7 +135,7 @@ void catch_sigterm(void) {
  */
 int main (int argc, char *argv[]) {
 
-  int exitStatus=0;
+	int exitStatus=0;
 	char *debug=DEFAULT_LOG_LEVEL;
 	struct _u_instance webInst;
 	Config *config=NULL;
@@ -193,7 +198,7 @@ int main (int argc, char *argv[]) {
 
 	/* Step-3: system registration with init */
 	if (send_request_to_init(REQ_REGISTER, config) != TRUE) {
-	  log_error("Error registrating with the init system");
+		log_error("Error registrating with the init system");
 		exitStatus = 1;
 		goto exit_program;
 	}
@@ -206,6 +211,7 @@ int main (int argc, char *argv[]) {
 
 	log_debug("Goodbye ... ");
 
+	send_request_to_init(REQ_UNREGISTER, config);
 	ulfius_stop_framework(&webInst);
 	ulfius_clean_instance(&webInst);
 

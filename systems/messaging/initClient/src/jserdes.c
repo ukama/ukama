@@ -26,12 +26,12 @@ int serialize_request(Request *request, json_t **json) {
 	Register *reg;
 	char *str=NULL;
 
-	*json = json_object();
-	if (*json == NULL) {
-		return FALSE;
-	}
-
 	if (request->reqType == (ReqType)REQ_REGISTER) {
+
+		*json = json_object();
+		if (*json == NULL) {
+			return FALSE;
+		}
 
 		reg = request->reg;
 
@@ -45,6 +45,8 @@ int serialize_request(Request *request, json_t **json) {
 			free(str);
 		}
 		ret = TRUE;
+	} else if (request->reqType == (ReqType)REQ_UNREGISTER) {
+	  ret = TRUE;
 	}
 
 	return ret;
