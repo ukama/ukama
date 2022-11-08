@@ -54,6 +54,12 @@ type UpdateSystemRequest struct {
 }
 
 type AddSystemResponse struct {
+	OrgName     string `path:"org" validate:"required"`
+	SysName     string `path:"system" validate:"required"`
+	Ip          string `json:"ip" validate:"required"`
+	Certificate string `json:"certificate" validate:"required"`
+	Port        int32  `json:"port" validate:"required"`
+	Health      int32  `json:"health" validate:"required"`
 }
 
 type GetSystemRequest struct {
@@ -67,6 +73,7 @@ type GetSystemResponse struct {
 	Ip          string `json:"ip"`
 	Certificate string `json:"certificate"`
 	Port        string `json:"port"`
+	Health      int32  `json:"health" validate:"required"`
 }
 
 type DeleteSystemRequest struct {
