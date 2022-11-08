@@ -137,7 +137,13 @@ func (r *OrgServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*p
 	}
 
 	logrus.Infof("Adding member")
-	member, err := r.orgRepo.AddMember(org, user)
+	member := &db.OrgUser{
+		OrgID:  org.ID,
+		UserID: user.ID,
+		Uuid:   userUUID,
+	}
+
+	err = r.orgRepo.AddMember(member)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
