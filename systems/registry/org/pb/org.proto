@@ -14,6 +14,9 @@ service OrgService {
     rpc Add(AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
+
+    /* Orgs */
+    rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
 }
 
 message AddRequest{
@@ -29,7 +32,7 @@ message GetRequest {
 }
 
 message GetResponse{
-    Organization org = 2;
+    Organization org = 1;
 }
 
 message GetByOwnerRequest{
@@ -41,6 +44,15 @@ message GetByOwnerResponse{
     repeated Organization orgs = 2;
 }
 
+message AddMemberRequest{
+    uint64 orgId = 1;
+    string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+}
+
+message AddMemberResponse{
+  OrgUser member = 1;
+}
+
 message Organization {
     uint64 id = 1;
     string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
@@ -48,4 +60,12 @@ message Organization {
     string certificate = 4;
     bool isDeactivated = 5;
     google.protobuf.Timestamp created_at = 6;
+}
+
+message OrgUser {
+    uint64 orgId = 1;
+    uint64 userId = 2;
+    string uuid = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    bool isDeactivated = 4;
+    google.protobuf.Timestamp created_at = 5;
 }
