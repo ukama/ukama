@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 func DeleteFile(fileName string) error {
@@ -65,4 +66,13 @@ func CreateQuery(rows [][]string, effectiveAt string, simType string) string {
 	}
 	stmt := fmt.Sprintf("INSERT INTO rates %s VALUES %s", headerStr, strings.Join(valueStrings, ","))
 	return stmt
+}
+
+func IsFutureDate(date string) bool {
+	t, err := time.Parse("2006-01-02T15:04:05Z", date)
+	if err != nil {
+		return false
+	}
+	today := time.Now().UnixNano() / int64(time.Millisecond)
+	return today < t.UnixNano()/int64(time.Millisecond)
 }

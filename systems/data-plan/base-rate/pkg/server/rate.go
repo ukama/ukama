@@ -88,6 +88,15 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		}, nil
 	}
 
+	if !utils.IsFutureDate(effectiveAt) {
+		logrus.Infof("Date you provided is not a future date.",
+			fileUrl, effectiveAt, simType)
+		return &pb.UploadBaseRatesResponse{
+			Status: http.StatusBadRequest,
+			Error:  "Date you provided is not a future date.",
+		}, nil
+	}
+
 	destinationFileName := "temp.csv"
 	fde := utils.FetchData(fileUrl, destinationFileName)
 	if fde != nil {
