@@ -15,9 +15,10 @@ service OrgService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
 
-    /* Orgs */
+    /* Members */
     rpc AddMember(MemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
+    rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
 }
 
 message AddRequest{
@@ -54,6 +55,14 @@ message MemberResponse{
   OrgUser member = 1;
 }
 
+message GetMembersRequest {
+    uint64 orgId = 1;
+}
+
+message GetMembersResponse{
+    uint64 orgId = 1;
+    repeated OrgUser members = 2;
+}
 
 message Organization {
     uint64 id = 1;

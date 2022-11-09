@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -93,6 +93,19 @@ func (this *MemberResponse) Validate() error {
 	if this.Member != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Member); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Member", err)
+		}
+	}
+	return nil
+}
+func (this *GetMembersRequest) Validate() error {
+	return nil
+}
+func (this *GetMembersResponse) Validate() error {
+	for _, item := range this.Members {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Members", err)
+			}
 		}
 	}
 	return nil
