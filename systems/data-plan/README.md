@@ -16,23 +16,26 @@ Base rate microservice is responsibe of:
 ### Directory Structure
 
     .
-    ├── systems
-    │   ├── data-plan
-    │   │   │── base-rate
-    │   │   │   │── cmd
-    │   │   │   │   └── server
-    │   │   │   │── pb
-    │   │   │   │── pkg
-    │   │   │   │   ├── db
-    │   │   │   │   ├── config
-    │   │   │   │   ├── models
-    │   │   │   │   ├── utils
-    │   │   │   │   ├── services
-    │   │   │   │   └── validations
-    │   │   │   └──  docs
-    |   |   |        ├── digrams
-    │   │   │        └── template
-    └── README
+    └── systems
+        └── data-plan
+            │── base-rate
+            │   │── cmd
+            |   |   ├── listner
+            |   |   ├── server
+            │   │   └── version
+            |   │── mocks
+            │   │── pb
+            |   |   └──gen
+            │   └── pkg
+            │       ├── db
+            │       ├── queue
+            │       ├── server
+            │       ├── utils
+            │       └── validations
+            ├──  docs
+            |    ├── digrams
+            |    └── template
+            └── README
 
 ### RPC Function
 
@@ -57,6 +60,10 @@ Function take these arguments:
     [required] effectiveAt => String
 }
 ```
+
+**Demo**
+
+![UploadBaseRates](https://user-images.githubusercontent.com/83802574/198561831-0efe13de-0e7e-465f-a6b9-58244296bca5.gif)
 
 ________________
 **GetBaseRates**
@@ -83,6 +90,10 @@ Function take these arguments:
 }
 ```
 
+**Demo**
+
+![GetBaseRates](https://user-images.githubusercontent.com/83802574/198694692-abed26f1-2ed1-4f4a-8e81-f67a9d0c7270.gif)
+
 ________________
 **GetBaseRate**
 
@@ -103,6 +114,11 @@ Function take below argument:
     [required] rateId => Int32
 }
 ```
+
+**Demo**
+
+![GetRate](https://user-images.githubusercontent.com/83802574/198693504-ea7339cb-1795-4c1e-9156-6d383471091a.gif)
+
 ________________
 
 ### How to use?
@@ -120,7 +136,7 @@ make server
 
 This command will run the server and create database named `baserate` with `rates` table under it.
 
-Server is running, Now we can use any gRPC client to intract with RPC handlers. I'm using [Evans](https://github.com/ktr0731/evans) here:
+Server is running, Now we can use any gRPC client to intract with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans) here:
 
 ```
 evans --path /path/to --path . --proto pb/rate.proto --host localhost --port 9090
