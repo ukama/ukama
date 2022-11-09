@@ -88,6 +88,52 @@ func (_m *OrgRepo) GetByOwner(_a0 uuid.UUID) ([]db.Org, error) {
 	return r0, r1
 }
 
+// GetMember provides a mock function with given fields: orgID, userUUID
+func (_m *OrgRepo) GetMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error) {
+	ret := _m.Called(orgID, userUUID)
+
+	var r0 *db.OrgUser
+	if rf, ok := ret.Get(0).(func(int, uuid.UUID) *db.OrgUser); ok {
+		r0 = rf(orgID, userUUID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.OrgUser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int, uuid.UUID) error); ok {
+		r1 = rf(orgID, userUUID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetMembers provides a mock function with given fields: orgID
+func (_m *OrgRepo) GetMembers(orgID uint) ([]db.OrgUser, error) {
+	ret := _m.Called(orgID)
+
+	var r0 []db.OrgUser
+	if rf, ok := ret.Get(0).(func(uint) []db.OrgUser); ok {
+		r0 = rf(orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.OrgUser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewOrgRepo interface {
 	mock.TestingT
 	Cleanup(func())

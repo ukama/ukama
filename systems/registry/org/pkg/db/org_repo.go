@@ -18,11 +18,9 @@ type OrgRepo interface {
 	// Delete(id int) error
 
 	AddMember(member *OrgUser) error
-	// GetMember(org *Org, user *User) (*OrgUser, error)
-	// GetMember()
-	// GetMembers()
-
-	// DeactivateMember()
+	GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
+	GetMembers(orgID uint) ([]OrgUser, error)
+	// DeactivateMember
 	// RemoveMember()
 }
 
@@ -31,7 +29,6 @@ type orgRepo struct {
 }
 
 func NewOrgRepo(db sql.Db) OrgRepo {
-	_ = db.GetGormDb().SetupJoinTable(&Org{}, "Members", &OrgUser{})
 	return &orgRepo{
 		Db: db,
 	}
@@ -74,6 +71,28 @@ func (r *orgRepo) AddMember(member *OrgUser) error {
 	d := r.Db.GetGormDb().Create(member)
 
 	return d.Error
+}
+
+func (r *orgRepo) GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error) {
+	var member OrgUser
+
+	result := r.Db.GetGormDb().First(&member, orgID, userUUID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &member, nil
+}
+
+func (r *orgRepo) GetMembers(orgID uint) ([]OrgUser, error) {
+	var members []OrgUser
+
+	result := r.Db.GetGormDb().Where(&OrgUser{OrgID: orgID}).Find(&members)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return members, nil
 }
 
 // func (r *orgRepo) Delete(name string) error {

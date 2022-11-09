@@ -43,16 +43,10 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 func (u *userRepo) Delete(userUUID uuid.UUID) error {
 	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Where(&User{Uuid: userUUID}).Delete(&User{})
+
 		if result.Error != nil {
 			return result.Error
 		}
-
-		// if nestedFunc != nil {
-		// nestErr := nestedFunc(userUUID, tx)
-		// if nestErr != nil {
-		// return nestErr
-		// }
-		// }
 
 		return nil
 	})
