@@ -96,7 +96,7 @@ func (r *OrgServer) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) (
 	return resp, nil
 }
 
-func (r *OrgServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.AddMemberResponse, error) {
+func (r *OrgServer) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
 	org, err := r.orgRepo.Get(int(req.GetOrgId()))
 	if err != nil {
@@ -148,7 +148,25 @@ func (r *OrgServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*p
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	return &pb.AddMemberResponse{Member: dbMemberToPbMember(member)}, nil
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
+}
+
+func (r *OrgServer) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
+	if len(req.GetUserUuid()) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "owner uuid cannot be empty")
+	}
+
+	uuid, err := uuid.Parse(req.GetUserUuid())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner uuid. Error %s", err.Error())
+	}
+
+	member, err := r.orgRepo.GetMember(int(req.GetOrgId()), uuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "orgs")
+	}
+
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
 // func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
