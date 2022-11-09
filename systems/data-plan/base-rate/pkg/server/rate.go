@@ -21,10 +21,12 @@ import (
 
 type BaseRateServer struct {
 	baseRateRepo   db.BaseRateRepo
-	queuePub       msgbus.QPub
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	pb.UnimplementedBaseRatesServiceServer
+}
+type GetRatesParams struct {
+	country, network, simType string
 }
 
 func NewBaseRateServer(baseRateRepo db.BaseRateRepo) *BaseRateServer {
@@ -40,28 +42,42 @@ func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 	logrus.Infof("Get rate  %v", req.GetRateId())
 
 	rateId := req.GetRateId()
+
 	rate, err := b.baseRateRepo.GetBaseRate(rateId)
 	if err != nil {
 		logrus.Error("error getting the rate" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rate")
+		return &pb.GetBaseRateResponse{
+			Status: http.StatusBadRequest,
+			Error:  "Rate ID is required.",
+		}, nil
+
 	}
 	resp := &pb.GetBaseRateResponse{
-		Rate: rate.ToPbRate(),
+		Rate:   rate.ToPbRate(),
+		Status: http.StatusAccepted,
 	}
 
 	return resp, nil
 }
 
 func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
-
+	logrus.Infof("GetBaseRates by country or network : %s", req.GetCountry())
 	country := req.GetCountry()
-	// network := req.GetProvider()
-	// simType := validations.ReqPbToStr(req.GetSimType())
-
-	rates, err := b.baseRateRepo.GetBaseRates(country)
+	network := req.GetProvider()
+	simType := validations.ReqPbToStr(req.GetSimType())
+	if validations.IsRequestEmpty(country) {
+		return &pb.GetBaseRatesResponse{
+			Status: http.StatusBadRequest,
+			Error:  "Country name is required!",
+		}, nil
+	}
+	rates, err := b.baseRateRepo.GetBaseRates(country, network, simType)
 	if err != nil {
 		logrus.Error("error getting the rate" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rate")
+		return &pb.GetBaseRatesResponse{
+			Status: http.StatusBadRequest,
+			Error:  "Please provide required params!.",
+		}, nil
 	}
 
 	rateList := &pb.GetBaseRatesResponse{

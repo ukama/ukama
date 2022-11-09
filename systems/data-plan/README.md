@@ -12,7 +12,7 @@ Base rate sub-system is responsibe of:
 - Populating rates in DB from CSV
 - Provide rates with some optional and require filters
 - Provide functionality to get record by id
-  
+
 ### Directory Structure
 
     .
@@ -65,7 +65,8 @@ Function take these arguments:
 
 <img src="https://user-images.githubusercontent.com/83802574/198561831-0efe13de-0e7e-465f-a6b9-58244296bca5.gif" alt="uploadBaseRates" width="720"/>
 
-________________
+---
+
 **GetBaseRates**
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/docs/digrams/GetBaseRates.png" alt="J" width="500"/>
@@ -94,7 +95,8 @@ Function take these arguments:
 
 <img src="https://user-images.githubusercontent.com/83802574/198694692-abed26f1-2ed1-4f4a-8e81-f67a9d0c7270.gif" alt="getBaseRates" width="720"/>
 
-________________
+---
+
 **GetBaseRate**
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/docs/digrams/GetBaseRate.png" alt="J" width="500"/>
@@ -119,7 +121,7 @@ Function take below argument:
 
 <img src="https://user-images.githubusercontent.com/83802574/198693504-ea7339cb-1795-4c1e-9156-6d383471091a.gif" alt="getBaseRate" width="720"/>
 
-________________
+---
 
 ### How to use?
 
@@ -127,14 +129,21 @@ Before using the repo make sure below tools are installed:
 
 - Go 1.18
 - PostgreSQL
+- gRPC client
 
 Then navigate into base-rate directory and run below command:
+
+```
+make gen
+```
+
+This command will generate protobuf from `pb/rate.proto`.
 
 ```
 make server
 ```
 
-This command will run the server and create database named `baserate` with `rates` table under it.
+This command will run the server on port `9090` ,and a database name `baserate` with `rates` table under it.
 
 Server is running, Now we can use any gRPC client to intract with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans) here:
 
@@ -156,13 +165,14 @@ Let's first populate data in out newly created DB using UploadBaseRates RPC.
 
 ```
 call UploadBaseRates
-````
+```
 
 Service takes 3 aurguments **fileURL**, **effectiveAt** & **simType**. For fileURL we can use url of template file existing under `data-plan/docs/template/template.csv`, effectiveAt can be any future UTC formate date and then choose simType.
 
 **GetBaseRates**
 
 To verify that our records are populated we can use GetBaseRates RPC which will return list of rates base on filters provided.
+This rpc function takes required `country` and some optional arguments **country**,**network**,**simType**,**from**,**to**.
 
 ```
 call GetBaseRates
