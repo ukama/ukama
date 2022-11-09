@@ -10,6 +10,7 @@ import (
 )
 
 type OrgRepo interface {
+	/* Orgs */
 	Add(org *Org) error
 	Get(id int) (*Org, error)
 	GetByOwner(uuid uuid.UUID) ([]Org, error)
@@ -17,6 +18,7 @@ type OrgRepo interface {
 	// Deactivate(id int) error
 	// Delete(id int) error
 
+	/* Members */
 	AddMember(member *OrgUser) error
 	GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
 	GetMembers(orgID int) ([]OrgUser, error)
