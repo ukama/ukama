@@ -112,11 +112,11 @@ func (_m *OrgRepo) GetMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error)
 }
 
 // GetMembers provides a mock function with given fields: orgID
-func (_m *OrgRepo) GetMembers(orgID uint) ([]db.OrgUser, error) {
+func (_m *OrgRepo) GetMembers(orgID int) ([]db.OrgUser, error) {
 	ret := _m.Called(orgID)
 
 	var r0 []db.OrgUser
-	if rf, ok := ret.Get(0).(func(uint) []db.OrgUser); ok {
+	if rf, ok := ret.Get(0).(func(int) []db.OrgUser); ok {
 		r0 = rf(orgID)
 	} else {
 		if ret.Get(0) != nil {
@@ -125,7 +125,7 @@ func (_m *OrgRepo) GetMembers(orgID uint) ([]db.OrgUser, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint) error); ok {
+	if rf, ok := ret.Get(1).(func(int) error); ok {
 		r1 = rf(orgID)
 	} else {
 		r1 = ret.Error(1)

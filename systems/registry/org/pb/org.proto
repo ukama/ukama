@@ -16,7 +16,8 @@ service OrgService {
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
 
     /* Orgs */
-    rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
+    rpc AddMember(MemberRequest) returns (MemberResponse);
+    rpc GetMember(MemberRequest) returns (MemberResponse);
 }
 
 message AddRequest{
@@ -44,14 +45,15 @@ message GetByOwnerResponse{
     repeated Organization orgs = 2;
 }
 
-message AddMemberRequest{
+message MemberRequest{
     uint64 orgId = 1;
     string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
 }
 
-message AddMemberResponse{
+message MemberResponse{
   OrgUser member = 1;
 }
+
 
 message Organization {
     uint64 id = 1;

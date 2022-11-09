@@ -38,20 +38,20 @@ func (_m *OrgServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*gen.
 }
 
 // AddMember provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) AddMember(_a0 context.Context, _a1 *gen.AddMemberRequest) (*gen.AddMemberResponse, error) {
+func (_m *OrgServiceServer) AddMember(_a0 context.Context, _a1 *gen.MemberRequest) (*gen.MemberResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.AddMemberResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddMemberRequest) *gen.AddMemberResponse); ok {
+	var r0 *gen.MemberResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest) *gen.MemberResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddMemberResponse)
+			r0 = ret.Get(0).(*gen.MemberResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddMemberRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -98,6 +98,29 @@ func (_m *OrgServiceServer) GetByOwner(_a0 context.Context, _a1 *gen.GetByOwnerR
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByOwnerRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetMember provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) GetMember(_a0 context.Context, _a1 *gen.MemberRequest) (*gen.MemberResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.MemberResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest) *gen.MemberResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.MemberResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

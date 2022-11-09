@@ -19,7 +19,7 @@ type OrgRepo interface {
 
 	AddMember(member *OrgUser) error
 	GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
-	GetMembers(orgID uint) ([]OrgUser, error)
+	GetMembers(orgID int) ([]OrgUser, error)
 	// DeactivateMember
 	// RemoveMember()
 }
@@ -76,7 +76,7 @@ func (r *orgRepo) AddMember(member *OrgUser) error {
 func (r *orgRepo) GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error) {
 	var member OrgUser
 
-	result := r.Db.GetGormDb().First(&member, orgID, userUUID)
+	result := r.Db.GetGormDb().Where("org_id = ? And uuid = ?", orgID, userUUID).First(&member)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -84,10 +84,10 @@ func (r *orgRepo) GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error) {
 	return &member, nil
 }
 
-func (r *orgRepo) GetMembers(orgID uint) ([]OrgUser, error) {
+func (r *orgRepo) GetMembers(orgID int) ([]OrgUser, error) {
 	var members []OrgUser
 
-	result := r.Db.GetGormDb().Where(&OrgUser{OrgID: orgID}).Find(&members)
+	result := r.Db.GetGormDb().Where(&OrgUser{OrgID: uint(orgID)}).Find(&members)
 	if result.Error != nil {
 		return nil, result.Error
 	}
