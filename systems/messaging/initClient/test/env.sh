@@ -10,9 +10,9 @@ export ENV_INIT_CLIENT_ADDR="localhost"
 export ENV_INIT_CLIENT_PORT=9091
 
 # to add org:
-curl -X PUT http://localhost:8081/v1/orgs/ukama001 \
-	 -H 'Content-Type: application/json' \
-	 -d '{ "certificate": "Hello certificate", "ip": "192.168.0.1", "port": 333
-}'
+#curl -X PUT http://localhost:8081/v1/orgs/ukama001 \
+#	 -H 'Content-Type: application/json' \
+#	 -d '{ "certificate": "Hello certificate", "ip": "192.168.0.1", "port": 333
+#}'
 
 # then execute the initClient
