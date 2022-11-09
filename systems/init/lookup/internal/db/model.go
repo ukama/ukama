@@ -23,11 +23,12 @@ type Org struct {
 
 type System struct {
 	gorm.Model
-	Name        string `gorm:"type:string;uniqueIndex:name_idx_case_insensetive,expression:lower(name);not null"`
+	Name        string `gorm:"unique;type:string;uniqueIndex:name_idx_case_insensetive,expression:lower(name);not null"`
 	Uuid        string `gorm:"type:uuid;unique"`
 	Certificate string
 	Ip          pgtype.Inet `gorm:"type:inet"`
 	Port        int32
 	OrgID       uint
 	Org         Org
+	Health      uint32 `gorm:"default:100"`
 }
