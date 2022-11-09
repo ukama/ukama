@@ -2,12 +2,12 @@
 
 Data Plan system manage all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
 
-- Base rate microservice
-- Packages microservice
+- Base rate sub-system
+- Packages sub-system
 
-## Base rate microservice
+## Base rate sub-system
 
-Base rate microservice is responsibe of:
+Base rate sub-system is responsibe of:
 
 - Populating rates in DB from CSV
 - Provide rates with some optional and require filters
@@ -63,7 +63,7 @@ Function take these arguments:
 
 **Demo**
 
-![UploadBaseRates](https://user-images.githubusercontent.com/83802574/198561831-0efe13de-0e7e-465f-a6b9-58244296bca5.gif)
+<img src="https://user-images.githubusercontent.com/83802574/198561831-0efe13de-0e7e-465f-a6b9-58244296bca5.gif" alt="uploadBaseRates" width="720"/>
 
 ________________
 **GetBaseRates**
@@ -92,7 +92,7 @@ Function take these arguments:
 
 **Demo**
 
-![GetBaseRates](https://user-images.githubusercontent.com/83802574/198694692-abed26f1-2ed1-4f4a-8e81-f67a9d0c7270.gif)
+<img src="https://user-images.githubusercontent.com/83802574/198694692-abed26f1-2ed1-4f4a-8e81-f67a9d0c7270.gif" alt="getBaseRates" width="720"/>
 
 ________________
 **GetBaseRate**
@@ -117,7 +117,7 @@ Function take below argument:
 
 **Demo**
 
-![GetRate](https://user-images.githubusercontent.com/83802574/198693504-ea7339cb-1795-4c1e-9156-6d383471091a.gif)
+<img src="https://user-images.githubusercontent.com/83802574/198693504-ea7339cb-1795-4c1e-9156-6d383471091a.gif" alt="getBaseRate" width="720"/>
 
 ________________
 
