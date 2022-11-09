@@ -163,10 +163,28 @@ func (r *OrgServer) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.M
 
 	member, err := r.orgRepo.GetMember(int(req.GetOrgId()), uuid)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "orgs")
+		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
+}
+
+func (r *OrgServer) GetMembers(ctx context.Context, req *pb.GetMembersRequest) (*pb.GetMembersResponse, error) {
+	_, err := r.orgRepo.Get(int(req.GetOrgId()))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+	members, err := r.orgRepo.GetMembers(int(req.GetOrgId()))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "orgs")
+	}
+
+	resp := &pb.GetMembersResponse{
+		OrgId:   req.GetOrgId(),
+		Members: dbMembersToPbMembers(members),
+	}
+
+	return resp, nil
 }
 
 // func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -210,4 +228,14 @@ func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 		IsDeactivated: member.Deactivated,
 		CreatedAt:     timestamppb.New(member.CreatedAt),
 	}
+}
+
+func dbMembersToPbMembers(members []db.OrgUser) []*pb.OrgUser {
+	res := []*pb.OrgUser{}
+
+	for _, m := range members {
+		res = append(res, dbMemberToPbMember(&m))
+	}
+
+	return res
 }
