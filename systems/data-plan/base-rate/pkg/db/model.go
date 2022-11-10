@@ -1,8 +1,6 @@
 package db
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -21,7 +19,7 @@ type Rate struct {
 	Lte          string
 	Lte_m        string
 	Apn          string
-	Effective_at time.Time
-	End_at       time.Time
+	Effective_at string
+	End_at       string
 	Sim_type     string
 }

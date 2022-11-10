@@ -1,18 +1,13 @@
 package db
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/ukama/ukama/systems/common/sql"
 )
-
-// declare interface so that we can mock it
 
 type BaseRateRepo interface {
 	GetBaseRate(Id int64) (*Rate, error)
 	GetBaseRates(country, network, effectiveAt, simType string) ([]Rate, error)
-	UploadBaseRates(query string) error
+	UploadBaseRates(rateList []Rate) error
 }
 
 type baseRateRepo struct {
@@ -36,11 +31,7 @@ func (u *baseRateRepo) GetBaseRate(rateId int64) (*Rate, error) {
 
 func (b *baseRateRepo) GetBaseRates(country, network, effectiveAt, simType string) ([]Rate, error) {
 	var rates []Rate
-	date, error := time.Parse("2006-01-02", effectiveAt)
-	if error != nil {
-		fmt.Println(error)
-	}
-	result := b.Db.GetGormDb().Where(&Rate{Country: country, Network: network, Sim_type: simType, Effective_at: date}).Find(&rates)
+	result := b.Db.GetGormDb().Where(&Rate{Country: country, Network: network, Sim_type: simType, Effective_at: effectiveAt}).Find(&rates)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -49,8 +40,8 @@ func (b *baseRateRepo) GetBaseRates(country, network, effectiveAt, simType strin
 	return rates, nil
 }
 
-func (b *baseRateRepo) UploadBaseRates(query string) error {
-	e := b.Db.GetGormDb().Exec(query)
+func (b *baseRateRepo) UploadBaseRates(rateList []Rate) error {
+	e := b.Db.GetGormDb().Create(&rateList)
 	if e != nil {
 		return e.Error
 	}
