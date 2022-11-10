@@ -169,7 +169,7 @@ type GetResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Org *Organization `protobuf:"bytes,2,opt,name=org,proto3" json:"org,omitempty"`
+	Org *Organization `protobuf:"bytes,1,opt,name=org,proto3" json:"org,omitempty"`
 }
 
 func (x *GetResponse) Reset() {
