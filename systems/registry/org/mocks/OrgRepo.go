@@ -42,6 +42,29 @@ func (_m *OrgRepo) AddMember(member *db.OrgUser) error {
 	return r0
 }
 
+// DeactivateMember provides a mock function with given fields: orgID, userUUID
+func (_m *OrgRepo) DeactivateMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error) {
+	ret := _m.Called(orgID, userUUID)
+
+	var r0 *db.OrgUser
+	if rf, ok := ret.Get(0).(func(int, uuid.UUID) *db.OrgUser); ok {
+		r0 = rf(orgID, userUUID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.OrgUser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int, uuid.UUID) error); ok {
+		r1 = rf(orgID, userUUID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Get provides a mock function with given fields: id
 func (_m *OrgRepo) Get(id int) (*db.Org, error) {
 	ret := _m.Called(id)

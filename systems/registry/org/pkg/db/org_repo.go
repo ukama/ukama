@@ -5,6 +5,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/ukama/ukama/systems/common/sql"
 )
@@ -22,7 +24,7 @@ type OrgRepo interface {
 	AddMember(member *OrgUser) error
 	GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
 	GetMembers(orgID int) ([]OrgUser, error)
-	// DeactivateMember
+	DeactivateMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
 	// RemoveMember()
 }
 
@@ -95,6 +97,25 @@ func (r *orgRepo) GetMembers(orgID int) ([]OrgUser, error) {
 	}
 
 	return members, nil
+}
+
+func (r *orgRepo) DeactivateMember(orgID int, userUUID uuid.UUID) (*OrgUser, error) {
+	member := &OrgUser{
+		OrgID:       uint(orgID),
+		Uuid:        userUUID,
+		Deactivated: true,
+	}
+
+	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", member.OrgID, member.Uuid).Updates(member)
+	if d.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	if d.Error != nil {
+		return nil, d.Error
+	}
+
+	return member, nil
 }
 
 // func (r *orgRepo) Delete(name string) error {
