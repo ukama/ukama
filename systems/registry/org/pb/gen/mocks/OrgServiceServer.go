@@ -175,6 +175,29 @@ func (_m *OrgServiceServer) GetMembers(_a0 context.Context, _a1 *gen.GetMembersR
 	return r0, r1
 }
 
+// RemoveMember provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) RemoveMember(_a0 context.Context, _a1 *gen.MemberRequest) (*gen.MemberResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.MemberResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest) *gen.MemberResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.MemberResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // mustEmbedUnimplementedOrgServiceServer provides a mock function with given fields:
 func (_m *OrgServiceServer) mustEmbedUnimplementedOrgServiceServer() {
 	_m.Called()

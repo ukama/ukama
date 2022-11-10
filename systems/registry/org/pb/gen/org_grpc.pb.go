@@ -31,6 +31,7 @@ type OrgServiceClient interface {
 	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
 	DeactivateMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 }
 
 type orgServiceClient struct {
@@ -104,6 +105,15 @@ func (c *orgServiceClient) DeactivateMember(ctx context.Context, in *MemberReque
 	return out, nil
 }
 
+func (c *orgServiceClient) RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/RemoveMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrgServiceServer is the server API for OrgService service.
 // All implementations must embed UnimplementedOrgServiceServer
 // for forward compatibility
@@ -117,6 +127,7 @@ type OrgServiceServer interface {
 	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
 	DeactivateMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	mustEmbedUnimplementedOrgServiceServer()
 }
 
@@ -144,6 +155,9 @@ func (UnimplementedOrgServiceServer) GetMembers(context.Context, *GetMembersRequ
 }
 func (UnimplementedOrgServiceServer) DeactivateMember(context.Context, *MemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeactivateMember not implemented")
+}
+func (UnimplementedOrgServiceServer) RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveMember not implemented")
 }
 func (UnimplementedOrgServiceServer) mustEmbedUnimplementedOrgServiceServer() {}
 
@@ -284,6 +298,24 @@ func _OrgService_DeactivateMember_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrgService_RemoveMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).RemoveMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/RemoveMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).RemoveMember(ctx, req.(*MemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrgService_ServiceDesc is the grpc.ServiceDesc for OrgService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -318,6 +350,10 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeactivateMember",
 			Handler:    _OrgService_DeactivateMember_Handler,
+		},
+		{
+			MethodName: "RemoveMember",
+			Handler:    _OrgService_RemoveMember_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
