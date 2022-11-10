@@ -8,9 +8,9 @@ import (
 
 type BaseRateRepo interface {
 	GetBaseRate(Id uint64) (*Rate, error)
-	GetBaseRates(country, network, simType string) (RateList, error)
+	GetBaseRates(country, network, simType string) ([]Rate, error)
 	UploadBaseRates(query string) error
-	GetAllBaseRates(effectiveAt string) (RateList, error)
+	GetAllBaseRates(effectiveAt string) ([]Rate, error)
 }
 
 type baseRateRepo struct {
@@ -33,8 +33,8 @@ func (u *baseRateRepo) GetBaseRate(rateId uint64) (*Rate, error) {
 	return rate, nil
 }
 
-func (b *baseRateRepo) GetBaseRates(country, network, simType string) (RateList, error) {
-	var rates RateList
+func (b *baseRateRepo) GetBaseRates(country, network, simType string) ([]Rate, error) {
+	var rates []Rate
 	result:= b.Db.GetGormDb().Where(&Rate{Country: country, Network: network,Sim_type:simType}).Find(&rates)
 
 		if result.Error != nil {
@@ -44,8 +44,8 @@ func (b *baseRateRepo) GetBaseRates(country, network, simType string) (RateList,
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetAllBaseRates(effectiveAt string) (RateList, error) {
-	var rates RateList
+func (b *baseRateRepo) GetAllBaseRates(effectiveAt string) ([]Rate, error) {
+	var rates []Rate
 	result := b.Db.GetGormDb().Where("effective_at", effectiveAt).Find(&rates)
 	if result.Error != nil {
 		return nil, result.Error

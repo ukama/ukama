@@ -34,29 +34,29 @@ func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 
 	rate, err := b.baseRateRepo.GetBaseRate(rateId)
 	if err != nil {
-		logrus.Error("error getting the rate" + err.Error())
+		logrus.Error("error while getting rate" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 	resp := &pb.GetBaseRateResponse{
-		Rate:   rate.ToPbRate(),
+		Rate:dbRatesToPbRates(rate),
 	}
 
 	return resp, nil
 }
 
 func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates by country or network : %s", req.GetCountry())
+	logrus.Infof("GetBaseRates where country =  %s and network =%s and simType =%s", req.GetCountry(),req.GetProvider(),req.GetSimType())
 	country := req.GetCountry()
 	network := req.GetProvider()
 	simType := validations.ReqPbToStr(req.GetSimType())
 	rates, err := b.baseRateRepo.GetBaseRates(country, network, simType)
 	if err != nil {
-		logrus.Error("error getting the rate" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rate")
+		logrus.Error("error while getting rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 
 	rateList := &pb.GetBaseRatesResponse{
-		Rates: rates.ToPbRates(),
+		Rates:dbratesToPbRates(rates),
 	}
 
 	return rateList, nil
@@ -129,15 +129,48 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
-	rates, err := b.baseRateRepo.GetAllBaseRates(effectiveAt)
-	if err != nil {
-		logrus.Error("error getting the rates" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rate")
-	}
+	// rates, err := b.baseRateRepo.GetAllBaseRates(effectiveAt)
+	// if err != nil {
+	// 	logrus.Error("error getting the rates" + err.Error())
+	// 	return nil, grpc.SqlErrorToGrpc(err, "rate")
+	// }
 
 	rateList := &pb.UploadBaseRatesResponse{
-		Rate: rates.ToPbRates(),
+		Rate: []*pb.Rate{},
 	}
 
 	return rateList, nil
+}
+
+func dbratesToPbRates(rates []db.Rate) []*pb.Rate {
+	res := []*pb.Rate{}
+	for _, u := range rates {
+		res = append(res, dbRatesToPbRates(&u))
+	}
+	return res
+}
+
+func dbRatesToPbRates(r *db.Rate) *pb.Rate {
+	return &pb.Rate{
+		Id:          int64(r.ID),
+		X2G:         r.X2g,
+		X3G:         r.X3g,
+		X5G:         r.X5g,
+		Lte:         r.Lte,
+		Apn:         r.Apn,
+		Vpmn:        r.Vpmn,
+		Imsi:        r.Imsi,
+		Data:        r.Data,
+		LteM:        r.Lte_m,
+		SmsMo:       r.Sms_mo,
+		SmsMt:       r.Sms_mt,
+		Network:     r.Network,
+		Country:     r.Country,
+		SimType:     r.Sim_type,
+		EndAt:       r.End_at.String(),
+		CreatedAt:   r.CreatedAt.String(),
+		UpdatedAt:   r.UpdatedAt.String(),
+		EffectiveAt: r.Effective_at.String(),
+		DeletedAt:   r.DeletedAt.Time.String(),
+	}
 }

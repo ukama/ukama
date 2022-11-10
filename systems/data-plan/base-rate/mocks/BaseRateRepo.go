@@ -13,15 +13,15 @@ type BaseRateRepo struct {
 }
 
 // GetAllBaseRates provides a mock function with given fields: effectiveAt
-func (_m *BaseRateRepo) GetAllBaseRates(effectiveAt string) (db.RateList, error) {
+func (_m *BaseRateRepo) GetAllBaseRates(effectiveAt string) ([]db.Rate, error) {
 	ret := _m.Called(effectiveAt)
 
-	var r0 db.RateList
-	if rf, ok := ret.Get(0).(func(string) db.RateList); ok {
+	var r0 []db.Rate
+	if rf, ok := ret.Get(0).(func(string) []db.Rate); ok {
 		r0 = rf(effectiveAt)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(db.RateList)
+			r0 = ret.Get(0).([]db.Rate)
 		}
 	}
 
@@ -59,15 +59,15 @@ func (_m *BaseRateRepo) GetBaseRate(Id uint64) (*db.Rate, error) {
 }
 
 // GetBaseRates provides a mock function with given fields: country, network, simType
-func (_m *BaseRateRepo) GetBaseRates(country string, network string, simType string) (db.RateList, error) {
+func (_m *BaseRateRepo) GetBaseRates(country string, network string, simType string) ([]db.Rate, error) {
 	ret := _m.Called(country, network, simType)
 
-	var r0 db.RateList
-	if rf, ok := ret.Get(0).(func(string, string, string) db.RateList); ok {
+	var r0 []db.Rate
+	if rf, ok := ret.Get(0).(func(string, string, string) []db.Rate); ok {
 		r0 = rf(country, network, simType)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(db.RateList)
+			r0 = ret.Get(0).([]db.Rate)
 		}
 	}
 
