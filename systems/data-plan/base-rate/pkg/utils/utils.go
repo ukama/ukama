@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -40,7 +39,7 @@ func FetchData(url string) ([]RawRates, error) {
 
 	var rawRates []RawRates
 	if err := csvutil.Unmarshal(content, &rawRates); err != nil {
-		fmt.Println("error:", err)
+		return nil, err
 	}
 
 	return rawRates, nil
