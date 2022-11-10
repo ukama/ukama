@@ -17,7 +17,7 @@ type userRepo struct {
 	Db sql.Db
 }
 
-func NewUserRepo(db sql.Db) *userRepo {
+func NewUserRepo(db sql.Db) UserRepo {
 	return &userRepo{
 		Db: db,
 	}
@@ -32,7 +32,7 @@ func (u *userRepo) Add(user *User) error {
 func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 	var user User
 
-	result := u.Db.GetGormDb().First(&user, uuid)
+	result := u.Db.GetGormDb().Where("uuid = ?", uuid).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -40,18 +40,12 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 	return &user, nil
 }
 
-func (u *userRepo) Delete(userUUID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+func (u *userRepo) Delete(userUUID uuid.UUID) error {
 	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Where(&User{Uuid: userUUID}).Delete(&User{})
+
 		if result.Error != nil {
 			return result.Error
-		}
-
-		if nestedFunc != nil {
-			nestErr := nestedFunc(userUUID, tx)
-			if nestErr != nil {
-				return nestErr
-			}
 		}
 
 		return nil

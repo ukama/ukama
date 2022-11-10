@@ -28,6 +28,43 @@ func (_m *OrgRepo) Add(org *db.Org) error {
 	return r0
 }
 
+// AddMember provides a mock function with given fields: member
+func (_m *OrgRepo) AddMember(member *db.OrgUser) error {
+	ret := _m.Called(member)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.OrgUser) error); ok {
+		r0 = rf(member)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeactivateMember provides a mock function with given fields: orgID, userUUID
+func (_m *OrgRepo) DeactivateMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error) {
+	ret := _m.Called(orgID, userUUID)
+
+	var r0 *db.OrgUser
+	if rf, ok := ret.Get(0).(func(int, uuid.UUID) *db.OrgUser); ok {
+		r0 = rf(orgID, userUUID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.OrgUser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int, uuid.UUID) error); ok {
+		r1 = rf(orgID, userUUID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Get provides a mock function with given fields: id
 func (_m *OrgRepo) Get(id int) (*db.Org, error) {
 	ret := _m.Called(id)
@@ -72,6 +109,66 @@ func (_m *OrgRepo) GetByOwner(_a0 uuid.UUID) ([]db.Org, error) {
 	}
 
 	return r0, r1
+}
+
+// GetMember provides a mock function with given fields: orgID, userUUID
+func (_m *OrgRepo) GetMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error) {
+	ret := _m.Called(orgID, userUUID)
+
+	var r0 *db.OrgUser
+	if rf, ok := ret.Get(0).(func(int, uuid.UUID) *db.OrgUser); ok {
+		r0 = rf(orgID, userUUID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.OrgUser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int, uuid.UUID) error); ok {
+		r1 = rf(orgID, userUUID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetMembers provides a mock function with given fields: orgID
+func (_m *OrgRepo) GetMembers(orgID int) ([]db.OrgUser, error) {
+	ret := _m.Called(orgID)
+
+	var r0 []db.OrgUser
+	if rf, ok := ret.Get(0).(func(int) []db.OrgUser); ok {
+		r0 = rf(orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.OrgUser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemoveMember provides a mock function with given fields: orgID, userUUID
+func (_m *OrgRepo) RemoveMember(orgID int, userUUID uuid.UUID) error {
+	ret := _m.Called(orgID, userUUID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int, uuid.UUID) error); ok {
+		r0 = rf(orgID, userUUID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 type mockConstructorTestingTNewOrgRepo interface {

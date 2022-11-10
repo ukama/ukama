@@ -5,6 +5,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/metrics"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	provider "github.com/ukama/ukama/systems/registry/org/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/org/pkg/server"
 
 	"github.com/ukama/ukama/systems/registry/org/pkg"
@@ -40,14 +41,18 @@ func main() {
 	runGrpcServer(orgDb)
 }
 
-// initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	svcConf = &pkg.Config{
-		DB: &uconf.Database{DbName: pkg.ServiceName},
+		DB: &uconf.Database{
+			DbName: pkg.ServiceName,
+		},
+		Grpc: &uconf.Grpc{
+			Port: 9091,
+		},
+		Metrics: &uconf.Metrics{
+			Port: 10251,
+		},
 	}
-
-	// We change only DB name. Rest of the fields is set by default.
-	svcConf.DB.DbName = pkg.ServiceName
 
 	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
@@ -68,7 +73,7 @@ func initDb() sql.Db {
 
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.Org{})
+	err := d.Init(&db.Org{}, &db.User{}, &db.OrgUser{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -77,7 +82,10 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb))
+	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
+		db.NewUserRepo(gormdb),
+		provider.NewUserClientProvider(svcConf.UsersHost),
+	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)

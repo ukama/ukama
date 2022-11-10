@@ -26,6 +26,12 @@ type OrgServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByOwner(ctx context.Context, in *GetByOwnerRequest, opts ...grpc.CallOption) (*GetByOwnerResponse, error)
+	// Members
+	AddMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
+	DeactivateMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 }
 
 type orgServiceClient struct {
@@ -63,6 +69,51 @@ func (c *orgServiceClient) GetByOwner(ctx context.Context, in *GetByOwnerRequest
 	return out, nil
 }
 
+func (c *orgServiceClient) AddMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/AddMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/GetMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error) {
+	out := new(GetMembersResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/GetMembers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) DeactivateMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/DeactivateMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/RemoveMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrgServiceServer is the server API for OrgService service.
 // All implementations must embed UnimplementedOrgServiceServer
 // for forward compatibility
@@ -71,6 +122,12 @@ type OrgServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByOwner(context.Context, *GetByOwnerRequest) (*GetByOwnerResponse, error)
+	// Members
+	AddMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
+	DeactivateMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	mustEmbedUnimplementedOrgServiceServer()
 }
 
@@ -86,6 +143,21 @@ func (UnimplementedOrgServiceServer) Get(context.Context, *GetRequest) (*GetResp
 }
 func (UnimplementedOrgServiceServer) GetByOwner(context.Context, *GetByOwnerRequest) (*GetByOwnerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByOwner not implemented")
+}
+func (UnimplementedOrgServiceServer) AddMember(context.Context, *MemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMember not implemented")
+}
+func (UnimplementedOrgServiceServer) GetMember(context.Context, *MemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMember not implemented")
+}
+func (UnimplementedOrgServiceServer) GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMembers not implemented")
+}
+func (UnimplementedOrgServiceServer) DeactivateMember(context.Context, *MemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeactivateMember not implemented")
+}
+func (UnimplementedOrgServiceServer) RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveMember not implemented")
 }
 func (UnimplementedOrgServiceServer) mustEmbedUnimplementedOrgServiceServer() {}
 
@@ -154,6 +226,96 @@ func _OrgService_GetByOwner_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrgService_AddMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).AddMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/AddMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).AddMember(ctx, req.(*MemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_GetMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).GetMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/GetMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).GetMember(ctx, req.(*MemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_GetMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMembersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).GetMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/GetMembers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).GetMembers(ctx, req.(*GetMembersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_DeactivateMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).DeactivateMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/DeactivateMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).DeactivateMember(ctx, req.(*MemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_RemoveMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).RemoveMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/RemoveMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).RemoveMember(ctx, req.(*MemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrgService_ServiceDesc is the grpc.ServiceDesc for OrgService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -172,6 +334,26 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetByOwner",
 			Handler:    _OrgService_GetByOwner_Handler,
+		},
+		{
+			MethodName: "AddMember",
+			Handler:    _OrgService_AddMember_Handler,
+		},
+		{
+			MethodName: "GetMember",
+			Handler:    _OrgService_GetMember_Handler,
+		},
+		{
+			MethodName: "GetMembers",
+			Handler:    _OrgService_GetMembers_Handler,
+		},
+		{
+			MethodName: "DeactivateMember",
+			Handler:    _OrgService_DeactivateMember_Handler,
+		},
+		{
+			MethodName: "RemoveMember",
+			Handler:    _OrgService_RemoveMember_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
