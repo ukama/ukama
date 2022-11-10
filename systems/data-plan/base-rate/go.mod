@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/sirupsen/logrus v1.8.1
-	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
@@ -29,10 +28,8 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
 	github.com/spf13/viper v1.13.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	gorm.io/driver/postgres v1.4.5 // indirect
 )
 
@@ -40,8 +37,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0
-	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect

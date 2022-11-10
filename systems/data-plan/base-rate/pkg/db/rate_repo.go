@@ -7,7 +7,7 @@ import (
 // declare interface so that we can mock it
 
 type BaseRateRepo interface {
-	GetBaseRate(Id int64) (*Rate, error)
+	GetBaseRate(Id uint64) (*Rate, error)
 	GetBaseRates(country, network, simType string) (RateList, error)
 	UploadBaseRates(query string) error
 	GetAllBaseRates(effectiveAt string) (RateList, error)
@@ -24,7 +24,7 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 	}
 }
 
-func (u *baseRateRepo) GetBaseRate(rateId int64) (*Rate, error) {
+func (u *baseRateRepo) GetBaseRate(rateId uint64) (*Rate, error) {
 	var rate *Rate
 	result := u.Db.GetGormDb().First(&rate, "Id=?", rateId)
 	if result.Error != nil {
@@ -35,27 +35,12 @@ func (u *baseRateRepo) GetBaseRate(rateId int64) (*Rate, error) {
 
 func (b *baseRateRepo) GetBaseRates(country, network, simType string) (RateList, error) {
 	var rates RateList
-	
-		result := b.Db.GetGormDb().Where("country", country).Find(&rates)
+	result:= b.Db.GetGormDb().Where(&Rate{Country: country, Network: network,Sim_type:simType}).Find(&rates)
+
 		if result.Error != nil {
 			return nil, result.Error
 		}
-	 if (len(network) != 0 && len(country) != 0){
-		result := b.Db.GetGormDb().Where(map[string]interface{}{"country": country, "network": network}).Find(&rates)
-		if result.Error != nil {
-			return nil, result.Error
-		}
-		}else if len(simType) != 0{
-			result := b.Db.GetGormDb().Where("sim_type", simType).Find(&rates)
-		if result.Error != nil {
-			return nil, result.Error
-		}
-		}
-		
-		
-		
-	
-	
+
 	return rates, nil
 }
 

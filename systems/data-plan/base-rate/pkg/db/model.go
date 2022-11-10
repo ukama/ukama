@@ -32,7 +32,7 @@ type RateList []*Rate
 func (r Rate) ToPbRate() *pb.Rate {
 
 	rate := &pb.Rate{
-		Id:          int32(r.ID),
+		Id:          int64(r.ID),
 		X2G:         r.X2g,
 		X3G:         r.X3g,
 		X5G:         r.X5g,
@@ -61,7 +61,7 @@ func (r RateList) ToPbRates() []*pb.Rate {
 	var rates []*pb.Rate
 	for _, rate := range r {
 		_rate := &pb.Rate{
-			Id:          int32(rate.ID),
+			Id:          int64(rate.ID),
 			X2G:         rate.X2g,
 			X3G:         rate.X3g,
 			X5G:         rate.X5g,

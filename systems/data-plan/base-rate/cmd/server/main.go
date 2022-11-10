@@ -30,9 +30,8 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()
-
-	nodeDb := initDb()
-	runGrpcServer(nodeDb)
+	rateDb := initDb()
+	runGrpcServer(rateDb)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.

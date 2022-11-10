@@ -16,16 +16,12 @@ message GetBaseRatesRequest{
 }
 message GetBaseRatesResponse {
     repeated Rate rates = 1;
-    int64 status = 2;
-    string error = 3;
 }
 message GetBaseRateResponse{
     Rate rate =1;
-    int64 status = 2;
-    string error = 3;
 }
 message GetBaseRateRequest{
-    int64 rateId =1;
+    uint64 rateId =1;
 }
 message UploadBaseRatesRequest {
     string fileURL = 1;
@@ -38,7 +34,7 @@ message UploadBaseRatesResponse {
     string error = 3;
 }
 message Rate{
-    int32 id =1;
+    int64 id =1;
     string country=2;
     string network = 3;
     string vpmn =4;
