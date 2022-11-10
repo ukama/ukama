@@ -187,6 +187,24 @@ func (r *OrgServer) GetMembers(ctx context.Context, req *pb.GetMembersRequest) (
 	return resp, nil
 }
 
+func (r *OrgServer) DeactivateMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
+	if len(req.GetUserUuid()) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "owner uuid cannot be empty")
+	}
+
+	uuid, err := uuid.Parse(req.GetUserUuid())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner uuid. Error %s", err.Error())
+	}
+
+	member, err := r.orgRepo.DeactivateMember(int(req.GetOrgId()), uuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "member")
+	}
+
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
+}
+
 // func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 // logrus.Infof("Deleting org %v", req)
 
