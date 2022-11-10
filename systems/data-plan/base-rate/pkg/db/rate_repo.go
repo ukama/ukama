@@ -5,7 +5,7 @@ import (
 )
 
 type BaseRateRepo interface {
-	GetBaseRate(Id int64) (*Rate, error)
+	GetBaseRate(Id uint64) (*Rate, error)
 	GetBaseRates(country, network, effectiveAt, simType string) ([]Rate, error)
 	UploadBaseRates(rateList []Rate) error
 }
@@ -20,7 +20,7 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 	}
 }
 
-func (u *baseRateRepo) GetBaseRate(rateId int64) (*Rate, error) {
+func (u *baseRateRepo) GetBaseRate(rateId uint64) (*Rate, error) {
 	var rate *Rate
 	result := u.Db.GetGormDb().First(&rate, "Id=?", rateId)
 	if result.Error != nil {

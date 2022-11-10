@@ -10,8 +10,8 @@ service BaseRatesService {
 message GetBaseRatesRequest{
     string country = 1;
     optional string provider =2;
-    optional int64 to  =3;
-    optional  int64 from  =4;
+    optional uint64 to  =3;
+    optional  uint64 from  =4;
     optional SimType sim_type=5;
     optional string effectiveAt = 6;
 }
@@ -22,7 +22,7 @@ message GetBaseRateResponse{
     Rate rate =1;
 }
 message GetBaseRateRequest{
-    int64 rateId =1;
+    uint64 rateId =1;
 }
 message UploadBaseRatesRequest {
     string fileURL = 1;
@@ -33,7 +33,7 @@ message UploadBaseRatesResponse {
     repeated Rate rate = 1;
 }
 message Rate{
-    int64 id =1;
+    uint64 id =1;
     string country=2;
     string network = 3;
     string vpmn =4;

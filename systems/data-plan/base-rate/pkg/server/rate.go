@@ -2,8 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/csv"
-	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -83,37 +81,14 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.InvalidArgument, "date you provided is not a valid future date %qs", effectiveAt)
 	}
 
-	destinationFileName := "temp.csv"
-	err := utils.FetchData(fileUrl, destinationFileName)
+	data, err := utils.FetchData(fileUrl)
 	if err != nil {
 		logrus.Infof("Error fetching data: %v", err.Error())
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	f, err := os.Open(destinationFileName)
-	if err != nil {
-		logrus.Infof("Error opening destination file: %v", err.Error())
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
+	res := utils.ParseToModel(data, effectiveAt, simType)
 
-	defer f.Close()
-
-	csvReader := csv.NewReader(f)
-	data, err := csvReader.ReadAll()
-	if err != nil {
-		logrus.Infof("Error opening file: %v", err.Error())
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-
-	query := utils.CreateData(data, effectiveAt, simType)
-
-	res := utils.ParseToModel(query)
-
-	err = utils.DeleteFile(destinationFileName)
-	if err != nil {
-		logrus.Infof("Error while deleting temp file: %s", err.Error())
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
 	err = b.baseRateRepo.UploadBaseRates(res)
 
 	if err != nil {
@@ -144,7 +119,7 @@ func dbratesToPbRates(rates []db.Rate) []*pb.Rate {
 
 func dbRatesToPbRates(r *db.Rate) *pb.Rate {
 	return &pb.Rate{
-		Id:          int64(r.ID),
+		Id:          uint64(r.ID),
 		X2G:         r.X2g,
 		X3G:         r.X3g,
 		X5G:         r.X5g,

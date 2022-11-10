@@ -19,6 +19,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/iamolegga/enviper v1.4.0 // indirect
+	github.com/jszwec/csvutil v1.7.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
