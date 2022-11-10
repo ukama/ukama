@@ -13,11 +13,11 @@ type BaseRateRepo struct {
 }
 
 // GetBaseRate provides a mock function with given fields: Id
-func (_m *BaseRateRepo) GetBaseRate(Id uint64) (*db.Rate, error) {
+func (_m *BaseRateRepo) GetBaseRate(Id int64) (*db.Rate, error) {
 	ret := _m.Called(Id)
 
 	var r0 *db.Rate
-	if rf, ok := ret.Get(0).(func(uint64) *db.Rate); ok {
+	if rf, ok := ret.Get(0).(func(int64) *db.Rate); ok {
 		r0 = rf(Id)
 	} else {
 		if ret.Get(0) != nil {
@@ -26,7 +26,7 @@ func (_m *BaseRateRepo) GetBaseRate(Id uint64) (*db.Rate, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint64) error); ok {
+	if rf, ok := ret.Get(1).(func(int64) error); ok {
 		r1 = rf(Id)
 	} else {
 		r1 = ret.Error(1)

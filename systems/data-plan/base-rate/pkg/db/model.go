@@ -25,4 +25,3 @@ type Rate struct {
 	End_at       time.Time
 	Sim_type     string
 }
-

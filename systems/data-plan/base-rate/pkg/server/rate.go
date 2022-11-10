@@ -20,7 +20,6 @@ type BaseRateServer struct {
 	pb.UnimplementedBaseRatesServiceServer
 }
 
-
 func NewBaseRateServer(baseRateRepo db.BaseRateRepo) *BaseRateServer {
 	return &BaseRateServer{baseRateRepo: baseRateRepo,
 	}
@@ -130,11 +129,12 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
-	rates, err := b.baseRateRepo.GetBaseRates("","","",effectiveAt)
+	rates, err := b.baseRateRepo.GetBaseRates("","",effectiveAt,"",)
 	if err != nil {
 		logrus.Error("error getting the rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
+	fmt.Println("RATES",rates)
 
 	rateList := &pb.UploadBaseRatesResponse{
 		Rate:dbratesToPbRates(rates),
