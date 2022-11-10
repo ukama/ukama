@@ -25,7 +25,7 @@ type OrgRepo interface {
 	GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
 	GetMembers(orgID int) ([]OrgUser, error)
 	DeactivateMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
-	// RemoveMember()
+	RemoveMember(orgID int, userUUID uuid.UUID) error
 }
 
 type orgRepo struct {
@@ -118,6 +118,14 @@ func (r *orgRepo) DeactivateMember(orgID int, userUUID uuid.UUID) (*OrgUser, err
 	return member, nil
 }
 
-// func (r *orgRepo) Delete(name string) error {
-// re,turn r.Db.GetGormDb().Delete(&Org{}, "name = ?", name).Error
-// }
+func (r *orgRepo) RemoveMember(orgID int, userUUID uuid.UUID) error {
+	var member OrgUser
+
+	// d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", orgID, userUUID).Delete(&member)
+	d := r.Db.GetGormDb().Where("org_id = ? And uuid = ?", orgID, userUUID).Delete(&member)
+	if d.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return d.Error
+}

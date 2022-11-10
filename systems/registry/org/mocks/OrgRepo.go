@@ -157,6 +157,20 @@ func (_m *OrgRepo) GetMembers(orgID int) ([]db.OrgUser, error) {
 	return r0, r1
 }
 
+// RemoveMember provides a mock function with given fields: orgID, userUUID
+func (_m *OrgRepo) RemoveMember(orgID int, userUUID uuid.UUID) error {
+	ret := _m.Called(orgID, userUUID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int, uuid.UUID) error); ok {
+		r0 = rf(orgID, userUUID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 type mockConstructorTestingTNewOrgRepo interface {
 	mock.TestingT
 	Cleanup(func())
