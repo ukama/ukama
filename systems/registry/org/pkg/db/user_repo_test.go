@@ -76,7 +76,7 @@ func Test_UserRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(user.Uuid).
+			WithArgs(user.Uuid, sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
@@ -109,7 +109,7 @@ func Test_UserRepo_Add(t *testing.T) {
 }
 
 func Test_UserRepo_Delete(t *testing.T) {
-	t.Run("DeleteNode", func(t *testing.T) {
+	t.Run("DeleteUser", func(t *testing.T) {
 		var db *extsql.DB
 
 		var userUUID = uuid.New()
@@ -119,8 +119,10 @@ func Test_UserRepo_Delete(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(userUUID).
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET`)).
+			WithArgs(sqlmock.AnyArg(), userUUID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
+
 		mock.ExpectCommit()
 
 		dialector := postgres.New(postgres.Config{
@@ -140,7 +142,7 @@ func Test_UserRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Delete(userUUID, nil)
+		err = r.Delete(userUUID)
 
 		// Assert
 		assert.NoError(t, err)
