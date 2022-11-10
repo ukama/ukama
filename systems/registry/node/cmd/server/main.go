@@ -3,26 +3,25 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/services/cloud/node/pkg/server"
-	uconf "github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/metrics"
-	"github.com/ukama/ukama/services/common/msgbus"
+	uconf "github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 
 	"github.com/num30/config"
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/services/cloud/node/pkg"
+	"github.com/ukama/ukama/systems/registry/node/pkg"
 
-	"github.com/ukama/ukama/services/cloud/node/cmd/version"
+	"github.com/ukama/ukama/systems/registry/node/cmd/version"
 
-	"github.com/ukama/ukama/services/cloud/node/pkg/db"
+	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	generated "github.com/ukama/ukama/services/cloud/node/pb/gen"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
-	ugrpc "github.com/ukama/ukama/services/common/grpc"
-	"github.com/ukama/ukama/services/common/sql"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/sql"
+	generated "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -45,6 +44,7 @@ func initConfig() {
 			DbName: pkg.ServiceName,
 		},
 	}
+
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -60,23 +60,20 @@ func initConfig() {
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
+
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+
 	err := d.Init(&db.Node{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
+
 	return d
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		pub, err := msgbus.NewQPub(serviceConfig.Queue.Uri, pkg.ServiceName, instanceId)
-		if err != nil {
-			log.Fatalf("Failed to create publisher. Error: %v", err)
-		}
-
-		srv := server.NewNodeServer(db.NewNodeRepo(gormdb), pub)
+		srv := server.NewNodeServer(db.NewNodeRepo(gormdb))
 		generated.RegisterNodeServiceServer(s, srv)
 	})
 

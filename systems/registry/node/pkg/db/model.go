@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql/driver"
+
 	"gorm.io/gorm"
 )
 
@@ -16,6 +17,7 @@ const (
 
 func (e *NodeType) Scan(value interface{}) error {
 	*e = NodeType(uint8(value.(int64)))
+
 	return nil
 }
 
@@ -44,6 +46,7 @@ const (
 
 func (e *NodeState) Scan(value interface{}) error {
 	*e = NodeState(uint8(value.(int64)))
+
 	return nil
 }
 

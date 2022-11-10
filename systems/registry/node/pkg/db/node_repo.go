@@ -3,8 +3,8 @@ package db
 import (
 	"strings"
 
-	"github.com/ukama/ukama/services/common/sql"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -35,6 +35,7 @@ func NewNodeRepo(db sql.Db) NodeRepo {
 
 func (r *nodeRepo) Add(node *Node, nestedFunc ...func() error) error {
 	node.NodeID = strings.ToLower(node.NodeID)
+
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
 		return tx.Create(node)
 	}, nestedFunc...)
@@ -44,23 +45,30 @@ func (r *nodeRepo) Add(node *Node, nestedFunc ...func() error) error {
 
 func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	var node Node
+
 	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id=?", id.StringLowercase())
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return &node, nil
 }
 
 func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
 		d := tx.Delete(&Node{}, "node_id = ?", id.StringLowercase())
+
 		if d.Error != nil {
 			return d
 		}
+
 		if d.RowsAffected == 0 {
 			d.Error = gorm.ErrRecordNotFound
+
 			return d
 		}
+
 		return d
 	}, nestedFunc...)
 
@@ -72,21 +80,25 @@ func (r *nodeRepo) Update(id ukama.NodeID, state *NodeState, nodeName *string, n
 	var rowsAffected int64
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
 		nd := Node{}
+
 		if state != nil {
 			nd.State = *state
 		}
+
 		if nodeName != nil {
 			nd.Name = *nodeName
 		}
 
 		result := tx.Where("node_id=?", id.StringLowercase()).Updates(nd)
 		rowsAffected = result.RowsAffected
+
 		return result
 	}, nestedFunc...)
 
 	if rowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
+
 	return err
 }
 
@@ -110,6 +122,7 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 
 	for _, n := range attachedNodeId {
 		an, err := r.Get(n)
+
 		if err != nil {
 			return err
 		}
@@ -122,11 +135,14 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 	}
 
 	db := r.Db.GetGormDb().Save(parentNode)
+
 	return db.Error
 }
 
 // DetachNode removes node from parent node
 func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
-	db := r.Db.GetGormDb().Exec("delete from attached_nodes where attached_id=(select id from nodes where node_id=?)", detachNodeId.StringLowercase())
+	db := r.Db.GetGormDb().Exec("delete from attached_nodes where attached_id=(select id from nodes where node_id=?)",
+		detachNodeId.StringLowercase())
+
 	return db.Error
 }

@@ -22,25 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
-	// adds new user with ICCID. Designed for internal use only.
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
-	// adds new user with ICCID. Designed for internal use only.
-	AddInternal(ctx context.Context, in *AddInternalRequest, opts ...grpc.CallOption) (*AddInternalResponse, error)
-	// deletes user and IMSI that is assigend to him
-	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
-	// lists all users for organization
-	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
-	// Get user info
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	// Get user info
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
-	// Generate sim token from ICCID
-	GenerateSimToken(ctx context.Context, in *GenerateSimTokenRequest, opts ...grpc.CallOption) (*GenerateSimTokenResponse, error)
-	// Set status of sim
-	SetSimStatus(ctx context.Context, in *SetSimStatusRequest, opts ...grpc.CallOption) (*SetSimStatusResponse, error)
-	// Terminates all user's sim cards
-	DeactivateUser(ctx context.Context, in *DeactivateUserRequest, opts ...grpc.CallOption) (*DeactivateUserResponse, error)
-	GetQrCode(ctx context.Context, in *GetQrCodeRequest, opts ...grpc.CallOption) (*GetQrCodeResponse, error)
+	Deactivate(ctx context.Context, in *DeactivateRequest, opts ...grpc.CallOption) (*DeactivateResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
 type userServiceClient struct {
@@ -54,33 +40,6 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 func (c *userServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
 	out := new(AddResponse)
 	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/Add", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userServiceClient) AddInternal(ctx context.Context, in *AddInternalRequest, opts ...grpc.CallOption) (*AddInternalResponse, error) {
-	out := new(AddInternalResponse)
-	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/AddInternal", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
-	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/Delete", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
-	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/List", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -105,36 +64,18 @@ func (c *userServiceClient) Update(ctx context.Context, in *UpdateRequest, opts 
 	return out, nil
 }
 
-func (c *userServiceClient) GenerateSimToken(ctx context.Context, in *GenerateSimTokenRequest, opts ...grpc.CallOption) (*GenerateSimTokenResponse, error) {
-	out := new(GenerateSimTokenResponse)
-	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/GenerateSimToken", in, out, opts...)
+func (c *userServiceClient) Deactivate(ctx context.Context, in *DeactivateRequest, opts ...grpc.CallOption) (*DeactivateResponse, error) {
+	out := new(DeactivateResponse)
+	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/Deactivate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userServiceClient) SetSimStatus(ctx context.Context, in *SetSimStatusRequest, opts ...grpc.CallOption) (*SetSimStatusResponse, error) {
-	out := new(SetSimStatusResponse)
-	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/SetSimStatus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userServiceClient) DeactivateUser(ctx context.Context, in *DeactivateUserRequest, opts ...grpc.CallOption) (*DeactivateUserResponse, error) {
-	out := new(DeactivateUserResponse)
-	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/DeactivateUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userServiceClient) GetQrCode(ctx context.Context, in *GetQrCodeRequest, opts ...grpc.CallOption) (*GetQrCodeResponse, error) {
-	out := new(GetQrCodeResponse)
-	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/GetQrCode", in, out, opts...)
+func (c *userServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -145,25 +86,11 @@ func (c *userServiceClient) GetQrCode(ctx context.Context, in *GetQrCodeRequest,
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
-	// adds new user with ICCID. Designed for internal use only.
 	Add(context.Context, *AddRequest) (*AddResponse, error)
-	// adds new user with ICCID. Designed for internal use only.
-	AddInternal(context.Context, *AddInternalRequest) (*AddInternalResponse, error)
-	// deletes user and IMSI that is assigend to him
-	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
-	// lists all users for organization
-	List(context.Context, *ListRequest) (*ListResponse, error)
-	// Get user info
 	Get(context.Context, *GetRequest) (*GetResponse, error)
-	// Get user info
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
-	// Generate sim token from ICCID
-	GenerateSimToken(context.Context, *GenerateSimTokenRequest) (*GenerateSimTokenResponse, error)
-	// Set status of sim
-	SetSimStatus(context.Context, *SetSimStatusRequest) (*SetSimStatusResponse, error)
-	// Terminates all user's sim cards
-	DeactivateUser(context.Context, *DeactivateUserRequest) (*DeactivateUserResponse, error)
-	GetQrCode(context.Context, *GetQrCodeRequest) (*GetQrCodeResponse, error)
+	Deactivate(context.Context, *DeactivateRequest) (*DeactivateResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -174,32 +101,17 @@ type UnimplementedUserServiceServer struct {
 func (UnimplementedUserServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
-func (UnimplementedUserServiceServer) AddInternal(context.Context, *AddInternalRequest) (*AddInternalResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddInternal not implemented")
-}
-func (UnimplementedUserServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
-}
-func (UnimplementedUserServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
-}
 func (UnimplementedUserServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedUserServiceServer) Update(context.Context, *UpdateRequest) (*UpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedUserServiceServer) GenerateSimToken(context.Context, *GenerateSimTokenRequest) (*GenerateSimTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GenerateSimToken not implemented")
+func (UnimplementedUserServiceServer) Deactivate(context.Context, *DeactivateRequest) (*DeactivateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Deactivate not implemented")
 }
-func (UnimplementedUserServiceServer) SetSimStatus(context.Context, *SetSimStatusRequest) (*SetSimStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetSimStatus not implemented")
-}
-func (UnimplementedUserServiceServer) DeactivateUser(context.Context, *DeactivateUserRequest) (*DeactivateUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeactivateUser not implemented")
-}
-func (UnimplementedUserServiceServer) GetQrCode(context.Context, *GetQrCodeRequest) (*GetQrCodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetQrCode not implemented")
+func (UnimplementedUserServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -228,60 +140,6 @@ func _UserService_Add_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).Add(ctx, req.(*AddRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_AddInternal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddInternalRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).AddInternal(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.users.v1.UserService/AddInternal",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).AddInternal(ctx, req.(*AddInternalRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).Delete(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.users.v1.UserService/Delete",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).Delete(ctx, req.(*DeleteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).List(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.users.v1.UserService/List",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -322,74 +180,38 @@ func _UserService_Update_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_GenerateSimToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateSimTokenRequest)
+func _UserService_Deactivate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeactivateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).GenerateSimToken(ctx, in)
+		return srv.(UserServiceServer).Deactivate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.users.v1.UserService/GenerateSimToken",
+		FullMethod: "/ukama.users.v1.UserService/Deactivate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GenerateSimToken(ctx, req.(*GenerateSimTokenRequest))
+		return srv.(UserServiceServer).Deactivate(ctx, req.(*DeactivateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_SetSimStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetSimStatusRequest)
+func _UserService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).SetSimStatus(ctx, in)
+		return srv.(UserServiceServer).Delete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.users.v1.UserService/SetSimStatus",
+		FullMethod: "/ukama.users.v1.UserService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).SetSimStatus(ctx, req.(*SetSimStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_DeactivateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeactivateUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).DeactivateUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.users.v1.UserService/DeactivateUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).DeactivateUser(ctx, req.(*DeactivateUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_GetQrCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetQrCodeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).GetQrCode(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.users.v1.UserService/GetQrCode",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetQrCode(ctx, req.(*GetQrCodeRequest))
+		return srv.(UserServiceServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -406,18 +228,6 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_Add_Handler,
 		},
 		{
-			MethodName: "AddInternal",
-			Handler:    _UserService_AddInternal_Handler,
-		},
-		{
-			MethodName: "Delete",
-			Handler:    _UserService_Delete_Handler,
-		},
-		{
-			MethodName: "List",
-			Handler:    _UserService_List_Handler,
-		},
-		{
 			MethodName: "Get",
 			Handler:    _UserService_Get_Handler,
 		},
@@ -426,20 +236,12 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_Update_Handler,
 		},
 		{
-			MethodName: "GenerateSimToken",
-			Handler:    _UserService_GenerateSimToken_Handler,
+			MethodName: "Deactivate",
+			Handler:    _UserService_Deactivate_Handler,
 		},
 		{
-			MethodName: "SetSimStatus",
-			Handler:    _UserService_SetSimStatus_Handler,
-		},
-		{
-			MethodName: "DeactivateUser",
-			Handler:    _UserService_DeactivateUser_Handler,
-		},
-		{
-			MethodName: "GetQrCode",
-			Handler:    _UserService_GetQrCode_Handler,
+			MethodName: "Delete",
+			Handler:    _UserService_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
