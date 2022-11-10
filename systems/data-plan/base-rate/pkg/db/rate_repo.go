@@ -1,6 +1,9 @@
 package db
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/ukama/ukama/systems/common/sql"
 )
 
@@ -8,9 +11,8 @@ import (
 
 type BaseRateRepo interface {
 	GetBaseRate(Id uint64) (*Rate, error)
-	GetBaseRates(country, network, simType string) ([]Rate, error)
+	GetBaseRates(country, network,effectiveAt, simType string) ([]Rate, error)
 	UploadBaseRates(query string) error
-	GetAllBaseRates(effectiveAt string) ([]Rate, error)
 }
 
 type baseRateRepo struct {
@@ -33,9 +35,13 @@ func (u *baseRateRepo) GetBaseRate(rateId uint64) (*Rate, error) {
 	return rate, nil
 }
 
-func (b *baseRateRepo) GetBaseRates(country, network, simType string) ([]Rate, error) {
+func (b *baseRateRepo) GetBaseRates(country, network,effectiveAt, simType string) ([]Rate, error) {
 	var rates []Rate
-	result:= b.Db.GetGormDb().Where(&Rate{Country: country, Network: network,Sim_type:simType}).Find(&rates)
+	date, error := time.Parse("2006-01-02", effectiveAt)
+	if error != nil {
+		fmt.Println(error)
+	}
+	result:= b.Db.GetGormDb().Where(&Rate{Country: country, Network: network,Sim_type:simType,Effective_at:date}).Find(&rates)
 
 		if result.Error != nil {
 			return nil, result.Error
@@ -44,14 +50,6 @@ func (b *baseRateRepo) GetBaseRates(country, network, simType string) ([]Rate, e
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetAllBaseRates(effectiveAt string) ([]Rate, error) {
-	var rates []Rate
-	result := b.Db.GetGormDb().Where("effective_at", effectiveAt).Find(&rates)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return rates, nil
-}
 
 func (b *baseRateRepo) UploadBaseRates(query string) error {
 	e := b.Db.GetGormDb().Exec(query)

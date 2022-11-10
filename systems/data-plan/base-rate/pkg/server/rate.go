@@ -48,8 +48,9 @@ func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesR
 	logrus.Infof("GetBaseRates where country =  %s and network =%s and simType =%s", req.GetCountry(),req.GetProvider(),req.GetSimType())
 	country := req.GetCountry()
 	network := req.GetProvider()
+	effectiveAt:=req.GetEffectiveAt()
 	simType := validations.ReqPbToStr(req.GetSimType())
-	rates, err := b.baseRateRepo.GetBaseRates(country, network, simType)
+	rates, err := b.baseRateRepo.GetBaseRates(country, network, simType,effectiveAt)
 	if err != nil {
 		logrus.Error("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
@@ -79,14 +80,14 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		}, nil
 	}
 
-	if !utils.IsFutureDate(effectiveAt) {
-		logrus.Infof("Date you provided is not a future date.",
-			fileUrl, effectiveAt, simType)
-		return &pb.UploadBaseRatesResponse{
-			Status: http.StatusBadRequest,
-			Error:  "Date you provided is not a future date.",
-		}, nil
-	}
+	// if !utils.IsFutureDate(effectiveAt) {
+	// 	logrus.Infof("Date you provided is not a future date.",
+	// 		fileUrl, effectiveAt, simType)
+	// 	return &pb.UploadBaseRatesResponse{
+	// 		Status: http.StatusBadRequest,
+	// 		Error:  "Date you provided is not a future date.",
+	// 	}, nil
+	// }
 
 	destinationFileName := "temp.csv"
 	fde := utils.FetchData(fileUrl, destinationFileName)
@@ -129,14 +130,14 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
-	// rates, err := b.baseRateRepo.GetAllBaseRates(effectiveAt)
-	// if err != nil {
-	// 	logrus.Error("error getting the rates" + err.Error())
-	// 	return nil, grpc.SqlErrorToGrpc(err, "rate")
-	// }
+	rates, err := b.baseRateRepo.GetBaseRates("","","",effectiveAt)
+	if err != nil {
+		logrus.Error("error getting the rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "rate")
+	}
 
 	rateList := &pb.UploadBaseRatesResponse{
-		Rate: []*pb.Rate{},
+		Rate:dbratesToPbRates(rates),
 	}
 
 	return rateList, nil

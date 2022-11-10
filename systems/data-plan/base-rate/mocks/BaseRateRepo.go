@@ -12,29 +12,6 @@ type BaseRateRepo struct {
 	mock.Mock
 }
 
-// GetAllBaseRates provides a mock function with given fields: effectiveAt
-func (_m *BaseRateRepo) GetAllBaseRates(effectiveAt string) ([]db.Rate, error) {
-	ret := _m.Called(effectiveAt)
-
-	var r0 []db.Rate
-	if rf, ok := ret.Get(0).(func(string) []db.Rate); ok {
-		r0 = rf(effectiveAt)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Rate)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(effectiveAt)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetBaseRate provides a mock function with given fields: Id
 func (_m *BaseRateRepo) GetBaseRate(Id uint64) (*db.Rate, error) {
 	ret := _m.Called(Id)
@@ -58,13 +35,13 @@ func (_m *BaseRateRepo) GetBaseRate(Id uint64) (*db.Rate, error) {
 	return r0, r1
 }
 
-// GetBaseRates provides a mock function with given fields: country, network, simType
-func (_m *BaseRateRepo) GetBaseRates(country string, network string, simType string) ([]db.Rate, error) {
-	ret := _m.Called(country, network, simType)
+// GetBaseRates provides a mock function with given fields: country, network, effectiveAt, simType
+func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt string, simType string) ([]db.Rate, error) {
+	ret := _m.Called(country, network, effectiveAt, simType)
 
 	var r0 []db.Rate
-	if rf, ok := ret.Get(0).(func(string, string, string) []db.Rate); ok {
-		r0 = rf(country, network, simType)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) []db.Rate); ok {
+		r0 = rf(country, network, effectiveAt, simType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Rate)
@@ -72,8 +49,8 @@ func (_m *BaseRateRepo) GetBaseRates(country string, network string, simType str
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(country, network, simType)
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(country, network, effectiveAt, simType)
 	} else {
 		r1 = ret.Error(1)
 	}
