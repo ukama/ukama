@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/csv"
-	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -12,6 +11,8 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type BaseRateServer struct {
@@ -71,28 +72,28 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		validations.IsRequestEmpty(simType) {
 		logrus.Infof("Please supply valid fileURL: %s, effectiveAt: %s and simType: %s.",
 			fileUrl, effectiveAt, simType)
-		return nil, grpc.SqlErrorToGrpc(fmt.Errorf("please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
-			fileUrl, effectiveAt, simType), "rate")
+		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
+			fileUrl, effectiveAt, simType)
 	}
 
 	if !utils.IsFutureDate(effectiveAt) {
 		logrus.Infof("Date you provided is not a valid future date.",
 			fileUrl, effectiveAt, simType)
 
-		return nil, grpc.SqlErrorToGrpc(fmt.Errorf("date you provided is not a valid future date %qs", effectiveAt), "rate")
+		return nil, status.Errorf(codes.InvalidArgument, "date you provided is not a valid future date %qs", effectiveAt)
 	}
 
 	destinationFileName := "temp.csv"
-	fde := utils.FetchData(fileUrl, destinationFileName)
-	if fde != nil {
-		logrus.Infof("Error fetching data: %v", fde.Error())
-		return nil, grpc.SqlErrorToGrpc(fde, "rate")
+	err := utils.FetchData(fileUrl, destinationFileName)
+	if err != nil {
+		logrus.Infof("Error fetching data: %v", err.Error())
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	f, err := os.Open(destinationFileName)
 	if err != nil {
 		logrus.Infof("Error opening destination file: %v", err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rate")
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	defer f.Close()
@@ -101,28 +102,28 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	data, err := csvReader.ReadAll()
 	if err != nil {
 		logrus.Infof("Error opening file: %v", err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rate")
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	query := utils.CreateData(data, effectiveAt, simType)
 
 	res := utils.ParseToModel(query)
 
-	dfe := utils.DeleteFile(destinationFileName)
-	if fde != nil {
-		logrus.Infof("Error while deleting temp file: %s", dfe.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rate")
+	err = utils.DeleteFile(destinationFileName)
+	if err != nil {
+		logrus.Infof("Error while deleting temp file: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	err = b.baseRateRepo.UploadBaseRates(res)
 
 	if err != nil {
-		logrus.Error("error getting the rate" + err.Error())
+		logrus.Error("error inserting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
 	rates, err := b.baseRateRepo.GetBaseRates("", "", effectiveAt, "")
 	if err != nil {
-		logrus.Error("error getting the rates" + err.Error())
+		logrus.Error("error fetching rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
