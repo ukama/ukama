@@ -6,25 +6,21 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
-	confr "github.com/num30/config"
-	"github.com/ukama/ukama/services/cloud/org/pkg/queue"
-	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukama/services/common/msgbus"
-	"google.golang.org/grpc/credentials/insecure"
-	"os"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	confr "github.com/num30/config"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukama/services/cloud/org/pb/gen"
+	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"google.golang.org/grpc"
 )
 
 type TestConfig struct {
-	ServiceHost string        `default:"localhost:9090"`
-	Queue       *config.Queue `default:"{}"`
+	ServiceHost string `default:"localhost:9090"`
 }
 
 var tConfig *TestConfig
@@ -47,8 +43,10 @@ func Test_FullFlow(t *testing.T) {
 	defer cancel()
 
 	logrus.Infoln("Connecting to service ", tConfig.ServiceHost)
+
 	conn, c, err := CreateOrgClient()
 	defer conn.Close()
+
 	if err != nil {
 		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
 		return
@@ -76,13 +74,14 @@ func Test_FullFlow(t *testing.T) {
 			assert.Equal(t, orgName, r.Org.Name)
 		}
 	})
-
 }
 
 func deleteOrg(t *testing.T, c pb.OrgServiceClient, orgName string) {
 	logrus.Info("Deleting org ", orgName)
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
+
 	_, err := c.Delete(ctx, &pb.DeleteRequest{
 		Name: orgName,
 	})
@@ -105,7 +104,7 @@ func Test_Listener(t *testing.T) {
 	}
 
 	// Act
-	err = sendMessageToQueue(ownerId)
+	// err = sendMessageToQueue(ownerId)
 
 	// Assert
 	assert.NoError(t, err)
@@ -113,17 +112,19 @@ func Test_Listener(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	logrus.Info("Getting org: " + ownerId)
+
 	resp, err := c.Get(ctx, &pb.GetRequest{Name: ownerId})
 	if assert.NoError(t, err) {
 		assert.Equal(t, ownerId, resp.Org.Owner)
 	}
-
 }
 
 func CreateOrgClient() (*grpc.ClientConn, pb.OrgServiceClient, error) {
 	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
+
 	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, err
@@ -131,24 +132,4 @@ func CreateOrgClient() (*grpc.ClientConn, pb.OrgServiceClient, error) {
 
 	c := pb.NewOrgServiceClient(conn)
 	return conn, c, nil
-}
-
-func sendMessageToQueue(ownerId string) error {
-	logrus.Info("Sending message to queue")
-
-	rabbit, err := msgbus.NewQPub(tConfig.Queue.Uri, "network-listener-integration-test", os.Getenv("POD_NAME"))
-	if err != nil {
-		logrus.Errorf("could not create rabbitmq client %+v", err)
-		return err
-	}
-
-	err = rabbit.Publish(&queue.UserRegisteredBody{
-		Id:    ownerId,
-		Email: "org-integration-test@gmail.com",
-	}, string(msgbus.UserRegisteredRoutingKey))
-	if err != nil {
-		logrus.Errorf("could not publish message %+v", err)
-	}
-
-	return err
 }

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -25,8 +26,12 @@ func NewSystemRepo(db sql.Db) *systemRepo {
 }
 
 func (s *systemRepo) Add(sys *System) error {
-	d := s.Db.GetGormDb().Create(sys)
-	return d.Error
+	result := s.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "name"}},
+		UpdateAll: true,
+	}).Create(sys)
+
+	return result.Error
 }
 
 func (s *systemRepo) Update(sys *System) error {
@@ -40,7 +45,13 @@ func (s *systemRepo) Delete(sys string) error {
 	if result.Error != nil {
 		return result.Error
 	}
-	return nil
+
+	if result.RowsAffected > 0 {
+		return nil
+	}
+
+	return fmt.Errorf("%s system missing", sys)
+
 }
 
 func (s *systemRepo) GetByName(sys string) (*System, error) {

@@ -1,4 +1,4 @@
-include ../../../services/config.mk
+include ../../../systems/config.mk
 
 .PHONY: build deps lint gen clean integration.test test
 
@@ -13,16 +13,14 @@ test:
 lint:
 	golangci-lint run
 
-
 deps:
 	go get github.com/vektra/mockery/v2/.../
-
 
 gen:
 	mockery --all --recursive
 
 clean:
-	rm pb/generated/*.go
+	rm -rf ./bin/ 
 
 # integration tests
 

@@ -2,13 +2,14 @@ package db
 
 import (
 	"fmt"
-	"github.com/ukama/ukama/services/common/errors"
+
+	"github.com/ukama/ukama/systems/common/errors"
 
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/services/common/validation"
+	"github.com/ukama/ukama/systems/common/validation"
 
-	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/systems/common/sql"
 )
 
 type OrgRepo interface {
@@ -45,19 +46,23 @@ func (r *orgRepo) Add(org *Org, nestedFunc ...func() error) (err error) {
 
 func (r *orgRepo) Get(id int) (*Org, error) {
 	var org Org
+
 	result := r.Db.GetGormDb().First(&org, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return &org, nil
 }
 
 func (r *orgRepo) GetByName(name string) (*Org, error) {
 	var org Org
+
 	result := r.Db.GetGormDb().First(&org, "name = ?", name)
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return &org, nil
 }
 
@@ -65,6 +70,7 @@ func (r *orgRepo) MakeUserOrgExist(orgName string) (*Org, error) {
 	org := Org{
 		Name: orgName,
 	}
+
 	d := r.Db.GetGormDb().First(&org, "name = ?", orgName)
 	if d.Error != nil {
 		if sql.IsNotFoundError(d.Error) {
@@ -77,5 +83,6 @@ func (r *orgRepo) MakeUserOrgExist(orgName string) (*Org, error) {
 			return nil, errors.Wrap(d.Error, "error finding the org")
 		}
 	}
+
 	return &org, nil
 }

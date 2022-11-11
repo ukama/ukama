@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm/clause"
@@ -42,5 +44,10 @@ func (r *nodeRepo) Delete(nodeId ukama.NodeID) error {
 	if result.Error != nil {
 		return result.Error
 	}
-	return nil
+
+	if result.RowsAffected > 0 {
+		return nil
+	}
+
+	return fmt.Errorf("%s node missing", nodeId.String())
 }

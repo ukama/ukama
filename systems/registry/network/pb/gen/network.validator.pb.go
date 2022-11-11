@@ -5,10 +5,10 @@ package gen
 
 import (
 	fmt "fmt"
+	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -81,6 +81,12 @@ func (this *Network) Validate() error {
 	return nil
 }
 func (this *Node) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if this.Name == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
+	}
 	return nil
 }
 func (this *ListRequest) Validate() error {

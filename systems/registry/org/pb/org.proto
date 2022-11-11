@@ -5,25 +5,22 @@ option go_package = "pb/gen";
 package ukama.org.v1;
 
 import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 
 service OrgService {
-    rpc Get(GetRequest) returns (GetResponse);
+    /* Orgs */
     rpc Add(AddRequest) returns (AddResponse);
-    rpc Delete(DeleteRequest) returns (DeleteResponse);
-}
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
 
-message GetRequest {
-    string name = 1;
-}
-
-message GetResponse{
-    Organization org = 1;
-}
-
-message Organization {
-    string name = 1 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
-    string owner = 2 [(validator.field) = { string_not_empty: true}];    
+    /* Members */
+    rpc AddMember(MemberRequest) returns (MemberResponse);
+    rpc GetMember(MemberRequest) returns (MemberResponse);
+    rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
+    rpc DeactivateMember(MemberRequest) returns (MemberResponse);
+    rpc RemoveMember(MemberRequest) returns (MemberResponse);
 }
 
 message AddRequest{
@@ -34,9 +31,54 @@ message AddResponse{
     Organization org = 1;
 }
 
-message DeleteRequest{
-    string name = 1;
+message GetRequest {
+    uint64 id = 1;
 }
-message DeleteResponse{
 
+message GetResponse{
+    Organization org = 1;
+}
+
+message GetByOwnerRequest{
+    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+}
+
+message GetByOwnerResponse{
+    string owner = 1 [(validator.field) = {uuid_ver: 0}];
+    repeated Organization orgs = 2;
+}
+
+message MemberRequest{
+    uint64 orgId = 1;
+    string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+}
+
+message MemberResponse{
+  OrgUser member = 1;
+}
+
+message GetMembersRequest {
+    uint64 orgId = 1;
+}
+
+message GetMembersResponse{
+    uint64 orgId = 1;
+    repeated OrgUser members = 2;
+}
+
+message Organization {
+    uint64 id = 1;
+    string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
+    string owner = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string certificate = 4;
+    bool isDeactivated = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message OrgUser {
+    uint64 orgId = 1;
+    uint64 userId = 2;
+    string uuid = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    bool isDeactivated = 4;
+    google.protobuf.Timestamp created_at = 5;
 }

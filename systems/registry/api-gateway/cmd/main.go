@@ -7,6 +7,7 @@ import (
 
 	"github.com/ukama/ukama/systems/registry/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	"github.com/ukama/ukama/systems/common/config"
@@ -18,7 +19,12 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
+	clientSet := rest.NewClientsSet(&svcConf.Services)
+
 	metrics.StartMetricsServer(&svcConf.Metrics)
+
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf))
+	r.Run()
 }
 
 func initConfig() {

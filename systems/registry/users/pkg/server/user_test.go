@@ -4,37 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/types/known/wrapperspb"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	hsspb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
-	hssmocks "github.com/ukama/ukama/services/cloud/hss/pb/gen/mocks"
-	"github.com/ukama/ukama/services/cloud/users/mocks"
-	pb "github.com/ukama/ukama/services/cloud/users/pb/gen"
-	mocks2 "github.com/ukama/ukama/services/cloud/users/pb/gen/mocks"
-	pbclient "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
-	"github.com/ukama/ukama/services/cloud/users/pkg/db"
-	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
-	commock "github.com/ukama/ukama/services/common/mocks"
+
+	"github.com/ukama/ukama/systems/registry/users/mocks"
+	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+
+	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 )
 
-const testOrg = "org"
-const testImis = "1"
-const tesRequesterId = "89273897297392"
-
-func Test_AddInternal(t *testing.T) {
-	// Arrange
+func TestUserService_Add(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
-	hssClient := &hssmocks.ImsiServiceClient{}
-	kratosClient := &mocks.KratosClient{}
-	simRepo := &mocks.SimcardRepo{}
-	simManager := &mocks2.SimManagerServiceClient{}
-	simProvider := &mocks.SimProvider{}
-	hssProv := &mocks.ImsiClientProvider{}
-	hssProv.On("GetClient").Return(hssClient, nil)
 
 	userRequest := &pb.User{
 		Name:  "Joe",
@@ -42,254 +23,154 @@ func Test_AddInternal(t *testing.T) {
 		Phone: "12324",
 	}
 
-	userUuid := uuid.New()
-	userRepo.On("Add", mock.Anything, testOrg, mock.Anything).Return(&db.User{Uuid: userUuid,
-		Email: userRequest.Email, Phone: userRequest.Phone,
-		Name: userRequest.Name}, nil)
+	userRepo.On("Add", mock.Anything).Return(nil).Once()
 
-	hssClient.On("Add", mock.MatchedBy(func(n *hsspb.AddImsiRequest) bool {
-		return n.Imsi.Imsi == testImis && n.Imsi.UserId == userUuid.String()
-	})).Return(&hsspb.AddImsiResponse{}, nil)
+	t.Run("AddUser", func(tt *testing.T) {
+		srv := NewUserService(userRepo)
+		addResp, err := srv.Add(context.TODO(), &pb.AddRequest{User: userRequest})
 
-	simManager.On("GetQrCode", mock.Anything, mock.Anything).Return(&pbclient.GetQrCodeResponse{
-		QrCode: "qr",
-	}, nil)
-
-	kratosClient.On("GetAccountName", tesRequesterId).Return("TestNO", nil)
-
-	pub := &commock.QPub{}
-	pub.On("PublishToQueue", "mailer", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
-	md := metadata.Pairs("x-requester", tesRequesterId)
-	ctx := metadata.NewIncomingContext(context.TODO(), md)
-	// Act
-	addResp, err := srv.AddInternal(ctx, &pb.AddInternalRequest{
-		Org:  testOrg,
-		User: userRequest,
-	})
-
-	// Assert
-	assert.NoError(t, err)
-	assert.NotEmpty(t, addResp.User.Uuid)
-	assert.Equal(t, userUuid.String(), addResp.User.Uuid)
-	assert.Equal(t, userRequest.Name, addResp.User.Name)
-	assert.Equal(t, userRequest.Phone, addResp.User.Phone)
-	assert.Equal(t, userRequest.Email, addResp.User.Email)
-}
-
-const TEST_SIM_TOKEN = "QQQQQQQQQQQ"
-
-func Test_Add(t *testing.T) {
-	// Arrange
-	userRepo := &mocks.UserRepo{}
-	hssClient := &hssmocks.ImsiServiceClient{}
-	simRepo := &mocks.SimcardRepo{}
-	simManager := &mocks2.SimManagerServiceClient{}
-	hssProv := &mocks.ImsiClientProvider{}
-	hssProv.On("GetClient").Return(hssClient, nil)
-
-	userRequest := &pb.User{
-		Name:  "Joe",
-		Email: "test@example.com",
-		Phone: "12324",
-	}
-
-	userUuid := uuid.New()
-	userRepo.On("Add", mock.Anything, testOrg, mock.Anything).Return(&db.User{Uuid: userUuid,
-		Email: userRequest.Email, Phone: userRequest.Phone,
-		Name: userRequest.Name}, nil)
-
-	hssClient.On("Add", mock.MatchedBy(func(n *hsspb.AddImsiRequest) bool {
-		return n.Imsi.Imsi == testImis && n.Imsi.UserId == userUuid.String()
-	})).Return(&hsspb.AddImsiResponse{}, nil)
-
-	simManager.On("GetQrCode", mock.Anything, mock.Anything).Return(&pbclient.GetQrCodeResponse{
-		QrCode: "qr",
-	}, nil).Maybe()
-
-	pub := &commock.QPub{}
-
-	t.Run("WithSimToken", func(tt *testing.T) {
-		simProvider := &mocks.SimProvider{}
-		simProvider.On("GetICCIDWithCode", TEST_SIM_TOKEN).Return(sims.GetDubugIccid(), nil)
-		kratosClient := &mocks.KratosClient{}
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
-		// Act
-		addResp, err := srv.Add(context.Background(), &pb.AddRequest{
-			Org:      testOrg,
-			User:     userRequest,
-			SimToken: TEST_SIM_TOKEN,
-		})
-
-		// Assert
-		if assert.NoError(t, err) {
-			assert.NotEmpty(t, addResp.User.Uuid)
-			assert.Equal(t, userUuid.String(), addResp.User.Uuid)
-			simProvider.AssertExpectations(tt)
-			simManager.AssertExpectations(tt)
-		}
-	})
-
-	t.Run("WithoutSimToken", func(tt *testing.T) {
-		simProvider := &mocks.SimProvider{}
-		simProvider.On("GetICCIDFromPool").Return(sims.GetDubugIccid(), nil)
-		kratosClient := &mocks.KratosClient{}
-		pub := &commock.QPub{}
-		pub.On("PublishToQueue", "mailer", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
-
-		md := metadata.Pairs("x-requester", tesRequesterId)
-		ctx := metadata.NewIncomingContext(context.TODO(), md)
-		kratosClient.On("GetAccountName", tesRequesterId).Return("TestNO", nil)
-
-		// Act
-		addResp, err := srv.Add(ctx, &pb.AddRequest{
-			Org:  testOrg,
-			User: userRequest,
-		})
-
-		// Assert
-		if assert.NoError(t, err) {
-			assert.NotEmpty(t, addResp.User.Uuid)
-			assert.Equal(t, userUuid.String(), addResp.User.Uuid)
-			simProvider.AssertExpectations(tt)
-		}
-	})
-
-	t.Run("WithDebugSimToken", func(tt *testing.T) {
-		simProvider := &mocks.SimProvider{}
-		pub := &commock.QPub{}
-		kratosClient := &mocks.KratosClient{}
-		pub.On("PublishToQueue", "mailer", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
-
-		kratosClient.On("GetAccountName", tesRequesterId).Return("TestNO", nil)
-		md := metadata.Pairs("x-requester", tesRequesterId)
-		ctx := metadata.NewIncomingContext(context.TODO(), md)
-
-		// Act
-		addResp, err := srv.Add(ctx, &pb.AddRequest{
-			Org:      testOrg,
-			User:     userRequest,
-			SimToken: "I_DO_NOT_NEED_A_SIM",
-		})
-
-		// Assert
-		if assert.NoError(t, err) {
-			assert.NotEmpty(t, addResp.User.Uuid)
-			assert.Equal(t, userUuid.String(), addResp.User.Uuid)
-			simProvider.AssertExpectations(tt)
-		}
+		assert.NoError(t, err)
+		assert.NotEmpty(t, addResp.User.Uuid)
+		assert.Equal(t, userRequest.Name, addResp.User.Name)
+		assert.Equal(t, userRequest.Phone, addResp.User.Phone)
+		assert.Equal(t, userRequest.Email, addResp.User.Email)
 	})
 }
 
-func Test_Deactivate(t *testing.T) {
-	// Arrange
-	userRepo := &mocks.UserRepo{}
-	hssClient := &hssmocks.ImsiServiceClient{}
-	simRepo := &mocks.SimcardRepo{}
-	simManager := &mocks2.SimManagerServiceClient{}
-	simProvider := &mocks.SimProvider{}
-	kratosClient := &mocks.KratosClient{}
-	hssProv := &mocks.ImsiClientProvider{}
-	hssProv.On("GetClient").Return(hssClient, nil)
-	pub := &commock.QPub{}
+//TestGet
+//UserNotFound
 
-	iccid := sims.GetDubugIccid()
-	userId := uuid.NewString()
-	userRepo.On("Get", uuid.MustParse(userId)).Return(&db.User{
-		Uuid: uuid.MustParse(userId),
-		Simcard: db.Simcard{
-			Iccid: iccid,
-		},
+func TestUserService_Get(t *testing.T) {
+	userRepo := &mocks.UserRepo{}
+	userUUID := uuid.NewString()
+
+	userRepo.On("Get", uuid.MustParse(userUUID)).Return(&db.User{
+		Uuid: uuid.MustParse(userUUID),
 	}, nil)
+
+	t.Run("UserFound", func(tt *testing.T) {
+		srv := NewUserService(userRepo)
+
+		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID})
+
+		assert.NoError(t, err)
+		assert.Equal(t, userUUID, user.GetUser().Uuid)
+		userRepo.AssertExpectations(t)
+	})
+}
+
+//TestUpdate
+
+//TestDactivate
+//UserAlreadyDeactivated
+//UserNotAlreadyDeactivate
+
+//TestDelete
+//UserAlreadyDeactivated
+//UserNotAlreadyDeactivate
+
+func TestUserService_Deactivate(t *testing.T) {
+	userRepo := &mocks.UserRepo{}
+	userUUID := uuid.NewString()
+
+	userRepo.On("Get", uuid.MustParse(userUUID)).Return(&db.User{
+		Uuid: uuid.MustParse(userUUID),
+	}, nil)
+
 	userRepo.On("Update", mock.MatchedBy(func(u *db.User) bool {
-		return u.Uuid.String() == userId
+		return u.Uuid.String() == userUUID
 	})).Return(&db.User{}, nil)
 
-	simManager.On("TerminateSim", mock.Anything, mock.MatchedBy(func(t *pbclient.TerminateSimRequest) bool {
-		return t.Iccid == iccid
-	})).Return(&pbclient.TerminateSimResponse{}, nil)
+	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
+		srv := NewUserService(userRepo)
 
-	hssClient.On("Delete", mock.Anything, mock.Anything).Return(&hsspb.DeleteImsiResponse{}, nil)
+		_, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
+			UserUuid: userUUID,
+		})
 
-	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
-
-	_, err := srv.DeactivateUser(context.Background(), &pb.DeactivateUserRequest{
-		UserId: userId,
-	})
-	if assert.NoError(t, err, "Error deactivating user") {
-		hssClient.AssertExpectations(t)
+		assert.NoError(t, err, "Error deactivating user")
 		userRepo.AssertExpectations(t)
-	}
+	})
 }
 
-func Test_AddValidation(t *testing.T) {
+func TestUserService_Validation_Add(t *testing.T) {
 	const name = "nn"
+
 	tests := []struct {
 		name        string
 		user        *pb.User
 		expectErr   bool
 		errContains string
 	}{
-		{name: "emptyName",
+		{
+			name:        "emptyName",
 			user:        &pb.User{},
 			expectErr:   true,
 			errContains: "Name",
 		},
-		{name: "email",
+		{
+			name:        "email",
 			user:        &pb.User{Email: "test_example.com", Name: name},
 			expectErr:   true,
 			errContains: "must be an email format",
 		},
-		{name: "emailNoTopLevelDomain",
+		{
+			name:        "emailNoTopLevelDomain",
 			user:        &pb.User{Email: "test@example", Name: name},
 			expectErr:   true,
 			errContains: "must be an email format",
 		},
-		{name: "emailNotRequired",
+		{
+			name:      "emailNotRequired",
 			user:      &pb.User{Name: name},
 			expectErr: false,
 		},
-		{name: "emailIsEmpty",
+		{
+			name:        "emailIsEmpty",
 			user:        &pb.User{Email: "@example.com", Name: name},
 			expectErr:   true,
 			errContains: "must be an email format",
 		},
 
-		{name: "phone1",
+		{
+			name:      "phone1",
 			user:      &pb.User{Phone: "(+351) 282 43 50 50", Name: name},
 			expectErr: false,
 		},
-		{name: "phone2",
+		{
+			name:      "phone2",
 			user:      &pb.User{Phone: "90191919908", Name: name},
 			expectErr: false,
 		},
 
-		{name: "phone3",
+		{
+			name:      "phone3",
 			user:      &pb.User{Phone: "555-8909", Name: name},
 			expectErr: false,
 		},
-		{name: "phone4",
+		{
+			name:      "phone4",
 			user:      &pb.User{Phone: "001 6867684", Name: name},
 			expectErr: false,
 		},
-		{name: "phone5",
+		{
+			name:      "phone5",
 			user:      &pb.User{Phone: "1 (234) 567-8901", Name: name},
 			expectErr: false,
 		},
-		{name: "phone6",
+		{
+			name:      "phone6",
 			user:      &pb.User{Phone: "+1 34 567-8901", Name: name},
 			expectErr: false,
 		},
-		{name: "phoneEmpty",
+		{
+			name:      "phoneEmpty",
 			user:      &pb.User{Name: name},
 			expectErr: false,
 		},
 
-		{name: "phoneErr",
+		{
+			name:        "phoneErr",
 			user:        &pb.User{Phone: "sdfewr", Name: name},
 			expectErr:   true,
 			errContains: "phone number",
@@ -301,78 +182,92 @@ func Test_AddValidation(t *testing.T) {
 
 			// test add requeset
 			r := &pb.AddRequest{
-				Org:  testOrg,
 				User: test.user,
 			}
+
 			err := r.Validate()
 			assertValidationErr(tt, err, test.expectErr, test.errContains)
 		})
 	}
 }
 
-func Test_UpdateValidation(t *testing.T) {
+func TestUserService_Validation_Update(t *testing.T) {
 	const name = "nn"
+
 	tests := []struct {
 		name        string
 		user        *pb.User
 		expectErr   bool
 		errContains string
 	}{
-		{name: "emptyName",
+		{
+			name:      "emptyName",
 			user:      &pb.User{},
 			expectErr: false,
 		},
-		{name: "email",
+		{
+			name:        "email",
 			user:        &pb.User{Email: "test_example.com", Name: name},
 			expectErr:   true,
 			errContains: "must be an email format",
 		},
-		{name: "emailNoTopLevelDomain",
+		{
+			name:        "emailNoTopLevelDomain",
 			user:        &pb.User{Email: "test@example", Name: name},
 			expectErr:   true,
 			errContains: "must be an email format",
 		},
-		{name: "emailNotRequired",
+		{
+			name:      "emailNotRequired",
 			user:      &pb.User{Name: name},
 			expectErr: false,
 		},
-		{name: "emailIsEmpty",
+		{
+			name:        "emailIsEmpty",
 			user:        &pb.User{Email: "@example.com", Name: name},
 			expectErr:   true,
 			errContains: "must be an email format",
 		},
 
-		{name: "phone1",
+		{
+			name:      "phone1",
 			user:      &pb.User{Phone: "(+351) 282 43 50 50", Name: name},
 			expectErr: false,
 		},
-		{name: "phone2",
+		{
+			name:      "phone2",
 			user:      &pb.User{Phone: "90191919908", Name: name},
 			expectErr: false,
 		},
 
-		{name: "phone3",
+		{
+			name:      "phone3",
 			user:      &pb.User{Phone: "555-8909", Name: name},
 			expectErr: false,
 		},
-		{name: "phone4",
+		{
+			name:      "phone4",
 			user:      &pb.User{Phone: "001 6867684", Name: name},
 			expectErr: false,
 		},
-		{name: "phone5",
+		{
+			name:      "phone5",
 			user:      &pb.User{Phone: "1 (234) 567-8901", Name: name},
 			expectErr: false,
 		},
-		{name: "phone6",
+		{
+			name:      "phone6",
 			user:      &pb.User{Phone: "+1 34 567-8901", Name: name},
 			expectErr: false,
 		},
-		{name: "phoneEmpty",
+		{
+			name:      "phoneEmpty",
 			user:      &pb.User{Name: name},
 			expectErr: false,
 		},
 
-		{name: "phoneErr",
+		{
+			name:        "phoneErr",
 			user:        &pb.User{Phone: "sdfewr", Name: name},
 			expectErr:   true,
 			errContains: "phone number",
@@ -381,123 +276,26 @@ func Test_UpdateValidation(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
+
 			// test update request
 			ru := &pb.UpdateRequest{
-				UserId: uuid.NewString(),
+				UserUuid: uuid.NewString(),
 				User: &pb.UserAttributes{
 					Phone: test.user.Phone,
 					Email: test.user.Email,
 					Name:  test.user.Name,
 				},
 			}
+
 			err := ru.Validate()
 			assertValidationErr(tt, err, test.expectErr, test.errContains)
 		})
 	}
-
-}
-
-func Test_UpdateServices(t *testing.T) {
-	// Arrange
-	userRepo := &mocks.UserRepo{}
-	simProvider := &mocks.SimProvider{}
-	hssProv := &mocks.ImsiClientProvider{}
-	testIccid := "890000000000000001"
-
-	simRepo := &mocks.SimcardRepo{}
-	simRepo.On("Get", testIccid).Return(&db.Simcard{Iccid: testIccid, Services: []*db.Service{
-		{Data: false, Type: db.ServiceTypeUkama},
-		{Data: true, Type: db.ServiceTypeCarrier},
-	}}, nil)
-	simRepo.On("UpdateServices", mock.Anything, mock.Anything, mock.MatchedBy(func(f func() error) bool {
-		// call the function that is passed as nestec func
-		err := f()
-		if err != nil {
-			t.Errorf("Error calling nested simmanager.updateServices. Error: %v", err)
-			t.Fail()
-		}
-		return true
-	})).Return(nil)
-
-	pub := &commock.QPub{}
-
-	t.Run("UpdateUkama", func(tt *testing.T) {
-		simManager := &mocks2.SimManagerServiceClient{}
-		kratosClient := &mocks.KratosClient{}
-
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
-		// Act
-		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
-			Iccid: testIccid,
-			Ukama: &pb.SetSimStatusRequest_SetServices{
-				Data: wrapperspb.Bool(true),
-			},
-		})
-
-		// Assert
-		if assert.NoError(t, err) {
-			simRepo.AssertExpectations(tt)
-			simManager.AssertExpectations(tt)
-			assert.NotNil(tt, resp)
-		}
-	})
-
-	t.Run("UpdateCarrier", func(tt *testing.T) {
-		simManager := &mocks2.SimManagerServiceClient{}
-		kratosClient := &mocks.KratosClient{}
-		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
-			return p.Services.Data.GetValue()
-		})).Return(nil, nil)
-
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
-		// Act
-		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
-			Iccid: testIccid,
-			Ukama: &pb.SetSimStatusRequest_SetServices{
-				Data: wrapperspb.Bool(true),
-			},
-			Carrier: &pb.SetSimStatusRequest_SetServices{
-				Data: wrapperspb.Bool(true),
-			},
-		})
-
-		// Assert
-		if assert.NoError(t, err) {
-			simRepo.AssertExpectations(tt)
-			simManager.AssertExpectations(tt)
-			assert.NotNil(tt, resp)
-		}
-	})
-
-	t.Run("DisableAllServicesButKeepCarrier", func(tt *testing.T) {
-		simManager := &mocks2.SimManagerServiceClient{}
-		kratosClient := &mocks.KratosClient{}
-		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
-			return p.Services.Data != nil && p.Services.Data.GetValue() == false
-		})).Return(nil, nil)
-
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
-		// Act
-		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
-			Iccid: testIccid,
-			Ukama: &pb.SetSimStatusRequest_SetServices{
-				Data: wrapperspb.Bool(false),
-			},
-			Carrier: &pb.SetSimStatusRequest_SetServices{
-				Data: wrapperspb.Bool(true),
-			},
-		})
-
-		// Assert
-		if assert.NoError(t, err) {
-			simRepo.AssertExpectations(tt)
-			simManager.AssertExpectations(tt)
-			assert.NotNil(tt, resp)
-		}
-	})
 }
 
 func assertValidationErr(t *testing.T, err error, expectErr bool, errContains string) {
+	t.Helper()
+
 	if expectErr {
 		if assert.Error(t, err) {
 			assert.Contains(t, err.Error(), errContains)

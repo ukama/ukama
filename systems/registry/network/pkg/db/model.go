@@ -24,6 +24,7 @@ const (
 
 func (e *NodeState) Scan(value interface{}) error {
 	*e = NodeState(uint8(value.(int64)))
+
 	return nil
 }
 
@@ -42,6 +43,7 @@ const (
 
 func (e *NodeType) Scan(value interface{}) error {
 	*e = NodeType(uint8(value.(int64)))
+
 	return nil
 }
 

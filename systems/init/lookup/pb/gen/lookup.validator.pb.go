@@ -38,6 +38,9 @@ func (this *UpdateOrgRequest) Validate() error {
 	return nil
 }
 func (this *UpdateOrgResponse) Validate() error {
+	if this.OrgName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+	}
 	return nil
 }
 func (this *GetOrgRequest) Validate() error {
@@ -59,6 +62,9 @@ func (this *AddNodeRequest) Validate() error {
 	return nil
 }
 func (this *AddNodeResponse) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *GetNodeForOrgRequest) Validate() error {

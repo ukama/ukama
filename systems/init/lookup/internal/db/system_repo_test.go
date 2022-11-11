@@ -24,6 +24,7 @@ func Test_systemRepo_Get(t *testing.T) {
 		const ip = "0.0.0.0"
 		const certs = "ukama_certs"
 		const port = 101
+		const health = 100
 
 		var dIp pgtype.Inet
 		err := dIp.Set(ip)
@@ -34,8 +35,8 @@ func Test_systemRepo_Get(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"name", "uuid", "certificate", "ip", "port"}).
-			AddRow(name, uuidStr, certs, dIp, port)
+		rows := sqlmock.NewRows([]string{"name", "uuid", "certificate", "ip", "port", "health"}).
+			AddRow(name, uuidStr, certs, dIp, port, health)
 
 		mock.ExpectQuery(`^SELECT.*systems.*`).
 			WithArgs(name).
@@ -133,6 +134,7 @@ func Test_systemRepo_Add(t *testing.T) {
 			Port:        100,
 			Uuid:        uuid.New().String(),
 			OrgID:       orgId,
+			Health:      100,
 		}
 
 		var db *extsql.DB
@@ -143,7 +145,7 @@ func Test_systemRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
@@ -193,6 +195,7 @@ func Test_systemRepo_Update(t *testing.T) {
 			Port:        100,
 			Uuid:        uuid.New().String(),
 			OrgID:       orgId,
+			Health:      100,
 		}
 
 		var db *extsql.DB
@@ -203,7 +206,7 @@ func Test_systemRepo_Update(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Name).
+			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health, system.Name).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
