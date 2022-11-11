@@ -21,8 +21,8 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 }
 
 func (u *baseRateRepo) GetBaseRate(rateId uint64) (*Rate, error) {
-	var rate *Rate
-	result := u.Db.GetGormDb().First(&rate, "Id=?", rateId)
+	rate := &Rate{}
+	result := u.Db.GetGormDb().First(rate, "Id=?", rateId)
 	if result.Error != nil {
 		return nil, result.Error
 	}

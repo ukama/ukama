@@ -75,6 +75,5 @@ func IsFutureDate(date string) bool {
 	if err != nil {
 		return false
 	}
-	today := time.Now().UnixNano() / int64(time.Millisecond)
-	return today < t.UnixNano()/int64(time.Millisecond)
+	return time.Now().Before(t)
 }

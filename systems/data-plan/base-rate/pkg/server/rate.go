@@ -46,7 +46,7 @@ func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesR
 	network := req.GetProvider()
 	effectiveAt := req.GetEffectiveAt()
 	simType := validations.ReqPbToStr(req.GetSimType())
-	rates, err := b.baseRateRepo.GetBaseRates(country, network,effectiveAt,simType)
+	rates, err := b.baseRateRepo.GetBaseRates(country, network, effectiveAt, simType)
 	if err != nil {
 		logrus.Error("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
@@ -87,18 +87,12 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	res := utils.ParseToModel(data, effectiveAt, simType)
+	rates := utils.ParseToModel(data, effectiveAt, simType)
 
-	err = b.baseRateRepo.UploadBaseRates(res)
+	err = b.baseRateRepo.UploadBaseRates(rates)
 
 	if err != nil {
 		logrus.Error("error inserting rates" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rate")
-	}
-
-	rates, err := b.baseRateRepo.GetBaseRates("", "",effectiveAt,"")
-	if err != nil {
-		logrus.Error("error fetching rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
