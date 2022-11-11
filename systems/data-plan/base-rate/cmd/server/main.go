@@ -27,7 +27,7 @@ import (
 var serviceConfig *pkg.Config
 
 func main() {
-	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+	ccmd.ProcessVersionArgument(pkg.SystemName, os.Args, version.Version, pkg.InstanceId)
 
 	initConfig()
 	rateDb := initDb()
@@ -38,10 +38,10 @@ func main() {
 func initConfig() {
 	serviceConfig = &pkg.Config{
 		DB: &uconf.Database{
-			DbName: pkg.ServiceName,
+			DbName: pkg.SystemName,
 		},
 	}
-	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
+	err := config.NewConfReader(pkg.SystemName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {

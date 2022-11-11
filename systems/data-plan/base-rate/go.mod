@@ -3,10 +3,12 @@ module github.com/ukama/ukama/systems/data-plan/base-rate
 go 1.18
 
 require (
+	github.com/jszwec/csvutil v1.7.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
+	gorm.io/gorm v1.24.1-0.20221019064659-5dd2bb482755
 )
 
 require (
@@ -19,7 +21,6 @@ require (
 	github.com/go-playground/validator/v10 v10.10.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/iamolegga/enviper v1.4.0 // indirect
-	github.com/jszwec/csvutil v1.7.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
@@ -31,7 +32,6 @@ require (
 	github.com/spf13/viper v1.13.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	gorm.io/driver/postgres v1.4.5 // indirect
-	gorm.io/gorm v1.24.1-0.20221019064659-5dd2bb482755 // indirect
 )
 
 require (

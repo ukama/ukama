@@ -58,13 +58,13 @@ func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt
 	return r0, r1
 }
 
-// UploadBaseRates provides a mock function with given fields: query
-func (_m *BaseRateRepo) UploadBaseRates(query string) error {
-	ret := _m.Called(query)
+// UploadBaseRates provides a mock function with given fields: rateList
+func (_m *BaseRateRepo) UploadBaseRates(rateList []db.Rate) error {
+	ret := _m.Called(rateList)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(query)
+	if rf, ok := ret.Get(0).(func([]db.Rate) error); ok {
+		r0 = rf(rateList)
 	} else {
 		r0 = ret.Error(0)
 	}
