@@ -9,7 +9,7 @@ import (
 type UserRepo interface {
 	Add(user *User) error
 	Get(uuid uuid.UUID) (*User, error)
-	// Deactivate(uuid uuid.UUID) error
+	Update(*User) (*User, error)
 	Delete(uuid uuid.UUID) error
 }
 
@@ -38,6 +38,34 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+func (u *userRepo) Update(user *User) (*User, error) {
+	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(User{}).Where("uuid = ?", user.Uuid).Updates(user)
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		member := &OrgUser{
+			Deactivated: user.Deactivated,
+		}
+
+		result = tx.Model(OrgUser{}).Where("uuid = ?", user.Uuid).Updates(member)
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
+
+	return user, err
 }
 
 func (u *userRepo) Delete(userUUID uuid.UUID) error {
