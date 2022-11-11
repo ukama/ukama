@@ -4,6 +4,8 @@ go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
+replace github.com/ukama/ukama/systems/registry/org => ../org
+
 replace github.com/ukama/ukama/systems/registry/users => ./
 
 require (
@@ -13,6 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/org v0.0.0-00010101000000-000000000000
 	github.com/vektra/mockery/v2 v2.14.0
 	google.golang.org/grpc v1.50.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
