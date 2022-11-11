@@ -15,6 +15,10 @@ service OrgService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
 
+
+    /* Users */
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+
     /* Members */
     rpc AddMember(MemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
@@ -66,6 +70,15 @@ message GetMembersResponse{
     repeated OrgUser members = 2;
 }
 
+message UpdateUserRequest {
+    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    bool isDeactivated = 2;
+}
+
+message UpdateUserResponse {
+    User user = 1;
+}
+
 message Organization {
     uint64 id = 1;
     string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
@@ -73,6 +86,12 @@ message Organization {
     string certificate = 4;
     bool isDeactivated = 5;
     google.protobuf.Timestamp created_at = 6;
+}
+
+message User {
+    uint64 userId = 1;
+    string uuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    bool isDeactivated = 3;
 }
 
 message OrgUser {

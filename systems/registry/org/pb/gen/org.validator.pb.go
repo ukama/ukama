@@ -111,6 +111,26 @@ func (this *GetMembersResponse) Validate() error {
 	return nil
 }
 
+var _regex_UpdateUserRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *UpdateUserRequest) Validate() error {
+	if !_regex_UpdateUserRequest_UserUuid.MatchString(this.UserUuid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserUuid))
+	}
+	if this.UserUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.UserUuid))
+	}
+	return nil
+}
+func (this *UpdateUserResponse) Validate() error {
+	if this.User != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.User); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("User", err)
+		}
+	}
+	return nil
+}
+
 var _regex_Organization_Owner = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Organization) Validate() error {
@@ -127,6 +147,18 @@ func (this *Organization) Validate() error {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
 		}
+	}
+	return nil
+}
+
+var _regex_User_Uuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *User) Validate() error {
+	if !_regex_User_Uuid.MatchString(this.Uuid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Uuid))
+	}
+	if this.Uuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must not be an empty string`, this.Uuid))
 	}
 	return nil
 }
