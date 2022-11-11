@@ -1,5 +1,7 @@
 package pkg
 
-const SystemName = "baserate"
-const InstanceId = "v01"
+const ServiceName = "baserate"
+const SystemName = "DataPlan"
+
 var IsDebugMode bool = false
+var InstanceId = ServiceName + "-debug"
