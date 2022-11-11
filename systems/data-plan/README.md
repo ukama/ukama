@@ -88,6 +88,7 @@ Function take these arguments:
     [optional] to => DateTime
     [optional] from => DateTime
     [optional] simType => String
+    [optional] effectiveAt => String
 }
 ```
 
@@ -143,7 +144,7 @@ This command will generate protobuf from `pb/rate.proto`.
 make server
 ```
 
-This command will run the server on port `9090` ,and a database name `baserate` with `rates` table under it.
+This command will run the server on port `9090` ,and craeate a database name `baserate` with `rates` table under it.
 
 Server is running, Now we can use any gRPC client to intract with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans) here:
 
@@ -172,7 +173,7 @@ Service takes 3 aurguments **fileURL**, **effectiveAt** & **simType**. For fileU
 **GetBaseRates**
 
 To verify that our records are populated we can use GetBaseRates RPC which will return list of rates base on filters provided.
-This rpc function takes required `country` and some optional arguments **country**,**network**,**simType**,**from**,**to**.
+This rpc function takes `country` as required param and some optional arguments **country**,**effectiveAt**,**network**,**simType**,**from**,**to**.
 
 ```
 call GetBaseRates
@@ -180,8 +181,8 @@ call GetBaseRates
 
 **GetBaseRate**
 
-To get base rate by id one can user GetBaseRate RPC which will return base rate record.
-This GetBaseRate takes required argument of `id`.
+To get base rate by id one can user GetBaseRate RPC which return single base rate record.
+This rpc takes required argument of `id`.
 
 ```
 call GetBaseRate
