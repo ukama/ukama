@@ -10,7 +10,7 @@ import (
 type UserRepo interface {
 	Add(user *User) error
 	Get(uuid uuid.UUID) (*User, error)
-	Update(user *User) (*User, error)
+	Update(user *User, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 	Delete(uuid uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
@@ -42,28 +42,41 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 }
 
 // Update user modified non-empty fields provided by user struct
-func (u *userRepo) Update(user *User) (*User, error) {
-	d := u.Db.GetGormDb().Clauses(clause.Returning{}).Where("uuid = ?", user.Uuid).Updates(user)
-	if d.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	if d.Error != nil {
-		return nil, d.Error
-	}
-
-	return user, nil
-}
-
-func (u *userRepo) Delete(userID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+func (u *userRepo) Update(user *User, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
 	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Where(&User{Uuid: userID}).Delete(&User{})
+		result := tx.Clauses(clause.Returning{}).Where("uuid = ?", user.Uuid).Updates(user)
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
 		if result.Error != nil {
 			return result.Error
 		}
 
 		if nestedFunc != nil {
-			nestErr := nestedFunc(userID, tx)
+			nestErr := nestedFunc(user.Uuid, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		return nil
+	})
+
+	return err
+
+}
+
+func (u *userRepo) Delete(userUUID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		result := tx.Where(&User{Uuid: userUUID}).Delete(&User{})
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if nestedFunc != nil {
+			nestErr := nestedFunc(userUUID, tx)
 			if nestErr != nil {
 				return nestErr
 			}
