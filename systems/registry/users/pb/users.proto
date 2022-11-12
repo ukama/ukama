@@ -47,6 +47,7 @@ message DeactivateRequest {
 }
 
 message  DeactivateResponse{
+    User user = 1;
 }
 
 message DeleteRequest{
