@@ -79,7 +79,7 @@ func TestUserService_Deactivate(t *testing.T) {
 
 	userRepo.On("Update", mock.MatchedBy(func(u *db.User) bool {
 		return u.Uuid.String() == userUUID
-	})).Return(&db.User{}, nil)
+	}), mock.Anything).Return(nil)
 
 	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
 		srv := NewUserService(userRepo)

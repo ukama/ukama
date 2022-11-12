@@ -68,12 +68,14 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	user, err := u.userRepo.Update(&db.User{
+	user := &db.User{
 		Uuid:  uuid,
 		Name:  req.User.Name,
 		Email: req.User.Email,
 		Phone: req.User.Phone,
-	})
+	}
+
+	err = u.userRepo.Update(user, nil)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
@@ -98,16 +100,18 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	}
 
 	// set user's status to suspended
-	_, err = u.userRepo.Update(&db.User{
+	user := &db.User{
 		Uuid:        uuid,
 		Deactivated: true,
-	})
+	}
+
+	err = u.userRepo.Update(user, nil)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	return &pb.DeactivateResponse{}, nil
+	return &pb.DeactivateResponse{User: dbUserToPbUser(user)}, nil
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
