@@ -32,7 +32,7 @@ type OrgServiceClient interface {
 	AddMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
-	DeactivateMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 }
 
@@ -107,9 +107,9 @@ func (c *orgServiceClient) GetMembers(ctx context.Context, in *GetMembersRequest
 	return out, nil
 }
 
-func (c *orgServiceClient) DeactivateMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+func (c *orgServiceClient) UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
 	out := new(MemberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/DeactivateMember", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/UpdateMember", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ type OrgServiceServer interface {
 	AddMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
-	DeactivateMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error)
 	RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	mustEmbedUnimplementedOrgServiceServer()
 }
@@ -169,8 +169,8 @@ func (UnimplementedOrgServiceServer) GetMember(context.Context, *MemberRequest) 
 func (UnimplementedOrgServiceServer) GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMembers not implemented")
 }
-func (UnimplementedOrgServiceServer) DeactivateMember(context.Context, *MemberRequest) (*MemberResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeactivateMember not implemented")
+func (UnimplementedOrgServiceServer) UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMember not implemented")
 }
 func (UnimplementedOrgServiceServer) RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveMember not implemented")
@@ -314,20 +314,20 @@ func _OrgService_GetMembers_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrgService_DeactivateMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MemberRequest)
+func _OrgService_UpdateMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMemberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrgServiceServer).DeactivateMember(ctx, in)
+		return srv.(OrgServiceServer).UpdateMember(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.org.v1.OrgService/DeactivateMember",
+		FullMethod: "/ukama.org.v1.OrgService/UpdateMember",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).DeactivateMember(ctx, req.(*MemberRequest))
+		return srv.(OrgServiceServer).UpdateMember(ctx, req.(*UpdateMemberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -386,8 +386,8 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrgService_GetMembers_Handler,
 		},
 		{
-			MethodName: "DeactivateMember",
-			Handler:    _OrgService_DeactivateMember_Handler,
+			MethodName: "UpdateMember",
+			Handler:    _OrgService_UpdateMember_Handler,
 		},
 		{
 			MethodName: "RemoveMember",

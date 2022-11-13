@@ -110,6 +110,19 @@ func (this *GetMembersResponse) Validate() error {
 	}
 	return nil
 }
+func (this *UpdateMemberRequest) Validate() error {
+	if this.Member != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Member); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Member", err)
+		}
+	}
+	if this.Attributes != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Attributes); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Attributes", err)
+		}
+	}
+	return nil
+}
 
 var _regex_UpdateUserRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
@@ -119,6 +132,11 @@ func (this *UpdateUserRequest) Validate() error {
 	}
 	if this.UserUuid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.UserUuid))
+	}
+	if this.Attributes != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Attributes); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Attributes", err)
+		}
 	}
 	return nil
 }
@@ -150,6 +168,9 @@ func (this *Organization) Validate() error {
 	}
 	return nil
 }
+func (this *UserAttributes) Validate() error {
+	return nil
+}
 
 var _regex_User_Uuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
@@ -160,6 +181,9 @@ func (this *User) Validate() error {
 	if this.Uuid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must not be an empty string`, this.Uuid))
 	}
+	return nil
+}
+func (this *OrgUserAttributes) Validate() error {
 	return nil
 }
 

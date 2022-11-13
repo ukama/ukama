@@ -23,7 +23,7 @@ service OrgService {
     rpc AddMember(MemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
-    rpc DeactivateMember(MemberRequest) returns (MemberResponse);
+    rpc UpdateMember(UpdateMemberRequest) returns (MemberResponse);
     rpc RemoveMember(MemberRequest) returns (MemberResponse);
 }
 
@@ -70,9 +70,16 @@ message GetMembersResponse{
     repeated OrgUser members = 2;
 }
 
+
+message UpdateMemberRequest {
+  MemberRequest member = 1;
+  OrgUserAttributes attributes = 2;
+}
+
+
 message UpdateUserRequest {
     string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
-    bool isDeactivated = 2;
+    UserAttributes attributes = 2;
 }
 
 message UpdateUserResponse {
@@ -88,10 +95,18 @@ message Organization {
     google.protobuf.Timestamp created_at = 6;
 }
 
+message UserAttributes {
+    bool isDeactivated = 3;
+}
+
 message User {
     uint64 userId = 1;
     string uuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
     bool isDeactivated = 3;
+}
+
+message OrgUserAttributes {
+    bool isDeactivated = 1;
 }
 
 message OrgUser {
@@ -101,3 +116,5 @@ message OrgUser {
     bool isDeactivated = 4;
     google.protobuf.Timestamp created_at = 5;
 }
+
+
