@@ -59,7 +59,7 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 func (r *OrgService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	logrus.Infof("Getting org %v", req)
 
-	org, err := r.orgRepo.Get(int(req.GetId()))
+	org, err := r.orgRepo.Get(uint(req.GetId()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -96,7 +96,7 @@ func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 
 	user, err := u.userRepo.Update(&db.User{
 		Uuid:        uuid,
-		Deactivated: req.IsDeactivated,
+		Deactivated: req.GetAttributes().IsDeactivated,
 	})
 
 	if err != nil {
@@ -108,7 +108,7 @@ func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 
 func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
-	org, err := r.orgRepo.Get(int(req.GetOrgId()))
+	org, err := r.orgRepo.Get(uint(req.GetOrgId()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -163,7 +163,7 @@ func (r *OrgService) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
 
-	member, err := r.orgRepo.GetMember(int(req.GetOrgId()), uuid)
+	member, err := r.orgRepo.GetMember(uint(req.GetOrgId()), uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -172,12 +172,12 @@ func (r *OrgService) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 }
 
 func (r *OrgService) GetMembers(ctx context.Context, req *pb.GetMembersRequest) (*pb.GetMembersResponse, error) {
-	_, err := r.orgRepo.Get(int(req.GetOrgId()))
+	_, err := r.orgRepo.Get(uint(req.GetOrgId()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	members, err := r.orgRepo.GetMembers(int(req.GetOrgId()))
+	members, err := r.orgRepo.GetMembers(uint(req.GetOrgId()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "orgs")
 	}
@@ -190,13 +190,19 @@ func (r *OrgService) GetMembers(ctx context.Context, req *pb.GetMembersRequest) 
 	return resp, nil
 }
 
-func (r *OrgService) DeactivateMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
-	uuid, err := uuid.Parse(req.GetUserUuid())
+func (r *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberRequest) (*pb.MemberResponse, error) {
+	uuid, err := uuid.Parse(req.GetMember().GetUserUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
 
-	member, err := r.orgRepo.DeactivateMember(int(req.GetOrgId()), uuid)
+	member := &db.OrgUser{
+		OrgID:       uint(req.GetMember().GetOrgId()),
+		Uuid:        uuid,
+		Deactivated: req.GetAttributes().IsDeactivated,
+	}
+
+	err = r.orgRepo.UpdateMember(member.OrgID, member)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -210,7 +216,7 @@ func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
 
-	member, err := r.orgRepo.GetMember(int(req.GetOrgId()), uuid)
+	member, err := r.orgRepo.GetMember(uint(req.GetOrgId()), uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -219,26 +225,13 @@ func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 		return nil, status.Errorf(codes.FailedPrecondition, "member must be deactivated first")
 	}
 
-	err = r.orgRepo.RemoveMember(int(req.GetOrgId()), uuid)
+	err = r.orgRepo.RemoveMember(uint(req.GetOrgId()), uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
 	return &pb.MemberResponse{}, nil
 }
-
-// func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-// logrus.Infof("Deleting org %v", req)
-
-// err := r.orgRepo.Delete(req.GetName())
-// if err != nil {
-// return nil, grpc.SqlErrorToGrpc(err, "org")
-// }
-
-// // publish event async
-
-// return &pb.DeleteResponse{}, nil
-// }
 
 func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 	return &pb.Organization{
