@@ -121,7 +121,7 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 		}
 
 		_, err = svc.UpdateUser(ctx, &orgpb.UpdateUserRequest{UserUuid: user.Uuid.String(),
-			IsDeactivated: user.Deactivated,
+			Attributes: &orgpb.UserAttributes{IsDeactivated: user.Deactivated},
 		})
 		if err != nil {
 			return err
