@@ -68,11 +68,11 @@ func (_m *UserRepo) Get(_a0 uuid.UUID) (*db.User, error) {
 }
 
 // Update provides a mock function with given fields: user, nestedFunc
-func (_m *UserRepo) Update(user *db.User, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+func (_m *UserRepo) Update(user *db.User, nestedFunc func(*db.User, *gorm.DB) error) error {
 	ret := _m.Called(user, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.User, func(uuid.UUID, *gorm.DB) error) error); ok {
+	if rf, ok := ret.Get(0).(func(*db.User, func(*db.User, *gorm.DB) error) error); ok {
 		r0 = rf(user, nestedFunc)
 	} else {
 		r0 = ret.Error(0)

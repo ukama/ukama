@@ -10,7 +10,7 @@ import (
 type UserRepo interface {
 	Add(user *User) error
 	Get(uuid uuid.UUID) (*User, error)
-	Update(user *User, nestedFunc func(uuid.UUID, *gorm.DB) error) error
+	Update(user *User, nestedFunc func(*User, *gorm.DB) error) error
 	Delete(uuid uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
@@ -42,7 +42,7 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 }
 
 // Update user modified non-empty fields provided by user struct
-func (u *userRepo) Update(user *User, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+func (u *userRepo) Update(user *User, nestedFunc func(*User, *gorm.DB) error) error {
 	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Clauses(clause.Returning{}).Where("uuid = ?", user.Uuid).Updates(user)
 
@@ -55,7 +55,7 @@ func (u *userRepo) Update(user *User, nestedFunc func(uuid.UUID, *gorm.DB) error
 		}
 
 		if nestedFunc != nil {
-			nestErr := nestedFunc(user.Uuid, tx)
+			nestErr := nestedFunc(user, tx)
 			if nestErr != nil {
 				return nestErr
 			}
