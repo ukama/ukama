@@ -10,6 +10,11 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+
+	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+
+	pkg "github.com/ukama/ukama/systems/registry/users/pkg/providers"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -20,12 +25,14 @@ const uuidParsingError = "Error parsing UUID"
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
-	userRepo db.UserRepo
+	userRepo   db.UserRepo
+	orgService pkg.OrgClientProvider
 }
 
-func NewUserService(userRepo db.UserRepo) *UserService {
+func NewUserService(userRepo db.UserRepo, orgService pkg.OrgClientProvider) *UserService {
 	return &UserService{
-		userRepo: userRepo,
+		userRepo:   userRepo,
+		orgService: orgService,
 	}
 }
 
@@ -85,12 +92,12 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 }
 
 func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest) (*pb.DeactivateResponse, error) {
-	uuid, err := uuid.Parse(req.UserUuid)
+	userUUID, err := uuid.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	usr, err := u.userRepo.Get(uuid)
+	usr, err := u.userRepo.Get(userUUID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
@@ -101,11 +108,27 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 
 	// set user's status to suspended
 	user := &db.User{
-		Uuid:        uuid,
+		Uuid:        userUUID,
 		Deactivated: true,
 	}
 
-	err = u.userRepo.Update(user, nil)
+	err = u.userRepo.Update(user, func(user *db.User, tx *gorm.DB) error {
+		logrus.Infof("Deactivating remote org user %s", userUUID)
+
+		svc, err := u.orgService.GetClient()
+		if err != nil {
+			return err
+		}
+
+		_, err = svc.UpdateUser(ctx, &orgpb.UpdateUserRequest{UserUuid: user.Uuid.String(),
+			IsDeactivated: user.Deactivated,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
