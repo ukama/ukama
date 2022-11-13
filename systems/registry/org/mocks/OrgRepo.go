@@ -42,35 +42,12 @@ func (_m *OrgRepo) AddMember(member *db.OrgUser) error {
 	return r0
 }
 
-// DeactivateMember provides a mock function with given fields: orgID, userUUID
-func (_m *OrgRepo) DeactivateMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error) {
-	ret := _m.Called(orgID, userUUID)
-
-	var r0 *db.OrgUser
-	if rf, ok := ret.Get(0).(func(int, uuid.UUID) *db.OrgUser); ok {
-		r0 = rf(orgID, userUUID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.OrgUser)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(int, uuid.UUID) error); ok {
-		r1 = rf(orgID, userUUID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Get provides a mock function with given fields: id
-func (_m *OrgRepo) Get(id int) (*db.Org, error) {
+func (_m *OrgRepo) Get(id uint) (*db.Org, error) {
 	ret := _m.Called(id)
 
 	var r0 *db.Org
-	if rf, ok := ret.Get(0).(func(int) *db.Org); ok {
+	if rf, ok := ret.Get(0).(func(uint) *db.Org); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
@@ -79,7 +56,7 @@ func (_m *OrgRepo) Get(id int) (*db.Org, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
 		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
@@ -112,11 +89,11 @@ func (_m *OrgRepo) GetByOwner(_a0 uuid.UUID) ([]db.Org, error) {
 }
 
 // GetMember provides a mock function with given fields: orgID, userUUID
-func (_m *OrgRepo) GetMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error) {
+func (_m *OrgRepo) GetMember(orgID uint, userUUID uuid.UUID) (*db.OrgUser, error) {
 	ret := _m.Called(orgID, userUUID)
 
 	var r0 *db.OrgUser
-	if rf, ok := ret.Get(0).(func(int, uuid.UUID) *db.OrgUser); ok {
+	if rf, ok := ret.Get(0).(func(uint, uuid.UUID) *db.OrgUser); ok {
 		r0 = rf(orgID, userUUID)
 	} else {
 		if ret.Get(0) != nil {
@@ -125,7 +102,7 @@ func (_m *OrgRepo) GetMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int, uuid.UUID) error); ok {
+	if rf, ok := ret.Get(1).(func(uint, uuid.UUID) error); ok {
 		r1 = rf(orgID, userUUID)
 	} else {
 		r1 = ret.Error(1)
@@ -135,11 +112,11 @@ func (_m *OrgRepo) GetMember(orgID int, userUUID uuid.UUID) (*db.OrgUser, error)
 }
 
 // GetMembers provides a mock function with given fields: orgID
-func (_m *OrgRepo) GetMembers(orgID int) ([]db.OrgUser, error) {
+func (_m *OrgRepo) GetMembers(orgID uint) ([]db.OrgUser, error) {
 	ret := _m.Called(orgID)
 
 	var r0 []db.OrgUser
-	if rf, ok := ret.Get(0).(func(int) []db.OrgUser); ok {
+	if rf, ok := ret.Get(0).(func(uint) []db.OrgUser); ok {
 		r0 = rf(orgID)
 	} else {
 		if ret.Get(0) != nil {
@@ -148,7 +125,7 @@ func (_m *OrgRepo) GetMembers(orgID int) ([]db.OrgUser, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
 		r1 = rf(orgID)
 	} else {
 		r1 = ret.Error(1)
@@ -158,12 +135,26 @@ func (_m *OrgRepo) GetMembers(orgID int) ([]db.OrgUser, error) {
 }
 
 // RemoveMember provides a mock function with given fields: orgID, userUUID
-func (_m *OrgRepo) RemoveMember(orgID int, userUUID uuid.UUID) error {
+func (_m *OrgRepo) RemoveMember(orgID uint, userUUID uuid.UUID) error {
 	ret := _m.Called(orgID, userUUID)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(int, uuid.UUID) error); ok {
+	if rf, ok := ret.Get(0).(func(uint, uuid.UUID) error); ok {
 		r0 = rf(orgID, userUUID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateMember provides a mock function with given fields: orgID, member
+func (_m *OrgRepo) UpdateMember(orgID uint, member *db.OrgUser) error {
+	ret := _m.Called(orgID, member)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uint, *db.OrgUser) error); ok {
+		r0 = rf(orgID, member)
 	} else {
 		r0 = ret.Error(0)
 	}

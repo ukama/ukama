@@ -14,18 +14,18 @@ import (
 type OrgRepo interface {
 	/* Orgs */
 	Add(org *Org) error
-	Get(id int) (*Org, error)
+	Get(id uint) (*Org, error)
 	GetByOwner(uuid uuid.UUID) ([]Org, error)
-	// Update(id int) error
-	// Deactivate(id int) error
-	// Delete(id int) error
+	// Update(id uint) error
+	// Deactivate(id uint) error
+	// Delete(id uint) error
 
 	/* Members */
 	AddMember(member *OrgUser) error
-	GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
-	GetMembers(orgID int) ([]OrgUser, error)
-	DeactivateMember(orgID int, userUUID uuid.UUID) (*OrgUser, error)
-	RemoveMember(orgID int, userUUID uuid.UUID) error
+	GetMember(orgID uint, userUUID uuid.UUID) (*OrgUser, error)
+	GetMembers(orgID uint) ([]OrgUser, error)
+	UpdateMember(orgID uint, member *OrgUser) error
+	RemoveMember(orgID uint, userUUID uuid.UUID) error
 }
 
 type orgRepo struct {
@@ -49,7 +49,7 @@ func (r *orgRepo) Add(org *Org) (err error) {
 	return d.Error
 }
 
-func (r *orgRepo) Get(id int) (*Org, error) {
+func (r *orgRepo) Get(id uint) (*Org, error) {
 	var org Org
 
 	result := r.Db.GetGormDb().First(&org, id)
@@ -77,7 +77,7 @@ func (r *orgRepo) AddMember(member *OrgUser) error {
 	return d.Error
 }
 
-func (r *orgRepo) GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error) {
+func (r *orgRepo) GetMember(orgID uint, userUUID uuid.UUID) (*OrgUser, error) {
 	var member OrgUser
 
 	result := r.Db.GetGormDb().Where("org_id = ? And uuid = ?", orgID, userUUID).First(&member)
@@ -88,7 +88,7 @@ func (r *orgRepo) GetMember(orgID int, userUUID uuid.UUID) (*OrgUser, error) {
 	return &member, nil
 }
 
-func (r *orgRepo) GetMembers(orgID int) ([]OrgUser, error) {
+func (r *orgRepo) GetMembers(orgID uint) ([]OrgUser, error) {
 	var members []OrgUser
 
 	result := r.Db.GetGormDb().Where(&OrgUser{OrgID: uint(orgID)}).Find(&members)
@@ -99,26 +99,16 @@ func (r *orgRepo) GetMembers(orgID int) ([]OrgUser, error) {
 	return members, nil
 }
 
-func (r *orgRepo) DeactivateMember(orgID int, userUUID uuid.UUID) (*OrgUser, error) {
-	member := &OrgUser{
-		OrgID:       uint(orgID),
-		Uuid:        userUUID,
-		Deactivated: true,
-	}
-
+func (r *orgRepo) UpdateMember(orgID uint, member *OrgUser) error {
 	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", member.OrgID, member.Uuid).Updates(member)
 	if d.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
+		return gorm.ErrRecordNotFound
 	}
 
-	if d.Error != nil {
-		return nil, d.Error
-	}
-
-	return member, nil
+	return d.Error
 }
 
-func (r *orgRepo) RemoveMember(orgID int, userUUID uuid.UUID) error {
+func (r *orgRepo) RemoveMember(orgID uint, userUUID uuid.UUID) error {
 	var member OrgUser
 
 	// d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", orgID, userUUID).Delete(&member)
