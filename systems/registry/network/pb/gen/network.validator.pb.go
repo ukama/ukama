@@ -16,53 +16,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *AddNodeRequest) Validate() error {
-	if nil == this.Node {
-		return github_com_mwitkow_go_proto_validators.FieldError("Node", fmt.Errorf("message must exist"))
-	}
-	if this.Node != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Node); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
-		}
-	}
-	if this.OrgName == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
-	}
-	if this.Network == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Network", fmt.Errorf(`value '%v' must not be an empty string`, this.Network))
-	}
-	return nil
-}
-func (this *AddNodeResponse) Validate() error {
-	if this.Node != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Node); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
-		}
-	}
-	return nil
-}
-func (this *DeleteNodeRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	return nil
-}
-func (this *DeleteNodeResponse) Validate() error {
-	return nil
-}
-func (this *GetNodesRequest) Validate() error {
-	return nil
-}
-func (this *GetNodesResponse) Validate() error {
-	for _, item := range this.Nodes {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Nodes", err)
-			}
-		}
-	}
-	return nil
-}
 func (this *AddRequest) Validate() error {
 	if this.Name == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
@@ -78,80 +31,6 @@ func (this *AddResponse) Validate() error {
 	return nil
 }
 func (this *Network) Validate() error {
-	return nil
-}
-func (this *Node) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	if this.Name == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
-	}
-	return nil
-}
-func (this *ListRequest) Validate() error {
-	return nil
-}
-func (this *ListResponse) Validate() error {
-	for _, item := range this.Orgs {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Orgs", err)
-			}
-		}
-	}
-	return nil
-}
-func (this *ListResponse_Network) Validate() error {
-	// Validation of proto3 map<> fields is unsupported.
-	return nil
-}
-func (this *ListResponse_Org) Validate() error {
-	for _, item := range this.Networks {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Networks", err)
-			}
-		}
-	}
-	return nil
-}
-func (this *UpdateNodeRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	if nil == this.Node {
-		return github_com_mwitkow_go_proto_validators.FieldError("Node", fmt.Errorf("message must exist"))
-	}
-	if this.Node != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Node); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
-		}
-	}
-	return nil
-}
-func (this *UpdateNodeResponse) Validate() error {
-	if this.Node != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Node); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
-		}
-	}
-	return nil
-}
-func (this *GetNodeRequest) Validate() error {
-	return nil
-}
-func (this *GetNodeResponse) Validate() error {
-	if this.Node != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Node); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
-		}
-	}
-	if this.Network != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
-		}
-	}
 	return nil
 }
 func (this *DeleteRequest) Validate() error {

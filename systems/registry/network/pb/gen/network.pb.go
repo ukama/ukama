@@ -21,413 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type NodeState int32
-
-const (
-	NodeState_UNDEFINED NodeState = 0
-	NodeState_PENDING   NodeState = 1
-	NodeState_ONBOARDED NodeState = 2
-)
-
-// Enum value maps for NodeState.
-var (
-	NodeState_name = map[int32]string{
-		0: "UNDEFINED",
-		1: "PENDING",
-		2: "ONBOARDED",
-	}
-	NodeState_value = map[string]int32{
-		"UNDEFINED": 0,
-		"PENDING":   1,
-		"ONBOARDED": 2,
-	}
-)
-
-func (x NodeState) Enum() *NodeState {
-	p := new(NodeState)
-	*p = x
-	return p
-}
-
-func (x NodeState) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (NodeState) Descriptor() protoreflect.EnumDescriptor {
-	return file_network_proto_enumTypes[0].Descriptor()
-}
-
-func (NodeState) Type() protoreflect.EnumType {
-	return &file_network_proto_enumTypes[0]
-}
-
-func (x NodeState) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use NodeState.Descriptor instead.
-func (NodeState) EnumDescriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{0}
-}
-
-type NodeType int32
-
-const (
-	NodeType_NODE_TYPE_UNDEFINED NodeType = 0
-	NodeType_HOME                NodeType = 1
-	NodeType_TOWER               NodeType = 2
-	NodeType_AMPLIFIER           NodeType = 3
-)
-
-// Enum value maps for NodeType.
-var (
-	NodeType_name = map[int32]string{
-		0: "NODE_TYPE_UNDEFINED",
-		1: "HOME",
-		2: "TOWER",
-		3: "AMPLIFIER",
-	}
-	NodeType_value = map[string]int32{
-		"NODE_TYPE_UNDEFINED": 0,
-		"HOME":                1,
-		"TOWER":               2,
-		"AMPLIFIER":           3,
-	}
-)
-
-func (x NodeType) Enum() *NodeType {
-	p := new(NodeType)
-	*p = x
-	return p
-}
-
-func (x NodeType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (NodeType) Descriptor() protoreflect.EnumDescriptor {
-	return file_network_proto_enumTypes[1].Descriptor()
-}
-
-func (NodeType) Type() protoreflect.EnumType {
-	return &file_network_proto_enumTypes[1]
-}
-
-func (x NodeType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use NodeType.Descriptor instead.
-func (NodeType) EnumDescriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{1}
-}
-
-type AddNodeRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Node    *Node  `protobuf:"bytes,1,opt,name=node,proto3" json:"node,omitempty"`
-	OrgName string `protobuf:"bytes,2,opt,name=orgName,proto3" json:"orgName,omitempty"`
-	Network string `protobuf:"bytes,3,opt,name=network,proto3" json:"network,omitempty"`
-}
-
-func (x *AddNodeRequest) Reset() {
-	*x = AddNodeRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AddNodeRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AddNodeRequest) ProtoMessage() {}
-
-func (x *AddNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AddNodeRequest.ProtoReflect.Descriptor instead.
-func (*AddNodeRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *AddNodeRequest) GetNode() *Node {
-	if x != nil {
-		return x.Node
-	}
-	return nil
-}
-
-func (x *AddNodeRequest) GetOrgName() string {
-	if x != nil {
-		return x.OrgName
-	}
-	return ""
-}
-
-func (x *AddNodeRequest) GetNetwork() string {
-	if x != nil {
-		return x.Network
-	}
-	return ""
-}
-
-type AddNodeResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Node *Node `protobuf:"bytes,1,opt,name=node,proto3" json:"node,omitempty"`
-}
-
-func (x *AddNodeResponse) Reset() {
-	*x = AddNodeResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AddNodeResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AddNodeResponse) ProtoMessage() {}
-
-func (x *AddNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AddNodeResponse.ProtoReflect.Descriptor instead.
-func (*AddNodeResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *AddNodeResponse) GetNode() *Node {
-	if x != nil {
-		return x.Node
-	}
-	return nil
-}
-
-type DeleteNodeRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-}
-
-func (x *DeleteNodeRequest) Reset() {
-	*x = DeleteNodeRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteNodeRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteNodeRequest) ProtoMessage() {}
-
-func (x *DeleteNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteNodeRequest.ProtoReflect.Descriptor instead.
-func (*DeleteNodeRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *DeleteNodeRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-type DeleteNodeResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-}
-
-func (x *DeleteNodeResponse) Reset() {
-	*x = DeleteNodeResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteNodeResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteNodeResponse) ProtoMessage() {}
-
-func (x *DeleteNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteNodeResponse.ProtoReflect.Descriptor instead.
-func (*DeleteNodeResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *DeleteNodeResponse) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-type GetNodesRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	OrgName string `protobuf:"bytes,1,opt,name=orgName,proto3" json:"orgName,omitempty"`
-}
-
-func (x *GetNodesRequest) Reset() {
-	*x = GetNodesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetNodesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetNodesRequest) ProtoMessage() {}
-
-func (x *GetNodesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetNodesRequest.ProtoReflect.Descriptor instead.
-func (*GetNodesRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *GetNodesRequest) GetOrgName() string {
-	if x != nil {
-		return x.OrgName
-	}
-	return ""
-}
-
-type GetNodesResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	OrgName string  `protobuf:"bytes,1,opt,name=orgName,proto3" json:"orgName,omitempty"`
-	Nodes   []*Node `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
-}
-
-func (x *GetNodesResponse) Reset() {
-	*x = GetNodesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetNodesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetNodesResponse) ProtoMessage() {}
-
-func (x *GetNodesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetNodesResponse.ProtoReflect.Descriptor instead.
-func (*GetNodesResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *GetNodesResponse) GetOrgName() string {
-	if x != nil {
-		return x.OrgName
-	}
-	return ""
-}
-
-func (x *GetNodesResponse) GetNodes() []*Node {
-	if x != nil {
-		return x.Nodes
-	}
-	return nil
-}
-
 type AddRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -440,7 +33,7 @@ type AddRequest struct {
 func (x *AddRequest) Reset() {
 	*x = AddRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[6]
+		mi := &file_network_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -453,7 +46,7 @@ func (x *AddRequest) String() string {
 func (*AddRequest) ProtoMessage() {}
 
 func (x *AddRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[6]
+	mi := &file_network_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -466,7 +59,7 @@ func (x *AddRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddRequest.ProtoReflect.Descriptor instead.
 func (*AddRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{6}
+	return file_network_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *AddRequest) GetName() string {
@@ -495,7 +88,7 @@ type AddResponse struct {
 func (x *AddResponse) Reset() {
 	*x = AddResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[7]
+		mi := &file_network_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -508,7 +101,7 @@ func (x *AddResponse) String() string {
 func (*AddResponse) ProtoMessage() {}
 
 func (x *AddResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[7]
+	mi := &file_network_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -521,7 +114,7 @@ func (x *AddResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddResponse.ProtoReflect.Descriptor instead.
 func (*AddResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{7}
+	return file_network_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *AddResponse) GetNetwork() *Network {
@@ -549,7 +142,7 @@ type Network struct {
 func (x *Network) Reset() {
 	*x = Network{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[8]
+		mi := &file_network_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -562,7 +155,7 @@ func (x *Network) String() string {
 func (*Network) ProtoMessage() {}
 
 func (x *Network) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[8]
+	mi := &file_network_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -575,7 +168,7 @@ func (x *Network) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Network.ProtoReflect.Descriptor instead.
 func (*Network) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{8}
+	return file_network_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Network) GetName() string {
@@ -583,374 +176,6 @@ func (x *Network) GetName() string {
 		return x.Name
 	}
 	return ""
-}
-
-type Node struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId string    `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-	State  NodeState `protobuf:"varint,4,opt,name=state,proto3,enum=ukama.network.v1.NodeState" json:"state,omitempty"`
-	Type   NodeType  `protobuf:"varint,5,opt,name=type,proto3,enum=ukama.network.v1.NodeType" json:"type,omitempty"`
-	Name   string    `protobuf:"bytes,6,opt,name=name,proto3" json:"name,omitempty"`
-}
-
-func (x *Node) Reset() {
-	*x = Node{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Node) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Node) ProtoMessage() {}
-
-func (x *Node) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Node.ProtoReflect.Descriptor instead.
-func (*Node) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *Node) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *Node) GetState() NodeState {
-	if x != nil {
-		return x.State
-	}
-	return NodeState_UNDEFINED
-}
-
-func (x *Node) GetType() NodeType {
-	if x != nil {
-		return x.Type
-	}
-	return NodeType_NODE_TYPE_UNDEFINED
-}
-
-func (x *Node) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-type ListRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *ListRequest) Reset() {
-	*x = ListRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListRequest) ProtoMessage() {}
-
-func (x *ListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
-func (*ListRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{10}
-}
-
-type ListResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Orgs []*ListResponse_Org `protobuf:"bytes,1,rep,name=orgs,proto3" json:"orgs,omitempty"`
-}
-
-func (x *ListResponse) Reset() {
-	*x = ListResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListResponse) ProtoMessage() {}
-
-func (x *ListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
-func (*ListResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *ListResponse) GetOrgs() []*ListResponse_Org {
-	if x != nil {
-		return x.Orgs
-	}
-	return nil
-}
-
-type UpdateNodeRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"` // node ID to update
-	Node   *Node  `protobuf:"bytes,2,opt,name=Node,proto3" json:"Node,omitempty"`
-}
-
-func (x *UpdateNodeRequest) Reset() {
-	*x = UpdateNodeRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *UpdateNodeRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateNodeRequest) ProtoMessage() {}
-
-func (x *UpdateNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateNodeRequest.ProtoReflect.Descriptor instead.
-func (*UpdateNodeRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *UpdateNodeRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *UpdateNodeRequest) GetNode() *Node {
-	if x != nil {
-		return x.Node
-	}
-	return nil
-}
-
-type UpdateNodeResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Node *Node `protobuf:"bytes,1,opt,name=Node,proto3" json:"Node,omitempty"`
-}
-
-func (x *UpdateNodeResponse) Reset() {
-	*x = UpdateNodeResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[13]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *UpdateNodeResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UpdateNodeResponse) ProtoMessage() {}
-
-func (x *UpdateNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[13]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UpdateNodeResponse.ProtoReflect.Descriptor instead.
-func (*UpdateNodeResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *UpdateNodeResponse) GetNode() *Node {
-	if x != nil {
-		return x.Node
-	}
-	return nil
-}
-
-type GetNodeRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-}
-
-func (x *GetNodeRequest) Reset() {
-	*x = GetNodeRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetNodeRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetNodeRequest) ProtoMessage() {}
-
-func (x *GetNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetNodeRequest.ProtoReflect.Descriptor instead.
-func (*GetNodeRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *GetNodeRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-type GetNodeResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Node    *Node    `protobuf:"bytes,1,opt,name=node,proto3" json:"node,omitempty"`
-	Org     string   `protobuf:"bytes,2,opt,name=org,proto3" json:"org,omitempty"`
-	Network *Network `protobuf:"bytes,3,opt,name=network,proto3" json:"network,omitempty"`
-}
-
-func (x *GetNodeResponse) Reset() {
-	*x = GetNodeResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[15]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetNodeResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetNodeResponse) ProtoMessage() {}
-
-func (x *GetNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[15]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetNodeResponse.ProtoReflect.Descriptor instead.
-func (*GetNodeResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *GetNodeResponse) GetNode() *Node {
-	if x != nil {
-		return x.Node
-	}
-	return nil
-}
-
-func (x *GetNodeResponse) GetOrg() string {
-	if x != nil {
-		return x.Org
-	}
-	return ""
-}
-
-func (x *GetNodeResponse) GetNetwork() *Network {
-	if x != nil {
-		return x.Network
-	}
-	return nil
 }
 
 type DeleteRequest struct {
@@ -965,7 +190,7 @@ type DeleteRequest struct {
 func (x *DeleteRequest) Reset() {
 	*x = DeleteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[16]
+		mi := &file_network_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -978,7 +203,7 @@ func (x *DeleteRequest) String() string {
 func (*DeleteRequest) ProtoMessage() {}
 
 func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[16]
+	mi := &file_network_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -991,7 +216,7 @@ func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{16}
+	return file_network_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DeleteRequest) GetOrgName() string {
@@ -1017,7 +242,7 @@ type DeleteResponse struct {
 func (x *DeleteResponse) Reset() {
 	*x = DeleteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[17]
+		mi := &file_network_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1030,7 +255,7 @@ func (x *DeleteResponse) String() string {
 func (*DeleteResponse) ProtoMessage() {}
 
 func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[17]
+	mi := &file_network_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1043,117 +268,7 @@ func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{17}
-}
-
-type ListResponse_Network struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Name          string            `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	NumberOfNodes map[string]uint32 `protobuf:"bytes,2,rep,name=numberOfNodes,proto3" json:"numberOfNodes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
-}
-
-func (x *ListResponse_Network) Reset() {
-	*x = ListResponse_Network{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[18]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListResponse_Network) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListResponse_Network) ProtoMessage() {}
-
-func (x *ListResponse_Network) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[18]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListResponse_Network.ProtoReflect.Descriptor instead.
-func (*ListResponse_Network) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{11, 0}
-}
-
-func (x *ListResponse_Network) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ListResponse_Network) GetNumberOfNodes() map[string]uint32 {
-	if x != nil {
-		return x.NumberOfNodes
-	}
-	return nil
-}
-
-type ListResponse_Org struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Name     string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Networks []*ListResponse_Network `protobuf:"bytes,2,rep,name=networks,proto3" json:"networks,omitempty"`
-}
-
-func (x *ListResponse_Org) Reset() {
-	*x = ListResponse_Org{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[19]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ListResponse_Org) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListResponse_Org) ProtoMessage() {}
-
-func (x *ListResponse_Org) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[19]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListResponse_Org.ProtoReflect.Descriptor instead.
-func (*ListResponse_Org) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{11, 1}
-}
-
-func (x *ListResponse_Org) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ListResponse_Org) GetNetworks() []*ListResponse_Network {
-	if x != nil {
-		return x.Networks
-	}
-	return nil
+	return file_network_proto_rawDescGZIP(), []int{4}
 }
 
 var File_network_proto protoreflect.FileDescriptor
@@ -1162,157 +277,35 @@ var file_network_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
 	0x10, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76,
 	0x31, 0x1a, 0x0f, 0x76, 0x61, 0x6c, 0x69, 0x64, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x22, 0x88, 0x01, 0x0a, 0x0e, 0x41, 0x64, 0x64, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x32, 0x0a, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77,
-	0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f, 0x64, 0x65, 0x42, 0x06, 0xe2, 0xdf, 0x1f,
-	0x02, 0x20, 0x01, 0x52, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x12, 0x20, 0x0a, 0x07, 0x6f, 0x72, 0x67,
-	0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02,
-	0x58, 0x01, 0x52, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x20, 0x0a, 0x07, 0x6e,
-	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf,
-	0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x22, 0x3d, 0x0a,
-	0x0f, 0x41, 0x64, 0x64, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x2a, 0x0a, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16,
+	0x74, 0x6f, 0x22, 0x42, 0x0a, 0x0a, 0x41, 0x64, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x1a, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06,
+	0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07,
+	0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6f,
+	0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x54, 0x0a, 0x0b, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x07, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e,
+	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72,
+	0x6b, 0x52, 0x07, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x12, 0x10, 0x0a, 0x03, 0x6f, 0x72,
+	0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6f, 0x72, 0x67, 0x22, 0x1d, 0x0a, 0x07,
+	0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x3d, 0x0a, 0x0d, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07,
+	0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6f,
+	0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x10, 0x0a, 0x0e, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xa1, 0x01, 0x0a,
+	0x0e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12,
+	0x42, 0x0a, 0x03, 0x41, 0x64, 0x64, 0x12, 0x1c, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e,
+	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74,
+	0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x4b, 0x0a, 0x06, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12, 0x1f, 0x2e,
+	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31,
+	0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20,
 	0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76,
-	0x31, 0x2e, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x22, 0x33, 0x0a, 0x11,
-	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x12, 0x1e, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49,
-	0x64, 0x22, 0x2c, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x22,
-	0x2b, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x5a, 0x0a, 0x10,
-	0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x18, 0x0a, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x2c, 0x0a, 0x05, 0x6e, 0x6f,
-	0x64, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x75, 0x6b, 0x61, 0x6d,
-	0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f, 0x64,
-	0x65, 0x52, 0x05, 0x6e, 0x6f, 0x64, 0x65, 0x73, 0x22, 0x42, 0x0a, 0x0a, 0x41, 0x64, 0x64, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x04, 0x6e, 0x61,
-	0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x54, 0x0a, 0x0b,
-	0x41, 0x64, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x07, 0x6e,
-	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x75,
-	0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e,
-	0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x07, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
-	0x12, 0x10, 0x0a, 0x03, 0x6f, 0x72, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6f,
-	0x72, 0x67, 0x22, 0x1d, 0x0a, 0x07, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x12, 0x12, 0x0a,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
-	0x65, 0x22, 0xa5, 0x01, 0x0a, 0x04, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x1e, 0x0a, 0x06, 0x6e, 0x6f,
-	0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02,
-	0x58, 0x01, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x31, 0x0a, 0x05, 0x73, 0x74,
-	0x61, 0x74, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1b, 0x2e, 0x75, 0x6b, 0x61, 0x6d,
-	0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f, 0x64,
-	0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12, 0x2e, 0x0a,
-	0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x75, 0x6b,
-	0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e,
-	0x6f, 0x64, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f,
-	0x02, 0x58, 0x01, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x0d, 0x0a, 0x0b, 0x4c, 0x69, 0x73,
-	0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0xe8, 0x02, 0x0a, 0x0c, 0x4c, 0x69, 0x73,
-	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x36, 0x0a, 0x04, 0x6f, 0x72, 0x67,
-	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e,
-	0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x4f, 0x72, 0x67, 0x52, 0x04, 0x6f, 0x72, 0x67,
-	0x73, 0x1a, 0xc0, 0x01, 0x0a, 0x07, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x12, 0x12, 0x0a,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
-	0x65, 0x12, 0x5f, 0x0a, 0x0d, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x4f, 0x66, 0x4e, 0x6f, 0x64,
-	0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x39, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61,
-	0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
-	0x2e, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x4f, 0x66, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x45, 0x6e,
-	0x74, 0x72, 0x79, 0x52, 0x0d, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x4f, 0x66, 0x4e, 0x6f, 0x64,
-	0x65, 0x73, 0x1a, 0x40, 0x0a, 0x12, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x4f, 0x66, 0x4e, 0x6f,
-	0x64, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
-	0x3a, 0x02, 0x38, 0x01, 0x1a, 0x5d, 0x0a, 0x03, 0x4f, 0x72, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x6e,
-	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12,
-	0x42, 0x0a, 0x08, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
-	0x0b, 0x32, 0x26, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72,
-	0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x2e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x08, 0x6e, 0x65, 0x74, 0x77, 0x6f,
-	0x72, 0x6b, 0x73, 0x22, 0x67, 0x0a, 0x11, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4e, 0x6f, 0x64,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1e, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65,
-	0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01,
-	0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x32, 0x0a, 0x04, 0x4e, 0x6f, 0x64, 0x65,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e,
-	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f, 0x64, 0x65, 0x42, 0x06,
-	0xe2, 0xdf, 0x1f, 0x02, 0x20, 0x01, 0x52, 0x04, 0x4e, 0x6f, 0x64, 0x65, 0x22, 0x40, 0x0a, 0x12,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x2a, 0x0a, 0x04, 0x4e, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x16, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
-	0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x04, 0x4e, 0x6f, 0x64, 0x65, 0x22, 0x28,
-	0x0a, 0x0e, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x22, 0x84, 0x01, 0x0a, 0x0f, 0x47, 0x65, 0x74,
-	0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a, 0x0a, 0x04,
-	0x6e, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x75, 0x6b, 0x61,
-	0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f,
-	0x64, 0x65, 0x52, 0x04, 0x6e, 0x6f, 0x64, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x6f, 0x72, 0x67, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6f, 0x72, 0x67, 0x12, 0x33, 0x0a, 0x07, 0x6e, 0x65,
-	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x75, 0x6b,
-	0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e,
-	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x07, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x22,
-	0x3d, 0x0a, 0x0d, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x12, 0x18, 0x0a, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
-	0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x10,
-	0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x2a, 0x36, 0x0a, 0x09, 0x4e, 0x6f, 0x64, 0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x0d, 0x0a,
-	0x09, 0x55, 0x4e, 0x44, 0x45, 0x46, 0x49, 0x4e, 0x45, 0x44, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07,
-	0x50, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x12, 0x0d, 0x0a, 0x09, 0x4f, 0x4e, 0x42,
-	0x4f, 0x41, 0x52, 0x44, 0x45, 0x44, 0x10, 0x02, 0x2a, 0x47, 0x0a, 0x08, 0x4e, 0x6f, 0x64, 0x65,
-	0x54, 0x79, 0x70, 0x65, 0x12, 0x17, 0x0a, 0x13, 0x4e, 0x4f, 0x44, 0x45, 0x5f, 0x54, 0x59, 0x50,
-	0x45, 0x5f, 0x55, 0x4e, 0x44, 0x45, 0x46, 0x49, 0x4e, 0x45, 0x44, 0x10, 0x00, 0x12, 0x08, 0x0a,
-	0x04, 0x48, 0x4f, 0x4d, 0x45, 0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x54, 0x4f, 0x57, 0x45, 0x52,
-	0x10, 0x02, 0x12, 0x0d, 0x0a, 0x09, 0x41, 0x4d, 0x50, 0x4c, 0x49, 0x46, 0x49, 0x45, 0x52, 0x10,
-	0x03, 0x32, 0x8d, 0x05, 0x0a, 0x0e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x53, 0x65, 0x72,
-	0x76, 0x69, 0x63, 0x65, 0x12, 0x42, 0x0a, 0x03, 0x41, 0x64, 0x64, 0x12, 0x1c, 0x2e, 0x75, 0x6b,
-	0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41,
-	0x64, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x75, 0x6b, 0x61, 0x6d,
-	0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x45, 0x0a, 0x04, 0x4c, 0x69, 0x73, 0x74,
-	0x12, 0x1d, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
-	0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x1e, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e,
-	0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x4b, 0x0a, 0x06, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12, 0x1f, 0x2e, 0x75, 0x6b, 0x61, 0x6d,
-	0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6b, 0x61,
-	0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x07,
-	0x41, 0x64, 0x64, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x20, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e,
-	0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x4e, 0x6f,
-	0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d,
-	0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64,
-	0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x57, 0x0a, 0x0a,
-	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x23, 0x2e, 0x75, 0x6b, 0x61,
-	0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65,
-	0x6c, 0x65, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x24, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e,
-	0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x08, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65,
-	0x73, 0x12, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72,
-	0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x73, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74,
-	0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x57, 0x0a, 0x0a, 0x55, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x23, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e,
-	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x75, 0x6b,
-	0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x55,
-	0x70, 0x64, 0x61, 0x74, 0x65, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x4e, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x12, 0x20, 0x2e, 0x75,
-	0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e,
-	0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21,
-	0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76,
-	0x31, 0x2e, 0x47, 0x65, 0x74, 0x4e, 0x6f, 0x64, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x42, 0x08, 0x5a, 0x06, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x42, 0x08, 0x5a, 0x06, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -1327,68 +320,25 @@ func file_network_proto_rawDescGZIP() []byte {
 	return file_network_proto_rawDescData
 }
 
-var file_network_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_network_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_network_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_network_proto_goTypes = []interface{}{
-	(NodeState)(0),               // 0: ukama.network.v1.NodeState
-	(NodeType)(0),                // 1: ukama.network.v1.NodeType
-	(*AddNodeRequest)(nil),       // 2: ukama.network.v1.AddNodeRequest
-	(*AddNodeResponse)(nil),      // 3: ukama.network.v1.AddNodeResponse
-	(*DeleteNodeRequest)(nil),    // 4: ukama.network.v1.DeleteNodeRequest
-	(*DeleteNodeResponse)(nil),   // 5: ukama.network.v1.DeleteNodeResponse
-	(*GetNodesRequest)(nil),      // 6: ukama.network.v1.GetNodesRequest
-	(*GetNodesResponse)(nil),     // 7: ukama.network.v1.GetNodesResponse
-	(*AddRequest)(nil),           // 8: ukama.network.v1.AddRequest
-	(*AddResponse)(nil),          // 9: ukama.network.v1.AddResponse
-	(*Network)(nil),              // 10: ukama.network.v1.Network
-	(*Node)(nil),                 // 11: ukama.network.v1.Node
-	(*ListRequest)(nil),          // 12: ukama.network.v1.ListRequest
-	(*ListResponse)(nil),         // 13: ukama.network.v1.ListResponse
-	(*UpdateNodeRequest)(nil),    // 14: ukama.network.v1.UpdateNodeRequest
-	(*UpdateNodeResponse)(nil),   // 15: ukama.network.v1.UpdateNodeResponse
-	(*GetNodeRequest)(nil),       // 16: ukama.network.v1.GetNodeRequest
-	(*GetNodeResponse)(nil),      // 17: ukama.network.v1.GetNodeResponse
-	(*DeleteRequest)(nil),        // 18: ukama.network.v1.DeleteRequest
-	(*DeleteResponse)(nil),       // 19: ukama.network.v1.DeleteResponse
-	(*ListResponse_Network)(nil), // 20: ukama.network.v1.ListResponse.Network
-	(*ListResponse_Org)(nil),     // 21: ukama.network.v1.ListResponse.Org
-	nil,                          // 22: ukama.network.v1.ListResponse.Network.NumberOfNodesEntry
+	(*AddRequest)(nil),     // 0: ukama.network.v1.AddRequest
+	(*AddResponse)(nil),    // 1: ukama.network.v1.AddResponse
+	(*Network)(nil),        // 2: ukama.network.v1.Network
+	(*DeleteRequest)(nil),  // 3: ukama.network.v1.DeleteRequest
+	(*DeleteResponse)(nil), // 4: ukama.network.v1.DeleteResponse
 }
 var file_network_proto_depIdxs = []int32{
-	11, // 0: ukama.network.v1.AddNodeRequest.node:type_name -> ukama.network.v1.Node
-	11, // 1: ukama.network.v1.AddNodeResponse.node:type_name -> ukama.network.v1.Node
-	11, // 2: ukama.network.v1.GetNodesResponse.nodes:type_name -> ukama.network.v1.Node
-	10, // 3: ukama.network.v1.AddResponse.network:type_name -> ukama.network.v1.Network
-	0,  // 4: ukama.network.v1.Node.state:type_name -> ukama.network.v1.NodeState
-	1,  // 5: ukama.network.v1.Node.type:type_name -> ukama.network.v1.NodeType
-	21, // 6: ukama.network.v1.ListResponse.orgs:type_name -> ukama.network.v1.ListResponse.Org
-	11, // 7: ukama.network.v1.UpdateNodeRequest.Node:type_name -> ukama.network.v1.Node
-	11, // 8: ukama.network.v1.UpdateNodeResponse.Node:type_name -> ukama.network.v1.Node
-	11, // 9: ukama.network.v1.GetNodeResponse.node:type_name -> ukama.network.v1.Node
-	10, // 10: ukama.network.v1.GetNodeResponse.network:type_name -> ukama.network.v1.Network
-	22, // 11: ukama.network.v1.ListResponse.Network.numberOfNodes:type_name -> ukama.network.v1.ListResponse.Network.NumberOfNodesEntry
-	20, // 12: ukama.network.v1.ListResponse.Org.networks:type_name -> ukama.network.v1.ListResponse.Network
-	8,  // 13: ukama.network.v1.NetworkService.Add:input_type -> ukama.network.v1.AddRequest
-	12, // 14: ukama.network.v1.NetworkService.List:input_type -> ukama.network.v1.ListRequest
-	18, // 15: ukama.network.v1.NetworkService.Delete:input_type -> ukama.network.v1.DeleteRequest
-	2,  // 16: ukama.network.v1.NetworkService.AddNode:input_type -> ukama.network.v1.AddNodeRequest
-	4,  // 17: ukama.network.v1.NetworkService.DeleteNode:input_type -> ukama.network.v1.DeleteNodeRequest
-	6,  // 18: ukama.network.v1.NetworkService.GetNodes:input_type -> ukama.network.v1.GetNodesRequest
-	14, // 19: ukama.network.v1.NetworkService.UpdateNode:input_type -> ukama.network.v1.UpdateNodeRequest
-	16, // 20: ukama.network.v1.NetworkService.GetNode:input_type -> ukama.network.v1.GetNodeRequest
-	9,  // 21: ukama.network.v1.NetworkService.Add:output_type -> ukama.network.v1.AddResponse
-	13, // 22: ukama.network.v1.NetworkService.List:output_type -> ukama.network.v1.ListResponse
-	19, // 23: ukama.network.v1.NetworkService.Delete:output_type -> ukama.network.v1.DeleteResponse
-	3,  // 24: ukama.network.v1.NetworkService.AddNode:output_type -> ukama.network.v1.AddNodeResponse
-	5,  // 25: ukama.network.v1.NetworkService.DeleteNode:output_type -> ukama.network.v1.DeleteNodeResponse
-	7,  // 26: ukama.network.v1.NetworkService.GetNodes:output_type -> ukama.network.v1.GetNodesResponse
-	15, // 27: ukama.network.v1.NetworkService.UpdateNode:output_type -> ukama.network.v1.UpdateNodeResponse
-	17, // 28: ukama.network.v1.NetworkService.GetNode:output_type -> ukama.network.v1.GetNodeResponse
-	21, // [21:29] is the sub-list for method output_type
-	13, // [13:21] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	2, // 0: ukama.network.v1.AddResponse.network:type_name -> ukama.network.v1.Network
+	0, // 1: ukama.network.v1.NetworkService.Add:input_type -> ukama.network.v1.AddRequest
+	3, // 2: ukama.network.v1.NetworkService.Delete:input_type -> ukama.network.v1.DeleteRequest
+	1, // 3: ukama.network.v1.NetworkService.Add:output_type -> ukama.network.v1.AddResponse
+	4, // 4: ukama.network.v1.NetworkService.Delete:output_type -> ukama.network.v1.DeleteResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_network_proto_init() }
@@ -1398,78 +348,6 @@ func file_network_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_network_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddNodeRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddNodeResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteNodeRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteNodeResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetNodesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetNodesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AddRequest); i {
 			case 0:
 				return &v.state
@@ -1481,7 +359,7 @@ func file_network_proto_init() {
 				return nil
 			}
 		}
-		file_network_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_network_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AddResponse); i {
 			case 0:
 				return &v.state
@@ -1493,7 +371,7 @@ func file_network_proto_init() {
 				return nil
 			}
 		}
-		file_network_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_network_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Network); i {
 			case 0:
 				return &v.state
@@ -1505,91 +383,7 @@ func file_network_proto_init() {
 				return nil
 			}
 		}
-		file_network_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Node); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateNodeRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateNodeResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetNodeRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetNodeResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_network_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteRequest); i {
 			case 0:
 				return &v.state
@@ -1601,32 +395,8 @@ func file_network_proto_init() {
 				return nil
 			}
 		}
-		file_network_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_network_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListResponse_Network); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_network_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListResponse_Org); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1643,14 +413,13 @@ func file_network_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_network_proto_rawDesc,
-			NumEnums:      2,
-			NumMessages:   21,
+			NumEnums:      0,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_network_proto_goTypes,
 		DependencyIndexes: file_network_proto_depIdxs,
-		EnumInfos:         file_network_proto_enumTypes,
 		MessageInfos:      file_network_proto_msgTypes,
 	}.Build()
 	File_network_proto = out.File

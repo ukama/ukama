@@ -8,44 +8,9 @@ package ukama.network.v1;
 
 service NetworkService {
     rpc Add(AddRequest) returns (AddResponse);
-    // list all orgs and networks in the network
-    rpc List(ListRequest) returns (ListResponse);
     rpc Delete(DeleteRequest) returns (DeleteResponse);
-
-    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
-    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
-    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
-    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
-    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
-
 }
 
-message AddNodeRequest{
-    Node node = 1  [(validator.field) = {msg_exists : true}];
-    string  orgName = 2 [(validator.field) = { string_not_empty: true}];
-    string network = 3 [(validator.field) = { string_not_empty: true}];
-}
-
-message AddNodeResponse{
-    Node node = 1;
-}
-
-message DeleteNodeRequest{
-    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
-}
-
-message DeleteNodeResponse{
-    string nodeId = 1;
-}
-
-message GetNodesRequest{    
-    string orgName = 1 ;
-}
-
-message GetNodesResponse{
-    string orgName = 1;
-    repeated Node nodes = 2;
-}
 
 message AddRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
@@ -60,62 +25,6 @@ message Network {
     string name = 1;
 }
 
-message Node {
-    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
-    NodeState state = 4;
-    NodeType type = 5;
-    string name = 6 [(validator.field) = { string_not_empty: true}];
-}
-
-message ListRequest {
-}
-
-message ListResponse{
-    message Network {
-        string name = 1;
-        map<string, uint32> numberOfNodes = 2;
-    }
-
-    message Org {
-        string name = 1;
-        repeated Network networks = 2;
-    }
-
-
-    repeated Org orgs = 1;
-}
-
-message  UpdateNodeRequest{
-    string nodeId = 1  [(validator.field) = { string_not_empty: true}]; // node ID to update
-    Node Node = 2 [(validator.field) = {msg_exists : true}];
-}
-
-message UpdateNodeResponse {
-    Node Node = 1;
-}
-
-message GetNodeRequest{
-    string nodeId = 1;
-}
-
-message GetNodeResponse{
-    Node node = 1;
-    string org = 2;
-    Network network = 3;
-}
-
-enum NodeState {
-    UNDEFINED = 0;
-    PENDING = 1;
-    ONBOARDED = 2;
-}
-
-enum NodeType{
-    NODE_TYPE_UNDEFINED = 0;
-    HOME = 1;
-    TOWER = 2;
-    AMPLIFIER = 3;
-}
 
 message DeleteRequest{
     string orgName = 1;
