@@ -3,7 +3,45 @@
 Data Plan system manage all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
 
 - Base rate sub-system
-- Packages sub-system
+- Package sub-system
+
+## Directory Structure
+
+    .
+    └── systems
+        └── data-plan
+            │
+            │── base-rate
+            │   ├── cmd
+            │   │   ├── server
+            │   │   └── version
+            │   ├── mocks
+            │   ├── pb
+            │   │   └──gen
+            │   └── pkg
+            │       ├── db
+            │       ├── queue
+            │       ├── server
+            │       ├── utils
+            │       └── validations
+            │
+            ├── docs
+            │    ├── digrams
+            │    └── template
+            │
+            ├── package
+            │   │── cmd
+            │   │   ├── server
+            │   │   └── version
+            │   ├── mocks
+            │   ├── pb
+            │   │   └──gen
+            │   └── pkg
+            │       ├── db
+            │       ├── server
+            │       └── validations
+            │
+            └── README
 
 ## Base rate sub-system
 
@@ -13,35 +51,11 @@ Base rate sub-system is responsibe of:
 - Provide rates with some optional and require filters
 - Provide functionality to get record by id
 
-### Directory Structure
-
-    .
-    └── systems
-        └── data-plan
-            │── base-rate
-            │   │── cmd
-            |   |   ├── listner
-            |   |   ├── server
-            │   │   └── version
-            |   │── mocks
-            │   │── pb
-            |   |   └──gen
-            │   └── pkg
-            │       ├── db
-            │       ├── queue
-            │       ├── server
-            │       ├── utils
-            │       └── validations
-            ├──  docs
-            |    ├── digrams
-            |    └── template
-            └── README
-
-### RPC Function
+### RPC Functions
 
 **UploadBaseRates**
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/docs/digrams/UploadBaseRates.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/UploadBaseRates.png" alt="J" width="500"/>
 
 Upload base rates service provide functionality to populate rates from CV file to DB.
 
@@ -69,7 +83,7 @@ Function take these arguments:
 
 **GetBaseRates**
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/docs/digrams/GetBaseRates.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/GetBaseRates.png" alt="J" width="500"/>
 
 Get base rates service provide functionality to fetch base rates, and filter data on some required and optional arguments.
 
@@ -100,7 +114,7 @@ Function take these arguments:
 
 **GetBaseRate**
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/docs/digrams/GetBaseRate.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/GetBaseRate.png" alt="J" width="500"/>
 
 Get base rate service provide functionality to fetch base rate by base rate id.
 
@@ -114,7 +128,7 @@ Function take below argument:
 
 ```js
 {
-    [required] rateId => Int32
+    [required] rateId => uint64
 }
 ```
 
@@ -187,3 +201,134 @@ This rpc takes required argument of `id`.
 ```
 call GetBaseRate
 ```
+
+## Package sub-system
+
+Package sub-system provide CRUD options to organization. Sub-system provide following rpc's:
+
+- Create package under organization
+- Update organization package
+- Get package by `id`
+- Get organization packages
+- Delete organization package
+
+### RPC Functions
+
+**GetPackages**
+
+```proto
+service PackagesService {
+    rpc GetPackages (GetPackagesRequest) returns (GetPackagesResponse) {}
+}
+```
+
+Function take below argument:
+
+```js
+{
+    [required] orgId => uint64
+}
+```
+
+**Demo**
+
+---
+
+**GetPackage**
+
+```proto
+service PackagesService {
+    rpc GetPackage(GetPackageRequest) returns (GetPackageResponse){}
+}
+```
+
+Function take below argument:
+
+```js
+{
+    [required] orgId => uint64
+    [required] packageId => uint64
+}
+```
+
+**Demo**
+
+---
+
+**CreatePackage**
+
+```proto
+service PackagesService {
+    rpc CreatePackage(CreatePackageRequest) returns (CreatePackageResponse){}
+}
+```
+
+Function take below argument:
+
+```js
+{
+    [required] orgId => uint64
+    [required] name => string
+    [required] duration => uint64
+    [required] org_rates_id => uint64
+    [optional] active => boolean
+    [optional] sim_type => string
+    [optional] sms_volume => int64
+    [optional] data_volume => int64
+    [optional] voice_volume => int64
+}
+```
+
+**Demo**
+
+---
+
+**UpdatePackage**
+
+```proto
+service PackagesService {
+    rpc UpdatePackage(UpdatePackageRequest) returns (UpdatePackageResponse){}
+}
+```
+
+Function take below argument:
+
+```js
+{
+    [required] id => uint64
+    [optional] name => string
+    [optional] duration => uint64
+    [optional] org_rates_id => uint64
+    [optional] active => boolean
+    [optional] sim_type => string
+    [optional] sms_volume => int64
+    [optional] data_volume => int64
+    [optional] voice_volume => int64
+}
+```
+
+**Demo**
+
+---
+
+**DeletePackage**
+
+```proto
+service PackagesService {
+    rpc DeletePackage(DeletePackageRequest) returns (DeletePackageResponse){}
+}
+```
+
+Function take below argument:
+
+```js
+{
+    [required] id => uint64
+    [required] orgId => uint64
+}
+```
+
+**Demo**
+
+
+### How to use?

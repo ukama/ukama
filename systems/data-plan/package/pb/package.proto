@@ -43,7 +43,7 @@ message UpdatePackageResponse {
 }
 message CreatePackageRequest {
     string name =2;
-    int64 org_id=3;
+    uint64 org_id=3;
     bool active =4;
     uint64 duration =5;
     SimType sim_type=6;

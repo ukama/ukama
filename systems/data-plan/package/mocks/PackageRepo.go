@@ -102,13 +102,13 @@ func (_m *PackageRepo) GetPackages() ([]db.Package, error) {
 	return r0, r1
 }
 
-// UpdatePackage provides a mock function with given fields: pkg
-func (_m *PackageRepo) UpdatePackage(pkg db.Package) (*db.Package, error) {
-	ret := _m.Called(pkg)
+// UpdatePackage provides a mock function with given fields: Id, pkg
+func (_m *PackageRepo) UpdatePackage(Id uint64, pkg db.Package) (*db.Package, error) {
+	ret := _m.Called(Id, pkg)
 
 	var r0 *db.Package
-	if rf, ok := ret.Get(0).(func(db.Package) *db.Package); ok {
-		r0 = rf(pkg)
+	if rf, ok := ret.Get(0).(func(uint64, db.Package) *db.Package); ok {
+		r0 = rf(Id, pkg)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Package)
@@ -116,8 +116,8 @@ func (_m *PackageRepo) UpdatePackage(pkg db.Package) (*db.Package, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(db.Package) error); ok {
-		r1 = rf(pkg)
+	if rf, ok := ret.Get(1).(func(uint64, db.Package) error); ok {
+		r1 = rf(Id, pkg)
 	} else {
 		r1 = ret.Error(1)
 	}
