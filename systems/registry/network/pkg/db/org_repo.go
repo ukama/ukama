@@ -14,7 +14,7 @@ import (
 
 type OrgRepo interface {
 	Add(org *Org, nestedFunc ...func() error) error
-	Get(id int) (*Org, error)
+	Get(id uint) (*Org, error)
 	GetByName(name string) (*Org, error)
 	MakeUserOrgExist(orgName string) (*Org, error)
 }
@@ -44,7 +44,7 @@ func (r *orgRepo) Add(org *Org, nestedFunc ...func() error) (err error) {
 	return err
 }
 
-func (r *orgRepo) Get(id int) (*Org, error) {
+func (r *orgRepo) Get(id uint) (*Org, error) {
 	var org Org
 
 	result := r.Db.GetGormDb().First(&org, id)

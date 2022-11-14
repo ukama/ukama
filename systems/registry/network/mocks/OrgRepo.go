@@ -34,11 +34,11 @@ func (_m *OrgRepo) Add(org *db.Org, nestedFunc ...func() error) error {
 }
 
 // Get provides a mock function with given fields: id
-func (_m *OrgRepo) Get(id int) (*db.Org, error) {
+func (_m *OrgRepo) Get(id uint) (*db.Org, error) {
 	ret := _m.Called(id)
 
 	var r0 *db.Org
-	if rf, ok := ret.Get(0).(func(int) *db.Org); ok {
+	if rf, ok := ret.Get(0).(func(uint) *db.Org); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
@@ -47,7 +47,7 @@ func (_m *OrgRepo) Get(id int) (*db.Org, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
 		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
