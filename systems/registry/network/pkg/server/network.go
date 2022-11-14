@@ -3,18 +3,12 @@ package server
 import (
 	"context"
 
-	"github.com/jackc/pgconn"
-	"github.com/pkg/errors"
-
 	"github.com/ukama/ukama/systems/common/grpc"
 	db2 "github.com/ukama/ukama/systems/registry/network/pkg/db"
 
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/sql"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type NetworkServer struct {
@@ -49,6 +43,20 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}, nil
 }
 
+func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+	nt, err := n.netRepo.Get(req.OrgName, req.GetName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org/network")
+	}
+
+	return &pb.GetResponse{
+		Network: &pb.Network{
+			Name: nt.Name,
+		},
+		Org: nt.Org.Name,
+	}, nil
+}
+
 func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	logrus.Infof("Deleting network %s", req.Name)
 
@@ -64,18 +72,4 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	// publish event before returning resp
 
 	return resp, nil
-}
-
-func (n *NetworkServer) processNodeDuplErrors(err error, nodeName string, nodeID string) error {
-	var pge *pgconn.PgError
-
-	if errors.As(err, &pge) {
-		if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION && pge.ConstraintName == "node_name_network_idx" {
-			return status.Errorf(codes.AlreadyExists, "node with name %s already exists in network", nodeName)
-		} else if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
-			return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeID)
-		}
-	}
-
-	return nil
 }
