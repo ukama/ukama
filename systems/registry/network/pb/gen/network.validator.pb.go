@@ -30,12 +30,26 @@ func (this *AddResponse) Validate() error {
 	}
 	return nil
 }
-func (this *Network) Validate() error {
+func (this *GetRequest) Validate() error {
+	if this.Name == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
+	}
+	return nil
+}
+func (this *GetResponse) Validate() error {
+	if this.Network != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
+		}
+	}
 	return nil
 }
 func (this *DeleteRequest) Validate() error {
 	return nil
 }
 func (this *DeleteResponse) Validate() error {
+	return nil
+}
+func (this *Network) Validate() error {
 	return nil
 }

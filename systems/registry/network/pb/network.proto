@@ -8,6 +8,7 @@ package ukama.network.v1;
 
 service NetworkService {
     rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
     rpc Delete(DeleteRequest) returns (DeleteResponse);
 }
 
@@ -21,10 +22,14 @@ message AddResponse{
     string org = 2;
 }
 
-message Network {
-    string name = 1;
+message GetRequest{
+    string name = 1 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2;
 }
-
+message GetResponse{
+    Network network = 1;
+    string org = 2;
+}
 
 message DeleteRequest{
     string orgName = 1;
@@ -32,4 +37,8 @@ message DeleteRequest{
 }
 
 message DeleteResponse{
+}
+
+message Network {
+    string name = 1;
 }
