@@ -6,10 +6,12 @@ service PackagesService {
     rpc GetPackages (GetPackagesRequest) returns (GetPackagesResponse) {}
     rpc GetPackage(GetPackageRequest) returns (GetPackageResponse){}
     rpc CreatePackage(CreatePackageRequest) returns (CreatePackageResponse){}
+    rpc DeletePackage(DeletePackageRequest) returns (DeletePackageResponse){}
+    rpc UpdatePackage(UpdatePackageRequest) returns (UpdatePackageResponse){}
 }
 message GetPackagesRequest{
-
 }
+
 message GetPackageRequest {
     uint64 id =1;
 }
@@ -17,38 +19,56 @@ message GetPackageResponse {
     Package package =1;
 }
 message GetPackagesResponse{
-repeated Package packages =1;
-
+    repeated Package packages =1;
+}
+message DeletePackageRequest {
+    uint64 id =1;
+}
+message DeletePackageResponse {
+    Package package = 1;
+}
+message UpdatePackageRequest {
+    string name =2;
+    bool active =4;
+    uint64 duration =5;
+    SimType sim_type=6;
+    int64 sms_volume =10;
+    int64 data_volume=11;
+    int64 voice_volume =12;
+    uint64 org_rates_id=13;
+}
+message UpdatePackageResponse {
+    Package package = 1;
 }
 message CreatePackageRequest {
-string name =2;
-int64 org_id=3;
-bool active =4;
-uint64 duration =5;
-SimType sim_type=6;
-int64 sms_volume =10;
-int64 data_volume=11;
-int64 voice_volume =12;
-uint64 org_rates_id=13;
+    string name =2;
+    int64 org_id=3;
+    bool active =4;
+    uint64 duration =5;
+    SimType sim_type=6;
+    int64 sms_volume =10;
+    int64 data_volume=11;
+    int64 voice_volume =12;
+    uint64 org_rates_id=13;
 }
 message CreatePackageResponse {
      Package package =1;
 
 }
 message Package {
-uint64 id =1;
-string name =2;
-int64 org_id=3;
-bool active =4;
-uint64 duration =5;
-SimType sim_type=6;
-string created_at=7;
-string deleted_at=8;
-string updated_at=9;
-int64 sms_volume =10;
-int64 data_volume=11;
-int64 voice_volume =12;
-uint64 org_rates_id=13;
+    uint64 id =1;
+    string name =2;
+    int64 org_id=3;
+    bool active =4;
+    uint64 duration =5;
+    SimType sim_type=6;
+    string created_at=7;
+    string deleted_at=8;
+    string updated_at=9;
+    int64 sms_volume =10;
+    int64 data_volume=11;
+    int64 voice_volume =12;
+    uint64 org_rates_id=13;
 }
 
 enum SimType {
