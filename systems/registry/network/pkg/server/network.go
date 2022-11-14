@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	db2 "github.com/ukama/ukama/systems/registry/network/pkg/db"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
@@ -36,10 +38,8 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}
 
 	return &pb.AddResponse{
-		Network: &pb.Network{
-			Name: nt.Name,
-		},
-		Org: req.GetOrgName(),
+		Network: dbNtwkToPbNtwk(nt),
+		Org:     req.GetOrgName(),
 	}, nil
 }
 
@@ -50,11 +50,23 @@ func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 	}
 
 	return &pb.GetResponse{
-		Network: &pb.Network{
-			Name: nt.Name,
-		},
-		Org: nt.Org.Name,
+		Network: dbNtwkToPbNtwk(nt),
+		Org:     req.GetOrgName(),
 	}, nil
+}
+
+func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
+	ntwks, err := n.netRepo.GetByOrg(req.OrgName)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org/network")
+	}
+
+	resp := &pb.GetByOrgResponse{
+		Org:      req.OrgName,
+		Networks: dbNtwksToPbNtwks(ntwks),
+	}
+
+	return resp, nil
 }
 
 func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -67,9 +79,27 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
-	resp := &pb.DeleteResponse{}
-
 	// publish event before returning resp
 
-	return resp, nil
+	return &pb.DeleteResponse{}, nil
+}
+
+func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
+	return &pb.Network{
+		Id:   uint64(ntwk.ID),
+		Name: ntwk.Name,
+		// Org:           ntwk.Org.Name,
+		IsDeactivated: ntwk.Deactivated,
+		CreatedAt:     timestamppb.New(ntwk.CreatedAt),
+	}
+}
+
+func dbNtwksToPbNtwks(ntwks []db.Network) []*pb.Network {
+	res := []*pb.Network{}
+
+	for _, n := range ntwks {
+		res = append(res, dbNtwkToPbNtwk(&n))
+	}
+
+	return res
 }

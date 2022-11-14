@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type NetworkServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
@@ -53,6 +54,15 @@ func (c *networkServiceClient) Get(ctx context.Context, in *GetRequest, opts ...
 	return out, nil
 }
 
+func (c *networkServiceClient) GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error) {
+	out := new(GetByOrgResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetByOrg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *networkServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
 	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/Delete", in, out, opts...)
@@ -68,6 +78,7 @@ func (c *networkServiceClient) Delete(ctx context.Context, in *DeleteRequest, op
 type NetworkServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
@@ -81,6 +92,9 @@ func (UnimplementedNetworkServiceServer) Add(context.Context, *AddRequest) (*Add
 }
 func (UnimplementedNetworkServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedNetworkServiceServer) GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByOrg not implemented")
 }
 func (UnimplementedNetworkServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -134,6 +148,24 @@ func _NetworkService_Get_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkService_GetByOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByOrgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).GetByOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.network.v1.NetworkService/GetByOrg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).GetByOrg(ctx, req.(*GetByOrgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _NetworkService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
@@ -166,6 +198,10 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _NetworkService_Get_Handler,
+		},
+		{
+			MethodName: "GetByOrg",
+			Handler:    _NetworkService_GetByOrg_Handler,
 		},
 		{
 			MethodName: "Delete",

@@ -83,6 +83,29 @@ func (_m *NetworkServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*
 	return r0, r1
 }
 
+// GetByOrg provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetByOrg(_a0 context.Context, _a1 *gen.GetByOrgRequest) (*gen.GetByOrgResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetByOrgResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest) *gen.GetByOrgResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByOrgResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByOrgRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // mustEmbedUnimplementedNetworkServiceServer provides a mock function with given fields:
 func (_m *NetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {
 	_m.Called()
