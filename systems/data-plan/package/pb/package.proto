@@ -28,14 +28,15 @@ message DeletePackageResponse {
     Package package = 1;
 }
 message UpdatePackageRequest {
-    string name =2;
-    bool active =4;
-    uint64 duration =5;
-    SimType sim_type=6;
-    int64 sms_volume =10;
-    int64 data_volume=11;
-    int64 voice_volume =12;
-    uint64 org_rates_id=13;
+    uint64 id=1;
+    string name=2;
+    bool active=3;
+    uint64 duration=4;
+    SimType sim_type=5;
+    int64 sms_volume=6;
+    int64 data_volume=7;
+    int64 voice_volume=8;
+    uint64 org_rates_id=9;
 }
 message UpdatePackageResponse {
     Package package = 1;

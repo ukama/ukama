@@ -53,9 +53,8 @@ func (p *PackageServer) GetPackages(ctx context.Context, req *pb.GetPackagesRequ
 
 func (p *PackageServer) CreatePackage(ctx context.Context, req *pb.CreatePackageRequest) (*pb.CreatePackageResponse, error) {
 	_package := db.Package{
-		Name: req.GetName(),
-		// Sim_type: validations.ReqPbToStr(pb.SimType(req.GetSimType())),
-		// Sim_type:     validations.ReqPbToStr(req.GetSimType()),
+		Name:         req.GetName(),
+		Sim_type:     "inter_mno_none",
 		Org_id:       uint(req.GetOrgId()),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
@@ -75,6 +74,46 @@ func (p *PackageServer) CreatePackage(ctx context.Context, req *pb.CreatePackage
 		Package: dbPackageToPbPackages(&_packageRes),
 	}, nil
 }
+
+func (p *PackageServer) DeletePackage(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
+	logrus.Infof("Delete Packages %v", req.Id)
+	packages, err := p.packageRepo.DeletePackage(req.Id)
+	if err != nil {
+		logrus.Error("error while deleting package" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+	packageList := &pb.DeletePackageResponse{
+		Package: dbPackageToPbPackages(packages),
+	}
+
+	return packageList, nil
+}
+
+func (p *PackageServer) UpdatePackage(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
+	logrus.Infof("Update Package Id: %v, Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v",
+		req.Id, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
+	_package := db.Package{
+		Name:         req.GetName(),
+		Sim_type:     "inter_mno_none",
+		Active:       req.Active,
+		Duration:     uint(req.GetDuration()),
+		Sms_volume:   uint(req.GetSmsVolume()),
+		Data_volume:  uint(req.GetDataVolume()),
+		Voice_volume: uint(req.GetVoiceVolume()),
+		Org_rates_id: uint(req.GetOrgRatesId()),
+	}
+
+	_packages, err := p.packageRepo.UpdatePackage(req.Id, _package)
+	if err != nil {
+		logrus.Error("error while getting rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "rates")
+	}
+
+	return &pb.UpdatePackageResponse{
+		Package: dbPackageToPbPackages(_packages),
+	}, nil
+}
+
 func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {
 	res := []*pb.Package{}
 	for _, u := range packages {

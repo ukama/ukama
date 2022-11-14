@@ -8,6 +8,8 @@ type PackageRepo interface {
 	GetPackage(Id uint64) (*Package, error)
 	GetPackages() ([]Package, error)
 	CreatePackage(Package) (Package, error)
+	DeletePackage(Id uint64) (*Package, error)
+	UpdatePackage(Id uint64, pkg Package) (*Package, error)
 }
 
 type packageRepo struct {
@@ -48,4 +50,23 @@ func (b *packageRepo) CreatePackage(newPackage Package) (Package, error) {
 	}
 
 	return _package, nil
+}
+
+func (p *packageRepo) DeletePackage(packageId uint64) (*Package, error) {
+	_package := &Package{}
+	result := p.Db.GetGormDb().Delete(_package, "id", packageId)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return _package, nil
+}
+
+func (b *packageRepo) UpdatePackage(Id uint64, pkg Package) (*Package, error) {
+
+	result := b.Db.GetGormDb().Where(Id).UpdateColumns(pkg)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &pkg, nil
 }

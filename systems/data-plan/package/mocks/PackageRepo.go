@@ -33,6 +33,29 @@ func (_m *PackageRepo) CreatePackage(_a0 db.Package) (db.Package, error) {
 	return r0, r1
 }
 
+// DeletePackage provides a mock function with given fields: Id
+func (_m *PackageRepo) DeletePackage(Id uint64) (*db.Package, error) {
+	ret := _m.Called(Id)
+
+	var r0 *db.Package
+	if rf, ok := ret.Get(0).(func(uint64) *db.Package); ok {
+		r0 = rf(Id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Package)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint64) error); ok {
+		r1 = rf(Id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetPackage provides a mock function with given fields: Id
 func (_m *PackageRepo) GetPackage(Id uint64) (*db.Package, error) {
 	ret := _m.Called(Id)
@@ -72,6 +95,29 @@ func (_m *PackageRepo) GetPackages() ([]db.Package, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdatePackage provides a mock function with given fields: pkg
+func (_m *PackageRepo) UpdatePackage(pkg db.Package) (*db.Package, error) {
+	ret := _m.Called(pkg)
+
+	var r0 *db.Package
+	if rf, ok := ret.Get(0).(func(db.Package) *db.Package); ok {
+		r0 = rf(pkg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Package)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(db.Package) error); ok {
+		r1 = rf(pkg)
 	} else {
 		r1 = ret.Error(1)
 	}
