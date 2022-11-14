@@ -6,7 +6,7 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	DB                config.Database
-	Grpc              config.Grpc
-	Metrics           config.Metrics
+	DB                *config.Database `default:"{}"`
+	Grpc              *config.Grpc     `default:"{}"`
+	Metrics           *config.Metrics  `default:"{}"`
 }
