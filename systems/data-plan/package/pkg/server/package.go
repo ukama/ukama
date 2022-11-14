@@ -6,7 +6,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb"
+	validations "github.com/ukama/ukama/systems/data-plan/package/pkg/validations"
+
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type PackageServer struct {
@@ -23,8 +27,9 @@ func (p *PackageServer) GetPackage(ctx context.Context, req *pb.GetPackageReques
 	logrus.Infof("Get rate %v", req.GetId())
 
 	packageId := req.GetId()
+	orgId := req.GetOrgId()
 
-	_package, err := p.packageRepo.GetPackage(packageId)
+	_package, err := p.packageRepo.GetPackage(packageId, orgId)
 	if err != nil {
 		logrus.Error("error while getting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
@@ -38,7 +43,7 @@ func (p *PackageServer) GetPackage(ctx context.Context, req *pb.GetPackageReques
 
 func (p *PackageServer) GetPackages(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
 	logrus.Infof("GetPackages")
-	packages, err := p.packageRepo.GetPackages()
+	packages, err := p.packageRepo.GetPackages(req.GetOrgId())
 	if err != nil {
 		logrus.Error("error while getting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
@@ -51,10 +56,11 @@ func (p *PackageServer) GetPackages(ctx context.Context, req *pb.GetPackagesRequ
 	return packageList, nil
 }
 
-func (p *PackageServer) CreatePackage(ctx context.Context, req *pb.CreatePackageRequest) (*pb.CreatePackageResponse, error) {
-	_package := db.Package{
+func (p *PackageServer) AddPackage(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+	logrus.Infof("Add Package Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v", req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
+	_package := &db.Package{
 		Name:         req.GetName(),
-		Sim_type:     "inter_mno_none",
+		Sim_type:     validations.ReqPbToStr(req.GetSimType()),
 		Org_id:       uint(req.GetOrgId()),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
@@ -63,16 +69,16 @@ func (p *PackageServer) CreatePackage(ctx context.Context, req *pb.CreatePackage
 		Voice_volume: uint(req.GetVoiceVolume()),
 		Org_rates_id: uint(req.GetOrgId()),
 	}
-
-	_packageRes, err := p.packageRepo.CreatePackage(_package)
+	err := p.packageRepo.AddPackage(_package)
 	if err != nil {
-		logrus.Error("error while getting rates" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rates")
+
+		logrus.Error("Error adding a package. " + err.Error())
+
+		return nil, status.Errorf(codes.Internal, "error adding a package")
 	}
 
-	return &pb.CreatePackageResponse{
-		Package: dbPackageToPbPackages(&_packageRes),
-	}, nil
+	return &pb.AddPackageResponse{Package: dbPackageToPbPackages(_package)}, nil
+
 }
 
 func (p *PackageServer) DeletePackage(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
@@ -94,7 +100,7 @@ func (p *PackageServer) UpdatePackage(ctx context.Context, req *pb.UpdatePackage
 		req.Id, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 	_package := db.Package{
 		Name:         req.GetName(),
-		Sim_type:     "inter_mno_none",
+		Sim_type:     validations.ReqPbToStr(req.GetSimType()),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
 		Sms_volume:   uint(req.GetSmsVolume()),
@@ -122,20 +128,20 @@ func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {
 	return res
 }
 
-func dbPackageToPbPackages(r *db.Package) *pb.Package {
+func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	return &pb.Package{
-		Id:          uint64(r.ID),
-		Name:        r.Name,
-		OrgId:       int64(r.Org_id),
-		Active:      r.Active,
-		Duration:    uint64(r.Duration),
-		SmsVolume:   int64(r.Sms_volume),
-		OrgRatesId:  uint64(r.Org_rates_id),
-		DataVolume:  int64(r.Data_volume),
-		VoiceVolume: int64(r.Voice_volume),
-		// SimType:     r.Sim_type.String(),
-		CreatedAt: r.CreatedAt.String(),
-		UpdatedAt: r.UpdatedAt.String(),
-		DeletedAt: r.DeletedAt.Time.String(),
+		Id:          uint64(p.ID),
+		Name:        p.Name,
+		OrgId:       int64(p.Org_id),
+		Active:      p.Active,
+		Duration:    uint64(p.Duration),
+		SmsVolume:   int64(p.Sms_volume),
+		OrgRatesId:  uint64(p.Org_rates_id),
+		DataVolume:  int64(p.Data_volume),
+		VoiceVolume: int64(p.Voice_volume),
+		SimType:     validations.ReqStrTopb(p.Sim_type),
+		CreatedAt:   p.CreatedAt.String(),
+		UpdatedAt:   p.UpdatedAt.String(),
+		DeletedAt:   p.DeletedAt.Time.String(),
 	}
 }

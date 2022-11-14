@@ -5,15 +5,18 @@ package ukama.rates.v1;
 service PackagesService {
     rpc GetPackages (GetPackagesRequest) returns (GetPackagesResponse) {}
     rpc GetPackage(GetPackageRequest) returns (GetPackageResponse){}
-    rpc CreatePackage(CreatePackageRequest) returns (CreatePackageResponse){}
+    rpc AddPackage(AddPackageRequest) returns (AddPackageResponse){}
     rpc DeletePackage(DeletePackageRequest) returns (DeletePackageResponse){}
     rpc UpdatePackage(UpdatePackageRequest) returns (UpdatePackageResponse){}
 }
 message GetPackagesRequest{
+    uint64 org_id =1;
 }
 
 message GetPackageRequest {
     uint64 id =1;
+    uint64 orgId =2;
+ 
 }
 message GetPackageResponse {
     Package package =1;
@@ -41,7 +44,7 @@ message UpdatePackageRequest {
 message UpdatePackageResponse {
     Package package = 1;
 }
-message CreatePackageRequest {
+message AddPackageRequest {
     string name =2;
     uint64 org_id=3;
     bool active =4;
@@ -52,7 +55,7 @@ message CreatePackageRequest {
     int64 voice_volume =12;
     uint64 org_rates_id=13;
 }
-message CreatePackageResponse {
+message AddPackageResponse {
      Package package =1;
 
 }

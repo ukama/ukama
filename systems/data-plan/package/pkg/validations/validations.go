@@ -1,6 +1,6 @@
 package validationErrors
 
-import "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
+import "github.com/ukama/ukama/systems/data-plan/package/pb"
 
 func IsRequestEmpty(ss ...string) bool {
 	for _, s := range ss {
