@@ -226,7 +226,7 @@ Function take below argument:
 
 ```js
 {
-    [required] orgId => uint64
+    [required] orgId => UInt64
 }
 ```
 
@@ -246,8 +246,8 @@ Function take below argument:
 
 ```js
 {
-    [required] orgId => uint64
-    [required] packageId => uint64
+    [required] orgId => UInt64
+    [required] packageId => UInt64
 }
 ```
 
@@ -267,15 +267,15 @@ Function take below argument:
 
 ```js
 {
-    [required] orgId => uint64
-    [required] name => string
-    [required] duration => uint64
-    [required] org_rates_id => uint64
-    [optional] active => boolean
-    [optional] sim_type => string
-    [optional] sms_volume => int64
-    [optional] data_volume => int64
-    [optional] voice_volume => int64
+    [required] orgId => UInt64
+    [required] name => String
+    [required] duration => UInt64
+    [required] org_rates_id => UInt64
+    [optional] active => Boolean
+    [optional] sim_type => String
+    [optional] sms_volume => Int64
+    [optional] data_volume => Int64
+    [optional] voice_volume => Int64
 }
 ```
 
@@ -295,15 +295,15 @@ Function take below argument:
 
 ```js
 {
-    [required] id => uint64
-    [optional] name => string
-    [optional] duration => uint64
-    [optional] org_rates_id => uint64
-    [optional] active => boolean
-    [optional] sim_type => string
-    [optional] sms_volume => int64
-    [optional] data_volume => int64
-    [optional] voice_volume => int64
+    [required] id => UInt64
+    [optional] name => String
+    [optional] duration => UInt64
+    [optional] org_rates_id => UInt64
+    [optional] active => Boolean
+    [optional] sim_type => String
+    [optional] sms_volume => Int64
+    [optional] data_volume => Int64
+    [optional] voice_volume => Int64
 }
 ```
 
@@ -323,8 +323,8 @@ Function take below argument:
 
 ```js
 {
-    [required] id => uint64
-    [required] orgId => uint64
+    [required] id => UInt64
+    [required] orgId => UInt64
 }
 ```
 
