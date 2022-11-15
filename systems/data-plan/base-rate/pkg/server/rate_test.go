@@ -62,7 +62,7 @@ func TestRateService_GetRates(t *testing.T) {
 	}
 
 	 baseRateRepo := &mocks.BaseRateRepo{}
-	 baseRateRepo.On("GetBaseRates", mockFilters.Country,mockFilters.Provider,mockFilters.EffectiveAt,"inter_mno_data").Return([]db.Rate{
+	 baseRateRepo.On("GetBaseRates", mockFilters.Country,mockFilters.Provider,mockFilters.EffectiveAt,mockSimType).Return([]db.Rate{
 	  {X2g: "2G",
       X3g: "3G",
       Apn: "Manual entry required",
