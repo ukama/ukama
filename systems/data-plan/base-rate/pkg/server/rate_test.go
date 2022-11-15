@@ -2,20 +2,45 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/mocks"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 )
 
+var mockNetwork = "ABC Tel"
 var mockCountry = "The lunar maria"
+var mockSimType = "inter_mno_data"
+var mockeEffectiveAt = "2022-12-01T00:00:00Z"
+var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
-func TestRateService_Get(t *testing.T) {
+func TestRateService_UploadRates(t *testing.T) {
+	mockRepo := &mocks.BaseRateRepo{}
+	mockRepo.On("UploadBaseRates", mock.Anything, mock.Anything).Return(nil)
+
+	rateService := NewBaseRateServer(mockRepo)
+
+	rateReq := &pb.UploadBaseRatesRequest{
+		FileURL:     mockFileUrl,
+		EffectiveAt: mockeEffectiveAt,
+		SimType:     validations.ReqStrTopb(mockSimType),
+	}
+
+	rateRes, err := rateService.UploadBaseRates(context.Background(), rateReq)
+	assert.NoError(t, err)
+	for i := range rateRes.Rate {
+		assert.Equal(t, rateRes.Rate[i].EffectiveAt, rateReq.EffectiveAt)
+		assert.Equal(t, rateRes.Rate[i].SimType, mockSimType)
+	}
+}
+
+func TestRateService_GetRate(t *testing.T) {
+
 	baseRateRepo := &mocks.BaseRateRepo{}
 	baseRateRepo.On("GetBaseRate", uint64(1)).Return(&db.Rate{
 		Country: mockCountry,
@@ -27,25 +52,18 @@ func TestRateService_Get(t *testing.T) {
 	assert.Equal(t, mockCountry, rate.Rate.Country)
 	baseRateRepo.AssertExpectations(t)
 }
-func TestRateService_GetRates(t *testing.T) {
-	var mockFilters = pb.GetBaseRatesRequest{
-		Country:     "The lunar maria",
-		Provider:    "ABC Tel",
-		EffectiveAt: "2022-12-01T00:00:00Z",
-		SimType:     validations.ReqStrTopb("inter_mno_data"),
-	}
 
+func TestRateService_GetRates(t *testing.T) {
 	baseRateRepo := &mocks.BaseRateRepo{}
 	baseRateRepo.On("GetBaseRates").Return(&db.Rate{
-		Country:      "The lunar maria",
-		Network:      "ABC Tel",
-		Effective_at: "2022-12-01T00:00:00Z",
-		Sim_type:     "inter_mno_data",
+		Country:      mockCountry,
+		Network:      mockNetwork,
+		Effective_at: mockeEffectiveAt,
+		Sim_type:     mockSimType,
 	}, nil)
+
 	s := NewBaseRateServer(baseRateRepo)
-	rate, err := s.GetBaseRates(context.TODO(), &pb.GetBaseRatesRequest{Country: mockFilters.Country, Provider: mockFilters.Provider, EffectiveAt: mockFilters.EffectiveAt, SimType: mockFilters.SimType})
-	fmt.Println(rate)
+	rate, err := s.GetBaseRates(context.TODO(), &pb.GetBaseRatesRequest{Country: mockCountry, Provider: mockNetwork, EffectiveAt: mockeEffectiveAt, SimType: validations.ReqStrTopb(mockSimType)})
 	assert.NoError(t, err)
-	// assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
-	// baseRateRepo.AssertExpectations(t)
+	assert.Equal(t, mockCountry, rate.Rates[0].Country)
 }
