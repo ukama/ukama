@@ -3,6 +3,7 @@ module github.com/ukama/ukama/systems/data-plan/base-rate
 go 1.18
 
 require (
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/jszwec/csvutil v1.7.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.1
