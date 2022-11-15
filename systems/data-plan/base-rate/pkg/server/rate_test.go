@@ -21,7 +21,7 @@ var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/da
 
 func TestRateService_UploadRates(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
-	mockRepo.On("UploadBaseRates", mock.Anything, mock.Anything).Return(nil)
+	mockRepo.On("UploadBaseRates", mock.Anything).Return(nil)
 
 	rateService := NewBaseRateServer(mockRepo)
 

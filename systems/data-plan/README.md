@@ -138,7 +138,13 @@ Then navigate into base-rate directory and run below command:
 make gen
 ```
 
-This command will generate protobuf from `pb/rate.proto`.
+This command will generate protobuf and mocks from `pb/rate.proto`.
+
+```
+make test
+```
+
+This command will run the unit tests.
 
 ```
 make server
