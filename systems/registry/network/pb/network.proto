@@ -55,7 +55,6 @@ message DeleteResponse{
 message Network {
     uint64 id = 1;
     string name = 2;
-    string org = 3;
-    bool isDeactivated = 4;
-    google.protobuf.Timestamp created_at = 5;
+    bool isDeactivated = 3;
+    google.protobuf.Timestamp created_at = 4;
 }
