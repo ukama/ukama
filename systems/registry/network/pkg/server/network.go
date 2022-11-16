@@ -46,7 +46,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	nt, err := n.netRepo.Get(req.OrgName, req.GetName())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org/network")
+		return nil, grpc.SqlErrorToGrpc(err, "mapping org/network")
 	}
 
 	return &pb.GetResponse{

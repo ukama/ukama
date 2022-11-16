@@ -29,46 +29,31 @@ func NewNetRepo(db sql.Db) NetRepo {
 }
 
 func (n netRepo) Get(orgName string, network string) (*Network, error) {
-	db := n.Db.GetGormDb()
+	var ntwk Network
 
-	rows, err := db.Raw(`SELECT n.name,n.id, n.org_id, o.name  from networks n
-inner join orgs o on n.org_id = o.id
-where n.deleted_at IS NULL and o.deleted_at IS NULL and
- n.name = ? and o.name = ?`, network, orgName).Rows()
+	result := n.Db.GetGormDb().Joins("JOIN orgs on orgs.id=networks.org_id").
+		Where("orgs.name=? and networks.name=? and orgs.deleted_at is null",
+			orgName, network).Find(&ntwk)
 
-	if err != nil {
-		return nil, err
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
-	defer rows.Close()
-	nt := Network{
-		Org: &Org{},
-	}
-
-	exist := false
-
-	for rows.Next() {
-		exist = true
-
-		err = rows.Scan(&nt.Name, &nt.ID, &nt.OrgID, &nt.Org.Name)
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if !exist {
+	if result.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	return &nt, nil
+	return &ntwk, nil
 }
 
 func (n netRepo) GetByOrg(orgID uint) ([]Network, error) {
 	db := n.Db.GetGormDb()
 	var networks []Network
-	//This gives the result in a single sql query, but fail to distingush between when org does not exist vs when org has no networks, can improve later.
-	// result := db.Joins("JOIN orgs on orgs.id=networks.org_id").Where("orgs.name=? and orgs.deleted_at is null", orgName).Debug().Find(&networks)
+
+	//This gives the result in a single sql query, but fail to distingush between
+	//	when org does not exist vs when org has no networks, can improve later.
+	// result := db.Joins("JOIN orgs on orgs.id=networks.org_id").
+	// Where("orgs.name=? and orgs.deleted_at is null", orgName).Debug().Find(&networks)
 
 	result := db.Where(&Network{OrgID: orgID}).Find(&networks)
 	if result.Error != nil {
