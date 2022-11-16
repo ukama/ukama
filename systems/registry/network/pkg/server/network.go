@@ -56,9 +56,14 @@ func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 }
 
 func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	ntwks, err := n.netRepo.GetByOrg(req.OrgName)
+	org, err := n.orgRepo.GetByName(req.GetOrgName())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org/network")
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	ntwks, err := n.netRepo.GetByOrg(org.ID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "networks")
 	}
 
 	resp := &pb.GetByOrgResponse{
@@ -86,9 +91,8 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
-		Id:   uint64(ntwk.ID),
-		Name: ntwk.Name,
-		// Org:           ntwk.Org.Name,
+		Id:            uint64(ntwk.ID),
+		Name:          ntwk.Name,
 		IsDeactivated: ntwk.Deactivated,
 		CreatedAt:     timestamppb.New(ntwk.CreatedAt),
 	}
