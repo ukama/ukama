@@ -25,7 +25,7 @@ func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
 }
 
 func (p *PackageServer) GetPackages(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
-	logrus.Infof("GetPackages : %s  ,%s", req.GetOrgId(), req.GetId())
+	logrus.Infof("GetPackages : %v  ,%v", req.GetOrgId(), req.GetId())
 	if len(strconv.Itoa(int(req.GetOrgId()))) < 2 {
 		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required.")
 	}
