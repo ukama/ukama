@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -23,27 +24,12 @@ func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
 
 }
 
-func (p *PackageServer) GetPackage(ctx context.Context, req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
-	logrus.Infof("Get rate %v", req.GetId())
-
-	packageId := req.GetId()
-	orgId := req.GetOrgId()
-
-	_package, err := p.packageRepo.GetPackage(packageId, orgId)
-	if err != nil {
-		logrus.Error("error while getting package" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "package")
-	}
-	resp := &pb.GetPackageResponse{
-		Package: dbPackageToPbPackages(_package),
-	}
-
-	return resp, nil
-}
-
 func (p *PackageServer) GetPackages(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
-	logrus.Infof("GetPackages")
-	packages, err := p.packageRepo.GetPackages(req.GetOrgId())
+	logrus.Infof("GetPackages : %s  ,%s", req.GetOrgId(), req.GetId())
+	if len(strconv.Itoa(int(req.GetOrgId()))) < 2 {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required.")
+	}
+	packages, err := p.packageRepo.Get(req.GetOrgId(), req.GetId())
 	if err != nil {
 		logrus.Error("error while getting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
@@ -69,7 +55,7 @@ func (p *PackageServer) AddPackage(ctx context.Context, req *pb.AddPackageReques
 		Voice_volume: uint(req.GetVoiceVolume()),
 		Org_rates_id: uint(req.GetOrgId()),
 	}
-	err := p.packageRepo.AddPackage(_package)
+	err := p.packageRepo.Add(_package)
 	if err != nil {
 
 		logrus.Error("Error adding a package. " + err.Error())
@@ -83,7 +69,7 @@ func (p *PackageServer) AddPackage(ctx context.Context, req *pb.AddPackageReques
 
 func (p *PackageServer) DeletePackage(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
 	logrus.Infof("Delete Packages %v", req.Id)
-	packages, err := p.packageRepo.DeletePackage(req.Id)
+	packages, err := p.packageRepo.Delete(req.Id)
 	if err != nil {
 		logrus.Error("error while deleting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
@@ -109,7 +95,7 @@ func (p *PackageServer) UpdatePackage(ctx context.Context, req *pb.UpdatePackage
 		Org_rates_id: uint(req.GetOrgRatesId()),
 	}
 
-	_packages, err := p.packageRepo.UpdatePackage(req.Id, _package)
+	_packages, err := p.packageRepo.Update(req.Id, _package)
 	if err != nil {
 		logrus.Error("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")

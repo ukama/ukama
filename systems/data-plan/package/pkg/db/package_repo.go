@@ -2,15 +2,15 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	// pb "github.com/ukama/ukama/systems/data-plan/package/pb"
 	"gorm.io/gorm"
 )
 
 type PackageRepo interface {
-	GetPackage(packageId ,OrgId uint64 ) (*Package, error)
-	GetPackages(orgId uint64) ([]Package, error)
-	AddPackage(_package *Package, nestedFunc ...func() error) error
-	DeletePackage(Id uint64) (*Package, error)
-	UpdatePackage(Id uint64, pkg Package) (*Package, error)
+	Add(_package *Package, nestedFunc ...func() error) error
+	Get(orgId, id uint64) ([]Package, error)
+	Delete(Id uint64) (*Package, error)
+	Update(Id uint64, pkg Package) (*Package, error)
 }
 
 type packageRepo struct {
@@ -23,35 +23,25 @@ func NewPackageRepo(db sql.Db) *packageRepo {
 	}
 }
 
-func (r *packageRepo) AddPackage(_package *Package, nestedFunc ...func() error) error {
+func (r *packageRepo) Add(_package *Package, nestedFunc ...func() error) error {
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
 		return tx.Create(_package)
 	}, nestedFunc...)
 
 	return err
 }
-func (p *packageRepo) GetPackage(packageId,OrgId uint64) (*Package, error) {
-	_package := &Package{}
-	result :=p.Db.GetGormDb().Where("Id = ? AND Org_id = ?",packageId , OrgId).First(&_package)
 
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return _package, nil
-}
-
-func (p *packageRepo) GetPackages( orgId uint64) ([]Package, error) {
+func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
 	var packages []Package
-	result :=p.Db.GetGormDb().Where("Org_id = ?", orgId).Find(&packages)
+	result := p.Db.GetGormDb().Where(&Package{Org_id: uint(orgId), Model: gorm.Model{ID: uint(id)}}).Find(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
-
 	return packages, nil
 }
 
-func (p *packageRepo) DeletePackage(packageId uint64) (*Package, error) {
+func (p *packageRepo) Delete(packageId uint64) (*Package, error) {
 	_package := &Package{}
 	result := p.Db.GetGormDb().Delete(_package, "id", packageId)
 	if result.Error != nil {
@@ -60,7 +50,7 @@ func (p *packageRepo) DeletePackage(packageId uint64) (*Package, error) {
 	return _package, nil
 }
 
-func (b *packageRepo) UpdatePackage(Id uint64, pkg Package) (*Package, error) {
+func (b *packageRepo) Update(Id uint64, pkg Package) (*Package, error) {
 
 	result := b.Db.GetGormDb().Where(Id).UpdateColumns(pkg)
 	if result.Error != nil {

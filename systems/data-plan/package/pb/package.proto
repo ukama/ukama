@@ -4,23 +4,15 @@ package ukama.rates.v1;
 
 service PackagesService {
     rpc GetPackages (GetPackagesRequest) returns (GetPackagesResponse) {}
-    rpc GetPackage(GetPackageRequest) returns (GetPackageResponse){}
     rpc AddPackage(AddPackageRequest) returns (AddPackageResponse){}
     rpc DeletePackage(DeletePackageRequest) returns (DeletePackageResponse){}
     rpc UpdatePackage(UpdatePackageRequest) returns (UpdatePackageResponse){}
 }
 message GetPackagesRequest{
     uint64 org_id =1;
+    uint64 id =2;
 }
 
-message GetPackageRequest {
-    uint64 id =1;
-    uint64 orgId =2;
- 
-}
-message GetPackageResponse {
-    Package package =1;
-}
 message GetPackagesResponse{
     repeated Package packages =1;
 }

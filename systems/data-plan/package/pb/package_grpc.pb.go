@@ -23,7 +23,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PackagesServiceClient interface {
 	GetPackages(ctx context.Context, in *GetPackagesRequest, opts ...grpc.CallOption) (*GetPackagesResponse, error)
-	GetPackage(ctx context.Context, in *GetPackageRequest, opts ...grpc.CallOption) (*GetPackageResponse, error)
 	AddPackage(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	DeletePackage(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error)
 	UpdatePackage(ctx context.Context, in *UpdatePackageRequest, opts ...grpc.CallOption) (*UpdatePackageResponse, error)
@@ -40,15 +39,6 @@ func NewPackagesServiceClient(cc grpc.ClientConnInterface) PackagesServiceClient
 func (c *packagesServiceClient) GetPackages(ctx context.Context, in *GetPackagesRequest, opts ...grpc.CallOption) (*GetPackagesResponse, error) {
 	out := new(GetPackagesResponse)
 	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/GetPackages", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *packagesServiceClient) GetPackage(ctx context.Context, in *GetPackageRequest, opts ...grpc.CallOption) (*GetPackageResponse, error) {
-	out := new(GetPackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/GetPackage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +77,6 @@ func (c *packagesServiceClient) UpdatePackage(ctx context.Context, in *UpdatePac
 // for forward compatibility
 type PackagesServiceServer interface {
 	GetPackages(context.Context, *GetPackagesRequest) (*GetPackagesResponse, error)
-	GetPackage(context.Context, *GetPackageRequest) (*GetPackageResponse, error)
 	AddPackage(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	DeletePackage(context.Context, *DeletePackageRequest) (*DeletePackageResponse, error)
 	UpdatePackage(context.Context, *UpdatePackageRequest) (*UpdatePackageResponse, error)
@@ -100,9 +89,6 @@ type UnimplementedPackagesServiceServer struct {
 
 func (UnimplementedPackagesServiceServer) GetPackages(context.Context, *GetPackagesRequest) (*GetPackagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackages not implemented")
-}
-func (UnimplementedPackagesServiceServer) GetPackage(context.Context, *GetPackageRequest) (*GetPackageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackage not implemented")
 }
 func (UnimplementedPackagesServiceServer) AddPackage(context.Context, *AddPackageRequest) (*AddPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPackage not implemented")
@@ -140,24 +126,6 @@ func _PackagesService_GetPackages_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).GetPackages(ctx, req.(*GetPackagesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PackagesService_GetPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPackageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PackagesServiceServer).GetPackage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.rates.v1.PackagesService/GetPackage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackagesServiceServer).GetPackage(ctx, req.(*GetPackageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -226,10 +194,6 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPackages",
 			Handler:    _PackagesService_GetPackages_Handler,
-		},
-		{
-			MethodName: "GetPackage",
-			Handler:    _PackagesService_GetPackage_Handler,
 		},
 		{
 			MethodName: "AddPackage",
