@@ -72,6 +72,29 @@ func (_m *NetRepo) Get(orgName string, network string) (*db.Network, error) {
 	return r0, r1
 }
 
+// GetByOrg provides a mock function with given fields: orgID
+func (_m *NetRepo) GetByOrg(orgID uint) ([]db.Network, error) {
+	ret := _m.Called(orgID)
+
+	var r0 []db.Network
+	if rf, ok := ret.Get(0).(func(uint) []db.Network); ok {
+		r0 = rf(orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Network)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewNetRepo interface {
 	mock.TestingT
 	Cleanup(func())
