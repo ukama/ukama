@@ -34,26 +34,17 @@ func (_m *PackageRepo) Add(_package *db.Package, nestedFunc ...func() error) err
 }
 
 // Delete provides a mock function with given fields: orgId, id
-func (_m *PackageRepo) Delete(orgId uint64, id uint64) (*db.Package, error) {
+func (_m *PackageRepo) Delete(orgId uint64, id uint64) error {
 	ret := _m.Called(orgId, id)
 
-	var r0 *db.Package
-	if rf, ok := ret.Get(0).(func(uint64, uint64) *db.Package); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uint64, uint64) error); ok {
 		r0 = rf(orgId, id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Package)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(uint64, uint64) error); ok {
-		r1 = rf(orgId, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Get provides a mock function with given fields: orgId, id
@@ -79,9 +70,9 @@ func (_m *PackageRepo) Get(orgId uint64, id uint64) ([]db.Package, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: id, pkg
-func (_m *PackageRepo) Update(id uint64, pkg db.Package) (*db.Package, error) {
-	ret := _m.Called(id, pkg)
+// Update provides a mock function with given fields: Id, pkg
+func (_m *PackageRepo) Update(Id uint64, pkg db.Package) (*db.Package, error) {
+	ret := _m.Called(Id, pkg)
 
 	var r0 *db.Package
 	if rf, ok := ret.Get(0).(func(uint64, db.Package) *db.Package); ok {
