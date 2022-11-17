@@ -22,6 +22,9 @@ func (this *AddRequest) Validate() error {
 	if this.Name == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
 	}
+	if this.OrgName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+	}
 	return nil
 }
 func (this *AddResponse) Validate() error {
@@ -36,6 +39,9 @@ func (this *GetRequest) Validate() error {
 	if this.Name == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
 	}
+	if this.OrgName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+	}
 	return nil
 }
 func (this *GetResponse) Validate() error {
@@ -47,6 +53,9 @@ func (this *GetResponse) Validate() error {
 	return nil
 }
 func (this *GetByOrgRequest) Validate() error {
+	if this.OrgName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+	}
 	return nil
 }
 func (this *GetByOrgResponse) Validate() error {
@@ -60,12 +69,40 @@ func (this *GetByOrgResponse) Validate() error {
 	return nil
 }
 func (this *DeleteRequest) Validate() error {
+	if this.Name == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
+	}
+	if this.OrgName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+	}
 	return nil
 }
 func (this *DeleteResponse) Validate() error {
 	return nil
 }
+func (this *AddSiteRequest) Validate() error {
+	if this.SiteName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SiteName", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteName))
+	}
+	return nil
+}
+func (this *AddSiteResponse) Validate() error {
+	if this.Site != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Site); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Site", err)
+		}
+	}
+	return nil
+}
 func (this *Network) Validate() error {
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
+	}
+	return nil
+}
+func (this *Site) Validate() error {
 	if this.CreatedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)

@@ -10,17 +10,26 @@ import "google/protobuf/wrappers.proto";
 package ukama.network.v1;
 
 service NetworkService {
+  /* Networks */
     rpc Add(AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByOrg(GetByOrgRequest) returns (GetByOrgResponse);
     rpc Delete(DeleteRequest) returns (DeleteResponse);
+
+  /* Sites */
+    rpc AddSite(AddSiteRequest) returns (AddSiteResponse);
+    // GetSite
+    // GetByNetwork
+    // UpdateSite
+    // RemoveSite
 }
 
 
 message AddRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2;
+    string orgName = 2 [(validator.field) = { string_not_empty: true}];
 }
+
 message AddResponse{
     Network network = 1;
     string org = 2;
@@ -28,7 +37,7 @@ message AddResponse{
 
 message GetRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2;
+    string orgName = 2 [(validator.field) = { string_not_empty: true}];
 }
 
 message GetResponse{
@@ -37,24 +46,42 @@ message GetResponse{
 }
 
 message GetByOrgRequest{
-    string orgName = 1;
+    string orgName = 1 [(validator.field) = { string_not_empty: true}];
 }
+
 message GetByOrgResponse{
     string org = 1;
     repeated Network networks = 2;
 }
 
 message DeleteRequest{
-    string orgName = 1;
-    string name = 2;
+    string name = 1 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true}];
 }
 
 message DeleteResponse{
 }
+
+message AddSiteRequest{
+    uint64 netID = 1;
+    string siteName = 2 [(validator.field) = { string_not_empty: true}];
+}
+message AddSiteResponse{
+    Site site = 1;
+}
+
 
 message Network {
     uint64 id = 1;
     string name = 2;
     bool isDeactivated = 3;
     google.protobuf.Timestamp created_at = 4;
+}
+
+message Site {
+    uint64 id = 1;
+    string name = 2;
+    uint64 NetworkID = 3;
+    bool isDeactivated = 4;
+    google.protobuf.Timestamp created_at = 5;
 }

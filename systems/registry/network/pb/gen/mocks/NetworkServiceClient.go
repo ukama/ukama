@@ -46,6 +46,36 @@ func (_m *NetworkServiceClient) Add(ctx context.Context, in *gen.AddRequest, opt
 	return r0, r1
 }
 
+// AddSite provides a mock function with given fields: ctx, in, opts
+func (_m *NetworkServiceClient) AddSite(ctx context.Context, in *gen.AddSiteRequest, opts ...grpc.CallOption) (*gen.AddSiteResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.AddSiteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddSiteRequest, ...grpc.CallOption) *gen.AddSiteResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddSiteResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddSiteRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Delete provides a mock function with given fields: ctx, in, opts
 func (_m *NetworkServiceClient) Delete(ctx context.Context, in *gen.DeleteRequest, opts ...grpc.CallOption) (*gen.DeleteResponse, error) {
 	_va := make([]interface{}, len(opts))

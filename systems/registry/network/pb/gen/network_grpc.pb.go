@@ -22,10 +22,13 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NetworkServiceClient interface {
+	// Networks
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	// Sites
+	AddSite(ctx context.Context, in *AddSiteRequest, opts ...grpc.CallOption) (*AddSiteResponse, error)
 }
 
 type networkServiceClient struct {
@@ -72,14 +75,26 @@ func (c *networkServiceClient) Delete(ctx context.Context, in *DeleteRequest, op
 	return out, nil
 }
 
+func (c *networkServiceClient) AddSite(ctx context.Context, in *AddSiteRequest, opts ...grpc.CallOption) (*AddSiteResponse, error) {
+	out := new(AddSiteResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/AddSite", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NetworkServiceServer is the server API for NetworkService service.
 // All implementations must embed UnimplementedNetworkServiceServer
 // for forward compatibility
 type NetworkServiceServer interface {
+	// Networks
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	// Sites
+	AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
 
@@ -98,6 +113,9 @@ func (UnimplementedNetworkServiceServer) GetByOrg(context.Context, *GetByOrgRequ
 }
 func (UnimplementedNetworkServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedNetworkServiceServer) AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddSite not implemented")
 }
 func (UnimplementedNetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {}
 
@@ -184,6 +202,24 @@ func _NetworkService_Delete_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkService_AddSite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddSiteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).AddSite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.network.v1.NetworkService/AddSite",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).AddSite(ctx, req.(*AddSiteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NetworkService_ServiceDesc is the grpc.ServiceDesc for NetworkService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,6 +242,10 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _NetworkService_Delete_Handler,
+		},
+		{
+			MethodName: "AddSite",
+			Handler:    _NetworkService_AddSite_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
