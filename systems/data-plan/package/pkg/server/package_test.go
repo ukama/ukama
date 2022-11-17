@@ -54,17 +54,19 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	packageRepo.AssertExpectations(t)
 }
 
-func TestPackageServer_DeletePackage(t *testing.T) {
+func TestPackageServer_UpdatePackage(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	packageRepo.On("Delete", uint64(1), uint64(1)).Return(&db.Package{}, nil).Once()
+	packageRepo.On("Update", uint64(1), mock.Anything).Return(&db.Package{
+		Active: false,
+	}, nil)
 
 	s := NewPackageServer(packageRepo)
 
-	_package, err := s.DeletePackage(context.TODO(), &pb.DeletePackageRequest{
-		Id:    uint64(1),
-		OrgId: uint64(1),
+	ap, err := s.UpdatePackage(context.TODO(), &pb.UpdatePackageRequest{
+		Id:     uint64(1),
+		Active: false,
 	})
 	assert.NoError(t, err)
-	assert.NotEmpty(t, _package.Package)
+	assert.Equal(t, false, ap.Package.Active)
 	packageRepo.AssertExpectations(t)
 }

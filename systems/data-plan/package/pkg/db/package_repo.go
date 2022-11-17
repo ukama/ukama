@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
 )
@@ -44,11 +42,9 @@ func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
 
 func (p *packageRepo) Delete(orgId, packageId uint64) (*Package, error) {
 	_package := &Package{}
-	result := p.Db.GetGormDb().Where("id = ? AND org_id = ? AND deleted_at = ?", packageId, orgId, nil).Delete(_package)
+	result := p.Db.GetGormDb().Where("id = ? AND org_id = ?", packageId, orgId).Delete(_package)
 	if result.Error != nil {
 		return nil, result.Error
-	} else if result.RowsAffected < 1 {
-		return nil, fmt.Errorf("record with packageId: %v and orgId: %v not found", packageId, orgId)
 	}
 
 	return _package, nil

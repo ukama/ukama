@@ -71,16 +71,17 @@ func (p *PackageServer) AddPackage(ctx context.Context, req *pb.AddPackageReques
 func (p *PackageServer) DeletePackage(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
 	logrus.Infof("Delete Packages, orgId: %v, packageId: %v", req.OrgId, req.Id)
 
-	packages, err := p.packageRepo.Get(req.OrgId, req.Id)
+	packages, err := p.packageRepo.Get(req.GetOrgId(), req.GetId())
 	if err != nil {
 		logrus.Error("error while getting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
+
 	if len(packages) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "Package with orgId: %v and packageId: %v not found", req.OrgId, req.Id)
+		return nil, status.Errorf(codes.NotFound, "Package with orgId: %v and packageId: %v not found", req.OrgId, req.Id)
 	}
 
-	_packages, err := p.packageRepo.Delete(req.OrgId, req.Id)
+	_packages, err := p.packageRepo.Delete(req.GetOrgId(), req.GetId())
 	if err != nil {
 		logrus.Error("error while deleting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
