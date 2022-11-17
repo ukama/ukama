@@ -11,9 +11,10 @@ import (
 )
 
 type NetRepo interface {
-	Get(orgName string, network string) (*Network, error)
-	// GetByOrgName(orgName string, network string) (*Network, error)
-	GetByOrg(orgID uint) ([]Network, error)
+	Get(id uint) (*Network, error)
+	GetByName(orgName string, network string) (*Network, error)
+	GetAllByOrgId(orgID uint) ([]Network, error)
+	// GetAllByOrgName(orgName string) ([]Network, error)
 	Add(orgId uint, network string) (*Network, error)
 	// Update(orgId uint, network *Network) error
 	Delete(orgName string, network string) error
@@ -29,7 +30,18 @@ func NewNetRepo(db sql.Db) NetRepo {
 	}
 }
 
-func (n netRepo) Get(orgName string, network string) (*Network, error) {
+func (n netRepo) Get(id uint) (*Network, error) {
+	var ntwk Network
+
+	result := n.Db.GetGormDb().First(&ntwk, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &ntwk, nil
+}
+
+func (n netRepo) GetByName(orgName string, network string) (*Network, error) {
 	var ntwk Network
 
 	result := n.Db.GetGormDb().Joins("JOIN orgs on orgs.id=networks.org_id").
@@ -47,14 +59,9 @@ func (n netRepo) Get(orgName string, network string) (*Network, error) {
 	return &ntwk, nil
 }
 
-func (n netRepo) GetByOrg(orgID uint) ([]Network, error) {
+func (n netRepo) GetAllByOrgId(orgID uint) ([]Network, error) {
 	db := n.Db.GetGormDb()
 	var networks []Network
-
-	//This gives the result in a single sql query, but fail to distingush between
-	//	when org does not exist vs when org has no networks, can improve later.
-	// result := db.Joins("JOIN orgs on orgs.id=networks.org_id").
-	// Where("orgs.name=? and orgs.deleted_at is null", orgName).Debug().Find(&networks)
 
 	result := db.Where(&Network{OrgID: orgID}).Find(&networks)
 	if result.Error != nil {
@@ -63,6 +70,15 @@ func (n netRepo) GetByOrg(orgID uint) ([]Network, error) {
 
 	return networks, nil
 }
+
+// func (n netRepo) GetByOrgName(orgID uint) ([]Network, error) {
+
+//This gives the result in a single sql query, but fail to distingush between
+//	when org does not exist vs when org has no networks, can improve later.
+// result := db.Joins("JOIN orgs on orgs.id=networks.org_id").
+// Where("orgs.name=? and orgs.deleted_at is null", orgName).Debug().Find(&networks)
+
+// }
 
 func (n netRepo) Add(orgId uint, network string) (*Network, error) {
 	db := n.Db.GetGormDb()
@@ -87,7 +103,7 @@ func (n netRepo) Delete(orgName string, network string) error {
 		txGorm := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 		txr := NewNetRepo(txGorm)
 
-		net, err := txr.Get(orgName, network)
+		net, err := txr.GetByName(orgName, network)
 		if err != nil {
 			return err
 		}

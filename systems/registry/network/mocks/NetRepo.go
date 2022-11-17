@@ -49,13 +49,13 @@ func (_m *NetRepo) Delete(orgName string, network string) error {
 	return r0
 }
 
-// Get provides a mock function with given fields: orgName, network
-func (_m *NetRepo) Get(orgName string, network string) (*db.Network, error) {
-	ret := _m.Called(orgName, network)
+// Get provides a mock function with given fields: id
+func (_m *NetRepo) Get(id uint) (*db.Network, error) {
+	ret := _m.Called(id)
 
 	var r0 *db.Network
-	if rf, ok := ret.Get(0).(func(string, string) *db.Network); ok {
-		r0 = rf(orgName, network)
+	if rf, ok := ret.Get(0).(func(uint) *db.Network); ok {
+		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Network)
@@ -63,8 +63,8 @@ func (_m *NetRepo) Get(orgName string, network string) (*db.Network, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(orgName, network)
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,8 +72,8 @@ func (_m *NetRepo) Get(orgName string, network string) (*db.Network, error) {
 	return r0, r1
 }
 
-// GetByOrg provides a mock function with given fields: orgID
-func (_m *NetRepo) GetByOrg(orgID uint) ([]db.Network, error) {
+// GetAllByOrgId provides a mock function with given fields: orgID
+func (_m *NetRepo) GetAllByOrgId(orgID uint) ([]db.Network, error) {
 	ret := _m.Called(orgID)
 
 	var r0 []db.Network
@@ -88,6 +88,29 @@ func (_m *NetRepo) GetByOrg(orgID uint) ([]db.Network, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uint) error); ok {
 		r1 = rf(orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetByName provides a mock function with given fields: orgName, network
+func (_m *NetRepo) GetByName(orgName string, network string) (*db.Network, error) {
+	ret := _m.Called(orgName, network)
+
+	var r0 *db.Network
+	if rf, ok := ret.Get(0).(func(string, string) *db.Network); ok {
+		r0 = rf(orgName, network)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Network)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(orgName, network)
 	} else {
 		r1 = ret.Error(1)
 	}

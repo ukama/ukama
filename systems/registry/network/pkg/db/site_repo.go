@@ -12,7 +12,7 @@ import (
 type SiteRepo interface {
 	Get(id uint) (*Site, error)
 	GetByNetwork(netID uint) ([]Site, error)
-	Add(netID uint, siteName string) (*Site, error)
+	Add(site *Site) error
 	// Update(site *Site) error
 	Delete(id uint) error
 
@@ -53,20 +53,15 @@ func (s siteRepo) GetByNetwork(netID uint) ([]Site, error) {
 	return sites, nil
 }
 
-func (s siteRepo) Add(netID uint, siteName string) (*Site, error) {
-	if !validation.IsValidDnsLabelName(siteName) {
-		return nil, fmt.Errorf("invalid name. must be less then 253 " +
+func (s siteRepo) Add(site *Site) error {
+	if !validation.IsValidDnsLabelName(site.Name) {
+		return fmt.Errorf("invalid name. must be less then 253 " +
 			"characters and consist of lowercase characters with a hyphen")
-	}
-
-	site := &Site{
-		NetworkID: netID,
-		Name:      siteName,
 	}
 
 	result := s.Db.GetGormDb().Create(site)
 
-	return site, result.Error
+	return result.Error
 }
 
 func (s siteRepo) Delete(siteID uint) error {

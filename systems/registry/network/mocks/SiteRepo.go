@@ -12,27 +12,18 @@ type SiteRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: netID, siteName
-func (_m *SiteRepo) Add(netID uint, siteName string) (*db.Site, error) {
-	ret := _m.Called(netID, siteName)
+// Add provides a mock function with given fields: site
+func (_m *SiteRepo) Add(site *db.Site) error {
+	ret := _m.Called(site)
 
-	var r0 *db.Site
-	if rf, ok := ret.Get(0).(func(uint, string) *db.Site); ok {
-		r0 = rf(netID, siteName)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Site) error); ok {
+		r0 = rf(site)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Site)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(uint, string) error); ok {
-		r1 = rf(netID, siteName)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Delete provides a mock function with given fields: id
