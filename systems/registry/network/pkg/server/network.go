@@ -5,7 +5,6 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
-	db2 "github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
@@ -15,14 +14,16 @@ import (
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	orgRepo db2.OrgRepo
-	netRepo db2.NetRepo
+	orgRepo  db.OrgRepo
+	netRepo  db.NetRepo
+	siteRepo db.SiteRepo
 }
 
-func NewNetworkServer(orgRepo db2.OrgRepo, netRepo db2.NetRepo) *NetworkServer {
+func NewNetworkServer(orgRepo db.OrgRepo, netRepo db.NetRepo, siteRepo db.SiteRepo) *NetworkServer {
 	return &NetworkServer{
-		orgRepo: orgRepo,
-		netRepo: netRepo,
+		orgRepo:  orgRepo,
+		netRepo:  netRepo,
+		siteRepo: siteRepo,
 	}
 }
 
@@ -44,7 +45,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 }
 
 func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	nt, err := n.netRepo.Get(req.OrgName, req.GetName())
+	nt, err := n.netRepo.GetByName(req.OrgName, req.GetName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "mapping org/network")
 	}
@@ -61,7 +62,7 @@ func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	ntwks, err := n.netRepo.GetByOrg(org.ID)
+	ntwks, err := n.netRepo.GetAllByOrgId(org.ID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "networks")
 	}
@@ -89,6 +90,28 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	return &pb.DeleteResponse{}, nil
 }
 
+func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*pb.AddSiteResponse, error) {
+	// We need to improve ukama/common/sql for more sql errors like foreign keys violations
+	// which will allow us to skip these extra calls to DBs
+	ntwk, err := n.netRepo.Get(uint(req.NetID))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	site := &db.Site{
+		NetworkID: ntwk.ID,
+		Name:      req.SiteName,
+	}
+
+	err = n.siteRepo.Add(site)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "site")
+	}
+
+	return &pb.AddSiteResponse{
+		Site: dbSiteToPbSite(site)}, nil
+}
+
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
 		Id:            uint64(ntwk.ID),
@@ -106,4 +129,14 @@ func dbNtwksToPbNtwks(ntwks []db.Network) []*pb.Network {
 	}
 
 	return res
+}
+
+func dbSiteToPbSite(site *db.Site) *pb.Site {
+	return &pb.Site{
+		Id:            uint64(site.ID),
+		Name:          site.Name,
+		NetworkID:     uint64(site.NetworkID),
+		IsDeactivated: site.Deactivated,
+		CreatedAt:     timestamppb.New(site.CreatedAt),
+	}
 }
