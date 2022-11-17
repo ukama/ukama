@@ -19,7 +19,8 @@ service NetworkService {
   /* Sites */
     rpc AddSite(AddSiteRequest) returns (AddSiteResponse);
     rpc GetSite(GetSiteRequest) returns (GetSiteResponse);
-    // GetByNetwork
+    rpc GetByNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
+
     // UpdateSite
     // RemoveSite
 }
@@ -77,6 +78,15 @@ message GetSiteRequest{
 
 message GetSiteResponse{
     Site site = 1;
+}
+
+message GetByNetworkRequest{
+    uint64 netID = 1;
+}
+
+message GetByNetworkResponse{
+    uint64 networkID = 1;
+    repeated Site sites = 2;
 }
 
 
