@@ -14,13 +14,13 @@ service NetworkService {
     rpc Add(AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByOrg(GetByOrgRequest) returns (GetByOrgResponse);
+    // Update
     rpc Delete(DeleteRequest) returns (DeleteResponse);
 
   /* Sites */
     rpc AddSite(AddSiteRequest) returns (AddSiteResponse);
     rpc GetSite(GetSiteRequest) returns (GetSiteResponse);
     rpc GetByNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
-
     // UpdateSite
     // RemoveSite
 }

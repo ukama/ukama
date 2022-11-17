@@ -14,6 +14,7 @@ import (
 
 	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
+	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/network/pkg/server"
 
 	"github.com/sirupsen/logrus"
@@ -81,12 +82,12 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	regServer := server.NewNetworkServer(db.NewOrgRepo(gormdb),
+	networkServer := server.NewNetworkServer(db.NewOrgRepo(gormdb),
 		db.NewNetRepo(gormdb), db.NewSiteRepo(gormdb),
-	)
+		providers.NewOrgClientProvider(svcConf.OrgHost))
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
-		generated.RegisterNetworkServiceServer(s, regServer)
+		generated.RegisterNetworkServiceServer(s, networkServer)
 	})
 
 	grpcServer.StartServer()

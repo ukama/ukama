@@ -26,6 +26,7 @@ type NetworkServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
+	// Update
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	// Sites
 	AddSite(ctx context.Context, in *AddSiteRequest, opts ...grpc.CallOption) (*AddSiteResponse, error)
@@ -112,6 +113,7 @@ type NetworkServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
+	// Update
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// Sites
 	AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error)

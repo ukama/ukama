@@ -5,6 +5,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
+	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
@@ -14,16 +15,19 @@ import (
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	orgRepo  db.OrgRepo
-	netRepo  db.NetRepo
-	siteRepo db.SiteRepo
+	orgRepo    db.OrgRepo
+	netRepo    db.NetRepo
+	siteRepo   db.SiteRepo
+	orgService providers.OrgClientProvider
 }
 
-func NewNetworkServer(orgRepo db.OrgRepo, netRepo db.NetRepo, siteRepo db.SiteRepo) *NetworkServer {
+func NewNetworkServer(orgRepo db.OrgRepo, netRepo db.NetRepo, siteRepo db.SiteRepo,
+	orgService providers.OrgClientProvider) *NetworkServer {
 	return &NetworkServer{
-		orgRepo:  orgRepo,
-		netRepo:  netRepo,
-		siteRepo: siteRepo,
+		orgRepo:    orgRepo,
+		netRepo:    netRepo,
+		siteRepo:   siteRepo,
+		orgService: orgService,
 	}
 }
 
