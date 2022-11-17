@@ -12,12 +12,12 @@ import (
 )
 
 func TestPackageServer_GetPackages(t *testing.T) {
-	PackageRepo := &mocks.PackageRepo{}
+	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetPackagesRequest{
 		Id:    1,
 		OrgId: 2323,
 	}
-	PackageRepo.On("Get", mockFilters.OrgId, mockFilters.Id).Return([]db.Package{
+	packageRepo.On("Get", mockFilters.OrgId, mockFilters.Id).Return([]db.Package{
 		{
 			Name:         "Daily-pack",
 			Org_id:       2323,
@@ -29,12 +29,12 @@ func TestPackageServer_GetPackages(t *testing.T) {
 			Org_rates_id: 00},
 	}, nil)
 
-	s := NewPackageServer(PackageRepo)
+	s := NewPackageServer(packageRepo)
 
 	_package, err := s.GetPackages(context.TODO(), mockFilters)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(12), _package.Packages[0].DataVolume)
-	PackageRepo.AssertExpectations(t)
+	packageRepo.AssertExpectations(t)
 }
 
 func TestPackageServer_AddPackage(t *testing.T) {
@@ -51,5 +51,20 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, ActPackage.Package.Active)
+	packageRepo.AssertExpectations(t)
+}
+
+func TestPackageServer_DeletePackage(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	packageRepo.On("Delete", uint64(1), uint64(1)).Return(&db.Package{}, nil).Once()
+
+	s := NewPackageServer(packageRepo)
+
+	_package, err := s.DeletePackage(context.TODO(), &pb.DeletePackageRequest{
+		Id:    uint64(1),
+		OrgId: uint64(1),
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, _package.Package)
 	packageRepo.AssertExpectations(t)
 }

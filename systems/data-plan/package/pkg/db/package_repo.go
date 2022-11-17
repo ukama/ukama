@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	// pb "github.com/ukama/ukama/systems/data-plan/package/pb"
 	"gorm.io/gorm"
@@ -9,8 +11,8 @@ import (
 type PackageRepo interface {
 	Add(_package *Package, nestedFunc ...func() error) error
 	Get(orgId, id uint64) ([]Package, error)
-	Delete(Id uint64) (*Package, error)
-	Update(Id uint64, pkg Package) (*Package, error)
+	Delete(orgId, id uint64) (*Package, error)
+	Update(id uint64, pkg Package) (*Package, error)
 }
 
 type packageRepo struct {
@@ -41,12 +43,15 @@ func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
 	return packages, nil
 }
 
-func (p *packageRepo) Delete(packageId uint64) (*Package, error) {
+func (p *packageRepo) Delete(orgId, packageId uint64) (*Package, error) {
 	_package := &Package{}
-	result := p.Db.GetGormDb().Delete(_package, "id", packageId)
+	result := p.Db.GetGormDb().Where("id = ? AND org_id = ? AND deleted_at = ?", packageId, orgId, nil).Delete(_package)
 	if result.Error != nil {
 		return nil, result.Error
+	} else if result.RowsAffected < 1 {
+		return nil, fmt.Errorf("record with packageId: %v and orgId: %v not found", packageId, orgId)
 	}
+
 	return _package, nil
 }
 
