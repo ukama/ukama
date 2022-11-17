@@ -65,6 +65,29 @@ func (_m *OrgRepo) Get(id uint) (*db.Org, error) {
 	return r0, r1
 }
 
+// GetByName provides a mock function with given fields: name
+func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
+	ret := _m.Called(name)
+
+	var r0 *db.Org
+	if rf, ok := ret.Get(0).(func(string) *db.Org); ok {
+		r0 = rf(name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Org)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetByOwner provides a mock function with given fields: _a0
 func (_m *OrgRepo) GetByOwner(_a0 uuid.UUID) ([]db.Org, error) {
 	ret := _m.Called(_a0)
