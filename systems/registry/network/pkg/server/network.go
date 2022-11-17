@@ -122,6 +122,25 @@ func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*p
 		Site: dbSiteToPbSite(site)}, nil
 }
 
+func (n *NetworkServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+	ntwk, err := n.netRepo.Get(uint(req.GetNetID()))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	sites, err := n.siteRepo.GetByNetwork(ntwk.ID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sites")
+	}
+
+	resp := &pb.GetByNetworkResponse{
+		NetworkID: uint64(ntwk.ID),
+		Sites:     dbSitesToPbSites(sites),
+	}
+
+	return resp, nil
+}
+
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
 		Id:            uint64(ntwk.ID),
@@ -149,4 +168,14 @@ func dbSiteToPbSite(site *db.Site) *pb.Site {
 		IsDeactivated: site.Deactivated,
 		CreatedAt:     timestamppb.New(site.CreatedAt),
 	}
+}
+
+func dbSitesToPbSites(sites []db.Site) []*pb.Site {
+	res := []*pb.Site{}
+
+	for _, s := range sites {
+		res = append(res, dbSiteToPbSite(&s))
+	}
+
+	return res
 }
