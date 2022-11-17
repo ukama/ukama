@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -85,8 +86,7 @@ func (p *PackageServer) DeletePackage(ctx context.Context, req *pb.DeletePackage
 		logrus.Error("error while deleting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
-
-	return &pb.DeletePackageResponse{Id: req.GetId()}, nil
+	return &pb.DeletePackageResponse{Id: strconv.FormatUint(req.Id, 10)}, nil
 }
 
 func (p *PackageServer) UpdatePackage(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {

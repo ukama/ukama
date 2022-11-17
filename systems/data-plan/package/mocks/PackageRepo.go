@@ -33,13 +33,20 @@ func (_m *PackageRepo) Add(_package *db.Package, nestedFunc ...func() error) err
 	return r0
 }
 
-// Delete provides a mock function with given fields: orgId, id
-func (_m *PackageRepo) Delete(orgId uint64, id uint64) error {
-	ret := _m.Called(orgId, id)
+// Delete provides a mock function with given fields: orgId, id, nestedFunc
+func (_m *PackageRepo) Delete(orgId uint64, id uint64, nestedFunc ...func() error) error {
+	_va := make([]interface{}, len(nestedFunc))
+	for _i := range nestedFunc {
+		_va[_i] = nestedFunc[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, orgId, id)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uint64, uint64) error); ok {
-		r0 = rf(orgId, id)
+	if rf, ok := ret.Get(0).(func(uint64, uint64, ...func() error) error); ok {
+		r0 = rf(orgId, id, nestedFunc...)
 	} else {
 		r0 = ret.Error(0)
 	}

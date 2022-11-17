@@ -21,7 +21,7 @@ message DeletePackageRequest {
     uint64 org_id =1;
 }
 message DeletePackageResponse {
-    uint64 id =1;
+    string id = 1;
 }
 message UpdatePackageRequest {
     uint64 id=1;
