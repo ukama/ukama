@@ -12,6 +12,7 @@ import (
 
 type NetRepo interface {
 	Get(orgName string, network string) (*Network, error)
+	// GetByOrgName(orgName string, network string) (*Network, error)
 	GetByOrg(orgID uint) ([]Network, error)
 	Add(orgId uint, network string) (*Network, error)
 	// Update(orgId uint, network *Network) error
