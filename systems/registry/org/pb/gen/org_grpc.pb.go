@@ -25,6 +25,7 @@ type OrgServiceClient interface {
 	// Orgs
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error)
 	GetByOwner(ctx context.Context, in *GetByOwnerRequest, opts ...grpc.CallOption) (*GetByOwnerResponse, error)
 	// Users
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
@@ -56,6 +57,15 @@ func (c *orgServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc
 func (c *orgServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error) {
+	out := new(GetByNameResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/GetByName", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +142,7 @@ type OrgServiceServer interface {
 	// Orgs
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error)
 	GetByOwner(context.Context, *GetByOwnerRequest) (*GetByOwnerResponse, error)
 	// Users
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
@@ -153,6 +164,9 @@ func (UnimplementedOrgServiceServer) Add(context.Context, *AddRequest) (*AddResp
 }
 func (UnimplementedOrgServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedOrgServiceServer) GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
 }
 func (UnimplementedOrgServiceServer) GetByOwner(context.Context, *GetByOwnerRequest) (*GetByOwnerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByOwner not implemented")
@@ -220,6 +234,24 @@ func _OrgService_Get_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OrgServiceServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_GetByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).GetByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/GetByName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).GetByName(ctx, req.(*GetByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -364,6 +396,10 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _OrgService_Get_Handler,
+		},
+		{
+			MethodName: "GetByName",
+			Handler:    _OrgService_GetByName_Handler,
 		},
 		{
 			MethodName: "GetByOwner",

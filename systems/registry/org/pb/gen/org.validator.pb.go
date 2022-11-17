@@ -77,6 +77,17 @@ func (this *GetByOwnerResponse) Validate() error {
 	}
 	return nil
 }
+func (this *GetByNameRequest) Validate() error {
+	return nil
+}
+func (this *GetByNameResponse) Validate() error {
+	if this.Org != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Org); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Org", err)
+		}
+	}
+	return nil
+}
 
 var _regex_MemberRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
