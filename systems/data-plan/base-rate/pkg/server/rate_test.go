@@ -61,28 +61,27 @@ func TestRateService_GetRates(t *testing.T) {
 		SimType:     validations.ReqStrTopb("inter_mno_data"),
 	}
 
-	 baseRateRepo := &mocks.BaseRateRepo{}
-	 baseRateRepo.On("GetBaseRates", mockFilters.Country,mockFilters.Provider,mockFilters.EffectiveAt,mockSimType).Return([]db.Rate{
-	  {X2g: "2G",
-      X3g: "3G",
-      Apn: "Manual entry required",
-      Country: "Tycho crater",
-      Data: "$0.4",
-      Effective_at: "2023-10-10",
-      Imsi: "1",
-      Lte: "LTE",
-      Network: "Multi Tel",
-      Sim_type: "inter_mno_data",
-      Sms_mo: "$0.1",
-      Sms_mt: "$0.1",
-      Vpmn: "TTC",},
-	 },nil)
-	
-	 s := NewBaseRateServer(baseRateRepo)
+	baseRateRepo := &mocks.BaseRateRepo{}
+	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, mockSimType).Return([]db.Rate{
+		{X2g: "2G",
+			X3g:          "3G",
+			Apn:          "Manual entry required",
+			Country:      "Tycho crater",
+			Data:         "$0.4",
+			Effective_at: "2023-10-10",
+			Imsi:         "1",
+			Lte:          "LTE",
+			Network:      "Multi Tel",
+			Sim_type:     "inter_mno_data",
+			Sms_mo:       "$0.1",
+			Sms_mt:       "$0.1",
+			Vpmn:         "TTC"},
+	}, nil)
+
+	s := NewBaseRateServer(baseRateRepo)
 	rate, err := s.GetBaseRates(context.TODO(), mockFilters)
 	assert.NoError(t, err)
 	assert.Equal(t, "Tycho crater", rate.Rates[0].Country)
 	assert.Equal(t, "LTE", rate.Rates[0].Lte)
 	baseRateRepo.AssertExpectations(t)
 }
-
