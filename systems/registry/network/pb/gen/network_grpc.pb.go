@@ -29,6 +29,7 @@ type NetworkServiceClient interface {
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	// Sites
 	AddSite(ctx context.Context, in *AddSiteRequest, opts ...grpc.CallOption) (*AddSiteResponse, error)
+	GetSite(ctx context.Context, in *GetSiteRequest, opts ...grpc.CallOption) (*GetSiteResponse, error)
 }
 
 type networkServiceClient struct {
@@ -84,6 +85,15 @@ func (c *networkServiceClient) AddSite(ctx context.Context, in *AddSiteRequest, 
 	return out, nil
 }
 
+func (c *networkServiceClient) GetSite(ctx context.Context, in *GetSiteRequest, opts ...grpc.CallOption) (*GetSiteResponse, error) {
+	out := new(GetSiteResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetSite", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NetworkServiceServer is the server API for NetworkService service.
 // All implementations must embed UnimplementedNetworkServiceServer
 // for forward compatibility
@@ -95,6 +105,7 @@ type NetworkServiceServer interface {
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// Sites
 	AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error)
+	GetSite(context.Context, *GetSiteRequest) (*GetSiteResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
 
@@ -116,6 +127,9 @@ func (UnimplementedNetworkServiceServer) Delete(context.Context, *DeleteRequest)
 }
 func (UnimplementedNetworkServiceServer) AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddSite not implemented")
+}
+func (UnimplementedNetworkServiceServer) GetSite(context.Context, *GetSiteRequest) (*GetSiteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSite not implemented")
 }
 func (UnimplementedNetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {}
 
@@ -220,6 +234,24 @@ func _NetworkService_AddSite_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkService_GetSite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSiteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).GetSite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.network.v1.NetworkService/GetSite",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).GetSite(ctx, req.(*GetSiteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NetworkService_ServiceDesc is the grpc.ServiceDesc for NetworkService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -246,6 +278,10 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddSite",
 			Handler:    _NetworkService_AddSite_Handler,
+		},
+		{
+			MethodName: "GetSite",
+			Handler:    _NetworkService_GetSite_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
