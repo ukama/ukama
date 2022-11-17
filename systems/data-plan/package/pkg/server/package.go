@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -26,8 +25,10 @@ func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
 
 func (p *PackageServer) GetPackages(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
 	logrus.Infof("GetPackages : %v  ,%v", req.GetOrgId(), req.GetId())
-	if len(strconv.Itoa(int(req.GetOrgId()))) < 2 {
+
+	if req.GetOrgId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required.")
+
 	}
 	packages, err := p.packageRepo.Get(req.GetOrgId(), req.GetId())
 	if err != nil {

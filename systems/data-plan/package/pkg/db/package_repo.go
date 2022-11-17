@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
-	// pb "github.com/ukama/ukama/systems/data-plan/package/pb"
 	"gorm.io/gorm"
 )
 
