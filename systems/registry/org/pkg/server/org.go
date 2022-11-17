@@ -67,6 +67,17 @@ func (r *OrgService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 	return &pb.GetResponse{Org: dbOrgToPbOrg(org)}, nil
 }
 
+func (r *OrgService) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
+	logrus.Infof("Getting org %v", req.GetName())
+
+	org, err := r.orgRepo.GetByName(req.GetName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	return &pb.GetByNameResponse{Org: dbOrgToPbOrg(org)}, nil
+}
+
 func (r *OrgService) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) (*pb.GetByOwnerResponse, error) {
 	logrus.Infof("Getting all orgs own by %v", req.GetUserUuid())
 
@@ -128,13 +139,20 @@ func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 			return nil, err
 		}
 
-		_, err = svc.Get(ctx, &userpb.GetRequest{UserUuid: userUUID.String()})
+		remoteUser, err := svc.Get(ctx, &userpb.GetRequest{UserUuid: userUUID.String()})
 		if err != nil {
 			return nil, err
 		}
 
+		// What should we do if the remote user exists, but is already deactivated
+		if remoteUser.User.IsDeactivated {
+			return nil, status.Errorf(codes.FailedPrecondition, "user is deactivated: cannot be added as member")
+		}
+
 		logrus.Infof("Adding remove user %s to local user repo", userUUID)
-		user = &db.User{Uuid: userUUID}
+		user = &db.User{Uuid: userUUID,
+			Deactivated: remoteUser.User.IsDeactivated,
+		}
 
 		err = r.userRepo.Add(user)
 		if err != nil {
