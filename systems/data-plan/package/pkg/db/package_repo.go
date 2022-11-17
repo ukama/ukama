@@ -8,7 +8,7 @@ import (
 type PackageRepo interface {
 	Add(_package *Package, nestedFunc ...func() error) error
 	Get(orgId, id uint64) ([]Package, error)
-	Delete(Id uint64) (*Package, error)
+	Delete(orgId, id uint64) (*Package, error)
 	Update(Id uint64, pkg Package) (*Package, error)
 }
 
@@ -40,12 +40,13 @@ func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
 	return packages, nil
 }
 
-func (p *packageRepo) Delete(packageId uint64) (*Package, error) {
+func (p *packageRepo) Delete(orgId, packageId uint64) (*Package, error) {
 	_package := &Package{}
-	result := p.Db.GetGormDb().Delete(_package, "id", packageId)
+	result := p.Db.GetGormDb().Where("id = ? AND org_id = ?", packageId, orgId).Delete(_package)
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return _package, nil
 }
 
