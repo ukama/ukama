@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -38,7 +39,9 @@ func (o *orgClientProvider) GetClient() (pb.OrgServiceClient, error) {
 		conn, err := grpc.DialContext(ctx, o.orgHost, grpc.WithBlock(),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("Failed to connect to Org service %s. Error: %v", o.orgHost, err)
+			log.Errorf("Failed to connect to Org service %s. Error: %v", o.orgHost, err)
+
+			return nil, fmt.Errorf("failed to connect to remote org service: %w", err)
 		}
 
 		o.orgService = pb.NewOrgServiceClient(conn)

@@ -6,9 +6,13 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+
+	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 
 	"github.com/sirupsen/logrus"
 )
@@ -32,12 +36,41 @@ func NewNetworkServer(orgRepo db.OrgRepo, netRepo db.NetRepo, siteRepo db.SiteRe
 }
 
 func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	org, err := n.orgRepo.MakeUserOrgExist(req.GetOrgName())
+	// Get the Org locally
+	orgNanem := req.GetOrgName()
+	networkName := req.GetName()
+	org, err := n.orgRepo.GetByName(orgNanem)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org")
+		logrus.Infof("lookup for org %s remotely", orgNanem)
+
+		svc, err := n.orgService.GetClient()
+		if err != nil {
+			return nil, err
+		}
+
+		remoteOrg, err := svc.GetByName(ctx, &orgpb.GetByNameRequest{Name: orgNanem})
+		if err != nil {
+			return nil, err
+		}
+
+		// What should we do if the remote org exists but is deactivated.
+		if remoteOrg.Org.IsDeactivated {
+			return nil, status.Errorf(codes.FailedPrecondition,
+				"org is deactivated: cannot add network to it")
+		}
+
+		logrus.Infof("Adding remove org %s to local org repo", orgNanem)
+		org = &db.Org{Name: remoteOrg.Org.Name,
+			Deactivated: remoteOrg.Org.IsDeactivated}
+
+		err = n.orgRepo.Add(org)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "org")
+		}
 	}
 
-	nt, err := n.netRepo.Add(org.ID, req.GetName())
+	logrus.Infof("Adding network %s", networkName)
+	nt, err := n.netRepo.Add(org.ID, networkName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
