@@ -70,3 +70,15 @@ func TestPackageServer_UpdatePackage(t *testing.T) {
 	assert.Equal(t, false, ap.Package.Active)
 	packageRepo.AssertExpectations(t)
 }
+
+func TestPackageServer_DeletePackage(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	packageRepo.On("Delete", uint64(1), uint64(1)).Return(nil)
+	s := NewPackageServer(packageRepo)
+	_, err := s.DeletePackage(context.TODO(), &pb.DeletePackageRequest{
+		Id:    uint64(1),
+		OrgId: uint64(1),
+	})
+	assert.NoError(t, err)
+	packageRepo.AssertExpectations(t)
+}
