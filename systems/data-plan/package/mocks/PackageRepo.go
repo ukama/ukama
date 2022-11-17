@@ -33,27 +33,18 @@ func (_m *PackageRepo) Add(_package *db.Package, nestedFunc ...func() error) err
 	return r0
 }
 
-// Delete provides a mock function with given fields: Id
-func (_m *PackageRepo) Delete(Id uint64) (*db.Package, error) {
-	ret := _m.Called(Id)
+// Delete provides a mock function with given fields: orgId, id
+func (_m *PackageRepo) Delete(orgId uint64, id uint64) error {
+	ret := _m.Called(orgId, id)
 
-	var r0 *db.Package
-	if rf, ok := ret.Get(0).(func(uint64) *db.Package); ok {
-		r0 = rf(Id)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uint64, uint64) error); ok {
+		r0 = rf(orgId, id)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Package)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(uint64) error); ok {
-		r1 = rf(Id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Get provides a mock function with given fields: orgId, id
