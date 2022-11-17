@@ -112,6 +112,16 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 		Site: dbSiteToPbSite(site)}, nil
 }
 
+func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*pb.GetSiteResponse, error) {
+	site, err := n.siteRepo.Get(uint(req.SiteID))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "site")
+	}
+
+	return &pb.GetSiteResponse{
+		Site: dbSiteToPbSite(site)}, nil
+}
+
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
 		Id:            uint64(ntwk.ID),
