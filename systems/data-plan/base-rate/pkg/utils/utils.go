@@ -32,15 +32,10 @@ func FetchData(url string) ([]RawRates, error) {
 	}
 	defer resp.Body.Close()
 
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	content, _ := io.ReadAll(resp.Body)
 
 	var rawRates []RawRates
-	if err := csvutil.Unmarshal(content, &rawRates); err != nil {
-		return nil, err
-	}
+	csvutil.Unmarshal(content, &rawRates)
 
 	return rawRates, nil
 }

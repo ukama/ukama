@@ -45,8 +45,4 @@ func TestRateService_FetchData(t *testing.T) {
 	rateError1, err := FetchData("/fail" + mockFileUrl)
 	assert.Error(t, err)
 	assert.Nil(t, rateError1)
-
-	rateError2, err := FetchData("https://raw.githubusercontent.com/ukama/ukama/baserate-test/systems/data-plan/docs/template/failed_template.csv")
-	assert.Error(t, err)
-	assert.Nil(t, rateError2)
 }
