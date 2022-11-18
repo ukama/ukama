@@ -3,10 +3,10 @@ option go_package = "pb/";
 package ukama.rates.v1;
 
 service PackagesService {
-    rpc GetPackages (GetPackagesRequest) returns (GetPackagesResponse) {}
-    rpc AddPackage(AddPackageRequest) returns (AddPackageResponse){}
-    rpc DeletePackage(DeletePackageRequest) returns (DeletePackageResponse){}
-    rpc UpdatePackage(UpdatePackageRequest) returns (UpdatePackageResponse){}
+    rpc Get (GetPackagesRequest) returns (GetPackagesResponse) {}
+    rpc Add (AddPackageRequest) returns (AddPackageResponse){}
+    rpc Delete (DeletePackageRequest) returns (DeletePackageResponse){}
+    rpc Update (UpdatePackageRequest) returns (UpdatePackageResponse){}
 }
 message GetPackagesRequest{
     uint64 org_id =1;

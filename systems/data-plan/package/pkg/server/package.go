@@ -24,7 +24,7 @@ func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
 
 }
 
-func (p *PackageServer) GetPackages(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
+func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
 	logrus.Infof("GetPackages : %v  ,%v", req.GetOrgId(), req.GetId())
 
 	if req.GetOrgId() == 0 {
@@ -44,7 +44,7 @@ func (p *PackageServer) GetPackages(ctx context.Context, req *pb.GetPackagesRequ
 	return packageList, nil
 }
 
-func (p *PackageServer) AddPackage(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	logrus.Infof("Add Package Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v", req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 	_package := &db.Package{
 		Name:         req.GetName(),
@@ -69,7 +69,7 @@ func (p *PackageServer) AddPackage(ctx context.Context, req *pb.AddPackageReques
 
 }
 
-func (p *PackageServer) DeletePackage(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
+func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
 	logrus.Infof("Delete Packages, orgId: %v, packageId: %v", req.GetOrgId(), req.GetId())
 	if req.GetOrgId() == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required.")
@@ -87,7 +87,7 @@ func (p *PackageServer) DeletePackage(ctx context.Context, req *pb.DeletePackage
 	return &pb.DeletePackageResponse{Id: strconv.FormatUint(req.Id, 10)}, nil
 }
 
-func (p *PackageServer) UpdatePackage(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
+func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	logrus.Infof("Update Package Id: %v, Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v",
 		req.Id, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 	_package := db.Package{
