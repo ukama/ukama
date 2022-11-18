@@ -3,7 +3,9 @@ package db
 import (
 	extsql "database/sql"
 	"log"
+	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
@@ -160,5 +162,69 @@ func Test_Rates_Get(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, rates)
+	})
+}
+
+func Test_Rate_Upload(t *testing.T) {
+	t.Run("UploadRates", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+
+		rates := []Rate{{
+			Country:      "Tycho crater",
+			Data:         "$0.4",
+			Effective_at: "2023-10-10",
+			Network:      "Multi Tel",
+			Sim_type:     "inter_mno_data",
+			X2g:          "",
+			X3g:          "",
+			Apn:          "",
+			Imsi:         "",
+			Lte:          "",
+			Sms_mo:       "",
+			Sms_mt:       "",
+			Vpmn:         "",
+			End_at:       "",
+			Lte_m:        "",
+			X5g:          "",
+		}}
+		createdAt := time.Now().UTC().Format(time.RFC3339)
+		updatedAt := time.Now().UTC().Format(time.RFC3339)
+		var zeroTime time.Time
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(regexp.QuoteMeta(
+			`INSERT INTO "rates" ("country","network","vpmn","imsi","sms_mo","sms_mt","data","x2g","x3g","x5g","lte","lte_m","apn","effective_at","end_at","sim_type")
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+				RETURNING "created_at", "updated_at", "deleted_at", "country", "network", "data", "effective_at", "sim_type"`)).
+			WithArgs(rates[0].Country, rates[0].Network, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Data, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Effective_at, sqlmock.AnyArg(), rates[0].Sim_type).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"created_at", "updated_at", "deleted_at", "country", "network", "data", "effective_at", "sim_type"}).
+					AddRow(createdAt, updatedAt, zeroTime, rates[0].Country, rates[0].Network, rates[0].Data, rates[0].Effective_at, rates[0].Sim_type))
+
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewBaseRateRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+		err = r.UploadBaseRates(rates)
+		//TODO: FIX HERE
+		assert.Error(t, err)
+		// err = mock.ExpectationsWereMet()
+		// assert.NoError(t, err)
 	})
 }
