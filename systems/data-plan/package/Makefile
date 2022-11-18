@@ -2,7 +2,7 @@ include ../../config.mk
 
 .PHONY: integration.test test build lint deps 
 
-build: integration.build
+build:
 	@echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/rate cmd/server/main.go
 lint:
