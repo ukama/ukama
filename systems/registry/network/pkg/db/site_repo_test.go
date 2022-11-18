@@ -190,7 +190,7 @@ func Test_SiteRepo_GetByNetwork(t *testing.T) {
 }
 
 func Test_SiteRepo_Add(t *testing.T) {
-	t.Run("AddOrg", func(t *testing.T) {
+	t.Run("AddSite", func(t *testing.T) {
 		// Arrange
 		var db *extsql.DB
 
