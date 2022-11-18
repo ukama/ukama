@@ -1,25 +1,39 @@
-//go:build integration
-// +build integration
-
-package db
+package db_test
 
 import (
-	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/sql"
-	"testing"
+	"log"
+
+	"gorm.io/gorm"
 )
 
-func Test_netRepo_GetNetwork(t *testing.T) {
-	dbConf := config.DefaultDatabase()
-	db := sql.NewDb(dbConf, true)
+type UkamaDbMock struct {
+	GormDb *gorm.DB
+}
 
-	db.Connect()
+func (u UkamaDbMock) Init(model ...interface{}) error {
+	panic("implement me: Init()")
+}
 
-	r := NewNetRepo(db)
-	resp, err := r.Get("network-listener-integration-test-org", "net-1")
+func (u UkamaDbMock) Connect() error {
+	panic("implement me: Connect()")
+}
 
-	assert.NoError(t, err)
-	fmt.Printf("%+v\n", resp)
+func (u UkamaDbMock) GetGormDb() *gorm.DB {
+	return u.GormDb
+}
+
+func (u UkamaDbMock) InitDB() error {
+	return nil
+}
+
+func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
+	nestedFuncs ...func() error) error {
+	log.Fatal("implement me: ExecuteInTransaction()")
+	return nil
+}
+
+func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
+	nestedFuncs ...func(tx *gorm.DB) error) error {
+	log.Fatal("implement me: ExecuteInTransaction2()")
+	return nil
 }
