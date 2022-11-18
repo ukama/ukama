@@ -55,7 +55,7 @@ func (p *PackageServer) AddPackage(ctx context.Context, req *pb.AddPackageReques
 		Sms_volume:   uint(req.GetSmsVolume()),
 		Data_volume:  uint(req.GetDataVolume()),
 		Voice_volume: uint(req.GetVoiceVolume()),
-		Org_rates_id: uint(req.GetOrgId()),
+		Org_rates_id: uint(req.GetOrgRatesId()),
 	}
 	err := p.packageRepo.Add(_package)
 	if err != nil {
@@ -71,17 +71,15 @@ func (p *PackageServer) AddPackage(ctx context.Context, req *pb.AddPackageReques
 
 func (p *PackageServer) DeletePackage(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
 	logrus.Infof("Delete Packages, orgId: %v, packageId: %v", req.GetOrgId(), req.GetId())
+	if req.GetOrgId() == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required.")
 
-	packages, err := p.packageRepo.Get(req.GetOrgId(), req.GetId())
-	if err != nil {
-		logrus.Error("error while getting package" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
-	if len(packages) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "Package with orgId: %v and packageId: %v not found", req.GetOrgId(), req.GetId())
-	}
+	if req.GetId() == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "PackageID is required.")
 
-	err = p.packageRepo.Delete(req.GetOrgId(), req.GetId())
+	}
+	err := p.packageRepo.Delete(req.GetOrgId(), req.GetId())
 	if err != nil {
 		logrus.Error("error while deleting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
