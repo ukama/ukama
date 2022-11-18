@@ -35,14 +35,18 @@ func TestRateService_IsFutureDate(t *testing.T) {
 }
 
 func TestRateService_FetchData(t *testing.T) {
-	//Success case
 	mockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
+	//Success case
 	rawRates, err := FetchData(mockFileUrl)
 	assert.NoError(t, err)
 	assert.Equal(t, "The lunar maria", rawRates[0].Country)
 
 	//Error case
-	_rawRates, err := FetchData("/fail" + mockFileUrl)
+	rateError1, err := FetchData("/fail" + mockFileUrl)
 	assert.Error(t, err)
-	assert.Nil(t, _rawRates)
+	assert.Nil(t, rateError1)
+
+	rateError2, err := FetchData("https://raw.githubusercontent.com/ukama/ukama/baserate-test/systems/data-plan/docs/template/failed_template.csv")
+	assert.Error(t, err)
+	assert.Nil(t, rateError2)
 }
