@@ -12,20 +12,13 @@ type OrgRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: org, nestedFunc
-func (_m *OrgRepo) Add(org *db.Org, nestedFunc ...func() error) error {
-	_va := make([]interface{}, len(nestedFunc))
-	for _i := range nestedFunc {
-		_va[_i] = nestedFunc[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, org)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
+// Add provides a mock function with given fields: org
+func (_m *OrgRepo) Add(org *db.Org) error {
+	ret := _m.Called(org)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Org, ...func() error) error); ok {
-		r0 = rf(org, nestedFunc...)
+	if rf, ok := ret.Get(0).(func(*db.Org) error); ok {
+		r0 = rf(org)
 	} else {
 		r0 = ret.Error(0)
 	}

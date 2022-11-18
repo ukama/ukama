@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -56,5 +57,52 @@ func Test_OrgRepo_Get(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, org)
+	})
+}
+
+func Test_OrgRepo_Add(t *testing.T) {
+	t.Run("AddOrg", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+
+		org := net_db.Org{
+			Name: "ukama",
+		}
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := net_db.NewOrgRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Add(&org)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
 	})
 }
