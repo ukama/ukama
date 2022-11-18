@@ -236,3 +236,47 @@ func Test_SiteRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func Test_SiteRepo_Delete(t *testing.T) {
+	t.Run("DeleteSite", func(t *testing.T) {
+		var db *extsql.DB
+
+		const siteId = 1
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "sites" SET`)).
+			WithArgs(sqlmock.AnyArg(), siteId).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := net_db.NewSiteRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Delete(siteId)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}

@@ -5,7 +5,6 @@ import (
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/validation"
-	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"gorm.io/gorm"
 )
 
@@ -66,17 +65,10 @@ func (s siteRepo) Add(site *Site) error {
 
 func (s siteRepo) Delete(siteID uint) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		txGorm := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
-		txr := NewSiteRepo(txGorm)
+		result := tx.Where("sites.id = ?", siteID).Delete(&Site{})
 
-		net, err := txr.Get(siteID)
-		if err != nil {
-			return err
-		}
-
-		err = tx.Delete(net).Error
-		if err != nil {
-			return err
+		if result.Error != nil {
+			return result.Error
 		}
 
 		return nil
