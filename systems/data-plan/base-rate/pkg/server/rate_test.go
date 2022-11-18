@@ -3,12 +3,12 @@ package server
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/mocks"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
-	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -16,28 +16,60 @@ import (
 )
 
 var mockCountry = "The lunar maria"
-var mockSimType = "inter_mno_data"
+var mockSimTypeStr = "inter_mno_data"
 var mockeEffectiveAt = "2022-12-01T00:00:00Z"
 var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
 func TestRateService_UploadRates(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
-	mockRepo.On("UploadBaseRates", mock.Anything).Return(nil)
-
 	rateService := NewBaseRateServer(mockRepo)
-
-	rateReq := &pb.UploadBaseRatesRequest{
+	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     mockFileUrl,
 		EffectiveAt: mockeEffectiveAt,
-		SimType:     validations.ReqStrTopb(mockSimType),
+		SimType:     pb.SimType_inter_mno_data,
+	}
+	failReqMock1 := &pb.UploadBaseRatesRequest{
+		FileURL:     "",
+		EffectiveAt: "",
+		SimType:     pb.SimType_inter_mno_data,
+	}
+	failReqMock2 := &pb.UploadBaseRatesRequest{
+		FileURL:     mockFileUrl,
+		EffectiveAt: time.Now().UTC().Format(time.RFC3339),
+		SimType:     pb.SimType_inter_mno_data,
+	}
+	failReqMock3 := &pb.UploadBaseRatesRequest{
+		FileURL:     "https://example",
+		EffectiveAt: mockeEffectiveAt,
+		SimType:     pb.SimType_inter_mno_data,
 	}
 
-	rateRes, err := rateService.UploadBaseRates(context.Background(), rateReq)
+	//Success case
+	mockRepo.On("UploadBaseRates", mock.Anything).Return(nil)
+	rateRes, err := rateService.UploadBaseRates(context.Background(), reqMock)
 	assert.NoError(t, err)
 	for i := range rateRes.Rate {
-		assert.Equal(t, rateRes.Rate[i].EffectiveAt, rateReq.EffectiveAt)
-		assert.Equal(t, rateRes.Rate[i].SimType, mockSimType)
+		assert.Equal(t, rateRes.Rate[i].EffectiveAt, reqMock.EffectiveAt)
+		assert.Equal(t, rateRes.Rate[i].SimType, mockSimTypeStr)
 	}
+
+	//Error case all empty args
+	mockRepo.On("UploadBaseRates", mock.Anything).Return(status.Errorf(codes.InvalidArgument, "invalid argument"))
+	failRes1, err := rateService.UploadBaseRates(context.Background(), failReqMock1)
+	assert.Error(t, err)
+	assert.Nil(t, failRes1)
+
+	//Error case invalid effectiveAt
+	mockRepo.On("UploadBaseRates", mock.Anything).Return(status.Errorf(codes.InvalidArgument, "invalid argument"))
+	failRes2, err := rateService.UploadBaseRates(context.Background(), failReqMock2)
+	assert.Error(t, err)
+	assert.Nil(t, failRes2)
+
+	//Error case invalid url
+	mockRepo.On("UploadBaseRates", mock.Anything).Return(status.Errorf(codes.Internal, "internal error"))
+	failRes3, err := rateService.UploadBaseRates(context.Background(), failReqMock3)
+	assert.Error(t, err)
+	assert.Nil(t, failRes3)
 }
 
 func TestRateService_GetRate(t *testing.T) {
@@ -62,15 +94,23 @@ func TestRateService_GetRate(t *testing.T) {
 }
 
 func TestRateService_GetRates(t *testing.T) {
-	var mockFilters = &pb.GetBaseRatesRequest{
+	mockFilters := &pb.GetBaseRatesRequest{
 		Country:     "Tycho crater",
 		Provider:    "ABC Tel",
 		EffectiveAt: "2022-12-01T00:00:00Z",
-		SimType:     validations.ReqStrTopb("inter_mno_data"),
+		SimType:     pb.SimType_inter_mno_data,
 	}
-
+	emptyMockFilters := &pb.GetBaseRatesRequest{
+		Country:     "",
+		Provider:    "",
+		EffectiveAt: "",
+		SimType:     pb.SimType_inter_mno_data,
+	}
 	baseRateRepo := &mocks.BaseRateRepo{}
-	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, mockSimType).Return([]db.Rate{
+	s := NewBaseRateServer(baseRateRepo)
+
+	// Success case
+	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, mockSimTypeStr).Return([]db.Rate{
 		{X2g: "2G",
 			X3g:          "3G",
 			Apn:          "Manual entry required",
@@ -85,11 +125,15 @@ func TestRateService_GetRates(t *testing.T) {
 			Sms_mt:       "$0.1",
 			Vpmn:         "TTC"},
 	}, nil)
-
-	s := NewBaseRateServer(baseRateRepo)
 	rate, err := s.GetBaseRates(context.TODO(), mockFilters)
 	assert.NoError(t, err)
-	assert.Equal(t, "Tycho crater", rate.Rates[0].Country)
-	assert.Equal(t, "LTE", rate.Rates[0].Lte)
+	assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
+	assert.Equal(t, mockFilters.SimType.String(), rate.Rates[0].SimType)
 	baseRateRepo.AssertExpectations(t)
+
+	// Error case
+	baseRateRepo.On("GetBaseRates", emptyMockFilters.Country, emptyMockFilters.Provider, emptyMockFilters.EffectiveAt, mockSimTypeStr).Return(nil, status.Errorf(codes.NotFound, "record not found"))
+	_rate, err := s.GetBaseRates(context.TODO(), emptyMockFilters)
+	assert.Error(t, err)
+	assert.Nil(t, _rate)
 }

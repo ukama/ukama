@@ -25,10 +25,8 @@ func NewBaseRateServer(baseRateRepo db.BaseRateRepo) *BaseRateServer {
 
 func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
 	logrus.Infof("Get rate %v", req.GetRateId())
+	rate, err := b.baseRateRepo.GetBaseRate(req.GetRateId())
 
-	rateId := req.GetRateId()
-
-	rate, err := b.baseRateRepo.GetBaseRate(rateId)
 	if err != nil {
 		logrus.Error("error while getting rate" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
@@ -42,16 +40,12 @@ func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 
 func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("GetBaseRates where country =  %s and network =%s and simType =%s", req.GetCountry(), req.GetProvider(), req.GetSimType())
-	country := req.GetCountry()
-	network := req.GetProvider()
-	effectiveAt := req.GetEffectiveAt()
-	simType := validations.ReqPbToStr(req.GetSimType())
-	rates, err := b.baseRateRepo.GetBaseRates(country, network, effectiveAt, simType)
+	rates, err := b.baseRateRepo.GetBaseRates(req.GetCountry(), req.GetProvider(), req.GetEffectiveAt(), req.GetSimType().String())
+
 	if err != nil {
 		logrus.Error("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
-
 	rateList := &pb.GetBaseRatesResponse{
 		Rates: dbratesToPbRates(rates),
 	}
@@ -60,21 +54,18 @@ func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesR
 }
 
 func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
-
 	fileUrl := req.GetFileURL()
 	effectiveAt := req.GetEffectiveAt()
-	simType := validations.ReqPbToStr(req.GetSimType())
+	simType := req.GetSimType().String()
 
-	if validations.IsRequestEmpty(fileUrl) ||
-		validations.IsRequestEmpty(effectiveAt) ||
-		validations.IsRequestEmpty(simType) {
+	if !validations.IsValidUploadReqArgs(fileUrl, effectiveAt, simType) {
 		logrus.Infof("Please supply valid fileURL: %s, effectiveAt: %s and simType: %s.",
 			fileUrl, effectiveAt, simType)
 		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
 			fileUrl, effectiveAt, simType)
 	}
 
-	if !utils.IsFutureDate(effectiveAt) {
+	if !validations.IsFutureDate(effectiveAt) {
 		logrus.Infof("Date you provided is not a valid future date. %s", effectiveAt)
 		return nil, status.Errorf(codes.InvalidArgument, "date you provided is not a valid future date %qs", effectiveAt)
 	}

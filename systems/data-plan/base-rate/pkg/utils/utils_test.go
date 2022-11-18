@@ -26,14 +26,6 @@ func TestRateService_ParseToModel(t *testing.T) {
 	assert.Equal(t, "inter_mno_data", dbRate[0].Sim_type)
 }
 
-func TestRateService_IsFutureDate(t *testing.T) {
-	//Success case
-	assert.True(t, IsFutureDate("2023-10-10T00:00:00Z"))
-	//Error case
-	assert.False(t, IsFutureDate("2023-10-10"))
-	assert.False(t, IsFutureDate("2020-10-10T00:00:00Z"))
-}
-
 func TestRateService_FetchData(t *testing.T) {
 	mockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 	//Success case

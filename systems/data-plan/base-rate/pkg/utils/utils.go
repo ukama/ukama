@@ -3,7 +3,6 @@ package utils
 import (
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/jszwec/csvutil"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
@@ -63,12 +62,4 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {
 		})
 	}
 	return rates
-}
-
-func IsFutureDate(date string) bool {
-	t, err := time.Parse(time.RFC3339, date)
-	if err != nil {
-		return false
-	}
-	return time.Now().Before(t)
 }
