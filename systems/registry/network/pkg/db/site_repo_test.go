@@ -15,22 +15,23 @@ import (
 	net_db "github.com/ukama/ukama/systems/registry/network/pkg/db"
 )
 
-func Test_OrgRepo_Get(t *testing.T) {
-	t.Run("OrgExist", func(t *testing.T) {
+func Test_SiteRepo_Get(t *testing.T) {
+	t.Run("SiteExist", func(t *testing.T) {
 		// Arrange
-		const orgId = 1
-		const orgName = "ukama"
+		const siteName = "site1"
+		const siteId = 1
+		const netId = 1
 
 		var db *extsql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(orgId, orgName)
+		rows := sqlmock.NewRows([]string{"id", "name", "network_id"}).
+			AddRow(siteId, siteName, netId)
 
-		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgId).
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(siteId).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -43,14 +44,14 @@ func Test_OrgRepo_Get(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := net_db.NewOrgRepo(&UkamaDbMock{
+		r := net_db.NewSiteRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		assert.NoError(t, err)
 
 		// Act
-		org, err := r.Get(orgId)
+		org, err := r.Get(siteId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -60,17 +61,17 @@ func Test_OrgRepo_Get(t *testing.T) {
 		assert.NotNil(t, org)
 	})
 
-	t.Run("OrgNotFound", func(t *testing.T) {
+	t.Run("SiteNotFound", func(t *testing.T) {
 		// Arrange
-		const orgId = 1
+		const siteId = 1
 
 		var db *extsql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgId).
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(siteId).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
@@ -83,14 +84,14 @@ func Test_OrgRepo_Get(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := net_db.NewOrgRepo(&UkamaDbMock{
+		r := net_db.NewSiteRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		assert.NoError(t, err)
 
 		// Act
-		org, err := r.Get(orgId)
+		org, err := r.Get(siteId)
 
 		// Assert
 		assert.Error(t, err)
@@ -101,22 +102,23 @@ func Test_OrgRepo_Get(t *testing.T) {
 	})
 }
 
-func Test_OrgRepo_GetByName(t *testing.T) {
-	t.Run("OrgExist", func(t *testing.T) {
+func Test_SiteRepo_GetByNetwork(t *testing.T) {
+	t.Run("NetworkExist", func(t *testing.T) {
 		// Arrange
-		const orgId = 1
-		const orgName = "ukama"
+		const siteName = "site1"
+		const siteId = 1
+		const netId = 1
 
 		var db *extsql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(orgId, orgName)
+		rows := sqlmock.NewRows([]string{"id", "name", "network_id"}).
+			AddRow(siteId, siteName, netId)
 
-		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName).
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(netId).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -129,34 +131,34 @@ func Test_OrgRepo_GetByName(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := net_db.NewOrgRepo(&UkamaDbMock{
+		r := net_db.NewSiteRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		assert.NoError(t, err)
 
 		// Act
-		org, err := r.GetByName(orgName)
+		sites, err := r.GetByNetwork(netId)
 
 		// Assert
 		assert.NoError(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.NotNil(t, org)
+		assert.NotNil(t, sites)
 	})
 
-	t.Run("OrgNotFound", func(t *testing.T) {
+	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		const orgName = "ukama"
+		const netId = 1
 
 		var db *extsql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName).
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(netId).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
@@ -169,31 +171,32 @@ func Test_OrgRepo_GetByName(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := net_db.NewOrgRepo(&UkamaDbMock{
+		r := net_db.NewSiteRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		assert.NoError(t, err)
 
 		// Act
-		org, err := r.GetByName(orgName)
+		sites, err := r.GetByNetwork(netId)
 
 		// Assert
 		assert.Error(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.Nil(t, org)
+		assert.Nil(t, sites)
 	})
 }
 
-func Test_OrgRepo_Add(t *testing.T) {
+func Test_SiteRepo_Add(t *testing.T) {
 	t.Run("AddOrg", func(t *testing.T) {
 		// Arrange
 		var db *extsql.DB
 
-		org := net_db.Org{
-			Name: "ukama",
+		site := net_db.Site{
+			Name:      "site1",
+			NetworkID: 1,
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -202,7 +205,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, sqlmock.AnyArg()).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), site.Name, site.NetworkID, sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
@@ -217,14 +220,14 @@ func Test_OrgRepo_Add(t *testing.T) {
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
-		r := net_db.NewOrgRepo(&UkamaDbMock{
+		r := net_db.NewSiteRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&org)
+		err = r.Add(&site)
 
 		// Assert
 		assert.NoError(t, err)
