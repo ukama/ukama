@@ -7,7 +7,7 @@ build: integration.build
 	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/users cmd/server/main.go	
 
 test:
-	go test -cover -v ./...
+	go test ./... -coverprofile cover. && go tool cover -func cover.out
 
 lint:
 	golangci-lint run

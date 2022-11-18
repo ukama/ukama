@@ -9,11 +9,12 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/base-rate/mocks"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
 )
 
-var mockNetwork = "ABC Tel"
 var mockCountry = "The lunar maria"
 var mockSimType = "inter_mno_data"
 var mockeEffectiveAt = "2022-12-01T00:00:00Z"
@@ -42,15 +43,22 @@ func TestRateService_UploadRates(t *testing.T) {
 func TestRateService_GetRate(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
+	s := NewBaseRateServer(baseRateRepo)
+
+	//Success case
 	baseRateRepo.On("GetBaseRate", uint64(1)).Return(&db.Rate{
 		Country: mockCountry,
 	}, nil)
-	s := NewBaseRateServer(baseRateRepo)
 	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateId: uint64(1)})
-
 	assert.NoError(t, err)
 	assert.Equal(t, mockCountry, rate.Rate.Country)
 	baseRateRepo.AssertExpectations(t)
+
+	//Error case
+	baseRateRepo.On("GetBaseRate", uint64(0)).Return(nil, status.Errorf(codes.NotFound, "record not found"))
+	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateId: uint64(0)})
+	assert.Error(t, err)
+	assert.Nil(t, _rate)
 }
 
 func TestRateService_GetRates(t *testing.T) {

@@ -74,12 +74,10 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 			fileUrl, effectiveAt, simType)
 	}
 
-	// if !utils.IsFutureDate(effectiveAt) {
-	// 	logrus.Infof("Date you provided is not a valid future date.",
-	// 		fileUrl, effectiveAt, simType)
-
-	// 	return nil, status.Errorf(codes.InvalidArgument, "date you provided is not a valid future date %qs", effectiveAt)
-	// }
+	if !utils.IsFutureDate(effectiveAt) {
+		logrus.Infof("Date you provided is not a valid future date. %s", effectiveAt)
+		return nil, status.Errorf(codes.InvalidArgument, "date you provided is not a valid future date %qs", effectiveAt)
+	}
 
 	data, err := utils.FetchData(fileUrl)
 	if err != nil {
