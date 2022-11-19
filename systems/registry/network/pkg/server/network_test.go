@@ -12,37 +12,64 @@ import (
 )
 
 func TestNetworkServer_AddNetwork(t *testing.T) {
-	// Arrange
-	const orgID = uint(1)
-	const netName = "network-1"
-	const orgName = "org-1"
+	t.Run("OrgExist", func(t *testing.T) {
+		// Arrange
+		const orgID = uint(1)
+		const netName = "network-1"
+		const orgName = "org-1"
 
-	netRepo := &mocks.NetRepo{}
-	orgRepo := &mocks.OrgRepo{}
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
 
-	net := &db.Network{
-		Name:  netName,
-		OrgID: orgID,
-	}
+		net := &db.Network{
+			Name:  netName,
+			OrgID: orgID,
+		}
 
-	orgRepo.On("GetByName", orgName).Return(
-		&db.Org{Model: gorm.Model{ID: orgID},
-			Name:        orgName,
-			Deactivated: false},
-		nil).Once()
-	netRepo.On("Add", orgID, netName).Return(net, nil).Once()
+		orgRepo.On("GetByName", orgName).Return(
+			&db.Org{Model: gorm.Model{ID: orgID},
+				Name:        orgName,
+				Deactivated: false},
+			nil).Once()
+		netRepo.On("Add", orgID, netName).Return(net, nil).Once()
 
-	s := NewNetworkServer(netRepo, orgRepo, nil, nil)
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil)
 
-	// Act
-	res, err := s.Add(context.TODO(), &pb.AddRequest{
-		Name:    netName,
-		OrgName: orgName,
+		// Act
+		res, err := s.Add(context.TODO(), &pb.AddRequest{
+			Name:    netName,
+			OrgName: orgName,
+		})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Equal(t, orgName, res.Org)
+		assert.Equal(t, netName, res.Network.Name)
+		netRepo.AssertExpectations(t)
 	})
+}
 
-	// Assert
-	assert.NoError(t, err)
-	assert.Equal(t, orgName, res.Org)
-	assert.Equal(t, netName, res.Network.Name)
-	netRepo.AssertExpectations(t)
+func TestNetworkServer_Get(t *testing.T) {
+	t.Run("Org and Network exist", func(t *testing.T) {
+		const netID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("GetByName", orgName, netName).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       1,
+				Deactivated: false,
+			}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		netResp, err := s.Get(context.TODO(), &pb.GetRequest{Name: netName, OrgName: orgName})
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(netID), netResp.GetNetwork().GetId())
+		assert.Equal(t, netName, netResp.Network.Name)
+		netRepo.AssertExpectations(t)
+	})
 }
