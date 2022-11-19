@@ -82,8 +82,8 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	networkServer := server.NewNetworkServer(db.NewOrgRepo(gormdb),
-		db.NewNetRepo(gormdb), db.NewSiteRepo(gormdb),
+	networkServer := server.NewNetworkServer(db.NewNetRepo(gormdb),
+		db.NewOrgRepo(gormdb), db.NewSiteRepo(gormdb),
 		providers.NewOrgClientProvider(svcConf.OrgHost))
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
