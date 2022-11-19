@@ -19,17 +19,17 @@ import (
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	orgRepo    db.OrgRepo
 	netRepo    db.NetRepo
+	orgRepo    db.OrgRepo
 	siteRepo   db.SiteRepo
 	orgService providers.OrgClientProvider
 }
 
-func NewNetworkServer(orgRepo db.OrgRepo, netRepo db.NetRepo, siteRepo db.SiteRepo,
+func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
 	orgService providers.OrgClientProvider) *NetworkServer {
 	return &NetworkServer{
-		orgRepo:    orgRepo,
 		netRepo:    netRepo,
+		orgRepo:    orgRepo,
 		siteRepo:   siteRepo,
 		orgService: orgService,
 	}
@@ -37,18 +37,18 @@ func NewNetworkServer(orgRepo db.OrgRepo, netRepo db.NetRepo, siteRepo db.SiteRe
 
 func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	// Get the Org locally
-	orgNanem := req.GetOrgName()
+	orgName := req.GetOrgName()
 	networkName := req.GetName()
-	org, err := n.orgRepo.GetByName(orgNanem)
+	org, err := n.orgRepo.GetByName(orgName)
 	if err != nil {
-		logrus.Infof("lookup for org %s remotely", orgNanem)
+		logrus.Infof("lookup for org %s remotely", orgName)
 
 		svc, err := n.orgService.GetClient()
 		if err != nil {
 			return nil, err
 		}
 
-		remoteOrg, err := svc.GetByName(ctx, &orgpb.GetByNameRequest{Name: orgNanem})
+		remoteOrg, err := svc.GetByName(ctx, &orgpb.GetByNameRequest{Name: orgName})
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 				"org is deactivated: cannot add network to it")
 		}
 
-		logrus.Infof("Adding remove org %s to local org repo", orgNanem)
+		logrus.Infof("Adding remove org %s to local org repo", orgName)
 		org = &db.Org{Name: remoteOrg.Org.Name,
 			Deactivated: remoteOrg.Org.IsDeactivated}
 
