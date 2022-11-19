@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type NetworkServiceClient interface {
 	// Networks
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
-	// rpc Get(GetRequest) returns (GetResponse);
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error)
 	GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
 	// Update
@@ -46,6 +46,15 @@ func NewNetworkServiceClient(cc grpc.ClientConnInterface) NetworkServiceClient {
 func (c *networkServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
 	out := new(AddResponse)
 	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/Add", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +121,7 @@ func (c *networkServiceClient) GetByNetwork(ctx context.Context, in *GetByNetwor
 type NetworkServiceServer interface {
 	// Networks
 	Add(context.Context, *AddRequest) (*AddResponse, error)
-	// rpc Get(GetRequest) returns (GetResponse);
+	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error)
 	GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
 	// Update
@@ -130,6 +139,9 @@ type UnimplementedNetworkServiceServer struct {
 
 func (UnimplementedNetworkServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
+}
+func (UnimplementedNetworkServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedNetworkServiceServer) GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
@@ -176,6 +188,24 @@ func _NetworkService_Add_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NetworkServiceServer).Add(ctx, req.(*AddRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.network.v1.NetworkService/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -298,6 +328,10 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Add",
 			Handler:    _NetworkService_Add_Handler,
+		},
+		{
+			MethodName: "Get",
+			Handler:    _NetworkService_Get_Handler,
 		},
 		{
 			MethodName: "GetByName",

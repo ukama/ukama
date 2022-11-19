@@ -133,6 +133,100 @@ func (x *AddResponse) GetOrg() string {
 	return ""
 }
 
+type GetRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NetworkID uint64 `protobuf:"varint,1,opt,name=networkID,proto3" json:"networkID,omitempty"`
+}
+
+func (x *GetRequest) Reset() {
+	*x = GetRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_network_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRequest) ProtoMessage() {}
+
+func (x *GetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_network_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
+func (*GetRequest) Descriptor() ([]byte, []int) {
+	return file_network_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetRequest) GetNetworkID() uint64 {
+	if x != nil {
+		return x.NetworkID
+	}
+	return 0
+}
+
+type GetResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Network *Network `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
+}
+
+func (x *GetResponse) Reset() {
+	*x = GetResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_network_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetResponse) ProtoMessage() {}
+
+func (x *GetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_network_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
+func (*GetResponse) Descriptor() ([]byte, []int) {
+	return file_network_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetResponse) GetNetwork() *Network {
+	if x != nil {
+		return x.Network
+	}
+	return nil
+}
+
 type GetByNameRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -145,7 +239,7 @@ type GetByNameRequest struct {
 func (x *GetByNameRequest) Reset() {
 	*x = GetByNameRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[2]
+		mi := &file_network_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -158,7 +252,7 @@ func (x *GetByNameRequest) String() string {
 func (*GetByNameRequest) ProtoMessage() {}
 
 func (x *GetByNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[2]
+	mi := &file_network_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -171,7 +265,7 @@ func (x *GetByNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetByNameRequest.ProtoReflect.Descriptor instead.
 func (*GetByNameRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{2}
+	return file_network_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetByNameRequest) GetName() string {
@@ -200,7 +294,7 @@ type GetByNameResponse struct {
 func (x *GetByNameResponse) Reset() {
 	*x = GetByNameResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[3]
+		mi := &file_network_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -213,7 +307,7 @@ func (x *GetByNameResponse) String() string {
 func (*GetByNameResponse) ProtoMessage() {}
 
 func (x *GetByNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[3]
+	mi := &file_network_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -226,7 +320,7 @@ func (x *GetByNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetByNameResponse.ProtoReflect.Descriptor instead.
 func (*GetByNameResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{3}
+	return file_network_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetByNameResponse) GetNetwork() *Network {
@@ -254,7 +348,7 @@ type GetByOrgRequest struct {
 func (x *GetByOrgRequest) Reset() {
 	*x = GetByOrgRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[4]
+		mi := &file_network_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -267,7 +361,7 @@ func (x *GetByOrgRequest) String() string {
 func (*GetByOrgRequest) ProtoMessage() {}
 
 func (x *GetByOrgRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[4]
+	mi := &file_network_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -280,7 +374,7 @@ func (x *GetByOrgRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetByOrgRequest.ProtoReflect.Descriptor instead.
 func (*GetByOrgRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{4}
+	return file_network_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetByOrgRequest) GetOrgName() string {
@@ -302,7 +396,7 @@ type GetByOrgResponse struct {
 func (x *GetByOrgResponse) Reset() {
 	*x = GetByOrgResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[5]
+		mi := &file_network_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -315,7 +409,7 @@ func (x *GetByOrgResponse) String() string {
 func (*GetByOrgResponse) ProtoMessage() {}
 
 func (x *GetByOrgResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[5]
+	mi := &file_network_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -328,7 +422,7 @@ func (x *GetByOrgResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetByOrgResponse.ProtoReflect.Descriptor instead.
 func (*GetByOrgResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{5}
+	return file_network_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetByOrgResponse) GetOrg() string {
@@ -357,7 +451,7 @@ type DeleteRequest struct {
 func (x *DeleteRequest) Reset() {
 	*x = DeleteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[6]
+		mi := &file_network_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -370,7 +464,7 @@ func (x *DeleteRequest) String() string {
 func (*DeleteRequest) ProtoMessage() {}
 
 func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[6]
+	mi := &file_network_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -383,7 +477,7 @@ func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{6}
+	return file_network_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DeleteRequest) GetName() string {
@@ -409,7 +503,7 @@ type DeleteResponse struct {
 func (x *DeleteResponse) Reset() {
 	*x = DeleteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[7]
+		mi := &file_network_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -422,7 +516,7 @@ func (x *DeleteResponse) String() string {
 func (*DeleteResponse) ProtoMessage() {}
 
 func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[7]
+	mi := &file_network_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -435,7 +529,7 @@ func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{7}
+	return file_network_proto_rawDescGZIP(), []int{9}
 }
 
 type AddSiteRequest struct {
@@ -443,14 +537,14 @@ type AddSiteRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	NetID    uint64 `protobuf:"varint,1,opt,name=netID,proto3" json:"netID,omitempty"`
-	SiteName string `protobuf:"bytes,2,opt,name=siteName,proto3" json:"siteName,omitempty"`
+	NetworkID uint64 `protobuf:"varint,1,opt,name=networkID,proto3" json:"networkID,omitempty"`
+	SiteName  string `protobuf:"bytes,2,opt,name=siteName,proto3" json:"siteName,omitempty"`
 }
 
 func (x *AddSiteRequest) Reset() {
 	*x = AddSiteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[8]
+		mi := &file_network_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -463,7 +557,7 @@ func (x *AddSiteRequest) String() string {
 func (*AddSiteRequest) ProtoMessage() {}
 
 func (x *AddSiteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[8]
+	mi := &file_network_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -476,12 +570,12 @@ func (x *AddSiteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddSiteRequest.ProtoReflect.Descriptor instead.
 func (*AddSiteRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{8}
+	return file_network_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *AddSiteRequest) GetNetID() uint64 {
+func (x *AddSiteRequest) GetNetworkID() uint64 {
 	if x != nil {
-		return x.NetID
+		return x.NetworkID
 	}
 	return 0
 }
@@ -504,7 +598,7 @@ type AddSiteResponse struct {
 func (x *AddSiteResponse) Reset() {
 	*x = AddSiteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[9]
+		mi := &file_network_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -517,7 +611,7 @@ func (x *AddSiteResponse) String() string {
 func (*AddSiteResponse) ProtoMessage() {}
 
 func (x *AddSiteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[9]
+	mi := &file_network_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -530,7 +624,7 @@ func (x *AddSiteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddSiteResponse.ProtoReflect.Descriptor instead.
 func (*AddSiteResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{9}
+	return file_network_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AddSiteResponse) GetSite() *Site {
@@ -551,7 +645,7 @@ type GetSiteRequest struct {
 func (x *GetSiteRequest) Reset() {
 	*x = GetSiteRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[10]
+		mi := &file_network_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -564,7 +658,7 @@ func (x *GetSiteRequest) String() string {
 func (*GetSiteRequest) ProtoMessage() {}
 
 func (x *GetSiteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[10]
+	mi := &file_network_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -577,7 +671,7 @@ func (x *GetSiteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSiteRequest.ProtoReflect.Descriptor instead.
 func (*GetSiteRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{10}
+	return file_network_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetSiteRequest) GetSiteID() uint64 {
@@ -598,7 +692,7 @@ type GetSiteResponse struct {
 func (x *GetSiteResponse) Reset() {
 	*x = GetSiteResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[11]
+		mi := &file_network_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -611,7 +705,7 @@ func (x *GetSiteResponse) String() string {
 func (*GetSiteResponse) ProtoMessage() {}
 
 func (x *GetSiteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[11]
+	mi := &file_network_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -624,7 +718,7 @@ func (x *GetSiteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSiteResponse.ProtoReflect.Descriptor instead.
 func (*GetSiteResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{11}
+	return file_network_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetSiteResponse) GetSite() *Site {
@@ -639,13 +733,13 @@ type GetByNetworkRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	NetID uint64 `protobuf:"varint,1,opt,name=netID,proto3" json:"netID,omitempty"`
+	NetworkID uint64 `protobuf:"varint,1,opt,name=networkID,proto3" json:"networkID,omitempty"`
 }
 
 func (x *GetByNetworkRequest) Reset() {
 	*x = GetByNetworkRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[12]
+		mi := &file_network_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -658,7 +752,7 @@ func (x *GetByNetworkRequest) String() string {
 func (*GetByNetworkRequest) ProtoMessage() {}
 
 func (x *GetByNetworkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[12]
+	mi := &file_network_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -671,12 +765,12 @@ func (x *GetByNetworkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetByNetworkRequest.ProtoReflect.Descriptor instead.
 func (*GetByNetworkRequest) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{12}
+	return file_network_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *GetByNetworkRequest) GetNetID() uint64 {
+func (x *GetByNetworkRequest) GetNetworkID() uint64 {
 	if x != nil {
-		return x.NetID
+		return x.NetworkID
 	}
 	return 0
 }
@@ -693,7 +787,7 @@ type GetByNetworkResponse struct {
 func (x *GetByNetworkResponse) Reset() {
 	*x = GetByNetworkResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[13]
+		mi := &file_network_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -706,7 +800,7 @@ func (x *GetByNetworkResponse) String() string {
 func (*GetByNetworkResponse) ProtoMessage() {}
 
 func (x *GetByNetworkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[13]
+	mi := &file_network_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -719,7 +813,7 @@ func (x *GetByNetworkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetByNetworkResponse.ProtoReflect.Descriptor instead.
 func (*GetByNetworkResponse) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{13}
+	return file_network_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetByNetworkResponse) GetNetworkID() uint64 {
@@ -750,7 +844,7 @@ type Network struct {
 func (x *Network) Reset() {
 	*x = Network{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[14]
+		mi := &file_network_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -763,7 +857,7 @@ func (x *Network) String() string {
 func (*Network) ProtoMessage() {}
 
 func (x *Network) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[14]
+	mi := &file_network_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -776,7 +870,7 @@ func (x *Network) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Network.ProtoReflect.Descriptor instead.
 func (*Network) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{14}
+	return file_network_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Network) GetId() uint64 {
@@ -822,7 +916,7 @@ type Site struct {
 func (x *Site) Reset() {
 	*x = Site{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_network_proto_msgTypes[15]
+		mi := &file_network_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -835,7 +929,7 @@ func (x *Site) String() string {
 func (*Site) ProtoMessage() {}
 
 func (x *Site) ProtoReflect() protoreflect.Message {
-	mi := &file_network_proto_msgTypes[15]
+	mi := &file_network_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -848,7 +942,7 @@ func (x *Site) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Site.ProtoReflect.Descriptor instead.
 func (*Site) Descriptor() ([]byte, []int) {
-	return file_network_proto_rawDescGZIP(), []int{15}
+	return file_network_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Site) GetId() uint64 {
@@ -906,7 +1000,14 @@ var file_network_proto_rawDesc = []byte{
 	0x19, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e,
 	0x76, 0x31, 0x2e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x07, 0x6e, 0x65, 0x74, 0x77,
 	0x6f, 0x72, 0x6b, 0x12, 0x10, 0x0a, 0x03, 0x6f, 0x72, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x03, 0x6f, 0x72, 0x67, 0x22, 0x50, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x61,
+	0x52, 0x03, 0x6f, 0x72, 0x67, 0x22, 0x2a, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x49, 0x44,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x49,
+	0x44, 0x22, 0x42, 0x0a, 0x0b, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x33, 0x0a, 0x07, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x19, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72,
+	0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x07, 0x6e, 0x65,
+	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x22, 0x50, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x61,
 	0x6d, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
 	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52,
 	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x20, 0x0a, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65,
@@ -932,25 +1033,26 @@ var file_network_proto_rawDesc = []byte{
 	0x6d, 0x65, 0x12, 0x20, 0x0a, 0x07, 0x6f, 0x72, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20,
 	0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x07, 0x6f, 0x72, 0x67,
 	0x4e, 0x61, 0x6d, 0x65, 0x22, 0x10, 0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x4a, 0x0a, 0x0e, 0x41, 0x64, 0x64, 0x53, 0x69, 0x74,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6e, 0x65, 0x74, 0x49,
-	0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x05, 0x6e, 0x65, 0x74, 0x49, 0x44, 0x12, 0x22,
-	0x0a, 0x08, 0x73, 0x69, 0x74, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01, 0x52, 0x08, 0x73, 0x69, 0x74, 0x65, 0x4e, 0x61,
-	0x6d, 0x65, 0x22, 0x3d, 0x0a, 0x0f, 0x41, 0x64, 0x64, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a, 0x0a, 0x04, 0x73, 0x69, 0x74, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77,
-	0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x69, 0x74, 0x65, 0x52, 0x04, 0x73, 0x69, 0x74,
-	0x65, 0x22, 0x28, 0x0a, 0x0e, 0x47, 0x65, 0x74, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x69, 0x74, 0x65, 0x49, 0x44, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x69, 0x74, 0x65, 0x49, 0x44, 0x22, 0x3d, 0x0a, 0x0f, 0x47,
-	0x65, 0x74, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a,
-	0x0a, 0x04, 0x73, 0x69, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x75,
-	0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e,
-	0x53, 0x69, 0x74, 0x65, 0x52, 0x04, 0x73, 0x69, 0x74, 0x65, 0x22, 0x2b, 0x0a, 0x13, 0x47, 0x65,
-	0x74, 0x42, 0x79, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x12, 0x14, 0x0a, 0x05, 0x6e, 0x65, 0x74, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04,
-	0x52, 0x05, 0x6e, 0x65, 0x74, 0x49, 0x44, 0x22, 0x62, 0x0a, 0x14, 0x47, 0x65, 0x74, 0x42, 0x79,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x52, 0x0a, 0x0e, 0x41, 0x64, 0x64, 0x53, 0x69, 0x74,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x65, 0x74, 0x77,
+	0x6f, 0x72, 0x6b, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x6e, 0x65, 0x74,
+	0x77, 0x6f, 0x72, 0x6b, 0x49, 0x44, 0x12, 0x22, 0x0a, 0x08, 0x73, 0x69, 0x74, 0x65, 0x4e, 0x61,
+	0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x06, 0xe2, 0xdf, 0x1f, 0x02, 0x58, 0x01,
+	0x52, 0x08, 0x73, 0x69, 0x74, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x22, 0x3d, 0x0a, 0x0f, 0x41, 0x64,
+	0x64, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a, 0x0a,
+	0x04, 0x73, 0x69, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x75, 0x6b,
+	0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x53,
+	0x69, 0x74, 0x65, 0x52, 0x04, 0x73, 0x69, 0x74, 0x65, 0x22, 0x28, 0x0a, 0x0e, 0x47, 0x65, 0x74,
+	0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x73,
+	0x69, 0x74, 0x65, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x73, 0x69, 0x74,
+	0x65, 0x49, 0x44, 0x22, 0x3d, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a, 0x0a, 0x04, 0x73, 0x69, 0x74, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74,
+	0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x69, 0x74, 0x65, 0x52, 0x04, 0x73, 0x69,
+	0x74, 0x65, 0x22, 0x33, 0x0a, 0x13, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x65, 0x74, 0x77, 0x6f,
+	0x72, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x65, 0x74,
+	0x77, 0x6f, 0x72, 0x6b, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x6e, 0x65,
+	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x49, 0x44, 0x22, 0x62, 0x0a, 0x14, 0x47, 0x65, 0x74, 0x42, 0x79,
 	0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
 	0x1c, 0x0a, 0x09, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x04, 0x52, 0x09, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x49, 0x44, 0x12, 0x2c, 0x0a,
@@ -976,45 +1078,49 @@ var file_network_proto_rawDesc = []byte{
 	0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28,
 	0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x09, 0x63,
-	0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x32, 0xc9, 0x04, 0x0a, 0x0e, 0x4e, 0x65, 0x74,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x32, 0x8d, 0x05, 0x0a, 0x0e, 0x4e, 0x65, 0x74,
 	0x77, 0x6f, 0x72, 0x6b, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x42, 0x0a, 0x03, 0x41,
 	0x64, 0x64, 0x12, 0x1c, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f,
 	0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x1a, 0x1d, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
 	0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x54, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x22, 0x2e, 0x75,
-	0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e,
-	0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x23, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
-	0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x08, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4f, 0x72,
-	0x67, 0x12, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72,
-	0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4f, 0x72, 0x67, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74,
-	0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4f, 0x72, 0x67,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b, 0x0a, 0x06, 0x44, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x12, 0x1f, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f,
-	0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77,
-	0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x07, 0x41, 0x64, 0x64, 0x53, 0x69, 0x74, 0x65,
-	0x12, 0x20, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
-	0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f,
-	0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x07, 0x47, 0x65, 0x74, 0x53, 0x69, 0x74, 0x65,
-	0x12, 0x20, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
-	0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f,
-	0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x69, 0x74, 0x65, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5d, 0x0a, 0x0c, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x65,
-	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x12, 0x25, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65,
-	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x65,
-	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x75,
-	0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e,
-	0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x08, 0x5a, 0x06, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x42, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x1c, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e,
+	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74,
+	0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x54, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x61, 0x6d, 0x65,
+	0x12, 0x22, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
+	0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74,
+	0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x61, 0x6d,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x51, 0x0a, 0x08, 0x47, 0x65, 0x74,
+	0x42, 0x79, 0x4f, 0x72, 0x67, 0x12, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65,
+	0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4f, 0x72,
+	0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61,
+	0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42,
+	0x79, 0x4f, 0x72, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b, 0x0a, 0x06,
+	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12, 0x1f, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e,
+	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e,
+	0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x07, 0x41, 0x64, 0x64,
+	0x53, 0x69, 0x74, 0x65, 0x12, 0x20, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74,
+	0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x53, 0x69, 0x74, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e,
+	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x53, 0x69, 0x74,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x07, 0x47, 0x65, 0x74,
+	0x53, 0x69, 0x74, 0x65, 0x12, 0x20, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74,
+	0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x69, 0x74, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e,
+	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x69, 0x74,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5d, 0x0a, 0x0c, 0x47, 0x65, 0x74,
+	0x42, 0x79, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x12, 0x25, 0x2e, 0x75, 0x6b, 0x61, 0x6d,
+	0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74,
+	0x42, 0x79, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x26, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
+	0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x08, 0x5a, 0x06, 0x70, 0x62, 0x2f, 0x67,
+	0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1029,54 +1135,59 @@ func file_network_proto_rawDescGZIP() []byte {
 	return file_network_proto_rawDescData
 }
 
-var file_network_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_network_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_network_proto_goTypes = []interface{}{
 	(*AddRequest)(nil),            // 0: ukama.network.v1.AddRequest
 	(*AddResponse)(nil),           // 1: ukama.network.v1.AddResponse
-	(*GetByNameRequest)(nil),      // 2: ukama.network.v1.GetByNameRequest
-	(*GetByNameResponse)(nil),     // 3: ukama.network.v1.GetByNameResponse
-	(*GetByOrgRequest)(nil),       // 4: ukama.network.v1.GetByOrgRequest
-	(*GetByOrgResponse)(nil),      // 5: ukama.network.v1.GetByOrgResponse
-	(*DeleteRequest)(nil),         // 6: ukama.network.v1.DeleteRequest
-	(*DeleteResponse)(nil),        // 7: ukama.network.v1.DeleteResponse
-	(*AddSiteRequest)(nil),        // 8: ukama.network.v1.AddSiteRequest
-	(*AddSiteResponse)(nil),       // 9: ukama.network.v1.AddSiteResponse
-	(*GetSiteRequest)(nil),        // 10: ukama.network.v1.GetSiteRequest
-	(*GetSiteResponse)(nil),       // 11: ukama.network.v1.GetSiteResponse
-	(*GetByNetworkRequest)(nil),   // 12: ukama.network.v1.GetByNetworkRequest
-	(*GetByNetworkResponse)(nil),  // 13: ukama.network.v1.GetByNetworkResponse
-	(*Network)(nil),               // 14: ukama.network.v1.Network
-	(*Site)(nil),                  // 15: ukama.network.v1.Site
-	(*timestamppb.Timestamp)(nil), // 16: google.protobuf.Timestamp
+	(*GetRequest)(nil),            // 2: ukama.network.v1.GetRequest
+	(*GetResponse)(nil),           // 3: ukama.network.v1.GetResponse
+	(*GetByNameRequest)(nil),      // 4: ukama.network.v1.GetByNameRequest
+	(*GetByNameResponse)(nil),     // 5: ukama.network.v1.GetByNameResponse
+	(*GetByOrgRequest)(nil),       // 6: ukama.network.v1.GetByOrgRequest
+	(*GetByOrgResponse)(nil),      // 7: ukama.network.v1.GetByOrgResponse
+	(*DeleteRequest)(nil),         // 8: ukama.network.v1.DeleteRequest
+	(*DeleteResponse)(nil),        // 9: ukama.network.v1.DeleteResponse
+	(*AddSiteRequest)(nil),        // 10: ukama.network.v1.AddSiteRequest
+	(*AddSiteResponse)(nil),       // 11: ukama.network.v1.AddSiteResponse
+	(*GetSiteRequest)(nil),        // 12: ukama.network.v1.GetSiteRequest
+	(*GetSiteResponse)(nil),       // 13: ukama.network.v1.GetSiteResponse
+	(*GetByNetworkRequest)(nil),   // 14: ukama.network.v1.GetByNetworkRequest
+	(*GetByNetworkResponse)(nil),  // 15: ukama.network.v1.GetByNetworkResponse
+	(*Network)(nil),               // 16: ukama.network.v1.Network
+	(*Site)(nil),                  // 17: ukama.network.v1.Site
+	(*timestamppb.Timestamp)(nil), // 18: google.protobuf.Timestamp
 }
 var file_network_proto_depIdxs = []int32{
-	14, // 0: ukama.network.v1.AddResponse.network:type_name -> ukama.network.v1.Network
-	14, // 1: ukama.network.v1.GetByNameResponse.network:type_name -> ukama.network.v1.Network
-	14, // 2: ukama.network.v1.GetByOrgResponse.networks:type_name -> ukama.network.v1.Network
-	15, // 3: ukama.network.v1.AddSiteResponse.site:type_name -> ukama.network.v1.Site
-	15, // 4: ukama.network.v1.GetSiteResponse.site:type_name -> ukama.network.v1.Site
-	15, // 5: ukama.network.v1.GetByNetworkResponse.sites:type_name -> ukama.network.v1.Site
-	16, // 6: ukama.network.v1.Network.created_at:type_name -> google.protobuf.Timestamp
-	16, // 7: ukama.network.v1.Site.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 8: ukama.network.v1.NetworkService.Add:input_type -> ukama.network.v1.AddRequest
-	2,  // 9: ukama.network.v1.NetworkService.GetByName:input_type -> ukama.network.v1.GetByNameRequest
-	4,  // 10: ukama.network.v1.NetworkService.GetByOrg:input_type -> ukama.network.v1.GetByOrgRequest
-	6,  // 11: ukama.network.v1.NetworkService.Delete:input_type -> ukama.network.v1.DeleteRequest
-	8,  // 12: ukama.network.v1.NetworkService.AddSite:input_type -> ukama.network.v1.AddSiteRequest
-	10, // 13: ukama.network.v1.NetworkService.GetSite:input_type -> ukama.network.v1.GetSiteRequest
-	12, // 14: ukama.network.v1.NetworkService.GetByNetwork:input_type -> ukama.network.v1.GetByNetworkRequest
-	1,  // 15: ukama.network.v1.NetworkService.Add:output_type -> ukama.network.v1.AddResponse
-	3,  // 16: ukama.network.v1.NetworkService.GetByName:output_type -> ukama.network.v1.GetByNameResponse
-	5,  // 17: ukama.network.v1.NetworkService.GetByOrg:output_type -> ukama.network.v1.GetByOrgResponse
-	7,  // 18: ukama.network.v1.NetworkService.Delete:output_type -> ukama.network.v1.DeleteResponse
-	9,  // 19: ukama.network.v1.NetworkService.AddSite:output_type -> ukama.network.v1.AddSiteResponse
-	11, // 20: ukama.network.v1.NetworkService.GetSite:output_type -> ukama.network.v1.GetSiteResponse
-	13, // 21: ukama.network.v1.NetworkService.GetByNetwork:output_type -> ukama.network.v1.GetByNetworkResponse
-	15, // [15:22] is the sub-list for method output_type
-	8,  // [8:15] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	16, // 0: ukama.network.v1.AddResponse.network:type_name -> ukama.network.v1.Network
+	16, // 1: ukama.network.v1.GetResponse.network:type_name -> ukama.network.v1.Network
+	16, // 2: ukama.network.v1.GetByNameResponse.network:type_name -> ukama.network.v1.Network
+	16, // 3: ukama.network.v1.GetByOrgResponse.networks:type_name -> ukama.network.v1.Network
+	17, // 4: ukama.network.v1.AddSiteResponse.site:type_name -> ukama.network.v1.Site
+	17, // 5: ukama.network.v1.GetSiteResponse.site:type_name -> ukama.network.v1.Site
+	17, // 6: ukama.network.v1.GetByNetworkResponse.sites:type_name -> ukama.network.v1.Site
+	18, // 7: ukama.network.v1.Network.created_at:type_name -> google.protobuf.Timestamp
+	18, // 8: ukama.network.v1.Site.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 9: ukama.network.v1.NetworkService.Add:input_type -> ukama.network.v1.AddRequest
+	2,  // 10: ukama.network.v1.NetworkService.Get:input_type -> ukama.network.v1.GetRequest
+	4,  // 11: ukama.network.v1.NetworkService.GetByName:input_type -> ukama.network.v1.GetByNameRequest
+	6,  // 12: ukama.network.v1.NetworkService.GetByOrg:input_type -> ukama.network.v1.GetByOrgRequest
+	8,  // 13: ukama.network.v1.NetworkService.Delete:input_type -> ukama.network.v1.DeleteRequest
+	10, // 14: ukama.network.v1.NetworkService.AddSite:input_type -> ukama.network.v1.AddSiteRequest
+	12, // 15: ukama.network.v1.NetworkService.GetSite:input_type -> ukama.network.v1.GetSiteRequest
+	14, // 16: ukama.network.v1.NetworkService.GetByNetwork:input_type -> ukama.network.v1.GetByNetworkRequest
+	1,  // 17: ukama.network.v1.NetworkService.Add:output_type -> ukama.network.v1.AddResponse
+	3,  // 18: ukama.network.v1.NetworkService.Get:output_type -> ukama.network.v1.GetResponse
+	5,  // 19: ukama.network.v1.NetworkService.GetByName:output_type -> ukama.network.v1.GetByNameResponse
+	7,  // 20: ukama.network.v1.NetworkService.GetByOrg:output_type -> ukama.network.v1.GetByOrgResponse
+	9,  // 21: ukama.network.v1.NetworkService.Delete:output_type -> ukama.network.v1.DeleteResponse
+	11, // 22: ukama.network.v1.NetworkService.AddSite:output_type -> ukama.network.v1.AddSiteResponse
+	13, // 23: ukama.network.v1.NetworkService.GetSite:output_type -> ukama.network.v1.GetSiteResponse
+	15, // 24: ukama.network.v1.NetworkService.GetByNetwork:output_type -> ukama.network.v1.GetByNetworkResponse
+	17, // [17:25] is the sub-list for method output_type
+	9,  // [9:17] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_network_proto_init() }
@@ -1110,7 +1221,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetByNameRequest); i {
+			switch v := v.(*GetRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1122,7 +1233,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetByNameResponse); i {
+			switch v := v.(*GetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1134,7 +1245,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetByOrgRequest); i {
+			switch v := v.(*GetByNameRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1146,7 +1257,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetByOrgResponse); i {
+			switch v := v.(*GetByNameResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1158,7 +1269,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteRequest); i {
+			switch v := v.(*GetByOrgRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1170,7 +1281,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteResponse); i {
+			switch v := v.(*GetByOrgResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1182,7 +1293,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddSiteRequest); i {
+			switch v := v.(*DeleteRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1194,7 +1305,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddSiteResponse); i {
+			switch v := v.(*DeleteResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1206,7 +1317,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSiteRequest); i {
+			switch v := v.(*AddSiteRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1218,7 +1329,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSiteResponse); i {
+			switch v := v.(*AddSiteResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1230,7 +1341,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetByNetworkRequest); i {
+			switch v := v.(*GetSiteRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1242,7 +1353,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetByNetworkResponse); i {
+			switch v := v.(*GetSiteResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1254,7 +1365,7 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Network); i {
+			switch v := v.(*GetByNetworkRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1266,6 +1377,30 @@ func file_network_proto_init() {
 			}
 		}
 		file_network_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetByNetworkResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_network_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Network); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_network_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Site); i {
 			case 0:
 				return &v.state
@@ -1284,7 +1419,7 @@ func file_network_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_network_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

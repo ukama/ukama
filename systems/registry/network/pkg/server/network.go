@@ -81,6 +81,17 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}, nil
 }
 
+func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+	nt, err := n.netRepo.Get(uint(req.NetworkID))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	return &pb.GetResponse{
+		Network: dbNtwkToPbNtwk(nt),
+	}, nil
+}
+
 func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
 	nt, err := n.netRepo.GetByName(req.OrgName, req.GetName())
 	if err != nil {
@@ -130,7 +141,7 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*pb.AddSiteResponse, error) {
 	// We need to improve ukama/common/sql for more sql errors like foreign keys violations
 	// which will allow us to skip these extra calls to DBs
-	ntwk, err := n.netRepo.Get(uint(req.NetID))
+	ntwk, err := n.netRepo.Get(uint(req.NetworkID))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -160,7 +171,7 @@ func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*p
 }
 
 func (n *NetworkServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
-	ntwk, err := n.netRepo.Get(uint(req.GetNetID()))
+	ntwk, err := n.netRepo.Get(uint(req.GetNetworkID()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}

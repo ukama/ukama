@@ -12,7 +12,7 @@ package ukama.network.v1;
 service NetworkService {
   /* Networks */
     rpc Add(AddRequest) returns (AddResponse);
-    // rpc Get(GetRequest) returns (GetResponse);
+    rpc Get(GetRequest) returns (GetResponse);
     rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
     rpc GetByOrg(GetByOrgRequest) returns (GetByOrgResponse);
     // Update
@@ -35,6 +35,14 @@ message AddRequest{
 message AddResponse{
     Network network = 1;
     string org = 2;
+}
+
+message GetRequest{
+    uint64 networkID = 1;
+}
+
+message GetResponse{
+    Network network = 1;
 }
 
 message GetByNameRequest{
@@ -65,7 +73,7 @@ message DeleteResponse{
 }
 
 message AddSiteRequest{
-    uint64 netID = 1;
+    uint64 networkID = 1;
     string siteName = 2 [(validator.field) = { string_not_empty: true}];
 }
 
@@ -82,7 +90,7 @@ message GetSiteResponse{
 }
 
 message GetByNetworkRequest{
-    uint64 netID = 1;
+    uint64 networkID = 1;
 }
 
 message GetByNetworkResponse{
