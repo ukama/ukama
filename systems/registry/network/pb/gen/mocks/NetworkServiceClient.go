@@ -106,8 +106,8 @@ func (_m *NetworkServiceClient) Delete(ctx context.Context, in *gen.DeleteReques
 	return r0, r1
 }
 
-// Get provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) Get(ctx context.Context, in *gen.GetRequest, opts ...grpc.CallOption) (*gen.GetResponse, error) {
+// GetByName provides a mock function with given fields: ctx, in, opts
+func (_m *NetworkServiceClient) GetByName(ctx context.Context, in *gen.GetByNameRequest, opts ...grpc.CallOption) (*gen.GetByNameResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -117,17 +117,17 @@ func (_m *NetworkServiceClient) Get(ctx context.Context, in *gen.GetRequest, opt
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest, ...grpc.CallOption) *gen.GetResponse); ok {
+	var r0 *gen.GetByNameResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByNameRequest, ...grpc.CallOption) *gen.GetByNameResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetResponse)
+			r0 = ret.Get(0).(*gen.GetByNameResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByNameRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

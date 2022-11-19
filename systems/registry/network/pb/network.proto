@@ -12,7 +12,8 @@ package ukama.network.v1;
 service NetworkService {
   /* Networks */
     rpc Add(AddRequest) returns (AddResponse);
-    rpc Get(GetRequest) returns (GetResponse);
+    // rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
     rpc GetByOrg(GetByOrgRequest) returns (GetByOrgResponse);
     // Update
     rpc Delete(DeleteRequest) returns (DeleteResponse);
@@ -36,12 +37,12 @@ message AddResponse{
     string org = 2;
 }
 
-message GetRequest{
+message GetByNameRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
     string orgName = 2 [(validator.field) = { string_not_empty: true}];
 }
 
-message GetResponse{
+message GetByNameResponse{
     Network network = 1;
     string org = 2;
 }

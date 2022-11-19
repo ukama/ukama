@@ -12,7 +12,7 @@ import (
 )
 
 func TestNetworkServer_AddNetwork(t *testing.T) {
-	t.Run("OrgExist", func(t *testing.T) {
+	t.Run("Org exist", func(t *testing.T) {
 		// Arrange
 		const orgID = uint(1)
 		const netName = "network-1"
@@ -49,7 +49,7 @@ func TestNetworkServer_AddNetwork(t *testing.T) {
 	})
 }
 
-func TestNetworkServer_Get(t *testing.T) {
+func TestNetworkServer_GetByName(t *testing.T) {
 	t.Run("Org and Network exist", func(t *testing.T) {
 		const netID = 1
 		const orgName = "org-1"
@@ -65,7 +65,8 @@ func TestNetworkServer_Get(t *testing.T) {
 			}, nil).Once()
 
 		s := NewNetworkServer(netRepo, nil, nil, nil)
-		netResp, err := s.Get(context.TODO(), &pb.GetRequest{Name: netName, OrgName: orgName})
+		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
+			Name: netName, OrgName: orgName})
 
 		assert.NoError(t, err)
 		assert.Equal(t, uint64(netID), netResp.GetNetwork().GetId())

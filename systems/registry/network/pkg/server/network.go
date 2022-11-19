@@ -81,13 +81,13 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}, nil
 }
 
-func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
 	nt, err := n.netRepo.GetByName(req.OrgName, req.GetName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "mapping org/network")
 	}
 
-	return &pb.GetResponse{
+	return &pb.GetByNameResponse{
 		Network: dbNtwkToPbNtwk(nt),
 		Org:     req.GetOrgName(),
 	}, nil
