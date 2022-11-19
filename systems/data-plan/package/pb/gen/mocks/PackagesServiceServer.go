@@ -14,8 +14,8 @@ type PackagesServiceServer struct {
 	mock.Mock
 }
 
-// AddPackage provides a mock function with given fields: _a0, _a1
-func (_m *PackagesServiceServer) AddPackage(_a0 context.Context, _a1 *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+// Add provides a mock function with given fields: _a0, _a1
+func (_m *PackagesServiceServer) Add(_a0 context.Context, _a1 *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *pb.AddPackageResponse
@@ -37,8 +37,8 @@ func (_m *PackagesServiceServer) AddPackage(_a0 context.Context, _a1 *pb.AddPack
 	return r0, r1
 }
 
-// DeletePackage provides a mock function with given fields: _a0, _a1
-func (_m *PackagesServiceServer) DeletePackage(_a0 context.Context, _a1 *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
+// Delete provides a mock function with given fields: _a0, _a1
+func (_m *PackagesServiceServer) Delete(_a0 context.Context, _a1 *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *pb.DeletePackageResponse
@@ -60,8 +60,8 @@ func (_m *PackagesServiceServer) DeletePackage(_a0 context.Context, _a1 *pb.Dele
 	return r0, r1
 }
 
-// GetPackages provides a mock function with given fields: _a0, _a1
-func (_m *PackagesServiceServer) GetPackages(_a0 context.Context, _a1 *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
+// Get provides a mock function with given fields: _a0, _a1
+func (_m *PackagesServiceServer) Get(_a0 context.Context, _a1 *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *pb.GetPackagesResponse
@@ -83,8 +83,8 @@ func (_m *PackagesServiceServer) GetPackages(_a0 context.Context, _a1 *pb.GetPac
 	return r0, r1
 }
 
-// UpdatePackage provides a mock function with given fields: _a0, _a1
-func (_m *PackagesServiceServer) UpdatePackage(_a0 context.Context, _a1 *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
+// Update provides a mock function with given fields: _a0, _a1
+func (_m *PackagesServiceServer) Update(_a0 context.Context, _a1 *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *pb.UpdatePackageResponse

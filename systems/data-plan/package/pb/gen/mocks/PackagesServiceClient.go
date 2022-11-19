@@ -17,8 +17,8 @@ type PackagesServiceClient struct {
 	mock.Mock
 }
 
-// AddPackage provides a mock function with given fields: ctx, in, opts
-func (_m *PackagesServiceClient) AddPackage(ctx context.Context, in *pb.AddPackageRequest, opts ...grpc.CallOption) (*pb.AddPackageResponse, error) {
+// Add provides a mock function with given fields: ctx, in, opts
+func (_m *PackagesServiceClient) Add(ctx context.Context, in *pb.AddPackageRequest, opts ...grpc.CallOption) (*pb.AddPackageResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -47,8 +47,8 @@ func (_m *PackagesServiceClient) AddPackage(ctx context.Context, in *pb.AddPacka
 	return r0, r1
 }
 
-// DeletePackage provides a mock function with given fields: ctx, in, opts
-func (_m *PackagesServiceClient) DeletePackage(ctx context.Context, in *pb.DeletePackageRequest, opts ...grpc.CallOption) (*pb.DeletePackageResponse, error) {
+// Delete provides a mock function with given fields: ctx, in, opts
+func (_m *PackagesServiceClient) Delete(ctx context.Context, in *pb.DeletePackageRequest, opts ...grpc.CallOption) (*pb.DeletePackageResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -77,8 +77,8 @@ func (_m *PackagesServiceClient) DeletePackage(ctx context.Context, in *pb.Delet
 	return r0, r1
 }
 
-// GetPackages provides a mock function with given fields: ctx, in, opts
-func (_m *PackagesServiceClient) GetPackages(ctx context.Context, in *pb.GetPackagesRequest, opts ...grpc.CallOption) (*pb.GetPackagesResponse, error) {
+// Get provides a mock function with given fields: ctx, in, opts
+func (_m *PackagesServiceClient) Get(ctx context.Context, in *pb.GetPackagesRequest, opts ...grpc.CallOption) (*pb.GetPackagesResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -107,8 +107,8 @@ func (_m *PackagesServiceClient) GetPackages(ctx context.Context, in *pb.GetPack
 	return r0, r1
 }
 
-// UpdatePackage provides a mock function with given fields: ctx, in, opts
-func (_m *PackagesServiceClient) UpdatePackage(ctx context.Context, in *pb.UpdatePackageRequest, opts ...grpc.CallOption) (*pb.UpdatePackageResponse, error) {
+// Update provides a mock function with given fields: ctx, in, opts
+func (_m *PackagesServiceClient) Update(ctx context.Context, in *pb.UpdatePackageRequest, opts ...grpc.CallOption) (*pb.UpdatePackageResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]

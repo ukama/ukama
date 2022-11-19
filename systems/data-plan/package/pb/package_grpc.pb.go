@@ -22,10 +22,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PackagesServiceClient interface {
-	GetPackages(ctx context.Context, in *GetPackagesRequest, opts ...grpc.CallOption) (*GetPackagesResponse, error)
-	AddPackage(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
-	DeletePackage(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error)
-	UpdatePackage(ctx context.Context, in *UpdatePackageRequest, opts ...grpc.CallOption) (*UpdatePackageResponse, error)
+	Get(ctx context.Context, in *GetPackagesRequest, opts ...grpc.CallOption) (*GetPackagesResponse, error)
+	Add(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
+	Delete(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error)
+	Update(ctx context.Context, in *UpdatePackageRequest, opts ...grpc.CallOption) (*UpdatePackageResponse, error)
 }
 
 type packagesServiceClient struct {
@@ -36,36 +36,36 @@ func NewPackagesServiceClient(cc grpc.ClientConnInterface) PackagesServiceClient
 	return &packagesServiceClient{cc}
 }
 
-func (c *packagesServiceClient) GetPackages(ctx context.Context, in *GetPackagesRequest, opts ...grpc.CallOption) (*GetPackagesResponse, error) {
+func (c *packagesServiceClient) Get(ctx context.Context, in *GetPackagesRequest, opts ...grpc.CallOption) (*GetPackagesResponse, error) {
 	out := new(GetPackagesResponse)
-	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/GetPackages", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *packagesServiceClient) AddPackage(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error) {
+func (c *packagesServiceClient) Add(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error) {
 	out := new(AddPackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/AddPackage", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *packagesServiceClient) DeletePackage(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error) {
+func (c *packagesServiceClient) Delete(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error) {
 	out := new(DeletePackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/DeletePackage", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *packagesServiceClient) UpdatePackage(ctx context.Context, in *UpdatePackageRequest, opts ...grpc.CallOption) (*UpdatePackageResponse, error) {
+func (c *packagesServiceClient) Update(ctx context.Context, in *UpdatePackageRequest, opts ...grpc.CallOption) (*UpdatePackageResponse, error) {
 	out := new(UpdatePackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/UpdatePackage", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.rates.v1.PackagesService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,10 +76,10 @@ func (c *packagesServiceClient) UpdatePackage(ctx context.Context, in *UpdatePac
 // All implementations must embed UnimplementedPackagesServiceServer
 // for forward compatibility
 type PackagesServiceServer interface {
-	GetPackages(context.Context, *GetPackagesRequest) (*GetPackagesResponse, error)
-	AddPackage(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
-	DeletePackage(context.Context, *DeletePackageRequest) (*DeletePackageResponse, error)
-	UpdatePackage(context.Context, *UpdatePackageRequest) (*UpdatePackageResponse, error)
+	Get(context.Context, *GetPackagesRequest) (*GetPackagesResponse, error)
+	Add(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
+	Delete(context.Context, *DeletePackageRequest) (*DeletePackageResponse, error)
+	Update(context.Context, *UpdatePackageRequest) (*UpdatePackageResponse, error)
 	mustEmbedUnimplementedPackagesServiceServer()
 }
 
@@ -87,17 +87,17 @@ type PackagesServiceServer interface {
 type UnimplementedPackagesServiceServer struct {
 }
 
-func (UnimplementedPackagesServiceServer) GetPackages(context.Context, *GetPackagesRequest) (*GetPackagesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPackages not implemented")
+func (UnimplementedPackagesServiceServer) Get(context.Context, *GetPackagesRequest) (*GetPackagesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedPackagesServiceServer) AddPackage(context.Context, *AddPackageRequest) (*AddPackageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddPackage not implemented")
+func (UnimplementedPackagesServiceServer) Add(context.Context, *AddPackageRequest) (*AddPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
-func (UnimplementedPackagesServiceServer) DeletePackage(context.Context, *DeletePackageRequest) (*DeletePackageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeletePackage not implemented")
+func (UnimplementedPackagesServiceServer) Delete(context.Context, *DeletePackageRequest) (*DeletePackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedPackagesServiceServer) UpdatePackage(context.Context, *UpdatePackageRequest) (*UpdatePackageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdatePackage not implemented")
+func (UnimplementedPackagesServiceServer) Update(context.Context, *UpdatePackageRequest) (*UpdatePackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedPackagesServiceServer) mustEmbedUnimplementedPackagesServiceServer() {}
 
@@ -112,74 +112,74 @@ func RegisterPackagesServiceServer(s grpc.ServiceRegistrar, srv PackagesServiceS
 	s.RegisterService(&PackagesService_ServiceDesc, srv)
 }
 
-func _PackagesService_GetPackages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PackagesService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPackagesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PackagesServiceServer).GetPackages(ctx, in)
+		return srv.(PackagesServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.rates.v1.PackagesService/GetPackages",
+		FullMethod: "/ukama.rates.v1.PackagesService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackagesServiceServer).GetPackages(ctx, req.(*GetPackagesRequest))
+		return srv.(PackagesServiceServer).Get(ctx, req.(*GetPackagesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PackagesService_AddPackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PackagesService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddPackageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PackagesServiceServer).AddPackage(ctx, in)
+		return srv.(PackagesServiceServer).Add(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.rates.v1.PackagesService/AddPackage",
+		FullMethod: "/ukama.rates.v1.PackagesService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackagesServiceServer).AddPackage(ctx, req.(*AddPackageRequest))
+		return srv.(PackagesServiceServer).Add(ctx, req.(*AddPackageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PackagesService_DeletePackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PackagesService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeletePackageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PackagesServiceServer).DeletePackage(ctx, in)
+		return srv.(PackagesServiceServer).Delete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.rates.v1.PackagesService/DeletePackage",
+		FullMethod: "/ukama.rates.v1.PackagesService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackagesServiceServer).DeletePackage(ctx, req.(*DeletePackageRequest))
+		return srv.(PackagesServiceServer).Delete(ctx, req.(*DeletePackageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PackagesService_UpdatePackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PackagesService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdatePackageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PackagesServiceServer).UpdatePackage(ctx, in)
+		return srv.(PackagesServiceServer).Update(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.rates.v1.PackagesService/UpdatePackage",
+		FullMethod: "/ukama.rates.v1.PackagesService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PackagesServiceServer).UpdatePackage(ctx, req.(*UpdatePackageRequest))
+		return srv.(PackagesServiceServer).Update(ctx, req.(*UpdatePackageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -192,20 +192,20 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PackagesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetPackages",
-			Handler:    _PackagesService_GetPackages_Handler,
+			MethodName: "Get",
+			Handler:    _PackagesService_Get_Handler,
 		},
 		{
-			MethodName: "AddPackage",
-			Handler:    _PackagesService_AddPackage_Handler,
+			MethodName: "Add",
+			Handler:    _PackagesService_Add_Handler,
 		},
 		{
-			MethodName: "DeletePackage",
-			Handler:    _PackagesService_DeletePackage_Handler,
+			MethodName: "Delete",
+			Handler:    _PackagesService_Delete_Handler,
 		},
 		{
-			MethodName: "UpdatePackage",
-			Handler:    _PackagesService_UpdatePackage_Handler,
+			MethodName: "Update",
+			Handler:    _PackagesService_Update_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
