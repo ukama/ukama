@@ -12,8 +12,8 @@ func TestRateService_IsFutureDate(t *testing.T) {
 	//Error case
 	assert.False(t, IsFutureDate("2023-10-10"))
 	assert.False(t, IsFutureDate("2020-10-10T00:00:00Z"))
-
 }
+
 func TestRateService_IsValidUploadReqArgs(t *testing.T) {
 	//Success case
 	assert.True(t, IsValidUploadReqArgs("https://test.com", "2023-10-10", "inter_mno_data"))
