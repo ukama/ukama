@@ -99,3 +99,38 @@ func TestNetworkServer_GetByName(t *testing.T) {
 		netRepo.AssertExpectations(t)
 	})
 }
+
+func TestNetworkServer_GetByOrg(t *testing.T) {
+	t.Run("Org exist", func(t *testing.T) {
+		const netID = 1
+		const orgID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
+
+		orgRepo.On("GetByName", orgName).Return(
+			&db.Org{Model: gorm.Model{ID: orgID},
+				Name:        orgName,
+				Deactivated: false},
+			nil).Once()
+
+		netRepo.On("GetAllByOrgId", uint(orgID)).Return(
+			[]db.Network{
+				db.Network{Model: gorm.Model{ID: netID},
+					Name:        netName,
+					OrgID:       1,
+					Deactivated: false,
+				}}, nil).Once()
+
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil)
+		netResp, err := s.GetByOrg(context.TODO(),
+			&pb.GetByOrgRequest{OrgName: orgName})
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint64(netID), netResp.GetNetworks()[0].GetId())
+		assert.Equal(t, orgName, netResp.Org)
+		netRepo.AssertExpectations(t)
+	})
+}
