@@ -51,7 +51,7 @@ func TestNetworkServer_AddNetwork(t *testing.T) {
 }
 
 func TestNetworkServer_Get(t *testing.T) {
-	t.Run("Network exists", func(t *testing.T) {
+	t.Run("Network found", func(t *testing.T) {
 		const netID = 1
 		const netName = "network-1"
 
@@ -72,6 +72,23 @@ func TestNetworkServer_Get(t *testing.T) {
 		assert.NotNil(t, netResp)
 		assert.Equal(t, uint64(netID), netResp.GetNetwork().GetId())
 		assert.Equal(t, netName, netResp.Network.Name)
+		netRepo.AssertExpectations(t)
+	})
+
+	t.Run("Network not found", func(t *testing.T) {
+		const netID = 1
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", uint(netID)).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
+			NetworkID: netID})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
 		netRepo.AssertExpectations(t)
 	})
 }
