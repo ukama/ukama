@@ -32,7 +32,7 @@ type NetworkServiceClient interface {
 	// Sites
 	AddSite(ctx context.Context, in *AddSiteRequest, opts ...grpc.CallOption) (*AddSiteResponse, error)
 	GetSite(ctx context.Context, in *GetSiteRequest, opts ...grpc.CallOption) (*GetSiteResponse, error)
-	GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error)
+	GetSiteByNetwork(ctx context.Context, in *GetSiteByNetworkRequest, opts ...grpc.CallOption) (*GetSiteByNetworkResponse, error)
 }
 
 type networkServiceClient struct {
@@ -106,9 +106,9 @@ func (c *networkServiceClient) GetSite(ctx context.Context, in *GetSiteRequest, 
 	return out, nil
 }
 
-func (c *networkServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
-	out := new(GetByNetworkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetByNetwork", in, out, opts...)
+func (c *networkServiceClient) GetSiteByNetwork(ctx context.Context, in *GetSiteByNetworkRequest, opts ...grpc.CallOption) (*GetSiteByNetworkResponse, error) {
+	out := new(GetSiteByNetworkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetSiteByNetwork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ type NetworkServiceServer interface {
 	// Sites
 	AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error)
 	GetSite(context.Context, *GetSiteRequest) (*GetSiteResponse, error)
-	GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error)
+	GetSiteByNetwork(context.Context, *GetSiteByNetworkRequest) (*GetSiteByNetworkResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
 
@@ -158,8 +158,8 @@ func (UnimplementedNetworkServiceServer) AddSite(context.Context, *AddSiteReques
 func (UnimplementedNetworkServiceServer) GetSite(context.Context, *GetSiteRequest) (*GetSiteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSite not implemented")
 }
-func (UnimplementedNetworkServiceServer) GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetByNetwork not implemented")
+func (UnimplementedNetworkServiceServer) GetSiteByNetwork(context.Context, *GetSiteByNetworkRequest) (*GetSiteByNetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSiteByNetwork not implemented")
 }
 func (UnimplementedNetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {}
 
@@ -300,20 +300,20 @@ func _NetworkService_GetSite_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NetworkService_GetByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetByNetworkRequest)
+func _NetworkService_GetSiteByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSiteByNetworkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NetworkServiceServer).GetByNetwork(ctx, in)
+		return srv.(NetworkServiceServer).GetSiteByNetwork(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/GetByNetwork",
+		FullMethod: "/ukama.network.v1.NetworkService/GetSiteByNetwork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
+		return srv.(NetworkServiceServer).GetSiteByNetwork(ctx, req.(*GetSiteByNetworkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -354,8 +354,8 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NetworkService_GetSite_Handler,
 		},
 		{
-			MethodName: "GetByNetwork",
-			Handler:    _NetworkService_GetByNetwork_Handler,
+			MethodName: "GetSiteByNetwork",
+			Handler:    _NetworkService_GetSiteByNetwork_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

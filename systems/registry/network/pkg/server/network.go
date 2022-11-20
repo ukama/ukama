@@ -170,7 +170,7 @@ func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*p
 		Site: dbSiteToPbSite(site)}, nil
 }
 
-func (n *NetworkServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+func (n *NetworkServer) GetSiteByNetwork(ctx context.Context, req *pb.GetSiteByNetworkRequest) (*pb.GetSiteByNetworkResponse, error) {
 	ntwk, err := n.netRepo.Get(uint(req.GetNetworkID()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
@@ -181,7 +181,7 @@ func (n *NetworkServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRe
 		return nil, grpc.SqlErrorToGrpc(err, "sites")
 	}
 
-	resp := &pb.GetByNetworkResponse{
+	resp := &pb.GetSiteByNetworkResponse{
 		NetworkID: uint64(ntwk.ID),
 		Sites:     dbSitesToPbSites(sites),
 	}
