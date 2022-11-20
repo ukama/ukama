@@ -12,7 +12,7 @@ import (
 )
 
 func TestNetworkServer_AddNetwork(t *testing.T) {
-	t.Run("Org exist", func(t *testing.T) {
+	t.Run("Org exists", func(t *testing.T) {
 		// Arrange
 		const orgID = uint(1)
 		const netName = "network-1"
@@ -94,7 +94,7 @@ func TestNetworkServer_Get(t *testing.T) {
 }
 
 func TestNetworkServer_GetByName(t *testing.T) {
-	t.Run("Org and Network exist", func(t *testing.T) {
+	t.Run("Org and Network found", func(t *testing.T) {
 		const netID = 1
 		const orgName = "org-1"
 		const netName = "network-1"
@@ -118,10 +118,28 @@ func TestNetworkServer_GetByName(t *testing.T) {
 		assert.Equal(t, netName, netResp.Network.Name)
 		netRepo.AssertExpectations(t)
 	})
+
+	t.Run("Org or Network not found", func(t *testing.T) {
+		const netID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("GetByName", orgName, netName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
 }
 
 func TestNetworkServer_GetByOrg(t *testing.T) {
-	t.Run("Org exist", func(t *testing.T) {
+	t.Run("Org found", func(t *testing.T) {
 		const netID = 1
 		const orgID = 1
 		const orgName = "org-1"
