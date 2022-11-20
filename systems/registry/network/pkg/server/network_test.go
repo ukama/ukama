@@ -134,3 +134,22 @@ func TestNetworkServer_GetByOrg(t *testing.T) {
 		netRepo.AssertExpectations(t)
 	})
 }
+
+func TestNetworkServer_Delete(t *testing.T) {
+	t.Run("Org and Network exist", func(t *testing.T) {
+		const netID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Delete", orgName, netName).Return(nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		_, err := s.Delete(context.TODO(), &pb.DeleteRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.NoError(t, err)
+		netRepo.AssertExpectations(t)
+	})
+}
