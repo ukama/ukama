@@ -1,10 +1,5 @@
 package rest
 
-import (
-	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-	pbnode "github.com/ukama/ukama/systems/registry/node/pb/gen"
-)
-
 // org group
 
 type AddOrgRequest struct {
@@ -110,51 +105,4 @@ type DetachNodeRequest struct {
 	OrgName        string `path:"org" validate:"required"`
 	NodeId         string `path:"node" validate:"required"`
 	AttachedNodeId string `path:"attachedId" validate:"required"`
-}
-
-func MapNodesList(pbList *pb.GetNodesResponse) *NodesList {
-	var nodes []*Node
-	for _, node := range pbList.Nodes {
-		nodes = append(nodes, mapPbNode(node))
-	}
-	return &NodesList{
-		OrgName: pbList.OrgName,
-		Nodes:   nodes,
-	}
-}
-
-func mapPbNode(node *pb.Node) *Node {
-	return &Node{
-		NodeId: node.NodeId,
-		State:  pb.NodeState_name[int32(node.State)],
-		Type:   pb.NodeType_name[int32(node.Type)],
-		Name:   node.Name,
-	}
-}
-
-func mapExtendeNode(node *pbnode.Node) *NodeExtended {
-	nx := &NodeExtended{
-		Node: Node{
-			NodeId: node.NodeId,
-			State:  pb.NodeState_name[int32(node.State)],
-			Type:   pb.NodeType_name[int32(node.Type)],
-			Name:   node.Name,
-		},
-	}
-	if len(node.Attached) > 0 {
-		nx.Attached = make([]*Node, len(node.Attached))
-		for i, n := range node.Attached {
-			nx.Attached[i] = mapNodePbNode(n)
-		}
-	}
-	return nx
-}
-
-func mapNodePbNode(node *pbnode.Node) *Node {
-	return &Node{
-		NodeId: node.NodeId,
-		State:  pb.NodeState_name[int32(node.State)],
-		Type:   pb.NodeType_name[int32(node.Type)],
-		Name:   node.Name,
-	}
 }
