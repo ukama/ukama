@@ -171,3 +171,44 @@ func TestNetworkServer_Delete(t *testing.T) {
 		netRepo.AssertExpectations(t)
 	})
 }
+
+func TestNetworkServer_AddSite(t *testing.T) {
+	t.Run("Network exists", func(t *testing.T) {
+		// Arrange
+		const netID = uint(1)
+		const orgID = uint(1)
+		const netName = "network-1"
+		const siteName = "site-A"
+
+		netRepo := &mocks.NetRepo{}
+		siteRepo := &mocks.SiteRepo{}
+
+		site := &db.Site{
+			Name:      siteName,
+			NetworkID: netID,
+		}
+
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       orgID,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("Add", site).Return(nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+
+		// Act
+		res, err := s.AddSite(context.TODO(), &pb.AddSiteRequest{
+			NetworkID: uint64(netID),
+			SiteName:  siteName,
+		})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Equal(t, siteName, res.Site.Name)
+		assert.Equal(t, uint64(netID), res.Site.NetworkID)
+		netRepo.AssertExpectations(t)
+	})
+}
