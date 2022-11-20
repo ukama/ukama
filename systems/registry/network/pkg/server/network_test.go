@@ -261,3 +261,40 @@ func TestNetworkServer_GetSite(t *testing.T) {
 		siteRepo.AssertExpectations(t)
 	})
 }
+
+func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
+	t.Run("Network found", func(t *testing.T) {
+		const netID = 1
+		const orgID = 1
+		const siteName = "site-A"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+		siteRepo := &mocks.SiteRepo{}
+
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       1,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByNetwork", uint(orgID)).Return(
+			[]db.Site{
+				db.Site{Model: gorm.Model{ID: netID},
+					Name:        siteName,
+					NetworkID:   1,
+					Deactivated: false,
+				}}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		netResp, err := s.GetSiteByNetwork(context.TODO(),
+			&pb.GetSiteByNetworkRequest{NetworkID: netID})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, uint64(netID), netResp.GetSites()[0].GetId())
+		assert.Equal(t, uint64(netID), netResp.NetworkID)
+		netRepo.AssertExpectations(t)
+	})
+}
