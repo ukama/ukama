@@ -26,7 +26,7 @@ message AddResponse{
 }
 
 message GetRequest {
-    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message GetResponse {
@@ -34,7 +34,7 @@ message GetResponse {
 }
 
 message UpdateRequest {
-    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
     UserAttributes user = 2;
 }
 
@@ -43,7 +43,7 @@ message UpdateResponse {
 }
 
 message DeactivateRequest {
-    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message  DeactivateResponse{
@@ -51,7 +51,7 @@ message  DeactivateResponse{
 }
 
 message DeleteRequest{
-    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message DeleteResponse {
@@ -68,6 +68,6 @@ message User {
     string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     string phone = 3  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string uuid = 4  [(validator.field) = {uuid_ver: 0}];
-    bool isDeactivated = 5;
-    google.protobuf.Timestamp created_at = 6;
+    bool isDeactivated = 5 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 6 [json_name = "created_at"];
 }
