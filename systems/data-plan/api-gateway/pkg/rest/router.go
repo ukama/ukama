@@ -88,8 +88,8 @@ func (r *Router) init() {
 	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
 
 	packages := v1.Group(pack, "Packages", "looking for packages credentials")
-	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PUT("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
+	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PATCH("", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
@@ -114,6 +114,7 @@ func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb
 	})
 	if err != nil {
 		logrus.Error(err)
+		return nil ,err
 	}
 
 	return resp,nil
@@ -127,8 +128,10 @@ func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest)
 		Id:    _id,
 		OrgId: 12345,
 	})
+	fmt.Println("ERROR :",err)
 	if err != nil {
 		logrus.Error(err)
+		return nil ,err
 	}
 	return resp,nil
 }
@@ -146,6 +149,7 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	})
 	if err != nil {
 		logrus.Error(err)
+		return nil ,err
 	}
 
 	return resp,nil
