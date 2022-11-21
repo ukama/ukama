@@ -2,21 +2,37 @@ package server
 
 import (
 	"context"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/data-plan/package/mocks"
 	"github.com/ukama/ukama/systems/data-plan/package/pb"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestPackageServer_GetPackages(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetPackagesRequest{
 		Id:    1,
-		OrgId: 2323,
+		OrgId: 1,
 	}
+	var failMockFilters1 = &pb.GetPackagesRequest{
+		Id:    0,
+		OrgId: 0,
+	}
+	var failMockFilters2 = &pb.GetPackagesRequest{
+		Id:    999,
+		OrgId: 999,
+	}
+	s := NewPackageServer(packageRepo)
+
+	// Success case
 	packageRepo.On("Get", mockFilters.OrgId, mockFilters.Id).Return([]db.Package{
 		{
 			Name:         "Daily-pack",
@@ -28,13 +44,24 @@ func TestPackageServer_GetPackages(t *testing.T) {
 			Voice_volume: 34,
 			Org_rates_id: 00},
 	}, nil)
-
-	s := NewPackageServer(packageRepo)
-
-	_package, err := s.GetPackages(context.TODO(), mockFilters)
+	pkg, err := s.Get(context.TODO(), mockFilters)
 	assert.NoError(t, err)
-	assert.Equal(t, int64(12), _package.Packages[0].DataVolume)
+	assert.Equal(t, int64(12), pkg.Packages[0].DataVolume)
 	packageRepo.AssertExpectations(t)
+
+	// Error case: Invalid orgID
+	packageRepo.On("Get", failMockFilters1.OrgId, failMockFilters1.Id).
+		Return(nil, status.Errorf(codes.InvalidArgument, "OrgId is required."))
+	pkg1, err := s.Get(context.TODO(), failMockFilters1)
+	assert.Error(t, err)
+	assert.Nil(t, pkg1)
+
+	// Error case: Error fetching records
+	packageRepo.On("Get", failMockFilters2.OrgId, failMockFilters2.Id).
+		Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
+	pkg2, err := s.Get(context.TODO(), failMockFilters2)
+	assert.Error(t, err)
+	assert.Nil(t, pkg2)
 }
 
 func TestPackageServer_AddPackage(t *testing.T) {
@@ -45,7 +72,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 
 	s := NewPackageServer(packageRepo)
 
-	ActPackage, err := s.AddPackage(context.TODO(), &pb.AddPackageRequest{
+	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active: true,
 		Name:   "daily-pack",
 	})
@@ -56,29 +83,82 @@ func TestPackageServer_AddPackage(t *testing.T) {
 
 func TestPackageServer_UpdatePackage(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
+	s := NewPackageServer(packageRepo)
+
+	// Success case
 	packageRepo.On("Update", uint64(1), mock.Anything).Return(&db.Package{
 		Active: false,
 	}, nil)
-
-	s := NewPackageServer(packageRepo)
-
-	ap, err := s.UpdatePackage(context.TODO(), &pb.UpdatePackageRequest{
+	up, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
 		Id:     uint64(1),
 		Active: false,
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, false, ap.Package.Active)
+	assert.Equal(t, false, up.Package.Active)
 	packageRepo.AssertExpectations(t)
+
+	//Error case
+	packageRepo.On("Update", uint64(1), db.Package{
+		Active: false,
+	}).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
+	_up, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
+		Id:     uint64(1),
+		Active: false,
+	})
+	layout := "2006-01-02 15:04:05 -0700 MST"
+	ct, _ := time.Parse(layout, _up.Package.GetCreatedAt())
+	ut, _ := time.Parse(layout, _up.Package.GetUpdatedAt())
+	dt, _ := time.Parse(layout, _up.Package.GetDeletedAt())
+	assert.NoError(t, err)
+	assert.True(t, true, ct.IsZero())
+	assert.True(t, true, ut.IsZero())
+	assert.True(t, true, dt.IsZero())
 }
 
 func TestPackageServer_DeletePackage(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	packageRepo.On("Delete", uint64(1), uint64(1)).Return(nil)
 	s := NewPackageServer(packageRepo)
-	_, err := s.DeletePackage(context.TODO(), &pb.DeletePackageRequest{
-		Id:    uint64(1),
-		OrgId: uint64(1),
-	})
+	var mockFilters = &pb.DeletePackageRequest{
+		Id:    1,
+		OrgId: 1,
+	}
+	var failMockFilters1 = &pb.DeletePackageRequest{
+		Id:    1,
+		OrgId: 0,
+	}
+	var failMockFilters2 = &pb.DeletePackageRequest{
+		Id:    0,
+		OrgId: 1,
+	}
+	var failMockFilters3 = &pb.DeletePackageRequest{
+		Id:    999,
+		OrgId: 999,
+	}
+
+	// Success case
+	packageRepo.On("Delete", mockFilters.OrgId, mockFilters.Id).Return(nil)
+	_, err := s.Delete(context.TODO(), mockFilters)
 	assert.NoError(t, err)
 	packageRepo.AssertExpectations(t)
+
+	// Error case: OrgID 0
+	packageRepo.On("Delete", failMockFilters1.OrgId, failMockFilters1.Id).
+		Return(status.Errorf(codes.InvalidArgument, "OrgId is required."))
+	pkg1, err := s.Delete(context.TODO(), failMockFilters1)
+	assert.Error(t, err)
+	assert.Nil(t, pkg1)
+
+	// Error case: Id 0
+	packageRepo.On("Delete", failMockFilters2.OrgId, failMockFilters2.Id).
+		Return(status.Errorf(codes.InvalidArgument, "Id is required."))
+	pkg2, err := s.Delete(context.TODO(), failMockFilters2)
+	assert.Error(t, err)
+	assert.Nil(t, pkg2)
+
+	// Error case: Error deleting record
+	packageRepo.On("Delete", failMockFilters3.OrgId, failMockFilters3.Id).
+		Return(grpc.SqlErrorToGrpc(errors.New("SQL error while deleting record"), "packages"))
+	pkg3, err := s.Delete(context.TODO(), failMockFilters3)
+	assert.Error(t, err)
+	assert.Nil(t, pkg3)
 }

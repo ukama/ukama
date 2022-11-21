@@ -8,7 +8,7 @@ build:
 lint:
 	golangci-lint run
 test:
-	go test -cover -v ./...
+	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
 gen:
 	protoc --go_out=. --go_opt=paths=source_relative \
    --go-grpc_out=. --go-grpc_opt=paths=source_relative \

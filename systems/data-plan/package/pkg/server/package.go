@@ -21,16 +21,15 @@ type PackageServer struct {
 
 func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
 	return &PackageServer{packageRepo: packageRepo}
-
 }
 
 func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
 	logrus.Infof("GetPackages : %v  ,%v", req.GetOrgId(), req.GetId())
 
-	if req.GetOrgId() == 0 {
+	if validations.IsInvalidId(req.GetOrgId()) {
 		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required.")
-
 	}
+
 	packages, err := p.packageRepo.Get(req.GetOrgId(), req.GetId())
 	if err != nil {
 		logrus.Error("error while getting package" + err.Error())
@@ -48,7 +47,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	logrus.Infof("Add Package Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v", req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 	_package := &db.Package{
 		Name:         req.GetName(),
-		Sim_type:     validations.ReqPbToStr(req.GetSimType()),
+		Sim_type:     req.GetSimType().String(),
 		Org_id:       uint(req.GetOrgId()),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
@@ -71,13 +70,11 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 
 func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
 	logrus.Infof("Delete Packages, orgId: %v, packageId: %v", req.GetOrgId(), req.GetId())
-	if req.GetOrgId() == 0 {
+	if validations.IsInvalidId(req.GetOrgId()) {
 		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required.")
-
 	}
-	if req.GetId() == 0 {
+	if validations.IsInvalidId(req.GetId()) {
 		return nil, status.Errorf(codes.InvalidArgument, "PackageID is required.")
-
 	}
 	err := p.packageRepo.Delete(req.GetOrgId(), req.GetId())
 	if err != nil {
@@ -92,7 +89,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		req.Id, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 	_package := db.Package{
 		Name:         req.GetName(),
-		Sim_type:     validations.ReqPbToStr(req.GetSimType()),
+		Sim_type:     req.GetSimType().String(),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
 		Sms_volume:   uint(req.GetSmsVolume()),
@@ -131,7 +128,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		OrgRatesId:  uint64(p.Org_rates_id),
 		DataVolume:  int64(p.Data_volume),
 		VoiceVolume: int64(p.Voice_volume),
-		SimType:     validations.ReqStrTopb(p.Sim_type),
+		SimType:     pb.SimType(pb.SimType_value[p.Sim_type]),
 		CreatedAt:   p.CreatedAt.String(),
 		UpdatedAt:   p.UpdatedAt.String(),
 		DeletedAt:   p.DeletedAt.Time.String(),
