@@ -13,7 +13,7 @@ type Config struct {
 	Server            rest.HttpConfig
 	Services          GrpcEndpoints `mapstructure:"services"`
 	HttpServices      HttpEndpoints `mapstructure:"httpServices"`
-	// Metrics           config.Metrics `mapstructure:"metrics"`
+	Metrics           config.Metrics `mapstructure:"metrics"`
 }
 
 type Kratos struct {
@@ -23,7 +23,6 @@ type Kratos struct {
 type GrpcEndpoints struct {
 	Timeout  time.Duration
 	Package  string
-	Baserate string
 }
 
 type HttpEndpoints struct {
@@ -40,11 +39,9 @@ func NewConfig() *Config {
 		BaseConfig: config.BaseConfig{
 			DebugMode: false,
 		},
-
 		Services: GrpcEndpoints{
-			Timeout:  3 * time.Second,
-			Package:  "package:9090",
-			Baserate: "base-rate:9090",
+			Timeout: 3 * time.Second,
+			Package:  "0.0.0.0:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
@@ -55,6 +52,6 @@ func NewConfig() *Config {
 			Port: 8080,
 			Cors: defaultCors,
 		},
-		// Metrics: *config.DefaultMetrics(),
+		Metrics: *config.DefaultMetrics(),
 	}
 }

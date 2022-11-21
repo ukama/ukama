@@ -9,6 +9,7 @@ import (
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/metrics"
 )
 
 var svcConf = pkg.NewConfig()
@@ -19,7 +20,7 @@ func main() {
 
 	clientSet := rest.NewClientsSet(&svcConf.Services)
 
-	//  metrics.StartMetricsServer(&svcConf.Metrics)
+	  metrics.StartMetricsServer(&svcConf.Metrics)
 
 	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf))
 	r.Run()

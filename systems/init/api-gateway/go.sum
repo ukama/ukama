@@ -663,12 +663,15 @@ github.com/ugorji/go/codec v1.2.6 h1:7kbGefxLoDBuYXOms4yD7223OpNMMPNPZxXk5TvFcyQ
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
 github.com/ukama/ukamaX/cloud/registry v0.0.0-20220425182032-2c377df948f4 h1:Gbs9BmYIeZFkcXfpq6a+BbGR9TYbWiqSqxsZ1ZXz+v8=
 github.com/ukama/ukamaX/cloud/registry v0.0.0-20220425182032-2c377df948f4/go.mod h1:1vkSPngT+cPyGi8K311Z6WIFTSBXYg4ogkKh3M7Q7ck=
+github.com/ukama/ukamaX/common v0.0.0-20211015093708-cd6e230254b5/go.mod h1:lvqau6EvXr2PM5EJuKiw2buxJhEls1GAKIQz2XkSRqo=
 github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f h1:yrl8IXbtADGO/HaR2pxe7pYYutqVBWEKU2Ywksz5HJE=
 github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f/go.mod h1:aADpt/Ghhrquzmq675Omb38j91t///mwvBFmIsJGLHw=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/vektra/mockery/v2 v2.14.0 h1:KZ1p5Hrn8tiY+LErRMr14HHle6khxo+JKOXLBW/yfqs=
 github.com/vektra/mockery/v2 v2.14.0/go.mod h1:bnD1T8tExSgPD1ripLkDbr60JA9VtQeu12P3wgLZd7M=
+github.com/vektra/mockery/v2 v2.15.0 h1:5Egbxoancm1hhkJUoAF+cf0FBzC9oxS28LL/ZKbC980=
+github.com/vektra/mockery/v2 v2.15.0/go.mod h1:RswGtsqDbCR9j4UcgBQuAZY7OFxI+TgtHevc0gR0kCY=
 github.com/wI2L/fizz v0.18.1 h1:7MHZ9Q+6TFjgI00xJtypVX5ah4tyOZWSfrNrk6KGUxI=
 github.com/wI2L/fizz v0.18.1/go.mod h1:CMxMR1amz8id9wr2YUpONf+F/F9hW1cqRXxVNNuWVxE=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=

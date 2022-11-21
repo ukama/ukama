@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -18,7 +19,6 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
-const PACKAGE_URL_PARAMETER = "package"
 
 type Router struct {
 	f       *fizz.Fizz
@@ -67,7 +67,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
-		// metricsConfig: svcConf.Metrics,
+		 metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
@@ -83,13 +83,15 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	const pack = "/packages/"
+	const pack = "/packages"
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
 
 	packages := v1.Group(pack, "Packages", "looking for packages credentials")
-	packages.GET("/", formatDoc("Get packages Credentials", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
-	packages.PUT("", formatDoc("Add Package and Credential", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
+	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
+	packages.PUT("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
+	packages.PATCH("", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
+	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
 }
 
@@ -101,31 +103,56 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb.GetPackagesResponse, error) {
 
-	// _id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	// if err != nil {
-	// 	logrus.Error(err)
-	// }
-	// _org_id, err := strconv.ParseUint(c.Param("org_id"), 10, 64)
-
-	// if err != nil {
-	// 	logrus.Error(err)
-	// }
-	return p.clients.d.GetPackage(&pb.GetPackagesRequest{
-		Id:    19,
+	_id, err := strconv.ParseUint(c.Param("package"), 10, 64)
+	if err != nil {
+		logrus.Error(err)
+	}
+	
+	resp,err:= p.clients.d.GetPackage(&pb.GetPackagesRequest{
+		Id:    _id,
 		OrgId: 12345,
 	})
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	return resp,nil
+}
+func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest) (*pb.DeletePackageResponse, error) {
+	_id, err := strconv.ParseUint(c.Param("package"), 10, 64)
+	if err != nil {
+		logrus.Error(err)
+	}
+	resp,err:= p.clients.d.DeletePackage(&pb.DeletePackageRequest{
+		Id:    _id,
+		OrgId: 12345,
+	})
+	if err != nil {
+		logrus.Error(err)
+	}
+	return resp,nil
+}
+func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
+	resp,err:= p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
+		Id:req.Id,
+		Name:         req.Name,
+		SimType:     ReqStrTopb(req.SimType),
+		Active:       req.Active,
+		Duration:     req.Duration,
+		SmsVolume:   req.SmsVolume,
+		DataVolume:  req.DataVolume,
+		VoiceVolume: req.VoiceVolume,
+		OrgRatesId: req.OrgRatesId,
+	})
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	return resp,nil
+
+	
 }
 func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
-
-	// _id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	// if err != nil {
-	// 	logrus.Error(err)
-	// }
-	// _org_id, err := strconv.ParseUint(c.Param("org_id"), 10, 64)
-
-	// if err != nil {
-	// 	logrus.Error(err)
-	// }
 	return p.clients.d.AddPackage(&pb.AddPackageRequest{
 		Name:   req.Name,
 		OrgId:req.OrgId,
@@ -135,7 +162,21 @@ func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Active:req.Active,
 		DataVolume:req.DataVolume,
 		SmsVolume:req.SmsVolume,
-		// SimType:req.SimType,
+		SimType:     ReqStrTopb(req.SimType),
 	})
 }
 
+func ReqStrTopb(e string) pb.SimType {
+	switch e {
+	case "inter_none":
+		return pb.SimType_INTER_NONE
+	case "inter_mno_data":
+		return pb.SimType_INTER_MNO_DATA
+	case "inter_ukama_all":
+		return pb.SimType_INTER_UKAMA_ALL
+	case "inter_mno_all":
+		return pb.SimType_INTER_MNO_ALL
+	default:
+		return pb.SimType_INTER_NONE
+	}
+}
