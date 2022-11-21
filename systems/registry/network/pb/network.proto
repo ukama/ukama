@@ -29,7 +29,7 @@ service NetworkService {
 
 message AddRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
 }
 
 message AddResponse{
@@ -38,7 +38,7 @@ message AddResponse{
 }
 
 message GetRequest{
-    uint64 networkID = 1;
+    uint64 networkID = 1 [json_name = "network_id"];
 }
 
 message GetResponse{
@@ -47,7 +47,7 @@ message GetResponse{
 
 message GetByNameRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
 }
 
 message GetByNameResponse{
@@ -56,7 +56,7 @@ message GetByNameResponse{
 }
 
 message GetByOrgRequest{
-    string orgName = 1 [(validator.field) = { string_not_empty: true}];
+    string orgName = 1 [(validator.field) = { string_not_empty: true}, json_name = "org"];
 }
 
 message GetByOrgResponse{
@@ -66,15 +66,15 @@ message GetByOrgResponse{
 
 message DeleteRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true} , json_name = "org"];
 }
 
 message DeleteResponse{
 }
 
 message AddSiteRequest{
-    uint64 networkID = 1;
-    string siteName = 2 [(validator.field) = { string_not_empty: true}];
+    uint64 networkID = 1 [json_name = "network_id"];
+    string siteName = 2 [(validator.field) = { string_not_empty: true}, json_name = "site"];
 }
 
 message AddSiteResponse{
@@ -82,7 +82,7 @@ message AddSiteResponse{
 }
 
 message GetSiteRequest{
-    uint64 siteID = 1;
+    uint64 siteID = 1 [json_name = "site_id"];
 }
 
 message GetSiteResponse{
@@ -90,11 +90,11 @@ message GetSiteResponse{
 }
 
 message GetSiteByNetworkRequest{
-    uint64 networkID = 1;
+    uint64 networkID = 1 [json_name = "network_id"];
 }
 
 message GetSiteByNetworkResponse{
-    uint64 networkID = 1;
+    uint64 networkID = 1 [json_name = "network_id"];
     repeated Site sites = 2;
 }
 
@@ -102,14 +102,14 @@ message GetSiteByNetworkResponse{
 message Network {
     uint64 id = 1;
     string name = 2;
-    bool isDeactivated = 3;
-    google.protobuf.Timestamp created_at = 4;
+    bool isDeactivated = 3 [json_name = "is_dactivated"];
+    google.protobuf.Timestamp created_at = 4 [json_name = "created_at"];
 }
 
 message Site {
     uint64 id = 1;
     string name = 2;
-    uint64 NetworkID = 3;
-    bool isDeactivated = 4;
-    google.protobuf.Timestamp created_at = 5;
+    uint64 NetworkID = 3 [json_name = "network_id"];
+    bool isDeactivated = 4 [json_name = "is_dactivated"];
+    google.protobuf.Timestamp created_at = 5 [json_name = "created_at"];
 }
