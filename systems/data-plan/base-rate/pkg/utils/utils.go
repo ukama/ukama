@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
 	"github.com/jszwec/csvutil"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 )
 
 type RawRates struct {
@@ -33,10 +35,17 @@ func FetchData(url string) ([]RawRates, error) {
 
 	content, _ := io.ReadAll(resp.Body)
 
-	var rawRates []RawRates
-	csvutil.Unmarshal(content, &rawRates)
+	var r []RawRates
+	errorStr := "invalid CSV file data"
+	csvutil.Unmarshal(content, &r)
 
-	return rawRates, nil
+	if len(r) == 0 || validations.IsEmpty(r[0].Country) ||
+		validations.IsEmpty(r[0].Network) ||
+		validations.IsEmpty(r[0].Data) {
+		return nil, errors.New(errorStr)
+	}
+
+	return r, nil
 }
 
 func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {

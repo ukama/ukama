@@ -28,13 +28,19 @@ func TestRateService_ParseToModel(t *testing.T) {
 
 func TestRateService_FetchData(t *testing.T) {
 	mockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
+	failMockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/baserate-test/systems/data-plan/docs/template/failed_template.csv"
 	//Success case
 	rawRates, err := FetchData(mockFileUrl)
 	assert.NoError(t, err)
 	assert.Equal(t, "The lunar maria", rawRates[0].Country)
 
-	//Error case
+	//Error case invalid file url
 	rateError1, err := FetchData("/fail" + mockFileUrl)
 	assert.Error(t, err)
 	assert.Nil(t, rateError1)
+
+	//Error case file with invalid data
+	rateError2, err := FetchData(failMockFileUrl)
+	assert.Error(t, err)
+	assert.Nil(t, rateError2)
 }

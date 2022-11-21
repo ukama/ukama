@@ -1,4 +1,4 @@
-package validationErrors
+package validations
 
 import (
 	"testing"
