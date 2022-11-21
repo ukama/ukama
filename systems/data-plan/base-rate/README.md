@@ -158,6 +158,8 @@ make test
 
 This commnd will run unit tests under all base-rate directories.
 
+![BaseRateTest](https://user-images.githubusercontent.com/83802574/203062237-1cf8e774-8e0f-4ea6-9e2b-638a9807057e.gif)
+
 **To Generate PB file**
 
 ```

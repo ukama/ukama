@@ -189,6 +189,8 @@ make test
 
 This commnd will run unit tests under all base-rate directories.
 
+![pkg_test](https://user-images.githubusercontent.com/83802574/203065220-496256f6-1ec4-4a78-8a0c-36d1f200f862.gif)
+
 **To Generate PB file**
 
 ```
