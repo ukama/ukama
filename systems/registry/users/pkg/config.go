@@ -8,6 +8,6 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                *config.Database `default:"{}"`
 	Grpc              *config.Grpc     `default:"{}"`
-	OrgHost           string           `default:"localhost:9091"`
+	OrgHost           string           `default:"org:9090"`
 	Metrics           *config.Metrics  `default:"{}"`
 }
