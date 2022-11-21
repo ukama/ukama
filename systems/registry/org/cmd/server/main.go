@@ -47,10 +47,10 @@ func initConfig() {
 			DbName: pkg.ServiceName,
 		},
 		Grpc: &uconf.Grpc{
-			Port: 9091,
+			Port: 9090,
 		},
 		Metrics: &uconf.Metrics{
-			Port: 10251,
+			Port: 10250,
 		},
 	}
 
