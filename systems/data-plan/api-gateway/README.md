@@ -6,6 +6,34 @@ Restful API Gateway exposed basic crud operations for packages sub system.
 
 A Data-plan Gateway is a single entry point dedicated to the `packages`,`base-rates` etc... It is the one which communicate with `OrgRate` service to get base-rate per region.
 
+## Project structure
+
+```bash
+├── cmd (server initialization)
+│   ├── main.go
+│   ├── version ( Api version )
+└── pkg
+    ├── client
+    │   └── DataPlan
+    ├── rest
+       ├── api (Api request schema structs)
+       └── router ( Api routes and handlers)
+```
+
+## Getting started
+
+```bash
+https://github.com/ukama/ukama.git
+
+cd /systems/data-plan
+
+```
+
+### Prerequisites
+
+- [Go lang](https://go.dev//) >= v1.18
+- An API platform for rest(postman,insomnia ,etc...)
+
 ## Interface
 
 ### Get Package
