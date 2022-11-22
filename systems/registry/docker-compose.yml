@@ -44,6 +44,7 @@ services:
       - DB_HOST=postgresd
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
+      - UKAMA_UUID=${UKAMA_UUID}
       - BOOTSTRAP_URL=bootstrap.dev.ukama.com
       - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
