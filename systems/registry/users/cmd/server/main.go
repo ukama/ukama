@@ -1,12 +1,15 @@
 package main
 
 import (
+	"errors"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/registry/users/pkg/server"
 	"gopkg.in/yaml.v2"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/registry/users/pkg"
 
@@ -79,6 +82,27 @@ func initDb() sql.Db {
 	err := d.Init(&db.User{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
+	}
+
+	usersDB := d.GetGormDb()
+
+	if usersDB.Migrator().HasTable(&db.User{}) {
+		if err := usersDB.First(&db.User{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			logrus.Info("Iniiialzing users table")
+			var ukamaUUID uuid.UUID
+			var err error
+
+			if ukamaUUID, err = uuid.Parse(os.Getenv("UKAMA_UUID")); err != nil {
+				log.Fatalf("Database initialization failed, need valid UKAMA UUID env var. Error: %v", err)
+			}
+
+			usersDB.Create(&db.User{
+				Uuid:  ukamaUUID,
+				Name:  "Ukama Root",
+				Email: "hello@ukama.com",
+				Phone: "0000000000",
+			})
+		}
 	}
 
 	return d

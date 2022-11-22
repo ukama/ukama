@@ -65,6 +65,7 @@ services:
       - DB_HOST=postgresd
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
+      - UKAMA_UUID=${UKAMA_UUID}
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
