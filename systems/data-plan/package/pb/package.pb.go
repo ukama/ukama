@@ -23,25 +23,25 @@ const (
 type SimType int32
 
 const (
-	SimType_INTER_NONE      SimType = 0
-	SimType_INTER_MNO_DATA  SimType = 1
-	SimType_INTER_MNO_ALL   SimType = 2
-	SimType_INTER_UKAMA_ALL SimType = 3
+	SimType_inter_none      SimType = 0
+	SimType_inter_mno_data  SimType = 1
+	SimType_inter_mno_all   SimType = 2
+	SimType_inter_ukama_all SimType = 3
 )
 
 // Enum value maps for SimType.
 var (
 	SimType_name = map[int32]string{
-		0: "INTER_NONE",
-		1: "INTER_MNO_DATA",
-		2: "INTER_MNO_ALL",
-		3: "INTER_UKAMA_ALL",
+		0: "inter_none",
+		1: "inter_mno_data",
+		2: "inter_mno_all",
+		3: "inter_ukama_all",
 	}
 	SimType_value = map[string]int32{
-		"INTER_NONE":      0,
-		"INTER_MNO_DATA":  1,
-		"INTER_MNO_ALL":   2,
-		"INTER_UKAMA_ALL": 3,
+		"inter_none":      0,
+		"inter_mno_data":  1,
+		"inter_mno_all":   2,
+		"inter_ukama_all": 3,
 	}
 )
 
@@ -356,7 +356,7 @@ func (x *UpdatePackageRequest) GetSimType() SimType {
 	if x != nil {
 		return x.SimType
 	}
-	return SimType_INTER_NONE
+	return SimType_inter_none
 }
 
 func (x *UpdatePackageRequest) GetSmsVolume() int64 {
@@ -514,7 +514,7 @@ func (x *AddPackageRequest) GetSimType() SimType {
 	if x != nil {
 		return x.SimType
 	}
-	return SimType_INTER_NONE
+	return SimType_inter_none
 }
 
 func (x *AddPackageRequest) GetSmsVolume() int64 {
@@ -683,7 +683,7 @@ func (x *Package) GetSimType() SimType {
 	if x != nil {
 		return x.SimType
 	}
-	return SimType_INTER_NONE
+	return SimType_inter_none
 }
 
 func (x *Package) GetCreatedAt() string {

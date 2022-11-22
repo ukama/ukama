@@ -19,6 +19,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
+const ORG_ID = 1234
 
 type Router struct {
 	f       *fizz.Fizz
@@ -67,7 +68,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
-		 metricsConfig: svcConf.Metrics,
+		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
@@ -107,87 +108,71 @@ func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb
 	if err != nil {
 		logrus.Error(err)
 	}
-	
-	resp,err:= p.clients.d.GetPackage(&pb.GetPackagesRequest{
+
+	resp, err := p.clients.d.GetPackage(&pb.GetPackagesRequest{
 		Id:    _id,
-		OrgId: 12345,
+		OrgId: ORG_ID,
 	})
 	if err != nil {
 		logrus.Error(err)
-		return nil ,err
+		return nil, err
 	}
 
-	return resp,nil
+	return resp, nil
 }
 func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest) (*pb.DeletePackageResponse, error) {
 	_id, err := strconv.ParseUint(c.Param("package"), 10, 64)
 	if err != nil {
 		logrus.Error(err)
 	}
-	resp,err:= p.clients.d.DeletePackage(&pb.DeletePackageRequest{
+	resp, err := p.clients.d.DeletePackage(&pb.DeletePackageRequest{
 		Id:    _id,
-		OrgId: 12345,
+		OrgId: ORG_ID,
 	})
 	if err != nil {
 		logrus.Error(err)
-		return nil ,err
+		return nil, err
 	}
-	return resp,nil
+	return resp, nil
 }
 func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.GetPackagesResponse, error) {
-	_,err:= p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
-		Id:req.Id,
-		Name:         req.Name,
-		SimType:     ReqStrTopb(req.SimType),
-		Active:       req.Active,
-		Duration:     req.Duration,
+	_, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
+		Id:          req.Id,
+		Name:        req.Name,
+		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
+		Active:      req.Active,
+		Duration:    req.Duration,
 		SmsVolume:   req.SmsVolume,
 		DataVolume:  req.DataVolume,
 		VoiceVolume: req.VoiceVolume,
-		OrgRatesId: req.OrgRatesId,
+		OrgRatesId:  req.OrgRatesId,
 	})
 	if err != nil {
 		logrus.Error(err)
-		return nil ,err
+		return nil, err
 	}
-	res,err:= p.clients.d.GetPackage(&pb.GetPackagesRequest{
+	res, err := p.clients.d.GetPackage(&pb.GetPackagesRequest{
 		Id:    req.Id,
-		OrgId: 12345,
+		OrgId: ORG_ID,
 	})
 	if err != nil {
-		logrus.Error("package with %d does not exist , ",req.Id, err.Error())
-		return nil,err
+		logrus.Errorf("package with %d does not exist %s", req.Id, err.Error())
+		return nil, err
 	}
 
-	return res,nil
+	return res, nil
 
-	
 }
 func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
 	return p.clients.d.AddPackage(&pb.AddPackageRequest{
-		Name:   req.Name,
-		OrgId:req.OrgId,
-		Duration:req.Duration,
-		OrgRatesId:req.OrgRatesId,
-		VoiceVolume:req.VoiceVolume,
-		Active:req.Active,
-		DataVolume:req.DataVolume,
-		SmsVolume:req.SmsVolume,
-		SimType:     ReqStrTopb(req.SimType),
+		Name:        req.Name,
+		OrgId:       req.OrgId,
+		Duration:    req.Duration,
+		OrgRatesId:  req.OrgRatesId,
+		VoiceVolume: req.VoiceVolume,
+		Active:      req.Active,
+		DataVolume:  req.DataVolume,
+		SmsVolume:   req.SmsVolume,
+		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
 	})
-}
-
-func ReqStrTopb(e string) pb.SimType {
-	switch e {
-	case "inter_none":
-		return pb.SimType_INTER_NONE
-	case "inter_mno_data":
-		return pb.SimType_INTER_MNO_DATA
-	case "inter_ukama_all":
-		return pb.SimType_INTER_UKAMA_ALL
-	case "inter_mno_all":
-		return pb.SimType_INTER_MNO_ALL
-	default:
-		return pb.SimType_INTER_NONE
-	}
 }

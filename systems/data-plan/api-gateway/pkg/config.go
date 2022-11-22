@@ -11,8 +11,8 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints `mapstructure:"services"`
-	HttpServices      HttpEndpoints `mapstructure:"httpServices"`
+	Services          GrpcEndpoints  `mapstructure:"services"`
+	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 }
 
@@ -21,8 +21,8 @@ type Kratos struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout  time.Duration
-	Package  string
+	Timeout time.Duration
+	Package string
 }
 
 type HttpEndpoints struct {
@@ -41,7 +41,7 @@ func NewConfig() *Config {
 		},
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Package:  "0.0.0.0:9090",
+			Package: "0.0.0.0:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
