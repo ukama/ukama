@@ -21,6 +21,7 @@ service OrgService {
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
 
     /* Members */
+    rpc RegisterUser(MemberRequest) returns (MemberResponse);
     rpc AddMember(MemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
