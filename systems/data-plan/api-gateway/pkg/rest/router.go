@@ -128,15 +128,14 @@ func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest)
 		Id:    _id,
 		OrgId: 12345,
 	})
-	fmt.Println("ERROR :",err)
 	if err != nil {
 		logrus.Error(err)
 		return nil ,err
 	}
 	return resp,nil
 }
-func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
-	resp,err:= p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
+func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.GetPackagesResponse, error) {
+	_,err:= p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
 		Id:req.Id,
 		Name:         req.Name,
 		SimType:     ReqStrTopb(req.SimType),
@@ -151,8 +150,16 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 		logrus.Error(err)
 		return nil ,err
 	}
+	res,err:= p.clients.d.GetPackage(&pb.GetPackagesRequest{
+		Id:    req.Id,
+		OrgId: 12345,
+	})
+	if err != nil {
+		logrus.Error("package with %d does not exist , ",req.Id, err.Error())
+		return nil,err
+	}
 
-	return resp,nil
+	return res,nil
 
 	
 }
