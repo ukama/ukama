@@ -13,7 +13,7 @@ import (
 
 type OrgRepo interface {
 	/* Orgs */
-	Add(org *Org) error
+	Add(org *Org, nestedFunc func(*Org, *gorm.DB) error) error
 	Get(id uint) (*Org, error)
 	GetByName(name string) (*Org, error)
 	GetByOwner(uuid uuid.UUID) ([]Org, error)
@@ -39,15 +39,30 @@ func NewOrgRepo(db sql.Db) OrgRepo {
 	}
 }
 
-func (r *orgRepo) Add(org *Org) (err error) {
+func (r *orgRepo) Add(org *Org, nestedFunc func(*Org, *gorm.DB) error) (err error) {
 	if !validation.IsValidDnsLabelName(org.Name) {
 		return fmt.Errorf("invalid name must be less then 253 " +
 			"characters and consist of lowercase characters with a hyphen")
 	}
 
-	d := r.Db.GetGormDb().Create(org)
+	err = r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		d := tx.Create(org)
 
-	return d.Error
+		if d.Error != nil {
+			return d.Error
+		}
+
+		if nestedFunc != nil {
+			nestErr := nestedFunc(org, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (r *orgRepo) Get(id uint) (*Org, error) {

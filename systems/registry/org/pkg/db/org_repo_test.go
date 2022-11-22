@@ -136,7 +136,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&org)
+		err = r.Add(&org, nil)
 
 		// Assert
 		assert.NoError(t, err)

@@ -5,14 +5,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/sql"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	"github.com/ukama/ukama/systems/registry/org/pkg"
 
 	userpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
-	pkg "github.com/ukama/ukama/systems/registry/org/pkg/providers"
+	provider "github.com/ukama/ukama/systems/registry/org/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -22,10 +25,10 @@ type OrgService struct {
 	pb.UnimplementedOrgServiceServer
 	orgRepo     db.OrgRepo
 	userRepo    db.UserRepo
-	userService pkg.UserClientProvider
+	userService provider.UserClientProvider
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, userService pkg.UserClientProvider) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, userService provider.UserClientProvider) *OrgService {
 	return &OrgService{
 		orgRepo:     orgRepo,
 		userRepo:    userRepo,
@@ -47,7 +50,36 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		Certificate: req.GetOrg().GetCertificate(),
 	}
 
-	err = r.orgRepo.Add(org)
+	err = r.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
+		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
+
+		// Adding owner as a member
+		user, err := db.NewUserRepo(txDb).Get(owner)
+		if err != nil {
+			user := &db.User{
+				Uuid: org.Owner,
+			}
+
+			err = db.NewUserRepo(txDb).Add(user)
+			if err != nil {
+				return err
+			}
+		}
+
+		logrus.Infof("Adding owner as member")
+		member := &db.OrgUser{
+			OrgID:  org.ID,
+			UserID: user.ID,
+			Uuid:   org.Owner,
+		}
+
+		err = db.NewOrgRepo(txDb).AddMember(member)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")

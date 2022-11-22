@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/registry/org/pkg/db"
+	gorm "gorm.io/gorm"
+
+	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
 )
@@ -14,13 +16,13 @@ type OrgRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: org
-func (_m *OrgRepo) Add(org *db.Org) error {
-	ret := _m.Called(org)
+// Add provides a mock function with given fields: org, nestedFunc
+func (_m *OrgRepo) Add(org *db.Org, nestedFunc func(*db.Org, *gorm.DB) error) error {
+	ret := _m.Called(org, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Org) error); ok {
-		r0 = rf(org)
+	if rf, ok := ret.Get(0).(func(*db.Org, func(*db.Org, *gorm.DB) error) error); ok {
+		r0 = rf(org, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}

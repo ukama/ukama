@@ -22,10 +22,29 @@ func TestOrgServer_AddOrg(t *testing.T) {
 	certificate := "ukama_certs"
 
 	orgRepo := &mocks.OrgRepo{}
+	userRepo := &mocks.UserRepo{}
 
-	orgRepo.On("Add", mock.Anything).Return(nil).Once()
+	org := &db.Org{
+		ID:          0,
+		Owner:       ownerUUID,
+		Certificate: certificate,
+		Name:        orgName,
+	}
 
-	s := NewOrgServer(orgRepo, nil, nil)
+	orgRepo.On("Add", org, mock.Anything).Return(nil).Once()
+
+	userRepo.On("Get", ownerUUID).Return(&db.User{
+		ID:   1,
+		Uuid: ownerUUID,
+	}, nil).Once()
+
+	// orgRepo.On("AddMember", &db.OrgUser{
+	// OrgID:  org.ID,
+	// UserID: 1,
+	// Uuid:   ownerUUID,
+	// }).Return(nil).Once()
+
+	s := NewOrgServer(orgRepo, userRepo, nil)
 
 	// Act
 	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
