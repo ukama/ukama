@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/metrics"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-	provider "github.com/ukama/ukama/systems/registry/org/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/org/pkg/server"
 	"gorm.io/gorm"
 
@@ -132,7 +131,6 @@ func initDb() sql.Db {
 func runGrpcServer(gormdb sql.Db) {
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
-		provider.NewUserClientProvider(svcConf.UsersHost),
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

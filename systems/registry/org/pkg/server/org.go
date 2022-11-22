@@ -12,10 +12,7 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg"
 
-	userpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
-
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
-	provider "github.com/ukama/ukama/systems/registry/org/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -23,16 +20,14 @@ import (
 
 type OrgService struct {
 	pb.UnimplementedOrgServiceServer
-	orgRepo     db.OrgRepo
-	userRepo    db.UserRepo
-	userService provider.UserClientProvider
+	orgRepo  db.OrgRepo
+	userRepo db.UserRepo
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, userService provider.UserClientProvider) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo) *OrgService {
 	return &OrgService{
-		orgRepo:     orgRepo,
-		userRepo:    userRepo,
-		userService: userService,
+		orgRepo:  orgRepo,
+		userRepo: userRepo,
 	}
 }
 
@@ -56,14 +51,7 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		// Adding owner as a member
 		user, err := db.NewUserRepo(txDb).Get(owner)
 		if err != nil {
-			user := &db.User{
-				Uuid: org.Owner,
-			}
-
-			err = db.NewUserRepo(txDb).Add(user)
-			if err != nil {
-				return err
-			}
+			return err
 		}
 
 		logrus.Infof("Adding owner as member")
@@ -149,6 +137,51 @@ func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 	return &pb.UpdateUserResponse{User: dbUserToPbUser(user)}, nil
 }
 
+func (r *OrgService) RegisterUser(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
+	// Get the Organization
+	org, err := r.orgRepo.Get(uint(req.GetOrgId()))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	// Get the User
+	userUUID, err := uuid.Parse(req.GetUserUuid())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
+	}
+
+	_, err = r.userRepo.Get(userUUID)
+	if err == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "user is already registered")
+	}
+
+	user := &db.User{Uuid: userUUID}
+	member := &db.OrgUser{}
+
+	err = r.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
+		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
+
+		member := &db.OrgUser{
+			OrgID:  org.ID,
+			UserID: user.ID,
+			Uuid:   userUUID,
+		}
+
+		err = db.NewOrgRepo(txDb).AddMember(member)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "member")
+	}
+
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
+}
+
 func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
 	org, err := r.orgRepo.Get(uint(req.GetOrgId()))
@@ -164,32 +197,7 @@ func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 
 	user, err := r.userRepo.Get(userUUID)
 	if err != nil {
-		logrus.Infof("lookup for remote user %s", userUUID)
-
-		svc, err := r.userService.GetClient()
-		if err != nil {
-			return nil, err
-		}
-
-		remoteUser, err := svc.Get(ctx, &userpb.GetRequest{UserUuid: userUUID.String()})
-		if err != nil {
-			return nil, err
-		}
-
-		// What should we do if the remote user exists, but is already deactivated
-		if remoteUser.User.IsDeactivated {
-			return nil, status.Errorf(codes.FailedPrecondition, "user is deactivated: cannot be added as member")
-		}
-
-		logrus.Infof("Adding remove user %s to local user repo", userUUID)
-		user = &db.User{Uuid: userUUID,
-			Deactivated: remoteUser.User.IsDeactivated,
-		}
-
-		err = r.userRepo.Add(user)
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "user")
-		}
+		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
 	logrus.Infof("Adding member")
