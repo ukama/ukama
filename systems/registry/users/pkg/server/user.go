@@ -22,6 +22,7 @@ import (
 )
 
 const uuidParsingError = "Error parsing UUID"
+const ukamaOrgID = 1
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
@@ -46,7 +47,24 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		Uuid:  uuid.New(),
 	}
 
-	err := u.userRepo.Add(user)
+	err := u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
+		logrus.Infof("Adding user %s as member of default org", user.Uuid)
+
+		svc, err := u.orgService.GetClient()
+		if err != nil {
+			return err
+		}
+
+		_, err = svc.RegisterUser(ctx, &orgpb.MemberRequest{
+			UserUuid: user.Uuid.String(),
+			OrgId:    ukamaOrgID,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")

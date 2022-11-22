@@ -23,7 +23,7 @@ func TestUserService_Add(t *testing.T) {
 		Phone: "12324",
 	}
 
-	userRepo.On("Add", mock.Anything).Return(nil).Once()
+	userRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("AddUser", func(tt *testing.T) {
 		srv := NewUserService(userRepo, nil)
