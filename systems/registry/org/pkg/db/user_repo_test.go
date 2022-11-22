@@ -98,7 +98,7 @@ func Test_UserRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&user)
+		err = r.Add(&user, nil)
 
 		// Assert
 		assert.NoError(t, err)

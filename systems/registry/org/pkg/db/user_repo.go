@@ -7,7 +7,7 @@ import (
 )
 
 type UserRepo interface {
-	Add(user *User) error
+	Add(user *User, nestedFunc func(*User, *gorm.DB) error) error
 	Get(uuid uuid.UUID) (*User, error)
 	Update(*User) (*User, error)
 	Delete(uuid uuid.UUID) error
@@ -23,10 +23,25 @@ func NewUserRepo(db sql.Db) UserRepo {
 	}
 }
 
-func (u *userRepo) Add(user *User) error {
-	d := u.Db.GetGormDb().Create(user)
+func (u *userRepo) Add(user *User, nestedFunc func(user *User, tx *gorm.DB) error) error {
+	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		d := tx.Create(user)
 
-	return d.Error
+		if d.Error != nil {
+			return d.Error
+		}
+
+		if nestedFunc != nil {
+			nestErr := nestedFunc(user, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
