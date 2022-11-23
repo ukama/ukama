@@ -58,6 +58,29 @@ func (_m *registry) GetOrg(orgName string) (*gen.Organization, error) {
 	return r0, r1
 }
 
+// GetOrgs provides a mock function with given fields: ownerUUID
+func (_m *registry) GetOrgs(ownerUUID string) (*gen.GetByOwnerResponse, error) {
+	ret := _m.Called(ownerUUID)
+
+	var r0 *gen.GetByOwnerResponse
+	if rf, ok := ret.Get(0).(func(string) *gen.GetByOwnerResponse); ok {
+		r0 = rf(ownerUUID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByOwnerResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(ownerUUID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // IsAuthorized provides a mock function with given fields: userId, org
 func (_m *registry) IsAuthorized(userId string, org string) (bool, error) {
 	ret := _m.Called(userId, org)

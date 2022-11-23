@@ -78,7 +78,24 @@ func (r *Registry) GetOrg(orgName string) (*pborg.Organization, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return res.Org, nil
+}
+
+func (r *Registry) GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.GetByOwner(ctx, &pborg.GetByOwnerRequest{UserUuid: ownerUUID})
+	if err != nil {
+		return nil, err
+	}
+
+	if res.Orgs == nil {
+		return &pborg.GetByOwnerResponse{Orgs: []*pborg.Organization{}, Owner: ownerUUID}, nil
+	}
+
+	return res, nil
 }
 
 func (r *Registry) AddOrg(orgName string, owner string) (*pborg.Organization, error) {

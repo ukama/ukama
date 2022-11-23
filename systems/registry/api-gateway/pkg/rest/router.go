@@ -99,6 +99,7 @@ func (r *Router) init() {
 
 	// org handler
 	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
+	orgs.GET("/", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
 	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 
 	// network
@@ -114,6 +115,16 @@ func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pborg.Organ
 	orgName := r.getOrgNameFromRoute(c)
 
 	return r.clients.Registry.GetOrg(orgName)
+}
+
+func (r *Router) getOrgsHandler(c *gin.Context) (*pborg.GetByOwnerResponse, error) {
+	ownerUUID, ok := c.GetQuery("user_uuid")
+	if !ok {
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "user_uuid is a mandatory query parameter"}
+	}
+
+	return r.clients.Registry.GetOrgs(ownerUUID)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
