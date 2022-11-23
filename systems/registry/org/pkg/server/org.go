@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -70,6 +71,10 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	})
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, grpc.SqlErrorToGrpc(err, "owner")
+		}
+
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
@@ -99,7 +104,7 @@ func (r *OrgService) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*
 }
 
 func (r *OrgService) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) (*pb.GetByOwnerResponse, error) {
-	logrus.Infof("Getting all orgs own by %v", req.GetUserUuid())
+	logrus.Infof("Getting all orgs owned by %v", req.GetUserUuid())
 
 	owner, err := uuid.Parse(req.GetUserUuid())
 	if err != nil {

@@ -28,6 +28,8 @@ import (
 	"google.golang.org/grpc"
 )
 
+const defaultOrgName = "ukama"
+
 var svcConf *pkg.Config
 
 func main() {
@@ -93,7 +95,7 @@ func initDb() sql.Db {
 			}
 
 			org := &db.Org{
-				Name:  "Ukama",
+				Name:  defaultOrgName,
 				Owner: ukamaUUID,
 			}
 
