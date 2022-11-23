@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ukama/ukama/systems/common/errors"
-
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/ukama/ukama/systems/common/rest"
@@ -48,6 +46,7 @@ type Clients struct {
 
 type registry interface {
 	GetOrg(orgName string) (*pborg.Organization, error)
+	GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error)
 	AddOrg(orgName string, owner string) (*pborg.Organization, error)
 	IsAuthorized(userId string, org string) (bool, error)
 }
@@ -92,24 +91,17 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	const org = "/orgs/" + ":" + ORG_URL_PARAMETER
+	// const org = "/orgs/" + ":" + ORG_URL_PARAMETER
+	const org = "/orgs"
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "API gateway", "Registry system version v1")
 
 	// org handler
 	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
-	orgs.GET("", []fizz.OperationOption{}, tonic.Handler(r.getOrgHandler, http.StatusOK))
-	orgs.PUT("", formatDoc("Add Org", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
+	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 
 	// network
-}
-
-func formatDoc(summary string, description string) []fizz.OperationOption {
-	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
-		info.Summary = summary
-		info.Description = description
-	}}
 }
 
 func (r *Router) getOrgNameFromRoute(c *gin.Context) string {
@@ -118,52 +110,17 @@ func (r *Router) getOrgNameFromRoute(c *gin.Context) string {
 
 // Org handlers
 
-func (r *Router) getOrgHandler(c *gin.Context) (*pborg.Organization, error) {
+func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pborg.Organization, error) {
 	orgName := r.getOrgNameFromRoute(c)
+
 	return r.clients.Registry.GetOrg(orgName)
 }
 
-func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pborg.Organization, error) {
-	orgName := r.getOrgNameFromRoute(c)
-	return r.clients.Registry.AddOrg(orgName, req.Owner)
-}
-
-// Users handlers: all these need to be updated.
-
-// func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*userspb.AddResponse, error) {
-// return r.clients.User.AddUser(req.Org, &userspb.User{
-// Name:  req.Name,
-// Email: req.Email,
-// Phone: req.Phone,
-// },
-// req.SimToken,
-// c.GetString(USER_ID_KEY))
-// }
-
-func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*userspb.User, error) {
-	if req.IsDeactivated {
-		err := r.clients.User.DeactivateUser(req.UserId, c.GetString(USER_ID_KEY))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	_, err := r.clients.User.UpdateUser(req.UserId, &userspb.UserAttributes{
-		Name:  req.Name,
-		Email: req.Email,
-		Phone: req.Phone,
-	}, c.GetString(USER_ID_KEY))
-
-	if err != nil {
-		return nil, err
-	}
-
-	resUser, err := r.clients.User.Get(req.UserId, c.GetString(USER_ID_KEY))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get updated user")
-	}
-
-	return resUser.GetUser(), nil
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {

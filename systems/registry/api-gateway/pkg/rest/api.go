@@ -2,6 +2,10 @@ package rest
 
 // org group
 
+type GetOrgRequest struct {
+	OrgName string `path:"org" validate:"required"`
+}
+
 type AddOrgRequest struct {
 	OrgName string `path:"org" validate:"required"`
 	Owner   string `path:"org" validate:"required"`
@@ -54,55 +58,4 @@ type SimServices struct {
 type DeleteUserRequest struct {
 	OrgName string `path:"org" validate:"required"`
 	UserId  string `path:"user" validate:"required"`
-}
-
-// Nodes group
-
-type NodesList struct {
-	OrgName string  `json:"orgName"`
-	Nodes   []*Node `json:"nodes"`
-}
-
-type Node struct {
-	NodeId string `json:"nodeId,omitempty"`
-	State  string `json:"state,omitempty"`
-	Type   string `json:"type,omitempty"`
-	Name   string `json:"name"`
-}
-
-type NodeExtended struct {
-	Node
-	Attached []*Node `json:"attached,omitempty"`
-}
-
-type GetNodeRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	NodeId  string `path:"node" validate:"required"`
-}
-
-// struct for creating or updating node
-type AddUpdateNodeRequest struct {
-	OrgName string     `path:"org" validate:"required"`
-	NodeId  string     `path:"node" validate:"required"`
-	Node    NodeModify `json:"node" validate:"required"`
-}
-
-type NodeModify struct {
-	Name     string        `json:"name,omitempty"`
-	Attached []*NodeAttach `json:"attached,omitempty"`
-}
-
-type NodeAttach struct {
-	NodeId string `json:"nodeId,omitempty" validate:"required"`
-}
-
-type DeleteNodeRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	NodeId  string `path:"node" validate:"required"`
-}
-
-type DetachNodeRequest struct {
-	OrgName        string `path:"org" validate:"required"`
-	NodeId         string `path:"node" validate:"required"`
-	AttachedNodeId string `path:"attachedId" validate:"required"`
 }
