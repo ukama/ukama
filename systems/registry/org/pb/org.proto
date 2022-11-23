@@ -64,7 +64,7 @@ message GetByNameResponse{
 
 
 message MemberRequest{
-    uint64 orgId = 1 [json_name = "org_id"];
+    string orgName = 1 [json_name = "org"];
     string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
 }
 
