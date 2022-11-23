@@ -114,6 +114,7 @@ func (r *Router) init() {
 	// Users Handlers
 	const user = "/users"
 	users := v1.Group(user, "Users", "Operations on Users")
+	users.POST("/", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
 	users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
 }
 
@@ -155,6 +156,15 @@ func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) erro
 
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
 	return r.clients.User.Get(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
+}
+
+func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
+	return r.clients.User.AddUser(&userspb.User{
+		Name:  req.Name,
+		Email: req.Email,
+		Phone: req.Phone,
+	},
+		c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {

@@ -28,12 +28,10 @@ type GetUserRequest struct {
 	UserUUID string `path:"user_uuid" validate:"required"`
 }
 
-type UserRequest struct {
-	Org      string `path:"org" validate:"required"`
-	SimToken string `json:"simToken"`
-	Name     string `json:"name,omitempty" validate:"required"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone,omitempty"`
+type AddUserRequest struct {
+	Name  string `json:"name,omitempty" validate:"required"`
+	Email string `json:"email" validate:"required"`
+	Phone string `json:"phone,omitempty" validate:"required"`
 }
 
 type UpdateUserRequest struct {
@@ -43,26 +41,6 @@ type UpdateUserRequest struct {
 	Email         string `json:"email,omitempty"`
 	Phone         string `json:"phone,omitempty"`
 	IsDeactivated bool   `json:"isDeactivated,omitempty"`
-}
-
-type SetSimStatusRequest struct {
-	OrgName string       `path:"org" validate:"required"`
-	UserId  string       `path:"user" validate:"required"`
-	Iccid   string       `path:"iccid" validate:"required"`
-	Carrier *SimServices `json:"carrier,omitempty"`
-	Ukama   *SimServices `json:"ukama,omitempty"`
-}
-
-type GetSimQrRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	UserId  string `path:"user" validate:"required"`
-	Iccid   string `path:"iccid" validate:"required"`
-}
-
-type SimServices struct {
-	Voice *bool `json:"voice,omitempty"`
-	Sms   *bool `json:"sms,omitempty"`
-	Data  *bool `json:"data,omitempty"`
 }
 
 type DeleteUserRequest struct {
