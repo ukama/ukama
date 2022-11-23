@@ -8,8 +8,13 @@ type GetOrgRequest struct {
 
 type AddOrgRequest struct {
 	OrgName     string `json:"name" validate:"required"`
-	Owner       string `json:"owner" validate:"required"`
+	Owner       string `json:"owner_uuid" validate:"required"`
 	Certificate string `json:"certificate"`
+}
+
+type AddMemberRequest struct {
+	OrgName  string `path:"org" validate:"required"`
+	UserUUID string `json:"user_uuid" validate:"required"`
 }
 
 // Users group

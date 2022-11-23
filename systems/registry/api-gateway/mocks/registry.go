@@ -12,6 +12,29 @@ type registry struct {
 	mock.Mock
 }
 
+// AddMember provides a mock function with given fields: orgName, userUUID
+func (_m *registry) AddMember(orgName string, userUUID string) (*gen.OrgUser, error) {
+	ret := _m.Called(orgName, userUUID)
+
+	var r0 *gen.OrgUser
+	if rf, ok := ret.Get(0).(func(string, string) *gen.OrgUser); ok {
+		r0 = rf(orgName, userUUID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.OrgUser)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(orgName, userUUID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AddOrg provides a mock function with given fields: orgName, owner, certificate
 func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*gen.Organization, error) {
 	ret := _m.Called(orgName, owner, certificate)

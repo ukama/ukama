@@ -128,6 +128,20 @@ func (r *Registry) GetMembers(orgName string) (*pborg.GetMembersResponse, error)
 	return res, nil
 }
 
+func (r *Registry) AddMember(orgName string, userUUID string) (*pborg.OrgUser, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	member := &pborg.MemberRequest{OrgName: orgName, UserUuid: userUUID}
+	res, err := r.orgClient.AddMember(ctx, member)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Member, nil
+}
+
 func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
 	orgResp, err := r.GetOrg(org)
 	if err != nil {
