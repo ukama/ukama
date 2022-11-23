@@ -22,6 +22,21 @@ require (
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rs/zerolog v1.27.0 // indirect
+	github.com/spf13/cobra v1.4.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
+	github.com/vektra/mockery/v2 v2.15.0 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/tools v0.1.12 // indirect
+)
+
+require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect

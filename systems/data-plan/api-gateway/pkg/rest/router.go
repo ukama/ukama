@@ -19,7 +19,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
-const ORG_ID = 1234
+const ORG_ID = 12345
 
 type Router struct {
 	f       *fizz.Fizz
@@ -88,16 +88,15 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	const pack = "/packages"
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
 
 	baseRates := v1.Group("/baseRates", "BaseRates", "BaseRates operations")
-	baseRates.POST("", nil, tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
-	baseRates.GET("/:baseRate", nil, tonic.Handler(r.getBaseRateHandler, http.StatusCreated))
-	baseRates.GET("", nil, tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
+	baseRates.POST("", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
+	baseRates.GET("/:baseRate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusCreated))
+	baseRates.GET("", formatDoc("Get BaseRates", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
 
-	packages := v1.Group(pack, "Packages", "Packages operations")
+	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.PUT("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
 	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PATCH("", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
@@ -121,6 +120,10 @@ func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*p
 	resp, err := p.clients.d.GetBaseRate(&pbBaseRate.GetBaseRateRequest{
 		RateId: RateId,
 	})
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
 
 	return resp, nil
 }
