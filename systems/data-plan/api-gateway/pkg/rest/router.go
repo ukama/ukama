@@ -91,7 +91,7 @@ func (r *Router) init() {
 	const pack = "/packages"
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
-	
+
 	baseRates := v1.Group("/baseRates", "BaseRates", "BaseRates operations")
 	baseRates.POST("", nil, tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
 	baseRates.GET("/:baseRate", nil, tonic.Handler(r.getBaseRateHandler, http.StatusCreated))
@@ -127,6 +127,7 @@ func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*p
 	return resp, nil
 }
 func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
+
 	resp, err := p.clients.d.UploadBaseRates(&pbBaseRate.UploadBaseRatesRequest{
 		FileURL:req.FileURL,
 		EffectiveAt:req.EffectiveAt,
@@ -135,6 +136,7 @@ func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 	})
 	if err != nil {
 		logrus.Error(err)
+		return nil, err
 	}
 
 	return resp, nil
