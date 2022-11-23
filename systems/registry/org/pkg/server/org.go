@@ -235,18 +235,18 @@ func (r *OrgService) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 }
 
 func (r *OrgService) GetMembers(ctx context.Context, req *pb.GetMembersRequest) (*pb.GetMembersResponse, error) {
-	_, err := r.orgRepo.Get(uint(req.GetOrgId()))
+	org, err := r.orgRepo.GetByName(req.GetOrgName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	members, err := r.orgRepo.GetMembers(uint(req.GetOrgId()))
+	members, err := r.orgRepo.GetMembers(uint(org.ID))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "orgs")
 	}
 
 	resp := &pb.GetMembersResponse{
-		OrgId:   req.GetOrgId(),
+		Org:     org.Name,
 		Members: dbMembersToPbMembers(members),
 	}
 
@@ -327,6 +327,7 @@ func dbUserToPbUser(user *db.User) *pb.User {
 func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 	return &pb.OrgUser{
 		OrgId:         uint64(member.OrgID),
+		UserId:        uint64(member.UserID),
 		Uuid:          member.Uuid.String(),
 		IsDeactivated: member.Deactivated,
 		CreatedAt:     timestamppb.New(member.CreatedAt),
