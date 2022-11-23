@@ -35,6 +35,29 @@ func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*g
 	return r0, r1
 }
 
+// GetMembers provides a mock function with given fields: orgName
+func (_m *registry) GetMembers(orgName string) (*gen.GetMembersResponse, error) {
+	ret := _m.Called(orgName)
+
+	var r0 *gen.GetMembersResponse
+	if rf, ok := ret.Get(0).(func(string) *gen.GetMembersResponse); ok {
+		r0 = rf(orgName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetMembersResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(orgName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetOrg provides a mock function with given fields: orgName
 func (_m *registry) GetOrg(orgName string) (*gen.Organization, error) {
 	ret := _m.Called(orgName)
