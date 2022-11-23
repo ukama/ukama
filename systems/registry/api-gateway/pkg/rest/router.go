@@ -48,6 +48,7 @@ type registry interface {
 	GetOrg(orgName string) (*pborg.Organization, error)
 	GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error)
 	AddOrg(orgName string, owner string, certificate string) (*pborg.Organization, error)
+	GetMember(orgName string, userUUID string) (*pborg.OrgUser, error)
 	GetMembers(orgName string) (*pborg.GetMembersResponse, error)
 	AddMember(orgName string, userUUID string) (*pborg.OrgUser, error)
 	IsAuthorized(userId string, org string) (bool, error)
@@ -106,20 +107,15 @@ func (r *Router) init() {
 	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 	orgs.GET("/:org/members", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
 	orgs.POST("/:org/members", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
+	orgs.GET("/:org/members/:user_uuid", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
 
 	// network
-}
-
-func (r *Router) getOrgNameFromRoute(c *gin.Context) string {
-	return c.Param("org")
 }
 
 // Org handlers
 
 func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pborg.Organization, error) {
-	orgName := r.getOrgNameFromRoute(c)
-
-	return r.clients.Registry.GetOrg(orgName)
+	return r.clients.Registry.GetOrg(c.Param("org"))
 }
 
 func (r *Router) getOrgsHandler(c *gin.Context) (*pborg.GetByOwnerResponse, error) {
@@ -137,20 +133,15 @@ func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*pborg.Orga
 }
 
 func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*pborg.GetMembersResponse, error) {
-	orgName := r.getOrgNameFromRoute(c)
-
-	return r.clients.Registry.GetMembers(orgName)
+	return r.clients.Registry.GetMembers(c.Param("org"))
 }
 
-func (r *Router) postMemberHandler(c *gin.Context, req *AddMemberRequest) (*pborg.OrgUser, error) {
+func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*pborg.OrgUser, error) {
+	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
+}
+
+func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*pborg.OrgUser, error) {
 	return r.clients.Registry.AddMember(req.OrgName, req.UserUUID)
-}
-
-func formatDoc(summary string, description string) []fizz.OperationOption {
-	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
-		info.Summary = summary
-		info.Description = description
-	}}
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
@@ -159,6 +150,13 @@ func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error
 
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
 	return r.clients.User.Get(req.UserId, c.GetString(USER_ID_KEY))
+}
+
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
 }
 
 func boolToPbBool(data *bool) *wrapperspb.BoolValue {

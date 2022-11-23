@@ -12,9 +12,14 @@ type AddOrgRequest struct {
 	Certificate string `json:"certificate"`
 }
 
-type AddMemberRequest struct {
+type MemberRequest struct {
 	OrgName  string `path:"org" validate:"required"`
 	UserUUID string `json:"user_uuid" validate:"required"`
+}
+
+type GetMemberRequest struct {
+	OrgName  string `path:"org" validate:"required"`
+	UserUUID string `path:"user_uuid" validate:"required"`
 }
 
 // Users group

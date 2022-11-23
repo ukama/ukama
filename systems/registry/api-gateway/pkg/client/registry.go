@@ -112,6 +112,18 @@ func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*pb
 	return res.Org, nil
 }
 
+func (r *Registry) GetMember(orgName string, userUUID string) (*pborg.OrgUser, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.GetMember(ctx, &pborg.MemberRequest{OrgName: orgName, UserUuid: userUUID})
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Member, nil
+}
+
 func (r *Registry) GetMembers(orgName string) (*pborg.GetMembersResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
