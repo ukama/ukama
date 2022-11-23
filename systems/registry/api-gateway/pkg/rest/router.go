@@ -95,23 +95,29 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	// const org = "/orgs/" + ":" + ORG_URL_PARAMETER
-	const org = "/orgs"
-
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "API gateway", "Registry system version v1")
 
-	// org handler
+	// org handlers
+	const org = "/orgs"
 	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
 	orgs.GET("/", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
 	orgs.POST("/", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
 	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
+	// update org
+	// Deactivate org
+	// Delete org
 	orgs.GET("/:org/members", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
 	orgs.POST("/:org/members", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
 	orgs.GET("/:org/members/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
+	// update member
+	// Deactivate member
 	orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 
-	// network
+	// Users Handlers
+	const user = "/users"
+	users := v1.Group(user, "Users", "Operations on Users")
+	users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
 }
 
 // Org handlers
@@ -150,12 +156,12 @@ func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) erro
 	return r.clients.Registry.RemoveMember(c.Param("org"), c.Param("user_uuid"))
 }
 
-func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
-	return r.clients.User.Delete(req.UserId, c.GetString(USER_ID_KEY))
+func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
+	return r.clients.User.Get(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
-func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.Get(req.UserId, c.GetString(USER_ID_KEY))
+func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
+	return r.clients.User.Delete(req.UserId, c.GetString(USER_ID_KEY))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

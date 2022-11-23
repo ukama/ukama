@@ -36,17 +36,15 @@ func NewUsers(host string, timeout time.Duration) *Users {
 	}
 }
 
-func NewTestHssFromClient(networkClient pbusers.UserServiceClient) *Users {
-	return &Users{
-		host:    "localhost",
-		timeout: 1,
-		conn:    nil,
-		client:  networkClient,
-	}
-}
-
 func (r *Users) Close() {
 	r.conn.Close()
+}
+
+func (r *Users) Get(userUUID string, requesterId string) (*pbusers.GetResponse, error) {
+	ctx, cancel := r.getContext(requesterId)
+	defer cancel()
+
+	return r.client.Get(ctx, &pbusers.GetRequest{UserUuid: userUUID})
 }
 
 func (r *Users) AddUser(user *pbusers.User, requesterId string) (*pbusers.AddResponse, error) {
@@ -76,13 +74,6 @@ func (r *Users) Delete(userUUID string, requesterId string) error {
 
 	_, err := r.client.Delete(ctx, &pbusers.DeleteRequest{UserUuid: userUUID})
 	return err
-}
-
-func (r *Users) Get(userUUID string, requesterId string) (*pbusers.GetResponse, error) {
-	ctx, cancel := r.getContext(requesterId)
-	defer cancel()
-
-	return r.client.Get(ctx, &pbusers.GetRequest{UserUuid: userUUID})
 }
 
 func (r *Users) DeactivateUser(userUUID string, requesterId string) error {

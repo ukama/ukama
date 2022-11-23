@@ -25,8 +25,7 @@ type GetMemberRequest struct {
 // Users group
 
 type GetUserRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	UserId  string `path:"user" validate:"required"`
+	UserUUID string `path:"user_uuid" validate:"required"`
 }
 
 type UserRequest struct {
