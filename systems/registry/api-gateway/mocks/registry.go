@@ -13,15 +13,15 @@ type registry struct {
 }
 
 // AddMember provides a mock function with given fields: orgName, userUUID
-func (_m *registry) AddMember(orgName string, userUUID string) (*gen.OrgUser, error) {
+func (_m *registry) AddMember(orgName string, userUUID string) (*gen.MemberResponse, error) {
 	ret := _m.Called(orgName, userUUID)
 
-	var r0 *gen.OrgUser
-	if rf, ok := ret.Get(0).(func(string, string) *gen.OrgUser); ok {
+	var r0 *gen.MemberResponse
+	if rf, ok := ret.Get(0).(func(string, string) *gen.MemberResponse); ok {
 		r0 = rf(orgName, userUUID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.OrgUser)
+			r0 = ret.Get(0).(*gen.MemberResponse)
 		}
 	}
 
@@ -36,15 +36,15 @@ func (_m *registry) AddMember(orgName string, userUUID string) (*gen.OrgUser, er
 }
 
 // AddOrg provides a mock function with given fields: orgName, owner, certificate
-func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*gen.Organization, error) {
+func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*gen.AddResponse, error) {
 	ret := _m.Called(orgName, owner, certificate)
 
-	var r0 *gen.Organization
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.Organization); ok {
+	var r0 *gen.AddResponse
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.AddResponse); ok {
 		r0 = rf(orgName, owner, certificate)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.Organization)
+			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
@@ -59,15 +59,15 @@ func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*g
 }
 
 // GetMember provides a mock function with given fields: orgName, userUUID
-func (_m *registry) GetMember(orgName string, userUUID string) (*gen.OrgUser, error) {
+func (_m *registry) GetMember(orgName string, userUUID string) (*gen.MemberResponse, error) {
 	ret := _m.Called(orgName, userUUID)
 
-	var r0 *gen.OrgUser
-	if rf, ok := ret.Get(0).(func(string, string) *gen.OrgUser); ok {
+	var r0 *gen.MemberResponse
+	if rf, ok := ret.Get(0).(func(string, string) *gen.MemberResponse); ok {
 		r0 = rf(orgName, userUUID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.OrgUser)
+			r0 = ret.Get(0).(*gen.MemberResponse)
 		}
 	}
 
@@ -105,15 +105,15 @@ func (_m *registry) GetMembers(orgName string) (*gen.GetMembersResponse, error) 
 }
 
 // GetOrg provides a mock function with given fields: orgName
-func (_m *registry) GetOrg(orgName string) (*gen.Organization, error) {
+func (_m *registry) GetOrg(orgName string) (*gen.GetByNameResponse, error) {
 	ret := _m.Called(orgName)
 
-	var r0 *gen.Organization
-	if rf, ok := ret.Get(0).(func(string) *gen.Organization); ok {
+	var r0 *gen.GetByNameResponse
+	if rf, ok := ret.Get(0).(func(string) *gen.GetByNameResponse); ok {
 		r0 = rf(orgName)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.Organization)
+			r0 = ret.Get(0).(*gen.GetByNameResponse)
 		}
 	}
 
@@ -143,27 +143,6 @@ func (_m *registry) GetOrgs(ownerUUID string) (*gen.GetByOwnerResponse, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(ownerUUID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// IsAuthorized provides a mock function with given fields: userId, org
-func (_m *registry) IsAuthorized(userId string, org string) (bool, error) {
-	ret := _m.Called(userId, org)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(string, string) bool); ok {
-		r0 = rf(userId, org)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(userId, org)
 	} else {
 		r1 = ret.Error(1)
 	}

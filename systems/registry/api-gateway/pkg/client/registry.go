@@ -2,13 +2,9 @@ package client
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/ukama/ukama/systems/common/rest"
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
@@ -70,7 +66,7 @@ func (r *Registry) Close() {
 	r.orgConn.Close()
 }
 
-func (r *Registry) GetOrg(orgName string) (*pborg.Organization, error) {
+func (r *Registry) GetOrg(orgName string) (*pborg.GetByNameResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -79,7 +75,7 @@ func (r *Registry) GetOrg(orgName string) (*pborg.Organization, error) {
 		return nil, err
 	}
 
-	return res.Org, nil
+	return res, nil
 }
 
 func (r *Registry) GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error) {
@@ -98,7 +94,7 @@ func (r *Registry) GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error) 
 	return res, nil
 }
 
-func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*pborg.Organization, error) {
+func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*pborg.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -109,10 +105,10 @@ func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*pb
 		return nil, err
 	}
 
-	return res.Org, nil
+	return res, nil
 }
 
-func (r *Registry) GetMember(orgName string, userUUID string) (*pborg.OrgUser, error) {
+func (r *Registry) GetMember(orgName string, userUUID string) (*pborg.MemberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -121,7 +117,7 @@ func (r *Registry) GetMember(orgName string, userUUID string) (*pborg.OrgUser, e
 		return nil, err
 	}
 
-	return res.Member, nil
+	return res, nil
 }
 
 func (r *Registry) GetMembers(orgName string) (*pborg.GetMembersResponse, error) {
@@ -140,7 +136,7 @@ func (r *Registry) GetMembers(orgName string) (*pborg.GetMembersResponse, error)
 	return res, nil
 }
 
-func (r *Registry) AddMember(orgName string, userUUID string) (*pborg.OrgUser, error) {
+func (r *Registry) AddMember(orgName string, userUUID string) (*pborg.MemberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -151,7 +147,7 @@ func (r *Registry) AddMember(orgName string, userUUID string) (*pborg.OrgUser, e
 		return nil, err
 	}
 
-	return res.Member, nil
+	return res, nil
 }
 
 func (r *Registry) RemoveMember(orgName string, userUUID string) error {
@@ -161,23 +157,4 @@ func (r *Registry) RemoveMember(orgName string, userUUID string) error {
 	_, err := r.orgClient.RemoveMember(ctx, &pborg.MemberRequest{OrgName: orgName, UserUuid: userUUID})
 
 	return err
-}
-
-func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
-	orgResp, err := r.GetOrg(org)
-	if err != nil {
-		if gErr, ok := err.(rest.HttpError); ok {
-			if gErr.HttpCode != http.StatusNotFound {
-				return false, nil
-			}
-
-			return false, gErr
-		} else {
-			return false, fmt.Errorf(err.Error())
-		}
-	}
-	if orgResp.Owner == userId {
-		return true, nil
-	}
-	return false, nil
 }

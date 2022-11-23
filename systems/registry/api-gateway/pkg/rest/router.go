@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"google.golang.org/protobuf/types/known/wrapperspb"
-
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
@@ -45,14 +43,13 @@ type Clients struct {
 }
 
 type registry interface {
-	GetOrg(orgName string) (*pborg.Organization, error)
+	GetOrg(orgName string) (*pborg.GetByNameResponse, error)
 	GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error)
-	AddOrg(orgName string, owner string, certificate string) (*pborg.Organization, error)
-	GetMember(orgName string, userUUID string) (*pborg.OrgUser, error)
+	AddOrg(orgName string, owner string, certificate string) (*pborg.AddResponse, error)
+	GetMember(orgName string, userUUID string) (*pborg.MemberResponse, error)
 	GetMembers(orgName string) (*pborg.GetMembersResponse, error)
-	AddMember(orgName string, userUUID string) (*pborg.OrgUser, error)
+	AddMember(orgName string, userUUID string) (*pborg.MemberResponse, error)
 	RemoveMember(orgName string, userUUID string) error
-	IsAuthorized(userId string, org string) (bool, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -122,7 +119,7 @@ func (r *Router) init() {
 
 // Org handlers
 
-func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pborg.Organization, error) {
+func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pborg.GetByNameResponse, error) {
 	return r.clients.Registry.GetOrg(c.Param("org"))
 }
 
@@ -136,7 +133,7 @@ func (r *Router) getOrgsHandler(c *gin.Context) (*pborg.GetByOwnerResponse, erro
 	return r.clients.Registry.GetOrgs(ownerUUID)
 }
 
-func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*pborg.Organization, error) {
+func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*pborg.AddResponse, error) {
 	return r.clients.Registry.AddOrg(req.OrgName, req.Owner, req.Certificate)
 }
 
@@ -144,11 +141,11 @@ func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*pborg.G
 	return r.clients.Registry.GetMembers(c.Param("org"))
 }
 
-func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*pborg.OrgUser, error) {
+func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*pborg.MemberResponse, error) {
 	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
 }
 
-func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*pborg.OrgUser, error) {
+func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*pborg.MemberResponse, error) {
 	return r.clients.Registry.AddMember(req.OrgName, req.UserUUID)
 }
 
@@ -169,11 +166,4 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
-}
-
-func boolToPbBool(data *bool) *wrapperspb.BoolValue {
-	if data == nil {
-		return nil
-	}
-	return &wrapperspb.BoolValue{Value: *data}
 }
