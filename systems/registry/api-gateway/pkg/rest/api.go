@@ -7,8 +7,9 @@ type GetOrgRequest struct {
 }
 
 type AddOrgRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	Owner   string `path:"org" validate:"required"`
+	OrgName     string `json:"name" validate:"required"`
+	Owner       string `json:"owner" validate:"required"`
+	Certificate string `json:"certificate"`
 }
 
 // Users group

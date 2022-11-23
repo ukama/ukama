@@ -98,11 +98,11 @@ func (r *Registry) GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error) 
 	return res, nil
 }
 
-func (r *Registry) AddOrg(orgName string, owner string) (*pborg.Organization, error) {
+func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*pborg.Organization, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	organization := &pborg.Organization{Name: orgName, Owner: owner}
+	organization := &pborg.Organization{Name: orgName, Owner: owner, Certificate: certificate}
 	res, err := r.orgClient.Add(ctx, &pborg.AddRequest{Org: organization})
 
 	if err != nil {

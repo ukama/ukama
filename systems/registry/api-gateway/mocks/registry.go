@@ -12,13 +12,13 @@ type registry struct {
 	mock.Mock
 }
 
-// AddOrg provides a mock function with given fields: orgName, owner
-func (_m *registry) AddOrg(orgName string, owner string) (*gen.Organization, error) {
-	ret := _m.Called(orgName, owner)
+// AddOrg provides a mock function with given fields: orgName, owner, certificate
+func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*gen.Organization, error) {
+	ret := _m.Called(orgName, owner, certificate)
 
 	var r0 *gen.Organization
-	if rf, ok := ret.Get(0).(func(string, string) *gen.Organization); ok {
-		r0 = rf(orgName, owner)
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.Organization); ok {
+		r0 = rf(orgName, owner, certificate)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.Organization)
@@ -26,8 +26,8 @@ func (_m *registry) AddOrg(orgName string, owner string) (*gen.Organization, err
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(orgName, owner)
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(orgName, owner, certificate)
 	} else {
 		r1 = ret.Error(1)
 	}

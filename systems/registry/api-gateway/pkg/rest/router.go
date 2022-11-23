@@ -47,7 +47,7 @@ type Clients struct {
 type registry interface {
 	GetOrg(orgName string) (*pborg.Organization, error)
 	GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error)
-	AddOrg(orgName string, owner string) (*pborg.Organization, error)
+	AddOrg(orgName string, owner string, certificate string) (*pborg.Organization, error)
 	IsAuthorized(userId string, org string) (bool, error)
 }
 
@@ -101,6 +101,7 @@ func (r *Router) init() {
 	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
 	orgs.GET("/", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
 	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
+	orgs.POST("/", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
 
 	// network
 }
@@ -125,6 +126,10 @@ func (r *Router) getOrgsHandler(c *gin.Context) (*pborg.GetByOwnerResponse, erro
 	}
 
 	return r.clients.Registry.GetOrgs(ownerUUID)
+}
+
+func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*pborg.Organization, error) {
+	return r.clients.Registry.AddOrg(req.OrgName, req.Owner, req.Certificate)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
