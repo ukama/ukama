@@ -1,6 +1,6 @@
 syntax = "proto3";
 option go_package = "pb/";
-package ukama.rates.v1;
+package ukama.packages.v1;
 
 service PackagesService {
     rpc Get (GetPackagesRequest) returns (GetPackagesResponse) {}

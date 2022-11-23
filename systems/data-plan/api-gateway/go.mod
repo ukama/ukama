@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/data-plan/api-gateway => ./
 
 replace github.com/ukama/ukama/systems/data-plan/package => ../package
 
+replace github.com/ukama/ukama/systems/data-plan/base-rate => ../base-rate
+
 require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
@@ -70,6 +72,7 @@ require (
 	github.com/spf13/viper v1.13.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
+	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.1.0 // indirect

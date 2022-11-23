@@ -23,6 +23,7 @@ type Kratos struct {
 type GrpcEndpoints struct {
 	Timeout time.Duration
 	Package string
+	BaseRate string
 }
 
 type HttpEndpoints struct {
@@ -42,6 +43,7 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
 			Package: "0.0.0.0:9090",
+			BaseRate:"0.0.0.0:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

@@ -24,6 +24,7 @@ func main() {
 
 	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf))
 	r.Run()
+	
 }
 
 func initConfig() {

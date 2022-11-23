@@ -9,13 +9,13 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/wI2L/fizz"
-
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/client"
+	pbBaseRate "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb"
+	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )
 
@@ -43,11 +43,15 @@ type dataPlan interface {
 	UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error)
 	GetPackage(req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error)
 	DeletePackage(req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error)
+	UploadBaseRates(req *pbBaseRate.UploadBaseRatesRequest)(*pbBaseRate.UploadBaseRatesResponse,error)
+	GetBaseRates(req *pbBaseRate.GetBaseRatesRequest)(*pbBaseRate.GetBaseRatesResponse,error)
+	GetBaseRate(req *pbBaseRate.GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.d = client.NewDataPlan(endpoints.Package, endpoints.Timeout)
+	c.d = client.NewDataPlan(endpoints.Package, endpoints.BaseRate, endpoints.Timeout)
+
 	return c
 }
 
@@ -87,12 +91,19 @@ func (r *Router) init() {
 	const pack = "/packages"
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
+	
+	baseRates := v1.Group("/baseRates", "BaseRates", "BaseRates operations")
+	baseRates.POST("", nil, tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
+	baseRates.GET("/:baseRate", nil, tonic.Handler(r.getBaseRateHandler, http.StatusCreated))
+	baseRates.GET("", nil, tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
 
-	packages := v1.Group(pack, "Packages", "looking for packages credentials")
+	packages := v1.Group(pack, "Packages", "Packages operations")
 	packages.PUT("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
 	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PATCH("", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
+
+  
 
 }
 
@@ -101,6 +112,62 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
+
+	RateId, err := strconv.ParseUint(c.Param("baseRate"), 10, 64)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	resp, err := p.clients.d.GetBaseRate(&pbBaseRate.GetBaseRateRequest{
+		RateId:    RateId,
+	})
+
+	return resp, nil
+}
+func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
+	resp, err := p.clients.d.UploadBaseRates(&pbBaseRate.UploadBaseRatesRequest{
+		FileURL:req.FileURL,
+		EffectiveAt:req.EffectiveAt,
+		SimType:	 pbBaseRate.SimType(pbBaseRate.SimType_value[req.SimType]),
+
+	})
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	return resp, nil
+}
+func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error) {
+country:=c.Param("Country")
+provider:=c.Param("Provider")
+effectiveAt:=c.Param("EffectiveAt")
+simType:=c.Param("SimType")
+
+	to, err := strconv.ParseUint(c.Param("To"), 10, 64)
+	if err != nil {
+		logrus.Error(err)
+	}
+	from, err := strconv.ParseUint(c.Param("From"), 10, 64)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	resp, err := p.clients.d.GetBaseRates(&pbBaseRate.GetBaseRatesRequest{
+		Country:    country,
+		Provider:provider,
+		To:to,
+		From:from,
+		SimType:pbBaseRate.SimType(pbBaseRate.SimType_value[simType]),
+		EffectiveAt:effectiveAt,
+	})
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	return resp, nil
 }
 func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb.GetPackagesResponse, error) {
 
@@ -176,3 +243,5 @@ func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
 	})
 }
+
+

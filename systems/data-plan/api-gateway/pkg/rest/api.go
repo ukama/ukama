@@ -33,3 +33,20 @@ type GetPackagesRequest struct {
 	Id    uint64 `path:"package" validate:"required"`
 	OrgId uint64 `json:"org_id"`
 }
+
+type GetBaseRatesRequest struct {
+	Country     string   `path:"country" validate:"required"`
+    Provider    string  `path:"provider"`
+    To          uint64  `path:"to"`
+    From        uint64  `path:"from"`
+    SimType     string `path:"sim_type"`
+    EffectiveAt string  `path:"effectiveAt"`
+}
+type GetBaseRateRequest struct {
+	RateId uint64       `path:"baseRate" validate:"required"`
+}
+type UploadBaseRatesRequest struct {
+	FileURL     string  `json:"file_url" validate:"required"`
+    EffectiveAt string  `json:"effective_at" validate:"required"`
+    SimType     string `json:"sim_type" validate:"required"`
+}
