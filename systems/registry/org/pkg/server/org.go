@@ -144,7 +144,7 @@ func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 
 func (r *OrgService) RegisterUser(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
-	org, err := r.orgRepo.Get(uint(req.GetOrgId()))
+	org, err := r.orgRepo.GetByName(req.GetOrgName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -189,7 +189,7 @@ func (r *OrgService) RegisterUser(ctx context.Context, req *pb.MemberRequest) (*
 
 func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
-	org, err := r.orgRepo.Get(uint(req.GetOrgId()))
+	org, err := r.orgRepo.GetByName(req.GetOrgName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -226,7 +226,13 @@ func (r *OrgService) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
 
-	member, err := r.orgRepo.GetMember(uint(req.GetOrgId()), uuid)
+	// Get the Organization
+	org, err := r.orgRepo.GetByName(req.GetOrgName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	member, err := r.orgRepo.GetMember(org.ID, uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -259,8 +265,13 @@ func (r *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberReque
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
 
+	org, err := r.orgRepo.GetByName(req.GetMember().GetOrgName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
 	member := &db.OrgUser{
-		OrgID:       uint(req.GetMember().GetOrgId()),
+		OrgID:       uint(org.ID),
 		Uuid:        uuid,
 		Deactivated: req.GetAttributes().IsDeactivated,
 	}
@@ -279,7 +290,12 @@ func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
 
-	member, err := r.orgRepo.GetMember(uint(req.GetOrgId()), uuid)
+	org, err := r.orgRepo.GetByName(req.GetOrgName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	member, err := r.orgRepo.GetMember(org.ID, uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -288,7 +304,7 @@ func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 		return nil, status.Errorf(codes.FailedPrecondition, "member must be deactivated first")
 	}
 
-	err = r.orgRepo.RemoveMember(uint(req.GetOrgId()), uuid)
+	err = r.orgRepo.RemoveMember(uint(org.ID), uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
