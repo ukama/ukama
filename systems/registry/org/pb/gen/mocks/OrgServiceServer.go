@@ -176,11 +176,11 @@ func (_m *OrgServiceServer) GetMembers(_a0 context.Context, _a1 *gen.GetMembersR
 }
 
 // RegisterUser provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) RegisterUser(_a0 context.Context, _a1 *gen.MemberRequest) (*gen.MemberResponse, error) {
+func (_m *OrgServiceServer) RegisterUser(_a0 context.Context, _a1 *gen.RegisterUserRequest) (*gen.MemberResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *gen.MemberResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest) *gen.MemberResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest) *gen.MemberResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -189,7 +189,7 @@ func (_m *OrgServiceServer) RegisterUser(_a0 context.Context, _a1 *gen.MemberReq
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RegisterUserRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

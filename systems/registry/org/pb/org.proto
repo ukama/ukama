@@ -21,7 +21,7 @@ service OrgService {
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
 
     /* Members */
-    rpc RegisterUser(MemberRequest) returns (MemberResponse);
+    rpc RegisterUser(RegisterUserRequest) returns (MemberResponse);
     rpc AddMember(MemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
@@ -62,7 +62,6 @@ message GetByNameResponse{
     Organization org = 1;
 }
 
-
 message MemberRequest{
     string orgName = 1 [json_name = "org"];
     string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
@@ -70,6 +69,11 @@ message MemberRequest{
 
 message MemberResponse{
   OrgUser member = 1;
+}
+
+message RegisterUserRequest{
+    uint64 orgId = 1 [json_name = "org_id"];
+    string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message GetMembersRequest {

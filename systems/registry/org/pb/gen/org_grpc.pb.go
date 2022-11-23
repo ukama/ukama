@@ -30,7 +30,7 @@ type OrgServiceClient interface {
 	// Users
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	// Members
-	RegisterUser(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	AddMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
@@ -91,7 +91,7 @@ func (c *orgServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest
 	return out, nil
 }
 
-func (c *orgServiceClient) RegisterUser(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+func (c *orgServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
 	out := new(MemberResponse)
 	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/RegisterUser", in, out, opts...)
 	if err != nil {
@@ -157,7 +157,7 @@ type OrgServiceServer interface {
 	// Users
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	// Members
-	RegisterUser(context.Context, *MemberRequest) (*MemberResponse, error)
+	RegisterUser(context.Context, *RegisterUserRequest) (*MemberResponse, error)
 	AddMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
@@ -185,7 +185,7 @@ func (UnimplementedOrgServiceServer) GetByOwner(context.Context, *GetByOwnerRequ
 func (UnimplementedOrgServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
-func (UnimplementedOrgServiceServer) RegisterUser(context.Context, *MemberRequest) (*MemberResponse, error) {
+func (UnimplementedOrgServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterUser not implemented")
 }
 func (UnimplementedOrgServiceServer) AddMember(context.Context, *MemberRequest) (*MemberResponse, error) {
@@ -307,7 +307,7 @@ func _OrgService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _OrgService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MemberRequest)
+	in := new(RegisterUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -319,7 +319,7 @@ func _OrgService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: "/ukama.org.v1.OrgService/RegisterUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).RegisterUser(ctx, req.(*MemberRequest))
+		return srv.(OrgServiceServer).RegisterUser(ctx, req.(*RegisterUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

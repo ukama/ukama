@@ -142,9 +142,9 @@ func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 	return &pb.UpdateUserResponse{User: dbUserToPbUser(user)}, nil
 }
 
-func (r *OrgService) RegisterUser(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
+func (r *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
-	org, err := r.orgRepo.GetByName(req.GetOrgName())
+	org, err := r.orgRepo.Get(uint(req.GetOrgId()))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
