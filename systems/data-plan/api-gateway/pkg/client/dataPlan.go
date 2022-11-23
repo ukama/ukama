@@ -13,16 +13,15 @@ import (
 )
 
 type DataPlan struct {
-	conn    *grpc.ClientConn
-	baseRateConn *grpc.ClientConn
-	timeout time.Duration
+	conn           *grpc.ClientConn
+	baseRateConn   *grpc.ClientConn
+	timeout        time.Duration
 	packageClient  pb.PackagesServiceClient
-	host    string
+	host           string
 	baseRateClient pbBaseRate.BaseRatesServiceClient
-
 }
 
-func NewDataPlan(packageHost ,baseRateHost string, timeout time.Duration) *DataPlan {
+func NewDataPlan(packageHost, baseRateHost string, timeout time.Duration) *DataPlan {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -39,19 +38,19 @@ func NewDataPlan(packageHost ,baseRateHost string, timeout time.Duration) *DataP
 	baseRateClient := pbBaseRate.NewBaseRatesServiceClient(baseRateConn)
 
 	return &DataPlan{
-		conn:    packageConn,
+		conn:           packageConn,
 		packageClient:  client,
-		timeout: timeout,
-		host:    packageHost,
-		baseRateClient:baseRateClient,
+		timeout:        timeout,
+		host:           packageHost,
+		baseRateClient: baseRateClient,
 	}
 }
 
-func NewPackageFromClient(client pb.PackagesServiceClient,baseRateClient pbBaseRate.BaseRatesServiceClient ) *DataPlan {
+func NewPackageFromClient(client pb.PackagesServiceClient, baseRateClient pbBaseRate.BaseRatesServiceClient) *DataPlan {
 	return &DataPlan{
-		host:    "localhost",
-		timeout: 1 * time.Second,
-		conn:    nil,
+		host:           "localhost",
+		timeout:        1 * time.Second,
+		conn:           nil,
 		packageClient:  client,
 		baseRateClient: baseRateClient,
 	}
@@ -89,8 +88,6 @@ func (d *DataPlan) GetPackage(req *pb.GetPackagesRequest) (*pb.GetPackagesRespon
 	return d.packageClient.Get(ctx, req)
 }
 
-
-
 func (d *DataPlan) UploadBaseRates(req *pbBaseRate.UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
@@ -107,5 +104,3 @@ func (d *DataPlan) GetBaseRate(req *pbBaseRate.GetBaseRateRequest) (*pbBaseRate.
 	defer cancel()
 	return d.baseRateClient.GetBaseRate(ctx, req)
 }
-
-

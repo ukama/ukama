@@ -43,8 +43,8 @@ type dataPlan interface {
 	UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error)
 	GetPackage(req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error)
 	DeletePackage(req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error)
-	UploadBaseRates(req *pbBaseRate.UploadBaseRatesRequest)(*pbBaseRate.UploadBaseRatesResponse,error)
-	GetBaseRates(req *pbBaseRate.GetBaseRatesRequest)(*pbBaseRate.GetBaseRatesResponse,error)
+	UploadBaseRates(req *pbBaseRate.UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error)
+	GetBaseRates(req *pbBaseRate.GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error)
 	GetBaseRate(req *pbBaseRate.GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error)
 }
 
@@ -103,8 +103,6 @@ func (r *Router) init() {
 	packages.PATCH("", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
-  
-
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -121,7 +119,7 @@ func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*p
 	}
 
 	resp, err := p.clients.d.GetBaseRate(&pbBaseRate.GetBaseRateRequest{
-		RateId:    RateId,
+		RateId: RateId,
 	})
 
 	return resp, nil
@@ -129,10 +127,9 @@ func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*p
 func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
 
 	resp, err := p.clients.d.UploadBaseRates(&pbBaseRate.UploadBaseRatesRequest{
-		FileURL:req.FileURL,
-		EffectiveAt:req.EffectiveAt,
-		SimType:	 pbBaseRate.SimType(pbBaseRate.SimType_value[req.SimType]),
-
+		FileURL:     req.FileURL,
+		EffectiveAt: req.EffectiveAt,
+		SimType:     pbBaseRate.SimType(pbBaseRate.SimType_value[req.SimType]),
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -142,10 +139,10 @@ func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 	return resp, nil
 }
 func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error) {
-country:=c.Param("Country")
-provider:=c.Param("Provider")
-effectiveAt:=c.Param("EffectiveAt")
-simType:=c.Param("SimType")
+	country := c.Param("Country")
+	provider := c.Param("Provider")
+	effectiveAt := c.Param("EffectiveAt")
+	simType := c.Param("SimType")
 
 	to, err := strconv.ParseUint(c.Param("To"), 10, 64)
 	if err != nil {
@@ -157,12 +154,12 @@ simType:=c.Param("SimType")
 	}
 
 	resp, err := p.clients.d.GetBaseRates(&pbBaseRate.GetBaseRatesRequest{
-		Country:    country,
-		Provider:provider,
-		To:to,
-		From:from,
-		SimType:pbBaseRate.SimType(pbBaseRate.SimType_value[simType]),
-		EffectiveAt:effectiveAt,
+		Country:     country,
+		Provider:    provider,
+		To:          to,
+		From:        from,
+		SimType:     pbBaseRate.SimType(pbBaseRate.SimType_value[simType]),
+		EffectiveAt: effectiveAt,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -245,5 +242,3 @@ func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
 	})
 }
-
-
