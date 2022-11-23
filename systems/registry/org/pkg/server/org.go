@@ -300,6 +300,10 @@ func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
+	if org.Owner == member.Uuid {
+		return nil, status.Errorf(codes.FailedPrecondition, "cannot remove the current owner of the Organization")
+	}
+
 	if !member.Deactivated {
 		return nil, status.Errorf(codes.FailedPrecondition, "member must be deactivated first")
 	}

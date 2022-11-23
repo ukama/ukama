@@ -171,6 +171,20 @@ func (_m *registry) IsAuthorized(userId string, org string) (bool, error) {
 	return r0, r1
 }
 
+// RemoveMember provides a mock function with given fields: orgName, userUUID
+func (_m *registry) RemoveMember(orgName string, userUUID string) error {
+	ret := _m.Called(orgName, userUUID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(orgName, userUUID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 type mockConstructorTestingTnewRegistry interface {
 	mock.TestingT
 	Cleanup(func())

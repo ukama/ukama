@@ -154,6 +154,15 @@ func (r *Registry) AddMember(orgName string, userUUID string) (*pborg.OrgUser, e
 	return res.Member, nil
 }
 
+func (r *Registry) RemoveMember(orgName string, userUUID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	_, err := r.orgClient.RemoveMember(ctx, &pborg.MemberRequest{OrgName: orgName, UserUuid: userUUID})
+
+	return err
+}
+
 func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
 	orgResp, err := r.GetOrg(org)
 	if err != nil {

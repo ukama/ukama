@@ -51,6 +51,7 @@ type registry interface {
 	GetMember(orgName string, userUUID string) (*pborg.OrgUser, error)
 	GetMembers(orgName string) (*pborg.GetMembersResponse, error)
 	AddMember(orgName string, userUUID string) (*pborg.OrgUser, error)
+	RemoveMember(orgName string, userUUID string) error
 	IsAuthorized(userId string, org string) (bool, error)
 }
 
@@ -107,7 +108,8 @@ func (r *Router) init() {
 	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 	orgs.GET("/:org/members", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
 	orgs.POST("/:org/members", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
-	orgs.GET("/:org/members/:user_uuid", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
+	orgs.GET("/:org/members/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
+	orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 
 	// network
 }
@@ -142,6 +144,10 @@ func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*pborg
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*pborg.OrgUser, error) {
 	return r.clients.Registry.AddMember(req.OrgName, req.UserUUID)
+}
+
+func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {
+	return r.clients.Registry.RemoveMember(c.Param("org"), c.Param("user_uuid"))
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
