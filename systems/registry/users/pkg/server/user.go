@@ -55,7 +55,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 			return err
 		}
 
-		_, err = svc.RegisterUser(ctx, &orgpb.MemberRequest{
+		_, err = svc.RegisterUser(ctx, &orgpb.RegisterUserRequest{
 			UserUuid: user.Uuid.String(),
 			OrgId:    ukamaOrgID,
 		})
