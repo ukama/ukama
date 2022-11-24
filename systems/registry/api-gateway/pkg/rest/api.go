@@ -26,6 +26,12 @@ type GetMemberRequest struct {
 	UserUUID string `path:"user_uuid" validate:"required"`
 }
 
+type UpdateMemberRequest struct {
+	OrgName       string `path:"org" validate:"required"`
+	UserUUID      string `path:"user_uuid" validate:"required"`
+	IsDeactivated bool   `json:"isDeactivated,omitempty"`
+}
+
 // Users group
 
 type GetUserRequest struct {
@@ -37,20 +43,6 @@ type AddUserRequest struct {
 	Email string `json:"email" validate:"required"`
 	Phone string `json:"phone,omitempty" validate:"required"`
 }
-
-// type UpdateUserRequest struct {
-// OrgName       string `path:"org" validate:"required"`
-// UserId        string `path:"user" validate:"required"`
-// Name          string `json:"name,omitempty"`
-// Email         string `json:"email,omitempty"`
-// Phone         string `json:"phone,omitempty"`
-// IsDeactivated bool   `json:"isDeactivated,omitempty"`
-// }
-
-// type DeleteUserRequest struct {
-// OrgName string `path:"org" validate:"required"`
-// UserId  string `path:"user" validate:"required"`
-// }
 
 // Network group
 

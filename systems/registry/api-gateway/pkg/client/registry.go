@@ -151,6 +151,17 @@ func (r *Registry) AddMember(orgName string, userUUID string) (*orgpb.MemberResp
 	return res, nil
 }
 
+func (r *Registry) UpdateMember(orgName string, userUUID string, isDeactivated bool) error {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	_, err := r.orgClient.UpdateMember(ctx, &orgpb.UpdateMemberRequest{
+		Member:     &orgpb.MemberRequest{OrgName: orgName, UserUuid: userUUID},
+		Attributes: &orgpb.OrgUserAttributes{IsDeactivated: isDeactivated}})
+
+	return err
+}
+
 func (r *Registry) RemoveMember(orgName string, userUUID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

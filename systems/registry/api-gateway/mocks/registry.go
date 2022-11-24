@@ -304,6 +304,20 @@ func (_m *registry) RemoveMember(orgName string, userUUID string) error {
 	return r0
 }
 
+// UpdateMember provides a mock function with given fields: orgName, userUUID, isDeactivated
+func (_m *registry) UpdateMember(orgName string, userUUID string, isDeactivated bool) error {
+	ret := _m.Called(orgName, userUUID, isDeactivated)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, bool) error); ok {
+		r0 = rf(orgName, userUUID, isDeactivated)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 type mockConstructorTestingTnewRegistry interface {
 	mock.TestingT
 	Cleanup(func())

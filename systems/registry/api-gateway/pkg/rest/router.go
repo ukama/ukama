@@ -50,6 +50,7 @@ type registry interface {
 	GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
 	GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
 	AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
+	UpdateMember(orgName string, userUUID string, isDeactivated bool) error
 	RemoveMember(orgName string, userUUID string) error
 
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
@@ -116,8 +117,7 @@ func (r *Router) init() {
 	orgs.GET("/:org/members", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
 	orgs.POST("/:org/members", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
 	orgs.GET("/:org/members/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
-	// update member
-	// Deactivate member
+	orgs.PATCH("/:org/members/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
 	orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 
 	// Users routes
@@ -181,6 +181,10 @@ func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
 	return r.clients.Registry.AddMember(req.OrgName, req.UserUUID)
+}
+
+func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
+	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUUID, req.IsDeactivated)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {
