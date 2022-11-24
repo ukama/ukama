@@ -160,6 +160,19 @@ func (r *Registry) RemoveMember(orgName string, userUUID string) error {
 	return err
 }
 
+func (r *Registry) AddNetwork(orgName string, netName string) (*netpb.AddResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.networkClient.Add(ctx, &netpb.AddRequest{OrgName: orgName, Name: netName})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (r *Registry) GetNetworks(org string) (*netpb.GetByOrgResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

@@ -53,6 +53,7 @@ type registry interface {
 	RemoveMember(orgName string, userUUID string) error
 
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
+	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -102,7 +103,7 @@ func (r *Router) init() {
 	const org = "/orgs"
 	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
 	orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
-	orgs.POST("/", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
+	orgs.POST("", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
 	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 	// update org
 	// Deactivate org
@@ -117,7 +118,7 @@ func (r *Router) init() {
 	// Users routes
 	const user = "/users"
 	users := v1.Group(user, "Users", "Operations on Users")
-	users.POST("/", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
+	users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
 	users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
 	// user orgs-member
 	// update user
@@ -128,6 +129,7 @@ func (r *Router) init() {
 	const net = "/networks"
 	networks := v1.Group(net, "Networks", "Operations on Networks")
 	networks.GET("", formatDoc("Get Networks", "Get all Networks of an organization"), tonic.Handler(r.getNetworksHandler, http.StatusOK))
+	networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
 }
 
 // Org handlers
@@ -194,6 +196,10 @@ func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*n
 	}
 
 	return r.clients.Registry.GetNetworks(orgName)
+}
+
+func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {
+	return r.clients.Registry.AddNetwork(req.OrgName, req.NetName)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

@@ -37,6 +37,29 @@ func (_m *registry) AddMember(orgName string, userUUID string) (*gen.MemberRespo
 	return r0, r1
 }
 
+// AddNetwork provides a mock function with given fields: orgName, netName
+func (_m *registry) AddNetwork(orgName string, netName string) (*pbgen.AddResponse, error) {
+	ret := _m.Called(orgName, netName)
+
+	var r0 *pbgen.AddResponse
+	if rf, ok := ret.Get(0).(func(string, string) *pbgen.AddResponse); ok {
+		r0 = rf(orgName, netName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pbgen.AddResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(orgName, netName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AddOrg provides a mock function with given fields: orgName, owner, certificate
 func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*gen.AddResponse, error) {
 	ret := _m.Called(orgName, owner, certificate)
