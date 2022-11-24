@@ -54,6 +54,7 @@ type registry interface {
 
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
+	GetNetwork(netID uint64) (*netpb.GetResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -130,6 +131,7 @@ func (r *Router) init() {
 	networks := v1.Group(net, "Networks", "Operations on Networks")
 	networks.GET("", formatDoc("Get Networks", "Get all Networks of an organization"), tonic.Handler(r.getNetworksHandler, http.StatusOK))
 	networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
+	networks.GET("/:network_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetworkHandler, http.StatusOK))
 }
 
 // Org handlers
@@ -188,6 +190,16 @@ func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error
 }
 
 // Network handlers
+
+func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
+	// netID, err := strconv.ParseUint(c.Param("network"), 10, 64)
+	// if err != nil {
+	// return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+	// Message: "invalid network_id"}
+	// }
+	return r.clients.Registry.GetNetwork(req.NetworkID)
+}
+
 func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*netpb.GetByOrgResponse, error) {
 	orgName, ok := c.GetQuery("org")
 	if !ok {

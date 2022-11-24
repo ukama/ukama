@@ -173,6 +173,18 @@ func (r *Registry) AddNetwork(orgName string, netName string) (*netpb.AddRespons
 	return res, nil
 }
 
+func (r *Registry) GetNetwork(netID uint64) (*netpb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.networkClient.Get(ctx, &netpb.GetRequest{NetworkID: netID})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (r *Registry) GetNetworks(org string) (*netpb.GetByOrgResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

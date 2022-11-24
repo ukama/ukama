@@ -58,6 +58,10 @@ type GetNetworksRequest struct {
 	OrgName string `form:"org" json:"org" query:"org" binding:"required" validate:"required"`
 }
 
+type GetNetworkRequest struct {
+	NetworkID uint64 `path:"network_id" validate:"required"`
+}
+
 type AddNetworkRequest struct {
 	OrgName string `json:"org" validate:"required"`
 	NetName string `json:"network_name" validate:"required"`

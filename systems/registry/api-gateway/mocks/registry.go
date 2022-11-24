@@ -129,6 +129,29 @@ func (_m *registry) GetMembers(orgName string) (*gen.GetMembersResponse, error) 
 	return r0, r1
 }
 
+// GetNetwork provides a mock function with given fields: netID
+func (_m *registry) GetNetwork(netID uint64) (*pbgen.GetResponse, error) {
+	ret := _m.Called(netID)
+
+	var r0 *pbgen.GetResponse
+	if rf, ok := ret.Get(0).(func(uint64) *pbgen.GetResponse); ok {
+		r0 = rf(netID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pbgen.GetResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint64) error); ok {
+		r1 = rf(netID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNetworks provides a mock function with given fields: org
 func (_m *registry) GetNetworks(org string) (*pbgen.GetByOrgResponse, error) {
 	ret := _m.Called(org)
