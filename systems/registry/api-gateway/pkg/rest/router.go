@@ -17,7 +17,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	pborg "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
@@ -43,13 +44,15 @@ type Clients struct {
 }
 
 type registry interface {
-	GetOrg(orgName string) (*pborg.GetByNameResponse, error)
-	GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error)
-	AddOrg(orgName string, owner string, certificate string) (*pborg.AddResponse, error)
-	GetMember(orgName string, userUUID string) (*pborg.MemberResponse, error)
-	GetMembers(orgName string) (*pborg.GetMembersResponse, error)
-	AddMember(orgName string, userUUID string) (*pborg.MemberResponse, error)
+	GetOrg(orgName string) (*orgpb.GetByNameResponse, error)
+	GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error)
+	AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error)
+	GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
+	GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
+	AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
 	RemoveMember(orgName string, userUUID string) error
+
+	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -95,10 +98,10 @@ func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "API gateway", "Registry system version v1")
 
-	// org handlers
+	// org routes
 	const org = "/orgs"
 	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
-	orgs.GET("/", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
+	orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
 	orgs.POST("/", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
 	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 	// update org
@@ -111,20 +114,29 @@ func (r *Router) init() {
 	// Deactivate member
 	orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 
-	// Users Handlers
+	// Users routes
 	const user = "/users"
 	users := v1.Group(user, "Users", "Operations on Users")
 	users.POST("/", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
 	users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+	// user orgs-member
+	// update user
+	// Deactivate user
+	// Delete user
+
+	// Network routes
+	const net = "/networks"
+	networks := v1.Group(net, "Networks", "Operations on Networks")
+	networks.GET("", formatDoc("Get Networks", "Get all Networks of an organization"), tonic.Handler(r.getNetworksHandler, http.StatusOK))
 }
 
 // Org handlers
 
-func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pborg.GetByNameResponse, error) {
+func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetByNameResponse, error) {
 	return r.clients.Registry.GetOrg(c.Param("org"))
 }
 
-func (r *Router) getOrgsHandler(c *gin.Context) (*pborg.GetByOwnerResponse, error) {
+func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.GetByOwnerResponse, error) {
 	ownerUUID, ok := c.GetQuery("user_uuid")
 	if !ok {
 		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
@@ -134,25 +146,27 @@ func (r *Router) getOrgsHandler(c *gin.Context) (*pborg.GetByOwnerResponse, erro
 	return r.clients.Registry.GetOrgs(ownerUUID)
 }
 
-func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*pborg.AddResponse, error) {
+func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddResponse, error) {
 	return r.clients.Registry.AddOrg(req.OrgName, req.Owner, req.Certificate)
 }
 
-func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*pborg.GetMembersResponse, error) {
+func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetMembersResponse, error) {
 	return r.clients.Registry.GetMembers(c.Param("org"))
 }
 
-func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*pborg.MemberResponse, error) {
+func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb.MemberResponse, error) {
 	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
 }
 
-func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*pborg.MemberResponse, error) {
+func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
 	return r.clients.Registry.AddMember(req.OrgName, req.UserUUID)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {
 	return r.clients.Registry.RemoveMember(c.Param("org"), c.Param("user_uuid"))
 }
+
+// Users handlers
 
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
 	return r.clients.User.Get(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
@@ -169,6 +183,17 @@ func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
 	return r.clients.User.Delete(req.UserId, c.GetString(USER_ID_KEY))
+}
+
+// Network handlers
+func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*netpb.GetByOrgResponse, error) {
+	orgName, ok := c.GetQuery("org")
+	if !ok {
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "org is a mandatory query parameter"}
+	}
+
+	return r.clients.Registry.GetNetworks(orgName)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

@@ -9,19 +9,20 @@ import (
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
-	pborg "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"google.golang.org/grpc"
 )
 
 const DefaultNetworkName = "default"
 
 type Registry struct {
-	conn      *grpc.ClientConn
-	orgConn   *grpc.ClientConn
-	client    pb.NetworkServiceClient
-	orgClient pborg.OrgServiceClient
-	timeout   time.Duration
-	host      string
+	conn          *grpc.ClientConn
+	orgConn       *grpc.ClientConn
+	networkClient pb.NetworkServiceClient
+	orgClient     orgpb.OrgServiceClient
+	timeout       time.Duration
+	host          string
 }
 
 func NewRegistry(networkHost string, orgHost string, timeout time.Duration) *Registry {
@@ -39,25 +40,25 @@ func NewRegistry(networkHost string, orgHost string, timeout time.Duration) *Reg
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
-	orgClient := pborg.NewOrgServiceClient(orgConn)
+	orgClient := orgpb.NewOrgServiceClient(orgConn)
 
 	return &Registry{
-		conn:      conn,
-		client:    client,
-		orgConn:   orgConn,
-		orgClient: orgClient,
-		timeout:   timeout,
-		host:      networkHost,
+		conn:          conn,
+		networkClient: client,
+		orgConn:       orgConn,
+		orgClient:     orgClient,
+		timeout:       timeout,
+		host:          networkHost,
 	}
 }
 
-func NewRegistryFromClient(networkClient pb.NetworkServiceClient, orgClient pborg.OrgServiceClient) *Registry {
+func NewRegistryFromClient(networkClient pb.NetworkServiceClient, orgClient orgpb.OrgServiceClient) *Registry {
 	return &Registry{
-		host:      "localhost",
-		timeout:   1 * time.Second,
-		conn:      nil,
-		client:    networkClient,
-		orgClient: orgClient,
+		host:          "localhost",
+		timeout:       1 * time.Second,
+		conn:          nil,
+		networkClient: networkClient,
+		orgClient:     orgClient,
 	}
 }
 
@@ -66,11 +67,11 @@ func (r *Registry) Close() {
 	r.orgConn.Close()
 }
 
-func (r *Registry) GetOrg(orgName string) (*pborg.GetByNameResponse, error) {
+func (r *Registry) GetOrg(orgName string) (*orgpb.GetByNameResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.GetByName(ctx, &pborg.GetByNameRequest{Name: orgName})
+	res, err := r.orgClient.GetByName(ctx, &orgpb.GetByNameRequest{Name: orgName})
 	if err != nil {
 		return nil, err
 	}
@@ -78,28 +79,28 @@ func (r *Registry) GetOrg(orgName string) (*pborg.GetByNameResponse, error) {
 	return res, nil
 }
 
-func (r *Registry) GetOrgs(ownerUUID string) (*pborg.GetByOwnerResponse, error) {
+func (r *Registry) GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.GetByOwner(ctx, &pborg.GetByOwnerRequest{UserUuid: ownerUUID})
+	res, err := r.orgClient.GetByOwner(ctx, &orgpb.GetByOwnerRequest{UserUuid: ownerUUID})
 	if err != nil {
 		return nil, err
 	}
 
 	if res.Orgs == nil {
-		return &pborg.GetByOwnerResponse{Orgs: []*pborg.Organization{}, Owner: ownerUUID}, nil
+		return &orgpb.GetByOwnerResponse{Orgs: []*orgpb.Organization{}, Owner: ownerUUID}, nil
 	}
 
 	return res, nil
 }
 
-func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*pborg.AddResponse, error) {
+func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	organization := &pborg.Organization{Name: orgName, Owner: owner, Certificate: certificate}
-	res, err := r.orgClient.Add(ctx, &pborg.AddRequest{Org: organization})
+	organization := &orgpb.Organization{Name: orgName, Owner: owner, Certificate: certificate}
+	res, err := r.orgClient.Add(ctx, &orgpb.AddRequest{Org: organization})
 
 	if err != nil {
 		return nil, err
@@ -108,11 +109,11 @@ func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*pb
 	return res, nil
 }
 
-func (r *Registry) GetMember(orgName string, userUUID string) (*pborg.MemberResponse, error) {
+func (r *Registry) GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.GetMember(ctx, &pborg.MemberRequest{OrgName: orgName, UserUuid: userUUID})
+	res, err := r.orgClient.GetMember(ctx, &orgpb.MemberRequest{OrgName: orgName, UserUuid: userUUID})
 	if err != nil {
 		return nil, err
 	}
@@ -120,27 +121,27 @@ func (r *Registry) GetMember(orgName string, userUUID string) (*pborg.MemberResp
 	return res, nil
 }
 
-func (r *Registry) GetMembers(orgName string) (*pborg.GetMembersResponse, error) {
+func (r *Registry) GetMembers(orgName string) (*orgpb.GetMembersResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.GetMembers(ctx, &pborg.GetMembersRequest{OrgName: orgName})
+	res, err := r.orgClient.GetMembers(ctx, &orgpb.GetMembersRequest{OrgName: orgName})
 	if err != nil {
 		return nil, err
 	}
 
 	if res.Members == nil {
-		return &pborg.GetMembersResponse{Members: []*pborg.OrgUser{}, Org: orgName}, nil
+		return &orgpb.GetMembersResponse{Members: []*orgpb.OrgUser{}, Org: orgName}, nil
 	}
 
 	return res, nil
 }
 
-func (r *Registry) AddMember(orgName string, userUUID string) (*pborg.MemberResponse, error) {
+func (r *Registry) AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	member := &pborg.MemberRequest{OrgName: orgName, UserUuid: userUUID}
+	member := &orgpb.MemberRequest{OrgName: orgName, UserUuid: userUUID}
 	res, err := r.orgClient.AddMember(ctx, member)
 
 	if err != nil {
@@ -154,7 +155,23 @@ func (r *Registry) RemoveMember(orgName string, userUUID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	_, err := r.orgClient.RemoveMember(ctx, &pborg.MemberRequest{OrgName: orgName, UserUuid: userUUID})
+	_, err := r.orgClient.RemoveMember(ctx, &orgpb.MemberRequest{OrgName: orgName, UserUuid: userUUID})
 
 	return err
+}
+
+func (r *Registry) GetNetworks(org string) (*netpb.GetByOrgResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.networkClient.GetByOrg(ctx, &netpb.GetByOrgRequest{OrgName: org})
+	if err != nil {
+		return nil, err
+	}
+
+	if res.Networks == nil {
+		return &netpb.GetByOrgResponse{Networks: []*netpb.Network{}, Org: org}, nil
+	}
+
+	return res, nil
 }

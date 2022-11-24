@@ -2,6 +2,10 @@ package rest
 
 // org group
 
+type GetOrgsRequest struct {
+	UserUUID string `form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
+}
+
 type GetOrgRequest struct {
 	OrgName string `path:"org" validate:"required"`
 }
@@ -46,4 +50,10 @@ type UpdateUserRequest struct {
 type DeleteUserRequest struct {
 	OrgName string `path:"org" validate:"required"`
 	UserId  string `path:"user" validate:"required"`
+}
+
+// Network group
+
+type GetNetworksRequest struct {
+	OrgName string `form:"org" json:"org" query:"org" binding:"required" validate:"required"`
 }
