@@ -214,6 +214,18 @@ func (r *Registry) AddSite(netID uint64, siteName string) (*netpb.AddSiteRespons
 	return res, nil
 }
 
+func (r *Registry) GetSite(netID uint64, siteName string) (*netpb.GetSiteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.networkClient.GetSiteByName(ctx, &netpb.GetSiteByNameRequest{NetworkID: netID, SiteName: siteName})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (r *Registry) GetSites(netID uint64) (*netpb.GetSiteByNetworkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

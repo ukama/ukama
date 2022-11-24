@@ -38,19 +38,19 @@ type AddUserRequest struct {
 	Phone string `json:"phone,omitempty" validate:"required"`
 }
 
-type UpdateUserRequest struct {
-	OrgName       string `path:"org" validate:"required"`
-	UserId        string `path:"user" validate:"required"`
-	Name          string `json:"name,omitempty"`
-	Email         string `json:"email,omitempty"`
-	Phone         string `json:"phone,omitempty"`
-	IsDeactivated bool   `json:"isDeactivated,omitempty"`
-}
+// type UpdateUserRequest struct {
+// OrgName       string `path:"org" validate:"required"`
+// UserId        string `path:"user" validate:"required"`
+// Name          string `json:"name,omitempty"`
+// Email         string `json:"email,omitempty"`
+// Phone         string `json:"phone,omitempty"`
+// IsDeactivated bool   `json:"isDeactivated,omitempty"`
+// }
 
-type DeleteUserRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	UserId  string `path:"user" validate:"required"`
-}
+// type DeleteUserRequest struct {
+// OrgName string `path:"org" validate:"required"`
+// UserId  string `path:"user" validate:"required"`
+// }
 
 // Network group
 
@@ -67,6 +67,10 @@ type AddNetworkRequest struct {
 	NetName string `json:"network_name" validate:"required"`
 }
 
+type GetSiteRequest struct {
+	NetworkID uint64 `path:"net_id" validate:"required"`
+	SiteName  string `path:"site" validate:"required"`
+}
 type AddSiteRequest struct {
 	NetworkID uint64 `path:"net_id" validate:"required"`
 	SiteName  string `json:"site" validate:"required"`

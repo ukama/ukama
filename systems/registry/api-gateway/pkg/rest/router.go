@@ -57,6 +57,7 @@ type registry interface {
 	GetNetwork(netID uint64) (*netpb.GetResponse, error)
 
 	AddSite(netID uint64, siteName string) (*netpb.AddSiteResponse, error)
+	GetSite(netID uint64, siteName string) (*netpb.GetSiteResponse, error)
 	GetSites(netID uint64) (*netpb.GetSiteByNetworkResponse, error)
 }
 
@@ -147,6 +148,7 @@ func (r *Router) init() {
 	// Sites
 	networks.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
 	networks.POST("/:net_id/sites", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
+	networks.GET("/:net_id/sites/:site", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
 }
 
 // Org handlers
@@ -200,10 +202,6 @@ func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.
 		c.GetString(USER_ID_KEY))
 }
 
-func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
-	return r.clients.User.Delete(req.UserId, c.GetString(USER_ID_KEY))
-}
-
 // Network handlers
 
 func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
@@ -222,6 +220,10 @@ func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*n
 
 func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {
 	return r.clients.Registry.AddNetwork(req.OrgName, req.NetName)
+}
+
+func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*netpb.GetSiteResponse, error) {
+	return r.clients.Registry.GetSite(req.NetworkID, req.SiteName)
 }
 
 func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetSiteByNetworkResponse, error) {
