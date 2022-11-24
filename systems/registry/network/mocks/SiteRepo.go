@@ -63,6 +63,29 @@ func (_m *SiteRepo) Get(id uint) (*db.Site, error) {
 	return r0, r1
 }
 
+// GetByName provides a mock function with given fields: netID, siteName
+func (_m *SiteRepo) GetByName(netID uint, siteName string) (*db.Site, error) {
+	ret := _m.Called(netID, siteName)
+
+	var r0 *db.Site
+	if rf, ok := ret.Get(0).(func(uint, string) *db.Site); ok {
+		r0 = rf(netID, siteName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Site)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint, string) error); ok {
+		r1 = rf(netID, siteName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetByNetwork provides a mock function with given fields: netID
 func (_m *SiteRepo) GetByNetwork(netID uint) ([]db.Site, error) {
 	ret := _m.Called(netID)

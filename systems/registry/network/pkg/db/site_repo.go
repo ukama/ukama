@@ -9,9 +9,10 @@ import (
 )
 
 type SiteRepo interface {
-	Get(id uint) (*Site, error)
-	GetByNetwork(netID uint) ([]Site, error)
 	Add(site *Site) error
+	Get(id uint) (*Site, error)
+	GetByName(netID uint, siteName string) (*Site, error)
+	GetByNetwork(netID uint) ([]Site, error)
 	// Update(site *Site) error
 	Delete(id uint) error
 
@@ -33,6 +34,17 @@ func (s siteRepo) Get(id uint) (*Site, error) {
 	var site Site
 
 	result := s.Db.GetGormDb().First(&site, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &site, nil
+}
+
+func (s siteRepo) GetByName(netID uint, siteName string) (*Site, error) {
+	var site Site
+
+	result := s.Db.GetGormDb().Where("sites.network_id = ? and sites.name = ?", netID, siteName).First(&site)
 	if result.Error != nil {
 		return nil, result.Error
 	}

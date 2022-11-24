@@ -32,6 +32,7 @@ type NetworkServiceClient interface {
 	// Sites
 	AddSite(ctx context.Context, in *AddSiteRequest, opts ...grpc.CallOption) (*AddSiteResponse, error)
 	GetSite(ctx context.Context, in *GetSiteRequest, opts ...grpc.CallOption) (*GetSiteResponse, error)
+	GetSiteByName(ctx context.Context, in *GetSiteByNameRequest, opts ...grpc.CallOption) (*GetSiteResponse, error)
 	GetSiteByNetwork(ctx context.Context, in *GetSiteByNetworkRequest, opts ...grpc.CallOption) (*GetSiteByNetworkResponse, error)
 }
 
@@ -106,6 +107,15 @@ func (c *networkServiceClient) GetSite(ctx context.Context, in *GetSiteRequest, 
 	return out, nil
 }
 
+func (c *networkServiceClient) GetSiteByName(ctx context.Context, in *GetSiteByNameRequest, opts ...grpc.CallOption) (*GetSiteResponse, error) {
+	out := new(GetSiteResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetSiteByName", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *networkServiceClient) GetSiteByNetwork(ctx context.Context, in *GetSiteByNetworkRequest, opts ...grpc.CallOption) (*GetSiteByNetworkResponse, error) {
 	out := new(GetSiteByNetworkResponse)
 	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetSiteByNetwork", in, out, opts...)
@@ -129,6 +139,7 @@ type NetworkServiceServer interface {
 	// Sites
 	AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error)
 	GetSite(context.Context, *GetSiteRequest) (*GetSiteResponse, error)
+	GetSiteByName(context.Context, *GetSiteByNameRequest) (*GetSiteResponse, error)
 	GetSiteByNetwork(context.Context, *GetSiteByNetworkRequest) (*GetSiteByNetworkResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
@@ -157,6 +168,9 @@ func (UnimplementedNetworkServiceServer) AddSite(context.Context, *AddSiteReques
 }
 func (UnimplementedNetworkServiceServer) GetSite(context.Context, *GetSiteRequest) (*GetSiteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSite not implemented")
+}
+func (UnimplementedNetworkServiceServer) GetSiteByName(context.Context, *GetSiteByNameRequest) (*GetSiteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSiteByName not implemented")
 }
 func (UnimplementedNetworkServiceServer) GetSiteByNetwork(context.Context, *GetSiteByNetworkRequest) (*GetSiteByNetworkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSiteByNetwork not implemented")
@@ -300,6 +314,24 @@ func _NetworkService_GetSite_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkService_GetSiteByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSiteByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).GetSiteByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.network.v1.NetworkService/GetSiteByName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).GetSiteByName(ctx, req.(*GetSiteByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _NetworkService_GetSiteByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSiteByNetworkRequest)
 	if err := dec(in); err != nil {
@@ -352,6 +384,10 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSite",
 			Handler:    _NetworkService_GetSite_Handler,
+		},
+		{
+			MethodName: "GetSiteByName",
+			Handler:    _NetworkService_GetSiteByName_Handler,
 		},
 		{
 			MethodName: "GetSiteByNetwork",

@@ -116,6 +116,12 @@ func (this *GetSiteResponse) Validate() error {
 	}
 	return nil
 }
+func (this *GetSiteByNameRequest) Validate() error {
+	if this.SiteName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SiteName", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteName))
+	}
+	return nil
+}
 func (this *GetSiteByNetworkRequest) Validate() error {
 	return nil
 }

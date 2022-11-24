@@ -175,6 +175,29 @@ func (_m *NetworkServiceServer) GetSite(_a0 context.Context, _a1 *gen.GetSiteReq
 	return r0, r1
 }
 
+// GetSiteByName provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetSiteByName(_a0 context.Context, _a1 *gen.GetSiteByNameRequest) (*gen.GetSiteResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetSiteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteByNameRequest) *gen.GetSiteResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetSiteResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSiteByNameRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSiteByNetwork provides a mock function with given fields: _a0, _a1
 func (_m *NetworkServiceServer) GetSiteByNetwork(_a0 context.Context, _a1 *gen.GetSiteByNetworkRequest) (*gen.GetSiteByNetworkResponse, error) {
 	ret := _m.Called(_a0, _a1)

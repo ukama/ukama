@@ -21,6 +21,7 @@ service NetworkService {
   /* Sites */
     rpc AddSite(AddSiteRequest) returns (AddSiteResponse);
     rpc GetSite(GetSiteRequest) returns (GetSiteResponse);
+    rpc GetSiteByName(GetSiteByNameRequest) returns (GetSiteResponse);
     rpc GetSiteByNetwork(GetSiteByNetworkRequest) returns (GetSiteByNetworkResponse);
     // UpdateSite
     // RemoveSite
@@ -87,6 +88,11 @@ message GetSiteRequest{
 
 message GetSiteResponse{
     Site site = 1;
+}
+
+message GetSiteByNameRequest{
+    uint64 networkID = 1 [json_name = "network_id"];
+    string siteName = 2 [(validator.field) = { string_not_empty: true}, json_name = "site"];
 }
 
 message GetSiteByNetworkRequest{
