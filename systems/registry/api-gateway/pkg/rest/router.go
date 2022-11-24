@@ -55,6 +55,8 @@ type registry interface {
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 	GetNetwork(netID uint64) (*netpb.GetResponse, error)
+
+	GetSites(netID uint64) (*netpb.GetSiteByNetworkResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -125,13 +127,24 @@ func (r *Router) init() {
 	// update user
 	// Deactivate user
 	// Delete user
+	// users.DELETE("/:user_uuid", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
 
 	// Network routes
+	// Networks
 	const net = "/networks"
 	networks := v1.Group(net, "Networks", "Operations on Networks")
 	networks.GET("", formatDoc("Get Networks", "Get all Networks of an organization"), tonic.Handler(r.getNetworksHandler, http.StatusOK))
 	networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
-	networks.GET("/:network_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetworkHandler, http.StatusOK))
+	networks.GET("/:net_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetworkHandler, http.StatusOK))
+	// update network
+	// networks.DELETE("/:net_id", formatDoc("Remove Network", "Remove a network of an organization"), tonic.Handler(r.removeNetworkHandler, http.StatusOK))
+
+	// Admins
+
+	// Vendors
+
+	// Sites
+	networks.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
 }
 
 // Org handlers
@@ -192,11 +205,6 @@ func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error
 // Network handlers
 
 func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
-	// netID, err := strconv.ParseUint(c.Param("network"), 10, 64)
-	// if err != nil {
-	// return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-	// Message: "invalid network_id"}
-	// }
 	return r.clients.Registry.GetNetwork(req.NetworkID)
 }
 
@@ -212,6 +220,10 @@ func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*n
 
 func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {
 	return r.clients.Registry.AddNetwork(req.OrgName, req.NetName)
+}
+
+func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetSiteByNetworkResponse, error) {
+	return r.clients.Registry.GetSites(req.NetworkID)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

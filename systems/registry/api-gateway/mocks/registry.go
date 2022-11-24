@@ -221,6 +221,29 @@ func (_m *registry) GetOrgs(ownerUUID string) (*gen.GetByOwnerResponse, error) {
 	return r0, r1
 }
 
+// GetSites provides a mock function with given fields: netID
+func (_m *registry) GetSites(netID uint64) (*pbgen.GetSiteByNetworkResponse, error) {
+	ret := _m.Called(netID)
+
+	var r0 *pbgen.GetSiteByNetworkResponse
+	if rf, ok := ret.Get(0).(func(uint64) *pbgen.GetSiteByNetworkResponse); ok {
+		r0 = rf(netID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pbgen.GetSiteByNetworkResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint64) error); ok {
+		r1 = rf(netID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemoveMember provides a mock function with given fields: orgName, userUUID
 func (_m *registry) RemoveMember(orgName string, userUUID string) error {
 	ret := _m.Called(orgName, userUUID)

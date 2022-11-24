@@ -200,3 +200,19 @@ func (r *Registry) GetNetworks(org string) (*netpb.GetByOrgResponse, error) {
 
 	return res, nil
 }
+
+func (r *Registry) GetSites(netID uint64) (*netpb.GetSiteByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.networkClient.GetSiteByNetwork(ctx, &netpb.GetSiteByNetworkRequest{NetworkID: netID})
+	if err != nil {
+		return nil, err
+	}
+
+	if res.Sites == nil {
+		return &netpb.GetSiteByNetworkResponse{Sites: []*netpb.Site{}, NetworkID: netID}, nil
+	}
+
+	return res, nil
+}

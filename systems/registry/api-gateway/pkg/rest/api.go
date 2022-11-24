@@ -59,7 +59,7 @@ type GetNetworksRequest struct {
 }
 
 type GetNetworkRequest struct {
-	NetworkID uint64 `path:"network_id" validate:"required"`
+	NetworkID uint64 `path:"net_id" validate:"required"`
 }
 
 type AddNetworkRequest struct {
