@@ -297,6 +297,71 @@ func TestNetworkServer_GetSite(t *testing.T) {
 	})
 }
 
+func TestNetworkServer_GetSiteByName(t *testing.T) {
+	t.Run("Site exists", func(t *testing.T) {
+		const siteID = 1
+		const netID = 1
+		const orgID = 1
+		const siteName = "site-A"
+		const netName = "net-1"
+
+		siteRepo := &mocks.SiteRepo{}
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       orgID,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByName", uint(netID), siteName).Return(
+			&db.Site{Model: gorm.Model{ID: siteID},
+				Name:        siteName,
+				NetworkID:   1,
+				Deactivated: false,
+			}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
+			NetworkID: netID, SiteName: siteName})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, uint64(siteID), netResp.GetSite().GetId())
+		assert.Equal(t, siteName, netResp.GetSite().GetName())
+		siteRepo.AssertExpectations(t)
+	})
+
+	t.Run("Site not found", func(t *testing.T) {
+		const siteID = 1
+		const netID = 1
+		const orgID = 1
+		const siteName = "site-A"
+		const netName = "net-1"
+
+		siteRepo := &mocks.SiteRepo{}
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       orgID,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByName", uint(netID), siteName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
+			NetworkID: netID, SiteName: siteName})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		siteRepo.AssertExpectations(t)
+	})
+}
+
 func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
 	t.Run("Network found", func(t *testing.T) {
 		const netID = 1

@@ -170,6 +170,21 @@ func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*p
 		Site: dbSiteToPbSite(site)}, nil
 }
 
+func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByNameRequest) (*pb.GetSiteResponse, error) {
+	ntwk, err := n.netRepo.Get(uint(req.NetworkID))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	site, err := n.siteRepo.GetByName(ntwk.ID, req.SiteName)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "site")
+	}
+
+	return &pb.GetSiteResponse{
+		Site: dbSiteToPbSite(site)}, nil
+}
+
 func (n *NetworkServer) GetSiteByNetwork(ctx context.Context, req *pb.GetSiteByNetworkRequest) (*pb.GetSiteByNetworkResponse, error) {
 	ntwk, err := n.netRepo.Get(uint(req.GetNetworkID()))
 	if err != nil {
