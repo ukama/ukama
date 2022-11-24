@@ -33,8 +33,8 @@ message AddRequest{
 }
 
 message AddResponse{
-    Network network = 1;
-    string org = 2;
+    string org = 1;
+    Network network = 2;
 }
 
 message GetRequest{

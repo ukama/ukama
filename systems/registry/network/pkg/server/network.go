@@ -107,7 +107,7 @@ func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest)
 func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
 	org, err := n.orgRepo.GetByName(req.GetOrgName())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org")
+		return nil, grpc.SqlErrorToGrpc(err, "networks")
 	}
 
 	ntwks, err := n.netRepo.GetAllByOrgId(org.ID)
