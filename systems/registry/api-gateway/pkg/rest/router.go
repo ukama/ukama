@@ -44,9 +44,9 @@ type Clients struct {
 }
 
 type registry interface {
+	AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error)
 	GetOrg(orgName string) (*orgpb.GetByNameResponse, error)
 	GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error)
-	AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error)
 	GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
 	GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
 	AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
@@ -56,6 +56,7 @@ type registry interface {
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 	GetNetwork(netID uint64) (*netpb.GetResponse, error)
 
+	AddSite(netID uint64, siteName string) (*netpb.AddSiteResponse, error)
 	GetSites(netID uint64) (*netpb.GetSiteByNetworkResponse, error)
 }
 
@@ -145,6 +146,7 @@ func (r *Router) init() {
 
 	// Sites
 	networks.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
+	networks.POST("/:net_id/sites", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
 }
 
 // Org handlers
@@ -224,6 +226,10 @@ func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*ne
 
 func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetSiteByNetworkResponse, error) {
 	return r.clients.Registry.GetSites(req.NetworkID)
+}
+
+func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*netpb.AddSiteResponse, error) {
+	return r.clients.Registry.AddSite(req.NetworkID, req.SiteName)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

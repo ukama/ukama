@@ -66,3 +66,8 @@ type AddNetworkRequest struct {
 	OrgName string `json:"org" validate:"required"`
 	NetName string `json:"network_name" validate:"required"`
 }
+
+type AddSiteRequest struct {
+	NetworkID uint64 `path:"net_id" validate:"required"`
+	SiteName  string `json:"site" validate:"required"`
+}

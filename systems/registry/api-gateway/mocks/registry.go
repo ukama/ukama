@@ -83,6 +83,29 @@ func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*g
 	return r0, r1
 }
 
+// AddSite provides a mock function with given fields: netID, siteName
+func (_m *registry) AddSite(netID uint64, siteName string) (*pbgen.AddSiteResponse, error) {
+	ret := _m.Called(netID, siteName)
+
+	var r0 *pbgen.AddSiteResponse
+	if rf, ok := ret.Get(0).(func(uint64, string) *pbgen.AddSiteResponse); ok {
+		r0 = rf(netID, siteName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pbgen.AddSiteResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint64, string) error); ok {
+		r1 = rf(netID, siteName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMember provides a mock function with given fields: orgName, userUUID
 func (_m *registry) GetMember(orgName string, userUUID string) (*gen.MemberResponse, error) {
 	ret := _m.Called(orgName, userUUID)
