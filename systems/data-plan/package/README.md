@@ -39,6 +39,7 @@ Package sub-system provide CRUD options to organization. Sub-system provide foll
             │   │   │   └── validations.go
             │   │   ├── config.go
             │   │   └── global.go
+            |   ├── Dockerfile
             │   ├── go.mod
             │   ├── go.sum
             │   └── Makefile
@@ -178,11 +179,27 @@ Before using the repo make sure below tools are installed:
 
 Then navigate into base-rate directory and run below command:
 
+**To Test**
+
+For unit tests run below commands:
+
+```
+make test
+```
+
+This commnd will run unit tests under all base-rate directories.
+
+![pkg_test](https://user-images.githubusercontent.com/83802574/203065220-496256f6-1ec4-4a78-8a0c-36d1f200f862.gif)
+
+**To Generate PB file**
+
 ```
 make gen
 ```
 
-This command will generate protobuf from `pb/package.proto`.
+This command will generate protobuf files from `pb/*.proto`.
+
+**To Run Server & Test RPC**
 
 ```
 make server
@@ -204,7 +221,7 @@ show rpc
 
 This command will show all the available RPC calls under package sub-system.
 
-**Add**
+→ **Add**
 
 Let's first populate data in our newly created DB using Add RPC.
 
@@ -212,7 +229,7 @@ Let's first populate data in our newly created DB using Add RPC.
 call Add
 ```
 
-**Get**
+→ **Get**
 
 Get package
 
@@ -220,7 +237,7 @@ Get package
 call Get
 ```
 
-**Update**
+→ **Update**
 
 Update package
 
@@ -228,7 +245,7 @@ Update package
 call Update
 ```
 
-**Delete**
+→ **Delete**
 
 Delete package
 

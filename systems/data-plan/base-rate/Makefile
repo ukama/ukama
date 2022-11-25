@@ -4,7 +4,7 @@ include ../../config.mk
 
 build: 
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/rate cmd/server/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/base-rate cmd/server/main.go
 lint:
 	golangci-lint run
 gen:

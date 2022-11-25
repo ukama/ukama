@@ -38,6 +38,7 @@ Base rate sub-system is responsibe of:
             │   │   │   └── utils.go
             │   │   └── validations
             │   │       └── validations.go
+            |   ├── Dockerfile
             │   ├── go.mod
             │   ├── go.sum
             │   └── Makefile
@@ -145,14 +146,29 @@ Before using the repo make sure below tools are installed:
 - Go 1.18
 - PostgreSQL
 - gRPC client
-
 Then navigate into base-rate directory and run below command:
+
+**To Test**
+
+For unit tests run below commands:
+
+```
+make test
+```
+
+This commnd will run unit tests under all base-rate directories.
+
+![BaseRateTest](https://user-images.githubusercontent.com/83802574/203062237-1cf8e774-8e0f-4ea6-9e2b-638a9807057e.gif)
+
+**To Generate PB file**
 
 ```
 make gen
 ```
 
-This command will generate protobuf from `pb/rate.proto`.
+This command will generate protobuf files from `pb/*.proto`.
+
+**To Run Server & Test RPC**
 
 ```
 make server
@@ -163,7 +179,7 @@ This command will run the server on port `9090` ,and craeate a database name `ba
 Server is running, Now we can use any gRPC client to intract with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans) here:
 
 ```
-evans --path /path/to --path . --proto pb/rate.proto --host localhost --port 9090
+evans --path /path/to --path . --proto pb/rates.proto --host localhost --port 9090
 ```
 
 Next run:
