@@ -93,12 +93,8 @@ func Test_Rate_Get(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		// Act
 		rate, err := r.GetBaseRate(rateId)
-
-		// Assert
 		assert.NoError(t, err)
-
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, rate)
@@ -162,7 +158,6 @@ func Test_Rates_Get(t *testing.T) {
 
 func Test_Rate_Upload(t *testing.T) {
 	t.Run("UploadRates", func(t *testing.T) {
-		// Arrange
 		var db *extsql.DB
 
 		rates := []Rate{{

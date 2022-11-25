@@ -26,20 +26,28 @@ func TestRateService_ParseToModel(t *testing.T) {
 	assert.Equal(t, "inter_mno_data", dbRate[0].Sim_type)
 }
 
-func TestRateService_FetchData(t *testing.T) {
+// Fetch data success case
+func TestRateService_FetchData_Success(t *testing.T) {
 	mockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
-	failMockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/baserate-test/systems/data-plan/docs/template/failed_template.csv"
-	//Success case
+
 	rawRates, err := FetchData(mockFileUrl)
 	assert.NoError(t, err)
 	assert.Equal(t, "The lunar maria", rawRates[0].Country)
+}
 
-	//Error case invalid file url
+// Fetch data error case invalid file url
+func TestRateService_FetchData_error1(t *testing.T) {
+	mockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
+
 	rateError1, err := FetchData("/fail" + mockFileUrl)
 	assert.Error(t, err)
 	assert.Nil(t, rateError1)
+}
 
-	//Error case file with invalid data
+// Fetch data error case file with invalid data
+func TestRateService_FetchData_error2(t *testing.T) {
+	failMockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/baserate-test/systems/data-plan/docs/template/failed_template.csv"
+
 	rateError2, err := FetchData(failMockFileUrl)
 	assert.Error(t, err)
 	assert.Nil(t, rateError2)
