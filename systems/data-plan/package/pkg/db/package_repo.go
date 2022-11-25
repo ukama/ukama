@@ -23,17 +23,12 @@ func NewPackageRepo(db sql.Db) *packageRepo {
 }
 
 func (r *packageRepo) Add(_package *Package) error {
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Create(_package)
+	result := r.Db.GetGormDb().Create(_package)
+	if result.Error != nil {
+		return result.Error
+	}
 
-		if result.Error != nil {
-			return result.Error
-		}
-
-		return nil
-	})
-
-	return err
+	return nil
 }
 
 func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
@@ -47,26 +42,19 @@ func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
 }
 
 func (r *packageRepo) Delete(orgId uint64, packageId uint64) error {
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Where("id = ? AND org_id = ?", packageId, orgId).Delete(&Package{})
+	result := r.Db.GetGormDb().Where("id = ? AND org_id = ?", packageId, orgId).Delete(&Package{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		result.Error = gorm.ErrRecordNotFound
+		return result.Error
+	}
 
-		if result.Error != nil {
-			return result.Error
-		}
-
-		if result.RowsAffected == 0 {
-			result.Error = gorm.ErrRecordNotFound
-			return result.Error
-		}
-
-		return nil
-	})
-
-	return err
+	return nil
 }
 
 func (b *packageRepo) Update(Id uint64, pkg Package) (*Package, error) {
-
 	result := b.Db.GetGormDb().Where(Id).UpdateColumns(pkg)
 	if result.Error != nil {
 		return nil, result.Error
