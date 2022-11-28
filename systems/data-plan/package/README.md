@@ -1,4 +1,4 @@
-# **Package sub-system**
+# Package sub-system
 
 Package sub-system provide CRUD options to organization. Sub-system provide following rpc's:
 
@@ -7,7 +7,7 @@ Package sub-system provide CRUD options to organization. Sub-system provide foll
 - Get packages by `id` & `orgId`
 - Delete package uder organization
 
-## **File Structure**
+## File Structure
 
     .
     └── systems
@@ -53,9 +53,9 @@ Package sub-system provide CRUD options to organization. Sub-system provide foll
 `*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
 - **pkg/server** This directory contains the file in which all the RPC functions logic is implemented. Those functions call `pkg\*_repo.go` functions to perform db operations.
 
-## **RPC Functions**
+## RPC Functions
 
-### **Get Packages**
+### Get Packages
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/GetPackages.png" alt="J" width="500"/>
 
@@ -80,7 +80,7 @@ Function take below argument:
 
 ---
 
-### **Add Package**
+### Add Package
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/AddPackage.png" alt="J" width="500"/>
 
@@ -112,7 +112,7 @@ Function take below argument:
 
 ---
 
-### **UpdatePackage**
+### UpdatePackage
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/UpdatePackage.png" alt="J" width="500"/>
 
@@ -144,7 +144,7 @@ Function take below argument:
 
 ---
 
-### **DeletePackage**
+### DeletePackage
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/DeletePackage.png" alt="J" width="500"/>
 
@@ -169,7 +169,7 @@ Function take below argument:
 
 ---
 
-## **How to use?**
+## How to use?
 
 Before using the repo make sure below tools are installed:
 

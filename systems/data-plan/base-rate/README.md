@@ -1,4 +1,4 @@
-# **Base rate sub-system**
+# Base rate sub-system
 
 Base rate sub-system is responsibe of:
 
@@ -6,7 +6,7 @@ Base rate sub-system is responsibe of:
 - Provide rates with some optional and require filters
 - Provide functionality to get record by id
 
-## **File Structure**
+## File Structure
 
     .
     └── systems
@@ -52,9 +52,9 @@ Base rate sub-system is responsibe of:
 `*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
 - **pkg/server** This directory contains the file in which all the RPC functions logic is implemented. Those functions call `pkg\*_repo.go` functions to perform db operations.
 
-## **RPC Functions**
+## RPC Functions
 
-### **UploadBaseRates**
+### UploadBaseRates
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/UploadBaseRates.png" alt="J" width="500"/>
 
@@ -82,7 +82,7 @@ Function take these arguments:
 
 ---
 
-### **GetBaseRates**
+### GetBaseRates
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/GetBaseRates.png" alt="J" width="500"/>
 
@@ -113,7 +113,7 @@ Function take these arguments:
 
 ---
 
-### **GetBaseRate**
+### GetBaseRate
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/GetBaseRate.png" alt="J" width="500"/>
 
@@ -139,7 +139,7 @@ Function take below argument:
 
 ---
 
-## **How to use?**
+## How to use?
 
 Before using the repo make sure below tools are installed:
 
