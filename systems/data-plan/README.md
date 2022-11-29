@@ -1,6 +1,6 @@
 # Data Plan System
 
-Data Plan system manage all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
+Data Plan system manages all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
 
 - Base rate sub-system
 - Packages sub-system
@@ -10,7 +10,7 @@ Data Plan system manage all the sim packages and base rates functionality. Data 
 Base rate sub-system is responsibe of:
 
 - Populating rates in DB from CSV
-- Provide rates with some optional and require filters
+- Provide rates with some optional and required filters
 - Provide functionality to get record by id
 
 ### Directory Structure
@@ -43,7 +43,7 @@ Base rate sub-system is responsibe of:
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/UploadBaseRates.png" alt="upload-base-rate" width="500"/>
 
-Upload base rates service provide functionality to populate rates from CV file to DB.
+Upload base rates service provides functionality to populate rates from CSV file to DB.
 
 ```proto
 service BaseRatesService {
@@ -51,7 +51,7 @@ service BaseRatesService {
 }
 ```
 
-Function take these arguments:
+Function takes these arguments:
 
 ```js
 {
@@ -71,7 +71,7 @@ Function take these arguments:
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/GetBaseRates.png" alt="get-base-rates" width="500"/>
 
-Get base rates service provide functionality to fetch base rates, and filter data on some required and optional arguments.
+Get base rates service provides functionality to fetch base rates, and filter data on some required and optional arguments.
 
 ```proto
 service BaseRatesService {
@@ -79,7 +79,7 @@ service BaseRatesService {
 }
 ```
 
-Function take these arguments:
+Function takes these arguments:
 
 ```js
 {
@@ -102,7 +102,7 @@ Function take these arguments:
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/GetBaseRate.png" alt="get-base-rate" width="500"/>
 
-Get base rate service provide functionality to fetch base rate by base rate id.
+Get base rate service provides functionality to fetch base rate by base rate id.
 
 ```proto
 service BaseRatesService {
@@ -110,7 +110,7 @@ service BaseRatesService {
 }
 ```
 
-Function take below argument:
+Function takes below argument:
 
 ```js
 {
@@ -150,9 +150,9 @@ This command will run the unit tests.
 make server
 ```
 
-This command will run the server on port `9090` ,and craeate a database name `baserate` with `rates` table under it.
+This command will run the server on port `9090`, and create a database named `baserate` with `rates` table under it.
 
-Server is running, Now we can use any gRPC client to intract with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans) here:
+Server is running, Now we can use any gRPC client to interact with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans) here:
 
 ```
 evans --path /path/to --path . --proto pb/rate.proto --host localhost --port 9090
@@ -168,17 +168,17 @@ This command will show all the available RPC calls under base-rate service.
 
 **UploadBaseRates**
 
-Let's first populate data in out newly created DB using UploadBaseRates RPC.
+Let's first populate data in our newly created DB using UploadBaseRates RPC.
 
 ```
 call UploadBaseRates
 ```
 
-Service takes 3 aurguments **fileURL**, **effectiveAt** & **simType**. For fileURL we can use url of template file existing under `data-plan/docs/template/template.csv`, effectiveAt can be any future UTC formate date and then choose simType.
+Service takes 3 aurguments **fileURL**, **effectiveAt** & **simType**. For fileURL we can use url of template file existing under `data-plan/docs/template/template.csv`, effectiveAt can be any future UTC formated date and then choose simType.
 
 **GetBaseRates**
 
-To verify that our records are populated we can use GetBaseRates RPC which will return list of rates base on filters provided.
+To verify that our records are populated we can use GetBaseRates RPC which will return a list of rates based on filters provided.
 This rpc function takes `country` as required param and some optional arguments **country**,**effectiveAt**,**network**,**simType**,**from**,**to**.
 
 ```
@@ -187,7 +187,7 @@ call GetBaseRates
 
 **GetBaseRate**
 
-To get base rate by id one can user GetBaseRate RPC which return single base rate record.
+To get base rate by id, one can use GetBaseRate RPC which returns a single base rate record.
 This rpc takes required argument of `id`.
 
 ```
