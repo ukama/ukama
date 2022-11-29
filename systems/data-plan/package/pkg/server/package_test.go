@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -94,6 +93,24 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	packageRepo.AssertExpectations(t)
 }
 
+// Error case adding package
+func TestPackageServer_AddPackage_Error(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	packageRepo.On("Add", mock.MatchedBy(func(p *db.Package) bool {
+		return p.Active == true && p.Name == "daily-pack"
+	})).Return(status.Errorf(codes.Internal, "error adding a package"))
+
+	s := NewPackageServer(packageRepo)
+
+	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
+		Active: true,
+		Name:   "daily-pack",
+	})
+	assert.Error(t, err)
+	assert.Nil(t, ActPackage)
+	packageRepo.AssertExpectations(t)
+}
+
 // End Add packages //
 
 // Update packages //
@@ -119,22 +136,12 @@ func TestPackageServer_UpdatePackage_Error(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
 
-	packageRepo.On("Update", uint64(1), db.Package{
-		Active: false,
-	}).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
-	_up, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
-		Id:     uint64(1),
-		Active: false,
+	packageRepo.On("Update", uint64(1), mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
+	_, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
+		Id: uint64(1),
 	})
-	layout := "2006-01-02 15:04:05 -0700 MST"
-	ct, _ := time.Parse(layout, _up.Package.GetCreatedAt())
-	ut, _ := time.Parse(layout, _up.Package.GetUpdatedAt())
-	dt, _ := time.Parse(layout, _up.Package.GetDeletedAt())
-	fmt.Println(_up, err)
-	assert.NoError(t, err)
-	assert.True(t, true, ct.IsZero())
-	assert.True(t, true, ut.IsZero())
-	assert.True(t, true, dt.IsZero())
+
+	assert.Error(t, err)
 }
 
 // End Update package //
