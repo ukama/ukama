@@ -36,6 +36,147 @@ cd /systems/data-plan
 
 ## Interface
 
+### Upload baseRates
+
+```bash
+curl -X 'POST' \
+  'http://localhost:8080/v1/baseRates' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "effective_at": "string",
+  "file_url": "string",
+  "sim_type": "string"
+}'
+```
+
+Response:
+
+```
+{
+	"rates": [
+		{
+			"id": "2",
+			"name": "",
+			"orgId": "",
+			"active": true,
+			"duration": "43",
+			"simType": "INTER_MNO_DATA",
+			"createdAt": "",
+			"deletedAt": "",
+			"updatedAt": "",
+			"smsVolume": "0",
+			"dataVolume": "23",
+			"voiceVolume": "23",
+			"orgRatesId": "55"
+		}
+	]
+}
+```
+
+### Get baseRate
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8080/v1/baseRates/3' \
+  -H 'accept: application/json'
+```
+
+Response:
+
+```
+{
+  "rate": {
+    "id": "3",
+    "country": "",
+    "network": "",
+    "vpmn": "",
+    "imsi": "",
+    "smsMo": "$0.1",
+    "smsMt": "$0.1",
+    "data": "$0.3",
+    "2g": "2G",
+    "3g": "3G",
+    "5g": "",
+    "lte": "",
+    "lteM": "",
+    "apn": "",
+    "createdAt": "2022-11-23 13:36:45.108238 +0200 CAT",
+    "deletedAt": "0001-01-01 00:00:00 +0000 UTC",
+    "updatedAt": "2022-11-23 13:36:45.108238 +0200 CAT",
+    "effectiveAt": "2023-06-23T09:16:50Z",
+    "endAt": "",
+    "simType": "inter_none"
+  }
+}
+```
+
+### Get baseRates
+
+```bash
+curl -X 'GET' \
+  'http://localhost:8080/v1/baseRates' \
+  -H 'accept: application/json'
+```
+
+```
+GetBaseRates end point accepts query params (country,effectiveAt,simType,to,from)
+
+```
+
+Response:
+
+```
+{
+  "rates": [
+    {
+      "id": "1",
+      "country": "",
+      "network": "",
+      "vpmn": "",
+      "imsi": "1",
+      "smsMo": "$0.1",
+      "smsMt": "$0.1",
+      "data": "$0.1",
+      "2g": "2G",
+      "3g": "",
+      "5g": "",
+      "lte": "",
+      "lteM": "",
+      "apn": "",
+      "createdAt": "2022-11-23 13:36:45.108238 +0200 CAT",
+      "deletedAt": "0001-01-01 00:00:00 +0000 UTC",
+      "updatedAt": "2022-11-23 13:36:45.108238 +0200 CAT",
+      "effectiveAt": "2023-06-23T09:16:50Z",
+      "endAt": "",
+      "simType": "inter_none"
+    },
+    {
+      "id": "2",
+      "country": "",
+      "network": "",
+      "vpmn": "",
+      "imsi": "1",
+      "smsMo": "$0.2",
+      "smsMt": "$0.1",
+      "data": "$0.2",
+      "2g": "2G",
+      "3g": "",
+      "5g": "",
+      "lte": "",
+      "lteM": "",
+      "apn": "",
+      "createdAt": "2022-11-23 13:36:45.108238 +0200 CAT",
+      "deletedAt": "0001-01-01 00:00:00 +0000 UTC",
+      "updatedAt": "2022-11-23 13:36:45.108238 +0200 CAT",
+      "effectiveAt": "2023-06-23T09:16:50Z",
+      "endAt": "",
+      "simType": "inter_none"
+    },
+  ]
+}
+```
+
 ### Get Package
 
 ```bash
