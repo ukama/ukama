@@ -69,8 +69,8 @@ message Package {
 }
 
 enum SimType {
-    INTER_NONE=0;
-    INTER_MNO_DATA=1;
-    INTER_MNO_ALL=2;
-    INTER_UKAMA_ALL=3;
+    inter_none=0;
+    inter_mno_data=1;
+    inter_mno_all=2;
+    inter_ukama_all=3;
 }
