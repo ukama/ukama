@@ -93,8 +93,8 @@ func (r *Router) init() {
 
 	baseRates := v1.Group("/baseRates", "BaseRates", "BaseRates operations")
 	baseRates.POST("", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
-	baseRates.GET("/:baseRate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusCreated))
-	baseRates.GET("", formatDoc("Get BaseRates", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
+	baseRates.GET("/:baseRate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
+	baseRates.GET("/", formatDoc("Get BaseRates by country", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
 
 	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.PUT("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
@@ -142,10 +142,10 @@ func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 	return resp, nil
 }
 func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error) {
-	country := c.Param("Country")
-	provider := c.Param("Provider")
-	effectiveAt := c.Param("EffectiveAt")
-	simType := c.Param("SimType")
+	provider := c.Query("Provider")
+	effectiveAt := c.Query("EffectiveAt")
+	simType := c.Query("SimType")
+	country := c.Query("country") // shortcut for c.Request.URL.Query().Get("lastname")
 
 	to, err := strconv.ParseUint(c.Param("To"), 10, 64)
 	if err != nil {
