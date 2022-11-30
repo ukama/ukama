@@ -6,7 +6,7 @@ on:
   push:   
     paths:
         - "systems/data-plan/package/**"
-        - ".github/workflows/systems-dataplan-package.yaml"
+        - ".github/workflows/systems-data-plan-package.yaml"
  
   workflow_dispatch:
 
