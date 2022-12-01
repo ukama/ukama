@@ -1,11 +1,11 @@
 # Package sub-system
 
-Package sub-system provide CRUD options to organization. Sub-system provide following rpc's:
+Package sub-system provides CRUD options to organization.It provides following rpc's:
 
 - Add package under organization
 - Update organization package
 - Get packages by `id` & `orgId`
-- Delete package uder organization
+- Delete package under an organization
 
 ## File Structure
 
@@ -49,8 +49,8 @@ Package sub-system provide CRUD options to organization. Sub-system provide foll
 - **mocks**: This directory contains the auto generagted file which get generated based on `*.proto`. It contains functions which we can use to write test cases.
 - **pb**: This directory contains the `*.proto` file. In proto file we define service with all the rpc's and messages.
 - **pkg/db**: DB directory under pkg contains 2 files.
-`model.go` file contains the db model structure/s.
-`*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
+  `model.go` file contains the db model structure/s.
+  `*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
 - **pkg/server** This directory contains the file in which all the RPC functions logic is implemented. Those functions call `pkg\*_repo.go` functions to perform db operations.
 
 ## RPC Functions
