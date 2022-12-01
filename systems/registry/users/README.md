@@ -33,6 +33,7 @@ Use the describing feature of your gRPC client to get a description of each serv
 # Server supports reflection
 > grpcurl -plaintext localhost:9090 describe ukama.users.v1.UserService
 
+ukama.users.v1.UserService is a service:
 service UserService {
   rpc Add ( .ukama.users.v1.AddRequest ) returns ( .ukama.users.v1.AddResponse );
   rpc Deactivate ( .ukama.users.v1.DeactivateRequest ) returns ( .ukama.users.v1.DeactivateResponse );
