@@ -1,0 +1,12 @@
+@startuml C4_Elements
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Container_Boundary(c1, "Package") {
+    Container(service, "GetPackages", "go, grpc, gorm")
+    ContainerDb(database, "Database", "PostgreSQL", "Packages")
+
+    Rel_R(Call, service, "{{ *OrgId, PackageId }}", "GetPackage")
+    Rel_R(service, database, "Read/Write package data")
+}
+
+@enduml
