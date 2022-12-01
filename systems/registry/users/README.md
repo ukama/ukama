@@ -41,6 +41,9 @@ service UserService {
   rpc Update ( .ukama.users.v1.UpdateRequest ) returns ( .ukama.users.v1.UpdateResponse );
 }
 ```
+**Demo:**
+![users_services](https://user-images.githubusercontent.com/10562122/205072320-da6c4e55-b49b-4820-8281-f6d09c43bf46.gif)
+
 Alternative introspection methods when server reflection is not supported:
 ```shell
 # Using compiled protoset files
@@ -62,33 +65,62 @@ Each RPC can also be described:
 ukama.users.v1.UserService.Get is a method:
 rpc Get ( .ukama.users.v1.GetRequest ) returns ( .ukama.users.v1.GetResponse );
 ```
+**Demo:**
+![users_rpc](https://user-images.githubusercontent.com/10562122/205072314-316fffd1-d042-4b39-b688-bf52121619e8.gif)
 
 As well as each proto message:
 ```shell
-> grpcurl -plaintext localhost:9090 describe ukama.users.v1.GetRequest
+> grpcurl -plaintext localhost:9090 describe ukama.users.v1.User
 
-ukama.users.v1.GetRequest is a message:
-message GetRequest {
-  string userUuid = 1 [json_name = "user_uuid"];
+ukama.users.v1.User is a message:
+message User {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string uuid = 4;
+  bool isDeactivated = 5 [json_name = "is_deactivated"];
+  .google.protobuf.Timestamp created_at = 6 [json_name = "registered_since"];
 }
 ```
+**Demo:**
+![users_proto](https://user-images.githubusercontent.com/10562122/205072308-4af74f4b-c0d8-4146-820b-a30601ed6316.gif)
+
 #### Calling RPCs
-RPCs can be invoked as long as each required input parameter is provided as JSON payload.
+RPCs can be invoked as long as each required input parameter (proto message) is provided as a valid JSON payload to the gRPC client.
 
 Example: **UserService.Get**
+
+You can manually construct your JSON payload with plain `echo` shell statements and pipe it to the standard input of the gRPC client (assuming that your gRPC client of choice can read from standard input), like the following:
 ```shell
-> echo '{"user_uuid":"bcee352c-91e8-46fb-a5a2-1b144543f327"}' | grpcurl -plaintext -d @ localhost:9090 ukama.users.v1.UserService.Get
+> echo '{"user_uuid":"23829813-0eaf-4586-8176-52e50318ab9b"}' | grpcurl -plaintext -d @ localhost:9090 ukama.users.v1.UserService.Get
 
 {
   "user": {
     "name": "Foo Cole",
     "email": "foo@example.com",
-    "phone": "0000000000",
-    "uuid": "bcee352c-91e8-46fb-a5a2-1b144543f327",
-    "registered_since": "2022-11-28T17:33:36.850917Z"
+    "phone": "1111111111",
+    "uuid": "23829813-0eaf-4586-8176-52e50318ab9b",
+    "registered_since": "2022-12-01T12:32:19.422218Z"
   }
 }
 ```
 
+Or you can use JSON printing tools (like [jo](https://github.com/jpmens/jo)) to make the JSON payload construction easier:
+```shell
+> jo user_uuid=23829813-0eaf-4586-8176-52e50318ab9b | grpcurl -plaintext -d @ localhost:9090 ukama.users.v1.UserService.Get
+
+{
+  "user": {
+    "name": "Foo Cole",
+    "email": "foo@example.com",
+    "phone": "1111111111",
+    "uuid": "23829813-0eaf-4586-8176-52e50318ab9b",
+    "registered_since": "2022-12-01T12:32:19.422218Z"
+  }
+}
+```
+**Demo:**
+![users_call](https://user-images.githubusercontent.com/10562122/205072298-27087a22-725e-4c16-b087-b147c4a90ba5.gif)
+
 ## How to use from outside the Registry System?
-Use the Registry System's API Gateway interface to perform the desired RESTful operations from outside the Registry System. See the Registry System API Gateway documentatiion for more.
+Use the Registry System's API Gateway interface to perform the equivalent RESTful operations from outside the Registry System. See the Registry System API Gateway documentatiion for more.
