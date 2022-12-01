@@ -46,11 +46,11 @@ Package sub-system provide CRUD options to organization. Sub-system provide foll
             └── README
 
 - **cmd**: Contains the server and system/sub-system version. Purpose of this file is to initialize the DB and start server. We use `make server` command to run this file.
-- **mocks**: This directory contains the auto generagted file which get generated based on `*.proto`. It contains functions which we can use to write test cases.
+- **mocks**: This directory contains the auto generated file which get generated based on `*.proto`. It contains functions which we can use to write test cases.
 - **pb**: This directory contains the `*.proto` file. In proto file we define service with all the rpc's and messages.
 - **pkg/db**: DB directory under pkg contains 2 files.
 `model.go` file contains the db model structure/s.
-`*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
+`*_repo.go` is responsible of communicating with db using [gorm](https://gorm.io/docs/).
 - **pkg/server** This directory contains the file in which all the RPC functions logic is implemented. Those functions call `pkg\*_repo.go` functions to perform db operations.
 
 ## RPC Functions
@@ -65,7 +65,7 @@ service PackagesService {
 }
 ```
 
-Function take below argument:
+Function takes below argument:
 
 ```js
 {
@@ -90,7 +90,7 @@ service PackagesService {
 }
 ```
 
-Function take below argument:
+Function takes below argument:
 
 ```js
 {
@@ -122,7 +122,7 @@ service PackagesService {
 }
 ```
 
-Function take below argument:
+Function takes below argument:
 
 ```js
 {
@@ -154,7 +154,7 @@ service PackagesService {
 }
 ```
 
-Function take below argument:
+Function takes below argument:
 
 ```js
 {
@@ -187,7 +187,7 @@ For unit tests run below commands:
 make test
 ```
 
-This commnd will run unit tests under all base-rate directories.
+This command will run unit tests under all base-rate directories.
 
 ![pkg_test](https://user-images.githubusercontent.com/83802574/203065220-496256f6-1ec4-4a78-8a0c-36d1f200f862.gif)
 
@@ -205,9 +205,9 @@ This command will generate protobuf files from `pb/*.proto`.
 make server
 ```
 
-This command will run the server on port `9090` ,and craeate a database name `package` with `packages` table under it.
+This command will run the server on port `9090`, and create a database name `package` with `packages` table under it.
 
-Server is running, Now we can use any gRPC client to intract with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans) here:
+Server is running, Now we can use any gRPC client to interact with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans) here:
 
 ```
 evans --path /path/to --path . --proto pb/package.proto --host localhost --port 9090
