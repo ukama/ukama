@@ -1,12 +1,13 @@
 package utils
 
 import (
+	"errors"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/jszwec/csvutil"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 )
 
 type RawRates struct {
@@ -32,17 +33,19 @@ func FetchData(url string) ([]RawRates, error) {
 	}
 	defer resp.Body.Close()
 
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	content, _ := io.ReadAll(resp.Body)
+
+	var r []RawRates
+	errorStr := "invalid CSV file data"
+	csvutil.Unmarshal(content, &r)
+
+	if len(r) == 0 || validations.IsEmpty(r[0].Country) ||
+		validations.IsEmpty(r[0].Network) ||
+		validations.IsEmpty(r[0].Data) {
+		return nil, errors.New(errorStr)
 	}
 
-	var rawRates []RawRates
-	if err := csvutil.Unmarshal(content, &rawRates); err != nil {
-		return nil, err
-	}
-
-	return rawRates, nil
+	return r, nil
 }
 
 func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {
@@ -68,12 +71,4 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {
 		})
 	}
 	return rates
-}
-
-func IsFutureDate(date string) bool {
-	t, err := time.Parse(time.RFC3339, date)
-	if err != nil {
-		return false
-	}
-	return time.Now().Before(t)
 }
