@@ -3,11 +3,14 @@ module github.com/ukama/ukama/systems/data-plan/base-rate
 go 1.18
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/jszwec/csvutil v1.7.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.1
+	github.com/tj/assert v0.0.3
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
+	gorm.io/driver/postgres v1.4.5
 	gorm.io/gorm v1.24.1-0.20221019064659-5dd2bb482755
 )
 
@@ -31,7 +34,6 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/spf13/viper v1.13.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	gorm.io/driver/postgres v1.4.5 // indirect
 )
 
 require (
