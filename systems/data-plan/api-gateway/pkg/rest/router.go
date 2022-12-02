@@ -92,7 +92,7 @@ func (r *Router) init() {
 	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
 
 	baseRates := v1.Group("/baseRates", "BaseRates", "BaseRates operations")
-	baseRates.POST("", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
+	baseRates.POST("", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
 	baseRates.GET("/:baseRate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
 	baseRates.GET("", formatDoc("Get BaseRates by country", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
 
@@ -112,13 +112,13 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
 
-	RateId, err := strconv.ParseUint(c.Param("baseRate"), 10, 64)
-	if err != nil {
+	var reqBody GetBaseRateRequest
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		logrus.Error(err)
 	}
-
 	resp, err := p.clients.d.GetBaseRate(&pbBaseRate.GetBaseRateRequest{
-		RateId: RateId,
+		RateId: reqBody.RateId,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -128,11 +128,15 @@ func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*p
 	return resp, nil
 }
 func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
-
+	var reqBody UploadBaseRatesRequest
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		logrus.Error(err)
+	}
 	resp, err := p.clients.d.UploadBaseRates(&pbBaseRate.UploadBaseRatesRequest{
-		FileURL:     req.FileURL,
-		EffectiveAt: req.EffectiveAt,
-		SimType:     pbBaseRate.SimType(pbBaseRate.SimType_value[req.SimType]),
+		FileURL:     reqBody.FileURL,
+		EffectiveAt: reqBody.EffectiveAt,
+		SimType:     pbBaseRate.SimType(pbBaseRate.SimType_value[reqBody.SimType]),
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -145,7 +149,11 @@ func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (
 	provider := c.Query("Provider")
 	effectiveAt := c.Query("EffectiveAt")
 	simType := c.Query("SimType")
-	country := c.Query("country") // shortcut for c.Request.URL.Query().Get("lastname")
+	country, ok := c.GetQuery("country")
+	if !ok {
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "country is a mandatory query parameter"}
+	}
 	to, err := strconv.ParseUint(c.Param("To"), 10, 64)
 	if err != nil {
 		logrus.Error(err)
@@ -171,14 +179,13 @@ func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (
 	return resp, nil
 }
 func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb.GetPackagesResponse, error) {
-
-	_id, err := strconv.ParseUint(c.Param("package"), 10, 64)
-	if err != nil {
+	var reqBody GetPackagesRequest
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		logrus.Error(err)
 	}
-
 	resp, err := p.clients.d.GetPackage(&pb.GetPackagesRequest{
-		Id:    _id,
+		Id:    reqBody.Id,
 		OrgId: ORG_ID,
 	})
 	if err != nil {
@@ -189,12 +196,13 @@ func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb
 	return resp, nil
 }
 func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest) (*pb.DeletePackageResponse, error) {
-	_id, err := strconv.ParseUint(c.Param("package"), 10, 64)
-	if err != nil {
+	var reqBody DeletePackageRequest
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		logrus.Error(err)
 	}
 	resp, err := p.clients.d.DeletePackage(&pb.DeletePackageRequest{
-		Id:    _id,
+		Id:    reqBody.Id,
 		OrgId: ORG_ID,
 	})
 	if err != nil {
@@ -204,16 +212,21 @@ func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest)
 	return resp, nil
 }
 func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.GetPackagesResponse, error) {
+	var reqBody UpdatePackageRequest
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		logrus.Error(err)
+	}
 	_, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
-		Id:          req.Id,
-		Name:        req.Name,
-		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
-		Active:      req.Active,
-		Duration:    req.Duration,
-		SmsVolume:   req.SmsVolume,
-		DataVolume:  req.DataVolume,
-		VoiceVolume: req.VoiceVolume,
-		OrgRatesId:  req.OrgRatesId,
+		Id:          reqBody.Id,
+		Name:        reqBody.Name,
+		SimType:     pb.SimType(pb.SimType_value[reqBody.SimType]),
+		Active:      reqBody.Active,
+		Duration:    reqBody.Duration,
+		SmsVolume:   reqBody.SmsVolume,
+		DataVolume:  reqBody.DataVolume,
+		VoiceVolume: reqBody.VoiceVolume,
+		OrgRatesId:  reqBody.OrgRatesId,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -232,15 +245,20 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 
 }
 func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
+	var reqBody AddPackageRequest
+	if err := c.ShouldBindJSON(&reqBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		logrus.Error(err)
+	}
 	return p.clients.d.AddPackage(&pb.AddPackageRequest{
-		Name:        req.Name,
-		OrgId:       req.OrgId,
-		Duration:    req.Duration,
-		OrgRatesId:  req.OrgRatesId,
-		VoiceVolume: req.VoiceVolume,
-		Active:      req.Active,
-		DataVolume:  req.DataVolume,
-		SmsVolume:   req.SmsVolume,
-		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
+		Name:        reqBody.Name,
+		OrgId:       reqBody.OrgId,
+		Duration:    reqBody.Duration,
+		OrgRatesId:  reqBody.OrgRatesId,
+		VoiceVolume: reqBody.VoiceVolume,
+		Active:      reqBody.Active,
+		DataVolume:  reqBody.DataVolume,
+		SmsVolume:   reqBody.SmsVolume,
+		SimType:     pb.SimType(pb.SimType_value[reqBody.SimType]),
 	})
 }
