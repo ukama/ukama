@@ -21,3 +21,6 @@ gen:
 
 clean:
 	rm -rf ./bin/ 
+server:
+	go run cmd/main.go
+    
