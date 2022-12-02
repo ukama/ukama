@@ -211,13 +211,13 @@ func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest)
 	}
 	return resp, nil
 }
-func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.GetPackagesResponse, error) {
+func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	var reqBody UpdatePackageRequest
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		logrus.Error(err)
 	}
-	_, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
+	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
 		Id:          reqBody.Id,
 		Name:        reqBody.Name,
 		SimType:     pb.SimType(pb.SimType_value[reqBody.SimType]),
@@ -232,16 +232,8 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 		logrus.Error(err)
 		return nil, err
 	}
-	res, err := p.clients.d.GetPackage(&pb.GetPackagesRequest{
-		Id:    req.Id,
-		OrgId: ORG_ID,
-	})
-	if err != nil {
-		logrus.Errorf("package with %d does not exist %s", req.Id, err.Error())
-		return nil, err
-	}
-
-	return res, nil
+	
+	return resp , nil
 
 }
 func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
