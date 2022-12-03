@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/metrics"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-	provider "github.com/ukama/ukama/systems/registry/org/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/org/pkg/server"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/registry/org/pkg"
 	"gopkg.in/yaml.v2"
@@ -25,6 +27,8 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"google.golang.org/grpc"
 )
+
+const defaultOrgName = "ukama"
 
 var svcConf *pkg.Config
 
@@ -47,10 +51,10 @@ func initConfig() {
 			DbName: pkg.ServiceName,
 		},
 		Grpc: &uconf.Grpc{
-			Port: 9091,
+			Port: 9090,
 		},
 		Metrics: &uconf.Metrics{
-			Port: 10251,
+			Port: 10250,
 		},
 	}
 
@@ -78,13 +82,57 @@ func initDb() sql.Db {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
 
+	orgDB := d.GetGormDb()
+
+	if orgDB.Migrator().HasTable(&db.Org{}) {
+		if err := orgDB.First(&db.Org{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			logrus.Info("Iniiialzing orgs table")
+			var ukamaUUID uuid.UUID
+			var err error
+
+			if ukamaUUID, err = uuid.Parse(os.Getenv("UKAMA_UUID")); err != nil {
+				log.Fatalf("Database initialization failed, need valid UKAMA UUID env var. Error: %v", err)
+			}
+
+			org := &db.Org{
+				Name:  defaultOrgName,
+				Owner: ukamaUUID,
+			}
+
+			usr := &db.User{
+				Uuid: ukamaUUID,
+			}
+
+			if err := orgDB.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Create(org).Error; err != nil {
+					return err
+				}
+
+				if err := tx.Create(usr).Error; err != nil {
+					return err
+				}
+
+				if err := tx.Create(&db.OrgUser{
+					OrgID:  org.ID,
+					UserID: usr.ID,
+					Uuid:   ukamaUUID,
+				}).Error; err != nil {
+					return err
+				}
+
+				return nil
+			}); err != nil {
+				log.Fatalf("Database initialization failed, invalid initial state. Error: %v", err)
+			}
+		}
+	}
+
 	return d
 }
 
 func runGrpcServer(gormdb sql.Db) {
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
-		provider.NewUserClientProvider(svcConf.UsersHost),
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

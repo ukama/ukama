@@ -6,10 +6,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 
-	uuid2 "github.com/google/uuid"
+	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/grpc"
 
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+
+	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+
+	pkg "github.com/ukama/ukama/systems/registry/users/pkg/providers"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -17,15 +22,18 @@ import (
 )
 
 const uuidParsingError = "Error parsing UUID"
+const ukamaOrgID = 1
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
-	userRepo db.UserRepo
+	userRepo   db.UserRepo
+	orgService pkg.OrgClientProvider
 }
 
-func NewUserService(userRepo db.UserRepo) *UserService {
+func NewUserService(userRepo db.UserRepo, orgService pkg.OrgClientProvider) *UserService {
 	return &UserService{
-		userRepo: userRepo,
+		userRepo:   userRepo,
+		orgService: orgService,
 	}
 }
 
@@ -36,10 +44,27 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		Email: req.User.Email,
 		Name:  req.User.Name,
 		Phone: req.User.Phone,
-		Uuid:  uuid2.New(),
+		Uuid:  uuid.New(),
 	}
 
-	err := u.userRepo.Add(user)
+	err := u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
+		logrus.Infof("Adding user %s as member of default org", user.Uuid)
+
+		svc, err := u.orgService.GetClient()
+		if err != nil {
+			return err
+		}
+
+		_, err = svc.RegisterUser(ctx, &orgpb.RegisterUserRequest{
+			UserUuid: user.Uuid.String(),
+			OrgId:    ukamaOrgID,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
@@ -49,7 +74,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	uuid, err := uuid2.Parse(req.UserUuid)
+	uuid, err := uuid.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -63,17 +88,19 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 }
 
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
-	uuid, err := uuid2.Parse(req.UserUuid)
+	uuid, err := uuid.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	user, err := u.userRepo.Update(&db.User{
+	user := &db.User{
 		Uuid:  uuid,
 		Name:  req.User.Name,
 		Email: req.User.Email,
 		Phone: req.User.Phone,
-	})
+	}
+
+	err = u.userRepo.Update(user, nil)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
@@ -83,12 +110,12 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 }
 
 func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest) (*pb.DeactivateResponse, error) {
-	uuid, err := uuid2.Parse(req.UserUuid)
+	userUUID, err := uuid.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	usr, err := u.userRepo.Get(uuid)
+	usr, err := u.userRepo.Get(userUUID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
@@ -98,25 +125,43 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	}
 
 	// set user's status to suspended
-	_, err = u.userRepo.Update(&db.User{
-		Uuid:        uuid,
+	user := &db.User{
+		Uuid:        userUUID,
 		Deactivated: true,
+	}
+
+	err = u.userRepo.Update(user, func(user *db.User, tx *gorm.DB) error {
+		logrus.Infof("Deactivating remote org user %s", userUUID)
+
+		svc, err := u.orgService.GetClient()
+		if err != nil {
+			return err
+		}
+
+		_, err = svc.UpdateUser(ctx, &orgpb.UpdateUserRequest{UserUuid: user.Uuid.String(),
+			Attributes: &orgpb.UserAttributes{IsDeactivated: user.Deactivated},
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	return &pb.DeactivateResponse{}, nil
+	return &pb.DeactivateResponse{User: dbUserToPbUser(user)}, nil
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	uuid, err := uuid2.Parse(req.UserUuid)
+	userUUID, err := uuid.Parse(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	usr, err := u.userRepo.Get(uuid)
+	usr, err := u.userRepo.Get(userUUID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
@@ -126,7 +171,7 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	}
 
 	// delete user
-	err = u.userRepo.Delete(uuid, func(uuid uuid2.UUID, tx *gorm.DB) error {
+	err = u.userRepo.Delete(userUUID, func(userUUID uuid.UUID, tx *gorm.DB) error {
 		// Perform any linked transation
 		return nil
 	})

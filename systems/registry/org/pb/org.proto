@@ -13,13 +13,19 @@ service OrgService {
     /* Orgs */
     rpc Add(AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
 
+
+    /* Users */
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+
     /* Members */
+    rpc RegisterUser(RegisterUserRequest) returns (MemberResponse);
     rpc AddMember(MemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
-    rpc DeactivateMember(MemberRequest) returns (MemberResponse);
+    rpc UpdateMember(UpdateMemberRequest) returns (MemberResponse);
     rpc RemoveMember(MemberRequest) returns (MemberResponse);
 }
 
@@ -32,7 +38,7 @@ message AddResponse{
 }
 
 message GetRequest {
-    uint64 id = 1;
+    uint64 id = 1 [json_name = "org_id"];
 }
 
 message GetResponse{
@@ -40,7 +46,7 @@ message GetResponse{
 }
 
 message GetByOwnerRequest{
-    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message GetByOwnerResponse{
@@ -48,22 +54,49 @@ message GetByOwnerResponse{
     repeated Organization orgs = 2;
 }
 
+message GetByNameRequest {
+    string name = 1;
+}
+
+message GetByNameResponse{
+    Organization org = 1;
+}
+
 message MemberRequest{
-    uint64 orgId = 1;
-    string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string orgName = 1 [json_name = "org"];
+    string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message MemberResponse{
   OrgUser member = 1;
 }
 
+message RegisterUserRequest{
+    uint64 orgId = 1 [json_name = "org_id"];
+    string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
+}
+
 message GetMembersRequest {
-    uint64 orgId = 1;
+    string orgName = 1 [json_name = "org"];
 }
 
 message GetMembersResponse{
-    uint64 orgId = 1;
+    string org = 1 [json_name = "org"];
     repeated OrgUser members = 2;
+}
+
+message UpdateMemberRequest {
+  MemberRequest member = 1;
+  OrgUserAttributes attributes = 2;
+}
+
+message UpdateUserRequest {
+    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
+    UserAttributes attributes = 2;
+}
+
+message UpdateUserResponse {
+    User user = 1;
 }
 
 message Organization {
@@ -71,14 +104,28 @@ message Organization {
     string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
     string owner = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
     string certificate = 4;
-    bool isDeactivated = 5;
-    google.protobuf.Timestamp created_at = 6;
+    bool isDeactivated = 5 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 6 [json_name = "created_at"];
+}
+
+message UserAttributes {
+    bool isDeactivated = 3 [json_name = "is_deactivated"];
+}
+
+message User {
+    uint64 userId = 1 [json_name = "user_id"];
+    string uuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    bool isDeactivated = 3 [json_name = "is_deactivated"];
+}
+
+message OrgUserAttributes {
+    bool isDeactivated = 1 [json_name = "is_deactivated"];
 }
 
 message OrgUser {
-    uint64 orgId = 1;
-    uint64 userId = 2;
+    uint64 orgId = 1 [json_name = "org_id"];
+    uint64 userId = 2 [json_name = "user_id"];
     string uuid = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
-    bool isDeactivated = 4;
-    google.protobuf.Timestamp created_at = 5;
+    bool isDeactivated = 4 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 5 [json_name = "member_since"];
 }

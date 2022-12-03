@@ -23,7 +23,6 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/users v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.18.1
@@ -98,5 +97,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.4.5 // indirect
-	gorm.io/gorm v1.24.1-0.20221019064659-5dd2bb482755 // indirect
+	gorm.io/gorm v1.24.1 // indirect
 )
