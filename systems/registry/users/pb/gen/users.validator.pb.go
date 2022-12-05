@@ -96,6 +96,11 @@ func (this *DeactivateRequest) Validate() error {
 	return nil
 }
 func (this *DeactivateResponse) Validate() error {
+	if this.User != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.User); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("User", err)
+		}
+	}
 	return nil
 }
 

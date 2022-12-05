@@ -4,240 +4,397 @@ import (
 	"context"
 	"testing"
 
-	"gorm.io/gorm"
-
-	mocks "github.com/ukama/ukama/systems/registry/network/mocks"
+	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/registry/network/mocks"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/systems/common/ukama"
+	"gorm.io/gorm"
 )
 
-var testNodeId = ukama.NewVirtualNodeId("HomeNode")
+func TestNetworkServer_AddNetwork(t *testing.T) {
+	t.Run("Org exists", func(t *testing.T) {
+		// Arrange
+		const orgID = uint(1)
+		const netName = "network-1"
+		const orgName = "org-1"
 
-const testOrgName = "org-1"
-const testNetName = "net-1"
-const testNetId = 98
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
 
-func TestNetworkServer_UpdateNode(t *testing.T) {
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := createNetRepoMock()
+		net := &db.Network{
+			Name:  netName,
+			OrgID: orgID,
+		}
 
-	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeAttributes) bool {
-		return *ns.State == db.Onboarded
-	}), mock.Anything).Return(nil).Once()
+		orgRepo.On("GetByName", orgName).Return(
+			&db.Org{Model: gorm.Model{ID: orgID},
+				Name:        orgName,
+				Deactivated: false},
+			nil).Once()
+		netRepo.On("Add", orgID, netName).Return(net, nil).Once()
 
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil)
 
-	_, err := s.UpdateNode(context.TODO(), &pb.UpdateNodeRequest{
-		NodeId: testNodeId.String(),
-		Node: &pb.Node{
-			State: pb.NodeState_ONBOARDED,
-		},
-	})
-
-	// Assert
-	assert.NoError(t, err)
-	nodeRepo.AssertExpectations(t)
-}
-
-func TestNetworkServer_AddNode(t *testing.T) {
-	// Arrange
-	nodeId := testNodeId.String()
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := createNetRepoMock()
-
-	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
-		return n.State == db.Pending && n.NodeID == nodeId && n.NetworkID == testNetId
-	}), mock.Anything).Return(func(o *db.Node, f ...func() error) error {
-		return f[0]()
-	}).Once()
-
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
-
-	// Act
-	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
-		Node: &pb.Node{
-			NodeId: nodeId,
-			State:  pb.NodeState_PENDING,
-			Name:   "node-1",
-		},
-		OrgName: testOrgName,
-		Network: testNetName,
-	})
-
-	// Assert
-	if assert.NoError(t, err) {
-		assert.Equal(t, "node-1", actNode.Node.Name)
-		nodeRepo.AssertExpectations(t)
-	}
-}
-
-func createNetRepoMock() *mocks.NetRepo {
-	netRepo := &mocks.NetRepo{}
-
-	netRepo.On("Get", testOrgName, testNetName).
-		Return(&db.Network{
-			Model: gorm.Model{ID: testNetId},
-			Name:  testNetName,
-			Org: &db.Org{
-				Name:  testOrgName,
-				Model: gorm.Model{ID: 101},
-			}}, nil).Once()
-
-	return netRepo
-}
-
-func TestNetworkServer_GetNodes(t *testing.T) {
-	orgName := "node-1"
-	nodeUuid1 := ukama.NewVirtualNodeId(ukama.OEMCODE)
-	nodeUuid2 := ukama.NewVirtualNodeId(ukama.OEMCODE)
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := &mocks.NetRepo{}
-
-	const NodeName0 = "NodeName0"
-	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{
-		{NodeID: nodeUuid1.String(), State: db.Undefined, Name: NodeName0, Network: &db.Network{Org: &db.Org{Name: orgName}}},
-		{NodeID: nodeUuid2.String(), State: db.Pending, Name: "NodeNeme2", Network: &db.Network{Org: &db.Org{Name: orgName}}},
-	}, nil).Once()
-
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
-
-	resp, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
-		OrgName: orgName,
-	})
-
-	if assert.NoError(t, err) {
-		assert.Equal(t, pb.NodeState_UNDEFINED, resp.Nodes[0].State)
-		assert.Equal(t, NodeName0, resp.Nodes[0].Name)
-		assert.Equal(t, resp.OrgName, orgName)
-		assert.Equal(t, pb.NodeState_PENDING, resp.Nodes[1].State)
-		assert.Equal(t, nodeUuid2.String(), resp.Nodes[1].NodeId)
-		nodeRepo.AssertExpectations(t)
-	}
-}
-
-func TestNetworkServer_GetNodesReturnsEmptyList(t *testing.T) {
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := &mocks.NetRepo{}
-
-	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{}, nil).Once()
-
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
-
-	// act
-	res, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
-		OrgName: "org-test",
-	})
-
-	// assert
-	assert.NoError(t, err)
-	assert.NotNil(t, res.Nodes)
-	assert.Equal(t, 0, len(res.Nodes))
-}
-
-func Test_toDbNodeType(t *testing.T) {
-	tests := []struct {
-		nodeId ukama.NodeID
-		want   db.NodeType
-	}{
-		{
-			nodeId: ukama.NewVirtualHomeNodeId(),
-			want:   db.NodeTypeHome,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE),
-			want:   db.NodeTypeTower,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE),
-			want:   db.NodeTypeAmplifier,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId("unknown"),
-			want:   db.NodeTypeUnknown,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.nodeId.String(), func(t *testing.T) {
-
-			got := toDbNodeType(tt.nodeId.GetNodeType())
-			assert.Equal(t, tt.want, got)
+		// Act
+		res, err := s.Add(context.TODO(), &pb.AddRequest{
+			Name:    netName,
+			OrgName: orgName,
 		})
-	}
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, orgName, res.Org)
+		assert.Equal(t, netName, res.Network.Name)
+		netRepo.AssertExpectations(t)
+	})
 }
 
-func Test_List(t *testing.T) {
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := &mocks.NetRepo{}
+func TestNetworkServer_Get(t *testing.T) {
+	t.Run("Network found", func(t *testing.T) {
+		const netID = 1
+		const netName = "network-1"
 
-	queryRes := map[string]map[string]map[db.NodeType]int{
-		"a": {
-			"n1": map[db.NodeType]int{
-				db.NodeTypeAmplifier: 1,
-				db.NodeTypeTower:     5,
-			},
-			"n2": map[db.NodeType]int{
-				db.NodeTypeAmplifier: 2,
-				db.NodeTypeTower:     6,
-				db.NodeTypeHome:      7,
-			},
-		},
-		"b": {
-			"n1": map[db.NodeType]int{
-				db.NodeTypeAmplifier: 1,
-			},
-		},
-	}
+		netRepo := &mocks.NetRepo{}
 
-	netRepo.On("List").Return(queryRes, nil).Once()
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       1,
+				Deactivated: false,
+			}, nil).Once()
 
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo)
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
+			NetworkID: netID})
 
-	// act
-	res, err := s.List(context.TODO(), &pb.ListRequest{})
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, uint64(netID), netResp.GetNetwork().GetId())
+		assert.Equal(t, netName, netResp.Network.Name)
+		netRepo.AssertExpectations(t)
+	})
 
-	// assert
-	if assert.NoError(t, err) && assert.NotNil(t, res.Orgs) {
-		var a, b *pb.ListResponse_Org
+	t.Run("Network not found", func(t *testing.T) {
+		const netID = 1
+		const netName = "network-1"
 
-		for _, org := range res.Orgs {
-			switch org.Name {
-			case "a":
-				a = org
-			case "b":
-				b = org
-			}
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", uint(netID)).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
+			NetworkID: netID})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetByName(t *testing.T) {
+	t.Run("Org and Network found", func(t *testing.T) {
+		const netID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("GetByName", orgName, netName).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       1,
+				Deactivated: false,
+			}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, uint64(netID), netResp.GetNetwork().GetId())
+		assert.Equal(t, netName, netResp.Network.Name)
+		netRepo.AssertExpectations(t)
+	})
+
+	t.Run("Org or Network not found", func(t *testing.T) {
+		const netID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("GetByName", orgName, netName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetByOrg(t *testing.T) {
+	t.Run("Org found", func(t *testing.T) {
+		const netID = 1
+		const orgID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
+
+		orgRepo.On("GetByName", orgName).Return(
+			&db.Org{Model: gorm.Model{ID: orgID},
+				Name:        orgName,
+				Deactivated: false},
+			nil).Once()
+
+		netRepo.On("GetAllByOrgId", uint(orgID)).Return(
+			[]db.Network{
+				db.Network{Model: gorm.Model{ID: netID},
+					Name:        netName,
+					OrgID:       1,
+					Deactivated: false,
+				}}, nil).Once()
+
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil)
+		netResp, err := s.GetByOrg(context.TODO(),
+			&pb.GetByOrgRequest{OrgName: orgName})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, uint64(netID), netResp.GetNetworks()[0].GetId())
+		assert.Equal(t, orgName, netResp.Org)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_Delete(t *testing.T) {
+	t.Run("Org and Network exist", func(t *testing.T) {
+		const netID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Delete", orgName, netName).Return(nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		netRepo.AssertExpectations(t)
+	})
+
+	t.Run("Network does not exist", func(t *testing.T) {
+		const netID = 1
+		const orgName = "org-1"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Delete", orgName, netName).Return(gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil)
+		netResp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_AddSite(t *testing.T) {
+	t.Run("Network exists", func(t *testing.T) {
+		// Arrange
+		const netID = uint(1)
+		const orgID = uint(1)
+		const netName = "network-1"
+		const siteName = "site-A"
+
+		netRepo := &mocks.NetRepo{}
+		siteRepo := &mocks.SiteRepo{}
+
+		site := &db.Site{
+			Name:      siteName,
+			NetworkID: netID,
 		}
 
-		assert.Len(t, res.Orgs, 2)
-		assert.Len(t, a.GetNetworks(), 2)
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       orgID,
+				Deactivated: false,
+			}, nil).Once()
 
-		var n1, n2 *pb.ListResponse_Network
+		siteRepo.On("Add", site).Return(nil).Once()
 
-		if a.GetNetworks()[0].GetName() == "n1" {
-			n1 = a.GetNetworks()[0]
-			n2 = a.GetNetworks()[1]
-		} else {
-			n2 = a.GetNetworks()[0]
-			n1 = a.GetNetworks()[1]
-		}
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
 
-		assert.Equal(t, uint32(1), n1.GetNumberOfNodes()["amplifier"])
+		// Act
+		res, err := s.AddSite(context.TODO(), &pb.AddSiteRequest{
+			NetworkID: uint64(netID),
+			SiteName:  siteName,
+		})
 
-		assert.Equal(t, uint32(2), n2.GetNumberOfNodes()["amplifier"])
-		assert.Equal(t, uint32(6), n2.GetNumberOfNodes()["tower"])
-		assert.Equal(t, uint32(7), n2.GetNumberOfNodes()["home"])
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, siteName, res.Site.Name)
+		assert.Equal(t, uint64(netID), res.Site.NetworkID)
+		netRepo.AssertExpectations(t)
+	})
+}
 
-		assert.Equal(t, "n1", b.GetNetworks()[0].GetName())
-		assert.Equal(t, uint32(1), b.GetNetworks()[0].GetNumberOfNodes()["amplifier"])
-	}
+func TestNetworkServer_GetSite(t *testing.T) {
+	t.Run("Site exists", func(t *testing.T) {
+		const siteID = 1
+		const siteName = "site-A"
+
+		siteRepo := &mocks.SiteRepo{}
+
+		siteRepo.On("Get", uint(siteID)).Return(
+			&db.Site{Model: gorm.Model{ID: siteID},
+				Name:        siteName,
+				NetworkID:   1,
+				Deactivated: false,
+			}, nil).Once()
+
+		s := NewNetworkServer(nil, nil, siteRepo, nil)
+		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
+			SiteID: siteID})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, uint64(siteID), netResp.GetSite().GetId())
+		assert.Equal(t, siteName, netResp.GetSite().GetName())
+		siteRepo.AssertExpectations(t)
+	})
+
+	t.Run("Site not found", func(t *testing.T) {
+		const siteID = 1
+		const siteName = "site-A"
+
+		siteRepo := &mocks.SiteRepo{}
+
+		siteRepo.On("Get", uint(siteID)).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(nil, nil, siteRepo, nil)
+		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
+			SiteID: siteID})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		siteRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetSiteByName(t *testing.T) {
+	t.Run("Site exists", func(t *testing.T) {
+		const siteID = 1
+		const netID = 1
+		const orgID = 1
+		const siteName = "site-A"
+		const netName = "net-1"
+
+		siteRepo := &mocks.SiteRepo{}
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       orgID,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByName", uint(netID), siteName).Return(
+			&db.Site{Model: gorm.Model{ID: siteID},
+				Name:        siteName,
+				NetworkID:   1,
+				Deactivated: false,
+			}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
+			NetworkID: netID, SiteName: siteName})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, uint64(siteID), netResp.GetSite().GetId())
+		assert.Equal(t, siteName, netResp.GetSite().GetName())
+		siteRepo.AssertExpectations(t)
+	})
+
+	t.Run("Site not found", func(t *testing.T) {
+		const siteID = 1
+		const netID = 1
+		const orgID = 1
+		const siteName = "site-A"
+		const netName = "net-1"
+
+		siteRepo := &mocks.SiteRepo{}
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       orgID,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByName", uint(netID), siteName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
+			NetworkID: netID, SiteName: siteName})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		siteRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
+	t.Run("Network found", func(t *testing.T) {
+		const netID = 1
+		const orgID = 1
+		const siteName = "site-A"
+		const netName = "network-1"
+
+		netRepo := &mocks.NetRepo{}
+		siteRepo := &mocks.SiteRepo{}
+
+		netRepo.On("Get", uint(netID)).Return(
+			&db.Network{Model: gorm.Model{ID: netID},
+				Name:        netName,
+				OrgID:       1,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByNetwork", uint(orgID)).Return(
+			[]db.Site{
+				db.Site{Model: gorm.Model{ID: netID},
+					Name:        siteName,
+					NetworkID:   1,
+					Deactivated: false,
+				}}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		netResp, err := s.GetSiteByNetwork(context.TODO(),
+			&pb.GetSiteByNetworkRequest{NetworkID: netID})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, uint64(netID), netResp.GetSites()[0].GetId())
+		assert.Equal(t, uint64(netID), netResp.NetworkID)
+		netRepo.AssertExpectations(t)
+	})
 }

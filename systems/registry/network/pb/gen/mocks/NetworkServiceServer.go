@@ -37,21 +37,21 @@ func (_m *NetworkServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*
 	return r0, r1
 }
 
-// AddNode provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) AddNode(_a0 context.Context, _a1 *gen.AddNodeRequest) (*gen.AddNodeResponse, error) {
+// AddSite provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) AddSite(_a0 context.Context, _a1 *gen.AddSiteRequest) (*gen.AddSiteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.AddNodeResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeRequest) *gen.AddNodeResponse); ok {
+	var r0 *gen.AddSiteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddSiteRequest) *gen.AddSiteResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddNodeResponse)
+			r0 = ret.Get(0).(*gen.AddSiteResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddNodeRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddSiteRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -83,21 +83,21 @@ func (_m *NetworkServiceServer) Delete(_a0 context.Context, _a1 *gen.DeleteReque
 	return r0, r1
 }
 
-// DeleteNode provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.DeleteNodeRequest) (*gen.DeleteNodeResponse, error) {
+// Get provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.GetResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.DeleteNodeResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeRequest) *gen.DeleteNodeResponse); ok {
+	var r0 *gen.GetResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) *gen.GetResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeleteNodeResponse)
+			r0 = ret.Get(0).(*gen.GetResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteNodeRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -106,21 +106,21 @@ func (_m *NetworkServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.DeleteN
 	return r0, r1
 }
 
-// GetNode provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeRequest) (*gen.GetNodeResponse, error) {
+// GetByName provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetByName(_a0 context.Context, _a1 *gen.GetByNameRequest) (*gen.GetByNameResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetNodeResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest) *gen.GetNodeResponse); ok {
+	var r0 *gen.GetByNameResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByNameRequest) *gen.GetByNameResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetNodeResponse)
+			r0 = ret.Get(0).(*gen.GetByNameResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByNameRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -129,21 +129,21 @@ func (_m *NetworkServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeReq
 	return r0, r1
 }
 
-// GetNodes provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) GetNodes(_a0 context.Context, _a1 *gen.GetNodesRequest) (*gen.GetNodesResponse, error) {
+// GetByOrg provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetByOrg(_a0 context.Context, _a1 *gen.GetByOrgRequest) (*gen.GetByOrgResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetNodesResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesRequest) *gen.GetNodesResponse); ok {
+	var r0 *gen.GetByOrgResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest) *gen.GetByOrgResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetNodesResponse)
+			r0 = ret.Get(0).(*gen.GetByOrgResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodesRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByOrgRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -152,21 +152,21 @@ func (_m *NetworkServiceServer) GetNodes(_a0 context.Context, _a1 *gen.GetNodesR
 	return r0, r1
 }
 
-// List provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListResponse, error) {
+// GetSite provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetSite(_a0 context.Context, _a1 *gen.GetSiteRequest) (*gen.GetSiteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.ListResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) *gen.ListResponse); ok {
+	var r0 *gen.GetSiteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteRequest) *gen.GetSiteResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListResponse)
+			r0 = ret.Get(0).(*gen.GetSiteResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSiteRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -175,21 +175,44 @@ func (_m *NetworkServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) 
 	return r0, r1
 }
 
-// UpdateNode provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) UpdateNode(_a0 context.Context, _a1 *gen.UpdateNodeRequest) (*gen.UpdateNodeResponse, error) {
+// GetSiteByName provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetSiteByName(_a0 context.Context, _a1 *gen.GetSiteByNameRequest) (*gen.GetSiteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.UpdateNodeResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeRequest) *gen.UpdateNodeResponse); ok {
+	var r0 *gen.GetSiteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteByNameRequest) *gen.GetSiteResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateNodeResponse)
+			r0 = ret.Get(0).(*gen.GetSiteResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateNodeRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSiteByNameRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSiteByNetwork provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetSiteByNetwork(_a0 context.Context, _a1 *gen.GetSiteByNetworkRequest) (*gen.GetSiteByNetworkResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetSiteByNetworkResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteByNetworkRequest) *gen.GetSiteByNetworkResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetSiteByNetworkResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSiteByNetworkRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

@@ -3,124 +3,119 @@ syntax = "proto3";
 option go_package = "pb/gen";
 
 import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
 
 package ukama.network.v1;
 
 service NetworkService {
+  /* Networks */
     rpc Add(AddRequest) returns (AddResponse);
-    // list all orgs and networks in the network
-    rpc List(ListRequest) returns (ListResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
+    rpc GetByOrg(GetByOrgRequest) returns (GetByOrgResponse);
+    // Update
     rpc Delete(DeleteRequest) returns (DeleteResponse);
 
-    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
-    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
-    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
-    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
-    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
-
+  /* Sites */
+    rpc AddSite(AddSiteRequest) returns (AddSiteResponse);
+    rpc GetSite(GetSiteRequest) returns (GetSiteResponse);
+    rpc GetSiteByName(GetSiteByNameRequest) returns (GetSiteResponse);
+    rpc GetSiteByNetwork(GetSiteByNetworkRequest) returns (GetSiteByNetworkResponse);
+    // UpdateSite
+    // RemoveSite
 }
 
-message AddNodeRequest{
-    Node node = 1  [(validator.field) = {msg_exists : true}];
-    string  orgName = 2 [(validator.field) = { string_not_empty: true}];
-    string network = 3 [(validator.field) = { string_not_empty: true}];
-}
-
-message AddNodeResponse{
-    Node node = 1;
-}
-
-message DeleteNodeRequest{
-    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
-}
-
-message DeleteNodeResponse{
-    string nodeId = 1;
-}
-
-message GetNodesRequest{    
-    string orgName = 1 ;
-}
-
-message GetNodesResponse{
-    string orgName = 1;
-    repeated Node nodes = 2;
-}
 
 message AddRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
-    string orgName = 2;
+    string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
 }
+
 message AddResponse{
+    string org = 1;
+    Network network = 2;
+}
+
+message GetRequest{
+    uint64 networkID = 1 [json_name = "network_id"];
+}
+
+message GetResponse{
+    Network network = 1;
+}
+
+message GetByNameRequest{
+    string name = 1 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true}, json_name = "org"];
+}
+
+message GetByNameResponse{
     Network network = 1;
     string org = 2;
 }
 
-message Network {
-    string name = 1;
+message GetByOrgRequest{
+    string orgName = 1 [(validator.field) = { string_not_empty: true}, json_name = "org"];
 }
 
-message Node {
-    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
-    NodeState state = 4;
-    NodeType type = 5;
-    string name = 6 [(validator.field) = { string_not_empty: true}];
-}
-
-message ListRequest {
-}
-
-message ListResponse{
-    message Network {
-        string name = 1;
-        map<string, uint32> numberOfNodes = 2;
-    }
-
-    message Org {
-        string name = 1;
-        repeated Network networks = 2;
-    }
-
-
-    repeated Org orgs = 1;
-}
-
-message  UpdateNodeRequest{
-    string nodeId = 1  [(validator.field) = { string_not_empty: true}]; // node ID to update
-    Node Node = 2 [(validator.field) = {msg_exists : true}];
-}
-
-message UpdateNodeResponse {
-    Node Node = 1;
-}
-
-message GetNodeRequest{
-    string nodeId = 1;
-}
-
-message GetNodeResponse{
-    Node node = 1;
-    string org = 2;
-    Network network = 3;
-}
-
-enum NodeState {
-    UNDEFINED = 0;
-    PENDING = 1;
-    ONBOARDED = 2;
-}
-
-enum NodeType{
-    NODE_TYPE_UNDEFINED = 0;
-    HOME = 1;
-    TOWER = 2;
-    AMPLIFIER = 3;
+message GetByOrgResponse{
+    string org = 1;
+    repeated Network networks = 2;
 }
 
 message DeleteRequest{
-    string orgName = 1;
-    string name = 2;
+    string name = 1 [(validator.field) = { string_not_empty: true}];
+    string orgName = 2 [(validator.field) = { string_not_empty: true} , json_name = "org"];
 }
 
 message DeleteResponse{
+}
+
+message AddSiteRequest{
+    uint64 networkID = 1 [json_name = "network_id"];
+    string siteName = 2 [(validator.field) = { string_not_empty: true}, json_name = "site"];
+}
+
+message AddSiteResponse{
+    Site site = 1;
+}
+
+message GetSiteRequest{
+    uint64 siteID = 1 [json_name = "site_id"];
+}
+
+message GetSiteResponse{
+    Site site = 1;
+}
+
+message GetSiteByNameRequest{
+    uint64 networkID = 1 [json_name = "network_id"];
+    string siteName = 2 [(validator.field) = { string_not_empty: true}, json_name = "site"];
+}
+
+message GetSiteByNetworkRequest{
+    uint64 networkID = 1 [json_name = "network_id"];
+}
+
+message GetSiteByNetworkResponse{
+    uint64 networkID = 1 [json_name = "network_id"];
+    repeated Site sites = 2;
+}
+
+
+message Network {
+    uint64 id = 1;
+    string name = 2;
+    bool isDeactivated = 3 [json_name = "is_dactivated"];
+    google.protobuf.Timestamp created_at = 4 [json_name = "created_at"];
+}
+
+message Site {
+    uint64 id = 1;
+    string name = 2;
+    uint64 NetworkID = 3 [json_name = "network_id"];
+    bool isDeactivated = 4 [json_name = "is_dactivated"];
+    google.protobuf.Timestamp created_at = 5 [json_name = "created_at"];
 }

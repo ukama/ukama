@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/registry/org/pkg/db"
+	gorm "gorm.io/gorm"
+
+	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
 )
@@ -14,13 +16,13 @@ type UserRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: user
-func (_m *UserRepo) Add(user *db.User) error {
-	ret := _m.Called(user)
+// Add provides a mock function with given fields: user, nestedFunc
+func (_m *UserRepo) Add(user *db.User, nestedFunc func(*db.User, *gorm.DB) error) error {
+	ret := _m.Called(user, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(*db.User, func(*db.User, *gorm.DB) error) error); ok {
+		r0 = rf(user, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -57,6 +59,29 @@ func (_m *UserRepo) Get(_a0 uuid.UUID) (*db.User, error) {
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Update provides a mock function with given fields: _a0
+func (_m *UserRepo) Update(_a0 *db.User) (*db.User, error) {
+	ret := _m.Called(_a0)
+
+	var r0 *db.User
+	if rf, ok := ret.Get(0).(func(*db.User) *db.User); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.User)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*db.User) error); ok {
 		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)

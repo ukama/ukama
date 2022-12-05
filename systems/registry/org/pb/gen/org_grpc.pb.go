@@ -25,12 +25,16 @@ type OrgServiceClient interface {
 	// Orgs
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error)
 	GetByOwner(ctx context.Context, in *GetByOwnerRequest, opts ...grpc.CallOption) (*GetByOwnerResponse, error)
+	// Users
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	// Members
+	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	AddMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
-	DeactivateMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 }
 
@@ -60,9 +64,36 @@ func (c *orgServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc
 	return out, nil
 }
 
+func (c *orgServiceClient) GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error) {
+	out := new(GetByNameResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/GetByName", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *orgServiceClient) GetByOwner(ctx context.Context, in *GetByOwnerRequest, opts ...grpc.CallOption) (*GetByOwnerResponse, error) {
 	out := new(GetByOwnerResponse)
 	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/GetByOwner", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
+	out := new(UpdateUserResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/UpdateUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/RegisterUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,9 +127,9 @@ func (c *orgServiceClient) GetMembers(ctx context.Context, in *GetMembersRequest
 	return out, nil
 }
 
-func (c *orgServiceClient) DeactivateMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+func (c *orgServiceClient) UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
 	out := new(MemberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/DeactivateMember", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/UpdateMember", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -121,12 +152,16 @@ type OrgServiceServer interface {
 	// Orgs
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error)
 	GetByOwner(context.Context, *GetByOwnerRequest) (*GetByOwnerResponse, error)
+	// Users
+	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	// Members
+	RegisterUser(context.Context, *RegisterUserRequest) (*MemberResponse, error)
 	AddMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
-	DeactivateMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error)
 	RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	mustEmbedUnimplementedOrgServiceServer()
 }
@@ -141,8 +176,17 @@ func (UnimplementedOrgServiceServer) Add(context.Context, *AddRequest) (*AddResp
 func (UnimplementedOrgServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
+func (UnimplementedOrgServiceServer) GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
+}
 func (UnimplementedOrgServiceServer) GetByOwner(context.Context, *GetByOwnerRequest) (*GetByOwnerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByOwner not implemented")
+}
+func (UnimplementedOrgServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedOrgServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterUser not implemented")
 }
 func (UnimplementedOrgServiceServer) AddMember(context.Context, *MemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMember not implemented")
@@ -153,8 +197,8 @@ func (UnimplementedOrgServiceServer) GetMember(context.Context, *MemberRequest) 
 func (UnimplementedOrgServiceServer) GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMembers not implemented")
 }
-func (UnimplementedOrgServiceServer) DeactivateMember(context.Context, *MemberRequest) (*MemberResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeactivateMember not implemented")
+func (UnimplementedOrgServiceServer) UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMember not implemented")
 }
 func (UnimplementedOrgServiceServer) RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveMember not implemented")
@@ -208,6 +252,24 @@ func _OrgService_Get_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrgService_GetByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).GetByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/GetByName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).GetByName(ctx, req.(*GetByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _OrgService_GetByOwner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetByOwnerRequest)
 	if err := dec(in); err != nil {
@@ -222,6 +284,42 @@ func _OrgService_GetByOwner_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(OrgServiceServer).GetByOwner(ctx, req.(*GetByOwnerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).UpdateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/UpdateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).UpdateUser(ctx, req.(*UpdateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).RegisterUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/RegisterUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).RegisterUser(ctx, req.(*RegisterUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -280,20 +378,20 @@ func _OrgService_GetMembers_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrgService_DeactivateMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MemberRequest)
+func _OrgService_UpdateMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMemberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrgServiceServer).DeactivateMember(ctx, in)
+		return srv.(OrgServiceServer).UpdateMember(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.org.v1.OrgService/DeactivateMember",
+		FullMethod: "/ukama.org.v1.OrgService/UpdateMember",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).DeactivateMember(ctx, req.(*MemberRequest))
+		return srv.(OrgServiceServer).UpdateMember(ctx, req.(*UpdateMemberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -332,8 +430,20 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrgService_Get_Handler,
 		},
 		{
+			MethodName: "GetByName",
+			Handler:    _OrgService_GetByName_Handler,
+		},
+		{
 			MethodName: "GetByOwner",
 			Handler:    _OrgService_GetByOwner_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _OrgService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "RegisterUser",
+			Handler:    _OrgService_RegisterUser_Handler,
 		},
 		{
 			MethodName: "AddMember",
@@ -348,8 +458,8 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrgService_GetMembers_Handler,
 		},
 		{
-			MethodName: "DeactivateMember",
-			Handler:    _OrgService_DeactivateMember_Handler,
+			MethodName: "UpdateMember",
+			Handler:    _OrgService_UpdateMember_Handler,
 		},
 		{
 			MethodName: "RemoveMember",
