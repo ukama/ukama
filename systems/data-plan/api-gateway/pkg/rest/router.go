@@ -112,11 +112,13 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
 
-	var reqBody GetBaseRateRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
+	 reqBody:= GetBaseRateRequest{}
+
+	if err := c.ShouldBindUri(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		logrus.Error(err)
 	}
+
 	resp, err := p.clients.d.GetBaseRate(&pbBaseRate.GetBaseRateRequest{
 		RateId: reqBody.RateId,
 	})
@@ -128,7 +130,7 @@ func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*p
 	return resp, nil
 }
 func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
-	var reqBody UploadBaseRatesRequest
+	 reqBody:= UploadBaseRatesRequest{}
 	if err := c.ShouldBindJSON(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		logrus.Error(err)
@@ -146,19 +148,19 @@ func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 	return resp, nil
 }
 func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error) {
-	provider := c.Query("Provider")
-	effectiveAt := c.Query("EffectiveAt")
-	simType := c.Query("SimType")
+	provider := c.Query("provider")
+	effectiveAt := c.Query("effective_at")
+	simType := c.Query("sim_type")
 	country, ok := c.GetQuery("country")
 	if !ok {
 		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
 			Message: "country is a mandatory query parameter"}
 	}
-	to, err := strconv.ParseUint(c.Param("To"), 10, 64)
+	to, err := strconv.ParseUint(c.Param("to"), 10, 64)
 	if err != nil {
 		logrus.Error(err)
 	}
-	from, err := strconv.ParseUint(c.Param("From"), 10, 64)
+	from, err := strconv.ParseUint(c.Param("from"), 10, 64)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -179,8 +181,8 @@ func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (
 	return resp, nil
 }
 func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb.GetPackagesResponse, error) {
-	var reqBody GetPackagesRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
+	 reqBody:= GetPackagesRequest{}
+	if err := c.ShouldBindUri(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		logrus.Error(err)
 	}
@@ -196,8 +198,8 @@ func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb
 	return resp, nil
 }
 func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest) (*pb.DeletePackageResponse, error) {
-	var reqBody DeletePackageRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
+	 reqBody :=DeletePackageRequest{}
+	if err := c.ShouldBindUri(&reqBody); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		logrus.Error(err)
 	}
@@ -212,45 +214,38 @@ func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest)
 	return resp, nil
 }
 func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
-	var reqBody UpdatePackageRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		logrus.Error(err)
-	}
 	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
-		Id:          reqBody.Id,
-		Name:        reqBody.Name,
-		SimType:     pb.SimType(pb.SimType_value[reqBody.SimType]),
-		Active:      reqBody.Active,
-		Duration:    reqBody.Duration,
-		SmsVolume:   reqBody.SmsVolume,
-		DataVolume:  reqBody.DataVolume,
-		VoiceVolume: reqBody.VoiceVolume,
-		OrgRatesId:  reqBody.OrgRatesId,
+		Id:          req.Id,
+		Name:        req.Name,
+		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
+		Active:      req.Active,
+		Duration:    req.Duration,
+		SmsVolume:   req.SmsVolume,
+		DataVolume:  req.DataVolume,
+		VoiceVolume: req.VoiceVolume,
+		OrgRatesId:  req.OrgRatesId,
 	})
 	if err != nil {
 		logrus.Error(err)
+		c.JSON(http.StatusBadRequest,gin.H{"error": err})
 		return nil, err
 	}
-	
-	return resp , nil
+
+	return resp, nil
 
 }
 func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
-	var reqBody AddPackageRequest
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		logrus.Error(err)
+	pack:=&pb.AddPackageRequest{
+		Name:        req.Name,
+		OrgId:       req.OrgId,
+		Duration:    req.Duration,
+		OrgRatesId:  req.OrgRatesId,
+		VoiceVolume: req.VoiceVolume,
+		Active:      req.Active,
+		DataVolume:  req.DataVolume,
+		SmsVolume:   req.SmsVolume,
+		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
 	}
-	return p.clients.d.AddPackage(&pb.AddPackageRequest{
-		Name:        reqBody.Name,
-		OrgId:       reqBody.OrgId,
-		Duration:    reqBody.Duration,
-		OrgRatesId:  reqBody.OrgRatesId,
-		VoiceVolume: reqBody.VoiceVolume,
-		Active:      reqBody.Active,
-		DataVolume:  reqBody.DataVolume,
-		SmsVolume:   reqBody.SmsVolume,
-		SimType:     pb.SimType(pb.SimType_value[reqBody.SimType]),
-	})
+
+	return p.clients.d.AddPackage(pack)
 }

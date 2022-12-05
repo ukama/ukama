@@ -1,19 +1,19 @@
 package rest
 
 type AddPackageRequest struct {
-	Name        string `json:"name" validate:"required"`
-	Duration    uint64 `json:"duration" validate:"required"`
-	OrgId       uint64 `json:"org_id" validate:"required"`
-	SimType     string `json:"sim_type" validate:"required"`
-	SmsVolume   int64  `json:"sms_volume"`
+	Name        string `json:"name" binding:"required"`
+	Duration    uint64 `json:"duration" `
+	OrgId       uint64 `json:"org_id" binding:"required"`
+	SimType     string `json:"sim_type" `
+	SmsVolume   int64  `json:"sms_volume" `
 	DataVolume  int64  `json:"data_volume" `
-	Active      bool   `json:"active"`
-	VoiceVolume int64  `json:"voice_volume" `
-	OrgRatesId  uint64 `json:"org_rates_id" validate:"required"`
+	Active      bool   `json:"active" `
+	VoiceVolume int64  `json:"voice_volume"`
+	OrgRatesId  uint64 `json:"org_rates_id" binding:"required"`
 }
 
 type UpdatePackageRequest struct {
-	Id          uint64 `json:"id" validate:"required"`
+	Id          uint64 `json:"id" binding:"required"`
 	Name        string `json:"name" `
 	Duration    uint64 `json:"duration" `
 	OrgId       uint64 `json:"org_id" `
@@ -25,12 +25,12 @@ type UpdatePackageRequest struct {
 	OrgRatesId  uint64 `json:"org_rates_id"`
 }
 type DeletePackageRequest struct {
-	Id    uint64 `path:"package" validate:"required"`
+	Id    uint64 `path:"package" uri:"package" validate:"required"`
 	OrgId uint64 `json:"org_id"`
 }
 
 type GetPackagesRequest struct {
-	Id    uint64 `path:"package" validate:"required"`
+	Id    uint64 `path:"package" uri:"package" validate:"required"`
 	OrgId uint64 `json:"org_id"`
 }
 
@@ -40,13 +40,13 @@ type GetBaseRatesRequest struct {
 	To          uint64 `json:"to"`
 	From        uint64 `json:"from"`
 	SimType     string `json:"sim_type"`
-	EffectiveAt string `json:"effectiveAt"`
+	EffectiveAt string `json:"effective_at"`
 }
 type GetBaseRateRequest struct {
-	RateId uint64 `path:"baseRate" validate:"required"`
+	RateId uint64 `path:"baseRate" uri:"baseRate" validate:"required"`
 }
 type UploadBaseRatesRequest struct {
-	FileURL     string `json:"file_url" validate:"required"`
-	EffectiveAt string `json:"effective_at" validate:"required"`
-	SimType     string `json:"sim_type" validate:"required"`
+	FileURL     string `json:"file_url" binding:"required,url"`
+	EffectiveAt string `json:"effective_at" binding:"required"`
+	SimType     string `json:"sim_type" binding:"required"`
 }
