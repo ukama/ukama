@@ -30,7 +30,7 @@ func (r *packageRepo) Add(_package *Package) error {
 
 func (p *packageRepo) Get(id uint64) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where(&Package{Model: gorm.Model{ID: uint(id)}}).Find(&packages)
+	result := p.Db.GetGormDb().Where("id = ?", id).First(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error
