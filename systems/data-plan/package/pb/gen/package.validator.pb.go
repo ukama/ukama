@@ -18,6 +18,19 @@ var _ = math.Inf
 func (this *GetPackagesRequest) Validate() error {
 	return nil
 }
+func (this *GetByOrgPackageRequest) Validate() error {
+	return nil
+}
+func (this *GetByOrgPackageResponse) Validate() error {
+	for _, item := range this.Packages {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Packages", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *GetPackagesResponse) Validate() error {
 	for _, item := range this.Packages {
 		if item != nil {

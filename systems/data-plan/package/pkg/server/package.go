@@ -38,7 +38,21 @@ func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackagesRequest) (*p
 
 	return packageList, nil
 }
+func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
+	logrus.Infof("GetPackage by Org: %v ", req.GetOrgId())
 
+	packages, err := p.packageRepo.GetByOrg(req.GetOrgId())
+	if err != nil {
+		logrus.Error("error while getting package by Org" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "packages")
+	}
+
+	packageList := &pb.GetByOrgPackageResponse{
+		Packages: dbpackagesToPbPackages(packages),
+	}
+
+	return packageList, nil
+}
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	logrus.Infof("Add Package Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v", req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 	_package := &db.Package{

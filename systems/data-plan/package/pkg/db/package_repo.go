@@ -9,6 +9,7 @@ type PackageRepo interface {
 	Add(_package *Package) error
 	Get(id uint64) ([]Package, error)
 	Delete(id uint64) error
+	GetByOrg(orgId uint64) ([]Package, error)
 	Update(Id uint64, pkg Package) (*Package, error)
 }
 
@@ -32,6 +33,14 @@ func (p *packageRepo) Get(id uint64) ([]Package, error) {
 	var packages []Package
 	result := p.Db.GetGormDb().Where("id = ?", id).First(&packages)
 
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return packages, nil
+}
+func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
+	var packages []Package
+	result := p.Db.GetGormDb().Where("org_id = ?", orgId).Find(&packages)
 	if result.Error != nil {
 		return nil, result.Error
 	}
