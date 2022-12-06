@@ -128,7 +128,7 @@ func Test_Package_GetByOrg(t *testing.T) {
 func Test_Package_Delete(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		packageId := 1
-		orgIdId := 1
+		orgId := 1
 
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
@@ -136,7 +136,7 @@ func Test_Package_Delete(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "packages" SET`)).
-			WithArgs(sqlmock.AnyArg(), uint64(orgIdId), uint64(packageId)).
+			WithArgs(sqlmock.AnyArg(), uint64(orgId), uint64(packageId)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
