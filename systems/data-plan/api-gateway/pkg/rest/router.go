@@ -125,11 +125,11 @@ func (p *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest)
 	return resp, nil
 }
 func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
-	rateId, error := strconv.ParseUint(c.Param("RateId"), 10, 64)
+	rateId, error := strconv.ParseUint(c.Param("baseRate"), 10, 64)	
 	if error != nil {
 		logrus.Error(error)
 		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-			Message: "rate is not valid!"}
+			Message: "baseRate is not valid!"}
 	}
 	resp, err := p.clients.d.GetBaseRate(&pbBaseRate.GetBaseRateRequest{
 		RateId: rateId,
