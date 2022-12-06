@@ -24,11 +24,8 @@ func NewPackageRepo(db sql.Db) *packageRepo {
 
 func (r *packageRepo) Add(_package *Package) error {
 	result := r.Db.GetGormDb().Create(_package)
-	if result.Error != nil {
-		return result.Error
-	}
 
-	return nil
+	return result.Error
 }
 
 func (p *packageRepo) Get(id uint64) ([]Package, error) {
@@ -47,8 +44,7 @@ func (r *packageRepo) Delete(packageId uint64) error {
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
-		result.Error = gorm.ErrRecordNotFound
-		return result.Error
+		return gorm.ErrRecordNotFound
 	}
 
 	return nil
