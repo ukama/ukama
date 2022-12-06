@@ -78,7 +78,7 @@ func Test_Package_Get(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		pkg, err := r.Get(orgIdId, packageId)
+		pkg, err := r.Get(packageId)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -115,7 +115,7 @@ func Test_Package_Delete(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		err = r.Delete(uint64(orgIdId), uint64(packageId))
+		err = r.Delete(uint64(packageId))
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

@@ -21,12 +21,11 @@ import (
 func TestPackageServer_GetPackages_Success(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetPackagesRequest{
-		Id:    1,
-		OrgId: 1,
+		Id: 1,
 	}
 	s := NewPackageServer(packageRepo)
 
-	packageRepo.On("Get", mockFilters.OrgId, mockFilters.Id).Return([]db.Package{
+	packageRepo.On("Get", mockFilters.Id).Return([]db.Package{
 		{
 			Name:         "Daily-pack",
 			Org_id:       2323,
@@ -47,11 +46,10 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 func TestPackageServer_GetPackages_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetPackagesRequest{
-		Id:    0,
-		OrgId: 0,
+		Id: 0,
 	}
 	s := NewPackageServer(packageRepo)
-	packageRepo.On("Get", mockFilters.OrgId, mockFilters.Id).
+	packageRepo.On("Get", mockFilters.Id).
 		Return(nil, status.Errorf(codes.InvalidArgument, "OrgId is required."))
 	pkg1, err := s.Get(context.TODO(), mockFilters)
 	assert.Error(t, err)
@@ -62,11 +60,10 @@ func TestPackageServer_GetPackages_Error1(t *testing.T) {
 func TestPackageServer_GetPackages_Error2(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetPackagesRequest{
-		Id:    999,
-		OrgId: 999,
+		Id: 999,
 	}
 	s := NewPackageServer(packageRepo)
-	packageRepo.On("Get", mockFilters.OrgId, mockFilters.Id).
+	packageRepo.On("Get", mockFilters.Id).
 		Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
 	pkg2, err := s.Get(context.TODO(), mockFilters)
 	assert.Error(t, err)
@@ -152,10 +149,9 @@ func TestPackageServer_DeletePackage_Success(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
 	var mockFilters = &pb.DeletePackageRequest{
-		Id:    1,
-		OrgId: 1,
+		Id: 1,
 	}
-	packageRepo.On("Delete", mockFilters.OrgId, mockFilters.Id).Return(nil)
+	packageRepo.On("Delete", mockFilters.Id).Return(nil)
 	_, err := s.Delete(context.TODO(), mockFilters)
 	assert.NoError(t, err)
 	packageRepo.AssertExpectations(t)
@@ -166,10 +162,9 @@ func TestPackageServer_DeletePackage_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
 	var mockFilters = &pb.DeletePackageRequest{
-		Id:    1,
-		OrgId: 0,
+		Id: 1,
 	}
-	packageRepo.On("Delete", mockFilters.OrgId, mockFilters.Id).
+	packageRepo.On("Delete", mockFilters.Id).
 		Return(status.Errorf(codes.InvalidArgument, "OrgId is required."))
 	pkg1, err := s.Delete(context.TODO(), mockFilters)
 	assert.Error(t, err)
@@ -181,10 +176,9 @@ func TestPackageServer_DeletePackage_Success_Error2(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
 	var mockFilters = &pb.DeletePackageRequest{
-		Id:    0,
-		OrgId: 1,
+		Id: 0,
 	}
-	packageRepo.On("Delete", mockFilters.OrgId, mockFilters.Id).
+	packageRepo.On("Delete", mockFilters.Id).
 		Return(status.Errorf(codes.InvalidArgument, "Id is required."))
 	pkg2, err := s.Delete(context.TODO(), mockFilters)
 	assert.Error(t, err)
@@ -196,10 +190,9 @@ func TestPackageServer_DeletePackage_Error3(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
 	var mf = &pb.DeletePackageRequest{
-		Id:    999,
-		OrgId: 999,
+		Id: 999,
 	}
-	packageRepo.On("Delete", mf.OrgId, mf.Id).
+	packageRepo.On("Delete", mf.Id).
 		Return(grpc.SqlErrorToGrpc(errors.New("SQL error while deleting record"), "packages"))
 	pkg3, err := s.Delete(context.TODO(), mf)
 	fmt.Println(err)

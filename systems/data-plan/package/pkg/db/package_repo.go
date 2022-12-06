@@ -7,8 +7,8 @@ import (
 
 type PackageRepo interface {
 	Add(_package *Package) error
-	Get(orgId, id uint64) ([]Package, error)
-	Delete(orgId, id uint64) error
+	Get(id uint64) ([]Package, error)
+	Delete(id uint64) error
 	Update(Id uint64, pkg Package) (*Package, error)
 }
 
@@ -31,9 +31,9 @@ func (r *packageRepo) Add(_package *Package) error {
 	return nil
 }
 
-func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
+func (p *packageRepo) Get(id uint64) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where(&Package{Org_id: uint(orgId), Model: gorm.Model{ID: uint(id)}}).Find(&packages)
+	result := p.Db.GetGormDb().Where(&Package{Model: gorm.Model{ID: uint(id)}}).Find(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -41,8 +41,8 @@ func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
 	return packages, nil
 }
 
-func (r *packageRepo) Delete(orgId uint64, packageId uint64) error {
-	result := r.Db.GetGormDb().Where("id = ? AND org_id = ?", packageId, orgId).Delete(&Package{})
+func (r *packageRepo) Delete(packageId uint64) error {
+	result := r.Db.GetGormDb().Where("id = ?", packageId).Delete(&Package{})
 	if result.Error != nil {
 		return result.Error
 	}
