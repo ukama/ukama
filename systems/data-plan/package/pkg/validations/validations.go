@@ -9,6 +9,6 @@ func IsEmpty(ss ...string) bool {
 	return false
 }
 
-func IsInvalidId(id uint64) bool {
+func IsReqEmpty(id uint64) bool {
 	return id == 0
 }

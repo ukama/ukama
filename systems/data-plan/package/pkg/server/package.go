@@ -24,11 +24,11 @@ func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
 }
 
 func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
-	logrus.Infof("GetPackages : %v ", req.GetId())
+	logrus.Infof("GetPackage : %v ", req.GetId())
 
 	packages, err := p.packageRepo.Get(req.GetId())
 	if err != nil {
-		logrus.Error("error while getting package" + err.Error())
+		logrus.Error("error while getting a package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
 	}
 
@@ -69,7 +69,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	err := p.packageRepo.Add(_package)
 	if err != nil {
 
-		logrus.Error("Error adding a package. " + err.Error())
+		logrus.Error("Error while adding a package. " + err.Error())
 
 		return nil, status.Errorf(codes.Internal, "error adding a package")
 	}
@@ -81,8 +81,8 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
 	logrus.Infof("Delete Packages packageId: %v", req.GetId())
 
-	if validations.IsInvalidId(req.GetId()) {
-		return nil, status.Errorf(codes.InvalidArgument, "PackageID is required.")
+	if validations.IsReqEmpty(req.GetId()) {
+		return nil, status.Errorf(codes.InvalidArgument, "Please provide a packageID!")
 	}
 	err := p.packageRepo.Delete(req.GetId())
 	if err != nil {
@@ -108,8 +108,8 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 
 	_packages, err := p.packageRepo.Update(req.Id, _package)
 	if err != nil {
-		logrus.Error("error while getting rates" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rates")
+		logrus.Error("error while getting updating a package" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
 	return &pb.UpdatePackageResponse{

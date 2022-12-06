@@ -19,9 +19,9 @@ func Test_IsEmpty(t *testing.T) {
 }
 func Test_IsInvalidId(t *testing.T) {
 	// Success case
-	check := IsInvalidId(0)
+	check := IsReqEmpty(0)
 	assert.True(t, check)
 
-	_check := IsInvalidId(1)
+	_check := IsReqEmpty(1)
 	assert.False(t, _check)
 }
