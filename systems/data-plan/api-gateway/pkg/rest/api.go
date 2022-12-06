@@ -1,19 +1,19 @@
 package rest
 
 type AddPackageRequest struct {
-	Name        string `json:"name" binding:"required"`
+	Name        string `json:"name" validation:"required"`
 	Duration    uint64 `json:"duration" `
-	OrgId       uint64 `json:"org_id" binding:"required"`
+	OrgId       uint64 `json:"org_id" validation:"required"`
 	SimType     string `json:"sim_type" `
 	SmsVolume   int64  `json:"sms_volume" `
 	DataVolume  int64  `json:"data_volume" `
 	Active      bool   `json:"active" `
 	VoiceVolume int64  `json:"voice_volume"`
-	OrgRatesId  uint64 `json:"org_rates_id" binding:"required"`
+	OrgRatesId  uint64 `json:"org_rates_id" validation:"required"`
 }
 
 type UpdatePackageRequest struct {
-	Id          uint64 `json:"id" binding:"required"`
+	Id          uint64 `json:"id" validation:"required"`
 	Name        string `json:"name" `
 	Duration    uint64 `json:"duration" `
 	OrgId       uint64 `json:"org_id" `
@@ -25,11 +25,11 @@ type UpdatePackageRequest struct {
 	OrgRatesId  uint64 `json:"org_rates_id"`
 }
 type DeletePackageRequest struct {
-	Id uint64 `path:"package" uri:"package" validate:"required"`
+	Id uint64 `path:"package" validate:"required"`
 }
 
 type GetPackagesRequest struct {
-	Id uint64 `path:"package" uri:"package" validate:"required"`
+	Id uint64 `path:"package" validate:"required"`
 }
 
 type GetBaseRatesRequest struct {
@@ -41,13 +41,13 @@ type GetBaseRatesRequest struct {
 	EffectiveAt string `json:"effective_at"`
 }
 type GetBaseRateRequest struct {
-	RateId uint64 `path:"baseRate" uri:"baseRate" validate:"required"`
+	RateId uint64 `path:"baseRate" validate:"required"`
 }
 type GetPackageByOrgRequest struct {
 	OrgId uint64 `json:"org_id"`
 }
 type UploadBaseRatesRequest struct {
-	FileURL     string `json:"file_url" binding:"required,url"`
-	EffectiveAt string `json:"effective_at" binding:"required"`
-	SimType     string `json:"sim_type" binding:"required"`
+	FileURL     string `json:"file_url" validate:"required,url"`
+	EffectiveAt string `json:"effective_at" validate:"required"`
+	SimType     string `json:"sim_type" validate:"required"`
 }
