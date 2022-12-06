@@ -12,20 +12,13 @@ type OrgRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: org, nestedFunc
-func (_m *OrgRepo) Add(org *db.Org, nestedFunc ...func() error) error {
-	_va := make([]interface{}, len(nestedFunc))
-	for _i := range nestedFunc {
-		_va[_i] = nestedFunc[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, org)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
+// Add provides a mock function with given fields: org
+func (_m *OrgRepo) Add(org *db.Org) error {
+	ret := _m.Called(org)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Org, ...func() error) error); ok {
-		r0 = rf(org, nestedFunc...)
+	if rf, ok := ret.Get(0).(func(*db.Org) error); ok {
+		r0 = rf(org)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -34,11 +27,11 @@ func (_m *OrgRepo) Add(org *db.Org, nestedFunc ...func() error) error {
 }
 
 // Get provides a mock function with given fields: id
-func (_m *OrgRepo) Get(id int) (*db.Org, error) {
+func (_m *OrgRepo) Get(id uint) (*db.Org, error) {
 	ret := _m.Called(id)
 
 	var r0 *db.Org
-	if rf, ok := ret.Get(0).(func(int) *db.Org); ok {
+	if rf, ok := ret.Get(0).(func(uint) *db.Org); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
@@ -47,7 +40,7 @@ func (_m *OrgRepo) Get(id int) (*db.Org, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int) error); ok {
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
 		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
@@ -72,29 +65,6 @@ func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MakeUserOrgExist provides a mock function with given fields: orgName
-func (_m *OrgRepo) MakeUserOrgExist(orgName string) (*db.Org, error) {
-	ret := _m.Called(orgName)
-
-	var r0 *db.Org
-	if rf, ok := ret.Get(0).(func(string) *db.Org); ok {
-		r0 = rf(orgName)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Org)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(orgName)
 	} else {
 		r1 = ret.Error(1)
 	}

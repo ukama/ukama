@@ -1,7 +1,8 @@
 # Data Plan System
 
-Data Plan system manage all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
+Data Plan system manages all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
 
+- API Gateway
 - Base rate sub-system
 - Package sub-system
 
@@ -10,6 +11,13 @@ Data Plan system manage all the sim packages and base rates functionality. Data 
     .
     └── systems
         └── data-plan
+            │── api-gateway
+            │   ├── cmd
+            │   │   ├── version
+            │   ├── mocks
+            │   └── pkg
+            │       ├── client
+            │       └── rest
             │
             │── base-rate
             │   ├── cmd
@@ -26,7 +34,7 @@ Data Plan system manage all the sim packages and base rates functionality. Data 
             │       └── validations
             │
             ├── docs
-            │    ├── digrams
+            │    ├── diagrams
             │    └── template
             │
             ├── package
@@ -45,8 +53,11 @@ Data Plan system manage all the sim packages and base rates functionality. Data 
 
 ## Learn more about sub-systems
 
+API Gateway (under development)
+
 [Base rate sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/base-rate)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 [Package sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/packge)
 =======
@@ -203,3 +214,6 @@ This rpc takes required argument of `id`.
 call GetBaseRate
 ```
 >>>>>>> main
+=======
+[Package sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/packge)
+>>>>>>> package-service

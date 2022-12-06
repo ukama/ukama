@@ -136,7 +136,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&org)
+		err = r.Add(&org, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -199,7 +199,7 @@ func Test_OrgRepo_GetMember(t *testing.T) {
 	t.Run("MemberExist", func(t *testing.T) {
 		// Arrange
 
-		orgID := 1
+		orgID := uint(1)
 		userUUID := uuid.New()
 
 		var db *extsql.DB
@@ -246,7 +246,7 @@ func Test_OrgRepo_GetMembers(t *testing.T) {
 	t.Run("MembersOfAnOrg", func(t *testing.T) {
 		// Arrange
 
-		orgID := 1
+		orgID := uint(1)
 
 		var db *extsql.DB
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	pbBaseRate "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
-	pb "github.com/ukama/ukama/systems/data-plan/package/pb"
+	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -103,4 +103,9 @@ func (d *DataPlan) GetBaseRate(req *pbBaseRate.GetBaseRateRequest) (*pbBaseRate.
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 	return d.baseRateClient.GetBaseRate(ctx, req)
+}
+func (d *DataPlan) GetPackageByOrg(req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	defer cancel()
+	return d.packageClient.GetByOrg(ctx, req)
 }

@@ -7,9 +7,9 @@ import (
 )
 
 type UserRepo interface {
-	Add(user *User) error
+	Add(user *User, nestedFunc func(*User, *gorm.DB) error) error
 	Get(uuid uuid.UUID) (*User, error)
-	// Deactivate(uuid uuid.UUID) error
+	Update(*User) (*User, error)
 	Delete(uuid uuid.UUID) error
 }
 
@@ -23,10 +23,25 @@ func NewUserRepo(db sql.Db) UserRepo {
 	}
 }
 
-func (u *userRepo) Add(user *User) error {
-	d := u.Db.GetGormDb().Create(user)
+func (u *userRepo) Add(user *User, nestedFunc func(user *User, tx *gorm.DB) error) error {
+	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		d := tx.Create(user)
 
-	return d.Error
+		if d.Error != nil {
+			return d.Error
+		}
+
+		if nestedFunc != nil {
+			nestErr := nestedFunc(user, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
@@ -38,6 +53,34 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 	}
 
 	return &user, nil
+}
+
+func (u *userRepo) Update(user *User) (*User, error) {
+	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(User{}).Where("uuid = ?", user.Uuid).Updates(user)
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		member := &OrgUser{
+			Deactivated: user.Deactivated,
+		}
+
+		result = tx.Model(OrgUser{}).Where("uuid = ?", user.Uuid).Updates(member)
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
+
+	return user, err
 }
 
 func (u *userRepo) Delete(userUUID uuid.UUID) error {

@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.7
-// source: pb/package.proto
+// source: package.proto
 
-package pb
+package gen
 
 import (
 	context "context"
@@ -26,6 +26,7 @@ type PackagesServiceClient interface {
 	Add(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	Delete(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error)
 	Update(ctx context.Context, in *UpdatePackageRequest, opts ...grpc.CallOption) (*UpdatePackageResponse, error)
+	GetByOrg(ctx context.Context, in *GetByOrgPackageRequest, opts ...grpc.CallOption) (*GetByOrgPackageResponse, error)
 }
 
 type packagesServiceClient struct {
@@ -72,6 +73,15 @@ func (c *packagesServiceClient) Update(ctx context.Context, in *UpdatePackageReq
 	return out, nil
 }
 
+func (c *packagesServiceClient) GetByOrg(ctx context.Context, in *GetByOrgPackageRequest, opts ...grpc.CallOption) (*GetByOrgPackageResponse, error) {
+	out := new(GetByOrgPackageResponse)
+	err := c.cc.Invoke(ctx, "/ukama.packages.v1.PackagesService/GetByOrg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PackagesServiceServer is the server API for PackagesService service.
 // All implementations must embed UnimplementedPackagesServiceServer
 // for forward compatibility
@@ -80,6 +90,7 @@ type PackagesServiceServer interface {
 	Add(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	Delete(context.Context, *DeletePackageRequest) (*DeletePackageResponse, error)
 	Update(context.Context, *UpdatePackageRequest) (*UpdatePackageResponse, error)
+	GetByOrg(context.Context, *GetByOrgPackageRequest) (*GetByOrgPackageResponse, error)
 	mustEmbedUnimplementedPackagesServiceServer()
 }
 
@@ -98,6 +109,9 @@ func (UnimplementedPackagesServiceServer) Delete(context.Context, *DeletePackage
 }
 func (UnimplementedPackagesServiceServer) Update(context.Context, *UpdatePackageRequest) (*UpdatePackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+}
+func (UnimplementedPackagesServiceServer) GetByOrg(context.Context, *GetByOrgPackageRequest) (*GetByOrgPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByOrg not implemented")
 }
 func (UnimplementedPackagesServiceServer) mustEmbedUnimplementedPackagesServiceServer() {}
 
@@ -184,6 +198,24 @@ func _PackagesService_Update_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PackagesService_GetByOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByOrgPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PackagesServiceServer).GetByOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.packages.v1.PackagesService/GetByOrg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PackagesServiceServer).GetByOrg(ctx, req.(*GetByOrgPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PackagesService_ServiceDesc is the grpc.ServiceDesc for PackagesService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -207,7 +239,11 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Update",
 			Handler:    _PackagesService_Update_Handler,
 		},
+		{
+			MethodName: "GetByOrg",
+			Handler:    _PackagesService_GetByOrg_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pb/package.proto",
+	Metadata: "package.proto",
 }

@@ -6,9 +6,10 @@ import (
 )
 
 type PackageRepo interface {
-	Add(_package *Package, nestedFunc ...func() error) error
-	Get(orgId, id uint64) ([]Package, error)
-	Delete(orgId ,id uint64, nestedFunc ...func() error) error
+	Add(_package *Package) error
+	Get(id uint64) ([]Package, error)
+	Delete(id uint64) error
+	GetByOrg(orgId uint64) ([]Package, error)
 	Update(Id uint64, pkg Package) (*Package, error)
 }
 
@@ -22,46 +23,43 @@ func NewPackageRepo(db sql.Db) *packageRepo {
 	}
 }
 
-func (r *packageRepo) Add(_package *Package, nestedFunc ...func() error) error {
-	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-		return tx.Create(_package)
-	}, nestedFunc...)
+func (r *packageRepo) Add(_package *Package) error {
+	result := r.Db.GetGormDb().Create(_package)
 
-	return err
+	return result.Error
 }
 
-func (p *packageRepo) Get(orgId, id uint64) ([]Package, error) {
+func (p *packageRepo) Get(id uint64) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where(&Package{Org_id: uint(orgId), Model: gorm.Model{ID: uint(id)}}).Find(&packages)
+	result := p.Db.GetGormDb().Where("id = ?", id).First(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return packages, nil
 }
+func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
+	var packages []Package
+	result := p.Db.GetGormDb().Where("org_id = ?", orgId).Find(&packages)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return packages, nil
+}
 
-func (r *packageRepo) Delete(orgId , packageId uint64, nestedFunc ...func() error) error {
-	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-		d := tx.Delete(&Package{}, "id = ? AND org_id = ?", packageId, orgId)
+func (r *packageRepo) Delete(packageId uint64) error {
+	result := r.Db.GetGormDb().Where("id = ?", packageId).Delete(&Package{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
 
-		if d.Error != nil {
-			return d
-		}
-
-		if d.RowsAffected == 0 {
-			d.Error = gorm.ErrRecordNotFound
-
-			return d
-		}
-
-		return d
-	}, nestedFunc...)
-
-	return err
+	return nil
 }
 
 func (b *packageRepo) Update(Id uint64, pkg Package) (*Package, error) {
-
 	result := b.Db.GetGormDb().Where(Id).UpdateColumns(pkg)
 	if result.Error != nil {
 		return nil, result.Error

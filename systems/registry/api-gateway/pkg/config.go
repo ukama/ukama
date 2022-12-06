@@ -16,10 +16,6 @@ type Config struct {
 	Metrics           config.Metrics `mapstructure:"metrics"`
 }
 
-type Kratos struct {
-	Url string
-}
-
 type GrpcEndpoints struct {
 	Timeout time.Duration
 	Network string
@@ -45,7 +41,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Network: "network:9190",
+			Network: "network:9090",
 			Users:   "users:9090",
 			Org:     "org:9090",
 			Node:    "node:9090",

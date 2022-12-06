@@ -1,24 +1,30 @@
 syntax = "proto3";
-option go_package = "pb/";
 package ukama.packages.v1;
+option go_package = "pb/gen";
 
 service PackagesService {
     rpc Get (GetPackagesRequest) returns (GetPackagesResponse) {}
     rpc Add (AddPackageRequest) returns (AddPackageResponse){}
     rpc Delete (DeletePackageRequest) returns (DeletePackageResponse){}
     rpc Update (UpdatePackageRequest) returns (UpdatePackageResponse){}
+    rpc GetByOrg (GetByOrgPackageRequest) returns (GetByOrgPackageResponse){}
+
 }
 message GetPackagesRequest{
-    uint64 org_id =1;
-    uint64 id =2;
+    uint64 id =1;
 }
+message GetByOrgPackageRequest{
+    uint64 orgId =1;
+}
+message GetByOrgPackageResponse{
+    repeated Package packages =1;
 
+}
 message GetPackagesResponse{
     repeated Package packages =1;
 }
 message DeletePackageRequest {
-    uint64 id =2;
-    uint64 org_id =1;
+    uint64 id =1;
 }
 message DeletePackageResponse {
     string id = 1;
@@ -69,8 +75,8 @@ message Package {
 }
 
 enum SimType {
-    INTER_NONE=0;
-    INTER_MNO_DATA=1;
-    INTER_MNO_ALL=2;
-    INTER_UKAMA_ALL=3;
+    inter_none=0;
+    inter_mno_data=1;
+    inter_mno_all=2;
+    inter_ukama_all=3;
 }

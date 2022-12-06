@@ -14,7 +14,7 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/client"
 	pbBaseRate "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
-	pb "github.com/ukama/ukama/systems/data-plan/package/pb"
+	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )
@@ -42,6 +42,7 @@ type dataPlan interface {
 	AddPackage(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error)
 	UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error)
 	GetPackage(req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error)
+	GetPackageByOrg(req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error)
 	DeletePackage(req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error)
 	UploadBaseRates(req *pbBaseRate.UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error)
 	GetBaseRates(req *pbBaseRate.GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error)
@@ -98,6 +99,7 @@ func (r *Router) init() {
 
 	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.PUT("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
+	packages.GET("", formatDoc("Get packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
 	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PATCH("", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
@@ -110,17 +112,27 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Description = description
 	}}
 }
-func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
-
-	 reqBody:= GetBaseRateRequest{}
-
-	if err := c.ShouldBindUri(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func (p *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest) (*pb.GetByOrgPackageResponse, error) {
+	orgId, _ := strconv.ParseUint(c.Query("orgId"), 10, 64)
+	resp, err := p.clients.d.GetPackageByOrg(&pb.GetByOrgPackageRequest{
+		OrgId: orgId,
+	})
+	if err != nil {
 		logrus.Error(err)
+		return nil, err
 	}
 
+	return resp, nil
+}
+func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
+	rateId, error := strconv.ParseUint(c.Param("RateId"), 10, 64)
+	if error != nil {
+		logrus.Error(error)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "rate is not valid!"}
+	}
 	resp, err := p.clients.d.GetBaseRate(&pbBaseRate.GetBaseRateRequest{
-		RateId: reqBody.RateId,
+		RateId: rateId,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -130,15 +142,11 @@ func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*p
 	return resp, nil
 }
 func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
-	 reqBody:= UploadBaseRatesRequest{}
-	if err := c.ShouldBindJSON(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		logrus.Error(err)
-	}
+
 	resp, err := p.clients.d.UploadBaseRates(&pbBaseRate.UploadBaseRatesRequest{
-		FileURL:     reqBody.FileURL,
-		EffectiveAt: reqBody.EffectiveAt,
-		SimType:     pbBaseRate.SimType(pbBaseRate.SimType_value[reqBody.SimType]),
+		FileURL:     req.FileURL,
+		EffectiveAt: req.EffectiveAt,
+		SimType:     pbBaseRate.SimType(pbBaseRate.SimType_value[req.SimType]),
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -181,14 +189,14 @@ func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (
 	return resp, nil
 }
 func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb.GetPackagesResponse, error) {
-	 reqBody:= GetPackagesRequest{}
-	if err := c.ShouldBindUri(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		logrus.Error(err)
+	packageId, error := strconv.ParseUint(c.Param("package"), 10, 64)
+	if error != nil {
+		logrus.Error(error)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "packageId is not valid!"}
 	}
 	resp, err := p.clients.d.GetPackage(&pb.GetPackagesRequest{
-		Id:    reqBody.Id,
-		OrgId: ORG_ID,
+		Id: packageId,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -198,14 +206,14 @@ func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb
 	return resp, nil
 }
 func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest) (*pb.DeletePackageResponse, error) {
-	 reqBody :=DeletePackageRequest{}
-	if err := c.ShouldBindUri(&reqBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		logrus.Error(err)
+	packageId, error := strconv.ParseUint(c.Param("package"), 10, 64)
+	if error != nil {
+		logrus.Error(error)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "packageId is not valid!"}
 	}
 	resp, err := p.clients.d.DeletePackage(&pb.DeletePackageRequest{
-		Id:    reqBody.Id,
-		OrgId: ORG_ID,
+		Id: packageId,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -227,7 +235,7 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	})
 	if err != nil {
 		logrus.Error(err)
-		c.JSON(http.StatusBadRequest,gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return nil, err
 	}
 
@@ -235,7 +243,7 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 
 }
 func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
-	pack:=&pb.AddPackageRequest{
+	pack := &pb.AddPackageRequest{
 		Name:        req.Name,
 		OrgId:       req.OrgId,
 		Duration:    req.Duration,

@@ -25,13 +25,11 @@ type UpdatePackageRequest struct {
 	OrgRatesId  uint64 `json:"org_rates_id"`
 }
 type DeletePackageRequest struct {
-	Id    uint64 `path:"package" uri:"package" validate:"required"`
-	OrgId uint64 `json:"org_id"`
+	Id uint64 `path:"package" uri:"package" validate:"required"`
 }
 
 type GetPackagesRequest struct {
-	Id    uint64 `path:"package" uri:"package" validate:"required"`
-	OrgId uint64 `json:"org_id"`
+	Id uint64 `path:"package" uri:"package" validate:"required"`
 }
 
 type GetBaseRatesRequest struct {
@@ -44,6 +42,9 @@ type GetBaseRatesRequest struct {
 }
 type GetBaseRateRequest struct {
 	RateId uint64 `path:"baseRate" uri:"baseRate" validate:"required"`
+}
+type GetPackageByOrgRequest struct {
+	OrgId uint64 `json:"org_id"`
 }
 type UploadBaseRatesRequest struct {
 	FileURL     string `json:"file_url" binding:"required,url"`

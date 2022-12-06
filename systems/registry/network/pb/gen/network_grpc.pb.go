@@ -22,15 +22,18 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NetworkServiceClient interface {
+	// Networks
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
-	// list all orgs and networks in the network
-	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error)
+	GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
+	// Update
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
-	AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
-	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
-	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
-	UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
-	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
+	// Sites
+	AddSite(ctx context.Context, in *AddSiteRequest, opts ...grpc.CallOption) (*AddSiteResponse, error)
+	GetSite(ctx context.Context, in *GetSiteRequest, opts ...grpc.CallOption) (*GetSiteResponse, error)
+	GetSiteByName(ctx context.Context, in *GetSiteByNameRequest, opts ...grpc.CallOption) (*GetSiteResponse, error)
+	GetSiteByNetwork(ctx context.Context, in *GetSiteByNetworkRequest, opts ...grpc.CallOption) (*GetSiteByNetworkResponse, error)
 }
 
 type networkServiceClient struct {
@@ -50,9 +53,27 @@ func (c *networkServiceClient) Add(ctx context.Context, in *AddRequest, opts ...
 	return out, nil
 }
 
-func (c *networkServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
-	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/List", in, out, opts...)
+func (c *networkServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkServiceClient) GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error) {
+	out := new(GetByNameResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetByName", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *networkServiceClient) GetByOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error) {
+	out := new(GetByOrgResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetByOrg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -68,45 +89,36 @@ func (c *networkServiceClient) Delete(ctx context.Context, in *DeleteRequest, op
 	return out, nil
 }
 
-func (c *networkServiceClient) AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error) {
-	out := new(AddNodeResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/AddNode", in, out, opts...)
+func (c *networkServiceClient) AddSite(ctx context.Context, in *AddSiteRequest, opts ...grpc.CallOption) (*AddSiteResponse, error) {
+	out := new(AddSiteResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/AddSite", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *networkServiceClient) DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error) {
-	out := new(DeleteNodeResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/DeleteNode", in, out, opts...)
+func (c *networkServiceClient) GetSite(ctx context.Context, in *GetSiteRequest, opts ...grpc.CallOption) (*GetSiteResponse, error) {
+	out := new(GetSiteResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetSite", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *networkServiceClient) GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
-	out := new(GetNodesResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetNodes", in, out, opts...)
+func (c *networkServiceClient) GetSiteByName(ctx context.Context, in *GetSiteByNameRequest, opts ...grpc.CallOption) (*GetSiteResponse, error) {
+	out := new(GetSiteResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetSiteByName", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *networkServiceClient) UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error) {
-	out := new(UpdateNodeResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/UpdateNode", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *networkServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
-	out := new(GetNodeResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetNode", in, out, opts...)
+func (c *networkServiceClient) GetSiteByNetwork(ctx context.Context, in *GetSiteByNetworkRequest, opts ...grpc.CallOption) (*GetSiteByNetworkResponse, error) {
+	out := new(GetSiteByNetworkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetSiteByNetwork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,15 +129,18 @@ func (c *networkServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, 
 // All implementations must embed UnimplementedNetworkServiceServer
 // for forward compatibility
 type NetworkServiceServer interface {
+	// Networks
 	Add(context.Context, *AddRequest) (*AddResponse, error)
-	// list all orgs and networks in the network
-	List(context.Context, *ListRequest) (*ListResponse, error)
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error)
+	GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
+	// Update
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
-	AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
-	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
-	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
-	UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error)
-	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
+	// Sites
+	AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error)
+	GetSite(context.Context, *GetSiteRequest) (*GetSiteResponse, error)
+	GetSiteByName(context.Context, *GetSiteByNameRequest) (*GetSiteResponse, error)
+	GetSiteByNetwork(context.Context, *GetSiteByNetworkRequest) (*GetSiteByNetworkResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
 
@@ -136,26 +151,29 @@ type UnimplementedNetworkServiceServer struct {
 func (UnimplementedNetworkServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
-func (UnimplementedNetworkServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+func (UnimplementedNetworkServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedNetworkServiceServer) GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByName not implemented")
+}
+func (UnimplementedNetworkServiceServer) GetByOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByOrg not implemented")
 }
 func (UnimplementedNetworkServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedNetworkServiceServer) AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddNode not implemented")
+func (UnimplementedNetworkServiceServer) AddSite(context.Context, *AddSiteRequest) (*AddSiteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddSite not implemented")
 }
-func (UnimplementedNetworkServiceServer) DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteNode not implemented")
+func (UnimplementedNetworkServiceServer) GetSite(context.Context, *GetSiteRequest) (*GetSiteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSite not implemented")
 }
-func (UnimplementedNetworkServiceServer) GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNodes not implemented")
+func (UnimplementedNetworkServiceServer) GetSiteByName(context.Context, *GetSiteByNameRequest) (*GetSiteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSiteByName not implemented")
 }
-func (UnimplementedNetworkServiceServer) UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateNode not implemented")
-}
-func (UnimplementedNetworkServiceServer) GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNode not implemented")
+func (UnimplementedNetworkServiceServer) GetSiteByNetwork(context.Context, *GetSiteByNetworkRequest) (*GetSiteByNetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSiteByNetwork not implemented")
 }
 func (UnimplementedNetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {}
 
@@ -188,20 +206,56 @@ func _NetworkService_Add_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NetworkService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRequest)
+func _NetworkService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NetworkServiceServer).List(ctx, in)
+		return srv.(NetworkServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/List",
+		FullMethod: "/ukama.network.v1.NetworkService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).List(ctx, req.(*ListRequest))
+		return srv.(NetworkServiceServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkService_GetByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).GetByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.network.v1.NetworkService/GetByName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).GetByName(ctx, req.(*GetByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NetworkService_GetByOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByOrgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).GetByOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.network.v1.NetworkService/GetByOrg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).GetByOrg(ctx, req.(*GetByOrgRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -224,92 +278,74 @@ func _NetworkService_Delete_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NetworkService_AddNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddNodeRequest)
+func _NetworkService_AddSite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddSiteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NetworkServiceServer).AddNode(ctx, in)
+		return srv.(NetworkServiceServer).AddSite(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/AddNode",
+		FullMethod: "/ukama.network.v1.NetworkService/AddSite",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).AddNode(ctx, req.(*AddNodeRequest))
+		return srv.(NetworkServiceServer).AddSite(ctx, req.(*AddSiteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NetworkService_DeleteNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteNodeRequest)
+func _NetworkService_GetSite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSiteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NetworkServiceServer).DeleteNode(ctx, in)
+		return srv.(NetworkServiceServer).GetSite(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/DeleteNode",
+		FullMethod: "/ukama.network.v1.NetworkService/GetSite",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).DeleteNode(ctx, req.(*DeleteNodeRequest))
+		return srv.(NetworkServiceServer).GetSite(ctx, req.(*GetSiteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NetworkService_GetNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNodesRequest)
+func _NetworkService_GetSiteByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSiteByNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NetworkServiceServer).GetNodes(ctx, in)
+		return srv.(NetworkServiceServer).GetSiteByName(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/GetNodes",
+		FullMethod: "/ukama.network.v1.NetworkService/GetSiteByName",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).GetNodes(ctx, req.(*GetNodesRequest))
+		return srv.(NetworkServiceServer).GetSiteByName(ctx, req.(*GetSiteByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NetworkService_UpdateNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateNodeRequest)
+func _NetworkService_GetSiteByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSiteByNetworkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NetworkServiceServer).UpdateNode(ctx, in)
+		return srv.(NetworkServiceServer).GetSiteByNetwork(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/UpdateNode",
+		FullMethod: "/ukama.network.v1.NetworkService/GetSiteByNetwork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).UpdateNode(ctx, req.(*UpdateNodeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NetworkService_GetNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNodeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NetworkServiceServer).GetNode(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/GetNode",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).GetNode(ctx, req.(*GetNodeRequest))
+		return srv.(NetworkServiceServer).GetSiteByNetwork(ctx, req.(*GetSiteByNetworkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -326,32 +362,36 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NetworkService_Add_Handler,
 		},
 		{
-			MethodName: "List",
-			Handler:    _NetworkService_List_Handler,
+			MethodName: "Get",
+			Handler:    _NetworkService_Get_Handler,
+		},
+		{
+			MethodName: "GetByName",
+			Handler:    _NetworkService_GetByName_Handler,
+		},
+		{
+			MethodName: "GetByOrg",
+			Handler:    _NetworkService_GetByOrg_Handler,
 		},
 		{
 			MethodName: "Delete",
 			Handler:    _NetworkService_Delete_Handler,
 		},
 		{
-			MethodName: "AddNode",
-			Handler:    _NetworkService_AddNode_Handler,
+			MethodName: "AddSite",
+			Handler:    _NetworkService_AddSite_Handler,
 		},
 		{
-			MethodName: "DeleteNode",
-			Handler:    _NetworkService_DeleteNode_Handler,
+			MethodName: "GetSite",
+			Handler:    _NetworkService_GetSite_Handler,
 		},
 		{
-			MethodName: "GetNodes",
-			Handler:    _NetworkService_GetNodes_Handler,
+			MethodName: "GetSiteByName",
+			Handler:    _NetworkService_GetSiteByName_Handler,
 		},
 		{
-			MethodName: "UpdateNode",
-			Handler:    _NetworkService_UpdateNode_Handler,
-		},
-		{
-			MethodName: "GetNode",
-			Handler:    _NetworkService_GetNode_Handler,
+			MethodName: "GetSiteByNetwork",
+			Handler:    _NetworkService_GetSiteByNetwork_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

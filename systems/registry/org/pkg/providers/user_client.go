@@ -21,8 +21,8 @@ type userClientProvider struct {
 	userHost    string
 }
 
-func NewUserClientProvider(hssHost string) UserClientProvider {
-	return &userClientProvider{userHost: hssHost}
+func NewUserClientProvider(userHost string) UserClientProvider {
+	return &userClientProvider{userHost: userHost}
 }
 
 func (u *userClientProvider) GetClient() (pb.UserServiceClient, error) {

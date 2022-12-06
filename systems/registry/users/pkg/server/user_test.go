@@ -23,10 +23,10 @@ func TestUserService_Add(t *testing.T) {
 		Phone: "12324",
 	}
 
-	userRepo.On("Add", mock.Anything).Return(nil).Once()
+	userRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("AddUser", func(tt *testing.T) {
-		srv := NewUserService(userRepo)
+		srv := NewUserService(userRepo, nil)
 		addResp, err := srv.Add(context.TODO(), &pb.AddRequest{User: userRequest})
 
 		assert.NoError(t, err)
@@ -49,7 +49,7 @@ func TestUserService_Get(t *testing.T) {
 	}, nil)
 
 	t.Run("UserFound", func(tt *testing.T) {
-		srv := NewUserService(userRepo)
+		srv := NewUserService(userRepo, nil)
 
 		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID})
 
@@ -79,10 +79,10 @@ func TestUserService_Deactivate(t *testing.T) {
 
 	userRepo.On("Update", mock.MatchedBy(func(u *db.User) bool {
 		return u.Uuid.String() == userUUID
-	})).Return(&db.User{}, nil)
+	}), mock.Anything).Return(nil)
 
 	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
-		srv := NewUserService(userRepo)
+		srv := NewUserService(userRepo, nil)
 
 		_, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
 			UserUuid: userUUID,
