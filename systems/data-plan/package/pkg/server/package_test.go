@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/data-plan/package/mocks"
-	"github.com/ukama/ukama/systems/data-plan/package/pb"
+	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

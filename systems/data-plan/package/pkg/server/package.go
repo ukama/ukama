@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	pb "github.com/ukama/ukama/systems/data-plan/package/pb"
+	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	validations "github.com/ukama/ukama/systems/data-plan/package/pkg/validations"
 
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
