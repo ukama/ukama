@@ -112,7 +112,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Description = description
 	}}
 }
-func (p *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest) (*pb.GetByOrgPackageResponse, error) {
+func (p *Router) getPackagesHandler(c *gin.Context) (*pb.GetByOrgPackageResponse, error) {
 	orgId, _ := strconv.ParseUint(c.Query("orgId"), 10, 64)
 	resp, err := p.clients.d.GetPackageByOrg(&pb.GetByOrgPackageRequest{
 		OrgId: orgId,
@@ -124,7 +124,7 @@ func (p *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest)
 
 	return resp, nil
 }
-func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
+func (p *Router) getBaseRateHandler(c *gin.Context) (*pbBaseRate.GetBaseRateResponse, error) {
 	rateId, error := strconv.ParseUint(c.Param("baseRate"), 10, 64)	
 	if error != nil {
 		logrus.Error(error)
@@ -155,7 +155,7 @@ func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 
 	return resp, nil
 }
-func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error) {
+func (p *Router) getBaseRatesHandler(c *gin.Context) (*pbBaseRate.GetBaseRatesResponse, error) {
 	provider := c.Query("provider")
 	effectiveAt := c.Query("effective_at")
 	simType := c.Query("sim_type")
@@ -188,7 +188,7 @@ func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (
 
 	return resp, nil
 }
-func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb.GetPackagesResponse, error) {
+func (p *Router) getPackageHandler(c *gin.Context) (*pb.GetPackagesResponse, error) {
 	packageId, error := strconv.ParseUint(c.Param("package"), 10, 64)
 	if error != nil {
 		logrus.Error(error)
@@ -205,7 +205,7 @@ func (p *Router) getPackageHandler(c *gin.Context, req *GetPackagesRequest) (*pb
 
 	return resp, nil
 }
-func (p *Router) deletePackageHandler(c *gin.Context, req *DeletePackageRequest) (*pb.DeletePackageResponse, error) {
+func (p *Router) deletePackageHandler(c *gin.Context) (*pb.DeletePackageResponse, error) {
 	packageId, error := strconv.ParseUint(c.Param("package"), 10, 64)
 	if error != nil {
 		logrus.Error(error)
