@@ -47,7 +47,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 func Test_Package_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		const packageId = 1
-		const orgIdId = 1
+		const orgId = 1
 
 		var db *extsql.DB
 
@@ -56,10 +56,10 @@ func Test_Package_Get(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"id", "name", "org_id", "active", "duration", "sms_volume",
 			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(packageId, "Monthly Super", orgIdId, "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
+			AddRow(packageId, "Monthly Super", orgId, "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(orgIdId, packageId).
+			WithArgs(orgId, packageId).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -85,7 +85,46 @@ func Test_Package_Get(t *testing.T) {
 		assert.NotNil(t, pkg)
 	})
 }
+func Test_Package_GetByOrg(t *testing.T) {
+	t.Run("Get", func(t *testing.T) {
+		const orgId = 1
 
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"id", "name", "org_id", "active", "duration", "sms_volume",
+			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
+			AddRow(orgId, "Monthly Super", "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(orgId).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		pkg, err := r.GetByOrg(orgId)
+		assert.NoError(t, err)
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.NotNil(t, pkg)
+	})
+}
 func Test_Package_Delete(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		packageId := 1
