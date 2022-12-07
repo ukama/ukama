@@ -167,10 +167,14 @@ func (p *Router) getBaseRatesHandler(c *gin.Context) (*pbBaseRate.GetBaseRatesRe
 	to, err := strconv.ParseUint(c.Param("to"), 10, 64)
 	if err != nil {
 		logrus.Error(err)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "to query param is not valid!"}
 	}
 	from, err := strconv.ParseUint(c.Param("from"), 10, 64)
 	if err != nil {
 		logrus.Error(err)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "from query param is not valid!"}
 	}
 
 	resp, err := p.clients.d.GetBaseRates(&pbBaseRate.GetBaseRatesRequest{

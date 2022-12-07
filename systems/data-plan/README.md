@@ -57,10 +57,8 @@ API Gateway (under development)
 
 [Base rate sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/base-rate)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 [Package sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/packge)
-=======
+
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/UploadBaseRates.png" alt="upload-base-rate" width="500"/>
 
 Upload base rates service provide functionality to populate rates from CV file to DB.
@@ -213,7 +211,5 @@ This rpc takes required argument of `id`.
 ```
 call GetBaseRate
 ```
->>>>>>> main
-=======
+
 [Package sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/packge)
->>>>>>> package-service
