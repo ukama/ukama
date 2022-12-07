@@ -37,7 +37,10 @@ func FetchData(url string) ([]RawRates, error) {
 
 	var r []RawRates
 	errorStr := "invalid CSV file data"
-	csvutil.Unmarshal(content, &r)
+	err = csvutil.Unmarshal(content, &r)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(r) == 0 || validations.IsEmpty(r[0].Country) ||
 		validations.IsEmpty(r[0].Network) ||
