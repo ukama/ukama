@@ -19,7 +19,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
-const ORG_ID = 12345
+const TEMP_ORG_ID = 1
 
 type Router struct {
 	f       *fizz.Fizz
@@ -41,7 +41,7 @@ type Clients struct {
 type dataPlan interface {
 	AddPackage(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error)
 	UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error)
-	GetPackage(req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error)
+	GetPackage(req *pb.GetPackageRequest) (*pb.GetPackageResponse, error)
 	GetPackageByOrg(req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error)
 	DeletePackage(req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error)
 	UploadBaseRates(req *pbBaseRate.UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error)
@@ -99,7 +99,7 @@ func (r *Router) init() {
 
 	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
-	packages.GET("", formatDoc("Get packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
+	packages.GET("/", formatDoc("Get packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
 	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PATCH("/:package", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
@@ -113,14 +113,8 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 func (p *Router) getPackagesHandler(c *gin.Context) (*pb.GetByOrgPackageResponse, error) {
-	orgId, error := strconv.ParseUint(c.Query("orgId"), 10, 64)
-	if error != nil {
-		logrus.Error(error)
-		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-			Message: "orgId query param is not valid!"}
-	}
 	resp, err := p.clients.d.GetPackageByOrg(&pb.GetByOrgPackageRequest{
-		OrgId: orgId,
+		OrgId: TEMP_ORG_ID,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -130,7 +124,7 @@ func (p *Router) getPackagesHandler(c *gin.Context) (*pb.GetByOrgPackageResponse
 	return resp, nil
 }
 func (p *Router) getBaseRateHandler(c *gin.Context) (*pbBaseRate.GetBaseRateResponse, error) {
-	rateId, error := strconv.ParseUint(c.Param("baseRate"), 10, 64)	
+	rateId, error := strconv.ParseUint(c.Param("baseRate"), 10, 64)
 	if error != nil {
 		logrus.Error(error)
 		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
@@ -197,14 +191,14 @@ func (p *Router) getBaseRatesHandler(c *gin.Context) (*pbBaseRate.GetBaseRatesRe
 
 	return resp, nil
 }
-func (p *Router) getPackageHandler(c *gin.Context) (*pb.GetPackagesResponse, error) {
+func (p *Router) getPackageHandler(c *gin.Context) (*pb.GetPackageResponse, error) {
 	packageId, error := strconv.ParseUint(c.Param("package"), 10, 64)
 	if error != nil {
 		logrus.Error(error)
 		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
 			Message: "packageId is not valid!"}
 	}
-	resp, err := p.clients.d.GetPackage(&pb.GetPackagesRequest{
+	resp, err := p.clients.d.GetPackage(&pb.GetPackageRequest{
 		Id: packageId,
 	})
 	if err != nil {
@@ -228,7 +222,7 @@ func (p *Router) deletePackageHandler(c *gin.Context) (*pb.DeletePackageResponse
 		logrus.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err})
 		return nil, err
-		
+
 	}
 	return resp, nil
 }
@@ -240,7 +234,7 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 			Message: "packageId is not valid!"}
 	}
 	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
-		Id:packageId,
+		Id:          packageId,
 		Name:        req.Name,
 		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
 		Active:      req.Active,
