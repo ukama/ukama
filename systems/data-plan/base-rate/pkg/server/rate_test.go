@@ -17,12 +17,12 @@ import (
 
 var mockCountry = "The lunar maria"
 var mockSimTypeStr = "inter_mno_data"
-var mockeEffectiveAt = "2022-12-01T00:00:00Z"
+var mockeEffectiveAt = time.Now().Add(time.Hour * 24 * 7 * time.Duration(4)).Format(time.RFC3339Nano)
 var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
 // Start UploadRates //
 // Success case
-func TestRateService_UploadRates_Succes(t *testing.T) {
+func TestRateService_UploadRates_Success(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
 	rateService := NewBaseRateServer(mockRepo)
 	reqMock := &pb.UploadBaseRatesRequest{
