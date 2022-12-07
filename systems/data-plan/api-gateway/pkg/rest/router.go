@@ -252,7 +252,7 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	})
 	if err != nil {
 		logrus.Error(err)
-		c.JSON(http.StatusNotFound, gin.H{"error": err})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return nil, err
 	}
 
