@@ -1,45 +1,63 @@
 # Data Plan System
 
-Data Plan system manage all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
+Data Plan system manages all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
 
+- API Gateway
 - Base rate sub-system
-- Packages sub-system
+- Package sub-system
 
-## Base rate sub-system
-
-Base rate sub-system is responsibe of:
-
-- Populating rates in DB from CSV
-- Provide rates with some optional and require filters
-- Provide functionality to get record by id
-
-### Directory Structure
+## Directory Structure
 
     .
     └── systems
         └── data-plan
+            │── api-gateway
+            │   ├── cmd
+            │   │   ├── version
+            │   ├── mocks
+            │   └── pkg
+            │       ├── client
+            │       └── rest
+            │
             │── base-rate
-            │   │── cmd
-            |   |   ├── listner
-            |   |   ├── server
+            │   ├── cmd
+            │   │   ├── server
             │   │   └── version
-            |   │── mocks
-            │   │── pb
-            |   |   └──gen
+            │   ├── mocks
+            │   ├── pb
+            │   │   └──gen
             │   └── pkg
             │       ├── db
             │       ├── queue
             │       ├── server
             │       ├── utils
             │       └── validations
-            ├──  docs
-            |    ├── digrams
-            |    └── template
+            │
+            ├── docs
+            │    ├── diagrams
+            │    └── template
+            │
+            ├── package
+            │   │── cmd
+            │   │   ├── server
+            │   │   └── version
+            │   ├── mocks
+            │   ├── pb
+            │   │   └──gen
+            │   └── pkg
+            │       ├── db
+            │       ├── server
+            │       └── validations
+            │
             └── README
 
-### RPC Function
+## Learn more about sub-systems
 
-**UploadBaseRates**
+API Gateway (under development)
+
+[Base rate sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/base-rate)
+
+[Package sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/packge)
 
 <img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/UploadBaseRates.png" alt="upload-base-rate" width="500"/>
 
@@ -193,3 +211,5 @@ This rpc takes required argument of `id`.
 ```
 call GetBaseRate
 ```
+
+[Package sub-system](https://github.com/ukama/ukama/tree/main/systems/data-plan/packge)

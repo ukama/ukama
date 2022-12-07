@@ -17,7 +17,6 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/ukama/ukama/systems/common v0.0.0-20220909103841-dd001a1af00e
-	github.com/ukama/ukama/systems/init/lookup v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220425182032-2c377df948f4
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.46.2
@@ -85,7 +84,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f // indirect
-	github.com/vektra/mockery/v2 v2.14.0 // indirect
+	github.com/vektra/mockery/v2 v2.15.0 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect

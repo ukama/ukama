@@ -7,5 +7,5 @@ import (
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database `default:"{}"`
-	Grpc             *uconf.Grpc    `default:"{}"`
+	Grpc             *uconf.Grpc     `default:"{}"`
 }
