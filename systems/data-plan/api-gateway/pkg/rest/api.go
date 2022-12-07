@@ -13,10 +13,9 @@ type AddPackageRequest struct {
 }
 
 type UpdatePackageRequest struct {
-	Id          uint64 `json:"id" validation:"required"`
+	Id uint64 `path:"package" validate:"required"`
 	Name        string `json:"name" `
 	Duration    uint64 `json:"duration" `
-	OrgId       uint64 `json:"org_id" `
 	Active      bool   `json:"active"`
 	SimType     string `json:"sim_type" `
 	SmsVolume   int64  `json:"sms_volume" `

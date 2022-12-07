@@ -98,10 +98,10 @@ func (r *Router) init() {
 	baseRates.GET("", formatDoc("Get BaseRates by country", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
 
 	packages := v1.Group("/packages", "Packages", "Packages operations")
-	packages.PUT("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
+	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
 	packages.GET("", formatDoc("Get packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
 	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
-	packages.PATCH("", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
+	packages.PATCH("/:package", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
 }
@@ -222,8 +222,14 @@ func (p *Router) deletePackageHandler(c *gin.Context) (*pb.DeletePackageResponse
 	return resp, nil
 }
 func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
+	packageId, error := strconv.ParseUint(c.Param("package"), 10, 64)
+	if error != nil {
+		logrus.Error(error)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "packageId is not valid!"}
+	}
 	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
-		Id:          req.Id,
+		Id:packageId,
 		Name:        req.Name,
 		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
 		Active:      req.Active,
