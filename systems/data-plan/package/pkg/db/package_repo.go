@@ -42,7 +42,8 @@ func (p *packageRepo) Get(id uint64) (*Package, error) {
 }
 func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where("org_id = ?", orgId).Find(&packages)
+	result:=p.Db.GetGormDb().Where(&Package{Org_id: uint(orgId)}).Find(&packages)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
