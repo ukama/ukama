@@ -106,7 +106,7 @@ Function takes below argument:
 
 ### Add Package
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/AddPackage.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/AddPackage.png" alt="ukama-addPackage" width="500"/>
 
 ```proto
 service PackagesService {
@@ -138,7 +138,7 @@ Function takes below argument:
 
 ### UpdatePackage
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/UpdatePackage.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/UpdatePackage.png" alt="ukama-update-package" width="500"/>
 
 ```proto
 service PackagesService {
@@ -170,7 +170,7 @@ Function takes below argument:
 
 ### DeletePackage
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/DeletePackage.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/DeletePackage.png" alt="ukama-delete-package" width="500"/>
 
 ```proto
 service PackagesService {
@@ -259,6 +259,14 @@ Get package
 
 ```
 call Get
+```
+
+→ **GetByOrg**
+
+Get packages by org
+
+```
+call GetByOrg
 ```
 
 → **Update**
