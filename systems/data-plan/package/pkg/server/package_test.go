@@ -38,7 +38,7 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 	}, nil)
 	pkg, err := s.Get(context.TODO(), mockFilters)
 	assert.NoError(t, err)
-	assert.Equal(t, int64(12), pkg.Packages[0].DataVolume)
+	assert.Equal(t, int64(12), pkg.Package.DataVolume)
 	packageRepo.AssertExpectations(t)
 }
 

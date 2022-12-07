@@ -7,7 +7,7 @@ import (
 
 type PackageRepo interface {
 	Add(_package *Package) error
-	Get(id uint64) ([]Package, error)
+	Get(id uint64) (*Package, error)
 	Delete(id uint64) error
 	GetByOrg(orgId uint64) ([]Package, error)
 	Update(Id uint64, pkg Package) (*Package, error)
@@ -29,14 +29,16 @@ func (r *packageRepo) Add(_package *Package) error {
 	return result.Error
 }
 
-func (p *packageRepo) Get(id uint64) ([]Package, error) {
-	var packages []Package
-	result := p.Db.GetGormDb().Where("id = ?", id).First(&packages)
+func (p *packageRepo) Get(id uint64) (*Package, error) {
+	var _package Package
+
+	result := p.Db.GetGormDb().Where("id = ?", id).First(&_package)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return packages, nil
+
+	return &_package, nil
 }
 func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
 	var packages []Package

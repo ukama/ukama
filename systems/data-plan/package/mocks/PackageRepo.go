@@ -41,15 +41,15 @@ func (_m *PackageRepo) Delete(id uint64) error {
 }
 
 // Get provides a mock function with given fields: id
-func (_m *PackageRepo) Get(id uint64) ([]db.Package, error) {
+func (_m *PackageRepo) Get(id uint64) (*db.Package, error) {
 	ret := _m.Called(id)
 
-	var r0 []db.Package
-	if rf, ok := ret.Get(0).(func(uint64) []db.Package); ok {
+	var r0 *db.Package
+	if rf, ok := ret.Get(0).(func(uint64) *db.Package); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Package)
+			r0 = ret.Get(0).(*db.Package)
 		}
 	}
 

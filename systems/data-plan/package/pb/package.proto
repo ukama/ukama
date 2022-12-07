@@ -21,7 +21,7 @@ message GetByOrgPackageResponse{
 
 }
 message GetPackageResponse{
-    repeated Package packages =1;
+     Package package =1;
 }
 message DeletePackageRequest {
     uint64 id =1;

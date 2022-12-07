@@ -24,18 +24,18 @@ func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
 
 func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
 	logrus.Infof("GetPackage : %v ", req.GetId())
+	_package, err := p.packageRepo.Get(req.GetId())
 
-	_pack, err := p.packageRepo.Get(req.GetId())
 	if err != nil {
-		logrus.Error("error while getting a package" + err.Error())
+		logrus.Error("error getting a package" + err.Error())
+
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	_package := &pb.GetPackageResponse{
-		Packages: dbpackagesToPbPackages(_pack),
-	}
+	resp := &pb.GetPackageResponse{Package: dbPackageToPbPackages(_package)}
 
-	return _package, nil
+	return resp, nil
+	
 }
 func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
 	logrus.Infof("GetPackage by Org: %v ", req.GetOrgId())
