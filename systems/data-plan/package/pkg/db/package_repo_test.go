@@ -47,7 +47,6 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 func Test_Package_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		const packageId = 1
-		const orgId = 1
 
 		var db *extsql.DB
 
@@ -56,10 +55,10 @@ func Test_Package_Get(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"id", "name", "org_id", "active", "duration", "sms_volume",
 			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(packageId, "Monthly Super", orgId, "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
+			AddRow(packageId, "Monthly Super", 1, "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(orgId, packageId).
+			WithArgs(packageId).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -96,7 +95,7 @@ func Test_Package_GetByOrg(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"id", "name", "org_id", "active", "duration", "sms_volume",
 			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(orgId, "Monthly Super", "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
+			AddRow(1, "Monthly Super", orgId, "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs(orgId).
@@ -128,7 +127,6 @@ func Test_Package_GetByOrg(t *testing.T) {
 func Test_Package_Delete(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		packageId := 1
-		orgId := 1
 
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
@@ -136,7 +134,7 @@ func Test_Package_Delete(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "packages" SET`)).
-			WithArgs(sqlmock.AnyArg(), uint64(orgId), uint64(packageId)).
+			WithArgs(sqlmock.AnyArg(), uint64(packageId)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()

@@ -25,16 +25,16 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 	}
 	s := NewPackageServer(packageRepo)
 
-	packageRepo.On("Get", mockFilters.Id).Return([]db.Package{
-		{
-			Name:         "Daily-pack",
-			Org_id:       2323,
-			Active:       true,
-			Duration:     1,
-			Sms_volume:   20,
-			Data_volume:  12,
-			Voice_volume: 34,
-			Org_rates_id: 00},
+	packageRepo.On("Get", mockFilters.Id).Return(&db.Package{
+		Sim_type:     pb.SimType_inter_mno_all.String(),
+		Name:         "Daily-pack",
+		Org_id:       2323,
+		Active:       true,
+		Duration:     1,
+		Sms_volume:   20,
+		Data_volume:  12,
+		Voice_volume: 34,
+		Org_rates_id: 00,
 	}, nil)
 	pkg, err := s.Get(context.TODO(), mockFilters)
 	assert.NoError(t, err)
@@ -71,6 +71,51 @@ func TestPackageServer_GetPackages_Error2(t *testing.T) {
 }
 
 // End Get packages //
+
+// Get Package by org //
+
+func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	var mockFilters = &pb.GetByOrgPackageRequest{
+		OrgId: 1,
+	}
+	s := NewPackageServer(packageRepo)
+
+	packageRepo.On("GetByOrg", mockFilters.OrgId).Return([]db.Package{{
+		Sim_type:     pb.SimType_inter_mno_all.String(),
+		Name:         "Daily-pack",
+		Org_id:       2323,
+		Active:       true,
+		Duration:     1,
+		Sms_volume:   20,
+		Data_volume:  12,
+		Voice_volume: 34,
+		Org_rates_id: 00,
+	}}, nil)
+	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(12), pkg.Packages[0].DataVolume)
+	packageRepo.AssertExpectations(t)
+}
+
+// Error cases
+
+func TestPackageServer_GetPackageByOrg_Error(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	var mockFilters = &pb.GetByOrgPackageRequest{
+		OrgId: 1,
+	}
+	s := NewPackageServer(packageRepo)
+
+	packageRepo.On("GetByOrg", mockFilters.OrgId).
+		Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
+	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
+	assert.Error(t, err)
+	assert.Nil(t, pkg)
+	packageRepo.AssertExpectations(t)
+}
+
+// End Get package org //
 
 // Add packages //
 func TestPackageServer_AddPackage(t *testing.T) {
