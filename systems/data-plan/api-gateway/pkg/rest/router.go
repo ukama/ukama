@@ -113,7 +113,12 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 func (p *Router) getPackagesHandler(c *gin.Context) (*pb.GetByOrgPackageResponse, error) {
-	orgId, _ := strconv.ParseUint(c.Query("orgId"), 10, 64)
+	orgId, error := strconv.ParseUint(c.Query("orgId"), 10, 64)
+	if error != nil {
+		logrus.Error(error)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "orgId query param is not valid!"}
+	}
 	resp, err := p.clients.d.GetPackageByOrg(&pb.GetByOrgPackageRequest{
 		OrgId: orgId,
 	})
@@ -221,7 +226,9 @@ func (p *Router) deletePackageHandler(c *gin.Context) (*pb.DeletePackageResponse
 	})
 	if err != nil {
 		logrus.Error(err)
+		c.JSON(http.StatusNotFound, gin.H{"error": err})
 		return nil, err
+		
 	}
 	return resp, nil
 }
@@ -245,7 +252,7 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	})
 	if err != nil {
 		logrus.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		c.JSON(http.StatusNotFound, gin.H{"error": err})
 		return nil, err
 	}
 
