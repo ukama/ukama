@@ -1,12 +1,12 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-dataplan-baserate
+name: build-data-plan-base-rate
 on:  
   push:   
     paths:
         - "systems/data-plan/base-rate/**"
-        - ".github/workflows/systems-data-plan-baserate.yaml"
+        - ".github/workflows/systems-data-plan-base-rate.yaml"
  
   workflow_dispatch:
 
