@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -23,20 +22,20 @@ func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
 	return &PackageServer{packageRepo: packageRepo}
 }
 
-func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
+func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
 	logrus.Infof("GetPackage : %v ", req.GetId())
 
-	packages, err := p.packageRepo.Get(req.GetId())
+	_pack, err := p.packageRepo.Get(req.GetId())
 	if err != nil {
 		logrus.Error("error while getting a package" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "packages")
+		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	packageList := &pb.GetPackagesResponse{
-		Packages: dbpackagesToPbPackages(packages),
+	_package := &pb.GetPackageResponse{
+		Packages: dbpackagesToPbPackages(_pack),
 	}
 
-	return packageList, nil
+	return _package, nil
 }
 func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
 	logrus.Infof("GetPackage by Org: %v ", req.GetOrgId())
@@ -89,7 +88,7 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		logrus.Error("error while deleting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
-	return &pb.DeletePackageResponse{Id: strconv.FormatUint(req.Id, 10)}, nil
+	return &pb.DeletePackageResponse{}, nil
 }
 
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {

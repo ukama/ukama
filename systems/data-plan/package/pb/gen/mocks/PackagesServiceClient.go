@@ -77,7 +77,7 @@ func (_m *PackagesServiceClient) Delete(ctx context.Context, in *gen.DeletePacka
 }
 
 // Get provides a mock function with given fields: ctx, in, opts
-func (_m *PackagesServiceClient) Get(ctx context.Context, in *gen.GetPackagesRequest, opts ...grpc.CallOption) (*gen.GetPackagesResponse, error) {
+func (_m *PackagesServiceClient) Get(ctx context.Context, in *gen.GetPackageRequest, opts ...grpc.CallOption) (*gen.GetPackageResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -87,17 +87,17 @@ func (_m *PackagesServiceClient) Get(ctx context.Context, in *gen.GetPackagesReq
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetPackagesResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesRequest, ...grpc.CallOption) *gen.GetPackagesResponse); ok {
+	var r0 *gen.GetPackageResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackageRequest, ...grpc.CallOption) *gen.GetPackageResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetPackagesResponse)
+			r0 = ret.Get(0).(*gen.GetPackageResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPackagesRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPackageRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

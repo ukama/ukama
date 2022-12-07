@@ -61,20 +61,20 @@ func (_m *PackagesServiceServer) Delete(_a0 context.Context, _a1 *gen.DeletePack
 }
 
 // Get provides a mock function with given fields: _a0, _a1
-func (_m *PackagesServiceServer) Get(_a0 context.Context, _a1 *gen.GetPackagesRequest) (*gen.GetPackagesResponse, error) {
+func (_m *PackagesServiceServer) Get(_a0 context.Context, _a1 *gen.GetPackageRequest) (*gen.GetPackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetPackagesResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesRequest) *gen.GetPackagesResponse); ok {
+	var r0 *gen.GetPackageResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackageRequest) *gen.GetPackageResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetPackagesResponse)
+			r0 = ret.Get(0).(*gen.GetPackageResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPackagesRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPackageRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

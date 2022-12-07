@@ -20,7 +20,7 @@ import (
 // Success case
 func TestPackageServer_GetPackages_Success(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	var mockFilters = &pb.GetPackagesRequest{
+	var mockFilters = &pb.GetPackageRequest{
 		Id: 1,
 	}
 	s := NewPackageServer(packageRepo)
@@ -45,7 +45,7 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 // Error case invalid arguments
 func TestPackageServer_GetPackages_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	var mockFilters = &pb.GetPackagesRequest{
+	var mockFilters = &pb.GetPackageRequest{
 		Id: 0,
 	}
 	s := NewPackageServer(packageRepo)
@@ -59,7 +59,7 @@ func TestPackageServer_GetPackages_Error1(t *testing.T) {
 // Error case SQL error
 func TestPackageServer_GetPackages_Error2(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	var mockFilters = &pb.GetPackagesRequest{
+	var mockFilters = &pb.GetPackageRequest{
 		Id: 999,
 	}
 	s := NewPackageServer(packageRepo)

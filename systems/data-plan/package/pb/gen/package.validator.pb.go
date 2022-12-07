@@ -15,7 +15,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetPackagesRequest) Validate() error {
+func (this *GetPackageRequest) Validate() error {
 	return nil
 }
 func (this *GetByOrgPackageRequest) Validate() error {
@@ -31,7 +31,7 @@ func (this *GetByOrgPackageResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetPackagesResponse) Validate() error {
+func (this *GetPackageResponse) Validate() error {
 	for _, item := range this.Packages {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
