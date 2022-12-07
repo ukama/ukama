@@ -4,7 +4,8 @@ Package sub-system provides CRUD options to organization.It provides following r
 
 - Add package under organization
 - Update organization package
-- Get packages by `id` & `orgId`
+- Get package by `id`
+- Get packages which will return packages by org
 - Delete package under an organization
 
 ## File Structure
@@ -55,9 +56,9 @@ Package sub-system provides CRUD options to organization.It provides following r
 
 ## RPC Functions
 
-### Get Packages
+### Get Package
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/GetPackages.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/GetPackage.png" alt="ukama-get-package" width="500"/>
 
 ```proto
 service PackagesService {
@@ -69,14 +70,37 @@ Function takes below argument:
 
 ```js
 {
-    [required] orgId => UInt64
-    [optional] id => UInt64
+    [require] id => UInt64
 }
 ```
 
 **Demo**
 
-![getPackage](https://user-images.githubusercontent.com/15526332/202410788-44f74507-94e7-42f5-98a5-adab48e7d50c.gif)
+![getPackage](https://user-images.githubusercontent.com/83802574/206276942-b3f97628-8717-491f-ab4b-9d686c88ff4a.gif)
+
+---
+
+### Get Packages
+
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/package/GetPackages.png" alt="ukama-get-package" width="500"/>
+
+```proto
+service PackagesService {
+    rpc GetByOrg (GetByOrgPackageRequest) returns (GetByOrgPackageResponse){}
+}
+```
+
+Function takes below argument:
+
+```js
+{
+    [require] orgId => UInt64
+}
+```
+
+**Demo**
+
+![getPackages](https://user-images.githubusercontent.com/83802574/206277060-0701946c-7a2a-4fd4-8410-ff6fd5f46e11.gif)
 
 ---
 
