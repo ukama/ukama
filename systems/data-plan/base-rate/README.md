@@ -56,7 +56,7 @@ Base rate sub-system is responsible of:
 
 ### UploadBaseRates
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/UploadBaseRates.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baseRate/UploadBaseRates.png" alt="ukama-uploadRates" width="500"/>
 
 Upload base rates service provides functionality to populate rates from CSV file to DB.
 
@@ -84,7 +84,7 @@ Function takes these arguments:
 
 ### GetBaseRates
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/GetBaseRates.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/GetBaseRates.png" alt="ukama-getBaseRates" width="500"/>
 
 Get base rates service provides functionality to fetch base rates, and filter data on some required and optional arguments.
 
@@ -115,7 +115,7 @@ Function takes these arguments:
 
 ### GetBaseRate
 
-<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/GetBaseRate.png" alt="J" width="500"/>
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/GetBaseRate.png" alt="ukama-getBaseRate" width="500"/>
 
 Get base rate service provides functionality to fetch base rate by base rate id.
 

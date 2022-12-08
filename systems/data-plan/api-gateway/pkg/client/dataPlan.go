@@ -81,7 +81,7 @@ func (d *DataPlan) UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackag
 
 	return d.packageClient.Update(ctx, req)
 }
-func (d *DataPlan) GetPackage(req *pb.GetPackagesRequest) (*pb.GetPackagesResponse, error) {
+func (d *DataPlan) GetPackage(req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 
