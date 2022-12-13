@@ -1,0 +1,49 @@
+syntax = "proto3";
+package ukama.subscriber.v1;
+option go_package = "pb/gen";
+
+service SubscriberService {
+    rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
+    rpc Add (AddSubscriberRequest) returns (AddSubscriberResponse){}
+    rpc Delete (DeleteSubscriberRequest) returns (DeleteSubscriberResponse){}
+}
+
+message DeleteSubscriberRequest{
+    string subscriberid  = 1;
+}
+message DeleteSubscriberResponse{
+    string subscriberid  = 1;
+}
+message GetSubscriberRequest{
+    string subscriberid  = 1;
+}
+message GetSubscriberResponse{
+    subscriber subscriber  = 1;
+}
+message AddSubscriberRequest{
+    string subscriberId=1;
+    string name  = 2;
+    string email  = 3;
+    string phone  = 4;
+    string address  = 5;
+}
+message AddSubscriberResponse{
+    string subscriberid  =1;
+}
+message subscriber{
+    uint64 id =1;
+    string name  = 2;
+    string subscriberId=3;
+    string email  = 4;
+    string phone  = 5;
+    string address  = 6; 
+    string created_at=7;
+    string deleted_at=8;
+    string updated_at=9;
+}
+enum SimType {
+    inter_none=0;
+    inter_mno_data=1;
+    inter_mno_all=2;
+    inter_ukama_all=3;
+}
