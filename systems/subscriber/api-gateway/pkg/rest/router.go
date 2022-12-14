@@ -1,0 +1,133 @@
+package rest
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/loopfz/gadgeto/tonic"
+	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/wI2L/fizz"
+
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/subscriber/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg"
+	"github.com/wI2L/fizz/openapi"
+)
+
+const SUBS_URL_PARAMETER = "subscriber"
+
+type Router struct {
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
+}
+
+type RouterConfig struct {
+	metricsConfig config.Metrics
+	httpEndpoints *pkg.HttpEndpoints
+	debugMode     bool
+	serverConf    *rest.HttpConfig
+}
+
+type Clients struct {
+	sp simPool
+	sm simManager
+}
+
+type simPool interface {
+}
+
+type simManager interface {
+}
+
+func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
+	c := &Clients{}
+	c.sp = client.NewSimPool(endpoints.SimPool, endpoints.Timeout)
+	c.sm = client.NewSimManager(endpoints.SimManager, endpoints.Timeout)
+	return c
+}
+
+func NewRouter(clients *Clients, config *RouterConfig) *Router {
+
+	r := &Router{
+		clients: clients,
+		config:  config,
+	}
+
+	if !config.debugMode {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	r.init()
+	return r
+}
+
+func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
+	return &RouterConfig{
+		metricsConfig: svcConf.Metrics,
+		httpEndpoints: &svcConf.HttpServices,
+		serverConf:    &svcConf.Server,
+		debugMode:     svcConf.DebugMode,
+	}
+}
+
+func (rt *Router) Run() {
+	logrus.Info("Listening on port ", rt.config.serverConf.Port)
+	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (r *Router) init() {
+	const subs = "/subscriber/" + ":" + SUBS_URL_PARAMETER
+
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
+	v1 := r.f.Group("/v1", "subscriber system ", "subscriber system version v1")
+
+	pool := v1.Group("/simpool", "SIM Pool", "SIM store for Org")
+	pool.GET("/stats", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
+	pool.PUT("/sim", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
+	pool.PUT("/sim/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
+	pool.DELETE("/sim", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimPool, http.StatusOK))
+
+	subscriber := v1.Group(subs, "Subscriber", "Orgs Subscriber database")
+	subscriber.GET("", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
+
+	sim := subscriber.Group("/sim", "SIM", "Orgs SIM data base")
+	sim.GET("/:sim", formatDoc("Get Orgs credential for Node", ""), tonic.Handler(r.getSim, http.StatusOK))
+
+}
+
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
+}
+
+func (r *Router) getSimPoolStats(c *gin.Context) error {
+	return nil
+}
+
+func (r *Router) addSimsToSimPool(c *gin.Context) error {
+	return nil
+}
+
+func (r *Router) uploadSimsToSimPool(c *gin.Context) error {
+	return nil
+}
+
+func (r *Router) deleteSimPool(c *gin.Context) error {
+	return nil
+}
+
+func (r *Router) getSubscriber(c *gin.Context) error {
+	return nil
+}
+
+func (r *Router) getSim(c *gin.Context) error {
+	return nil
+}
