@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
+	"github.com/num30/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg/server"
 
-	"github.com/num30/config"
 	"gopkg.in/yaml.v3"
 
 	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg"

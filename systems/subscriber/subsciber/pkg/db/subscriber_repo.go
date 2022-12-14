@@ -30,7 +30,7 @@ func (r *subscriberRepo) Add(_package *Subscriber) error {
 func (s *subscriberRepo) Get(subscriberId string) (*Subscriber, error) {
 	var subscriber Subscriber
 
-	result := s.Db.GetGormDb().Where("subscriberId = ?", subscriberId).First(&subscriber)
+	result := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).First(&subscriber)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -42,7 +42,7 @@ func (s *subscriberRepo) Get(subscriberId string) (*Subscriber, error) {
 
 
 func (s *subscriberRepo) Delete(subscriberId string) error {
-	result := s.Db.GetGormDb().Where("subscriberId = ?", subscriberId).Delete(&Subscriber{})
+	result := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).Delete(&Subscriber{})
 	if result.Error != nil {
 		return result.Error
 	}

@@ -21,7 +21,6 @@ message GetSubscriberResponse{
     subscriber subscriber  = 1;
 }
 message AddSubscriberRequest{
-    string subscriberId=1;
     string name  = 2;
     string email  = 3;
     string phone  = 4;

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
@@ -19,11 +20,12 @@ func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SunscriberServer {
 }
 func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Add a subscriber : %v ")
+	subId := uuid.New()
 	subscriber := &db.Subscriber{
-		SubscriberId: req.GetSubscriberId(),
-		Name:        req.GetName(),
-		Email:    req.GetEmail(),
-		Phone:      req.GetPhone(),
+		SubscriberId: subId.String(),
+		Name:         req.GetName(),
+		Email:        req.GetEmail(),
+		Phone:        req.GetPhone(),
 		Address:      req.GetAddress(),
 	}
 	err := s.subscriberRepo.Add(subscriber)
@@ -31,9 +33,8 @@ func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest
 		logrus.Error("error while adding subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	return &pb.AddSubscriberResponse{Subscriberid:req.SubscriberId}, nil
+	return &pb.AddSubscriberResponse{Subscriberid: subId.String()}, nil
 
-	
 }
 func (s *SunscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	logrus.Infof("Delete Subscriber : %v ", req.GetSubscriberid())
@@ -43,7 +44,7 @@ func (s *SunscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberR
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 	return &pb.DeleteSubscriberResponse{}, nil
-	
+
 }
 
 func (s *SunscriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
@@ -56,10 +57,10 @@ func (s *SunscriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	resp := &pb.GetSubscriberResponse{Subscriber:dbSubscriberToPbSubscribers( subscriber)}
+	resp := &pb.GetSubscriberResponse{Subscriber: dbSubscriberToPbSubscribers(subscriber)}
 
 	return resp, nil
-	
+
 }
 func dbsubscriberToPbSubscribers(packages []db.Subscriber) []*pb.Subscriber {
 	res := []*pb.Subscriber{}
@@ -71,13 +72,14 @@ func dbsubscriberToPbSubscribers(packages []db.Subscriber) []*pb.Subscriber {
 
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 	return &pb.Subscriber{
-		Id:          uint64(s.ID),
-		Name:        s.Name,
-		Email:    s.Email,
-		Phone:      s.Phone,
+		Id:           uint64(s.ID),
+		Name:         s.Name,
+		Email:        s.Email,
+		SubscriberId: s.SubscriberId,
+		Phone:        s.Phone,
 		Address:      s.Address,
-		CreatedAt:   s.CreatedAt.String(),
-		UpdatedAt:   s.UpdatedAt.String(),
-		DeletedAt:   s.DeletedAt.Time.String(),
+		CreatedAt:    s.CreatedAt.String(),
+		UpdatedAt:    s.UpdatedAt.String(),
+		DeletedAt:    s.DeletedAt.Time.String(),
 	}
 }
