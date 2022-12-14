@@ -23,7 +23,6 @@ type Sim struct {
 	SimId string `gorm:"type:string;uniqueIndex:sim_id, where:deleted_at is null;size:23"`
 	network string
 	SubscriberId string
-	Subscriber *Subscriber
 	OrgId string
 	SimManager string
 	Packages []*Package `gorm:"many2many:attached_packages"`
@@ -39,7 +38,6 @@ type Sim struct {
 	IsData bool
 	IsVoice bool
 	IsRoaming bool
-	IsLocal bool
 	IsPrepaid bool
 	IsPostpaid bool
 	SimType string
@@ -47,6 +45,5 @@ type Sim struct {
 type Package struct {
 	gorm.Model
 	PackageId string `gorm:"type:string;uniqueIndex:package_id, where:deleted_at is null;size:23"`
-	PackageStartDate *time.Time
-	PackageEndDate *time.Time
+	PackageStartActivationDate *time.Time
 }
