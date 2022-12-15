@@ -1,82 +1,114 @@
 package rest
 
-type AddOrgRequest struct {
-	OrgName     string `path:"org" validate:"required"`
-	Ip          string `json:"ip" validate:"required"`
-	Certificate string `json:"certificate" validate:"required"`
+import (
+	"time"
+)
+
+type SimPoolStats struct {
+	Count     int32 `json:"count"`
+	Available int32 `json:"available"`
+	Consumed  int32 `json:"consumed"`
+	Failed    int32 `json:"failed"`
 }
 
-type UpdateOrgRequest struct {
-	OrgName     string `path:"org" validate:"required"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
+type SIM struct {
 }
 
-type GetOrgRequest struct {
-	OrgName string `path:"org" validate:"required"`
+type SimType struct {
 }
 
-type GetOrgResponse struct {
-	OrgName     string `json:"org"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
+type SimPoolStatByTypeReq struct {
+	stype SimType `json:"simType`
 }
 
-type AddNodeRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	NodeId  string `path:"node" validate:"required"`
+type SimPoolRemoveSimReq struct {
+	Sims []UUID `json:"sims"`
 }
 
-type DeleteNodeRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	NodeId  string `path:"node" validate:"required"`
+type SimPoolUplaodSimReq struct {
 }
 
-type GetNodeRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	NodeId  string `path:"node" validate:"required"`
+type SubscriberAddReq struct {
+	Name                  string    `json:"name" validate:"required"`
+	EMail                 string    `json:"email" validate:"required"`
+	PhoneNumber           string    `json:"phone" validate:"required"`
+	DOB                   time.Time `json:"dob" validate:"required"`
+	ProofOfIdentification string    `json:"proofOfId" validate:"required"`
+	IdSerial              string    `json:"idSerial" validate:"required"`
+	Address               string    `json:"address" validate:"required"`
 }
 
-type AddSystemRequest struct {
-	OrgName     string `path:"org" validate:"required"`
-	SysName     string `path:"system" validate:"required"`
-	Ip          string `json:"ip" validate:"required"`
-	Certificate string `json:"certificate" validate:"required"`
-	Port        int32  `json:"port" validate:"required"`
+type SubscriberAddResp struct {
+	SubscriberId UUID `path:"subscriberId" validate:"required"`
 }
 
-type UpdateSystemRequest struct {
-	OrgName     string `path:"org" validate:"required"`
-	SysName     string `path:"system" validate:"required"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
-	Port        int32  `json:"port"`
+type SubscriberGetReq struct {
+	SubscriberId UUID `json:"subscriberId" validate:"required"`
 }
 
-type AddSystemResponse struct {
-	OrgName     string `path:"org"`
-	SysName     string `path:"system"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
-	Port        int32  `json:"port"`
-	Health      int32  `json:"health"`
+type Subscriber struct {
+	SubscriberId          UUID      `json:"subscriberId" validate:"required"`
+	Name                  string    `json:"name" validate:"required"`
+	EMail                 string    `json:"email" validate:"email,required"`
+	PhoneNumber           string    `json:"phone" validate:"required"`
+	DOB                   time.Time `json:"dob" validate:"required"`
+	ProofOfIdentification string    `json:"proofOfId" validate:"required"`
+	IdSerial              string    `json:"idSerial" validate:"required"`
+	Address               string    `json:"address" validate:"required"`
+	SimList               []SIM     `json:"sims" validate:"required"`
 }
 
-type GetSystemRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	SysName string `path:"system" validate:"required"`
+type SubscriberGetResp struct {
+	Subscriber
 }
 
-type GetSystemResponse struct {
-	OrgName     string `json:"org"`
-	SystemName  string `json:"system"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
-	Port        string `json:"port"`
-	Health      int32  `json:"health"`
+type SubscriberDeleteReq struct {
+	SubscriberId UUID `path:"subscriberId" validate:"required"`
 }
 
-type DeleteSystemRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	SysName string `path:"system" validate:"required"`
+type SubscriberListReq struct {
+	NetworkId UUID `path:"networkId" validate:"required"`
+}
+
+type SubscriberListResp struct {
+	Subscribers []Subscriber `json:"subscribers"`
+}
+type SubscriberSimAllocateReq struct {
+	SubscriberId UUID    `path:"subscriberId" validate:"required"`
+	NetworkId    UUID    `json:"networkId" validate:"required"`
+	SType        SimType `json:"type" validate:"required"`
+	Token        string  `json:"token" validate:"required"`
+	PlanId       UUID    `json:"planId" validate:"required"`
+}
+
+type SubscriberSimAllocateResp struct {
+	SIM
+}
+
+type SubscriberSimUpdateStateReq struct {
+	SubscriberId UUID   `path:"subscriberId" validate:"required"`
+	SimId        UUID   `path:"simId" validate:"required"`
+	State        string `json:"state" validate:"eq=inactive|eq=INACTIVE|eq=active|eq=ACTIVE,required" `
+}
+
+type SubscriberSimDeleteReq struct {
+	SubscriberId UUID `path:"subscriberId" validate:"required"`
+	SimId        UUID `path:"simId" validate:"required"`
+}
+
+type SubscriberSimReadReq struct {
+	SIM
+}
+
+type SubscriberSimAddPackageReq struct {
+	SubscriberId UUID      `path:"subscriberId" validate:"required"`
+	SimId        UUID      `path:"simId" validate:"required"`
+	PackageID    UUID      `json: "packageId" validate:"required"`
+	StartDate    time.Time `json: "startDate" validate:"required"`
+}
+
+type SubscriberSimRemovePackageReq struct {
+	SubscriberId UUID `path:"subscriberId" validate:"required"`
+	SimId        UUID `path:"simId" validate:"required"`
+	PackageID    UUID `json: "packageId" validate:"required"`
 }
