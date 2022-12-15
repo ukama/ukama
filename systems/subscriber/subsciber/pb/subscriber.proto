@@ -22,9 +22,14 @@ message GetSubscriberResponse{
 }
 message AddSubscriberRequest{
     string name  = 2;
-    string email  = 3;
-    string phone  = 4;
-    string address  = 5;
+    string subscriberId=3;
+    string email  = 4;
+    string phoneNumber  = 5;
+    string address  = 6; 
+    string passportNumber =7;
+    string created_at=8;
+    string deleted_at=9;
+    string updated_at=10;
 }
 message AddSubscriberResponse{
     string subscriberid  =1;
@@ -34,15 +39,37 @@ message subscriber{
     string name  = 2;
     string subscriberId=3;
     string email  = 4;
-    string phone  = 5;
+    string phoneNumber  = 5;
     string address  = 6; 
-    string created_at=7;
-    string deleted_at=8;
-    string updated_at=9;
+    string passportNumber =7;
+    string created_at=8;
+    string deleted_at=9;
+    string updated_at=10;
+    repeated sims sims = 11;
 }
-enum SimType {
-    inter_none=0;
-    inter_mno_data=1;
-    inter_mno_all=2;
-    inter_ukama_all=3;
+message sims {
+    string simId = 1;
+    string subscriberId = 2;
+    string simNumber = 3;
+    string simType = 4;
+    string created_at=5;
+    string deleted_at=6;
+    string updated_at=7;
+    string simProvider=8;
+    string networkId = 9;
+    string orgId = 10;
+    string activationsCount = 11;
+    string deactivationsCount = 12;
+    string firstActivatedOn = 13;
+    string lastActivatedOn = 14;
+    string iccid = 15;
+    string msisdn = 16;
+    string status = 17;    
+    repeated package package = 18;
+
 }
+ message package {
+    string packageId = 1;
+    string packageStartDate = 2;
+    string packageEndDate = 3;
+ }

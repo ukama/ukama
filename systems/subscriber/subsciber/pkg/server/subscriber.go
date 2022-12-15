@@ -23,10 +23,11 @@ func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest
 	subId := uuid.New()
 	subscriber := &db.Subscriber{
 		SubscriberId: subId.String(),
-		Name:         req.GetName(),
+		FullName:         req.GetName(),
 		Email:        req.GetEmail(),
-		Phone:        req.GetPhone(),
+		PhoneNumber:        req.GetPhoneNumber(),
 		Address:      req.GetAddress(),
+
 	}
 	err := s.subscriberRepo.Add(subscriber)
 	if err != nil {
@@ -73,10 +74,10 @@ func dbsubscriberToPbSubscribers(packages []db.Subscriber) []*pb.Subscriber {
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 	return &pb.Subscriber{
 		Id:           uint64(s.ID),
-		Name:         s.Name,
+		Name:         s.FullName,
 		Email:        s.Email,
 		SubscriberId: s.SubscriberId,
-		Phone:        s.Phone,
+		PhoneNumber:        s.PhoneNumber,
 		Address:      s.Address,
 		CreatedAt:    s.CreatedAt.String(),
 		UpdatedAt:    s.UpdatedAt.String(),

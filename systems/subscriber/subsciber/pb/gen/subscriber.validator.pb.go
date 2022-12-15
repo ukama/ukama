@@ -39,5 +39,25 @@ func (this *AddSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *Subscriber) Validate() error {
+	for _, item := range this.Sims {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Sims", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *Sims) Validate() error {
+	for _, item := range this.Package {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Package", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *Package) Validate() error {
 	return nil
 }
