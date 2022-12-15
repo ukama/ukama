@@ -2,8 +2,11 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"time"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
@@ -20,21 +23,28 @@ func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SunscriberServer {
 }
 func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Add a subscriber : %v ")
-	subId := uuid.New()
+	timestamp := req.GetDateOfBith()
+	dateOfBirth := timestamp.AsTime()
+	uuid, err := uuid.NewV4()
+    if err != nil {
+        fmt.Printf("Failed to generate UUID: %s", err)
+        return nil,err
+    }
 	subscriber := &db.Subscriber{
-		SubscriberId: subId.String(),
-		FullName:         req.GetName(),
+		SubscriberID: uuid,
+		FullName:     req.GetFullName(),
 		Email:        req.GetEmail(),
-		PhoneNumber:        req.GetPhoneNumber(),
+		PhoneNumber:  req.GetPhoneNumber(),
 		Address:      req.GetAddress(),
-
+		PassportNumber:req.GetPassportNumber(),
+		DateOfBirth:  &dateOfBirth,
 	}
-	err := s.subscriberRepo.Add(subscriber)
+	err = s.subscriberRepo.Add(subscriber)
 	if err != nil {
 		logrus.Error("error while adding subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	return &pb.AddSubscriberResponse{Subscriberid: subId.String()}, nil
+	return &pb.AddSubscriberResponse{Subscriberid: uuid.String()}, nil
 
 }
 func (s *SunscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
@@ -71,32 +81,40 @@ func dbsubscriberToPbSubscribers(packages []db.Subscriber) []*pb.Subscriber {
 	return res
 }
 
-
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
-	pbSims := make([]*pb.Sim, len(s.Sims))
+	time, err := time.Parse("2006-01-02", s.DateOfBirth.String())
+if err != nil {
+	logrus.Error("error while parsing date of birth" + err.Error())
+}
+timestamp, err := ptypes.TimestampProto(time)
+if err != nil {
+	logrus.Error("error while parsing date of birth" + err.Error())
+}
+	pbSims := make([]*pb.Sims, len(s.Sims))
 	for i, sim := range s.Sims {
-		pbSims[i] = &pb.Sim{
-			Id:         uint64(sim.ID),
-			Iccid:      sim.Iccid,
-			Imsi:       sim.Imsi,
-			Msisdn:     sim.Msisdn,
-			CreatedAt:  sim.CreatedAt.String(),
-			UpdatedAt:  sim.UpdatedAt.String(),
-			DeletedAt:  sim.DeletedAt.Time.String(),
+		pbSims[i] = &pb.Sims{
+			SimId:     sim.SimID.String(),
+			Iccid:     sim.Iccid,
+			Imsi:      sim.Imsi,
+			Msisdn:    sim.Msisdn,
+			CreatedAt: sim.CreatedAt.String(),
+			UpdatedAt: sim.UpdatedAt.String(),
+			DeletedAt: sim.DeletedAt.Time.String(),
 		}
 	}
 
 	return &pb.Subscriber{
-		Id:           uint64(s.ID),
-		Name:         s.FullName,
-		Email:        s.Email,
-		SubscriberId: s.SubscriberId,
+		Id:             uint64(s.ID),
+		FullName:           s.FullName,
+		Email:          s.Email,
+		SubscriberId:   s.SubscriberID.String(),
 		PassportNumber: s.PassportNumber,
-		PhoneNumber:   s.PhoneNumber,
-		Sims:          pbSims,
-		Address:       s.Address,
-		CreatedAt:     s.CreatedAt.String(),
-		UpdatedAt:     s.UpdatedAt.String(),
-		DeletedAt:     s.DeletedAt.Time.String(),
+		PhoneNumber:    s.PhoneNumber,
+		Sims:           pbSims,
+		Address:        s.Address,
+		CreatedAt:      s.CreatedAt.String(),
+		UpdatedAt:      s.UpdatedAt.String(),
+		DeletedAt:      s.DeletedAt.Time.String(),
+		DateOfBith:	 timestamp,
 	}
 }

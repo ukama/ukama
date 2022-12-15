@@ -1,6 +1,7 @@
 syntax = "proto3";
 package ukama.subscriber.v1;
 option go_package = "pb/gen";
+import "google/protobuf/timestamp.proto";
 
 service SubscriberService {
     rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
@@ -21,22 +22,20 @@ message GetSubscriberResponse{
     subscriber subscriber  = 1;
 }
 message AddSubscriberRequest{
-    string name  = 2;
-    string subscriberId=3;
-    string email  = 4;
-    string phoneNumber  = 5;
-    string address  = 6; 
-    string passportNumber =7;
-    string created_at=8;
-    string deleted_at=9;
-    string updated_at=10;
+    string fullName  = 1;
+    string email  = 3;
+    string phoneNumber  = 4;
+    string address  = 5; 
+    string passportNumber =6;
+    google.protobuf.Timestamp date_of_bith = 11;
+    
 }
 message AddSubscriberResponse{
     string subscriberid  =1;
 }
 message subscriber{
     uint64 id =1;
-    string name  = 2;
+    string fullName  = 2;
     string subscriberId=3;
     string email  = 4;
     string phoneNumber  = 5;
@@ -46,6 +45,8 @@ message subscriber{
     string deleted_at=9;
     string updated_at=10;
     repeated sims sims = 11;
+    google.protobuf.Timestamp date_of_bith = 12;
+
 }
 message sims {
     string simId = 1;
@@ -67,6 +68,8 @@ message sims {
     string msisdn = 17;
     string status = 18;    
     repeated package package = 19;
+    string State =20;
+    string ActivePackageID =21;
 
 }
  message package {

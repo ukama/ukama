@@ -7,6 +7,7 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -33,6 +34,11 @@ func (this *GetSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *AddSubscriberRequest) Validate() error {
+	if this.DateOfBith != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBith); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBith", err)
+		}
+	}
 	return nil
 }
 func (this *AddSubscriberResponse) Validate() error {
@@ -44,6 +50,11 @@ func (this *Subscriber) Validate() error {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Sims", err)
 			}
+		}
+	}
+	if this.DateOfBith != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBith); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBith", err)
 		}
 	}
 	return nil
