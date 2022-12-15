@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.sim_manager.v1;
+
+service SimManagerService {
+}
