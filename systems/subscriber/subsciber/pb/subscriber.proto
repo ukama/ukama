@@ -56,16 +56,17 @@ message sims {
     string deleted_at=6;
     string updated_at=7;
     string simProvider=8;
-    string networkId = 9;
-    string orgId = 10;
-    string activationsCount = 11;
-    string deactivationsCount = 12;
-    string firstActivatedOn = 13;
-    string lastActivatedOn = 14;
-    string iccid = 15;
-    string msisdn = 16;
-    string status = 17;    
-    repeated package package = 18;
+    string Imsi=9;
+    string networkId = 10;
+    string orgId = 11;
+    string activationsCount = 12;
+    string deactivationsCount = 13;
+    string firstActivatedOn = 14;
+    string lastActivatedOn = 15;
+    string iccid = 16;
+    string msisdn = 17;
+    string status = 18;    
+    repeated package package = 19;
 
 }
  message package {

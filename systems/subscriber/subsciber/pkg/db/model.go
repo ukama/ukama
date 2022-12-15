@@ -13,7 +13,7 @@ type Subscriber struct {
 	Email   string
 	PhoneNumber   string
 	DateOfBirth *time.Time
-	ProofOfIdentication string
+	PassportNumber string
 	Address string
 	Sims []*Sim `gorm:"many2many:attached_sims"`
 }
@@ -24,6 +24,7 @@ type Sim struct {
 	NetworkId string
 	SubscriberId string
 	OrgId string
+	Imsi string
 	SimProvider string
 	Packages []*Package `gorm:"many2many:attached_packages"`
 	ActivationsCount int64
@@ -31,8 +32,8 @@ type Sim struct {
 	LastActivationDate *time.Time
 	LastDeactivationDate *time.Time
 	Iccid string
-	msisdn string
-	status bool
+	Msisdn string
+	Status bool
 	IsPrepaid bool
 	SimType string
 }

@@ -71,16 +71,32 @@ func dbsubscriberToPbSubscribers(packages []db.Subscriber) []*pb.Subscriber {
 	return res
 }
 
+
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
+	pbSims := make([]*pb.Sim, len(s.Sims))
+	for i, sim := range s.Sims {
+		pbSims[i] = &pb.Sim{
+			Id:         uint64(sim.ID),
+			Iccid:      sim.Iccid,
+			Imsi:       sim.Imsi,
+			Msisdn:     sim.Msisdn,
+			CreatedAt:  sim.CreatedAt.String(),
+			UpdatedAt:  sim.UpdatedAt.String(),
+			DeletedAt:  sim.DeletedAt.Time.String(),
+		}
+	}
+
 	return &pb.Subscriber{
 		Id:           uint64(s.ID),
 		Name:         s.FullName,
 		Email:        s.Email,
 		SubscriberId: s.SubscriberId,
-		PhoneNumber:        s.PhoneNumber,
-		Address:      s.Address,
-		CreatedAt:    s.CreatedAt.String(),
-		UpdatedAt:    s.UpdatedAt.String(),
-		DeletedAt:    s.DeletedAt.Time.String(),
+		PassportNumber: s.PassportNumber,
+		PhoneNumber:   s.PhoneNumber,
+		Sims:          pbSims,
+		Address:       s.Address,
+		CreatedAt:     s.CreatedAt.String(),
+		UpdatedAt:     s.UpdatedAt.String(),
+		DeletedAt:     s.DeletedAt.Time.String(),
 	}
 }
