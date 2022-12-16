@@ -36,8 +36,9 @@ func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest
 		Email:        req.GetEmail(),
 		PhoneNumber:  req.GetPhoneNumber(),
 		Address:      req.GetAddress(),
-		PassportNumber:req.GetPassportNumber(),
-		DateOfBirth:  &dateOfBirth,
+		ProofOfIdentification:req.GetProofOfIdentification(),
+		DOB:  &dateOfBirth,
+		IdSerial:req.GetIdSerial(),
 	}
 	err = s.subscriberRepo.Add(subscriber)
 	if err != nil {
@@ -82,7 +83,7 @@ func dbsubscriberToPbSubscribers(packages []db.Subscriber) []*pb.Subscriber {
 }
 
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
-	time, err := time.Parse("2006-01-02", s.DateOfBirth.String())
+	time, err := time.Parse("2006-01-02", s.DOB.String())
 if err != nil {
 	logrus.Error("error while parsing date of birth" + err.Error())
 }
@@ -94,9 +95,9 @@ if err != nil {
 	for i, sim := range s.Sims {
 		pbSims[i] = &pb.Sims{
 			SimId:     sim.SimID.String(),
-			Iccid:     sim.Iccid,
-			Imsi:      sim.Imsi,
-			Msisdn:    sim.Msisdn,
+			Iccid:     sim.ICCID,
+			Imsi:      sim.IMSI,
+			Msisdn:    sim.MSISDN,
 			CreatedAt: sim.CreatedAt.String(),
 			UpdatedAt: sim.UpdatedAt.String(),
 			DeletedAt: sim.DeletedAt.Time.String(),
@@ -108,8 +109,9 @@ if err != nil {
 		FullName:           s.FullName,
 		Email:          s.Email,
 		SubscriberId:   s.SubscriberID.String(),
-		PassportNumber: s.PassportNumber,
+		ProofOfIdentification: s.ProofOfIdentification,
 		PhoneNumber:    s.PhoneNumber,
+		IdSerial:s.IdSerial,
 		Sims:           pbSims,
 		Address:        s.Address,
 		CreatedAt:      s.CreatedAt.String(),

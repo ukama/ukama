@@ -9,14 +9,15 @@ import (
 
 type Subscriber struct {
 	gorm.Model
-	SubscriberID   uuid.UUID `gorm:"type:uuid"`
-	FullName       string
-	Email          string
-	PhoneNumber    string
-	DateOfBirth    *time.Time
-	PassportNumber string
-	Address        string
-	Sims           []*Sim `gorm:"one2many:attached_sims"`
+	SubscriberID          uuid.UUID `gorm:"type:uuid"`
+	FullName              string
+	Email                 string
+	PhoneNumber           string
+	DOB                   *time.Time
+	ProofOfIdentification string
+	IdSerial              string
+	Address               string
+	Sims                  []*Sim `gorm:"one2many:attached_sims"`
 }
 
 type Sim struct {
@@ -26,15 +27,15 @@ type Sim struct {
 	SubscriberID         uuid.UUID `gorm:"type:uuid"`
 	OrgID                uuid.UUID `gorm:"type:uuid"`
 	ActivePackageID      uuid.UUID `gorm:"type:uuid"`
-	Imsi                 string
+	IMSI                 string
 	SimManager           string
 	Packages             []*Package `gorm:"many2many:attached_packages"`
 	ActivationsCount     int64
 	DeactivationsCount   int64
 	LastActivationDate   *time.Time
 	LastDeactivationDate *time.Time
-	Iccid                string
-	Msisdn               string
+	ICCID                string
+	MSISDN               string
 	State                SimState `gorm:"type:varchar(255)"`
 	IsPrepaid            bool
 	SimType              string

@@ -26,8 +26,9 @@ message AddSubscriberRequest{
     string email  = 3;
     string phoneNumber  = 4;
     string address  = 5; 
-    string passportNumber =6;
-    google.protobuf.Timestamp date_of_bith = 11;
+    string IdSerial =6;
+    string proofOfIdentification =7;
+    google.protobuf.Timestamp date_of_bith = 8;
     
 }
 message AddSubscriberResponse{
@@ -40,12 +41,14 @@ message subscriber{
     string email  = 4;
     string phoneNumber  = 5;
     string address  = 6; 
-    string passportNumber =7;
+    string proofOfIdentification =7;
     string created_at=8;
     string deleted_at=9;
     string updated_at=10;
     repeated sims sims = 11;
     google.protobuf.Timestamp date_of_bith = 12;
+    string IdSerial =13;
+
 
 }
 message sims {
