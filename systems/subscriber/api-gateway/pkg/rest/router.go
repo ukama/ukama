@@ -119,62 +119,62 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) getAllSubscribers(c *gin.Context) error {
-	return nil
+func (r *Router) getAllSubscribers(c *gin.Context, req *SubscriberListReq) (*SubscriberListResp, error) {
+	return nil, nil
 }
 
-func (r *Router) getAllSims(c *gin.Context) error {
-	return nil
+func (r *Router) getAllSims(c *gin.Context, req *SimListReq) (*SimListResp, error) {
+	return nil, nil
 }
 
-func (r *Router) getSimPoolStats(c *gin.Context) error {
-	return nil
+func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolStatByTypeReq) (*SimPoolStats, error) {
+	return nil, nil
 }
 
 func (r *Router) addSimsToSimPool(c *gin.Context) error {
 	return nil
 }
 
-func (r *Router) uploadSimsToSimPool(c *gin.Context) error {
+func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*SimPoolUploadSimResp, error) {
+	return nil, nil
+}
+
+func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) (*SimPoolRemoveSimResp, error) {
+	return nil, nil
+}
+
+func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*SubscriberGetResp, error) {
+	return nil, nil
+}
+
+func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*SubscriberAddResp, error) {
+	return nil, nil
+}
+
+func (r *Router) deleteSubscriber(c *gin.Context, req *SubscriberDeleteReq) error {
 	return nil
 }
 
-func (r *Router) deleteSimFromSimPool(c *gin.Context) error {
+func (r *Router) getSim(c *gin.Context, req *SubscriberSimReadReq) (*SubscriberSimReadResp, *error) {
+	return nil, nil
+}
+
+func (r *Router) allocateSim(c *gin.Context, req *SubscriberSimAllocateReq) (*SubscriberSimAllocateResp, error) {
+	return nil, nil
+}
+
+func (r *Router) postPackageToSim(c *gin.Context, req *SubscriberSimAddPackageReq) error {
 	return nil
 }
 
-func (r *Router) getSubscriber(c *gin.Context) error {
+func (r *Router) deletePackageForSim(c *gin.Context, req *SubscriberSimRemovePackageReq) error {
 	return nil
 }
 
-func (r *Router) putSubscriber(c *gin.Context) error {
+func (r *Router) deleteSim(c *gin.Context, req *SubscriberSimDeleteReq) error {
 	return nil
 }
 
-func (r *Router) deleteSubscriber(c *gin.Context) error {
-	return nil
-}
-
-func (r *Router) getSim(c *gin.Context) error {
-	return nil
-}
-
-func (r *Router) allocateSim(c *gin.Context) error {
-	return nil
-}
-
-func (r *Router) postPackageToSim(c *gin.Context) error {
-	return nil
-}
-
-func (r *Router) deletePackageForSim(c *gin.Context) error {
-	return nil
-}
-
-func (r *Router) deleteSim(c *gin.Context) error {
-	return nil
-}
-
-func (r *Router) patchSim(c *gin.Context) error {
+func (r *Router) patchSim(c *gin.Context, req *SubscriberSimUpdateStateReq) error {
 	return nil
 }

@@ -17,6 +17,21 @@ type SIM struct {
 type SimType struct {
 }
 
+type Package struct {
+}
+
+type Subscriber struct {
+	SubscriberId          UUID      `json:"subscriberId" validate:"required"`
+	Name                  string    `json:"name" validate:"required"`
+	EMail                 string    `json:"email" validate:"email,required"`
+	PhoneNumber           string    `json:"phone" validate:"required"`
+	DOB                   time.Time `json:"dob" validate:"required"`
+	ProofOfIdentification string    `json:"proofOfId" validate:"required"`
+	IdSerial              string    `json:"idSerial" validate:"required"`
+	Address               string    `json:"address" validate:"required"`
+	SimList               []SIM     `json:"sims" validate:"required"`
+}
+
 type SimPoolStatByTypeReq struct {
 	stype SimType `json:"simType`
 }
@@ -25,7 +40,14 @@ type SimPoolRemoveSimReq struct {
 	Sims []UUID `json:"sims"`
 }
 
-type SimPoolUplaodSimReq struct {
+type SimPoolRemoveSimResp struct {
+	Sims []UUID `json:"sims"`
+}
+type SimPoolUploadSimReq struct {
+}
+
+type SimPoolUploadSimResp struct {
+	Sims []UUID `json:"sims"`
 }
 
 type SubscriberAddReq struct {
@@ -44,18 +66,6 @@ type SubscriberAddResp struct {
 
 type SubscriberGetReq struct {
 	SubscriberId UUID `json:"subscriberId" validate:"required"`
-}
-
-type Subscriber struct {
-	SubscriberId          UUID      `json:"subscriberId" validate:"required"`
-	Name                  string    `json:"name" validate:"required"`
-	EMail                 string    `json:"email" validate:"email,required"`
-	PhoneNumber           string    `json:"phone" validate:"required"`
-	DOB                   time.Time `json:"dob" validate:"required"`
-	ProofOfIdentification string    `json:"proofOfId" validate:"required"`
-	IdSerial              string    `json:"idSerial" validate:"required"`
-	Address               string    `json:"address" validate:"required"`
-	SimList               []SIM     `json:"sims" validate:"required"`
 }
 
 type SubscriberGetResp struct {
@@ -97,9 +107,13 @@ type SubscriberSimDeleteReq struct {
 }
 
 type SubscriberSimReadReq struct {
-	SIM
+	SubscriberId UUID `path:"subscriberId" validate:"required"`
+	SimId        UUID `path:"simId" validate:"required"`
 }
 
+type SubscriberSimReadResp struct {
+	SIM
+}
 type SubscriberSimAddPackageReq struct {
 	SubscriberId UUID      `path:"subscriberId" validate:"required"`
 	SimId        UUID      `path:"simId" validate:"required"`
@@ -111,4 +125,13 @@ type SubscriberSimRemovePackageReq struct {
 	SubscriberId UUID `path:"subscriberId" validate:"required"`
 	SimId        UUID `path:"simId" validate:"required"`
 	PackageID    UUID `json: "packageId" validate:"required"`
+}
+
+
+type SimListReq struct {
+	NetworkId UUID `path:"networkId" validate:"required"`
+}
+
+type SimListResp struct {
+	Subscribers []Subscriber `json:"subscribers"`
 }
