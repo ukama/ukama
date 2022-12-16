@@ -2,6 +2,8 @@ package rest
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type SimPoolStats struct {
@@ -12,16 +14,31 @@ type SimPoolStats struct {
 }
 
 type SIM struct {
-}
-
-type SimType struct {
+	SimId             uuid.UUID `json:"simId" validate:"required"`
+	SubscriberId      uuid.UUID `json:"packageId" validate:"required"`
+	Iccid             string    `json:"iccid" validate:"required"`
+	SimType           string    `json:"simType" validate:"required"`
+	SimManager        string    `json:"simManager" validate:"required"`
+	OrgId             uuid.UUID `json:"orgId" validate:"required"`
+	NetworkId         uuid.UUID `json:"networkId" validate:"required"`
+	ActivationCount   int32     `json:"activationCount" validate:"required"`
+	DeactivationCount int32     `json:"DeactivationCount" validate:"required"`
+	FirstActivatedOn  time.Time `json:"firstActivedOn" validate:"required"`
+	LastActivationOn  time.Time `json:"lastActivationOn" validate:"required"`
+	Msidn             string    `json:"msidn" validate:"required"`
+	State             string    `json:"state" validate:"required"`
+	Package           []Package `json:"packages" validate:"required"`
+	ActivePackageId   uuid.UUID `json:"activePackageId" validate:"required"`
 }
 
 type Package struct {
+	PackageId uuid.UUID `json:"packageId" validate:"required"`
+	StartDate time.Time `json:"startDate" validate:"required"`
+	EndDate   time.Time `json:"endDate" validate:"required"`
 }
 
 type Subscriber struct {
-	SubscriberId          UUID      `json:"subscriberId" validate:"required"`
+	SubscriberId          uuid.UUID `json:"subscriberId" validate:"required"`
 	Name                  string    `json:"name" validate:"required"`
 	EMail                 string    `json:"email" validate:"email,required"`
 	PhoneNumber           string    `json:"phone" validate:"required"`
@@ -33,21 +50,21 @@ type Subscriber struct {
 }
 
 type SimPoolStatByTypeReq struct {
-	stype SimType `json:"simType`
+	SimType string `json:"simType"`
 }
 
 type SimPoolRemoveSimReq struct {
-	Sims []UUID `json:"sims"`
+	Sims []uuid.UUID `json:"sims"`
 }
 
 type SimPoolRemoveSimResp struct {
-	Sims []UUID `json:"sims"`
+	Sims []uuid.UUID `json:"sims"`
 }
 type SimPoolUploadSimReq struct {
 }
 
 type SimPoolUploadSimResp struct {
-	Sims []UUID `json:"sims"`
+	Sims []uuid.UUID `json:"sims"`
 }
 
 type SubscriberAddReq struct {
@@ -61,11 +78,11 @@ type SubscriberAddReq struct {
 }
 
 type SubscriberAddResp struct {
-	SubscriberId UUID `path:"subscriberId" validate:"required"`
+	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
 }
 
 type SubscriberGetReq struct {
-	SubscriberId UUID `json:"subscriberId" validate:"required"`
+	SubscriberId uuid.UUID `json:"subscriberId" validate:"required"`
 }
 
 type SubscriberGetResp struct {
@@ -73,22 +90,22 @@ type SubscriberGetResp struct {
 }
 
 type SubscriberDeleteReq struct {
-	SubscriberId UUID `path:"subscriberId" validate:"required"`
+	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
 }
 
 type SubscriberListReq struct {
-	NetworkId UUID `path:"networkId" validate:"required"`
+	NetworkId uuid.UUID `path:"networkId" validate:"required"`
 }
 
 type SubscriberListResp struct {
 	Subscribers []Subscriber `json:"subscribers"`
 }
 type SubscriberSimAllocateReq struct {
-	SubscriberId UUID    `path:"subscriberId" validate:"required"`
-	NetworkId    UUID    `json:"networkId" validate:"required"`
-	SType        SimType `json:"type" validate:"required"`
-	Token        string  `json:"token" validate:"required"`
-	PlanId       UUID    `json:"planId" validate:"required"`
+	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
+	NetworkId    uuid.UUID `json:"networkId" validate:"required"`
+	SimType      string    `json:"type" validate:"required"`
+	Token        string    `json:"token" validate:"required"`
+	PlanId       uuid.UUID `json:"planId" validate:"required"`
 }
 
 type SubscriberSimAllocateResp struct {
@@ -96,40 +113,39 @@ type SubscriberSimAllocateResp struct {
 }
 
 type SubscriberSimUpdateStateReq struct {
-	SubscriberId UUID   `path:"subscriberId" validate:"required"`
-	SimId        UUID   `path:"simId" validate:"required"`
-	State        string `json:"state" validate:"eq=inactive|eq=INACTIVE|eq=active|eq=ACTIVE,required" `
+	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
+	SimId        uuid.UUID `path:"simId" validate:"required"`
+	State        string    `json:"state" validate:"eq=inactive|eq=INACTIVE|eq=active|eq=ACTIVE,required" `
 }
 
 type SubscriberSimDeleteReq struct {
-	SubscriberId UUID `path:"subscriberId" validate:"required"`
-	SimId        UUID `path:"simId" validate:"required"`
+	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
+	SimId        uuid.UUID `path:"simId" validate:"required"`
 }
 
 type SubscriberSimReadReq struct {
-	SubscriberId UUID `path:"subscriberId" validate:"required"`
-	SimId        UUID `path:"simId" validate:"required"`
+	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
+	SimId        uuid.UUID `path:"simId" validate:"required"`
 }
 
 type SubscriberSimReadResp struct {
 	SIM
 }
 type SubscriberSimAddPackageReq struct {
-	SubscriberId UUID      `path:"subscriberId" validate:"required"`
-	SimId        UUID      `path:"simId" validate:"required"`
-	PackageID    UUID      `json: "packageId" validate:"required"`
-	StartDate    time.Time `json: "startDate" validate:"required"`
+	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
+	SimId        uuid.UUID `path:"simId" validate:"required"`
+	PackageId    uuid.UUID `json:"packageId" validate:"required"`
+	StartDate    time.Time `json:"startDate" validate:"required"`
 }
 
 type SubscriberSimRemovePackageReq struct {
-	SubscriberId UUID `path:"subscriberId" validate:"required"`
-	SimId        UUID `path:"simId" validate:"required"`
-	PackageID    UUID `json: "packageId" validate:"required"`
+	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
+	SimId        uuid.UUID `path:"simId" validate:"required"`
+	PackageId    uuid.UUID `json:"packageId" validate:"required"`
 }
 
-
 type SimListReq struct {
-	NetworkId UUID `path:"networkId" validate:"required"`
+	NetworkId uuid.UUID `path:"networkId" validate:"required"`
 }
 
 type SimListResp struct {
