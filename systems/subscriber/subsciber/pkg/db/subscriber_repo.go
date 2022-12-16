@@ -21,22 +21,21 @@ func NewSubscriberRepo(db sql.Db) *subscriberRepo {
 	}
 }
 
-func (r *subscriberRepo) Add(_package *Subscriber) error {
-	result := r.Db.GetGormDb().Create(_package)
-
-	return result.Error
+func (s *subscriberRepo) Add(pkg *Subscriber) error {
+    db := s.Db.GetGormDb()
+    result := db.Create(pkg)
+    return result.Error
 }
 
 func (s *subscriberRepo) Get(subscriberId string) (*Subscriber, error) {
-	var subscriber Subscriber
+    var subscriber Subscriber
 
-	result := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).First(&subscriber)
+    err := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).First(&subscriber).Error
+    if err != nil {
+        return nil, err
+    }
 
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return &subscriber, nil
+    return &subscriber, nil
 }
 
 

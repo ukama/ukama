@@ -21,15 +21,21 @@ type SunscriberServer struct {
 func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SunscriberServer {
 	return &SunscriberServer{subscriberRepo: subscriberRepo}
 }
+
+
 func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
-	logrus.Infof("Add a subscriber : %v ")
-	timestamp := req.GetDateOfBith()
-	dateOfBirth := timestamp.AsTime()
-	uuid, err := uuid.NewV4()
+	  logrus.Infof("Adding subscriber: %v", req)
+	      uuid, err := uuid.NewV4()
     if err != nil {
-        fmt.Printf("Failed to generate UUID: %s", err)
-        return nil,err
+        logrus.Errorf("Failed to generate UUID: %s", err)
+        return nil, err
     }
+	    dateOfBirth, err := ptypes.Timestamp(req.GetDateOfBith())
+    if err != nil {
+        logrus.Errorf("Error converting timestamp: %s", err)
+        return nil, err
+    }
+   
 	subscriber := &db.Subscriber{
 		SubscriberID: uuid,
 		FullName:     req.GetFullName(),
@@ -49,8 +55,9 @@ func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest
 
 }
 func (s *SunscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
-	logrus.Infof("Delete Subscriber : %v ", req.GetSubscriberid())
-	err := s.subscriberRepo.Delete(req.GetSubscriberid())
+	subscriberID := req.GetSubscriberid()
+	logrus.Infof("Delete Subscriber : %v ", subscriberID)
+	err := s.subscriberRepo.Delete(subscriberID)
 	if err != nil {
 		logrus.Error("error while deleting subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
@@ -60,8 +67,10 @@ func (s *SunscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberR
 }
 
 func (s *SunscriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
-	logrus.Infof("GetSubscriber : %v ", req.GetSubscriberid())
-	subscriber, err := s.subscriberRepo.Get(req.GetSubscriberid())
+	subscriberID := req.GetSubscriberid()
+
+	logrus.Infof("GetSubscriber : %v ", subscriberID)
+	subscriber, err := s.subscriberRepo.Get(subscriberID)
 
 	if err != nil {
 		logrus.Error("error getting a subscriber" + err.Error())
@@ -103,7 +112,7 @@ if err != nil {
 			DeletedAt: sim.DeletedAt.Time.String(),
 		}
 	}
-
+fmt.Println("SIMS",pbSims)
 	return &pb.Subscriber{
 		Id:             uint64(s.ID),
 		FullName:           s.FullName,

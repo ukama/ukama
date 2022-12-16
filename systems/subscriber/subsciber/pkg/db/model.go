@@ -46,8 +46,8 @@ type Package struct {
 	Status                     bool
 	SimID                      uuid.UUID `gorm:"type:uuid"`
 	PackageID                  uuid.UUID `gorm:"type:uuid"`
-	PackageStartActivationDate *time.Time
-	PackageEndActivationDate   *time.Time
+	StartDate *time.Time
+	EndDate   *time.Time
 }
 type SimState string
 
