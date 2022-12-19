@@ -12,13 +12,13 @@ type SimPoolRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: networkId, orgId, iccid, msisdn, isAllocated, simType
-func (_m *SimPoolRepo) Add(networkId string, orgId uint64, iccid string, msisdn string, isAllocated bool, simType string) ([]db.SimPool, error) {
-	ret := _m.Called(networkId, orgId, iccid, msisdn, isAllocated, simType)
+// Add provides a mock function with given fields: simPools
+func (_m *SimPoolRepo) Add(simPools []db.SimPool) ([]db.SimPool, error) {
+	ret := _m.Called(simPools)
 
 	var r0 []db.SimPool
-	if rf, ok := ret.Get(0).(func(string, uint64, string, string, bool, string) []db.SimPool); ok {
-		r0 = rf(networkId, orgId, iccid, msisdn, isAllocated, simType)
+	if rf, ok := ret.Get(0).(func([]db.SimPool) []db.SimPool); ok {
+		r0 = rf(simPools)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.SimPool)
@@ -26,8 +26,8 @@ func (_m *SimPoolRepo) Add(networkId string, orgId uint64, iccid string, msisdn 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, uint64, string, string, bool, string) error); ok {
-		r1 = rf(networkId, orgId, iccid, msisdn, isAllocated, simType)
+	if rf, ok := ret.Get(1).(func([]db.SimPool) error); ok {
+		r1 = rf(simPools)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -68,7 +68,7 @@ func initDb() sql.Db {
 func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 
-		srv := server.NewSimPoolServer(db.NewSimPoolRepo(gormdb))
+		srv := server.NewSimPoolServer(db.SimPoolRepo(gormdb))
 		generated.RegisterSimPoolServiceServer(s, srv)
 	})
 

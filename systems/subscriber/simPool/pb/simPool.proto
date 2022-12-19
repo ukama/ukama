@@ -1,15 +1,15 @@
 syntax = "proto3";
-option go_package = "pb/";
-package ukama.rates.v1;
+package ukama.simPool.v1;
+option go_package = "pb/gen";
 
-service BaseRatesService {
+service SimPoolService {
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
     rpc Add(AddRequest) returns (AddResponse){}
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
     rpc Upload(UploadRequest) returns (UploadResponse){}
 }
 message GetStatsRequest{
-    uint64 rateId =1;
+    uint64 Id =1;
     SimType simType = 2;
 }
 message GetStatsResponse {

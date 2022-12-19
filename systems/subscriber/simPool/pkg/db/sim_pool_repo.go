@@ -6,9 +6,8 @@ import (
 
 type SimPoolRepo interface {
 	GetStats(Id uint64, SimType string) ([]SimPool, error)
-	Add(networkId string, orgId uint64, iccid string, msisdn string, isAllocated bool, simType string) ([]SimPool, error)
+	Add(simPools []SimPool) ([]SimPool, error)
 	Delete(Id uint64) error
-	Upload(fileUrl string, simType string, orgId uint64) ([]SimPool, error)
 }
 
 type simPoolRepo struct {
@@ -25,14 +24,10 @@ func (u *simPoolRepo) GetStats(Id uint64, SimType string) (*SimPool, error) {
 	return nil, nil
 }
 
-func (b *simPoolRepo) Add(networkId string, orgId uint64, iccid string, msisdn string, isAllocated bool, simType string) ([]SimPool, error) {
+func (b *simPoolRepo) Add(simPools []SimPool) ([]SimPool, error) {
 	return nil, nil
 }
 
 func (b *simPoolRepo) Delete(Id uint64) error {
 	return nil
-}
-
-func (b *simPoolRepo) Upload(fileUrl string, simType string, orgId uint64) ([]SimPool, error) {
-	return nil, nil
 }

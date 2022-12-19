@@ -1,44 +1,76 @@
 package simPool
 
 import (
-	// pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
 
+	"context"
+
+	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/utils"
 )
 
 type SimPoolServer struct {
 	simPoolRepo db.SimPoolRepo
-	// pb.UnimplementedSimPoolServiceServer
+	pb.UnimplementedSimPoolServiceServer
 }
 
 func NewSimPoolServer(simPoolRepo db.SimPoolRepo) *SimPoolServer {
 	return &SimPoolServer{simPoolRepo: simPoolRepo}
 }
 
-// func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
-// 	logrus.Infof("GetPackage : %v ", req.GetId())
-// 	_package, err := p.simPoolRepo.Get(req.GetId())
+func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
+	logrus.Infof("GetPoolStats : %v ", req.GetId())
+	_, err := p.simPoolRepo.GetStats(req.GetId(), req.GetSimType().String())
 
-// 	if err != nil {
-// 		logrus.Error("error getting a package" + err.Error())
+	if err != nil {
+		logrus.Error("error getting a simPool" + err.Error())
 
-// 		return nil, grpc.SqlErrorToGrpc(err, "package")
-// 	}
+		return nil, grpc.SqlErrorToGrpc(err, "simPool")
+	}
 
-// 	resp := &pb.GetPackageResponse{SimPool: dbPackageToPbPackages(_package)}
+	// resp := &pb.GetStatsResponse{}
 
-// 	return resp, nil
+	return nil, nil
+}
 
-// }
+func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+	logrus.Infof("Add SimPool : %v ", req.SimPool)
 
-// func dbpackagesToPbPackages(packages []db.SimPool) []*pb.SimPool {
-// 	res := []*pb.SimPool{}
-// 	for _, u := range packages {
-// 		res = append(res, dbPackageToPbPackages(&u))
-// 	}
-// 	return res
-// }
+	result := utils.PbParseToModel(req.SimPool)
+	_simPool, err := p.simPoolRepo.Add(result)
+	if err != nil {
+		logrus.Error("error adding a simPool" + err.Error())
 
-// func dbPackageToPbPackages(p *db.SimPool) *pb.SimPool {
-// 	return &pb.SimPool{}
-// }
+		return nil, grpc.SqlErrorToGrpc(err, "simPool")
+	}
+
+	resp := &pb.AddResponse{SimPool: dbSimPoolsToPbSimPool(_simPool)}
+
+	return resp, nil
+}
+
+func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
+	logrus.Infof("Upload SimPool: %v", req.GetFileUrl())
+
+	var s []db.SimPool
+	_simPool, err := p.simPoolRepo.Add(s)
+	if err != nil {
+		logrus.Error("error while Upload simPool data" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "simPool")
+	}
+	return &pb.UploadResponse{SimPool: dbSimPoolsToPbSimPool(_simPool)}, nil
+}
+
+func dbSimPoolsToPbSimPool(packages []db.SimPool) []*pb.SimPool {
+	res := []*pb.SimPool{}
+	for _, u := range packages {
+		res = append(res, dbSimPoolToPbSimPool(&u))
+	}
+	return res
+}
+
+func dbSimPoolToPbSimPool(p *db.SimPool) *pb.SimPool {
+	return &pb.SimPool{}
+}
