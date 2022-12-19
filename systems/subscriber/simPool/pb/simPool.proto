@@ -1,0 +1,66 @@
+syntax = "proto3";
+option go_package = "pb/";
+package ukama.rates.v1;
+
+service BaseRatesService {
+    rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
+    rpc Add(AddRequest) returns (AddResponse){}
+    rpc Delete(DeleteRequest) returns (DeleteResponse){}
+    rpc Upload(UploadRequest) returns (UploadResponse){}
+}
+message GetStatsRequest{
+    uint64 rateId =1;
+    SimType simType = 2;
+}
+message GetStatsResponse {
+    uint64 total = 1;
+    uint64 available = 2;
+    uint64 consumed = 3;
+    uint64 failed = 4;
+}
+message AddRequest{
+    repeated AddSimPool simPool = 1;
+}
+message AddResponse{
+    repeated SimPool simPool = 1;
+}
+message DeleteRequest{
+    uint64 id =1;
+}
+message DeleteResponse {
+    uint64 id =1;
+}
+message UploadRequest{
+    string fileUrl = 1;
+    SimType simType = 2;
+    uint64 orgId = 3;
+}
+message UploadResponse {
+    repeated SimPool simPool = 1;
+}
+message SimPool{
+    uint64 id = 1;
+    string networkId = 2;
+    uint64 orgId = 3;
+    string iccid = 4;
+    string msisdn = 5; 
+    bool isAllocated = 6;
+    SimType simType = 7;
+    string created_at=8;
+    string deleted_at=9;
+    string updated_at=10;
+}
+message AddSimPool{
+    string networkId = 1;
+    uint64 orgId = 2;
+    string iccid = 3;
+    string msisdn = 4; 
+    bool isAllocated = 5;
+    SimType simType = 6;
+}
+enum SimType {
+    inter_none=0;
+    inter_mno_data=1;
+    inter_mno_all=2;
+    inter_ukama_all=3;
+}
