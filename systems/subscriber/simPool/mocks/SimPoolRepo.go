@@ -13,26 +13,17 @@ type SimPoolRepo struct {
 }
 
 // Add provides a mock function with given fields: simPools
-func (_m *SimPoolRepo) Add(simPools []db.SimPool) ([]db.SimPool, error) {
+func (_m *SimPoolRepo) Add(simPools []db.SimPool) error {
 	ret := _m.Called(simPools)
 
-	var r0 []db.SimPool
-	if rf, ok := ret.Get(0).(func([]db.SimPool) []db.SimPool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]db.SimPool) error); ok {
 		r0 = rf(simPools)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.SimPool)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func([]db.SimPool) error); ok {
-		r1 = rf(simPools)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Delete provides a mock function with given fields: Id
@@ -65,29 +56,6 @@ func (_m *SimPoolRepo) GetStats(Id uint64, SimType string) ([]db.SimPool, error)
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uint64, string) error); ok {
 		r1 = rf(Id, SimType)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Upload provides a mock function with given fields: fileUrl, simType, orgId
-func (_m *SimPoolRepo) Upload(fileUrl string, simType string, orgId uint64) ([]db.SimPool, error) {
-	ret := _m.Called(fileUrl, simType, orgId)
-
-	var r0 []db.SimPool
-	if rf, ok := ret.Get(0).(func(string, string, uint64) []db.SimPool); ok {
-		r0 = rf(fileUrl, simType, orgId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.SimPool)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, uint64) error); ok {
-		r1 = rf(fileUrl, simType, orgId)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -21,8 +21,8 @@ func NewSimPoolServer(simPoolRepo db.SimPoolRepo) *SimPoolServer {
 }
 
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
-	logrus.Infof("GetPoolStats : %v ", req.GetId())
-	_, err := p.simPoolRepo.GetStats(req.GetId(), req.GetSimType().String())
+	logrus.Infof("GetPoolStats : %v ", req.GetOrgId())
+	_, err := p.simPoolRepo.GetStats(req.GetOrgId(), req.GetSimType().String())
 
 	if err != nil {
 		logrus.Error("error getting a simPool" + err.Error())
@@ -39,14 +39,14 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	logrus.Infof("Add SimPool : %v ", req.SimPool)
 
 	result := utils.PbParseToModel(req.SimPool)
-	_simPool, err := p.simPoolRepo.Add(result)
+	err := p.simPoolRepo.Add(result)
 	if err != nil {
 		logrus.Error("error adding a simPool" + err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
 
-	resp := &pb.AddResponse{SimPool: dbSimPoolsToPbSimPool(_simPool)}
+	resp := &pb.AddResponse{SimPool: dbSimPoolsToPbSimPool(result)}
 
 	return resp, nil
 }
@@ -55,12 +55,12 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 	logrus.Infof("Upload SimPool: %v", req.GetFileUrl())
 
 	var s []db.SimPool
-	_simPool, err := p.simPoolRepo.Add(s)
+	err := p.simPoolRepo.Add(s)
 	if err != nil {
 		logrus.Error("error while Upload simPool data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
-	return &pb.UploadResponse{SimPool: dbSimPoolsToPbSimPool(_simPool)}, nil
+	return &pb.UploadResponse{SimPool: dbSimPoolsToPbSimPool(s)}, nil
 }
 
 func dbSimPoolsToPbSimPool(packages []db.SimPool) []*pb.SimPool {

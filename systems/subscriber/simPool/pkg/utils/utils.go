@@ -56,8 +56,8 @@ func PbParseToModel(slice []*pb.AddSimPool) []db.SimPool {
 	return simPool
 }
 
-func ParseModelToPb(slice []db.SimPool) []*pb.SimPool {
-	var simPool []*pb.SimPool
+func ParseModelToPb(slice []*db.SimPool) []pb.SimPool {
+	var simPool []pb.SimPool
 	// for _, value := range slice {
 	// 	simPool = append(simPool, db.SimPool{
 

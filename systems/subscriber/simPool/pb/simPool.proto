@@ -9,7 +9,7 @@ service SimPoolService {
     rpc Upload(UploadRequest) returns (UploadResponse){}
 }
 message GetStatsRequest{
-    uint64 Id =1;
+    uint64 orgId =1;
     SimType simType = 2;
 }
 message GetStatsResponse {
