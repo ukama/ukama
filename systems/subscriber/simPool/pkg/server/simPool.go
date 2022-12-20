@@ -1,4 +1,4 @@
-package simPool
+package server
 
 import (
 	pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"

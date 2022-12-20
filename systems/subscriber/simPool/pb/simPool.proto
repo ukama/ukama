@@ -51,12 +51,13 @@ message SimPool{
     string updated_at=10;
 }
 message AddSimPool{
-    string networkId = 1;
-    uint64 orgId = 2;
-    string iccid = 3;
-    string msisdn = 4; 
-    bool isAllocated = 5;
-    SimType simType = 6;
+    string iccid = 1;
+    SimType simType = 2;
+    string msisdn = 3;
+    string smDpAddress = 4;
+    string activationCode = 5;
+    string qrCode = 6; 
+    uint64 orgId = 7;
 }
 enum SimType {
     inter_none=0;

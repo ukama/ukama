@@ -15,7 +15,7 @@ type simPoolRepo struct {
 	Db sql.Db
 }
 
-func GetSimPoolRepo(db sql.Db) *simPoolRepo {
+func NeSimPoolRepo(db sql.Db) *simPoolRepo {
 	return &simPoolRepo{
 		Db: db,
 	}

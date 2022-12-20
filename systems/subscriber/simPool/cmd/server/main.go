@@ -4,12 +4,11 @@ import (
 	"os"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/server"
 
 	"github.com/num30/config"
+	pkg "github.com/ukama/ukama/systems/subscriber/simPool/pkg"
+	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/server"
 	"gopkg.in/yaml.v3"
-
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg"
 
 	"github.com/ukama/ukama/systems/subscriber/simPool/cmd/version"
 
@@ -20,7 +19,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/subscriber/simPool/pb"
+	generated "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -68,7 +67,7 @@ func initDb() sql.Db {
 func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 
-		srv := server.NewSimPoolServer(db.SimPoolRepo(gormdb))
+		srv := server.NewSimPoolServer(db.NeSimPoolRepo(gormdb))
 		generated.RegisterSimPoolServiceServer(s, srv)
 	})
 
