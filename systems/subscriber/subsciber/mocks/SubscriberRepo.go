@@ -63,6 +63,29 @@ func (_m *SubscriberRepo) Get(subscriberId string) (*db.Subscriber, error) {
 	return r0, r1
 }
 
+// Update provides a mock function with given fields: subscriberId, sub
+func (_m *SubscriberRepo) Update(subscriberId string, sub db.Subscriber) (*db.Subscriber, error) {
+	ret := _m.Called(subscriberId, sub)
+
+	var r0 *db.Subscriber
+	if rf, ok := ret.Get(0).(func(string, db.Subscriber) *db.Subscriber); ok {
+		r0 = rf(subscriberId, sub)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Subscriber)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, db.Subscriber) error); ok {
+		r1 = rf(subscriberId, sub)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewSubscriberRepo interface {
 	mock.TestingT
 	Cleanup(func())

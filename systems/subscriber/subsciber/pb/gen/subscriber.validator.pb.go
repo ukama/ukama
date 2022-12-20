@@ -7,7 +7,6 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -34,9 +33,15 @@ func (this *GetSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *AddSubscriberRequest) Validate() error {
-	if this.DateOfBith != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBith); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBith", err)
+	return nil
+}
+func (this *UpdateSubscriberRequest) Validate() error {
+	return nil
+}
+func (this *UpdateSubscriberResponse) Validate() error {
+	if this.Subscriber != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
 		}
 	}
 	return nil
@@ -45,21 +50,16 @@ func (this *AddSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *Subscriber) Validate() error {
-	for _, item := range this.Sims {
+	for _, item := range this.Sim {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Sims", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
 			}
-		}
-	}
-	if this.DateOfBith != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBith); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBith", err)
 		}
 	}
 	return nil
 }
-func (this *Sims) Validate() error {
+func (this *Sim) Validate() error {
 	for _, item := range this.Package {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {

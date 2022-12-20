@@ -2,49 +2,49 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-type SunscriberServer struct {
+type SubcriberServer struct {
 	subscriberRepo db.SubscriberRepo
 	pb.UnimplementedSubscriberServiceServer
 }
 
-func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SunscriberServer {
-	return &SunscriberServer{subscriberRepo: subscriberRepo}
+func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
+	return &SubcriberServer{subscriberRepo: subscriberRepo}
 }
 
+func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
+	logrus.Infof("Adding subscriber: %v", req)
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		logrus.Errorf("Failed to generate UUID: %s", err)
+		return nil, err
+	}
+	parsedDoB, err := time.Parse("2006-1-2", req.GetDateOfBith())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid date format!")
+	}
 
-func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
-	  logrus.Infof("Adding subscriber: %v", req)
-	      uuid, err := uuid.NewV4()
-    if err != nil {
-        logrus.Errorf("Failed to generate UUID: %s", err)
-        return nil, err
-    }
-	    dateOfBirth, err := ptypes.Timestamp(req.GetDateOfBith())
-    if err != nil {
-        logrus.Errorf("Error converting timestamp: %s", err)
-        return nil, err
-    }
-   
 	subscriber := &db.Subscriber{
-		SubscriberID: uuid,
-		FullName:     req.GetFullName(),
-		Email:        req.GetEmail(),
-		PhoneNumber:  req.GetPhoneNumber(),
-		Address:      req.GetAddress(),
-		ProofOfIdentification:req.GetProofOfIdentification(),
-		DOB:  &dateOfBirth,
-		IdSerial:req.GetIdSerial(),
+		SubscriberID:          uuid,
+		FirstName:             req.GetFirstName(),
+		LastName:              req.GetLastName(),
+		Email:                 req.GetEmail(),
+		PhoneNumber:           req.GetPhoneNumber(),
+		Gender:                req.GetGender(),
+		Address:               req.GetAddress(),
+		ProofOfIdentification: req.GetProofOfIdentification(),
+		DOB:                   parsedDoB.Format("2006-01-02"),
+		IdSerial:              req.GetIdSerial(),
 	}
 	err = s.subscriberRepo.Add(subscriber)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *SunscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest
 	return &pb.AddSubscriberResponse{Subscriberid: uuid.String()}, nil
 
 }
-func (s *SunscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
+func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberID := req.GetSubscriberid()
 	logrus.Infof("Delete Subscriber : %v ", subscriberID)
 	err := s.subscriberRepo.Delete(subscriberID)
@@ -66,7 +66,7 @@ func (s *SunscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberR
 
 }
 
-func (s *SunscriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
+func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
 	subscriberID := req.GetSubscriberid()
 
 	logrus.Infof("GetSubscriber : %v ", subscriberID)
@@ -83,49 +83,55 @@ func (s *SunscriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest
 	return resp, nil
 
 }
-func dbsubscriberToPbSubscribers(packages []db.Subscriber) []*pb.Subscriber {
+func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
+	logrus.Infof("Update Subscriber Id: %v, FullName: %v, Email: %v, Email: %v, ProofOfIdentification: %v, Address: %v, DateOfBith: %v",
+		req.FirstName, req.Email, req.Email, req.ProofOfIdentification, req.Address, req.DateOfBith)
+	subscriber := db.Subscriber{
+		FirstName:             req.GetFirstName(),
+		LastName:              req.GetLastName(),
+		Email:                 req.GetEmail(),
+		PhoneNumber:           req.GetPhoneNumber(),
+		SimID:                 req.GetSimRef(),
+		Address:               req.GetAddress(),
+		ProofOfIdentification: req.GetProofOfIdentification(),
+		DOB:                   req.GetDateOfBith(),
+		IdSerial:              req.GetIdSerial(),
+	}
+
+	sub, err := s.subscriberRepo.Update(req.GetSubscriberId(), subscriber)
+	if err != nil {
+		logrus.Error("error while getting updating a subscriber" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
+
+	return &pb.UpdateSubscriberResponse{
+		Subscriber: dbSubscriberToPbSubscribers(sub),
+	}, nil
+}
+func dbsubscriberToPbSubscribers(subscriber []db.Subscriber) []*pb.Subscriber {
 	res := []*pb.Subscriber{}
-	for _, u := range packages {
+	for _, u := range subscriber {
 		res = append(res, dbSubscriberToPbSubscribers(&u))
 	}
 	return res
 }
 
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
-	time, err := time.Parse("2006-01-02", s.DOB.String())
-if err != nil {
-	logrus.Error("error while parsing date of birth" + err.Error())
-}
-timestamp, err := ptypes.TimestampProto(time)
-if err != nil {
-	logrus.Error("error while parsing date of birth" + err.Error())
-}
-	pbSims := make([]*pb.Sims, len(s.Sims))
-	for i, sim := range s.Sims {
-		pbSims[i] = &pb.Sims{
-			SimId:     sim.SimID.String(),
-			Iccid:     sim.ICCID,
-			Imsi:      sim.IMSI,
-			Msisdn:    sim.MSISDN,
-			CreatedAt: sim.CreatedAt.String(),
-			UpdatedAt: sim.UpdatedAt.String(),
-			DeletedAt: sim.DeletedAt.Time.String(),
-		}
-	}
-fmt.Println("SIMS",pbSims)
+
 	return &pb.Subscriber{
-		Id:             uint64(s.ID),
-		FullName:           s.FullName,
-		Email:          s.Email,
-		SubscriberId:   s.SubscriberID.String(),
+		Id:                    uint64(s.ID),
+		FirstName:             s.FirstName,
+		LastName:              s.LastName,
+		Email:                 s.Email,
+		SubscriberId:          s.SubscriberID.String(),
 		ProofOfIdentification: s.ProofOfIdentification,
-		PhoneNumber:    s.PhoneNumber,
-		IdSerial:s.IdSerial,
-		Sims:           pbSims,
-		Address:        s.Address,
-		CreatedAt:      s.CreatedAt.String(),
-		UpdatedAt:      s.UpdatedAt.String(),
-		DeletedAt:      s.DeletedAt.Time.String(),
-		DateOfBith:	 timestamp,
+		PhoneNumber:           s.PhoneNumber,
+		IdSerial:              s.IdSerial,
+		Gender:                s.Gender,
+		Address:               s.Address,
+		CreatedAt:             s.CreatedAt.String(),
+		UpdatedAt:             s.UpdatedAt.String(),
+		DeletedAt:             s.DeletedAt.Time.String(),
+		DateOfBith:            s.DOB,
 	}
 }

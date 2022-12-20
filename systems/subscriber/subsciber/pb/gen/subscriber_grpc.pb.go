@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type SubscriberServiceClient interface {
 	Get(ctx context.Context, in *GetSubscriberRequest, opts ...grpc.CallOption) (*GetSubscriberResponse, error)
 	Add(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error)
+	Update(ctx context.Context, in *UpdateSubscriberRequest, opts ...grpc.CallOption) (*UpdateSubscriberResponse, error)
 	Delete(ctx context.Context, in *DeleteSubscriberRequest, opts ...grpc.CallOption) (*DeleteSubscriberResponse, error)
 }
 
@@ -53,6 +54,15 @@ func (c *subscriberServiceClient) Add(ctx context.Context, in *AddSubscriberRequ
 	return out, nil
 }
 
+func (c *subscriberServiceClient) Update(ctx context.Context, in *UpdateSubscriberRequest, opts ...grpc.CallOption) (*UpdateSubscriberResponse, error) {
+	out := new(UpdateSubscriberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.v1.SubscriberService/Update", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *subscriberServiceClient) Delete(ctx context.Context, in *DeleteSubscriberRequest, opts ...grpc.CallOption) (*DeleteSubscriberResponse, error) {
 	out := new(DeleteSubscriberResponse)
 	err := c.cc.Invoke(ctx, "/ukama.subscriber.v1.SubscriberService/Delete", in, out, opts...)
@@ -68,6 +78,7 @@ func (c *subscriberServiceClient) Delete(ctx context.Context, in *DeleteSubscrib
 type SubscriberServiceServer interface {
 	Get(context.Context, *GetSubscriberRequest) (*GetSubscriberResponse, error)
 	Add(context.Context, *AddSubscriberRequest) (*AddSubscriberResponse, error)
+	Update(context.Context, *UpdateSubscriberRequest) (*UpdateSubscriberResponse, error)
 	Delete(context.Context, *DeleteSubscriberRequest) (*DeleteSubscriberResponse, error)
 	mustEmbedUnimplementedSubscriberServiceServer()
 }
@@ -81,6 +92,9 @@ func (UnimplementedSubscriberServiceServer) Get(context.Context, *GetSubscriberR
 }
 func (UnimplementedSubscriberServiceServer) Add(context.Context, *AddSubscriberRequest) (*AddSubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
+}
+func (UnimplementedSubscriberServiceServer) Update(context.Context, *UpdateSubscriberRequest) (*UpdateSubscriberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedSubscriberServiceServer) Delete(context.Context, *DeleteSubscriberRequest) (*DeleteSubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -134,6 +148,24 @@ func _SubscriberService_Add_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SubscriberService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSubscriberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscriberServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.subscriber.v1.SubscriberService/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscriberServiceServer).Update(ctx, req.(*UpdateSubscriberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SubscriberService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteSubscriberRequest)
 	if err := dec(in); err != nil {
@@ -166,6 +198,10 @@ var SubscriberService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Add",
 			Handler:    _SubscriberService_Add_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _SubscriberService_Update_Handler,
 		},
 		{
 			MethodName: "Delete",

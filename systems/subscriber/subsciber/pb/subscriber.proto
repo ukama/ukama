@@ -1,11 +1,11 @@
 syntax = "proto3";
 package ukama.subscriber.v1;
 option go_package = "pb/gen";
-import "google/protobuf/timestamp.proto";
 
 service SubscriberService {
     rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
     rpc Add (AddSubscriberRequest) returns (AddSubscriberResponse){}
+    rpc Update(UpdateSubscriberRequest) returns (UpdateSubscriberResponse){}
     rpc Delete (DeleteSubscriberRequest) returns (DeleteSubscriberResponse){}
 }
 
@@ -19,39 +19,60 @@ message GetSubscriberRequest{
     string subscriberid  = 1;
 }
 message GetSubscriberResponse{
-    subscriber subscriber  = 1;
+    Subscriber subscriber  = 1;
 }
 message AddSubscriberRequest{
-    string fullName  = 1;
+    string firstName  = 1;
+    string lastName=2;
     string email  = 3;
     string phoneNumber  = 4;
     string address  = 5; 
     string IdSerial =6;
     string proofOfIdentification =7;
-    google.protobuf.Timestamp date_of_bith = 8;
+    string date_of_bith = 8;
+    string gender =9;
+
     
+}
+message UpdateSubscriberRequest{
+    string subscriberId =1;
+    string firstName  = 2;
+    string lastName = 3;
+    string email  = 4;
+    string phoneNumber  = 5;
+    string address  = 6; 
+    string simRef =7;
+    string IdSerial =8;
+    string packageId=9;
+    string sim =10;
+    string proofOfIdentification =11;
+    string date_of_bith = 12;
+}
+message UpdateSubscriberResponse{
+    Subscriber subscriber  = 1;
 }
 message AddSubscriberResponse{
     string subscriberid  =1;
 }
-message subscriber{
+message Subscriber{
     uint64 id =1;
-    string fullName  = 2;
-    string subscriberId=3;
-    string email  = 4;
-    string phoneNumber  = 5;
-    string address  = 6; 
-    string proofOfIdentification =7;
-    string created_at=8;
-    string deleted_at=9;
-    string updated_at=10;
-    repeated sims sims = 11;
-    google.protobuf.Timestamp date_of_bith = 12;
-    string IdSerial =13;
-
-
+    string firstName  = 2;
+    string lastName = 3;
+    string subscriberId=4;
+    string email  = 5;
+    string phoneNumber  = 6;
+    string address  = 7; 
+    string proofOfIdentification =8;
+    string created_at=9;
+    string deleted_at=10;
+    string updated_at=11;
+    repeated Sim sim = 12;
+    string date_of_bith = 13;
+    string IdSerial =14;
+    string gender =15;
 }
-message sims {
+
+message Sim {
     string simId = 1;
     string subscriberId = 2;
     string simNumber = 3;
@@ -70,12 +91,12 @@ message sims {
     string iccid = 16;
     string msisdn = 17;
     string status = 18;    
-    repeated package package = 19;
+    repeated Package package = 19;
     string State =20;
     string ActivePackageID =21;
 
 }
- message package {
+ message Package {
     string packageId = 1;
     string startDate = 2;
     string endDate = 3;

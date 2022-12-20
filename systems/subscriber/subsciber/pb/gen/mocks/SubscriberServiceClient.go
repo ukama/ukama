@@ -106,6 +106,36 @@ func (_m *SubscriberServiceClient) Get(ctx context.Context, in *gen.GetSubscribe
 	return r0, r1
 }
 
+// Update provides a mock function with given fields: ctx, in, opts
+func (_m *SubscriberServiceClient) Update(ctx context.Context, in *gen.UpdateSubscriberRequest, opts ...grpc.CallOption) (*gen.UpdateSubscriberResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.UpdateSubscriberResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateSubscriberRequest, ...grpc.CallOption) *gen.UpdateSubscriberResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateSubscriberResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateSubscriberRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 type mockConstructorTestingTNewSubscriberServiceClient interface {
 	mock.TestingT
 	Cleanup(func())
