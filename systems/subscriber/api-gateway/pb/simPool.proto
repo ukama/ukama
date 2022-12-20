@@ -41,15 +41,16 @@ message UploadResponse {
 
 message SimPool{
     uint64 id = 1;
-    string networkId = 2;
-    uint64 orgId = 3;
-    string iccid = 4;
-    string msisdn = 5; 
-    bool isAllocated = 6;
-    SimType simType = 7;
-    string created_at=8;
-    string deleted_at=9;
-    string updated_at=10;
+    string iccid = 2;
+    string msisdn = 3; 
+    bool isAllocated = 4;
+    SimType simType = 5;
+    string smDpAddress = 6;
+    string activationCode = 7;
+    string qrCode = 8;
+    string created_at=9;
+    string deleted_at=10;
+    string updated_at=11;
 }
 
 message SimInfo{
@@ -59,7 +60,6 @@ message SimInfo{
     string smDpAddress = 4;
     string activationCode = 5;
     string qrCode = 6; 
-    bool isAllocated = 7;
 }
 
 enum SimType {

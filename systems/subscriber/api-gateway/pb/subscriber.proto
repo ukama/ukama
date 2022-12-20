@@ -1,0 +1,79 @@
+syntax = "proto3";
+package ukama.subscriber.v1;
+option go_package = "pb/gen";
+import "google/protobuf/timestamp.proto";
+
+service SubscriberService {
+    rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
+    rpc Add (AddSubscriberRequest) returns (AddSubscriberResponse){}
+    rpc Delete (DeleteSubscriberRequest) returns (DeleteSubscriberResponse){}
+}
+
+message DeleteSubscriberRequest{
+    string subscriberid  = 1;
+}
+message DeleteSubscriberResponse{
+    string subscriberid  = 1;
+}
+message GetSubscriberRequest{
+    string subscriberid  = 1;
+}
+message GetSubscriberResponse{
+    subscriber subscriber  = 1;
+}
+message AddSubscriberRequest{
+    string fullName  = 1;
+    string email  = 3;
+    string phoneNumber  = 4;
+    string address  = 5; 
+    string passportNumber =6;
+    google.protobuf.Timestamp date_of_bith = 11;
+    
+}
+message AddSubscriberResponse{
+    string subscriberid  =1;
+}
+message subscriber{
+    uint64 id =1;
+    string fullName  = 2;
+    string subscriberId=3;
+    string email  = 4;
+    string phoneNumber  = 5;
+    string address  = 6; 
+    string passportNumber =7;
+    string created_at=8;
+    string deleted_at=9;
+    string updated_at=10;
+    repeated sims sims = 11;
+    google.protobuf.Timestamp date_of_bith = 12;
+
+}
+message sims {
+    string simId = 1;
+    string subscriberId = 2;
+    string simNumber = 3;
+    string simType = 4;
+    string created_at=5;
+    string deleted_at=6;
+    string updated_at=7;
+    string simProvider=8;
+    string Imsi=9;
+    string networkId = 10;
+    string orgId = 11;
+    string activationsCount = 12;
+    string deactivationsCount = 13;
+    string firstActivatedOn = 14;
+    string lastActivatedOn = 15;
+    string iccid = 16;
+    string msisdn = 17;
+    string status = 18;    
+    repeated package package = 19;
+    string State =20;
+    string ActivePackageID =21;
+
+}
+ message package {
+    string packageId = 1;
+    string packageStartDate = 2;
+    string packageEndDate = 3;
+ }
