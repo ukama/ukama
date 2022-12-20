@@ -100,7 +100,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 
 	sub, err := s.subscriberRepo.Update(req.GetSubscriberId(), subscriber)
 	if err != nil {
-		logrus.Error("error while getting updating a subscriber" + err.Error())
+		logrus.Error("error while updating a subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
