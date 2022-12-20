@@ -13,6 +13,7 @@ import (
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -21,6 +22,380 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type ActivateSimRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+}
+
+func (x *ActivateSimRequest) Reset() {
+	*x = ActivateSimRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_sim_manager_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ActivateSimRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivateSimRequest) ProtoMessage() {}
+
+func (x *ActivateSimRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivateSimRequest.ProtoReflect.Descriptor instead.
+func (*ActivateSimRequest) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ActivateSimRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type ActivateSimResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *ActivateSimResponse) Reset() {
+	*x = ActivateSimResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_sim_manager_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ActivateSimResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActivateSimResponse) ProtoMessage() {}
+
+func (x *ActivateSimResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActivateSimResponse.ProtoReflect.Descriptor instead.
+func (*ActivateSimResponse) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{1}
+}
+
+type GetSimInfoRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Iccid string `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
+}
+
+func (x *GetSimInfoRequest) Reset() {
+	*x = GetSimInfoRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_sim_manager_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSimInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSimInfoRequest) ProtoMessage() {}
+
+func (x *GetSimInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSimInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetSimInfoRequest) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetSimInfoRequest) GetIccid() string {
+	if x != nil {
+		return x.Iccid
+	}
+	return ""
+}
+
+type GetSimInfoResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Iccid string `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
+	Imsi  string `protobuf:"bytes,2,opt,name=imsi,proto3" json:"imsi,omitempty"`
+}
+
+func (x *GetSimInfoResponse) Reset() {
+	*x = GetSimInfoResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_sim_manager_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSimInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSimInfoResponse) ProtoMessage() {}
+
+func (x *GetSimInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSimInfoResponse.ProtoReflect.Descriptor instead.
+func (*GetSimInfoResponse) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetSimInfoResponse) GetIccid() string {
+	if x != nil {
+		return x.Iccid
+	}
+	return ""
+}
+
+func (x *GetSimInfoResponse) GetImsi() string {
+	if x != nil {
+		return x.Imsi
+	}
+	return ""
+}
+
+type DeactivateSimRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Iccid string `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
+}
+
+func (x *DeactivateSimRequest) Reset() {
+	*x = DeactivateSimRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_sim_manager_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeactivateSimRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivateSimRequest) ProtoMessage() {}
+
+func (x *DeactivateSimRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivateSimRequest.ProtoReflect.Descriptor instead.
+func (*DeactivateSimRequest) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DeactivateSimRequest) GetIccid() string {
+	if x != nil {
+		return x.Iccid
+	}
+	return ""
+}
+
+type DeactivateSimResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *DeactivateSimResponse) Reset() {
+	*x = DeactivateSimResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_sim_manager_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeactivateSimResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeactivateSimResponse) ProtoMessage() {}
+
+func (x *DeactivateSimResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeactivateSimResponse.ProtoReflect.Descriptor instead.
+func (*DeactivateSimResponse) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{5}
+}
+
+type GetSimUsageRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Iccid string `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
+}
+
+func (x *GetSimUsageRequest) Reset() {
+	*x = GetSimUsageRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_sim_manager_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSimUsageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSimUsageRequest) ProtoMessage() {}
+
+func (x *GetSimUsageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSimUsageRequest.ProtoReflect.Descriptor instead.
+func (*GetSimUsageRequest) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetSimUsageRequest) GetIccid() string {
+	if x != nil {
+		return x.Iccid
+	}
+	return ""
+}
+
+type GetSimUsageResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DataUsageInBytes int64 `protobuf:"varint,1,opt,name=DataUsageInBytes,proto3" json:"DataUsageInBytes,omitempty"`
+	DataTotalInBytes int64 `protobuf:"varint,2,opt,name=DataTotalInBytes,proto3" json:"DataTotalInBytes,omitempty"`
+}
+
+func (x *GetSimUsageResponse) Reset() {
+	*x = GetSimUsageResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_sim_manager_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSimUsageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSimUsageResponse) ProtoMessage() {}
+
+func (x *GetSimUsageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSimUsageResponse.ProtoReflect.Descriptor instead.
+func (*GetSimUsageResponse) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetSimUsageResponse) GetDataUsageInBytes() int64 {
+	if x != nil {
+		return x.DataUsageInBytes
+	}
+	return 0
+}
+
+func (x *GetSimUsageResponse) GetDataTotalInBytes() int64 {
+	if x != nil {
+		return x.DataTotalInBytes
+	}
+	return 0
+}
 
 var File_sim_manager_proto protoreflect.FileDescriptor
 
@@ -32,16 +407,100 @@ var file_sim_manager_proto_rawDesc = []byte{
 	0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65,
 	0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x67, 0x6f, 0x6f,
 	0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x77, 0x72, 0x61,
-	0x70, 0x70, 0x65, 0x72, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0x13, 0x0a, 0x11, 0x53,
-	0x69, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
-	0x42, 0x08, 0x5a, 0x06, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x70, 0x70, 0x65, 0x72, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x2d, 0x0a, 0x12, 0x41,
+	0x63, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x53, 0x69, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x15, 0x0a, 0x13, 0x41, 0x63,
+	0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x53, 0x69, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x22, 0x3f, 0x0a, 0x11, 0x47, 0x65, 0x74, 0x53, 0x69, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2a, 0x0a, 0x05, 0x69, 0x63, 0x63, 0x69, 0x64, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x14, 0xe2, 0xdf, 0x1f, 0x10, 0x0a, 0x0e, 0x5e, 0x5b, 0x30,
+	0x2d, 0x39, 0x5d, 0x7b, 0x31, 0x38, 0x2c, 0x31, 0x39, 0x7d, 0x24, 0x52, 0x05, 0x69, 0x63, 0x63,
+	0x69, 0x64, 0x22, 0x3e, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x53, 0x69, 0x6d, 0x49, 0x6e, 0x66, 0x6f,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x69, 0x63, 0x63, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x69, 0x63, 0x63, 0x69, 0x64, 0x12, 0x12,
+	0x0a, 0x04, 0x69, 0x6d, 0x73, 0x69, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x69, 0x6d,
+	0x73, 0x69, 0x22, 0x42, 0x0a, 0x14, 0x44, 0x65, 0x61, 0x63, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65,
+	0x53, 0x69, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2a, 0x0a, 0x05, 0x69, 0x63,
+	0x63, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x14, 0xe2, 0xdf, 0x1f, 0x10, 0x0a,
+	0x0e, 0x5e, 0x5b, 0x30, 0x2d, 0x39, 0x5d, 0x7b, 0x31, 0x38, 0x2c, 0x31, 0x39, 0x7d, 0x24, 0x52,
+	0x05, 0x69, 0x63, 0x63, 0x69, 0x64, 0x22, 0x17, 0x0a, 0x15, 0x44, 0x65, 0x61, 0x63, 0x74, 0x69,
+	0x76, 0x61, 0x74, 0x65, 0x53, 0x69, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x40, 0x0a, 0x12, 0x47, 0x65, 0x74, 0x53, 0x69, 0x6d, 0x55, 0x73, 0x61, 0x67, 0x65, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2a, 0x0a, 0x05, 0x69, 0x63, 0x63, 0x69, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x42, 0x14, 0xe2, 0xdf, 0x1f, 0x10, 0x0a, 0x0e, 0x5e, 0x5b, 0x30, 0x2d,
+	0x39, 0x5d, 0x7b, 0x31, 0x38, 0x2c, 0x31, 0x39, 0x7d, 0x24, 0x52, 0x05, 0x69, 0x63, 0x63, 0x69,
+	0x64, 0x22, 0x6d, 0x0a, 0x13, 0x47, 0x65, 0x74, 0x53, 0x69, 0x6d, 0x55, 0x73, 0x61, 0x67, 0x65,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2a, 0x0a, 0x10, 0x44, 0x61, 0x74, 0x61,
+	0x55, 0x73, 0x61, 0x67, 0x65, 0x49, 0x6e, 0x42, 0x79, 0x74, 0x65, 0x73, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x03, 0x52, 0x10, 0x44, 0x61, 0x74, 0x61, 0x55, 0x73, 0x61, 0x67, 0x65, 0x49, 0x6e, 0x42,
+	0x79, 0x74, 0x65, 0x73, 0x12, 0x2a, 0x0a, 0x10, 0x44, 0x61, 0x74, 0x61, 0x54, 0x6f, 0x74, 0x61,
+	0x6c, 0x49, 0x6e, 0x42, 0x79, 0x74, 0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x10,
+	0x44, 0x61, 0x74, 0x61, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x49, 0x6e, 0x42, 0x79, 0x74, 0x65, 0x73,
+	0x32, 0xa6, 0x03, 0x0a, 0x11, 0x53, 0x69, 0x6d, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x53,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x5f, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x53, 0x69, 0x6d,
+	0x49, 0x6e, 0x66, 0x6f, 0x12, 0x27, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x73, 0x69, 0x6d,
+	0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x53,
+	0x69, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e,
+	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x73, 0x69, 0x6d, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65,
+	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x69, 0x6d, 0x49, 0x6e, 0x66, 0x6f, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x62, 0x0a, 0x0b, 0x41, 0x63, 0x74, 0x69, 0x76,
+	0x61, 0x74, 0x65, 0x53, 0x69, 0x6d, 0x12, 0x28, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x73,
+	0x69, 0x6d, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x63,
+	0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x53, 0x69, 0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x29, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x73, 0x69, 0x6d, 0x5f, 0x6d, 0x61, 0x6e,
+	0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x63, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65,
+	0x53, 0x69, 0x6d, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x68, 0x0a, 0x0d, 0x44,
+	0x65, 0x61, 0x63, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x53, 0x69, 0x6d, 0x12, 0x2a, 0x2e, 0x75,
+	0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x73, 0x69, 0x6d, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72,
+	0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x61, 0x63, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x53, 0x69,
+	0x6d, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2b, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61,
+	0x2e, 0x73, 0x69, 0x6d, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e,
+	0x44, 0x65, 0x61, 0x63, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x53, 0x69, 0x6d, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x62, 0x0a, 0x0b, 0x47, 0x65, 0x74, 0x53, 0x69, 0x6d, 0x55,
+	0x73, 0x61, 0x67, 0x65, 0x12, 0x28, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x73, 0x69, 0x6d,
+	0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x53,
+	0x69, 0x6d, 0x55, 0x73, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29,
+	0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x73, 0x69, 0x6d, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67,
+	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x53, 0x69, 0x6d, 0x55, 0x73, 0x61, 0x67,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x08, 0x5a, 0x06, 0x70, 0x62, 0x2f,
+	0x67, 0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var file_sim_manager_proto_goTypes = []interface{}{}
+var (
+	file_sim_manager_proto_rawDescOnce sync.Once
+	file_sim_manager_proto_rawDescData = file_sim_manager_proto_rawDesc
+)
+
+func file_sim_manager_proto_rawDescGZIP() []byte {
+	file_sim_manager_proto_rawDescOnce.Do(func() {
+		file_sim_manager_proto_rawDescData = protoimpl.X.CompressGZIP(file_sim_manager_proto_rawDescData)
+	})
+	return file_sim_manager_proto_rawDescData
+}
+
+var file_sim_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_sim_manager_proto_goTypes = []interface{}{
+	(*ActivateSimRequest)(nil),    // 0: ukama.sim_manager.v1.ActivateSimRequest
+	(*ActivateSimResponse)(nil),   // 1: ukama.sim_manager.v1.ActivateSimResponse
+	(*GetSimInfoRequest)(nil),     // 2: ukama.sim_manager.v1.GetSimInfoRequest
+	(*GetSimInfoResponse)(nil),    // 3: ukama.sim_manager.v1.GetSimInfoResponse
+	(*DeactivateSimRequest)(nil),  // 4: ukama.sim_manager.v1.DeactivateSimRequest
+	(*DeactivateSimResponse)(nil), // 5: ukama.sim_manager.v1.DeactivateSimResponse
+	(*GetSimUsageRequest)(nil),    // 6: ukama.sim_manager.v1.GetSimUsageRequest
+	(*GetSimUsageResponse)(nil),   // 7: ukama.sim_manager.v1.GetSimUsageResponse
+}
 var file_sim_manager_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
+	2, // 0: ukama.sim_manager.v1.SimManagerService.GetSimInfo:input_type -> ukama.sim_manager.v1.GetSimInfoRequest
+	0, // 1: ukama.sim_manager.v1.SimManagerService.ActivateSim:input_type -> ukama.sim_manager.v1.ActivateSimRequest
+	4, // 2: ukama.sim_manager.v1.SimManagerService.DeactivateSim:input_type -> ukama.sim_manager.v1.DeactivateSimRequest
+	6, // 3: ukama.sim_manager.v1.SimManagerService.GetSimUsage:input_type -> ukama.sim_manager.v1.GetSimUsageRequest
+	3, // 4: ukama.sim_manager.v1.SimManagerService.GetSimInfo:output_type -> ukama.sim_manager.v1.GetSimInfoResponse
+	1, // 5: ukama.sim_manager.v1.SimManagerService.ActivateSim:output_type -> ukama.sim_manager.v1.ActivateSimResponse
+	5, // 6: ukama.sim_manager.v1.SimManagerService.DeactivateSim:output_type -> ukama.sim_manager.v1.DeactivateSimResponse
+	7, // 7: ukama.sim_manager.v1.SimManagerService.GetSimUsage:output_type -> ukama.sim_manager.v1.GetSimUsageResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -52,18 +511,117 @@ func file_sim_manager_proto_init() {
 	if File_sim_manager_proto != nil {
 		return
 	}
+	if !protoimpl.UnsafeEnabled {
+		file_sim_manager_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ActivateSimRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_sim_manager_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ActivateSimResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_sim_manager_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSimInfoRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_sim_manager_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSimInfoResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_sim_manager_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeactivateSimRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_sim_manager_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeactivateSimResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_sim_manager_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSimUsageRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_sim_manager_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSimUsageResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_sim_manager_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   0,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_sim_manager_proto_goTypes,
 		DependencyIndexes: file_sim_manager_proto_depIdxs,
+		MessageInfos:      file_sim_manager_proto_msgTypes,
 	}.Build()
 	File_sim_manager_proto = out.File
 	file_sim_manager_proto_rawDesc = nil

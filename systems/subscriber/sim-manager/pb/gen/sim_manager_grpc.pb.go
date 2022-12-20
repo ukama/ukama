@@ -7,7 +7,10 @@
 package gen
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,6 +22,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SimManagerServiceClient interface {
+	GetSimInfo(ctx context.Context, in *GetSimInfoRequest, opts ...grpc.CallOption) (*GetSimInfoResponse, error)
+	ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error)
+	DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error)
+	GetSimUsage(ctx context.Context, in *GetSimUsageRequest, opts ...grpc.CallOption) (*GetSimUsageResponse, error)
 }
 
 type simManagerServiceClient struct {
@@ -29,10 +36,50 @@ func NewSimManagerServiceClient(cc grpc.ClientConnInterface) SimManagerServiceCl
 	return &simManagerServiceClient{cc}
 }
 
+func (c *simManagerServiceClient) GetSimInfo(ctx context.Context, in *GetSimInfoRequest, opts ...grpc.CallOption) (*GetSimInfoResponse, error) {
+	out := new(GetSimInfoResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSimInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error) {
+	out := new(ActivateSimResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/ActivateSim", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error) {
+	out := new(DeactivateSimResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/DeactivateSim", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) GetSimUsage(ctx context.Context, in *GetSimUsageRequest, opts ...grpc.CallOption) (*GetSimUsageResponse, error) {
+	out := new(GetSimUsageResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSimUsage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SimManagerServiceServer is the server API for SimManagerService service.
 // All implementations must embed UnimplementedSimManagerServiceServer
 // for forward compatibility
 type SimManagerServiceServer interface {
+	GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error)
+	ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error)
+	DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error)
+	GetSimUsage(context.Context, *GetSimUsageRequest) (*GetSimUsageResponse, error)
 	mustEmbedUnimplementedSimManagerServiceServer()
 }
 
@@ -40,6 +87,18 @@ type SimManagerServiceServer interface {
 type UnimplementedSimManagerServiceServer struct {
 }
 
+func (UnimplementedSimManagerServiceServer) GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSimInfo not implemented")
+}
+func (UnimplementedSimManagerServiceServer) ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ActivateSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeactivateSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) GetSimUsage(context.Context, *GetSimUsageRequest) (*GetSimUsageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSimUsage not implemented")
+}
 func (UnimplementedSimManagerServiceServer) mustEmbedUnimplementedSimManagerServiceServer() {}
 
 // UnsafeSimManagerServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -53,13 +112,102 @@ func RegisterSimManagerServiceServer(s grpc.ServiceRegistrar, srv SimManagerServ
 	s.RegisterService(&SimManagerService_ServiceDesc, srv)
 }
 
+func _SimManagerService_GetSimInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSimInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).GetSimInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetSimInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).GetSimInfo(ctx, req.(*GetSimInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_ActivateSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ActivateSimRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).ActivateSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/ActivateSim",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).ActivateSim(ctx, req.(*ActivateSimRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_DeactivateSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeactivateSimRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).DeactivateSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/DeactivateSim",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).DeactivateSim(ctx, req.(*DeactivateSimRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_GetSimUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSimUsageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).GetSimUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetSimUsage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).GetSimUsage(ctx, req.(*GetSimUsageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SimManagerService_ServiceDesc is the grpc.ServiceDesc for SimManagerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ukama.sim_manager.v1.SimManagerService",
 	HandlerType: (*SimManagerServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "sim_manager.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetSimInfo",
+			Handler:    _SimManagerService_GetSimInfo_Handler,
+		},
+		{
+			MethodName: "ActivateSim",
+			Handler:    _SimManagerService_ActivateSim_Handler,
+		},
+		{
+			MethodName: "DeactivateSim",
+			Handler:    _SimManagerService_DeactivateSim_Handler,
+		},
+		{
+			MethodName: "GetSimUsage",
+			Handler:    _SimManagerService_GetSimUsage_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "sim_manager.proto",
 }

@@ -10,4 +10,42 @@ import "google/protobuf/wrappers.proto";
 package ukama.sim_manager.v1;
 
 service SimManagerService {
+    rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
+    rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
+    rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
+    rpc GetSimUsage(GetSimUsageRequest) returns (GetSimUsageResponse);
+}
+
+message ActivateSimRequest {
+    string user_id = 1;
+}
+
+message ActivateSimResponse{}
+
+
+message GetSimInfoRequest {
+    string iccid = 1 [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message GetSimInfoResponse {
+    string iccid = 1;
+    string imsi = 2;
+}
+
+
+message DeactivateSimRequest {
+    string iccid = 1  [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message DeactivateSimResponse{
+}
+
+
+message GetSimUsageRequest{
+    string iccid = 1  [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message GetSimUsageResponse {
+    int64 DataUsageInBytes  = 1;
+    int64 DataTotalInBytes  = 2;
 }

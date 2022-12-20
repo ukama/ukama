@@ -10,9 +10,54 @@ import (
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	regexp "regexp"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+func (this *ActivateSimRequest) Validate() error {
+	return nil
+}
+func (this *ActivateSimResponse) Validate() error {
+	return nil
+}
+
+var _regex_GetSimInfoRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+
+func (this *GetSimInfoRequest) Validate() error {
+	if !_regex_GetSimInfoRequest_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	}
+	return nil
+}
+func (this *GetSimInfoResponse) Validate() error {
+	return nil
+}
+
+var _regex_DeactivateSimRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+
+func (this *DeactivateSimRequest) Validate() error {
+	if !_regex_DeactivateSimRequest_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	}
+	return nil
+}
+func (this *DeactivateSimResponse) Validate() error {
+	return nil
+}
+
+var _regex_GetSimUsageRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+
+func (this *GetSimUsageRequest) Validate() error {
+	if !_regex_GetSimUsageRequest_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	}
+	return nil
+}
+func (this *GetSimUsageResponse) Validate() error {
+	return nil
+}
