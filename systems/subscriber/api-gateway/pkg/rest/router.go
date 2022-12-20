@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/cmd/version"
+	pb "github.com/ukama/ukama/systems/subscriber/api-gateway/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/client"
 	"github.com/wI2L/fizz/openapi"
@@ -38,6 +40,10 @@ type Clients struct {
 }
 
 type simPool interface {
+	GetSimPoolStats(req *pb.GetStatsRequest) (*pb.GetStatsResponse, error)
+	AddSimsToSimPool(req *pb.AddRequest) (*pb.AddResponse, error)
+	UploadSimsToSimPool(req *pb.UploadRequest) (*pb.UploadResponse, error)
+	DeleteSimFromSimPool(req *pb.DeleteRequest) (*pb.DeleteResponse, error)
 }
 
 type simManager interface {
@@ -128,19 +134,82 @@ func (r *Router) getAllSims(c *gin.Context, req *SimListReq) (*SimListResp, erro
 }
 
 func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolStatByTypeReq) (*SimPoolStats, error) {
-	return nil, nil
+	resp, err := r.clients.sp.GetSimPoolStats(&pb.GetStatsRequest{
+		SimType: pb.SimType_inter_mno_all,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &SimPoolStats{
+		Total:     uint64(resp.Total),
+		Available: uint64(resp.Available),
+		Consumed:  uint64(resp.Available),
+		Failed:    uint64(resp.Failed),
+	}, nil
 }
 
-func (r *Router) addSimsToSimPool(c *gin.Context) error {
-	return nil
+func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*SimPoolAddSimResp, error) {
+
+	pbreq, err := addReqToAddSimReqPb(req)
+	if err != nil {
+		return nil, err
+	}
+
+	pbResp, err := r.clients.sp.AddSimsToSimPool(pbreq)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := addSimRespTojsonSimArray(pbResp.Iccid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SimPoolAddSimResp{
+		Iccids: resp,
+	}, nil
 }
 
 func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*SimPoolUploadSimResp, error) {
-	return nil, nil
+
+	bodyBytes, err := ioutil.ReadAll(c.Request.Body)
+	c.Request.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// CSV file itself not URL
+	pbResp, err := r.clients.sp.UploadSimsToSimPool(&pb.UploadRequest{
+		SimPoolData: bodyBytes,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := addSimRespTojsonSimArray(pbResp.Iccid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SimPoolUploadSimResp{
+		Iccids: resp,
+	}, nil
+
 }
 
 func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) (*SimPoolRemoveSimResp, error) {
-	return nil, nil
+
+	pbResp, err := r.clients.sp.DeleteSimFromSimPool(&pb.DeleteRequest{
+		Iccid: req.Iccids,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &SimPoolRemoveSimResp{
+		Iccids: pbResp.Iccid,
+	}, nil
 }
 
 func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*SubscriberGetResp, error) {
@@ -177,4 +246,42 @@ func (r *Router) deleteSim(c *gin.Context, req *SubscriberSimDeleteReq) error {
 
 func (r *Router) patchSim(c *gin.Context, req *SubscriberSimUpdateStateReq) error {
 	return nil
+}
+
+func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*pb.AddRequest, error) {
+
+	if req == nil {
+		return nil, fmt.Errorf("invalid add request")
+	}
+
+	reqSimInfo := make([]*pb.SimInfo, len(req.SimInfo))
+
+	for idx, iter := range req.SimInfo {
+		reqSimInfo[idx].Iccid = iter.Iccid
+		reqSimInfo[idx].Msisdn = iter.Msidn
+		// simInfo := pb.AddSimPool{
+		// 	Iccid: iter.Iccid,
+		// 	Msisdn: iter.Msidn,
+		// }
+		//reqSimInfo[idx].SimType= iter.SimType //TODO: tarnslate to enum or use some util string to enum
+		//reqSimInfo[idx] = &simInfo
+	}
+
+	pbReq := &pb.AddRequest{
+		SimInfo: reqSimInfo,
+	}
+
+	return pbReq, nil
+}
+
+func addSimRespTojsonSimArray(req []string) ([]string, error) {
+
+	resp := make([]string, len(req))
+
+	for idx, iter := range req {
+		resp[idx] = iter
+	}
+
+	return resp, nil
+
 }

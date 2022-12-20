@@ -5,19 +5,10 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/SimPool/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/api-gateway/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
-
-/* temp */
-type SPDummyReq struct {
-	Dummy string
-}
-
-type SPDummyResp struct {
-	Dummy string
-}
 
 type SimPool struct {
 	conn    *grpc.ClientConn
@@ -57,30 +48,30 @@ func (sp *SimPool) Close() {
 	sp.conn.Close()
 }
 
-func (sp *SimPool) GetSimPoolStats(req *SPDummyReq) (*SPDummyResp, error) {
+func (sp *SimPool) GetSimPoolStats(req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.AddOrg(ctx, req)
+	return sp.client.GetStats(ctx, req)
 }
 
-func (sp *SimPool) AddSimsToSimPool(req *SPDummyReq) (*SPDummyResp, error) {
+func (sp *SimPool) AddSimsToSimPool(req *pb.AddRequest) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.UpdateOrg(ctx, req)
+	return sp.client.Add(ctx, req)
 }
 
-func (sp *SimPool) UploadSimsToSimPool(req *SPDummyReq) (*SPDummyResp, error) {
+func (sp *SimPool) UploadSimsToSimPool(req *pb.UploadRequest) (*pb.UploadResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.GetOrg(ctx, req)
+	return sp.client.Upload(ctx, req)
 }
 
-func (sp *SimPool) deleteSimFromSimPool(req *SPDummyReq) (*SPDummyResp, error) {
+func (sp *SimPool) DeleteSimFromSimPool(req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.AddNodeForOrg(ctx, req)
+	return sp.client.Delete(ctx, req)
 }

@@ -6,11 +6,21 @@ import (
 	"github.com/google/uuid"
 )
 
+type SimInfo struct {
+	Iccid          string `json:"iccid" validate:"required"`
+	SimType        string `json:"simType" validate:"required"`
+	Msidn          string `json:"msidn" validate:"required"`
+	SmDpAddress    string `json:"smdpAddress" validate:"required"`
+	ActivationCode string `json:"activationCode" validate:"required"`
+	QrCode         string `json:"qrcode" validate:"required"`
+	
+}
+
 type SimPoolStats struct {
-	Count     int32 `json:"count"`
-	Available int32 `json:"available"`
-	Consumed  int32 `json:"consumed"`
-	Failed    int32 `json:"failed"`
+	Total     uint64 `json:"count"`
+	Available uint64 `json:"available"`
+	Consumed  uint64 `json:"consumed"`
+	Failed    uint64 `json:"failed"`
 }
 
 type SIM struct {
@@ -21,8 +31,8 @@ type SIM struct {
 	SimManager        string    `json:"simManager" validate:"required"`
 	OrgId             uuid.UUID `json:"orgId" validate:"required"`
 	NetworkId         uuid.UUID `json:"networkId" validate:"required"`
-	ActivationCount   int32     `json:"activationCount" validate:"required"`
-	DeactivationCount int32     `json:"DeactivationCount" validate:"required"`
+	ActivationCount   uint64    `json:"activationCount" validate:"required"`
+	DeactivationCount uint64    `json:"DeactivationCount" validate:"required"`
 	FirstActivatedOn  time.Time `json:"firstActivedOn" validate:"required"`
 	LastActivationOn  time.Time `json:"lastActivationOn" validate:"required"`
 	Msidn             string    `json:"msidn" validate:"required"`
@@ -54,17 +64,25 @@ type SimPoolStatByTypeReq struct {
 }
 
 type SimPoolRemoveSimReq struct {
-	Sims []uuid.UUID `json:"sims"`
+	Iccids []string `json:"iccids"`
 }
 
 type SimPoolRemoveSimResp struct {
-	Sims []uuid.UUID `json:"sims"`
+	Iccids []string `json:"iccids"`
 }
 type SimPoolUploadSimReq struct {
 }
 
 type SimPoolUploadSimResp struct {
-	Sims []uuid.UUID `json:"sims"`
+	Iccids []string `json:"iccids"`
+}
+
+type SimPoolAddSimReq struct {
+	SimInfo []SimInfo
+}
+
+type SimPoolAddSimResp struct {
+	Iccids []string `json:"iccids"`
 }
 
 type SubscriberAddReq struct {
