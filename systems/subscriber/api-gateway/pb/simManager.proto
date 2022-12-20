@@ -1,0 +1,11 @@
+syntax = "proto3";
+package ukama.subscriber.v1;
+option go_package = "pb/gen";
+
+service SimManagerService {
+   rpc DummyRPC(Dummy) returns(Dummy) {}
+}
+
+message Dummy {
+    string Id =1;
+}

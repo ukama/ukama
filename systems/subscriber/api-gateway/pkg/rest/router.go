@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
@@ -37,6 +39,7 @@ type RouterConfig struct {
 type Clients struct {
 	sp simPool
 	sm simManager
+	sr subscriberRegistry
 }
 
 type simPool interface {
@@ -49,10 +52,17 @@ type simPool interface {
 type simManager interface {
 }
 
+type subscriberRegistry interface {
+	GetSubscriber(req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error)
+	AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error)
+	DeleteSubscriber(req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error)
+}
+
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.sp = client.NewSimPool(endpoints.SimPool, endpoints.Timeout)
 	c.sm = client.NewSimManager(endpoints.SimManager, endpoints.Timeout)
+	c.sr = client.NewSubscriberRegistry(endpoints.SubscriberRegistry, endpoints.Timeout)
 	return c
 }
 
@@ -213,15 +223,61 @@ func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) 
 }
 
 func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*SubscriberGetResp, error) {
-	return nil, nil
+	subsId := req.SubscriberId.String()
+
+	pbResp, err := r.clients.sr.GetSubscriber(&pb.GetSubscriberRequest{
+		SubscriberId: subsId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	a
+	dteString := "01-30-2023"
+	dob, _ := time.Parse(pbResp.Subscriber.Dob, dateString)
+
+	return &SubscriberGetResp{
+		Subscriber{
+			SubscriberId:          req.SubscriberId,
+			Name:                  pbResp.Subscriber.Name,
+			EMail:                 pbResp.Subscriber.Email,
+			PhoneNumber:           pbResp.Subscriber.Phone,
+			DOB:                   dob,
+			Address:               pbResp.Subscriber.Address,
+			ProofOfIdentification: pbResp.Subscriber.ProofOfIdentitification,
+			ProofSerialNumber:     pbResp.Subscriber.ProofSerialNumber,
+			SimList:               nil,
+		},
+	}, nil
 }
 
 func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*SubscriberAddResp, error) {
-	return nil, nil
+
+	dob := req.DOB.String()
+
+	pbResp, err := r.clients.sr.AddSubscriber(&pb.AddSubscriberRequest{Name: req.Name,
+		Email:                   req.Email,
+		Phone:                   req.Phone,
+		Dob:                     dob,
+		Address:                 req.Address,
+		ProofOfIdentitification: req.ProofOfIdentification,
+		ProofSerialNumber:       req.ProofSerialNumber})
+	if err != nil {
+		return nil, err
+	}
+
+	subsId, _ := uuid.Parse(pbResp.SubscriberId)
+	return &SubscriberAddResp{
+		SubscriberId: subsId,
+	}, nil
 }
 
 func (r *Router) deleteSubscriber(c *gin.Context, req *SubscriberDeleteReq) error {
-	return nil
+	subsId := req.SubscriberId.String()
+	_, err := r.clients.sr.DeleteSubscriber(&pb.DeleteSubscriberRequest{
+		SubscriberId: subsId,
+	})
+
+	return err
 }
 
 func (r *Router) getSim(c *gin.Context, req *SubscriberSimReadReq) (*SubscriberSimReadResp, *error) {

@@ -57,27 +57,6 @@ func (sm *SimManager) Close() {
 	sm.conn.Close()
 }
 
-func (sm *SimManager) GetSubscriber(req *SMDummyReq) (*SMDummyResp, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.AddOrg(ctx, req)
-}
-
-func (sm *SimManager) AddSubscriber(req *SMDummyReq) (*SMDummyResp, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.UpdateOrg(ctx, req)
-}
-
-func (sm *SimManager) DeleteSubscriber(req *SMDummyReq) (*SMDummyResp, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.GetOrg(ctx, req)
-}
-
 func (sm *SimManager) GetSim(req *SMDummyReq) (*SMDummyResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()

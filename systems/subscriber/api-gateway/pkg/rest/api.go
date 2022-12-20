@@ -13,7 +13,6 @@ type SimInfo struct {
 	SmDpAddress    string `json:"smdpAddress" validate:"required"`
 	ActivationCode string `json:"activationCode" validate:"required"`
 	QrCode         string `json:"qrcode" validate:"required"`
-	
 }
 
 type SimPoolStats struct {
@@ -50,11 +49,11 @@ type Package struct {
 type Subscriber struct {
 	SubscriberId          uuid.UUID `json:"subscriberId" validate:"required"`
 	Name                  string    `json:"name" validate:"required"`
-	EMail                 string    `json:"email" validate:"email,required"`
-	PhoneNumber           string    `json:"phone" validate:"required"`
+	Email                 string    `json:"email" validate:"email,required"`
+	Phone                 string    `json:"phone" validate:"required"`
 	DOB                   time.Time `json:"dob" validate:"required"`
 	ProofOfIdentification string    `json:"proofOfId" validate:"required"`
-	IdSerial              string    `json:"idSerial" validate:"required"`
+	ProofSerialNumber     string    `json:"proofSerial" validate:"required"`
 	Address               string    `json:"address" validate:"required"`
 	SimList               []SIM     `json:"sims" validate:"required"`
 }
@@ -87,11 +86,11 @@ type SimPoolAddSimResp struct {
 
 type SubscriberAddReq struct {
 	Name                  string    `json:"name" validate:"required"`
-	EMail                 string    `json:"email" validate:"required"`
-	PhoneNumber           string    `json:"phone" validate:"required"`
+	Email                 string    `json:"email" validate:"required"`
+	Phone                 string    `json:"phone" validate:"required"`
 	DOB                   time.Time `json:"dob" validate:"required"`
 	ProofOfIdentification string    `json:"proofOfId" validate:"required"`
-	IdSerial              string    `json:"idSerial" validate:"required"`
+	ProofSerialNumber     string    `json:"proofSerial" validate:"required"`
 	Address               string    `json:"address" validate:"required"`
 }
 
