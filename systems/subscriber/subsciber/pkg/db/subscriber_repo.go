@@ -1,15 +1,17 @@
 package db
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
 )
 
 type SubscriberRepo interface {
 	Add(subscriber *Subscriber) error
-	Get(subscriberId string) (*Subscriber, error)
-	Delete(subscriberId string) error
-	Update(subscriberId string, sub Subscriber) (*Subscriber, error)
+	Get(subscriberID string) (*Subscriber, error)
+	Delete(subscriberID string) error
+	Update(subscriberID string, sub Subscriber) (*Subscriber, error)
+	GetByNetwork(networkID uuid.UUID) ([]Subscriber, error)
 }
 
 type subscriberRepo struct {
@@ -58,4 +60,12 @@ func (b *subscriberRepo) Update(subscriberId string, sub Subscriber) (*Subscribe
 
 	return &sub, nil
 }
+func (s *subscriberRepo) GetByNetwork(networkID uuid.UUID) ([]Subscriber, error) {
+	var subscribers []Subscriber
+	result := s.Db.GetGormDb().Where(&Subscriber{NetworkID: networkID}).Find(&subscribers)
 
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return subscribers, nil
+}

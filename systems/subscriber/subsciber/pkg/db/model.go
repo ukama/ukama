@@ -12,7 +12,7 @@ type Subscriber struct {
 	SubscriberID          uuid.UUID `gorm:"type:uuid"`
 	FirstName             string
 	LastName              string
-	SimID          uuid.UUID `gorm:"type:uuid"`
+	NetworkID          uuid.UUID `gorm:"type:uuid"`
 	Email                 string
 	PhoneNumber           string
 	Gender                string
