@@ -79,15 +79,14 @@ message Subscriber{
 }
 
 message Sim {
-    string simId = 1;
-    string subscriberId = 2;
+    string simID = 1 [json_name = "sim_id"];
+    string subscriberID = 2 [json_name = "subscriber_id"];
     string simType = 4;
     string created_at=5;
     string deleted_at=6;
     string updated_at=7;
     string simManager=8;
-    string networkId = 10;
-    string orgId = 11;
+    string orgID = 11 [json_name = "org_id"];
     string activationsCount = 12;
     string deactivationsCount = 13;
     string firstActivatedOn = 14;
