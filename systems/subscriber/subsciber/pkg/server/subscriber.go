@@ -81,14 +81,9 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	logrus.Infof("Update Subscriber Id: %v, FullName: %v, Email: %v, Email: %v, ProofOfIdentification: %v, Address: %v, DateOfBith: %v",
 		req.Email, req.ProofOfIdentification, req.Address)
 
-	simID, err := uuid.FromString(req.GetSimID())
-	if err != nil {
-		logrus.Error("Error while parsing simID from string to uuid", err.Error())
-	}
 	subscriber := db.Subscriber{
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
-		SimID:                 simID,
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
 		IdSerial:              req.GetIdSerial(),

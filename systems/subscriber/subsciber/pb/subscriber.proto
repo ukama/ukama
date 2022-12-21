@@ -12,15 +12,22 @@ service SubscriberService {
     rpc Add (AddSubscriberRequest) returns (AddSubscriberResponse){}
     rpc Update(UpdateSubscriberRequest) returns (UpdateSubscriberResponse){}
     rpc Delete (DeleteSubscriberRequest) returns (DeleteSubscriberResponse){}
+    rpc getByNetwork(GetByNetworkRequest) returns(GetByNetworkResponse){}
 }
 
 message DeleteSubscriberRequest{
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
 
 }
+message GetByNetworkRequest{
+    string networkID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+
+}
+message GetByNetworkResponse{
+    Subscriber subscriber  = 1;
+}
 message DeleteSubscriberResponse{
     string subscriberID = 1 [json_name = "subscriber_id"];
-
 }
 message GetSubscriberRequest{
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
@@ -46,8 +53,6 @@ message UpdateSubscriberRequest{
     string phoneNumber = 5  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string address  = 6; 
     string IdSerial =8;
-    string packageId=9;
-    string simID = 10[(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
     string proofOfIdentification =11;
     google.protobuf.Timestamp date_of_birth = 12;
 
