@@ -1,6 +1,11 @@
 syntax = "proto3";
-package ukama.subscriber.v1;
 option go_package = "pb/gen";
+
+import "validator.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+package ukama.subscriber.v1;
 
 service SubscriberService {
     rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
@@ -10,78 +15,76 @@ service SubscriberService {
 }
 
 message DeleteSubscriberRequest{
-    string subscriberid  = 1;
+    string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+
 }
 message DeleteSubscriberResponse{
-    string subscriberid  = 1;
+    string subscriberID = 1 [json_name = "subscriber_id"];
+
 }
 message GetSubscriberRequest{
-    string subscriberid  = 1;
+    string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
 }
 message GetSubscriberResponse{
     Subscriber subscriber  = 1;
 }
 message AddSubscriberRequest{
-    string firstName  = 1;
-    string lastName=2;
-    string email  = 3;
-    string phoneNumber  = 4;
+    string firstName = 1 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    string lastName = 2 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+    string phoneNumber = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string address  = 5; 
     string IdSerial =6;
-    string proofOfIdentification =7;
-    string date_of_bith = 8;
-    string gender =9;
-
-    
+    string proofOfIdentification =7 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];;
+    google.protobuf.Timestamp date_of_birth = 8 ;
+    string gender =9 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
 }
 message UpdateSubscriberRequest{
-    string subscriberId =1;
-    string firstName  = 2;
-    string lastName = 3;
-    string email  = 4;
-    string phoneNumber  = 5;
+    string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+    string email = 4  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+    string phoneNumber = 5  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string address  = 6; 
-    string simRef =7;
     string IdSerial =8;
     string packageId=9;
-    string sim =10;
+    string simID = 10[(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
     string proofOfIdentification =11;
-    string date_of_bith = 12;
+    google.protobuf.Timestamp date_of_birth = 12;
+
 }
 message UpdateSubscriberResponse{
     Subscriber subscriber  = 1;
 }
 message AddSubscriberResponse{
-    string subscriberid  =1;
+    string subscriberID = 1 [json_name = "subscriber_id"];
+
 }
 message Subscriber{
     uint64 id =1;
     string firstName  = 2;
     string lastName = 3;
-    string subscriberId=4;
-    string email  = 5;
-    string phoneNumber  = 6;
-    string address  = 7; 
-    string proofOfIdentification =8;
-    string created_at=9;
-    string deleted_at=10;
-    string updated_at=11;
-    repeated Sim sim = 12;
-    string date_of_bith = 13;
-    string IdSerial =14;
-    string gender =15;
+    string subscriberID = 4 [json_name = "subscriber_id"];
+    string networkId = 5;
+    string email  = 6;
+    string phoneNumber  = 7;
+    string address  = 8; 
+    string proofOfIdentification =9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp deleted_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+    repeated Sim sim = 13;
+    google.protobuf.Timestamp date_of_birth = 14;
+    string idSerial =15;
+    string gender =16;
 }
 
 message Sim {
     string simId = 1;
     string subscriberId = 2;
-    string simNumber = 3;
     string simType = 4;
     string created_at=5;
     string deleted_at=6;
     string updated_at=7;
-    string simProvider=8;
-    string Imsi=9;
+    string simManager=8;
     string networkId = 10;
     string orgId = 11;
     string activationsCount = 12;
@@ -90,7 +93,6 @@ message Sim {
     string lastActivatedOn = 15;
     string iccid = 16;
     string msisdn = 17;
-    string status = 18;    
     repeated Package package = 19;
     string State =20;
     string ActivePackageID =21;

@@ -7,6 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -15,13 +19,30 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_DeleteSubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *DeleteSubscriberRequest) Validate() error {
+	if !_regex_DeleteSubscriberRequest_SubscriberID.MatchString(this.SubscriberID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	}
+	if this.SubscriberID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	}
 	return nil
 }
 func (this *DeleteSubscriberResponse) Validate() error {
 	return nil
 }
+
+var _regex_GetSubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *GetSubscriberRequest) Validate() error {
+	if !_regex_GetSubscriberRequest_SubscriberID.MatchString(this.SubscriberID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	}
+	if this.SubscriberID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	}
 	return nil
 }
 func (this *GetSubscriberResponse) Validate() error {
@@ -32,10 +53,78 @@ func (this *GetSubscriberResponse) Validate() error {
 	}
 	return nil
 }
+
+var _regex_AddSubscriberRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+var _regex_AddSubscriberRequest_PhoneNumber = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
+
 func (this *AddSubscriberRequest) Validate() error {
+	if this.FirstName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("FirstName", fmt.Errorf(`value '%v' must not be an empty string`, this.FirstName))
+	}
+	if !(len(this.FirstName) > 1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("FirstName", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.FirstName))
+	}
+	if this.LastName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("LastName", fmt.Errorf(`value '%v' must not be an empty string`, this.LastName))
+	}
+	if !(len(this.LastName) > 1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("LastName", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.LastName))
+	}
+	if !_regex_AddSubscriberRequest_Email.MatchString(this.Email) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
+	}
+	if !_regex_AddSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
+	}
+	if this.ProofOfIdentification == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("ProofOfIdentification", fmt.Errorf(`value '%v' must not be an empty string`, this.ProofOfIdentification))
+	}
+	if !(len(this.ProofOfIdentification) > 1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("ProofOfIdentification", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.ProofOfIdentification))
+	}
+	if this.DateOfBirth != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBirth); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBirth", err)
+		}
+	}
+	if this.Gender == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Gender", fmt.Errorf(`value '%v' must not be an empty string`, this.Gender))
+	}
+	if !(len(this.Gender) > 1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Gender", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Gender))
+	}
 	return nil
 }
+
+var _regex_UpdateSubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_UpdateSubscriberRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+var _regex_UpdateSubscriberRequest_PhoneNumber = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
+var _regex_UpdateSubscriberRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *UpdateSubscriberRequest) Validate() error {
+	if !_regex_UpdateSubscriberRequest_SubscriberID.MatchString(this.SubscriberID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	}
+	if this.SubscriberID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	}
+	if !_regex_UpdateSubscriberRequest_Email.MatchString(this.Email) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
+	}
+	if !_regex_UpdateSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
+	}
+	if !_regex_UpdateSubscriberRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
+	}
+	if this.DateOfBirth != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBirth); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBirth", err)
+		}
+	}
 	return nil
 }
 func (this *UpdateSubscriberResponse) Validate() error {
@@ -50,11 +139,31 @@ func (this *AddSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *Subscriber) Validate() error {
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
+	}
+	if this.DeletedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DeletedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DeletedAt", err)
+		}
+	}
+	if this.UpdatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.UpdatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("UpdatedAt", err)
+		}
+	}
 	for _, item := range this.Sim {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
 			}
+		}
+	}
+	if this.DateOfBirth != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBirth); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBirth", err)
 		}
 	}
 	return nil

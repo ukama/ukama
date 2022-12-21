@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 )
@@ -8,17 +10,14 @@ import (
 type Subscriber struct {
 	gorm.Model
 	SubscriberID          uuid.UUID `gorm:"type:uuid"`
-	FirstName 				  string
-	LastName                   string
-	SimID				  string
+	FirstName             string
+	LastName              string
+	SimID          uuid.UUID `gorm:"type:uuid"`
 	Email                 string
 	PhoneNumber           string
-	Gender				string
-	DOB                   string
+	Gender                string
+	DOB       time.Time `gorm:"column:dob"`
 	ProofOfIdentification string
 	IdSerial              string
 	Address               string
 }
-
-
-

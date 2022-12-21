@@ -2,15 +2,13 @@ package server
 
 import (
 	"context"
-	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg/db"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type SubcriberServer struct {
@@ -29,10 +27,6 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		logrus.Errorf("Failed to generate UUID: %s", err)
 		return nil, err
 	}
-	parsedDoB, err := time.Parse("2006-1-2", req.GetDateOfBith())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid date format!")
-	}
 
 	subscriber := &db.Subscriber{
 		SubscriberID:          uuid,
@@ -43,7 +37,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
-		DOB:                   parsedDoB.Format("2006-01-02"),
+		DOB:                   req.GetDateOfBirth().AsTime(),
 		IdSerial:              req.GetIdSerial(),
 	}
 	err = s.subscriberRepo.Add(subscriber)
@@ -51,11 +45,11 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		logrus.Error("error while adding subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	return &pb.AddSubscriberResponse{Subscriberid: uuid.String()}, nil
+	return &pb.AddSubscriberResponse{SubscriberID: uuid.String()}, nil
 
 }
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
-	subscriberID := req.GetSubscriberid()
+	subscriberID := req.GetSubscriberID()
 	logrus.Infof("Delete Subscriber : %v ", subscriberID)
 	err := s.subscriberRepo.Delete(subscriberID)
 	if err != nil {
@@ -67,7 +61,7 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
-	subscriberID := req.GetSubscriberid()
+	subscriberID := req.GetSubscriberID()
 
 	logrus.Infof("GetSubscriber : %v ", subscriberID)
 	subscriber, err := s.subscriberRepo.Get(subscriberID)
@@ -85,20 +79,22 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 }
 func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	logrus.Infof("Update Subscriber Id: %v, FullName: %v, Email: %v, Email: %v, ProofOfIdentification: %v, Address: %v, DateOfBith: %v",
-		req.FirstName, req.Email, req.Email, req.ProofOfIdentification, req.Address, req.DateOfBith)
+		req.Email, req.ProofOfIdentification, req.Address)
+
+	simID, err := uuid.FromString(req.GetSimID())
+	if err != nil {
+		logrus.Error("Error while parsing simID from string to uuid", err.Error())
+	}
 	subscriber := db.Subscriber{
-		FirstName:             req.GetFirstName(),
-		LastName:              req.GetLastName(),
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
-		SimID:                 req.GetSimRef(),
+		SimID:                 simID,
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
-		DOB:                   req.GetDateOfBith(),
 		IdSerial:              req.GetIdSerial(),
 	}
 
-	sub, err := s.subscriberRepo.Update(req.GetSubscriberId(), subscriber)
+	sub, err := s.subscriberRepo.Update(req.GetSubscriberID(), subscriber)
 	if err != nil {
 		logrus.Error("error while updating a subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
@@ -117,21 +113,40 @@ func dbsubscriberToPbSubscribers(subscriber []db.Subscriber) []*pb.Subscriber {
 }
 
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
+	createdAt, err := ptypes.TimestampProto(s.CreatedAt)
+	if err != nil {
+		return nil
+	}
 
+	updateAt, err := ptypes.TimestampProto(s.UpdatedAt)
+	if err != nil {
+		return nil
+	}
+
+	deleteAt, err := ptypes.TimestampProto(s.DeletedAt.Time)
+	if err != nil {
+		return nil
+	}
+
+	DOB, err := ptypes.TimestampProto(s.DOB)
+	if err != nil {
+		return nil
+	}
 	return &pb.Subscriber{
 		Id:                    uint64(s.ID),
 		FirstName:             s.FirstName,
 		LastName:              s.LastName,
 		Email:                 s.Email,
-		SubscriberId:          s.SubscriberID.String(),
+		SubscriberID:          s.SubscriberID.String(),
 		ProofOfIdentification: s.ProofOfIdentification,
 		PhoneNumber:           s.PhoneNumber,
 		IdSerial:              s.IdSerial,
 		Gender:                s.Gender,
 		Address:               s.Address,
-		CreatedAt:             s.CreatedAt.String(),
-		UpdatedAt:             s.UpdatedAt.String(),
-		DeletedAt:             s.DeletedAt.Time.String(),
-		DateOfBith:            s.DOB,
+		CreatedAt:             createdAt,
+		UpdatedAt:             updateAt,
+		DeletedAt:             deleteAt,
+		DateOfBirth:           DOB,
 	}
+
 }
