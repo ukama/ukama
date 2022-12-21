@@ -19,18 +19,29 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_ActivateSimRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *ActivateSimRequest) Validate() error {
+	if !_regex_ActivateSimRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
+	}
 	return nil
 }
 func (this *ActivateSimResponse) Validate() error {
 	return nil
 }
 
-var _regex_GetSimInfoRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+var _regex_GetSimInfoRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *GetSimInfoRequest) Validate() error {
-	if !_regex_GetSimInfoRequest_Iccid.MatchString(this.Iccid) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	if !_regex_GetSimInfoRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
 	}
 	return nil
 }
@@ -38,11 +49,14 @@ func (this *GetSimInfoResponse) Validate() error {
 	return nil
 }
 
-var _regex_DeactivateSimRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+var _regex_DeactivateSimRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *DeactivateSimRequest) Validate() error {
-	if !_regex_DeactivateSimRequest_Iccid.MatchString(this.Iccid) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	if !_regex_DeactivateSimRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
 	}
 	return nil
 }
@@ -50,11 +64,14 @@ func (this *DeactivateSimResponse) Validate() error {
 	return nil
 }
 
-var _regex_GetSimUsageRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+var _regex_GetSimUsageRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *GetSimUsageRequest) Validate() error {
-	if !_regex_GetSimUsageRequest_Iccid.MatchString(this.Iccid) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	if !_regex_GetSimUsageRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
 	}
 	return nil
 }
