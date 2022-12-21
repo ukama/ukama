@@ -30,8 +30,8 @@ func main() {
 	pkg.InstanceId = os.Getenv("POD_NAME")
 
 	initConfig()
-	rateDb := initDb()
-	runGrpcServer(rateDb)
+	simPoolDb := initDb()
+	runGrpcServer(simPoolDb)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
@@ -58,6 +58,7 @@ func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
 	err := d.Init(&db.SimPool{})
+
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}

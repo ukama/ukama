@@ -21,8 +21,8 @@ func NewSimPoolServer(simPoolRepo db.SimPoolRepo) *SimPoolServer {
 }
 
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
-	logrus.Infof("GetPoolStats : %v ", req.GetOrgId())
-	_, err := p.simPoolRepo.GetStats(req.GetOrgId(), req.GetSimType().String())
+	logrus.Infof("GetPoolStats : %v ", req.GetSimType())
+	_, err := p.simPoolRepo.GetStats(req.GetSimType().String())
 
 	if err != nil {
 		logrus.Error("error getting a simPool" + err.Error())

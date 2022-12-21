@@ -6,10 +6,11 @@ import (
 
 type SimPool struct {
 	gorm.Model
-	network_id   string
-	org_id       uint64
-	iccid        string
-	msisdn       string
-	is_allocated bool
-	sim_type     string
+	Iccid          string
+	Msisdn         string
+	Is_allocated   bool
+	Sim_type       string
+	SmDpAddress    string
+	ActivationCode string
+	QrCode         string
 }

@@ -6,7 +6,7 @@ import (
 )
 
 type SimPoolRepo interface {
-	GetStats(orgId uint64, SimType string) ([]SimPool, error)
+	GetStats(SimType string) ([]SimPool, error)
 	Add(simPools []SimPool) error
 	Delete(Id uint64) error
 }
@@ -21,9 +21,9 @@ func NeSimPoolRepo(db sql.Db) *simPoolRepo {
 	}
 }
 
-func (s *simPoolRepo) GetStats(orgId uint64, SimType string) ([]SimPool, error) {
+func (s *simPoolRepo) GetStats(SimType string) ([]SimPool, error) {
 	var simPool []SimPool
-	result := s.Db.GetGormDb().Where(&SimPool{org_id: orgId, sim_type: SimType}).Find(&simPool)
+	result := s.Db.GetGormDb().Where(&SimPool{Sim_type: SimType}).Find(&simPool)
 
 	if result.Error != nil {
 		return nil, result.Error

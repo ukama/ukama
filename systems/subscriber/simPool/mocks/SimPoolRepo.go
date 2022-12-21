@@ -40,13 +40,13 @@ func (_m *SimPoolRepo) Delete(Id uint64) error {
 	return r0
 }
 
-// GetStats provides a mock function with given fields: Id, SimType
-func (_m *SimPoolRepo) GetStats(Id uint64, SimType string) ([]db.SimPool, error) {
-	ret := _m.Called(Id, SimType)
+// GetStats provides a mock function with given fields: SimType
+func (_m *SimPoolRepo) GetStats(SimType string) ([]db.SimPool, error) {
+	ret := _m.Called(SimType)
 
 	var r0 []db.SimPool
-	if rf, ok := ret.Get(0).(func(uint64, string) []db.SimPool); ok {
-		r0 = rf(Id, SimType)
+	if rf, ok := ret.Get(0).(func(string) []db.SimPool); ok {
+		r0 = rf(SimType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.SimPool)
@@ -54,8 +54,8 @@ func (_m *SimPoolRepo) GetStats(Id uint64, SimType string) ([]db.SimPool, error)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint64, string) error); ok {
-		r1 = rf(Id, SimType)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(SimType)
 	} else {
 		r1 = ret.Error(1)
 	}
