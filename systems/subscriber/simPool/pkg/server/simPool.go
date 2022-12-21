@@ -22,17 +22,16 @@ func NewSimPoolServer(simPoolRepo db.SimPoolRepo) *SimPoolServer {
 
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetPoolStats : %v ", req.GetSimType())
-	_, err := p.simPoolRepo.GetStats(req.GetSimType().String())
+	simPool, err := p.simPoolRepo.GetStats(req.GetSimType().String())
 
 	if err != nil {
 		logrus.Error("error getting a simPool" + err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
+	resp := utils.SimPoolStats(simPool)
 
-	// resp := &pb.GetStatsResponse{}
-
-	return nil, nil
+	return resp, nil
 }
 
 func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
@@ -61,6 +60,16 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
 	return &pb.UploadResponse{SimPool: dbSimPoolsToPbSimPool(s)}, nil
+}
+
+func (p *SimPoolServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	logrus.Infof("Delete SimPool: %v", req.GetId())
+	err := p.simPoolRepo.Delete(req.GetId())
+	if err != nil {
+		logrus.Error("error while delete simPool data" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "simPool")
+	}
+	return &pb.DeleteResponse{Id: req.GetId()}, nil
 }
 
 func dbSimPoolsToPbSimPool(packages []db.SimPool) []*pb.SimPool {
