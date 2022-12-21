@@ -35,9 +35,10 @@ message AddSubscriberRequest{
     string phoneNumber = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string address  = 5; 
     string IdSerial =6;
-    string proofOfIdentification =7 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];;
-    google.protobuf.Timestamp date_of_birth = 8 ;
-    string gender =9 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    string networkID = 7 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+    string proofOfIdentification =8 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];;
+    google.protobuf.Timestamp date_of_birth = 9 ;
+    string gender =10 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
 }
 message UpdateSubscriberRequest{
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
@@ -63,7 +64,7 @@ message Subscriber{
     string firstName  = 2;
     string lastName = 3;
     string subscriberID = 4 [json_name = "subscriber_id"];
-    string networkId = 5;
+    string networkID = 5;
     string email  = 6;
     string phoneNumber  = 7;
     string address  = 8; 
