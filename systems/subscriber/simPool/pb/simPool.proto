@@ -1,6 +1,6 @@
 syntax = "proto3";
-package ukama.simPool.v1;
 option go_package = "pb/gen";
+package ukama.simPool.v1;
 
 service SimPoolService {
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
@@ -30,8 +30,7 @@ message DeleteResponse {
     uint64 id =1;
 }
 message UploadRequest{
-    string fileUrl = 1;
-    SimType simType = 2;
+    bytes simPoolData = 1;
 }
 message UploadResponse {
     repeated SimPool simPool = 1;

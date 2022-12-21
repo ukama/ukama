@@ -36,23 +36,18 @@ func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (
 
 func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	logrus.Infof("Add SimPool : %v ", req.SimPool)
-
 	result := utils.PbParseToModel(req.SimPool)
 	err := p.simPoolRepo.Add(result)
 	if err != nil {
 		logrus.Error("error adding a simPool" + err.Error())
-
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
-
 	resp := &pb.AddResponse{SimPool: dbSimPoolsToPbSimPool(result)}
-
 	return resp, nil
 }
 
 func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
-	logrus.Infof("Upload SimPool: %v", req.GetFileUrl())
-
+	// logrus.Infof("Upload SimPool: %v", req.GetFileUrl())
 	var s []db.SimPool
 	err := p.simPoolRepo.Add(s)
 	if err != nil {
@@ -81,5 +76,17 @@ func dbSimPoolsToPbSimPool(packages []db.SimPool) []*pb.SimPool {
 }
 
 func dbSimPoolToPbSimPool(p *db.SimPool) *pb.SimPool {
-	return &pb.SimPool{}
+	return &pb.SimPool{
+		Id:             uint64(p.ID),
+		Iccid:          p.Iccid,
+		Msisdn:         p.Msisdn,
+		IsAllocated:    p.Is_allocated,
+		SmDpAddress:    p.SmDpAddress,
+		ActivationCode: p.ActivationCode,
+		QrCode:         p.QrCode,
+		CreatedAt:      p.CreatedAt.String(),
+		UpdatedAt:      p.UpdatedAt.String(),
+		DeletedAt:      p.DeletedAt.Time.String(),
+		SimType:        pb.SimType(pb.SimType_value[p.Sim_type]),
+	}
 }
