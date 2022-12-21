@@ -74,8 +74,24 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 
 	resp := &pb.GetSubscriberResponse{Subscriber: dbSubscriberToPbSubscribers(subscriber)}
 
-	return resp, nil
+	return resp,nil
 
+}
+func (s *SubcriberServer) GetByNetwork(ctx context.Context,req *pb.GetByNetworkRequest)(*pb.GetByNetworkResponse,error){
+	logrus.Infof("Get subscribers by network: %v ", req.GetNetworkID())
+    networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
+
+	subscribers, err := s.subscriberRepo.GetByNetwork(networkID_uuid)
+	if err != nil {
+		logrus.Error("error while getting subscribers by network" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "subscribers")
+	}
+
+	subscriberList := &pb.GetByNetworkResponse{
+		Subscribers: dbsubscriberToPbSubscribers(subscribers),
+	}
+
+	return subscriberList,nil
 }
 func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	logrus.Infof("Update Subscriber Id: %v, FullName: %v, Email: %v, Email: %v, ProofOfIdentification: %v, Address: %v, DateOfBith: %v",

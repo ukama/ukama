@@ -24,7 +24,7 @@ message GetByNetworkRequest{
 
 }
 message GetByNetworkResponse{
-    Subscriber subscriber  = 1;
+    repeated Subscriber subscribers  = 1;
 }
 message DeleteSubscriberResponse{
     string subscriberID = 1 [json_name = "subscriber_id"];

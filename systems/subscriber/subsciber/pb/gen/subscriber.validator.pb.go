@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -43,9 +43,11 @@ func (this *GetByNetworkRequest) Validate() error {
 	return nil
 }
 func (this *GetByNetworkResponse) Validate() error {
-	if this.Subscriber != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
+	for _, item := range this.Subscribers {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Subscribers", err)
+			}
 		}
 	}
 	return nil
