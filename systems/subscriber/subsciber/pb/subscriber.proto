@@ -12,7 +12,7 @@ service SubscriberService {
     rpc Add (AddSubscriberRequest) returns (AddSubscriberResponse){}
     rpc Update(UpdateSubscriberRequest) returns (UpdateSubscriberResponse){}
     rpc Delete (DeleteSubscriberRequest) returns (DeleteSubscriberResponse){}
-    rpc getByNetwork(GetByNetworkRequest) returns(GetByNetworkResponse){}
+    rpc GetByNetwork(GetByNetworkRequest) returns(GetByNetworkResponse){}
 }
 
 message DeleteSubscriberRequest{

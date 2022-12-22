@@ -75,7 +75,7 @@ func (c *subscriberServiceClient) Delete(ctx context.Context, in *DeleteSubscrib
 
 func (c *subscriberServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
 	out := new(GetByNetworkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.v1.SubscriberService/getByNetwork", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.v1.SubscriberService/GetByNetwork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func _SubscriberService_GetByNetwork_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.v1.SubscriberService/getByNetwork",
+		FullMethod: "/ukama.subscriber.v1.SubscriberService/GetByNetwork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SubscriberServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
@@ -240,7 +240,7 @@ var SubscriberService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SubscriberService_Delete_Handler,
 		},
 		{
-			MethodName: "getByNetwork",
+			MethodName: "GetByNetwork",
 			Handler:    _SubscriberService_GetByNetwork_Handler,
 		},
 	},
