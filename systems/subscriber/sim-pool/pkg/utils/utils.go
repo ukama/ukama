@@ -2,8 +2,8 @@ package utils
 
 import (
 	"github.com/jszwec/csvutil"
-	pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/db"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 )
 
 func PoolStats(slice []db.Sim) *pb.GetStatsResponse {

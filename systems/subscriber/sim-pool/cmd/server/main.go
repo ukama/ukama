@@ -6,20 +6,20 @@ import (
 	uconf "github.com/ukama/ukama/systems/common/config"
 
 	"github.com/num30/config"
-	pkg "github.com/ukama/ukama/systems/subscriber/simPool/pkg"
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/server"
+	pkg "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/server"
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/subscriber/simPool/cmd/version"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version"
 
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
+	generated "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"google.golang.org/grpc"
 )
 

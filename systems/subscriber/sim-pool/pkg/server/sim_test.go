@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/subscriber/simPool/mocks"
-	pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/mocks"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 
 	"context"
 )
@@ -40,7 +40,7 @@ func TestGetStats_Error(t *testing.T) {
 	reqMock := &pb.GetStatsRequest{
 		SimType: pb.SimType_inter_mno_data,
 	}
-	mockRepo.On("GetStats", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("SimPool record not found!"), "simPool"))
+	mockRepo.On("GetStats", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("SimPool record not found!"), "sim-pool"))
 	res, err := simService.GetStats(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
@@ -64,7 +64,7 @@ func TestDelete_Error(t *testing.T) {
 	reqMock := &pb.DeleteRequest{
 		Id: []uint64{1},
 	}
-	mockRepo.On("Delete", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error while deleting record!"), "simPool"))
+	mockRepo.On("Delete", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error while deleting record!"), "sim-pool"))
 	res, err := simService.Delete(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
@@ -108,7 +108,7 @@ func TestAdd_Error(t *testing.T) {
 			},
 		},
 	}
-	mockRepo.On("Add", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error creating sims"), "simPool"))
+	mockRepo.On("Add", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error creating sims"), "sim-pool"))
 	res, err := simService.Add(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)

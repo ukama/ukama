@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/db"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 )
 
 func TestSimPoolStats_Success(t *testing.T) {

@@ -1,14 +1,14 @@
 package server
 
 import (
-	pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 
 	"context"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/db"
-	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/utils"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/utils"
 )
 
 type SimServer struct {
@@ -27,7 +27,7 @@ func (p *SimServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.
 	if err != nil {
 		logrus.Error("error getting a sim pool stats" + err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "simPool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 	resp := utils.PoolStats(sim)
 
@@ -40,7 +40,7 @@ func (p *SimServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 	err := p.simRepo.Add(result)
 	if err != nil {
 		logrus.Error("error adding a sims" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "simPool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 	resp := &pb.AddResponse{Sim: dbSimsToPbSim(result)}
 	return resp, nil
@@ -54,7 +54,7 @@ func (p *SimServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.Uplo
 	err := p.simRepo.Add(s)
 	if err != nil {
 		logrus.Error("error while Upload sims data" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "simPool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 	return &pb.UploadResponse{Sim: dbSimsToPbSim(s)}, nil
 }
@@ -64,7 +64,7 @@ func (p *SimServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Dele
 	err := p.simRepo.Delete(req.GetId())
 	if err != nil {
 		logrus.Error("error while delete sims data" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "simPool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 	return &pb.DeleteResponse{Id: req.GetId()}, nil
 }

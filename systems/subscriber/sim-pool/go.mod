@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/systems/subscriber/simPool
+module github.com/ukama/ukama/systems/subscriber/sim-pool
 
 go 1.19
 
