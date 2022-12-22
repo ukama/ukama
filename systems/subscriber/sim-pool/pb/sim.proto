@@ -9,7 +9,7 @@ service SimService {
     rpc Upload(UploadRequest) returns (UploadResponse){}
 }
 message GetStatsRequest{
-    SimType simType = 2;
+    SimType simType = 1;
 }
 message GetStatsResponse {
     uint64 total = 1;
@@ -60,8 +60,9 @@ message AddSim{
     bool isPhysicalSim=12;
 }
 enum SimType {
-    inter_none=0;
-    inter_mno_data=1;
-    inter_mno_all=2;
-    inter_ukama_all=3;
+    any=0;
+    inter_none=1;
+    inter_mno_data=2;
+    inter_mno_all=3;
+    inter_ukama_all=4;
 }
