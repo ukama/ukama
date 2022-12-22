@@ -1,9 +1,6 @@
 package utils
 
 import (
-	"io"
-	"net/http"
-
 	"github.com/jszwec/csvutil"
 	pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/db"
@@ -49,18 +46,6 @@ type RawSim struct {
 	SmDpAddress    string `csv:"SmDpAddress"`
 	ActivationCode string `csv:"ActivationCode"`
 	IsPhysical     string `csv:"IsPhysical"`
-}
-
-func FetchData(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	content, _ := io.ReadAll(resp.Body)
-
-	return content, nil
 }
 
 func ParseBytesToRawSim(b []byte) ([]RawSim, error) {

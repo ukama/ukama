@@ -35,7 +35,6 @@ func TestSimPoolStats_Success(t *testing.T) {
 	assert.Equal(t, sims.Total, uint64(2))
 }
 
-// Fetch data success case
 func TestPbParseToModel_Success(t *testing.T) {
 	sims := PbParseToModel([]*pb.AddSim{{
 		Iccid:          "1234567890123456789",
@@ -47,4 +46,16 @@ func TestPbParseToModel_Success(t *testing.T) {
 	}})
 	assert.NotNil(t, sims)
 	assert.Equal(t, sims[0].Iccid, "1234567890123456789")
+}
+
+func TestBytesToRawSim_Success(t *testing.T) {
+	rsims := RawSimToPb([]RawSim{{
+		Iccid:          "1234567890123456789",
+		Msisdn:         "2345678901",
+		SmDpAddress:    "http://localhost:8080",
+		ActivationCode: "123456",
+		IsPhysical:     "true",
+	}}, "inter_ukama_all")
+	assert.NotNil(t, rsims)
+	assert.Equal(t, rsims[0].Iccid, "1234567890123456789")
 }
