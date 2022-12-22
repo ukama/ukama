@@ -9,7 +9,7 @@ import (
 )
 
 func TestSimPoolStats_Success(t *testing.T) {
-	simPool := SimPoolStats([]db.SimPool{
+	sims := PoolStats([]db.Sim{
 		{
 			Msisdn:         "2345678901",
 			ActivationCode: "123456",
@@ -29,15 +29,15 @@ func TestSimPoolStats_Success(t *testing.T) {
 			QrCode:         "http://localhost:8080",
 		},
 	})
-	assert.NotNil(t, simPool)
-	assert.Equal(t, simPool.Available, uint64(1))
-	assert.Equal(t, simPool.Consumed, uint64(1))
-	assert.Equal(t, simPool.Total, uint64(2))
+	assert.NotNil(t, sims)
+	assert.Equal(t, sims.Available, uint64(1))
+	assert.Equal(t, sims.Consumed, uint64(1))
+	assert.Equal(t, sims.Total, uint64(2))
 }
 
 // Fetch data success case
 func TestPbParseToModel_Success(t *testing.T) {
-	simPool := PbParseToModel([]*pb.AddSimPool{{
+	sims := PbParseToModel([]*pb.AddSim{{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
 		QrCode:         "http://localhost:8080",
@@ -45,6 +45,6 @@ func TestPbParseToModel_Success(t *testing.T) {
 		SmDpAddress:    "http://localhost:8080",
 		ActivationCode: "123456",
 	}})
-	assert.NotNil(t, simPool)
-	assert.Equal(t, simPool[0].Iccid, "1234567890123456789")
+	assert.NotNil(t, sims)
+	assert.Equal(t, sims[0].Iccid, "1234567890123456789")
 }

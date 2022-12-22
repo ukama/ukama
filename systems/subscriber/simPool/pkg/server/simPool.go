@@ -11,72 +11,74 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/utils"
 )
 
-type SimPoolServer struct {
-	simPoolRepo db.SimPoolRepo
-	pb.UnimplementedSimPoolServiceServer
+type SimServer struct {
+	simRepo db.SimRepo
+	pb.UnimplementedSimServiceServer
 }
 
-func NewSimPoolServer(simPoolRepo db.SimPoolRepo) *SimPoolServer {
-	return &SimPoolServer{simPoolRepo: simPoolRepo}
+func NewSimServer(simRepo db.SimRepo) *SimServer {
+	return &SimServer{simRepo: simRepo}
 }
 
-func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
-	logrus.Infof("GetPoolStats : %v ", req.GetSimType())
-	simPool, err := p.simPoolRepo.GetStats(req.GetSimType().String())
+func (p *SimServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
+	logrus.Infof("GetSimStats : %v ", req.GetSimType())
+	sim, err := p.simRepo.GetStats(req.GetSimType().String())
 
 	if err != nil {
-		logrus.Error("error getting a simPool" + err.Error())
+		logrus.Error("error getting a sim pool stats" + err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
-	resp := utils.SimPoolStats(simPool)
+	resp := utils.PoolStats(sim)
 
 	return resp, nil
 }
 
-func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	logrus.Infof("Add SimPool : %v ", req.SimPool)
-	result := utils.PbParseToModel(req.SimPool)
-	err := p.simPoolRepo.Add(result)
+func (p *SimServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+	logrus.Infof("Add Sims : %v ", req.Sim)
+	result := utils.PbParseToModel(req.Sim)
+	err := p.simRepo.Add(result)
 	if err != nil {
-		logrus.Error("error adding a simPool" + err.Error())
+		logrus.Error("error adding a sims" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
-	resp := &pb.AddResponse{SimPool: dbSimPoolsToPbSimPool(result)}
+	resp := &pb.AddResponse{Sim: dbSimsToPbSim(result)}
 	return resp, nil
 }
 
-func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
-	// logrus.Infof("Upload SimPool: %v", req.GetFileUrl())
-	var s []db.SimPool
-	err := p.simPoolRepo.Add(s)
+func (p *SimServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
+	logrus.Infof("Upload Sims to pool")
+
+	a, _ := utils.ParseBytesToRawSim(req.SimData)
+	s := utils.RawSimToPb(a, req.GetSimType().String())
+	err := p.simRepo.Add(s)
 	if err != nil {
-		logrus.Error("error while Upload simPool data" + err.Error())
+		logrus.Error("error while Upload sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
-	return &pb.UploadResponse{SimPool: dbSimPoolsToPbSimPool(s)}, nil
+	return &pb.UploadResponse{Sim: dbSimsToPbSim(s)}, nil
 }
 
-func (p *SimPoolServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	logrus.Infof("Delete SimPool: %v", req.GetId())
-	err := p.simPoolRepo.Delete(req.GetId())
+func (p *SimServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	logrus.Infof("Delete Sims: %v", req.GetId())
+	err := p.simRepo.Delete(req.GetId())
 	if err != nil {
-		logrus.Error("error while delete simPool data" + err.Error())
+		logrus.Error("error while delete sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "simPool")
 	}
 	return &pb.DeleteResponse{Id: req.GetId()}, nil
 }
 
-func dbSimPoolsToPbSimPool(packages []db.SimPool) []*pb.SimPool {
-	res := []*pb.SimPool{}
+func dbSimsToPbSim(packages []db.Sim) []*pb.Sim {
+	res := []*pb.Sim{}
 	for _, u := range packages {
-		res = append(res, dbSimPoolToPbSimPool(&u))
+		res = append(res, dbSimToPbSim(&u))
 	}
 	return res
 }
 
-func dbSimPoolToPbSimPool(p *db.SimPool) *pb.SimPool {
-	return &pb.SimPool{
+func dbSimToPbSim(p *db.Sim) *pb.Sim {
+	return &pb.Sim{
 		Id:             uint64(p.ID),
 		Iccid:          p.Iccid,
 		Msisdn:         p.Msisdn,

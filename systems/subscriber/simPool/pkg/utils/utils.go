@@ -1,11 +1,15 @@
 package utils
 
 import (
+	"io"
+	"net/http"
+
+	"github.com/jszwec/csvutil"
 	pb "github.com/ukama/ukama/systems/subscriber/simPool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/simPool/pkg/db"
 )
 
-func SimPoolStats(slice []db.SimPool) *pb.GetStatsResponse {
+func PoolStats(slice []db.Sim) *pb.GetStatsResponse {
 	total := len(slice)
 	failed := 0
 	available := 0
@@ -25,10 +29,10 @@ func SimPoolStats(slice []db.SimPool) *pb.GetStatsResponse {
 	}
 }
 
-func PbParseToModel(slice []*pb.AddSimPool) []db.SimPool {
-	var simPool []db.SimPool
+func PbParseToModel(slice []*pb.AddSim) []db.Sim {
+	var sims []db.Sim
 	for _, value := range slice {
-		simPool = append(simPool, db.SimPool{
+		sims = append(sims, db.Sim{
 			Iccid:          value.Iccid,
 			Msisdn:         value.Msisdn,
 			SmDpAddress:    value.SmDpAddress,
@@ -36,5 +40,49 @@ func PbParseToModel(slice []*pb.AddSimPool) []db.SimPool {
 			QrCode:         value.QrCode,
 		})
 	}
-	return simPool
+	return sims
+}
+
+type RawSim struct {
+	Iccid          string `csv:"ICCID"`
+	Msisdn         string `csv:"MSISDN"`
+	SmDpAddress    string `csv:"SmDpAddress"`
+	ActivationCode string `csv:"ActivationCode"`
+	IsPhysical     string `csv:"IsPhysical"`
+}
+
+func FetchData(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	content, _ := io.ReadAll(resp.Body)
+
+	return content, nil
+}
+
+func ParseBytesToRawSim(b []byte) ([]RawSim, error) {
+	var r []RawSim
+	err := csvutil.Unmarshal(b, &r)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+func RawSimToPb(r []RawSim, simType string) []db.Sim {
+	var s []db.Sim
+	for _, value := range r {
+		s = append(s, db.Sim{
+			Iccid:          value.Iccid,
+			Msisdn:         value.Msisdn,
+			SmDpAddress:    value.SmDpAddress,
+			ActivationCode: value.ActivationCode,
+			Is_physical:    value.IsPhysical == "TRUE",
+			Sim_type:       simType,
+		})
+	}
+	return s
 }

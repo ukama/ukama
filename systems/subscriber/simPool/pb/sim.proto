@@ -1,8 +1,8 @@
 syntax = "proto3";
 option go_package = "pb/gen";
-package ukama.simPool.v1;
+package ukama.sim.v1;
 
-service SimPoolService {
+service SimService {
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
     rpc Add(AddRequest) returns (AddResponse){}
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
@@ -18,24 +18,25 @@ message GetStatsResponse {
     uint64 failed = 4;
 }
 message AddRequest{
-    repeated AddSimPool simPool = 1;
+    repeated AddSim sim = 1;
 }
 message AddResponse{
-    repeated SimPool simPool = 1;
+    repeated Sim sim = 1;
 }
 message DeleteRequest{
-    uint64 id =1;
+    repeated uint64 id = 1;
 }
 message DeleteResponse {
-    uint64 id =1;
+    repeated uint64 id = 1;
 }
 message UploadRequest{
-    bytes simPoolData = 1;
+    bytes simData = 1;
+    SimType simType = 2;
 }
 message UploadResponse {
-    repeated SimPool simPool = 1;
+    repeated Sim sim = 1;
 }
-message SimPool{
+message Sim{
     uint64 id = 1;
     string iccid = 2;
     string msisdn = 3; 
@@ -47,14 +48,16 @@ message SimPool{
     string created_at=9;
     string deleted_at=10;
     string updated_at=11;
+    bool isPhysicalSim=12;  
 }
-message AddSimPool{
+message AddSim{
     string iccid = 1;
     SimType simType = 2;
     string msisdn = 3;
     string smDpAddress = 4;
     string activationCode = 5;
     string qrCode = 6; 
+    bool isPhysicalSim=12;
 }
 enum SimType {
     inter_none=0;

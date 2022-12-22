@@ -30,8 +30,8 @@ func main() {
 	pkg.InstanceId = os.Getenv("POD_NAME")
 
 	initConfig()
-	simPoolDb := initDb()
-	runGrpcServer(simPoolDb)
+	simDb := initDb()
+	runGrpcServer(simDb)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
@@ -57,7 +57,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.SimPool{})
+	err := d.Init(&db.Sim{})
 
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
@@ -68,8 +68,8 @@ func initDb() sql.Db {
 func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 
-		srv := server.NewSimPoolServer(db.NeSimPoolRepo(gormdb))
-		generated.RegisterSimPoolServiceServer(s, srv)
+		srv := server.NewSimServer(db.NewSimRepo(gormdb))
+		generated.RegisterSimServiceServer(s, srv)
 	})
 
 	grpcServer.StartServer()
