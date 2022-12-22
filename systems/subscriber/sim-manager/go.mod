@@ -8,6 +8,7 @@ replace github.com/ukama/ukama/systems/subscriber/sim-manager => ./
 
 require (
 	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.3.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
