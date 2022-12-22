@@ -22,6 +22,7 @@ func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
+	networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
 	uuid, err := uuid.NewV4()
 	if err != nil {
 		logrus.Errorf("Failed to generate UUID: %s", err)
@@ -32,6 +33,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		SubscriberID:          uuid,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
+		NetworkID:             networkID_uuid,
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Gender:                req.GetGender(),
@@ -74,12 +76,12 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 
 	resp := &pb.GetSubscriberResponse{Subscriber: dbSubscriberToPbSubscribers(subscriber)}
 
-	return resp,nil
+	return resp, nil
 
 }
-func (s *SubcriberServer) GetByNetwork(ctx context.Context,req *pb.GetByNetworkRequest)(*pb.GetByNetworkResponse,error){
+func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	logrus.Infof("Get subscribers by network: %v ", req.GetNetworkID())
-    networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
+	networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
 
 	subscribers, err := s.subscriberRepo.GetByNetwork(networkID_uuid)
 	if err != nil {
@@ -91,7 +93,7 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context,req *pb.GetByNetworkR
 		Subscribers: dbsubscriberToPbSubscribers(subscribers),
 	}
 
-	return subscriberList,nil
+	return subscriberList, nil
 }
 func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	logrus.Infof("Update Subscriber Id: %v, FullName: %v, Email: %v, Email: %v, ProofOfIdentification: %v, Address: %v, DateOfBith: %v",
