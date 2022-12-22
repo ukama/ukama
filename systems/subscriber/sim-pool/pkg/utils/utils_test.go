@@ -17,7 +17,6 @@ func TestSimPoolStats_Success(t *testing.T) {
 			Sim_type:       "inter_ukama_all",
 			Iccid:          "1234567890123456789",
 			SmDpAddress:    "http://localhost:8080",
-			QrCode:         "http://localhost:8080",
 		},
 		{
 			Msisdn:         "2345678901",
@@ -26,7 +25,6 @@ func TestSimPoolStats_Success(t *testing.T) {
 			Sim_type:       "inter_ukama_all",
 			Iccid:          "1234567890123456789",
 			SmDpAddress:    "http://localhost:8080",
-			QrCode:         "http://localhost:8080",
 		},
 	})
 	assert.NotNil(t, sims)
@@ -39,7 +37,6 @@ func TestPbParseToModel_Success(t *testing.T) {
 	sims := PbParseToModel([]*pb.AddSim{{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
-		QrCode:         "http://localhost:8080",
 		SimType:        pb.SimType(pb.SimType_value["inter_ukama_all"]),
 		SmDpAddress:    "http://localhost:8080",
 		ActivationCode: "123456",

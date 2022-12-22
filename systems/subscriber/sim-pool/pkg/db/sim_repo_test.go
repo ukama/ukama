@@ -52,7 +52,7 @@ func Test_Get_Stats(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "iccid", "msisdn", "is_allocated", "sim_type", "sm_dp_address", "activation_code", "qr_code", "is_physical"})
+		rows := sqlmock.NewRows([]string{"id", "iccid", "msisdn", "is_allocated", "sim_type", "sm_dp_address", "activation_code", "is_physical"})
 		rows.AddRow(1,
 			"10101010",
 			"01010101",
@@ -60,7 +60,6 @@ func Test_Get_Stats(t *testing.T) {
 			"inter_ukama_all",
 			"123456789",
 			"0000",
-			"http://localhost:8080/qr/123456789",
 			true,
 		)
 

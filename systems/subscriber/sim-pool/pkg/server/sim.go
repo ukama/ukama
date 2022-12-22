@@ -51,7 +51,6 @@ func (p *SimServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 
 func (p *SimServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
 	logrus.Infof("Upload Sims to pool")
-
 	a, _ := utils.ParseBytesToRawSim(req.SimData)
 	s := utils.RawSimToPb(a, req.GetSimType().String())
 	err := p.simRepo.Add(s)
@@ -88,7 +87,6 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		IsAllocated:    p.Is_allocated,
 		SmDpAddress:    p.SmDpAddress,
 		ActivationCode: p.ActivationCode,
-		QrCode:         p.QrCode,
 		CreatedAt:      p.CreatedAt.String(),
 		UpdatedAt:      p.UpdatedAt.String(),
 		DeletedAt:      p.DeletedAt.Time.String(),

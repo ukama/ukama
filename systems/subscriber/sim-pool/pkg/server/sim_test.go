@@ -23,7 +23,6 @@ func TestGetStats_Success(t *testing.T) {
 	mockRepo.On("GetStats", mock.Anything).Return([]db.Sim{{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
-		QrCode:         "http://localhost:8080",
 		Sim_type:       "inter_mno_data",
 		SmDpAddress:    "http://localhost:8080",
 		Is_allocated:   false,
@@ -78,7 +77,6 @@ func TestAdd_Success(t *testing.T) {
 			{
 				Iccid:          "1234567890123456789",
 				Msisdn:         "2345678901",
-				QrCode:         "http://localhost:8080",
 				SimType:        pb.SimType_inter_mno_data,
 				SmDpAddress:    "http://localhost:8080",
 				ActivationCode: "123456",
@@ -100,7 +98,6 @@ func TestAdd_Error(t *testing.T) {
 			{
 				Iccid:          "1234567890123456789",
 				Msisdn:         "2345678901",
-				QrCode:         "http://localhost:8080",
 				SimType:        pb.SimType_inter_mno_data,
 				SmDpAddress:    "http://localhost:8080",
 				ActivationCode: "123456",

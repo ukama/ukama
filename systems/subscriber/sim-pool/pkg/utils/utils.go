@@ -34,7 +34,6 @@ func PbParseToModel(slice []*pb.AddSim) []db.Sim {
 			Msisdn:         value.Msisdn,
 			SmDpAddress:    value.SmDpAddress,
 			ActivationCode: value.ActivationCode,
-			QrCode:         value.QrCode,
 		})
 	}
 	return sims

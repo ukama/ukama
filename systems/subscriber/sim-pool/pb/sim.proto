@@ -44,7 +44,6 @@ message Sim{
     SimType simType = 5;
     string smDpAddress = 6;
     string activationCode = 7;
-    string qrCode = 8;
     string created_at=9;
     string deleted_at=10;
     string updated_at=11;
@@ -56,7 +55,6 @@ message AddSim{
     string msisdn = 3;
     string smDpAddress = 4;
     string activationCode = 5;
-    string qrCode = 6; 
     bool isPhysicalSim=12;
 }
 enum SimType {
