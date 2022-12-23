@@ -2,8 +2,10 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/sql"
 	"gopkg.in/yaml.v2"
 
 	"github.com/num30/config"
@@ -13,6 +15,7 @@ import (
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
 	"github.com/sirupsen/logrus"
@@ -32,12 +35,17 @@ func main() {
 
 	metrics.StartMetricsServer(svcConf.Metrics)
 
-	runGrpcServer()
+	simDB := initDb()
+
+	runGrpcServer(simDB)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	svcConf = &pkg.Config{
+		DB: &uconf.Database{
+			DbName: strings.ReplaceAll(pkg.ServiceName, "-", "_"),
+		},
 		Grpc: &uconf.Grpc{
 			Port: 9090,
 		},
@@ -60,7 +68,20 @@ func initConfig() {
 	pkg.IsDebugMode = svcConf.DebugMode
 }
 
-func runGrpcServer() {
+func initDb() sql.Db {
+	log.Infof("Initializing Database")
+
+	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
+
+	err := d.Init(&db.Sim{})
+	if err != nil {
+		log.Fatalf("Database initialization failed. Error: %v", err)
+	}
+
+	return d
+}
+
+func runGrpcServer(gormDB sql.Db) {
 	simManagerServer := server.NewSimManagerServer()
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
