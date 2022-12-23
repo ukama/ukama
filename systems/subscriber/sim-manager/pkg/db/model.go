@@ -9,8 +9,8 @@ import (
 )
 
 type Sim struct {
-	SimID        uuid.UUID `gorm:"primaryKey;type:uuid"`
-	UserID       uuid.UUID `gorm:"not null;type:uuid"`
+	ID           uuid.UUID `gorm:"primaryKey;type:uuid"`
+	SubscriberID uuid.UUID `gorm:"not null;type:uuid"`
 	NetworkID    uuid.UUID `gorm:"not null;type:uuid"`
 	Iccid        string    `gorm:"index:idx_iccid,unique"`
 	Msisdn       string
