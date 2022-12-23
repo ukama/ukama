@@ -12,5 +12,6 @@ type Sim struct {
 	Sim_type       string
 	SmDpAddress    string
 	ActivationCode string
+	QrCode         string
 	Is_physical    bool
 }

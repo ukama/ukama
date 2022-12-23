@@ -47,7 +47,8 @@ message Sim{
     string created_at=9;
     string deleted_at=10;
     string updated_at=11;
-    bool isPhysicalSim=12;  
+    bool isPhysicalSim=12;
+    string qrCode=13;
 }
 message AddSim{
     string iccid = 1;
@@ -55,12 +56,13 @@ message AddSim{
     string msisdn = 3;
     string smDpAddress = 4;
     string activationCode = 5;
-    bool isPhysicalSim=12;
+    string qrCode=6;
+    bool isPhysicalSim=7;
 }
 enum SimType {
-    any=0;
-    inter_none=1;
-    inter_mno_data=2;
-    inter_mno_all=3;
-    inter_ukama_all=4;
+    ANY=0;
+    INTER_NONE=1;
+    INTER_MNO_DATA=2;
+    INTER_MNO_ALL=3;
+    INTER_UKAMA_ALL=4;
 }

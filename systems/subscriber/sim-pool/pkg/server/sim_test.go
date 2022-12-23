@@ -18,7 +18,7 @@ func TestGetStats_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	simService := NewSimServer(mockRepo)
 	reqMock := &pb.GetStatsRequest{
-		SimType: pb.SimType_inter_mno_data,
+		SimType: pb.SimType_INTER_MNO_DATA,
 	}
 	mockRepo.On("GetStats", mock.Anything).Return([]db.Sim{{
 		Iccid:          "1234567890123456789",
@@ -37,7 +37,7 @@ func TestGetStats_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
 	simService := NewSimServer(mockRepo)
 	reqMock := &pb.GetStatsRequest{
-		SimType: pb.SimType_inter_mno_data,
+		SimType: pb.SimType_INTER_MNO_DATA,
 	}
 	mockRepo.On("GetStats", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("SimPool record not found!"), "sim-pool"))
 	res, err := simService.GetStats(context.Background(), reqMock)
@@ -77,7 +77,7 @@ func TestAdd_Success(t *testing.T) {
 			{
 				Iccid:          "1234567890123456789",
 				Msisdn:         "2345678901",
-				SimType:        pb.SimType_inter_mno_data,
+				SimType:        pb.SimType_INTER_MNO_DATA,
 				SmDpAddress:    "http://localhost:8080",
 				ActivationCode: "123456",
 				IsPhysicalSim:  false,
@@ -98,7 +98,7 @@ func TestAdd_Error(t *testing.T) {
 			{
 				Iccid:          "1234567890123456789",
 				Msisdn:         "2345678901",
-				SimType:        pb.SimType_inter_mno_data,
+				SimType:        pb.SimType_INTER_MNO_DATA,
 				SmDpAddress:    "http://localhost:8080",
 				ActivationCode: "123456",
 				IsPhysicalSim:  false,

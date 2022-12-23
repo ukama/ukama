@@ -34,6 +34,7 @@ func PbParseToModel(slice []*pb.AddSim) []db.Sim {
 			Msisdn:         value.Msisdn,
 			SmDpAddress:    value.SmDpAddress,
 			ActivationCode: value.ActivationCode,
+			QrCode:         value.QrCode,
 		})
 	}
 	return sims
@@ -44,6 +45,7 @@ type RawSim struct {
 	Msisdn         string `csv:"MSISDN"`
 	SmDpAddress    string `csv:"SmDpAddress"`
 	ActivationCode string `csv:"ActivationCode"`
+	QrCode         string `csv:"QrCode"`
 	IsPhysical     string `csv:"IsPhysical"`
 }
 
@@ -66,6 +68,7 @@ func RawSimToPb(r []RawSim, simType string) []db.Sim {
 			ActivationCode: value.ActivationCode,
 			Is_physical:    value.IsPhysical == "TRUE",
 			Sim_type:       simType,
+			QrCode:         value.QrCode,
 		})
 	}
 	return s

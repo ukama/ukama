@@ -23,7 +23,7 @@ func NewSimServer(simRepo db.SimRepo) *SimServer {
 func (p *SimServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetSimStats : %v ", req.GetSimType())
 	simType := req.SimType.String()
-	if req.GetSimType() == pb.SimType_any {
+	if req.GetSimType() == pb.SimType_ANY {
 		simType = ""
 	}
 	sim, err := p.simRepo.GetStats(simType)
