@@ -26,13 +26,13 @@ func (_m *SimRepo) Add(sims []db.Sim) error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: Id
-func (_m *SimRepo) Delete(Id []uint64) error {
-	ret := _m.Called(Id)
+// Delete provides a mock function with given fields: id
+func (_m *SimRepo) Delete(id []uint64) error {
+	ret := _m.Called(id)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func([]uint64) error); ok {
-		r0 = rf(Id)
+		r0 = rf(id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -40,13 +40,36 @@ func (_m *SimRepo) Delete(Id []uint64) error {
 	return r0
 }
 
-// GetStats provides a mock function with given fields: SimType
-func (_m *SimRepo) GetStats(SimType string) ([]db.Sim, error) {
-	ret := _m.Called(SimType)
+// Get provides a mock function with given fields: isPhysicalSim
+func (_m *SimRepo) Get(isPhysicalSim bool) (*db.Sim, error) {
+	ret := _m.Called(isPhysicalSim)
+
+	var r0 *db.Sim
+	if rf, ok := ret.Get(0).(func(bool) *db.Sim); ok {
+		r0 = rf(isPhysicalSim)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Sim)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(bool) error); ok {
+		r1 = rf(isPhysicalSim)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetStats provides a mock function with given fields: simType
+func (_m *SimRepo) GetStats(simType string) ([]db.Sim, error) {
+	ret := _m.Called(simType)
 
 	var r0 []db.Sim
 	if rf, ok := ret.Get(0).(func(string) []db.Sim); ok {
-		r0 = rf(SimType)
+		r0 = rf(simType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Sim)
@@ -55,7 +78,7 @@ func (_m *SimRepo) GetStats(SimType string) ([]db.Sim, error) {
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(SimType)
+		r1 = rf(simType)
 	} else {
 		r1 = ret.Error(1)
 	}

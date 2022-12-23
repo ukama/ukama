@@ -3,10 +3,17 @@ option go_package = "pb/gen";
 package ukama.sim.v1;
 
 service SimService {
+    rpc Get (GetRequest) returns (GetResponse) {}
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
     rpc Add(AddRequest) returns (AddResponse){}
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
     rpc Upload(UploadRequest) returns (UploadResponse){}
+}
+message GetRequest{
+    bool IsPhysicalSim=1;
+}
+message GetResponse {
+    Sim sim = 1;
 }
 message GetStatsRequest{
     SimType simType = 1;

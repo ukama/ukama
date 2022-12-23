@@ -110,3 +110,34 @@ func TestAdd_Error(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, res)
 }
+
+func TestGet_Success(t *testing.T) {
+	mockRepo := &mocks.SimRepo{}
+	simService := NewSimServer(mockRepo)
+	reqMock := &pb.GetRequest{
+		IsPhysicalSim: true,
+	}
+	mockRepo.On("Get", mock.Anything).Return(&db.Sim{
+		Iccid:          "1234567890123456789",
+		Msisdn:         "2345678901",
+		Sim_type:       "inter_mno_data",
+		SmDpAddress:    "http://localhost:8080",
+		ActivationCode: "123456",
+		Is_physical:    false,
+	}, nil)
+	res, err := simService.Get(context.Background(), reqMock)
+	assert.NoError(t, err)
+	assert.Equal(t, "1234567890123456789", res.Sim.Iccid)
+}
+
+func TestGet_Error(t *testing.T) {
+	mockRepo := &mocks.SimRepo{}
+	simService := NewSimServer(mockRepo)
+	reqMock := &pb.GetRequest{
+		IsPhysicalSim: true,
+	}
+	mockRepo.On("Get", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim-pool"))
+	res, err := simService.Get(context.Background(), reqMock)
+	assert.Error(t, err)
+	assert.Nil(t, res)
+}

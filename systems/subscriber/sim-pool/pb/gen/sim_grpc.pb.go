@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SimServiceClient interface {
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error)
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
@@ -34,6 +35,15 @@ type simServiceClient struct {
 
 func NewSimServiceClient(cc grpc.ClientConnInterface) SimServiceClient {
 	return &simServiceClient{cc}
+}
+
+func (c *simServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim.v1.SimService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *simServiceClient) GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error) {
@@ -76,6 +86,7 @@ func (c *simServiceClient) Upload(ctx context.Context, in *UploadRequest, opts .
 // All implementations must embed UnimplementedSimServiceServer
 // for forward compatibility
 type SimServiceServer interface {
+	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error)
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
@@ -87,6 +98,9 @@ type SimServiceServer interface {
 type UnimplementedSimServiceServer struct {
 }
 
+func (UnimplementedSimServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
 func (UnimplementedSimServiceServer) GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
 }
@@ -110,6 +124,24 @@ type UnsafeSimServiceServer interface {
 
 func RegisterSimServiceServer(s grpc.ServiceRegistrar, srv SimServiceServer) {
 	s.RegisterService(&SimService_ServiceDesc, srv)
+}
+
+func _SimService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimServiceServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim.v1.SimService/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimServiceServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _SimService_GetStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -191,6 +223,10 @@ var SimService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ukama.sim.v1.SimService",
 	HandlerType: (*SimServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Get",
+			Handler:    _SimService_Get_Handler,
+		},
 		{
 			MethodName: "GetStats",
 			Handler:    _SimService_GetStats_Handler,

@@ -76,6 +76,36 @@ func (_m *SimServiceClient) Delete(ctx context.Context, in *gen.DeleteRequest, o
 	return r0, r1
 }
 
+// Get provides a mock function with given fields: ctx, in, opts
+func (_m *SimServiceClient) Get(ctx context.Context, in *gen.GetRequest, opts ...grpc.CallOption) (*gen.GetResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest, ...grpc.CallOption) *gen.GetResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetStats provides a mock function with given fields: ctx, in, opts
 func (_m *SimServiceClient) GetStats(ctx context.Context, in *gen.GetStatsRequest, opts ...grpc.CallOption) (*gen.GetStatsResponse, error) {
 	_va := make([]interface{}, len(opts))

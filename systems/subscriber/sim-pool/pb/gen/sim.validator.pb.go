@@ -15,6 +15,17 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *GetRequest) Validate() error {
+	return nil
+}
+func (this *GetResponse) Validate() error {
+	if this.Sim != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+		}
+	}
+	return nil
+}
 func (this *GetStatsRequest) Validate() error {
 	return nil
 }

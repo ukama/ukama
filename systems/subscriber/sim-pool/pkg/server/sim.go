@@ -20,6 +20,18 @@ func NewSimServer(simRepo db.SimRepo) *SimServer {
 	return &SimServer{simRepo: simRepo}
 }
 
+func (p *SimServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+	logrus.Infof("GetSim : %v", req.GetIsPhysicalSim())
+
+	sim, err := p.simRepo.Get(req.GetIsPhysicalSim())
+	if err != nil {
+		logrus.Error("error fetching a sim " + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+	}
+
+	return &pb.GetResponse{Sim: dbSimToPbSim(sim)}, nil
+}
+
 func (p *SimServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetSimStats : %v ", req.GetSimType())
 	simType := req.SimType.String()
