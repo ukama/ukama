@@ -67,13 +67,13 @@ func (_m *SimRepo) Get(simID uuid.UUID) (*db.Sim, error) {
 	return r0, r1
 }
 
-// GetByNetwork provides a mock function with given fields: NetworkID
-func (_m *SimRepo) GetByNetwork(NetworkID uuid.UUID) ([]db.Sim, error) {
-	ret := _m.Called(NetworkID)
+// GetByNetwork provides a mock function with given fields: networkID
+func (_m *SimRepo) GetByNetwork(networkID uuid.UUID) ([]db.Sim, error) {
+	ret := _m.Called(networkID)
 
 	var r0 []db.Sim
 	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Sim); ok {
-		r0 = rf(NetworkID)
+		r0 = rf(networkID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Sim)
@@ -82,7 +82,7 @@ func (_m *SimRepo) GetByNetwork(NetworkID uuid.UUID) ([]db.Sim, error) {
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(NetworkID)
+		r1 = rf(networkID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -90,13 +90,13 @@ func (_m *SimRepo) GetByNetwork(NetworkID uuid.UUID) ([]db.Sim, error) {
 	return r0, r1
 }
 
-// GetByUser provides a mock function with given fields: userID
-func (_m *SimRepo) GetByUser(userID uuid.UUID) ([]db.Sim, error) {
-	ret := _m.Called(userID)
+// GetBySubscriber provides a mock function with given fields: subscriberID
+func (_m *SimRepo) GetBySubscriber(subscriberID uuid.UUID) ([]db.Sim, error) {
+	ret := _m.Called(subscriberID)
 
 	var r0 []db.Sim
 	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Sim); ok {
-		r0 = rf(userID)
+		r0 = rf(subscriberID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Sim)
@@ -105,7 +105,7 @@ func (_m *SimRepo) GetByUser(userID uuid.UUID) ([]db.Sim, error) {
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(userID)
+		r1 = rf(subscriberID)
 	} else {
 		r1 = ret.Error(1)
 	}

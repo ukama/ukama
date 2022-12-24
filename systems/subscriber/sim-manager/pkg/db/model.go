@@ -41,7 +41,7 @@ func (s *SimType) Scan(value interface{}) error {
 }
 
 func (s SimType) Value() (driver.Value, error) {
-	return uint8(s), nil
+	return int64(s), nil
 }
 
 type SimStatus uint8
@@ -63,5 +63,5 @@ func (s *SimStatus) Scan(value interface{}) error {
 }
 
 func (s SimStatus) Value() (driver.Value, error) {
-	return uint8(s), nil
+	return int64(s), nil
 }
