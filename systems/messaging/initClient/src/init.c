@@ -55,12 +55,12 @@ static long send_http_request(char *url, Request *request, json_t *json) {
 	long code=0;
 	CURL *curl=NULL;
 	CURLcode res;
-	char *json_str;
+	char *json_str=NULL;
 	struct curl_slist *headers=NULL;
 	struct Response response;
 
 	/* sanity check */
-	if (json == NULL || url == NULL) {
+	if (url == NULL) {
 		return FALSE;
 	}
 
@@ -72,7 +72,6 @@ static long send_http_request(char *url, Request *request, json_t *json) {
 
 	response.buffer = malloc(1);
 	response.size   = 0;
-	json_str = json_dumps(json, 0);
 
 	/* Add to the header. */
 	headers = curl_slist_append(headers, "Accept: application/json");
@@ -82,13 +81,14 @@ static long send_http_request(char *url, Request *request, json_t *json) {
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
 	if (request->reqType == (ReqType)REQ_REGISTER) {
+		json_str = json_dumps(json, 0);
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
 	} else if (request->reqType == (ReqType)REQ_UNREGISTER) {
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 	}
 
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
 
@@ -119,9 +119,10 @@ static long send_http_request(char *url, Request *request, json_t *json) {
  */
 static void create_url(char *url, Config *config, ReqType reqType) {
 
-	if (reqType == (ReqType)REQ_REGISTER) {
+	if (reqType == (ReqType)REQ_REGISTER ||
+		reqType == (ReqType)REQ_UNREGISTER) {
 		/* URL -> host:port/v1/orgs/{org}/systems/{system} */
-		sprintf(url, "%s:%s/%s/%s/%s/%s/%s/",
+		sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
 				config->initSystemAddr,
 				config->initSystemPort,
 				config->initSystemAPIVer,
@@ -176,6 +177,8 @@ static void free_request(Request *request) {
 		if (reg->cert) free(reg->cert);
 		if (reg->ip)   free(reg->ip);
 		if (reg->port) free(reg->port);
+
+		free(reg);
 	}
 
 	free(request);
@@ -195,7 +198,7 @@ int send_request_to_init(ReqType reqType, Config *config) {
 	json_t *json=NULL;
 	char url[MAX_URL_LEN]={0};
 	long respCode;
-	int ret=TRUE;
+	int ret=FALSE;
 
 	if (config == NULL) return FALSE;
 
@@ -226,7 +229,21 @@ int send_request_to_init(ReqType reqType, Config *config) {
 
 	/* Step-3 send over the wire */
 	respCode = send_http_request(&url[0], request, json);
-	if (respCode != HttpStatus_Created) {
+
+	switch(respCode) {
+	case HttpStatus_OK:
+		if (reqType == (ReqType)REQ_UNREGISTER) {
+			log_debug("Successful unregister");
+			ret = TRUE;
+		}
+		break;
+	case HttpStatus_Created:
+		if (reqType == (ReqType)REQ_REGISTER) {
+			log_debug("Successful register");
+			ret = TRUE;
+		}
+		break;
+	default:
 		log_error("Error sending request to init: %s", HttpStatusStr(respCode));
 		ret=FALSE;
 	}
