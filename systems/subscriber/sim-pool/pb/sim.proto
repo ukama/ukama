@@ -2,6 +2,14 @@ syntax = "proto3";
 option go_package = "pb/gen";
 package ukama.sim.v1;
 
+/*
+Sim pool sub-system is responsible of:
+
+    - Populating sims data in DB from CSV
+    - Provide sim stats
+    - Provide sim on request
+    - Allows to add slice of sims
+*/
 service SimService {
     rpc Get (GetRequest) returns (GetResponse) {}
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
