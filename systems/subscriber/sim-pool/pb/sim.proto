@@ -11,10 +11,15 @@ Sim pool sub-system is responsible of:
     - Allows to add slice of sims
 */
 service SimService {
+    /// Get sim from pool
     rpc Get (GetRequest) returns (GetResponse) {}
+    ///Get sim pool statistaics
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
+    ///Add sims to pool
     rpc Add(AddRequest) returns (AddResponse){}
+    ///Delete sims from pool
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
+    ///Batch upload sims from CSV
     rpc Upload(UploadRequest) returns (UploadResponse){}
 }
 message GetRequest{

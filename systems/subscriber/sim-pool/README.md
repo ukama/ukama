@@ -42,11 +42,11 @@ Sim pool sub-system is responsible of:
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| Get | [GetRequest](#ukama.sim.v1.GetRequest) | [GetResponse](#ukama.sim.v1.GetRequest) |  |
-| GetStats | [GetStatsRequest](#ukama.sim.v1.GetStatsRequest) | [GetStatsResponse](#ukama.sim.v1.GetStatsRequest) |  |
-| Add | [AddRequest](#ukama.sim.v1.AddRequest) | [AddResponse](#ukama.sim.v1.AddRequest) |  |
-| Delete | [DeleteRequest](#ukama.sim.v1.DeleteRequest) | [DeleteResponse](#ukama.sim.v1.DeleteRequest) |  |
-| Upload | [UploadRequest](#ukama.sim.v1.UploadRequest) | [UploadResponse](#ukama.sim.v1.UploadRequest) |  |
+| Get | [GetRequest](#ukama.sim.v1.GetRequest) | [GetResponse](#ukama.sim.v1.GetRequest) | Get sim from pool |
+| GetStats | [GetStatsRequest](#ukama.sim.v1.GetStatsRequest) | [GetStatsResponse](#ukama.sim.v1.GetStatsRequest) | Get sim pool statistaics |
+| Add | [AddRequest](#ukama.sim.v1.AddRequest) | [AddResponse](#ukama.sim.v1.AddRequest) | Add sims to pool |
+| Delete | [DeleteRequest](#ukama.sim.v1.DeleteRequest) | [DeleteResponse](#ukama.sim.v1.DeleteRequest) | Delete sims from pool |
+| Upload | [UploadRequest](#ukama.sim.v1.UploadRequest) | [UploadResponse](#ukama.sim.v1.UploadRequest) | Batch upload sims from CSV |
 
 
 
