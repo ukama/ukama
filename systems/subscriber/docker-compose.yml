@@ -29,6 +29,24 @@ services:
       - postgresd
 
 
+
+  test-agent:
+    build: ./test-agent
+    ports:
+      - "9091:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+
+
 networks:
   ukama-net:
       ipam:
