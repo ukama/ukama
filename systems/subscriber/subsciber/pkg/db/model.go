@@ -4,20 +4,22 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"gorm.io/gorm"
 )
 
+
 type Subscriber struct {
-	gorm.Model
-	SubscriberID          uuid.UUID `gorm:"type:uuid"`
-	FirstName             string
-	LastName              string
-	NetworkID          uuid.UUID `gorm:"type:uuid"`
-	Email                 string
-	PhoneNumber           string
-	Gender                string
-	DOB       time.Time `gorm:"column:dob"`
-	ProofOfIdentification string
-	IdSerial              string
-	Address               string
+	SubscriberID          uuid.UUID `gorm:"type:uuid;index"`
+	FirstName             string `gorm:"size:255"`
+	LastName              string `gorm:"size:255"`
+	NetworkID          uuid.UUID `gorm:"type:uuid;index"`
+	Email                 string `gorm:"size:255"`
+	PhoneNumber           string `gorm:"size:15"`
+	Gender                string `gorm:"size:255"`
+	DOB                   time.Time
+	ProofOfIdentification string `gorm:"size:255"`
+	IdSerial              string `gorm:"size:255"`
+	Address               string `gorm:"size:255"`
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	DeletedAt             *time.Time `sql:"index"`
 }

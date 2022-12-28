@@ -1,9 +1,8 @@
 syntax = "proto3";
 option go_package = "pb/gen";
 
-import "validator.proto";
-import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
+import "validator.proto";
 
 package ukama.subscriber.v1;
 
@@ -17,7 +16,6 @@ service SubscriberService {
 
 message DeleteSubscriberRequest{
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
-
 }
 message GetByNetworkRequest{
     string networkID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
@@ -27,7 +25,7 @@ message GetByNetworkResponse{
     repeated Subscriber subscribers  = 1;
 }
 message DeleteSubscriberResponse{
-    string subscriberID = 1 [json_name = "subscriber_id"];
+    string subscriberID = 1;
 }
 message GetSubscriberRequest{
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
@@ -35,16 +33,17 @@ message GetSubscriberRequest{
 message GetSubscriberResponse{
     Subscriber subscriber  = 1;
 }
+
 message AddSubscriberRequest{
     string firstName = 1 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
     string lastName = 2 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
     string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     string phoneNumber = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string address  = 5; 
-    string IdSerial =6;
+    string idSerial =6;
     string networkID = 7 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
-    string proofOfIdentification =8 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];;
-    google.protobuf.Timestamp date_of_birth = 9 ;
+    string proofOfIdentification =8 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    google.protobuf.Timestamp dateOfBirth = 9;
     string gender =10 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
 }
 message UpdateSubscriberRequest{
@@ -52,7 +51,7 @@ message UpdateSubscriberRequest{
     string email = 4  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     string phoneNumber = 5  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string address  = 6; 
-    string IdSerial =8;
+    string idSerial =8;
     string proofOfIdentification =11;
     google.protobuf.Timestamp date_of_birth = 12;
 
@@ -74,11 +73,11 @@ message Subscriber{
     string phoneNumber  = 7;
     string address  = 8; 
     string proofOfIdentification =9;
-    google.protobuf.Timestamp created_at = 10;
-    google.protobuf.Timestamp deleted_at = 11;
-    google.protobuf.Timestamp updated_at = 12;
+    string created_at = 10;
+    string deleted_at = 11;
+    string updated_at = 12;
     repeated Sim sim = 13;
-    google.protobuf.Timestamp date_of_birth = 14;
+    string date_of_birth = 14;
     string idSerial =15;
     string gender =16;
 }
@@ -99,8 +98,8 @@ message Sim {
     string iccid = 16;
     string msisdn = 17;
     repeated Package package = 19;
-    string State =20;
-    string ActivePackageID =21;
+    string state =20;
+    string activePackageID =21;
 
 }
  message Package {

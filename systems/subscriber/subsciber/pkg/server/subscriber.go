@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
@@ -15,6 +17,11 @@ type SubcriberServer struct {
 	subscriberRepo db.SubscriberRepo
 	pb.UnimplementedSubscriberServiceServer
 }
+type Date struct {
+	Year  int32
+	Month int32
+	Day   int32
+  }
 
 func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
 	return &SubcriberServer{subscriberRepo: subscriberRepo}
@@ -28,6 +35,13 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		logrus.Errorf("Failed to generate UUID: %s", err)
 		return nil, err
 	}
+	timestamp := &timestamppb.Timestamp{
+		Seconds: req.DateOfBirth.Seconds,
+		Nanos:   req.DateOfBirth.Nanos,
+	}
+
+	birthday := timestamp.AsTime()
+	
 
 	subscriber := &db.Subscriber{
 		SubscriberID:          uuid,
@@ -39,7 +53,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
-		DOB:                   req.GetDateOfBirth().AsTime(),
+		DOB:             birthday ,
 		IdSerial:              req.GetIdSerial(),
 	}
 	err = s.subscriberRepo.Add(subscriber)
@@ -126,27 +140,11 @@ func dbsubscriberToPbSubscribers(subscriber []db.Subscriber) []*pb.Subscriber {
 }
 
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
-	createdAt, err := ptypes.TimestampProto(s.CreatedAt)
-	if err != nil {
-		return nil
-	}
+	fmt.Println("DATE",s.DOB)
+	dateString := s.DOB.Format("2006-01-02")
+	fmt.Println("DATE STRING",dateString)
 
-	updateAt, err := ptypes.TimestampProto(s.UpdatedAt)
-	if err != nil {
-		return nil
-	}
-
-	deleteAt, err := ptypes.TimestampProto(s.DeletedAt.Time)
-	if err != nil {
-		return nil
-	}
-
-	DOB, err := ptypes.TimestampProto(s.DOB)
-	if err != nil {
-		return nil
-	}
 	return &pb.Subscriber{
-		Id:                    uint64(s.ID),
 		FirstName:             s.FirstName,
 		LastName:              s.LastName,
 		Email:                 s.Email,
@@ -154,12 +152,12 @@ func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 		ProofOfIdentification: s.ProofOfIdentification,
 		PhoneNumber:           s.PhoneNumber,
 		IdSerial:              s.IdSerial,
+		NetworkID: s.NetworkID.String(),
 		Gender:                s.Gender,
 		Address:               s.Address,
-		CreatedAt:             createdAt,
-		UpdatedAt:             updateAt,
-		DeletedAt:             deleteAt,
-		DateOfBirth:           DOB,
+		CreatedAt:              s.CreatedAt.String(),
+		UpdatedAt:             s.UpdatedAt.String(),
+		DateOfBirth:           dateString,
 	}
 
 }

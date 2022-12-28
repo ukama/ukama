@@ -8,7 +8,6 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
@@ -161,31 +160,11 @@ func (this *AddSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *Subscriber) Validate() error {
-	if this.CreatedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
-		}
-	}
-	if this.DeletedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DeletedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("DeletedAt", err)
-		}
-	}
-	if this.UpdatedAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.UpdatedAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("UpdatedAt", err)
-		}
-	}
 	for _, item := range this.Sim {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
 			}
-		}
-	}
-	if this.DateOfBirth != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBirth); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBirth", err)
 		}
 	}
 	return nil

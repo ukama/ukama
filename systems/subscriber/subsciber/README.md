@@ -12,6 +12,8 @@ The Subscriber Registry sub-system allows you to manage subscribers. It has the 
 
 - Update: Updates a subscriber in the database.
 
+- GetByNetwork: Retrieve subscriber by NetworkID.
+
 ## Prerequisites
 
 To use this sub-registry system, you will need the following:
@@ -24,7 +26,7 @@ To use this sub-registry system, you will need the following:
 
 - Clone this repository to your local machine:
 
-  `git clone https://github.com/your_username/subscriber-grpc-server.git`
+  `git clone https://github.com/ukama/ukama.git`
 
 * Navigate to the root directory of the repository:
 

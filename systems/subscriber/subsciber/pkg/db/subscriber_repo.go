@@ -53,11 +53,11 @@ func (s *subscriberRepo) Delete(subscriberId string) error {
 }
 
 func (b *subscriberRepo) Update(subscriberId string, sub Subscriber) (*Subscriber, error) {
-	result := b.Db.GetGormDb().Where(sub).UpdateColumns(sub)
+
+	result := b.Db.GetGormDb().Where("subscriber_id = ?",subscriberId).UpdateColumns(sub)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-
 	return &sub, nil
 }
 func (s *subscriberRepo) GetByNetwork(networkID uuid.UUID) ([]Subscriber, error) {
