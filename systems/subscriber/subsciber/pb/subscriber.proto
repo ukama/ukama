@@ -25,7 +25,6 @@ message GetByNetworkResponse{
     repeated Subscriber subscribers  = 1;
 }
 message DeleteSubscriberResponse{
-    string subscriberID = 1;
 }
 message GetSubscriberRequest{
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
@@ -53,11 +52,9 @@ message UpdateSubscriberRequest{
     string address  = 6; 
     string idSerial =8;
     string proofOfIdentification =11;
-    google.protobuf.Timestamp date_of_birth = 12;
-
 }
 message UpdateSubscriberResponse{
-    Subscriber subscriber  = 1;
+    string subscriberID = 1 [json_name = "subscriber_id"];
 }
 message AddSubscriberResponse{
     string subscriberID = 1 [json_name = "subscriber_id"];
@@ -81,29 +78,14 @@ message Subscriber{
     string idSerial =15;
     string gender =16;
 }
-
 message Sim {
-    string simID = 1 [json_name = "sim_id"];
-    string subscriberID = 2 [json_name = "subscriber_id"];
-    string simType = 4;
-    string created_at=5;
-    string deleted_at=6;
-    string updated_at=7;
-    string simManager=8;
-    string orgID = 11 [json_name = "org_id"];
-    string activationsCount = 12;
-    string deactivationsCount = 13;
-    string firstActivatedOn = 14;
-    string lastActivatedOn = 15;
-    string iccid = 16;
-    string msisdn = 17;
-    repeated Package package = 19;
-    string state =20;
-    string activePackageID =21;
-
+    string id = 1 ;
+    string subscriberID = 2 ;
+    string networkID = 3 ;
+    string iccid = 4;
+    string msisdn = 5 ;
+	// SimType Type = 6;
+	// SimStatus Status = 7;
+    bool isPhysical = 8 ;
+    google.protobuf.Timestamp allocatedAt = 9 ;
 }
- message Package {
-    string packageId = 1;
-    string startDate = 2;
-    string endDate = 3;
- }

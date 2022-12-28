@@ -89,16 +89,14 @@ func (_m *SubscriberRepo) GetByNetwork(networkID uuid.UUID) ([]db.Subscriber, er
 }
 
 // Update provides a mock function with given fields: subscriberID, sub
-func (_m *SubscriberRepo) Update(subscriberID string, sub db.Subscriber) (*db.Subscriber, error) {
+func (_m *SubscriberRepo) Update(subscriberID string, sub db.Subscriber) (string, error) {
 	ret := _m.Called(subscriberID, sub)
 
-	var r0 *db.Subscriber
-	if rf, ok := ret.Get(0).(func(string, db.Subscriber) *db.Subscriber); ok {
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, db.Subscriber) string); ok {
 		r0 = rf(subscriberID, sub)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Subscriber)
-		}
+		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error

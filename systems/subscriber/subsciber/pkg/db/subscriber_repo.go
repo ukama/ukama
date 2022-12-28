@@ -10,7 +10,7 @@ type SubscriberRepo interface {
 	Add(subscriber *Subscriber) error
 	Get(subscriberID string) (*Subscriber, error)
 	Delete(subscriberID string) error
-	Update(subscriberID string, sub Subscriber) (*Subscriber, error)
+	Update(subscriberID string, sub Subscriber) (string, error)
 	GetByNetwork(networkID uuid.UUID) ([]Subscriber, error)
 }
 
@@ -52,13 +52,13 @@ func (s *subscriberRepo) Delete(subscriberId string) error {
 	return nil
 }
 
-func (b *subscriberRepo) Update(subscriberId string, sub Subscriber) (*Subscriber, error) {
+func (b *subscriberRepo) Update(subscriberId string, sub Subscriber) (string, error) {
 
 	result := b.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).UpdateColumns(sub)
 	if result.Error != nil {
-		return nil, result.Error
+		return "", result.Error
 	}
-	return &sub, nil
+	return subscriberId, nil
 }
 func (s *subscriberRepo) GetByNetwork(networkID uuid.UUID) ([]Subscriber, error) {
 	var subscribers []Subscriber

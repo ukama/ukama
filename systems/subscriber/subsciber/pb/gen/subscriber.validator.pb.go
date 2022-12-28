@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -141,19 +141,9 @@ func (this *UpdateSubscriberRequest) Validate() error {
 	if !_regex_UpdateSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {
 		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
 	}
-	if this.DateOfBirth != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBirth); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBirth", err)
-		}
-	}
 	return nil
 }
 func (this *UpdateSubscriberResponse) Validate() error {
-	if this.Subscriber != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
-		}
-	}
 	return nil
 }
 func (this *AddSubscriberResponse) Validate() error {
@@ -170,15 +160,10 @@ func (this *Subscriber) Validate() error {
 	return nil
 }
 func (this *Sim) Validate() error {
-	for _, item := range this.Package {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Package", err)
-			}
+	if this.AllocatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.AllocatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("AllocatedAt", err)
 		}
 	}
-	return nil
-}
-func (this *Package) Validate() error {
 	return nil
 }
