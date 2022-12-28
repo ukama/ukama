@@ -45,7 +45,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Subscriber_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
-		 subscriberID :="7333911a-effb-4da9-949c-9f79fac688dd"
+		subscriberID := "7333911a-effb-4da9-949c-9f79fac688dd"
 
 		var db *extsql.DB
 
