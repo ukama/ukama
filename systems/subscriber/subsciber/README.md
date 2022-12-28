@@ -31,7 +31,7 @@ To use this sub-registry system, you will need the following:
 * Navigate to the root directory of the repository:
 
 ```
-cd/subscriber
+cd/systems/subscriber/subsciber
 ```
 
 - Compile the Protobuf files using the Protobuf compiler:
