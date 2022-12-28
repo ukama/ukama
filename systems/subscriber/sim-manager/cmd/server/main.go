@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -27,6 +28,7 @@ import (
 )
 
 var svcConf *pkg.Config
+var timeout = 3 * time.Second
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -85,8 +87,7 @@ func initDb() sql.Db {
 func runGrpcServer(gormDB sql.Db) {
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
-		clients.NewTestAgentAdapter(
-			clients.NewTestAgentClientProvider(svcConf.TestAgentHost)))
+		clients.NewAgentFactory(svcConf.TestAgentHost, timeout))
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)

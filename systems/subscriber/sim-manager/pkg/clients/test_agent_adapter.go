@@ -2,35 +2,29 @@ package clients
 
 import (
 	"context"
-	"log"
 
-	testagentpb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
+	"google.golang.org/grpc"
 )
 
 type TestAgentAdapter struct {
-	testAgentService TestAgentClientProvider
-	testAgentClient  testagentpb.TestAgentServiceClient
+	conn   *grpc.ClientConn
+	host   string
+	client pb.TestAgentServiceClient
 }
 
-func NewTestAgentAdapter(testAgentService TestAgentClientProvider) *TestAgentAdapter {
-	testAgentClient, err := testAgentService.GetClient()
-	if err != nil {
-		log.Fatal()
-	}
-
-	return &TestAgentAdapter{
-		testAgentClient: testAgentClient,
-	}
-}
-
-func (s *TestAgentAdapter) ActivateSim(ctx context.Context, simID string) error {
-	_, err := s.testAgentClient.ActivateSim(ctx, &testagentpb.ActivateSimRequest{SimID: simID})
+func (t *TestAgentAdapter) ActivateSim(ctx context.Context, simID string) error {
+	_, err := t.client.ActivateSim(ctx, &pb.ActivateSimRequest{SimID: simID})
 
 	return err
 }
 
-func (s *TestAgentAdapter) DeactivateSim(ctx context.Context, simID string) error {
-	_, err := s.testAgentClient.DeactivateSim(ctx, &testagentpb.DeactivateSimRequest{SimID: simID})
+func (t *TestAgentAdapter) DeactivateSim(ctx context.Context, simID string) error {
+	_, err := t.client.DeactivateSim(ctx, &pb.DeactivateSimRequest{SimID: simID})
 
 	return err
+}
+
+func (t *TestAgentAdapter) Close() {
+	t.conn.Close()
 }

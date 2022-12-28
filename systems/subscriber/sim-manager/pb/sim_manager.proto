@@ -41,6 +41,7 @@ message GetByNetworkResponse {
 
 message ActivateSimRequest {
     string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    uint32 simType = 2 [json_name = "sim_type"];
 }
 
 message ActivateSimResponse{}
@@ -59,6 +60,7 @@ message GetSimInfoResponse {
 
 message DeactivateSimRequest {
     string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    uint32 simType = 2 [json_name = "sim_type"];
 }
 
 message DeactivateSimResponse{
