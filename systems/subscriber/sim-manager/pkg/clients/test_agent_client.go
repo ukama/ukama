@@ -1,4 +1,4 @@
-package providers
+package clients
 
 import (
 	"context"
@@ -23,8 +23,8 @@ type testAgentClientProvider struct {
 	testAgentHost    string
 }
 
-func NewTestAgentClientProvider(orgHost string) TestAgentClientProvider {
-	return &testAgentClientProvider{testAgentHost: orgHost}
+func NewTestAgentClientProvider(testAgentHost string) TestAgentClientProvider {
+	return &testAgentClientProvider{testAgentHost: testAgentHost}
 }
 
 func (t *testAgentClientProvider) GetClient() (pb.TestAgentServiceClient, error) {
