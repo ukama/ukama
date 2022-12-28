@@ -22,6 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SimManagerServiceClient interface {
+	GetBySubscriber(ctx context.Context, in *GetBySubscriberRequest, opts ...grpc.CallOption) (*GetBySubscriberResponse, error)
+	GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error)
 	GetSimInfo(ctx context.Context, in *GetSimInfoRequest, opts ...grpc.CallOption) (*GetSimInfoResponse, error)
 	ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error)
 	DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error)
@@ -34,6 +36,24 @@ type simManagerServiceClient struct {
 
 func NewSimManagerServiceClient(cc grpc.ClientConnInterface) SimManagerServiceClient {
 	return &simManagerServiceClient{cc}
+}
+
+func (c *simManagerServiceClient) GetBySubscriber(ctx context.Context, in *GetBySubscriberRequest, opts ...grpc.CallOption) (*GetBySubscriberResponse, error) {
+	out := new(GetBySubscriberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetBySubscriber", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
+	out := new(GetByNetworkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetByNetwork", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *simManagerServiceClient) GetSimInfo(ctx context.Context, in *GetSimInfoRequest, opts ...grpc.CallOption) (*GetSimInfoResponse, error) {
@@ -76,6 +96,8 @@ func (c *simManagerServiceClient) GetSimUsage(ctx context.Context, in *GetSimUsa
 // All implementations must embed UnimplementedSimManagerServiceServer
 // for forward compatibility
 type SimManagerServiceServer interface {
+	GetBySubscriber(context.Context, *GetBySubscriberRequest) (*GetBySubscriberResponse, error)
+	GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error)
 	GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error)
 	ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error)
 	DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error)
@@ -87,6 +109,12 @@ type SimManagerServiceServer interface {
 type UnimplementedSimManagerServiceServer struct {
 }
 
+func (UnimplementedSimManagerServiceServer) GetBySubscriber(context.Context, *GetBySubscriberRequest) (*GetBySubscriberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBySubscriber not implemented")
+}
+func (UnimplementedSimManagerServiceServer) GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByNetwork not implemented")
+}
 func (UnimplementedSimManagerServiceServer) GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSimInfo not implemented")
 }
@@ -110,6 +138,42 @@ type UnsafeSimManagerServiceServer interface {
 
 func RegisterSimManagerServiceServer(s grpc.ServiceRegistrar, srv SimManagerServiceServer) {
 	s.RegisterService(&SimManagerService_ServiceDesc, srv)
+}
+
+func _SimManagerService_GetBySubscriber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBySubscriberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).GetBySubscriber(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetBySubscriber",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).GetBySubscriber(ctx, req.(*GetBySubscriberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_GetByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByNetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).GetByNetwork(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetByNetwork",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _SimManagerService_GetSimInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -191,6 +255,14 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ukama.sim_manager.v1.SimManagerService",
 	HandlerType: (*SimManagerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetBySubscriber",
+			Handler:    _SimManagerService_GetBySubscriber_Handler,
+		},
+		{
+			MethodName: "GetByNetwork",
+			Handler:    _SimManagerService_GetByNetwork_Handler,
+		},
 		{
 			MethodName: "GetSimInfo",
 			Handler:    _SimManagerService_GetSimInfo_Handler,

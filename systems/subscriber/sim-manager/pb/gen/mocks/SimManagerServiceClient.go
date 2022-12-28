@@ -76,6 +76,66 @@ func (_m *SimManagerServiceClient) DeactivateSim(ctx context.Context, in *gen.De
 	return r0, r1
 }
 
+// GetByNetwork provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) GetByNetwork(ctx context.Context, in *gen.GetByNetworkRequest, opts ...grpc.CallOption) (*gen.GetByNetworkResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetByNetworkResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByNetworkRequest, ...grpc.CallOption) *gen.GetByNetworkResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByNetworkResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByNetworkRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBySubscriber provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) GetBySubscriber(ctx context.Context, in *gen.GetBySubscriberRequest, opts ...grpc.CallOption) (*gen.GetBySubscriberResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetBySubscriberResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBySubscriberRequest, ...grpc.CallOption) *gen.GetBySubscriberResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetBySubscriberResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBySubscriberRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSimInfo provides a mock function with given fields: ctx, in, opts
 func (_m *SimManagerServiceClient) GetSimInfo(ctx context.Context, in *gen.GetSimInfoRequest, opts ...grpc.CallOption) (*gen.GetSimInfoResponse, error) {
 	_va := make([]interface{}, len(opts))
