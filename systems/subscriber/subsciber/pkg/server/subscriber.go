@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gofrs/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,7 +20,7 @@ type Date struct {
 	Year  int32
 	Month int32
 	Day   int32
-  }
+}
 
 func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
 	return &SubcriberServer{subscriberRepo: subscriberRepo}
@@ -41,7 +40,6 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}
 
 	birthday := timestamp.AsTime()
-	
 
 	subscriber := &db.Subscriber{
 		SubscriberID:          uuid,
@@ -53,7 +51,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
-		DOB:             birthday ,
+		DOB:                   birthday,
 		IdSerial:              req.GetIdSerial(),
 	}
 	err = s.subscriberRepo.Add(subscriber)
@@ -140,9 +138,7 @@ func dbsubscriberToPbSubscribers(subscriber []db.Subscriber) []*pb.Subscriber {
 }
 
 func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
-	fmt.Println("DATE",s.DOB)
 	dateString := s.DOB.Format("2006-01-02")
-	fmt.Println("DATE STRING",dateString)
 
 	return &pb.Subscriber{
 		FirstName:             s.FirstName,
@@ -152,10 +148,10 @@ func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 		ProofOfIdentification: s.ProofOfIdentification,
 		PhoneNumber:           s.PhoneNumber,
 		IdSerial:              s.IdSerial,
-		NetworkID: s.NetworkID.String(),
+		NetworkID:             s.NetworkID.String(),
 		Gender:                s.Gender,
 		Address:               s.Address,
-		CreatedAt:              s.CreatedAt.String(),
+		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
 		DateOfBirth:           dateString,
 	}
