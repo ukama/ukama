@@ -17,11 +17,6 @@ type SubcriberServer struct {
 	subscriberRepo db.SubscriberRepo
 	pb.UnimplementedSubscriberServiceServer
 }
-type Date struct {
-	Year  int32
-	Month int32
-	Day   int32
-}
 
 func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
 	return &SubcriberServer{subscriberRepo: subscriberRepo}
@@ -139,8 +134,8 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		return nil, err
 	}
 
-	logrus.Infof("Update Subscriber Id: %v, FullName: %v, Email: %v, Email: %v, ProofOfIdentification: %v, Address: %v, DateOfBith: %v",
-		req.Email, req.ProofOfIdentification, req.Address)
+	logrus.Infof("Update Subscriber Id: %v, Email: %v, ProofOfIdentification: %v, Address: %v",
+		req.SubscriberID,req.Email, req.ProofOfIdentification, req.Address)
 
 	subscriber := db.Subscriber{
 		Email:                 req.GetEmail(),
