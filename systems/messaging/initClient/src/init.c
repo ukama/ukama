@@ -13,6 +13,10 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <jansson.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
 
 #include "initClient.h"
 #include "httpStatus.h"
@@ -28,29 +32,30 @@
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
 
-  size_t realsize = size * nmemb;
-  struct Response *response = (struct Response *)userp;
+	size_t realsize = size * nmemb;
+	struct Response *response = (struct Response *)userp;
 
-  response->buffer = realloc(response->buffer, response->size + realsize + 1);
+	response->buffer = realloc(response->buffer, response->size + realsize + 1);
 
-  if(response->buffer == NULL) {
-    log_error("Not enough memory to realloc of size: %s",
-              response->size + realsize + 1);
-    return 0;
-  }
+	if(response->buffer == NULL) {
+		log_error("Not enough memory to realloc of size: %s",
+				  response->size + realsize + 1);
+		return 0;
+	}
 
-  memcpy(&(response->buffer[response->size]), contents, realsize);
-  response->size += realsize;
-  response->buffer[response->size] = 0; /* Null terminate. */
+	memcpy(&(response->buffer[response->size]), contents, realsize);
+	response->size += realsize;
+	response->buffer[response->size] = 0; /* Null terminate. */
 
-  return realsize;
+	return realsize;
 }
 
 /*
  * send_http_request --
  *
  */
-static long send_http_request(char *url, Request *request, json_t *json) {
+static long send_http_request(char *url, Request *request, json_t *json,
+							  char **retStr) {
 
 	long code=0;
 	CURL *curl=NULL;
@@ -86,6 +91,12 @@ static long send_http_request(char *url, Request *request, json_t *json) {
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
 	} else if (request->reqType == (ReqType)REQ_UNREGISTER) {
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+	} else if (request->reqType == (ReqType)REQ_QUERY) {
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+	} else if (request->reqType == (ReqType)REQ_UPDATE) {
+		json_str = json_dumps(json, 0);
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
 	}
 
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -102,6 +113,7 @@ static long send_http_request(char *url, Request *request, json_t *json) {
 	} else {
 		/* get status code */
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+		*retStr = strdup(response.buffer);
 	}
 
 	free(json_str);
@@ -120,7 +132,8 @@ static long send_http_request(char *url, Request *request, json_t *json) {
 static void create_url(char *url, Config *config, ReqType reqType) {
 
 	if (reqType == (ReqType)REQ_REGISTER ||
-		reqType == (ReqType)REQ_UNREGISTER) {
+		reqType == (ReqType)REQ_UNREGISTER ||
+		reqType == (ReqType)REQ_QUERY) {
 		/* URL -> host:port/v1/orgs/{org}/systems/{system} */
 		sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
 				config->initSystemAddr,
@@ -139,7 +152,8 @@ static int create_request(Request **request, Config *config) {
 
 	Register *reg=NULL;
 
-	if ((*request)->reqType == (ReqType)REQ_REGISTER) {
+	if ((*request)->reqType == (ReqType)REQ_REGISTER ||
+		((*request)->reqType == (ReqType)REQ_UPDATE)) {
 
 		reg = (Register *)calloc(1, sizeof(Register));
 		if (reg == NULL) return FALSE;
@@ -168,7 +182,8 @@ static void free_request(Request *request) {
 
 	reg = request->reg;
 
-	if (request->reqType == (ReqType) REQ_REGISTER) {
+	if (request->reqType == (ReqType) REQ_REGISTER ||
+		request->reqType == (ReqType) REQ_UPDATE) {
 
 		if (reg == NULL) return;
 
@@ -185,6 +200,58 @@ static void free_request(Request *request) {
 }
 
 /*
+ * free_query_response --
+ *
+ */
+void free_query_response(QueryResponse *response) {
+
+	if (response == NULL) return;
+
+	if (response->systemName)  free(response->systemName);
+	if (response->systemID)    free(response->systemID);
+	if (response->certificate) free(response->certificate);
+	if (response->ip)          free(response->ip);
+
+	free(response);
+}
+
+/*
+ * read_cache_uuid --
+ *
+ */
+static int read_cache_uuid(char *fileName, char **uuid) {
+
+	FILE *fp;
+	struct stat sb;
+	char buffer[MAX_BUFFER_SIZE] = {0};
+
+	/* Check to see if the cache file exist. */
+	if (stat(fileName, &sb) == -1) {
+		log_debug("Cache file does not exist: %s Error: %s",
+				  fileName, strerror(errno));
+		return REG_STATUS_NO_UUID;
+	}
+
+	/* Try to open it */
+	fp = fopen(fileName, "r");
+	if (fp == NULL) {
+		log_error("Error opening cache file: %s Error: %s",
+				  fileName, strerror(errno));
+		return REG_STATUS_NO_UUID;
+	}
+
+	/* Try to read the uuid */
+	if (fread(buffer, 1, MAX_UUID_LEN, fp) == 0) {
+		log_error("Error reading from the cache file: %s Error :%s",
+				  fileName, strerror(errno));
+		return REG_STATUS_NO_UUID;
+	}
+
+	*uuid = strndup(buffer, MAX_UUID_LEN);
+	return REG_STATUS_HAVE_UUID;
+}
+
+/*
  * send_request_to_init --
  *
  * create_request
@@ -192,7 +259,7 @@ static void free_request(Request *request) {
  * send to init
  *
  */
-int send_request_to_init(ReqType reqType, Config *config) {
+int send_request_to_init(ReqType reqType, Config *config, char **response) {
 
 	Request *request=NULL;
 	json_t *json=NULL;
@@ -228,12 +295,18 @@ int send_request_to_init(ReqType reqType, Config *config) {
 	create_url(&url[0], config, reqType);
 
 	/* Step-3 send over the wire */
-	respCode = send_http_request(&url[0], request, json);
+	respCode = send_http_request(&url[0], request, json, response);
 
 	switch(respCode) {
 	case HttpStatus_OK:
 		if (reqType == (ReqType)REQ_UNREGISTER) {
 			log_debug("Successful unregister");
+			ret = TRUE;
+		} else if (reqType == (ReqType)REQ_QUERY) {
+			log_debug("Query successful");
+			ret = TRUE;
+		} else if (reqType == (ReqType)REQ_UPDATE) {
+			log_debug("Update successful");
 			ret = TRUE;
 		}
 		break;
@@ -252,4 +325,57 @@ int send_request_to_init(ReqType reqType, Config *config) {
 	json_decref(json);
 
 	return ret;
+}
+
+/*
+ * existing_registration --
+ *
+ */
+int existing_registration(Config *config, char **cacheUUID,
+						  char **systemUUID) {
+
+	int status=REG_STATUS_NONE;
+	char *str=NULL;
+	QueryResponse *queryResponse=NULL;
+
+	if (send_request_to_init(REQ_QUERY, config, &str)) {
+		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
+			log_error("Error deserialize query response. Str: %s", str);
+			return -1;
+		}
+	} else {
+		status = REG_STATUS_NO_MATCH;
+		goto return_function;
+	}
+
+	status = read_cache_uuid(config->tempFile, cacheUUID);
+
+	/* match? */
+	if (strcmp(config->systemName, queryResponse->systemName) == 0 &&
+		strcmp(config->systemAddr, queryResponse->ip) == 0 &&
+		strcmp(config->systemCert, queryResponse->certificate) == 0 &&
+		atoi(config->systemPort) == queryResponse->port) {
+
+		if (status == REG_STATUS_HAVE_UUID) {
+			if (strcmp(*cacheUUID, queryResponse->systemID) == 0){
+				status |= REG_STATUS_MATCH;
+			} else {
+				status |= REG_STATUS_NO_MATCH;
+			}
+		} else {
+			status |= REG_STATUS_MATCH;
+		}
+	} else {
+		status |= REG_STATUS_NO_MATCH;
+	}
+
+	if (queryResponse->systemID) {
+		*systemUUID = strdup(queryResponse->systemID);
+	}
+
+ return_function:
+	if (str)  free(str);
+	free_query_response(queryResponse);
+
+	return status;
 }

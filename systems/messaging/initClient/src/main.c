@@ -18,9 +18,11 @@
 #include <getopt.h>
 #include <ulfius.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "initClient.h"
 #include "config.h"
+#include "jserdes.h"
 #include "log.h"
 
 #define VERSION "0.0.1"
@@ -32,7 +34,6 @@ typedef struct {
 } State;
 
 extern int start_web_services(Config *config, UInst *webtInst); /*network.c */
-extern int send_request_to_init(ReqType reqType, Config *config); /* init.c */
 
 /* Global */
 State *state=NULL; 
@@ -83,10 +84,13 @@ void set_log_level(char *slevel) {
  */
 void signal_term_handler(void) {
 
+    char *response=NULL;
+
 	if (state == NULL) exit(1);
 
 	/* un-register the system */
-	if (send_request_to_init(REQ_UNREGISTER, state->config) != TRUE) {
+	if (send_request_to_init(REQ_UNREGISTER, state->config,
+							 &response) != TRUE) {
 		log_error("Error registrating with the init system");
 	}
 
@@ -123,6 +127,26 @@ void catch_sigterm(void) {
 }
 
 /*
+ * create_temp_file_and_store_uuid --
+ *
+ */
+int create_temp_file_and_store_uuid(char *fileName, char *uuid) {
+
+    FILE *fp=NULL;
+
+    if ((fp = fopen(fileName, "w")) == NULL) {
+		log_error("Unable to create cache temp file: %s Error: %s",
+				  fileName, strerror(errno));
+        return FALSE;
+    }
+
+    fputs(uuid, fp);
+	fclose(fp);
+
+    return TRUE;
+}
+
+/*
  * Life of initClient:
  *
  * Look for environment variables
@@ -135,10 +159,13 @@ void catch_sigterm(void) {
  */
 int main (int argc, char *argv[]) {
 
-	int exitStatus=0;
+	int exitStatus=0, regStatus=REG_STATUS_NONE;
 	char *debug=DEFAULT_LOG_LEVEL;
+	char *response=NULL;
 	struct _u_instance webInst;
 	Config *config=NULL;
+	char *cacheUUID=NULL, *systemUUID=NULL;
+	QueryResponse *queryResponse=NULL;
 
 	state = (State *)calloc(1, sizeof(State));
 	if (state == NULL) {
@@ -196,12 +223,55 @@ int main (int argc, char *argv[]) {
 		goto exit_program;
 	}
 
-	/* Step-3: system registration with init */
-	if (send_request_to_init(REQ_REGISTER, config) != TRUE) {
-		log_error("Error registrating with the init system");
-		exitStatus = 1;
-		goto exit_program;
+	/* Step-2: check current registration status */
+	regStatus = existing_registration(config, &cacheUUID, &systemUUID);
+
+	/* Step-3: take action(s) */
+	switch(regStatus) {
+	case REG_STATUS_MATCH | REG_STATUS_HAVE_UUID:
+		log_debug("System already registerd with init.");
+		break;
+
+	case REG_STATUS_MATCH | REG_STATUS_NO_UUID:
+		log_debug("Storing UUID %s to tempFile: %s", systemUUID,
+				  config->tempFile);
+		create_temp_file_and_store_uuid(config->tempFile, systemUUID);
+		break;
+
+	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
+		if (send_request_to_init(REQ_UPDATE, config, &response) != TRUE) {
+			log_error("Error updating with the init system");
+			exitStatus = 1;
+			goto exit_program;
+		}
+		break;
+
+	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
+		/* first time registering */
+		if (send_request_to_init(REQ_REGISTER, config, &response) != TRUE) {
+			log_error("Error registrating with the init system");
+			exitStatus = 1;
+			goto exit_program;
+		}
+
+		/* read the UUID and log it into tempfile. */
+		if (deserialize_response(REQ_REGISTER, &queryResponse,
+								 response) != TRUE) {
+			log_error("Error deserialize the registration response. Str: %s",
+					  response);
+			exitStatus = 1;
+			goto exit_program;
+		}
+		create_temp_file_and_store_uuid(config->tempFile,
+									   queryResponse->systemID);
+		break;
+
+	default:
+		break;
 	}
+
+	if (queryResponse) free_query_response(queryResponse);
+	if (response)      free(response);
 
 	/* Wait here for ever. XXX */
 
@@ -211,7 +281,7 @@ int main (int argc, char *argv[]) {
 
 	log_debug("Goodbye ... ");
 
-	send_request_to_init(REQ_UNREGISTER, config);
+	send_request_to_init(REQ_UNREGISTER, config, &response);
 	ulfius_stop_framework(&webInst);
 	ulfius_clean_instance(&webInst);
 

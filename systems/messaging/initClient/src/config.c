@@ -33,16 +33,18 @@
  */
 int read_config_from_env(Config **config){
 
-	char *port=NULL, *addr=NULL;
+	char *port=NULL, *addr=NULL, *tempFile=NULL;
 	char *systemName=NULL, *systemAddr=NULL, *systemPort=NULL;
 	char *initSystemAddr=NULL, *initSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
 
 	if ((addr = getenv(ENV_INIT_CLIENT_ADDR)) == NULL ||
-		(port = getenv(ENV_INIT_CLIENT_PORT)) == NULL) {
-		log_error("Required env variables: %s and %s missing",
+		(port = getenv(ENV_INIT_CLIENT_PORT)) == NULL ||
+		(tempFile = getenv(ENV_INIT_CLIENT_TEMP_FILE)) == NULL) {
+		log_error("Required env variables: %s %s %s missing",
 				  ENV_INIT_CLIENT_ADDR,
-				  ENV_INIT_CLIENT_PORT);
+				  ENV_INIT_CLIENT_PORT,
+				  ENV_INIT_CLIENT_TEMP_FILE);
 		return FALSE;
 	}
 
@@ -72,8 +74,9 @@ int read_config_from_env(Config **config){
 
 	(*config)->logLevel   = getenv(ENV_INIT_CLIENT_LOG_LEVEL);
 
-	(*config)->addr = strdup(addr);
-	(*config)->port = strdup(port);
+	(*config)->addr     = strdup(addr);
+	(*config)->port     = strdup(port);
+	(*config)->tempFile = strdup(tempFile);
 
 	(*config)->systemOrg  = strdup(systemOrg);
 	(*config)->systemName = strdup(systemName);
@@ -103,6 +106,7 @@ void clear_config(Config *config) {
 
 	if (config->addr)             free(config->addr);
 	if (config->port)             free(config->port);
+	if (config->tempFile)         free(config->tempFile);
 
 	if (config->systemOrg)        free(config->systemOrg);
 	if (config->systemName)       free(config->systemName);
