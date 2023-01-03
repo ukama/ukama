@@ -25,7 +25,7 @@ func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
 	networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
-	uuid, err := uuid.NewV4()
+	subscriberID_uuid, err := uuid.NewV4()
 	if err != nil {
 		logrus.Errorf("Failed to generate UUID: %s", err)
 		return nil, err
@@ -38,7 +38,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	birthday := timestamp.AsTime()
 
 	subscriber := &db.Subscriber{
-		SubscriberID:          uuid,
+		SubscriberID:          subscriberID_uuid,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
 		NetworkID:             networkID_uuid,
@@ -55,7 +55,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		logrus.Error("error while adding subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	return &pb.AddSubscriberResponse{SubscriberID: uuid.String()}, nil
+	return &pb.AddSubscriberResponse{SubscriberID: subscriberID_uuid.String()}, nil
 
 }
 
