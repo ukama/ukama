@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/validation"
 	"gorm.io/gorm"
@@ -10,11 +11,11 @@ import (
 
 type SiteRepo interface {
 	Add(site *Site) error
-	Get(id uint) (*Site, error)
-	GetByName(netID uint, siteName string) (*Site, error)
-	GetByNetwork(netID uint) ([]Site, error)
+	Get(id uuid.UUID) (*Site, error)
+	GetByName(netID uuid.UUID, siteName string) (*Site, error)
+	GetByNetwork(netID uuid.UUID) ([]Site, error)
 	// Update(site *Site) error
-	Delete(id uint) error
+	Delete(id uuid.UUID) error
 
 	// AttachNodes
 	// DetachNodes
@@ -30,7 +31,7 @@ func NewSiteRepo(db sql.Db) SiteRepo {
 	}
 }
 
-func (s siteRepo) Get(id uint) (*Site, error) {
+func (s siteRepo) Get(id uuid.UUID) (*Site, error) {
 	var site Site
 
 	result := s.Db.GetGormDb().First(&site, id)
@@ -41,7 +42,7 @@ func (s siteRepo) Get(id uint) (*Site, error) {
 	return &site, nil
 }
 
-func (s siteRepo) GetByName(netID uint, siteName string) (*Site, error) {
+func (s siteRepo) GetByName(netID uuid.UUID, siteName string) (*Site, error) {
 	var site Site
 
 	result := s.Db.GetGormDb().Where("sites.network_id = ? and sites.name = ?", netID, siteName).First(&site)
@@ -52,7 +53,7 @@ func (s siteRepo) GetByName(netID uint, siteName string) (*Site, error) {
 	return &site, nil
 }
 
-func (s siteRepo) GetByNetwork(netID uint) ([]Site, error) {
+func (s siteRepo) GetByNetwork(netID uuid.UUID) ([]Site, error) {
 	var sites []Site
 	db := s.Db.GetGormDb()
 
@@ -75,7 +76,7 @@ func (s siteRepo) Add(site *Site) error {
 	return result.Error
 }
 
-func (s siteRepo) Delete(siteID uint) error {
+func (s siteRepo) Delete(siteID uuid.UUID) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Where("sites.id = ?", siteID).Delete(&Site{})
 

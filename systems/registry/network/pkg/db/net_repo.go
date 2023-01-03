@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -11,11 +12,11 @@ import (
 )
 
 type NetRepo interface {
-	Get(id uint) (*Network, error)
+	Add(network *Network) error
+	Get(id uuid.UUID) (*Network, error)
 	GetByName(orgName string, network string) (*Network, error)
-	GetAllByOrgId(orgID uint) ([]Network, error)
-	// GetAllByOrgName(orgName string) ([]Network, error)
-	Add(orgId uint, network string) (*Network, error)
+	GetByOrg(orgID uuid.UUID) ([]Network, error)
+	// GetByOrgName(orgName string) ([]Network, error)
 	// Update(orgId uint, network *Network) error
 	Delete(orgName string, network string) error
 }
@@ -30,7 +31,7 @@ func NewNetRepo(db sql.Db) NetRepo {
 	}
 }
 
-func (n netRepo) Get(id uint) (*Network, error) {
+func (n netRepo) Get(id uuid.UUID) (*Network, error) {
 	var ntwk Network
 
 	result := n.Db.GetGormDb().First(&ntwk, id)
@@ -59,7 +60,7 @@ func (n netRepo) GetByName(orgName string, network string) (*Network, error) {
 	return &ntwk, nil
 }
 
-func (n netRepo) GetAllByOrgId(orgID uint) ([]Network, error) {
+func (n netRepo) GetByOrg(orgID uuid.UUID) ([]Network, error) {
 	db := n.Db.GetGormDb()
 	var networks []Network
 
@@ -80,22 +81,15 @@ func (n netRepo) GetAllByOrgId(orgID uint) ([]Network, error) {
 
 // }
 
-func (n netRepo) Add(orgId uint, network string) (*Network, error) {
-	db := n.Db.GetGormDb()
-
-	if !validation.IsValidDnsLabelName(network) {
-		return nil, fmt.Errorf("invalid name. must be less then 253 " +
+func (n netRepo) Add(network *Network) error {
+	if !validation.IsValidDnsLabelName(network.Name) {
+		return fmt.Errorf("invalid name. must be less then 253 " +
 			"characters and consist of lowercase characters with a hyphen")
 	}
 
-	netw := &Network{
-		OrgID: orgId,
-		Name:  network,
-	}
+	result := n.Db.GetGormDb().Create(network)
 
-	db = db.Create(netw)
-
-	return netw, db.Error
+	return result.Error
 }
 
 func (n netRepo) Delete(orgName string, network string) error {

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,8 +20,8 @@ func Test_SiteRepo_Get(t *testing.T) {
 	t.Run("SiteExist", func(t *testing.T) {
 		// Arrange
 		const siteName = "site1"
-		const siteId = 1
-		const netId = 1
+		var siteId = uuid.New()
+		var netId = uuid.New()
 
 		var db *extsql.DB
 
@@ -63,7 +64,7 @@ func Test_SiteRepo_Get(t *testing.T) {
 
 	t.Run("SiteNotFound", func(t *testing.T) {
 		// Arrange
-		const siteId = 1
+		var siteId = uuid.New()
 
 		var db *extsql.DB
 
@@ -106,8 +107,8 @@ func Test_SiteRepo_GetByName(t *testing.T) {
 	t.Run("SiteExist", func(t *testing.T) {
 		// Arrange
 		const siteName = "site1"
-		const siteId = 1
-		const netId = 1
+		var siteId = uuid.New()
+		var netId = uuid.New()
 
 		var db *extsql.DB
 
@@ -150,7 +151,7 @@ func Test_SiteRepo_GetByName(t *testing.T) {
 
 	t.Run("SiteNotFound", func(t *testing.T) {
 		// Arrange
-		const netId = 1
+		var netId = uuid.New()
 		const siteName = "site-1"
 
 		var db *extsql.DB
@@ -194,8 +195,8 @@ func Test_SiteRepo_GetByNetwork(t *testing.T) {
 	t.Run("NetworkExist", func(t *testing.T) {
 		// Arrange
 		const siteName = "site1"
-		const siteId = 1
-		const netId = 1
+		var siteId = uuid.New()
+		var netId = uuid.New()
 
 		var db *extsql.DB
 
@@ -238,7 +239,7 @@ func Test_SiteRepo_GetByNetwork(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		const netId = 1
+		var netId = uuid.New()
 
 		var db *extsql.DB
 
@@ -283,8 +284,9 @@ func Test_SiteRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		site := net_db.Site{
+			ID:        uuid.New(),
 			Name:      "site1",
-			NetworkID: 1,
+			NetworkID: uuid.New(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -292,9 +294,9 @@ func Test_SiteRepo_Add(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), site.Name, site.NetworkID, sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(site.ID, site.Name, site.NetworkID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
@@ -329,7 +331,7 @@ func Test_SiteRepo_Delete(t *testing.T) {
 	t.Run("DeleteSite", func(t *testing.T) {
 		var db *extsql.DB
 
-		const siteId = 1
+		var siteId = uuid.New()
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
