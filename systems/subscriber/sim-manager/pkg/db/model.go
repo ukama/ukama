@@ -16,7 +16,7 @@ type Sim struct {
 	Msisdn       string
 	Type         SimType
 	Status       SimStatus
-	isPhysical   bool
+	IsPhysical   bool
 	AllocatedAt  int64 `gorm:"autoCreateTime"`
 	UpdatedAt    time.Time
 	TerminatedAt gorm.DeletedAt `gorm:"index"`

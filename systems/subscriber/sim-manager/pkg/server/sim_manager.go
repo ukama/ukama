@@ -2,10 +2,14 @@ package server
 
 import (
 	"context"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -22,6 +26,44 @@ func NewSimManagerServer(simRepo db.SimRepo, agentFactory *clients.AgentFactory)
 		simRepo:      simRepo,
 		agentFactory: agentFactory,
 	}
+}
+
+func (s *SimManagerServer) GetBySubscriber(ctx context.Context, req *pb.GetBySubscriberRequest) (*pb.GetBySubscriberResponse, error) {
+	subID, err := uuid.Parse(req.GetSubscriberID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of subscriber uuid. Error %s", err.Error())
+	}
+
+	sims, err := s.simRepo.GetBySubscriber(subID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
+	}
+
+	resp := &pb.GetBySubscriberResponse{
+		SubscriberID: req.GetSubscriberID(),
+		Sims:         dbSimsToPbSims(sims),
+	}
+
+	return resp, nil
+}
+
+func (s *SimManagerServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+	netID, err := uuid.Parse(req.GetNetworkID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
+	}
+
+	sims, err := s.simRepo.GetByNetwork(netID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
+	}
+
+	resp := &pb.GetByNetworkResponse{
+		NetworkID: req.GetNetworkID(),
+		Sims:      dbSimsToPbSims(sims),
+	}
+
+	return resp, nil
 }
 
 func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRequest) (*pb.ActivateSimResponse, error) {
@@ -50,4 +92,26 @@ func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.Deactivate
 	}
 
 	return &pb.DeactivateSimResponse{}, nil
+}
+
+func dbSimToPbSim(sim *db.Sim) *pb.Sim {
+	return &pb.Sim{
+		Id:           sim.ID.String(),
+		SubscriberID: sim.SubscriberID.String(),
+		NetworkID:    sim.NetworkID.String(),
+		Iccid:        sim.Iccid,
+		Msisdn:       sim.Msisdn,
+		IsPhysical:   sim.IsPhysical,
+		AllocatedAt:  timestamppb.New(time.Unix(sim.AllocatedAt, 0)),
+	}
+}
+
+func dbSimsToPbSims(sims []db.Sim) []*pb.Sim {
+	res := []*pb.Sim{}
+
+	for _, s := range sims {
+		res = append(res, dbSimToPbSim(&s))
+	}
+
+	return res
 }
