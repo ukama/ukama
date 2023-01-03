@@ -11,7 +11,6 @@ type SimRepo interface {
 	Add(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Get(simID uuid.UUID) (*Sim, error)
 	GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error)
-	GetByNetwork(networkID uuid.UUID) ([]Sim, error)
 	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
@@ -61,17 +60,6 @@ func (r *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
 	result := r.Db.GetGormDb().Where(&Sim{SubscriberID: subscriberID}).Find(&sims)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return sims, nil
-}
-
-func (r *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
-	var sims []Sim
-
-	result := r.Db.GetGormDb().Where(&Sim{NetworkID: networkID}).Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}

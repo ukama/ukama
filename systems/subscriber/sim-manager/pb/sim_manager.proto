@@ -11,7 +11,6 @@ package ukama.sim_manager.v1;
 
 service SimManagerService {
     rpc GetBySubscriber(GetBySubscriberRequest) returns (GetBySubscriberResponse);
-    rpc GetByNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
     rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
     rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
     rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
@@ -27,17 +26,6 @@ message GetBySubscriberResponse {
     string subscriberID = 1 [json_name = "subscriber_id"];
     repeated Sim sims = 2;
 }
-
-
-message GetByNetworkRequest {
-    string networkID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
-}
-
-message GetByNetworkResponse {
-    string networkID = 1 [json_name = "network_id"];
-    repeated Sim sims = 2;
-}
-
 
 message ActivateSimRequest {
     string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
@@ -79,11 +67,10 @@ message GetSimUsageResponse {
 message Sim {
     string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
     string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
-    string networkID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
-    string iccid = 4;
-    string msisdn = 5  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-	// SimType Type = 6
-	// SimStatus Status = 7
-    bool isPhysical = 8 [json_name = "is_physical"];
-    google.protobuf.Timestamp allocatedAt = 9 [json_name = "allocated_at"];
+    string iccid = 3;
+    string msisdn = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+	// SimType Type = 5
+	// SimStatus Status = 6
+    bool isPhysical = 7 [json_name = "is_physical"];
+    google.protobuf.Timestamp allocatedAt = 8 [json_name = "allocated_at"];
 }

@@ -47,25 +47,6 @@ func (s *SimManagerServer) GetBySubscriber(ctx context.Context, req *pb.GetBySub
 	return resp, nil
 }
 
-func (s *SimManagerServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
-	netID, err := uuid.Parse(req.GetNetworkID())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
-	}
-
-	sims, err := s.simRepo.GetByNetwork(netID)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	resp := &pb.GetByNetworkResponse{
-		NetworkID: req.GetNetworkID(),
-		Sims:      dbSimsToPbSims(sims),
-	}
-
-	return resp, nil
-}
-
 func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRequest) (*pb.ActivateSimResponse, error) {
 	simAgent, ok := s.agentFactory.GetAgentAdapter(req.SimType)
 	if !ok {
@@ -98,7 +79,6 @@ func dbSimToPbSim(sim *db.Sim) *pb.Sim {
 	return &pb.Sim{
 		Id:           sim.ID.String(),
 		SubscriberID: sim.SubscriberID.String(),
-		NetworkID:    sim.NetworkID.String(),
 		Iccid:        sim.Iccid,
 		Msisdn:       sim.Msisdn,
 		IsPhysical:   sim.IsPhysical,
