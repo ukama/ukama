@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
@@ -16,6 +17,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
+
+const uuidParsingError = "Error parsing UUID"
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
@@ -69,20 +72,31 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		}
 	}
 
+	network := &db.Network{
+		ID:    uuid.New(),
+		Name:  networkName,
+		OrgID: org.ID,
+	}
+
 	logrus.Infof("Adding network %s", networkName)
-	nt, err := n.netRepo.Add(org.ID, networkName)
+	err = n.netRepo.Add(network)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
 	return &pb.AddResponse{
-		Network: dbNtwkToPbNtwk(nt),
+		Network: dbNtwkToPbNtwk(network),
 		Org:     req.GetOrgName(),
 	}, nil
 }
 
 func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	nt, err := n.netRepo.Get(uint(req.NetworkID))
+	netID, err := uuid.Parse(req.NetworkID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	nt, err := n.netRepo.Get(netID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -93,7 +107,7 @@ func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 }
 
 func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
-	nt, err := n.netRepo.GetByName(req.OrgName, req.GetName())
+	nt, err := n.netRepo.GetByName(req.GetOrgName(), req.GetName())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "mapping org/network")
 	}
@@ -105,18 +119,18 @@ func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest)
 }
 
 func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	org, err := n.orgRepo.GetByName(req.GetOrgName())
+	orgID, err := uuid.Parse(req.OrgID)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "networks")
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	ntwks, err := n.netRepo.GetAllByOrgId(org.ID)
+	ntwks, err := n.netRepo.GetByOrg(orgID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "networks")
 	}
 
 	resp := &pb.GetByOrgResponse{
-		Org:      req.OrgName,
+		OrgID:    req.OrgID,
 		Networks: dbNtwksToPbNtwks(ntwks),
 	}
 
@@ -139,9 +153,14 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 }
 
 func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*pb.AddSiteResponse, error) {
+	netID, err := uuid.Parse(req.NetworkID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
 	// We need to improve ukama/common/sql for more sql errors like foreign keys violations
 	// which will allow us to skip these extra calls to DBs
-	ntwk, err := n.netRepo.Get(uint(req.NetworkID))
+	ntwk, err := n.netRepo.Get(netID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -161,7 +180,12 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 }
 
 func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*pb.GetSiteResponse, error) {
-	site, err := n.siteRepo.Get(uint(req.SiteID))
+	siteID, err := uuid.Parse(req.SiteID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	site, err := n.siteRepo.Get(siteID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
@@ -171,7 +195,12 @@ func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*p
 }
 
 func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByNameRequest) (*pb.GetSiteResponse, error) {
-	ntwk, err := n.netRepo.Get(uint(req.NetworkID))
+	netID, err := uuid.Parse(req.NetworkID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	ntwk, err := n.netRepo.Get(netID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -185,8 +214,13 @@ func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByName
 		Site: dbSiteToPbSite(site)}, nil
 }
 
-func (n *NetworkServer) GetSiteByNetwork(ctx context.Context, req *pb.GetSiteByNetworkRequest) (*pb.GetSiteByNetworkResponse, error) {
-	ntwk, err := n.netRepo.Get(uint(req.GetNetworkID()))
+func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesByNetworkRequest) (*pb.GetSitesByNetworkResponse, error) {
+	netID, err := uuid.Parse(req.NetworkID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	ntwk, err := n.netRepo.Get(netID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
@@ -196,8 +230,8 @@ func (n *NetworkServer) GetSiteByNetwork(ctx context.Context, req *pb.GetSiteByN
 		return nil, grpc.SqlErrorToGrpc(err, "sites")
 	}
 
-	resp := &pb.GetSiteByNetworkResponse{
-		NetworkID: uint64(ntwk.ID),
+	resp := &pb.GetSitesByNetworkResponse{
+		NetworkID: ntwk.ID.String(),
 		Sites:     dbSitesToPbSites(sites),
 	}
 
@@ -206,8 +240,9 @@ func (n *NetworkServer) GetSiteByNetwork(ctx context.Context, req *pb.GetSiteByN
 
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
-		Id:            uint64(ntwk.ID),
+		Id:            ntwk.ID.String(),
 		Name:          ntwk.Name,
+		OrgID:         ntwk.OrgID.String(),
 		IsDeactivated: ntwk.Deactivated,
 		CreatedAt:     timestamppb.New(ntwk.CreatedAt),
 	}
@@ -225,9 +260,9 @@ func dbNtwksToPbNtwks(ntwks []db.Network) []*pb.Network {
 
 func dbSiteToPbSite(site *db.Site) *pb.Site {
 	return &pb.Site{
-		Id:            uint64(site.ID),
+		Id:            site.ID.String(),
 		Name:          site.Name,
-		NetworkID:     uint64(site.NetworkID),
+		NetworkID:     site.NetworkID.String(),
 		IsDeactivated: site.Deactivated,
 		CreatedAt:     timestamppb.New(site.CreatedAt),
 	}
