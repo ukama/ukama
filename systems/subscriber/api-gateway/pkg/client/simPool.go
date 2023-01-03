@@ -13,7 +13,7 @@ import (
 type SimPool struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
-	client  pb.SimPoolServiceClient
+	client  pb.SimServiceClient
 	host    string
 }
 
@@ -25,7 +25,7 @@ func NewSimPool(host string, timeout time.Duration) *SimPool {
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
-	client := pb.NewSimPoolServiceClient(conn)
+	client := pb.NewSimServiceClient(conn)
 
 	return &SimPool{
 		conn:    conn,
@@ -35,7 +35,7 @@ func NewSimPool(host string, timeout time.Duration) *SimPool {
 	}
 }
 
-func NewSimPoolFromClient(SimPoolClient pb.SimPoolServiceClient) *SimPool {
+func NewSimPoolFromClient(SimPoolClient pb.SimServiceClient) *SimPool {
 	return &SimPool{
 		host:    "localhost",
 		timeout: 1 * time.Second,
@@ -48,11 +48,11 @@ func (sp *SimPool) Close() {
 	sp.conn.Close()
 }
 
-func (sp *SimPool) GetSimPoolStats(req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
+func (sp *SimPool) GetStats(simType string) (*pb.GetStatsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.GetStats(ctx, req)
+	return sp.client.GetStats(ctx, &pb.GetStatsRequest{SimType: pb.SimType(pb.SimType_value[simType])})
 }
 
 func (sp *SimPool) AddSimsToSimPool(req *pb.AddRequest) (*pb.AddResponse, error) {
@@ -69,9 +69,9 @@ func (sp *SimPool) UploadSimsToSimPool(req *pb.UploadRequest) (*pb.UploadRespons
 	return sp.client.Upload(ctx, req)
 }
 
-func (sp *SimPool) DeleteSimFromSimPool(req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+func (sp *SimPool) DeleteSimFromSimPool(id []uint64) (*pb.DeleteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.Delete(ctx, req)
+	return sp.client.Delete(ctx, &pb.DeleteRequest{Id: id})
 }

@@ -22,16 +22,23 @@ func (this *GetStatsResponse) Validate() error {
 	return nil
 }
 func (this *AddRequest) Validate() error {
-	for _, item := range this.SimInfo {
+	for _, item := range this.Sim {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("SimInfo", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
 			}
 		}
 	}
 	return nil
 }
 func (this *AddResponse) Validate() error {
+	for _, item := range this.Sim {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+			}
+		}
+	}
 	return nil
 }
 func (this *DeleteRequest) Validate() error {
@@ -44,11 +51,18 @@ func (this *UploadRequest) Validate() error {
 	return nil
 }
 func (this *UploadResponse) Validate() error {
+	for _, item := range this.Sim {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+			}
+		}
+	}
 	return nil
 }
-func (this *SimPool) Validate() error {
+func (this *Sim) Validate() error {
 	return nil
 }
-func (this *SimInfo) Validate() error {
+func (this *AddSim) Validate() error {
 	return nil
 }

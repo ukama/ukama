@@ -43,10 +43,10 @@ type Clients struct {
 }
 
 type simPool interface {
-	GetSimPoolStats(req *pb.GetStatsRequest) (*pb.GetStatsResponse, error)
+	GetStats(simType string) (*pb.GetStatsResponse, error)
 	AddSimsToSimPool(req *pb.AddRequest) (*pb.AddResponse, error)
 	UploadSimsToSimPool(req *pb.UploadRequest) (*pb.UploadResponse, error)
-	DeleteSimFromSimPool(req *pb.DeleteRequest) (*pb.DeleteResponse, error)
+	DeleteSimFromSimPool(id []uint64) (*pb.DeleteResponse, error)
 }
 
 type simManager interface {
@@ -143,83 +143,55 @@ func (r *Router) getAllSims(c *gin.Context, req *SimListReq) (*SimListResp, erro
 	return nil, nil
 }
 
-func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolStatByTypeReq) (*SimPoolStats, error) {
-	resp, err := r.clients.sp.GetSimPoolStats(&pb.GetStatsRequest{
-		SimType: pb.SimType_inter_mno_all,
-	})
+func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolStatByTypeReq) (*pb.GetStatsResponse, error) {
+	simType, ok := c.GetQuery("simType")
+	if !ok {
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "simType is a mandatory query parameter"}
+	}
+	resp, err := r.clients.sp.GetStats(simType)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SimPoolStats{
-		Total:     uint64(resp.Total),
-		Available: uint64(resp.Available),
-		Consumed:  uint64(resp.Available),
-		Failed:    uint64(resp.Failed),
-	}, nil
+	return resp, nil
 }
 
-func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*SimPoolAddSimResp, error) {
-
+func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*pb.AddResponse, error) {
 	pbreq, err := addReqToAddSimReqPb(req)
 	if err != nil {
 		return nil, err
 	}
-
 	pbResp, err := r.clients.sp.AddSimsToSimPool(pbreq)
 	if err != nil {
 		return nil, err
 	}
-
-	resp, err := addSimRespTojsonSimArray(pbResp.Iccid)
-	if err != nil {
-		return nil, err
-	}
-
-	return &SimPoolAddSimResp{
-		Iccids: resp,
-	}, nil
+	return pbResp, nil
 }
 
-func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*SimPoolUploadSimResp, error) {
-
-	bodyBytes, err := ioutil.ReadAll(c.Request.Body)
+func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*pb.UploadResponse, error) {
+	data, err := ioutil.ReadAll(c.Request.Body)
 	c.Request.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	// CSV file itself not URL
 	pbResp, err := r.clients.sp.UploadSimsToSimPool(&pb.UploadRequest{
-		SimPoolData: bodyBytes,
+		SimData: data,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := addSimRespTojsonSimArray(pbResp.Iccid)
-	if err != nil {
-		return nil, err
-	}
-
-	return &SimPoolUploadSimResp{
-		Iccids: resp,
-	}, nil
-
+	return pbResp, nil
 }
 
-func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) (*SimPoolRemoveSimResp, error) {
-
-	pbResp, err := r.clients.sp.DeleteSimFromSimPool(&pb.DeleteRequest{
-		Iccid: req.Iccids,
-	})
+func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) (*pb.DeleteResponse, error) {
+	res, err := r.clients.sp.DeleteSimFromSimPool(req.Id)
 	if err != nil {
 		return nil, err
 	}
-
-	return &SimPoolRemoveSimResp{
-		Iccids: pbResp.Iccid,
-	}, nil
+	return res, nil
 }
 
 func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*SubscriberGetResp, error) {
@@ -231,19 +203,19 @@ func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*Subscrib
 	if err != nil {
 		return nil, err
 	}
-	a
-	dteString := "01-30-2023"
+
+	dateString := "01-30-2023"
 	dob, _ := time.Parse(pbResp.Subscriber.Dob, dateString)
 
 	return &SubscriberGetResp{
 		Subscriber{
 			SubscriberId:          req.SubscriberId,
 			Name:                  pbResp.Subscriber.Name,
-			EMail:                 pbResp.Subscriber.Email,
-			PhoneNumber:           pbResp.Subscriber.Phone,
+			Email:                 pbResp.Subscriber.Email,
+			Phone:                 pbResp.Subscriber.Phone,
 			DOB:                   dob,
 			Address:               pbResp.Subscriber.Address,
-			ProofOfIdentification: pbResp.Subscriber.ProofOfIdentitification,
+			ProofOfIdentification: pbResp.Subscriber.ProofOfIdentification,
 			ProofSerialNumber:     pbResp.Subscriber.ProofSerialNumber,
 			SimList:               nil,
 		},
@@ -305,39 +277,25 @@ func (r *Router) patchSim(c *gin.Context, req *SubscriberSimUpdateStateReq) erro
 }
 
 func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*pb.AddRequest, error) {
-
 	if req == nil {
 		return nil, fmt.Errorf("invalid add request")
 	}
 
-	reqSimInfo := make([]*pb.SimInfo, len(req.SimInfo))
-
-	for idx, iter := range req.SimInfo {
-		reqSimInfo[idx].Iccid = iter.Iccid
-		reqSimInfo[idx].Msisdn = iter.Msidn
-		// simInfo := pb.AddSimPool{
-		// 	Iccid: iter.Iccid,
-		// 	Msisdn: iter.Msidn,
-		// }
-		//reqSimInfo[idx].SimType= iter.SimType //TODO: tarnslate to enum or use some util string to enum
-		//reqSimInfo[idx] = &simInfo
+	list := make([]*pb.AddSim, len(req.SimInfo))
+	for i, iter := range req.SimInfo {
+		list[i] = &pb.AddSim{
+			Iccid:          iter.Iccid,
+			Msisdn:         iter.Msidn,
+			ActivationCode: iter.ActivationCode,
+			IsPhysicalSim:  iter.IsPhysicalSim,
+			QrCode:         iter.QrCode,
+			SmDpAddress:    iter.SmDpAddress,
+			SimType:        pb.SimType(pb.SimType_value[iter.SimType]),
+		}
 	}
-
 	pbReq := &pb.AddRequest{
-		SimInfo: reqSimInfo,
+		Sim: list,
 	}
 
 	return pbReq, nil
-}
-
-func addSimRespTojsonSimArray(req []string) ([]string, error) {
-
-	resp := make([]string, len(req))
-
-	for idx, iter := range req {
-		resp[idx] = iter
-	}
-
-	return resp, nil
-
 }

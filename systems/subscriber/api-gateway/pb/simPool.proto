@@ -1,11 +1,23 @@
 syntax = "proto3";
-package ukama.simPool.v1;
+package ukama.sim.v1;
 option go_package = "pb/gen";
 
-service SimPoolService {
+/*
+Sim pool sub-system is responsible of:
+
+    - Populating sims data in DB from CSV
+    - Provide sim stats
+    - Provide sim on request
+    - Allows to add slice of sims
+*/
+service SimService {
+    ///Get sim pool statistaics
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
+    ///Add sims to pool
     rpc Add(AddRequest) returns (AddResponse){}
+    ///Delete sims from pool
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
+    ///Batch upload sims from CSV
     rpc Upload(UploadRequest) returns (UploadResponse){}
 }
 message GetStatsRequest{
@@ -17,29 +29,26 @@ message GetStatsResponse {
     uint64 consumed = 3;
     uint64 failed = 4;
 }
-
 message AddRequest{
-    repeated SimInfo simInfo = 1;
+    repeated AddSim sim = 1;
 }
-
 message AddResponse{
-    repeated string iccid = 1;
+    repeated Sim sim = 1;
 }
 message DeleteRequest{
-    repeated string iccid = 1;
+    repeated uint64 id = 1;
 }
 message DeleteResponse {
-    repeated string iccid = 1;
+    repeated uint64 id = 1;
 }
-
 message UploadRequest{
-    bytes simPoolData = 1;
+    bytes simData = 1;
+    SimType simType = 2;
 }
 message UploadResponse {
-    repeated string iccid = 1;
+    repeated Sim sim = 1;
 }
-
-message SimPool{
+message Sim{
     uint64 id = 1;
     string iccid = 2;
     string msisdn = 3; 
@@ -47,24 +56,25 @@ message SimPool{
     SimType simType = 5;
     string smDpAddress = 6;
     string activationCode = 7;
-    string qrCode = 8;
     string created_at=9;
     string deleted_at=10;
     string updated_at=11;
+    bool isPhysicalSim=12;
+    string qrCode=13;
 }
-
-message SimInfo{
+message AddSim{
     string iccid = 1;
     SimType simType = 2;
     string msisdn = 3;
     string smDpAddress = 4;
     string activationCode = 5;
-    string qrCode = 6; 
+    string qrCode=6;
+    bool isPhysicalSim=7;
 }
-
 enum SimType {
-    inter_none=0;
-    inter_mno_data=1;
-    inter_mno_all=2;
-    inter_ukama_all=3;
+    ANY=0;
+    INTER_NONE=1;
+    INTER_MNO_DATA=2;
+    INTER_MNO_ALL=3;
+    INTER_UKAMA_ALL=4;
 }
