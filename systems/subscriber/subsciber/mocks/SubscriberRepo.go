@@ -29,11 +29,11 @@ func (_m *SubscriberRepo) Add(subscriber *db.Subscriber) error {
 }
 
 // Delete provides a mock function with given fields: subscriberID
-func (_m *SubscriberRepo) Delete(subscriberID string) error {
+func (_m *SubscriberRepo) Delete(subscriberID uuid.UUID) error {
 	ret := _m.Called(subscriberID)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
+	if rf, ok := ret.Get(0).(func(uuid.UUID) error); ok {
 		r0 = rf(subscriberID)
 	} else {
 		r0 = ret.Error(0)
@@ -43,11 +43,11 @@ func (_m *SubscriberRepo) Delete(subscriberID string) error {
 }
 
 // Get provides a mock function with given fields: subscriberID
-func (_m *SubscriberRepo) Get(subscriberID string) (*db.Subscriber, error) {
+func (_m *SubscriberRepo) Get(subscriberID uuid.UUID) (*db.Subscriber, error) {
 	ret := _m.Called(subscriberID)
 
 	var r0 *db.Subscriber
-	if rf, ok := ret.Get(0).(func(string) *db.Subscriber); ok {
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Subscriber); ok {
 		r0 = rf(subscriberID)
 	} else {
 		if ret.Get(0) != nil {
@@ -56,7 +56,7 @@ func (_m *SubscriberRepo) Get(subscriberID string) (*db.Subscriber, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
 		r1 = rf(subscriberID)
 	} else {
 		r1 = ret.Error(1)
@@ -89,18 +89,20 @@ func (_m *SubscriberRepo) GetByNetwork(networkID uuid.UUID) ([]db.Subscriber, er
 }
 
 // Update provides a mock function with given fields: subscriberID, sub
-func (_m *SubscriberRepo) Update(subscriberID string, sub db.Subscriber) (string, error) {
+func (_m *SubscriberRepo) Update(subscriberID uuid.UUID, sub db.Subscriber) (uuid.UUID, error) {
 	ret := _m.Called(subscriberID, sub)
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func(string, db.Subscriber) string); ok {
+	var r0 uuid.UUID
+	if rf, ok := ret.Get(0).(func(uuid.UUID, db.Subscriber) uuid.UUID); ok {
 		r0 = rf(subscriberID, sub)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, db.Subscriber) error); ok {
+	if rf, ok := ret.Get(1).(func(uuid.UUID, db.Subscriber) error); ok {
 		r1 = rf(subscriberID, sub)
 	} else {
 		r1 = ret.Error(1)

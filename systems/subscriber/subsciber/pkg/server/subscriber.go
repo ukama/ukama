@@ -68,9 +68,10 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	subscriberIDUUID, err := uuid.FromString(subscriberID)
 
 	logrus.Infof("Delete Subscriber : %v ", subscriberID)
-	err := s.subscriberRepo.Delete(subscriberID)
+	err = s.subscriberRepo.Delete(subscriberIDUUID)
 	if err != nil {
 		logrus.WithError(err).Error("error while deleting subscriber")
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
@@ -80,9 +81,17 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
 	subscriberID := req.GetSubscriberID()
+	if subscriberID == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
+	}
 
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	subscriberIDUUID, err := uuid.FromString(subscriberID)
 	logrus.Infof("GetSubscriber : %v ", subscriberID)
-	subscriber, err := s.subscriberRepo.Get(subscriberID)
+	subscriber, err := s.subscriberRepo.Get(subscriberIDUUID)
 
 	if err != nil {
 		logrus.Error("error getting a subscriber" + err.Error())
@@ -125,17 +134,18 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 	return subscriberList, nil
 }
 func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
-	subscriberID := req.GetSubscriberID()
-	if subscriberID == "" {
+	subscriberIdReq := req.GetSubscriberID()
+	if subscriberIdReq == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
 	}
 
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	subscribeIDUUID, err := uuid.FromString(subscriberIdReq)
 
 	logrus.Infof("Update Subscriber Id: %v, Email: %v, ProofOfIdentification: %v, Address: %v",
-		req.SubscriberID,req.Email, req.ProofOfIdentification, req.Address)
+		req.SubscriberID, req.Email, req.ProofOfIdentification, req.Address)
 
 	subscriber := db.Subscriber{
 		Email:                 req.GetEmail(),
@@ -144,14 +154,14 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		ProofOfIdentification: req.GetProofOfIdentification(),
 		IdSerial:              req.GetIdSerial(),
 	}
-	subscriberID, err := s.subscriberRepo.Update(req.SubscriberID, subscriber)
+	subscriberID, err := s.subscriberRepo.Update(subscribeIDUUID, subscriber)
 	if err != nil {
 		logrus.Errorf("error while updating a subscriber: %v", err)
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
 	return &pb.UpdateSubscriberResponse{
-		SubscriberID: subscriberID,
+		SubscriberID: subscriberID.String(),
 	}, nil
 }
 
