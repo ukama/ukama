@@ -28,11 +28,13 @@
 #define ENV_INIT_SYSTEM_API  "ENV_INIT_SYSTEM_API"
 
 #define ENV_INIT_CLIENT_LOG_LEVEL "ENV_INIT_CLIENT_LOG_LEVEL"
+#define ENV_INIT_CLIENT_TEMP_FILE "ENV_INIT_CLIENT_TEMP_FILE"
 
 /* Struct to various env variables and runtime config parameters */
 typedef struct {
 
 	char *logLevel;   /* Log level */
+	char *tempFile;   /* Temp file to log stuff */
 
 	char *addr;       /* initClient bind address */
 	char *port;       /* initClient listening port */
