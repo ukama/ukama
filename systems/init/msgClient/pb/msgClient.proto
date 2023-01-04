@@ -61,6 +61,8 @@ message UnregisterRoutesResp {
 
 message PublishMsgRequest {
     string routingKey = 1 [(validator.field) = {string_not_empty: true}];
+    string queueName = 2 [(validator.field) = {string_not_empty: true}];
+    string Exchange = 3 [(validator.field) = {string_not_empty: true}];
     google.protobuf.Any msg = 2;
 }
 

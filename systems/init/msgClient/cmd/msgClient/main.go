@@ -2,6 +2,8 @@ package main
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/num30/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
@@ -9,6 +11,7 @@ import (
 	"github.com/ukama/ukama/systems/init/msgClient/cmd/version"
 	"github.com/ukama/ukama/systems/init/msgClient/internal"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
+	"github.com/ukama/ukama/systems/init/msgClient/internal/queue"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/server"
 	"gopkg.in/yaml.v3"
 
@@ -18,6 +21,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
+
 	"google.golang.org/grpc"
 )
 
@@ -82,11 +86,34 @@ func runGrpcServer(d sql.Db) {
 	// 	internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
 	// 	serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
 	// 	serviceConfig.MsgClient.ListnerRoutes)
+	serviceRepo, routingKeyrepo := db.NewServiceRepo(d), db.NewRoutingKeyRepo(d)
+	listener, err := queue.NewQueueListener(serviceConfig.Queue, internal.SystemName+internal.ServiceName, os.Getenv("POD_NAME"), serviceRepo, routingKeyrepo)
+	if err != nil {
+		logrus.Fatalf("Failed to create queue listener: %v", err)
+	}
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(db.NewServiceRepo(d), db.NewRoutingKeyRepo(d))
+		srv := server.NewMsgClientServer(serviceRepo, routingKeyrepo, listener)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
-	grpcServer.StartServer()
+	signalHandler(listener, grpcServer)
+
+	go grpcServer.StartServer()
+
+	err = listener.StartQueueListening()
+	if err != nil {
+		logrus.Fatalf("Failed to start queue listener: %v", err)
+	}
+
+}
+
+func signalHandler(listner *queue.QueueListener, server *ugrpc.UkamaGrpcServer) {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-ch
+		listner.StopQueueListening()
+		server.StopServer()
+	}()
 }

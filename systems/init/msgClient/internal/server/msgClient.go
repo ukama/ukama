@@ -4,20 +4,23 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
+	"github.com/ukama/ukama/systems/init/msgClient/internal/queue"
 	pb "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
 )
 
 type MsgClientServer struct {
 	serviceRepo    db.ServiceRepo
 	routingKeyRepo db.RoutingKeyRepo
+	listner        *queue.QueueListener
 
 	pb.UnimplementedMsgClientServiceServer
 }
 
-func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RoutingKeyRepo) *MsgClientServer {
+func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RoutingKeyRepo, l *queue.QueueListener) *MsgClientServer {
 	return &MsgClientServer{
 		serviceRepo:    serviceRepo,
 		routingKeyRepo: keyRepo,
+		listner:        l,
 	}
 }
 
