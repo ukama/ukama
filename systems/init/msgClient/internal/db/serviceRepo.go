@@ -9,7 +9,7 @@ import (
 type ServiceRepo interface {
 	Register(name string, url string) error
 	UnRegister(serviceId string) error
-	Update(serviceId string) error
+	Update(serviceId string, url string) error
 	Get(serviceId string) (*Service, error)
 	List() (*Service, error)
 }
@@ -32,7 +32,7 @@ func (r *serviceRepo) Update(servieId string, url string) error {
 	return nil
 }
 
-func (r *serviceRepo) UnRegister(serviceId int) error {
+func (r *serviceRepo) UnRegister(serviceId string) error {
 	return nil
 }
 
@@ -41,6 +41,6 @@ func (r *serviceRepo) List() (*Service, error) {
 	return nil, nil
 }
 
-func (r *serviceRepo) Get(serviceId int) (*Service, error) {
+func (r *serviceRepo) Get(serviceId string) (*Service, error) {
 	return nil, nil
 }

@@ -27,15 +27,15 @@ func (_m *RoutingKeyRepo) Add(key string) error {
 }
 
 // Get provides a mock function with given fields: key
-func (_m *RoutingKeyRepo) Get(key string) (*db.RoutingKeys, error) {
+func (_m *RoutingKeyRepo) Get(key string) (*db.RoutingKey, error) {
 	ret := _m.Called(key)
 
-	var r0 *db.RoutingKeys
-	if rf, ok := ret.Get(0).(func(string) *db.RoutingKeys); ok {
+	var r0 *db.RoutingKey
+	if rf, ok := ret.Get(0).(func(string) *db.RoutingKey); ok {
 		r0 = rf(key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.RoutingKeys)
+			r0 = ret.Get(0).(*db.RoutingKey)
 		}
 	}
 
@@ -50,15 +50,15 @@ func (_m *RoutingKeyRepo) Get(key string) (*db.RoutingKeys, error) {
 }
 
 // List provides a mock function with given fields:
-func (_m *RoutingKeyRepo) List() (*db.RoutingKeys, error) {
+func (_m *RoutingKeyRepo) List() (*db.RoutingKey, error) {
 	ret := _m.Called()
 
-	var r0 *db.RoutingKeys
-	if rf, ok := ret.Get(0).(func() *db.RoutingKeys); ok {
+	var r0 *db.RoutingKey
+	if rf, ok := ret.Get(0).(func() *db.RoutingKey); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.RoutingKeys)
+			r0 = ret.Get(0).(*db.RoutingKey)
 		}
 	}
 

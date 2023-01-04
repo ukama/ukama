@@ -3,9 +3,8 @@ package server
 import (
 	"context"
 
-	"github.com/ukama/ukama/systems/init/lookup/internal/db"
-	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
-	mb "github.com/ukama/ukama/systems/init/lookup/pkg/msgBusClient"
+	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
+	pb "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
 )
 
 type MsgClientServer struct {
@@ -15,7 +14,7 @@ type MsgClientServer struct {
 	pb.UnimplementedMsgClientServiceServer
 }
 
-func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RoutingKeyRepo, msgBus *mb.MsgBusClient) *MsgClientServer {
+func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RoutingKeyRepo) *MsgClientServer {
 	return &MsgClientServer{
 		serviceRepo:    serviceRepo,
 		routingKeyRepo: keyRepo,

@@ -9,8 +9,8 @@ import (
 type RoutingKeyRepo interface {
 	Add(key string) error
 	Remove(key string) error
-	Register(key string, serviceId string)
-	UnRegister(key string, serviceId string)
+	Register(key string, serviceId string) error
+	UnRegister(key string, serviceId string) error
 	List() (*RoutingKey, error)
 	Get(key string) (*RoutingKey, error)
 }
@@ -29,15 +29,15 @@ func (r *routingKeyRepo) Add(key string) error {
 	return nil
 }
 
-func (r *routingKeyRepo) Remove(key string, url string) error {
+func (r *routingKeyRepo) Remove(key string) error {
 	return nil
 }
 
-func (r *routingKeyRepo) Register(key string) error {
+func (r *routingKeyRepo) Register(key string, serviceId string) error {
 	return nil
 }
 
-func (r *routingKeyRepo) UnRegister(key string) error {
+func (r *routingKeyRepo) UnRegister(key string, serviceId string) error {
 	return nil
 }
 
@@ -46,6 +46,6 @@ func (r *routingKeyRepo) List() (*RoutingKey, error) {
 	return nil, nil
 }
 
-func (r *routingKeyRepo) Get(key int) (*RoutingKey, error) {
+func (r *routingKeyRepo) Get(key string) (*RoutingKey, error) {
 	return nil, nil
 }

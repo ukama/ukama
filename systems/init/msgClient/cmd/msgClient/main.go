@@ -18,7 +18,6 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
-	mb "github.com/ukama/ukama/systems/init/msgClient/pkg/msgBusClient"
 	"google.golang.org/grpc"
 )
 
@@ -45,7 +44,7 @@ func main() {
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+	d := sql.NewDb(serviceConfig.DB, internal.IsDebugMode)
 	err := d.Init(&db.Service{}, &db.RoutingKey{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
@@ -64,7 +63,7 @@ func initConfig() {
 	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
-	} else if serviceConfig.DebugMode {
+	} else if internal.IsDebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
 			logrus.Infof("Config:\n%s", string(b))
@@ -73,21 +72,20 @@ func initConfig() {
 
 	log.Debugf("\nService: %s DB Config: %+v", internal.ServiceName, serviceConfig.DB)
 
-	internal.IsDebugMode = serviceConfig.DebugMode
 }
 
 func runGrpcServer(d sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
+	//instanceId := os.Getenv("POD_NAME")
 
 	//var mbClient *mb.MsgBusClient
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
-		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListnerRoutes)
+	// mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
+	// 	internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
+	// 	serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
+	// 	serviceConfig.MsgClient.ListnerRoutes)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(db.NewServiceRepo(d), db.NewRoutingKeyRepo(d), mbClient)
-		generated.RegisterLookupServiceServer(s, srv)
+		srv := server.NewMsgClientServer(db.NewServiceRepo(d), db.NewRoutingKeyRepo(d))
+		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
 	grpcServer.StartServer()
