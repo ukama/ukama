@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package ukama.msgClient.v1;
+
+import "validator.proto";
+import "google/protobuf/any.proto";
+
+service MsgClientService {
+
+    rpc RegisterService(RegisterServiceReq) returns (RegisterServiceResp);
+    rpc RegisterRoutes(RegisterRoutesReq) returns (RegisterRoutesResp);
+    rpc UnregisterService(UnregisterServiceReq) returns (UnregisterServiceResp);
+    rpc UnregisterRoutes(UnregisterRoutesReq) returns (UnregisterRoutesResp);
+    rpc PusblishMsg(PublishMsgRequest) returns (PublishMsgResponse);
+
+}
+enum REGISTRAION_STATUS {
+    REGISTERED = 0;
+    ALLREADY_REGISTERED = 1;
+    NOT_REGISTERED =2;
+}
+
+message RegisterServiceReq {
+    string systemName = 1 [(validator.field) = {string_not_empty: true}];
+    string serviceName = 2 [(validator.field) = {string_not_empty: true}];
+    string instanceId = 3  [(validator.field) = {string_not_empty: true}];
+}
+
+message RegisterServiceResp {
+    REGISTRAION_STATUS state =1;
+    string serviceId = 2; 
+}
+
+message UnregisterServiceReq {
+    string serviceId = 1; 
+}
+
+message UnregisterServiceResp {
+    string serviceId = 1; 
+}
+
+message RegisterRoutesReq {
+    string serviceId = 1 [(validator.field) = {string_not_empty: true}];
+    repeated  string keys = 2 [(validator.field) = {string_not_empty: true}];
+}
+
+message RegisterRoutesResp {
+    repeated  string keys = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message UnregisterRoutesReq {
+    repeated  string keys = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message UnregisterRoutesResp {
+    repeated  string keys = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+
+message PublishMsgRequest {
+    string routingKey = 1 [(validator.field) = {string_not_empty: true}];
+    google.protobuf.Any msg = 2;
+}
+
+message PublishMsgResponse {
+
+}
