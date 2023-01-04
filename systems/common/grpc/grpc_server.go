@@ -18,6 +18,7 @@ import (
 // Basic GrpcServer with the set of middlewares
 type UkamaGrpcServer struct {
 	// replace with custom implementation if needed
+	server                  *grpc.Server
 	healthChecker           pbhealth.HealthServer
 	config                  config.Grpc
 	serviceRegistrar        func(s *grpc.Server)
@@ -60,16 +61,23 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	}
 	uInterc = append(uInterc, g.ExtraUnaryInterceptors...)
 
-	s := grpc.NewServer(
+	server := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(sInterc...)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(uInterc...)),
 	)
 
-	g.serviceRegistrar(s)
+	g.serviceRegistrar(server)
 
-	pbhealth.RegisterHealthServer(s, g.healthChecker)
-	reflection.Register(s)
-	if err := s.Serve(listener); err != nil {
+	pbhealth.RegisterHealthServer(server, g.healthChecker)
+	reflection.Register(server)
+	g.server = server
+	if err := server.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+}
+
+func (g *UkamaGrpcServer) StopServer() {
+	log.Infof("Stoping gRpc server.")
+
+	g.server.Stop()
 }
