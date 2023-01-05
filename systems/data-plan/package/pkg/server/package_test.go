@@ -26,7 +26,7 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 	s := NewPackageServer(packageRepo)
 
 	packageRepo.On("Get", mockFilters.Id).Return(&db.Package{
-		Sim_type:     pb.SimType_inter_mno_all.String(),
+		Sim_type:     pb.SimType_INTER_MNO_ALL.String(),
 		Name:         "Daily-pack",
 		Org_id:       2323,
 		Active:       true,
@@ -82,7 +82,7 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 	s := NewPackageServer(packageRepo)
 
 	packageRepo.On("GetByOrg", mockFilters.OrgId).Return([]db.Package{{
-		Sim_type:     pb.SimType_inter_mno_all.String(),
+		Sim_type:     pb.SimType_INTER_MNO_ALL.String(),
 		Name:         "Daily-pack",
 		Org_id:       2323,
 		Active:       true,

@@ -55,7 +55,7 @@ func Test_Package_Get(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"id", "name", "org_id", "active", "duration", "sms_volume",
 			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(packageId, "Monthly Super", 1, "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
+			AddRow(packageId, "Monthly Super", 1, "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs(packageId).
@@ -95,7 +95,7 @@ func Test_Package_GetByOrg(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"id", "name", "org_id", "active", "duration", "sms_volume",
 			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(1, "Monthly Super", orgId, "t", 360000, 10, 1024, 10, "inter_ukama_all", 1)
+			AddRow(1, "Monthly Super", orgId, "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs(orgId).
@@ -168,7 +168,7 @@ func Test_Package_Update(t *testing.T) {
 		assert.NoError(t, err)
 		mock.ExpectBegin()
 
-		mock.ExpectExec("UPDATE").WithArgs("Monthly", "inter_ukama_all", 360000, 10, 1024, 10, 1, packageId).
+		mock.ExpectExec("UPDATE").WithArgs("Monthly", "INTER_UKAMA_ALL", 360000, 10, 1024, 10, 1, packageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -187,7 +187,7 @@ func Test_Package_Update(t *testing.T) {
 
 		_package := Package{
 			Name:         "Monthly",
-			Sim_type:     "inter_ukama_all",
+			Sim_type:     "INTER_UKAMA_ALL",
 			Active:       false,
 			Duration:     360000,
 			Sms_volume:   10,
@@ -210,7 +210,7 @@ func Test_Package_Add(t *testing.T) {
 
 		pkg := Package{
 			Name:         "Monthly",
-			Sim_type:     "inter_ukama_all",
+			Sim_type:     "INTER_UKAMA_ALL",
 			Active:       false,
 			Duration:     360000,
 			Sms_volume:   10,

@@ -69,7 +69,7 @@ func Test_Rate_Get(t *testing.T) {
 				"2G",
 				"3G",
 				"",
-				"inter_mno_data",
+				"INTER_MNO_DATA",
 				"2023-10-10",
 			)
 
@@ -124,7 +124,7 @@ func Test_Rates_Get(t *testing.T) {
 				"2G",
 				"3G",
 				"",
-				"inter_mno_data",
+				"INTER_MNO_DATA",
 				"2023-10-10",
 			)
 		}
@@ -148,7 +148,7 @@ func Test_Rates_Get(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		rates, err := r.GetBaseRates("Tycho crater", "", "", "inter_mno_data")
+		rates, err := r.GetBaseRates("Tycho crater", "", "", "INTER_MNO_DATA")
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -165,7 +165,7 @@ func Test_Rate_Upload(t *testing.T) {
 			Data:         "$0.4",
 			Effective_at: "2023-10-10",
 			Network:      "Multi Tel",
-			Sim_type:     "inter_mno_data",
+			Sim_type:     "INTER_MNO_DATA",
 			X2g:          "",
 			X3g:          "",
 			Apn:          "",
