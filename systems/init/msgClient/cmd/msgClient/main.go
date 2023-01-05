@@ -49,7 +49,7 @@ func main() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, internal.IsDebugMode)
-	err := d.Init(&db.Service{}, &db.RoutingKey{})
+	err := d.Init(&db.Service{}, &db.Route{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -86,34 +86,30 @@ func runGrpcServer(d sql.Db) {
 	// 	internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
 	// 	serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
 	// 	serviceConfig.MsgClient.ListnerRoutes)
-	serviceRepo, routingKeyrepo := db.NewServiceRepo(d), db.NewRoutingKeyRepo(d)
-	listener, err := queue.NewQueueListener(serviceConfig.Queue, internal.SystemName+internal.ServiceName, os.Getenv("POD_NAME"), serviceRepo, routingKeyrepo)
-	if err != nil {
-		logrus.Fatalf("Failed to create queue listener: %v", err)
-	}
+	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
+	listener := queue.NewMessageBusListener(serviceRepo, routeRepo)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(serviceRepo, routingKeyrepo, listener)
+		srv := server.NewMsgClientServer(serviceRepo, routeRepo, listener)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
 	signalHandler(listener, grpcServer)
 
-	go grpcServer.StartServer()
-
-	err = listener.StartQueueListening()
+	err := listener.CreateQueueListeners()
 	if err != nil {
-		logrus.Fatalf("Failed to start queue listener: %v", err)
+		logrus.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
 	}
 
+	grpcServer.StartServer()
 }
 
-func signalHandler(listner *queue.QueueListener, server *ugrpc.UkamaGrpcServer) {
+func signalHandler(listner *queue.MsgBusListener, server *ugrpc.UkamaGrpcServer) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-ch
-		listner.StopQueueListening()
+		listner.StopQueueListener()
 		server.StopServer()
 	}()
 }

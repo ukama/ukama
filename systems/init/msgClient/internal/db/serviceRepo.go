@@ -11,7 +11,7 @@ type ServiceRepo interface {
 	UnRegister(serviceId string) error
 	Update(serviceId string, url string) error
 	Get(serviceId string) (*Service, error)
-	List() (*Service, error)
+	List() ([]Service, error)
 }
 
 type serviceRepo struct {
@@ -36,7 +36,7 @@ func (r *serviceRepo) UnRegister(serviceId string) error {
 	return nil
 }
 
-func (r *serviceRepo) List() (*Service, error) {
+func (r *serviceRepo) List() ([]Service, error) {
 
 	return nil, nil
 }

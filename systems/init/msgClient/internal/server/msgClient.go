@@ -9,18 +9,18 @@ import (
 )
 
 type MsgClientServer struct {
-	s db.ServiceRepo
-	r db.RoutingKeyRepo
-	l *queue.QueueListener
+	s  db.ServiceRepo
+	r  db.RouteRepo
+	mq *queue.MsgBusListener
 
 	pb.UnimplementedMsgClientServiceServer
 }
 
-func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RoutingKeyRepo, l *queue.QueueListener) *MsgClientServer {
+func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, mq *queue.MsgBusListener) *MsgClientServer {
 	return &MsgClientServer{
-		s: serviceRepo,
-		r: keyRepo,
-		l: l,
+		s:  serviceRepo,
+		r:  keyRepo,
+		mq: mq,
 	}
 }
 
@@ -34,8 +34,7 @@ func (m *MsgClientServer) RegisterRoutes(context.Context, *pb.RegisterRoutesReq)
 	/* Add a route and serviceID */
 
 	/* Restart listener */
-	err := m.l.RetstartListening()
-	return nil, err
+	return nil, nil
 }
 
 func (m *MsgClientServer) UnregisterService(context.Context, *pb.UnregisterServiceReq) (*pb.UnregisterServiceResp, error) {
