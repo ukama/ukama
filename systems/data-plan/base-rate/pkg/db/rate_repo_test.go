@@ -160,10 +160,12 @@ func Test_Rates_Get(t *testing.T) {
 }
 
 func Test_Rate_Upload(t *testing.T) {
+	var rate_uuid = uuid.New()
 	t.Run("UploadRates", func(t *testing.T) {
 		var db *extsql.DB
 
 		rates := []Rate{{
+			Uuid:         rate_uuid,
 			Country:      "Tycho crater",
 			Data:         "$0.4",
 			Effective_at: "2023-10-10",
@@ -186,7 +188,7 @@ func Test_Rate_Upload(t *testing.T) {
 		assert.NoError(t, err)
 		mock.ExpectBegin()
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Country, rates[0].Network,
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Country, rates[0].Network,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Data,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), rates[0].Effective_at, sqlmock.AnyArg(), rates[0].Sim_type).
