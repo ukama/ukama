@@ -12,6 +12,7 @@ type RoutingKeyRepo interface {
 	Register(key string, serviceId string) error
 	UnRegister(key string, serviceId string) error
 	List() (*RoutingKey, error)
+	ReadAllRoutes() ([]string, error)
 	Get(key string) (*RoutingKey, error)
 }
 
@@ -42,6 +43,11 @@ func (r *routingKeyRepo) UnRegister(key string, serviceId string) error {
 }
 
 func (r *routingKeyRepo) List() (*RoutingKey, error) {
+
+	return nil, nil
+}
+
+func (r *routingKeyRepo) ReadAllRoutes() ([]string, error) {
 
 	return nil, nil
 }

@@ -2,26 +2,26 @@ package queue
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
 )
 
 type QueueListener struct {
-	serviceRepo    db.ServiceRepo
-	routingKeyRepo db.RoutingKeyRepo
-	msgBusConn     mb.Consumer
-	grpcTimeout    time.Duration
-	serviceId      string
-	serviceName    string
-	state          bool
-	channel        chan bool
+	s           db.ServiceRepo
+	r           db.RoutingKeyRepo
+	m           mb.Consumer
+	grpcTimeout time.Duration
+	serviceId   string
+	serviceName string
+	state       bool
+	c           chan bool
 }
 
 type QueueListenerConfig struct {
@@ -44,23 +44,38 @@ func NewQueueListener(conf *uconf.Queue, serviceName string, serviceId string, s
 	ch := make(chan bool, 1)
 
 	return &QueueListener{
-		msgBusConn:     client,
-		serviceId:      serviceId,
-		serviceName:    serviceName,
-		channel:        ch,
-		state:          false,
-		serviceRepo:    sRepo,
-		routingKeyRepo: kRepo,
+		m:           client,
+		serviceId:   serviceId,
+		serviceName: serviceName,
+		c:           ch,
+		state:       false,
+		s:           sRepo,
+		r:           kRepo,
 	}, nil
 }
 
 func (q *QueueListener) StartQueueListening() (err error) {
 
 	/* Read the possible list of the Routes from db if empty */
+	strRoutes, err := q.r.ReadAllRoutes()
+	if err != nil {
+		log.Errorf("Error reading routes. Error %s", err.Error())
+		return err
+	}
+
+	if len(strRoutes) <= 0 {
+		log.Errorf("No routes available.")
+		return fmt.Errorf("no routes to monitor")
+	}
+
+	routes, err := mb.ParseRouteList(strRoutes)
+	if err != nil {
+		return err
+	}
 
 	/* Subscribe to exchange for the routes */
-	err = q.msgBusConn.SubscribeToServiceQueue(q.serviceName, mb.DeviceQ.Exchange,
-		[]mb.RoutingKey{msgbus.DeviceConnectedRoutingKey}, q.serviceId, q.incomingMessageHandler)
+	err = q.m.SubscribeToServiceQueue(q.serviceName, mb.DeviceQ.Exchange,
+		routes, q.serviceId, q.incomingMessageHandler)
 	if err != nil {
 		log.Errorf("Error subscribing for a queue messages. Error: %+v", err)
 		return err
@@ -69,18 +84,25 @@ func (q *QueueListener) StartQueueListening() (err error) {
 	q.state = true
 
 	/* Waiting for stop */
-	<-q.channel
+	<-q.c
 
 	log.Info("Shutting down...")
-	q.msgBusConn.Close()
+	q.m.Close()
 	q.state = false
 
 	return nil
 }
 
-func (q *QueueListener) StopQueueListening() (err error) {
-	q.channel <- true
-	return nil
+func (q *QueueListener) StopQueueListening() {
+	q.c <- true
+	time.Sleep(1 * time.Second) // TODO: Update this
+}
+
+func (q *QueueListener) RetstartListening() (err error) {
+	if q.state {
+		q.StopQueueListening()
+	}
+	return q.StartQueueListening()
 }
 
 func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan<- bool) {
