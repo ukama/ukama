@@ -20,7 +20,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
+	generated "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"google.golang.org/grpc"
 )
 

@@ -1,11 +1,13 @@
 package db
 
 import (
+	"github.com/gofrs/uuid"
 	"gorm.io/gorm"
 )
 
 type Rate struct {
 	gorm.Model
+	Uuid         uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
 	Country      string
 	Network      string
 	Vpmn         string

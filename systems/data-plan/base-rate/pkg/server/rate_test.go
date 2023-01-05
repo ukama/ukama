@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/mocks"
@@ -12,7 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
+	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 )
 
 var mockCountry = "The lunar maria"
@@ -100,11 +101,11 @@ func TestRateService_GetRate_Success(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
-
-	baseRateRepo.On("GetBaseRate", uint64(1)).Return(&db.Rate{
+	var uuid = uuid.New()
+	baseRateRepo.On("GetBaseRate", uuid).Return(&db.Rate{
 		Country: mockCountry,
 	}, nil)
-	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateId: uint64(1)})
+	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
 	assert.NoError(t, err)
 	assert.Equal(t, mockCountry, rate.Rate.Country)
 	baseRateRepo.AssertExpectations(t)
@@ -116,9 +117,9 @@ func TestRateService_GetRate_Error(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
-
-	baseRateRepo.On("GetBaseRate", uint64(0)).Return(nil, status.Errorf(codes.NotFound, "record not found"))
-	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateId: uint64(0)})
+	var uuid = uuid.New()
+	baseRateRepo.On("GetBaseRate", uuid).Return(nil, status.Errorf(codes.NotFound, "record not found"))
+	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
 	assert.Error(t, err)
 	assert.Nil(t, _rate)
 }
