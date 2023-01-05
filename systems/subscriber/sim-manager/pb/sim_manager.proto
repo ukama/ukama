@@ -29,7 +29,7 @@ message GetBySubscriberResponse {
 
 message ActivateSimRequest {
     string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
-    uint32 simType = 2 [json_name = "sim_type"];
+    string simType = 2 [json_name = "sim_type"];
 }
 
 message ActivateSimResponse{}
@@ -48,7 +48,7 @@ message GetSimInfoResponse {
 
 message DeactivateSimRequest {
     string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
-    uint32 simType = 2 [json_name = "sim_type"];
+    string simType = 2 [json_name = "sim_type"];
 }
 
 message DeactivateSimResponse{
@@ -60,8 +60,8 @@ message GetSimUsageRequest{
 }
 
 message GetSimUsageResponse {
-    int64 DataUsageInBytes  = 1;
-    int64 DataTotalInBytes  = 2;
+    int64 dataUsageInBytes  = 1;
+    int64 dataTotalInBytes  = 2;
 }
 
 message Sim {
@@ -69,8 +69,8 @@ message Sim {
     string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
     string iccid = 3;
     string msisdn = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-	// SimType Type = 5
-	// SimStatus Status = 6
+    string type = 5;
+    string status = 6;
     bool isPhysical = 7 [json_name = "is_physical"];
     google.protobuf.Timestamp allocatedAt = 8 [json_name = "allocated_at"];
 }

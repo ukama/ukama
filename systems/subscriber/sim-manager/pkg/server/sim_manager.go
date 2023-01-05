@@ -12,16 +12,17 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
 type SimManagerServer struct {
 	pb.UnimplementedSimManagerServiceServer
-	simRepo      db.SimRepo
+	simRepo      sims.SimRepo
 	agentFactory *clients.AgentFactory
 }
 
-func NewSimManagerServer(simRepo db.SimRepo, agentFactory *clients.AgentFactory) *SimManagerServer {
+func NewSimManagerServer(simRepo sims.SimRepo, agentFactory *clients.AgentFactory) *SimManagerServer {
 	return &SimManagerServer{
 		simRepo:      simRepo,
 		agentFactory: agentFactory,
@@ -48,9 +49,9 @@ func (s *SimManagerServer) GetBySubscriber(ctx context.Context, req *pb.GetBySub
 }
 
 func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRequest) (*pb.ActivateSimResponse, error) {
-	simAgent, ok := s.agentFactory.GetAgentAdapter(req.SimType)
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sims.ParseType(req.SimType))
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%s", req.SimID)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type %q for sim ID %q", req.SimType, req.SimID)
 	}
 
 	err := simAgent.ActivateSim(ctx, req.SimID)
@@ -62,9 +63,9 @@ func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimR
 }
 
 func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.DeactivateSimRequest) (*pb.DeactivateSimResponse, error) {
-	simAgent, ok := s.agentFactory.GetAgentAdapter(req.SimType)
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sims.ParseType(req.SimType))
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%s", req.SimID)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", req.SimType, req.SimID)
 	}
 
 	err := simAgent.DeactivateSim(ctx, req.SimID)
@@ -75,18 +76,20 @@ func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.Deactivate
 	return &pb.DeactivateSimResponse{}, nil
 }
 
-func dbSimToPbSim(sim *db.Sim) *pb.Sim {
+func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 	return &pb.Sim{
 		Id:           sim.ID.String(),
 		SubscriberID: sim.SubscriberID.String(),
 		Iccid:        sim.Iccid,
 		Msisdn:       sim.Msisdn,
+		Type:         sim.Type.String(),
+		Status:       sim.Status.String(),
 		IsPhysical:   sim.IsPhysical,
 		AllocatedAt:  timestamppb.New(time.Unix(sim.AllocatedAt, 0)),
 	}
 }
 
-func dbSimsToPbSims(sims []db.Sim) []*pb.Sim {
+func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {
 	res := []*pb.Sim{}
 
 	for _, s := range sims {

@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,11 +19,11 @@ type AgentAdapter interface {
 
 type AgentFactory struct {
 	timeout time.Duration
-	factory map[uint32]AgentAdapter
+	factory map[sims.SimType]AgentAdapter
 }
 
 func NewAgentFactory(testAgentHost string, timeout time.Duration) *AgentFactory {
-	var factory = make(map[uint32]AgentAdapter)
+	var factory = make(map[sims.SimType]AgentAdapter)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -34,7 +35,7 @@ func NewAgentFactory(testAgentHost string, timeout time.Duration) *AgentFactory 
 
 	}
 
-	factory[0] = &TestAgentAdapter{
+	factory[sims.SimTypeInterNone] = &TestAgentAdapter{
 		conn:   testAgentConn,
 		host:   testAgentHost,
 		client: pb.NewTestAgentServiceClient(testAgentConn)}
@@ -45,7 +46,7 @@ func NewAgentFactory(testAgentHost string, timeout time.Duration) *AgentFactory 
 	}
 }
 
-func (a *AgentFactory) GetAgentAdapter(simType uint32) (AgentAdapter, bool) {
+func (a *AgentFactory) GetAgentAdapter(simType sims.SimType) (AgentAdapter, bool) {
 	agent, ok := a.factory[simType]
 
 	return agent, ok
