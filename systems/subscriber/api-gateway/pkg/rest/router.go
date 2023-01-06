@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
@@ -37,9 +35,9 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	sp simPool
-	sm simManager
-	sr subscriberRegistry
+	sp  simPool
+	sm  simManager
+	sub subscriber
 }
 
 type simPool interface {
@@ -52,17 +50,19 @@ type simPool interface {
 type simManager interface {
 }
 
-type subscriberRegistry interface {
-	GetSubscriber(req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error)
+type subscriber interface {
+	GetSubscriber(sid string) (*pb.GetSubscriberResponse, error)
 	AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error)
-	DeleteSubscriber(req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error)
+	DeleteSubscriber(sid string) (*pb.DeleteSubscriberResponse, error)
+	UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error)
+	GetByNetwork(networkId string) (*pb.GetByNetworkResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.sp = client.NewSimPool(endpoints.SimPool, endpoints.Timeout)
-	c.sm = client.NewSimManager(endpoints.SimManager, endpoints.Timeout)
-	c.sr = client.NewSubscriberRegistry(endpoints.SubscriberRegistry, endpoints.Timeout)
+	// c.sm = client.NewSimManager(endpoints.SimManager, endpoints.Timeout)
+	c.sub = client.NewSubscriberRegistry(endpoints.SubscriberRegistry, endpoints.Timeout)
 	return c
 }
 
@@ -99,24 +99,26 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	const subs = "/subscriber/" + ":" + SUBS_URL_PARAMETER
+	const subs = "/subscriber"
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "subscriber system ", "subscriber system version v1")
 	/* These two API will be available based on RBAC */
-	v1.GET("/susbscribers/networks/:networkid", formatDoc("List all subscibers for a Network", ""), tonic.Handler(r.getAllSubscribers, http.StatusOK))
-	v1.GET("/sims/networks/:networkid", formatDoc("List all sims for a Network", ""), tonic.Handler(r.getAllSims, http.StatusOK))
+	// v1.GET("/susbscribers/networks/:networkid", formatDoc("List all subscibers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
+	// v1.GET("/sims/networks/:networkid", formatDoc("List all sims for a Network", ""), tonic.Handler(r.getAllSims, http.StatusOK))
 
 	pool := v1.Group("/simpool", "SIM Pool", "SIM store for Org")
 	pool.GET("/stats", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
 	pool.PUT("/sim", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
-	pool.PUT("/sim/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
+	pool.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
 	pool.DELETE("/sim", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
 
 	subscriber := v1.Group(subs, "Subscriber", "Orgs Subscriber database")
-	subscriber.GET("", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
+	subscriber.GET("/", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
 	subscriber.PUT("", formatDoc("Add a new subsciber", ""), tonic.Handler(r.putSubscriber, http.StatusOK))
 	subscriber.DELETE("", formatDoc("Delete a subsciber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
+	subscriber.PATCH("", formatDoc("Update a subsciber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
+	subscriber.GET("/network/:networkId", formatDoc("List all subscibers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
 
 	sim := subscriber.Group("/sim", "SIM", "Orgs SIM data base")
 	sim.GET("/:sim", formatDoc("Get a SIM of the subscriber by SIM Id", ""), tonic.Handler(r.getSim, http.StatusOK))
@@ -133,10 +135,6 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
-}
-
-func (r *Router) getAllSubscribers(c *gin.Context, req *SubscriberListReq) (*SubscriberListResp, error) {
-	return nil, nil
 }
 
 func (r *Router) getAllSims(c *gin.Context, req *SimListReq) (*SimListResp, error) {
@@ -194,62 +192,59 @@ func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) 
 	return res, nil
 }
 
-func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*SubscriberGetResp, error) {
-	subsId := req.SubscriberId.String()
+func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*pb.GetSubscriberResponse, error) {
+	subsId := req.SubscriberId
 
-	pbResp, err := r.clients.sr.GetSubscriber(&pb.GetSubscriberRequest{
-		SubscriberId: subsId,
-	})
+	pbResp, err := r.clients.sub.GetSubscriber(subsId)
 	if err != nil {
 		return nil, err
 	}
 
-	dateString := "01-30-2023"
-	dob, _ := time.Parse(pbResp.Subscriber.Dob, dateString)
-
-	return &SubscriberGetResp{
-		Subscriber{
-			SubscriberId:          req.SubscriberId,
-			Name:                  pbResp.Subscriber.Name,
-			Email:                 pbResp.Subscriber.Email,
-			Phone:                 pbResp.Subscriber.Phone,
-			DOB:                   dob,
-			Address:               pbResp.Subscriber.Address,
-			ProofOfIdentification: pbResp.Subscriber.ProofOfIdentification,
-			ProofSerialNumber:     pbResp.Subscriber.ProofSerialNumber,
-			SimList:               nil,
-		},
-	}, nil
+	return pbResp, nil
 }
 
-func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*SubscriberAddResp, error) {
+func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*pb.AddSubscriberResponse, error) {
 
-	dob := req.DOB.String()
-
-	pbResp, err := r.clients.sr.AddSubscriber(&pb.AddSubscriberRequest{Name: req.Name,
-		Email:                   req.Email,
-		Phone:                   req.Phone,
-		Dob:                     dob,
-		Address:                 req.Address,
-		ProofOfIdentitification: req.ProofOfIdentification,
-		ProofSerialNumber:       req.ProofSerialNumber})
+	pbResp, err := r.clients.sub.AddSubscriber(&pb.AddSubscriberRequest{
+		FirstName:             req.FirstName,
+		LastName:              req.LastName,
+		Email:                 req.Email,
+		PhoneNumber:           req.Phone,
+		DateOfBirth:           req.DOB,
+		Address:               req.Address,
+		ProofOfIdentification: req.ProofOfIdentification,
+		IdSerial:              req.IdSerial})
 	if err != nil {
 		return nil, err
 	}
 
-	subsId, _ := uuid.Parse(pbResp.SubscriberId)
-	return &SubscriberAddResp{
-		SubscriberId: subsId,
-	}, nil
+	return &pb.AddSubscriberResponse{SubscriberID: pbResp.SubscriberID}, nil
 }
 
 func (r *Router) deleteSubscriber(c *gin.Context, req *SubscriberDeleteReq) error {
-	subsId := req.SubscriberId.String()
-	_, err := r.clients.sr.DeleteSubscriber(&pb.DeleteSubscriberRequest{
-		SubscriberId: subsId,
-	})
+	_, err := r.clients.sub.DeleteSubscriber(req.SubscriberId)
 
 	return err
+}
+
+func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*pb.UpdateSubscriberResponse, error) {
+
+	res, err := r.clients.sub.UpdateSubscriber(&pb.UpdateSubscriberRequest{
+		SubscriberID:          req.SubscriberId,
+		Email:                 req.Email,
+		PhoneNumber:           req.Phone,
+		Address:               req.Address,
+		ProofOfIdentification: req.ProofOfIdentification,
+		IdSerial:              req.IdSerial,
+	})
+
+	return res, err
+}
+
+func (r *Router) getSubscriberByNetwork(c *gin.Context, req *SubscriberByNetworkReq) (*pb.GetByNetworkResponse, error) {
+	subs, err := r.clients.sub.GetByNetwork(req.NetworkId)
+
+	return subs, err
 }
 
 func (r *Router) getSim(c *gin.Context, req *SubscriberSimReadReq) (*SubscriberSimReadResp, *error) {

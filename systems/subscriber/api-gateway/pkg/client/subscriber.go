@@ -13,7 +13,7 @@ import (
 type SubscriberRegistry struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
-	client  pb.SubscriberRegistryServiceClient
+	client  pb.SubscriberServiceClient
 	host    string
 }
 
@@ -25,7 +25,7 @@ func NewSubscriberRegistry(host string, timeout time.Duration) *SubscriberRegist
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
-	client := pb.NewSubscriberRegistryServiceClient(conn)
+	client := pb.NewSubscriberServiceClient(conn)
 
 	return &SubscriberRegistry{
 		conn:    conn,
@@ -35,7 +35,7 @@ func NewSubscriberRegistry(host string, timeout time.Duration) *SubscriberRegist
 	}
 }
 
-func NewSubscriberRegistryFromClient(SubscriberRegistryClient pb.SubscriberRegistryServiceClient) *SubscriberRegistry {
+func NewSubscriberRegistryFromClient(SubscriberRegistryClient pb.SubscriberServiceClient) *SubscriberRegistry {
 	return &SubscriberRegistry{
 		host:    "localhost",
 		timeout: 1 * time.Second,
@@ -44,27 +44,43 @@ func NewSubscriberRegistryFromClient(SubscriberRegistryClient pb.SubscriberRegis
 	}
 }
 
-func (sr *SubscriberRegistry) Close() {
-	sr.conn.Close()
+func (sub *SubscriberRegistry) Close() {
+	sub.conn.Close()
 }
 
-func (sr *SubscriberRegistry) GetSubscriber(req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sr.timeout)
+func (sub *SubscriberRegistry) GetSubscriber(sid string) (*pb.GetSubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
-
-	return sr.client.Get(ctx, req)
+	return sub.client.Get(ctx, &pb.GetSubscriberRequest{SubscriberID: sid})
 }
 
-func (sr *SubscriberRegistry) AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sr.timeout)
+func (sub *SubscriberRegistry) AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
-
-	return sr.client.Add(ctx, req)
+	return sub.client.Add(ctx, req)
 }
 
-func (sr *SubscriberRegistry) DeleteSubscriber(req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sr.timeout)
+func (sub *SubscriberRegistry) DeleteSubscriber(sid string) (*pb.DeleteSubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
+	return sub.client.Delete(ctx, &pb.DeleteSubscriberRequest{SubscriberID: sid})
+}
 
-	return sr.client.Delete(ctx, req)
+func (sub *SubscriberRegistry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+	defer cancel()
+	return sub.client.Update(ctx, &pb.UpdateSubscriberRequest{
+		SubscriberID:          subscriber.SubscriberID,
+		Email:                 subscriber.Email,
+		PhoneNumber:           subscriber.PhoneNumber,
+		Address:               subscriber.Address,
+		IdSerial:              subscriber.IdSerial,
+		ProofOfIdentification: subscriber.ProofOfIdentification,
+	})
+}
+
+func (sub *SubscriberRegistry) GetByNetwork(networkId string) (*pb.GetByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+	defer cancel()
+	return sub.client.GetByNetwork(ctx, &pb.GetByNetworkRequest{NetworkID: networkId})
 }

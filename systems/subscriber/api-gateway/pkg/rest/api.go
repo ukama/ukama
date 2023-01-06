@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type SimInfo struct {
@@ -49,12 +50,13 @@ type Package struct {
 
 type Subscriber struct {
 	SubscriberId          uuid.UUID `json:"subscriberId" validate:"required"`
-	Name                  string    `json:"name" validate:"required"`
+	FirstName             string    `json:"firstName" validate:"required"`
+	LastName              string    `json:"lastName" validate:"required"`
 	Email                 string    `json:"email" validate:"email,required"`
 	Phone                 string    `json:"phone" validate:"required"`
 	DOB                   time.Time `json:"dob" validate:"required"`
 	ProofOfIdentification string    `json:"proofOfId" validate:"required"`
-	ProofSerialNumber     string    `json:"proofSerial" validate:"required"`
+	IdSerial              string    `json:"idSerial" validate:"required"`
 	Address               string    `json:"address" validate:"required"`
 	SimList               []SIM     `json:"sims" validate:"required"`
 }
@@ -75,33 +77,35 @@ type SimPoolAddSimReq struct {
 }
 
 type SubscriberAddReq struct {
-	Name                  string    `json:"name" validate:"required"`
-	Email                 string    `json:"email" validate:"required"`
-	Phone                 string    `json:"phone" validate:"required"`
-	DOB                   time.Time `json:"dob" validate:"required"`
-	ProofOfIdentification string    `json:"proofOfId" validate:"required"`
-	ProofSerialNumber     string    `json:"proofSerial" validate:"required"`
-	Address               string    `json:"address" validate:"required"`
-}
-
-type SubscriberAddResp struct {
-	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
+	FirstName             string                 `json:"firstName" validate:"required"`
+	LastName              string                 `json:"lastName" validate:"required"`
+	Email                 string                 `json:"email" validate:"required"`
+	Phone                 string                 `json:"phone" validate:"required"`
+	DOB                   *timestamppb.Timestamp `json:"dob" validate:"required"`
+	ProofOfIdentification string                 `json:"proofOfId" validate:"required"`
+	IdSerial              string                 `json:"idSerial" validate:"required"`
+	Address               string                 `json:"address" validate:"required"`
 }
 
 type SubscriberGetReq struct {
-	SubscriberId uuid.UUID `json:"subscriberId" validate:"required"`
-}
-
-type SubscriberGetResp struct {
-	Subscriber
+	SubscriberId string `form:"subscriberId" json:"subscriberId" path:"subscriberId" binding:"required" validate:"required"`
 }
 
 type SubscriberDeleteReq struct {
-	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
+	SubscriberId string `form:"subscriberId" json:"subscriberId" path:"subscriberId" binding:"required" validate:"required"`
 }
 
-type SubscriberListReq struct {
-	NetworkId uuid.UUID `path:"networkId" validate:"required"`
+type SubscriberByNetworkReq struct {
+	NetworkId string `form:"networkId" json:"networkId" path:"networkId" binding:"required" validate:"required"`
+}
+
+type SubscriberUpdateReq struct {
+	SubscriberId          string `json:"subscriberId" validate:"required"`
+	Email                 string `json:"email" validate:"required"`
+	Phone                 string `json:"phone" validate:"required"`
+	Address               string `json:"address" validate:"required"`
+	ProofOfIdentification string `json:"proofOfIdentification" validate:"required"`
+	IdSerial              string `json:"idSerial" validate:"required"`
 }
 
 type SubscriberListResp struct {

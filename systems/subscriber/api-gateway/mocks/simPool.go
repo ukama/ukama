@@ -35,13 +35,13 @@ func (_m *simPool) AddSimsToSimPool(req *gen.AddRequest) (*gen.AddResponse, erro
 	return r0, r1
 }
 
-// DeleteSimFromSimPool provides a mock function with given fields: req
-func (_m *simPool) DeleteSimFromSimPool(req *gen.DeleteRequest) (*gen.DeleteResponse, error) {
-	ret := _m.Called(req)
+// DeleteSimFromSimPool provides a mock function with given fields: id
+func (_m *simPool) DeleteSimFromSimPool(id []uint64) (*gen.DeleteResponse, error) {
+	ret := _m.Called(id)
 
 	var r0 *gen.DeleteResponse
-	if rf, ok := ret.Get(0).(func(*gen.DeleteRequest) *gen.DeleteResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func([]uint64) *gen.DeleteResponse); ok {
+		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DeleteResponse)
@@ -49,8 +49,8 @@ func (_m *simPool) DeleteSimFromSimPool(req *gen.DeleteRequest) (*gen.DeleteResp
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*gen.DeleteRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func([]uint64) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -58,13 +58,13 @@ func (_m *simPool) DeleteSimFromSimPool(req *gen.DeleteRequest) (*gen.DeleteResp
 	return r0, r1
 }
 
-// GetSimPoolStats provides a mock function with given fields: req
-func (_m *simPool) GetSimPoolStats(req *gen.GetStatsRequest) (*gen.GetStatsResponse, error) {
-	ret := _m.Called(req)
+// GetStats provides a mock function with given fields: simType
+func (_m *simPool) GetStats(simType string) (*gen.GetStatsResponse, error) {
+	ret := _m.Called(simType)
 
 	var r0 *gen.GetStatsResponse
-	if rf, ok := ret.Get(0).(func(*gen.GetStatsRequest) *gen.GetStatsResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(string) *gen.GetStatsResponse); ok {
+		r0 = rf(simType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetStatsResponse)
@@ -72,8 +72,8 @@ func (_m *simPool) GetSimPoolStats(req *gen.GetStatsRequest) (*gen.GetStatsRespo
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*gen.GetStatsRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(simType)
 	} else {
 		r1 = ret.Error(1)
 	}

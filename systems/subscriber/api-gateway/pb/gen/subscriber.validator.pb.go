@@ -7,6 +7,7 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -16,6 +17,19 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *DeleteSubscriberRequest) Validate() error {
+	return nil
+}
+func (this *GetByNetworkRequest) Validate() error {
+	return nil
+}
+func (this *GetByNetworkResponse) Validate() error {
+	for _, item := range this.Subscribers {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Subscribers", err)
+			}
+		}
+	}
 	return nil
 }
 func (this *DeleteSubscriberResponse) Validate() error {
@@ -33,11 +47,37 @@ func (this *GetSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *AddSubscriberRequest) Validate() error {
+	if this.DateOfBirth != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBirth); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBirth", err)
+		}
+	}
+	return nil
+}
+func (this *UpdateSubscriberRequest) Validate() error {
+	return nil
+}
+func (this *UpdateSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *AddSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *Subscriber) Validate() error {
+	for _, item := range this.Sim {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *SubscriberSim) Validate() error {
+	if this.AllocatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.AllocatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("AllocatedAt", err)
+		}
+	}
 	return nil
 }
