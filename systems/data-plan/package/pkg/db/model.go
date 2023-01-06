@@ -1,11 +1,13 @@
 package db
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Package struct {
 	gorm.Model
+	Uuid         uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
 	Name         string
 	Sim_type     string
 	Org_id       uint

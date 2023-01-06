@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -46,16 +47,16 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Package_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
-		const packageId = 1
+		packageId := uuid.New()
 
 		var db *extsql.DB
 
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "name", "org_id", "active", "duration", "sms_volume",
+		rows := sqlmock.NewRows([]string{"id", "uuid", "name", "org_id", "active", "duration", "sms_volume",
 			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(packageId, "Monthly Super", 1, "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
+			AddRow(1, packageId.String(), "Monthly Super", 1, "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs(packageId).
@@ -84,6 +85,7 @@ func Test_Package_Get(t *testing.T) {
 		assert.NotNil(t, pkg)
 	})
 }
+
 func Test_Package_GetByOrg(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		const orgId = 1
@@ -126,7 +128,7 @@ func Test_Package_GetByOrg(t *testing.T) {
 }
 func Test_Package_Delete(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
-		packageId := 1
+		packageId := uuid.New()
 
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
@@ -134,7 +136,7 @@ func Test_Package_Delete(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "packages" SET`)).
-			WithArgs(sqlmock.AnyArg(), uint64(packageId)).
+			WithArgs(sqlmock.AnyArg(), packageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -152,7 +154,7 @@ func Test_Package_Delete(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		err = r.Delete(uint64(packageId))
+		err = r.Delete(packageId)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -161,7 +163,7 @@ func Test_Package_Delete(t *testing.T) {
 
 func Test_Package_Update(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
-		packageId := 1
+		packageId := uuid.New()
 
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
@@ -197,7 +199,7 @@ func Test_Package_Update(t *testing.T) {
 		}
 
 		assert.NoError(t, err)
-		_, err = r.Update(uint64(packageId), _package)
+		_, err = r.Update(packageId, _package)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -209,6 +211,7 @@ func Test_Package_Add(t *testing.T) {
 		var db *extsql.DB
 
 		pkg := Package{
+			Uuid:         uuid.New(),
 			Name:         "Monthly",
 			Sim_type:     "INTER_UKAMA_ALL",
 			Active:       false,
@@ -226,7 +229,7 @@ func Test_Package_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.Name, pkg.Sim_type, pkg.Org_id,
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.Uuid.String(), pkg.Name, pkg.Sim_type, pkg.Org_id,
 				pkg.Active, pkg.Duration, pkg.Sms_volume, pkg.Data_volume, pkg.Voice_volume, pkg.Org_rates_id).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
