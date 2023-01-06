@@ -23,38 +23,38 @@ service SimService {
     rpc Upload(UploadRequest) returns (UploadResponse){}
 }
 message GetRequest{
-    bool IsPhysicalSim=1;
+    bool IsPhysicalSim=1; /// True/False
 }
 message GetResponse {
-    Sim sim = 1;
+    Sim sim = 1; /// Sim object
 }
 message GetStatsRequest{
-    SimType simType = 1;
+    SimType simType = 1; /// SimType string enum
 }
 message GetStatsResponse {
-    uint64 total = 1;
-    uint64 available = 2;
-    uint64 consumed = 3;
-    uint64 failed = 4;
+    uint64 total = 1; /// Total sims in sim pool
+    uint64 available = 2; /// Available sims in sim pool
+    uint64 consumed = 3; /// Consumed sims in sim pool
+    uint64 failed = 4; /// Failed sims in sim pool
 }
 message AddRequest{
-    repeated AddSim sim = 1;
+    repeated AddSim sim = 1; /// Slice of sims to add in sim pool
 }
 message AddResponse{
-    repeated Sim sim = 1;
+    repeated Sim sim = 1; /// Slice of sims added in sim pool
 }
 message DeleteRequest{
-    repeated uint64 id = 1;
+    repeated uint64 id = 1; /// Slice of sim id's to delete from sim pool
 }
 message DeleteResponse {
-    repeated uint64 id = 1;
+    repeated uint64 id = 1; /// Slice of sim id's deleted from sim pool
 }
 message UploadRequest{
-    bytes simData = 1;
-    SimType simType = 2;
+    bytes simData = 1; /// Bytes of CSV file content
+    SimType simType = 2; /// SimType of sim
 }
 message UploadResponse {
-    repeated Sim sim = 1;
+    repeated Sim sim = 1; /// Slice of sims added in sim pool
 }
 message Sim{
     uint64 id = 1;

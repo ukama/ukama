@@ -1,36 +1,35 @@
 # Protocol Documentation
+
 <a name="top"></a>
 
 ## Table of Contents
 
- - [SimService](#ukama.sim.v1.SimService)
+- [SimService](#ukama.sim.v1.SimService)
 - [Directory structure](#directory-structure)
 - [How to use?](#how-to)
- - [pb/sim.proto](#pb/sim.proto)
-   - [AddRequest Messages](#ukama.sim.v1.AddRequest)
-   - [AddResponse Messages](#ukama.sim.v1.AddResponse)
-   - [AddSim Messages](#ukama.sim.v1.AddSim)
-   - [DeleteRequest Messages](#ukama.sim.v1.DeleteRequest)
-   - [DeleteResponse Messages](#ukama.sim.v1.DeleteResponse)
-   - [GetRequest Messages](#ukama.sim.v1.GetRequest)
-   - [GetResponse Messages](#ukama.sim.v1.GetResponse)
-   - [GetStatsRequest Messages](#ukama.sim.v1.GetStatsRequest)
-   - [GetStatsResponse Messages](#ukama.sim.v1.GetStatsResponse)
-   - [Sim Messages](#ukama.sim.v1.Sim)
-   - [UploadRequest Messages](#ukama.sim.v1.UploadRequest)
-   - [UploadResponse Messages](#ukama.sim.v1.UploadResponse)
-    - [SimType](#ukama.sim.v1.SimType)
+- [pb/sim.proto](#pb/sim.proto)
+  - [AddRequest Messages](#ukama.sim.v1.AddRequest)
+  - [AddResponse Messages](#ukama.sim.v1.AddResponse)
+  - [AddSim Messages](#ukama.sim.v1.AddSim)
+  - [DeleteRequest Messages](#ukama.sim.v1.DeleteRequest)
+  - [DeleteResponse Messages](#ukama.sim.v1.DeleteResponse)
+  - [GetRequest Messages](#ukama.sim.v1.GetRequest)
+  - [GetResponse Messages](#ukama.sim.v1.GetResponse)
+  - [GetStatsRequest Messages](#ukama.sim.v1.GetStatsRequest)
+  - [GetStatsResponse Messages](#ukama.sim.v1.GetStatsResponse)
+  - [Sim Messages](#ukama.sim.v1.Sim)
+  - [UploadRequest Messages](#ukama.sim.v1.UploadRequest)
+  - [UploadResponse Messages](#ukama.sim.v1.UploadResponse)
+  - [SimType](#ukama.sim.v1.SimType)
 - [Scalar Value Types](#scalar-value-types)
-
-
 
 <a name="pb/sim.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-
 <a name="ukama.sim.v1.SimService"></a>
 
 # SimService
+
 Sim pool sub-system is responsible of:
 
 - Populating sims data in DB from CSV
@@ -47,9 +46,6 @@ Sim pool sub-system is responsible of:
 | Add | [AddRequest](#ukama.sim.v1.AddRequest) | [AddResponse](#ukama.sim.v1.AddRequest) | Add sims to pool |
 | Delete | [DeleteRequest](#ukama.sim.v1.DeleteRequest) | [DeleteResponse](#ukama.sim.v1.DeleteRequest) | Delete sims from pool |
 | Upload | [UploadRequest](#ukama.sim.v1.UploadRequest) | [UploadResponse](#ukama.sim.v1.UploadRequest) | Batch upload sims from CSV |
-
-
-
 
 <a name="#directory-structure"></a>
 
@@ -155,39 +151,25 @@ This command will show all the available RPC calls under base-rate sub-system. T
 
 ## pb/sim.proto
 
-
-
 <a name="ukama.sim.v1.AddRequest"></a>
 
 ### AddRequest
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| sim | [AddSim](#ukama.sim.v1.AddSim) | repeated |  |
-
-
-
+| sim | [AddSim](#ukama.sim.v1.AddSim) | repeated | Slice of sims to add in sim pool |
 
 <a name="ukama.sim.v1.AddResponse"></a>
 
 ### AddResponse
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| sim | [Sim](#ukama.sim.v1.Sim) | repeated |  |
-
-
-
+| sim | [Sim](#ukama.sim.v1.Sim) | repeated | Slice of sims added in sim pool |
 
 <a name="ukama.sim.v1.AddSim"></a>
 
 ### AddSim
-
-
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -199,95 +181,60 @@ This command will show all the available RPC calls under base-rate sub-system. T
 | qrCode | [string](#string) |  |  |
 | isPhysicalSim | [bool](#bool) |  |  |
 
-
-
-
 <a name="ukama.sim.v1.DeleteRequest"></a>
 
 ### DeleteRequest
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [uint64](#uint64) | repeated |  |
-
-
-
+| id | [uint64](#uint64) | repeated | Slice of sim id's to delete from sim pool |
 
 <a name="ukama.sim.v1.DeleteResponse"></a>
 
 ### DeleteResponse
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [uint64](#uint64) | repeated |  |
-
-
-
+| id | [uint64](#uint64) | repeated | Slice of sim id's deleted from sim pool |
 
 <a name="ukama.sim.v1.GetRequest"></a>
 
 ### GetRequest
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| IsPhysicalSim | [bool](#bool) |  |  |
-
-
-
+| IsPhysicalSim | [bool](#bool) |  | True/False |
 
 <a name="ukama.sim.v1.GetResponse"></a>
 
 ### GetResponse
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| sim | [Sim](#ukama.sim.v1.Sim) |  |  |
-
-
-
+| sim | [Sim](#ukama.sim.v1.Sim) |  | Sim object |
 
 <a name="ukama.sim.v1.GetStatsRequest"></a>
 
 ### GetStatsRequest
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| simType | [SimType](#ukama.sim.v1.SimType) |  |  |
-
-
-
+| simType | [SimType](#ukama.sim.v1.SimType) |  | SimType string enum |
 
 <a name="ukama.sim.v1.GetStatsResponse"></a>
 
 ### GetStatsResponse
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| total | [uint64](#uint64) |  |  |
-| available | [uint64](#uint64) |  |  |
-| consumed | [uint64](#uint64) |  |  |
-| failed | [uint64](#uint64) |  |  |
-
-
-
+| total | [uint64](#uint64) |  | Total sims in sim pool |
+| available | [uint64](#uint64) |  | Available sims in sim pool |
+| consumed | [uint64](#uint64) |  | Consumed sims in sim pool |
+| failed | [uint64](#uint64) |  | Failed sims in sim pool |
 
 <a name="ukama.sim.v1.Sim"></a>
 
 ### Sim
-
-
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -304,42 +251,26 @@ This command will show all the available RPC calls under base-rate sub-system. T
 | isPhysicalSim | [bool](#bool) |  |  |
 | qrCode | [string](#string) |  |  |
 
-
-
-
 <a name="ukama.sim.v1.UploadRequest"></a>
 
 ### UploadRequest
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| simData | [bytes](#bytes) |  |  |
-| simType | [SimType](#ukama.sim.v1.SimType) |  |  |
-
-
-
+| simData | [bytes](#bytes) |  | Bytes of CSV file content |
+| simType | [SimType](#ukama.sim.v1.SimType) |  | SimType of sim |
 
 <a name="ukama.sim.v1.UploadResponse"></a>
 
 ### UploadResponse
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| sim | [Sim](#ukama.sim.v1.Sim) | repeated |  |
-
-
-
-
-
+| sim | [Sim](#ukama.sim.v1.Sim) | repeated | Slice of sims added in sim pool |
 
 <a name="ukama.sim.v1.SimType"></a>
 
 ### SimType
-
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -348,15 +279,6 @@ This command will show all the available RPC calls under base-rate sub-system. T
 | INTER_MNO_DATA | 2 |  |
 | INTER_MNO_ALL | 3 |  |
 | INTER_UKAMA_ALL | 4 |  |
-
-
-
-
- 
-
-
-
-
 
 ## Scalar Value Types
 
