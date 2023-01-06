@@ -2,14 +2,17 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/ukama/ukama/systems/common/sql"
+	"gorm.io/gorm/clause"
 )
 
 // declare interface so that we can mock it
 type ServiceRepo interface {
 	Register(service *Service) error
 	UnRegister(serviceId string) error
-	Update(serviceId string, url string) error
+	Update(service *Service) error
 	Get(serviceId string) (*Service, error)
 	GetRoutes(serviceId string) ([]Route, error)
 	List() ([]Service, error)
@@ -26,8 +29,27 @@ func NewServiceRepo(db sql.Db) *serviceRepo {
 }
 
 func (r *serviceRepo) Register(service *Service) error {
+	res := r.db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "name"}},
+		DoNothing: true}).Create(&service)
+	//res := r.db.GetGormDb().Create(service)
+	if res.Error != nil {
 
-	res := r.db.GetGormDb().Create(service)
+		return res.Error
+	}
+
+	if res.RowsAffected > 0 {
+		return fmt.Errorf("service with name %s exist", service.Name)
+	}
+
+	return nil
+}
+
+func (r *serviceRepo) Update(service *Service) error {
+	res := r.db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "service_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"msg_bus_uri", "queue_name", "exchange", "service_uri", "grpc_timeout"}),
+	}).Create(service)
 	if res.Error != nil {
 
 		return res.Error
@@ -36,17 +58,24 @@ func (r *serviceRepo) Register(service *Service) error {
 	return nil
 }
 
-func (r *serviceRepo) Update(servieId string, url string) error {
-	return nil
-}
-
 func (r *serviceRepo) UnRegister(serviceId string) error {
+	var svc Service
+	res := r.db.GetGormDb().Delete(&svc, Service{ServiceId: serviceId})
+	if res.Error != nil {
+		return res.Error
+	}
+
 	return nil
 }
 
 func (r *serviceRepo) List() ([]Service, error) {
+	var svc []Service
+	res := r.db.GetGormDb().Preload("Routes").Find(&svc)
+	if res.Error != nil {
+		return nil, res.Error
+	}
 
-	return nil, nil
+	return svc, nil
 }
 
 func (r *serviceRepo) GetRoutes(serviceId string) ([]Route, error) {
@@ -60,8 +89,13 @@ func (r *serviceRepo) GetRoutes(serviceId string) ([]Route, error) {
 }
 
 func (r *serviceRepo) Get(serviceId string) (*Service, error) {
+	var svc Service
+	err := r.db.GetGormDb().Model(&Service{}).Where("service_id = ?", serviceId).Association("Routes").Find(&svc)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	return &svc, nil
 }
 
 func (r *serviceRepo) AddRoute(serviceId string, key string) error {
@@ -78,7 +112,7 @@ func (r *serviceRepo) AddRoute(serviceId string, key string) error {
 	return res
 }
 
-func (r *serviceRepo) RemoveRoutes(serviceId string, key string) error {
+func (r *serviceRepo) RemoveRoutes(serviceId string) error {
 
 	service := Service{
 		ServiceId: serviceId,
