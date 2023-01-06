@@ -9,9 +9,7 @@ import (
 type RouteRepo interface {
 	Add(key string) error
 	Remove(key string) error
-	Register(key string, serviceId string) error
-	UnRegister(key string, serviceId string) error
-	List() (*Route, error)
+	List() ([]Route, error)
 	Get(key string) (*Route, error)
 }
 
@@ -36,22 +34,36 @@ func (r *routeRepo) Add(key string) error {
 }
 
 func (r *routeRepo) Remove(key string) error {
+	var rt Route
+	res := r.db.GetGormDb().Delete(&rt, Route{Key: key})
+	if res.Error != nil {
+		return res.Error
+	}
+
 	return nil
 }
 
-func (r *routeRepo) Register(key string, serviceId string) error {
-	return nil
-}
+func (r *routeRepo) List() ([]Route, error) {
 
-func (r *routeRepo) UnRegister(key string, serviceId string) error {
-	return nil
-}
+	var rt []Route
+	res := r.db.GetGormDb().Find(&rt)
+	if res.Error != nil {
+		return nil, res.Error
+	}
 
-func (r *routeRepo) List() (*Route, error) {
-
-	return nil, nil
+	return rt, nil
 }
 
 func (r *routeRepo) Get(key string) (*Route, error) {
-	return nil, nil
+
+	rt := Route{
+		Key: key,
+	}
+
+	res := r.db.GetGormDb().Find(&rt)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &rt, nil
 }
