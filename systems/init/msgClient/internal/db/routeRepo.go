@@ -26,6 +26,12 @@ func NewRouteRepo(db sql.Db) *routeRepo {
 }
 
 func (r *routeRepo) Add(key string) error {
+	var rt Route
+	res := r.db.GetGormDb().FirstOrCreate(&rt, Route{Key: key})
+	if res.Error != nil {
+		return res.Error
+	}
+
 	return nil
 }
 
