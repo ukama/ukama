@@ -19,10 +19,64 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-var _regex_GetBySubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_AllocateSimRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_AllocateSimRequest_PlanID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_AllocateSimRequest_NetworkID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *GetBySubscriberRequest) Validate() error {
-	if !_regex_GetBySubscriberRequest_SubscriberID.MatchString(this.SubscriberID) {
+func (this *AllocateSimRequest) Validate() error {
+	if !_regex_AllocateSimRequest_SubscriberID.MatchString(this.SubscriberID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	}
+	if this.SubscriberID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	}
+	if !_regex_AllocateSimRequest_PlanID.MatchString(this.PlanID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PlanID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PlanID))
+	}
+	if this.PlanID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PlanID", fmt.Errorf(`value '%v' must not be an empty string`, this.PlanID))
+	}
+	if !_regex_AllocateSimRequest_NetworkID.MatchString(this.NetworkID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkID))
+	}
+	if this.NetworkID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkID))
+	}
+	return nil
+}
+func (this *AllocateSimResponse) Validate() error {
+	if this.Sim != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+		}
+	}
+	return nil
+}
+
+var _regex_GetSimRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetSimRequest) Validate() error {
+	if !_regex_GetSimRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
+	}
+	return nil
+}
+func (this *GetSimResponse) Validate() error {
+	if this.Sim != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+		}
+	}
+	return nil
+}
+
+var _regex_GetSimsBySubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetSimsBySubscriberRequest) Validate() error {
+	if !_regex_GetSimsBySubscriberRequest_SubscriberID.MatchString(this.SubscriberID) {
 		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
 	}
 	if this.SubscriberID == "" {
@@ -30,7 +84,7 @@ func (this *GetBySubscriberRequest) Validate() error {
 	}
 	return nil
 }
-func (this *GetBySubscriberResponse) Validate() error {
+func (this *GetSimsBySubscriberResponse) Validate() error {
 	for _, item := range this.Sims {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -56,21 +110,6 @@ func (this *ActivateSimResponse) Validate() error {
 	return nil
 }
 
-var _regex_GetSimInfoRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *GetSimInfoRequest) Validate() error {
-	if !_regex_GetSimInfoRequest_SimID.MatchString(this.SimID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
-	}
-	if this.SimID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
-	}
-	return nil
-}
-func (this *GetSimInfoResponse) Validate() error {
-	return nil
-}
-
 var _regex_DeactivateSimRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *DeactivateSimRequest) Validate() error {
@@ -86,6 +125,55 @@ func (this *DeactivateSimResponse) Validate() error {
 	return nil
 }
 
+var _regex_AddPackageRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_AddPackageRequest_PackageID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *AddPackageRequest) Validate() error {
+	if !_regex_AddPackageRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
+	}
+	if !_regex_AddPackageRequest_PackageID.MatchString(this.PackageID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageID))
+	}
+	if this.PackageID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageID))
+	}
+	if this.StartDate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartDate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("StartDate", err)
+		}
+	}
+	return nil
+}
+func (this *AddPackageResponse) Validate() error {
+	return nil
+}
+
+var _regex_RemovePackageRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_RemovePackageRequest_PackageID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *RemovePackageRequest) Validate() error {
+	if !_regex_RemovePackageRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
+	}
+	if !_regex_RemovePackageRequest_PackageID.MatchString(this.PackageID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageID))
+	}
+	if this.PackageID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageID))
+	}
+	return nil
+}
+func (this *RemovePackageResponse) Validate() error {
+	return nil
+}
+
 var _regex_GetSimUsageRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *GetSimUsageRequest) Validate() error {
@@ -98,6 +186,28 @@ func (this *GetSimUsageRequest) Validate() error {
 	return nil
 }
 func (this *GetSimUsageResponse) Validate() error {
+	return nil
+}
+
+var _regex_Package_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *Package) Validate() error {
+	if !_regex_Package_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if this.StartDate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartDate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("StartDate", err)
+		}
+	}
+	if this.EndDate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.EndDate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("EndDate", err)
+		}
+	}
 	return nil
 }
 
@@ -118,8 +228,23 @@ func (this *Sim) Validate() error {
 	if this.SubscriberID == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
 	}
+	if this.Package != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Package); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Package", err)
+		}
+	}
 	if !_regex_Sim_Msisdn.MatchString(this.Msisdn) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Msisdn", fmt.Errorf(`must be a phone number format`))
+	}
+	if this.FirstActivatedOn != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.FirstActivatedOn); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("FirstActivatedOn", err)
+		}
+	}
+	if this.LastActivatedOn != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.LastActivatedOn); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("LastActivatedOn", err)
+		}
 	}
 	if this.AllocatedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.AllocatedAt); err != nil {

@@ -29,7 +29,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, agentFactory *clients.AgentFactor
 	}
 }
 
-func (s *SimManagerServer) GetBySubscriber(ctx context.Context, req *pb.GetBySubscriberRequest) (*pb.GetBySubscriberResponse, error) {
+func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetSimsBySubscriberRequest) (*pb.GetSimsBySubscriberResponse, error) {
 	subID, err := uuid.Parse(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of subscriber uuid. Error %s", err.Error())
@@ -40,7 +40,7 @@ func (s *SimManagerServer) GetBySubscriber(ctx context.Context, req *pb.GetBySub
 		return nil, grpc.SqlErrorToGrpc(err, "sims")
 	}
 
-	resp := &pb.GetBySubscriberResponse{
+	resp := &pb.GetSimsBySubscriberResponse{
 		SubscriberID: req.GetSubscriberID(),
 		Sims:         dbSimsToPbSims(sims),
 	}
@@ -49,12 +49,22 @@ func (s *SimManagerServer) GetBySubscriber(ctx context.Context, req *pb.GetBySub
 }
 
 func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRequest) (*pb.ActivateSimResponse, error) {
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sims.ParseType(req.SimType))
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type %q for sim ID %q", req.SimType, req.SimID)
+	simID, err := uuid.Parse(req.GetSimID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
 	}
 
-	err := simAgent.ActivateSim(ctx, req.SimID)
+	sim, err := s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type %q for sim ID %q", sim.Type, req.SimID)
+	}
+
+	err = simAgent.ActivateSim(ctx, req.SimID)
 	if err != nil {
 		return nil, err
 	}
@@ -63,12 +73,22 @@ func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimR
 }
 
 func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.DeactivateSimRequest) (*pb.DeactivateSimResponse, error) {
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sims.ParseType(req.SimType))
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", req.SimType, req.SimID)
+	simID, err := uuid.Parse(req.GetSimID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
 	}
 
-	err := simAgent.DeactivateSim(ctx, req.SimID)
+	sim, err := s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", sim.Type, req.SimID)
+	}
+
+	err = simAgent.DeactivateSim(ctx, req.SimID)
 	if err != nil {
 		return nil, err
 	}

@@ -46,6 +46,66 @@ func (_m *SimManagerServiceClient) ActivateSim(ctx context.Context, in *gen.Acti
 	return r0, r1
 }
 
+// AddPackageForSim provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) AddPackageForSim(ctx context.Context, in *gen.AddPackageRequest, opts ...grpc.CallOption) (*gen.AddPackageResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.AddPackageResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddPackageRequest, ...grpc.CallOption) *gen.AddPackageResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddPackageResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddPackageRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AllocateSim provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) AllocateSim(ctx context.Context, in *gen.AllocateSimRequest, opts ...grpc.CallOption) (*gen.AllocateSimResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.AllocateSimResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AllocateSimRequest, ...grpc.CallOption) *gen.AllocateSimResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AllocateSimResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AllocateSimRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeactivateSim provides a mock function with given fields: ctx, in, opts
 func (_m *SimManagerServiceClient) DeactivateSim(ctx context.Context, in *gen.DeactivateSimRequest, opts ...grpc.CallOption) (*gen.DeactivateSimResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -76,8 +136,8 @@ func (_m *SimManagerServiceClient) DeactivateSim(ctx context.Context, in *gen.De
 	return r0, r1
 }
 
-// GetBySubscriber provides a mock function with given fields: ctx, in, opts
-func (_m *SimManagerServiceClient) GetBySubscriber(ctx context.Context, in *gen.GetBySubscriberRequest, opts ...grpc.CallOption) (*gen.GetBySubscriberResponse, error) {
+// GetSim provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) GetSim(ctx context.Context, in *gen.GetSimRequest, opts ...grpc.CallOption) (*gen.GetSimResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -87,47 +147,17 @@ func (_m *SimManagerServiceClient) GetBySubscriber(ctx context.Context, in *gen.
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetBySubscriberResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBySubscriberRequest, ...grpc.CallOption) *gen.GetBySubscriberResponse); ok {
+	var r0 *gen.GetSimResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimRequest, ...grpc.CallOption) *gen.GetSimResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetBySubscriberResponse)
+			r0 = ret.Get(0).(*gen.GetSimResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBySubscriberRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSimInfo provides a mock function with given fields: ctx, in, opts
-func (_m *SimManagerServiceClient) GetSimInfo(ctx context.Context, in *gen.GetSimInfoRequest, opts ...grpc.CallOption) (*gen.GetSimInfoResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.GetSimInfoResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimInfoRequest, ...grpc.CallOption) *gen.GetSimInfoResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSimInfoResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimInfoRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -158,6 +188,66 @@ func (_m *SimManagerServiceClient) GetSimUsage(ctx context.Context, in *gen.GetS
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimUsageRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSimsBySubscriber provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) GetSimsBySubscriber(ctx context.Context, in *gen.GetSimsBySubscriberRequest, opts ...grpc.CallOption) (*gen.GetSimsBySubscriberResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetSimsBySubscriberResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimsBySubscriberRequest, ...grpc.CallOption) *gen.GetSimsBySubscriberResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetSimsBySubscriberResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimsBySubscriberRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemovePackageForSim provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) RemovePackageForSim(ctx context.Context, in *gen.RemovePackageRequest, opts ...grpc.CallOption) (*gen.RemovePackageResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.RemovePackageResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemovePackageRequest, ...grpc.CallOption) *gen.RemovePackageResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemovePackageResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemovePackageRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

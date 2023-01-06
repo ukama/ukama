@@ -37,6 +37,52 @@ func (_m *SimManagerServiceServer) ActivateSim(_a0 context.Context, _a1 *gen.Act
 	return r0, r1
 }
 
+// AddPackageForSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) AddPackageForSim(_a0 context.Context, _a1 *gen.AddPackageRequest) (*gen.AddPackageResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.AddPackageResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddPackageRequest) *gen.AddPackageResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddPackageResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddPackageRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AllocateSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) AllocateSim(_a0 context.Context, _a1 *gen.AllocateSimRequest) (*gen.AllocateSimResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.AllocateSimResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AllocateSimRequest) *gen.AllocateSimResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AllocateSimResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AllocateSimRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeactivateSim provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) DeactivateSim(_a0 context.Context, _a1 *gen.DeactivateSimRequest) (*gen.DeactivateSimResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -60,44 +106,21 @@ func (_m *SimManagerServiceServer) DeactivateSim(_a0 context.Context, _a1 *gen.D
 	return r0, r1
 }
 
-// GetBySubscriber provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) GetBySubscriber(_a0 context.Context, _a1 *gen.GetBySubscriberRequest) (*gen.GetBySubscriberResponse, error) {
+// GetSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) GetSim(_a0 context.Context, _a1 *gen.GetSimRequest) (*gen.GetSimResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetBySubscriberResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBySubscriberRequest) *gen.GetBySubscriberResponse); ok {
+	var r0 *gen.GetSimResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimRequest) *gen.GetSimResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetBySubscriberResponse)
+			r0 = ret.Get(0).(*gen.GetSimResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBySubscriberRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetSimInfo provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) GetSimInfo(_a0 context.Context, _a1 *gen.GetSimInfoRequest) (*gen.GetSimInfoResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.GetSimInfoResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimInfoRequest) *gen.GetSimInfoResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSimInfoResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimInfoRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -121,6 +144,52 @@ func (_m *SimManagerServiceServer) GetSimUsage(_a0 context.Context, _a1 *gen.Get
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimUsageRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSimsBySubscriber provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) GetSimsBySubscriber(_a0 context.Context, _a1 *gen.GetSimsBySubscriberRequest) (*gen.GetSimsBySubscriberResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetSimsBySubscriberResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimsBySubscriberRequest) *gen.GetSimsBySubscriberResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetSimsBySubscriberResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimsBySubscriberRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemovePackageForSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) RemovePackageForSim(_a0 context.Context, _a1 *gen.RemovePackageRequest) (*gen.RemovePackageResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.RemovePackageResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemovePackageRequest) *gen.RemovePackageResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemovePackageResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemovePackageRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

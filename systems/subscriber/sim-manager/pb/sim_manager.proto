@@ -10,48 +10,89 @@ import "google/protobuf/wrappers.proto";
 package ukama.sim_manager.v1;
 
 service SimManagerService {
-    rpc GetBySubscriber(GetBySubscriberRequest) returns (GetBySubscriberResponse);
-    rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
+    // Sim
+    rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
+    rpc GetSim(GetSimRequest) returns (GetSimResponse);
+    rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
+    // GetSimsByNetwork ???
     rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
     rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
+    // DeleteSim vs TerminateSim
+
+    // Sim pacakge
+    rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
+    rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
+
+    // Metrics???
     rpc GetSimUsage(GetSimUsageRequest) returns (GetSimUsageResponse);
 }
 
 
-message GetBySubscriberRequest {
+
+message AllocateSimRequest {
+    string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+    string simToken = 2;
+    // PackageID ???
+    string planID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "plan_id"];
+    // Do I ever need NetworkID for anything?
+    string networkID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+}
+
+message AllocateSimResponse {
+    Sim sim = 1;
+}
+
+
+message GetSimRequest {
+    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+}
+
+message GetSimResponse {
+    Sim sim = 1;
+}
+
+
+message GetSimsBySubscriberRequest {
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
 }
 
-message GetBySubscriberResponse {
+message GetSimsBySubscriberResponse {
     string subscriberID = 1 [json_name = "subscriber_id"];
     repeated Sim sims = 2;
 }
 
+
 message ActivateSimRequest {
     string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
-    string simType = 2 [json_name = "sim_type"];
 }
 
 message ActivateSimResponse{}
 
 
-message GetSimInfoRequest {
-    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
-}
-
-message GetSimInfoResponse {
-    string simID = 1 [json_name = "sim_id"];
-    string iccid = 2;
-    string imsi = 3;
-}
-
-
 message DeactivateSimRequest {
     string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
-    string simType = 2 [json_name = "sim_type"];
 }
 
 message DeactivateSimResponse{
+}
+
+
+message AddPackageRequest {
+    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_id"];
+    google.protobuf.Timestamp startDate = 4 [json_name = "start_date"];
+}
+
+message AddPackageResponse{
+}
+
+
+message RemovePackageRequest {
+    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_id"];
+}
+
+message RemovePackageResponse{
 }
 
 
@@ -64,13 +105,29 @@ message GetSimUsageResponse {
     int64 dataTotalInBytes  = 2;
 }
 
+
+message Package {
+    string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
+    google.protobuf.Timestamp startDate = 2 [json_name = "start_date"];
+    google.protobuf.Timestamp endDate = 3 [json_name = "end_date"];
+}
+
+
 message Sim {
     string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
     string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
-    string iccid = 3;
-    string msisdn = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string type = 5;
-    string status = 6;
-    bool isPhysical = 7 [json_name = "is_physical"];
-    google.protobuf.Timestamp allocatedAt = 8 [json_name = "allocated_at"];
+    // orgID ???
+    // networkID ???
+    // simManager???
+    Package package = 3;
+    string iccid = 4;
+    string msisdn = 5  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string type = 6;
+    string status = 7;
+    bool isPhysical = 8 [json_name = "is_physical"];
+    google.protobuf.Timestamp firstActivatedOn = 9;
+    google.protobuf.Timestamp lastActivatedOn = 10 ;
+    uint64 activationsCount = 11;
+    uint64 deactivationsCount = 12;
+    google.protobuf.Timestamp allocatedAt = 13 [json_name = "allocated_at"];
 }
