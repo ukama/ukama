@@ -17,7 +17,7 @@ type QueueListener struct {
 	mConn       mb.Consumer
 	gConn       *grpc.ClientConn
 	grpcTimeout time.Duration
-	serviceId   string
+	serviceUuid string
 	serviceName string
 	serviceHost string
 	state       bool
@@ -72,7 +72,7 @@ func newQueueListener(s db.Service) (*QueueListener, error) {
 
 	return &QueueListener{
 		mConn:       client,
-		serviceId:   s.ServiceUuid,
+		serviceUuid: s.ServiceUuid,
 		serviceName: s.Name,
 		c:           ch,
 		state:       false,
@@ -94,7 +94,7 @@ func startQueueListening(q *QueueListener) {
 
 	/* Subscribe to exchange for the routes */
 	err = q.mConn.SubscribeToServiceQueue(q.serviceName, q.exchange,
-		routes, q.serviceId, q.incomingMessageHandler)
+		routes, q.serviceUuid, q.incomingMessageHandler)
 	if err != nil {
 		log.Errorf("[%s] Failed to create listener. Error %s", q.serviceName, err.Error())
 		log.Errorf("[%s] Shutting down listener.", q.serviceName)

@@ -36,7 +36,6 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	/* Register service */
 	svc := db.Service{
 		Name: req.ServiceName,
-		//ServiceUuid:   uuid.NewV4().String(),
 		ServiceUri:  req.ServiceURI,
 		MsgBusUri:   req.MsgBusURI,
 		QueueName:   req.QueueName,

@@ -13,7 +13,7 @@ type ServiceRepo interface {
 	Register(service *Service) (*Service, error)
 	UnRegister(serviceId string) error
 	Update(service *Service) error
-	Get(serviceId string) (*Service, error)
+	Get(serviceUuid string) (*Service, error)
 	GetRoutes(serviceId string) ([]Route, error)
 	List() ([]Service, error)
 	AddRoute(s *Service, rt *Route) error
@@ -57,9 +57,9 @@ func (r *serviceRepo) Update(service *Service) error {
 	return nil
 }
 
-func (r *serviceRepo) UnRegister(serviceId string) error {
+func (r *serviceRepo) UnRegister(serviceUuid string) error {
 	var svc Service
-	res := r.db.GetGormDb().Delete(&svc, Service{ServiceUuid: serviceId})
+	res := r.db.GetGormDb().Delete(&svc, Service{ServiceUuid: serviceUuid})
 	if res.Error != nil {
 		return res.Error
 	}
@@ -77,9 +77,9 @@ func (r *serviceRepo) List() ([]Service, error) {
 	return svc, nil
 }
 
-func (r *serviceRepo) GetRoutes(serviceId string) ([]Route, error) {
+func (r *serviceRepo) GetRoutes(serviceUuid string) ([]Route, error) {
 	var serviceRoutes []Route
-	err := r.db.GetGormDb().Model(&Service{}).Where("service_uuid = ?", serviceId).Association("Routes").Find(&serviceRoutes)
+	err := r.db.GetGormDb().Model(&Service{}).Where("service_uuid = ?", serviceUuid).Association("Routes").Find(&serviceRoutes)
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +87,9 @@ func (r *serviceRepo) GetRoutes(serviceId string) ([]Route, error) {
 	return serviceRoutes, nil
 }
 
-func (r *serviceRepo) Get(serviceId string) (*Service, error) {
+func (r *serviceRepo) Get(serviceUuid string) (*Service, error) {
 	var svc Service
-	res := r.db.GetGormDb().Preload("Routes").Where("service_uuid = ?", serviceId).First(&svc)
+	res := r.db.GetGormDb().Preload("Routes").Where("service_uuid = ?", serviceUuid).First(&svc)
 	if res.Error != nil {
 		return nil, res.Error
 	}
