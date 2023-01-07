@@ -27,12 +27,27 @@ func (this *RegisterServiceReq) Validate() error {
 	if this.InstanceId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("InstanceId", fmt.Errorf(`value '%v' must not be an empty string`, this.InstanceId))
 	}
+	if this.MsgBusURI == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("MsgBusURI", fmt.Errorf(`value '%v' must not be an empty string`, this.MsgBusURI))
+	}
 	return nil
 }
 func (this *RegisterServiceResp) Validate() error {
 	return nil
 }
 func (this *UnregisterServiceReq) Validate() error {
+	return nil
+}
+func (this *StartListeningReq) Validate() error {
+	return nil
+}
+func (this *StopListeningReq) Validate() error {
+	return nil
+}
+func (this *StartListeningResp) Validate() error {
+	return nil
+}
+func (this *StopListeningResp) Validate() error {
 	return nil
 }
 func (this *UnregisterServiceResp) Validate() error {

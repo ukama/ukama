@@ -23,8 +23,10 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MsgClientServiceClient interface {
 	RegisterService(ctx context.Context, in *RegisterServiceReq, opts ...grpc.CallOption) (*RegisterServiceResp, error)
-	RegisterRoutes(ctx context.Context, in *RegisterRoutesReq, opts ...grpc.CallOption) (*RegisterRoutesResp, error)
 	UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error)
+	StartListening(ctx context.Context, in *StartListeningReq, opts ...grpc.CallOption) (*StartListeningResp, error)
+	StopListening(ctx context.Context, in *StopListeningReq, opts ...grpc.CallOption) (*StopListeningResp, error)
+	RegisterRoutes(ctx context.Context, in *RegisterRoutesReq, opts ...grpc.CallOption) (*RegisterRoutesResp, error)
 	UnregisterRoutes(ctx context.Context, in *UnregisterRoutesReq, opts ...grpc.CallOption) (*UnregisterRoutesResp, error)
 	PusblishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error)
 }
@@ -46,18 +48,36 @@ func (c *msgClientServiceClient) RegisterService(ctx context.Context, in *Regist
 	return out, nil
 }
 
-func (c *msgClientServiceClient) RegisterRoutes(ctx context.Context, in *RegisterRoutesReq, opts ...grpc.CallOption) (*RegisterRoutesResp, error) {
-	out := new(RegisterRoutesResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/RegisterRoutes", in, out, opts...)
+func (c *msgClientServiceClient) UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error) {
+	out := new(UnregisterServiceResp)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/UnregisterService", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *msgClientServiceClient) UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error) {
-	out := new(UnregisterServiceResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/UnregisterService", in, out, opts...)
+func (c *msgClientServiceClient) StartListening(ctx context.Context, in *StartListeningReq, opts ...grpc.CallOption) (*StartListeningResp, error) {
+	out := new(StartListeningResp)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/StartListening", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClientServiceClient) StopListening(ctx context.Context, in *StopListeningReq, opts ...grpc.CallOption) (*StopListeningResp, error) {
+	out := new(StopListeningResp)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/StopListening", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClientServiceClient) RegisterRoutes(ctx context.Context, in *RegisterRoutesReq, opts ...grpc.CallOption) (*RegisterRoutesResp, error) {
+	out := new(RegisterRoutesResp)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/RegisterRoutes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +107,10 @@ func (c *msgClientServiceClient) PusblishMsg(ctx context.Context, in *PublishMsg
 // for forward compatibility
 type MsgClientServiceServer interface {
 	RegisterService(context.Context, *RegisterServiceReq) (*RegisterServiceResp, error)
-	RegisterRoutes(context.Context, *RegisterRoutesReq) (*RegisterRoutesResp, error)
 	UnregisterService(context.Context, *UnregisterServiceReq) (*UnregisterServiceResp, error)
+	StartListening(context.Context, *StartListeningReq) (*StartListeningResp, error)
+	StopListening(context.Context, *StopListeningReq) (*StopListeningResp, error)
+	RegisterRoutes(context.Context, *RegisterRoutesReq) (*RegisterRoutesResp, error)
 	UnregisterRoutes(context.Context, *UnregisterRoutesReq) (*UnregisterRoutesResp, error)
 	PusblishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error)
 	mustEmbedUnimplementedMsgClientServiceServer()
@@ -101,11 +123,17 @@ type UnimplementedMsgClientServiceServer struct {
 func (UnimplementedMsgClientServiceServer) RegisterService(context.Context, *RegisterServiceReq) (*RegisterServiceResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterService not implemented")
 }
-func (UnimplementedMsgClientServiceServer) RegisterRoutes(context.Context, *RegisterRoutesReq) (*RegisterRoutesResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterRoutes not implemented")
-}
 func (UnimplementedMsgClientServiceServer) UnregisterService(context.Context, *UnregisterServiceReq) (*UnregisterServiceResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnregisterService not implemented")
+}
+func (UnimplementedMsgClientServiceServer) StartListening(context.Context, *StartListeningReq) (*StartListeningResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartListening not implemented")
+}
+func (UnimplementedMsgClientServiceServer) StopListening(context.Context, *StopListeningReq) (*StopListeningResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopListening not implemented")
+}
+func (UnimplementedMsgClientServiceServer) RegisterRoutes(context.Context, *RegisterRoutesReq) (*RegisterRoutesResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterRoutes not implemented")
 }
 func (UnimplementedMsgClientServiceServer) UnregisterRoutes(context.Context, *UnregisterRoutesReq) (*UnregisterRoutesResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnregisterRoutes not implemented")
@@ -144,24 +172,6 @@ func _MsgClientService_RegisterService_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MsgClientService_RegisterRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterRoutesReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgClientServiceServer).RegisterRoutes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/RegisterRoutes",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgClientServiceServer).RegisterRoutes(ctx, req.(*RegisterRoutesReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MsgClientService_UnregisterService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UnregisterServiceReq)
 	if err := dec(in); err != nil {
@@ -176,6 +186,60 @@ func _MsgClientService_UnregisterService_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgClientServiceServer).UnregisterService(ctx, req.(*UnregisterServiceReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MsgClientService_StartListening_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartListeningReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgClientServiceServer).StartListening(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.msgClient.v1.MsgClientService/StartListening",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgClientServiceServer).StartListening(ctx, req.(*StartListeningReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MsgClientService_StopListening_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopListeningReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgClientServiceServer).StopListening(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.msgClient.v1.MsgClientService/StopListening",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgClientServiceServer).StopListening(ctx, req.(*StopListeningReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MsgClientService_RegisterRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterRoutesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgClientServiceServer).RegisterRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.msgClient.v1.MsgClientService/RegisterRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgClientServiceServer).RegisterRoutes(ctx, req.(*RegisterRoutesReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -228,12 +292,20 @@ var MsgClientService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MsgClientService_RegisterService_Handler,
 		},
 		{
-			MethodName: "RegisterRoutes",
-			Handler:    _MsgClientService_RegisterRoutes_Handler,
-		},
-		{
 			MethodName: "UnregisterService",
 			Handler:    _MsgClientService_UnregisterService_Handler,
+		},
+		{
+			MethodName: "StartListening",
+			Handler:    _MsgClientService_StartListening_Handler,
+		},
+		{
+			MethodName: "StopListening",
+			Handler:    _MsgClientService_StopListening_Handler,
+		},
+		{
+			MethodName: "RegisterRoutes",
+			Handler:    _MsgClientService_RegisterRoutes_Handler,
 		},
 		{
 			MethodName: "UnregisterRoutes",

@@ -41,21 +41,22 @@ func NewMessageBusListener(s db.ServiceRepo, r db.RouteRepo) *MsgBusListener {
 	}
 	mbl.ql = make(map[string]*QueueListener)
 
-	return nil
+	return mbl
 
 }
 
 func newQueueListener(s db.Service) (*QueueListener, error) {
 
-	routes := []string{}
+	log.Debugf("Listener Config %+v", s)
+	routes := make([]string, len(s.Routes))
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.GrpcTimeout))
 	defer cancel()
 
 	conn, err := grpc.DialContext(ctx, s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("Could not connect: %v", err)
-	}
+	// if err != nil {
+	// 	log.Fatalf("Could not connect: %v", err)
+	// }
 
 	client, err := mb.NewConsumerClient(s.MsgBusUri)
 	if err != nil {
@@ -84,25 +85,30 @@ func newQueueListener(s db.Service) (*QueueListener, error) {
 
 func startQueueListening(q *QueueListener) {
 
+	log.Debugf("[%s]: Starting listener routine.", q.serviceName)
 	/* Validate routes */ // TODO: Update ParseRoutesList implementation
 	routes, err := mb.ParseRouteList(q.routes)
 	if err != nil {
-		log.Errorf("Failed to create listener for %s. Error %s", q.serviceName, err.Error())
+		log.Errorf("[%s] Failed to create listener. Error %s", q.serviceName, err.Error())
 	}
 
 	/* Subscribe to exchange for the routes */
 	err = q.mConn.SubscribeToServiceQueue(q.serviceName, q.exchange,
 		routes, q.serviceId, q.incomingMessageHandler)
 	if err != nil {
-		log.Errorf("Failed to create listener for %s. Error %s", q.serviceName, err.Error())
+		log.Errorf("[%s] Failed to create listener. Error %s", q.serviceName, err.Error())
+		log.Errorf("[%s] Shutting down listener.", q.serviceName)
+		q.mConn.Close()
+		q.state = false
+		return
 	}
 
 	q.state = true
-	log.Infof("Queue listener started for %s services on %v routes", q.serviceName, q.routes)
+	log.Infof("[%s] Queue listener started on %v routes", q.serviceName, q.routes)
 	/* Waiting for stop */
 	<-q.c
 
-	log.Info("Shutting down queue for %s service.", q.serviceName)
+	log.Infof("[%s] Shutting down queue listener", q.serviceName)
 	q.mConn.Close()
 	q.state = false
 
@@ -110,7 +116,7 @@ func startQueueListening(q *QueueListener) {
 
 func stopQueueListening(q *QueueListener) {
 	if q.state {
-		log.Infof("Stopping queue listner routine for service %s on %v routes", q.serviceName, q.routes)
+		log.Infof("Stopping queue listener routine for service %s on %v routes", q.serviceName, q.routes)
 		q.c <- true
 	}
 }
@@ -125,11 +131,11 @@ func (m *MsgBusListener) CreateQueueListeners() error {
 
 	if len(services) <= 0 {
 		log.Errorf("No services available.")
-		return fmt.Errorf("no services to monitor")
 	}
 
 	for _, s := range services {
 		/*  Create a queue listner for each service */
+		log.Infof("Starting listener for %s service.", s.ServiceId)
 		listener, err := newQueueListener(s)
 		if err != nil {
 			log.Errorf("Failed to create listner for %s. Error %s", s.Name, err.Error())
@@ -149,7 +155,7 @@ func (m *MsgBusListener) StartQueueListeners() {
 
 	for _, q := range m.ql {
 		/*  Create a queue listner for each service */
-		log.Infof("Starting new queue listner routine for service %s on %v routes", q.serviceName, q.routes)
+		log.Infof("Starting new queue listener routine for service %s on %v routes", q.serviceName, q.routes)
 		go startQueueListening(q)
 
 	}
@@ -175,21 +181,27 @@ func (m *MsgBusListener) RetstartServiceQueueListening(service string) (err erro
 	return nil
 }
 
-func (m *MsgBusListener) UpdateServiceQueueListening(s db.Service) (err error) {
+func (m *MsgBusListener) UpdateServiceQueueListening(s *db.Service) (err error) {
 	_, ok := m.ql[s.ServiceId]
 	if ok {
 		m.RemoveServiceQueueListening(s.ServiceId)
 	}
 
-	listener, err := newQueueListener(s)
+	listener, err := newQueueListener(*s)
 	if err != nil {
-		log.Errorf("Failed to create listner for %s. Error %s", s.Name, err.Error())
+		log.Errorf("Failed to create listener for %s. Error %s", s.Name, err.Error())
 		return err
 	}
 
 	m.ql[s.ServiceId] = listener
 
-	startQueueListening(m.ql[s.ServiceId])
+	go startQueueListening(listener)
+
+	time.Sleep(500 * time.Millisecond)
+
+	if !listener.state {
+		return fmt.Errorf("failed to start listener for service %s", listener.serviceName)
+	}
 
 	return nil
 }
@@ -199,17 +211,18 @@ func (m *MsgBusListener) StopServiceQueueListening(service string) (err error) {
 	if ok {
 		stopQueueListening(q)
 		time.Sleep(500 * time.Millisecond)
-		if !q.state {
+		if q.state {
 			return fmt.Errorf("failed to stop queue listening service for %s", q.serviceName)
 		}
 	} else {
 		return fmt.Errorf("no service with id %s registered", service)
 	}
-	/* TDOD: check if m.ql is changing the state for service */
+
 	return nil
 }
 
 func (m *MsgBusListener) RemoveServiceQueueListening(service string) error {
+	log.Infof("Removing queue listener for %s service", service)
 
 	err := m.StopServiceQueueListening(service)
 	if err != nil {
@@ -217,7 +230,7 @@ func (m *MsgBusListener) RemoveServiceQueueListening(service string) error {
 	}
 	delete(m.ql, service)
 
-	log.Infof("Removed queue listner for %s service", service)
+	log.Infof("Removed queue listener for %s service", service)
 
 	return nil
 }

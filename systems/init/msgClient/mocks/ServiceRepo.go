@@ -35,16 +35,39 @@ func (_m *ServiceRepo) Get(serviceId string) (*db.Service, error) {
 	return r0, r1
 }
 
+// GetRoutes provides a mock function with given fields: serviceId
+func (_m *ServiceRepo) GetRoutes(serviceId string) ([]db.Route, error) {
+	ret := _m.Called(serviceId)
+
+	var r0 []db.Route
+	if rf, ok := ret.Get(0).(func(string) []db.Route); ok {
+		r0 = rf(serviceId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Route)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(serviceId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // List provides a mock function with given fields:
-func (_m *ServiceRepo) List() (*db.Service, error) {
+func (_m *ServiceRepo) List() ([]db.Service, error) {
 	ret := _m.Called()
 
-	var r0 *db.Service
-	if rf, ok := ret.Get(0).(func() *db.Service); ok {
+	var r0 []db.Service
+	if rf, ok := ret.Get(0).(func() []db.Service); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Service)
+			r0 = ret.Get(0).([]db.Service)
 		}
 	}
 
@@ -58,13 +81,13 @@ func (_m *ServiceRepo) List() (*db.Service, error) {
 	return r0, r1
 }
 
-// Register provides a mock function with given fields: name, url
-func (_m *ServiceRepo) Register(name string, url string) error {
-	ret := _m.Called(name, url)
+// Register provides a mock function with given fields: service
+func (_m *ServiceRepo) Register(service *db.Service) error {
+	ret := _m.Called(service)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(name, url)
+	if rf, ok := ret.Get(0).(func(*db.Service) error); ok {
+		r0 = rf(service)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -86,13 +109,13 @@ func (_m *ServiceRepo) UnRegister(serviceId string) error {
 	return r0
 }
 
-// Update provides a mock function with given fields: serviceId
-func (_m *ServiceRepo) Update(serviceId string) error {
-	ret := _m.Called(serviceId)
+// Update provides a mock function with given fields: service
+func (_m *ServiceRepo) Update(service *db.Service) error {
+	ret := _m.Called(service)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(serviceId)
+	if rf, ok := ret.Get(0).(func(*db.Service) error); ok {
+		r0 = rf(service)
 	} else {
 		r0 = ret.Error(0)
 	}

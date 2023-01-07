@@ -62,6 +62,9 @@ func initConfig() {
 		DB: &uconf.Database{
 			DbName: internal.ServiceName,
 		},
+		Grpc: &uconf.Grpc{
+			Port: 9095,
+		},
 	}
 
 	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
@@ -74,7 +77,7 @@ func initConfig() {
 		}
 	}
 
-	log.Debugf("\nService: %s DB Config: %+v", internal.ServiceName, serviceConfig.DB)
+	log.Debugf("Service: %s Config: %+v", internal.ServiceName, serviceConfig.Grpc)
 
 }
 
@@ -95,7 +98,7 @@ func runGrpcServer(d sql.Db) {
 	})
 
 	signalHandler(listener, grpcServer)
-
+	log.Infof("Listener is %+v", listener)
 	err := listener.CreateQueueListeners()
 	if err != nil {
 		logrus.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())

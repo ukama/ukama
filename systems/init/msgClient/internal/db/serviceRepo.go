@@ -38,7 +38,7 @@ func (r *serviceRepo) Register(service *Service) error {
 		return res.Error
 	}
 
-	if res.RowsAffected > 0 {
+	if res.RowsAffected < 1 {
 		return fmt.Errorf("service with name %s exist", service.Name)
 	}
 
@@ -90,9 +90,9 @@ func (r *serviceRepo) GetRoutes(serviceId string) ([]Route, error) {
 
 func (r *serviceRepo) Get(serviceId string) (*Service, error) {
 	var svc Service
-	err := r.db.GetGormDb().Model(&Service{}).Where("service_id = ?", serviceId).Association("Routes").Find(&svc)
-	if err != nil {
-		return nil, err
+	res := r.db.GetGormDb().Preload("Routes").Where("service_id = ?", serviceId).First(&svc)
+	if res.Error != nil {
+		return nil, res.Error
 	}
 
 	return &svc, nil

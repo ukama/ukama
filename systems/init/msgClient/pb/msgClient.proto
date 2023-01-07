@@ -10,8 +10,10 @@ import "google/protobuf/any.proto";
 service MsgClientService {
 
     rpc RegisterService(RegisterServiceReq) returns (RegisterServiceResp);
-    rpc RegisterRoutes(RegisterRoutesReq) returns (RegisterRoutesResp);
     rpc UnregisterService(UnregisterServiceReq) returns (UnregisterServiceResp);
+    rpc StartListening(StartListeningReq) returns (StartListeningResp);
+    rpc StopListening(StopListeningReq) returns (StopListeningResp);
+    rpc RegisterRoutes(RegisterRoutesReq) returns (RegisterRoutesResp);
     rpc UnregisterRoutes(UnregisterRoutesReq) returns (UnregisterRoutesResp);
     rpc PusblishMsg(PublishMsgRequest) returns (PublishMsgResponse);
 
@@ -20,12 +22,20 @@ enum REGISTRAION_STATUS {
     REGISTERED = 0;
     ALLREADY_REGISTERED = 1;
     NOT_REGISTERED =2;
+    LISTNENING = 3;
+    LISTNENING_FAILURE = 4;
 }
 
 message RegisterServiceReq {
     string systemName = 1 [(validator.field) = {string_not_empty: true}];
     string serviceName = 2 [(validator.field) = {string_not_empty: true}];
     string instanceId = 3  [(validator.field) = {string_not_empty: true}];
+    string msgBusURI = 4 [(validator.field) = {string_not_empty: true}];
+    string serviceURI = 5;
+    string queueName = 6;
+    string exchange = 7;
+    uint32 grpcTimeout = 8; 
+    repeated string routes = 9 ;
 }
 
 message RegisterServiceResp {
@@ -35,6 +45,20 @@ message RegisterServiceResp {
 
 message UnregisterServiceReq {
     string serviceId = 1; 
+}
+
+message StartListeningReq {
+    string serviceId = 1; 
+}
+
+message StopListeningReq {
+    string serviceId = 1; 
+}
+
+message StartListeningResp {
+}
+
+message StopListeningResp {
 }
 
 message UnregisterServiceResp {
@@ -61,8 +85,6 @@ message UnregisterRoutesResp {
 
 message PublishMsgRequest {
     string routingKey = 1 [(validator.field) = {string_not_empty: true}];
-    string queueName = 2 [(validator.field) = {string_not_empty: true}];
-    string Exchange = 3 [(validator.field) = {string_not_empty: true}];
     google.protobuf.Any msg = 2;
 }
 

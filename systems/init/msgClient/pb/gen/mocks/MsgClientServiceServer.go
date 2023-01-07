@@ -83,6 +83,52 @@ func (_m *MsgClientServiceServer) RegisterService(_a0 context.Context, _a1 *gen.
 	return r0, r1
 }
 
+// StartListening provides a mock function with given fields: _a0, _a1
+func (_m *MsgClientServiceServer) StartListening(_a0 context.Context, _a1 *gen.StartListeningReq) (*gen.StartListeningResp, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.StartListeningResp
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.StartListeningReq) *gen.StartListeningResp); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.StartListeningResp)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.StartListeningReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// StopListening provides a mock function with given fields: _a0, _a1
+func (_m *MsgClientServiceServer) StopListening(_a0 context.Context, _a1 *gen.StopListeningReq) (*gen.StopListeningResp, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.StopListeningResp
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.StopListeningReq) *gen.StopListeningResp); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.StopListeningResp)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.StopListeningReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UnregisterRoutes provides a mock function with given fields: _a0, _a1
 func (_m *MsgClientServiceServer) UnregisterRoutes(_a0 context.Context, _a1 *gen.UnregisterRoutesReq) (*gen.UnregisterRoutesResp, error) {
 	ret := _m.Called(_a0, _a1)

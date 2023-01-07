@@ -106,6 +106,66 @@ func (_m *MsgClientServiceClient) RegisterService(ctx context.Context, in *gen.R
 	return r0, r1
 }
 
+// StartListening provides a mock function with given fields: ctx, in, opts
+func (_m *MsgClientServiceClient) StartListening(ctx context.Context, in *gen.StartListeningReq, opts ...grpc.CallOption) (*gen.StartListeningResp, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.StartListeningResp
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.StartListeningReq, ...grpc.CallOption) *gen.StartListeningResp); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.StartListeningResp)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.StartListeningReq, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// StopListening provides a mock function with given fields: ctx, in, opts
+func (_m *MsgClientServiceClient) StopListening(ctx context.Context, in *gen.StopListeningReq, opts ...grpc.CallOption) (*gen.StopListeningResp, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.StopListeningResp
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.StopListeningReq, ...grpc.CallOption) *gen.StopListeningResp); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.StopListeningResp)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.StopListeningReq, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UnregisterRoutes provides a mock function with given fields: ctx, in, opts
 func (_m *MsgClientServiceClient) UnregisterRoutes(ctx context.Context, in *gen.UnregisterRoutesReq, opts ...grpc.CallOption) (*gen.UnregisterRoutesResp, error) {
 	_va := make([]interface{}, len(opts))

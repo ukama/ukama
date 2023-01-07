@@ -1,6 +1,6 @@
 package internal
 
-const ServiceName = "msgClient"
+const ServiceName = "msgclient"
 
 const SystemName = "Init"
 
