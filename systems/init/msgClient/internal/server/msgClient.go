@@ -36,7 +36,7 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	/* Register service */
 	svc := db.Service{
 		Name: req.ServiceName,
-		//ServiceId:   uuid.NewV4().String(),
+		//ServiceUuid:   uuid.NewV4().String(),
 		ServiceUri:  req.ServiceURI,
 		MsgBusUri:   req.MsgBusURI,
 		QueueName:   req.QueueName,
@@ -47,6 +47,13 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	service, err := m.s.Register(&svc)
 	if err != nil {
 		log.Errorf("Failed to register service %s", req.ServiceName)
+		return resp, err
+	}
+
+	log.Debugf("Removing old route for %s service", service.Name)
+	err = m.s.RemoveRoutes(service)
+	if err != nil {
+		log.Errorf("Failed to remove old routes for service %s. Error %s", req.ServiceName, err.Error())
 		return resp, err
 	}
 
@@ -71,16 +78,16 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	}
 
 	resp.State = pb.REGISTRAION_STATUS_REGISTERED
-	resp.ServiceId = service.ServiceId
+	resp.ServiceUuid = service.ServiceUuid
 	return resp, nil
 }
 
 func (m *MsgClientServer) StartListening(ctx context.Context, req *pb.StartListeningReq) (*pb.StartListeningResp, error) {
-	log.Debugf("Start listener request for %s", req.ServiceId)
+	log.Debugf("Start listener request for %s", req.ServiceUuid)
 
-	svc, err := m.s.Get(req.ServiceId)
+	svc, err := m.s.Get(req.ServiceUuid)
 	if err != nil {
-		log.Errorf("Failed to get listener config for %s", req.ServiceId)
+		log.Errorf("Failed to get listener config for %s", req.ServiceUuid)
 		return nil, err
 	}
 
@@ -96,11 +103,11 @@ func (m *MsgClientServer) StartListening(ctx context.Context, req *pb.StartListe
 
 func (m *MsgClientServer) StopListening(ctx context.Context, req *pb.StopListeningReq) (*pb.StopListeningResp, error) {
 
-	log.Debugf("Stop listener request for %s", req.ServiceId)
+	log.Debugf("Stop listener request for %s", req.ServiceUuid)
 	/* start listening */
-	err := m.mq.StopServiceQueueListening(req.ServiceId)
+	err := m.mq.StopServiceQueueListening(req.ServiceUuid)
 	if err != nil {
-		log.Errorf("Failed to stop listener for service %s. Error %s", req.ServiceId, err.Error())
+		log.Errorf("Failed to stop listener for service %s. Error %s", req.ServiceUuid, err.Error())
 		return nil, err
 	}
 

@@ -2,6 +2,8 @@
 package db
 
 import (
+	log "github.com/sirupsen/logrus"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm/clause"
 )
@@ -15,6 +17,7 @@ type ServiceRepo interface {
 	GetRoutes(serviceId string) ([]Route, error)
 	List() ([]Service, error)
 	AddRoute(s *Service, rt *Route) error
+	RemoveRoutes(service *Service) error
 }
 
 type serviceRepo struct {
@@ -56,7 +59,7 @@ func (r *serviceRepo) Update(service *Service) error {
 
 func (r *serviceRepo) UnRegister(serviceId string) error {
 	var svc Service
-	res := r.db.GetGormDb().Delete(&svc, Service{ServiceId: serviceId})
+	res := r.db.GetGormDb().Delete(&svc, Service{ServiceUuid: serviceId})
 	if res.Error != nil {
 		return res.Error
 	}
@@ -76,7 +79,7 @@ func (r *serviceRepo) List() ([]Service, error) {
 
 func (r *serviceRepo) GetRoutes(serviceId string) ([]Route, error) {
 	var serviceRoutes []Route
-	err := r.db.GetGormDb().Model(&Service{}).Where("service_id = ?", serviceId).Association("Routes").Find(&serviceRoutes)
+	err := r.db.GetGormDb().Model(&Service{}).Where("service_uuid = ?", serviceId).Association("Routes").Find(&serviceRoutes)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +89,7 @@ func (r *serviceRepo) GetRoutes(serviceId string) ([]Route, error) {
 
 func (r *serviceRepo) Get(serviceId string) (*Service, error) {
 	var svc Service
-	res := r.db.GetGormDb().Preload("Routes").Where("service_id = ?", serviceId).First(&svc)
+	res := r.db.GetGormDb().Preload("Routes").Where("service_uuid = ?", serviceId).First(&svc)
 	if res.Error != nil {
 		return nil, res.Error
 	}
@@ -100,20 +103,16 @@ func (r *serviceRepo) AddRoute(s *Service, rt *Route) error {
 	return res
 }
 
-func (r *serviceRepo) RemoveRoutes(serviceId string) error {
+func (r *serviceRepo) RemoveRoutes(service *Service) error {
 
-	service := Service{
-		ServiceId: serviceId,
+	var serviceRoutes []Route
+	err := r.db.GetGormDb().Model(service).Where("service_id = ?", service.ID).Association("Routes").Find(&serviceRoutes)
+	if err != nil {
+		return err
 	}
 
-	var routes []Route
-
-	res := r.db.GetGormDb().Model(&Route{}).Where("service_id = ?", serviceId).Find(&routes)
-	if res.Error != nil {
-		return res.Error
-	}
-
-	err := r.db.GetGormDb().Model(&service).Association("Routes").Delete(&routes)
+	log.Infof("found old routes %+v", serviceRoutes)
+	err = r.db.GetGormDb().Model(service).Association("Routes").Delete(&serviceRoutes)
 	if err != nil {
 		return err
 	}

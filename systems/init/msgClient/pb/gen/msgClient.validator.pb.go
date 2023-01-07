@@ -54,8 +54,8 @@ func (this *UnregisterServiceResp) Validate() error {
 	return nil
 }
 func (this *RegisterRoutesReq) Validate() error {
-	if this.ServiceId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("ServiceId", fmt.Errorf(`value '%v' must not be an empty string`, this.ServiceId))
+	if this.ServiceUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("ServiceUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.ServiceUuid))
 	}
 	for _, item := range this.Keys {
 		if item == "" {

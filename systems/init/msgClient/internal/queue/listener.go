@@ -72,7 +72,7 @@ func newQueueListener(s db.Service) (*QueueListener, error) {
 
 	return &QueueListener{
 		mConn:       client,
-		serviceId:   s.ServiceId,
+		serviceId:   s.ServiceUuid,
 		serviceName: s.Name,
 		c:           ch,
 		state:       false,
@@ -135,14 +135,14 @@ func (m *MsgBusListener) CreateQueueListeners() error {
 
 	for _, s := range services {
 		/*  Create a queue listner for each service */
-		log.Infof("Starting listener for %s service.", s.ServiceId)
+		log.Infof("Starting listener for %s service.", s.ServiceUuid)
 		listener, err := newQueueListener(s)
 		if err != nil {
 			log.Errorf("Failed to create listner for %s. Error %s", s.Name, err.Error())
 			return err
 		}
 
-		m.ql[s.ServiceId] = listener
+		m.ql[s.ServiceUuid] = listener
 
 	}
 
@@ -182,9 +182,9 @@ func (m *MsgBusListener) RetstartServiceQueueListening(service string) (err erro
 }
 
 func (m *MsgBusListener) UpdateServiceQueueListening(s *db.Service) (err error) {
-	_, ok := m.ql[s.ServiceId]
+	_, ok := m.ql[s.ServiceUuid]
 	if ok {
-		m.RemoveServiceQueueListening(s.ServiceId)
+		m.RemoveServiceQueueListening(s.ServiceUuid)
 	}
 
 	listener, err := newQueueListener(*s)
@@ -193,7 +193,7 @@ func (m *MsgBusListener) UpdateServiceQueueListening(s *db.Service) (err error) 
 		return err
 	}
 
-	m.ql[s.ServiceId] = listener
+	m.ql[s.ServiceUuid] = listener
 
 	go startQueueListening(listener)
 

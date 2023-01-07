@@ -194,7 +194,7 @@ type RegisterServiceResp struct {
 	unknownFields protoimpl.UnknownFields
 
 	State     REGISTRAION_STATUS `protobuf:"varint,1,opt,name=state,proto3,enum=ukama.msgClient.v1.REGISTRAION_STATUS" json:"state,omitempty"`
-	ServiceId string             `protobuf:"bytes,2,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
+	ServiceUuid string             `protobuf:"bytes,2,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
 }
 
 func (x *RegisterServiceResp) Reset() {
@@ -238,7 +238,7 @@ func (x *RegisterServiceResp) GetState() REGISTRAION_STATUS {
 
 func (x *RegisterServiceResp) GetServiceId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ServiceUuid
 	}
 	return ""
 }
@@ -248,7 +248,7 @@ type UnregisterServiceReq struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ServiceId string `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
+	ServiceUuid string `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
 }
 
 func (x *UnregisterServiceReq) Reset() {
@@ -285,7 +285,7 @@ func (*UnregisterServiceReq) Descriptor() ([]byte, []int) {
 
 func (x *UnregisterServiceReq) GetServiceId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ServiceUuid
 	}
 	return ""
 }
@@ -295,7 +295,7 @@ type StartListeningReq struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ServiceId string `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
+	ServiceUuid string `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
 }
 
 func (x *StartListeningReq) Reset() {
@@ -332,7 +332,7 @@ func (*StartListeningReq) Descriptor() ([]byte, []int) {
 
 func (x *StartListeningReq) GetServiceId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ServiceUuid
 	}
 	return ""
 }
@@ -342,7 +342,7 @@ type StopListeningReq struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ServiceId string `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
+	ServiceUuid string `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
 }
 
 func (x *StopListeningReq) Reset() {
@@ -379,7 +379,7 @@ func (*StopListeningReq) Descriptor() ([]byte, []int) {
 
 func (x *StopListeningReq) GetServiceId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ServiceUuid
 	}
 	return ""
 }
@@ -465,7 +465,7 @@ type UnregisterServiceResp struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ServiceId string `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
+	ServiceUuid string `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
 }
 
 func (x *UnregisterServiceResp) Reset() {
@@ -502,7 +502,7 @@ func (*UnregisterServiceResp) Descriptor() ([]byte, []int) {
 
 func (x *UnregisterServiceResp) GetServiceId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ServiceUuid
 	}
 	return ""
 }
@@ -512,7 +512,7 @@ type RegisterRoutesReq struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ServiceId string   `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
+	ServiceUuid string   `protobuf:"bytes,1,opt,name=serviceId,proto3" json:"serviceId,omitempty"`
 	Keys      []string `protobuf:"bytes,2,rep,name=keys,proto3" json:"keys,omitempty"`
 }
 
@@ -550,7 +550,7 @@ func (*RegisterRoutesReq) Descriptor() ([]byte, []int) {
 
 func (x *RegisterRoutesReq) GetServiceId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ServiceUuid
 	}
 	return ""
 }
