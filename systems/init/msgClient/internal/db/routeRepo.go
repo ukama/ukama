@@ -7,7 +7,7 @@ import (
 
 // declare interface so that we can mock it
 type RouteRepo interface {
-	Add(key string) error
+	Add(key string) (*Route, error)
 	Remove(key string) error
 	List() ([]Route, error)
 	Get(key string) (*Route, error)
@@ -23,14 +23,16 @@ func NewRouteRepo(db sql.Db) *routeRepo {
 	}
 }
 
-func (r *routeRepo) Add(key string) error {
-	var rt Route
-	res := r.db.GetGormDb().FirstOrCreate(&rt, Route{Key: key})
+func (r *routeRepo) Add(key string) (*Route, error) {
+
+	var route Route
+	res := r.db.GetGormDb().FirstOrCreate(&route, Route{Key: key})
 	if res.Error != nil {
-		return res.Error
+		return nil, res.Error
 	}
 
-	return nil
+	return &route, nil
+
 }
 
 func (r *routeRepo) Remove(key string) error {

@@ -7,7 +7,7 @@ import (
 type Service struct {
 	gorm.Model
 	Name        string `gorm:"unique;type:string;uniqueIndex:service_idx_case_insensetive,expression:lower(name);not null"` /* name of the service */
-	ServiceId   string `gorm:"type:uuid;unique"`                                                                            /* returned by msg client on registration */
+	ServiceId   string `gorm:"type:uuid;unique;"`                                                                           //default:uuid_generate_v3                                                                          /* returned by msg client on registration */
 	MsgBusUri   string /* grpc srever url to create grpc client*/
 	QueueName   string
 	Exchange    string

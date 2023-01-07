@@ -16,6 +16,7 @@ type ServiceRepo interface {
 	Get(serviceId string) (*Service, error)
 	GetRoutes(serviceId string) ([]Route, error)
 	List() ([]Service, error)
+	AddRoute(s *Service, rt *Route) error
 }
 
 type serviceRepo struct {
@@ -31,8 +32,8 @@ func NewServiceRepo(db sql.Db) *serviceRepo {
 func (r *serviceRepo) Register(service *Service) error {
 	res := r.db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "name"}},
-		DoNothing: true}).Create(&service)
-	//res := r.db.GetGormDb().Create(service)
+		DoNothing: true}).
+		Create(&service)
 	if res.Error != nil {
 
 		return res.Error
@@ -98,17 +99,9 @@ func (r *serviceRepo) Get(serviceId string) (*Service, error) {
 	return &svc, nil
 }
 
-func (r *serviceRepo) AddRoute(serviceId string, key string) error {
+func (r *serviceRepo) AddRoute(s *Service, rt *Route) error {
 
-	service := Service{
-		ServiceId: serviceId,
-	}
-
-	route := Route{
-		Key: key,
-	}
-
-	res := r.db.GetGormDb().Model(&service).Association("Routes").Append(&route)
+	res := r.db.GetGormDb().Model(s).Association("Routes").Append(rt)
 	return res
 }
 

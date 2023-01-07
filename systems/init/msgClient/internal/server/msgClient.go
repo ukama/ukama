@@ -34,19 +34,6 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 		State: pb.REGISTRAION_STATUS_NOT_REGISTERED,
 	}
 
-	/* Add Routes */
-	routes := make([]db.Route, len(req.Routes))
-	for i, r := range req.Routes {
-		routes[i].Key = r
-
-		// err := m.r.Add(r)
-		// if err != nil {
-		// 	/* No need to rollback the already added routes.*/
-		// 	log.Errorf("Failed to add route %s for service %s. Error %s", r, req.ServiceName, err.Error())
-		// 	return resp, err
-		// }
-	}
-
 	/* Generate UUID */
 	id := uuid.NewV4()
 	// if err != nil {
@@ -65,7 +52,6 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 		QueueName:   req.QueueName,
 		Exchange:    req.Exchange,
 		GrpcTimeout: req.GrpcTimeout,
-		Routes:      routes,
 	}
 
 	err := m.s.Register(&svc)
@@ -73,6 +59,27 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 		log.Errorf("Failed to register service %s", req.ServiceName)
 		return resp, err
 	}
+
+	/* Add Routes */
+	routes := make([]db.Route, len(req.Routes))
+	for i, r := range req.Routes {
+		routes[i].Key = r
+		rt, err := m.r.Add(r)
+		if err != nil {
+			/* No need to rollback the already added routes.*/
+			log.Errorf("Failed to add route %s for service %s. Error %s", r, req.ServiceName, err.Error())
+			return resp, err
+		}
+
+		log.Debugf("Adding route %s for %s service", r, svc.Name)
+		err = m.s.AddRoute(&svc, rt)
+		if err != nil {
+			/* No need to rollback the already added routes.*/
+			log.Errorf("Failed to add route %s for service %s. Error %s", r, req.ServiceName, err.Error())
+			return resp, err
+		}
+	}
+
 	resp.State = pb.REGISTRAION_STATUS_REGISTERED
 	resp.ServiceId = svc.ServiceId
 	return resp, nil
