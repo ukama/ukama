@@ -29,6 +29,20 @@ func NewSimManagerServer(simRepo sims.SimRepo, agentFactory *clients.AgentFactor
 	}
 }
 
+func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
+	simID, err := uuid.Parse(req.GetSimID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+	}
+
+	sim, err := s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	return &pb.GetSimResponse{Sim: dbSimToPbSim(sim)}, nil
+}
+
 func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetSimsBySubscriberRequest) (*pb.GetSimsBySubscriberResponse, error) {
 	subID, err := uuid.Parse(req.GetSubscriberID())
 	if err != nil {
@@ -98,14 +112,19 @@ func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.Deactivate
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 	return &pb.Sim{
-		Id:           sim.ID.String(),
-		SubscriberID: sim.SubscriberID.String(),
-		Iccid:        sim.Iccid,
-		Msisdn:       sim.Msisdn,
-		Type:         sim.Type.String(),
-		Status:       sim.Status.String(),
-		IsPhysical:   sim.IsPhysical,
-		AllocatedAt:  timestamppb.New(time.Unix(sim.AllocatedAt, 0)),
+		Id:                 sim.ID.String(),
+		SubscriberID:       sim.SubscriberID.String(),
+		Iccid:              sim.Iccid,
+		Msisdn:             sim.Msisdn,
+		Imsi:               sim.Imsi,
+		Type:               sim.Type.String(),
+		Status:             sim.Status.String(),
+		IsPhysical:         sim.IsPhysical,
+		ActivationsCount:   sim.ActivationsCount,
+		DeactivationsCount: sim.DeactivationsCount,
+		FirstActivatedOn:   timestamppb.New(sim.FirstActivatedOn),
+		LastActivatedOn:    timestamppb.New(sim.LastActivatedOn),
+		AllocatedAt:        timestamppb.New(time.Unix(sim.AllocatedAt, 0)),
 	}
 }
 

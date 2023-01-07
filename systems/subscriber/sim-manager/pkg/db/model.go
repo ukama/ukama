@@ -10,16 +10,21 @@ import (
 )
 
 type Sim struct {
-	ID           uuid.UUID `gorm:"primaryKey;type:uuid"`
-	SubscriberID uuid.UUID `gorm:"not null;type:uuid"`
-	Iccid        string    `gorm:"index:idx_iccid,unique"`
-	Msisdn       string
-	Type         SimType
-	Status       SimStatus
-	IsPhysical   bool
-	AllocatedAt  int64 `gorm:"autoCreateTime"`
-	UpdatedAt    time.Time
-	TerminatedAt gorm.DeletedAt `gorm:"index"`
+	ID                 uuid.UUID `gorm:"primaryKey;type:uuid"`
+	SubscriberID       uuid.UUID `gorm:"not null;type:uuid"`
+	Iccid              string    `gorm:"index:idx_iccid,unique"`
+	Msisdn             string
+	Imsi               string
+	Type               SimType
+	Status             SimStatus
+	IsPhysical         bool
+	ActivationsCount   uint64
+	DeactivationsCount uint64
+	FirstActivatedOn   time.Time
+	LastActivatedOn    time.Time
+	AllocatedAt        int64 `gorm:"autoCreateTime"`
+	UpdatedAt          time.Time
+	TerminatedAt       gorm.DeletedAt `gorm:"index"`
 }
 
 type SimType uint8

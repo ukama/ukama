@@ -122,12 +122,13 @@ message Sim {
     Package package = 3;
     string iccid = 4;
     string msisdn = 5  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string type = 6;
-    string status = 7;
-    bool isPhysical = 8 [json_name = "is_physical"];
-    google.protobuf.Timestamp firstActivatedOn = 9;
-    google.protobuf.Timestamp lastActivatedOn = 10 ;
-    uint64 activationsCount = 11;
-    uint64 deactivationsCount = 12;
-    google.protobuf.Timestamp allocatedAt = 13 [json_name = "allocated_at"];
+    string imsi = 6;
+    string type = 7;
+    string status = 8;
+    bool isPhysical = 9 [json_name = "is_physical"];
+    google.protobuf.Timestamp firstActivatedOn = 10;
+    google.protobuf.Timestamp lastActivatedOn = 11 ;
+    uint64 activationsCount = 12;
+    uint64 deactivationsCount = 13;
+    google.protobuf.Timestamp allocatedAt = 14 [json_name = "allocated_at"];
 }
