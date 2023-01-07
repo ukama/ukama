@@ -2,15 +2,13 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm/clause"
 )
 
 // declare interface so that we can mock it
 type ServiceRepo interface {
-	Register(service *Service) error
+	Register(service *Service) (*Service, error)
 	UnRegister(serviceId string) error
 	Update(service *Service) error
 	Get(serviceId string) (*Service, error)
@@ -29,21 +27,18 @@ func NewServiceRepo(db sql.Db) *serviceRepo {
 	}
 }
 
-func (r *serviceRepo) Register(service *Service) error {
+func (r *serviceRepo) Register(service *Service) (*Service, error) {
+
 	res := r.db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "name"}},
-		DoNothing: true}).
-		Create(&service)
+		DoUpdates: clause.AssignmentColumns([]string{"msg_bus_uri", "queue_name", "exchange", "service_uri", "grpc_timeout"}),
+	}).Create(service)
 	if res.Error != nil {
 
-		return res.Error
+		return nil, res.Error
 	}
 
-	if res.RowsAffected < 1 {
-		return fmt.Errorf("service with name %s exist", service.Name)
-	}
-
-	return nil
+	return service, nil
 }
 
 func (r *serviceRepo) Update(service *Service) error {

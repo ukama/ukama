@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 
-	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/queue"
@@ -34,19 +33,10 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 		State: pb.REGISTRAION_STATUS_NOT_REGISTERED,
 	}
 
-	/* Generate UUID */
-	id := uuid.NewV4()
-	// if err != nil {
-	// 	log.Errorf("Service Id genration failed for service %s. Error %s", req.ServiceName, err.Error())
-	// 	return &pb.RegisterServiceResp{
-	// 		State: pb.REGISTRAION_STATUS_NOT_REGISTERED,
-	// 	}, err
-	// }
-
 	/* Register service */
 	svc := db.Service{
-		Name:        req.ServiceName,
-		ServiceId:   id.String(),
+		Name: req.ServiceName,
+		//ServiceId:   uuid.NewV4().String(),
 		ServiceUri:  req.ServiceURI,
 		MsgBusUri:   req.MsgBusURI,
 		QueueName:   req.QueueName,
@@ -54,7 +44,7 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 		GrpcTimeout: req.GrpcTimeout,
 	}
 
-	err := m.s.Register(&svc)
+	service, err := m.s.Register(&svc)
 	if err != nil {
 		log.Errorf("Failed to register service %s", req.ServiceName)
 		return resp, err
@@ -71,8 +61,8 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 			return resp, err
 		}
 
-		log.Debugf("Adding route %s for %s service", r, svc.Name)
-		err = m.s.AddRoute(&svc, rt)
+		log.Debugf("Adding route %s for %s service", r, service.Name)
+		err = m.s.AddRoute(service, rt)
 		if err != nil {
 			/* No need to rollback the already added routes.*/
 			log.Errorf("Failed to add route %s for service %s. Error %s", r, req.ServiceName, err.Error())
@@ -81,7 +71,7 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	}
 
 	resp.State = pb.REGISTRAION_STATUS_REGISTERED
-	resp.ServiceId = svc.ServiceId
+	resp.ServiceId = service.ServiceId
 	return resp, nil
 }
 
