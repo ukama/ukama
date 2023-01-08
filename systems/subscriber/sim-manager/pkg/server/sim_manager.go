@@ -73,6 +73,10 @@ func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimR
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
+	if sim.Status != sims.SimStatusInactive {
+		return nil, status.Errorf(codes.FailedPrecondition, "sim's state %s is invalid for activation: Error %s", sim.Status, err.Error())
+	}
+
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type %q for sim ID %q", sim.Type, req.SimID)
@@ -81,6 +85,23 @@ func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimR
 	err = simAgent.ActivateSim(ctx, req.SimID)
 	if err != nil {
 		return nil, err
+	}
+
+	simUpdates := &sims.Sim{
+		ID:               sim.ID,
+		Status:           sims.SimStatusActive,
+		ActivationsCount: sim.ActivationsCount + 1,
+		LastActivatedOn:  time.Now(),
+	}
+
+	if sim.FirstActivatedOn.IsZero() {
+		simUpdates.FirstActivatedOn = simUpdates.LastActivatedOn
+	}
+
+	err = s.simRepo.Update(simUpdates, nil)
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
 	return &pb.ActivateSimResponse{}, nil
@@ -97,6 +118,10 @@ func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.Deactivate
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
+	if sim.Status != sims.SimStatusActive {
+		return nil, status.Errorf(codes.FailedPrecondition, "sim's state %s is invalid for deactivation: Error %s", sim.Status, err.Error())
+	}
+
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", sim.Type, req.SimID)
@@ -105,6 +130,17 @@ func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.Deactivate
 	err = simAgent.DeactivateSim(ctx, req.SimID)
 	if err != nil {
 		return nil, err
+	}
+
+	simUpdates := &sims.Sim{
+		ID:                 sim.ID,
+		Status:             sims.SimStatusInactive,
+		DeactivationsCount: sim.DeactivationsCount + 1}
+
+	err = s.simRepo.Update(simUpdates, nil)
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
 	return &pb.DeactivateSimResponse{}, nil
