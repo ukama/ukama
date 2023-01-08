@@ -146,6 +146,51 @@ func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.Deactivate
 	return &pb.DeactivateSimResponse{}, nil
 }
 
+func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimRequest) (*pb.DeleteSimResponse, error) {
+	simID, err := uuid.Parse(req.GetSimID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+	}
+
+	sim, err := s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	if sim.Status != sims.SimStatusInactive {
+		return nil, status.Errorf(codes.FailedPrecondition, "sim's state %s is invalid for deletion: Error %s", sim.Status, err.Error())
+	}
+
+	// simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	// if !ok {
+	// return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", sim.Type, req.SimID)
+	// }
+
+	// err = simAgent.TerminateSim(ctx, req.SimID)
+	// if err != nil {
+	// return nil, err
+	// }
+
+	simUpdates := &sims.Sim{
+		ID:     sim.ID,
+		Status: sims.SimStatusTerminated}
+
+	err = s.simRepo.Update(simUpdates, nil)
+
+	// TODO: to optimize update & delete
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	err = s.simRepo.Delete(sim.ID, nil)
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	return &pb.DeleteSimResponse{}, nil
+}
+
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 	return &pb.Sim{
 		Id:                 sim.ID.String(),
