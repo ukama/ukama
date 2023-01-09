@@ -1,11 +1,109 @@
 syntax = "proto3";
-package ukama.subscriber.v1;
+
 option go_package = "pb/gen";
 
+import "google/protobuf/timestamp.proto";
+
+package ukama.sim_manager.v1;
+
 service SimManagerService {
-   rpc DummyRPC(Dummy) returns(Dummy) {}
+    rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
+    rpc GetSim(GetSimRequest) returns (GetSimResponse);
+    rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
+    rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
+    rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
+    rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
+    rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
+    rpc GetSimUsage(GetSimUsageRequest) returns (GetSimUsageResponse);
 }
 
-message Dummy {
-    string Id =1;
+message AllocateSimRequest {
+    string subscriberID = 1;
+    string simToken = 2;
+    string planID = 3;
+    string networkID = 4;
+}
+
+message AllocateSimResponse {
+    SimObj sim = 1;
+}
+
+message GetSimRequest {
+    string simID = 1;
+}
+
+message GetSimResponse {
+    SimObj sim = 1;
+}
+
+message GetSimsBySubscriberRequest {
+    string subscriberID = 1;
+}
+
+message GetSimsBySubscriberResponse {
+    string subscriberID = 1;
+    repeated SimObj sims = 2;
+}
+
+message ActivateSimRequest {
+    string simID = 1;
+}
+
+message ActivateSimResponse{}
+
+
+message DeactivateSimRequest {
+    string simID = 1;
+}
+
+message DeactivateSimResponse{
+}
+
+message AddPackageRequest {
+    string simID = 1;
+    string packageID = 3;
+    google.protobuf.Timestamp startDate = 4;
+}
+
+message AddPackageResponse{
+}
+
+message RemovePackageRequest {
+    string simID = 1;
+    string packageID = 3;
+}
+
+message RemovePackageResponse{
+}
+
+
+message GetSimUsageRequest{
+    string simID = 1;
+}
+
+message GetSimUsageResponse {
+    int64 dataUsageInBytes = 1;
+    int64 dataTotalInBytes = 2;
+}
+
+message Package {
+    string id = 1;
+    google.protobuf.Timestamp startDate = 2;
+    google.protobuf.Timestamp endDate = 3;
+}
+
+message SimObj {
+    string id = 1;
+    string subscriberID = 2;
+    Package package = 3;
+    string iccid = 4;
+    string msisdn = 5;
+    string type = 6;
+    string status = 7;
+    bool isPhysical = 8;
+    google.protobuf.Timestamp firstActivatedOn = 9;
+    google.protobuf.Timestamp lastActivatedOn = 10 ;
+    uint64 activationsCount = 11;
+    uint64 deactivationsCount = 12;
+    google.protobuf.Timestamp allocatedAt = 13;
 }

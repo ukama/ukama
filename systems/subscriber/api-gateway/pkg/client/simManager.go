@@ -57,58 +57,50 @@ func (sm *SimManager) Close() {
 	sm.conn.Close()
 }
 
-func (sm *SimManager) GetSim(req *SMDummyReq) (*SMDummyResp, error) {
+func (sm *SimManager) AllocateSim(req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-
-	return sm.client.AddNodeForOrg(ctx, req)
+	return sm.client.AllocateSim(ctx, req)
 }
 
-func (sm *SimManager) AllocateSim(req *SMDummyReq) (*SMDummyResp, error) {
+func (sm *SimManager) GetSim(simId string) (*pb.GetSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-
-	return sm.client.GetNodeForOrg(ctx, req)
+	return sm.client.GetSim(ctx, &pb.GetSimRequest{SimID: simId})
 }
 
-func (sm *SimManager) AddPackageToSim(req *SMDummyReq) (*SMDummyResp, error) {
+func (sm *SimManager) GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-
-	return sm.client.DeleteNodeForOrg(ctx, req)
+	return sm.client.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{SubscriberID: subscriberId})
 }
 
-func (sm *SimManager) RemovePackageForSim(req *SMDummyReq) (*SMDummyResp, error) {
+func (sm *SimManager) ActivateSim(simId string) (*pb.ActivateSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-
-	return sm.client.AddSystemForOrg(ctx, req)
+	return sm.client.ActivateSim(ctx, &pb.ActivateSimRequest{SimID: simId})
 }
 
-func (sm *SimManager) DeleteSim(req *SMDummyReq) (*SMDummyResp, error) {
+func (sm *SimManager) DeactivateSim(simId string) (*pb.DeactivateSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-
-	return sm.client.UpdateSystemForOrg(ctx, req)
+	return sm.client.DeactivateSim(ctx, &pb.DeactivateSimRequest{SimID: simId})
 }
 
-func (sm *SimManager) PatchSim(req *SMDummyReq) (*SMDummyResp, error) {
+func (sm *SimManager) AddPackageToSim(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-
-	return sm.client.GetSystemForOrg(ctx, req)
+	return sm.client.AddPackageForSim(ctx, req)
 }
 
-func (sm *SimManager) getAllSubscribers(req *SMDummyReq) (*SMDummyResp, error) {
+func (sm *SimManager) RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-
-	return sm.client.DeleteSystemForOrg(ctx, req)
+	return sm.client.RemovePackageForSim(ctx, req)
 }
 
-func (sm *SimManager) getAllSims(req *SMDummyReq) (*SMDummyResp, error) {
+func (sm *SimManager) GetSimUsage(simId string) (*pb.GetSimUsageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-
-	return sm.client.DeleteSystemForOrg(ctx, req)
+	return sm.client.GetSimUsage(ctx, &pb.GetSimUsageRequest{SimID: simId})
 }

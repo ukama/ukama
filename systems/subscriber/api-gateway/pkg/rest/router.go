@@ -48,6 +48,14 @@ type simPool interface {
 }
 
 type simManager interface {
+	AllocateSim(req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error)
+	GetSim(simId string) (*pb.GetSimResponse, error)
+	GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriberResponse, error)
+	ActivateSim(simId string) (*pb.ActivateSimResponse, error)
+	DeactivateSim(simId string) (*pb.DeactivateSimResponse, error)
+	AddPackageToSim(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error)
+	RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error)
+	GetSimUsage(simId string) (*pb.GetSimUsageResponse, error)
 }
 
 type subscriber interface {
@@ -61,7 +69,7 @@ type subscriber interface {
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.sp = client.NewSimPool(endpoints.SimPool, endpoints.Timeout)
-	// c.sm = client.NewSimManager(endpoints.SimManager, endpoints.Timeout)
+	c.sm = client.NewSimManager(endpoints.SimManager, endpoints.Timeout)
 	c.sub = client.NewSubscriberRegistry(endpoints.SubscriberRegistry, endpoints.Timeout)
 	return c
 }
@@ -120,13 +128,13 @@ func (r *Router) init() {
 	subscriber.PATCH("", formatDoc("Update a subsciber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
 	subscriber.GET("/network/:networkId", formatDoc("List all subscibers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
 
-	sim := subscriber.Group("/sim", "SIM", "Orgs SIM data base")
-	sim.GET("/:sim", formatDoc("Get a SIM of the subscriber by SIM Id", ""), tonic.Handler(r.getSim, http.StatusOK))
-	sim.POST("/:sim", formatDoc("Allocate  anew sim to subsciber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
-	sim.POST("/:sim/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.postPackageToSim, http.StatusOK))
-	sim.DELETE("/:sim/package", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.deletePackageForSim, http.StatusOK))
-	sim.DELETE("/:sim", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
-	sim.PATCH("/:sim", formatDoc("Update the SIM state to active/inactive for the subscriber's sim", ""), tonic.Handler(r.patchSim, http.StatusOK))
+	// sim := subscriber.Group("/sim", "SIM", "Orgs SIM data base")
+	// sim.GET("/:sim", formatDoc("Get a SIM of the subscriber by SIM Id", ""), tonic.Handler(r.getSim, http.StatusOK))
+	// sim.POST("/:sim", formatDoc("Allocate  anew sim to subsciber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
+	// sim.POST("/:sim/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.postPackageToSim, http.StatusOK))
+	// sim.DELETE("/:sim/package", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.deletePackageForSim, http.StatusOK))
+	// sim.DELETE("/:sim", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
+	// sim.PATCH("/:sim", formatDoc("Update the SIM state to active/inactive for the subscriber's sim", ""), tonic.Handler(r.patchSim, http.StatusOK))
 
 }
 
@@ -247,28 +255,76 @@ func (r *Router) getSubscriberByNetwork(c *gin.Context, req *SubscriberByNetwork
 	return subs, err
 }
 
-func (r *Router) getSim(c *gin.Context, req *SubscriberSimReadReq) (*SubscriberSimReadResp, *error) {
+/////////
+
+func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*pb.AllocateSimResponse, error) {
+
 	return nil, nil
 }
 
-func (r *Router) allocateSim(c *gin.Context, req *SubscriberSimAllocateReq) (*SubscriberSimAllocateResp, error) {
-	return nil, nil
+func (r *Router) getSim(c *gin.Context, req *SimReq) (*pb.GetSimResponse, error) {
+	res, err := r.clients.sm.GetSim(req.SimId)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
-func (r *Router) postPackageToSim(c *gin.Context, req *SubscriberSimAddPackageReq) error {
+func (r *Router) getSimsBySub(c *gin.Context, req *GetSimsBySubReq) (*pb.GetSimsBySubscriberResponse, error) {
+	res, err := r.clients.sm.GetSimsBySub(req.SubscriberId)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (r *Router) activateSim(c *gin.Context, req *SimReq) error {
+	_, err := r.clients.sm.ActivateSim(req.SimId)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (r *Router) deletePackageForSim(c *gin.Context, req *SubscriberSimRemovePackageReq) error {
+func (r *Router) deactivateSim(c *gin.Context, req *SimReq) error {
+	_, err := r.clients.sm.DeactivateSim(req.SimId)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (r *Router) deleteSim(c *gin.Context, req *SubscriberSimDeleteReq) error {
+func (r *Router) addPkgForSim(c *gin.Context, req *AddPkgToSimReq) error {
+	payload := pb.AddPackageRequest{
+		SimID:     req.SimId,
+		PackageID: req.PackageId,
+		StartDate: req.StartDate,
+	}
+	_, err := r.clients.sm.AddPackageToSim(&payload)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (r *Router) patchSim(c *gin.Context, req *SubscriberSimUpdateStateReq) error {
+func (r *Router) removePkgForSim(c *gin.Context, req *RemovePkgFromSimReq) error {
+	payload := pb.RemovePackageRequest{
+		SimID:     req.SimId,
+		PackageID: req.PackageId,
+	}
+	_, err := r.clients.sm.RemovePackageForSim(&payload)
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func (r *Router) getSimUsage(c *gin.Context, req *SimReq) (*pb.GetSimUsageResponse, error) {
+	res, err := r.clients.sm.GetSimUsage(req.SimId)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*pb.AddRequest, error) {
