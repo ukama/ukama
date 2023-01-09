@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients"
 
@@ -161,28 +162,24 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		return nil, status.Errorf(codes.FailedPrecondition, "sim's state %s is invalid for deletion: Error %s", sim.Status, err.Error())
 	}
 
-	// simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
-	// if !ok {
-	// return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", sim.Type, req.SimID)
-	// }
-
-	// err = simAgent.TerminateSim(ctx, req.SimID)
-	// if err != nil {
-	// return nil, err
-	// }
-
-	simUpdates := &sims.Sim{
-		ID:     sim.ID,
-		Status: sims.SimStatusTerminated}
-
-	err = s.simRepo.Update(simUpdates, nil)
-
-	// TODO: to optimize update & delete
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", sim.Type, req.SimID)
 	}
 
-	err = s.simRepo.Delete(sim.ID, nil)
+	err = simAgent.TerminateSim(ctx, req.SimID)
+	if err != nil {
+		return nil, err
+	}
+
+	// update sim status & mark sim as deleted
+	simUpdates := &sims.Sim{
+		ID:           sim.ID,
+		Status:       sims.SimStatusTerminated,
+		TerminatedAt: gorm.DeletedAt{Time: time.Now(), Valid: true},
+	}
+
+	err = s.simRepo.Update(simUpdates, nil)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")

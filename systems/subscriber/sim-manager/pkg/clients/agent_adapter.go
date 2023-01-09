@@ -14,7 +14,7 @@ import (
 type AgentAdapter interface {
 	ActivateSim(context.Context, string) error
 	DeactivateSim(context.Context, string) error
-	// TerminateSim(context.Context, string) error
+	TerminateSim(context.Context, string) error
 	Close()
 }
 
