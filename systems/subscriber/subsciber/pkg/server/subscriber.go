@@ -181,7 +181,6 @@ func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 		{
 			Id:           "12345",
 			SubscriberID: s.SubscriberID.String(),
-			NetworkID:    "abcde",
 			Iccid:        "9876543210",
 			Msisdn:       "123-456-7890",
 			IsPhysical:   true,
@@ -189,7 +188,6 @@ func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 		{
 			Id:           "54321",
 			SubscriberID: s.SubscriberID.String(),
-			NetworkID:    "abcde",
 			Iccid:        "0123456789",
 			Msisdn:       "123-456-7891",
 			IsPhysical:   false,
@@ -197,7 +195,6 @@ func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 		{
 			Id:           "67890",
 			SubscriberID: s.SubscriberID.String(),
-			NetworkID:    "abcde",
 			Iccid:        "0123456789",
 			Msisdn:       "123-456-7891",
 			IsPhysical:   false,
