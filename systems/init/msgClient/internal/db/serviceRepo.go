@@ -34,7 +34,7 @@ func (r *serviceRepo) Register(service *Service) (*Service, error) {
 
 	res := r.db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "name"}},
-		DoUpdates: clause.AssignmentColumns([]string{"msg_bus_uri", "queue_name", "exchange", "service_uri", "grpc_timeout"}),
+		DoUpdates: clause.AssignmentColumns([]string{"instance_id", "msg_bus_uri", "list_queue", "publ_queue", "exchange", "service_uri", "grpc_timeout"}),
 	}).Create(service)
 	if res.Error != nil {
 
@@ -47,7 +47,7 @@ func (r *serviceRepo) Register(service *Service) (*Service, error) {
 func (r *serviceRepo) Update(service *Service) error {
 	res := r.db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "service_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"msg_bus_uri", "queue_name", "exchange", "service_uri", "grpc_timeout"}),
+		DoUpdates: clause.AssignmentColumns([]string{"instance_id", "msg_bus_uri", "list_queue", "publ_queue", "exchange", "service_uri", "grpc_timeout"}),
 	}).Create(service)
 	if res.Error != nil {
 

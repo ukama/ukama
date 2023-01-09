@@ -35,57 +35,16 @@ func (this *RegisterServiceReq) Validate() error {
 func (this *RegisterServiceResp) Validate() error {
 	return nil
 }
-func (this *UnregisterServiceReq) Validate() error {
+func (this *StartMsgBusHandlerReq) Validate() error {
 	return nil
 }
-func (this *StartListeningReq) Validate() error {
+func (this *StopMsgBusHandlerReq) Validate() error {
 	return nil
 }
-func (this *StopListeningReq) Validate() error {
+func (this *StartMsgBusHandlerResp) Validate() error {
 	return nil
 }
-func (this *StartListeningResp) Validate() error {
-	return nil
-}
-func (this *StopListeningResp) Validate() error {
-	return nil
-}
-func (this *UnregisterServiceResp) Validate() error {
-	return nil
-}
-func (this *RegisterRoutesReq) Validate() error {
-	if this.ServiceUuid == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("ServiceUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.ServiceUuid))
-	}
-	for _, item := range this.Keys {
-		if item == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("Keys", fmt.Errorf(`value '%v' must not be an empty string`, item))
-		}
-	}
-	return nil
-}
-func (this *RegisterRoutesResp) Validate() error {
-	for _, item := range this.Keys {
-		if item == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("Keys", fmt.Errorf(`value '%v' must not be an empty string`, item))
-		}
-	}
-	return nil
-}
-func (this *UnregisterRoutesReq) Validate() error {
-	for _, item := range this.Keys {
-		if item == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("Keys", fmt.Errorf(`value '%v' must not be an empty string`, item))
-		}
-	}
-	return nil
-}
-func (this *UnregisterRoutesResp) Validate() error {
-	for _, item := range this.Keys {
-		if item == "" {
-			return github_com_mwitkow_go_proto_validators.FieldError("Keys", fmt.Errorf(`value '%v' must not be an empty string`, item))
-		}
-	}
+func (this *StopMsgBusHandlerResp) Validate() error {
 	return nil
 }
 func (this *PublishMsgRequest) Validate() error {

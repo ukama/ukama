@@ -12,13 +12,27 @@ type ServiceRepo struct {
 	mock.Mock
 }
 
-// Get provides a mock function with given fields: serviceId
-func (_m *ServiceRepo) Get(serviceId string) (*db.Service, error) {
-	ret := _m.Called(serviceId)
+// AddRoute provides a mock function with given fields: s, rt
+func (_m *ServiceRepo) AddRoute(s *db.Service, rt *db.Route) error {
+	ret := _m.Called(s, rt)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Service, *db.Route) error); ok {
+		r0 = rf(s, rt)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Get provides a mock function with given fields: serviceUuid
+func (_m *ServiceRepo) Get(serviceUuid string) (*db.Service, error) {
+	ret := _m.Called(serviceUuid)
 
 	var r0 *db.Service
 	if rf, ok := ret.Get(0).(func(string) *db.Service); ok {
-		r0 = rf(serviceId)
+		r0 = rf(serviceUuid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Service)
@@ -27,7 +41,7 @@ func (_m *ServiceRepo) Get(serviceId string) (*db.Service, error) {
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(serviceId)
+		r1 = rf(serviceUuid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -82,7 +96,30 @@ func (_m *ServiceRepo) List() ([]db.Service, error) {
 }
 
 // Register provides a mock function with given fields: service
-func (_m *ServiceRepo) Register(service *db.Service) error {
+func (_m *ServiceRepo) Register(service *db.Service) (*db.Service, error) {
+	ret := _m.Called(service)
+
+	var r0 *db.Service
+	if rf, ok := ret.Get(0).(func(*db.Service) *db.Service); ok {
+		r0 = rf(service)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Service)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*db.Service) error); ok {
+		r1 = rf(service)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemoveRoutes provides a mock function with given fields: service
+func (_m *ServiceRepo) RemoveRoutes(service *db.Service) error {
 	ret := _m.Called(service)
 
 	var r0 error

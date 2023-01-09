@@ -46,36 +46,6 @@ func (_m *MsgClientServiceClient) PusblishMsg(ctx context.Context, in *gen.Publi
 	return r0, r1
 }
 
-// RegisterRoutes provides a mock function with given fields: ctx, in, opts
-func (_m *MsgClientServiceClient) RegisterRoutes(ctx context.Context, in *gen.RegisterRoutesReq, opts ...grpc.CallOption) (*gen.RegisterRoutesResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.RegisterRoutesResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterRoutesReq, ...grpc.CallOption) *gen.RegisterRoutesResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.RegisterRoutesResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.RegisterRoutesReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RegisterService provides a mock function with given fields: ctx, in, opts
 func (_m *MsgClientServiceClient) RegisterService(ctx context.Context, in *gen.RegisterServiceReq, opts ...grpc.CallOption) (*gen.RegisterServiceResp, error) {
 	_va := make([]interface{}, len(opts))
@@ -106,8 +76,8 @@ func (_m *MsgClientServiceClient) RegisterService(ctx context.Context, in *gen.R
 	return r0, r1
 }
 
-// StartListening provides a mock function with given fields: ctx, in, opts
-func (_m *MsgClientServiceClient) StartListening(ctx context.Context, in *gen.StartListeningReq, opts ...grpc.CallOption) (*gen.StartListeningResp, error) {
+// StartMsgBusHandler provides a mock function with given fields: ctx, in, opts
+func (_m *MsgClientServiceClient) StartMsgBusHandler(ctx context.Context, in *gen.StartMsgBusHandlerReq, opts ...grpc.CallOption) (*gen.StartMsgBusHandlerResp, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -117,17 +87,17 @@ func (_m *MsgClientServiceClient) StartListening(ctx context.Context, in *gen.St
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.StartListeningResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.StartListeningReq, ...grpc.CallOption) *gen.StartListeningResp); ok {
+	var r0 *gen.StartMsgBusHandlerResp
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.StartMsgBusHandlerReq, ...grpc.CallOption) *gen.StartMsgBusHandlerResp); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.StartListeningResp)
+			r0 = ret.Get(0).(*gen.StartMsgBusHandlerResp)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.StartListeningReq, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.StartMsgBusHandlerReq, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -136,8 +106,8 @@ func (_m *MsgClientServiceClient) StartListening(ctx context.Context, in *gen.St
 	return r0, r1
 }
 
-// StopListening provides a mock function with given fields: ctx, in, opts
-func (_m *MsgClientServiceClient) StopListening(ctx context.Context, in *gen.StopListeningReq, opts ...grpc.CallOption) (*gen.StopListeningResp, error) {
+// StopMsgBusHandler provides a mock function with given fields: ctx, in, opts
+func (_m *MsgClientServiceClient) StopMsgBusHandler(ctx context.Context, in *gen.StopMsgBusHandlerReq, opts ...grpc.CallOption) (*gen.StopMsgBusHandlerResp, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -147,77 +117,17 @@ func (_m *MsgClientServiceClient) StopListening(ctx context.Context, in *gen.Sto
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.StopListeningResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.StopListeningReq, ...grpc.CallOption) *gen.StopListeningResp); ok {
+	var r0 *gen.StopMsgBusHandlerResp
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.StopMsgBusHandlerReq, ...grpc.CallOption) *gen.StopMsgBusHandlerResp); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.StopListeningResp)
+			r0 = ret.Get(0).(*gen.StopMsgBusHandlerResp)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.StopListeningReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UnregisterRoutes provides a mock function with given fields: ctx, in, opts
-func (_m *MsgClientServiceClient) UnregisterRoutes(ctx context.Context, in *gen.UnregisterRoutesReq, opts ...grpc.CallOption) (*gen.UnregisterRoutesResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UnregisterRoutesResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UnregisterRoutesReq, ...grpc.CallOption) *gen.UnregisterRoutesResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UnregisterRoutesResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UnregisterRoutesReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UnregisterService provides a mock function with given fields: ctx, in, opts
-func (_m *MsgClientServiceClient) UnregisterService(ctx context.Context, in *gen.UnregisterServiceReq, opts ...grpc.CallOption) (*gen.UnregisterServiceResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UnregisterServiceResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UnregisterServiceReq, ...grpc.CallOption) *gen.UnregisterServiceResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UnregisterServiceResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UnregisterServiceReq, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.StopMsgBusHandlerReq, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

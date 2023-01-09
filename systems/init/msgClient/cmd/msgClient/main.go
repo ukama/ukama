@@ -90,16 +90,16 @@ func runGrpcServer(d sql.Db) {
 	// 	serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
 	// 	serviceConfig.MsgClient.ListnerRoutes)
 	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
-	listener := queue.NewMessageBusListener(serviceRepo, routeRepo)
+	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(serviceRepo, routeRepo, listener)
+		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
-	signalHandler(listener, grpcServer)
-	log.Infof("Listener is %+v", listener)
-	err := listener.CreateQueueListeners()
+	signalHandler(handler, grpcServer)
+	log.Infof("Message Bus Handler is %+v", handler)
+	err := handler.CreateServiceMsgBusHandler()
 	if err != nil {
 		logrus.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
 	}
@@ -107,12 +107,12 @@ func runGrpcServer(d sql.Db) {
 	grpcServer.StartServer()
 }
 
-func signalHandler(listner *queue.MsgBusListener, server *ugrpc.UkamaGrpcServer) {
+func signalHandler(handler *queue.MsgBusHandler, server *ugrpc.UkamaGrpcServer) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-ch
-		listner.StopQueueListener()
+		handler.StopQueueListener()
 		server.StopServer()
 	}()
 }

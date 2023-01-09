@@ -13,17 +13,26 @@ type RouteRepo struct {
 }
 
 // Add provides a mock function with given fields: key
-func (_m *RouteRepo) Add(key string) error {
+func (_m *RouteRepo) Add(key string) (*db.Route, error) {
 	ret := _m.Called(key)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
+	var r0 *db.Route
+	if rf, ok := ret.Get(0).(func(string) *db.Route); ok {
 		r0 = rf(key)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Route)
+		}
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Get provides a mock function with given fields: key

@@ -7,9 +7,11 @@ import (
 type Service struct {
 	gorm.Model
 	Name        string `gorm:"unique;type:string;uniqueIndex:service_idx_case_insensetive,expression:lower(name);not null"` /* name of the service */
-	ServiceUuid string `gorm:"type:uuid;default:gen_random_uuid();unique"`                                                  //default:uuid_generate_v3                                                                          /* returned by msg client on registration */
+	InstanceId  string `gorm:"unique;type:string;"`
+	ServiceUuid string `gorm:"type:uuid;default:gen_random_uuid();unique"` //default:uuid_generate_v3                                                                          /* returned by msg client on registration */
 	MsgBusUri   string /* grpc srever url to create grpc client*/
-	QueueName   string
+	ListQueue   string
+	PublQueue   string
 	Exchange    string
 	ServiceUri  string
 	GrpcTimeout uint32

@@ -10,18 +10,18 @@ import (
 )
 
 type MsgClientServer struct {
-	s  db.ServiceRepo
-	r  db.RouteRepo
-	mq *queue.MsgBusListener
+	s db.ServiceRepo
+	r db.RouteRepo
+	h *queue.MsgBusHandler
 
 	pb.UnimplementedMsgClientServiceServer
 }
 
-func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, mq *queue.MsgBusListener) *MsgClientServer {
+func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, h *queue.MsgBusHandler) *MsgClientServer {
 	return &MsgClientServer{
-		s:  serviceRepo,
-		r:  keyRepo,
-		mq: mq,
+		s: serviceRepo,
+		r: keyRepo,
+		h: h,
 	}
 }
 
@@ -35,10 +35,11 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 
 	/* Register service */
 	svc := db.Service{
-		Name: req.ServiceName,
+		Name:        req.ServiceName,
 		ServiceUri:  req.ServiceURI,
 		MsgBusUri:   req.MsgBusURI,
-		QueueName:   req.QueueName,
+		ListQueue:   req.ListQueue,
+		PublQueue:   req.PublQueue,
 		Exchange:    req.Exchange,
 		GrpcTimeout: req.GrpcTimeout,
 	}
@@ -81,8 +82,8 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	return resp, nil
 }
 
-func (m *MsgClientServer) StartListening(ctx context.Context, req *pb.StartListeningReq) (*pb.StartListeningResp, error) {
-	log.Debugf("Start listener request for %s", req.ServiceUuid)
+func (m *MsgClientServer) StartHandler(ctx context.Context, req *pb.StartMsgBusHandlerReq) (*pb.StartMsgBusHandlerResp, error) {
+	log.Debugf("Start handler request for %s", req.ServiceUuid)
 
 	svc, err := m.s.Get(req.ServiceUuid)
 	if err != nil {
@@ -90,42 +91,27 @@ func (m *MsgClientServer) StartListening(ctx context.Context, req *pb.StartListe
 		return nil, err
 	}
 
-	/* start listening */
-	err = m.mq.UpdateServiceQueueListening(svc)
+	/* Update Service handler for message queue */
+	err = m.h.UpdateServiceQueueHandler(svc)
 	if err != nil {
 		log.Errorf("Failed to start listener for service %s. Error %s", svc.Name, err.Error())
 		return nil, err
 	}
 
-	return &pb.StartListeningResp{}, nil
+	return &pb.StartMsgBusHandlerResp{}, nil
 }
 
-func (m *MsgClientServer) StopListening(ctx context.Context, req *pb.StopListeningReq) (*pb.StopListeningResp, error) {
+func (m *MsgClientServer) StopHandler(ctx context.Context, req *pb.StopMsgBusHandlerReq) (*pb.StopMsgBusHandlerResp, error) {
 
-	log.Debugf("Stop listener request for %s", req.ServiceUuid)
+	log.Debugf("Stop handler request for %s", req.ServiceUuid)
 	/* start listening */
-	err := m.mq.StopServiceQueueListening(req.ServiceUuid)
+	err := m.h.StopServiceQueueHandler(req.ServiceUuid)
 	if err != nil {
 		log.Errorf("Failed to stop listener for service %s. Error %s", req.ServiceUuid, err.Error())
 		return nil, err
 	}
 
-	return &pb.StopListeningResp{}, nil
-}
-
-func (m *MsgClientServer) RegisterRoutes(context.Context, *pb.RegisterRoutesReq) (*pb.RegisterRoutesResp, error) {
-	/* Add a route and serviceID */
-
-	/* Restart listener */
-	return nil, nil
-}
-
-func (m *MsgClientServer) UnregisterService(context.Context, *pb.UnregisterServiceReq) (*pb.UnregisterServiceResp, error) {
-	return nil, nil
-}
-
-func (m *MsgClientServer) UnregisterRoutes(context.Context, *pb.UnregisterRoutesReq) (*pb.UnregisterRoutesResp, error) {
-	return nil, nil
+	return &pb.StopMsgBusHandlerResp{}, nil
 }
 
 func (m *MsgClientServer) PusblishMsg(context.Context, *pb.PublishMsgRequest) (*pb.PublishMsgResponse, error) {

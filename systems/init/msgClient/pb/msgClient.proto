@@ -10,11 +10,8 @@ import "google/protobuf/any.proto";
 service MsgClientService {
 
     rpc RegisterService(RegisterServiceReq) returns (RegisterServiceResp);
-    rpc UnregisterService(UnregisterServiceReq) returns (UnregisterServiceResp);
-    rpc StartListening(StartListeningReq) returns (StartListeningResp);
-    rpc StopListening(StopListeningReq) returns (StopListeningResp);
-    rpc RegisterRoutes(RegisterRoutesReq) returns (RegisterRoutesResp);
-    rpc UnregisterRoutes(UnregisterRoutesReq) returns (UnregisterRoutesResp);
+    rpc StartMsgBusHandler(StartMsgBusHandlerReq) returns (StartMsgBusHandlerResp);
+    rpc StopMsgBusHandler(StopMsgBusHandlerReq) returns (StopMsgBusHandlerResp);
     rpc PusblishMsg(PublishMsgRequest) returns (PublishMsgResponse);
 
 }
@@ -32,56 +29,32 @@ message RegisterServiceReq {
     string instanceId = 3  [(validator.field) = {string_not_empty: true}];
     string msgBusURI = 4 [(validator.field) = {string_not_empty: true}];
     string serviceURI = 5;
-    string queueName = 6;
-    string exchange = 7;
-    uint32 grpcTimeout = 8; 
-    repeated string routes = 9 ;
+    string listQueue = 6;
+    string publQueue = 7;
+    string exchange = 8;
+    uint32 grpcTimeout = 9; 
+    repeated string routes = 10 ;
 }
 
 message RegisterServiceResp {
     REGISTRAION_STATUS state =1;
-    string serviceId = 2; 
+    string serviceUuid = 2; 
 }
 
-message UnregisterServiceReq {
-    string serviceId = 1; 
+
+message StartMsgBusHandlerReq {
+    string serviceUuid = 1; 
 }
 
-message StartListeningReq {
-    string serviceId = 1; 
+message StopMsgBusHandlerReq {
+    string serviceUuid = 1; 
 }
 
-message StopListeningReq {
-    string serviceId = 1; 
+message StartMsgBusHandlerResp {
 }
 
-message StartListeningResp {
+message StopMsgBusHandlerResp {
 }
-
-message StopListeningResp {
-}
-
-message UnregisterServiceResp {
-    string serviceId = 1; 
-}
-
-message RegisterRoutesReq {
-    string serviceId = 1 [(validator.field) = {string_not_empty: true}];
-    repeated  string keys = 2 [(validator.field) = {string_not_empty: true}];
-}
-
-message RegisterRoutesResp {
-    repeated  string keys = 1 [(validator.field) = {string_not_empty: true}];
-}
-
-message UnregisterRoutesReq {
-    repeated  string keys = 1 [(validator.field) = {string_not_empty: true}];
-}
-
-message UnregisterRoutesResp {
-    repeated  string keys = 1 [(validator.field) = {string_not_empty: true}];
-}
-
 
 message PublishMsgRequest {
     string routingKey = 1 [(validator.field) = {string_not_empty: true}];

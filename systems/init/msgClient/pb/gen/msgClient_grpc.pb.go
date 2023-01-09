@@ -23,11 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MsgClientServiceClient interface {
 	RegisterService(ctx context.Context, in *RegisterServiceReq, opts ...grpc.CallOption) (*RegisterServiceResp, error)
-	UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error)
-	StartListening(ctx context.Context, in *StartListeningReq, opts ...grpc.CallOption) (*StartListeningResp, error)
-	StopListening(ctx context.Context, in *StopListeningReq, opts ...grpc.CallOption) (*StopListeningResp, error)
-	RegisterRoutes(ctx context.Context, in *RegisterRoutesReq, opts ...grpc.CallOption) (*RegisterRoutesResp, error)
-	UnregisterRoutes(ctx context.Context, in *UnregisterRoutesReq, opts ...grpc.CallOption) (*UnregisterRoutesResp, error)
+	StartMsgBusHandler(ctx context.Context, in *StartMsgBusHandlerReq, opts ...grpc.CallOption) (*StartMsgBusHandlerResp, error)
+	StopMsgBusHandler(ctx context.Context, in *StopMsgBusHandlerReq, opts ...grpc.CallOption) (*StopMsgBusHandlerResp, error)
 	PusblishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error)
 }
 
@@ -48,45 +45,18 @@ func (c *msgClientServiceClient) RegisterService(ctx context.Context, in *Regist
 	return out, nil
 }
 
-func (c *msgClientServiceClient) UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error) {
-	out := new(UnregisterServiceResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/UnregisterService", in, out, opts...)
+func (c *msgClientServiceClient) StartMsgBusHandler(ctx context.Context, in *StartMsgBusHandlerReq, opts ...grpc.CallOption) (*StartMsgBusHandlerResp, error) {
+	out := new(StartMsgBusHandlerResp)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/StartMsgBusHandler", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *msgClientServiceClient) StartListening(ctx context.Context, in *StartListeningReq, opts ...grpc.CallOption) (*StartListeningResp, error) {
-	out := new(StartListeningResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/StartListening", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *msgClientServiceClient) StopListening(ctx context.Context, in *StopListeningReq, opts ...grpc.CallOption) (*StopListeningResp, error) {
-	out := new(StopListeningResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/StopListening", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *msgClientServiceClient) RegisterRoutes(ctx context.Context, in *RegisterRoutesReq, opts ...grpc.CallOption) (*RegisterRoutesResp, error) {
-	out := new(RegisterRoutesResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/RegisterRoutes", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *msgClientServiceClient) UnregisterRoutes(ctx context.Context, in *UnregisterRoutesReq, opts ...grpc.CallOption) (*UnregisterRoutesResp, error) {
-	out := new(UnregisterRoutesResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/UnregisterRoutes", in, out, opts...)
+func (c *msgClientServiceClient) StopMsgBusHandler(ctx context.Context, in *StopMsgBusHandlerReq, opts ...grpc.CallOption) (*StopMsgBusHandlerResp, error) {
+	out := new(StopMsgBusHandlerResp)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/StopMsgBusHandler", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,11 +77,8 @@ func (c *msgClientServiceClient) PusblishMsg(ctx context.Context, in *PublishMsg
 // for forward compatibility
 type MsgClientServiceServer interface {
 	RegisterService(context.Context, *RegisterServiceReq) (*RegisterServiceResp, error)
-	UnregisterService(context.Context, *UnregisterServiceReq) (*UnregisterServiceResp, error)
-	StartListening(context.Context, *StartListeningReq) (*StartListeningResp, error)
-	StopListening(context.Context, *StopListeningReq) (*StopListeningResp, error)
-	RegisterRoutes(context.Context, *RegisterRoutesReq) (*RegisterRoutesResp, error)
-	UnregisterRoutes(context.Context, *UnregisterRoutesReq) (*UnregisterRoutesResp, error)
+	StartMsgBusHandler(context.Context, *StartMsgBusHandlerReq) (*StartMsgBusHandlerResp, error)
+	StopMsgBusHandler(context.Context, *StopMsgBusHandlerReq) (*StopMsgBusHandlerResp, error)
 	PusblishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error)
 	mustEmbedUnimplementedMsgClientServiceServer()
 }
@@ -123,20 +90,11 @@ type UnimplementedMsgClientServiceServer struct {
 func (UnimplementedMsgClientServiceServer) RegisterService(context.Context, *RegisterServiceReq) (*RegisterServiceResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterService not implemented")
 }
-func (UnimplementedMsgClientServiceServer) UnregisterService(context.Context, *UnregisterServiceReq) (*UnregisterServiceResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnregisterService not implemented")
+func (UnimplementedMsgClientServiceServer) StartMsgBusHandler(context.Context, *StartMsgBusHandlerReq) (*StartMsgBusHandlerResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartMsgBusHandler not implemented")
 }
-func (UnimplementedMsgClientServiceServer) StartListening(context.Context, *StartListeningReq) (*StartListeningResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartListening not implemented")
-}
-func (UnimplementedMsgClientServiceServer) StopListening(context.Context, *StopListeningReq) (*StopListeningResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StopListening not implemented")
-}
-func (UnimplementedMsgClientServiceServer) RegisterRoutes(context.Context, *RegisterRoutesReq) (*RegisterRoutesResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterRoutes not implemented")
-}
-func (UnimplementedMsgClientServiceServer) UnregisterRoutes(context.Context, *UnregisterRoutesReq) (*UnregisterRoutesResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnregisterRoutes not implemented")
+func (UnimplementedMsgClientServiceServer) StopMsgBusHandler(context.Context, *StopMsgBusHandlerReq) (*StopMsgBusHandlerResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopMsgBusHandler not implemented")
 }
 func (UnimplementedMsgClientServiceServer) PusblishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PusblishMsg not implemented")
@@ -172,92 +130,38 @@ func _MsgClientService_RegisterService_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MsgClientService_UnregisterService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnregisterServiceReq)
+func _MsgClientService_StartMsgBusHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartMsgBusHandlerReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgClientServiceServer).UnregisterService(ctx, in)
+		return srv.(MsgClientServiceServer).StartMsgBusHandler(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/UnregisterService",
+		FullMethod: "/ukama.msgClient.v1.MsgClientService/StartMsgBusHandler",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgClientServiceServer).UnregisterService(ctx, req.(*UnregisterServiceReq))
+		return srv.(MsgClientServiceServer).StartMsgBusHandler(ctx, req.(*StartMsgBusHandlerReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MsgClientService_StartListening_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StartListeningReq)
+func _MsgClientService_StopMsgBusHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopMsgBusHandlerReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgClientServiceServer).StartListening(ctx, in)
+		return srv.(MsgClientServiceServer).StopMsgBusHandler(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/StartListening",
+		FullMethod: "/ukama.msgClient.v1.MsgClientService/StopMsgBusHandler",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgClientServiceServer).StartListening(ctx, req.(*StartListeningReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MsgClientService_StopListening_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StopListeningReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgClientServiceServer).StopListening(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/StopListening",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgClientServiceServer).StopListening(ctx, req.(*StopListeningReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MsgClientService_RegisterRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterRoutesReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgClientServiceServer).RegisterRoutes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/RegisterRoutes",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgClientServiceServer).RegisterRoutes(ctx, req.(*RegisterRoutesReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MsgClientService_UnregisterRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnregisterRoutesReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgClientServiceServer).UnregisterRoutes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/UnregisterRoutes",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgClientServiceServer).UnregisterRoutes(ctx, req.(*UnregisterRoutesReq))
+		return srv.(MsgClientServiceServer).StopMsgBusHandler(ctx, req.(*StopMsgBusHandlerReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -292,24 +196,12 @@ var MsgClientService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MsgClientService_RegisterService_Handler,
 		},
 		{
-			MethodName: "UnregisterService",
-			Handler:    _MsgClientService_UnregisterService_Handler,
+			MethodName: "StartMsgBusHandler",
+			Handler:    _MsgClientService_StartMsgBusHandler_Handler,
 		},
 		{
-			MethodName: "StartListening",
-			Handler:    _MsgClientService_StartListening_Handler,
-		},
-		{
-			MethodName: "StopListening",
-			Handler:    _MsgClientService_StopListening_Handler,
-		},
-		{
-			MethodName: "RegisterRoutes",
-			Handler:    _MsgClientService_RegisterRoutes_Handler,
-		},
-		{
-			MethodName: "UnregisterRoutes",
-			Handler:    _MsgClientService_UnregisterRoutes_Handler,
+			MethodName: "StopMsgBusHandler",
+			Handler:    _MsgClientService_StopMsgBusHandler_Handler,
 		},
 		{
 			MethodName: "PusblishMsg",
