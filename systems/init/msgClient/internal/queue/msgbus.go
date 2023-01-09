@@ -204,3 +204,17 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
 
 	return nil
 }
+
+func (m *MsgBusHandler) Publish(service string, key string, msg any) error {
+	p, ok := m.qp[service]
+	if ok {
+		err := p.Publish(key, msg)
+		if err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("no publiher for service %s found", service)
+	}
+
+	return nil
+}

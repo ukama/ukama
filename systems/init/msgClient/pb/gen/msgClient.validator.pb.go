@@ -36,9 +36,15 @@ func (this *RegisterServiceResp) Validate() error {
 	return nil
 }
 func (this *StartMsgBusHandlerReq) Validate() error {
+	if this.ServiceUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("ServiceUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.ServiceUuid))
+	}
 	return nil
 }
 func (this *StopMsgBusHandlerReq) Validate() error {
+	if this.ServiceUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("ServiceUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.ServiceUuid))
+	}
 	return nil
 }
 func (this *StartMsgBusHandlerResp) Validate() error {
@@ -48,6 +54,9 @@ func (this *StopMsgBusHandlerResp) Validate() error {
 	return nil
 }
 func (this *PublishMsgRequest) Validate() error {
+	if this.ServiceUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("ServiceUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.ServiceUuid))
+	}
 	if this.RoutingKey == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("RoutingKey", fmt.Errorf(`value '%v' must not be an empty string`, this.RoutingKey))
 	}

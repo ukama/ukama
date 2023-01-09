@@ -1,6 +1,9 @@
 package queue
 
 import (
+	"fmt"
+	"time"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
@@ -34,15 +37,29 @@ func NewQueuePublisher(s db.Service) (*QueuePublisher, error) {
 	return qp, nil
 }
 
-func (p *QueuePublisher) Publish(payload any, key string) {
-	go func() {
-		err := p.pub.Publish(payload, key)
-		if err != nil {
-			log.Errorf("Failed to publish message. Error %s", err.Error())
+func (p *QueuePublisher) Publish(key string, payload any) error {
+
+	err := make(chan error, 1)
+	go func(err chan error) {
+		e := p.pub.Publish(payload, key)
+		if e != nil {
+			log.Errorf("Failed to publish message. Error %s", e.Error())
+			err <- e
 		}
 
 		log.Debugf("Publishing: \n Service: %s InstanceId: %s Queue: %s\n Message: \n %+v", p.name, p.instanceId, p.q, payload)
-	}()
+	}(err)
+
+	select {
+	case ret := <-err:
+		if ret != nil {
+			return ret
+		}
+	case <-time.After(2 * time.Second):
+		return fmt.Errorf("timout while publishing message for Service %s InstanceId %s Key %s", p.name, p.instanceId, key)
+	}
+
+	return nil
 }
 
 func (p *QueuePublisher) Close() error {

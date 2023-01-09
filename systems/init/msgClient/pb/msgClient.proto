@@ -43,11 +43,11 @@ message RegisterServiceResp {
 
 
 message StartMsgBusHandlerReq {
-    string serviceUuid = 1; 
+    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];
 }
 
 message StopMsgBusHandlerReq {
-    string serviceUuid = 1; 
+    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];
 }
 
 message StartMsgBusHandlerResp {
@@ -57,8 +57,9 @@ message StopMsgBusHandlerResp {
 }
 
 message PublishMsgRequest {
-    string routingKey = 1 [(validator.field) = {string_not_empty: true}];
-    google.protobuf.Any msg = 2;
+    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];
+    string routingKey = 2 [(validator.field) = {string_not_empty: true}];
+    google.protobuf.Any msg = 3;
 }
 
 message PublishMsgResponse {

@@ -114,6 +114,12 @@ func (m *MsgClientServer) StopHandler(ctx context.Context, req *pb.StopMsgBusHan
 	return &pb.StopMsgBusHandlerResp{}, nil
 }
 
-func (m *MsgClientServer) PusblishMsg(context.Context, *pb.PublishMsgRequest) (*pb.PublishMsgResponse, error) {
-	return nil, nil
+func (m *MsgClientServer) PublishMsg(ctx context.Context, req *pb.PublishMsgRequest) (*pb.PublishMsgResponse, error) {
+	log.Debugf("Publish request for %s service", req.ServiceUuid)
+
+	err := m.h.Publish(req.ServiceUuid, req.RoutingKey, req.Msg)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.PublishMsgResponse{}, nil
 }
