@@ -80,7 +80,7 @@ func TestAdd_Success(t *testing.T) {
 				SimType:        pb.SimType_INTER_MNO_DATA,
 				SmDpAddress:    "http://localhost:8080",
 				ActivationCode: "123456",
-				IsPhysicalSim:  false,
+				IsPhysical:     false,
 			},
 		},
 	}
@@ -101,7 +101,7 @@ func TestAdd_Error(t *testing.T) {
 				SimType:        pb.SimType_INTER_MNO_DATA,
 				SmDpAddress:    "http://localhost:8080",
 				ActivationCode: "123456",
-				IsPhysicalSim:  false,
+				IsPhysical:     false,
 			},
 		},
 	}

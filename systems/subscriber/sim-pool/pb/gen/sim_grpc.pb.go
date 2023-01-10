@@ -22,10 +22,15 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SimServiceClient interface {
+	// / Get sim from pool
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	// /Get sim pool statistaics
 	GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error)
+	// /Add sims to pool
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
+	// /Delete sims from pool
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	// /Batch upload sims from CSV
 	Upload(ctx context.Context, in *UploadRequest, opts ...grpc.CallOption) (*UploadResponse, error)
 }
 
@@ -86,10 +91,15 @@ func (c *simServiceClient) Upload(ctx context.Context, in *UploadRequest, opts .
 // All implementations must embed UnimplementedSimServiceServer
 // for forward compatibility
 type SimServiceServer interface {
+	// / Get sim from pool
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	// /Get sim pool statistaics
 	GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error)
+	// /Add sims to pool
 	Add(context.Context, *AddRequest) (*AddResponse, error)
+	// /Delete sims from pool
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	// /Batch upload sims from CSV
 	Upload(context.Context, *UploadRequest) (*UploadResponse, error)
 	mustEmbedUnimplementedSimServiceServer()
 }

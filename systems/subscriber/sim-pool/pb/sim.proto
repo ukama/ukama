@@ -1,6 +1,7 @@
 syntax = "proto3";
 option go_package = "pb/gen";
 package ukama.sim.v1;
+import "validator.proto";
 
 /*
 Sim pool sub-system is responsible of:
@@ -59,7 +60,7 @@ message UploadResponse {
 message Sim{
     uint64 id = 1;
     string iccid = 2;
-    string msisdn = 3; 
+    string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}]; 
     bool isAllocated = 4;
     SimType simType = 5;
     string smDpAddress = 6;
@@ -67,17 +68,17 @@ message Sim{
     string created_at=9;
     string deleted_at=10;
     string updated_at=11;
-    bool isPhysicalSim=12;
+    bool isPhysical=12 [json_name = "is_physical"];
     string qrCode=13;
 }
 message AddSim{
     string iccid = 1;
     SimType simType = 2;
-    string msisdn = 3;
+    string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string smDpAddress = 4;
     string activationCode = 5;
     string qrCode=6;
-    bool isPhysicalSim=7;
+    bool isPhysical=7 [json_name = "is_physical"];
 }
 enum SimType {
     ANY=0;
