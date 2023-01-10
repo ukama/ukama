@@ -87,6 +87,7 @@ func initDb() sql.Db {
 func runGrpcServer(gormDB sql.Db) {
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
+		db.NewPackageRepo(gormDB),
 		clients.NewAgentFactory(svcConf.TestAgentHost, timeout))
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

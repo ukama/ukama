@@ -33,8 +33,7 @@ type Package struct {
 	SimID     uuid.UUID `gorm:"not null;type:uuid"`
 	StartDate time.Time
 	EndDate   time.Time
-	PlanID    uuid.UUID      `gorm:"not null;type:uuid"`
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	PlanID    uuid.UUID `gorm:"not null;type:uuid"`
 }
 
 type SimType uint8

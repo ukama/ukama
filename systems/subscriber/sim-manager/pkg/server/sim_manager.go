@@ -20,12 +20,14 @@ import (
 type SimManagerServer struct {
 	pb.UnimplementedSimManagerServiceServer
 	simRepo      sims.SimRepo
+	packageRepo  sims.PackageRepo
 	agentFactory *clients.AgentFactory
 }
 
-func NewSimManagerServer(simRepo sims.SimRepo, agentFactory *clients.AgentFactory) *SimManagerServer {
+func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo, agentFactory *clients.AgentFactory) *SimManagerServer {
 	return &SimManagerServer{
 		simRepo:      simRepo,
+		packageRepo:  packageRepo,
 		agentFactory: agentFactory,
 	}
 }
@@ -186,6 +188,20 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	}
 
 	return &pb.DeleteSimResponse{}, nil
+}
+
+func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
+	packageID, err := uuid.Parse(req.GetPackageID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of package uuid. Error %s", err.Error())
+	}
+
+	err = s.packageRepo.Delete(packageID, nil)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	return &pb.RemovePackageResponse{}, nil
 }
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
