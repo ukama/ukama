@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 
 	"github.com/wagslane/go-rabbitmq"
+	"google.golang.org/protobuf/proto"
 )
 
 type QPub interface {
 	Publish(payload any, routingKey string) error
+	PublishProto(payload proto.Message, routingKey string) error
 	PublishToQueue(queueName string, payload any) error
 	Close() error
 }
@@ -37,6 +39,27 @@ func NewQPub(queueUri string, serviceName string, instanceId string) (*qPub, err
 func (q *qPub) Publish(payload any, routingKey string) error {
 
 	b, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	err = q.publisher.Publish(b, []string{routingKey},
+		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}{
+			"source-service": q.serviceName,
+			"instance-id":    q.instanceId,
+		}),
+		rabbitmq.WithPublishOptionsExchange(DefaultExchange))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (q *qPub) PublishProto(payload proto.Message, routingKey string) error {
+
+	b, err := proto.Marshal(payload)
 	if err != nil {
 		return err
 	}
