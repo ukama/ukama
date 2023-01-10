@@ -6,10 +6,11 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/sirupsen/logrus"
 
-	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	pb "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -17,23 +18,26 @@ type Registration struct {
 }
 
 type MsgBusClient struct {
-	service    string
-	system     string
-	instanceId string
-	msgBusURI  string
-	//queuePub       msgbus.QPub
-	//baseRoutingKey msgbus.RoutingKeyBuilder
-	conn    *grpc.ClientConn
-	client  pb.MsgBusClient
-	timeout time.Duration
-	host    string
-	retry   int8
-	routes  []string
+	uuid         string
+	service      string
+	system       string
+	instanceId   string
+	msgBusURI    string
+	msgClientURI string
+	exchange     string
+	listQueue    string
+	publQueue    string
+	conn         *grpc.ClientConn
+	client       pb.MsgClientServiceClient
+	timeout      time.Duration
+	host         string
+	retry        int8
+	routes       []string
 }
 
 func NewMsgBusClient(timeout time.Duration, system string,
 	service string, instanceId string, msgBusURI string,
-	msgClientURI string, retry int8, routes []string) *MsgBusClient {
+	serviceURI string, msgClientURI string, exchange string, lq string, pq string, retry int8, routes []string) *MsgBusClient {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -42,33 +46,75 @@ func NewMsgBusClient(timeout time.Duration, system string,
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
-	client := pb.NewMsgBusClient(conn)
+	client := pb.NewMsgClientServiceClient(conn)
 
 	return &MsgBusClient{
-		service:    service,
-		system:     system,
-		instanceId: instanceId,
-		msgBusURI:  msgBusURI,
-		conn:       conn,
-		client:     client,
-		timeout:    timeout,
-		retry:      retry,
-		host:       msgClientURI,
+		service:      service,
+		system:       system,
+		instanceId:   instanceId,
+		msgBusURI:    msgBusURI,
+		msgClientURI: msgClientURI,
+		conn:         conn,
+		client:       client,
+		timeout:      timeout,
+		retry:        retry,
+		host:         serviceURI,
+		routes:       routes,
+		listQueue:    lq,
+		publQueue:    pq,
+		exchange:     exchange,
 	}
 
 }
 
-func (m *MsgBusClient) Init() error {
+func (m *MsgBusClient) Register() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	_, err := m.client.Initialize(ctx, &pb.InitRequest{
+	resp, err := m.client.RegisterService(ctx, &pb.RegisterServiceReq{
 		ServiceName: m.service,
 		SystemName:  m.system,
-		QueueURI:    m.msgBusURI,
+		MsgBusURI:   m.msgBusURI,
+		ServiceURI:  m.host,
 		InstanceId:  m.instanceId,
 		Routes:      m.routes,
+		ListQueue:   m.listQueue,
+		PublQueue:   m.publQueue,
+		Exchange:    m.exchange,
+		GrpcTimeout: uint32(m.timeout)})
+	if err != nil {
+		return err
+	}
+
+	if resp.GetState() == pb.REGISTRAION_STATUS_REGISTERED {
+		m.uuid = resp.ServiceUuid
+	}
+
+	return nil
+}
+
+func (m *MsgBusClient) Start() error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+
+	_, err := m.client.StartMsgBusHandler(ctx, &pb.StartMsgBusHandlerReq{
+		ServiceUuid: m.uuid})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *MsgBusClient) Stop() error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+
+	_, err := m.client.StopMsgBusHandler(ctx, &pb.StopMsgBusHandlerReq{
+		ServiceUuid: m.uuid,
 	})
 	if err != nil {
 		return err
@@ -77,21 +123,23 @@ func (m *MsgBusClient) Init() error {
 	return nil
 }
 
-// TODO: Check if we require specific function for each Message type.
 func (m *MsgBusClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
 
-	// ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
-	// defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
 
-	// anyMsg, err := anypb.New(msg)
-	// if err != nil {
-	// 	return err
-	// }
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		return err
+	}
 
-	// _, err = m.client.PusblishMsg(ctx, &pb.PublishMsgRequest{RoutingKey: route, Msg: anyMsg})
-	// if err != nil {
-	// 	return err
-	// }
+	_, err = m.client.PublishMsg(ctx, &pb.PublishMsgRequest{
+		ServiceUuid: m.uuid,
+		RoutingKey:  route,
+		Msg:         anyMsg})
+	if err != nil {
+		return err
+	}
 	logrus.Debugf("Published:\n Message: %v  \n Key: %s \n ", msg, route)
 	return nil
 

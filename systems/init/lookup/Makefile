@@ -13,7 +13,7 @@ gen:
 					  lookup.proto
 
 	protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
-					  msgBus.proto
+					  events.proto
 					  
 	mockery --all --recursive --dir ./internal
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks

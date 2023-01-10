@@ -7,12 +7,6 @@ package ukama.lookup.v1;
 import "validator.proto";
 import "google/protobuf/any.proto";
 
-service Events {
-
-    rpc SystemsKeepAlive(SystemKeepAliveRequest) returns (SystemKeepAliveResponse);
-
-}
-
 
 message SystemKeepAliveRequest {
     string systemName = 1 [(validator.field) = {string_not_empty: true}];
@@ -20,5 +14,14 @@ message SystemKeepAliveRequest {
 }
 
 message SystemKeepAliveResponse {
+
+}
+
+message Event {
+    string rotingkey = 1 [(validator.field) = {string_not_empty: true}];
+    google.protobuf.Any msg = 2;
+}
+
+message EventResponse {
 
 }

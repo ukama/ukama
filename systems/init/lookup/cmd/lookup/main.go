@@ -59,6 +59,7 @@ func initConfig() {
 		DB: &uconf.Database{
 			DbName: internal.ServiceName,
 		},
+		Service: uconf.LoadServiceHostConfig(internal.ServiceName),
 	}
 
 	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
@@ -79,15 +80,19 @@ func initConfig() {
 func runGrpcServer(d sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 
-	//var mbClient *mb.MsgBusClient
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
 		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListnerRoutes)
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
 		generated.RegisterLookupServiceServer(s, srv)
 	})
+
+	mbClient.Start()
 
 	grpcServer.StartServer()
 }

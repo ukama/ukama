@@ -14,12 +14,13 @@ type Config struct {
 	Metrics          *uconf.Metrics  `default:"{}"`
 	Timeout          time.Duration
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	Service          *uconf.Service
 }
 
 func NewConfig() *Config {
 	return &Config{
 		MsgClient: &uconf.MsgClient{
-			ListnerRoutes: []string{""},
+			ListenerRoutes: []string{""},
 		},
 	}
 }
