@@ -124,6 +124,11 @@ type SimReq struct {
 	SimId string `form:"sim_id" json:"sim_id" query:"sim_id" binding:"required" validate:"required`
 }
 
+type ActivateDeactivateSimReq struct {
+	SimId  string `form:"sim_id" json:"sim_id" query:"sim_id" binding:"required" validate:"required`
+	Status string `form:"status" json:"status" path:"status" binding:"required" validate:"required`
+}
+
 type GetSimsBySubReq struct {
 	SubscriberId string `form:"subscriber_id" json:"subscriber_id" query:"subscriber_id" binding:"required" validate:"required`
 }

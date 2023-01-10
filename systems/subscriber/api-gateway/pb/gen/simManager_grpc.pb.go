@@ -27,6 +27,7 @@ type SimManagerServiceClient interface {
 	GetSimsBySubscriber(ctx context.Context, in *GetSimsBySubscriberRequest, opts ...grpc.CallOption) (*GetSimsBySubscriberResponse, error)
 	ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error)
 	DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error)
+	DeleteSim(ctx context.Context, in *DeleteSimRequest, opts ...grpc.CallOption) (*DeleteSimResponse, error)
 	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error)
 	GetSimUsage(ctx context.Context, in *GetSimUsageRequest, opts ...grpc.CallOption) (*GetSimUsageResponse, error)
@@ -85,6 +86,15 @@ func (c *simManagerServiceClient) DeactivateSim(ctx context.Context, in *Deactiv
 	return out, nil
 }
 
+func (c *simManagerServiceClient) DeleteSim(ctx context.Context, in *DeleteSimRequest, opts ...grpc.CallOption) (*DeleteSimResponse, error) {
+	out := new(DeleteSimResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/DeleteSim", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *simManagerServiceClient) AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error) {
 	out := new(AddPackageResponse)
 	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/AddPackageForSim", in, out, opts...)
@@ -121,6 +131,7 @@ type SimManagerServiceServer interface {
 	GetSimsBySubscriber(context.Context, *GetSimsBySubscriberRequest) (*GetSimsBySubscriberResponse, error)
 	ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error)
 	DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error)
+	DeleteSim(context.Context, *DeleteSimRequest) (*DeleteSimResponse, error)
 	AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error)
 	GetSimUsage(context.Context, *GetSimUsageRequest) (*GetSimUsageResponse, error)
@@ -145,6 +156,9 @@ func (UnimplementedSimManagerServiceServer) ActivateSim(context.Context, *Activa
 }
 func (UnimplementedSimManagerServiceServer) DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeactivateSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) DeleteSim(context.Context, *DeleteSimRequest) (*DeleteSimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteSim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPackageForSim not implemented")
@@ -258,6 +272,24 @@ func _SimManagerService_DeactivateSim_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimManagerService_DeleteSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSimRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).DeleteSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/DeleteSim",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).DeleteSim(ctx, req.(*DeleteSimRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SimManagerService_AddPackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddPackageRequest)
 	if err := dec(in); err != nil {
@@ -338,6 +370,10 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeactivateSim",
 			Handler:    _SimManagerService_DeactivateSim_Handler,
+		},
+		{
+			MethodName: "DeleteSim",
+			Handler:    _SimManagerService_DeleteSim_Handler,
 		},
 		{
 			MethodName: "AddPackageForSim",

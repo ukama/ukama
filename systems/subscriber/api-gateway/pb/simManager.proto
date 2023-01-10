@@ -12,6 +12,7 @@ service SimManagerService {
     rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
     rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
     rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
+    rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
     rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
     rpc GetSimUsage(GetSimUsageRequest) returns (GetSimUsageResponse);
@@ -20,7 +21,7 @@ service SimManagerService {
 message AllocateSimRequest {
     string subscriberID = 1;
     string simToken = 2;
-    string planID = 3;
+    string packageID = 3;
     string networkID = 4;
 }
 
@@ -57,6 +58,13 @@ message DeactivateSimRequest {
 }
 
 message DeactivateSimResponse{
+}
+
+message DeleteSimRequest {
+    string simID = 1;
+}
+
+message DeleteSimResponse{
 }
 
 message AddPackageRequest {

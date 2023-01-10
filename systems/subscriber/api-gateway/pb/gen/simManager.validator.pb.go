@@ -63,6 +63,12 @@ func (this *DeactivateSimRequest) Validate() error {
 func (this *DeactivateSimResponse) Validate() error {
 	return nil
 }
+func (this *DeleteSimRequest) Validate() error {
+	return nil
+}
+func (this *DeleteSimResponse) Validate() error {
+	return nil
+}
 func (this *AddPackageRequest) Validate() error {
 	if this.StartDate != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartDate); err != nil {
