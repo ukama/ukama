@@ -189,7 +189,7 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 }
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
-	return &pb.Sim{
+	res := &pb.Sim{
 		Id:                 sim.ID.String(),
 		SubscriberID:       sim.SubscriberID.String(),
 		Iccid:              sim.Iccid,
@@ -200,10 +200,41 @@ func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 		IsPhysical:         sim.IsPhysical,
 		ActivationsCount:   sim.ActivationsCount,
 		DeactivationsCount: sim.DeactivationsCount,
-		FirstActivatedOn:   timestamppb.New(sim.FirstActivatedOn),
-		LastActivatedOn:    timestamppb.New(sim.LastActivatedOn),
-		AllocatedAt:        timestamppb.New(time.Unix(sim.AllocatedAt, 0)),
 	}
+
+	if sim.Package.ID != uuid.Nil {
+		res.Package = dbPackageToPbPackage(&sim.Package)
+	}
+
+	if !sim.FirstActivatedOn.IsZero() {
+		res.FirstActivatedOn = timestamppb.New(sim.FirstActivatedOn)
+	}
+
+	if !sim.LastActivatedOn.IsZero() {
+		res.LastActivatedOn = timestamppb.New(sim.LastActivatedOn)
+	}
+
+	if sim.AllocatedAt != 0 {
+		res.AllocatedAt = timestamppb.New(sim.LastActivatedOn)
+	}
+
+	return res
+}
+
+func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
+	res := &pb.Package{
+		Id: pkg.ID.String(),
+	}
+
+	if !pkg.EndDate.IsZero() {
+		res.EndDate = timestamppb.New(pkg.EndDate)
+	}
+
+	if !pkg.StartDate.IsZero() {
+		res.StartDate = timestamppb.New(pkg.StartDate)
+	}
+
+	return res
 }
 
 func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {

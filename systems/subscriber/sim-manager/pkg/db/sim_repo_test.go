@@ -56,17 +56,26 @@ func TestSimRepo_Get(t *testing.T) {
 		var netID = uuid.New()
 		var subID = uuid.New()
 
+		var packageID = uuid.New()
+
 		var db *extsql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
+		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
 			AddRow(simID, netID, subID)
+
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageID, simID)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs(simID).
-			WillReturnRows(rows)
+			WillReturnRows(simRow)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simID).
+			WillReturnRows(packageRow)
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -93,6 +102,8 @@ func TestSimRepo_Get(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, sim)
+		assert.NotNil(t, sim)
+		assert.Equal(t, packageID, sim.Package.ID)
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
@@ -143,17 +154,26 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 		var netID = uuid.New()
 		var subID = uuid.New()
 
+		var packageID = uuid.New()
+
 		var db *extsql.DB
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
+		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
 			AddRow(simID, netID, subID)
+
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageID, simID)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs(subID).
-			WillReturnRows(rows)
+			WillReturnRows(simRow)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simID).
+			WillReturnRows(packageRow)
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -180,6 +200,7 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, sims)
+		assert.Equal(t, packageID, sims[0].Package.ID)
 	})
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {

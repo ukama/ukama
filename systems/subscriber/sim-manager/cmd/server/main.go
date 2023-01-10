@@ -76,7 +76,7 @@ func initDb() sql.Db {
 
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.Sim{})
+	err := d.Init(&db.Sim{}, &db.Package{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}

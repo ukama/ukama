@@ -12,19 +12,29 @@ import (
 type Sim struct {
 	ID                 uuid.UUID `gorm:"primaryKey;type:uuid"`
 	SubscriberID       uuid.UUID `gorm:"not null;type:uuid"`
-	Iccid              string    `gorm:"index:idx_iccid,unique"`
+	Package            Package
+	Iccid              string `gorm:"index:idx_iccid,unique"`
 	Msisdn             string
 	Imsi               string
 	Type               SimType
 	Status             SimStatus
 	IsPhysical         bool
-	ActivationsCount   uint64
-	DeactivationsCount uint64
+	ActivationsCount   uint64 `gorm:"default:0"`
+	DeactivationsCount uint64 `gorm:"default:0"`
 	FirstActivatedOn   time.Time
 	LastActivatedOn    time.Time
 	AllocatedAt        int64 `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time
 	TerminatedAt       gorm.DeletedAt `gorm:"index"`
+}
+
+type Package struct {
+	ID        uuid.UUID `gorm:"primaryKey;type:uuid"`
+	SimID     uuid.UUID `gorm:"not null;type:uuid"`
+	StartDate time.Time
+	EndDate   time.Time
+	PlanID    uuid.UUID      `gorm:"not null;type:uuid"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type SimType uint8
