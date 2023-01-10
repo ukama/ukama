@@ -106,30 +106,6 @@ type SubscriberUpdateReq struct {
 	IdSerial              string `json:"idSerial" validate:"required"`
 }
 
-type SubscriberSimAllocateReq struct {
-	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
-	NetworkId    uuid.UUID `json:"networkId" validate:"required"`
-	SimType      string    `json:"type" validate:"required"`
-	Token        string    `json:"token" validate:"required"`
-	PlanId       uuid.UUID `json:"planId" validate:"required"`
-}
-
-type SubscriberSimUpdateStateReq struct {
-	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
-	SimId        uuid.UUID `path:"simId" validate:"required"`
-	State        string    `json:"state" validate:"eq=inactive|eq=INACTIVE|eq=active|eq=ACTIVE,required" `
-}
-
-type SubscriberSimDeleteReq struct {
-	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
-	SimId        uuid.UUID `path:"simId" validate:"required"`
-}
-
-type SubscriberSimReadReq struct {
-	SubscriberId uuid.UUID `path:"subscriberId" validate:"required"`
-	SimId        uuid.UUID `path:"simId" validate:"required"`
-}
-
 type SimListReq struct {
 	NetworkId uuid.UUID `path:"networkId" validate:"required"`
 }
@@ -139,26 +115,26 @@ type SimListResp struct {
 }
 
 type AllocateSimReq struct {
-	SubscriberId string `path:"subscriberId" validate:"required"`
-	SimToken     string `path:"simToken" validate:"required"`
-	PlanId       string `json:"planId" validate:"required"`
-	NetworkId    string `json:"networkId" validate:"required"`
+	SubscriberId string `form:"subscriberId" json:"subscriberId" path:"subscriberId" binding:"required" validate:"required`
+	SimToken     string `form:"simToken" json:"simToken" path:"simToken" binding:"required" validate:"required`
+	PackageId    string `form:"packageId" json:"packageId" path:"packageId" binding:"required" validate:"required`
+	NetworkId    string `form:"networkId" json:"networkId" path:"networkId" binding:"required" validate:"required`
 }
 type SimReq struct {
-	SimId string `path:"simId" validate:"required"`
+	SimId string `form:"sim_id" json:"sim_id" query:"sim_id" binding:"required" validate:"required`
 }
 
 type GetSimsBySubReq struct {
-	SubscriberId string `path:"subscriberId" validate:"required"`
+	SubscriberId string `form:"subscriber_id" json:"subscriber_id" query:"subscriber_id" binding:"required" validate:"required`
 }
 type AddPkgToSimReq struct {
-	SimId        string                 `path:"simId" validate:"required"`
-	SubscriberId string                 `path:"subscriberId" validate:"required"`
-	PackageId    string                 `path:"packageId" validate:"required"`
-	StartDate    *timestamppb.Timestamp `json:"startDate" validate:"required"`
+	SimId        string                 `form:"simId" json:"simId" path:"simId" binding:"required" validate:"required`
+	SubscriberId string                 `form:"subscriberId" json:"subscriberId" path:"subscriberId" binding:"required" validate:"required`
+	PackageId    string                 `form:"packageId" json:"packageId" path:"packageId" binding:"required" validate:"required`
+	StartDate    *timestamppb.Timestamp `form:"startDate" json:"startDate" path:"startDate" binding:"required" validate:"required`
 }
 
 type RemovePkgFromSimReq struct {
-	SimId     string `path:"simId" validate:"required"`
-	PackageId string `json:"packageId" validate:"required"`
+	SimId     string `form:"simId" json:"simId" path:"simId" binding:"required" validate:"required`
+	PackageId string `form:"packageId" json:"packageId" path:"packageId" binding:"required" validate:"required`
 }

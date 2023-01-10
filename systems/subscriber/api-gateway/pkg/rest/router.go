@@ -128,11 +128,16 @@ func (r *Router) init() {
 	subscriber.PATCH("", formatDoc("Update a subsciber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
 	subscriber.GET("/network/:networkId", formatDoc("List all subscibers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
 
-	// sim := subscriber.Group("/sim", "SIM", "Orgs SIM data base")
+	sim := v1.Group("/sim", "SIM", "Orgs SIM data base")
 	// sim.GET("/:sim", formatDoc("Get a SIM of the subscriber by SIM Id", ""), tonic.Handler(r.getSim, http.StatusOK))
-	// sim.POST("/:sim", formatDoc("Allocate  anew sim to subsciber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
-	// sim.POST("/:sim/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.postPackageToSim, http.StatusOK))
-	// sim.DELETE("/:sim/package", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.deletePackageForSim, http.StatusOK))
+	// sim.GET("/:subscriber", formatDoc("Get a SIMs of the subscriber by Subscriber Id", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
+	// sim.GET("/:sim/usage", formatDoc("Get SIM usage", ""), tonic.Handler(r.getSimUsage, http.StatusOK))
+	// sim.PUT("/", formatDoc("Activate sim for subscriber", ""), tonic.Handler(r.activateSim, http.StatusOK))
+	// sim.PATCH("/", formatDoc("Deactivate sim of subscriber", ""), tonic.Handler(r.deactivateSim, http.StatusOK))
+	sim.POST("/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.addPkgForSim, http.StatusOK))
+	sim.DELETE("/package", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
+
+	// sim.POST("/:sim", formatDoc("Allocate  anew sim to subscriber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
 	// sim.DELETE("/:sim", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
 	// sim.PATCH("/:sim", formatDoc("Update the SIM state to active/inactive for the subscriber's sim", ""), tonic.Handler(r.patchSim, http.StatusOK))
 
