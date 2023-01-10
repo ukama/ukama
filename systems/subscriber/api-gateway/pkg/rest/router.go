@@ -227,13 +227,13 @@ func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*pb.AddSu
 		return nil, err
 	}
 
-	return &pb.AddSubscriberResponse{SubscriberID: pbResp.SubscriberID}, nil
+	return pbResp, nil
 }
 
-func (r *Router) deleteSubscriber(c *gin.Context, req *SubscriberDeleteReq) error {
-	_, err := r.clients.sub.DeleteSubscriber(req.SubscriberId)
+func (r *Router) deleteSubscriber(c *gin.Context, req *SubscriberDeleteReq) (*pb.DeleteSubscriberResponse, error) {
+	res, err := r.clients.sub.DeleteSubscriber(req.SubscriberId)
 
-	return err
+	return res, err
 }
 
 func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*pb.UpdateSubscriberResponse, error) {

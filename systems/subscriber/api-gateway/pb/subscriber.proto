@@ -23,6 +23,7 @@ message GetByNetworkResponse{
     repeated Subscriber subscribers  = 1;
 }
 message DeleteSubscriberResponse{
+    uint64 id =1;
 }
 message GetSubscriberRequest{
     string subscriberID = 1;
@@ -52,10 +53,14 @@ message UpdateSubscriberRequest{
     string proofOfIdentification =6;
 }
 message UpdateSubscriberResponse{
-    string subscriberID = 1;
+    string email = 1;
+    string phoneNumber = 2;
+    string address  = 3; 
+    string idSerial =4;
+    string proofOfIdentification =5;
 }
 message AddSubscriberResponse{
-    string subscriberID = 1;
+    Subscriber Subscriber = 1;
 }
 message Subscriber{
     uint64 id =1;
