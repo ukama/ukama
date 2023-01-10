@@ -244,6 +244,103 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 	})
 }
 
+func TestSimRepo_GetByNetwork(t *testing.T) {
+	t.Run("NetworkFound", func(t *testing.T) {
+		// Arrange
+		var simID = uuid.New()
+		var netID = uuid.New()
+		var subID = uuid.New()
+
+		var packageID = uuid.New()
+
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
+			AddRow(simID, netID, subID)
+
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageID, simID)
+
+		mock.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs(netID).
+			WillReturnRows(simRow)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simID).
+			WillReturnRows(packageRow)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		sims, err := r.GetByNetwork(netID)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.NotNil(t, sims)
+		assert.Equal(t, packageID, sims[0].Package.ID)
+	})
+
+	t.Run("NetworkNotFound", func(t *testing.T) {
+		// Arrange
+		var netID = uuid.New()
+
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs(netID).
+			WillReturnError(sql.ErrNoRows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		sims, err := r.GetByNetwork(netID)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.Nil(t, sims)
+	})
+}
+
 func TestSimRepo_Add(t *testing.T) {
 	t.Run("AddSim", func(t *testing.T) {
 		// Arrange
@@ -260,7 +357,7 @@ func TestSimRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sim.ID, sim.SubscriberID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(sim.ID, sim.SubscriberID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
