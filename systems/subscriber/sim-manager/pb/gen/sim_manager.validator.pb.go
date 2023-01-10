@@ -211,21 +211,6 @@ func (this *RemovePackageResponse) Validate() error {
 	return nil
 }
 
-var _regex_GetSimUsageRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *GetSimUsageRequest) Validate() error {
-	if !_regex_GetSimUsageRequest_SimID.MatchString(this.SimID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
-	}
-	if this.SimID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
-	}
-	return nil
-}
-func (this *GetSimUsageResponse) Validate() error {
-	return nil
-}
-
 var _regex_Package_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Package) Validate() error {

@@ -33,8 +33,6 @@ type SimManagerServiceClient interface {
 	// Sim pacakge
 	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error)
-	// Metrics???
-	GetSimUsage(ctx context.Context, in *GetSimUsageRequest, opts ...grpc.CallOption) (*GetSimUsageResponse, error)
 }
 
 type simManagerServiceClient struct {
@@ -126,15 +124,6 @@ func (c *simManagerServiceClient) RemovePackageForSim(ctx context.Context, in *R
 	return out, nil
 }
 
-func (c *simManagerServiceClient) GetSimUsage(ctx context.Context, in *GetSimUsageRequest, opts ...grpc.CallOption) (*GetSimUsageResponse, error) {
-	out := new(GetSimUsageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSimUsage", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // SimManagerServiceServer is the server API for SimManagerService service.
 // All implementations must embed UnimplementedSimManagerServiceServer
 // for forward compatibility
@@ -150,8 +139,6 @@ type SimManagerServiceServer interface {
 	// Sim pacakge
 	AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error)
-	// Metrics???
-	GetSimUsage(context.Context, *GetSimUsageRequest) (*GetSimUsageResponse, error)
 	mustEmbedUnimplementedSimManagerServiceServer()
 }
 
@@ -185,9 +172,6 @@ func (UnimplementedSimManagerServiceServer) AddPackageForSim(context.Context, *A
 }
 func (UnimplementedSimManagerServiceServer) RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemovePackageForSim not implemented")
-}
-func (UnimplementedSimManagerServiceServer) GetSimUsage(context.Context, *GetSimUsageRequest) (*GetSimUsageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSimUsage not implemented")
 }
 func (UnimplementedSimManagerServiceServer) mustEmbedUnimplementedSimManagerServiceServer() {}
 
@@ -364,24 +348,6 @@ func _SimManagerService_RemovePackageForSim_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SimManagerService_GetSimUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSimUsageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).GetSimUsage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetSimUsage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).GetSimUsage(ctx, req.(*GetSimUsageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // SimManagerService_ServiceDesc is the grpc.ServiceDesc for SimManagerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -424,10 +390,6 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemovePackageForSim",
 			Handler:    _SimManagerService_RemovePackageForSim_Handler,
-		},
-		{
-			MethodName: "GetSimUsage",
-			Handler:    _SimManagerService_GetSimUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
