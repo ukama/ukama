@@ -4,7 +4,7 @@ Package sub-system provides CRUD options to organization.It provides following r
 
 - Add package under organization
 - Update organization package
-- Get package by `id`
+- Get package by `packageUuid`
 - Get packages which will return packages by org
 - Delete package under an organization
 
@@ -70,7 +70,7 @@ Function takes below argument:
 
 ```js
 {
-    [require] id => UInt64
+    [require] packageUuid => string
 }
 ```
 
@@ -150,7 +150,7 @@ Function takes below argument:
 
 ```js
 {
-    [required] id => UInt64
+    [required] packageUuid => string
     [optional] name => String
     [optional] duration => UInt64
     [optional] org_rates_id => UInt64
@@ -182,7 +182,7 @@ Function takes below argument:
 
 ```js
 {
-    [required] id => UInt64
+    [required] packageUuid => string
     [required] orgId => UInt64
 }
 ```
