@@ -25,6 +25,7 @@ service SimService {
 }
 message GetRequest{
     bool IsPhysicalSim=1; /// True/False
+    SimType simType = 2; /// SimType string enum
 }
 message GetResponse {
     Sim sim = 1; /// Sim object
