@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type MsgBusHandler struct {
@@ -147,9 +148,9 @@ func (m *MsgBusHandler) StopServiceQueueHandler(service string) (err error) {
 		err := p.Close()
 		if err != nil {
 			return err
-		} else {
-			log.Errorf("No service with id %s registered in publisher", service)
 		}
+	} else {
+		log.Errorf("No service with id %s registered in publisher", service)
 	}
 
 	/* Stop listener */
@@ -158,9 +159,9 @@ func (m *MsgBusHandler) StopServiceQueueHandler(service string) (err error) {
 		err := m.StopServiceQueueListening(service)
 		if err != nil {
 			return err
-		} else {
-			log.Errorf("No service with id %s registered in listener", service)
 		}
+	} else {
+		log.Errorf("No service with id %s registered in listener", service)
 	}
 
 	return err
@@ -203,9 +204,15 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
 	return nil
 }
 
-func (m *MsgBusHandler) Publish(service string, key string, msg any) error {
+func (m *MsgBusHandler) Publish(service string, key string, msg *anypb.Any) error {
 	p, ok := m.qp[service]
 	if ok {
+		// pmsg := proto.Message{}
+		// err := anypb.UnmarshalTo(msg, pmsg, proto.UnmarshalOptions{})
+		// if err != nil {
+		// 	return err
+		// }
+
 		err := p.Publish(key, msg)
 		if err != nil {
 			return err

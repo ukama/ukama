@@ -8,6 +8,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
+	"google.golang.org/protobuf/proto"
 )
 
 type QueuePublisher struct {
@@ -37,11 +38,11 @@ func NewQueuePublisher(s db.Service) (*QueuePublisher, error) {
 	return qp, nil
 }
 
-func (p *QueuePublisher) Publish(key string, payload any) error {
+func (p *QueuePublisher) Publish(key string, payload proto.Message) error {
 
 	err := make(chan error, 1)
 	go func(err chan error) {
-		e := p.pub.Publish(payload, key)
+		e := p.pub.PublishProto(payload, key)
 		if e != nil {
 			log.Errorf("Failed to publish message. Error %s", e.Error())
 			err <- e
@@ -56,7 +57,7 @@ func (p *QueuePublisher) Publish(key string, payload any) error {
 		if ret != nil {
 			return ret
 		}
-	case <-time.After(20 * time.Second):
+	case <-time.After(2 * time.Second):
 		return fmt.Errorf("timout while publishing message for Service %s InstanceId %s Key %s", p.name, p.instanceId, key)
 	}
 
@@ -71,6 +72,6 @@ func (p *QueuePublisher) Close() error {
 		return err
 	}
 
-	log.Infof("Cosed publisher for Service: %s InstanceId: %s", p.name, p.instanceId)
+	log.Infof("Closed publisher for Service: %s InstanceId: %s", p.name, p.instanceId)
 	return err
 }

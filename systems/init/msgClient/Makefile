@@ -3,7 +3,7 @@ include ../../../systems/config.mk
 .PHONY: integration.test test build lint deps 
 
 build: 
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/init/msgClient/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/msgClient cmd/msgClient/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/init/msgClient/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/msgClient cmd/msgClient/main.go
 
 test:
 	go test -v ./...
