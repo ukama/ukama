@@ -16,8 +16,8 @@ type MsgClientServiceClient struct {
 	mock.Mock
 }
 
-// PusblishMsg provides a mock function with given fields: ctx, in, opts
-func (_m *MsgClientServiceClient) PusblishMsg(ctx context.Context, in *gen.PublishMsgRequest, opts ...grpc.CallOption) (*gen.PublishMsgResponse, error) {
+// PublishMsg provides a mock function with given fields: ctx, in, opts
+func (_m *MsgClientServiceClient) PublishMsg(ctx context.Context, in *gen.PublishMsgRequest, opts ...grpc.CallOption) (*gen.PublishMsgResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]

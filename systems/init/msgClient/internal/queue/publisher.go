@@ -48,6 +48,7 @@ func (p *QueuePublisher) Publish(key string, payload any) error {
 		}
 
 		log.Debugf("Publishing: \n Service: %s InstanceId: %s Queue: %s\n Message: \n %+v", p.name, p.instanceId, p.q, payload)
+		err <- nil
 	}(err)
 
 	select {
@@ -55,7 +56,7 @@ func (p *QueuePublisher) Publish(key string, payload any) error {
 		if ret != nil {
 			return ret
 		}
-	case <-time.After(2 * time.Second):
+	case <-time.After(20 * time.Second):
 		return fmt.Errorf("timout while publishing message for Service %s InstanceId %s Key %s", p.name, p.instanceId, key)
 	}
 

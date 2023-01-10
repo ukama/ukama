@@ -36,6 +36,7 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	/* Register service */
 	svc := db.Service{
 		Name:        req.ServiceName,
+		InstanceId:  req.InstanceId,
 		ServiceUri:  req.ServiceURI,
 		MsgBusUri:   req.MsgBusURI,
 		ListQueue:   req.ListQueue,
@@ -82,7 +83,7 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	return resp, nil
 }
 
-func (m *MsgClientServer) StartHandler(ctx context.Context, req *pb.StartMsgBusHandlerReq) (*pb.StartMsgBusHandlerResp, error) {
+func (m *MsgClientServer) StartMsgBusHandler(ctx context.Context, req *pb.StartMsgBusHandlerReq) (*pb.StartMsgBusHandlerResp, error) {
 	log.Debugf("Start handler request for %s", req.ServiceUuid)
 
 	svc, err := m.s.Get(req.ServiceUuid)
@@ -101,7 +102,7 @@ func (m *MsgClientServer) StartHandler(ctx context.Context, req *pb.StartMsgBusH
 	return &pb.StartMsgBusHandlerResp{}, nil
 }
 
-func (m *MsgClientServer) StopHandler(ctx context.Context, req *pb.StopMsgBusHandlerReq) (*pb.StopMsgBusHandlerResp, error) {
+func (m *MsgClientServer) StopMsgBusHandler(ctx context.Context, req *pb.StopMsgBusHandlerReq) (*pb.StopMsgBusHandlerResp, error) {
 
 	log.Debugf("Stop handler request for %s", req.ServiceUuid)
 	/* start listening */

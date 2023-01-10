@@ -120,5 +120,5 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 
 func (q *QueueListener) processEventMsg(ctx context.Context, delivery amqp.Delivery) {
 	// Read Db for the key and find the services which we need to post message to.
-
+	log.Infof("Received message %+v", delivery)
 }

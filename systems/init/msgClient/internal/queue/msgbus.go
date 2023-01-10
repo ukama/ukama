@@ -112,7 +112,6 @@ func (m *MsgBusHandler) StopServiceQueueListening(service string) (err error) {
 }
 
 func (m *MsgBusHandler) RemoveServiceQueueListening(service string) error {
-	log.Infof("Removing queue listener for %s service", service)
 	_, ok := m.ql[service]
 	if ok {
 		err := m.StopServiceQueueListening(service)
@@ -127,7 +126,6 @@ func (m *MsgBusHandler) RemoveServiceQueueListening(service string) error {
 }
 
 func (m *MsgBusHandler) RemoveServiceQueuePublisher(service string) error {
-	log.Infof("Removing queue publisher for %s service", service)
 	p, ok := m.qp[service]
 	if ok {
 		err := p.Close()

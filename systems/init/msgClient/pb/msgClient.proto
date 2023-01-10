@@ -12,7 +12,7 @@ service MsgClientService {
     rpc RegisterService(RegisterServiceReq) returns (RegisterServiceResp);
     rpc StartMsgBusHandler(StartMsgBusHandlerReq) returns (StartMsgBusHandlerResp);
     rpc StopMsgBusHandler(StopMsgBusHandlerReq) returns (StopMsgBusHandlerResp);
-    rpc PusblishMsg(PublishMsgRequest) returns (PublishMsgResponse);
+    rpc PublishMsg(PublishMsgRequest) returns (PublishMsgResponse);
 
 }
 enum REGISTRAION_STATUS {

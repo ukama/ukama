@@ -14,8 +14,8 @@ type MsgClientServiceServer struct {
 	mock.Mock
 }
 
-// PusblishMsg provides a mock function with given fields: _a0, _a1
-func (_m *MsgClientServiceServer) PusblishMsg(_a0 context.Context, _a1 *gen.PublishMsgRequest) (*gen.PublishMsgResponse, error) {
+// PublishMsg provides a mock function with given fields: _a0, _a1
+func (_m *MsgClientServiceServer) PublishMsg(_a0 context.Context, _a1 *gen.PublishMsgRequest) (*gen.PublishMsgResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *gen.PublishMsgResponse

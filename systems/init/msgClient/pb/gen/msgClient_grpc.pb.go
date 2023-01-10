@@ -25,7 +25,7 @@ type MsgClientServiceClient interface {
 	RegisterService(ctx context.Context, in *RegisterServiceReq, opts ...grpc.CallOption) (*RegisterServiceResp, error)
 	StartMsgBusHandler(ctx context.Context, in *StartMsgBusHandlerReq, opts ...grpc.CallOption) (*StartMsgBusHandlerResp, error)
 	StopMsgBusHandler(ctx context.Context, in *StopMsgBusHandlerReq, opts ...grpc.CallOption) (*StopMsgBusHandlerResp, error)
-	PusblishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error)
+	PublishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error)
 }
 
 type msgClientServiceClient struct {
@@ -63,9 +63,9 @@ func (c *msgClientServiceClient) StopMsgBusHandler(ctx context.Context, in *Stop
 	return out, nil
 }
 
-func (c *msgClientServiceClient) PusblishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error) {
+func (c *msgClientServiceClient) PublishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error) {
 	out := new(PublishMsgResponse)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/PusblishMsg", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/PublishMsg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ type MsgClientServiceServer interface {
 	RegisterService(context.Context, *RegisterServiceReq) (*RegisterServiceResp, error)
 	StartMsgBusHandler(context.Context, *StartMsgBusHandlerReq) (*StartMsgBusHandlerResp, error)
 	StopMsgBusHandler(context.Context, *StopMsgBusHandlerReq) (*StopMsgBusHandlerResp, error)
-	PusblishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error)
+	PublishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error)
 	mustEmbedUnimplementedMsgClientServiceServer()
 }
 
@@ -96,8 +96,8 @@ func (UnimplementedMsgClientServiceServer) StartMsgBusHandler(context.Context, *
 func (UnimplementedMsgClientServiceServer) StopMsgBusHandler(context.Context, *StopMsgBusHandlerReq) (*StopMsgBusHandlerResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopMsgBusHandler not implemented")
 }
-func (UnimplementedMsgClientServiceServer) PusblishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PusblishMsg not implemented")
+func (UnimplementedMsgClientServiceServer) PublishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublishMsg not implemented")
 }
 func (UnimplementedMsgClientServiceServer) mustEmbedUnimplementedMsgClientServiceServer() {}
 
@@ -166,20 +166,20 @@ func _MsgClientService_StopMsgBusHandler_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MsgClientService_PusblishMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MsgClientService_PublishMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PublishMsgRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgClientServiceServer).PusblishMsg(ctx, in)
+		return srv.(MsgClientServiceServer).PublishMsg(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/PusblishMsg",
+		FullMethod: "/ukama.msgClient.v1.MsgClientService/PublishMsg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgClientServiceServer).PusblishMsg(ctx, req.(*PublishMsgRequest))
+		return srv.(MsgClientServiceServer).PublishMsg(ctx, req.(*PublishMsgRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -204,8 +204,8 @@ var MsgClientService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MsgClientService_StopMsgBusHandler_Handler,
 		},
 		{
-			MethodName: "PusblishMsg",
-			Handler:    _MsgClientService_PusblishMsg_Handler,
+			MethodName: "PublishMsg",
+			Handler:    _MsgClientService_PublishMsg_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
