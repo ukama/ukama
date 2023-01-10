@@ -143,10 +143,25 @@ func (this *UpdateSubscriberRequest) Validate() error {
 	}
 	return nil
 }
+
+var _regex_UpdateSubscriberResponse_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+var _regex_UpdateSubscriberResponse_PhoneNumber = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
+
 func (this *UpdateSubscriberResponse) Validate() error {
+	if !_regex_UpdateSubscriberResponse_Email.MatchString(this.Email) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
+	}
+	if !_regex_UpdateSubscriberResponse_PhoneNumber.MatchString(this.PhoneNumber) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
+	}
 	return nil
 }
 func (this *AddSubscriberResponse) Validate() error {
+	if this.Subscriber != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
+		}
+	}
 	return nil
 }
 func (this *Subscriber) Validate() error {
@@ -155,6 +170,28 @@ func (this *Subscriber) Validate() error {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
 			}
+		}
+	}
+	return nil
+}
+
+var _regex_Package_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *Package) Validate() error {
+	if !_regex_Package_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if this.StartDate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartDate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("StartDate", err)
+		}
+	}
+	if this.EndDate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.EndDate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("EndDate", err)
 		}
 	}
 	return nil
@@ -193,6 +230,11 @@ func (this *Sim) Validate() error {
 	if this.AllocatedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.AllocatedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("AllocatedAt", err)
+		}
+	}
+	if this.Package != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Package); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Package", err)
 		}
 	}
 	return nil

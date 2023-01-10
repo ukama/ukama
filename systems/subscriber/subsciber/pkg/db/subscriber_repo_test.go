@@ -64,7 +64,11 @@ func TestSubscriberRepo_Add(t *testing.T) {
 			FirstName: "John",
 			LastName:  "Doe",
 		}).Return(&gen.AddSubscriberResponse{
-			SubscriberID: "12345",
+			Subscriber: &gen.Subscriber{
+				FirstName:    "John",
+				LastName:     "Doe",
+				SubscriberID: "12345",
+			},
 		}, nil)
 		response, err := subscriberServiceServerMock.Add(context.Background(), &gen.AddSubscriberRequest{
 			FirstName: "John",
@@ -72,7 +76,11 @@ func TestSubscriberRepo_Add(t *testing.T) {
 		})
 
 		expectedResponse := &gen.AddSubscriberResponse{
-			SubscriberID: "12345",
+			Subscriber: &gen.Subscriber{
+				FirstName:    "John",
+				LastName:     "Doe",
+				SubscriberID: "12345",
+			},
 		}
 
 		assert.Equal(t, expectedResponse, response)
@@ -85,11 +93,16 @@ func TestSubscriberRepo_Update(t *testing.T) {
 	t.Run("SubscriberExist", func(t *testing.T) {
 
 		subscriberServiceServerMock.On("Update", mock.Anything, &gen.UpdateSubscriberRequest{
-			SubscriberID: "12345",
-			Email:        "john@gmail.com",
-			Address:      "kigali",
+			SubscriberID:          "12345",
+			IdSerial:              "12345",
+			Email:                 "john@gmail.com",
+			Address:               "kigali",
+			ProofOfIdentification: "0909099",
 		}).Return(&gen.UpdateSubscriberResponse{
-			SubscriberID: "12345",
+			IdSerial:              "12345",
+			ProofOfIdentification: "0909099",
+			Email:                 "john@gmail.com",
+			Address:               "kigali",
 		}, nil)
 
 		response, err := subscriberServiceServerMock.Update(context.Background(), &gen.UpdateSubscriberRequest{
@@ -98,7 +111,10 @@ func TestSubscriberRepo_Update(t *testing.T) {
 			Address:      "kigali",
 		})
 		expectedResponse := &gen.UpdateSubscriberResponse{
-			SubscriberID: "12345",
+			IdSerial:              "12345",
+			ProofOfIdentification: "0909099",
+			Email:                 "john@gmail.com",
+			Address:               "kigali",
 		}
 
 		assert.Equal(t, expectedResponse, response)

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 )
 
 func TestSubcriberServer_Add(t *testing.T) {
+
 	testCases := []struct {
 		name         string
 		req          *pb.AddSubscriberRequest
@@ -31,12 +33,21 @@ func TestSubcriberServer_Add(t *testing.T) {
 				PhoneNumber:           "1234567890",
 				Gender:                "male",
 				Address:               "123 Main St",
-				DateOfBirth:           &timestamppb.Timestamp{Seconds: time.Now().Unix()},
 				IdSerial:              "123456",
 				ProofOfIdentification: "drivers_license",
 			},
 			expectedResp: &pb.AddSubscriberResponse{
-				SubscriberID: "93a3f36b-4556-444f-97c3-6132e0bfdda9",
+				Subscriber: &pb.Subscriber{
+					FirstName:             "John",
+					LastName:              "Doe",
+					NetworkID:             "00000000-0000-0000-0000-000000000000",
+					Email:                 "john.doe@example.com",
+					PhoneNumber:           "1234567890",
+					Gender:                "male",
+					Address:               "123 Main St",
+					IdSerial:              "123456",
+					ProofOfIdentification: "drivers_license",
+				},
 			},
 
 			expectedErr: nil,
@@ -105,15 +116,17 @@ type subscriberRepoMock struct {
 	delFunc      func(subscriberID uuid.UUID) error
 	getFunc      func(subscriberID uuid.UUID) (*db.Subscriber, error)
 	getByNetwork func(networkID uuid.UUID) ([]db.Subscriber, error)
-	updateFunc   func(subscriberID uuid.UUID, sub db.Subscriber) (uuid.UUID, error)
+	updateFunc   func(subscriberID uuid.UUID, sub db.Subscriber) (db.Subscriber, error)
 }
 
-func (r *subscriberRepoMock) Update(subscriberID uuid.UUID, sub db.Subscriber) (uuid.UUID, error) {
+func (r *subscriberRepoMock) Update(subscriberID uuid.UUID, sub db.Subscriber) (*db.Subscriber, error) {
 	if r.updateFunc != nil {
-		return r.updateFunc(subscriberID, sub)
+		updatedSubscriber, err := r.updateFunc(subscriberID, sub)
+		return &updatedSubscriber, err
 	}
-	return subscriberID, nil
+	return nil, fmt.Errorf("updateFunc is not defined")
 }
+
 func (r *subscriberRepoMock) Add(subscriber *db.Subscriber) error {
 	if r.addFunc != nil {
 		return r.addFunc(subscriber)

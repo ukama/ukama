@@ -55,7 +55,21 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		logrus.Error("error while adding subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	return &pb.AddSubscriberResponse{SubscriberID: subscriberID_uuid.String()}, nil
+
+	return &pb.AddSubscriberResponse{
+		Subscriber: &pb.Subscriber{
+			SubscriberID:          subscriberID_uuid.String(),
+			FirstName:             req.GetFirstName(),
+			LastName:              req.GetLastName(),
+			NetworkID:             networkID_uuid.String(),
+			Email:                 req.GetEmail(),
+			PhoneNumber:           req.GetPhoneNumber(),
+			Gender:                req.GetGender(),
+			Address:               req.GetAddress(),
+			ProofOfIdentification: req.GetProofOfIdentification(),
+			DateOfBirth:           birthday.GoString(),
+			IdSerial:              req.GetIdSerial()},
+	}, nil
 
 }
 
@@ -147,21 +161,26 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	logrus.Infof("Update Subscriber Id: %v, Email: %v, ProofOfIdentification: %v, Address: %v",
 		req.SubscriberID, req.Email, req.ProofOfIdentification, req.Address)
 
-	subscriber := db.Subscriber{
+	updateSubscriber := db.Subscriber{
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
 		IdSerial:              req.GetIdSerial(),
 	}
-	subscriberID, err := s.subscriberRepo.Update(subscribeIDUUID, subscriber)
+
+	updatedSubscriberRes, err := s.subscriberRepo.Update(subscribeIDUUID, updateSubscriber)
 	if err != nil {
 		logrus.Errorf("error while updating a subscriber: %v", err)
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
 	return &pb.UpdateSubscriberResponse{
-		SubscriberID: subscriberID.String(),
+		Email:                 updatedSubscriberRes.Email,
+		PhoneNumber:           updatedSubscriberRes.PhoneNumber,
+		Address:               updatedSubscriberRes.Address,
+		IdSerial:              updatedSubscriberRes.IdSerial,
+		ProofOfIdentification: updatedSubscriberRes.ProofOfIdentification,
 	}, nil
 }
 

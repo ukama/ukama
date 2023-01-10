@@ -15,17 +15,24 @@ type SubscriberRepo struct {
 }
 
 // Add provides a mock function with given fields: subscriber
-func (_m *SubscriberRepo) Add(subscriber *db.Subscriber) error {
+func (_m *SubscriberRepo) Add(subscriber *db.Subscriber) (db.Subscriber, error) {
 	ret := _m.Called(subscriber)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Subscriber) error); ok {
+	var r0 db.Subscriber
+	if rf, ok := ret.Get(0).(func(*db.Subscriber) db.Subscriber); ok {
 		r0 = rf(subscriber)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(db.Subscriber)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*db.Subscriber) error); ok {
+		r1 = rf(subscriber)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Delete provides a mock function with given fields: subscriberID
@@ -89,20 +96,18 @@ func (_m *SubscriberRepo) GetByNetwork(networkID uuid.UUID) ([]db.Subscriber, er
 }
 
 // Update provides a mock function with given fields: subscriberID, sub
-func (_m *SubscriberRepo) Update(subscriberID uuid.UUID, sub db.Subscriber) (uuid.UUID, error) {
+func (_m *SubscriberRepo) Update(subscriberID uuid.UUID, sub db.UpdateSubscriberReq) (db.UpdateSubscriberReq, error) {
 	ret := _m.Called(subscriberID, sub)
 
-	var r0 uuid.UUID
-	if rf, ok := ret.Get(0).(func(uuid.UUID, db.Subscriber) uuid.UUID); ok {
+	var r0 db.UpdateSubscriberReq
+	if rf, ok := ret.Get(0).(func(uuid.UUID, db.UpdateSubscriberReq) db.UpdateSubscriberReq); ok {
 		r0 = rf(subscriberID, sub)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(uuid.UUID)
-		}
+		r0 = ret.Get(0).(db.UpdateSubscriberReq)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uuid.UUID, db.Subscriber) error); ok {
+	if rf, ok := ret.Get(1).(func(uuid.UUID, db.UpdateSubscriberReq) error); ok {
 		r1 = rf(subscriberID, sub)
 	} else {
 		r1 = ret.Error(1)
