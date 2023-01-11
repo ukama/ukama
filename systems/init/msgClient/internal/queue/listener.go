@@ -117,14 +117,7 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
 	defer cancel()
 
-	switch delivery.RoutingKey {
-	case string(mb.DeviceConnectedRoutingKey):
-		q.processEventMsg(ctx, delivery)
-
-	default:
-		log.Warning("No handler for routing key ", delivery.RoutingKey)
-		q.processEventMsg(ctx, delivery)
-	}
+	q.processEventMsg(ctx, delivery)
 
 	done <- true
 }
