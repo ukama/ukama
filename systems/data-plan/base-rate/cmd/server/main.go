@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
@@ -21,10 +22,15 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	msgClient "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var serviceConfig *pkg.Config
+var host = "localhost"
+var port = 50051
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -73,4 +79,21 @@ func runGrpcServer(gormdb sql.Db) {
 	})
 
 	grpcServer.StartServer()
+	conn, err := grpc.Dial("localhost:7070", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to dial msg server: %v", err)
+	}
+	defer conn.Close()
+	client := msgClient.NewMsgClientServiceClient(conn)
+
+	res, err := client.RegisterService(context.Background(), &msgClient.RegisterServiceReq{
+		SystemName:  pkg.SystemName,
+		ServiceName: pkg.ServiceName,
+		InstanceId:  pkg.InstanceId,
+	})
+	if err != nil {
+		log.Fatalf("Error while Registering service: %v", err)
+	}
+	log.Printf("res msg data: %v", res)
+
 }
