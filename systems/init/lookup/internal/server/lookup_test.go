@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
-	mb "github.com/ukama/ukama/systems/common/msgBusClient"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	mocks "github.com/ukama/ukama/systems/init/lookup/mocks"
