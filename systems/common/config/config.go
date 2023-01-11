@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"os"
 
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"
@@ -105,11 +106,20 @@ type GrpcService struct {
 Message Client for a system which talks to MsgBus
 */
 type MsgClient struct {
-	Host          string        `default:"localhost:9091"`
+	Host          string        `default:"localhost:9095"`
 	Timeout       time.Duration `default:"3s"`
 	RetryCount    int8          `default:"3"`
-	ListnerRoutes []string
+	Exchange	  string		`default:"amq.topic"`
+	ListenQueue   string		`default:""`
+	PublishQueue string			`default:""`
+	ListenerRoutes []string		
 }
+
+type Service struct {
+	Host	string `default:"localhost"`
+	Port	string `default:"9090"`
+	Uri		string `default:"localhost:9090"`
+}	
 
 type Metrics struct {
 	Port    int  `default:"10250"`
@@ -185,5 +195,16 @@ func DefaultForwardConfig() Forward {
 		Ip:   "localhost",
 		Port: 8080,
 		Path: "/",
+	}
+}
+
+func LoadServiceHostConfig(name string) *Service {
+	svcHost :="_SERVICE_HOST"
+	svcPort :="_SERVICE_PORT"
+	
+	return &Service {
+		Host: os.Getenv(strings.ToUpper(name+svcHost)),
+		Port: os.Getenv(strings.ToUpper(name+svcPort)),
+		Uri:  os.Getenv(strings.ToUpper(name+svcHost))+":"+os.Getenv(strings.ToUpper(name+svcPort)),
 	}
 }

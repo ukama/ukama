@@ -5,6 +5,7 @@ option go_package = "pb/gen";
 package ukama.lookup.v1;
 
 import "validator.proto";
+import "events.proto";
 
 service LookupService {
 
@@ -28,6 +29,7 @@ service LookupService {
     rpc AddSystemForOrg(AddSystemRequest) returns (AddSystemResponse);
     rpc UpdateSystemForOrg(UpdateSystemRequest) returns (UpdateSystemResponse);
     rpc DeleteSystemForOrg(DeleteSystemRequest) returns (DeleteSystemResponse);
+    rpc EventListner(Event) returns (EventResponse);
 
 }
 
