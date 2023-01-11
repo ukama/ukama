@@ -49,7 +49,7 @@ func (u *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) er
 func (r *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 	var sim Sim
 
-	result := r.Db.GetGormDb().Model(&Sim{}).Preload("Package").First(&sim, simID)
+	result := r.Db.GetGormDb().Model(&Sim{}).Preload("Package", "is_active is true").First(&sim, simID)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -60,7 +60,7 @@ func (r *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 func (r *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := r.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberID: subscriberID}).Preload("Package").Find(&sims)
+	result := r.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberID: subscriberID}).Preload("Package", "is_active is true").Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -71,7 +71,7 @@ func (r *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 func (r *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := r.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkID: networkID}).Preload("Package").Find(&sims)
+	result := r.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkID: networkID}).Preload("Package", "is_active is true").Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}

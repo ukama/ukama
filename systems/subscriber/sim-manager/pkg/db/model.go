@@ -31,10 +31,11 @@ type Sim struct {
 
 type Package struct {
 	ID        uuid.UUID `gorm:"primaryKey;type:uuid"`
-	SimID     uuid.UUID `gorm:"not null;type:uuid"`
+	SimID     uuid.UUID `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;not null;type:uuid"`
 	StartDate time.Time
 	EndDate   time.Time
 	PlanID    uuid.UUID `gorm:"not null;type:uuid"`
+	IsActive  bool      `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;default:false"`
 }
 
 type SimType uint8
