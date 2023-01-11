@@ -6,6 +6,8 @@ replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/init/msgClient => ./
 
+replace github.com/ukama/ukama/systems/init/lookup => ../lookup
+
 require (
 	github.com/golang/protobuf v1.5.2
 	github.com/mwitkow/go-proto-validators v0.3.2

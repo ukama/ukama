@@ -465,8 +465,6 @@ github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69
 github.com/subosito/gotenv v1.4.0 h1:yAzM1+SmVcz5R4tXGsNMu1jUl2aOJXoiWUCEwwnGrvs=
 github.com/subosito/gotenv v1.4.0/go.mod h1:mZd6rFysKEcUhUHXJk0C/08wAgyDBFuwEYL7vWWGaGo=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
-github.com/ukama/ukama/systems/init/lookup v0.0.0-20230104003636-ab3d312e74b3 h1:8Y0qvzu22YAsIlAv3KNIL002bLjVPm8OLcAQL+AIebU=
-github.com/ukama/ukama/systems/init/lookup v0.0.0-20230104003636-ab3d312e74b3/go.mod h1:Rz2IPcG0+RnbEqBp4NgJ++t64021RCZzw6mqbbj+I7Q=
 github.com/wagslane/go-rabbitmq v0.8.1 h1:9HLHEaFUoVZ7FirwjQ/t+XIW/iP2VoFz/R2+uLI3a/A=
 github.com/wagslane/go-rabbitmq v0.8.1/go.mod h1:SDjKDyaWPAA8eCQfmTns9TSAkz8tsKRS7c6d5ak3pNg=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
