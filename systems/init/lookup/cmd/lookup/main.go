@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/num30/config"
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
 	"github.com/ukama/ukama/systems/init/lookup/internal"
@@ -22,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serviceConfig = internal.NewConfig()
+var serviceConfig = internal.NewConfig(internal.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument("lookup", os.Args, version.Version)
@@ -55,12 +54,6 @@ func initDb() sql.Db {
 
 func initConfig() {
 	log.Infof("Initializing config")
-	serviceConfig = &internal.Config{
-		DB: &uconf.Database{
-			DbName: internal.ServiceName,
-		},
-		Service: uconf.LoadServiceHostConfig(internal.ServiceName),
-	}
 
 	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -72,7 +65,7 @@ func initConfig() {
 		}
 	}
 
-	log.Debugf("\nService: %s DB Config: %+v", internal.ServiceName, serviceConfig.DB)
+	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v", internal.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
 
 	internal.IsDebugMode = serviceConfig.DebugMode
 }
@@ -87,12 +80,22 @@ func runGrpcServer(d sql.Db) {
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
+		nSrv := server.NewLookupEventServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
 		generated.RegisterLookupServiceServer(s, srv)
+		generated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 
-	mbClient.Start()
+	if err := mbClient.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := mbClient.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", internal.ServiceName, err.Error())
+	}
 
 	grpcServer.StartServer()
 }

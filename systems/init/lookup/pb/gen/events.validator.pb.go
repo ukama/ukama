@@ -27,8 +27,8 @@ func (this *SystemKeepAliveResponse) Validate() error {
 	return nil
 }
 func (this *Event) Validate() error {
-	if this.Rotingkey == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Rotingkey", fmt.Errorf(`value '%v' must not be an empty string`, this.Rotingkey))
+	if this.RoutingKey == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("RoutingKey", fmt.Errorf(`value '%v' must not be an empty string`, this.RoutingKey))
 	}
 	if this.Msg != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Msg); err != nil {
