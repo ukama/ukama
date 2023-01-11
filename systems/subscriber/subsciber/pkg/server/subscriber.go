@@ -131,7 +131,7 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 
 	subscribers, err := s.subscriberRepo.ListSubscribers()
 	if err != nil {
-		logrus.WithError(err).Error("error while getting subscribers by network")
+		logrus.WithError(err).Error("error while getting all subscribers")
 		return nil, grpc.SqlErrorToGrpc(err, "subscribers")
 	}
 
