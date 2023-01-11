@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -84,88 +85,18 @@ func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSims
 	return resp, nil
 }
 
-func (s *SimManagerServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRequest) (*pb.ActivateSimResponse, error) {
-	simID, err := uuid.Parse(req.GetSimID())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSimStatusRequest) (*pb.ToggleSimStatusResponse, error) {
+	strStatus := strings.ToLower(req.Status)
+	simStatus := sims.ParseStatus(strStatus)
+
+	switch simStatus {
+	case sims.SimStatusActive:
+		return s.activateSim(ctx, req.SimID)
+	case sims.SimStatusInactive:
+		return s.deactivateSim(ctx, req.SimID)
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "invalid status parameter: %s.", strStatus)
 	}
-
-	sim, err := s.simRepo.Get(simID)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	if sim.Status != sims.SimStatusInactive {
-		return nil, status.Errorf(codes.FailedPrecondition, "sim's state %s is invalid for activation: Error %s", sim.Status, err.Error())
-	}
-
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type %q for sim ID %q", sim.Type, req.SimID)
-	}
-
-	err = simAgent.ActivateSim(ctx, req.SimID)
-	if err != nil {
-		return nil, err
-	}
-
-	simUpdates := &sims.Sim{
-		ID:               sim.ID,
-		Status:           sims.SimStatusActive,
-		ActivationsCount: sim.ActivationsCount + 1,
-		LastActivatedOn:  time.Now(),
-	}
-
-	if sim.FirstActivatedOn.IsZero() {
-		simUpdates.FirstActivatedOn = simUpdates.LastActivatedOn
-	}
-
-	err = s.simRepo.Update(simUpdates, nil)
-
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	return &pb.ActivateSimResponse{}, nil
-}
-
-func (s *SimManagerServer) DeactivateSim(ctx context.Context, req *pb.DeactivateSimRequest) (*pb.DeactivateSimResponse, error) {
-	simID, err := uuid.Parse(req.GetSimID())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
-	}
-
-	sim, err := s.simRepo.Get(simID)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	if sim.Status != sims.SimStatusActive {
-		return nil, status.Errorf(codes.FailedPrecondition, "sim's state %s is invalid for deactivation: Error %s", sim.Status, err.Error())
-	}
-
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", sim.Type, req.SimID)
-	}
-
-	err = simAgent.DeactivateSim(ctx, req.SimID)
-	if err != nil {
-		return nil, err
-	}
-
-	simUpdates := &sims.Sim{
-		ID:                 sim.ID,
-		Status:             sims.SimStatusInactive,
-		DeactivationsCount: sim.DeactivationsCount + 1}
-
-	err = s.simRepo.Update(simUpdates, nil)
-
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	return &pb.DeactivateSimResponse{}, nil
 }
 
 func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimRequest) (*pb.DeleteSimResponse, error) {
@@ -180,12 +111,12 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	}
 
 	if sim.Status != sims.SimStatusInactive {
-		return nil, status.Errorf(codes.FailedPrecondition, "sim's state %s is invalid for deletion: Error %s", sim.Status, err.Error())
+		return nil, status.Errorf(codes.FailedPrecondition, "sim state: %s is invalid for deletion", sim.Status)
 	}
 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type:%q for sim ID %q", sim.Type, req.SimID)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type: %q for sim ID: %q", sim.Type, req.SimID)
 	}
 
 	err = simAgent.TerminateSim(ctx, req.SimID)
@@ -221,6 +152,90 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 	}
 
 	return &pb.RemovePackageResponse{}, nil
+}
+
+func (s *SimManagerServer) activateSim(ctx context.Context, id string) (*pb.ToggleSimStatusResponse, error) {
+	simID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+	}
+
+	sim, err := s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	if sim.Status != sims.SimStatusInactive {
+		return nil, status.Errorf(codes.FailedPrecondition, "sim state: %s is invalid for activation", sim.Status)
+	}
+
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type: %q for sim ID: %q", sim.Type, id)
+	}
+
+	err = simAgent.ActivateSim(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	simUpdates := &sims.Sim{
+		ID:               sim.ID,
+		Status:           sims.SimStatusActive,
+		ActivationsCount: sim.ActivationsCount + 1,
+		LastActivatedOn:  time.Now(),
+	}
+
+	if sim.FirstActivatedOn.IsZero() {
+		simUpdates.FirstActivatedOn = simUpdates.LastActivatedOn
+	}
+
+	err = s.simRepo.Update(simUpdates, nil)
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	return &pb.ToggleSimStatusResponse{}, nil
+}
+
+func (s *SimManagerServer) deactivateSim(ctx context.Context, id string) (*pb.ToggleSimStatusResponse, error) {
+	simID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+	}
+
+	sim, err := s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	if sim.Status != sims.SimStatusActive {
+		return nil, status.Errorf(codes.FailedPrecondition, "sim state: %s is invalid for deactivation", sim.Status)
+	}
+
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type: %q for sim ID: %q", sim.Type, id)
+	}
+
+	err = simAgent.DeactivateSim(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	simUpdates := &sims.Sim{
+		ID:                 sim.ID,
+		Status:             sims.SimStatusInactive,
+		DeactivationsCount: sim.DeactivationsCount + 1}
+
+	err = s.simRepo.Update(simUpdates, nil)
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	return &pb.ToggleSimStatusResponse{}, nil
 }
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {

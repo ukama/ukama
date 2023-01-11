@@ -14,29 +14,6 @@ type SimManagerServiceServer struct {
 	mock.Mock
 }
 
-// ActivateSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) ActivateSim(_a0 context.Context, _a1 *gen.ActivateSimRequest) (*gen.ActivateSimResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.ActivateSimResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ActivateSimRequest) *gen.ActivateSimResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ActivateSimResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ActivateSimRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // AddPackageForSim provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) AddPackageForSim(_a0 context.Context, _a1 *gen.AddPackageRequest) (*gen.AddPackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -75,29 +52,6 @@ func (_m *SimManagerServiceServer) AllocateSim(_a0 context.Context, _a1 *gen.All
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.AllocateSimRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DeactivateSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) DeactivateSim(_a0 context.Context, _a1 *gen.DeactivateSimRequest) (*gen.DeactivateSimResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.DeactivateSimResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeactivateSimRequest) *gen.DeactivateSimResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeactivateSimResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeactivateSimRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -213,6 +167,29 @@ func (_m *SimManagerServiceServer) RemovePackageForSim(_a0 context.Context, _a1 
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemovePackageRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ToggleSimStatus provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) ToggleSimStatus(_a0 context.Context, _a1 *gen.ToggleSimStatusRequest) (*gen.ToggleSimStatusResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.ToggleSimStatusResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSimStatusRequest) *gen.ToggleSimStatusResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ToggleSimStatusResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleSimStatusRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

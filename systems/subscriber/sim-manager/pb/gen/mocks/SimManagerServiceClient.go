@@ -16,36 +16,6 @@ type SimManagerServiceClient struct {
 	mock.Mock
 }
 
-// ActivateSim provides a mock function with given fields: ctx, in, opts
-func (_m *SimManagerServiceClient) ActivateSim(ctx context.Context, in *gen.ActivateSimRequest, opts ...grpc.CallOption) (*gen.ActivateSimResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.ActivateSimResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ActivateSimRequest, ...grpc.CallOption) *gen.ActivateSimResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ActivateSimResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ActivateSimRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // AddPackageForSim provides a mock function with given fields: ctx, in, opts
 func (_m *SimManagerServiceClient) AddPackageForSim(ctx context.Context, in *gen.AddPackageRequest, opts ...grpc.CallOption) (*gen.AddPackageResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -98,36 +68,6 @@ func (_m *SimManagerServiceClient) AllocateSim(ctx context.Context, in *gen.Allo
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.AllocateSimRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DeactivateSim provides a mock function with given fields: ctx, in, opts
-func (_m *SimManagerServiceClient) DeactivateSim(ctx context.Context, in *gen.DeactivateSimRequest, opts ...grpc.CallOption) (*gen.DeactivateSimResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.DeactivateSimResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeactivateSimRequest, ...grpc.CallOption) *gen.DeactivateSimResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeactivateSimResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeactivateSimRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -278,6 +218,36 @@ func (_m *SimManagerServiceClient) RemovePackageForSim(ctx context.Context, in *
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemovePackageRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ToggleSimStatus provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) ToggleSimStatus(ctx context.Context, in *gen.ToggleSimStatusRequest, opts ...grpc.CallOption) (*gen.ToggleSimStatusResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.ToggleSimStatusResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSimStatusRequest, ...grpc.CallOption) *gen.ToggleSimStatusResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ToggleSimStatusResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleSimStatusRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
