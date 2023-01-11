@@ -90,7 +90,9 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		logrus.WithError(err).Error("error while deleting subscriber")
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	return &pb.DeleteSubscriberResponse{}, nil
+	return &pb.DeleteSubscriberResponse{
+		SubscriberID: subscriberID,
+	}, nil
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
