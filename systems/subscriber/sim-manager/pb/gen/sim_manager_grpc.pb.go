@@ -31,6 +31,7 @@ type SimManagerServiceClient interface {
 	DeleteSim(ctx context.Context, in *DeleteSimRequest, opts ...grpc.CallOption) (*DeleteSimResponse, error)
 	// Sim pacakge
 	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
+	GetPackagesBySim(ctx context.Context, in *GetPackagesBySimRequest, opts ...grpc.CallOption) (*GetPackagesBySimResponse, error)
 	RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error)
 }
 
@@ -105,6 +106,15 @@ func (c *simManagerServiceClient) AddPackageForSim(ctx context.Context, in *AddP
 	return out, nil
 }
 
+func (c *simManagerServiceClient) GetPackagesBySim(ctx context.Context, in *GetPackagesBySimRequest, opts ...grpc.CallOption) (*GetPackagesBySimResponse, error) {
+	out := new(GetPackagesBySimResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetPackagesBySim", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *simManagerServiceClient) RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error) {
 	out := new(RemovePackageResponse)
 	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/RemovePackageForSim", in, out, opts...)
@@ -127,6 +137,7 @@ type SimManagerServiceServer interface {
 	DeleteSim(context.Context, *DeleteSimRequest) (*DeleteSimResponse, error)
 	// Sim pacakge
 	AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
+	GetPackagesBySim(context.Context, *GetPackagesBySimRequest) (*GetPackagesBySimResponse, error)
 	RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error)
 	mustEmbedUnimplementedSimManagerServiceServer()
 }
@@ -155,6 +166,9 @@ func (UnimplementedSimManagerServiceServer) DeleteSim(context.Context, *DeleteSi
 }
 func (UnimplementedSimManagerServiceServer) AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPackageForSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) GetPackagesBySim(context.Context, *GetPackagesBySimRequest) (*GetPackagesBySimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPackagesBySim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemovePackageForSim not implemented")
@@ -298,6 +312,24 @@ func _SimManagerService_AddPackageForSim_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimManagerService_GetPackagesBySim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPackagesBySimRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).GetPackagesBySim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetPackagesBySim",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).GetPackagesBySim(ctx, req.(*GetPackagesBySimRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SimManagerService_RemovePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemovePackageRequest)
 	if err := dec(in); err != nil {
@@ -350,6 +382,10 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddPackageForSim",
 			Handler:    _SimManagerService_AddPackageForSim_Handler,
+		},
+		{
+			MethodName: "GetPackagesBySim",
+			Handler:    _SimManagerService_GetPackagesBySim_Handler,
 		},
 		{
 			MethodName: "RemovePackageForSim",

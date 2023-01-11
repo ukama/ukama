@@ -140,6 +140,25 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	return &pb.DeleteSimResponse{}, nil
 }
 
+func (s *SimManagerServer) GetPackagesBySim(ctx context.Context, req *pb.GetPackagesBySimRequest) (*pb.GetPackagesBySimResponse, error) {
+	simID, err := uuid.Parse(req.GetSimID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+	}
+
+	packages, err := s.packageRepo.GetBySim(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "packages")
+	}
+
+	resp := &pb.GetPackagesBySimResponse{
+		SimID:    req.GetSimID(),
+		Packages: dbPackagesToPbPackages(packages),
+	}
+
+	return resp, nil
+}
+
 func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
 	packageID, err := uuid.Parse(req.GetPackageID())
 	if err != nil {
@@ -272,6 +291,16 @@ func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 	return res
 }
 
+func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {
+	res := []*pb.Sim{}
+
+	for _, s := range sims {
+		res = append(res, dbSimToPbSim(&s))
+	}
+
+	return res
+}
+
 func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	res := &pb.Package{
 		Id: pkg.ID.String(),
@@ -288,11 +317,11 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	return res
 }
 
-func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {
-	res := []*pb.Sim{}
+func dbPackagesToPbPackages(packages []sims.Package) []*pb.Package {
+	res := []*pb.Package{}
 
-	for _, s := range sims {
-		res = append(res, dbSimToPbSim(&s))
+	for _, s := range packages {
+		res = append(res, dbPackageToPbPackage(&s))
 	}
 
 	return res

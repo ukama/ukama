@@ -8,6 +8,7 @@ import (
 
 type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
+	GetBySim(simID uuid.UUID) ([]Package, error)
 	Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
@@ -21,8 +22,8 @@ func NewPackageRepo(db sql.Db) PackageRepo {
 	}
 }
 
-func (u *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.DB) error) error {
-	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+func (p *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.DB) error) error {
+	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Create(pkg)
 		if result.Error != nil {
 			return result.Error
@@ -41,8 +42,19 @@ func (u *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.D
 	return err
 }
 
-func (u *packageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
-	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
+	var packages []Package
+
+	result := p.Db.GetGormDb().Where(&Package{SimID: simID}).Find(&packages)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return packages, nil
+}
+
+func (p *packageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Delete(&Package{}, packageID)
 		if result.Error != nil {
 			return result.Error

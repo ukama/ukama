@@ -26,8 +26,8 @@ func NewSimRepo(db sql.Db) SimRepo {
 	}
 }
 
-func (u *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) error {
-	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+func (s *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) error {
+	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Create(sim)
 		if result.Error != nil {
 			return result.Error
@@ -46,10 +46,10 @@ func (u *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) er
 	return err
 }
 
-func (r *simRepo) Get(simID uuid.UUID) (*Sim, error) {
+func (s *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 	var sim Sim
 
-	result := r.Db.GetGormDb().Model(&Sim{}).Preload("Package", "is_active is true").First(&sim, simID)
+	result := s.Db.GetGormDb().Model(&Sim{}).Preload("Package", "is_active is true").First(&sim, simID)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -57,10 +57,10 @@ func (r *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 	return &sim, nil
 }
 
-func (r *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
+func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := r.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberID: subscriberID}).Preload("Package", "is_active is true").Find(&sims)
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberID: subscriberID}).Preload("Package", "is_active is true").Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -68,10 +68,10 @@ func (r *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 	return sims, nil
 }
 
-func (r *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
+func (s *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := r.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkID: networkID}).Preload("Package", "is_active is true").Find(&sims)
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkID: networkID}).Preload("Package", "is_active is true").Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -80,8 +80,8 @@ func (r *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 }
 
 // Update sim modified non-empty fields provided by Sim struct
-func (u *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error {
-	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+func (s *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error {
+	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Clauses(clause.Returning{}).Updates(sim)
 
 		if result.RowsAffected == 0 {
@@ -105,8 +105,8 @@ func (u *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error 
 	return err
 }
 
-func (u *simRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
-	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+func (s *simRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Delete(&Sim{}, simID)
 		if result.Error != nil {
 			return result.Error
