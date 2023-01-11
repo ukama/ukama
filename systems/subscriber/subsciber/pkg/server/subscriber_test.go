@@ -95,6 +95,10 @@ func TestSubcriberServer_Add(t *testing.T) {
 				delFunc: func(subscriberID uuid.UUID) error {
 					return nil
 				},
+				listFunc: func() ([]db.Subscriber, error) {
+					var listSubscribers []db.Subscriber
+					return listSubscribers, nil
+				},
 				getFunc: func(subscriberID uuid.UUID) (*db.Subscriber, error) {
 					return nil, nil
 				},
@@ -116,6 +120,7 @@ type subscriberRepoMock struct {
 	delFunc      func(subscriberID uuid.UUID) error
 	getFunc      func(subscriberID uuid.UUID) (*db.Subscriber, error)
 	getByNetwork func(networkID uuid.UUID) ([]db.Subscriber, error)
+	listFunc     func() ([]db.Subscriber, error)
 	updateFunc   func(subscriberID uuid.UUID, sub db.Subscriber) (db.Subscriber, error)
 }
 
@@ -132,6 +137,14 @@ func (r *subscriberRepoMock) Add(subscriber *db.Subscriber) error {
 		return r.addFunc(subscriber)
 	}
 	return nil
+}
+
+func (r *subscriberRepoMock) ListSubscribers() ([]db.Subscriber, error) {
+	var subscribers []db.Subscriber
+	if r.addFunc != nil {
+		return r.listFunc()
+	}
+	return subscribers, nil
 }
 
 func (r *subscriberRepoMock) Delete(subscriberID uuid.UUID) error {

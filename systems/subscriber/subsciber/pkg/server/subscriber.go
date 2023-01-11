@@ -121,6 +121,26 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 
 }
 
+func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	logrus.Infof("List all subscribers")
+
+	subscribers, err := s.subscriberRepo.ListSubscribers()
+	if err != nil {
+		logrus.WithError(err).Error("error while getting subscribers by network")
+		return nil, grpc.SqlErrorToGrpc(err, "subscribers")
+	}
+
+	subscriberList := &pb.ListSubscribersResponse{
+		Subscribers: dbsubscriberToPbSubscribers(subscribers),
+	}
+
+	return subscriberList, nil
+}
 func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	networkID := req.GetNetworkID()
 	if networkID == "" {

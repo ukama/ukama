@@ -18,6 +18,20 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *ListSubscribersRequest) Validate() error {
+	return nil
+}
+func (this *ListSubscribersResponse) Validate() error {
+	for _, item := range this.Subscribers {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Subscribers", err)
+			}
+		}
+	}
+	return nil
+}
+
 var _regex_DeleteSubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *DeleteSubscriberRequest) Validate() error {

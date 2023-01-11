@@ -12,6 +12,7 @@ type SubscriberRepo interface {
 	Delete(subscriberID uuid.UUID) error
 	Update(subscriberID uuid.UUID, sub Subscriber) (*Subscriber, error)
 	GetByNetwork(networkID uuid.UUID) ([]Subscriber, error)
+	ListSubscribers() ([]Subscriber, error)
 }
 
 type subscriberRepo struct {
@@ -27,6 +28,15 @@ func NewSubscriberRepo(db sql.Db) *subscriberRepo {
 func (s *subscriberRepo) Add(subscriber *Subscriber) error {
 	db := s.Db.GetGormDb()
 	return db.Create(subscriber).Error
+}
+func (s *subscriberRepo) ListSubscribers() ([]Subscriber, error) {
+
+	var subscribers []Subscriber
+	result := s.Db.GetGormDb().Find(&subscribers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return subscribers, nil
 }
 
 func (s *subscriberRepo) Get(subscriberId uuid.UUID) (*Subscriber, error) {

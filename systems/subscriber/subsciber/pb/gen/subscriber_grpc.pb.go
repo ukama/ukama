@@ -27,6 +27,7 @@ type SubscriberServiceClient interface {
 	Update(ctx context.Context, in *UpdateSubscriberRequest, opts ...grpc.CallOption) (*UpdateSubscriberResponse, error)
 	Delete(ctx context.Context, in *DeleteSubscriberRequest, opts ...grpc.CallOption) (*DeleteSubscriberResponse, error)
 	GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error)
+	ListSubscribers(ctx context.Context, in *ListSubscribersRequest, opts ...grpc.CallOption) (*ListSubscribersResponse, error)
 }
 
 type subscriberServiceClient struct {
@@ -82,6 +83,15 @@ func (c *subscriberServiceClient) GetByNetwork(ctx context.Context, in *GetByNet
 	return out, nil
 }
 
+func (c *subscriberServiceClient) ListSubscribers(ctx context.Context, in *ListSubscribersRequest, opts ...grpc.CallOption) (*ListSubscribersResponse, error) {
+	out := new(ListSubscribersResponse)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.v1.SubscriberService/ListSubscribers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubscriberServiceServer is the server API for SubscriberService service.
 // All implementations must embed UnimplementedSubscriberServiceServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type SubscriberServiceServer interface {
 	Update(context.Context, *UpdateSubscriberRequest) (*UpdateSubscriberResponse, error)
 	Delete(context.Context, *DeleteSubscriberRequest) (*DeleteSubscriberResponse, error)
 	GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error)
+	ListSubscribers(context.Context, *ListSubscribersRequest) (*ListSubscribersResponse, error)
 	mustEmbedUnimplementedSubscriberServiceServer()
 }
 
@@ -112,6 +123,9 @@ func (UnimplementedSubscriberServiceServer) Delete(context.Context, *DeleteSubsc
 }
 func (UnimplementedSubscriberServiceServer) GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByNetwork not implemented")
+}
+func (UnimplementedSubscriberServiceServer) ListSubscribers(context.Context, *ListSubscribersRequest) (*ListSubscribersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSubscribers not implemented")
 }
 func (UnimplementedSubscriberServiceServer) mustEmbedUnimplementedSubscriberServiceServer() {}
 
@@ -216,6 +230,24 @@ func _SubscriberService_GetByNetwork_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SubscriberService_ListSubscribers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSubscribersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscriberServiceServer).ListSubscribers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.subscriber.v1.SubscriberService/ListSubscribers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscriberServiceServer).ListSubscribers(ctx, req.(*ListSubscribersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SubscriberService_ServiceDesc is the grpc.ServiceDesc for SubscriberService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +274,10 @@ var SubscriberService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetByNetwork",
 			Handler:    _SubscriberService_GetByNetwork_Handler,
+		},
+		{
+			MethodName: "ListSubscribers",
+			Handler:    _SubscriberService_ListSubscribers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
