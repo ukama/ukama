@@ -35,7 +35,9 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 	log.Debugf("Listener Config %+v", s)
 	routes := make([]string, len(s.Routes))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.GrpcTimeout))
+	t := time.Duration(s.GrpcTimeout) * time.Second
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(t))
 	defer cancel()
 
 	conn, err := grpc.DialContext(ctx, s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
@@ -69,7 +71,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 		routes:      routes,
 		queue:       s.ListQueue,
 		exchange:    s.Exchange,
-		grpcTimeout: time.Duration(s.GrpcTimeout) * time.Second,
+		grpcTimeout: t,
 	}, nil
 }
 

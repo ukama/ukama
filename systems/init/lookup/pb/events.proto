@@ -9,15 +9,17 @@ import "google/protobuf/any.proto";
 
 service EventNotificationService {
     rpc EventNotification(Event) returns (EventResponse);
+    rpc KeepAlive
 }
 
-message SystemKeepAliveRequest {
-    string systemName = 1 [(validator.field) = {string_not_empty: true}];
-    int64 tstamp = 2 [(validator.field) = {string_not_empty: true}];
+message ServiceKeepAliveRequest {
+   int64 reqTStamp=1  [(validator.field) = {string_not_empty: true}];
 }
 
-message SystemKeepAliveResponse {
-
+message ServiceKeepAliveResponse {
+    string name = 1 [(validator.field) = {string_not_empty: true}];
+    string instanceId =2 [(validator.field) = {string_not_empty: true}];
+    int64 respTStamp = 3 [(validator.field) = {string_not_empty: true}];
 }
 
 message Event {

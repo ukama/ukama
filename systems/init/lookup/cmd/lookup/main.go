@@ -89,13 +89,18 @@ func runGrpcServer(d sql.Db) {
 		generated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 
-	if err := mbClient.Register(); err != nil {
+	go msgBusListener(mbClient)
+
+	grpcServer.StartServer()
+}
+
+func msgBusListener(m *mb.MsgBusClient) {
+
+	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
 
-	if err := mbClient.Start(); err != nil {
+	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", internal.ServiceName, err.Error())
 	}
-
-	grpcServer.StartServer()
 }
