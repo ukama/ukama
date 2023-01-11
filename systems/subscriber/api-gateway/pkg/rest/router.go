@@ -51,7 +51,7 @@ type simManager interface {
 	AllocateSim(req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error)
 	GetSim(simId string) (*pb.GetSimResponse, error)
 	GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriberResponse, error)
-	ActivateDeactivateSim(simId string, status string) (*pb.ActivateSimResponse, error)
+	ToggleSimStatus(simId string, status string) (*pb.ToggleSimStatusResponse, error)
 	AddPackageToSim(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error)
 	RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error)
 	GetSimUsage(simId string) (*pb.GetSimUsageResponse, error)
@@ -286,12 +286,12 @@ func (r *Router) getSimsBySub(c *gin.Context, req *GetSimsBySubReq) (*pb.GetSims
 	return res, nil
 }
 
-func (r *Router) updateSimStatus(c *gin.Context, req *ActivateDeactivateSimReq) error {
-	_, err := r.clients.sm.ActivateDeactivateSim(req.SimId, req.Status)
+func (r *Router) updateSimStatus(c *gin.Context, req *ActivateDeactivateSimReq) (*pb.ToggleSimStatusResponse, error) {
+	res, err := r.clients.sm.ToggleSimStatus(req.SimId, req.Status)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return res, nil
 }
 
 func (r *Router) addPkgForSim(c *gin.Context, req *AddPkgToSimReq) error {

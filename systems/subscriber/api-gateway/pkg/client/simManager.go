@@ -75,16 +75,10 @@ func (sm *SimManager) GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriber
 	return sm.client.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{SubscriberID: subscriberId})
 }
 
-func (sm *SimManager) ActivateDeactivateSim(simId string, status string) (*pb.ActivateSimResponse, error) {
+func (sm *SimManager) ToggleSimStatus(simId string, status string) (*pb.ToggleSimStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-	return sm.client.ActivateSim(ctx, &pb.ActivateSimRequest{SimID: simId})
-}
-
-func (sm *SimManager) DeactivateSim(simId string) (*pb.DeactivateSimResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-	return sm.client.DeactivateSim(ctx, &pb.DeactivateSimRequest{SimID: simId})
+	return sm.client.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{SimID: simId, Status: status})
 }
 
 func (sm *SimManager) AddPackageToSim(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {

@@ -51,16 +51,10 @@ func (this *GetSimsBySubscriberResponse) Validate() error {
 	}
 	return nil
 }
-func (this *ActivateSimRequest) Validate() error {
+func (this *ToggleSimStatusRequest) Validate() error {
 	return nil
 }
-func (this *ActivateSimResponse) Validate() error {
-	return nil
-}
-func (this *DeactivateSimRequest) Validate() error {
-	return nil
-}
-func (this *DeactivateSimResponse) Validate() error {
+func (this *ToggleSimStatusResponse) Validate() error {
 	return nil
 }
 func (this *DeleteSimRequest) Validate() error {

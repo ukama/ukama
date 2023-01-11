@@ -10,8 +10,7 @@ service SimManagerService {
     rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
     rpc GetSim(GetSimRequest) returns (GetSimResponse);
     rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
-    rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
-    rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
+    rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
     rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
     rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
@@ -46,19 +45,13 @@ message GetSimsBySubscriberResponse {
     repeated SimObj sims = 2;
 }
 
-message ActivateSimRequest {
+message ToggleSimStatusRequest {
     string simID = 1;
+    string status = 2;
 }
 
-message ActivateSimResponse{}
+message ToggleSimStatusResponse{}
 
-
-message DeactivateSimRequest {
-    string simID = 1;
-}
-
-message DeactivateSimResponse{
-}
 
 message DeleteSimRequest {
     string simID = 1;

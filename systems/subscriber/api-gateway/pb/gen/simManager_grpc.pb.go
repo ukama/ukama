@@ -25,8 +25,7 @@ type SimManagerServiceClient interface {
 	AllocateSim(ctx context.Context, in *AllocateSimRequest, opts ...grpc.CallOption) (*AllocateSimResponse, error)
 	GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error)
 	GetSimsBySubscriber(ctx context.Context, in *GetSimsBySubscriberRequest, opts ...grpc.CallOption) (*GetSimsBySubscriberResponse, error)
-	ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error)
-	DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error)
+	ToggleSimStatus(ctx context.Context, in *ToggleSimStatusRequest, opts ...grpc.CallOption) (*ToggleSimStatusResponse, error)
 	DeleteSim(ctx context.Context, in *DeleteSimRequest, opts ...grpc.CallOption) (*DeleteSimResponse, error)
 	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error)
@@ -68,18 +67,9 @@ func (c *simManagerServiceClient) GetSimsBySubscriber(ctx context.Context, in *G
 	return out, nil
 }
 
-func (c *simManagerServiceClient) ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error) {
-	out := new(ActivateSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/ActivateSim", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *simManagerServiceClient) DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error) {
-	out := new(DeactivateSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/DeactivateSim", in, out, opts...)
+func (c *simManagerServiceClient) ToggleSimStatus(ctx context.Context, in *ToggleSimStatusRequest, opts ...grpc.CallOption) (*ToggleSimStatusResponse, error) {
+	out := new(ToggleSimStatusResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/ToggleSimStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,8 +119,7 @@ type SimManagerServiceServer interface {
 	AllocateSim(context.Context, *AllocateSimRequest) (*AllocateSimResponse, error)
 	GetSim(context.Context, *GetSimRequest) (*GetSimResponse, error)
 	GetSimsBySubscriber(context.Context, *GetSimsBySubscriberRequest) (*GetSimsBySubscriberResponse, error)
-	ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error)
-	DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error)
+	ToggleSimStatus(context.Context, *ToggleSimStatusRequest) (*ToggleSimStatusResponse, error)
 	DeleteSim(context.Context, *DeleteSimRequest) (*DeleteSimResponse, error)
 	AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error)
@@ -151,11 +140,8 @@ func (UnimplementedSimManagerServiceServer) GetSim(context.Context, *GetSimReque
 func (UnimplementedSimManagerServiceServer) GetSimsBySubscriber(context.Context, *GetSimsBySubscriberRequest) (*GetSimsBySubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSimsBySubscriber not implemented")
 }
-func (UnimplementedSimManagerServiceServer) ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ActivateSim not implemented")
-}
-func (UnimplementedSimManagerServiceServer) DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeactivateSim not implemented")
+func (UnimplementedSimManagerServiceServer) ToggleSimStatus(context.Context, *ToggleSimStatusRequest) (*ToggleSimStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ToggleSimStatus not implemented")
 }
 func (UnimplementedSimManagerServiceServer) DeleteSim(context.Context, *DeleteSimRequest) (*DeleteSimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSim not implemented")
@@ -236,38 +222,20 @@ func _SimManagerService_GetSimsBySubscriber_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SimManagerService_ActivateSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ActivateSimRequest)
+func _SimManagerService_ToggleSimStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ToggleSimStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SimManagerServiceServer).ActivateSim(ctx, in)
+		return srv.(SimManagerServiceServer).ToggleSimStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/ActivateSim",
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/ToggleSimStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).ActivateSim(ctx, req.(*ActivateSimRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SimManagerService_DeactivateSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeactivateSimRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).DeactivateSim(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/DeactivateSim",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).DeactivateSim(ctx, req.(*DeactivateSimRequest))
+		return srv.(SimManagerServiceServer).ToggleSimStatus(ctx, req.(*ToggleSimStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -364,12 +332,8 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SimManagerService_GetSimsBySubscriber_Handler,
 		},
 		{
-			MethodName: "ActivateSim",
-			Handler:    _SimManagerService_ActivateSim_Handler,
-		},
-		{
-			MethodName: "DeactivateSim",
-			Handler:    _SimManagerService_DeactivateSim_Handler,
+			MethodName: "ToggleSimStatus",
+			Handler:    _SimManagerService_ToggleSimStatus_Handler,
 		},
 		{
 			MethodName: "DeleteSim",
