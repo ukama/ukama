@@ -17,7 +17,7 @@ type Config struct {
 }
 
 type HeathCheckRoutine struct {
-	Period      time.Duration `default:"120s"`
+	Period      time.Duration `default:"60s"`
 	AllowedMiss uint32        `default:"3"`
 }
 

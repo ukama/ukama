@@ -192,7 +192,7 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
 
 	go listener.startQueueListening()
 
-	/* Check listner state before reurning */
+	/* Check listner state before returning */
 	time.Sleep(500 * time.Millisecond)
 
 	if !listener.state {
@@ -229,18 +229,18 @@ func (m *MsgBusHandler) Publish(service string, key string, msg *anypb.Any) erro
 }
 
 func (m *MsgBusHandler) doHealthCheck() error {
-	log.Debugf("[Health Check Monitor] Starting HealthCheck at %s.", time.Now().Format(time.RFC1123))
+	log.Debugf("[Health Check Monitor] Starting HealthCheck at %s", time.Now().Format(time.RFC1123))
 	for id, q := range m.ql {
 		q.healthCheck()
 		if q.continuousMiss > m.mia {
-			serviceName := q.serviceName
+			log.Debugf("Hit")
 
-			if err := m.RemoveServiceQueueListening(serviceName); err != nil {
-				log.Errorf("[Health Check Monitor] Failed to remove listener for %s with id %s . Error %s", serviceName, id, err.Error())
+			if err := m.RemoveServiceQueueListening(id); err != nil {
+				log.Errorf("[Health Check Monitor] Failed to remove listener for %s with id %s . Error %s", q.serviceName, id, err.Error())
 			}
 
-			if err := m.RemoveServiceQueuePublisher(serviceName); err != nil {
-				log.Errorf("[Health Check Monitor] Failed to remove publisher for %s with id %s. Error %s", serviceName, id, err.Error())
+			if err := m.RemoveServiceQueuePublisher(id); err != nil {
+				log.Errorf("[Health Check Monitor] Failed to remove publisher for %s with id %s. Error %s", q.serviceName, id, err.Error())
 			}
 		}
 	}
@@ -249,15 +249,19 @@ func (m *MsgBusHandler) doHealthCheck() error {
 }
 
 func (m *MsgBusHandler) monitor(q chan bool) {
+	log.Infof("Starting health check routine with period %s.", m.pHC)
 	t := time.NewTicker(m.pHC)
-	log.Infof("Starting health check routine.")
+
 	go func() {
-		select {
-		case <-t.C:
-			m.doHealthCheck()
-		case <-q:
-			t.Stop()
-			return
+		for {
+			select {
+			case <-t.C:
+				m.doHealthCheck()
+			case <-q:
+				t.Stop()
+				return
+			}
 		}
 	}()
+
 }

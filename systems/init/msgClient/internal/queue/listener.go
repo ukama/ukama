@@ -31,7 +31,7 @@ type QueueListener struct {
 	c              chan bool
 	routes         []string
 	lastPing       time.Time
-	continuousMiss uint32 `"default:"0"`
+	continuousMiss uint32
 }
 
 func NewQueueListener(s db.Service) (*QueueListener, error) {
@@ -168,6 +168,9 @@ func (q *QueueListener) healthCheck() {
 
 	if q.gConn == nil {
 		if err := q.reConnect(ctx); err != nil {
+			dt := time.Now()
+			q.continuousMiss++
+			log.Errorf("HealthCheck Failed %d time/s for %s service at %s", q.continuousMiss, q.serviceName, dt.Format(time.RFC1123))
 			return
 		}
 	}
