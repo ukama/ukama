@@ -44,6 +44,29 @@ func (_m *PackageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *g
 	return r0
 }
 
+// Get provides a mock function with given fields: packageID
+func (_m *PackageRepo) Get(packageID uuid.UUID) (*db.Package, error) {
+	ret := _m.Called(packageID)
+
+	var r0 *db.Package
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Package); ok {
+		r0 = rf(packageID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Package)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(packageID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetBySim provides a mock function with given fields: simID
 func (_m *PackageRepo) GetBySim(simID uuid.UUID) ([]db.Package, error) {
 	ret := _m.Called(simID)

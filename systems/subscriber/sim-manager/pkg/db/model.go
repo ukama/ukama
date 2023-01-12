@@ -38,6 +38,10 @@ type Package struct {
 	IsActive  bool      `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;default:false"`
 }
 
+func (p Package) IsExpired() bool {
+	return p.EndDate.Before(time.Now())
+}
+
 type SimType uint8
 
 const (
