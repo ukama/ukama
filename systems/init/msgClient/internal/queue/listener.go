@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
+	hpb "github.com/ukama/ukama/systems/common/pb/gen/health"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
 	"google.golang.org/grpc"
@@ -16,23 +17,28 @@ import (
 )
 
 type QueueListener struct {
-	mConn       mb.Consumer
-	gConn       *grpc.ClientConn
-	gClient     pb.EventNotificationServiceClient
-	grpcTimeout time.Duration
-	serviceUuid string
-	serviceName string
-	serviceHost string
-	state       bool
-	queue       string
-	exchange    string
-	c           chan bool
-	routes      []string
+	mConn          mb.Consumer
+	gConn          *grpc.ClientConn
+	gClient        pb.EventNotificationServiceClient
+	hClient        hpb.HealthClient
+	grpcTimeout    time.Duration
+	serviceUuid    string
+	serviceName    string
+	serviceHost    string
+	state          bool
+	queue          string
+	exchange       string
+	c              chan bool
+	routes         []string
+	lastPing       time.Time
+	continuousMiss uint32 `"default:"0"`
 }
 
 func NewQueueListener(s db.Service) (*QueueListener, error) {
+
 	var gc pb.EventNotificationServiceClient
-	log.Debugf("Listener Config %+v", s)
+	var hc hpb.HealthClient
+
 	routes := make([]string, len(s.Routes))
 
 	t := time.Duration(s.GrpcTimeout) * time.Second
@@ -45,6 +51,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 		log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", s.ServiceUri, err.Error())
 	} else {
 		gc = pb.NewEventNotificationServiceClient(conn)
+		hc = hpb.NewHealthClient(conn)
 	}
 
 	client, err := mb.NewConsumerClient(s.MsgBusUri)
@@ -68,6 +75,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 		state:       false,
 		gConn:       conn,
 		gClient:     gc,
+		hClient:     hc,
 		routes:      routes,
 		queue:       s.ListQueue,
 		exchange:    s.Exchange,
@@ -140,21 +148,52 @@ func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
 	log.Infof("Received a message: %+v", e)
 
 	if q.gConn == nil {
-		conn, err := grpc.DialContext(ctx, q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-		if err != nil {
-			log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", q.serviceHost, err.Error())
+		if err := q.reConnect(ctx); err != nil {
 			return
-		} else {
-			q.gClient = pb.NewEventNotificationServiceClient(conn)
 		}
-
-		q.gConn = conn
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	_, err = q.gClient.EventNotification(ctx, e)
 	if err != nil {
 		log.Errorf("Failed to send message to %s with key %s. Error %s", q.serviceHost, d.RoutingKey, err.Error())
 	}
+
+}
+
+func (q *QueueListener) healthCheck() {
+
+	log.Debugf("Sending health check to service %s", q.serviceName)
+	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
+	defer cancel()
+
+	if q.gConn == nil {
+		if err := q.reConnect(ctx); err != nil {
+			return
+		}
+	}
+
+	_, err := q.hClient.Check(ctx, &hpb.HealthCheckRequest{Service: q.serviceName})
+	if err != nil {
+		dt := time.Now()
+		q.continuousMiss++
+		log.Errorf("HealthCheck Failed %d time/s for %s service at %s", q.continuousMiss, q.serviceName, dt.Format(time.RFC1123))
+	} else {
+		q.continuousMiss = 0
+		q.lastPing = time.Now()
+	}
+}
+
+func (q *QueueListener) reConnect(ctx context.Context) error {
+
+	conn, err := grpc.DialContext(ctx, q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", q.serviceHost, err.Error())
+		return err
+	} else {
+		q.gClient = pb.NewEventNotificationServiceClient(conn)
+		q.hClient = hpb.NewHealthClient(conn)
+	}
+	q.gConn = conn
+
+	return nil
 }
