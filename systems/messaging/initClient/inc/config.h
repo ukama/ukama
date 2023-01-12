@@ -14,35 +14,36 @@
 #ifndef INIT_CLIENT_CONFIG_H
 #define INIT_CLIENT_CONFIG_H
 
-#define DEFAULT_SYSTEM_ORG "Ukama"
-#define DEFAULT_API_VER    "v1"
+#define ENV_INIT_CLIENT_ADDR "ENV_INIT_CLIENT_ADDR"
+#define ENV_INIT_CLIENT_PORT "ENV_INIT_CLIENT_PORT"
 
-#define ENV_INIT_CLIENT_LOG_LEVEL "INIT_CLIENT_LOG_LEVEL"
-#define ENV_INIT_CLIENT_IP        "INIT_CLIENT_IP"
-#define ENV_INIT_CLIENT_PORT      "INIT_CLIENT_PORT"
+#define ENV_SYSTEM_NAME "ENV_SYSTEM_NAME"
+#define ENV_SYSTEM_ADDR "ENV_SYSTEM_ADDR"
+#define ENV_SYSTEM_PORT "ENV_SYSTEM_PORT"
+#define ENV_SYSTEM_CERT "ENV_SYSTEM_CERT"
+#define ENV_SYSTEM_ORG  "ENV_SYSTEM_ORG"
 
-#define ENV_INIT_CLIENT_SYSTEM_ORG  "ENV_INIT_CLIENT_SYSTEM_ORG"
-#define ENV_INIT_CLIENT_SYSTEM_NAME "ENV_INIT_CLIENT_SYSTEM_NAME"
-#define ENV_INIT_CLIENT_SYSTEM_ADDR "ENV_INIT_CLIENT_SYSTEM_ADDR"
-#define ENV_INIT_CLIENT_SYSTEM_PORT "ENV_INIT_CLIENT_SYSTEM_PORT"
-#define ENV_INIT_CLIENT_SYSTEM_CERT "ENV_INIT_CLIENT_SYSTEM_CERT"
+#define ENV_INIT_SYSTEM_ADDR "ENV_INIT_SYSTEM_ADDR"
+#define ENV_INIT_SYSTEM_PORT "ENV_INIT_SYSTEM_PORT"
+#define ENV_INIT_SYSTEM_API  "ENV_INIT_SYSTEM_API"
 
-#define ENV_INIT_SYSTEM_API_VER     "ENV_INIT_SYSTEM_API_VER"
-#define ENV_INIT_SYSTEM_ADDR        "ENV_INIT_SYSTEM_ADDR"
-#define ENV_INIT_SYSTEM_PORT        "ENV_INIT_SYSTEM_PORT"
+#define ENV_INIT_CLIENT_LOG_LEVEL "ENV_INIT_CLIENT_LOG_LEVEL"
+#define ENV_INIT_CLIENT_TEMP_FILE "ENV_INIT_CLIENT_TEMP_FILE"
 
 /* Struct to various env variables and runtime config parameters */
 typedef struct {
 
 	char *logLevel;   /* Log level */
-	char *ip;         /* IP bind */
-	char *port;       /* Port listen */
+	char *tempFile;   /* Temp file to log stuff */
 
-    char *systemOrg;  /* Name of the organization the system belongs */
+	char *addr;       /* initClient bind address */
+	char *port;       /* initClient listening port */
+
+	char *systemOrg;  /* Name of the organization the system belongs */
 	char *systemName; /* Name of the system */
 	char *systemAddr; /* address where system can be reached at */
 	char *systemPort; /* port where system can be reached at */
-    char *systemCert; /* Certificate for the system */
+	char *systemCert; /* Certificate for the system */
 
 	char *initSystemAPIVer; /* API version for init system */
 	char *initSystemAddr;   /* address for init system */
