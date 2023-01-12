@@ -79,7 +79,7 @@ func (s *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 	return sims, nil
 }
 
-// Update sim modified non-empty fields provided by Sim struct
+// Update package modified non-empty fields provided by Package struct
 func (s *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Clauses(clause.Returning{}).Updates(sim)

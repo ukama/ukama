@@ -4,11 +4,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	GetBySim(simID uuid.UUID) ([]Package, error)
+	Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
@@ -51,6 +53,31 @@ func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
 	}
 
 	return packages, nil
+}
+
+func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error {
+	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if nestedFunc != nil {
+			nestErr := nestedFunc(pkg, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		result := tx.Clauses(clause.Returning{}).Updates(pkg)
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (p *packageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {

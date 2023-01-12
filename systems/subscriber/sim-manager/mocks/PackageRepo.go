@@ -67,6 +67,20 @@ func (_m *PackageRepo) GetBySim(simID uuid.UUID) ([]db.Package, error) {
 	return r0, r1
 }
 
+// Update provides a mock function with given fields: pkg, nestedFunc
+func (_m *PackageRepo) Update(pkg *db.Package, nestedFunc func(*db.Package, *gorm.DB) error) error {
+	ret := _m.Called(pkg, nestedFunc)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Package, func(*db.Package, *gorm.DB) error) error); ok {
+		r0 = rf(pkg, nestedFunc)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 type mockConstructorTestingTNewPackageRepo interface {
 	mock.TestingT
 	Cleanup(func())
