@@ -51,11 +51,6 @@ func (_m *HealthServer) Watch(_a0 *health.HealthCheckRequest, _a1 health.Health_
 	return r0
 }
 
-// mustEmbedUnimplementedHealthServer provides a mock function with given fields:
-func (_m *HealthServer) mustEmbedUnimplementedHealthServer() {
-	_m.Called()
-}
-
 type mockConstructorTestingTNewHealthServer interface {
 	mock.TestingT
 	Cleanup(func())
