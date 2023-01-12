@@ -6,8 +6,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
-
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,7 +17,9 @@ import (
 const uuidParsingError = "Error parsing UUID"
 
 type PackageServer struct {
-	packageRepo db.PackageRepo
+	packageRepo       db.PackageRepo
+	msgbus            *mb.MsgBusClient
+	packageRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
 }
 
@@ -85,6 +88,15 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		logrus.Error("error while deleting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
+
+	// Publish message to msgbus
+
+	route := p.packageRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
+	err = p.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
 	return &pb.DeletePackageResponse{}, nil
 }
 
@@ -106,6 +118,14 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 	if err != nil {
 		logrus.Error("error while getting updating a package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	// Publish message to msgbus
+
+	route := p.packageRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
+	err = p.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.UpdatePackageResponse{

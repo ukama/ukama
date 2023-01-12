@@ -19,6 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mbc "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"google.golang.org/grpc"
@@ -35,7 +36,6 @@ func main() {
 	runGrpcServer(packageDb)
 }
 
-// initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	serviceConfig = &pkg.Config{
 		DB: &uconf.Database{
@@ -66,11 +66,35 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
+	instanceId := os.Getenv("POD_NAME")
+
+	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 
 		srv := server.NewPackageServer(db.NewPackageRepo(gormdb))
 		generated.RegisterPackagesServiceServer(s, srv)
 	})
 
+	go msgBusListener(mbClient)
+
 	grpcServer.StartServer()
+}
+
+func msgBusListener(m *mbc.MsgBusClient) {
+
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }
