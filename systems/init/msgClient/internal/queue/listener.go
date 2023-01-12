@@ -35,7 +35,9 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 	log.Debugf("Listener Config %+v", s)
 	routes := make([]string, len(s.Routes))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.GrpcTimeout))
+	t := time.Duration(s.GrpcTimeout) * time.Second
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(t))
 	defer cancel()
 
 	conn, err := grpc.DialContext(ctx, s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
@@ -69,7 +71,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 		routes:      routes,
 		queue:       s.ListQueue,
 		exchange:    s.Exchange,
-		grpcTimeout: time.Duration(s.GrpcTimeout) * time.Second,
+		grpcTimeout: t,
 	}, nil
 }
 
@@ -115,14 +117,7 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
 	defer cancel()
 
-	switch delivery.RoutingKey {
-	case string(mb.DeviceConnectedRoutingKey):
-		q.processEventMsg(ctx, delivery)
-
-	default:
-		log.Warning("No handler for routing key ", delivery.RoutingKey)
-		q.processEventMsg(ctx, delivery)
-	}
+	q.processEventMsg(ctx, delivery)
 
 	done <- true
 }

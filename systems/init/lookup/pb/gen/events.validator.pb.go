@@ -17,15 +17,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *SystemKeepAliveRequest) Validate() error {
-	if this.SystemName == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SystemName", fmt.Errorf(`value '%v' must not be an empty string`, this.SystemName))
-	}
-	return nil
-}
-func (this *SystemKeepAliveResponse) Validate() error {
-	return nil
-}
 func (this *Event) Validate() error {
 	if this.RoutingKey == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("RoutingKey", fmt.Errorf(`value '%v' must not be an empty string`, this.RoutingKey))

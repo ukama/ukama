@@ -97,8 +97,6 @@ func (r RoutingKeyBuilder) SetActionUpdate() RoutingKeyBuilder {
 	return r
 }
 
-
-
 func (r RoutingKeyBuilder) SetActionDelete() RoutingKeyBuilder {
 	r.action = ACTION_CRUD_DELETE
 	return r
@@ -144,23 +142,29 @@ func (r RoutingKeyBuilder) MustBuild() string {
 }
 
 func Parse(s string) (RoutingKey, error) {
-	
+
 	parts := strings.Split(s, ".")
 	if len(parts) != 5 {
-    	return "", fmt.Errorf("invalid route %s", s)
+		return "", fmt.Errorf("invalid route %s", s)
 	}
 
 	/* Validate the components of key too like source , event etc. */
 
 	k := RoutingKey(s)
-	return k, nil 
+	return k, nil
 }
 
-func ParseRouteList(s []string)([]RoutingKey, error) {
+func ParseRouteList(s []string) ([]RoutingKey, error) {
+
 	rk := make([]RoutingKey, len(s))
-	for i,k := range s {
-		rk[i] = RoutingKey(k)
+	for i, k := range s {
+		t, err := Parse(k)
+		if err != nil {
+			/* return with keys which ar parsed successfully */
+			return rk, err
+		}
+		rk[i] = t
 	}
 
-	return rk,nil
+	return rk, nil
 }

@@ -6,11 +6,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	mocks "github.com/ukama/ukama/systems/init/lookup/mocks"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
-	mb "github.com/ukama/ukama/systems/init/lookup/pkg/msgBusClient"
 
 	"github.com/stretchr/testify/assert"
 )

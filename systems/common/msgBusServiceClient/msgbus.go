@@ -46,7 +46,7 @@ func NewMsgBusClient(timeout time.Duration, system string,
 		logrus.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewMsgClientServiceClient(conn)
-	logrus.Info(timeout)
+
 	return &MsgBusClient{
 		service:      service,
 		system:       system,
