@@ -3,19 +3,17 @@ package server
 import (
 	"context"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/goombaio/namegenerator"
 	"github.com/jackc/pgtype"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/init/lookup/internal"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
-	mb "github.com/ukama/ukama/systems/init/lookup/pkg/msgBusClient"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -26,19 +24,16 @@ type LookupServer struct {
 	nodeRepo       db.NodeRepo
 	msgbus         *mb.MsgBusClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
-	nameGenerator  namegenerator.Generator
 	pb.UnimplementedLookupServiceServer
 }
 
 func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus *mb.MsgBusClient) *LookupServer {
-	seed := time.Now().UTC().UnixNano()
 	return &LookupServer{
 		nodeRepo:       nodeRepo,
 		orgRepo:        orgRepo,
 		systemRepo:     systemRepo,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
-		nameGenerator:  namegenerator.NewNameGenerator(seed),
 	}
 }
 
@@ -72,7 +67,7 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	route := l.baseRoutingKey.SetActionCreate().SetObject("organization").MustBuild()
+	route := l.baseRoutingKey.SetAction("create").SetObject("organization").MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -167,7 +162,7 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	route := l.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild()
+	route := l.baseRoutingKey.SetAction("create").SetObject("node").MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -334,7 +329,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		}
 	}
 
-	route := l.baseRoutingKey.SetActionCreate().SetObject("system").MustBuild()
+	route := l.baseRoutingKey.SetAction("create").SetObject("system").MustBuild()
 	err = l.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -434,6 +429,12 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 	}
 
 	return &pb.DeleteSystemResponse{}, nil
+}
+
+func (l *LookupServer) EvenListner(ctx context.Context, req *pb.Event) (*pb.EventResponse, error) {
+	logrus.Infof("Event %s received. Msg %+v", req.RoutingKey, req.Msg)
+
+	return &pb.EventResponse{}, nil
 }
 
 func invalidNodeIdError(nodeId string, err error) error {
