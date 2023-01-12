@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"os"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
@@ -20,12 +19,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mbc "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
-	msgClient "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 var serviceConfig *pkg.Config
@@ -72,28 +70,36 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
+	instanceId := os.Getenv("POD_NAME")
+
+	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 
 		srv := server.NewBaseRateServer(db.NewBaseRateRepo(gormdb))
 		generated.RegisterBaseRatesServiceServer(s, srv)
 	})
 
+	go msgBusListener(mbClient)
+
 	grpcServer.StartServer()
-	conn, err := grpc.Dial("localhost:7070", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("Failed to dial msg server: %v", err)
-	}
-	defer conn.Close()
-	client := msgClient.NewMsgClientServiceClient(conn)
 
-	res, err := client.RegisterService(context.Background(), &msgClient.RegisterServiceReq{
-		SystemName:  pkg.SystemName,
-		ServiceName: pkg.ServiceName,
-		InstanceId:  pkg.InstanceId,
-	})
-	if err != nil {
-		log.Fatalf("Error while Registering service: %v", err)
-	}
-	log.Printf("res msg data: %v", res)
+}
 
+func msgBusListener(m *mbc.MsgBusClient) {
+
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }
