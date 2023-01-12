@@ -231,16 +231,16 @@ func (m *MsgBusHandler) Publish(service string, key string, msg *anypb.Any) erro
 func (m *MsgBusHandler) doHealthCheck() error {
 	log.Debugf("[Health Check Monitor] Starting HealthCheck at %s", time.Now().Format(time.RFC1123))
 	for id, q := range m.ql {
-		q.healthCheck()
-		if q.continuousMiss > m.mia {
-			log.Debugf("Hit")
+		if q.state {
+			q.healthCheck()
+			if q.continuousMiss > m.mia {
+				if err := m.RemoveServiceQueueListening(id); err != nil {
+					log.Errorf("[Health Check Monitor] Failed to remove listener for %s with id %s . Error %s", q.serviceName, id, err.Error())
+				}
 
-			if err := m.RemoveServiceQueueListening(id); err != nil {
-				log.Errorf("[Health Check Monitor] Failed to remove listener for %s with id %s . Error %s", q.serviceName, id, err.Error())
-			}
-
-			if err := m.RemoveServiceQueuePublisher(id); err != nil {
-				log.Errorf("[Health Check Monitor] Failed to remove publisher for %s with id %s. Error %s", q.serviceName, id, err.Error())
+				if err := m.RemoveServiceQueuePublisher(id); err != nil {
+					log.Errorf("[Health Check Monitor] Failed to remove publisher for %s with id %s. Error %s", q.serviceName, id, err.Error())
+				}
 			}
 		}
 	}
