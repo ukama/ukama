@@ -4,7 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	db "github.com/ukama/ukama/systems/subscriber/subscriber/pkg/db"
+	db "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 
 	uuid "github.com/gofrs/uuid"
 )
@@ -81,6 +81,29 @@ func (_m *SubscriberRepo) GetByNetwork(networkID uuid.UUID) ([]db.Subscriber, er
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
 		r1 = rf(networkID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ListSubscribers provides a mock function with given fields:
+func (_m *SubscriberRepo) ListSubscribers() ([]db.Subscriber, error) {
+	ret := _m.Called()
+
+	var r0 []db.Subscriber
+	if rf, ok := ret.Get(0).(func() []db.Subscriber); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Subscriber)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -8,8 +8,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg/db"
+	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"

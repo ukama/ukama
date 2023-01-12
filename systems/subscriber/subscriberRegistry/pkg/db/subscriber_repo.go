@@ -41,10 +41,13 @@ func (s *subscriberRepo) ListSubscribers() ([]Subscriber, error) {
 
 func (s *subscriberRepo) Get(subscriberId uuid.UUID) (*Subscriber, error) {
 	var subscriber Subscriber
+	
 	err := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).FirstOrCreate(&subscriber).Error
 	if err != nil {
 		return nil, err
+
 	}
+
 	return &subscriber, nil
 }
 

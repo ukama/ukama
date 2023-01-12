@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/systems/subscriber/subscriber
+module github.com/ukama/ukama/systems/subscriber/subscriber-registry
 
 go 1.18
 

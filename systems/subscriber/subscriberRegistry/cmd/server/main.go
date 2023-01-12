@@ -5,22 +5,22 @@ import (
 
 	"github.com/num30/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg/server"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/server"
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg"
 
-	"github.com/ukama/ukama/systems/subscriber/subscriber/cmd/version"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/cmd/version"
 
-	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
+	generated "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -70,7 +70,7 @@ func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 
 		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb))
-		generated.RegisterSubscriberServiceServer(s, srv)
+		generated.RegisterSubscriberRegistryServiceServer(s, srv)
 	})
 
 	grpcServer.StartServer()

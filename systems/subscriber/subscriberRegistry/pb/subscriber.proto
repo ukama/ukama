@@ -4,9 +4,9 @@ option go_package = "pb/gen";
 import "google/protobuf/timestamp.proto";
 import "validator.proto";
 
-package ukama.subscriber.v1;
+package ukama.subscriber_registry.v1;
 
-service SubscriberService {
+service SubscriberRegistryService {
     rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
     rpc Add (AddSubscriberRequest) returns (AddSubscriberResponse){}
     rpc Update(UpdateSubscriberRequest) returns (UpdateSubscriberResponse){}

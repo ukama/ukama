@@ -6,8 +6,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	pb "github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/subscriber/pkg/db"
+	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -15,7 +15,7 @@ import (
 
 type SubcriberServer struct {
 	subscriberRepo db.SubscriberRepo
-	pb.UnimplementedSubscriberServiceServer
+	pb.UnimplementedSubscriberRegistryServiceServer
 }
 
 func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
@@ -96,6 +96,7 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
+
 	subscriberID := req.GetSubscriberID()
 	if subscriberID == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")

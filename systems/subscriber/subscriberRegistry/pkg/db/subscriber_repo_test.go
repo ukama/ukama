@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/subscriber/pb/gen/mocks"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen/mocks"
 )
 
 func TestSubscriberRepo_Get(t *testing.T) {
