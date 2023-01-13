@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
@@ -25,7 +26,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serviceConfig *pkg.Config
+var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -66,12 +67,20 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
+	// instanceId := os.Getenv("POD_NAME")
 
-	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+	fmt.Println("pkg.SystemName:", pkg.SystemName)
+
+	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+		pkg.SystemName,
+		pkg.ServiceName,
+		"data-plan-package",
+		serviceConfig.Queue.Uri,
+		"localhost:9090",
+		serviceConfig.MsgClient.Host,
+		serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue,
+		serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
