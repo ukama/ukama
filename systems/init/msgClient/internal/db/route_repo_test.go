@@ -56,27 +56,30 @@ func Test_routeRepo_Get(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"key"}).
-			AddRow(key)
-
-		mock.ExpectQuery(`^SELECT.*routes.*`).
-			WithArgs(key).
-			WillReturnRows(rows)
-
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
 			DriverName:           "postgres",
 			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
+
 		gdb, err := gorm.Open(dialector, &gorm.Config{})
 		assert.NoError(t, err)
 
+		gdbx := gdb.Debug()
+
 		r := int_db.NewRouteRepo(&UkamaDbMock{
-			GormDb: gdb,
+			GormDb: gdbx,
 		})
 
 		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"key"}).
+			AddRow(key)
+
+		mock.ExpectQuery(`^SELECT.*routes.*`).
+			WithArgs(key).
+			WillReturnRows(rows)
 
 		// Act
 		route, err := r.Get(key)
@@ -159,10 +162,12 @@ func Test_routeRepo_Add(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"key"}).
 			AddRow(key)
 
+		mock.ExpectBegin()
 		mock.ExpectQuery(`^SELECT.*routes.*`).
 			WithArgs(key).
 			WillReturnRows(rows)
 
+		mock.ExpectCommit()
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
 			DriverName:           "postgres",
@@ -187,53 +192,54 @@ func Test_routeRepo_Add(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+}
 
-	/*
-		t.Run("AddRouteWithNonExistingKey", func(t *testing.T) {
+func Test_routeRepo_List(t *testing.T) {
 
-			const key = "event.cloud.lookup.organization.create"
+	t.Run("ListRoutes", func(t *testing.T) {
 
-			// route := int_db.Route{
-			// 	Key: key,
-			// }
+		const key = "event.cloud.lookup.organization.create"
+		const key1 = "event.cloud.lookup.organization.update"
 
-			var db *extsql.DB
-			var err error
+		// route := int_db.Route{
+		// 	Key: key,
+		// }
 
-			db, mock, err := sqlmock.New() // mock sql.DB
-			assert.NoError(t, err)
+		var db *extsql.DB
+		var err error
 
-			mock.ExpectQuery(regexp.QuoteMeta("SELECT")).
-				WithArgs(key).
-				WillReturnRows(sqlmock.NewRows([]string{"key"}))
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
 
-			// mock.ExpectQuery(regexp.QuoteMeta("INSERT")).
-			// 	WithArgs(key).
-			// 	WillReturnRows(sqlmock.NewRows([]string{"key"}).AddRow(key))
+		rows := sqlmock.NewRows([]string{"key"}).
+			AddRow(key).AddRow(key1)
 
-			dialector := postgres.New(postgres.Config{
-				DSN:                  "sqlmock_db_0",
-				DriverName:           "postgres",
-				Conn:                 db,
-				PreferSimpleProtocol: true,
-			})
-			gdb, err := gorm.Open(dialector, &gorm.Config{})
-			assert.NoError(t, err)
+		mock.ExpectQuery(`^SELECT.*routes.*`).
+			WillReturnRows(rows)
 
-			r := int_db.NewRouteRepo(&UkamaDbMock{
-				GormDb: gdb,
-			})
-
-			assert.NoError(t, err)
-
-			// Act
-			_, err = r.Add(key)
-
-			// Assert
-			assert.NoError(t, err)
-
-			err = mock.ExpectationsWereMet()
-			assert.NoError(t, err)
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
 		})
-	*/
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewRouteRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		rt, err := r.List()
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.NotNil(t, rt)
+	})
 }
