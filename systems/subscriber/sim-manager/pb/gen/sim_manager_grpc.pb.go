@@ -32,6 +32,7 @@ type SimManagerServiceClient interface {
 	// Sim pacakge
 	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	GetPackagesBySim(ctx context.Context, in *GetPackagesBySimRequest, opts ...grpc.CallOption) (*GetPackagesBySimResponse, error)
+	SetActivePackageForSim(ctx context.Context, in *SetActivePackageRequest, opts ...grpc.CallOption) (*SetActivePackageResponse, error)
 	RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error)
 }
 
@@ -115,6 +116,15 @@ func (c *simManagerServiceClient) GetPackagesBySim(ctx context.Context, in *GetP
 	return out, nil
 }
 
+func (c *simManagerServiceClient) SetActivePackageForSim(ctx context.Context, in *SetActivePackageRequest, opts ...grpc.CallOption) (*SetActivePackageResponse, error) {
+	out := new(SetActivePackageResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/SetActivePackageForSim", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *simManagerServiceClient) RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error) {
 	out := new(RemovePackageResponse)
 	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/RemovePackageForSim", in, out, opts...)
@@ -138,6 +148,7 @@ type SimManagerServiceServer interface {
 	// Sim pacakge
 	AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	GetPackagesBySim(context.Context, *GetPackagesBySimRequest) (*GetPackagesBySimResponse, error)
+	SetActivePackageForSim(context.Context, *SetActivePackageRequest) (*SetActivePackageResponse, error)
 	RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error)
 	mustEmbedUnimplementedSimManagerServiceServer()
 }
@@ -169,6 +180,9 @@ func (UnimplementedSimManagerServiceServer) AddPackageForSim(context.Context, *A
 }
 func (UnimplementedSimManagerServiceServer) GetPackagesBySim(context.Context, *GetPackagesBySimRequest) (*GetPackagesBySimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPackagesBySim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) SetActivePackageForSim(context.Context, *SetActivePackageRequest) (*SetActivePackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetActivePackageForSim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemovePackageForSim not implemented")
@@ -330,6 +344,24 @@ func _SimManagerService_GetPackagesBySim_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimManagerService_SetActivePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetActivePackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).SetActivePackageForSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/SetActivePackageForSim",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).SetActivePackageForSim(ctx, req.(*SetActivePackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SimManagerService_RemovePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemovePackageRequest)
 	if err := dec(in); err != nil {
@@ -386,6 +418,10 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPackagesBySim",
 			Handler:    _SimManagerService_GetPackagesBySim_Handler,
+		},
+		{
+			MethodName: "SetActivePackageForSim",
+			Handler:    _SimManagerService_SetActivePackageForSim_Handler,
 		},
 		{
 			MethodName: "RemovePackageForSim",

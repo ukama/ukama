@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -193,6 +193,28 @@ func (this *GetPackagesBySimResponse) Validate() error {
 			}
 		}
 	}
+	return nil
+}
+
+var _regex_SetActivePackageRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_SetActivePackageRequest_PackageID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *SetActivePackageRequest) Validate() error {
+	if !_regex_SetActivePackageRequest_SimID.MatchString(this.SimID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
+	}
+	if this.SimID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
+	}
+	if !_regex_SetActivePackageRequest_PackageID.MatchString(this.PackageID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageID))
+	}
+	if this.PackageID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageID))
+	}
+	return nil
+}
+func (this *SetActivePackageResponse) Validate() error {
 	return nil
 }
 

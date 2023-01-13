@@ -198,6 +198,29 @@ func (_m *SimManagerServiceServer) RemovePackageForSim(_a0 context.Context, _a1 
 	return r0, r1
 }
 
+// SetActivePackageForSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) SetActivePackageForSim(_a0 context.Context, _a1 *gen.SetActivePackageRequest) (*gen.SetActivePackageResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.SetActivePackageResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetActivePackageRequest) *gen.SetActivePackageResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.SetActivePackageResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetActivePackageRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ToggleSimStatus provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) ToggleSimStatus(_a0 context.Context, _a1 *gen.ToggleSimStatusRequest) (*gen.ToggleSimStatusResponse, error) {
 	ret := _m.Called(_a0, _a1)

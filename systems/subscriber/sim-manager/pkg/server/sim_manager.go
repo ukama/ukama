@@ -36,7 +36,8 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo, age
 func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
 	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of sim uuid. Error %s", err.Error())
 	}
 
 	sim, err := s.simRepo.Get(simID)
@@ -50,7 +51,8 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetSimsBySubscriberRequest) (*pb.GetSimsBySubscriberResponse, error) {
 	subID, err := uuid.Parse(req.GetSubscriberID())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of subscriber uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
 
 	sims, err := s.simRepo.GetBySubscriber(subID)
@@ -69,7 +71,8 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSimsByNetworkRequest) (*pb.GetSimsByNetworkResponse, error) {
 	netID, err := uuid.Parse(req.GetNetworkID())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of network uuid. Error %s", err.Error())
 	}
 
 	sims, err := s.simRepo.GetByNetwork(netID)
@@ -95,14 +98,16 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 	case sims.SimStatusInactive:
 		return s.deactivateSim(ctx, req.SimID)
 	default:
-		return nil, status.Errorf(codes.InvalidArgument, "invalid status parameter: %s.", strStatus)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid status parameter: %s.", strStatus)
 	}
 }
 
 func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimRequest) (*pb.DeleteSimResponse, error) {
 	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of sim uuid. Error %s", err.Error())
 	}
 
 	sim, err := s.simRepo.Get(simID)
@@ -111,12 +116,14 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	}
 
 	if sim.Status != sims.SimStatusInactive {
-		return nil, status.Errorf(codes.FailedPrecondition, "sim state: %s is invalid for deletion", sim.Status)
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"sim state: %s is invalid for deletion", sim.Status)
 	}
 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type: %q for sim ID: %q", sim.Type, req.SimID)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim ID: %q", sim.Type, req.SimID)
 	}
 
 	err = simAgent.TerminateSim(ctx, req.SimID)
@@ -143,7 +150,8 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 func (s *SimManagerServer) GetPackagesBySim(ctx context.Context, req *pb.GetPackagesBySimRequest) (*pb.GetPackagesBySimResponse, error) {
 	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of sim uuid. Error %s", err.Error())
 	}
 
 	packages, err := s.packageRepo.GetBySim(simID)
@@ -159,10 +167,83 @@ func (s *SimManagerServer) GetPackagesBySim(ctx context.Context, req *pb.GetPack
 	return resp, nil
 }
 
+func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
+	packageID, err := uuid.Parse(req.GetPackageID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pckg, err := s.packageRepo.Get(packageID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	if pckg.SimID.String() != req.GetSimID() {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimID())
+	}
+
+	if pckg.IsExpired() {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set expired package as active: package end date is %s", pckg.EndDate)
+	}
+
+	if pckg.IsActive {
+		return &pb.SetActivePackageResponse{}, nil
+	}
+
+	simID, err := uuid.Parse(req.GetSimID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of sim uuid. Error %s", err.Error())
+	}
+
+	sim, err := s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	newPackageToActivate := &sims.Package{
+		ID:       pckg.ID,
+		IsActive: true,
+	}
+
+	err = s.packageRepo.Update(newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
+		// if there is already an active package
+		if sim.Package.ID != uuid.Nil {
+			// get it
+			currentActivepackage := &sims.Package{
+				ID: sim.Package.ID,
+			}
+
+			// then deactivate it
+			result := tx.Model(currentActivepackage).Update("is_active", false)
+			if result.RowsAffected == 0 {
+				return gorm.ErrRecordNotFound
+			}
+
+			if result.Error != nil {
+				return result.Error
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to set package as active. Error %s", err.Error())
+	}
+
+	return &pb.SetActivePackageResponse{}, nil
+}
+
 func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
 	packageID, err := uuid.Parse(req.GetPackageID())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of package uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
 	}
 
 	err = s.packageRepo.Delete(packageID, nil)
@@ -176,7 +257,8 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 func (s *SimManagerServer) activateSim(ctx context.Context, id string) (*pb.ToggleSimStatusResponse, error) {
 	simID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of sim uuid. Error %s", err.Error())
 	}
 
 	sim, err := s.simRepo.Get(simID)
@@ -185,12 +267,14 @@ func (s *SimManagerServer) activateSim(ctx context.Context, id string) (*pb.Togg
 	}
 
 	if sim.Status != sims.SimStatusInactive {
-		return nil, status.Errorf(codes.FailedPrecondition, "sim state: %s is invalid for activation", sim.Status)
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"sim state: %s is invalid for activation", sim.Status)
 	}
 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type: %q for sim ID: %q", sim.Type, id)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim ID: %q", sim.Type, id)
 	}
 
 	err = simAgent.ActivateSim(ctx, id)
@@ -221,7 +305,8 @@ func (s *SimManagerServer) activateSim(ctx context.Context, id string) (*pb.Togg
 func (s *SimManagerServer) deactivateSim(ctx context.Context, id string) (*pb.ToggleSimStatusResponse, error) {
 	simID, err := uuid.Parse(id)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of sim uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of sim uuid. Error %s", err.Error())
 	}
 
 	sim, err := s.simRepo.Get(simID)
@@ -230,12 +315,14 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, id string) (*pb.To
 	}
 
 	if sim.Status != sims.SimStatusActive {
-		return nil, status.Errorf(codes.FailedPrecondition, "sim state: %s is invalid for deactivation", sim.Status)
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"sim state: %s is invalid for deactivation", sim.Status)
 	}
 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid sim type: %q for sim ID: %q", sim.Type, id)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim ID: %q", sim.Type, id)
 	}
 
 	err = simAgent.DeactivateSim(ctx, id)
