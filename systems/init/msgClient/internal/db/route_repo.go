@@ -37,7 +37,7 @@ func (r *routeRepo) Add(key string) (*Route, error) {
 
 func (r *routeRepo) Remove(key string) error {
 	var rt Route
-	res := r.db.GetGormDb().Delete(&rt, Route{Key: key})
+	res := r.db.GetGormDb().Where("key = ?", key).Delete(&rt)
 	if res.Error != nil {
 		return res.Error
 	}
@@ -58,11 +58,9 @@ func (r *routeRepo) List() ([]Route, error) {
 
 func (r *routeRepo) Get(key string) (*Route, error) {
 
-	rt := Route{
-		Key: key,
-	}
+	var rt Route
 
-	res := r.db.GetGormDb().Find(&rt)
+	res := r.db.GetGormDb().Where("key = ?", key).First(&rt)
 	if res.Error != nil {
 		return nil, res.Error
 	}

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
 	"google.golang.org/protobuf/proto"
@@ -16,7 +15,7 @@ type QueuePublisher struct {
 	name           string
 	instanceId     string
 	pub            mb.QPub
-	baseRoutingKey msgbus.RoutingKeyBuilder
+	baseRoutingKey mb.RoutingKeyBuilder
 }
 
 func NewQueuePublisher(s db.Service) (*QueuePublisher, error) {

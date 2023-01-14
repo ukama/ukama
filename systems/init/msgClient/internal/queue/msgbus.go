@@ -10,18 +10,24 @@ import (
 )
 
 type MsgBusHandler struct {
-	ql map[string]*QueueListener
-	qp map[string]*QueuePublisher
-	s  db.ServiceRepo
-	r  db.RouteRepo
+	ql  map[string]*QueueListener
+	qp  map[string]*QueuePublisher
+	s   db.ServiceRepo
+	r   db.RouteRepo
+	mia uint32
+	pHC time.Duration
+	mR  chan bool
 }
 
-func NewMessageBusHandler(s db.ServiceRepo, r db.RouteRepo) *MsgBusHandler {
+func NewMessageBusHandler(s db.ServiceRepo, r db.RouteRepo, miss uint32, period time.Duration) *MsgBusHandler {
 
 	h := &MsgBusHandler{
-		s: s,
-		r: r,
+		s:   s,
+		r:   r,
+		mia: miss,
+		pHC: period,
 	}
+	h.mR = make(chan bool, 1)
 	h.ql = make(map[string]*QueueListener)
 	h.qp = make(map[string]*QueuePublisher)
 	return h
@@ -35,6 +41,9 @@ func (m *MsgBusHandler) CreateServiceMsgBusHandler() error {
 		log.Errorf("Error reading services. Error %s", err.Error())
 		return err
 	}
+
+	/* Start routine to monitor */
+	m.monitor(m.mR)
 
 	if len(services) <= 0 {
 		log.Errorf("No services available.")
@@ -183,7 +192,7 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
 
 	go listener.startQueueListening()
 
-	/* Check listner state before reurning */
+	/* Check listner state before returning */
 	time.Sleep(500 * time.Millisecond)
 
 	if !listener.state {
@@ -207,11 +216,6 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
 func (m *MsgBusHandler) Publish(service string, key string, msg *anypb.Any) error {
 	p, ok := m.qp[service]
 	if ok {
-		// pmsg := proto.Message{}
-		// err := anypb.UnmarshalTo(msg, pmsg, proto.UnmarshalOptions{})
-		// if err != nil {
-		// 	return err
-		// }
 
 		err := p.Publish(key, msg)
 		if err != nil {
@@ -222,4 +226,42 @@ func (m *MsgBusHandler) Publish(service string, key string, msg *anypb.Any) erro
 	}
 
 	return nil
+}
+
+func (m *MsgBusHandler) doHealthCheck() error {
+	log.Debugf("[Health Check Monitor] Starting HealthCheck at %s", time.Now().Format(time.RFC1123))
+	for id, q := range m.ql {
+		if q.state {
+			q.healthCheck()
+			if q.continuousMiss > m.mia {
+				if err := m.RemoveServiceQueueListening(id); err != nil {
+					log.Errorf("[Health Check Monitor] Failed to remove listener for %s with id %s . Error %s", q.serviceName, id, err.Error())
+				}
+
+				if err := m.RemoveServiceQueuePublisher(id); err != nil {
+					log.Errorf("[Health Check Monitor] Failed to remove publisher for %s with id %s. Error %s", q.serviceName, id, err.Error())
+				}
+			}
+		}
+	}
+	log.Debugf("[Health Check Monitor] Completed HealthCheck at %s.", time.Now().Format(time.RFC1123))
+	return nil
+}
+
+func (m *MsgBusHandler) monitor(q chan bool) {
+	log.Infof("Starting health check routine with period %s.", m.pHC)
+	t := time.NewTicker(m.pHC)
+
+	go func() {
+		for {
+			select {
+			case <-t.C:
+				m.doHealthCheck()
+			case <-q:
+				t.Stop()
+				return
+			}
+		}
+	}()
+
 }

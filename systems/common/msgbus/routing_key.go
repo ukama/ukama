@@ -149,7 +149,6 @@ func Parse(s string) (RoutingKey, error) {
 	}
 
 	/* Validate the components of key too like source , event etc. */
-
 	k := RoutingKey(s)
 	return k, nil
 }
