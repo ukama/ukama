@@ -13,6 +13,7 @@ type Sim struct {
 	ID                 uuid.UUID `gorm:"primaryKey;type:uuid"`
 	SubscriberID       uuid.UUID `gorm:"not null;type:uuid"`
 	NetworkID          uuid.UUID `gorm:"not null;type:uuid"`
+	OrgID              uuid.UUID `gorm:"not null;type:uuid"`
 	Package            Package
 	Iccid              string `gorm:"index:idx_iccid,unique"`
 	Msisdn             string
