@@ -16,7 +16,7 @@ import (
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
@@ -88,7 +88,7 @@ func runGrpcServer(gormDB sql.Db) {
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
-		clients.NewAgentFactory(svcConf.TestAgentHost, timeout))
+		adapters.NewAgentFactory(svcConf.TestAgentHost, timeout))
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)
