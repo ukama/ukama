@@ -90,6 +90,29 @@ func (_m *PackageRepo) GetBySim(simID uuid.UUID) ([]db.Package, error) {
 	return r0, r1
 }
 
+// GetOverlap provides a mock function with given fields: _a0
+func (_m *PackageRepo) GetOverlap(_a0 *db.Package) ([]db.Package, error) {
+	ret := _m.Called(_a0)
+
+	var r0 []db.Package
+	if rf, ok := ret.Get(0).(func(*db.Package) []db.Package); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Package)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*db.Package) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: pkg, nestedFunc
 func (_m *PackageRepo) Update(pkg *db.Package, nestedFunc func(*db.Package, *gorm.DB) error) error {
 	ret := _m.Called(pkg, nestedFunc)

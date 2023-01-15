@@ -11,6 +11,7 @@ type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Get(packageID uuid.UUID) (*Package, error)
 	GetBySim(simID uuid.UUID) ([]Package, error)
+	GetOverlap(*Package) ([]Package, error)
 	Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
@@ -60,6 +61,19 @@ func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
 	var packages []Package
 
 	result := p.Db.GetGormDb().Where(&Package{SimID: simID}).Find(&packages)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return packages, nil
+}
+
+func (p *packageRepo) GetOverlap(pkg *Package) ([]Package, error) {
+	var packages []Package
+
+	result := p.Db.GetGormDb().Where(&Package{SimID: pkg.SimID}).Find(&packages,
+		"end_date >= ? AND start_date <= ?", pkg.StartDate, pkg.EndDate)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
