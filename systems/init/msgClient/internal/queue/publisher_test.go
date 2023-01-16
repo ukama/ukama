@@ -27,17 +27,6 @@ var service1 = db.Service{
 	GrpcTimeout: 5,
 }
 
-func NewTestQueuePublisher() *QueuePublisher {
-	pub := &mocks.QPub{}
-
-	qp := &QueuePublisher{
-		pub:            pub,
-		baseRoutingKey: mb.NewRoutingKeyBuilder().SetCloudSource().SetContainer("test"),
-	}
-
-	return qp
-}
-
 func TestQueuePublisher_Publish(t *testing.T) {
 	pub := &mocks.QPub{}
 	qp := &QueuePublisher{
