@@ -48,9 +48,10 @@ message AddSubscriberRequest{
     string address  = 5; 
     string idSerial =6;
     string networkID = 7 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
-    string proofOfIdentification =8 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
-    google.protobuf.Timestamp dateOfBirth = 9;
-    string gender =10 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    string orgID = 8 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    string proofOfIdentification =9 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    google.protobuf.Timestamp dateOfBirth = 10;
+    string gender =11 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
 }
 message UpdateSubscriberRequest{
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
@@ -72,10 +73,11 @@ message AddSubscriberResponse{
 
 }
 message Subscriber{
-    string firstName  = 2;
-    string lastName = 3;
-    string subscriberID = 4 [json_name = "subscriber_id"];
-    string networkID = 5;
+    string firstName  = 1;
+    string lastName = 2;
+    string subscriberID = 3 [json_name = "subscriber_id"];
+    string networkID = 4;
+    string orgID = 5 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
     string email  = 6;
     string phoneNumber  = 7;
     string address  = 8; 
@@ -97,17 +99,18 @@ message Sim {
     string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
     string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
     string networkID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
-    Package package = 4;
-    string iccid = 5;
-    string msisdn = 6  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string imsi = 7;
-    string type = 8;
-    string status = 9;
-    bool isPhysical = 10 [json_name = "is_physical"];
-    google.protobuf.Timestamp firstActivatedOn = 11;
-    google.protobuf.Timestamp lastActivatedOn = 12 ;
-    uint64 activationsCount = 13;
-    uint64 deactivationsCount = 14;
-    google.protobuf.Timestamp allocatedAt = 15 [json_name = "allocated_at"];
+    string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    Package package = 5;
+    string iccid = 6;
+    string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string imsi = 8;
+    string type = 9;
+    string status = 10;
+    bool isPhysical = 11 [json_name = "is_physical"];
+    google.protobuf.Timestamp firstActivatedOn = 12;
+    google.protobuf.Timestamp lastActivatedOn = 13 ;
+    uint64 activationsCount = 14;
+    uint64 deactivationsCount = 15;
+    google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
 
 }

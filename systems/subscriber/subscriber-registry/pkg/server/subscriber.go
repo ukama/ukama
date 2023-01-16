@@ -25,14 +25,15 @@ func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
 	networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
+	orgID_uuid := uuid.FromStringOrNil(req.GetOrgID())
 	subscriberID_uuid, err := uuid.NewV4()
 	if err != nil {
 		logrus.Errorf("Failed to generate UUID: %s", err)
 		return nil, err
 	}
 	timestamp := &timestamppb.Timestamp{
-		Seconds: req.DateOfBirth.Seconds,
-		Nanos:   req.DateOfBirth.Nanos,
+		Seconds: req.DateOfBirth.GetSeconds(),
+		Nanos:   req.DateOfBirth.GetNanos(),
 	}
 
 	birthday := timestamp.AsTime()
@@ -42,6 +43,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
 		NetworkID:             networkID_uuid,
+		OrgID:                 orgID_uuid,
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Gender:                req.GetGender(),
@@ -253,6 +255,7 @@ func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 		PhoneNumber:           s.PhoneNumber,
 		IdSerial:              s.IdSerial,
 		NetworkID:             s.NetworkID.String(),
+		OrgID:                 s.OrgID.String(),
 		Gender:                s.Gender,
 		Address:               s.Address,
 		CreatedAt:             s.CreatedAt.String(),
