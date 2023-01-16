@@ -1,6 +1,8 @@
 package db
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
@@ -75,7 +77,9 @@ func (p *packageRepo) GetOverlap(pkg *Package) ([]Package, error) {
 		"end_date >= ? AND start_date <= ?", pkg.StartDate, pkg.EndDate)
 
 	if result.Error != nil {
-		return nil, result.Error
+		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, result.Error
+		}
 	}
 
 	return packages, nil

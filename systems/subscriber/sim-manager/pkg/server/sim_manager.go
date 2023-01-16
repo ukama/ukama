@@ -13,23 +13,29 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+
+	pkgpb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 )
 
 type SimManagerServer struct {
 	pb.UnimplementedSimManagerServiceServer
-	simRepo      sims.SimRepo
-	packageRepo  sims.PackageRepo
-	agentFactory *clients.AgentFactory
+	simRepo        sims.SimRepo
+	packageRepo    sims.PackageRepo
+	agentFactory   *adapters.AgentFactory
+	packageService providers.PackageClientProvider
 }
 
-func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo, agentFactory *clients.AgentFactory) *SimManagerServer {
+func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	agentFactory *adapters.AgentFactory, packageService providers.PackageClientProvider) *SimManagerServer {
 	return &SimManagerServer{
-		simRepo:      simRepo,
-		packageRepo:  packageRepo,
-		agentFactory: agentFactory,
+		simRepo:        simRepo,
+		packageRepo:    packageRepo,
+		agentFactory:   agentFactory,
+		packageService: packageService,
 	}
 }
 
@@ -147,6 +153,89 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	return &pb.DeleteSimResponse{}, nil
 }
 
+func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+	if err := req.GetStartDate().CheckValid(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid time format for package start_date. Error %s", err.Error())
+	}
+
+	startDate := req.GetStartDate().AsTime()
+
+	if startDate.Before(time.Now()) {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set package start date on the past: package start date is %s", startDate)
+	}
+
+	simID, err := uuid.Parse(req.GetSimID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of sim uuid. Error %s", err.Error())
+	}
+
+	sim, err := s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	packageID, err := uuid.Parse(req.GetPackageID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	svc, err := s.packageService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	remoteResp, err := svc.Get(ctx, &pkgpb.GetPackageRequest{PackageUuid: packageID.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	if !remoteResp.Package.Active {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set package to sim: package is no more active within its org")
+	}
+
+	if sim.OrgID.String() != remoteResp.Package.OrgId {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid packageID: provided package does not belong to sim org issuer")
+	}
+
+	if sim.Type.String() != remoteResp.Package.SimType.String() {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: sim (%s) and packge (%s) sim types mismatch", sim.Type, remoteResp.Package.SimType.String())
+	}
+
+	pkg := &sims.Package{
+		ID:        uuid.New(),
+		SimID:     sim.ID,
+		StartDate: startDate,
+		EndDate:   startDate.Add(time.Duration(remoteResp.Package.Duration)),
+		PlanID:    packageID,
+		IsActive:  false,
+	}
+
+	overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "packages")
+	}
+
+	if len(overlappingPackages) > 0 {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set package to sim: package validity period overlaps with %d or more other packaes set for this sim",
+			len(overlappingPackages))
+	}
+
+	err = s.packageRepo.Add(pkg, nil)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	return &pb.AddPackageResponse{}, nil
+}
+
 func (s *SimManagerServer) GetPackagesBySim(ctx context.Context, req *pb.GetPackagesBySimRequest) (*pb.GetPackagesBySimResponse, error) {
 	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
@@ -213,12 +302,12 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		// if there is already an active package
 		if sim.Package.ID != uuid.Nil {
 			// get it
-			currentActivepackage := &sims.Package{
+			currentActivePackage := &sims.Package{
 				ID: sim.Package.ID,
 			}
 
 			// then deactivate it
-			result := tx.Model(currentActivepackage).Update("is_active", false)
+			result := tx.Model(currentActivePackage).Update("is_active", false)
 			if result.RowsAffected == 0 {
 				return gorm.ErrRecordNotFound
 			}
