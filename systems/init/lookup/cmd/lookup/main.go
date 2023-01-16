@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/num30/config"
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
 	"github.com/ukama/ukama/systems/init/lookup/internal"
@@ -16,13 +15,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/init/lookup/pb/gen"
-	mb "github.com/ukama/ukama/systems/init/lookup/pkg/msgBusClient"
 	"google.golang.org/grpc"
 )
 
-var serviceConfig = internal.NewConfig()
+var serviceConfig = internal.NewConfig(internal.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument("lookup", os.Args, version.Version)
@@ -55,11 +54,6 @@ func initDb() sql.Db {
 
 func initConfig() {
 	log.Infof("Initializing config")
-	serviceConfig = &internal.Config{
-		DB: &uconf.Database{
-			DbName: internal.ServiceName,
-		},
-	}
 
 	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -71,7 +65,7 @@ func initConfig() {
 		}
 	}
 
-	log.Debugf("\nService: %s DB Config: %+v", internal.ServiceName, serviceConfig.DB)
+	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v", internal.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
 
 	internal.IsDebugMode = serviceConfig.DebugMode
 }
@@ -79,15 +73,34 @@ func initConfig() {
 func runGrpcServer(d sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 
-	//var mbClient *mb.MsgBusClient
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
 		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListnerRoutes)
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
+		nSrv := server.NewLookupEventServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
 		generated.RegisterLookupServiceServer(s, srv)
+		generated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 
+	go msgBusListener(mbClient)
+
 	grpcServer.StartServer()
+}
+
+func msgBusListener(m *mb.MsgBusClient) {
+
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", internal.ServiceName, err.Error())
+	}
 }
