@@ -2,11 +2,9 @@ module github.com/ukama/ukama/systems/data-plan/package
 
 go 1.18
 
-replace github.com/ukama/ukama/systems/common => /Users/salman/Documents/Github/Ukama/ukama/systems/common
+replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/init/msgClient => /Users/salman/Documents/Github/Ukama/ukama/systems/init/msgClient
-
-replace github.com/ukama/ukama => /Users/salman/Documents/Github/Ukama/ukama
+replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0

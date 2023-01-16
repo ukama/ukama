@@ -10,7 +10,7 @@ type Package struct {
 	Uuid         uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
 	Name         string
 	Sim_type     string
-	Org_id       uint
+	Org_id       uuid.UUID `gorm:"not null;type:uuid"`
 	Active       bool
 	Duration     uint
 	Sms_volume   uint

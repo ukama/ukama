@@ -14,8 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const uuidParsingError = "Error parsing UUID"
-
 type PackageServer struct {
 	packageRepo       db.PackageRepo
 	msgbus            *mb.MsgBusClient
@@ -44,7 +42,13 @@ func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb
 func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
 	logrus.Infof("GetPackage by Org: %v ", req.GetOrgId())
 
-	packages, err := p.packageRepo.GetByOrg(req.GetOrgId())
+	orgID, err := uuid.Parse(req.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of org uuid. Error %s", err.Error())
+	}
+
+	packages, err := p.packageRepo.GetByOrg(orgID)
 	if err != nil {
 		logrus.Error("error while getting package by Org" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
@@ -58,10 +62,17 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 }
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	logrus.Infof("Add Package Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v", req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
+
+	orgID, err := uuid.Parse(req.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of org uuid. Error %s", err.Error())
+	}
+
 	_package := &db.Package{
 		Name:         req.GetName(),
 		Sim_type:     req.GetSimType().String(),
-		Org_id:       uint(req.GetOrgId()),
+		Org_id:       orgID,
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
 		Sms_volume:   uint(req.GetSmsVolume()),
@@ -69,7 +80,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Voice_volume: uint(req.GetVoiceVolume()),
 		Org_rates_id: uint(req.GetOrgRatesId()),
 	}
-	err := p.packageRepo.Add(_package)
+	err = p.packageRepo.Add(_package)
 	if err != nil {
 
 		logrus.Error("Error while adding a package. " + err.Error())
@@ -145,7 +156,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	return &pb.Package{
 		Id:          uint64(p.ID),
 		Name:        p.Name,
-		OrgId:       int64(p.Org_id),
+		OrgId:       p.Org_id.String(),
 		Active:      p.Active,
 		Duration:    uint64(p.Duration),
 		SmsVolume:   int64(p.Sms_volume),
