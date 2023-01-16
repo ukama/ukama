@@ -8,6 +8,10 @@ replace github.com/ukama/ukama/systems/data-plan/package => ../../data-plan/pack
 
 replace github.com/ukama/ukama/systems/subscriber/test-agent => ../test-agent
 
+replace github.com/ukama/ukama/systems/subscriber/sim-pool => ../sim-pool
+
+replace github.com/ukama/ukama/systems/subscriber/subscriber-registry => ../subscriber-registry
+
 replace github.com/ukama/ukama/systems/subscriber/sim-manager => ./
 
 require (
@@ -19,8 +23,9 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-20221114075906-a5be6bf1d178
+	github.com/ukama/ukama/systems/common v0.0.0-20221214015906-c10a5b135749
 	github.com/ukama/ukama/systems/data-plan/package v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/test-agent v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1

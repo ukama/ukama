@@ -29,10 +29,9 @@ type AllocateSimRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	SubscriberID string `protobuf:"bytes,1,opt,name=subscriberID,json=subscriber_id,proto3" json:"subscriberID,omitempty"`
-	// simToken ???
-	SimToken  string `protobuf:"bytes,2,opt,name=simToken,proto3" json:"simToken,omitempty"`
-	PackageID string `protobuf:"bytes,3,opt,name=packageID,json=plan_id,proto3" json:"packageID,omitempty"`
-	NetworkID string `protobuf:"bytes,4,opt,name=networkID,json=network_id,proto3" json:"networkID,omitempty"`
+	SimToken     string `protobuf:"bytes,2,opt,name=simToken,proto3" json:"simToken,omitempty"`
+	PackageID    string `protobuf:"bytes,3,opt,name=packageID,json=plan_id,proto3" json:"packageID,omitempty"`
+	NetworkID    string `protobuf:"bytes,4,opt,name=networkID,json=network_id,proto3" json:"networkID,omitempty"`
 }
 
 func (x *AllocateSimRequest) Reset() {
