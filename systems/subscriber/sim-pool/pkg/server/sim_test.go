@@ -143,3 +143,34 @@ func TestGet_Error(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, res)
 }
+
+func TestGetByIccid_Success(t *testing.T) {
+	mockRepo := &mocks.SimRepo{}
+	simService := NewSimServer(mockRepo)
+	reqMock := &pb.GetByIccidRequest{
+		Iccid: "1234567890123456789",
+	}
+	mockRepo.On("GetByIccid", reqMock.Iccid).Return(&db.Sim{
+		Iccid:          "1234567890123456789",
+		Msisdn:         "2345678901",
+		Sim_type:       "inter_mno_data",
+		SmDpAddress:    "http://localhost:8080",
+		ActivationCode: "123456",
+		Is_physical:    false,
+	}, nil)
+	res, err := simService.GetByIccid(context.Background(), reqMock)
+	assert.NoError(t, err)
+	assert.Equal(t, "1234567890123456789", res.Sim.Iccid)
+}
+
+func TestGetByIccid_Error(t *testing.T) {
+	mockRepo := &mocks.SimRepo{}
+	simService := NewSimServer(mockRepo)
+	reqMock := &pb.GetByIccidRequest{
+		Iccid: "1234567890123456789",
+	}
+	mockRepo.On("GetByIccid", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim-pool"))
+	res, err := simService.GetByIccid(context.Background(), reqMock)
+	assert.Error(t, err)
+	assert.Nil(t, res)
+}

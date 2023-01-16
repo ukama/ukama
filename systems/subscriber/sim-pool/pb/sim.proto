@@ -14,6 +14,7 @@ Sim pool sub-system is responsible of:
 service SimService {
     /// Get sim from pool
     rpc Get (GetRequest) returns (GetResponse) {}
+    rpc GetByIccid (GetByIccidRequest) returns (GetByIccidResponse) {}
     ///Get sim pool statistaics
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
     ///Add sims to pool
@@ -28,6 +29,12 @@ message GetRequest{
     SimType simType = 2; /// SimType string enum
 }
 message GetResponse {
+    Sim sim = 1; /// Sim object
+}
+message GetByIccidRequest{
+    string iccid=1; /// Sim iccid string
+}
+message GetByIccidResponse {
     Sim sim = 1; /// Sim object
 }
 message GetStatsRequest{

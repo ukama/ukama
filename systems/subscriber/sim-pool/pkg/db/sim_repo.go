@@ -7,6 +7,7 @@ import (
 
 type SimRepo interface {
 	Get(isPhysicalSim bool, simType string) (*Sim, error)
+	GetByIccid(iccid string) (*Sim, error)
 	GetStats(simType string) ([]Sim, error)
 	Add(sims []Sim) error
 	Delete(id []uint64) error
@@ -25,6 +26,17 @@ func NewSimRepo(db sql.Db) *simRepo {
 func (s *simRepo) Get(isPhysicalSim bool, simType string) (*Sim, error) {
 	var sim Sim
 	result := s.Db.GetGormDb().Where("is_allocated = ?", false).Where("is_physical = ?", isPhysicalSim).Where("sim_type = ?", simType).Find(&sim)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &sim, nil
+}
+
+func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
+	var sim Sim
+	result := s.Db.GetGormDb().Where("is_allocated = ? AND iccid = ?", false, iccid).First(&sim)
 
 	if result.Error != nil {
 		return nil, result.Error

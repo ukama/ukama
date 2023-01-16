@@ -32,6 +32,18 @@ func (p *SimServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 	return &pb.GetResponse{Sim: dbSimToPbSim(sim)}, nil
 }
 
+func (p *SimServer) GetByIccid(ctx context.Context, req *pb.GetByIccidRequest) (*pb.GetByIccidResponse, error) {
+	logrus.Infof("GetSimByIccid : %v", req.GetIccid())
+
+	sim, err := p.simRepo.GetByIccid(req.GetIccid())
+	if err != nil {
+		logrus.Error("error fetching a sim " + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+	}
+
+	return &pb.GetByIccidResponse{Sim: dbSimToPbSim(sim)}, nil
+}
+
 func (p *SimServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetSimStats : %v ", req.GetSimType())
 	simType := req.SimType.String()
