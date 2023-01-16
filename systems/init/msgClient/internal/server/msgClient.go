@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/init/msgClient/internal"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/queue"
 	pb "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
@@ -12,12 +14,12 @@ import (
 type MsgClientServer struct {
 	s db.ServiceRepo
 	r db.RouteRepo
-	h *queue.MsgBusHandler
+	h queue.MsgBusHandlerInterface
 
 	pb.UnimplementedMsgClientServiceServer
 }
 
-func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, h *queue.MsgBusHandler) *MsgClientServer {
+func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, h queue.MsgBusHandlerInterface) *MsgClientServer {
 	return &MsgClientServer{
 		s: serviceRepo,
 		r: keyRepo,
@@ -33,6 +35,9 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 		State: pb.REGISTRAION_STATUS_NOT_REGISTERED,
 	}
 
+	if internal.SystemName != req.SystemName {
+		return nil, fmt.Errorf("inavlid system name %s in request", req.SystemName)
+	}
 	/* Register service */
 	svc := db.Service{
 		Name:        req.ServiceName,

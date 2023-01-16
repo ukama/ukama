@@ -9,6 +9,13 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+type MsgBusHandlerInterface interface {
+	CreateServiceMsgBusHandler() error
+	StopServiceQueueHandler(service string) (err error)
+	UpdateServiceQueueHandler(s *db.Service) (err error)
+	Publish(service string, key string, msg *anypb.Any) error
+}
+
 type MsgBusHandler struct {
 	ql  map[string]*QueueListener
 	qp  map[string]*QueuePublisher
