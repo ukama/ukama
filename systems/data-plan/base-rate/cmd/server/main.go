@@ -70,12 +70,17 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
 
-	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+		pkg.SystemName,
+		pkg.ServiceName,
+		"data-plan-base-rate",
+		serviceConfig.Queue.Uri,
+		"localhost:9090",
+		serviceConfig.MsgClient.Host,
+		serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue,
+		serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
