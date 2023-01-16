@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/gofrs/uuid"
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
@@ -71,7 +72,16 @@ func initConfig() {
 }
 
 func runGrpcServer(d sql.Db) {
+
 	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		inst, err := uuid.NewV4()
+		if err != nil {
+			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
+		}
+		instanceId = inst.String()
+	}
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
 		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
