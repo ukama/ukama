@@ -6,6 +6,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -14,7 +16,9 @@ import (
 )
 
 type SubcriberServer struct {
-	subscriberRepo db.SubscriberRepo
+	subscriberRepo       db.SubscriberRepo
+	msgbus               *mb.MsgBusClient
+	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedSubscriberRegistryServiceServer
 }
 
@@ -89,6 +93,11 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 	if err != nil {
 		logrus.WithError(err).Error("error while deleting subscriber")
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
+	route := s.subscriberRoutingKey.SetActionUpdate().SetObject("subscriber").MustBuild()
+	err = s.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	return &pb.DeleteSubscriberResponse{
 		SubscriberID: subscriberID,
