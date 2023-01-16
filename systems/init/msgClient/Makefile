@@ -38,6 +38,9 @@ integration.test:
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 
+docs:
+	protoc --doc_out=. --doc_opt=./../../template.tmpl,README.md pb/*.proto & sh ./../../generate-dir-tree.sh $(PWD)
+
 server:
 	go run cmd/msgClient/main.go
 
