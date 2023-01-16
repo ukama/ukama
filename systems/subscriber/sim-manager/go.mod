@@ -23,9 +23,10 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-20221214015906-c10a5b135749
+	github.com/ukama/ukama/systems/common v0.0.0-20230104003636-ab3d312e74b3
 	github.com/ukama/ukama/systems/data-plan/package v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/subscriber-registry v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/test-agent v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
@@ -80,8 +81,8 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
