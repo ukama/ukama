@@ -1,0 +1,90 @@
+syntax = "proto3";
+option go_package = "pb/gen";
+package ukama.sim.v1;
+import "validator.proto";
+
+/*
+Sim pool sub-system is responsible of:
+
+    - Populating sims data in DB from CSV
+    - Provide sim stats
+    - Provide sim on request
+    - Allows to add slice of sims
+*/
+service SimService {
+    /// Get sim from pool
+    rpc Get (GetRequest) returns (GetResponse) {}
+    ///Get sim pool statistaics
+    rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
+    ///Add sims to pool
+    rpc Add(AddRequest) returns (AddResponse){}
+    ///Delete sims from pool
+    rpc Delete(DeleteRequest) returns (DeleteResponse){}
+    ///Batch upload sims from CSV
+    rpc Upload(UploadRequest) returns (UploadResponse){}
+}
+message GetRequest{
+    bool IsPhysicalSim=1; /// True/False
+    SimType simType = 2; /// SimType string enum
+}
+message GetResponse {
+    Sim sim = 1; /// Sim object
+}
+message GetStatsRequest{
+    SimType simType = 1; /// SimType string enum
+}
+message GetStatsResponse {
+    uint64 total = 1; /// Total sims in sim pool
+    uint64 available = 2; /// Available sims in sim pool
+    uint64 consumed = 3; /// Consumed sims in sim pool
+    uint64 failed = 4; /// Failed sims in sim pool
+}
+message AddRequest{
+    repeated AddSim sim = 1; /// Slice of sims to add in sim pool
+}
+message AddResponse{
+    repeated Sim sim = 1; /// Slice of sims added in sim pool
+}
+message DeleteRequest{
+    repeated uint64 id = 1; /// Slice of sim id's to delete from sim pool
+}
+message DeleteResponse {
+    repeated uint64 id = 1; /// Slice of sim id's deleted from sim pool
+}
+message UploadRequest{
+    bytes simData = 1; /// Bytes of CSV file content
+    SimType simType = 2; /// SimType of sim
+}
+message UploadResponse {
+    repeated Sim sim = 1; /// Slice of sims added in sim pool
+}
+message Sim{
+    uint64 id = 1;
+    string iccid = 2;
+    string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}]; 
+    bool isAllocated = 4;
+    SimType simType = 5;
+    string smDpAddress = 6;
+    string activationCode = 7;
+    string created_at=9;
+    string deleted_at=10;
+    string updated_at=11;
+    bool isPhysical=12 [json_name = "is_physical"];
+    string qrCode=13;
+}
+message AddSim{
+    string iccid = 1;
+    SimType simType = 2;
+    string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string smDpAddress = 4;
+    string activationCode = 5;
+    string qrCode=6;
+    bool isPhysical=7 [json_name = "is_physical"];
+}
+enum SimType {
+    ANY=0;
+    INTER_NONE=1;
+    INTER_MNO_DATA=2;
+    INTER_MNO_ALL=3;
+    INTER_UKAMA_ALL=4;
+}
