@@ -32,6 +32,7 @@ message AllocateSimRequest {
     string simToken = 2;
     string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "plan_id"];
     string networkID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+    string simType = 5;
 }
 
 message AllocateSimResponse {
@@ -133,16 +134,17 @@ message Sim {
     string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
     string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
     string networkID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
-    Package package = 4;
-    string iccid = 5;
-    string msisdn = 6  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string imsi = 7;
-    string type = 8;
-    string status = 9;
-    bool isPhysical = 10 [json_name = "is_physical"];
-    google.protobuf.Timestamp firstActivatedOn = 11;
-    google.protobuf.Timestamp lastActivatedOn = 12 ;
-    uint64 activationsCount = 13;
-    uint64 deactivationsCount = 14;
-    google.protobuf.Timestamp allocatedAt = 15 [json_name = "allocated_at"];
+    string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    Package package = 5;
+    string iccid = 6;
+    string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string imsi = 8;
+    string type = 9;
+    string status = 10;
+    bool isPhysical = 11 [json_name = "is_physical"];
+    google.protobuf.Timestamp firstActivatedOn = 12;
+    google.protobuf.Timestamp lastActivatedOn = 13 ;
+    uint64 activationsCount = 14;
+    uint64 deactivationsCount = 15;
+    google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
 }

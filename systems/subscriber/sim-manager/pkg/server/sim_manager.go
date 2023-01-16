@@ -7,7 +7,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/sql"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -15,28 +17,187 @@ import (
 
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
 	pkgpb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	simpoolpb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	subregpb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 )
+
+const DefaultDaysDelayForPackageStartDate = 1
 
 type SimManagerServer struct {
 	pb.UnimplementedSimManagerServiceServer
-	simRepo        sims.SimRepo
-	packageRepo    sims.PackageRepo
-	agentFactory   *adapters.AgentFactory
-	packageService providers.PackageClientProvider
+	simRepo                   sims.SimRepo
+	packageRepo               sims.PackageRepo
+	agentFactory              *adapters.AgentFactory
+	packageService            providers.PackageClientProvider
+	subscriberRegistryService providers.SubscriberRegistryClientProvider
+	simPoolService            providers.SimPoolClientProvider
+	key                       string
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	agentFactory *adapters.AgentFactory, packageService providers.PackageClientProvider) *SimManagerServer {
+	agentFactory *adapters.AgentFactory, packageService providers.PackageClientProvider,
+	subscriberRegistryService providers.SubscriberRegistryClientProvider,
+	simPoolService providers.SimPoolClientProvider, key string) *SimManagerServer {
 	return &SimManagerServer{
-		simRepo:        simRepo,
-		packageRepo:    packageRepo,
-		agentFactory:   agentFactory,
-		packageService: packageService,
+		simRepo:                   simRepo,
+		packageRepo:               packageRepo,
+		agentFactory:              agentFactory,
+		packageService:            packageService,
+		subscriberRegistryService: subscriberRegistryService,
+		simPoolService:            simPoolService,
+		key:                       key,
 	}
+}
+
+func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
+	subscriberID, err := uuid.Parse(req.GetSubscriberID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of subscriber uuid. Error %s", err.Error())
+	}
+
+	subRegistrySvc, err := s.subscriberRegistryService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	remoteSubResp, err := subRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{SubscriberID: subscriberID.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	if remoteSubResp.Subscriber.NetworkID != req.GetNetworkID() {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid networkId: subscriber is not registered on the provided network")
+	}
+
+	packageID, err := uuid.Parse(req.GetPackageID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	packageSvc, err := s.packageService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	remotePkgResp, err := packageSvc.Get(ctx, &pkgpb.GetPackageRequest{PackageUuid: packageID.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	if remotePkgResp.Package.OrgId != remoteSubResp.Subscriber.OrgID {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set package to subscriber sim: package does not belong to subscriber registerd org")
+	}
+
+	if !remotePkgResp.Package.Active {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set package to sim: package is no more active within its org")
+	}
+
+	strType := strings.ToLower(req.GetSimType())
+	simType := sims.ParseType(strType)
+
+	if remotePkgResp.Package.SimType.String() != simType.String() {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: provided sim type (%s) does not match with package allowed sim type (%s)",
+			simType, remotePkgResp.Package.SimType)
+	}
+
+	poolSim := new(simpoolpb.Sim)
+
+	simPoolSvc, err := s.simPoolService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	if req.SimToken != "" {
+		iccid, err := utils.GetIccidFromToken(req.SimToken, s.key)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal,
+				"an unknown error occured while getting iccid from sim token. Error %s", err.Error())
+		}
+
+		remoteSimPoolResp, err := simPoolSvc.GetByIccid(ctx, &simpoolpb.GetByIccidRequest{Iccid: iccid})
+		if err != nil {
+			return nil, err
+		}
+
+		poolSim = remoteSimPoolResp.Sim
+
+	} else {
+		remoteSimPoolResp, err := simPoolSvc.Get(ctx,
+			&simpoolpb.GetRequest{IsPhysicalSim: false, SimType: simpoolpb.SimType(simType)})
+
+		if err != nil {
+			return nil, err
+		}
+
+		poolSim = remoteSimPoolResp.Sim
+	}
+
+	networkID, err := uuid.Parse(remoteSubResp.Subscriber.NetworkID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"invalid format of subscriber's network uuid. Error %s", err.Error())
+	}
+
+	orgID, err := uuid.Parse(remoteSubResp.Subscriber.OrgID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"invalid format of subscriber's org uuid. Error %s", err.Error())
+	}
+
+	sim := &sims.Sim{
+		ID:           uuid.New(),
+		SubscriberID: subscriberID,
+		NetworkID:    networkID,
+		OrgID:        orgID,
+		Iccid:        poolSim.Iccid,
+		Msisdn:       poolSim.Msisdn,
+		Type:         simType,
+		Status:       sims.SimStatusInactive,
+		IsPhysical:   poolSim.IsPhysical,
+	}
+
+	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
+		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
+
+		startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
+		endDate := startDate.Add(time.Duration(remotePkgResp.Package.Duration))
+
+		firstPackage := &sims.Package{
+			ID:        uuid.New(),
+			SimID:     sim.ID,
+			StartDate: startDate,
+			EndDate:   endDate,
+			PlanID:    packageID,
+			IsActive:  false,
+		}
+
+		// Adding package to new allocated sim
+		err := db.NewPackageRepo(txDb).Add(firstPackage, nil)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to allocate sim to subscriber. Error %s", err.Error())
+	}
+
+	return &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}, nil
 }
 
 func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
@@ -438,6 +599,7 @@ func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 		Id:                 sim.ID.String(),
 		SubscriberID:       sim.SubscriberID.String(),
 		NetworkID:          sim.NetworkID.String(),
+		OrgID:              sim.OrgID.String(),
 		Iccid:              sim.Iccid,
 		Msisdn:             sim.Msisdn,
 		Imsi:               sim.Imsi,

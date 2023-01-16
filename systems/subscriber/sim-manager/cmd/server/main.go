@@ -91,6 +91,9 @@ func runGrpcServer(gormDB sql.Db) {
 		db.NewPackageRepo(gormDB),
 		adapters.NewAgentFactory(svcConf.TestAgentHost, timeout),
 		providers.NewPackageClientProvider(svcConf.PackageHost),
+		providers.NewSubscriberRegistryClientProvider(svcConf.SubscriberRegistryHost),
+		providers.NewSimPoolClientProvider(svcConf.SimPoolHost),
+		svcConf.Key,
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
