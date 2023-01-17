@@ -1,6 +1,9 @@
 package storage
 
+import "sync"
+
 type MemStorage struct {
+	m    *sync.RWMutex
 	data map[string]simInfo
 }
 
@@ -10,20 +13,29 @@ func NewMemStorage() *MemStorage {
 	}
 }
 
-func (m MemStorage) Get(key string) (simInfo, error) {
-	if val, ok := m.data[key]; ok {
+func (s MemStorage) Get(key string) (simInfo, error) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	if val, ok := s.data[key]; ok {
 		return val, nil
 	}
 
 	return simInfo{}, nil
 }
 
-func (m MemStorage) Put(key string, value simInfo) error {
-	m.data[key] = value
+func (s MemStorage) Put(key string, value simInfo) error {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	s.data[key] = value
 	return nil
 }
 
-func (m MemStorage) Delete(key string) error {
-	delete(m.data, key)
+func (s MemStorage) Delete(key string) error {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	delete(s.data, key)
 	return nil
 }
