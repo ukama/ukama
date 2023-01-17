@@ -36,7 +36,7 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 	}
 
 	if internal.SystemName != req.SystemName {
-		return nil, fmt.Errorf("inavlid system name %s in request", req.SystemName)
+		return nil, fmt.Errorf("invalid system name %s in request", req.SystemName)
 	}
 	/* Register service */
 	svc := db.Service{

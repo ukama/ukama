@@ -190,7 +190,7 @@ func (q *QueueListener) reConnect(ctx context.Context) error {
 
 	conn, err := grpc.DialContext(ctx, q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", q.serviceHost, err.Error())
+		log.Errorf("Could not connect to %s. Error %s", q.serviceHost, err.Error())
 		return err
 	} else {
 		q.gClient = pb.NewEventNotificationServiceClient(conn)
