@@ -38,6 +38,7 @@ type MsgBusClient struct {
 func NewMsgBusClient(timeout time.Duration, system string,
 	service string, instanceId string, msgBusURI string,
 	serviceURI string, msgClientURI string, exchange string, lq string, pq string, retry int8, routes []string) *MsgBusClient {
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -95,7 +96,7 @@ func (m *MsgBusClient) Register() error {
 }
 
 func (m *MsgBusClient) Start() error {
-	logrus.Debugf("Starting MessageClientRoutine for %s service instance %s.", m.service, m.instanceId)
+	logrus.Debugf("Starting MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -109,7 +110,7 @@ func (m *MsgBusClient) Start() error {
 }
 
 func (m *MsgBusClient) Stop() error {
-	logrus.Debugf("Stopping MessageClientRoutine for %s service instance %s..", m.service, m.instanceId)
+	logrus.Debugf("Stopping MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -124,7 +125,7 @@ func (m *MsgBusClient) Stop() error {
 }
 
 func (m *MsgBusClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
-	logrus.Debugf("Publishing message %s to MessageClientRoutine for %s service instance %s..", route, m.service, m.instanceId)
+	logrus.Debugf("Publishing message %s to MessageClientRoutine for %s service instance %s Routine ID %s", route, m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
