@@ -63,17 +63,11 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	logrus.Infof("Add Package Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v", req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 
-	orgID, err := uuid.Parse(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", err.Error())
-	}
-
 	_package := &db.Package{
 		Uuid:         uuid.New(),
 		Name:         req.GetName(),
 		Sim_type:     req.GetSimType().String(),
-		Org_id:       orgID,
+		Org_id:       uuid.MustParse(req.GetOrgId()),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
 		Sms_volume:   uint(req.GetSmsVolume()),
@@ -81,7 +75,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Voice_volume: uint(req.GetVoiceVolume()),
 		Org_rates_id: uint(req.GetOrgRatesId()),
 	}
-	err = p.packageRepo.Add(_package)
+	err := p.packageRepo.Add(_package)
 	if err != nil {
 
 		logrus.Error("Error while adding a package. " + err.Error())
