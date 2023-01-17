@@ -16,7 +16,7 @@ message GetPackageRequest{
     string packageUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_uuid"];
 }
 message GetByOrgPackageRequest{
-    uint64 orgId =1;
+    string orgId = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
 }
 message GetByOrgPackageResponse{
     repeated Package packages =1;
@@ -47,7 +47,7 @@ message UpdatePackageResponse {
 }
 message AddPackageRequest {
     string name=1;
-    uint64 org_id=2;
+    uint64 org_id=2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
     bool active =3;
     uint64 duration=4;
     SimType sim_type=5;
@@ -63,7 +63,7 @@ message Package {
     uint64 id =1;
     string uuid=2  [(validator.field) = {uuid_ver: 2}];
     string name =3;
-    int64 org_id=4;
+    string org_id = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
     bool active =5;
     uint64 duration =6;
     SimType sim_type=7;

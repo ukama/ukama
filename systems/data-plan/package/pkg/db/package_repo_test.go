@@ -48,6 +48,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 func Test_Package_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		packageId := uuid.New()
+		orgId := uuid.New()
 
 		var db *extsql.DB
 
@@ -56,7 +57,7 @@ func Test_Package_Get(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"id", "uuid", "name", "org_id", "active", "duration", "sms_volume",
 			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(1, packageId.String(), "Monthly Super", 1, "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
+			AddRow(1, packageId.String(), "Monthly Super", orgId.String(), "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs(packageId).
@@ -88,7 +89,7 @@ func Test_Package_Get(t *testing.T) {
 
 func Test_Package_GetByOrg(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
-		const orgId = 1
+		var orgId = uuid.New()
 
 		var db *extsql.DB
 
@@ -220,7 +221,7 @@ func Test_Package_Add(t *testing.T) {
 			Data_volume:  1024,
 			Voice_volume: 10,
 			Org_rates_id: 1,
-			Org_id:       1,
+			Org_id:       uuid.New(),
 		}
 
 		db, mock, err := sqlmock.New()

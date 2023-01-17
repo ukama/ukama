@@ -10,7 +10,7 @@ type PackageRepo interface {
 	Add(_package *Package) error
 	Get(uuid uuid.UUID) (*Package, error)
 	Delete(uuid uuid.UUID) error
-	GetByOrg(orgId uint64) ([]Package, error)
+	GetByOrg(orgId uuid.UUID) ([]Package, error)
 	Update(uuid uuid.UUID, pkg Package) (*Package, error)
 }
 
@@ -42,9 +42,9 @@ func (p *packageRepo) Get(uuid uuid.UUID) (*Package, error) {
 	return &_package, nil
 }
 
-func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
+func (p *packageRepo) GetByOrg(orgId uuid.UUID) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where(&Package{Org_id: uint(orgId)}).Find(&packages)
+	result := p.Db.GetGormDb().Where(&Package{Org_id: orgId}).Find(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error
