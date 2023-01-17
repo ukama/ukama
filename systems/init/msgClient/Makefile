@@ -2,10 +2,10 @@ include ../../../systems/config.mk
 
 .PHONY: integration.test test build lint deps 
 
-build: 
+build: integration.build 
 	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/init/msgClient/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/msgClient cmd/msgClient/main.go
 
-test:
+test: integration.test 
 	go test -v ./...
 
 gen:
