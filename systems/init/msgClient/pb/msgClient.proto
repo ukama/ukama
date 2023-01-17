@@ -4,23 +4,36 @@ option go_package = "pb/gen";
 
 package ukama.msgClient.v1;
 
-import "validator.proto";
 import "google/protobuf/any.proto";
+import "validator.proto";
+
+/*
+MsgClient system is responsibe for inter systems comunications, Suystems can emmit or generate events using MsgClientService. System expose following rpc's:
+    - Register Service 
+    - StartMsgBusHandler
+    - StopMsgBusHandler
+    - PublishMsg
+*/
 
 service MsgClientService {
-
+    /// Use this rpc to register system to MsgClient
     rpc RegisterService(RegisterServiceReq) returns (RegisterServiceResp);
+    /// Call this rpc to  StartMsgBus after registration
     rpc StartMsgBusHandler(StartMsgBusHandlerReq) returns (StartMsgBusHandlerResp);
+    /// Call this rpc to  StopMsgBus
     rpc StopMsgBusHandler(StopMsgBusHandlerReq) returns (StopMsgBusHandlerResp);
+    /// Call this rpc to publisg events
     rpc PublishMsg(PublishMsgRequest) returns (PublishMsgResponse);
 
 }
+
+/// Registration status enums
 enum REGISTRAION_STATUS {
-    REGISTERED = 0;
-    ALLREADY_REGISTERED = 1;
-    NOT_REGISTERED =2;
-    LISTNENING = 3;
-    LISTNENING_FAILURE = 4;
+    REGISTERED = 0; /// System registered status
+    ALLREADY_REGISTERED = 1; /// System already registered status
+    NOT_REGISTERED =2; /// System not registered status
+    LISTNENING = 3; /// Listening to event
+    LISTNENING_FAILURE = 4; /// Listening failed
 }
 
 message RegisterServiceReq {
@@ -37,17 +50,17 @@ message RegisterServiceReq {
 }
 
 message RegisterServiceResp {
-    REGISTRAION_STATUS state =1;
-    string serviceUuid = 2; 
+    REGISTRAION_STATUS state =1 ; /// Status of service after registration
+    string serviceUuid = 2; /// Uuid of created service
 }
 
 
 message StartMsgBusHandlerReq {
-    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];
+    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];; /// Uuid of service to start
 }
 
 message StopMsgBusHandlerReq {
-    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];
+    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];; /// Uuid of service to stop
 }
 
 message StartMsgBusHandlerResp {
@@ -57,9 +70,9 @@ message StopMsgBusHandlerResp {
 }
 
 message PublishMsgRequest {
-    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];
-    string routingKey = 2 [(validator.field) = {string_not_empty: true}];
-    google.protobuf.Any msg = 3;
+    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}]; /// Uuid of service
+    string routingKey = 2 [(validator.field) = {string_not_empty: true}]; /// Unique routing key
+    google.protobuf.Any msg = 3; /// Msg proto
 }
 
 message PublishMsgResponse {

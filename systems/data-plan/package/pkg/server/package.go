@@ -70,6 +70,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	}
 
 	_package := &db.Package{
+		Uuid:         uuid.New(),
 		Name:         req.GetName(),
 		Sim_type:     req.GetSimType().String(),
 		Org_id:       orgID,
@@ -89,7 +90,6 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	}
 
 	return &pb.AddPackageResponse{Package: dbPackageToPbPackages(_package)}, nil
-
 }
 
 func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
@@ -108,7 +108,9 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.DeletePackageResponse{}, nil
+	return &pb.DeletePackageResponse{
+		PackageUuid: req.PackageUuid,
+	}, nil
 }
 
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
