@@ -30,7 +30,7 @@ message AllocateSimRequest {
 }
 
 message AllocateSimResponse {
-    Sim sim = 1;
+    ukama.sim_manager.v1.Sim sim = 1;
 }
 
 
@@ -39,7 +39,7 @@ message GetSimRequest {
 }
 
 message GetSimResponse {
-    Sim sim = 1;
+    ukama.sim_manager.v1.Sim sim = 1;
 }
 
 
@@ -49,7 +49,7 @@ message GetSimsBySubscriberRequest {
 
 message GetSimsBySubscriberResponse {
     string subscriberID = 1 [json_name = "subscriber_id"];
-    repeated Sim sims = 2;
+    repeated ukama.sim_manager.v1.Sim sims = 2;
 }
 
 
@@ -59,7 +59,7 @@ message GetSimsByNetworkRequest {
 
 message GetSimsByNetworkResponse {
     string networkID = 1 [json_name = "network_id"];
-    repeated Sim sims = 2;
+    repeated ukama.sim_manager.v1.Sim sims = 2;
 }
 
 
@@ -98,7 +98,6 @@ message GetPackagesBySimResponse {
     repeated Package packages = 2;
 }
 
-
 message SetActivePackageRequest {
     string simID = 1;
     string packageID = 2;
@@ -106,7 +105,6 @@ message SetActivePackageRequest {
 
 message SetActivePackageResponse{
 }
-
 
 message RemovePackageRequest {
     string simID = 1;
@@ -116,13 +114,11 @@ message RemovePackageRequest {
 message RemovePackageResponse{
 }
 
-
 message Package {
     string id = 1;
     google.protobuf.Timestamp startDate = 2 [json_name = "start_date"];
     google.protobuf.Timestamp endDate = 3 [json_name = "end_date"];
 }
-
 
 message Sim {
     string id = 1;

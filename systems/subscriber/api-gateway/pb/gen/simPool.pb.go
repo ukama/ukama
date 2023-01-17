@@ -198,7 +198,7 @@ type GetByIccidRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Iccid string `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"` /// Sim iccid string
+	Iccid string `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 }
 
 func (x *GetByIccidRequest) Reset() {
@@ -245,7 +245,7 @@ type GetByIccidResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Sim *Sim `protobuf:"bytes,1,opt,name=sim,proto3" json:"sim,omitempty"` /// Sim object
+	Sim *Sim `protobuf:"bytes,1,opt,name=sim,proto3" json:"sim,omitempty"`
 }
 
 func (x *GetByIccidResponse) Reset() {

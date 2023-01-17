@@ -75,7 +75,7 @@ message Subscriber{
     string created_at = 10;
     string deleted_at = 11;
     string updated_at = 12;
-    repeated Sim sim = 13;
+    repeated ukama.subscriber.v1.Sim sim = 13;
     string date_of_birth = 14;
     string idSerial =15;
     string gender =16;

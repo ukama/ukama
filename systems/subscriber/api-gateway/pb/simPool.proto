@@ -2,24 +2,11 @@ syntax = "proto3";
 package ukama.sim.v1;
 option go_package = "pb/gen";
 
-/*
-Sim pool sub-system is responsible of:
-
-    - Populating sims data in DB from CSV
-    - Provide sim stats
-    - Provide sim on request
-    - Allows to add slice of sims
-*/
 service SimService {
-    ///Get sim pool statistaics
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
-    ///Get sim by id
     rpc GetByIccid (GetByIccidRequest) returns (GetByIccidResponse) {}
-    ///Add sims to pool
     rpc Add(AddRequest) returns (AddResponse){}
-    ///Delete sims from pool
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
-    ///Batch upload sims from CSV
     rpc Upload(UploadRequest) returns (UploadResponse){}
 }
 message GetStatsRequest{
@@ -32,16 +19,16 @@ message GetStatsResponse {
     uint64 failed = 4;
 }
 message GetByIccidRequest{
-    string iccid=1; /// Sim iccid string
+    string iccid=1;
 }
 message GetByIccidResponse {
-    Sim sim = 1; /// Sim object
+    ukama.sim.v1.Sim sim = 1;
 }
 message AddRequest{
     repeated AddSim sim = 1;
 }
 message AddResponse{
-    repeated Sim sim = 1;
+    repeated ukama.sim.v1.Sim sim = 1;
 }
 message DeleteRequest{
     repeated uint64 id = 1;
@@ -54,7 +41,7 @@ message UploadRequest{
     SimType simType = 2;
 }
 message UploadResponse {
-    repeated Sim sim = 1;
+    repeated ukama.sim.v1.Sim sim = 1;
 }
 message Sim{
     uint64 id = 1;
