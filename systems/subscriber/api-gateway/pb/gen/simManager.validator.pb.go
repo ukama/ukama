@@ -51,6 +51,19 @@ func (this *GetSimsBySubscriberResponse) Validate() error {
 	}
 	return nil
 }
+func (this *GetSimsByNetworkRequest) Validate() error {
+	return nil
+}
+func (this *GetSimsByNetworkResponse) Validate() error {
+	for _, item := range this.Sims {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Sims", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *ToggleSimStatusRequest) Validate() error {
 	return nil
 }
@@ -74,16 +87,29 @@ func (this *AddPackageRequest) Validate() error {
 func (this *AddPackageResponse) Validate() error {
 	return nil
 }
+func (this *GetPackagesBySimRequest) Validate() error {
+	return nil
+}
+func (this *GetPackagesBySimResponse) Validate() error {
+	for _, item := range this.Packages {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Packages", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *SetActivePackageRequest) Validate() error {
+	return nil
+}
+func (this *SetActivePackageResponse) Validate() error {
+	return nil
+}
 func (this *RemovePackageRequest) Validate() error {
 	return nil
 }
 func (this *RemovePackageResponse) Validate() error {
-	return nil
-}
-func (this *GetSimUsageRequest) Validate() error {
-	return nil
-}
-func (this *GetSimUsageResponse) Validate() error {
 	return nil
 }
 func (this *Package) Validate() error {
@@ -99,7 +125,7 @@ func (this *Package) Validate() error {
 	}
 	return nil
 }
-func (this *SimObj) Validate() error {
+func (this *Sim) Validate() error {
 	if this.Package != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Package); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Package", err)

@@ -21,6 +21,17 @@ func (this *GetStatsRequest) Validate() error {
 func (this *GetStatsResponse) Validate() error {
 	return nil
 }
+func (this *GetByIccidRequest) Validate() error {
+	return nil
+}
+func (this *GetByIccidResponse) Validate() error {
+	if this.Sim != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+		}
+	}
+	return nil
+}
 func (this *AddRequest) Validate() error {
 	for _, item := range this.Sim {
 		if item != nil {

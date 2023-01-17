@@ -58,6 +58,29 @@ func (_m *simPool) DeleteSimFromSimPool(id []uint64) (*gen.DeleteResponse, error
 	return r0, r1
 }
 
+// Get provides a mock function with given fields: iccid
+func (_m *simPool) Get(iccid string) (*gen.GetByIccidResponse, error) {
+	ret := _m.Called(iccid)
+
+	var r0 *gen.GetByIccidResponse
+	if rf, ok := ret.Get(0).(func(string) *gen.GetByIccidResponse); ok {
+		r0 = rf(iccid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByIccidResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(iccid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetStats provides a mock function with given fields: simType
 func (_m *simPool) GetStats(simType string) (*gen.GetStatsResponse, error) {
 	ret := _m.Called(simType)

@@ -24,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 type SimServiceClient interface {
 	// /Get sim pool statistaics
 	GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error)
+	// /Get sim by id
+	GetByIccid(ctx context.Context, in *GetByIccidRequest, opts ...grpc.CallOption) (*GetByIccidResponse, error)
 	// /Add sims to pool
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	// /Delete sims from pool
@@ -43,6 +45,15 @@ func NewSimServiceClient(cc grpc.ClientConnInterface) SimServiceClient {
 func (c *simServiceClient) GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error) {
 	out := new(GetStatsResponse)
 	err := c.cc.Invoke(ctx, "/ukama.sim.v1.SimService/GetStats", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simServiceClient) GetByIccid(ctx context.Context, in *GetByIccidRequest, opts ...grpc.CallOption) (*GetByIccidResponse, error) {
+	out := new(GetByIccidResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim.v1.SimService/GetByIccid", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +93,8 @@ func (c *simServiceClient) Upload(ctx context.Context, in *UploadRequest, opts .
 type SimServiceServer interface {
 	// /Get sim pool statistaics
 	GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error)
+	// /Get sim by id
+	GetByIccid(context.Context, *GetByIccidRequest) (*GetByIccidResponse, error)
 	// /Add sims to pool
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	// /Delete sims from pool
@@ -97,6 +110,9 @@ type UnimplementedSimServiceServer struct {
 
 func (UnimplementedSimServiceServer) GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
+}
+func (UnimplementedSimServiceServer) GetByIccid(context.Context, *GetByIccidRequest) (*GetByIccidResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByIccid not implemented")
 }
 func (UnimplementedSimServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
@@ -134,6 +150,24 @@ func _SimService_GetStats_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimServiceServer).GetStats(ctx, req.(*GetStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimService_GetByIccid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByIccidRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimServiceServer).GetByIccid(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim.v1.SimService/GetByIccid",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimServiceServer).GetByIccid(ctx, req.(*GetByIccidRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -202,6 +236,10 @@ var SimService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStats",
 			Handler:    _SimService_GetStats_Handler,
+		},
+		{
+			MethodName: "GetByIccid",
+			Handler:    _SimService_GetByIccid_Handler,
 		},
 		{
 			MethodName: "Add",

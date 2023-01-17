@@ -93,14 +93,26 @@ func (sm *SimManager) RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.Rem
 	return sm.client.RemovePackageForSim(ctx, req)
 }
 
-func (sm *SimManager) GetSimUsage(simId string) (*pb.GetSimUsageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-	return sm.client.GetSimUsage(ctx, &pb.GetSimUsageRequest{SimID: simId})
-}
-
 func (sm *SimManager) DeleteSim(simId string) (*pb.DeleteSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 	return sm.client.DeleteSim(ctx, &pb.DeleteSimRequest{SimID: simId})
+}
+
+func (sm *SimManager) GetSimsByNetwork(networkId string) (*pb.GetSimsByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+	return sm.client.GetSimsByNetwork(ctx, &pb.GetSimsByNetworkRequest{NetworkID: networkId})
+}
+
+func (sm *SimManager) GetPackagesForSim(simId string) (*pb.GetPackagesBySimResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+	return sm.client.GetPackagesBySim(ctx, &pb.GetPackagesBySimRequest{SimID: simId})
+}
+
+func (sm *SimManager) SetActivePackageForSim(req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+	return sm.client.SetActivePackageForSim(ctx, req)
 }

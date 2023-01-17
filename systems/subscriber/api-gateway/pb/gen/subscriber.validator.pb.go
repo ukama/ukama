@@ -78,7 +78,7 @@ func (this *Subscriber) Validate() error {
 	}
 	return nil
 }
-func (this *SubscriberSim) Validate() error {
+func (this *Sim) Validate() error {
 	if this.AllocatedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.AllocatedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("AllocatedAt", err)

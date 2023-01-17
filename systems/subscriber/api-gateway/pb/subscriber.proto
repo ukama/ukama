@@ -75,12 +75,12 @@ message Subscriber{
     string created_at = 10;
     string deleted_at = 11;
     string updated_at = 12;
-    repeated SubscriberSim sim = 13;
+    repeated Sim sim = 13;
     string date_of_birth = 14;
     string idSerial =15;
     string gender =16;
 }
-message SubscriberSim {
+message Sim {
     string id = 1 ;
     string subscriberID = 2 ;
     string networkID = 3 ;
