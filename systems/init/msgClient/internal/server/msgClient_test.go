@@ -26,7 +26,7 @@ var service1 = db.Service{
 	ListQueue:   "",
 	PublQueue:   "",
 	Exchange:    "amq.topic",
-	ServiceUri:  "localhost:9090",
+	ServiceUri:  "localhost:9095",
 	GrpcTimeout: 5,
 }
 

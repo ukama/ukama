@@ -39,7 +39,7 @@ var service1 = db.Service{
 	ListQueue:   "",
 	PublQueue:   "",
 	Exchange:    "amq.topic",
-	ServiceUri:  "localhost:9090",
+	ServiceUri:  "localhost:9095",
 	GrpcTimeout: 5,
 }
 
@@ -70,7 +70,7 @@ func Test_FullFlow(t *testing.T) {
 	// Contact the server and print out its response.
 	t.Run("Register", func(t *testing.T) {
 		resp, err := c.RegisterService(ctx, &pb.RegisterServiceReq{
-			SystemName:  "test-msgClient",
+			SystemName:  "init",
 			ServiceName: service1.Name,
 			Exchange:    service1.Exchange,
 			InstanceId:  service1.InstanceId,
@@ -126,7 +126,7 @@ func Test_FullFlow(t *testing.T) {
 
 func CreateMsgBusClient() (*grpc.ClientConn, pb.MsgClientServiceClient, error) {
 	logrus.Infoln("Connecting to MsgBusClientService ", tConfig.ServiceHost)
-	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	context, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

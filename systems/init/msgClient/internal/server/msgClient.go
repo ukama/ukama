@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/init/msgClient/internal"
@@ -35,7 +36,7 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 		State: pb.REGISTRAION_STATUS_NOT_REGISTERED,
 	}
 
-	if internal.SystemName != req.SystemName {
+	if !strings.EqualFold(internal.SystemName, req.SystemName) {
 		return nil, fmt.Errorf("invalid system name %s in request", req.SystemName)
 	}
 	/* Register service */
