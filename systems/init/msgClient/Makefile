@@ -9,11 +9,6 @@ test: integration.test
 	go test -v ./...
 
 gen:
-	# protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
-	# 				  lookup.proto
-
-	# protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
-	# 				  msgBus.proto
 
 	protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
 					  msgClient.proto

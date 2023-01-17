@@ -17,6 +17,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc"
@@ -96,7 +97,7 @@ func runGrpcServer(d sql.Db) {
 		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
 		nSrv := server.NewLookupEventServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
 		generated.RegisterLookupServiceServer(s, srv)
-		generated.RegisterEventNotificationServiceServer(s, nSrv)
+		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 
 	go msgBusListener(mbClient)

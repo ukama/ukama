@@ -431,12 +431,6 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 	return &pb.DeleteSystemResponse{}, nil
 }
 
-func (l *LookupServer) EvenListner(ctx context.Context, req *pb.Event) (*pb.EventResponse, error) {
-	logrus.Infof("Event %s received. Msg %+v", req.RoutingKey, req.Msg)
-
-	return &pb.EventResponse{}, nil
-}
-
 func invalidNodeIdError(nodeId string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
 }
