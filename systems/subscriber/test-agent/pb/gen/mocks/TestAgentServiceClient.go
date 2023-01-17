@@ -106,36 +106,6 @@ func (_m *TestAgentServiceClient) GetSimInfo(ctx context.Context, in *gen.GetSim
 	return r0, r1
 }
 
-// GetSimUsage provides a mock function with given fields: ctx, in, opts
-func (_m *TestAgentServiceClient) GetSimUsage(ctx context.Context, in *gen.GetSimUsageRequest, opts ...grpc.CallOption) (*gen.GetSimUsageResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.GetSimUsageResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimUsageRequest, ...grpc.CallOption) *gen.GetSimUsageResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSimUsageResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimUsageRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 type mockConstructorTestingTNewTestAgentServiceClient interface {
 	mock.TestingT
 	Cleanup(func())

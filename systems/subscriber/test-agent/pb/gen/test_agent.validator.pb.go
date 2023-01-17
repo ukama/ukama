@@ -10,7 +10,6 @@ import (
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
-	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -19,62 +18,29 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-var _regex_ActivateSimRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *ActivateSimRequest) Validate() error {
-	if !_regex_ActivateSimRequest_SimID.MatchString(this.SimID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
-	}
-	if this.SimID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
-	}
 	return nil
 }
 func (this *ActivateSimResponse) Validate() error {
 	return nil
 }
-
-var _regex_GetSimInfoRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *GetSimInfoRequest) Validate() error {
-	if !_regex_GetSimInfoRequest_SimID.MatchString(this.SimID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
-	}
-	if this.SimID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
-	}
 	return nil
 }
 func (this *GetSimInfoResponse) Validate() error {
+	if this.SimInfo != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.SimInfo); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("SimInfo", err)
+		}
+	}
 	return nil
 }
-
-var _regex_DeactivateSimRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *DeactivateSimRequest) Validate() error {
-	if !_regex_DeactivateSimRequest_SimID.MatchString(this.SimID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
-	}
-	if this.SimID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
-	}
 	return nil
 }
 func (this *DeactivateSimResponse) Validate() error {
 	return nil
 }
-
-var _regex_GetSimUsageRequest_SimID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *GetSimUsageRequest) Validate() error {
-	if !_regex_GetSimUsageRequest_SimID.MatchString(this.SimID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimID))
-	}
-	if this.SimID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))
-	}
-	return nil
-}
-func (this *GetSimUsageResponse) Validate() error {
+func (this *SimInfo) Validate() error {
 	return nil
 }
