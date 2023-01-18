@@ -6,7 +6,7 @@ The Subscriber Registry sub-system allows you to manage subscribers. It has the 
 
 - Add: Adds a new subscriber to the database.
 
-- Delete: Deletes a subscriber from the database.
+- Delete: Deletes a subscriber from the database and sends an event message with the subscriber's ID to a message bus.
 
 - Get: Retrieves a subscriber from the database by ID.
 
@@ -48,13 +48,14 @@ cd/systems/subscriber/subsciber
 
 ## Demo
 
-Make sure that the subscriber registry is running and listening for connections. You can start the server by running `make server`.
+Make sure that the subscriber registry and message bus broker are running and listening for connections. You can start the server by running `make server`.
 
 ### Add
 
 The Add method allows you to add a new subscriber to the database. It takes the following parameters:
 
 ```
+orgID : A UUID representing the org ID of the subscriber.
 networkID`: A string representing the network ID of the subscriber.
 firstName: A string representing the first name of the subscriber.
 lastName: A string representing the last name of the subscriber.
@@ -68,7 +69,7 @@ gender: A string representing the gender of the subscriber.
 
 ```
 
-grpcurl -d '{"networkID": "123456", "firstName": "John", "lastName": "Doe", "email": "john.doe@example.com", "phoneNumber": "123-456-7890", "gender": "M"}' -plaintext localhost:9090 SubscriberService.Add
+grpcurl -d '{"networkID": "123456","orgID:" "137849","firstName": "John", "lastName": "Doe", "email": "john.doe@example.com", "phoneNumber": "123-456-7890", "gender": "M"}' -plaintext localhost:9090 SubscriberService.Add
 
 ```
 
