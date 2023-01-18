@@ -25,6 +25,7 @@ type TestAgentServiceClient interface {
 	GetSimInfo(ctx context.Context, in *GetSimInfoRequest, opts ...grpc.CallOption) (*GetSimInfoResponse, error)
 	ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error)
 	DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error)
+	TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error)
 }
 
 type testAgentServiceClient struct {
@@ -62,6 +63,15 @@ func (c *testAgentServiceClient) DeactivateSim(ctx context.Context, in *Deactiva
 	return out, nil
 }
 
+func (c *testAgentServiceClient) TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error) {
+	out := new(TerminateSimResponse)
+	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/TerminateSim", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TestAgentServiceServer is the server API for TestAgentService service.
 // All implementations must embed UnimplementedTestAgentServiceServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type TestAgentServiceServer interface {
 	GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error)
 	ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error)
 	DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error)
+	TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error)
 	mustEmbedUnimplementedTestAgentServiceServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedTestAgentServiceServer) ActivateSim(context.Context, *Activat
 }
 func (UnimplementedTestAgentServiceServer) DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeactivateSim not implemented")
+}
+func (UnimplementedTestAgentServiceServer) TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TerminateSim not implemented")
 }
 func (UnimplementedTestAgentServiceServer) mustEmbedUnimplementedTestAgentServiceServer() {}
 
@@ -152,6 +166,24 @@ func _TestAgentService_DeactivateSim_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TestAgentService_TerminateSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TerminateSimRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TestAgentServiceServer).TerminateSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.test_agent.v1.TestAgentService/TerminateSim",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestAgentServiceServer).TerminateSim(ctx, req.(*TerminateSimRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TestAgentService_ServiceDesc is the grpc.ServiceDesc for TestAgentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var TestAgentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeactivateSim",
 			Handler:    _TestAgentService_DeactivateSim_Handler,
+		},
+		{
+			MethodName: "TerminateSim",
+			Handler:    _TestAgentService_TerminateSim_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

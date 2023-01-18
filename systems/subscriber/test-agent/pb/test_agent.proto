@@ -13,6 +13,7 @@ service TestAgentService {
     rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
     rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
     rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
+    rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
 }
 
 message ActivateSimRequest {
@@ -36,6 +37,14 @@ message DeactivateSimRequest {
 }
 
 message DeactivateSimResponse{
+}
+
+
+message TerminateSimRequest {
+    string iccid = 1 ;
+}
+
+message TerminateSimResponse{
 }
 
 message SimInfo {
