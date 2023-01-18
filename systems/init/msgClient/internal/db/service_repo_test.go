@@ -2,7 +2,6 @@ package db_test
 
 import (
 	extsql "database/sql"
-	"regexp"
 	"testing"
 
 	int_db "github.com/ukama/ukama/systems/init/msgClient/internal/db"

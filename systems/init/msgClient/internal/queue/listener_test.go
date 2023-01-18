@@ -44,6 +44,7 @@ func NewTestQueueListener(s db.Service) *QueueListener {
 		routes:      routes,
 		queue:       s.ListQueue,
 		exchange:    s.Exchange,
+		mConn:       &mocks.Consumer{},
 	}
 }
 
@@ -53,12 +54,15 @@ func TestQueuePublisher_startstopQueueListening(t *testing.T) {
 	qp.mConn = client
 
 	client.On("SubscribeToServiceQueue", qp.serviceName, qp.exchange, route, qp.serviceUuid, mock.AnythingOfType("func(amqp.Delivery, chan<- bool)")).Return(nil).Once()
+	client.On("Close").Return(nil).Once()
 
 	go qp.startQueueListening()
 
 	time.Sleep(2 * time.Second)
 
 	qp.stopQueueListening()
+
+	time.Sleep(2 * time.Second)
 
 	client.AssertExpectations(t)
 
