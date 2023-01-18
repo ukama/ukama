@@ -10,20 +10,19 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/server"
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version"
-
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
-
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 	"google.golang.org/grpc"
 )
 
-var serviceConfig *pkg.Config
+var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -34,7 +33,6 @@ func main() {
 	runGrpcServer(simDb)
 }
 
-// initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	serviceConfig = &pkg.Config{
 		DB: &uconf.Database{
@@ -66,11 +64,46 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
+	// instanceId := os.Getenv("POD_NAME")
+	// if instanceId == "" {
+	// 	inst, err := uuid.NewV4()
+	// 	if err != nil {
+	// 		log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
+	// 	}
+	// 	instanceId = inst.String()
+	// }
+
+	// mbClient := mb.NewMsgBusClient(
+	// 	serviceConfig.MsgClient.Timeout,
+	// 	pkg.SystemName,
+	// 	pkg.ServiceName,
+	// 	instanceId,
+	// 	serviceConfig.Queue.Uri,
+	// 	serviceConfig.Service.Uri,
+	// 	serviceConfig.MsgClient.Host,
+	// 	serviceConfig.MsgClient.Exchange,
+	// 	serviceConfig.MsgClient.ListenQueue,
+	// 	serviceConfig.MsgClient.PublishQueue,
+	// 	serviceConfig.MsgClient.RetryCount,
+	// 	serviceConfig.MsgClient.ListenerRoutes)
+
+	// log.Debugf("MessageBus Client is %+v", mbClient)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-
-		srv := server.NewSimServer(db.NewSimRepo(gormdb))
-		generated.RegisterSimServiceServer(s, srv)
+		// srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), mbClient)
+		nSrv := server.NewSimPoolEventServer(db.NewSimRepo(gormdb))
+		// generated.RegisterSimServiceServer(s, srv)
+		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
-
+	// go msgBusListener(mbClient)
 	grpcServer.StartServer()
+}
+
+func msgBusListener(m mb.MsgBusServiceClient) {
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }

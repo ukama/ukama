@@ -33,6 +33,6 @@ integration.test:
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 
-
-
+server:
+	go run cmd/msgClient/main.go
 
