@@ -14,6 +14,8 @@ type MsgBusHandlerInterface interface {
 	StopServiceQueueHandler(service string) (err error)
 	UpdateServiceQueueHandler(s *db.Service) (err error)
 	Publish(service string, key string, msg *anypb.Any) error
+	RemoveServiceQueuePublisher(service string) error
+	RemoveServiceQueueListening(service string) error
 }
 
 type MsgBusHandler struct {
@@ -189,7 +191,7 @@ func (m *MsgBusHandler) StopServiceQueueHandler(service string) (err error) {
 func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
 
 	log.Debugf("Removing old listener and publisher if any for service %s.", s.Name)
-	/* Listner */
+	/* Listener */
 	m.RemoveServiceQueueListening(s.ServiceUuid)
 
 	/* Publisher */

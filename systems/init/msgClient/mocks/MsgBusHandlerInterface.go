@@ -42,6 +42,34 @@ func (_m *MsgBusHandlerInterface) Publish(service string, key string, msg *anypb
 	return r0
 }
 
+// RemoveServiceQueueListening provides a mock function with given fields: service
+func (_m *MsgBusHandlerInterface) RemoveServiceQueueListening(service string) error {
+	ret := _m.Called(service)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(service)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// RemoveServiceQueuePublisher provides a mock function with given fields: service
+func (_m *MsgBusHandlerInterface) RemoveServiceQueuePublisher(service string) error {
+	ret := _m.Called(service)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(service)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // StopServiceQueueHandler provides a mock function with given fields: service
 func (_m *MsgBusHandlerInterface) StopServiceQueueHandler(service string) error {
 	ret := _m.Called(service)

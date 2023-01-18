@@ -12,6 +12,7 @@ service MsgClientService {
     rpc RegisterService(RegisterServiceReq) returns (RegisterServiceResp);
     rpc StartMsgBusHandler(StartMsgBusHandlerReq) returns (StartMsgBusHandlerResp);
     rpc StopMsgBusHandler(StopMsgBusHandlerReq) returns (StopMsgBusHandlerResp);
+    rpc UnregisterService(UnregisterServiceReq) returns (UnregisterServiceResp);
     rpc PublishMsg(PublishMsgRequest) returns (PublishMsgResponse);
 
 }
@@ -41,6 +42,12 @@ message RegisterServiceResp {
     string serviceUuid = 2; 
 }
 
+message UnregisterServiceReq {
+    string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message UnregisterServiceResp {
+}
 
 message StartMsgBusHandlerReq {
     string serviceUuid = 1 [(validator.field) = {string_not_empty: true}];

@@ -121,6 +121,31 @@ func (m *MsgClientServer) StopMsgBusHandler(ctx context.Context, req *pb.StopMsg
 	return &pb.StopMsgBusHandlerResp{}, nil
 }
 
+func (m *MsgClientServer) UnregisterService(ctx context.Context, req *pb.UnregisterServiceReq) (*pb.UnregisterServiceResp, error) {
+
+	log.Debugf("Remove handler request for %s", req.ServiceUuid)
+
+	/* Listener */
+	err := m.h.RemoveServiceQueueListening(req.ServiceUuid)
+	if err != nil {
+		return nil, err
+	}
+
+	/* Publisher */
+	err = m.h.RemoveServiceQueuePublisher(req.ServiceUuid)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.s.UnRegister(req.ServiceUuid)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("listener and publisher removed for service %s", req.ServiceUuid)
+
+	return &pb.UnregisterServiceResp{}, nil
+}
+
 func (m *MsgClientServer) PublishMsg(ctx context.Context, req *pb.PublishMsgRequest) (*pb.PublishMsgResponse, error) {
 	log.Debugf("Publish request for %s service", req.ServiceUuid)
 
