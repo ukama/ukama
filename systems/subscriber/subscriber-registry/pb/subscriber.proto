@@ -113,5 +113,4 @@ message Sim {
     uint64 activationsCount = 14;
     uint64 deactivationsCount = 15;
     google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
-
 }
