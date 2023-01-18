@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var healthCheck internal.HeathCheckRoutine
 var route1 = db.Route{
 	Key: "event.cloud.lookup.organization.create",
 }
