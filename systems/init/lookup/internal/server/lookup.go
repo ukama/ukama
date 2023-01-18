@@ -22,12 +22,12 @@ type LookupServer struct {
 	systemRepo     db.SystemRepo
 	orgRepo        db.OrgRepo
 	nodeRepo       db.NodeRepo
-	msgbus         *mb.MsgBusClient
+	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedLookupServiceServer
 }
 
-func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus *mb.MsgBusClient) *LookupServer {
+func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus mb.MsgBusServiceClient) *LookupServer {
 	return &LookupServer{
 		nodeRepo:       nodeRepo,
 		orgRepo:        orgRepo,

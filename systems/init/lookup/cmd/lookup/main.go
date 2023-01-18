@@ -105,7 +105,7 @@ func runGrpcServer(d sql.Db) {
 	grpcServer.StartServer()
 }
 
-func msgBusListener(m *mb.MsgBusClient) {
+func msgBusListener(m mb.MsgBusServiceClient) {
 
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
