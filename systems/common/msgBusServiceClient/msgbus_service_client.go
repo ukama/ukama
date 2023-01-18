@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-type MsgBusServiceClientInterface interface {
+type MsgBusServiceClient interface {
 	Register() error
 	Start() error
 	Stop() error
