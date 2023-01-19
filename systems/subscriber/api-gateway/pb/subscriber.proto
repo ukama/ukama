@@ -1,0 +1,91 @@
+syntax = "proto3";
+option go_package = "pb/gen";
+package ukama.subscriber.v1;
+
+import "google/protobuf/timestamp.proto";
+
+service SubscriberService {
+    rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
+    rpc Add (AddSubscriberRequest) returns (AddSubscriberResponse){}
+    rpc Update(UpdateSubscriberRequest) returns (UpdateSubscriberResponse){}
+    rpc Delete (DeleteSubscriberRequest) returns (DeleteSubscriberResponse){}
+    rpc GetByNetwork(GetByNetworkRequest) returns(GetByNetworkResponse){}
+}
+
+message DeleteSubscriberRequest{
+    string subscriberID = 1;
+}
+message GetByNetworkRequest{
+    string networkID = 1;
+
+}
+message GetByNetworkResponse{
+    repeated Subscriber subscribers  = 1;
+}
+message DeleteSubscriberResponse{
+    uint64 id =1;
+}
+message GetSubscriberRequest{
+    string subscriberID = 1;
+}
+message GetSubscriberResponse{
+    Subscriber subscriber  = 1;
+}
+
+message AddSubscriberRequest{
+    string firstName = 1;
+    string lastName = 2;
+    string email = 3;
+    string phoneNumber = 4;
+    string address  = 5; 
+    string idSerial =6;
+    string networkID = 7;
+    string proofOfIdentification =8;
+    google.protobuf.Timestamp dateOfBirth = 9;
+    string gender =10;
+}
+message UpdateSubscriberRequest{
+    string subscriberID = 1;
+    string email = 2;
+    string phoneNumber = 3;
+    string address  = 4; 
+    string idSerial =5;
+    string proofOfIdentification =6;
+}
+message UpdateSubscriberResponse{
+    string email = 1;
+    string phoneNumber = 2;
+    string address  = 3; 
+    string idSerial =4;
+    string proofOfIdentification =5;
+}
+message AddSubscriberResponse{
+    Subscriber Subscriber = 1;
+}
+message Subscriber{
+    uint64 id =1;
+    string firstName  = 2;
+    string lastName = 3;
+    string subscriberID = 4;
+    string networkID = 5;
+    string email  = 6;
+    string phoneNumber  = 7;
+    string address  = 8; 
+    string proofOfIdentification =9;
+    string created_at = 10;
+    string deleted_at = 11;
+    string updated_at = 12;
+    repeated ukama.subscriber.v1.Sim sim = 13;
+    string date_of_birth = 14;
+    string idSerial =15;
+    string gender =16;
+}
+message Sim {
+    string id = 1 ;
+    string subscriberID = 2 ;
+    string networkID = 3 ;
+    string iccid = 4;
+    string msisdn = 5 ;
+    bool isPhysical = 6 ;
+    google.protobuf.Timestamp allocatedAt = 7 ;
+}
