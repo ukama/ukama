@@ -93,7 +93,7 @@ func runGrpcServer(d sql.Db) {
 	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo, serviceConfig.HeathCheck.AllowedMiss, serviceConfig.HeathCheck.Period)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler)
+		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler, serviceConfig.System)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
