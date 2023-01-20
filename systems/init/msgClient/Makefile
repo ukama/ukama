@@ -23,6 +23,11 @@ clean:
 lint:
 	golangci-lint run
 
+# Generate Docs
+
+docs:
+	protoc --doc_out=. --doc_opt=./template.tmpl,README.md pb/*.proto & sh ./../../generate-dir-tree.sh $(PWD)
+
 
 # integration tests
 
@@ -33,6 +38,7 @@ integration.test:
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 
-
+server:
+	go run cmd/msgClient/main.go
 
 
