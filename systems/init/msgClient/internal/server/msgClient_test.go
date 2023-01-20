@@ -30,7 +30,7 @@ var service1 = db.Service{
 	GrpcTimeout: 5,
 }
 
-func TestLookupServer_RegisterService(t *testing.T) {
+func TestMsgClientServer_RegisterService(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 
@@ -63,7 +63,7 @@ func TestLookupServer_RegisterService(t *testing.T) {
 	routeRepo.AssertExpectations(t)
 }
 
-func TestLookupServer_StartMsgHandler(t *testing.T) {
+func TestMsgClientServer_StartMsgHandler(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
@@ -86,7 +86,7 @@ func TestLookupServer_StartMsgHandler(t *testing.T) {
 	serviceRepo.AssertExpectations(t)
 }
 
-func TestLookupServer_StoptMsgHandler(t *testing.T) {
+func TestMsgClientServer_StoptMsgHandler(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
@@ -104,7 +104,7 @@ func TestLookupServer_StoptMsgHandler(t *testing.T) {
 	msgIf.AssertExpectations(t)
 }
 
-func TestLookupServer_Publish(t *testing.T) {
+func TestMsgClientServer_Publish(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
