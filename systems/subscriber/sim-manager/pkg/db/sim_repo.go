@@ -28,16 +28,16 @@ func NewSimRepo(db sql.Db) SimRepo {
 
 func (s *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Create(sim)
-		if result.Error != nil {
-			return result.Error
-		}
-
 		if nestedFunc != nil {
 			nestErr := nestedFunc(sim, tx)
 			if nestErr != nil {
 				return nestErr
 			}
+		}
+
+		result := tx.Create(sim)
+		if result.Error != nil {
+			return result.Error
 		}
 
 		return nil
@@ -82,6 +82,13 @@ func (s *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 // Update package modified non-empty fields provided by Package struct
 func (s *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if nestedFunc != nil {
+			nestErr := nestedFunc(sim, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
 		result := tx.Clauses(clause.Returning{}).Updates(sim)
 
 		if result.RowsAffected == 0 {
@@ -90,13 +97,6 @@ func (s *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error 
 
 		if result.Error != nil {
 			return result.Error
-		}
-
-		if nestedFunc != nil {
-			nestErr := nestedFunc(sim, tx)
-			if nestErr != nil {
-				return nestErr
-			}
 		}
 
 		return nil
