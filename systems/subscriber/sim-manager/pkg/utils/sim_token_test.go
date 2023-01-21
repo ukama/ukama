@@ -24,7 +24,6 @@ func Test_encrypt(t *testing.T) {
 }
 
 func Test_encryptErrors(t *testing.T) {
-
 	tests := []struct {
 		key  string
 		text string
