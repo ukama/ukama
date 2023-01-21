@@ -41,7 +41,7 @@ message AllocateSimResponse {
 
 
 message GetSimRequest {
-    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string simID = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
 }
 
 message GetSimResponse {
@@ -70,7 +70,7 @@ message GetSimsByNetworkResponse {
 
 
 message ToggleSimStatusRequest {
-    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string simID = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
     string status = 2;
 }
 
@@ -78,7 +78,7 @@ message ToggleSimStatusResponse{}
 
 
 message DeleteSimRequest {
-    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string simID = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
 }
 
 message DeleteSimResponse{
