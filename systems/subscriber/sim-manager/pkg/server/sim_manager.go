@@ -33,7 +33,7 @@ type SimManagerServer struct {
 	pb.UnimplementedSimManagerServiceServer
 	simRepo                   sims.SimRepo
 	packageRepo               sims.PackageRepo
-	agentFactory              *adapters.AgentFactory
+	agentFactory              adapters.AgentFactory
 	packageService            providers.PackageClientProvider
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	simPoolService            providers.SimPoolClientProvider
@@ -41,7 +41,7 @@ type SimManagerServer struct {
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	agentFactory *adapters.AgentFactory, packageService providers.PackageClientProvider,
+	agentFactory adapters.AgentFactory, packageService providers.PackageClientProvider,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	simPoolService providers.SimPoolClientProvider, key string) *SimManagerServer {
 	return &SimManagerServer{
@@ -67,7 +67,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, err
 	}
 
-	remoteSubResp, err := subRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{SubscriberID: subscriberID.String()})
+	remoteSubResp, err := subRegistrySvc.Get(ctx,
+		&subregpb.GetSubscriberRequest{SubscriberID: subscriberID.String()})
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +89,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, err
 	}
 
-	remotePkgResp, err := packageSvc.Get(ctx, &pkgpb.GetPackageRequest{PackageUuid: packageID.String()})
+	remotePkgResp, err := packageSvc.Get(ctx,
+		&pkgpb.GetPackageRequest{PackageUuid: packageID.String()})
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +108,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	strType := strings.ToLower(req.GetSimType())
 	simType := sims.ParseType(strType)
 
-	if remotePkgResp.Package.SimType.String() != simType.String() {
+	if uint8(simType) != uint8(remotePkgResp.Package.SimType) {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid sim type: provided sim type (%s) does not match with package allowed sim type (%s)",
 			simType, remotePkgResp.Package.SimType)
@@ -157,7 +159,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	sim := &sims.Sim{
-		ID:           uuid.New(),
 		SubscriberID: subscriberID,
 		NetworkID:    networkID,
 		OrgID:        orgID,
@@ -171,6 +172,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
 		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 
+		sim.ID = uuid.New()
 		startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
 		endDate := startDate.Add(time.Duration(remotePkgResp.Package.Duration))
 
@@ -293,19 +295,21 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 			"invalid sim type: %q for sim ID: %q", sim.Type, req.SimID)
 	}
 
-	err = simAgent.TerminateSim(ctx, req.SimID)
+	err = simAgent.TerminateSim(ctx, sim.Iccid)
 	if err != nil {
 		return nil, err
 	}
 
-	// update sim status & mark sim as deleted
 	simUpdates := &sims.Sim{
-		ID:           sim.ID,
-		Status:       sims.SimStatusTerminated,
-		TerminatedAt: gorm.DeletedAt{Time: time.Now(), Valid: true},
+		ID:     sim.ID,
+		Status: sims.SimStatusTerminated,
 	}
 
-	err = s.simRepo.Update(simUpdates, nil)
+	err = s.simRepo.Update(simUpdates, func(pckg *sims.Sim, tx *gorm.DB) error {
+		pckg.TerminatedAt = gorm.DeletedAt{Time: time.Now(), Valid: true}
+
+		return nil
+	})
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
@@ -364,13 +368,12 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			"invalid packageID: provided package does not belong to sim org issuer")
 	}
 
-	if sim.Type.String() != remoteResp.Package.SimType.String() {
+	if uint8(sim.Type) != uint8(remoteResp.Package.SimType) {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid sim type: sim (%s) and packge (%s) sim types mismatch", sim.Type, remoteResp.Package.SimType.String())
 	}
 
 	pkg := &sims.Package{
-		ID:        uuid.New(),
 		SimID:     sim.ID,
 		StartDate: startDate,
 		EndDate:   startDate.Add(time.Duration(remoteResp.Package.Duration)),
@@ -389,7 +392,12 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			len(overlappingPackages))
 	}
 
-	err = s.packageRepo.Add(pkg, nil)
+	err = s.packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
+		pckg.ID = uuid.New()
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
@@ -418,31 +426,6 @@ func (s *SimManagerServer) GetPackagesBySim(ctx context.Context, req *pb.GetPack
 }
 
 func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
-	packageID, err := uuid.Parse(req.GetPackageID())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of package uuid. Error %s", err.Error())
-	}
-
-	pckg, err := s.packageRepo.Get(packageID)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "package")
-	}
-
-	if pckg.SimID.String() != req.GetSimID() {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimID())
-	}
-
-	if pckg.IsExpired() {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set expired package as active: package end date is %s", pckg.EndDate)
-	}
-
-	if pckg.IsActive {
-		return &pb.SetActivePackageResponse{}, nil
-	}
-
 	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -454,8 +437,38 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
+	if sim.Status != sims.SimStatusActive {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set active package on non active sim: sim's status is is %s", sim.Status)
+	}
+
+	packageID, err := uuid.Parse(req.GetPackageID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pkg, err := s.packageRepo.Get(packageID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	if pkg.SimID.String() != req.GetSimID() {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimID())
+	}
+
+	if pkg.IsExpired() {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set expired package as active: package end date is %s", pkg.EndDate)
+	}
+
+	if pkg.IsActive {
+		return &pb.SetActivePackageResponse{}, nil
+	}
+
 	newPackageToActivate := &sims.Package{
-		ID:       pckg.ID,
+		ID:       pkg.ID,
 		IsActive: true,
 	}
 
@@ -496,6 +509,16 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
+	pckg, err := s.packageRepo.Get(packageID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	if pckg.SimID.String() != req.GetSimID() {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimID())
+	}
+
 	err = s.packageRepo.Delete(packageID, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "package")
@@ -504,8 +527,8 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 	return &pb.RemovePackageResponse{}, nil
 }
 
-func (s *SimManagerServer) activateSim(ctx context.Context, id string) (*pb.ToggleSimStatusResponse, error) {
-	simID, err := uuid.Parse(id)
+func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*pb.ToggleSimStatusResponse, error) {
+	simID, err := uuid.Parse(reqSimID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
@@ -524,10 +547,10 @@ func (s *SimManagerServer) activateSim(ctx context.Context, id string) (*pb.Togg
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim ID: %q", sim.Type, id)
+			"invalid sim type: %q for sim ID: %q", sim.Type, reqSimID)
 	}
 
-	err = simAgent.ActivateSim(ctx, id)
+	err = simAgent.ActivateSim(ctx, sim.Iccid)
 	if err != nil {
 		return nil, err
 	}
@@ -552,8 +575,8 @@ func (s *SimManagerServer) activateSim(ctx context.Context, id string) (*pb.Togg
 	return &pb.ToggleSimStatusResponse{}, nil
 }
 
-func (s *SimManagerServer) deactivateSim(ctx context.Context, id string) (*pb.ToggleSimStatusResponse, error) {
-	simID, err := uuid.Parse(id)
+func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (*pb.ToggleSimStatusResponse, error) {
+	simID, err := uuid.Parse(reqSimID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
@@ -572,10 +595,10 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, id string) (*pb.To
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim ID: %q", sim.Type, id)
+			"invalid sim type: %q for sim ID: %q", sim.Type, reqSimID)
 	}
 
-	err = simAgent.DeactivateSim(ctx, id)
+	err = simAgent.DeactivateSim(ctx, sim.Iccid)
 	if err != nil {
 		return nil, err
 	}
