@@ -6,9 +6,6 @@ import (
 	"time"
 
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
-	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AgentAdapter interface {
@@ -18,42 +15,50 @@ type AgentAdapter interface {
 	Close()
 }
 
-type AgentFactory struct {
+type AgentFactory interface {
+	GetAgentAdapter(sims.SimType) (AgentAdapter, bool)
+}
+
+type agentFactory struct {
 	timeout time.Duration
 	factory map[sims.SimType]AgentAdapter
 }
 
-func NewAgentFactory(testAgentHost string, timeout time.Duration) *AgentFactory {
-	var factory = make(map[sims.SimType]AgentAdapter)
+func NewAgentFactory(testAgentHost string, timeout time.Duration) *agentFactory {
+	// we should lookup from provided config to get {realHost, realAgent, timeout} mappings
+	// in order to dynamically fill the factory map with available running agents
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	// for each {realHost, realAgent, timeout}}
+	// agent, err := NewRealAgent(realHost, timeout)
+	// handle err
+	// factory[SimTypeForAgent] = agent
 
-	testAgentConn, err := grpc.DialContext(ctx, testAgentHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
-
+	// For now we will only use TestAgent for any sim type
+	agent, err := NewTestAgentAdapter(testAgentHost, timeout)
 	if err != nil {
-		log.Fatalf("Failed to connect to Test Agent service %s. Error: %v", testAgentHost, err)
-
+		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", testAgentHost, err)
 	}
 
-	factory[sims.SimTypeInterNone] = &TestAgentAdapter{
-		conn:   testAgentConn,
-		host:   testAgentHost,
-		client: pb.NewTestAgentServiceClient(testAgentConn)}
+	var factory = make(map[sims.SimType]AgentAdapter)
 
-	return &AgentFactory{
+	factory[sims.SimTypeInterNone] = agent
+	factory[sims.SimTypeInterMnoAll] = agent
+	factory[sims.SimTypeInterMnoData] = agent
+	factory[sims.SimTypeInterUkamaAll] = agent
+
+	return &agentFactory{
 		timeout: timeout,
 		factory: factory,
 	}
 }
 
-func (a *AgentFactory) GetAgentAdapter(simType sims.SimType) (AgentAdapter, bool) {
+func (a *agentFactory) GetAgentAdapter(simType sims.SimType) (AgentAdapter, bool) {
 	agent, ok := a.factory[simType]
 
 	return agent, ok
 }
 
-func (a *AgentFactory) Close() {
+func (a *agentFactory) Close() {
 	for _, adapter := range a.factory {
 		adapter.Close()
 	}
