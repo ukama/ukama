@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	gen "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	events "github.com/ukama/ukama/systems/common/pb/gen/events"
 	grpc "google.golang.org/grpc"
 
 	mock "github.com/stretchr/testify/mock"
@@ -17,7 +17,7 @@ type EventNotificationServiceClient struct {
 }
 
 // EventNotification provides a mock function with given fields: ctx, in, opts
-func (_m *EventNotificationServiceClient) EventNotification(ctx context.Context, in *gen.Event, opts ...grpc.CallOption) (*gen.EventResponse, error) {
+func (_m *EventNotificationServiceClient) EventNotification(ctx context.Context, in *events.Event, opts ...grpc.CallOption) (*events.EventResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -27,17 +27,17 @@ func (_m *EventNotificationServiceClient) EventNotification(ctx context.Context,
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.EventResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.Event, ...grpc.CallOption) *gen.EventResponse); ok {
+	var r0 *events.EventResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *events.Event, ...grpc.CallOption) *events.EventResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.EventResponse)
+			r0 = ret.Get(0).(*events.EventResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.Event, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *events.Event, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

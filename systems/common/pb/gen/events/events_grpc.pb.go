@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: events.proto
+// source: events/events.proto
 
-package gen
+package events
 
 import (
 	context "context"
@@ -35,7 +35,7 @@ func NewEventNotificationServiceClient(cc grpc.ClientConnInterface) EventNotific
 
 func (c *eventNotificationServiceClient) EventNotification(ctx context.Context, in *Event, opts ...grpc.CallOption) (*EventResponse, error) {
 	out := new(EventResponse)
-	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.EventNotificationService/EventNotification", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.events.v1.EventNotificationService/EventNotification", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -43,21 +43,18 @@ func (c *eventNotificationServiceClient) EventNotification(ctx context.Context, 
 }
 
 // EventNotificationServiceServer is the server API for EventNotificationService service.
-// All implementations must embed UnimplementedEventNotificationServiceServer
+// All implementations should embed UnimplementedEventNotificationServiceServer
 // for forward compatibility
 type EventNotificationServiceServer interface {
 	EventNotification(context.Context, *Event) (*EventResponse, error)
-	mustEmbedUnimplementedEventNotificationServiceServer()
 }
 
-// UnimplementedEventNotificationServiceServer must be embedded to have forward compatible implementations.
+// UnimplementedEventNotificationServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedEventNotificationServiceServer struct {
 }
 
 func (UnimplementedEventNotificationServiceServer) EventNotification(context.Context, *Event) (*EventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EventNotification not implemented")
-}
-func (UnimplementedEventNotificationServiceServer) mustEmbedUnimplementedEventNotificationServiceServer() {
 }
 
 // UnsafeEventNotificationServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -81,7 +78,7 @@ func _EventNotificationService_EventNotification_Handler(srv interface{}, ctx co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.lookup.v1.EventNotificationService/EventNotification",
+		FullMethod: "/ukama.events.v1.EventNotificationService/EventNotification",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EventNotificationServiceServer).EventNotification(ctx, req.(*Event))
@@ -93,7 +90,7 @@ func _EventNotificationService_EventNotification_Handler(srv interface{}, ctx co
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var EventNotificationService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.lookup.v1.EventNotificationService",
+	ServiceName: "ukama.events.v1.EventNotificationService",
 	HandlerType: (*EventNotificationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -102,5 +99,5 @@ var EventNotificationService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "events.proto",
+	Metadata: "events/events.proto",
 }

@@ -37,7 +37,6 @@ type LookupServiceClient interface {
 	AddSystemForOrg(ctx context.Context, in *AddSystemRequest, opts ...grpc.CallOption) (*AddSystemResponse, error)
 	UpdateSystemForOrg(ctx context.Context, in *UpdateSystemRequest, opts ...grpc.CallOption) (*UpdateSystemResponse, error)
 	DeleteSystemForOrg(ctx context.Context, in *DeleteSystemRequest, opts ...grpc.CallOption) (*DeleteSystemResponse, error)
-	EventListner(ctx context.Context, in *Event, opts ...grpc.CallOption) (*EventResponse, error)
 }
 
 type lookupServiceClient struct {
@@ -147,15 +146,6 @@ func (c *lookupServiceClient) DeleteSystemForOrg(ctx context.Context, in *Delete
 	return out, nil
 }
 
-func (c *lookupServiceClient) EventListner(ctx context.Context, in *Event, opts ...grpc.CallOption) (*EventResponse, error) {
-	out := new(EventResponse)
-	err := c.cc.Invoke(ctx, "/ukama.lookup.v1.LookupService/EventListner", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // LookupServiceServer is the server API for LookupService service.
 // All implementations must embed UnimplementedLookupServiceServer
 // for forward compatibility
@@ -175,7 +165,6 @@ type LookupServiceServer interface {
 	AddSystemForOrg(context.Context, *AddSystemRequest) (*AddSystemResponse, error)
 	UpdateSystemForOrg(context.Context, *UpdateSystemRequest) (*UpdateSystemResponse, error)
 	DeleteSystemForOrg(context.Context, *DeleteSystemRequest) (*DeleteSystemResponse, error)
-	EventListner(context.Context, *Event) (*EventResponse, error)
 	mustEmbedUnimplementedLookupServiceServer()
 }
 
@@ -215,9 +204,6 @@ func (UnimplementedLookupServiceServer) UpdateSystemForOrg(context.Context, *Upd
 }
 func (UnimplementedLookupServiceServer) DeleteSystemForOrg(context.Context, *DeleteSystemRequest) (*DeleteSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSystemForOrg not implemented")
-}
-func (UnimplementedLookupServiceServer) EventListner(context.Context, *Event) (*EventResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method EventListner not implemented")
 }
 func (UnimplementedLookupServiceServer) mustEmbedUnimplementedLookupServiceServer() {}
 
@@ -430,24 +416,6 @@ func _LookupService_DeleteSystemForOrg_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LookupService_EventListner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Event)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LookupServiceServer).EventListner(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.lookup.v1.LookupService/EventListner",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LookupServiceServer).EventListner(ctx, req.(*Event))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // LookupService_ServiceDesc is the grpc.ServiceDesc for LookupService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -498,10 +466,6 @@ var LookupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteSystemForOrg",
 			Handler:    _LookupService_DeleteSystemForOrg_Handler,
-		},
-		{
-			MethodName: "EventListner",
-			Handler:    _LookupService_EventListner_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

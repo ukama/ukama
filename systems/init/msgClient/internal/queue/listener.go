@@ -7,8 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	hpb "github.com/ukama/ukama/systems/common/pb/gen/health"
-	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -190,7 +190,7 @@ func (q *QueueListener) reConnect(ctx context.Context) error {
 
 	conn, err := grpc.DialContext(ctx, q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", q.serviceHost, err.Error())
+		log.Errorf("Could not connect to %s. Error %s", q.serviceHost, err.Error())
 		return err
 	} else {
 		q.gClient = pb.NewEventNotificationServiceClient(conn)

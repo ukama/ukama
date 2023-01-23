@@ -82,18 +82,12 @@ func initConfig() {
 }
 
 func runGrpcServer(d sql.Db) {
-	//instanceId := os.Getenv("POD_NAME")
 
-	//var mbClient *mb.MsgBusClient
-	// mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
-	// 	internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
-	// 	serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
-	// 	serviceConfig.MsgClient.ListnerRoutes)
 	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
 	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo, serviceConfig.HeathCheck.AllowedMiss, serviceConfig.HeathCheck.Period)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler)
+		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler, serviceConfig.System)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 

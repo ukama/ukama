@@ -9,6 +9,15 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
+type MsgBusHandlerInterface interface {
+	CreateServiceMsgBusHandler() error
+	StopServiceQueueHandler(service string) (err error)
+	UpdateServiceQueueHandler(s *db.Service) (err error)
+	Publish(service string, key string, msg *anypb.Any) error
+	RemoveServiceQueuePublisher(service string) error
+	RemoveServiceQueueListening(service string) error
+}
+
 type MsgBusHandler struct {
 	ql  map[string]*QueueListener
 	qp  map[string]*QueuePublisher
@@ -69,6 +78,8 @@ func (m *MsgBusHandler) CreateServiceMsgBusHandler() error {
 			m.ql[s.ServiceUuid] = listener
 		}
 
+		log.Debugf("Service: %s \n Listner: %+v  \n Publisher: %+v", s.Name, listener, publisher)
+
 	}
 
 	m.StartQueueListeners()
@@ -94,7 +105,7 @@ func (m *MsgBusHandler) StopQueueListener() {
 	}
 }
 
-func (m *MsgBusHandler) RetstartServiceQueueListening(service string) (err error) {
+func (m *MsgBusHandler) RestartServiceQueueListening(service string) (err error) {
 	q, ok := m.ql[service]
 	if ok {
 		q.stopQueueListening()
@@ -177,10 +188,24 @@ func (m *MsgBusHandler) StopServiceQueueHandler(service string) (err error) {
 }
 
 /* start/Update Message queue parameters */
-func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
+func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) error {
 
-	/* Listner */
-	m.RemoveServiceQueueListening(s.ServiceUuid)
+	log.Debugf("Removing old listener and publisher if any for service %s.", s.Name)
+	/* Listener */
+	err := m.RemoveServiceQueueListening(s.ServiceUuid)
+	if err != nil {
+		log.Errorf("Failed to stop old listener for %s. Error %s", s.Name, err.Error())
+		return err
+	}
+
+	/* Publisher */
+	err = m.RemoveServiceQueuePublisher(s.ServiceUuid)
+	if err != nil {
+		log.Errorf("Failed to stop old publisher for %s. Error %s", s.Name, err.Error())
+		return err
+	}
+
+	log.Debugf("Removing old listener and publisher if any for service %s completed.", s.Name)
 
 	listener, err := NewQueueListener(*s)
 	if err != nil {
@@ -199,9 +224,6 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
 		return fmt.Errorf("failed to start listener for service %s", listener.serviceName)
 	}
 
-	/* Publisher */
-	m.RemoveServiceQueuePublisher(s.ServiceUuid)
-
 	publisher, err := NewQueuePublisher(*s)
 	if err != nil {
 		log.Errorf("Failed to create publisher for %s. Error %s", s.Name, err.Error())
@@ -210,6 +232,7 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
 		m.qp[s.ServiceUuid] = publisher
 	}
 
+	log.Debugf("Started listener and publisher if any for service %s.", s.Name)
 	return nil
 }
 
@@ -222,7 +245,7 @@ func (m *MsgBusHandler) Publish(service string, key string, msg *anypb.Any) erro
 			return err
 		}
 	} else {
-		return fmt.Errorf("no publiher for service %s found", service)
+		return fmt.Errorf("no publisher for service %s found", service)
 	}
 
 	return nil
@@ -256,7 +279,7 @@ func (m *MsgBusHandler) monitor(q chan bool) {
 		for {
 			select {
 			case <-t.C:
-				m.doHealthCheck()
+				_ = m.doHealthCheck()
 			case <-q:
 				t.Stop()
 				return

@@ -162,12 +162,10 @@ func Test_routeRepo_Add(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"key"}).
 			AddRow(key)
 
-		mock.ExpectBegin()
 		mock.ExpectQuery(`^SELECT.*routes.*`).
 			WithArgs(key).
 			WillReturnRows(rows)
 
-		mock.ExpectCommit()
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
 			DriverName:           "postgres",

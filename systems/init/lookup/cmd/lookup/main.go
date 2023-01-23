@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/gofrs/uuid"
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
@@ -16,6 +17,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc"
@@ -71,7 +73,16 @@ func initConfig() {
 }
 
 func runGrpcServer(d sql.Db) {
+
 	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		inst, err := uuid.NewV4()
+		if err != nil {
+			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
+		}
+		instanceId = inst.String()
+	}
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
 		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -86,7 +97,7 @@ func runGrpcServer(d sql.Db) {
 		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
 		nSrv := server.NewLookupEventServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
 		generated.RegisterLookupServiceServer(s, srv)
-		generated.RegisterEventNotificationServiceServer(s, nSrv)
+		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 
 	go msgBusListener(mbClient)
@@ -94,7 +105,7 @@ func runGrpcServer(d sql.Db) {
 	grpcServer.StartServer()
 }
 
-func msgBusListener(m *mb.MsgBusClient) {
+func msgBusListener(m mb.MsgBusServiceClient) {
 
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
