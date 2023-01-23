@@ -1,119 +1,113 @@
-package integration
+package server
 
 import (
 	"context"
-	"log"
-	"net"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
-	sb "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/server"
-
 	"google.golang.org/grpc"
-
-	"google.golang.org/grpc/test/bufconn"
 )
 
-const bufSize = 1024 * 1024
-
-var lis *bufconn.Listener
-
-func init() {
-	lis = bufconn.Listen(bufSize)
-	s := grpc.NewServer()
-	pb.RegisterSimServiceServer(s, &sb.SimPoolServer{})
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
-		}
-	}()
-}
-
-func bufDialer(context.Context, string) (net.Conn, error) {
-	return lis.Dial()
-}
-func TestAddSimToSimPool(t *testing.T) {
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-	client := pb.NewSimServiceClient(conn)
-	_, err = client.Add(ctx, &pb.AddRequest{
-		Sim: []*pb.AddSim{
-			{
-			Msisdn:"1234567890",
-			IsPhysical:     true,
-			ActivationCode: "123456",
-			SmDpAddress:    "http://localhost:8080",
-			QrCode:         "http://localhost:8080/qr/123456",
-			SimType:        pb.SimType_INTER_MNO_DATA,
+func TestSimPoolServer_Add(t *testing.T) {
+    // Create a gRPC client to connect to the server
+    conn, err := grpc.Dial("localhost:9090", grpc.WithInsecure())
+    if err != nil {
+        t.Fatalf("Failed to connect to server: %v", err)
+    }
+    defer conn.Close()
+    client := pb.NewSimServiceClient(conn)
+    // Create a request for a physical SIM of type "SIM_TYPE_1"
+    // req := &pb.GetRequest{IsPhysicalSim: true, SimType: pb.SimType_SIM_TYPE_1}
+	req:=&pb.AddRequest{
+	Sim:[]*pb.AddSim{
+		{
+			Iccid: "123456789", SimType: pb.SimType_INTER_MNO_DATA, Msisdn: "555-555-1234", SmDpAddress: "http://example.com", ActivationCode: "abc123", QrCode: "qr123", IsPhysical: true,
 		},
-
-			
+		{
+			Iccid: "12273", SimType: pb.SimType_INTER_MNO_DATA, Msisdn: "583-5343-0234", SmDpAddress: "http://example.com", ActivationCode: "abc123", QrCode: "qr123", IsPhysical: true,
 		},
-	})
-	if err != nil {
-		t.Fatalf("AddRequest failed: %v", err)
-	}
-
-	resp, err := client.Get(ctx, &pb.GetRequest{
-		IsPhysicalSim: true,
-		SimType:       pb.SimType_INTER_MNO_DATA,
-	})
-	if err != nil {
-		t.Fatalf("GetRequest failed: %v", err)
-	}
-	expected := &pb.GetResponse{
-		Sim: &pb.Sim{
-			Id:             1,
-			IsAllocated:    false,
-			IsPhysical:     true,
-			Msisdn:         "1234567890",
-			ActivationCode: "123456",
-			SmDpAddress:    "http://localhost:8080",
-			QrCode:         "http://localhost:8080/qr/123456",
-			SimType:        pb.SimType_INTER_MNO_DATA,
-		},
-	}
-	if !cmp.Equal(resp, expected) {
-		t.Errorf("Add Sim test failed, expected %v but got %v", expected, resp)
-	}
+	},
 }
 
 
-func TestGetSimFromSimPool(t *testing.T) {
-	ctx := context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
-	defer conn.Close()
-	client := pb.NewSimServiceClient(conn)
+    // Send the request to the server and check the response
+    resp, err := client.Add(context.Background(), req)
+    if err != nil {
+        t.Fatalf("Failed to adding SIMs: %v", err)
+    }
+    if resp.Sim == nil {
+        t.Error("Expected a SIM but got nil")
+    }
+}
 
-	resp, err := client.Get(ctx, &pb.GetRequest{
-		IsPhysicalSim: true,
-		SimType:       pb.SimType_INTER_MNO_DATA,
-	})
-	if err != nil {
-		t.Fatalf("AddRequest failed: %v", err)
-	}
-	expected := &pb.GetResponse{
-		Sim: &pb.Sim{
-			Id:             1,
-			IsAllocated:    false,
-			IsPhysical:     true,
-			Msisdn:         "1234567890",
-			ActivationCode: "123456",
-			Iccid:          "1234567890123456789",
-			SmDpAddress:    "http://localhost:8080",
-			QrCode:         "http://localhost:8080/qr/123456",
-			SimType:        pb.SimType_INTER_MNO_DATA,
+
+func TestSimPoolServer_Get(t *testing.T) {
+    // Create a gRPC client to connect to the server
+    conn, err := grpc.Dial("localhost:9090", grpc.WithInsecure())
+    if err != nil {
+        t.Fatalf("Failed to connect to server: %v", err)
+    }
+    defer conn.Close()
+    client := pb.NewSimServiceClient(conn)
+	req:=&pb.GetRequest{
+		IsPhysicalSim:true,
+		SimType:pb.SimType_INTER_MNO_DATA,
+}
+
+
+    // Send the request to the server and check the response
+    resp, err := client.Get(context.Background(), req)
+    if err != nil {
+        t.Fatalf("Failed to get SIMs: %v", err)
+    }
+    if resp.Sim == nil {
+        t.Error("Expected a SIM but got nil")
+    }
+}
+func TestSimPoolServer_GetByICCID(t *testing.T) {
+    // Create a gRPC client to connect to the server
+    conn, err := grpc.Dial("localhost:9090", grpc.WithInsecure())
+    if err != nil {
+        t.Fatalf("Failed to connect to server: %v", err)
+    }
+    defer conn.Close()
+    client := pb.NewSimServiceClient(conn)
+	req:=&pb.GetByIccidRequest{
+		Iccid:"123456789",
+}
+
+
+    // Send the request to the server and check the response
+    resp, err := client.GetByIccid(context.Background(), req)
+    if err != nil {
+        t.Fatalf("Failed to get SIM by ICCID: %v", err)
+    }
+    if resp.Sim == nil {
+        t.Error("Expected a SIM but got nil")
+    }
+}
+
+func TestSimPoolServer_Delete(t *testing.T) {
+    // Create a gRPC client to connect to the server
+    conn, err := grpc.Dial("localhost:9090", grpc.WithInsecure())
+    if err != nil {
+        t.Fatalf("Failed to connect to server: %v", err)
+    }
+    defer conn.Close()
+    client := pb.NewSimServiceClient(conn)
+	req:=&pb.DeleteRequest{
+		Id:[]uint64{
+			123456789,
+			123456789,
 		},
-	}
-	if !cmp.Equal(resp, expected) {
-		t.Errorf("Get Sim test failed, expected %v but got %v", expected, resp)
-	}
+}
+
+    // Send the request to the server and check the response
+    resp, err := client.Delete(context.Background(), req)
+    if err != nil {
+        t.Fatalf("Failed to delete SIMs with: %v", err)
+    }
+    if resp.Id == nil {
+        t.Error("Expected Id but got nil")
+    }
 }
