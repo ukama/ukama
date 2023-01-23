@@ -80,8 +80,6 @@ func GetIccidFromTestSimUUID(s string) (string, error) {
 
 	iccid := strings.Replace(strings.TrimPrefix(s, testUUUIDPrefix), "-", "", -1)
 
-	fmt.Println([]rune(iccid))
-
 	return iccid, nil
 }
 

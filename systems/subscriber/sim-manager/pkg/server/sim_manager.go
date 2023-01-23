@@ -6,15 +6,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -30,7 +33,6 @@ import (
 const DefaultDaysDelayForPackageStartDate = 1
 
 type SimManagerServer struct {
-	pb.UnimplementedSimManagerServiceServer
 	simRepo                   sims.SimRepo
 	packageRepo               sims.PackageRepo
 	agentFactory              adapters.AgentFactory
@@ -38,12 +40,16 @@ type SimManagerServer struct {
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	simPoolService            providers.SimPoolClientProvider
 	key                       string
+	msgbus                    mb.MsgBusServiceClient
+	baseRoutingKey            msgbus.RoutingKeyBuilder
+	pb.UnimplementedSimManagerServiceServer
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	agentFactory adapters.AgentFactory, packageService providers.PackageClientProvider,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
-	simPoolService providers.SimPoolClientProvider, key string) *SimManagerServer {
+	simPoolService providers.SimPoolClientProvider, key string,
+	msgBus mb.MsgBusServiceClient) *SimManagerServer {
 	return &SimManagerServer{
 		simRepo:                   simRepo,
 		packageRepo:               packageRepo,
@@ -52,6 +58,8 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		subscriberRegistryService: subscriberRegistryService,
 		simPoolService:            simPoolService,
 		key:                       key,
+		msgbus:                    msgBus,
+		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
@@ -199,7 +207,15 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"failed to allocate sim to subscriber. Error %s", err.Error())
 	}
 
-	return &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}, nil
+	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
+
+	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
+	err = s.msgbus.PublishRequest(route, resp.Sim)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
+	return resp, nil
 }
 
 func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gopkg.in/yaml.v2"
@@ -12,6 +13,8 @@ import (
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/cmd/version"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
+
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 
@@ -86,6 +89,25 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormDB sql.Db) {
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		inst, err := uuid.NewV4()
+		if err != nil {
+			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
+		}
+		instanceId = inst.String()
+	}
+
+	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName,
+		pkg.ServiceName, instanceId, svcConf.Queue.Uri,
+		svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange,
+		svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
+		svcConf.MsgClient.RetryCount,
+		svcConf.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
@@ -94,6 +116,7 @@ func runGrpcServer(gormDB sql.Db) {
 		providers.NewSubscriberRegistryClientProvider(svcConf.SubscriberRegistryHost),
 		providers.NewSimPoolClientProvider(svcConf.SimPoolHost),
 		svcConf.Key,
+		mbClient,
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
