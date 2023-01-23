@@ -6,25 +6,26 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/init/msgClient/internal"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/queue"
 	pb "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
 )
 
 type MsgClientServer struct {
-	s db.ServiceRepo
-	r db.RouteRepo
-	h queue.MsgBusHandlerInterface
+	sys string
+	s   db.ServiceRepo
+	r   db.RouteRepo
+	h   queue.MsgBusHandlerInterface
 
 	pb.UnimplementedMsgClientServiceServer
 }
 
-func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, h queue.MsgBusHandlerInterface) *MsgClientServer {
+func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, h queue.MsgBusHandlerInterface, sys string) *MsgClientServer {
 	return &MsgClientServer{
-		s: serviceRepo,
-		r: keyRepo,
-		h: h,
+		sys: sys,
+		s:   serviceRepo,
+		r:   keyRepo,
+		h:   h,
 	}
 }
 
@@ -36,7 +37,7 @@ func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterS
 		State: pb.REGISTRAION_STATUS_NOT_REGISTERED,
 	}
 
-	if !strings.EqualFold(internal.SystemName, req.SystemName) {
+	if !strings.EqualFold(m.sys, req.SystemName) {
 		return nil, fmt.Errorf("invalid system name %s in request", req.SystemName)
 	}
 	/* Register service */

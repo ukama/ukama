@@ -188,14 +188,22 @@ func (m *MsgBusHandler) StopServiceQueueHandler(service string) (err error) {
 }
 
 /* start/Update Message queue parameters */
-func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) (err error) {
+func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) error {
 
 	log.Debugf("Removing old listener and publisher if any for service %s.", s.Name)
 	/* Listener */
-	m.RemoveServiceQueueListening(s.ServiceUuid)
+	err := m.RemoveServiceQueueListening(s.ServiceUuid)
+	if err != nil {
+		log.Errorf("Failed to stop old listener for %s. Error %s", s.Name, err.Error())
+		return err
+	}
 
 	/* Publisher */
-	m.RemoveServiceQueuePublisher(s.ServiceUuid)
+	err = m.RemoveServiceQueuePublisher(s.ServiceUuid)
+	if err != nil {
+		log.Errorf("Failed to stop old publisher for %s. Error %s", s.Name, err.Error())
+		return err
+	}
 
 	log.Debugf("Removing old listener and publisher if any for service %s completed.", s.Name)
 
@@ -271,7 +279,7 @@ func (m *MsgBusHandler) monitor(q chan bool) {
 		for {
 			select {
 			case <-t.C:
-				m.doHealthCheck()
+				_ = m.doHealthCheck()
 			case <-q:
 				t.Stop()
 				return

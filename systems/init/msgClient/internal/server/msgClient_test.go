@@ -13,11 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var healthCheck internal.HeathCheckRoutine
 var route1 = db.Route{
 	Key: "event.cloud.lookup.organization.create",
 }
 
+var sys = "init"
 var ServiceUuid = "1ce2fa2f-2997-422c-83bf-92cf2e7334dd"
 var service1 = db.Service{
 	Name:        "test",
@@ -30,7 +30,7 @@ var service1 = db.Service{
 	GrpcTimeout: 5,
 }
 
-func TestLookupServer_RegisterService(t *testing.T) {
+func TestMsgClientServer_RegisterService(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 
@@ -55,7 +55,7 @@ func TestLookupServer_RegisterService(t *testing.T) {
 	routeRepo.On("Add", route1.Key).Return(&rt, nil).Once()
 	serviceRepo.On("AddRoute", &svc, &rt).Return(nil).Once()
 
-	s := NewMsgClientServer(serviceRepo, routeRepo, nil)
+	s := NewMsgClientServer(serviceRepo, routeRepo, nil, sys)
 	_, err := s.RegisterService(context.TODO(), &reqPb)
 
 	assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestLookupServer_RegisterService(t *testing.T) {
 	routeRepo.AssertExpectations(t)
 }
 
-func TestLookupServer_StartMsgHandler(t *testing.T) {
+func TestMsgClientServer_StartMsgHandler(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
@@ -79,14 +79,14 @@ func TestLookupServer_StartMsgHandler(t *testing.T) {
 	serviceRepo.On("Get", ServiceUuid).Return(&svc, nil).Once()
 	msgIf.On("UpdateServiceQueueHandler", &svc).Return(nil).Once()
 
-	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf)
+	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf, sys)
 	_, err := s.StartMsgBusHandler(context.TODO(), &reqStartPb)
 
 	assert.NoError(t, err)
 	serviceRepo.AssertExpectations(t)
 }
 
-func TestLookupServer_StoptMsgHandler(t *testing.T) {
+func TestMsgClientServer_StoptMsgHandler(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
@@ -97,14 +97,14 @@ func TestLookupServer_StoptMsgHandler(t *testing.T) {
 
 	msgIf.On("StopServiceQueueHandler", reqStopPb.ServiceUuid).Return(nil).Once()
 
-	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf)
+	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf, sys)
 	_, err := s.StopMsgBusHandler(context.TODO(), &reqStopPb)
 
 	assert.NoError(t, err)
 	msgIf.AssertExpectations(t)
 }
 
-func TestLookupServer_Publish(t *testing.T) {
+func TestMsgClientServer_Publish(t *testing.T) {
 	serviceRepo := &mocks.ServiceRepo{}
 	routeRepo := &mocks.RouteRepo{}
 	msgIf := &mocks.MsgBusHandlerInterface{}
@@ -121,7 +121,7 @@ func TestLookupServer_Publish(t *testing.T) {
 
 	msgIf.On("Publish", reqMsg.ServiceUuid, reqMsg.RoutingKey, reqMsg.Msg).Return(nil).Once()
 
-	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf)
+	s := NewMsgClientServer(serviceRepo, routeRepo, msgIf, sys)
 	_, err := s.PublishMsg(context.TODO(), &reqMsg)
 
 	assert.NoError(t, err)
