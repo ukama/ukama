@@ -8,6 +8,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/utils"
 )
@@ -19,11 +20,10 @@ type SimPoolServer struct {
 	pb.UnimplementedSimServiceServer
 }
 
-func NewSimPoolServer(simRepo db.SimRepo) *SimPoolServer {
+func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
 	return &SimPoolServer{simRepo: simRepo,
-		// msgbus:         msgBus,
-		// baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
-	}
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
 
 func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -88,6 +88,7 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 		logrus.Error("error while Upload sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
+
 	return &pb.UploadResponse{Sim: dbSimsToPbSim(s)}, nil
 }
 

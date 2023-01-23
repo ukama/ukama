@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	uconf "github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
 	"github.com/num30/config"
 	pkg "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
@@ -76,23 +77,27 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(
-		serviceConfig.MsgClient.Timeout,
-		pkg.SystemName,
-		pkg.ServiceName,
-		instanceId,
-		serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri,
-		serviceConfig.MsgClient.Host,
-		serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue,
-		serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListenerRoutes)
+	timeout := serviceConfig.MsgClient.Timeout
+if instanceId == "" {
+    inst, err := uuid.NewV4()
+    if err != nil {
+        log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
+    }
+    instanceId = inst.String()
+}
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+
+client := msgBusServiceClient.NewMsgBusClient(timeout, pkg.ServiceName, pkg.SystemName, instanceId, serviceConfig.MsgClient.Host, "localhost:9090", serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+
+err := client.Register()
+if err != nil {
+    logrus.Error(err)
+}
+	
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), mbClient)
+
+		srv := server.NewSimPoolServer(db.NewSimRepo(gormdb),client)
 		// nSrv := server.NewSimPoolEventServer(db.NewSimRepo(gormdb))
 		nSrv := server.NewSimPoolEventServer(db.NewSimRepo(gormdb))
 
@@ -101,7 +106,7 @@ func runGrpcServer(gormdb sql.Db) {
 		pb.RegisterSimServiceServer(s, srv)
 
 	})
-	go msgBusListener(mbClient)
+	// go msgBusListener(mbClient)
 	grpcServer.StartServer()
 }
 

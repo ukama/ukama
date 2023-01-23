@@ -98,8 +98,7 @@ func TestAdd_Success(t *testing.T) {
 
 func TestAdd_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
-	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	simService := NewSimPoolServer(mockRepo, msgbusClient)
+	simService := NewSimPoolServer(mockRepo)
 	reqMock := &pb.AddRequest{
 		Sim: []*pb.AddSim{
 			{
