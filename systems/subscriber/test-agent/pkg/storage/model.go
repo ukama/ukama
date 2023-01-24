@@ -3,8 +3,8 @@ package storage
 import "strconv"
 
 type Storage interface {
-	Get(key string) ([]byte, error)
-	Put(key string, value string) error
+	Get(key string) (*SimInfo, error)
+	Put(string, *SimInfo) error
 	Delete(key string) error
 }
 

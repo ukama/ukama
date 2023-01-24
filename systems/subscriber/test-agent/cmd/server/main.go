@@ -14,6 +14,7 @@ import (
 
 	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/server"
+	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -61,7 +62,7 @@ func initConfig() {
 }
 
 func runGrpcServer() {
-	testAgentServer := server.NewTestAgentServer()
+	testAgentServer := server.NewTestAgentServer(storage.NewMemStorage())
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterTestAgentServiceServer(s, testAgentServer)

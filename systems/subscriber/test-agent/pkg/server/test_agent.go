@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -19,8 +18,10 @@ type TestAgentServer struct {
 	pb.UnimplementedTestAgentServiceServer
 }
 
-func NewTestAgentServer() *TestAgentServer {
-	return &TestAgentServer{}
+func NewTestAgentServer(storage storage.Storage) *TestAgentServer {
+	return &TestAgentServer{
+		storage: storage,
+	}
 }
 
 func (s *TestAgentServer) GetSimInfo(ctx context.Context, req *pb.GetSimInfoRequest) (*pb.GetSimInfoResponse, error) {
@@ -48,7 +49,7 @@ func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRe
 	logrus.Infof("Activate sim for iccid: %s", req.Iccid)
 	sim := s.getSim(ctx, req.Iccid)
 	if sim == nil {
-		return nil, status.Errorf(codes.NotFound, "Sim not found.")
+		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
 	if sim.Status != storage.SimStatusInactive.String() {
@@ -57,9 +58,9 @@ func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRe
 
 	sim.Status = storage.SimStatusActive.String()
 
-	err := s.storage.Put(req.Iccid, marshalSimInfo(sim))
+	err := s.storage.Put(req.Iccid, sim)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Cannot update sim info in storage: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot update sim info in storage: %v", err)
 	}
 
 	return &pb.ActivateSimResponse{}, nil
@@ -69,7 +70,7 @@ func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateS
 	logrus.Infof("Deactivate sim for iccid: %s", req.Iccid)
 	sim := s.getSim(ctx, req.Iccid)
 	if sim == nil {
-		return nil, status.Errorf(codes.NotFound, "Sim not found.")
+		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
 	if sim.Status != storage.SimStatusActive.String() {
@@ -78,9 +79,9 @@ func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateS
 
 	sim.Status = storage.SimStatusInactive.String()
 
-	err := s.storage.Put(req.Iccid, marshalSimInfo(sim))
+	err := s.storage.Put(req.Iccid, sim)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Cannot update sim info in storage: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot update sim info in storage: %v", err)
 	}
 
 	return &pb.DeactivateSimResponse{}, nil
@@ -90,7 +91,7 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 	logrus.Infof("Terminate sim for iccid: %s", req.Iccid)
 	sim := s.getSim(ctx, req.Iccid)
 	if sim == nil {
-		return nil, status.Errorf(codes.NotFound, "Sim not found.")
+		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
 	if sim.Status != storage.SimStatusInactive.String() {
@@ -99,7 +100,7 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 
 	err := s.storage.Delete(req.Iccid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Cannot delete sim info from storage: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot delete sim info from storage: %v", err)
 	}
 	return &pb.TerminateSimResponse{}, nil
 }
@@ -117,9 +118,9 @@ func (s *TestAgentServer) getOrCreateSim(ctx context.Context, req *pb.GetSimInfo
 		}
 	}
 
-	err := s.storage.Put(req.Iccid, marshalSimInfo(sim))
+	err := s.storage.Put(req.Iccid, sim)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Cannot update sim info in storage: %v", err)
+		return nil, status.Errorf(codes.Internal, "cannot update sim info in storage: %v", err)
 	}
 	return sim, nil
 }
@@ -127,33 +128,15 @@ func (s *TestAgentServer) getOrCreateSim(ctx context.Context, req *pb.GetSimInfo
 func (s *TestAgentServer) getSim(ctx context.Context, iccid string) *storage.SimInfo {
 	val, err := s.storage.Get(iccid)
 	if err != nil {
-		logrus.Errorf("Cannot get sim info from storage: %v", err)
+		logrus.Errorf("cannot get sim info from storage: %v", err)
 		return nil
 	}
 
 	var sim *storage.SimInfo
 	if val != nil {
-		sim = unmarshalSimInfo(val)
+		sim = val
 	} else {
 		sim = nil
 	}
 	return sim
-}
-
-func marshalSimInfo(info *storage.SimInfo) string {
-	b, err := json.MarshalIndent(info, "", "  ")
-	if err != nil {
-		logrus.Errorf("Cannot marshal sim info: %v", err)
-	}
-	return string(b)
-}
-
-func unmarshalSimInfo(b []byte) *storage.SimInfo {
-	info := storage.SimInfo{}
-	err := json.Unmarshal(b, &info)
-	if err != nil {
-		logrus.Errorf("Cannot unmarshal sim info: %v", err)
-		return nil
-	}
-	return &info
 }

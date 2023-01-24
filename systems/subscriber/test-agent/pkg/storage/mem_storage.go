@@ -4,16 +4,17 @@ import "sync"
 
 type MemStorage struct {
 	m    *sync.RWMutex
-	data map[string]SimInfo
+	data map[string]*SimInfo
 }
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		data: make(map[string]SimInfo),
+		m:    &sync.RWMutex{},
+		data: make(map[string]*SimInfo),
 	}
 }
 
-func (s MemStorage) Get(key string) (SimInfo, error) {
+func (s *MemStorage) Get(key string) (*SimInfo, error) {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
@@ -21,10 +22,10 @@ func (s MemStorage) Get(key string) (SimInfo, error) {
 		return val, nil
 	}
 
-	return SimInfo{}, nil
+	return &SimInfo{}, nil
 }
 
-func (s MemStorage) Put(key string, value SimInfo) error {
+func (s *MemStorage) Put(key string, value *SimInfo) error {
 	s.m.Lock()
 	defer s.m.Unlock()
 
@@ -32,7 +33,7 @@ func (s MemStorage) Put(key string, value SimInfo) error {
 	return nil
 }
 
-func (s MemStorage) Delete(key string) error {
+func (s *MemStorage) Delete(key string) error {
 	s.m.Lock()
 	defer s.m.Unlock()
 
