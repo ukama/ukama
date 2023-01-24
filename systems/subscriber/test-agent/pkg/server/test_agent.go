@@ -37,8 +37,9 @@ func (s *TestAgentServer) GetSimInfo(ctx context.Context, request *pb.GetSimInfo
 
 	return &pb.GetSimInfoResponse{
 		SimInfo: &pb.SimInfo{
-			Iccid: sim.Iccid,
-			Imsi:  sim.Imsi,
+			Iccid:  sim.Iccid,
+			Imsi:   sim.Imsi,
+			Status: sim.Status,
 		},
 	}, nil
 }
@@ -58,6 +59,10 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 		return nil, status.Errorf(codes.NotFound, "Sim not found.")
 	}
 
+	if sim.Status != storage.SimStatusInactive.String() {
+		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state (%s) for deletion", sim.Status)
+	}
+
 	err := s.storage.Delete(req.Iccid)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Cannot delete sim info from etcd: %v", err)
@@ -72,8 +77,9 @@ func (s *TestAgentServer) getOrCreateSim(ctx context.Context, request *pb.GetSim
 
 		imsi := request.Iccid[len(iccid)-15:]
 		sim = &storage.SimInfo{
-			Iccid: iccid,
-			Imsi:  imsi,
+			Iccid:  iccid,
+			Imsi:   imsi,
+			Status: storage.SimStatusInactive.String(),
 		}
 	}
 

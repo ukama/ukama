@@ -50,4 +50,5 @@ message TerminateSimResponse{
 message SimInfo {
 	string Iccid  = 1;
 	string Imsi = 2; 
+    string Status = 3;
 }
