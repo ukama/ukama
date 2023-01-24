@@ -23,14 +23,14 @@ func NewTestAgentServer() *TestAgentServer {
 	return &TestAgentServer{}
 }
 
-func (s *TestAgentServer) GetSimInfo(ctx context.Context, request *pb.GetSimInfoRequest) (*pb.GetSimInfoResponse, error) {
-	logrus.Infof("GetSimInfo: %+v", request)
-	if !strings.HasPrefix(request.Iccid, iccidPrefix) {
-		return nil, status.Errorf(codes.NotFound, "Sim not found. Dummy sim should start with "+iccidPrefix)
+func (s *TestAgentServer) GetSimInfo(ctx context.Context, req *pb.GetSimInfoRequest) (*pb.GetSimInfoResponse, error) {
+	logrus.Infof("GetSimInfo: %+v", req)
+	if !strings.HasPrefix(req.Iccid, iccidPrefix) {
+		return nil, status.Errorf(codes.NotFound, "Sim with iccid %q not found. Test sim iccid should start with: %q", req.Iccid, iccidPrefix)
 	}
-	iccid := request.Iccid
+	iccid := req.Iccid
 
-	sim, err := s.getOrCreateSim(ctx, request, iccid)
+	sim, err := s.getOrCreateSim(ctx, req, iccid)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 	}
 
 	if sim.Status != storage.SimStatusInactive.String() {
-		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state (%s) for deletion", sim.Status)
+		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for deletion", sim.Status)
 	}
 
 	err := s.storage.Delete(req.Iccid)
@@ -70,12 +70,12 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 	return &pb.TerminateSimResponse{}, nil
 }
 
-func (s *TestAgentServer) getOrCreateSim(ctx context.Context, request *pb.GetSimInfoRequest, iccid string) (*storage.SimInfo, error) {
+func (s *TestAgentServer) getOrCreateSim(ctx context.Context, req *pb.GetSimInfoRequest, iccid string) (*storage.SimInfo, error) {
 	logrus.Infof("Get sim info for iccid: %s", iccid)
-	sim := s.getSim(ctx, request.Iccid)
+	sim := s.getSim(ctx, req.Iccid)
 	if sim == nil {
 
-		imsi := request.Iccid[len(iccid)-15:]
+		imsi := req.Iccid[len(iccid)-15:]
 		sim = &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
@@ -83,7 +83,7 @@ func (s *TestAgentServer) getOrCreateSim(ctx context.Context, request *pb.GetSim
 		}
 	}
 
-	err := s.storage.Put(request.Iccid, marshalSimInfo(sim))
+	err := s.storage.Put(req.Iccid, marshalSimInfo(sim))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Cannot update sim info in etcd: %v", err)
 	}
