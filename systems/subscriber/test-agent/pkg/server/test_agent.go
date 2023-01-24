@@ -66,7 +66,24 @@ func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRe
 }
 
 func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateSimRequest) (*pb.DeactivateSimResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "cannot deactivate sim %s: method TestAgent.DeactivateSim not implemented", req.Iccid)
+	logrus.Infof("Deactivate sim for iccid: %s", req.Iccid)
+	sim := s.getSim(ctx, req.Iccid)
+	if sim == nil {
+		return nil, status.Errorf(codes.NotFound, "Sim not found.")
+	}
+
+	if sim.Status != storage.SimStatusActive.String() {
+		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for deletion", sim.Status)
+	}
+
+	sim.Status = storage.SimStatusInactive.String()
+
+	err := s.storage.Put(req.Iccid, marshalSimInfo(sim))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Cannot update sim info in storage: %v", err)
+	}
+
+	return &pb.DeactivateSimResponse{}, nil
 }
 
 func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSimRequest) (*pb.TerminateSimResponse, error) {
