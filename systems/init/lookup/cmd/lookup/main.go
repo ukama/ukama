@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/gofrs/uuid"
 	"github.com/num30/config"
+	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/init/lookup/cmd/version"
 	"github.com/ukama/ukama/systems/init/lookup/internal"
@@ -12,7 +12,6 @@ import (
 	"github.com/ukama/ukama/systems/init/lookup/internal/server"
 	"gopkg.in/yaml.v3"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -29,7 +28,7 @@ func main() {
 	ccmd.ProcessVersionArgument("lookup", os.Args, version.Version)
 
 	/* Log level */
-	logrus.SetLevel(logrus.TraceLevel)
+	log.SetLevel(log.TraceLevel)
 	log.Infof("Starting the lookup service")
 
 	initConfig()
@@ -40,7 +39,7 @@ func main() {
 
 	runGrpcServer(db)
 
-	logrus.Infof("Exiting service %s", internal.ServiceName)
+	log.Infof("Exiting service %s", internal.ServiceName)
 
 }
 
@@ -63,7 +62,7 @@ func initConfig() {
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 
@@ -77,10 +76,7 @@ func runGrpcServer(d sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
-		inst, err := uuid.NewV4()
-		if err != nil {
-			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
-		}
+		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
 
