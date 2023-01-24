@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
@@ -11,6 +12,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const iccidPrefix = "890000"
+
 type TestAgentServer struct {
 	storage storage.Storage
 	pb.UnimplementedTestAgentServiceServer
@@ -18,6 +21,26 @@ type TestAgentServer struct {
 
 func NewTestAgentServer() *TestAgentServer {
 	return &TestAgentServer{}
+}
+
+func (s *TestAgentServer) GetSimInfo(ctx context.Context, request *pb.GetSimInfoRequest) (*pb.GetSimInfoResponse, error) {
+	logrus.Infof("GetSimInfo: %+v", request)
+	if !strings.HasPrefix(request.Iccid, iccidPrefix) {
+		return nil, status.Errorf(codes.NotFound, "Sim not found. Dummy sim should start with "+iccidPrefix)
+	}
+	iccid := request.Iccid
+
+	sim, err := s.getOrCreateSim(ctx, request, iccid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetSimInfoResponse{
+		SimInfo: &pb.SimInfo{
+			Iccid: sim.Iccid,
+			Imsi:  sim.Imsi,
+		},
+	}, nil
 }
 
 func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRequest) (*pb.ActivateSimResponse, error) {
@@ -30,7 +53,7 @@ func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateS
 
 func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSimRequest) (*pb.TerminateSimResponse, error) {
 	logrus.Infof("Terminate sim for iccid: %s", req.Iccid)
-	sim := s.getSimInfo(ctx, req.Iccid)
+	sim := s.getSim(ctx, req.Iccid)
 	if sim == nil {
 		return nil, status.Errorf(codes.NotFound, "Sim not found.")
 	}
@@ -42,7 +65,26 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 	return &pb.TerminateSimResponse{}, nil
 }
 
-func (s *TestAgentServer) getSimInfo(ctx context.Context, iccid string) *storage.SimInfo {
+func (s *TestAgentServer) getOrCreateSim(ctx context.Context, request *pb.GetSimInfoRequest, iccid string) (*storage.SimInfo, error) {
+	logrus.Infof("Get sim info for iccid: %s", iccid)
+	sim := s.getSim(ctx, request.Iccid)
+	if sim == nil {
+
+		imsi := request.Iccid[len(iccid)-15:]
+		sim = &storage.SimInfo{
+			Iccid: iccid,
+			Imsi:  imsi,
+		}
+	}
+
+	err := s.storage.Put(request.Iccid, marshalSimInfo(sim))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Cannot update sim info in etcd: %v", err)
+	}
+	return sim, nil
+}
+
+func (s *TestAgentServer) getSim(ctx context.Context, iccid string) *storage.SimInfo {
 	val, err := s.storage.Get(iccid)
 	if err != nil {
 		logrus.Errorf("Cannot get sim info from etcd: %v", err)
