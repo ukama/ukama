@@ -45,7 +45,24 @@ func (s *TestAgentServer) GetSimInfo(ctx context.Context, req *pb.GetSimInfoRequ
 }
 
 func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRequest) (*pb.ActivateSimResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "cannot activate sim %s: method TestAgent.ActivateSim not implemented", req.Iccid)
+	logrus.Infof("Activate sim for iccid: %s", req.Iccid)
+	sim := s.getSim(ctx, req.Iccid)
+	if sim == nil {
+		return nil, status.Errorf(codes.NotFound, "Sim not found.")
+	}
+
+	if sim.Status != storage.SimStatusInactive.String() {
+		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for deletion", sim.Status)
+	}
+
+	sim.Status = storage.SimStatusActive.String()
+
+	err := s.storage.Put(req.Iccid, marshalSimInfo(sim))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Cannot update sim info in storage: %v", err)
+	}
+
+	return &pb.ActivateSimResponse{}, nil
 }
 
 func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateSimRequest) (*pb.DeactivateSimResponse, error) {
@@ -65,7 +82,7 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 
 	err := s.storage.Delete(req.Iccid)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Cannot delete sim info from etcd: %v", err)
+		return nil, status.Errorf(codes.Internal, "Cannot delete sim info from storage: %v", err)
 	}
 	return &pb.TerminateSimResponse{}, nil
 }
@@ -85,7 +102,7 @@ func (s *TestAgentServer) getOrCreateSim(ctx context.Context, req *pb.GetSimInfo
 
 	err := s.storage.Put(req.Iccid, marshalSimInfo(sim))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Cannot update sim info in etcd: %v", err)
+		return nil, status.Errorf(codes.Internal, "Cannot update sim info in storage: %v", err)
 	}
 	return sim, nil
 }
@@ -93,7 +110,7 @@ func (s *TestAgentServer) getOrCreateSim(ctx context.Context, req *pb.GetSimInfo
 func (s *TestAgentServer) getSim(ctx context.Context, iccid string) *storage.SimInfo {
 	val, err := s.storage.Get(iccid)
 	if err != nil {
-		logrus.Errorf("Cannot get sim info from etcd: %v", err)
+		logrus.Errorf("Cannot get sim info from storage: %v", err)
 		return nil
 	}
 
