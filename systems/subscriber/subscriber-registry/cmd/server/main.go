@@ -38,6 +38,7 @@ func main() {
 	runGrpcServer(packageDb)
 }
 
+
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -53,6 +54,7 @@ func initConfig() {
 
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
+
 
 func initDb() sql.Db {
 	logrus.Infof("Initializing Database")
@@ -75,8 +77,6 @@ func runGrpcServer(gormdb sql.Db) {
 		}
 		instanceId = inst.String()
 	}
-
-	// timeout := serviceConfig.MsgClient.Timeout
 	if instanceId == "" {
 		inst, err := uuid.NewV4()
 		if err != nil {

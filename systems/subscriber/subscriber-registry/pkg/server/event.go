@@ -4,7 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
-	epb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 	"google.golang.org/protobuf/proto"

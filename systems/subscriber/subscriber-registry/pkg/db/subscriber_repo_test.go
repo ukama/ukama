@@ -12,7 +12,7 @@ import (
 )
 
 func TestSubscriberRepo_Get(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberServiceServer{}
+	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
 
 	t.Run("SubscriberExist", func(t *testing.T) {
 
@@ -57,7 +57,7 @@ func TestSubscriberRepo_Get(t *testing.T) {
 }
 
 func TestSubscriberRepo_Add(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberServiceServer{}
+	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
 	t.Run("Add a Subscriber", func(t *testing.T) {
 
 		subscriberServiceServerMock.On("Add", mock.Anything, &gen.AddSubscriberRequest{
@@ -89,7 +89,7 @@ func TestSubscriberRepo_Add(t *testing.T) {
 }
 
 func TestSubscriberRepo_Update(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberServiceServer{}
+	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
 	t.Run("SubscriberExist", func(t *testing.T) {
 
 		subscriberServiceServerMock.On("Update", mock.Anything, &gen.UpdateSubscriberRequest{
