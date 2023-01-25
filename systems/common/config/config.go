@@ -210,7 +210,7 @@ func LoadServiceHostConfig(name string) *Service {
 
 	val, present = os.LookupEnv(strings.ToUpper(name + svcPort))
 	if present {
-		s.Host = val
+		s.Port = val
 	}
 
 	s.Uri = s.Host + ":" + s.Port
