@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -52,8 +52,8 @@ func Test_NetRepo_Get(t *testing.T) {
 	t.Run("NetworkExist", func(t *testing.T) {
 		// Arrange
 		const netName = "network1"
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -96,7 +96,7 @@ func Test_NetRepo_Get(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		var netID = uuid.New()
+		var netID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -139,8 +139,8 @@ func Test_NetRepo_GetByName(t *testing.T) {
 	t.Run("NetworkExist", func(t *testing.T) {
 		// Arrange
 		const netName = "network1"
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 		const orgName = "org1"
 
 		var db *extsql.DB
@@ -228,8 +228,8 @@ func Test_NetRepo_GetByOrgId(t *testing.T) {
 	t.Run("OrgExist", func(t *testing.T) {
 		// Arrange
 		const netName = "network1"
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -272,7 +272,7 @@ func Test_NetRepo_GetByOrgId(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		var orgID = uuid.New()
+		var orgID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -317,9 +317,9 @@ func Test_NetRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		network := net_db.Network{
-			ID:    uuid.New(),
+			ID:    uuid.NewV4(),
 			Name:  "network1",
-			OrgID: uuid.New(),
+			OrgID: uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -366,8 +366,8 @@ func Test_NetRepo_Delete(t *testing.T) {
 
 		const orgName = "org1"
 		const netName = "net1"
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)

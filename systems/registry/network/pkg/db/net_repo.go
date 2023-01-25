@@ -3,11 +3,10 @@ package db
 import (
 	"fmt"
 
-	"github.com/google/uuid"
-	"github.com/ukama/ukama/systems/registry/network/pkg"
-
+	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/validation"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"gorm.io/gorm"
 )
 

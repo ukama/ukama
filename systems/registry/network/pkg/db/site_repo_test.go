@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -20,8 +20,8 @@ func Test_SiteRepo_Get(t *testing.T) {
 	t.Run("SiteExist", func(t *testing.T) {
 		// Arrange
 		const siteName = "site1"
-		var siteId = uuid.New()
-		var netId = uuid.New()
+		var siteId = uuid.NewV4()
+		var netId = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -64,7 +64,7 @@ func Test_SiteRepo_Get(t *testing.T) {
 
 	t.Run("SiteNotFound", func(t *testing.T) {
 		// Arrange
-		var siteId = uuid.New()
+		var siteId = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -107,8 +107,8 @@ func Test_SiteRepo_GetByName(t *testing.T) {
 	t.Run("SiteExist", func(t *testing.T) {
 		// Arrange
 		const siteName = "site1"
-		var siteId = uuid.New()
-		var netId = uuid.New()
+		var siteId = uuid.NewV4()
+		var netId = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -151,7 +151,7 @@ func Test_SiteRepo_GetByName(t *testing.T) {
 
 	t.Run("SiteNotFound", func(t *testing.T) {
 		// Arrange
-		var netId = uuid.New()
+		var netId = uuid.NewV4()
 		const siteName = "site-1"
 
 		var db *extsql.DB
@@ -195,8 +195,8 @@ func Test_SiteRepo_GetByNetwork(t *testing.T) {
 	t.Run("NetworkExist", func(t *testing.T) {
 		// Arrange
 		const siteName = "site1"
-		var siteId = uuid.New()
-		var netId = uuid.New()
+		var siteId = uuid.NewV4()
+		var netId = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -239,7 +239,7 @@ func Test_SiteRepo_GetByNetwork(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		var netId = uuid.New()
+		var netId = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -284,9 +284,9 @@ func Test_SiteRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		site := net_db.Site{
-			ID:        uuid.New(),
+			ID:        uuid.NewV4(),
 			Name:      "site1",
-			NetworkID: uuid.New(),
+			NetworkID: uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -331,7 +331,7 @@ func Test_SiteRepo_Delete(t *testing.T) {
 	t.Run("DeleteSite", func(t *testing.T) {
 		var db *extsql.DB
 
-		var siteId = uuid.New()
+		var siteId = uuid.NewV4()
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)

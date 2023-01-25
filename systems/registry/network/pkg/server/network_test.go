@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/registry/network/mocks"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
@@ -16,7 +16,7 @@ import (
 // func TestNetworkServer_AddNetwork(t *testing.T) {
 // t.Run("Org exists", func(t *testing.T) {
 // // Arrange
-// var orgID = uuid.New()
+// var orgID = uuid.NewV4()
 // const netName = "network-1"
 // const orgName = "org-1"
 
@@ -55,7 +55,7 @@ import (
 
 func TestNetworkServer_Get(t *testing.T) {
 	t.Run("Network found", func(t *testing.T) {
-		var netID = uuid.New()
+		var netID = uuid.NewV4()
 		const netName = "network-1"
 
 		netRepo := &mocks.NetRepo{}
@@ -63,7 +63,7 @@ func TestNetworkServer_Get(t *testing.T) {
 		netRepo.On("Get", netID).Return(
 			&db.Network{ID: netID,
 				Name:        netName,
-				OrgID:       uuid.New(),
+				OrgID:       uuid.NewV4(),
 				Deactivated: false,
 			}, nil).Once()
 
@@ -79,7 +79,7 @@ func TestNetworkServer_Get(t *testing.T) {
 	})
 
 	t.Run("Network not found", func(t *testing.T) {
-		var netID = uuid.New()
+		var netID = uuid.NewV4()
 		const netName = "network-1"
 
 		netRepo := &mocks.NetRepo{}
@@ -98,7 +98,7 @@ func TestNetworkServer_Get(t *testing.T) {
 
 func TestNetworkServer_GetByName(t *testing.T) {
 	t.Run("Org and Network found", func(t *testing.T) {
-		var netID = uuid.New()
+		var netID = uuid.NewV4()
 		const orgName = "org-1"
 		const netName = "network-1"
 
@@ -107,7 +107,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 		netRepo.On("GetByName", orgName, netName).Return(
 			&db.Network{ID: netID,
 				Name:        netName,
-				OrgID:       uuid.New(),
+				OrgID:       uuid.NewV4(),
 				Deactivated: false,
 			}, nil).Once()
 
@@ -142,8 +142,8 @@ func TestNetworkServer_GetByName(t *testing.T) {
 
 func TestNetworkServer_GetByOrg(t *testing.T) {
 	t.Run("Org found", func(t *testing.T) {
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 		const netName = "network-1"
 
 		netRepo := &mocks.NetRepo{}
@@ -210,8 +210,8 @@ func TestNetworkServer_Delete(t *testing.T) {
 func TestNetworkServer_AddSite(t *testing.T) {
 	t.Run("Network exists", func(t *testing.T) {
 		// Arrange
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 		const netName = "network-1"
 		const siteName = "site-A"
 
@@ -251,7 +251,7 @@ func TestNetworkServer_AddSite(t *testing.T) {
 
 func TestNetworkServer_GetSite(t *testing.T) {
 	t.Run("Site exists", func(t *testing.T) {
-		var siteID = uuid.New()
+		var siteID = uuid.NewV4()
 		const siteName = "site-A"
 
 		siteRepo := &mocks.SiteRepo{}
@@ -259,7 +259,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 		siteRepo.On("Get", siteID).Return(
 			&db.Site{ID: siteID,
 				Name:        siteName,
-				NetworkID:   uuid.New(),
+				NetworkID:   uuid.NewV4(),
 				Deactivated: false,
 			}, nil).Once()
 
@@ -275,7 +275,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 	})
 
 	t.Run("Site not found", func(t *testing.T) {
-		var siteID = uuid.New()
+		var siteID = uuid.NewV4()
 		const siteName = "site-A"
 
 		siteRepo := &mocks.SiteRepo{}
@@ -294,9 +294,9 @@ func TestNetworkServer_GetSite(t *testing.T) {
 
 func TestNetworkServer_GetSiteByName(t *testing.T) {
 	t.Run("Site exists", func(t *testing.T) {
-		var siteID = uuid.New()
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var siteID = uuid.NewV4()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 		const siteName = "site-A"
 		const netName = "net-1"
 
@@ -330,8 +330,8 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 
 	t.Run("Site not found", func(t *testing.T) {
 		const siteID = 1
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 		const siteName = "site-A"
 		const netName = "net-1"
 
@@ -359,8 +359,8 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 
 func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
 	t.Run("Network found", func(t *testing.T) {
-		var netID = uuid.New()
-		var orgID = uuid.New()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 		const siteName = "site-A"
 		const netName = "network-1"
 

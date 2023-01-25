@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,7 +19,7 @@ import (
 func Test_OrgRepo_Get(t *testing.T) {
 	t.Run("OrgExist", func(t *testing.T) {
 		// Arrange
-		var orgID = uuid.New()
+		var orgID = uuid.NewV4()
 		const orgName = "ukama"
 
 		var db *extsql.DB
@@ -63,7 +63,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 
 	t.Run("OrgNotFound", func(t *testing.T) {
 		// Arrange
-		var orgID = uuid.New()
+		var orgID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -105,7 +105,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 func Test_OrgRepo_GetByName(t *testing.T) {
 	t.Run("OrgExist", func(t *testing.T) {
 		// Arrange
-		var orgID = uuid.New()
+		var orgID = uuid.NewV4()
 		const orgName = "ukama"
 
 		var db *extsql.DB
@@ -194,7 +194,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		org := net_db.Org{
-			ID:   uuid.New(),
+			ID:   uuid.NewV4(),
 			Name: "ukama",
 		}
 

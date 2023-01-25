@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
@@ -73,7 +73,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}
 
 	network := &db.Network{
-		ID:    uuid.New(),
+		ID:    uuid.NewV4(),
 		Name:  networkName,
 		OrgID: org.ID,
 	}
@@ -91,7 +91,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 }
 
 func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	netID, err := uuid.Parse(req.NetworkID)
+	netID, err := uuid.FromString(req.NetworkID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -119,7 +119,7 @@ func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest)
 }
 
 func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	orgID, err := uuid.Parse(req.OrgID)
+	orgID, err := uuid.FromString(req.OrgID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -153,7 +153,7 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 }
 
 func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*pb.AddSiteResponse, error) {
-	netID, err := uuid.Parse(req.NetworkID)
+	netID, err := uuid.FromString(req.NetworkID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -180,7 +180,7 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 }
 
 func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*pb.GetSiteResponse, error) {
-	siteID, err := uuid.Parse(req.SiteID)
+	siteID, err := uuid.FromString(req.SiteID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -195,7 +195,7 @@ func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*p
 }
 
 func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByNameRequest) (*pb.GetSiteResponse, error) {
-	netID, err := uuid.Parse(req.NetworkID)
+	netID, err := uuid.FromString(req.NetworkID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -215,7 +215,7 @@ func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByName
 }
 
 func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesByNetworkRequest) (*pb.GetSitesByNetworkResponse, error) {
-	netID, err := uuid.Parse(req.NetworkID)
+	netID, err := uuid.FromString(req.NetworkID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}

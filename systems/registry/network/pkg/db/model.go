@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
 )
 

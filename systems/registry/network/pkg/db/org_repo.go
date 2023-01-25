@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/validation"
 
 	"github.com/ukama/ukama/systems/common/sql"
