@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -16,6 +17,7 @@ import (
 )
 
 func TestSubcriberServer_Add(t *testing.T) {
+	msgbus := &mbmocks.MsgBusServiceClient{}
 
 	testCases := []struct {
 		name         string
@@ -106,7 +108,7 @@ func TestSubcriberServer_Add(t *testing.T) {
 					return nil, nil
 				},
 			}
-			server := NewSubscriberServer(subscriberRepo,msgbusClient)
+			server := NewSubscriberServer(subscriberRepo,msgbus)
 			resp, err := server.Add(context.Background(), testCase.req)
 
 			assert.Equal(t, testCase.expectedResp, resp)

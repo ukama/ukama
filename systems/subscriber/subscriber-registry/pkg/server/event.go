@@ -12,15 +12,16 @@ import (
 )
 
 type SubcriberRegistryEventServer struct {
-	subscriberRepo db.Subscriber
+	subscriberRepo db.SubscriberRepo
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSubscriberEventServer(subscriberRepo db.Subscriber) *SubcriberRegistryEventServer {
+func NewSubscriberEventServer(subscriberRepo db.SubscriberRepo) *SubcriberRegistryEventServer {
 	return &SubcriberRegistryEventServer{
 		subscriberRepo: subscriberRepo,
 	}
 }
+
 func (l *SubcriberRegistryEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {

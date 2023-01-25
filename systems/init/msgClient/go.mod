@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/init/msgClient
 
-go 1.19
+go 1.18
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
@@ -20,8 +20,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.24.3
 )
-
-require github.com/gofrs/uuid v4.2.0+incompatible // indirect
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0

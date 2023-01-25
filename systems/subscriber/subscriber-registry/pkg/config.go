@@ -16,6 +16,7 @@ type Config struct {
 	Service          *uconf.Service
 }
 
+
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &uconf.Database{

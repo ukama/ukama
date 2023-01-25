@@ -1,25 +1,29 @@
 package main
 
 import (
+	"log"
 	"os"
 
+	"github.com/gofrs/uuid"
 	"github.com/num30/config"
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/server"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/server"
 	"gopkg.in/yaml.v3"
 
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg"
 
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/cmd/version"
 
+	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 
 	"github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	mbc "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -62,31 +66,41 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
-		pkg.SystemName,
-		pkg.ServiceName,
-		"susbcriber-registry",
-		serviceConfig.Queue.Uri,
-		"localhost:9090",
-		serviceConfig.MsgClient.Host,
-		serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue,
-		serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListenerRoutes)
+	instanceId := os.Getenv("POD_NAME")
+
+	if instanceId == "" {
+		inst, err := uuid.NewV4()
+		if err != nil {
+			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
+		}
+		instanceId = inst.String()
+	}
+
+	// timeout := serviceConfig.MsgClient.Timeout
+	if instanceId == "" {
+		inst, err := uuid.NewV4()
+		if err != nil {
+			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
+		}
+		instanceId = inst.String()
+	}
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+
 
 		logrus.Debugf("MessageBus Client is %+v", mbClient)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		 srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient)
+		nSrv := server.NewSubscriberEventServer(db.NewSubscriberRepo(gormdb))
+		pb.RegisterSubscriberRegistryServiceServer(s, srv)
+		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 
-		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb),mbClient)
-		generated.RegisterSubscriberRegistryServiceServer(s, srv)
 	})
 	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }
 
-func msgBusListener(m *mbc.MsgBusServiceClient) {
+func msgBusListener(m mb.MsgBusServiceClient) {
 
 	if err := m.Register(); err != nil {
 		logrus.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())

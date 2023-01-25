@@ -18,19 +18,20 @@ import (
 
 type SubcriberServer struct {
 	subscriberRepo       db.SubscriberRepo
-	msgbus               *mb.MsgBusServiceClient
+	msgbus               mb.MsgBusServiceClient
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedSubscriberRegistryServiceServer
 }
 
 
+
 func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient) *SubcriberServer {
-	return &SubcriberServer{
-		subscriberRepo: subscriberRepo,
+	return &SubcriberServer{subscriberRepo: subscriberRepo,
 		msgbus:         msgBus,
 		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
-	
 }
+
+
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
@@ -105,7 +106,7 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		logrus.WithError(err).Error("error while deleting subscriber")
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	route := s.baseRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
+	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
 	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
