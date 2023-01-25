@@ -84,23 +84,17 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	// mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName,
-	// 	instanceId,
-	// 	serviceConfig.MsgClient.Host, "localhost:9090", serviceConfig.MsgClient.Host,
-	// 	serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	// log.Debugf("MessageBus Client is %+v", mbClient)
-logrus.Infof("MESSAGE %+v",serviceConfig.Service)
-	client := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 
-		srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), client)
+		srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), mbClient)
 		nSrv := server.NewSimPoolEventServer(db.NewSimRepo(gormdb))
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 		pb.RegisterSimServiceServer(s, srv)
 
 	})
-	go msgBusListener(client)
+	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }

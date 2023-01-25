@@ -6,6 +6,8 @@ build:
 	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/sim-pool cmd/server/main.go
 lint:
 	golangci-lint run
+integration.test:
+	go test ./test/integration -tags integration  -v -count=1
 test:
 	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
 gen:

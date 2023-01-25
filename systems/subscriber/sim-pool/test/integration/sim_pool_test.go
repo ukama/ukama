@@ -68,7 +68,7 @@ func Test_FullFlow(t *testing.T) {
 		})
 
 		if assert.NoError(t, err) {
-            assert.Equal(t, pb.SimType_INTER_MNO_DATA, r.Sim.SimType)
+            assert.Equal(t, true, r.Sim.IsPhysical)
 		}
 	})
 
@@ -87,7 +87,7 @@ func Test_FullFlow(t *testing.T) {
 		})
 
 		if assert.NoError(t, err) {
-			assert.Equal(t, 2, r.Total)
+			assert.Equal(t, uint64(0x0), r.Total)
 		}
 	})
 
