@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/num30/config"
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/server"
 
 	"gopkg.in/yaml.v3"
@@ -25,7 +24,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serviceConfig = pkg.NewConfig(pkg.ServiceName)
+var serviceConfig *pkg.Config
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -38,11 +37,7 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	serviceConfig = &pkg.Config{
-		DB: &uconf.Database{
-			DbName: pkg.ServiceName,
-		},
-	}
+	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
