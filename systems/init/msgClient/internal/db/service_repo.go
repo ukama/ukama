@@ -12,7 +12,6 @@ import (
 type ServiceRepo interface {
 	Register(service *Service) (*Service, error)
 	UnRegister(serviceId string) error
-	Update(service *Service) error
 	Get(serviceUuid string) (*Service, error)
 	GetRoutes(serviceId string) ([]Route, error)
 	List() ([]Service, error)
@@ -34,7 +33,7 @@ func (r *serviceRepo) Register(service *Service) (*Service, error) {
 
 	res := r.db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "name"}},
-		DoUpdates: clause.AssignmentColumns([]string{"instance_id", "msg_bus_uri", "list_queue", "publ_queue", "exchange", "service_uri", "grpc_timeout"}),
+		DoUpdates: clause.AssignmentColumns([]string{"instance_id", "msg_bus_uri", "list_queue", "publ_queue", "exchange", "service_uri", "grpc_timeout", "deleted_at"}),
 	}).Create(service)
 	if res.Error != nil {
 
@@ -42,19 +41,6 @@ func (r *serviceRepo) Register(service *Service) (*Service, error) {
 	}
 
 	return service, nil
-}
-
-func (r *serviceRepo) Update(service *Service) error {
-	res := r.db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "service_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"instance_id", "msg_bus_uri", "list_queue", "publ_queue", "exchange", "service_uri", "grpc_timeout"}),
-	}).Create(service)
-	if res.Error != nil {
-
-		return res.Error
-	}
-
-	return nil
 }
 
 func (r *serviceRepo) UnRegister(serviceUuid string) error {

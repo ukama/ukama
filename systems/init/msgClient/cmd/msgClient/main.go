@@ -15,7 +15,6 @@ import (
 	"github.com/ukama/ukama/systems/init/msgClient/internal/server"
 	"gopkg.in/yaml.v3"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -42,7 +41,7 @@ func main() {
 
 	runGrpcServer(db)
 
-	logrus.Infof("Exiting service %s", internal.ServiceName)
+	log.Infof("Exiting service %s", internal.ServiceName)
 
 }
 
@@ -73,7 +72,7 @@ func initConfig() {
 	} else if internal.IsDebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 
@@ -82,18 +81,12 @@ func initConfig() {
 }
 
 func runGrpcServer(d sql.Db) {
-	//instanceId := os.Getenv("POD_NAME")
 
-	//var mbClient *mb.MsgBusClient
-	// mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
-	// 	internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
-	// 	serviceConfig.MsgClient.Host, serviceConfig.MsgClient.RetryCount,
-	// 	serviceConfig.MsgClient.ListnerRoutes)
 	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
-	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo)
+	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo, serviceConfig.HeathCheck.AllowedMiss, serviceConfig.HeathCheck.Period)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler)
+		srv := server.NewMsgClientServer(serviceRepo, routeRepo, handler, serviceConfig.System)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
@@ -101,7 +94,7 @@ func runGrpcServer(d sql.Db) {
 	log.Infof("Message Bus Handler is %+v", handler)
 	err := handler.CreateServiceMsgBusHandler()
 	if err != nil {
-		logrus.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
+		log.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
 	}
 
 	grpcServer.StartServer()

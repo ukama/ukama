@@ -15,14 +15,16 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/init/lookup v0.0.0-20230104003636-ab3d312e74b3
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.24.3
 )
 
+require github.com/gofrs/uuid v4.2.0+incompatible // indirect
+
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/creasty/defaults v1.6.0 // indirect
@@ -77,5 +79,5 @@ require (
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/postgres v1.3.5 // indirect
+	gorm.io/driver/postgres v1.3.5
 )

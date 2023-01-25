@@ -11,10 +11,10 @@ replace github.com/ukama/ukama/systems/init/msgClient => ../msgClient
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/golang/protobuf v1.5.2
-	github.com/google/uuid v1.3.0
 	github.com/jackc/pgtype v1.11.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
+	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
@@ -34,7 +34,6 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
-	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect

@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
+	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -22,12 +22,12 @@ type LookupServer struct {
 	systemRepo     db.SystemRepo
 	orgRepo        db.OrgRepo
 	nodeRepo       db.NodeRepo
-	msgbus         *mb.MsgBusClient
+	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedLookupServiceServer
 }
 
-func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus *mb.MsgBusClient) *LookupServer {
+func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus mb.MsgBusServiceClient) *LookupServer {
 	return &LookupServer{
 		nodeRepo:       nodeRepo,
 		orgRepo:        orgRepo,
@@ -299,7 +299,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 	logrus.Infof("Adding system %s for org  %s", req.GetSystemName(), req.GetOrgName())
 
 	var sysIp pgtype.Inet
-	sysId := uuid.New().String()
+	sysId := uuid.NewV4().String()
 
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
@@ -429,12 +429,6 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 	}
 
 	return &pb.DeleteSystemResponse{}, nil
-}
-
-func (l *LookupServer) EvenListner(ctx context.Context, req *pb.Event) (*pb.EventResponse, error) {
-	logrus.Infof("Event %s received. Msg %+v", req.RoutingKey, req.Msg)
-
-	return &pb.EventResponse{}, nil
 }
 
 func invalidNodeIdError(nodeId string, err error) error {

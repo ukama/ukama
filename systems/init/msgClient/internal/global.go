@@ -4,4 +4,4 @@ const ServiceName = "msgclient"
 
 const SystemName = "Init"
 
-var IsDebugMode = true
+var IsDebugMode = false

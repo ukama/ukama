@@ -146,20 +146,6 @@ func (_m *ServiceRepo) UnRegister(serviceId string) error {
 	return r0
 }
 
-// Update provides a mock function with given fields: service
-func (_m *ServiceRepo) Update(service *db.Service) error {
-	ret := _m.Called(service)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Service) error); ok {
-		r0 = rf(service)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 type mockConstructorTestingTNewServiceRepo interface {
 	mock.TestingT
 	Cleanup(func())
