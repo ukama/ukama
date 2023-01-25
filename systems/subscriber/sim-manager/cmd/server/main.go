@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofrs/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gopkg.in/yaml.v2"
@@ -92,10 +92,7 @@ func runGrpcServer(gormDB sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
-		inst, err := uuid.NewV4()
-		if err != nil {
-			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
-		}
+		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
 

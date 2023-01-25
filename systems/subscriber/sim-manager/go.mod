@@ -18,11 +18,10 @@ replace github.com/ukama/ukama/systems/subscriber/sim-manager => ./
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/golang/protobuf v1.5.2
-	github.com/google/uuid v1.3.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
+	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tj/assert v0.0.3

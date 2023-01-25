@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_TestSimUUID(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		tt := func() string {
-			s := uuid.NewString()
+			s := uuid.NewV4().String()
 			return strings.Replace(s, s[:8], testUUUIDPrefix, 1)
 		}()
 
