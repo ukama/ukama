@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	grpc_health_v1 "google.golang.org/grpc/health/grpc_health_v1"
+	health "github.com/ukama/ukama/systems/common/pb/gen/health"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -16,20 +16,20 @@ type HealthCheckerInterface struct {
 }
 
 // Check provides a mock function with given fields: ctx, request
-func (_m *HealthCheckerInterface) Check(ctx context.Context, request *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
+func (_m *HealthCheckerInterface) Check(ctx context.Context, request *health.HealthCheckRequest) (*health.HealthCheckResponse, error) {
 	ret := _m.Called(ctx, request)
 
-	var r0 *grpc_health_v1.HealthCheckResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *grpc_health_v1.HealthCheckRequest) *grpc_health_v1.HealthCheckResponse); ok {
+	var r0 *health.HealthCheckResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *health.HealthCheckRequest) *health.HealthCheckResponse); ok {
 		r0 = rf(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*grpc_health_v1.HealthCheckResponse)
+			r0 = ret.Get(0).(*health.HealthCheckResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *grpc_health_v1.HealthCheckRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *health.HealthCheckRequest) error); ok {
 		r1 = rf(ctx, request)
 	} else {
 		r1 = ret.Error(1)
@@ -39,11 +39,11 @@ func (_m *HealthCheckerInterface) Check(ctx context.Context, request *grpc_healt
 }
 
 // Watch provides a mock function with given fields: request, server
-func (_m *HealthCheckerInterface) Watch(request *grpc_health_v1.HealthCheckRequest, server grpc_health_v1.Health_WatchServer) error {
+func (_m *HealthCheckerInterface) Watch(request *health.HealthCheckRequest, server health.Health_WatchServer) error {
 	ret := _m.Called(request, server)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*grpc_health_v1.HealthCheckRequest, grpc_health_v1.Health_WatchServer) error); ok {
+	if rf, ok := ret.Get(0).(func(*health.HealthCheckRequest, health.Health_WatchServer) error); ok {
 		r0 = rf(request, server)
 	} else {
 		r0 = ret.Error(0)

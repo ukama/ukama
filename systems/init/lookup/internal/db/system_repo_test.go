@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
+	uuid "github.com/satori/go.uuid"
 	int_db "github.com/ukama/ukama/systems/init/lookup/internal/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -132,7 +132,7 @@ func Test_systemRepo_Add(t *testing.T) {
 			Certificate: "sys_certs",
 			Ip:          dIp,
 			Port:        100,
-			Uuid:        uuid.New().String(),
+			Uuid:        uuid.NewV4().String(),
 			OrgID:       orgId,
 			Health:      100,
 		}
@@ -145,7 +145,7 @@ func Test_systemRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health, sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
@@ -193,7 +193,7 @@ func Test_systemRepo_Update(t *testing.T) {
 			Certificate: "sys_certs",
 			Ip:          dIp,
 			Port:        100,
-			Uuid:        uuid.New().String(),
+			Uuid:        uuid.NewV4().String(),
 			OrgID:       orgId,
 			Health:      100,
 		}
