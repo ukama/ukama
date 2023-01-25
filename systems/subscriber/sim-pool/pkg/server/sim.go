@@ -20,6 +20,7 @@ type SimPoolServer struct {
 	pb.UnimplementedSimServiceServer
 }
 
+
 func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
 	return &SimPoolServer{simRepo: simRepo,
 		msgbus:         msgBus,
@@ -87,6 +88,11 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 	if err != nil {
 		logrus.Error("error while Upload sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+	}
+	route := p.baseRoutingKey.SetAction("upload").SetObject("sim").MustBuild()
+	err = p.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.UploadResponse{Sim: dbSimsToPbSim(s)}, nil

@@ -2,9 +2,9 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"

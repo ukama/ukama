@@ -10,8 +10,4 @@ sleep 2
 file_contents=$(<./README.md)
 echo "${file_contents//#DIR_CONTENT#/$DIR_CONTENT}" > ./README.md
 rm -f temp.txt
-<<<<<<< HEAD
 echo "Completed."
-=======
-echo "Completed."
->>>>>>> msgClient
