@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
+	uuid "github.com/satori/go.uuid"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
@@ -252,7 +252,7 @@ func TestLookupServer_GetSystemForOrg(t *testing.T) {
 
 	system := &db.System{
 		Name:        "sys",
-		Uuid:        uuid.New().String(),
+		Uuid:        uuid.NewV4().String(),
 		Certificate: "ukama_certs",
 		Ip:          orgIp,
 		Port:        100,
@@ -327,7 +327,7 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 
 	system := &db.System{
 		Name:        "sys",
-		Uuid:        uuid.New().String(),
+		Uuid:        uuid.NewV4().String(),
 		Certificate: "ukama_certs",
 		Ip:          orgIp,
 		Port:        100,

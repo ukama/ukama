@@ -2,6 +2,7 @@ package msgBusServiceClient
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
@@ -93,6 +94,8 @@ func (m *msgBusServiceClient) Register() error {
 
 	if resp.GetState() == pb.REGISTRAION_STATUS_REGISTERED {
 		m.uuid = resp.ServiceUuid
+	} else {
+		return fmt.Errorf("failed to register %s service instance %s: %s", m.service, m.instanceId, resp.State.String())
 	}
 
 	logrus.Infof("%s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, resp.State.String())

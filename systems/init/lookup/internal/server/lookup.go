@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
+	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -299,7 +299,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 	logrus.Infof("Adding system %s for org  %s", req.GetSystemName(), req.GetOrgName())
 
 	var sysIp pgtype.Inet
-	sysId := uuid.New().String()
+	sysId := uuid.NewV4().String()
 
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {

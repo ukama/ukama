@@ -15,7 +15,6 @@ import (
 	"github.com/ukama/ukama/systems/init/msgClient/internal/server"
 	"gopkg.in/yaml.v3"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -42,7 +41,7 @@ func main() {
 
 	runGrpcServer(db)
 
-	logrus.Infof("Exiting service %s", internal.ServiceName)
+	log.Infof("Exiting service %s", internal.ServiceName)
 
 }
 
@@ -73,7 +72,7 @@ func initConfig() {
 	} else if internal.IsDebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 
@@ -95,7 +94,7 @@ func runGrpcServer(d sql.Db) {
 	log.Infof("Message Bus Handler is %+v", handler)
 	err := handler.CreateServiceMsgBusHandler()
 	if err != nil {
-		logrus.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
+		log.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
 	}
 
 	grpcServer.StartServer()
