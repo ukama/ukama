@@ -4,19 +4,19 @@ import (
 	"context"
 	"os"
 
-	"github.com/ukama/ukama/services/common/metrics"
-	sig "github.com/ukama/ukama/services/common/signal"
-	"github.com/ukama/ukama/services/common/sql"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	"github.com/ukama/ukama/systems/common/metrics"
+	sig "github.com/ukama/ukama/systems/common/signal"
+	"github.com/ukama/ukama/systems/common/sql"
+	sr "github.com/ukama/ukama/systems/common/srvcrouter"
 	"github.com/ukama/ukama/testing/services/network/internal"
 	"github.com/ukama/ukama/testing/services/network/internal/db"
 	"github.com/ukama/ukama/testing/services/network/internal/server"
 
-	ccmd "github.com/ukama/ukama/services/common/cmd"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	"github.com/ukama/ukama/testing/services/network/cmd/version"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 )
 
 func main() {
