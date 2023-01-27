@@ -7,24 +7,27 @@ import (
 )
 
 func PoolStats(slice []db.Sim) *pb.GetStatsResponse {
-	total := len(slice)
-	failed := 0
-	available := 0
-	consumed := 0
-	for _, value := range slice {
-		if value.Is_allocated {
-			consumed = consumed + 1
-		} else {
-			available = available + 1
-		}
-	}
-	return &pb.GetStatsResponse{
-		Total:     uint64(total),
-		Failed:    uint64(failed),
-		Available: uint64(available),
-		Consumed:  uint64(consumed),
-	}
+    total := len(slice)
+    failed := 0
+    available := 0
+    consumed := 0
+    for _, value := range slice {
+        if value.Is_allocated {
+            consumed = consumed + 1
+        } else if value.Is_failed {
+            failed = failed + 1
+        } else {
+            available = available + 1
+        }
+    }
+    return &pb.GetStatsResponse{
+        Total:     uint64(total),
+        Failed:    uint64(failed),
+        Available: uint64(available),
+        Consumed:  uint64(consumed),
+    }
 }
+
 
 func PbParseToModel(slice []*pb.AddSim) []db.Sim {
 	var sims []db.Sim
