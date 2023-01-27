@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package ukama.subscriber.asr.v1;
+
+import "validator.proto";
+
+/* ASR aka Active Subscriber Registry
+  ASR maintains the record of all the active subscribers of a organization. All the network with in the organization share same ASR.
+  Subscriber is added to ASr as soon as its activated and removed from ASR as soon as its deactivated.
+  
+  ASR has REST ineterfaces to the servics like 
+    -  Factory, for reading sim data
+    -  PCRF, for setting policies for subscriber
+    -  Organization registry for validating network.enum
+  
+  For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
+
+  RPC exposed by ASR
+    - Activate
+    - Inactivate
+    - UpdatePackage
+    - UpdateGuti
+    - UpdateTai
+    - Read
+
+  */
+  service AsrRecordService {
+
+    /// Use this RPC to activate or add a new subscriber to ASR  
+    rpc Activate(ActivateReq) returns (ActivateResp);
+    
+    /// Use this RPC to inactivate or remove a subscriber to ASR  
+    rpc Inactivate(InactivateReq) returns (InactivateResp);
+
+    /// Use this RPC to update a subscriber package in ASR  
+    rpc UpdatePackage(UpdatePackageReq) returns (UpdatePackageResp); 
+   
+    
+    /// This RPC is called when a Update GUTI message is sent by node  
+    rpc UpdateGuti (UpdateGutiReq) returns (UpdateGutiResp);
+
+    /// This RPC is called when a Update TAI message is sent by node  
+    rpc UpdateTai (UpdateTaiReq) returns (UpdateTaiResp);
+
+    /// This RPC is used to read the subscriber data from ASR based on IMSI or ICCID
+    rpc Read(ReadReq) returns (ReadResp);
+}
+
+
+message Record {
+    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string SimId = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name="simId"];
+    string Iccid = 3 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 16}, json_name="iccid"];
+    bytes Key = 4[json_name="k"];
+    bytes Op = 5[json_name="op"];
+    bytes Amf = 6[json_name="amf"];
+    Apn Apn = 7 [json_name="apn"];
+    uint32 AlgoType = 8 [json_name="algo_type"];
+    uint32 UeDlAmbrBps = 9 [json_name="ue_dl_ambr_bps"];
+    uint32 UeUlAmbrBps = 10 [json_name="ue_ul_ambr_bps"];
+    uint64 Sqn  = 11 [json_name="sqn"];
+    bool CsgIdPrsent = 12 [json_name="csg_id_prsent"];
+    uint32 CsgId = 13 [json_name="csg_id"];
+    string PackageId = 14 [json_name="package_id"];
+}
+
+message Apn {
+    string Name = 1;
+}
+
+message ReadReq {
+    oneof id {
+        string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}]; ///oneof
+        string Iccid = 2 [(validator.field) = {string_not_empty: true, length_gt: 18, length_lt: 22}]; ///oneof
+    }
+}
+
+message ReadResp {
+    Record Record = 1;
+}
+message ActivateReq {
+    string network = 1[(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name="network"];
+    string Iccid = 2 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
+    string PackageId = 3;
+}
+
+message ActivateResp {
+    ///Empty 
+}
+
+/* Could be called by subscriber manager with ICCID and by billing service with imsi */ 
+message InactivateReq {
+    oneof id {
+        string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}]; /// oneof
+        string Iccid = 2 [(validator.field) = {string_not_empty: true, length_gt: 18, length_lt: 22}]; ///oneof
+    }
+}
+
+message InactivateResp {
+    ///Empty 
+}
+
+message UpdatePackageReq {
+    string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
+    string PackageId = 2[(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name="packageId"]; 
+}
+
+message UpdatePackageResp {
+    ///Empty
+}
+
+message UpdateGutiReq{
+    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}];
+    Guti Guti = 2 [(validator.field) = { msg_exists: true }];
+    uint32 UpdatedAt = 4 [json_name="updated_at",(validator.field) = { int_gt: 1639144053}]; // unix timestamp
+}
+
+message Guti{
+    string PlmnId = 1 [json_name="plmn_id", (validator.field) = { string_not_empty: true,  length_gt: 4, length_lt: 7}];
+    uint32 Mmegi  = 2;
+    uint32  Mmec = 3;
+    uint32  Mtmsi = 4;
+}
+
+message UpdateGutiResp{
+    ///Empty
+}
+
+message UpdateTaiReq{
+    string Imsi = 1;
+    string PlmnId = 2 [json_name="plmn_id", (validator.field) = { string_not_empty: true,  length_gt: 4, length_lt: 7}];
+    uint32 Tac = 3 [(validator.field) = { string_not_empty: true, length_lt: 65537}]; // 16 bit max
+    uint32 UpdatedAt = 4 [json_name="updated_at", (validator.field) = { int_gt: 1639144053} ]; // unix timestamp
+}
+
+message UpdateTaiResp{
+    ///Empty
+}
