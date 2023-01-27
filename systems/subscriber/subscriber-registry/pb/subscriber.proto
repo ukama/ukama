@@ -2,9 +2,16 @@ syntax = "proto3";
 option go_package = "pb/gen";
 
 import "google/protobuf/timestamp.proto";
+package ukama.subscriber.subscriber_registry.v1;
 import "validator.proto";
 
-package ukama.subscriber.subscriber_registry.v1;
+/*
+Subscriber-registry sub-system is responsible of:
+    - Creating subscriber
+    - Update subscriber
+    - Get subscriber by network
+    - Get single subscriber with Sims associated to them
+*/
 // Defines the service for subscriber registry operations
 service SubscriberRegistryService {
 // Get method to retrieve a subscriber by subscriber ID
