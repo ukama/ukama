@@ -41,6 +41,7 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
+	
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -51,7 +52,6 @@ func initConfig() {
 			logrus.Infof("Config:\n%s", string(b))
 		}
 	}
-
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
@@ -84,6 +84,7 @@ func runGrpcServer(gormdb sql.Db) {
 		}
 		instanceId = inst.String()
 	}
+
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 

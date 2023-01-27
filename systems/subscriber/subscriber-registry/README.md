@@ -2,6 +2,49 @@
 
 The Subscriber Registry sub-system allows you to manage subscribers. It has the following features:
 
+      ├── README.md
+      ├── bin
+      │      ├── integration
+      │      ├── subscriber-registry
+      ├── cmd
+      │      ├── server
+      │      │      ├── main.go
+      │      ├── version
+      │      │      ├── version.go
+      ├── coverage.out
+      ├── dockerfile
+      ├── generate-dir-tree.sh
+      ├── go.mod
+      ├── go.sum
+      ├── makefile
+      ├── mocks
+      │      ├── SubscriberRepo.go
+      ├── pb
+      │      ├── gen
+      │      │      ├── mocks
+      │      │      │      ├── SubscriberRegistryServiceClient.go
+      │      │      │      ├── SubscriberRegistryServiceServer.go
+      │      │      │      ├── UnsafeSubscriberRegistryServiceServer.go
+      │      │      ├── subscriber.pb.go
+      │      │      ├── subscriber.validator.pb.go
+      │      │      ├── subscriber_grpc.pb.go
+      │      ├── subscriber.proto
+      ├── pkg
+      │      ├── config.go
+      │      ├── db
+      │      │      ├── model.go
+      │      │      ├── subscriber_repo.go
+      │      │      ├── subscriber_repo_test.go
+      │      ├── global.go
+      │      ├── server
+      │      │      ├── event.go
+      │      │      ├── subscriber.go
+      │      │      ├── subscriber_test.go
+      ├── template.tmpl
+      ├── test
+      │      ├── integration
+      │      │      ├── susbcriber_test.go
+
 ## Features
 
 - Add: Adds a new subscriber to the database.
