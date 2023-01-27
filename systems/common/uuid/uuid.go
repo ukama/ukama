@@ -84,16 +84,30 @@ func NewV5(ns UUID, name string) UUID {
 }
 
 // NullUUID wraps suuid.NullUUID.
-type NullUUID suuid.NullUUID
+type NullUUID struct {
+	UUID  UUID
+	Valid bool
+}
 
 // Scan wraps suuid.NullUUID.Scan().
 func (u *NullUUID) Scan(src interface{}) error {
-	return (*suuid.NullUUID)(u).Scan(src)
+	if src == nil {
+		u.UUID, u.Valid = Nil, false
+		return nil
+	}
+
+	// Delegate to UUID Scan function
+	u.Valid = true
+	return u.UUID.Scan(src)
 }
 
 // Value wraps suuid.NullUUID.Value().
 func (u NullUUID) Value() (driver.Value, error) {
-	return suuid.NullUUID(u).Value()
+	if !u.Valid {
+		return nil, nil
+	}
+	// Delegate to UUID Value function
+	return u.UUID.Value()
 }
 
 // UUID wraps suuid.UUID.

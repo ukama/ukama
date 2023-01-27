@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
-
-	suuid "github.com/satori/go.uuid"
 )
 
 func TestEqual(t *testing.T) {
@@ -319,22 +317,39 @@ func TestUUID_SetAndGetVersion(t *testing.T) {
 }
 
 func TestNullUUID_Value(t *testing.T) {
-	u := NullUUID{}
+	t.Run("Null", func(t *testing.T) {
+		u := NullUUID{}
 
-	val, err := u.Value()
+		val, err := u.Value()
 
-	if err != nil {
-		t.Error("expected no error but got one")
-	}
+		if err != nil {
+			t.Error("expected no error but got one")
+		}
 
-	if val != nil {
-		t.Errorf("expected nil value but got %v", val)
-	}
+		if val != nil {
+			t.Errorf("expected nil value but got %v", val)
+		}
+	})
+
+	t.Run("NonNull", func(t *testing.T) {
+		u := NullUUID{UUID{0x6b, 0xa7, 0xb8, 0x10, 0x9d, 0xad, 0x11, 0xd1, 0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8}, true}
+
+		val, err := u.Value()
+
+		if err != nil {
+			t.Error("expected no error but got one")
+		}
+
+		if val == nil {
+			t.Errorf("expected non nil value but got %v", val)
+		}
+
+	})
 }
 
 func TestNullUUID_Scan(t *testing.T) {
 	t.Run("ScanNil", func(t *testing.T) {
-		u := NullUUID{suuid.UUID{0x6b, 0xa7, 0xb8, 0x10, 0x9d, 0xad, 0x11, 0xd1, 0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8}, true}
+		u := NullUUID{UUID{0x6b, 0xa7, 0xb8, 0x10, 0x9d, 0xad, 0x11, 0xd1, 0x80, 0xb4, 0x00, 0xc0, 0x4f, 0xd4, 0x30, 0xc8}, true}
 
 		err := u.Scan(nil)
 
@@ -346,7 +361,7 @@ func TestNullUUID_Scan(t *testing.T) {
 			t.Errorf("expected u.Valid to be %t but got %t", false, u.Valid)
 		}
 
-		if u.UUID != suuid.Nil {
+		if u.UUID != Nil {
 			t.Errorf("expected UUID Nil value but got %v", u.UUID)
 		}
 	})
@@ -367,7 +382,7 @@ func TestNullUUID_Scan(t *testing.T) {
 			t.Errorf("expected u.Valid to be %t but got %t", true, u.Valid)
 		}
 
-		if u.UUID != suuid.UUID(want) {
+		if u.UUID != want {
 			t.Errorf("expected UUID Nil value but got %v", u.UUID)
 		}
 	})
