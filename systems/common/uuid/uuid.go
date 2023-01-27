@@ -12,6 +12,9 @@ import (
 	suuid "github.com/satori/go.uuid"
 )
 
+// Nil represents the nil UUID
+var Nil = UUID{}
+
 // Generator provides interface for generating UUIDs.
 type Generator interface {
 	NewV1() UUID
