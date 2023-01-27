@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/grpc"

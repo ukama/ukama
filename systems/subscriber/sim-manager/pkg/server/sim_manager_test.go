@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/mocks"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
