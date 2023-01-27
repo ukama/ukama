@@ -68,24 +68,23 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
 
-	if instanceId == "" {
+	if pkg.InstanceId  == "" {
 		inst, err := uuid.NewV4()
 		if err != nil {
 			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
 		}
-		instanceId = inst.String()
+		pkg.InstanceId  = inst.String()
 	}
-	if instanceId == "" {
+	if pkg.InstanceId  == "" {
 		inst, err := uuid.NewV4()
 		if err != nil {
 			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
 		}
-		instanceId = inst.String()
+		pkg.InstanceId  = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,pkg.ServiceName, pkg.InstanceId , serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 
 		logrus.Debugf("MessageBus Client is %+v", mbClient)

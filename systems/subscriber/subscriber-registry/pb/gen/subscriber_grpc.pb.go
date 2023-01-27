@@ -22,11 +22,17 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SubscriberRegistryServiceClient interface {
+	// Get method to retrieve a subscriber by subscriber ID
 	Get(ctx context.Context, in *GetSubscriberRequest, opts ...grpc.CallOption) (*GetSubscriberResponse, error)
+	// Add method to add a new subscriber
 	Add(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error)
+	// Update method to update an existing subscriber
 	Update(ctx context.Context, in *UpdateSubscriberRequest, opts ...grpc.CallOption) (*UpdateSubscriberResponse, error)
+	// Delete method to delete a subscriber by subscriber ID
 	Delete(ctx context.Context, in *DeleteSubscriberRequest, opts ...grpc.CallOption) (*DeleteSubscriberResponse, error)
+	// GetByNetwork method to retrieve subscribers by network ID
 	GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error)
+	// ListSubscribers method to retrieve a list of all subscribers
 	ListSubscribers(ctx context.Context, in *ListSubscribersRequest, opts ...grpc.CallOption) (*ListSubscribersResponse, error)
 }
 
@@ -40,7 +46,7 @@ func NewSubscriberRegistryServiceClient(cc grpc.ClientConnInterface) SubscriberR
 
 func (c *subscriberRegistryServiceClient) Get(ctx context.Context, in *GetSubscriberRequest, opts ...grpc.CallOption) (*GetSubscriberResponse, error) {
 	out := new(GetSubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber_registry.v1.SubscriberRegistryService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +55,7 @@ func (c *subscriberRegistryServiceClient) Get(ctx context.Context, in *GetSubscr
 
 func (c *subscriberRegistryServiceClient) Add(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error) {
 	out := new(AddSubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber_registry.v1.SubscriberRegistryService/Add", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +64,7 @@ func (c *subscriberRegistryServiceClient) Add(ctx context.Context, in *AddSubscr
 
 func (c *subscriberRegistryServiceClient) Update(ctx context.Context, in *UpdateSubscriberRequest, opts ...grpc.CallOption) (*UpdateSubscriberResponse, error) {
 	out := new(UpdateSubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber_registry.v1.SubscriberRegistryService/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +73,7 @@ func (c *subscriberRegistryServiceClient) Update(ctx context.Context, in *Update
 
 func (c *subscriberRegistryServiceClient) Delete(ctx context.Context, in *DeleteSubscriberRequest, opts ...grpc.CallOption) (*DeleteSubscriberResponse, error) {
 	out := new(DeleteSubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber_registry.v1.SubscriberRegistryService/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +82,7 @@ func (c *subscriberRegistryServiceClient) Delete(ctx context.Context, in *Delete
 
 func (c *subscriberRegistryServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
 	out := new(GetByNetworkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber_registry.v1.SubscriberRegistryService/GetByNetwork", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/GetByNetwork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +91,7 @@ func (c *subscriberRegistryServiceClient) GetByNetwork(ctx context.Context, in *
 
 func (c *subscriberRegistryServiceClient) ListSubscribers(ctx context.Context, in *ListSubscribersRequest, opts ...grpc.CallOption) (*ListSubscribersResponse, error) {
 	out := new(ListSubscribersResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber_registry.v1.SubscriberRegistryService/ListSubscribers", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/ListSubscribers", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,11 +102,17 @@ func (c *subscriberRegistryServiceClient) ListSubscribers(ctx context.Context, i
 // All implementations must embed UnimplementedSubscriberRegistryServiceServer
 // for forward compatibility
 type SubscriberRegistryServiceServer interface {
+	// Get method to retrieve a subscriber by subscriber ID
 	Get(context.Context, *GetSubscriberRequest) (*GetSubscriberResponse, error)
+	// Add method to add a new subscriber
 	Add(context.Context, *AddSubscriberRequest) (*AddSubscriberResponse, error)
+	// Update method to update an existing subscriber
 	Update(context.Context, *UpdateSubscriberRequest) (*UpdateSubscriberResponse, error)
+	// Delete method to delete a subscriber by subscriber ID
 	Delete(context.Context, *DeleteSubscriberRequest) (*DeleteSubscriberResponse, error)
+	// GetByNetwork method to retrieve subscribers by network ID
 	GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error)
+	// ListSubscribers method to retrieve a list of all subscribers
 	ListSubscribers(context.Context, *ListSubscribersRequest) (*ListSubscribersResponse, error)
 	mustEmbedUnimplementedSubscriberRegistryServiceServer()
 }
@@ -151,7 +163,7 @@ func _SubscriberRegistryService_Get_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber_registry.v1.SubscriberRegistryService/Get",
+		FullMethod: "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SubscriberRegistryServiceServer).Get(ctx, req.(*GetSubscriberRequest))
@@ -169,7 +181,7 @@ func _SubscriberRegistryService_Add_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber_registry.v1.SubscriberRegistryService/Add",
+		FullMethod: "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SubscriberRegistryServiceServer).Add(ctx, req.(*AddSubscriberRequest))
@@ -187,7 +199,7 @@ func _SubscriberRegistryService_Update_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber_registry.v1.SubscriberRegistryService/Update",
+		FullMethod: "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SubscriberRegistryServiceServer).Update(ctx, req.(*UpdateSubscriberRequest))
@@ -205,7 +217,7 @@ func _SubscriberRegistryService_Delete_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber_registry.v1.SubscriberRegistryService/Delete",
+		FullMethod: "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SubscriberRegistryServiceServer).Delete(ctx, req.(*DeleteSubscriberRequest))
@@ -223,7 +235,7 @@ func _SubscriberRegistryService_GetByNetwork_Handler(srv interface{}, ctx contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber_registry.v1.SubscriberRegistryService/GetByNetwork",
+		FullMethod: "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/GetByNetwork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SubscriberRegistryServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
@@ -241,7 +253,7 @@ func _SubscriberRegistryService_ListSubscribers_Handler(srv interface{}, ctx con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber_registry.v1.SubscriberRegistryService/ListSubscribers",
+		FullMethod: "/ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService/ListSubscribers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SubscriberRegistryServiceServer).ListSubscribers(ctx, req.(*ListSubscribersRequest))
@@ -253,7 +265,7 @@ func _SubscriberRegistryService_ListSubscribers_Handler(srv interface{}, ctx con
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SubscriberRegistryService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.subscriber_registry.v1.SubscriberRegistryService",
+	ServiceName: "ukama.subscriber.subscriber_registry.v1.SubscriberRegistryService",
 	HandlerType: (*SubscriberRegistryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

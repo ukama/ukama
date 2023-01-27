@@ -22,5 +22,8 @@ gen:
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 clean:
 	rm pb/gen/*.go
+docs:
+    protoc --doc_out=. --doc_opt=./../../template.tmpl,README.md pb/*.proto & sh ./../../generate-dir-tree.sh $(PWD)
+
 server:
 	go run cmd/server/main.go
