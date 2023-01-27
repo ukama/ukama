@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/tj/assert"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/mocks"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"

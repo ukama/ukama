@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/grpc"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 	"google.golang.org/grpc/codes"
