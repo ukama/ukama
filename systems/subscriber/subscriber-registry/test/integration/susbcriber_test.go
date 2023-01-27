@@ -79,6 +79,21 @@ func TestAddSubscriber(t *testing.T) {
             assert.Equal(t, "john", r.Subscribers[0].FirstName)
 		}
 	})
+	t.Run("Get", func(t *testing.T) {
+		_, err := c.Get(ctx, &pb.GetSubscriberRequest{
+		SubscriberID: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
+		})
+		assert.Equal(t, "subscriber not found", err.Error())
+		
+	})
+	t.Run("Delete", func(t *testing.T) {
+		_, err := c.Delete(ctx, &pb.DeleteSubscriberRequest{
+		SubscriberID: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
+		})
+		assert.Equal(t, "subscriber not found", err.Error())
+		
+	})
+
 
 }
 
