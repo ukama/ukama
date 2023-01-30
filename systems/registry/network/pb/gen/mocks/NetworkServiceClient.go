@@ -256,8 +256,8 @@ func (_m *NetworkServiceClient) GetSiteByName(ctx context.Context, in *gen.GetSi
 	return r0, r1
 }
 
-// GetSiteByNetwork provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) GetSiteByNetwork(ctx context.Context, in *gen.GetSiteByNetworkRequest, opts ...grpc.CallOption) (*gen.GetSiteByNetworkResponse, error) {
+// GetSitesByNetwork provides a mock function with given fields: ctx, in, opts
+func (_m *NetworkServiceClient) GetSitesByNetwork(ctx context.Context, in *gen.GetSitesByNetworkRequest, opts ...grpc.CallOption) (*gen.GetSitesByNetworkResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -267,17 +267,17 @@ func (_m *NetworkServiceClient) GetSiteByNetwork(ctx context.Context, in *gen.Ge
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetSiteByNetworkResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteByNetworkRequest, ...grpc.CallOption) *gen.GetSiteByNetworkResponse); ok {
+	var r0 *gen.GetSitesByNetworkResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSitesByNetworkRequest, ...grpc.CallOption) *gen.GetSitesByNetworkResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSiteByNetworkResponse)
+			r0 = ret.Get(0).(*gen.GetSitesByNetworkResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSiteByNetworkRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSitesByNetworkRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
