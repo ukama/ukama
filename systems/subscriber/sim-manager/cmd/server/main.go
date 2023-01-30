@@ -2,8 +2,6 @@ package main
 
 import (
 	"os"
-	"strings"
-	"time"
 
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -18,10 +16,10 @@ import (
 
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/interceptor"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
 	"github.com/sirupsen/logrus"
@@ -31,12 +29,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-var svcConf *pkg.Config
-var timeout = 3 * time.Second
+var svcConf = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-	pkg.InstanceId = os.Getenv("POD_NAME")
+
+	/* Log level */
+	log.SetLevel(log.TraceLevel)
+	log.Infof("Starting %s service", pkg.ServiceName)
 
 	initConfig()
 
@@ -45,22 +45,12 @@ func main() {
 	simDB := initDb()
 
 	runGrpcServer(simDB)
+
+	log.Infof("Exiting service %s", pkg.ServiceName)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	svcConf = &pkg.Config{
-		DB: &uconf.Database{
-			DbName: strings.ReplaceAll(pkg.ServiceName, "-", "_"),
-		},
-		Grpc: &uconf.Grpc{
-			Port: 9090,
-		},
-		Metrics: &uconf.Metrics{
-			Port: 10250,
-		},
-	}
-
 	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
@@ -71,6 +61,8 @@ func initConfig() {
 			logrus.Infof("Config:\n%s", string(b))
 		}
 	}
+
+	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v", pkg.ServiceName, svcConf.DB, svcConf.Service, svcConf.MsgClient)
 
 	pkg.IsDebugMode = svcConf.DebugMode
 }
@@ -108,7 +100,7 @@ func runGrpcServer(gormDB sql.Db) {
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
-		adapters.NewAgentFactory(svcConf.TestAgentHost, timeout),
+		adapters.NewAgentFactory(svcConf.TestAgentHost, svcConf.Timeout),
 		providers.NewPackageClientProvider(svcConf.PackageHost),
 		providers.NewSubscriberRegistryClientProvider(svcConf.SubscriberRegistryHost),
 		providers.NewSimPoolClientProvider(svcConf.SimPoolHost),
@@ -116,9 +108,14 @@ func runGrpcServer(gormDB sql.Db) {
 		mbClient,
 	)
 
+	tsInterceptor := interceptor.NewTestSimInterceptor(svcConf.TestAgentHost, svcConf.Timeout)
+
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)
 	})
+
+	grpcServer.ExtraUnaryInterceptors = []grpc.UnaryServerInterceptor{
+		tsInterceptor.UnaryServerInterceptor}
 
 	go msgBusListener(mbClient)
 
