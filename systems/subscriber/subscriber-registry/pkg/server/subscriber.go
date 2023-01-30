@@ -36,10 +36,15 @@ func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServi
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
-	networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
-	orgID_uuid := uuid.FromStringOrNil(req.GetOrgID())
-
-	subscriberID_uuid := uuid.NewV4()
+	networkID := uuid.FromStringOrNil(req.GetNetworkID())
+	orgID := uuid.FromStringOrNil(req.GetOrgID())
+	if networkID == uuid.Nil {
+		return nil, status.Errorf(codes.InvalidArgument, "NetworkID must not be empty")
+	}
+	if orgID == uuid.Nil {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgID must not be empty")
+	}
+	subscriberID := uuid.NewV4()
 	timestamp := &timestamppb.Timestamp{
 		Seconds: req.DateOfBirth.GetSeconds(),
 		Nanos:   req.DateOfBirth.GetNanos(),
@@ -48,11 +53,11 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	birthday := timestamp.AsTime()
 
 	subscriber := &db.Subscriber{
-		OrgID:orgID_uuid,
-		SubscriberID:          subscriberID_uuid,
+		OrgID:orgID,
+		SubscriberID:          subscriberID,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
-		NetworkID:             networkID_uuid,
+		NetworkID:             networkID,
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Gender:                req.GetGender(),
@@ -69,11 +74,11 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 	return &pb.AddSubscriberResponse{
 		Subscriber: &pb.Subscriber{
-			OrgID: orgID_uuid.String(),
-			SubscriberID:          subscriberID_uuid.String(),
+			OrgID: orgID.String(),
+			SubscriberID:          subscriberID.String(),
 			FirstName:             req.GetFirstName(),
 			LastName:              req.GetLastName(),
-			NetworkID:             networkID_uuid.String(),
+			NetworkID:             networkID.String(),
 			Email:                 req.GetEmail(),
 			PhoneNumber:           req.GetPhoneNumber(),
 			Gender:                req.GetGender(),
@@ -86,18 +91,18 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 }
 
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
-	subscriberID := req.GetSubscriberID()
-	if subscriberID == "" {
+	subscriberIdReq := req.GetSubscriberID()
+	if subscriberIdReq == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
 	}
 
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	subscriberIDUUID, err := uuid.FromString(subscriberID)
+	subscriberID, err := uuid.FromString(subscriberIdReq)
 
 	logrus.Infof("Delete Subscriber : %v ", subscriberID)
-	err = s.subscriberRepo.Delete(subscriberIDUUID)
+	err = s.subscriberRepo.Delete(subscriberID)
 	if err != nil {
 		logrus.WithError(err).Error("error while deleting subscriber")
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
@@ -111,14 +116,14 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	return &pb.DeleteSubscriberResponse{
-		SubscriberID: subscriberID,
+		SubscriberID: subscriberID.String(),
 	}, nil
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
 
-	subscriberID := req.GetSubscriberID()
-	if subscriberID == "" {
+	subscriberIdReq := req.GetSubscriberID()
+	if subscriberIdReq == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
 	}
 
@@ -126,9 +131,9 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 		return nil, err
 	}
 
-	subscriberIDUUID, err := uuid.FromString(subscriberID)
+	subscriberID, err := uuid.FromString(subscriberIdReq)
 	logrus.Infof("GetSubscriber : %v ", subscriberID)
-	subscriber, err := s.subscriberRepo.Get(subscriberIDUUID)
+	subscriber, err := s.subscriberRepo.Get(subscriberID)
 
 	if err != nil {
 		logrus.Error("error getting a subscriber" + err.Error())
@@ -163,8 +168,8 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 	return subscriberList, nil
 }
 func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
-	networkID := req.GetNetworkID()
-	if networkID == "" {
+	networkIdReq := req.GetNetworkID()
+	if networkIdReq == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "networkID must not be empty")
 	}
 
@@ -172,13 +177,13 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 		return nil, err
 	}
 
-	logrus.Infof("Get subscribers by network: %v ", networkID)
-	networkIDUUID, err := uuid.FromString(networkID)
+	logrus.Infof("Get subscribers by network: %v ", networkIdReq)
+	networkID, err := uuid.FromString(networkIdReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid networkID: %v", err)
 	}
 
-	subscribers, err := s.subscriberRepo.GetByNetwork(networkIDUUID)
+	subscribers, err := s.subscriberRepo.GetByNetwork(networkID)
 	if err != nil {
 		logrus.WithError(err).Error("error while getting subscribers by network")
 		return nil, grpc.SqlErrorToGrpc(err, "subscribers")
@@ -199,7 +204,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	subscribeIDUUID, err := uuid.FromString(subscriberIdReq)
+	subscribeID, err := uuid.FromString(subscriberIdReq)
 
 	logrus.Infof("Update Subscriber Id: %v, Email: %v, ProofOfIdentification: %v, Address: %v",
 		req.SubscriberID, req.Email, req.ProofOfIdentification, req.Address)
@@ -212,7 +217,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		IdSerial:              req.GetIdSerial(),
 	}
 
-	updatedSubscriberRes, err := s.subscriberRepo.Update(subscribeIDUUID, updateSubscriber)
+	updatedSubscriberRes, err := s.subscriberRepo.Update(subscribeID, updateSubscriber)
 	if err != nil {
 		logrus.Errorf("error while updating a subscriber: %v", err)
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
