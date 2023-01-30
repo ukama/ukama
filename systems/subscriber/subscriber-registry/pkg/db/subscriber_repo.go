@@ -19,7 +19,7 @@ type subscriberRepo struct {
 	Db sql.Db
 }
 
-func NewSubscriberRepo(db sql.Db) *subscriberRepo {
+func NewSubscriberRepo(db sql.Db) SubscriberRepo {
 	return &subscriberRepo{
 		Db: db,
 	}
@@ -41,15 +41,15 @@ func (s *subscriberRepo) ListSubscribers() ([]Subscriber, error) {
 
 func (s *subscriberRepo) Get(subscriberId uuid.UUID) (*Subscriber, error) {
 	var subscriber Subscriber
-	
-	err := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).FirstOrCreate(&subscriber).Error
+
+	err := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).First(&subscriber).Error
 	if err != nil {
 		return nil, err
-
 	}
 
 	return &subscriber, nil
 }
+
 
 func (s *subscriberRepo) Delete(subscriberId uuid.UUID) error {
 	result := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).Delete(&Subscriber{})
