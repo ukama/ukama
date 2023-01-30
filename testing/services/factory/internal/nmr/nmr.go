@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	sr "github.com/ukama/ukama/systems/common/srvcrouter"
 	"github.com/ukama/ukama/testing/services/factory/internal"
 )
 

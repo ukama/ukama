@@ -8,7 +8,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/testing/services/network/internal/db"
 	"github.com/ukama/ukama/testing/services/network/mocks"
 
