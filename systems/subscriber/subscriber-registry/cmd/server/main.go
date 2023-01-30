@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"os"
 
-	"github.com/gofrs/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/num30/config"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -68,20 +68,11 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-
-	if pkg.InstanceId  == "" {
-		inst, err := uuid.NewV4()
-		if err != nil {
-			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
-		}
-		pkg.InstanceId  = inst.String()
-	}
-	if pkg.InstanceId  == "" {
-		inst, err := uuid.NewV4()
-		if err != nil {
-			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
-		}
-		pkg.InstanceId  = inst.String()
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		inst := uuid.NewV4()
+		instanceId = inst.String()
 	}
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,pkg.ServiceName, pkg.InstanceId , serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
