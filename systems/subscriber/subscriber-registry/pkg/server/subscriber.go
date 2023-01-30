@@ -3,7 +3,8 @@ package server
 import (
 	"context"
 
-	"github.com/gofrs/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -38,12 +39,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
 	orgID_uuid := uuid.FromStringOrNil(req.GetOrgID())
 
-	subscriberID_uuid, err := uuid.NewV4()
-	if err != nil {
-		logrus.Errorf("Failed to generate UUID: %s", err)
-		return nil, err
-	}
-
+	subscriberID_uuid := uuid.NewV4()
 	timestamp := &timestamppb.Timestamp{
 		Seconds: req.DateOfBirth.GetSeconds(),
 		Nanos:   req.DateOfBirth.GetNanos(),
@@ -65,7 +61,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		DOB:                   birthday,
 		IdSerial:              req.GetIdSerial(),
 	}
-	err = s.subscriberRepo.Add(subscriber)
+	err := s.subscriberRepo.Add(subscriber)
 	if err != nil {
 		logrus.Error("error while adding subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")

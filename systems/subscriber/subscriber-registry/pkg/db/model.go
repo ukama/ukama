@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	"github.com/gofrs/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Subscriber struct {

@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
