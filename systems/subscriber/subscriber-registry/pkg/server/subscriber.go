@@ -92,26 +92,20 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberID()
-	if subscriberIdReq == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
-	}
+	subscriberID, error := uuid.FromString(subscriberIdReq)
 
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if error != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of subscriber uuid. Error %s", error.Error())
 	}
-	subscriberID, err := uuid.FromString(subscriberIdReq)
-
 	logrus.Infof("Delete Subscriber : %v ", subscriberID)
-	err = s.subscriberRepo.Delete(subscriberID)
-	if err != nil {
-		logrus.WithError(err).Error("error while deleting subscriber")
-		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	er := s.subscriberRepo.Delete(subscriberID)
+	if er != nil {
+		logrus.WithError(er).Error("error while deleting subscriber")
+		return nil, grpc.SqlErrorToGrpc(er, "subscriber")
 	}
 	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
-	err = s.msgbus.PublishRequest(route, req)
-	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+	err := s.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -121,17 +115,17 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
-
 	subscriberIdReq := req.GetSubscriberID()
-	if subscriberIdReq == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
-	}
 
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 
-	subscriberID, err := uuid.FromString(subscriberIdReq)
+	subscriberID, error := uuid.FromString(subscriberIdReq)
+	if error != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of subscriber uuid. Error %s", error.Error())
+	}
 	logrus.Infof("GetSubscriber : %v ", subscriberID)
 	subscriber, err := s.subscriberRepo.Get(subscriberID)
 
@@ -169,9 +163,6 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 }
 func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	networkIdReq := req.GetNetworkID()
-	if networkIdReq == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "networkID must not be empty")
-	}
 
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -197,15 +188,15 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 }
 func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberID()
-	if subscriberIdReq == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
-	}
-
+	
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	subscribeID, err := uuid.FromString(subscriberIdReq)
-
+	subscribeID, error := uuid.FromString(subscriberIdReq)
+	if error != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of subscriber uuid. Error %s", error.Error())
+	}
 	logrus.Infof("Update Subscriber Id: %v, Email: %v, ProofOfIdentification: %v, Address: %v",
 		req.SubscriberID, req.Email, req.ProofOfIdentification, req.Address)
 
