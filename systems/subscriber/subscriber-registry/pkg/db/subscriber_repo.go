@@ -50,7 +50,6 @@ func (s *subscriberRepo) Get(subscriberId uuid.UUID) (*Subscriber, error) {
 	return &subscriber, nil
 }
 
-
 func (s *subscriberRepo) Delete(subscriberId uuid.UUID) error {
 	result := s.Db.GetGormDb().Where("subscriber_id = ?", subscriberId).Delete(&Subscriber{})
 	if result.Error != nil {

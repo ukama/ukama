@@ -24,15 +24,11 @@ type SubcriberServer struct {
 	pb.UnimplementedSubscriberRegistryServiceServer
 }
 
-
-
 func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient) *SubcriberServer {
 	return &SubcriberServer{subscriberRepo: subscriberRepo,
-		msgbus:         msgBus,
+		msgbus:               msgBus,
 		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
-
-
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
@@ -53,7 +49,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	birthday := timestamp.AsTime()
 
 	subscriber := &db.Subscriber{
-		OrgID:orgID,
+		OrgID:                 orgID,
 		SubscriberID:          subscriberID,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
@@ -74,7 +70,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 	return &pb.AddSubscriberResponse{
 		Subscriber: &pb.Subscriber{
-			OrgID: orgID.String(),
+			OrgID:                 orgID.String(),
 			SubscriberID:          subscriberID.String(),
 			FirstName:             req.GetFirstName(),
 			LastName:              req.GetLastName(),
@@ -117,10 +113,6 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberID()
 
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
 	subscriberID, error := uuid.FromString(subscriberIdReq)
 	if error != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -143,10 +135,6 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 
 func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
 
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
 	logrus.Infof("List all subscribers")
 
 	subscribers, err := s.subscriberRepo.ListSubscribers()
@@ -163,11 +151,6 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 }
 func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	networkIdReq := req.GetNetworkID()
-
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
 	logrus.Infof("Get subscribers by network: %v ", networkIdReq)
 	networkID, err := uuid.FromString(networkIdReq)
 	if err != nil {
@@ -188,10 +171,7 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 }
 func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberID()
-	
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
+
 	subscribeID, error := uuid.FromString(subscriberIdReq)
 	if error != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -274,7 +254,7 @@ func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
 		DateOfBirth:           pbTimestamp,
-		OrgID: s.OrgID.String(),
+		OrgID:                 s.OrgID.String(),
 	}
 
 }
