@@ -11,10 +11,10 @@ import (
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/systems/common/rest"
-	pb "github.com/ukama/ukama/systems/init/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/pkg/client"
+	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/wI2L/fizz/openapi"
 )
 
