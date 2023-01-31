@@ -87,7 +87,7 @@ func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "ukama-agent ", "Ukama-agent system")
 
-	asr := v1.Group("asr/subscriber/", "Asr", "Active susbcriber registry")
+	asr := v1.Group("subscriber/", "Asr", "Active susbcriber registry")
 	asr.GET(":iccid", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
 	asr.PUT(":iccid", formatDoc("Activate: Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
 	asr.DELETE(":iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
@@ -113,7 +113,7 @@ func (r *Router) putSubscriber(c *gin.Context, req *ActivateReq) (*pb.ActivateRe
 
 func (r *Router) deleteSubscriber(c *gin.Context, req *InactivateReq) (*pb.InactivateResp, error) {
 
-	return r.clients.a.Inactivate(&pb.InctivateReq{
+	return r.clients.a.Inactivate(&pb.InactivateReq{
 		Id: &pb.InactivateReq_Iccid{
 			Iccid: req.Iccid,
 		},
@@ -122,13 +122,13 @@ func (r *Router) deleteSubscriber(c *gin.Context, req *InactivateReq) (*pb.Inact
 
 func (r *Router) patchPackageUpdate(c *gin.Context, req *UpdatePackageReq) (*pb.UpdatePackageResp, error) {
 
-	return r.clients.a.Activate(&pb.ActivateReq{
+	return r.clients.a.UpdatePackage(&pb.UpdatePackageReq{
 		Iccid:     req.Iccid,
 		PackageId: req.PackageId,
 	})
 }
 
-func (r *Router) getActiveSubscriber(c *gin.Context, req *ReadSusbscriberReq) (*pb.ReadSubscriberResp, error) {
+func (r *Router) getActiveSubscriber(c *gin.Context, req *ReadSubscriberReq) (*pb.ReadResp, error) {
 	return r.clients.a.Read(&pb.ReadReq{
 		Id: &pb.ReadReq_Iccid{
 			Iccid: req.Iccid,

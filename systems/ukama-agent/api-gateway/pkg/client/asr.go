@@ -25,7 +25,7 @@ func NewAsr(host string, timeout time.Duration) *Asr {
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
-	client := pb.NewAsrServiceClient(conn)
+	client := pb.NewAsrRecordServiceClient(conn)
 
 	return &Asr{
 		conn:    conn,

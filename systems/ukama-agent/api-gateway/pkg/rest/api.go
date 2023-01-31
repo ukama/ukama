@@ -15,6 +15,11 @@ type UpdatePackageReq struct {
 	PackageId string `json:"packageId" validate:"required"`
 }
 
-type ReadSusbscriberReq struct {
+type ReadSubscriberReq struct {
+	Iccid string `path:"iccid, omitempty"`
+}
+
+
+type ReadSubscriberResp struct {
 	Iccid string `path:"iccid, omitempty"`
 }
