@@ -24,7 +24,6 @@ type SimCardInfoReq struct {
 // TODO: update
 type NetworkValidationReq struct {
 	Network string `path:"network" validate:"required,uuid4"`
-	Org     string `path:"org" validate:"required,uuid4"`
 }
 
 type DeleteSimReq struct {
@@ -92,7 +91,7 @@ func (r *Router) init() {
 	f.GET("/simcards/:iccid", formatDoc("Read Sim card Information", ""), tonic.Handler(r.getSimCard, http.StatusOK))
 
 	n := v1.Group("/networks", "Registry", "Network Factory")
-	n.GET("/:network/orgs/:org", formatDoc("Validate Network", ""), tonic.Handler(r.getValidateNetwork, http.StatusOK))
+	n.GET("/:network/", formatDoc("Validate Network", ""), tonic.Handler(r.getValidateNetwork, http.StatusOK))
 
 	p := v1.Group("/pcrf", "PCRF", "Policy control")
 	p.PUT("/sims/:imsi", formatDoc("Add Sim", ""), tonic.Handler(r.putSim, http.StatusOK))
@@ -137,9 +136,18 @@ func (r *Router) getSimCard(c *gin.Context, req *SimCardInfoReq) (*client.SimCar
 	return &s, nil
 }
 
-func (r *Router) getValidateNetwork(c *gin.Context, req *NetworkValidationReq) error {
+func (r *Router) getValidateNetwork(c *gin.Context, req *NetworkValidationReq) (*client.NetworkInfo, error) {
 	/* No implementaion always return success.*/
-	return nil
+	if req.Network == "40987edb-ebb6-4f84-a27c-99db7c136127" {
+		return &client.NetworkInfo{
+			NetworkId:     "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Name:          "test-network",
+			OrgId:         "40987edb-ebb6-4f84-a27c-99db7c136100",
+			IsDeactivated: false,
+			CreatedAt:     time.Now(),
+		}, nil
+	}
+	return nil, fmt.Errorf("network %s not found", req.Network)
 }
 
 func (r *Router) putSim(c *gin.Context, req *client.PolicyControlSimInfo) error {

@@ -1,6 +1,10 @@
 package client
 
-import uuid "github.com/satori/go.uuid"
+import (
+	"time"
+
+	uuid "github.com/satori/go.uuid"
+)
 
 type SimCardInfo struct {
 	Imsi           string
@@ -18,10 +22,11 @@ type SimCardInfo struct {
 }
 
 type NetworkInfo struct {
-	Name      string
-	NetworkId uuid.UUID
-	OrgID     uuid.UUID
-	OrgName   string
+	NetworkId     string    `json:"id"`
+	Name          string    `json:"name"`
+	OrgId         string    `json:"org_id"`
+	IsDeactivated bool      `json:"is_deactivated"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type PolicyControlSimInfo struct {

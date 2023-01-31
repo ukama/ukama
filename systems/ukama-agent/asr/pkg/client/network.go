@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -34,11 +35,11 @@ func (N *network) ValidateNetwork(networkId string, orgId string) error {
 
 	errStatus := &ErrorMessage{}
 
-	//network := NetworkInfo{}
+	network := NetworkInfo{}
 
 	resp, err := N.R.C.R().
 		SetError(errStatus).
-		Get(N.R.Url.String() + "/v1/networks/" + networkId + "/orgs/" + orgId)
+		Get(N.R.Url.String() + "/v1/networks/" + networkId)
 
 	if err != nil {
 		logrus.Errorf("Failed to send api request to network registry. Error %s", err.Error())
@@ -49,17 +50,19 @@ func (N *network) ValidateNetwork(networkId string, orgId string) error {
 		logrus.Tracef("Failed to fetch network info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
 		return fmt.Errorf(" Network Info failure %s", errStatus.Message)
 	}
-	//TODO:: Not sur of this API yet
-	// err = json.Unmarshal(resp.Body(), &network)
-	// if err != nil {
-	// 	logrus.Tracef("Failed to desrialize network info. Error message is %s", err.Error())
-	// 	return fmt.Errorf("network info deserailization failure:" + err.Error())
-	// }
 
-	// if orgId != network.OrgID.String() {
-	// 	logrus.Error("Missing network.")
-	// 	return fmt.Errorf("Network mismatch")
-	// }
+	err = json.Unmarshal(resp.Body(), &network)
+	if err != nil {
+		logrus.Tracef("Failed to desrialize network info. Error message is %s", err.Error())
+		return fmt.Errorf("network info deserailization failure:" + err.Error())
+	} else {
+		logrus.Infof("Network Info: %+v", network)
+	}
+
+	if orgId != network.OrgId {
+		logrus.Error("Missing network.")
+		return fmt.Errorf("Network mismatch")
+	}
 
 	return nil
 }
