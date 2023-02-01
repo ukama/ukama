@@ -9,7 +9,6 @@ replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
 require (
 	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.8
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0

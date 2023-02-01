@@ -44,7 +44,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
-func Test_Get_Stats(t *testing.T) {
+func Test_GetSimsByType(t *testing.T) {
 	t.Run("GetStats", func(t *testing.T) {
 
 		var db *extsql.DB
@@ -83,7 +83,7 @@ func Test_Get_Stats(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		sp, err := r.GetStats("inter_ukama_all")
+		sp, err := r.GetSimsByType("inter_ukama_all")
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -192,11 +192,11 @@ func Test_Add(t *testing.T) {
 			{
 				Iccid:          "10101010",
 				Msisdn:         "01010101",
-				Is_allocated:   false,
-				Sim_type:       "inter_ukama_all",
+				IsAllocated:   false,
+				SimType:       "inter_ukama_all",
 				SmDpAddress:    "123456789",
 				ActivationCode: "0000",
-				Is_physical:    true,
+				IsPhysical:    true,
 				QrCode:         "123456789",
 			},
 		}

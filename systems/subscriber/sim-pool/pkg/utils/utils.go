@@ -12,9 +12,9 @@ func PoolStats(slice []db.Sim) *pb.GetStatsResponse {
     available := 0
     consumed := 0
     for _, value := range slice {
-        if value.Is_allocated {
+        if value.IsAllocated {
             consumed = consumed + 1
-        } else if value.Is_failed {
+        } else if value.IsFailed {
             failed = failed + 1
         } else {
             available = available + 1
@@ -69,8 +69,8 @@ func RawSimToPb(r []RawSim, simType string) []db.Sim {
 			Msisdn:         value.Msisdn,
 			SmDpAddress:    value.SmDpAddress,
 			ActivationCode: value.ActivationCode,
-			Is_physical:    value.IsPhysical == "TRUE",
-			Sim_type:       simType,
+			IsPhysical:    value.IsPhysical == "TRUE",
+			SimType:       simType,
 			QrCode:         value.QrCode,
 		})
 	}

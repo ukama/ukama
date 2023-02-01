@@ -20,7 +20,6 @@ type SimPoolServer struct {
 	pb.UnimplementedSimServiceServer
 }
 
-
 func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
 	return &SimPoolServer{simRepo: simRepo,
 		msgbus:         msgBus,
@@ -57,7 +56,7 @@ func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (
 	if req.GetSimType() == pb.SimType_ANY {
 		simType = ""
 	}
-	sim, err := p.simRepo.GetStats(simType)
+	sim, err := p.simRepo.GetSimsByType(simType)
 	if err != nil {
 		logrus.Error("error getting a sim pool stats" + err.Error())
 
@@ -121,12 +120,12 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		Id:             uint64(p.ID),
 		Iccid:          p.Iccid,
 		Msisdn:         p.Msisdn,
-		IsAllocated:    p.Is_allocated,
+		IsAllocated:    p.IsAllocated,
 		SmDpAddress:    p.SmDpAddress,
 		ActivationCode: p.ActivationCode,
 		CreatedAt:      p.CreatedAt.String(),
 		UpdatedAt:      p.UpdatedAt.String(),
 		DeletedAt:      p.DeletedAt.Time.String(),
-		SimType:        pb.SimType(pb.SimType_value[p.Sim_type]),
+		SimType:        pb.SimType(pb.SimType_value[p.SimType]),
 	}
 }

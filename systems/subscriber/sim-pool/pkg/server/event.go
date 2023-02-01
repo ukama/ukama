@@ -25,6 +25,15 @@ func (l *SimPoolEventServer) EventNotification(ctx context.Context, e *epb.Event
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case "event.cloud.simManager.sim.allocation":
+		msg, err := unmarshalAllocateSim(e.Msg)
+		if err != nil { 
+			return nil, err
+		}
+
+		err = handleEventAllocateSim(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("handler not registered for %s",e.RoutingKey)
 	}
