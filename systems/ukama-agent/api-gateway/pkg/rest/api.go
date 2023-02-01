@@ -7,7 +7,7 @@ type ActivateReq struct {
 }
 
 type InactivateReq struct {
-	Iccid string `path:"iccid, omitempty"`
+	Iccid string `path:"iccid" validate:"required"`
 }
 
 type UpdatePackageReq struct {
@@ -16,10 +16,5 @@ type UpdatePackageReq struct {
 }
 
 type ReadSubscriberReq struct {
-	Iccid string `path:"iccid, omitempty"`
-}
-
-
-type ReadSubscriberResp struct {
-	Iccid string `path:"iccid, omitempty"`
+	Iccid string `path:"iccid" validate:"required"`
 }

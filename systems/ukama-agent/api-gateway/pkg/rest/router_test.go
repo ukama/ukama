@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,8 +18,6 @@ import (
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/pkg/client"
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	amocks "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen/mocks"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var defaultCors = cors.Config{
@@ -36,7 +35,29 @@ var routerConfig = &RouterConfig{
 
 var testClientSet *Clients
 
-var iccid = "1111111111-test-iccid"
+var iccid = "012345678901234567891"
+var network = "40987edb-ebb6-4f84-a27c-99db7c136127"
+
+// var orgId = "880f7c63-eb57-461a-b514-248ce91e9b3e"
+var packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
+
+var sub = pb.ReadResp{
+	Record: &pb.Record{
+		Iccid:       iccid,
+		SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
+		Imsi:        "012345678912345",
+		Op:          []byte("0123456789012345"),
+		Key:         []byte("0123456789012345"),
+		Amf:         []byte("800"),
+		AlgoType:    1,
+		UeDlAmbrBps: 2000000,
+		UeUlAmbrBps: 2000000,
+		Sqn:         1,
+		CsgIdPrsent: false,
+		CsgId:       0,
+		PackageId:   packageId,
+	},
+}
 
 func init() {
 	gin.SetMode(gin.TestMode)
@@ -61,69 +82,18 @@ func TestRouter_PingRoute(t *testing.T) {
 
 func TestRouter_PutSubscriber(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/v1/susbcriber"+iccid, 
-        strings.NewReader(`{"Certificate": "helloOrg","Ip": "0.0.0.0"}`))
+	req, _ := http.NewRequest("PUT", "/v1/subscriber/"+iccid,
+		strings.NewReader(`{"network":"`+network+`","packageId":"`+packageId+`"}`))
 
 	m := &amocks.AsrRecordServiceClient{}
 
-	req := pb.ActivateReq{
-		Iccid:     req.Iccid,
-		Network:   req.Network,
-		PackageId: req.PackageId,
+	pReq := &pb.ActivateReq{
+		Iccid:     iccid,
+		Network:   network,
+		PackageId: packageId,
 	}
 
-	m.On("Activate", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "org not found"))
-
-	r := NewRouter(&Clients{
-		a: client.NewAsrFromClient(m),
-	}, routerConfig).f.Engine()
-
-	// act
-	r.ServeHTTP(w, req)
-
-	// assert
-	assert.Equal(t, http.StatusNotFound, w.Code)
-	m.AssertExpectations(t)
-}
-
-func TestRouter_DeleteSubscriber(t *testing.T) {
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/orgs/org-name", 
-	)))
-
-	m := &amocks.AsrRecordServiceClient{}
-
-	m.On("Inactivate", mock.Anything, mock.Anything).Return(&pb.GetOrgResponse{
-		OrgName:     "org-name",
-		Certificate: "helloOrg",
-		Ip:          "0.0.0.0",
-	}, nil)
-
-	r := NewRouter(&Clients{
-		a: client.NewAsrFromClient(m),
-	}, routerConfig).f.Engine()
-
-	// act
-	r.ServeHTTP(w, req)
-
-	// assert
-	assert.Equal(t, http.StatusOK, w.Code)
-	m.AssertExpectations(t)
-	assert.Contains(t, w.Body.String(), `"orgName":"org-name"`)
-}
-
-func TestRouter_PatchSubscriber(t *testing.T) {
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name",
-		strings.NewReader(`{"Certificate": "helloOrg","Ip": "0.0.0.0"}`))
-
-	m := &amocks.AsrRecordServiceClient{}
-	org := &pb.AddOrgRequest{
-		OrgName:     "org-name",
-		Certificate: "helloOrg",
-		Ip:          "0.0.0.0",
-	}
-	m.On("UpdatePackage", mock.Anything, org).Return(&pb.AddOrgResponse{}, nil)
+	m.On("Activate", mock.Anything, pReq).Return(&pb.ActivateResp{}, nil)
 
 	r := NewRouter(&Clients{
 		a: client.NewAsrFromClient(m),
@@ -135,47 +105,98 @@ func TestRouter_PatchSubscriber(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusCreated, w.Code)
 	m.AssertExpectations(t)
+}
+
+func TestRouter_DeleteSubscriber(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/v1/subscriber/"+iccid, nil)
+
+	m := &amocks.AsrRecordServiceClient{}
+
+	pReq := &pb.InactivateReq{
+		Id: &pb.InactivateReq_Iccid{
+			Iccid: iccid,
+		},
+	}
+
+	m.On("Inactivate", mock.Anything, pReq).Return(&pb.InactivateResp{}, nil)
+
+	r := NewRouter(&Clients{
+		a: client.NewAsrFromClient(m),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
+}
+
+func TestRouter_PatchSubscriber(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/v1/subscriber/"+iccid,
+		strings.NewReader(`{"packageId":"`+packageId+`"}`))
+
+	m := &amocks.AsrRecordServiceClient{}
+	pReq := &pb.UpdatePackageReq{
+		Iccid:     iccid,
+		PackageId: packageId,
+	}
+	m.On("UpdatePackage", mock.Anything, pReq).Return(&pb.UpdatePackageResp{}, nil)
+
+	r := NewRouter(&Clients{
+		a: client.NewAsrFromClient(m),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
 
 }
 
 func TestRouter_GetSubscriber(t *testing.T) {
 	t.Run("SubscriberExists", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("PATCH", "/v1/orgs/org-name",
-			strings.NewReader(`{"Certificate": "updated_certs","Ip": "127.0.0.1"}`))
+		req, _ := http.NewRequest("GET", "/v1/subscriber/"+iccid, nil)
 
 		m := &amocks.AsrRecordServiceClient{}
 
-		org := &pb.UpdateOrgRequest{
-			OrgName:     "org-name",
-			Certificate: "updated_certs",
-			Ip:          "127.0.0.1",
+		pReq := &pb.ReadReq{
+			Id: &pb.ReadReq_Iccid{
+				Iccid: iccid,
+			},
 		}
-		m.On("Read", mock.Anything, org).Return(&pb.UpdateOrgResponse{}, nil)
+		m.On("Read", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
 
 		r := NewRouter(&Clients{
 			a: client.NewAsrFromClient(m),
 		}, routerConfig).f.Engine()
+
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		m.AssertExpectations(t)
 	})
 
 	t.Run("SubscriberDoesn'tExists", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("PATCH", "/v1/orgs/org-name",
-			strings.NewReader(`{"Certificate": "updated_certs","Ip": "127.0.0.1"}`))
+		req, _ := http.NewRequest("GET", "/v1/subscriber/"+iccid, nil)
 
 		m := &amocks.AsrRecordServiceClient{}
-		org := &pb.UpdateOrgRequest{
-			OrgName:     "org-name",
-			Certificate: "updated_certs",
-			Ip:          "127.0.0.1",
+
+		pReq := &pb.ReadReq{
+			Id: &pb.ReadReq_Iccid{
+				Iccid: iccid,
+			},
 		}
-		m.On("Read", mock.Anything, org).Return(&pb.UpdateOrgResponse{}, nil)
+
+		m.On("Read", mock.Anything, pReq).Return(&sub, nil)
 
 		r := NewRouter(&Clients{
 			a: client.NewAsrFromClient(m),
