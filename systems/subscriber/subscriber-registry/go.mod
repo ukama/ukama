@@ -7,9 +7,7 @@ replace github.com/ukama/ukama/systems/common => ../../common
 replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
 
 require (
-	github.com/gofrs/uuid v4.3.1+incompatible
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.9
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
@@ -22,6 +20,8 @@ require (
 )
 
 require (
+	github.com/gofrs/uuid v4.3.1+incompatible // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect

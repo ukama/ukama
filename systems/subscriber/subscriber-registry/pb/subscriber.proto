@@ -40,8 +40,10 @@ repeated Subscriber subscribers = 1;
 
 // DeleteSubscriberRequest message is used to delete a subscriber
 message DeleteSubscriberRequest{
-// subscriberID field is used to specify the subscriber id for deletion
+// subscriberID field to be deleted
 string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+
+
 }
 
 // GetByNetworkRequest message is used to get all subscribers by network id
@@ -59,9 +61,6 @@ repeated Subscriber subscribers = 1;
 
 // DeleteSubscriberResponse message is used to delete a subscriber
 message DeleteSubscriberResponse{
-// subscriberID field is used to specify the subscriber id for deletion
-string subscriberID = 1;
-
 }
 
 // GetSubscriberRequest message is used to get a subscriber by subscriber ID
@@ -136,8 +135,8 @@ message Subscriber{
     string orgID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
     string firstName  = 2;
     string lastName = 3;
-    string subscriberID = 4 [json_name = "subscriber_id"];
-    string networkID = 5;
+    string subscriberID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkID = 5 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
     string email  = 6;
     string phoneNumber  = 7;
     string address  = 8; 

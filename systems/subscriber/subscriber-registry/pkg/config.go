@@ -16,7 +16,6 @@ type Config struct {
 	Service          *uconf.Service
 }
 
-
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &uconf.Database{
@@ -25,7 +24,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        7 * time.Second,
-			ListenerRoutes: []string{"event.cloud.simManager.sim.allocation"},
+			ListenerRoutes: []string{""},
 		},
 	}
 }

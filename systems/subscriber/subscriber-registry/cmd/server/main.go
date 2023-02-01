@@ -7,7 +7,6 @@ import (
 
 	"github.com/num30/config"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/server"
 	"gopkg.in/yaml.v3"
@@ -38,10 +37,9 @@ func main() {
 	runGrpcServer(packageDb)
 }
 
-
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	
+
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -55,7 +53,6 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-
 func initDb() sql.Db {
 	logrus.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
@@ -68,6 +65,7 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
+
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
@@ -75,15 +73,12 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,pkg.ServiceName, pkg.InstanceId , serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-
-		logrus.Debugf("MessageBus Client is %+v", mbClient)
+	logrus.Debugf("MessageBus Client is %+v", mbClient)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		 srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient)
-		nSrv := server.NewSubscriberEventServer(db.NewSubscriberRepo(gormdb))
+		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient)
 		pb.RegisterSubscriberRegistryServiceServer(s, srv)
-		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 
 	})
 	go msgBusListener(mbClient)

@@ -14,7 +14,6 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type SubcriberServer struct {
@@ -41,12 +40,6 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		return nil, status.Errorf(codes.InvalidArgument, "OrgID must not be empty")
 	}
 	subscriberID := uuid.NewV4()
-	timestamp := &timestamppb.Timestamp{
-		Seconds: req.DateOfBirth.GetSeconds(),
-		Nanos:   req.DateOfBirth.GetNanos(),
-	}
-
-	birthday := timestamp.AsTime()
 
 	subscriber := &db.Subscriber{
 		OrgID:                 orgID,
@@ -59,7 +52,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
-		DOB:                   birthday,
+		DOB:                   req.DateOfBirth.AsTime(),
 		IdSerial:              req.GetIdSerial(),
 	}
 	err := s.subscriberRepo.Add(subscriber)
@@ -80,7 +73,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			Gender:                req.GetGender(),
 			Address:               req.GetAddress(),
 			ProofOfIdentification: req.GetProofOfIdentification(),
-			DateOfBirth:           birthday.GoString(),
+			DateOfBirth:           req.GetDateOfBirth().String(),
 			IdSerial:              req.GetIdSerial()},
 	}, nil
 
@@ -105,9 +98,7 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	return &pb.DeleteSubscriberResponse{
-		SubscriberID: subscriberID.String(),
-	}, nil
+	return &pb.DeleteSubscriberResponse{}, nil
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {

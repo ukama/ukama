@@ -131,12 +131,8 @@ func TestSubscriberRepo_Delete(t *testing.T) {
 		// Set up mock database
 		subscriberServiceServerMock.On("Delete", mock.Anything, &gen.DeleteSubscriberRequest{
 			SubscriberID: "12345",
-		}).Return(&gen.DeleteSubscriberResponse{
-			SubscriberID:"12345",
-		}, nil)
-		expectedResponse := &gen.DeleteSubscriberResponse{
-				SubscriberID: "12345",
-		}
+		}).Return(&gen.DeleteSubscriberResponse{}, nil)
+		expectedResponse := &gen.DeleteSubscriberResponse{}
 
 		response, err := subscriberServiceServerMock.Delete(context.Background(), &gen.DeleteSubscriberRequest{
 			SubscriberID: "12345",
