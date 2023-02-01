@@ -9,6 +9,7 @@ import (
 )
 
 type AgentAdapter interface {
+	GetSim(context.Context, string) (any, error)
 	ActivateSim(context.Context, string) error
 	DeactivateSim(context.Context, string) error
 	TerminateSim(context.Context, string) error
