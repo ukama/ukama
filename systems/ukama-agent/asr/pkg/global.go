@@ -1,7 +1,6 @@
 package pkg
 
 const ServiceName = "asr"
-const SystemName = "subscriber"
+const SystemName = "ukama_agent"
 
 var IsDebugMode bool = true
-var IsMessageBus bool = false

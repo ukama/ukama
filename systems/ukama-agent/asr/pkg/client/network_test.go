@@ -2,6 +2,7 @@ package client
 
 import (
 	"testing"
+	"time"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/tj/assert"
@@ -14,6 +15,8 @@ func TestNetworkClient_ValidateNetwork(t *testing.T) {
 
 	t.Run("ValidateNetwork_Success", func(t *testing.T) {
 
+		var responder httpmock.Responder
+
 		n, err := NewNetworkClient(networkBaseUrl, pkg.IsDebugMode)
 		assert.NoError(t, err)
 
@@ -21,11 +24,23 @@ func TestNetworkClient_ValidateNetwork(t *testing.T) {
 
 		defer httpmock.DeactivateAndReset()
 
+		nw := NetworkInfo{
+			NetworkId:     "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Name:          "test-network",
+			OrgId:         "40987edb-ebb6-4f84-a27c-99db7c136100",
+			IsDeactivated: false,
+			CreatedAt:     time.Now(),
+		}
+
 		// Arrange
-		networkId := "4cdc0020-3d8f-43d8-a13c-930400393ecf"
-		orgId := "39e280e0-36c2-47bf-89b5-6b95115749c8"
-		responder := httpmock.NewStringResponder(200, "")
-		url := networkBaseUrl + "/v1/networks/" + networkId + "/orgs/" + orgId
+		orgId := "40987edb-ebb6-4f84-a27c-99db7c136100"
+		networkId := "40987edb-ebb6-4f84-a27c-99db7c136127"
+		responder, err = httpmock.NewJsonResponder(200, &nw)
+		if err != nil {
+			responder = httpmock.NewStringResponder(500, "")
+		}
+
+		url := networkBaseUrl + "/v1/networks/" + networkId
 		httpmock.RegisterResponder("GET", url, responder)
 		assert.NoError(t, err)
 
@@ -48,7 +63,7 @@ func TestNetworkClient_ValidateNetwork(t *testing.T) {
 		networkId := "4cdc0020-3d8f-43d8-a13c-930400393ecf"
 		orgId := "39e280e0-36c2-47bf-89b5-6b95115749c8"
 		responder := httpmock.NewStringResponder(400, "")
-		url := networkBaseUrl + "/v1/networks/" + networkId + "/orgs/" + orgId
+		url := networkBaseUrl + "/v1/networks/" + networkId
 		httpmock.RegisterResponder("GET", url, responder)
 		assert.NoError(t, err)
 

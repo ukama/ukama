@@ -65,6 +65,8 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 
+	var mbClient mb.MsgBusServiceClient
+
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
@@ -75,14 +77,17 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListenerRoutes)
+	if serviceConfig.IsMsgBus {
+		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+			pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+			serviceConfig.MsgClient.RetryCount,
+			serviceConfig.MsgClient.ListenerRoutes)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+		log.Debugf("MessageBus Client is %+v", mbClient)
+	}
+
 	asr := db.NewAsrRecordRepo(gormdb)
 	guti := db.NewGutiRepo(gormdb)
 
@@ -112,10 +117,12 @@ func runGrpcServer(gormdb sql.Db) {
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterAsrRecordServiceServer(s, asrServer)
-		egen.RegisterEventNotificationServiceServer(s, nSrv)
+		if serviceConfig.IsMsgBus {
+			egen.RegisterEventNotificationServiceServer(s, nSrv)
+		}
 	})
 
-	if pkg.IsMessageBus {
+	if serviceConfig.IsMsgBus {
 		go msgBusListener(mbClient)
 	}
 

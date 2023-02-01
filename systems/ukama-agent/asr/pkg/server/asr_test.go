@@ -143,7 +143,7 @@ func TestAsr_UpdatePackage(t *testing.T) {
 	asrRepo.On("GetByIccid", reqPb.GetIccid()).Return(&sub, nil).Once()
 	pcrf.On("UpdateSim", req).Return(nil).Once()
 	asrRepo.On("UpdatePackage", sub.Imsi, pId).Return(nil).Once()
-	mbC.On("PublishRequest", "event.cloud.asr.activesubscriber.update", mock.Anything).Return(nil).Once()
+	mbC.On("PublishRequest", "event.cloud.asr.updateactivesubscriber.update", mock.Anything).Return(nil).Once()
 
 	s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, pcrf, Org, mbC)
 	assert.NoError(t, err)

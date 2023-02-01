@@ -14,12 +14,12 @@ type Config struct {
 	MsgClient         *config.MsgClient `default:"{}"`
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
-	SimTokenKey       string            `default:"11111111111111111111111111111111"`
 	AsrHost           string            `default:"localhost"`
 	NetworkHost       string            `default:"http://localhost:8085"`
 	PCRFHost          string            `default:"http://localhost:8085"`
 	FactoryHost       string            `default:"http://localhost:8085"`
 	Org               string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
+	IsMsgBus          bool              `default:"true"`
 }
 
 type SimManager struct {
@@ -36,11 +36,11 @@ func NewConfig(name string) *Config {
 		Grpc: &config.Grpc{
 			Port: 9090,
 		},
-		SimTokenKey: "11111111111111111111111111111111",
-		Service:     config.LoadServiceHostConfig(name),
+
+		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.lookup.organization.create"},
+			ListenerRoutes: []string{},
 		},
 	}
 }

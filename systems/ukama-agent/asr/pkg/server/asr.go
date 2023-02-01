@@ -34,15 +34,19 @@ type AsrRecordServer struct {
 func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network client.Network, pcrf client.PolicyControl, org string, msgBus mb.MsgBusServiceClient) (*AsrRecordServer, error) {
 
 	asr := AsrRecordServer{
-		asrRepo:        asrRepo,
-		gutiRepo:       gutiRepo,
-		Org:            org,
-		factory:        factory,
-		network:        network,
-		pcrf:           pcrf,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		asrRepo:  asrRepo,
+		gutiRepo: gutiRepo,
+		Org:      org,
+		factory:  factory,
+		network:  network,
+		pcrf:     pcrf,
+		msgbus:   msgBus,
 	}
+
+	if msgBus != nil {
+		asr.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)
+	}
+
 	return &asr, nil
 }
 
@@ -160,10 +164,12 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		},
 	}
 
-	route := s.baseRoutingKey.SetAction("create").SetObject("activesubscriber").MustBuild()
-	merr := s.msgbus.PublishRequest(route, e)
-	if merr != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetAction("create").SetObject("activesubscriber").MustBuild()
+		merr := s.msgbus.PublishRequest(route, e)
+		if merr != nil {
+			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+		}
 	}
 
 	return &pb.ActivateResp{}, err
@@ -208,12 +214,13 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		},
 	}
 
-	route := s.baseRoutingKey.SetActionUpdate().SetObject("activesubscriber").MustBuild()
-	merr := s.msgbus.PublishRequest(route, e)
-	if merr != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetActionUpdate().SetObject("updateactivesubscriber").MustBuild()
+		merr := s.msgbus.PublishRequest(route, e)
+		if merr != nil {
+			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+		}
 	}
-
 	return &pb.UpdatePackageResp{}, nil
 }
 
@@ -257,10 +264,12 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		},
 	}
 
-	route := s.baseRoutingKey.SetActionDelete().SetObject("activesubscriber").MustBuild()
-	merr := s.msgbus.PublishRequest(route, e)
-	if merr != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetActionDelete().SetObject("activesubscriber").MustBuild()
+		merr := s.msgbus.PublishRequest(route, e)
+		if merr != nil {
+			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+		}
 	}
 
 	return &pb.InactivateResp{}, nil
