@@ -14,6 +14,7 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg"
 
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/cmd/version"
+	clientPkg "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/client"
 
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
@@ -76,8 +77,11 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
+
+	simMClient := clientPkg.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
+	
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient)
+		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient,simMClient)
 		pb.RegisterSubscriberRegistryServiceServer(s, srv)
 
 	})

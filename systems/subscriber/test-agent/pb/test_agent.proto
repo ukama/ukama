@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.test_agent.v1;
+
+service TestAgentService {
+    rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
+    rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
+    rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
+    rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
+}
+
+message ActivateSimRequest {
+    string iccid = 1 ;
+}
+
+message ActivateSimResponse{}
+
+
+message GetSimInfoRequest {
+    string iccid = 1 ;
+}
+
+message GetSimInfoResponse {
+    SimInfo simInfo = 1;
+}
+
+
+message DeactivateSimRequest {
+    string iccid = 1 ;
+}
+
+message DeactivateSimResponse{
+}
+
+
+message TerminateSimRequest {
+    string iccid = 1 ;
+}
+
+message TerminateSimResponse{
+}
+
+message SimInfo {
+	string Iccid  = 1;
+	string Imsi = 2; 
+    string Status = 3;
+}
