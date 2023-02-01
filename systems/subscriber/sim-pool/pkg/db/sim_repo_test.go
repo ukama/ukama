@@ -192,11 +192,11 @@ func Test_Add(t *testing.T) {
 			{
 				Iccid:          "10101010",
 				Msisdn:         "01010101",
-				IsAllocated:   false,
-				SimType:       "inter_ukama_all",
+				IsAllocated:    false,
+				SimType:        "inter_ukama_all",
 				SmDpAddress:    "123456789",
 				ActivationCode: "0000",
-				IsPhysical:    true,
+				IsPhysical:     true,
 				QrCode:         "123456789",
 			},
 		}
@@ -206,7 +206,7 @@ func Test_Add(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sim[0].Iccid, sim[0].Msisdn, sim[0].Is_allocated, sim[0].Sim_type, sim[0].SmDpAddress, sim[0].ActivationCode, sim[0].QrCode, sim[0].Is_physical).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sim[0].Iccid, sim[0].Msisdn, sim[0].IsAllocated, sim[0].IsFailed, sim[0].SimType, sim[0].SmDpAddress, sim[0].ActivationCode, sim[0].QrCode, sim[0].IsPhysical).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

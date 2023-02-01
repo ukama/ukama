@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package integration
 
 import (
@@ -60,15 +63,14 @@ func Test_FullFlow(t *testing.T) {
 
 	})
 
-
 	t.Run("Get", func(t *testing.T) {
 		r, err := c.Get(ctx, &pb.GetRequest{
-			IsPhysicalSim:  true,
-			SimType: pb.SimType_INTER_MNO_DATA,
+			IsPhysicalSim: true,
+			SimType:       pb.SimType_INTER_MNO_DATA,
 		})
 
 		if assert.NoError(t, err) {
-            assert.Equal(t, true, r.Sim.IsPhysical)
+			assert.Equal(t, true, r.Sim.IsPhysical)
 		}
 	})
 
@@ -81,9 +83,9 @@ func Test_FullFlow(t *testing.T) {
 			assert.Equal(t, "123456789", r.Sim.Iccid)
 		}
 	})
-    t.Run("GetStats", func(t *testing.T) {
+	t.Run("GetStats", func(t *testing.T) {
 		r, err := c.GetStats(ctx, &pb.GetStatsRequest{
-			SimType:pb.SimType_INTER_MNO_DATA,
+			SimType: pb.SimType_INTER_MNO_DATA,
 		})
 
 		if assert.NoError(t, err) {
@@ -93,13 +95,12 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("Delete", func(T *testing.T) {
 		_, err := c.Delete(ctx, &pb.DeleteRequest{
-			Id:[]uint64{
-                1,
-                2,
-            },
-			
+			Id: []uint64{
+				1,
+				2,
+			},
 		})
-        
+
 		assert.NoError(t, err)
 	})
 
