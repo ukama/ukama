@@ -106,21 +106,21 @@ type GrpcService struct {
 Message Client for a system which talks to MsgBus
 */
 type MsgClient struct {
-	Host          string        `default:"localhost:9095"`
-	Timeout       time.Duration `default:"3s"`
-	RetryCount    int8          `default:"3"`
-	Exchange	  string		`default:"amq.topic"`
-	ListenQueue   string		`default:""`
-	PublishQueue string			`default:""`
-	ListenerRoutes []string		
+	Host           string        `default:"localhost:9095"`
+	Timeout        time.Duration `default:"3s"`
+	RetryCount     int8          `default:"3"`
+	Exchange       string        `default:"amq.topic"`
+	ListenQueue    string        `default:""`
+	PublishQueue   string        `default:""`
+	ListenerRoutes []string
 }
 
 type Service struct {
-	Host	string `default:"localhost"`
-	Port	string `default:"9090"`
-	Uri		string `default:"localhost:9090"`
-}	
-
+	Host string `default:"localhost"`
+	Port string `default:"9090"`
+	Uri  string `default:"localhost:9090"`
+}
+	
 type Metrics struct {
 	Port    int  `default:"10250"`
 	Enabled bool `default:"true"`
@@ -199,12 +199,21 @@ func DefaultForwardConfig() Forward {
 }
 
 func LoadServiceHostConfig(name string) *Service {
-	svcHost :="_SERVICE_HOST"
-	svcPort :="_SERVICE_PORT"
-	
-	return &Service {
-		Host: os.Getenv(strings.ToUpper(name+svcHost)),
-		Port: os.Getenv(strings.ToUpper(name+svcPort)),
-		Uri:  os.Getenv(strings.ToUpper(name+svcHost))+":"+os.Getenv(strings.ToUpper(name+svcPort)),
+	s := &Service{}
+	svcHost := "_SERVICE_HOST"
+	svcPort := "_SERVICE_PORT"
+
+	val, present := os.LookupEnv(strings.ToUpper(name + svcHost))
+	if present {
+		s.Host = val
 	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + svcPort))
+	if present {
+		s.Port = val
+	}
+
+	s.Uri = s.Host + ":" + s.Port
+
+	return s
 }

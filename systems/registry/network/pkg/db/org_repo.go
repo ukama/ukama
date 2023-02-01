@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -10,7 +11,7 @@ import (
 
 type OrgRepo interface {
 	Add(org *Org) error
-	Get(id uint) (*Org, error)
+	Get(id uuid.UUID) (*Org, error)
 	GetByName(name string) (*Org, error)
 }
 
@@ -35,7 +36,7 @@ func (r *orgRepo) Add(org *Org) (err error) {
 	return d.Error
 }
 
-func (r *orgRepo) Get(id uint) (*Org, error) {
+func (r *orgRepo) Get(id uuid.UUID) (*Org, error) {
 	var org Org
 
 	result := r.Db.GetGormDb().First(&org, id)

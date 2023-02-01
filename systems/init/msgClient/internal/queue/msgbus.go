@@ -63,7 +63,6 @@ func (m *MsgBusHandler) CreateServiceMsgBusHandler() error {
 		log.Infof("Creating message bus handler  for %s service.", s.ServiceUuid)
 
 		/* Create publisher */
-		log.Infof("BRACKLEY",s)
 		publisher, err := NewQueuePublisher(s)
 		if err != nil {
 			log.Errorf("Failed to create Publisher for %s. Error %s", s.Name, err.Error())

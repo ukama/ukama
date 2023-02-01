@@ -6,8 +6,8 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	confr "github.com/num30/config"
+	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc"
@@ -35,8 +35,8 @@ func init() {
 	r := confr.NewConfReader("integration")
 	r.Read(tConfig)
 
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("%+v", tConfig)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("%+v", tConfig)
 }
 
 func Test_FullFlow(t *testing.T) {
@@ -48,7 +48,7 @@ func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	logrus.Infoln("Connecting to service ", tConfig.ServiceHost)
+	log.Infoln("Connecting to service ", tConfig.ServiceHost)
 	conn, c, err := CreateLookupClient()
 	defer conn.Close()
 	if err != nil {
@@ -146,7 +146,7 @@ func Test_FullFlow(t *testing.T) {
 			assert.Equal(t, strings.ToLower(sysName), r.SystemName)
 		}
 
-		_, err = uuid.Parse(r.SystemId)
+		_, err = uuid.FromString(r.SystemId)
 		assert.NoError(t, err)
 	})
 
@@ -161,7 +161,7 @@ func Test_FullFlow(t *testing.T) {
 }
 
 func CreateLookupClient() (*grpc.ClientConn, pb.LookupServiceClient, error) {
-	logrus.Infoln("Connecting to Lookup ", tConfig.ServiceHost)
+	log.Infoln("Connecting to Lookup ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))

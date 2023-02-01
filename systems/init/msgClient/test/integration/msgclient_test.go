@@ -12,7 +12,7 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/init/msgClient/internal/db"
 	pb "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
@@ -48,8 +48,8 @@ func init() {
 	r := confr.NewConfReader("integration")
 	r.Read(tConfig)
 
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("%+v", tConfig)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("%+v", tConfig)
 }
 
 func Test_FullFlow(t *testing.T) {
@@ -58,7 +58,7 @@ func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	logrus.Infoln("Connecting to service ", tConfig.ServiceHost)
+	log.Infoln("Connecting to service ", tConfig.ServiceHost)
 	conn, c, err := CreateMsgBusClient()
 	defer conn.Close()
 	if err != nil {
@@ -125,7 +125,7 @@ func Test_FullFlow(t *testing.T) {
 }
 
 func CreateMsgBusClient() (*grpc.ClientConn, pb.MsgClientServiceClient, error) {
-	logrus.Infoln("Connecting to MsgBusClientService ", tConfig.ServiceHost)
+	log.Infoln("Connecting to MsgBusClientService ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
