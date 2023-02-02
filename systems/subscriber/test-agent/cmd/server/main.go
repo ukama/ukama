@@ -62,7 +62,7 @@ func initConfig() {
 }
 
 func runGrpcServer() {
-	testAgentServer := server.NewTestAgentServer(storage.NewMemStorage())
+	testAgentServer := server.NewTestAgentServer(storage.NewMemStorage(make(map[string]*storage.SimInfo)))
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterTestAgentServiceServer(s, testAgentServer)

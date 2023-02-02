@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
@@ -27,7 +28,11 @@ func (s *TestAgentServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*p
 
 	sim, err := s.getOrCreateSimInfo(ctx, req)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, status.Errorf(codes.NotFound, "sim not found.")
+		}
+
+		return nil, status.Errorf(codes.Internal, "an unexpected error has occurred")
 	}
 
 	return &pb.GetSimResponse{
@@ -123,7 +128,7 @@ func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, req *pb.GetSim
 
 		err := s.storage.Put(req.Iccid, sim)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot add sim info into storage: %w", err)
 		}
 	}
 
@@ -133,9 +138,7 @@ func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, req *pb.GetSim
 func (s *TestAgentServer) getSimInfo(ctx context.Context, iccid string) (*storage.SimInfo, error) {
 	sim, err := s.storage.Get(iccid)
 	if err != nil {
-		log.Errorf("cannot get sim info from storage: %v", err)
-
-		return nil, err
+		return nil, fmt.Errorf("cannot get sim info from storage: %w", err)
 	}
 
 	return sim, nil

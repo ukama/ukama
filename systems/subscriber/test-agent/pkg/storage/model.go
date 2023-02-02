@@ -6,6 +6,7 @@ import (
 )
 
 var ErrNotFound = errors.New("sim not found")
+var ErrInternal = errors.New("an unexpected error has occurred")
 
 type Storage interface {
 	Get(key string) (*SimInfo, error)
@@ -51,5 +52,5 @@ func ParseStatus(value string) SimStatus {
 		return SimStatus(0)
 	}
 
-	return SimStatus(v)
+	return v
 }

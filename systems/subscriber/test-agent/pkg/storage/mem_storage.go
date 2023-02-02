@@ -9,10 +9,10 @@ type MemStorage struct {
 	data map[string]*SimInfo
 }
 
-func NewMemStorage() *MemStorage {
+func NewMemStorage(data map[string]*SimInfo) *MemStorage {
 	return &MemStorage{
 		m:    &sync.RWMutex{},
-		data: make(map[string]*SimInfo),
+		data: data,
 	}
 }
 
@@ -32,6 +32,7 @@ func (s *MemStorage) Put(key string, value *SimInfo) error {
 	defer s.m.Unlock()
 
 	s.data[key] = value
+
 	return nil
 }
 
@@ -40,5 +41,6 @@ func (s *MemStorage) Delete(key string) error {
 	defer s.m.Unlock()
 
 	delete(s.data, key)
+
 	return nil
 }
