@@ -12,7 +12,6 @@ import (
 
 	generated "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/server"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
 
@@ -23,30 +22,26 @@ import (
 	"google.golang.org/grpc"
 )
 
-var svcConf *pkg.Config
+var svcConf = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-	pkg.InstanceId = os.Getenv("POD_NAME")
+
+	/* Log level */
+	log.SetLevel(log.TraceLevel)
+	log.Infof("Starting %s service", pkg.ServiceName)
 
 	initConfig()
 
 	metrics.StartMetricsServer(svcConf.Metrics)
 
 	runGrpcServer()
+
+	log.Infof("Exiting service %s", pkg.ServiceName)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	svcConf = &pkg.Config{
-		Grpc: &uconf.Grpc{
-			Port: 9090,
-		},
-		Metrics: &uconf.Metrics{
-			Port: 10250,
-		},
-	}
-
 	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
@@ -57,6 +52,8 @@ func initConfig() {
 			logrus.Infof("Config:\n%s", string(b))
 		}
 	}
+
+	log.Debugf("\nService: %s Service: %+v ", pkg.ServiceName, svcConf.Service)
 
 	pkg.IsDebugMode = svcConf.DebugMode
 }
