@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// OrgClientProvider creates a local client to interact with
+// SimManagerClientProvider creates a local client to interact with
 // a remote instance of  Org service.
 type SimManagerClientProvider interface {
 	GetSimManagerService() (pb.SimManagerServiceClient, error)
@@ -33,11 +33,11 @@ func (u *simManagerClientProvider) GetSimManagerService() (pb.SimManagerServiceC
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		log.Infoln("Connecting to Org service ", u.simManagerHost)
+		log.Infoln("Connecting to SimManager service ", u.simManagerHost)
 
 		conn, err := grpc.DialContext(ctx, u.simManagerHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("Failed to connect to Org service %s. Error: %v", u.simManagerHost, err)
+			log.Fatalf("Failed to connect to SimManager service %s. Error: %v", u.simManagerHost, err)
 		}
 
 		u.simManagerService = pb.NewSimManagerServiceClient(conn)

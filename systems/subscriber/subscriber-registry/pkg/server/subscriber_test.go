@@ -108,7 +108,7 @@ func TestSubcriberServer_Add(t *testing.T) {
 					return nil, nil
 				},
 			}
-			server := NewSubscriberServer(subscriberRepo,msgbus)
+			server := NewSubscriberServer(subscriberRepo, msgbus)
 			resp, err := server.Add(context.Background(), testCase.req)
 
 			assert.Equal(t, testCase.expectedResp, resp)

@@ -25,6 +25,7 @@ type SimManagerServiceClient interface {
 	// Sim
 	AllocateSim(ctx context.Context, in *AllocateSimRequest, opts ...grpc.CallOption) (*AllocateSimResponse, error)
 	GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error)
+	ListSims(ctx context.Context, in *ListSimsRequest, opts ...grpc.CallOption) (*ListSimsResponse, error)
 	GetSimsBySubscriber(ctx context.Context, in *GetSimsBySubscriberRequest, opts ...grpc.CallOption) (*GetSimsBySubscriberResponse, error)
 	GetSimsByNetwork(ctx context.Context, in *GetSimsByNetworkRequest, opts ...grpc.CallOption) (*GetSimsByNetworkResponse, error)
 	ToggleSimStatus(ctx context.Context, in *ToggleSimStatusRequest, opts ...grpc.CallOption) (*ToggleSimStatusResponse, error)
@@ -56,6 +57,15 @@ func (c *simManagerServiceClient) AllocateSim(ctx context.Context, in *AllocateS
 func (c *simManagerServiceClient) GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error) {
 	out := new(GetSimResponse)
 	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSim", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) ListSims(ctx context.Context, in *ListSimsRequest, opts ...grpc.CallOption) (*ListSimsResponse, error) {
+	out := new(ListSimsResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/ListSims", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +151,7 @@ type SimManagerServiceServer interface {
 	// Sim
 	AllocateSim(context.Context, *AllocateSimRequest) (*AllocateSimResponse, error)
 	GetSim(context.Context, *GetSimRequest) (*GetSimResponse, error)
+	ListSims(context.Context, *ListSimsRequest) (*ListSimsResponse, error)
 	GetSimsBySubscriber(context.Context, *GetSimsBySubscriberRequest) (*GetSimsBySubscriberResponse, error)
 	GetSimsByNetwork(context.Context, *GetSimsByNetworkRequest) (*GetSimsByNetworkResponse, error)
 	ToggleSimStatus(context.Context, *ToggleSimStatusRequest) (*ToggleSimStatusResponse, error)
@@ -162,6 +173,9 @@ func (UnimplementedSimManagerServiceServer) AllocateSim(context.Context, *Alloca
 }
 func (UnimplementedSimManagerServiceServer) GetSim(context.Context, *GetSimRequest) (*GetSimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) ListSims(context.Context, *ListSimsRequest) (*ListSimsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSims not implemented")
 }
 func (UnimplementedSimManagerServiceServer) GetSimsBySubscriber(context.Context, *GetSimsBySubscriberRequest) (*GetSimsBySubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSimsBySubscriber not implemented")
@@ -232,6 +246,24 @@ func _SimManagerService_GetSim_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).GetSim(ctx, req.(*GetSimRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_ListSims_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSimsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).ListSims(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/ListSims",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).ListSims(ctx, req.(*ListSimsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -394,6 +426,10 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSim",
 			Handler:    _SimManagerService_GetSim_Handler,
+		},
+		{
+			MethodName: "ListSims",
+			Handler:    _SimManagerService_ListSims_Handler,
 		},
 		{
 			MethodName: "GetSimsBySubscriber",

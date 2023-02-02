@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -62,6 +62,19 @@ func (this *GetSimResponse) Validate() error {
 	if this.Sim != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+		}
+	}
+	return nil
+}
+func (this *ListSimsRequest) Validate() error {
+	return nil
+}
+func (this *ListSimsResponse) Validate() error {
+	for _, item := range this.Sims {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Sims", err)
+			}
 		}
 	}
 	return nil

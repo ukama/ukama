@@ -13,6 +13,7 @@ service SimManagerService {
     // Sim
     rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
     rpc GetSim(GetSimRequest) returns (GetSimResponse);
+    rpc ListSims(ListSimsRequest) returns (ListSimsResponse);
     rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
     rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
     rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
@@ -46,6 +47,14 @@ message GetSimRequest {
 
 message GetSimResponse {
     Sim sim = 1;
+}
+
+
+message ListSimsRequest{
+}
+
+message ListSimsResponse {
+    repeated Sim sims = 1;
 }
 
 
