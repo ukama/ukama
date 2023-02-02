@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
 	"google.golang.org/grpc/codes"
@@ -23,7 +23,7 @@ func NewTestAgentServer(storage storage.Storage) *TestAgentServer {
 }
 
 func (s *TestAgentServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
-	logrus.Infof("GetSimInfo: %+v", req)
+	log.Infof("GetSim: %+v", req)
 
 	sim, err := s.getOrCreateSimInfo(ctx, req)
 	if err != nil {
@@ -40,7 +40,8 @@ func (s *TestAgentServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*p
 }
 
 func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRequest) (*pb.ActivateSimResponse, error) {
-	logrus.Infof("Activate sim for iccid: %s", req.Iccid)
+	log.Infof("Activate sim for iccid: %s", req.Iccid)
+
 	sim, err := s.getSimInfo(ctx, req.Iccid)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
@@ -61,7 +62,8 @@ func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRe
 }
 
 func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateSimRequest) (*pb.DeactivateSimResponse, error) {
-	logrus.Infof("Deactivate sim for iccid: %s", req.Iccid)
+	log.Infof("Deactivate sim for iccid: %s", req.Iccid)
+
 	sim, err := s.getSimInfo(ctx, req.Iccid)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
@@ -82,7 +84,8 @@ func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateS
 }
 
 func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSimRequest) (*pb.TerminateSimResponse, error) {
-	logrus.Infof("Terminate sim for iccid: %s", req.Iccid)
+	log.Infof("Terminate sim for iccid: %s", req.Iccid)
+
 	sim, err := s.getSimInfo(ctx, req.Iccid)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
@@ -100,7 +103,8 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 }
 
 func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, req *pb.GetSimRequest) (*storage.SimInfo, error) {
-	logrus.Infof("Get sim info for iccid: %s", req.Iccid)
+	log.Infof("Get sim info for iccid: %s", req.Iccid)
+
 	sim, err := s.getSimInfo(ctx, req.Iccid)
 
 	if err != nil {
@@ -108,7 +112,7 @@ func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, req *pb.GetSim
 			return nil, err
 		}
 
-		logrus.Infof("Sim info for iccid: %s does not exist. Adding new sim info to Storage", req.Iccid)
+		log.Infof("Sim info for iccid: %s does not exist. Adding new sim info to Storage", req.Iccid)
 		imsi := req.Iccid[len(req.Iccid)-15:]
 
 		sim = &storage.SimInfo{
@@ -129,7 +133,8 @@ func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, req *pb.GetSim
 func (s *TestAgentServer) getSimInfo(ctx context.Context, iccid string) (*storage.SimInfo, error) {
 	sim, err := s.storage.Get(iccid)
 	if err != nil {
-		logrus.Errorf("cannot get sim info from storage: %v", err)
+		log.Errorf("cannot get sim info from storage: %v", err)
+
 		return nil, err
 	}
 
