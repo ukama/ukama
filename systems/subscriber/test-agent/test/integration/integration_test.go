@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package integration
+package integration_test
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -19,8 +18,7 @@ import (
 )
 
 type TestConfig struct {
-	ServiceHost string        `default:"localhost:9090"`
-	Queue       *config.Queue `default:"{}"`
+	ServiceHost string `default:"localhost:9090"`
 }
 
 var tConfig *TestConfig
@@ -31,8 +29,7 @@ func init() {
 
 	reader := rconf.NewConfReader("integration")
 
-	err := reader.Read(tConfig)
-	if err != nil {
+	if err := reader.Read(tConfig); err != nil {
 		log.Fatalf("Failed to read config: %v", err)
 	}
 
@@ -51,14 +48,19 @@ func Test_FullFlow(t *testing.T) {
 	defer cancel()
 
 	log.Infoln("Connecting to service ", tConfig.ServiceHost)
+
 	conn, c, err := CreateTestAgentClient()
 	defer conn.Close()
+
 	if err != nil {
 		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
+
 		return
 	}
 
 	t.Run("GetSim", func(t *testing.T) {
+		//t.Parallel()
+
 		_, err := c.GetSim(ctx, &pb.GetSimRequest{
 			Iccid: iccid,
 		})
@@ -67,6 +69,8 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("DeactivateSim", func(t *testing.T) {
+		//t.Parallel()
+
 		_, err := c.DeactivateSim(ctx, &pb.DeactivateSimRequest{
 			Iccid: iccid,
 		})
@@ -75,6 +79,8 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("ActivateSim", func(t *testing.T) {
+		//t.Parallel()
+
 		_, err := c.ActivateSim(ctx, &pb.ActivateSimRequest{
 			Iccid: iccid,
 		})
@@ -83,6 +89,8 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("TerminateSim", func(t *testing.T) {
+		//t.Parallel()
+
 		_, err := c.TerminateSim(ctx, &pb.TerminateSimRequest{
 			Iccid: iccid,
 		})
@@ -91,6 +99,8 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("ActivateSim", func(t *testing.T) {
+		//t.Parallel()
+
 		_, err := c.ActivateSim(ctx, &pb.ActivateSimRequest{
 			Iccid: iccid,
 		})
@@ -99,6 +109,8 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("DeactivateSim", func(t *testing.T) {
+		//t.Parallel()
+
 		_, err := c.DeactivateSim(ctx, &pb.DeactivateSimRequest{
 			Iccid: iccid,
 		})
@@ -107,6 +119,8 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("TerminateSim", func(t *testing.T) {
+		//t.Parallel()
+
 		_, err := c.TerminateSim(ctx, &pb.TerminateSimRequest{
 			Iccid: iccid,
 		})
@@ -127,5 +141,6 @@ func CreateTestAgentClient() (*grpc.ClientConn, pb.TestAgentServiceClient, error
 	}
 
 	c := pb.NewTestAgentServiceClient(conn)
+
 	return conn, c, nil
 }
