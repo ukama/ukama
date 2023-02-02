@@ -1,6 +1,11 @@
 package storage
 
-import "strconv"
+import (
+	"errors"
+	"strconv"
+)
+
+var ErrNotFound = errors.New("sim not found")
 
 type Storage interface {
 	Get(key string) (*SimInfo, error)

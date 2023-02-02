@@ -1,6 +1,8 @@
 package storage
 
-import "sync"
+import (
+	"sync"
+)
 
 type MemStorage struct {
 	m    *sync.RWMutex
@@ -22,7 +24,7 @@ func (s *MemStorage) Get(key string) (*SimInfo, error) {
 		return val, nil
 	}
 
-	return &SimInfo{}, nil
+	return nil, ErrNotFound
 }
 
 func (s *MemStorage) Put(key string, value *SimInfo) error {
