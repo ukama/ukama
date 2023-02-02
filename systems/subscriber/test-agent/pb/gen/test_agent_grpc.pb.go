@@ -38,7 +38,7 @@ func NewTestAgentServiceClient(cc grpc.ClientConnInterface) TestAgentServiceClie
 
 func (c *testAgentServiceClient) GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error) {
 	out := new(GetSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/GetSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.test_agent.v1.TestAgentService/GetSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *testAgentServiceClient) GetSim(ctx context.Context, in *GetSimRequest, 
 
 func (c *testAgentServiceClient) ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error) {
 	out := new(ActivateSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/ActivateSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.test_agent.v1.TestAgentService/ActivateSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (c *testAgentServiceClient) ActivateSim(ctx context.Context, in *ActivateSi
 
 func (c *testAgentServiceClient) DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error) {
 	out := new(DeactivateSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/DeactivateSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.test_agent.v1.TestAgentService/DeactivateSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (c *testAgentServiceClient) DeactivateSim(ctx context.Context, in *Deactiva
 
 func (c *testAgentServiceClient) TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error) {
 	out := new(TerminateSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/TerminateSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.test_agent.v1.TestAgentService/TerminateSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func _TestAgentService_GetSim_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.test_agent.v1.TestAgentService/GetSim",
+		FullMethod: "/ukama.subscriber.test_agent.v1.TestAgentService/GetSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestAgentServiceServer).GetSim(ctx, req.(*GetSimRequest))
@@ -140,7 +140,7 @@ func _TestAgentService_ActivateSim_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.test_agent.v1.TestAgentService/ActivateSim",
+		FullMethod: "/ukama.subscriber.test_agent.v1.TestAgentService/ActivateSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestAgentServiceServer).ActivateSim(ctx, req.(*ActivateSimRequest))
@@ -158,7 +158,7 @@ func _TestAgentService_DeactivateSim_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.test_agent.v1.TestAgentService/DeactivateSim",
+		FullMethod: "/ukama.subscriber.test_agent.v1.TestAgentService/DeactivateSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestAgentServiceServer).DeactivateSim(ctx, req.(*DeactivateSimRequest))
@@ -176,7 +176,7 @@ func _TestAgentService_TerminateSim_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.test_agent.v1.TestAgentService/TerminateSim",
+		FullMethod: "/ukama.subscriber.test_agent.v1.TestAgentService/TerminateSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestAgentServiceServer).TerminateSim(ctx, req.(*TerminateSimRequest))
@@ -188,7 +188,7 @@ func _TestAgentService_TerminateSim_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TestAgentService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.test_agent.v1.TestAgentService",
+	ServiceName: "ukama.subscriber.test_agent.v1.TestAgentService",
 	HandlerType: (*TestAgentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
