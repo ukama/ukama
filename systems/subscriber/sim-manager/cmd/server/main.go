@@ -108,14 +108,14 @@ func runGrpcServer(gormDB sql.Db) {
 		mbClient,
 	)
 
-	tsInterceptor := interceptor.NewTestSimInterceptor(svcConf.TestAgentHost, svcConf.Timeout)
+	fsInterceptor := interceptor.NewFakeSimInterceptor(svcConf.TestAgentHost, svcConf.Timeout)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)
 	})
 
 	grpcServer.ExtraUnaryInterceptors = []grpc.UnaryServerInterceptor{
-		tsInterceptor.UnaryServerInterceptor}
+		fsInterceptor.UnaryServerInterceptor}
 
 	go msgBusListener(mbClient)
 
