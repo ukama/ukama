@@ -14,7 +14,7 @@ import (
 // OrgClientProvider creates a local client to interact with
 // a remote instance of  Org service.
 type SimManagerClientProvider interface {
-	GetSimsBySubscriber() (pb.SimManagerServiceClient, error)
+	GetSimManagerService() (pb.SimManagerServiceClient, error)
 }
 
 type simManagerClientProvider struct {
@@ -26,7 +26,7 @@ func NewSimManagerClientProvider(simManagerHost string) SimManagerClientProvider
 	return &simManagerClientProvider{simManagerHost: simManagerHost}
 }
 
-func (u *simManagerClientProvider) GetSimsBySubscriber() (pb.SimManagerServiceClient, error) {
+func (u *simManagerClientProvider) GetSimManagerService() (pb.SimManagerServiceClient, error) {
 	if u.simManagerService == nil {
 		var conn *grpc.ClientConn
 

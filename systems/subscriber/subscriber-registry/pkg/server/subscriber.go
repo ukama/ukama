@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -57,7 +56,7 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	smc, err := s.simManagerService.GetSimsBySubscriber()
+	smc, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
 		logrus.Error("Failed to get SimManagerServiceClient. Error: %v", err)
 	}
@@ -71,10 +70,10 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 	if err != nil {
 		log.Fatalf("Failed to get Sims by subscriber. Error: %v", err)
 	}
-	fmt.Println(simRep)
+	subscriberSims := pbManagerSimsToPbSubscriberSims(simRep.Sims)
 
 
-	resp := &pb.GetSubscriberResponse{Subscriber: dbSubscriberToPbSubscribers(subscriber)}
+	resp := &pb.GetSubscriberResponse{Subscriber: dbSubscriberToPbSubscriber(subscriber,subscriberSims)}
 
 	return resp, nil
 
@@ -83,49 +82,41 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 
 
 
-func dbsubscriberToPbSubscribers(subscriber []db.Subscriber) []*pb.Subscriber {
+func dbSubScribersToPbSubscribers(subscriber []db.Subscriber,simMaping simMangerPb.GetPackagesBySimResponse ) []*pb.Subscriber {
 	res := []*pb.Subscriber{}
 	for _, u := range subscriber {
-		res = append(res, dbSubscriberToPbSubscribers(&u))
+	
+		//get list of sims from simManager for that subscriber
+		//convert that list of sim manager sims to subscriber sims
+		//add the list of subscriber sim to that subscriber
+		res = append(res, dbSubscriberToPbSubscriber(&u))
+	}
+	return res
+}
+func pbManagerSimsToPbSubscriberSims (s []*simMangerPb.Sim) []*pb.Sim{
+	res := []*pb.Sim{}
+	for _, u := range s {
+		ss := &pb.Sim{
+			Id:u.Id,
+			SubscriberID: u.SubscriberID,
+			NetworkID:u.NetworkID,
+		}
+
+		res = append(res, ss)
 	}
 	return res
 }
 
-func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
+func dbSubscriberToPbSubscriber(s *db.Subscriber,sims []*pb.Sim) *pb.Subscriber {
 	pbTimestamp := s.DOB.Format("2006-01-02")
-
-	// Create a slice of mock SIMs
-	simList := []*pb.Sim{
-		{
-			Id:           "12345",
-			SubscriberID: s.SubscriberID.String(),
-			Iccid:        "9876543210",
-			Msisdn:       "123-456-7890",
-			IsPhysical:   true,
-		},
-		{
-			Id:           "54321",
-			SubscriberID: s.SubscriberID.String(),
-			Iccid:        "0123456789",
-			Msisdn:       "123-456-7891",
-			IsPhysical:   false,
-		},
-		{
-			Id:           "67890",
-			SubscriberID: s.SubscriberID.String(),
-			Iccid:        "0123456789",
-			Msisdn:       "123-456-7891",
-			IsPhysical:   false,
-		},
-	}
-
+	
 	return &pb.Subscriber{
 		FirstName:             s.FirstName,
 		LastName:              s.LastName,
 		Email:                 s.Email,
 		SubscriberID:          s.SubscriberID.String(),
 		ProofOfIdentification: s.ProofOfIdentification,
-		Sim:                   simList,
+		Sim:                   sims,
 		PhoneNumber:           s.PhoneNumber,
 		IdSerial:              s.IdSerial,
 		NetworkID:             s.NetworkID.String(),
