@@ -22,10 +22,15 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MsgClientServiceClient interface {
+	/// Use this rpc to register system to MsgClient
 	RegisterService(ctx context.Context, in *RegisterServiceReq, opts ...grpc.CallOption) (*RegisterServiceResp, error)
+	/// Call this rpc to  StartMsgBus after registration
 	StartMsgBusHandler(ctx context.Context, in *StartMsgBusHandlerReq, opts ...grpc.CallOption) (*StartMsgBusHandlerResp, error)
+	/// Call this rpc to  StopMsgBus
 	StopMsgBusHandler(ctx context.Context, in *StopMsgBusHandlerReq, opts ...grpc.CallOption) (*StopMsgBusHandlerResp, error)
+	/// Unregister service from MsgClient
 	UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error)
+	/// Call this rpc to publisg events
 	PublishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error)
 }
 
@@ -86,10 +91,15 @@ func (c *msgClientServiceClient) PublishMsg(ctx context.Context, in *PublishMsgR
 // All implementations must embed UnimplementedMsgClientServiceServer
 // for forward compatibility
 type MsgClientServiceServer interface {
+	/// Use this rpc to register system to MsgClient
 	RegisterService(context.Context, *RegisterServiceReq) (*RegisterServiceResp, error)
+	/// Call this rpc to  StartMsgBus after registration
 	StartMsgBusHandler(context.Context, *StartMsgBusHandlerReq) (*StartMsgBusHandlerResp, error)
+	/// Call this rpc to  StopMsgBus
 	StopMsgBusHandler(context.Context, *StopMsgBusHandlerReq) (*StopMsgBusHandlerResp, error)
+	/// Unregister service from MsgClient
 	UnregisterService(context.Context, *UnregisterServiceReq) (*UnregisterServiceResp, error)
+	/// Call this rpc to publisg events
 	PublishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error)
 	mustEmbedUnimplementedMsgClientServiceServer()
 }

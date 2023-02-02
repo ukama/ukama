@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
-	"github.com/ukama/ukama/services/common/ukama"
+	sr "github.com/ukama/ukama/systems/common/srvcrouter"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/testing/services/factory/internal"
 	"github.com/ukama/ukama/testing/services/factory/internal/builder"
 	"github.com/ukama/ukama/testing/services/factory/internal/nmr"

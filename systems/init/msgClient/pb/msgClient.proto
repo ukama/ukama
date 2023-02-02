@@ -31,11 +31,8 @@ service MsgClientService {
 
 /// Registration status enums
 enum REGISTRAION_STATUS {
-    REGISTERED = 0; /// System registered status
-    ALLREADY_REGISTERED = 1; /// System already registered status
-    NOT_REGISTERED =2; /// System not registered status
-    LISTNENING = 3; /// Listening to event
-    LISTNENING_FAILURE = 4; /// Listening failed
+    REGISTERED = 0; /// System registered status  
+    NOT_REGISTERED = 1; /// System not registered status
 }
 
 message RegisterServiceReq {

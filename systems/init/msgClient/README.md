@@ -4,22 +4,25 @@
 
 ## Table of Contents
 
-- [MsgClientService](#ukama.msgClient.v1.MsgClientService)
-- [Directory structure](#directory-structure)
-- [How to use?](#how-to)
-- [pb/msgClient.proto](#pb/msgClient.proto)
-  - [PublishMsgRequest Messages](#ukama.msgClient.v1.PublishMsgRequest)
-  - [PublishMsgResponse Messages](#ukama.msgClient.v1.PublishMsgResponse)
-  - [RegisterServiceReq Messages](#ukama.msgClient.v1.RegisterServiceReq)
-  - [RegisterServiceResp Messages](#ukama.msgClient.v1.RegisterServiceResp)
-  - [StartMsgBusHandlerReq Messages](#ukama.msgClient.v1.StartMsgBusHandlerReq)
-  - [StartMsgBusHandlerResp Messages](#ukama.msgClient.v1.StartMsgBusHandlerResp)
-  - [StopMsgBusHandlerReq Messages](#ukama.msgClient.v1.StopMsgBusHandlerReq)
-  - [StopMsgBusHandlerResp Messages](#ukama.msgClient.v1.StopMsgBusHandlerResp)
-  - [UnregisterServiceReq Messages](#ukama.msgClient.v1.UnregisterServiceReq)
-  - [UnregisterServiceResp Messages](#ukama.msgClient.v1.UnregisterServiceResp)
-  - [REGISTRAION_STATUS](#ukama.msgClient.v1.REGISTRAION_STATUS)
-- [Scalar Value Types](#scalar-value-types)
+- [Protocol Documentation](#protocol-documentation)
+  - [Table of Contents](#table-of-contents)
+- [MsgClientService](#msgclientservice)
+  - [RPC Functions](#rpc-functions)
+  - [Directory structure](#directory-structure)
+  - [How to use?](#how-to-use)
+  - [pb/msgClient.proto](#pbmsgclientproto)
+    - [PublishMsgRequest](#publishmsgrequest)
+    - [PublishMsgResponse](#publishmsgresponse)
+    - [RegisterServiceReq](#registerservicereq)
+    - [RegisterServiceResp](#registerserviceresp)
+    - [StartMsgBusHandlerReq](#startmsgbushandlerreq)
+    - [StartMsgBusHandlerResp](#startmsgbushandlerresp)
+    - [StopMsgBusHandlerReq](#stopmsgbushandlerreq)
+    - [StopMsgBusHandlerResp](#stopmsgbushandlerresp)
+    - [UnregisterServiceReq](#unregisterservicereq)
+    - [UnregisterServiceResp](#unregisterserviceresp)
+    - [REGISTRAION\_STATUS](#registraion_status)
+  - [Scalar Value Types](#scalar-value-types)
 
 <a name="pb/msgClient.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
@@ -227,10 +230,7 @@ Registration status enums
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | REGISTERED | 0 | System registered status |
-| ALLREADY_REGISTERED | 1 | System already registered status |
-| NOT_REGISTERED | 2 | System not registered status |
-| LISTNENING | 3 | Listening to event |
-| LISTNENING_FAILURE | 4 | Listening failed |
+| NOT_REGISTERED | 1 | System not registered status |
 
 ## Scalar Value Types
 
