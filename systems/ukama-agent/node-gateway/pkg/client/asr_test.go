@@ -2,6 +2,7 @@ package client
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -13,7 +14,7 @@ import (
 )
 
 var iccid = "012345678901234567891"
-var network = "40987edb-ebb6-4f84-a27c-99db7c136127"
+var imsi = "012345678912345"
 
 // var orgId = "880f7c63-eb57-461a-b514-248ce91e9b3e"
 var packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
@@ -22,7 +23,7 @@ var sub = pb.ReadResp{
 	Record: &pb.Record{
 		Iccid:       iccid,
 		SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
-		Imsi:        "012345678912345",
+		Imsi:        imsi,
 		Op:          []byte("0123456789012345"),
 		Key:         []byte("0123456789012345"),
 		Amf:         []byte("800"),
@@ -36,39 +37,45 @@ var sub = pb.ReadResp{
 	},
 }
 
-func TestAsrClient_Activate(t *testing.T) {
+func TestAsrClient_UpdateGuti(t *testing.T) {
 	m := &amocks.AsrRecordServiceClient{}
 	l := &Asr{
 		client: m,
 	}
 
-	pReq := &pb.ActivateReq{
-		Iccid:     iccid,
-		Network:   network,
-		PackageId: packageId,
+	pReq := &pb.UpdateGutiReq{
+		Imsi:      imsi,
+		UpdatedAt: uint32(time.Now().Unix()),
+		Guti: &pb.Guti{
+			PlmnId: "00101",
+			Mmegi:  3200,
+			Mmec:   100,
+			Mtmsi:  1,
+		},
 	}
 
-	m.On("Activate", mock.Anything, pReq).Return(&pb.ActivateResp{}, nil)
+	m.On("UpdateGuti", mock.Anything, pReq).Return(&pb.UpdateGutiResp{}, nil)
 
-	_, err := l.Activate(pReq)
+	_, err := l.UpdateGuti(pReq)
 	assert.NoError(t, err)
 }
 
-func TestAsrClient_UpdatePackage(t *testing.T) {
+func TestAsrClient_UpdateTai(t *testing.T) {
 	m := &amocks.AsrRecordServiceClient{}
 
 	l := &Asr{
 		client: m,
 	}
 
-	pReq := &pb.UpdatePackageReq{
-		Iccid:     iccid,
-		PackageId: packageId,
+	pReq := &pb.UpdateTaiReq{
+		Imsi:      imsi,
+		UpdatedAt: uint32(time.Now().Unix()),
+		Tac:       1,
 	}
 
-	m.On("UpdatePackage", mock.Anything, pReq).Return(&pb.UpdatePackageResp{}, nil)
+	m.On("UpdateTai", mock.Anything, pReq).Return(&pb.UpdateTaiResp{}, nil)
 
-	_, err := l.UpdatePackage(pReq)
+	_, err := l.UpdateTai(pReq)
 	assert.NoError(t, err)
 }
 
@@ -80,8 +87,8 @@ func TestAsrClient_Read(t *testing.T) {
 	}
 
 	pReq := &pb.ReadReq{
-		Id: &pb.ReadReq_Iccid{
-			Iccid: iccid,
+		Id: &pb.ReadReq_Imsi{
+			Imsi: imsi,
 		},
 	}
 
@@ -89,7 +96,7 @@ func TestAsrClient_Read(t *testing.T) {
 		Record: &pb.Record{
 			Iccid:       iccid,
 			SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
-			Imsi:        "012345678912345",
+			Imsi:        imsi,
 			Op:          []byte("0123456789012345"),
 			Key:         []byte("0123456789012345"),
 			Amf:         []byte("800"),
@@ -108,25 +115,6 @@ func TestAsrClient_Read(t *testing.T) {
 	resp, err := l.Read(pReq)
 	if assert.NoError(t, err) {
 		m.AssertExpectations(t)
-		assert.Equal(t, iccid, resp.Record.Iccid)
+		assert.Equal(t, imsi, resp.Record.Imsi)
 	}
-}
-
-func TestAsrClient_Inactivate(t *testing.T) {
-	m := &amocks.AsrRecordServiceClient{}
-
-	l := &Asr{
-		client: m,
-	}
-
-	pReq := &pb.InactivateReq{
-		Id: &pb.InactivateReq_Iccid{
-			Iccid: iccid,
-		},
-	}
-
-	m.On("Inactivate", mock.Anything, pReq).Return(&pb.InactivateResp{}, nil)
-
-	_, err := l.Inactivate(pReq)
-	assert.NoError(t, err)
 }

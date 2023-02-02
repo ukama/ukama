@@ -6,9 +6,10 @@ package integration
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg/rest"
 	"net/http"
-	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
@@ -23,6 +24,7 @@ type TestConfig struct {
 var testConf *TestConfig
 
 var iccid = "012345678901234567891"
+var imsi = "012345678912345"
 var network = "40987edb-ebb6-4f84-a27c-99db7c136127"
 
 // var orgId = "880f7c63-eb57-461a-b514-248ce91e9b3e"
@@ -40,34 +42,10 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 
 	client := resty.New()
 
-	t.Run("Activate", func(tt *testing.T) {
-		resp, err := client.R().
-			EnableTrace().
-			SetBody(strings.NewReader(`{"network":"` + network + `","packageId":"` + packageId + `"}`)).
-			Put(getApiUrl() + "/v1/subscriber/" + iccid)
-
-		if assert.NoError(t, err) {
-			assert.Equal(tt, http.StatusCreated, resp.StatusCode())
-		}
-	})
-
-	t.Run("UpdatePackage", func(tt *testing.T) {
-		resp, err := client.R().
-			EnableTrace().
-			SetBody(strings.NewReader(`{"packageId":"` + packageId + `"}`)).
-			Patch(getApiUrl() + "/v1/subscriber/" + iccid)
-
-		if err != nil {
-			if assert.Error(t, err) {
-				assert.Equal(tt, http.StatusOK, resp.StatusCode())
-			}
-		}
-	})
-
 	t.Run("Read", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
-			Get(getApiUrl() + "/v1/subscriber/" + iccid)
+			Get(getApiUrl() + "/v1/subscriber/" + imsi)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusOK, resp.StatusCode())
@@ -75,10 +53,39 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 		}
 	})
 
-	t.Run("Inactivate", func(tt *testing.T) {
+	t.Run("UpdateGuti", func(tt *testing.T) {
+
+		req := rest.UpdateGutiReq{
+			Guti: rest.Guti{
+				PlmnId: "00101",
+				Mmegi:  3200,
+				Mmec:   100,
+				Mtmsi:  1,
+			},
+			UpdatedAt: uint32(time.Now().Unix()),
+		}
+
 		resp, err := client.R().
 			EnableTrace().
-			Delete(getApiUrl() + "/v1/subscriber/" + iccid)
+			SetBody(req).
+			Post(getApiUrl() + "/v1/subscriber/" + imsi + "/guti")
+
+		if assert.NoError(t, err) {
+			assert.Equal(tt, http.StatusOK, resp.StatusCode())
+		}
+	})
+
+	t.Run("UpdateTai", func(tt *testing.T) {
+
+		req := rest.UpdateTaiReq{
+			PlmnId:    "00101",
+			Tac:       1,
+			UpdatedAt: uint32(time.Now().Unix()),
+		}
+		resp, err := client.R().
+			EnableTrace().
+			SetBody(req).
+			Post(getApiUrl() + "/v1/subscriber/" + imsi + "/tai")
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusOK, resp.StatusCode())

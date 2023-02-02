@@ -38,9 +38,8 @@ type Clients struct {
 }
 
 type asr interface {
-	Activate(req *pb.ActivateReq) (*pb.ActivateResp, error)
-	Inactivate(req *pb.InactivateReq) (*pb.InactivateResp, error)
-	UpdatePackage(req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error)
+	UpdateGuti(req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error)
+	UpdateTai(req *pb.UpdateTaiReq) (*pb.UpdateTaiResp, error)
 	Read(req *pb.ReadReq) (*pb.ReadResp, error)
 }
 
@@ -85,14 +84,12 @@ func (rt *Router) Run() {
 func (r *Router) init() {
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
-	v1 := r.f.Group("/v1", "ukama-agent ", "Ukama-agent system")
+	v1 := r.f.Group("/v1", "ukama-agent-node-gateway ", "Ukama-agent system")
 
 	asr := v1.Group("/subscriber", "Asr", "Active susbcriber registry")
-	asr.GET("/:iccid", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
-	asr.PUT("/:iccid", formatDoc("Activate: Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
-	asr.DELETE("/:iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
-	asr.PATCH("/:iccid", formatDoc("Update package id", ""), tonic.Handler(r.patchPackageUpdate, http.StatusOK))
-
+	asr.GET("/:imsi", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
+	asr.POST("/:imsi/guti", formatDoc("GUTI update for subscriber", ""), tonic.Handler(r.postGuti, http.StatusOK))
+	asr.POST("/:imsi/tai", formatDoc("TAI update for subscriber", ""), tonic.Handler(r.postTai, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -102,36 +99,34 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) putSubscriber(c *gin.Context, req *ActivateReq) (*pb.ActivateResp, error) {
+func (r *Router) postGuti(c *gin.Context, req *UpdateGutiReq) (*pb.UpdateGutiResp, error) {
 
-	return r.clients.a.Activate(&pb.ActivateReq{
-		Iccid:     req.Iccid,
-		Network:   req.Network,
-		PackageId: req.PackageId,
-	})
-}
-
-func (r *Router) deleteSubscriber(c *gin.Context, req *InactivateReq) (*pb.InactivateResp, error) {
-
-	return r.clients.a.Inactivate(&pb.InactivateReq{
-		Id: &pb.InactivateReq_Iccid{
-			Iccid: req.Iccid,
+	return r.clients.a.UpdateGuti(&pb.UpdateGutiReq{
+		Imsi:      req.Imsi,
+		UpdatedAt: req.UpdatedAt,
+		Guti: &pb.Guti{
+			PlmnId: req.Guti.PlmnId,
+			Mmegi:  req.Guti.Mmegi,
+			Mmec:   req.Guti.Mmec,
+			Mtmsi:  req.Guti.Mtmsi,
 		},
 	})
+
 }
 
-func (r *Router) patchPackageUpdate(c *gin.Context, req *UpdatePackageReq) (*pb.UpdatePackageResp, error) {
+func (r *Router) postTai(c *gin.Context, req *UpdateTaiReq) (*pb.UpdateTaiResp, error) {
 
-	return r.clients.a.UpdatePackage(&pb.UpdatePackageReq{
-		Iccid:     req.Iccid,
-		PackageId: req.PackageId,
+	return r.clients.a.UpdateTai(&pb.UpdateTaiReq{
+		Imsi:      req.Imsi,
+		UpdatedAt: req.UpdatedAt,
+		Tac:       req.Tac,
 	})
 }
 
-func (r *Router) getActiveSubscriber(c *gin.Context, req *ReadSubscriberReq) (*pb.ReadResp, error) {
+func (r *Router) getActiveSubscriber(c *gin.Context, req *GetSubscriberReq) (*pb.ReadResp, error) {
 	return r.clients.a.Read(&pb.ReadReq{
-		Id: &pb.ReadReq_Iccid{
-			Iccid: req.Iccid,
+		Id: &pb.ReadReq_Imsi{
+			Imsi: req.Imsi,
 		},
 	})
 }

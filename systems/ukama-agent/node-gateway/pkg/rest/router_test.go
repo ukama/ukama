@@ -1,10 +1,11 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -36,7 +37,7 @@ var routerConfig = &RouterConfig{
 var testClientSet *Clients
 
 var iccid = "012345678901234567891"
-var network = "40987edb-ebb6-4f84-a27c-99db7c136127"
+var imsi = "012345678912345"
 
 // var orgId = "880f7c63-eb57-461a-b514-248ce91e9b3e"
 var packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
@@ -45,7 +46,7 @@ var sub = pb.ReadResp{
 	Record: &pb.Record{
 		Iccid:       iccid,
 		SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
-		Imsi:        "012345678912345",
+		Imsi:        imsi,
 		Op:          []byte("0123456789012345"),
 		Key:         []byte("0123456789012345"),
 		Amf:         []byte("800"),
@@ -80,77 +81,76 @@ func TestRouter_PingRoute(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "pong")
 }
 
-func TestRouter_PutSubscriber(t *testing.T) {
+func TestRouter_PostGuti(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/v1/subscriber/"+iccid,
-		strings.NewReader(`{"network":"`+network+`","packageId":"`+packageId+`"}`))
-
-	m := &amocks.AsrRecordServiceClient{}
-
-	pReq := &pb.ActivateReq{
-		Iccid:     iccid,
-		Network:   network,
-		PackageId: packageId,
+	req := UpdateGutiReq{
+		Guti: Guti{
+			PlmnId: "00101",
+			Mmegi:  3200,
+			Mmec:   100,
+			Mtmsi:  1,
+		},
+		UpdatedAt: uint32(time.Now().Unix()),
 	}
 
-	m.On("Activate", mock.Anything, pReq).Return(&pb.ActivateResp{}, nil)
+	body, _ := json.Marshal(req)
 
-	r := NewRouter(&Clients{
-		a: client.NewAsrFromClient(m),
-	}, routerConfig).f.Engine()
-
-	// act
-	r.ServeHTTP(w, req)
-
-	// assert
-	assert.Equal(t, http.StatusCreated, w.Code)
-	m.AssertExpectations(t)
-}
-
-func TestRouter_DeleteSubscriber(t *testing.T) {
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/v1/subscriber/"+iccid, nil)
+	hreq, _ := http.NewRequest("POST", "/v1/subscriber/"+imsi+"/guti",
+		bytes.NewBuffer(body))
 
 	m := &amocks.AsrRecordServiceClient{}
-
-	pReq := &pb.InactivateReq{
-		Id: &pb.InactivateReq_Iccid{
-			Iccid: iccid,
+	pReq := &pb.UpdateGutiReq{
+		Imsi:      imsi,
+		UpdatedAt: req.UpdatedAt,
+		Guti: &pb.Guti{
+			PlmnId: req.Guti.PlmnId,
+			Mmegi:  req.Guti.Mmegi,
+			Mmec:   req.Guti.Mmec,
+			Mtmsi:  req.Guti.Mtmsi,
 		},
 	}
-
-	m.On("Inactivate", mock.Anything, pReq).Return(&pb.InactivateResp{}, nil)
+	m.On("UpdateGuti", mock.Anything, pReq).Return(&pb.UpdateGutiResp{}, nil)
 
 	r := NewRouter(&Clients{
 		a: client.NewAsrFromClient(m),
 	}, routerConfig).f.Engine()
 
 	// act
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(w, hreq)
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	m.AssertExpectations(t)
+
 }
 
-func TestRouter_PatchSubscriber(t *testing.T) {
+func TestRouter_PostTai(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/v1/subscriber/"+iccid,
-		strings.NewReader(`{"packageId":"`+packageId+`"}`))
+	req := UpdateTaiReq{
+		PlmnId:    "00101",
+		Tac:       1,
+		UpdatedAt: uint32(time.Now().Unix()),
+	}
+
+	body, _ := json.Marshal(req)
+
+	hreq, _ := http.NewRequest("POST", "/v1/subscriber/"+imsi+"/tai",
+		bytes.NewBuffer(body))
 
 	m := &amocks.AsrRecordServiceClient{}
-	pReq := &pb.UpdatePackageReq{
-		Iccid:     iccid,
-		PackageId: packageId,
+	pReq := &pb.UpdateTaiReq{
+		Imsi:      imsi,
+		UpdatedAt: req.UpdatedAt,
+		Tac:       req.Tac,
 	}
-	m.On("UpdatePackage", mock.Anything, pReq).Return(&pb.UpdatePackageResp{}, nil)
+	m.On("UpdateTai", mock.Anything, pReq).Return(&pb.UpdateTaiResp{}, nil)
 
 	r := NewRouter(&Clients{
 		a: client.NewAsrFromClient(m),
 	}, routerConfig).f.Engine()
 
 	// act
-	r.ServeHTTP(w, req)
+	r.ServeHTTP(w, hreq)
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -161,13 +161,13 @@ func TestRouter_PatchSubscriber(t *testing.T) {
 func TestRouter_GetSubscriber(t *testing.T) {
 	t.Run("SubscriberExists", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/subscriber/"+iccid, nil)
+		req, _ := http.NewRequest("GET", "/v1/subscriber/"+imsi, nil)
 
 		m := &amocks.AsrRecordServiceClient{}
 
 		pReq := &pb.ReadReq{
-			Id: &pb.ReadReq_Iccid{
-				Iccid: iccid,
+			Id: &pb.ReadReq_Imsi{
+				Imsi: imsi,
 			},
 		}
 		m.On("Read", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
@@ -186,13 +186,13 @@ func TestRouter_GetSubscriber(t *testing.T) {
 
 	t.Run("SubscriberDoesn'tExists", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/subscriber/"+iccid, nil)
+		req, _ := http.NewRequest("GET", "/v1/subscriber/"+imsi, nil)
 
 		m := &amocks.AsrRecordServiceClient{}
 
 		pReq := &pb.ReadReq{
-			Id: &pb.ReadReq_Iccid{
-				Iccid: iccid,
+			Id: &pb.ReadReq_Imsi{
+				Imsi: imsi,
 			},
 		}
 

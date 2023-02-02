@@ -48,25 +48,18 @@ func (r *Asr) Close() {
 	r.conn.Close()
 }
 
-func (a *Asr) Activate(req *pb.ActivateReq) (*pb.ActivateResp, error) {
+func (a *Asr) UpdateGuti(req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
-	return a.client.Activate(ctx, req)
+	return a.client.UpdateGuti(ctx, req)
 }
 
-func (a *Asr) Inactivate(req *pb.InactivateReq) (*pb.InactivateResp, error) {
+func (a *Asr) UpdateTai(req *pb.UpdateTaiReq) (*pb.UpdateTaiResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
-	return a.client.Inactivate(ctx, req)
-}
-
-func (a *Asr) UpdatePackage(req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
-	defer cancel()
-
-	return a.client.UpdatePackage(ctx, req)
+	return a.client.UpdateTai(ctx, req)
 }
 
 func (a *Asr) Read(req *pb.ReadReq) (*pb.ReadResp, error) {

@@ -12,52 +12,6 @@ type asr struct {
 	mock.Mock
 }
 
-// Activate provides a mock function with given fields: req
-func (_m *asr) Activate(req *gen.ActivateReq) (*gen.ActivateResp, error) {
-	ret := _m.Called(req)
-
-	var r0 *gen.ActivateResp
-	if rf, ok := ret.Get(0).(func(*gen.ActivateReq) *gen.ActivateResp); ok {
-		r0 = rf(req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ActivateResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*gen.ActivateReq) error); ok {
-		r1 = rf(req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Inactivate provides a mock function with given fields: req
-func (_m *asr) Inactivate(req *gen.InactivateReq) (*gen.InactivateResp, error) {
-	ret := _m.Called(req)
-
-	var r0 *gen.InactivateResp
-	if rf, ok := ret.Get(0).(func(*gen.InactivateReq) *gen.InactivateResp); ok {
-		r0 = rf(req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.InactivateResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*gen.InactivateReq) error); ok {
-		r1 = rf(req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Read provides a mock function with given fields: req
 func (_m *asr) Read(req *gen.ReadReq) (*gen.ReadResp, error) {
 	ret := _m.Called(req)
@@ -81,21 +35,44 @@ func (_m *asr) Read(req *gen.ReadReq) (*gen.ReadResp, error) {
 	return r0, r1
 }
 
-// UpdatePackage provides a mock function with given fields: req
-func (_m *asr) UpdatePackage(req *gen.UpdatePackageReq) (*gen.UpdatePackageResp, error) {
+// UpdateGuti provides a mock function with given fields: req
+func (_m *asr) UpdateGuti(req *gen.UpdateGutiReq) (*gen.UpdateGutiResp, error) {
 	ret := _m.Called(req)
 
-	var r0 *gen.UpdatePackageResp
-	if rf, ok := ret.Get(0).(func(*gen.UpdatePackageReq) *gen.UpdatePackageResp); ok {
+	var r0 *gen.UpdateGutiResp
+	if rf, ok := ret.Get(0).(func(*gen.UpdateGutiReq) *gen.UpdateGutiResp); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdatePackageResp)
+			r0 = ret.Get(0).(*gen.UpdateGutiResp)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*gen.UpdatePackageReq) error); ok {
+	if rf, ok := ret.Get(1).(func(*gen.UpdateGutiReq) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateTai provides a mock function with given fields: req
+func (_m *asr) UpdateTai(req *gen.UpdateTaiReq) (*gen.UpdateTaiResp, error) {
+	ret := _m.Called(req)
+
+	var r0 *gen.UpdateTaiResp
+	if rf, ok := ret.Get(0).(func(*gen.UpdateTaiReq) *gen.UpdateTaiResp); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateTaiResp)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*gen.UpdateTaiReq) error); ok {
 		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)
