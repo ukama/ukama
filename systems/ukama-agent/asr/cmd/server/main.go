@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/gofrs/uuid"
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
@@ -66,15 +65,13 @@ func initDb() sql.Db {
 func runGrpcServer(gormdb sql.Db) {
 
 	var mbClient mb.MsgBusServiceClient
+	var instanceId string
 
-	instanceId := os.Getenv("POD_NAME")
-	if instanceId == "" {
-		/* used on local machines */
-		inst, err := uuid.NewV4()
-		if err != nil {
-			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
-		}
-		instanceId = inst.String()
+	inst, ok := os.LookupEnv("POD_NAME")
+	if ok {
+		instanceId = inst
+	} else {
+		instanceId = pkg.InstanceId
 	}
 
 	if serviceConfig.IsMsgBus {
