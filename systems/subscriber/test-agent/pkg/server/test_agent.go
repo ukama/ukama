@@ -123,7 +123,7 @@ func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, req *pb.GetSim
 
 		err := s.storage.Put(req.Iccid, sim)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "fail to add sim info in storage: %v", err)
+			return nil, err
 		}
 	}
 
