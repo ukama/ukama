@@ -233,6 +233,10 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 	return &pb.GetSimResponse{Sim: dbSimToPbSim(sim)}, nil
 }
 
+func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest) (*pb.ListSimsResponse, error) {
+	return nil, nil
+}
+
 func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetSimsBySubscriberRequest) (*pb.GetSimsBySubscriberResponse, error) {
 	subID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {

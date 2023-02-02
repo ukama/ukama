@@ -66,6 +66,19 @@ func (this *GetSimResponse) Validate() error {
 	}
 	return nil
 }
+func (this *ListSimsRequest) Validate() error {
+	return nil
+}
+func (this *ListSimsResponse) Validate() error {
+	for _, item := range this.Sims {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Sims", err)
+			}
+		}
+	}
+	return nil
+}
 
 var _regex_GetSimsBySubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 

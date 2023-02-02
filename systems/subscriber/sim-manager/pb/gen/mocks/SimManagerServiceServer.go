@@ -175,6 +175,29 @@ func (_m *SimManagerServiceServer) GetSimsBySubscriber(_a0 context.Context, _a1 
 	return r0, r1
 }
 
+// ListSims provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) ListSims(_a0 context.Context, _a1 *gen.ListSimsRequest) (*gen.ListSimsResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.ListSimsResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListSimsRequest) *gen.ListSimsResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListSimsResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListSimsRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemovePackageForSim provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) RemovePackageForSim(_a0 context.Context, _a1 *gen.RemovePackageRequest) (*gen.RemovePackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
