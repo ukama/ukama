@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -119,12 +119,6 @@ func (this *AddSubscriberRequest) Validate() error {
 	if this.NetworkID == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkID))
 	}
-	if !_regex_AddSubscriberRequest_OrgID.MatchString(this.OrgID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgID))
-	}
-	if this.OrgID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgID))
-	}
 	if this.ProofOfIdentification == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("ProofOfIdentification", fmt.Errorf(`value '%v' must not be an empty string`, this.ProofOfIdentification))
 	}
@@ -193,11 +187,8 @@ func (this *AddSubscriberResponse) Validate() error {
 }
 
 var _regex_Subscriber_OrgID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-<<<<<<< HEAD
 var _regex_Subscriber_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_Subscriber_NetworkID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-=======
->>>>>>> subscriber-sys_sim-manager
 
 func (this *Subscriber) Validate() error {
 	if !_regex_Subscriber_OrgID.MatchString(this.OrgID) {
@@ -206,7 +197,6 @@ func (this *Subscriber) Validate() error {
 	if this.OrgID == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgID))
 	}
-<<<<<<< HEAD
 	if !_regex_Subscriber_SubscriberID.MatchString(this.SubscriberID) {
 		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
 	}
@@ -219,8 +209,6 @@ func (this *Subscriber) Validate() error {
 	if this.NetworkID == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkID))
 	}
-=======
->>>>>>> subscriber-sys_sim-manager
 	for _, item := range this.Sim {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {

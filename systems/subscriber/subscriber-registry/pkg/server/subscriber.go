@@ -314,7 +314,6 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscri
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
 		DateOfBirth:           pbTimestamp,
-		OrgID:                 s.OrgID.String(),
 	}
 
 }
