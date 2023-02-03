@@ -42,7 +42,6 @@ func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServi
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
-<<<<<<< HEAD
 	networkID := uuid.FromStringOrNil(req.GetNetworkID())
 	orgID := uuid.FromStringOrNil(req.GetOrgID())
 	if networkID == uuid.Nil {
@@ -53,36 +52,17 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}
 	subscriberID := uuid.NewV4()
 	err := s.network.ValidateNetwork(networkID.String(),orgID.String() )
-=======
-	networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
-	orgID_uuid := uuid.FromStringOrNil(req.GetOrgID())
-	subscriberID_uuid, err := uuid.NewV4()
->>>>>>> subscriber-sys_sim-manager
 	if err != nil {
 		return nil, fmt.Errorf("error validating network")
 	}
-<<<<<<< HEAD
 	
-=======
-	timestamp := &timestamppb.Timestamp{
-		Seconds: req.DateOfBirth.GetSeconds(),
-		Nanos:   req.DateOfBirth.GetNanos(),
-	}
-
-	birthday := timestamp.AsTime()
-
->>>>>>> subscriber-sys_sim-manager
+	
 	subscriber := &db.Subscriber{
 		OrgID:                 orgID,
 		SubscriberID:          subscriberID,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
-<<<<<<< HEAD
 		NetworkID:             networkID,
-=======
-		NetworkID:             networkID_uuid,
-		OrgID:                 orgID_uuid,
->>>>>>> subscriber-sys_sim-manager
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Gender:                req.GetGender(),

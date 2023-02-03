@@ -23,6 +23,7 @@ require (
 )
 
 require (
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
