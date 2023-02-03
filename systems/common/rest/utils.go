@@ -2,6 +2,7 @@ package rest
 
 import (
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -54,4 +55,19 @@ func GetNodeIdFromPath(c *gin.Context, nodeIdKey string) (id ukama.NodeID, isVal
 		return "", false
 	}
 	return id, true
+}
+
+// HTTP req to GET data from URL, Returns byte array
+func GetDataFromURL(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return content, nil
 }

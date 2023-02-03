@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/testing/services/factory/internal"
 )
 

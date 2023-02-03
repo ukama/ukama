@@ -8,13 +8,13 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/testing/services/factory/internal"
 	spec "github.com/ukama/ukama/testing/services/factory/specs/factory/spec"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -46,7 +46,7 @@ func initMsgBus() {
 
 }
 
-//Handle Response message
+// Handle Response message
 func EvtMsgHandlerCB(d amqp.Delivery, done chan<- bool) {
 
 	log.Debugf("Mock::Event message handler for the mock %s  msg: %v", d.RoutingKey, d)
