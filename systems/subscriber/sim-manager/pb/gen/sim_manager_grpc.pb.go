@@ -47,7 +47,7 @@ func NewSimManagerServiceClient(cc grpc.ClientConnInterface) SimManagerServiceCl
 
 func (c *simManagerServiceClient) AllocateSim(ctx context.Context, in *AllocateSimRequest, opts ...grpc.CallOption) (*AllocateSimResponse, error) {
 	out := new(AllocateSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/AllocateSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/AllocateSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (c *simManagerServiceClient) AllocateSim(ctx context.Context, in *AllocateS
 
 func (c *simManagerServiceClient) GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error) {
 	out := new(GetSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (c *simManagerServiceClient) GetSim(ctx context.Context, in *GetSimRequest,
 
 func (c *simManagerServiceClient) ListSims(ctx context.Context, in *ListSimsRequest, opts ...grpc.CallOption) (*ListSimsResponse, error) {
 	out := new(ListSimsResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/ListSims", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/ListSims", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (c *simManagerServiceClient) ListSims(ctx context.Context, in *ListSimsRequ
 
 func (c *simManagerServiceClient) GetSimsBySubscriber(ctx context.Context, in *GetSimsBySubscriberRequest, opts ...grpc.CallOption) (*GetSimsBySubscriberResponse, error) {
 	out := new(GetSimsBySubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSimsBySubscriber", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsBySubscriber", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (c *simManagerServiceClient) GetSimsBySubscriber(ctx context.Context, in *G
 
 func (c *simManagerServiceClient) GetSimsByNetwork(ctx context.Context, in *GetSimsByNetworkRequest, opts ...grpc.CallOption) (*GetSimsByNetworkResponse, error) {
 	out := new(GetSimsByNetworkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSimsByNetwork", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsByNetwork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (c *simManagerServiceClient) GetSimsByNetwork(ctx context.Context, in *GetS
 
 func (c *simManagerServiceClient) ToggleSimStatus(ctx context.Context, in *ToggleSimStatusRequest, opts ...grpc.CallOption) (*ToggleSimStatusResponse, error) {
 	out := new(ToggleSimStatusResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/ToggleSimStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/ToggleSimStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (c *simManagerServiceClient) ToggleSimStatus(ctx context.Context, in *Toggl
 
 func (c *simManagerServiceClient) DeleteSim(ctx context.Context, in *DeleteSimRequest, opts ...grpc.CallOption) (*DeleteSimResponse, error) {
 	out := new(DeleteSimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/DeleteSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/DeleteSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (c *simManagerServiceClient) DeleteSim(ctx context.Context, in *DeleteSimRe
 
 func (c *simManagerServiceClient) AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error) {
 	out := new(AddPackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/AddPackageForSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/AddPackageForSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (c *simManagerServiceClient) AddPackageForSim(ctx context.Context, in *AddP
 
 func (c *simManagerServiceClient) GetPackagesBySim(ctx context.Context, in *GetPackagesBySimRequest, opts ...grpc.CallOption) (*GetPackagesBySimResponse, error) {
 	out := new(GetPackagesBySimResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetPackagesBySim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/GetPackagesBySim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (c *simManagerServiceClient) GetPackagesBySim(ctx context.Context, in *GetP
 
 func (c *simManagerServiceClient) SetActivePackageForSim(ctx context.Context, in *SetActivePackageRequest, opts ...grpc.CallOption) (*SetActivePackageResponse, error) {
 	out := new(SetActivePackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/SetActivePackageForSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/SetActivePackageForSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (c *simManagerServiceClient) SetActivePackageForSim(ctx context.Context, in
 
 func (c *simManagerServiceClient) RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error) {
 	out := new(RemovePackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/RemovePackageForSim", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim_manager.v1.SimManagerService/RemovePackageForSim", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func _SimManagerService_AllocateSim_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/AllocateSim",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/AllocateSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).AllocateSim(ctx, req.(*AllocateSimRequest))
@@ -242,7 +242,7 @@ func _SimManagerService_GetSim_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetSim",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).GetSim(ctx, req.(*GetSimRequest))
@@ -260,7 +260,7 @@ func _SimManagerService_ListSims_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/ListSims",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/ListSims",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).ListSims(ctx, req.(*ListSimsRequest))
@@ -278,7 +278,7 @@ func _SimManagerService_GetSimsBySubscriber_Handler(srv interface{}, ctx context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetSimsBySubscriber",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsBySubscriber",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).GetSimsBySubscriber(ctx, req.(*GetSimsBySubscriberRequest))
@@ -296,7 +296,7 @@ func _SimManagerService_GetSimsByNetwork_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetSimsByNetwork",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsByNetwork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).GetSimsByNetwork(ctx, req.(*GetSimsByNetworkRequest))
@@ -314,7 +314,7 @@ func _SimManagerService_ToggleSimStatus_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/ToggleSimStatus",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/ToggleSimStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).ToggleSimStatus(ctx, req.(*ToggleSimStatusRequest))
@@ -332,7 +332,7 @@ func _SimManagerService_DeleteSim_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/DeleteSim",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/DeleteSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).DeleteSim(ctx, req.(*DeleteSimRequest))
@@ -350,7 +350,7 @@ func _SimManagerService_AddPackageForSim_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/AddPackageForSim",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/AddPackageForSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).AddPackageForSim(ctx, req.(*AddPackageRequest))
@@ -368,7 +368,7 @@ func _SimManagerService_GetPackagesBySim_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetPackagesBySim",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/GetPackagesBySim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).GetPackagesBySim(ctx, req.(*GetPackagesBySimRequest))
@@ -386,7 +386,7 @@ func _SimManagerService_SetActivePackageForSim_Handler(srv interface{}, ctx cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/SetActivePackageForSim",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/SetActivePackageForSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).SetActivePackageForSim(ctx, req.(*SetActivePackageRequest))
@@ -404,7 +404,7 @@ func _SimManagerService_RemovePackageForSim_Handler(srv interface{}, ctx context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/RemovePackageForSim",
+		FullMethod: "/ukama.subscriber.sim_manager.v1.SimManagerService/RemovePackageForSim",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).RemovePackageForSim(ctx, req.(*RemovePackageRequest))
@@ -416,7 +416,7 @@ func _SimManagerService_RemovePackageForSim_Handler(srv interface{}, ctx context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SimManagerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.sim_manager.v1.SimManagerService",
+	ServiceName: "ukama.subscriber.sim_manager.v1.SimManagerService",
 	HandlerType: (*SimManagerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
