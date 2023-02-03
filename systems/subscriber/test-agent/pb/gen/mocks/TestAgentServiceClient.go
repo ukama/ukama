@@ -76,8 +76,8 @@ func (_m *TestAgentServiceClient) DeactivateSim(ctx context.Context, in *gen.Dea
 	return r0, r1
 }
 
-// GetSimInfo provides a mock function with given fields: ctx, in, opts
-func (_m *TestAgentServiceClient) GetSimInfo(ctx context.Context, in *gen.GetSimInfoRequest, opts ...grpc.CallOption) (*gen.GetSimInfoResponse, error) {
+// GetSim provides a mock function with given fields: ctx, in, opts
+func (_m *TestAgentServiceClient) GetSim(ctx context.Context, in *gen.GetSimRequest, opts ...grpc.CallOption) (*gen.GetSimResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -87,17 +87,17 @@ func (_m *TestAgentServiceClient) GetSimInfo(ctx context.Context, in *gen.GetSim
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetSimInfoResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimInfoRequest, ...grpc.CallOption) *gen.GetSimInfoResponse); ok {
+	var r0 *gen.GetSimResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimRequest, ...grpc.CallOption) *gen.GetSimResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSimInfoResponse)
+			r0 = ret.Get(0).(*gen.GetSimResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimInfoRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

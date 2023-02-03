@@ -40,3 +40,5 @@ integration.build:
 
 server:
 	go run cmd/msgClient/main.go
+
+

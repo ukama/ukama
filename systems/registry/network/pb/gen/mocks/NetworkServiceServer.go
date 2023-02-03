@@ -198,21 +198,21 @@ func (_m *NetworkServiceServer) GetSiteByName(_a0 context.Context, _a1 *gen.GetS
 	return r0, r1
 }
 
-// GetSiteByNetwork provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) GetSiteByNetwork(_a0 context.Context, _a1 *gen.GetSiteByNetworkRequest) (*gen.GetSiteByNetworkResponse, error) {
+// GetSitesByNetwork provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetSitesByNetwork(_a0 context.Context, _a1 *gen.GetSitesByNetworkRequest) (*gen.GetSitesByNetworkResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetSiteByNetworkResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSiteByNetworkRequest) *gen.GetSiteByNetworkResponse); ok {
+	var r0 *gen.GetSitesByNetworkResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSitesByNetworkRequest) *gen.GetSitesByNetworkResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSiteByNetworkResponse)
+			r0 = ret.Get(0).(*gen.GetSitesByNetworkResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSiteByNetworkRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSitesByNetworkRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

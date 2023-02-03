@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/rest"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	"github.com/ukama/ukama/systems/common/rest"
+	sr "github.com/ukama/ukama/systems/common/srvcrouter"
 )
 
 type NMR struct {

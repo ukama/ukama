@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/errors"
-	"github.com/ukama/ukama/services/common/msgbus"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/errors"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/testing/services/network/internal"
 	"github.com/ukama/ukama/testing/services/network/internal/db"
 	spec "github.com/ukama/ukama/testing/services/network/specs/controller/spec"

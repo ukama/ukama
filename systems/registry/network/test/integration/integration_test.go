@@ -169,7 +169,7 @@ type TestConfig struct {
 // t.Run("NetworkAddedEvent", func(tt *testing.T) {
 // rabbit.Publish(&msgbus.OrgCreatedBody{
 // Name:  org,
-// Owner: uuid.NewString(),
+// Owner: uuid.NewV4().String(),
 // }, string(msgbus.OrgCreatedRoutingKey))
 
 // time.Sleep(2 * time.Second)
