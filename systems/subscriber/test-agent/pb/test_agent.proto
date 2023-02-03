@@ -7,10 +7,17 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
 
+<<<<<<< HEAD
 package ukama.test_agent.v1;
 
 service TestAgentService {
     rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
+=======
+package ukama.subscriber.test_agent.v1;
+
+service TestAgentService {
+    rpc GetSim(GetSimRequest) returns (GetSimResponse);
+>>>>>>> subscriber-sys_sim-manager
     rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
     rpc DeactivateSim(DeactivateSimRequest) returns (DeactivateSimResponse);
     rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
@@ -23,12 +30,21 @@ message ActivateSimRequest {
 message ActivateSimResponse{}
 
 
+<<<<<<< HEAD
 message GetSimInfoRequest {
     string iccid = 1 ;
 }
 
 message GetSimInfoResponse {
     SimInfo simInfo = 1;
+=======
+message GetSimRequest {
+    string iccid = 1 ;
+}
+
+message GetSimResponse {
+    SimInfo simInfo = 1 [json_name = "sim"];
+>>>>>>> subscriber-sys_sim-manager
 }
 
 
@@ -48,7 +64,13 @@ message TerminateSimResponse{
 }
 
 message SimInfo {
+<<<<<<< HEAD
 	string Iccid  = 1;
 	string Imsi = 2; 
     string Status = 3;
+=======
+	string Iccid  = 1 [json_name = "iccid"];
+	string Imsi = 2 [json_name = "imsi"];
+    string Status = 3 [json_name = "status"];
+>>>>>>> subscriber-sys_sim-manager
 }

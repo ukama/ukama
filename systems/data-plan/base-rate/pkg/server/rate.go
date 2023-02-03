@@ -3,9 +3,12 @@ package server
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
@@ -13,8 +16,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const uuidParsingError = "Error parsing UUID"
+
 type BaseRateServer struct {
-	baseRateRepo db.BaseRateRepo
+	baseRateRepo   db.BaseRateRepo
+	msgbus         *mb.MsgBusClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedBaseRatesServiceServer
 }
 
@@ -24,8 +31,12 @@ func NewBaseRateServer(baseRateRepo db.BaseRateRepo) *BaseRateServer {
 }
 
 func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
-	logrus.Infof("Get rate %v", req.GetRateId())
-	rate, err := b.baseRateRepo.GetBaseRate(req.GetRateId())
+	logrus.Infof("Get rate %v", req.GetRateUuid())
+	uuid, err := uuid.Parse(req.RateUuid)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+	rate, err := b.baseRateRepo.GetBaseRate(uuid)
 
 	if err != nil {
 		logrus.Error("error while getting rate" + err.Error())
@@ -83,6 +94,14 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	if err != nil {
 		logrus.Error("error inserting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
+	}
+
+	// Publish message to msgbus
+
+	route := b.baseRoutingKey.SetActionUpdate().SetObject("base-rate").MustBuild()
+	err = b.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	rateList := &pb.UploadBaseRatesResponse{

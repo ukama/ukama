@@ -24,10 +24,17 @@ func (this *ActivateSimRequest) Validate() error {
 func (this *ActivateSimResponse) Validate() error {
 	return nil
 }
+<<<<<<< HEAD
 func (this *GetSimInfoRequest) Validate() error {
 	return nil
 }
 func (this *GetSimInfoResponse) Validate() error {
+=======
+func (this *GetSimRequest) Validate() error {
+	return nil
+}
+func (this *GetSimResponse) Validate() error {
+>>>>>>> subscriber-sys_sim-manager
 	if this.SimInfo != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.SimInfo); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("SimInfo", err)

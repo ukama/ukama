@@ -90,6 +90,7 @@ message AddSubscriberRequest {
     string idSerial =6;
     // network ID of the subscriber, must be a UUID and not empty
     string networkID = 7 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+<<<<<<< HEAD
     // proof of identification of the subscriber, must not be empty and have a length greater than 1
     string proofOfIdentification =8 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
     // date of birth of the subscriber
@@ -100,6 +101,13 @@ message AddSubscriberRequest {
     string orgID = 11 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
     }
 // UpdateSubscriberRequest defines the request to update a subscriber
+=======
+    string orgID = 8 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    string proofOfIdentification =9 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    google.protobuf.Timestamp dateOfBirth = 10;
+    string gender =11 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+}
+>>>>>>> subscriber-sys_sim-manager
 message UpdateSubscriberRequest{
     // subscriberID is the ID of the subscriber to update
     string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
@@ -132,11 +140,19 @@ message AddSubscriberResponse{
 
 }
 message Subscriber{
+<<<<<<< HEAD
     string orgID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
     string firstName  = 2;
     string lastName = 3;
     string subscriberID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
     string networkID = 5 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+=======
+    string firstName  = 1;
+    string lastName = 2;
+    string subscriberID = 3 [json_name = "subscriber_id"];
+    string networkID = 4;
+    string orgID = 5 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+>>>>>>> subscriber-sys_sim-manager
     string email  = 6;
     string phoneNumber  = 7;
     string address  = 8; 
@@ -165,6 +181,7 @@ message Sim {
     string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
     // networkID field is a string that must be a valid UUID version 0 and cannot be empty
     string networkID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+<<<<<<< HEAD
     // orgID field is a string that must be a valid UUID version 0 and cannot be empty
     string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
     // package field is a package object
@@ -187,3 +204,20 @@ message Sim {
     uint64 deactivationsCount = 15; // This field stores the number of times the SIM card has been deactivated
     google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];// This field stores the timestamp when the SIM card was allocated. 
 }
+=======
+    string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    Package package = 5;
+    string iccid = 6;
+    string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string imsi = 8;
+    string type = 9;
+    string status = 10;
+    bool isPhysical = 11 [json_name = "is_physical"];
+    google.protobuf.Timestamp firstActivatedOn = 12;
+    google.protobuf.Timestamp lastActivatedOn = 13 ;
+    uint64 activationsCount = 14;
+    uint64 deactivationsCount = 15;
+    google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
+
+}
+>>>>>>> subscriber-sys_sim-manager

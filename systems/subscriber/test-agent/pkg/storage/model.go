@@ -1,6 +1,16 @@
 package storage
 
+<<<<<<< HEAD
 import "strconv"
+=======
+import (
+	"errors"
+	"strconv"
+)
+
+var ErrNotFound = errors.New("sim not found")
+var ErrInternal = errors.New("an unexpected error has occurred")
+>>>>>>> subscriber-sys_sim-manager
 
 type Storage interface {
 	Get(key string) (*SimInfo, error)
@@ -46,5 +56,9 @@ func ParseStatus(value string) SimStatus {
 		return SimStatus(0)
 	}
 
+<<<<<<< HEAD
 	return SimStatus(v)
+=======
+	return v
+>>>>>>> subscriber-sys_sim-manager
 }

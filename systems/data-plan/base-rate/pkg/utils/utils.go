@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/jszwec/csvutil"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
@@ -55,6 +56,7 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {
 	var rates []db.Rate
 	for _, value := range slice {
 		rates = append(rates, db.Rate{
+			Uuid:         uuid.New(),
 			Country:      value.Country,
 			Network:      value.Network,
 			Vpmn:         value.Vpmn,

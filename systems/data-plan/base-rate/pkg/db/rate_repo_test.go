@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -46,15 +47,16 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Rate_Get(t *testing.T) {
 	t.Run("GetRate", func(t *testing.T) {
-		const rateId = 1
+		var rateId = uuid.New()
 
 		var db *extsql.DB
 
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "lte", "lte_m", "apn", "end_at", "x2g", "x3g", "x5g", "sim_type", "effective_at"}).
+		rows := sqlmock.NewRows([]string{"id", "uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "lte", "lte_m", "apn", "end_at", "x2g", "x3g", "x5g", "sim_type", "effective_at"}).
 			AddRow(1,
+				rateId,
 				"Tycho crater",
 				"Multi Tel",
 				"TTC",
@@ -69,7 +71,7 @@ func Test_Rate_Get(t *testing.T) {
 				"2G",
 				"3G",
 				"",
-				"inter_mno_data",
+				"INTER_MNO_DATA",
 				"2023-10-10",
 			)
 
@@ -107,9 +109,10 @@ func Test_Rates_Get(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "lte", "lte_m", "apn", "end_at", "x2g", "x3g", "x5g", "sim_type", "effective_at"})
+		rows := sqlmock.NewRows([]string{"id", "uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "lte", "lte_m", "apn", "end_at", "x2g", "x3g", "x5g", "sim_type", "effective_at"})
 		for i := 1; i <= 3; i++ {
 			rows.AddRow(i,
+				uuid.New(),
 				"Tycho crater",
 				"Multi Tel",
 				"TTC",
@@ -124,7 +127,7 @@ func Test_Rates_Get(t *testing.T) {
 				"2G",
 				"3G",
 				"",
-				"inter_mno_data",
+				"INTER_MNO_DATA",
 				"2023-10-10",
 			)
 		}
@@ -148,7 +151,7 @@ func Test_Rates_Get(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		rates, err := r.GetBaseRates("Tycho crater", "", "", "inter_mno_data")
+		rates, err := r.GetBaseRates("Tycho crater", "", "", "INTER_MNO_DATA")
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -157,15 +160,17 @@ func Test_Rates_Get(t *testing.T) {
 }
 
 func Test_Rate_Upload(t *testing.T) {
+	var rate_uuid = uuid.New()
 	t.Run("UploadRates", func(t *testing.T) {
 		var db *extsql.DB
 
 		rates := []Rate{{
+			Uuid:         rate_uuid,
 			Country:      "Tycho crater",
 			Data:         "$0.4",
 			Effective_at: "2023-10-10",
 			Network:      "Multi Tel",
-			Sim_type:     "inter_mno_data",
+			Sim_type:     "INTER_MNO_DATA",
 			X2g:          "",
 			X3g:          "",
 			Apn:          "",
@@ -183,7 +188,7 @@ func Test_Rate_Upload(t *testing.T) {
 		assert.NoError(t, err)
 		mock.ExpectBegin()
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Country, rates[0].Network,
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Country, rates[0].Network,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Data,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), rates[0].Effective_at, sqlmock.AnyArg(), rates[0].Sim_type).

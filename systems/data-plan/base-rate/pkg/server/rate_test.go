@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/mocks"
@@ -12,11 +13,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
+	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 )
 
 var mockCountry = "The lunar maria"
-var mockSimTypeStr = "inter_mno_data"
+var mockSimTypeStr = "INTER_MNO_DATA"
 var mockeEffectiveAt = time.Now().Add(time.Hour * 24 * 7 * time.Duration(4)).Format(time.RFC3339Nano)
 var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
@@ -28,7 +29,7 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     mockFileUrl,
 		EffectiveAt: mockeEffectiveAt,
-		SimType:     pb.SimType_inter_mno_data,
+		SimType:     pb.SimType_INTER_MNO_DATA,
 	}
 
 	mockRepo.On("UploadBaseRates", mock.Anything).Return(nil)
@@ -48,7 +49,7 @@ func TestRateService_UploadRates_Error1(t *testing.T) {
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     "",
 		EffectiveAt: "",
-		SimType:     pb.SimType_inter_mno_data,
+		SimType:     pb.SimType_INTER_MNO_DATA,
 	}
 
 	mockRepo.On("UploadBaseRates", mock.Anything).Return(status.Errorf(codes.InvalidArgument, "invalid argument"))
@@ -65,7 +66,7 @@ func TestRateService_UploadRates_Error2(t *testing.T) {
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     mockFileUrl,
 		EffectiveAt: time.Now().UTC().Format(time.RFC3339),
-		SimType:     pb.SimType_inter_mno_data,
+		SimType:     pb.SimType_INTER_MNO_DATA,
 	}
 
 	mockRepo.On("UploadBaseRates", mock.Anything).Return(status.Errorf(codes.InvalidArgument, "invalid argument"))
@@ -83,7 +84,7 @@ func TestRateService_UploadRates_Error3(t *testing.T) {
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     "https://example",
 		EffectiveAt: mockeEffectiveAt,
-		SimType:     pb.SimType_inter_mno_data,
+		SimType:     pb.SimType_INTER_MNO_DATA,
 	}
 
 	mockRepo.On("UploadBaseRates", mock.Anything).Return(status.Errorf(codes.Internal, "internal error"))
@@ -100,11 +101,11 @@ func TestRateService_GetRate_Success(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
-
-	baseRateRepo.On("GetBaseRate", uint64(1)).Return(&db.Rate{
+	var uuid = uuid.New()
+	baseRateRepo.On("GetBaseRate", uuid).Return(&db.Rate{
 		Country: mockCountry,
 	}, nil)
-	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateId: uint64(1)})
+	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
 	assert.NoError(t, err)
 	assert.Equal(t, mockCountry, rate.Rate.Country)
 	baseRateRepo.AssertExpectations(t)
@@ -116,9 +117,9 @@ func TestRateService_GetRate_Error(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
-
-	baseRateRepo.On("GetBaseRate", uint64(0)).Return(nil, status.Errorf(codes.NotFound, "record not found"))
-	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateId: uint64(0)})
+	var uuid = uuid.New()
+	baseRateRepo.On("GetBaseRate", uuid).Return(nil, status.Errorf(codes.NotFound, "record not found"))
+	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
 	assert.Error(t, err)
 	assert.Nil(t, _rate)
 }
@@ -132,7 +133,7 @@ func TestRateService_GetRates_Success(t *testing.T) {
 		Country:     "Tycho crater",
 		Provider:    "ABC Tel",
 		EffectiveAt: "2022-12-01T00:00:00Z",
-		SimType:     pb.SimType_inter_mno_data,
+		SimType:     pb.SimType_INTER_MNO_DATA,
 	}
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
@@ -147,7 +148,7 @@ func TestRateService_GetRates_Success(t *testing.T) {
 			Imsi:         "1",
 			Lte:          "LTE",
 			Network:      "Multi Tel",
-			Sim_type:     "inter_mno_data",
+			Sim_type:     "INTER_MNO_DATA",
 			Sms_mo:       "$0.1",
 			Sms_mt:       "$0.1",
 			Vpmn:         "TTC"},
@@ -166,7 +167,7 @@ func TestRateService_GetRates_Error(t *testing.T) {
 		Country:     "",
 		Provider:    "",
 		EffectiveAt: "",
-		SimType:     pb.SimType_inter_mno_data,
+		SimType:     pb.SimType_INTER_MNO_DATA,
 	}
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)

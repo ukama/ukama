@@ -10,14 +10,11 @@ lint:
 test:
 	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
 gen:
-# 	protoc --go_out=. --go_opt=paths=source_relative \
-#    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-#    pb/package.proto
-
-# 	mockery --all --recursive --dir ./pkg
-# 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
- 			  package.proto
+ 			package.proto
+
+	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
+ 			events.proto
 	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks

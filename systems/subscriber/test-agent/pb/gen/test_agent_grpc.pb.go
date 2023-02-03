@@ -22,7 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TestAgentServiceClient interface {
+<<<<<<< HEAD
 	GetSimInfo(ctx context.Context, in *GetSimInfoRequest, opts ...grpc.CallOption) (*GetSimInfoResponse, error)
+=======
+	GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error)
+>>>>>>> subscriber-sys_sim-manager
 	ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error)
 	DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error)
 	TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error)
@@ -36,9 +40,15 @@ func NewTestAgentServiceClient(cc grpc.ClientConnInterface) TestAgentServiceClie
 	return &testAgentServiceClient{cc}
 }
 
+<<<<<<< HEAD
 func (c *testAgentServiceClient) GetSimInfo(ctx context.Context, in *GetSimInfoRequest, opts ...grpc.CallOption) (*GetSimInfoResponse, error) {
 	out := new(GetSimInfoResponse)
 	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/GetSimInfo", in, out, opts...)
+=======
+func (c *testAgentServiceClient) GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error) {
+	out := new(GetSimResponse)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.test_agent.v1.TestAgentService/GetSim", in, out, opts...)
+>>>>>>> subscriber-sys_sim-manager
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +57,11 @@ func (c *testAgentServiceClient) GetSimInfo(ctx context.Context, in *GetSimInfoR
 
 func (c *testAgentServiceClient) ActivateSim(ctx context.Context, in *ActivateSimRequest, opts ...grpc.CallOption) (*ActivateSimResponse, error) {
 	out := new(ActivateSimResponse)
+<<<<<<< HEAD
 	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/ActivateSim", in, out, opts...)
+=======
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.test_agent.v1.TestAgentService/ActivateSim", in, out, opts...)
+>>>>>>> subscriber-sys_sim-manager
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +70,11 @@ func (c *testAgentServiceClient) ActivateSim(ctx context.Context, in *ActivateSi
 
 func (c *testAgentServiceClient) DeactivateSim(ctx context.Context, in *DeactivateSimRequest, opts ...grpc.CallOption) (*DeactivateSimResponse, error) {
 	out := new(DeactivateSimResponse)
+<<<<<<< HEAD
 	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/DeactivateSim", in, out, opts...)
+=======
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.test_agent.v1.TestAgentService/DeactivateSim", in, out, opts...)
+>>>>>>> subscriber-sys_sim-manager
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +83,11 @@ func (c *testAgentServiceClient) DeactivateSim(ctx context.Context, in *Deactiva
 
 func (c *testAgentServiceClient) TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error) {
 	out := new(TerminateSimResponse)
+<<<<<<< HEAD
 	err := c.cc.Invoke(ctx, "/ukama.test_agent.v1.TestAgentService/TerminateSim", in, out, opts...)
+=======
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.test_agent.v1.TestAgentService/TerminateSim", in, out, opts...)
+>>>>>>> subscriber-sys_sim-manager
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +98,11 @@ func (c *testAgentServiceClient) TerminateSim(ctx context.Context, in *Terminate
 // All implementations must embed UnimplementedTestAgentServiceServer
 // for forward compatibility
 type TestAgentServiceServer interface {
+<<<<<<< HEAD
 	GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error)
+=======
+	GetSim(context.Context, *GetSimRequest) (*GetSimResponse, error)
+>>>>>>> subscriber-sys_sim-manager
 	ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error)
 	DeactivateSim(context.Context, *DeactivateSimRequest) (*DeactivateSimResponse, error)
 	TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error)
@@ -87,8 +113,13 @@ type TestAgentServiceServer interface {
 type UnimplementedTestAgentServiceServer struct {
 }
 
+<<<<<<< HEAD
 func (UnimplementedTestAgentServiceServer) GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSimInfo not implemented")
+=======
+func (UnimplementedTestAgentServiceServer) GetSim(context.Context, *GetSimRequest) (*GetSimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSim not implemented")
+>>>>>>> subscriber-sys_sim-manager
 }
 func (UnimplementedTestAgentServiceServer) ActivateSim(context.Context, *ActivateSimRequest) (*ActivateSimResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ActivateSim not implemented")
@@ -112,12 +143,18 @@ func RegisterTestAgentServiceServer(s grpc.ServiceRegistrar, srv TestAgentServic
 	s.RegisterService(&TestAgentService_ServiceDesc, srv)
 }
 
+<<<<<<< HEAD
 func _TestAgentService_GetSimInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSimInfoRequest)
+=======
+func _TestAgentService_GetSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSimRequest)
+>>>>>>> subscriber-sys_sim-manager
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
+<<<<<<< HEAD
 		return srv.(TestAgentServiceServer).GetSimInfo(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
@@ -126,6 +163,16 @@ func _TestAgentService_GetSimInfo_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestAgentServiceServer).GetSimInfo(ctx, req.(*GetSimInfoRequest))
+=======
+		return srv.(TestAgentServiceServer).GetSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.subscriber.test_agent.v1.TestAgentService/GetSim",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestAgentServiceServer).GetSim(ctx, req.(*GetSimRequest))
+>>>>>>> subscriber-sys_sim-manager
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -140,7 +187,11 @@ func _TestAgentService_ActivateSim_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
+<<<<<<< HEAD
 		FullMethod: "/ukama.test_agent.v1.TestAgentService/ActivateSim",
+=======
+		FullMethod: "/ukama.subscriber.test_agent.v1.TestAgentService/ActivateSim",
+>>>>>>> subscriber-sys_sim-manager
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestAgentServiceServer).ActivateSim(ctx, req.(*ActivateSimRequest))
@@ -158,7 +209,11 @@ func _TestAgentService_DeactivateSim_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
+<<<<<<< HEAD
 		FullMethod: "/ukama.test_agent.v1.TestAgentService/DeactivateSim",
+=======
+		FullMethod: "/ukama.subscriber.test_agent.v1.TestAgentService/DeactivateSim",
+>>>>>>> subscriber-sys_sim-manager
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestAgentServiceServer).DeactivateSim(ctx, req.(*DeactivateSimRequest))
@@ -176,7 +231,11 @@ func _TestAgentService_TerminateSim_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
+<<<<<<< HEAD
 		FullMethod: "/ukama.test_agent.v1.TestAgentService/TerminateSim",
+=======
+		FullMethod: "/ukama.subscriber.test_agent.v1.TestAgentService/TerminateSim",
+>>>>>>> subscriber-sys_sim-manager
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestAgentServiceServer).TerminateSim(ctx, req.(*TerminateSimRequest))
@@ -188,12 +247,21 @@ func _TestAgentService_TerminateSim_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TestAgentService_ServiceDesc = grpc.ServiceDesc{
+<<<<<<< HEAD
 	ServiceName: "ukama.test_agent.v1.TestAgentService",
 	HandlerType: (*TestAgentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetSimInfo",
 			Handler:    _TestAgentService_GetSimInfo_Handler,
+=======
+	ServiceName: "ukama.subscriber.test_agent.v1.TestAgentService",
+	HandlerType: (*TestAgentServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetSim",
+			Handler:    _TestAgentService_GetSim_Handler,
+>>>>>>> subscriber-sys_sim-manager
 		},
 		{
 			MethodName: "ActivateSim",

@@ -60,6 +60,7 @@ func (_m *TestAgentServiceServer) DeactivateSim(_a0 context.Context, _a1 *gen.De
 	return r0, r1
 }
 
+<<<<<<< HEAD
 // GetSimInfo provides a mock function with given fields: _a0, _a1
 func (_m *TestAgentServiceServer) GetSimInfo(_a0 context.Context, _a1 *gen.GetSimInfoRequest) (*gen.GetSimInfoResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -70,11 +71,27 @@ func (_m *TestAgentServiceServer) GetSimInfo(_a0 context.Context, _a1 *gen.GetSi
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetSimInfoResponse)
+=======
+// GetSim provides a mock function with given fields: _a0, _a1
+func (_m *TestAgentServiceServer) GetSim(_a0 context.Context, _a1 *gen.GetSimRequest) (*gen.GetSimResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetSimResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimRequest) *gen.GetSimResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetSimResponse)
+>>>>>>> subscriber-sys_sim-manager
 		}
 	}
 
 	var r1 error
+<<<<<<< HEAD
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimInfoRequest) error); ok {
+=======
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimRequest) error); ok {
+>>>>>>> subscriber-sys_sim-manager
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

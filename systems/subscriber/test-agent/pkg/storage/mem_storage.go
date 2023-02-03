@@ -1,16 +1,29 @@
 package storage
 
+<<<<<<< HEAD
 import "sync"
+=======
+import (
+	"sync"
+)
+>>>>>>> subscriber-sys_sim-manager
 
 type MemStorage struct {
 	m    *sync.RWMutex
 	data map[string]*SimInfo
 }
 
+<<<<<<< HEAD
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
 		m:    &sync.RWMutex{},
 		data: make(map[string]*SimInfo),
+=======
+func NewMemStorage(data map[string]*SimInfo) *MemStorage {
+	return &MemStorage{
+		m:    &sync.RWMutex{},
+		data: data,
+>>>>>>> subscriber-sys_sim-manager
 	}
 }
 
@@ -22,7 +35,11 @@ func (s *MemStorage) Get(key string) (*SimInfo, error) {
 		return val, nil
 	}
 
+<<<<<<< HEAD
 	return &SimInfo{}, nil
+=======
+	return nil, ErrNotFound
+>>>>>>> subscriber-sys_sim-manager
 }
 
 func (s *MemStorage) Put(key string, value *SimInfo) error {
@@ -30,6 +47,10 @@ func (s *MemStorage) Put(key string, value *SimInfo) error {
 	defer s.m.Unlock()
 
 	s.data[key] = value
+<<<<<<< HEAD
+=======
+
+>>>>>>> subscriber-sys_sim-manager
 	return nil
 }
 
@@ -38,5 +59,9 @@ func (s *MemStorage) Delete(key string) error {
 	defer s.m.Unlock()
 
 	delete(s.data, key)
+<<<<<<< HEAD
+=======
+
+>>>>>>> subscriber-sys_sim-manager
 	return nil
 }

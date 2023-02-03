@@ -13,16 +13,26 @@ func TestSimPoolStats_Success(t *testing.T) {
 		{
 			Msisdn:         "2345678901",
 			ActivationCode: "123456",
+<<<<<<< HEAD
 			IsAllocated:   false,
 			SimType:       "inter_ukama_all",
+=======
+			Is_allocated:   false,
+			Sim_type:       "inter_ukama_all",
+>>>>>>> subscriber-sys_sim-manager
 			Iccid:          "1234567890123456789",
 			SmDpAddress:    "http://localhost:8080",
 		},
 		{
 			Msisdn:         "2345678901",
 			ActivationCode: "123456",
+<<<<<<< HEAD
 			IsAllocated:   true,
 			SimType:       "inter_ukama_all",
+=======
+			Is_allocated:   true,
+			Sim_type:       "inter_ukama_all",
+>>>>>>> subscriber-sys_sim-manager
 			Iccid:          "1234567890123456789",
 			SmDpAddress:    "http://localhost:8080",
 		},

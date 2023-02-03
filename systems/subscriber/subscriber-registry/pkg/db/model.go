@@ -11,7 +11,11 @@ type Subscriber struct {
 	FirstName             string    `gorm:"size:255"`
 	LastName              string    `gorm:"size:255"`
 	NetworkID             uuid.UUID `gorm:"type:uuid;index"`
+<<<<<<< HEAD
 	OrgID          uuid.UUID `gorm:"type:uuid"`
+=======
+	OrgID                 uuid.UUID `gorm:"type:uuid"`
+>>>>>>> subscriber-sys_sim-manager
 	Email                 string    `gorm:"size:255"`
 	PhoneNumber           string    `gorm:"size:15"`
 	Gender                string    `gorm:"size:255"`
