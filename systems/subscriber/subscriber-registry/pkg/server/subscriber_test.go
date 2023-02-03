@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	mocks "github.com/ukama/ukama/systems/subscriber/subscriber-registry/mocks"
+
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
@@ -18,7 +20,7 @@ import (
 
 func TestSubcriberServer_Add(t *testing.T) {
 	msgbus := &mbmocks.MsgBusServiceClient{}
-
+	network := &mocks.Network{}
 	testCases := []struct {
 		name         string
 		req          *pb.AddSubscriberRequest
@@ -108,7 +110,7 @@ func TestSubcriberServer_Add(t *testing.T) {
 					return nil, nil
 				},
 			}
-			server := NewSubscriberServer(subscriberRepo, msgbus)
+			server := NewSubscriberServer(subscriberRepo, msgbus,nil,network,)
 			resp, err := server.Add(context.Background(), testCase.req)
 
 			assert.Equal(t, testCase.expectedResp, resp)

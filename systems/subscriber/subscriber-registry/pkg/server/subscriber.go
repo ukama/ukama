@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg"
+	client "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/client"
 	clientPkg "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/client"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -26,13 +28,70 @@ type SubcriberServer struct {
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedSubscriberRegistryServiceServer
 	simManagerService clientPkg.SimManagerClientProvider
+	network        client.Network
+
 }
 
-func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService clientPkg.SimManagerClientProvider) *SubcriberServer {
+func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService clientPkg.SimManagerClientProvider, network client.Network) *SubcriberServer {
 	return &SubcriberServer{subscriberRepo: subscriberRepo,
 		msgbus:               msgBus,
 		simManagerService:    simManagerService,
+		network:  network,
 		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
+}
+
+func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
+	logrus.Infof("Adding subscriber: %v", req)
+	networkID := uuid.FromStringOrNil(req.GetNetworkID())
+	orgID := uuid.FromStringOrNil(req.GetOrgID())
+	if networkID == uuid.Nil {
+		return nil, status.Errorf(codes.InvalidArgument, "NetworkID must not be empty")
+	}
+	if orgID == uuid.Nil {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgID must not be empty")
+	}
+	subscriberID := uuid.NewV4()
+	err := s.network.ValidateNetwork(networkID.String(),orgID.String() )
+	if err != nil {
+		return nil, fmt.Errorf("error validating network")
+	}
+	
+	subscriber := &db.Subscriber{
+		OrgID:                 orgID,
+		SubscriberID:          subscriberID,
+		FirstName:             req.GetFirstName(),
+		LastName:              req.GetLastName(),
+		NetworkID:             networkID,
+		Email:                 req.GetEmail(),
+		PhoneNumber:           req.GetPhoneNumber(),
+		Gender:                req.GetGender(),
+		Address:               req.GetAddress(),
+		ProofOfIdentification: req.GetProofOfIdentification(),
+		DOB:                   req.DateOfBirth.AsTime(),
+		IdSerial:              req.GetIdSerial(),
+	}
+	err = s.subscriberRepo.Add(subscriber)
+	if err != nil {
+		logrus.Error("error while adding subscriber" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
+
+	return &pb.AddSubscriberResponse{
+		Subscriber: &pb.Subscriber{
+			OrgID:                 orgID.String(),
+			SubscriberID:          subscriberID.String(),
+			FirstName:             req.GetFirstName(),
+			LastName:              req.GetLastName(),
+			NetworkID:             networkID.String(),
+			Email:                 req.GetEmail(),
+			PhoneNumber:           req.GetPhoneNumber(),
+			Gender:                req.GetGender(),
+			Address:               req.GetAddress(),
+			ProofOfIdentification: req.GetProofOfIdentification(),
+			DateOfBirth:           req.GetDateOfBirth().String(),
+			IdSerial:              req.GetIdSerial()},
+	}, nil
+
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
