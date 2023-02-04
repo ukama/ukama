@@ -86,8 +86,8 @@ func (_m *SimRepo) GetByIccid(iccid string) (*db.Sim, error) {
 	return r0, r1
 }
 
-// GetStats provides a mock function with given fields: simType
-func (_m *SimRepo) GetStats(simType string) ([]db.Sim, error) {
+// GetSimsByType provides a mock function with given fields: simType
+func (_m *SimRepo) GetSimsByType(simType string) ([]db.Sim, error) {
 	ret := _m.Called(simType)
 
 	var r0 []db.Sim

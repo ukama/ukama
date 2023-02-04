@@ -8,10 +8,11 @@ type Sim struct {
 	gorm.Model
 	Iccid          string `gorm:"index:idx_iccid,unique"`
 	Msisdn         string
-	Is_allocated   bool
-	Sim_type       string
+	IsAllocated    bool
+	IsFailed       bool
+	SimType        string
 	SmDpAddress    string
 	ActivationCode string
 	QrCode         string
-	Is_physical    bool
+	IsPhysical     bool
 }
