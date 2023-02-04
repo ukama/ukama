@@ -1,0 +1,5 @@
+@startuml CreateSubscriber
+APIGateway -> SubscriberRegistry: Create Subscriber Request
+SubscriberRegistry -> SubscriberRegistry: Add subscriber to SubscriberDB
+SubscriberRegistry --> APIGateway: Create Subscriber Response 
+@enduml

@@ -2,54 +2,73 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"time"
 
-	"github.com/gofrs/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg"
+	client "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/client"
+	clientPkg "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/client"
 	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type SubcriberServer struct {
-	subscriberRepo db.SubscriberRepo
+	subscriberRepo       db.SubscriberRepo
+	msgbus               mb.MsgBusServiceClient
+	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedSubscriberRegistryServiceServer
+	simManagerService clientPkg.SimManagerClientProvider
+	network        client.Network
+
 }
 
-func NewSubscriberServer(subscriberRepo db.SubscriberRepo) *SubcriberServer {
-	return &SubcriberServer{subscriberRepo: subscriberRepo}
+func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService clientPkg.SimManagerClientProvider, network client.Network) *SubcriberServer {
+	return &SubcriberServer{subscriberRepo: subscriberRepo,
+		msgbus:               msgBus,
+		simManagerService:    simManagerService,
+		network:  network,
+		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
-	networkID_uuid := uuid.FromStringOrNil(req.GetNetworkID())
-	orgID_uuid := uuid.FromStringOrNil(req.GetOrgID())
-	subscriberID_uuid, err := uuid.NewV4()
+	networkID := uuid.FromStringOrNil(req.GetNetworkID())
+	orgID := uuid.FromStringOrNil(req.GetOrgID())
+	if networkID == uuid.Nil {
+		return nil, status.Errorf(codes.InvalidArgument, "NetworkID must not be empty")
+	}
+	if orgID == uuid.Nil {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgID must not be empty")
+	}
+	subscriberID := uuid.NewV4()
+	err := s.network.ValidateNetwork(networkID.String(),orgID.String() )
 	if err != nil {
-		logrus.Errorf("Failed to generate UUID: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("error validating network")
 	}
-	timestamp := &timestamppb.Timestamp{
-		Seconds: req.DateOfBirth.GetSeconds(),
-		Nanos:   req.DateOfBirth.GetNanos(),
-	}
-
-	birthday := timestamp.AsTime()
-
+	
+	
 	subscriber := &db.Subscriber{
-		SubscriberID:          subscriberID_uuid,
+		OrgID:                 orgID,
+		SubscriberID:          subscriberID,
 		FirstName:             req.GetFirstName(),
 		LastName:              req.GetLastName(),
-		NetworkID:             networkID_uuid,
-		OrgID:                 orgID_uuid,
+		NetworkID:             networkID,
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
-		DOB:                   birthday,
+		DOB:                   req.DateOfBirth.AsTime(),
 		IdSerial:              req.GetIdSerial(),
 	}
 	err = s.subscriberRepo.Add(subscriber)
@@ -60,75 +79,60 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 	return &pb.AddSubscriberResponse{
 		Subscriber: &pb.Subscriber{
-			SubscriberID:          subscriberID_uuid.String(),
+			OrgID:                 orgID.String(),
+			SubscriberID:          subscriberID.String(),
 			FirstName:             req.GetFirstName(),
 			LastName:              req.GetLastName(),
-			NetworkID:             networkID_uuid.String(),
+			NetworkID:             networkID.String(),
 			Email:                 req.GetEmail(),
 			PhoneNumber:           req.GetPhoneNumber(),
 			Gender:                req.GetGender(),
 			Address:               req.GetAddress(),
 			ProofOfIdentification: req.GetProofOfIdentification(),
-			DateOfBirth:           birthday.GoString(),
+			DateOfBirth:           req.GetDateOfBirth().String(),
 			IdSerial:              req.GetIdSerial()},
 	}, nil
 
 }
 
-func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
-	subscriberID := req.GetSubscriberID()
-	if subscriberID == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
-	}
-
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	subscriberIDUUID, err := uuid.FromString(subscriberID)
-
-	logrus.Infof("Delete Subscriber : %v ", subscriberID)
-	err = s.subscriberRepo.Delete(subscriberIDUUID)
-	if err != nil {
-		logrus.WithError(err).Error("error while deleting subscriber")
-		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
-	}
-	return &pb.DeleteSubscriberResponse{
-		SubscriberID: subscriberID,
-	}, nil
-}
-
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
-
-	subscriberID := req.GetSubscriberID()
-	if subscriberID == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
-	}
-
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
-	subscriberIDUUID, err := uuid.FromString(subscriberID)
-	logrus.Infof("GetSubscriber : %v ", subscriberID)
-	subscriber, err := s.subscriberRepo.Get(subscriberIDUUID)
-
+	subscriberIdReq := req.GetSubscriberID()
+	subscriberID, err := uuid.FromString(subscriberIdReq)
 	if err != nil {
-		logrus.Error("error getting a subscriber" + err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid subscriberID format: %v", err)
+	}
 
+	logrus.Infof("Getting subscriber with ID: %v", subscriberID)
+	subscriber, err := s.subscriberRepo.Get(subscriberID)
+	if err != nil {
+		logrus.Error("Error while getting subscriber: %v", err)
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	resp := &pb.GetSubscriberResponse{Subscriber: dbSubscriberToPbSubscribers(subscriber)}
+	smc, err := s.simManagerService.GetSimManagerService()
+	if err != nil {
+		logrus.Error("Error while getting SimManagerServiceClient: %v", err)
+		return nil, err
+	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	simRep, err := smc.GetSimsBySubscriber(ctx, &simMangerPb.GetSimsBySubscriberRequest{
+		SubscriberID: subscriberID.String(),
+	})
+	if err != nil {
+		logrus.Error("Error while getting Sims by subscriber: %v", err)
+		return nil, err
+	}
+
+	resp := &pb.GetSubscriberResponse{
+		Subscriber: dbSubscriberToPbSubscriber(subscriber, pbManagerSimsToPbSubscriberSims(simRep.Sims)),
+	}
 	return resp, nil
-
 }
 
 func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
-
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 
 	logrus.Infof("List all subscribers")
 
@@ -138,113 +142,162 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 		return nil, grpc.SqlErrorToGrpc(err, "subscribers")
 	}
 
+	simManagerClient, err := s.simManagerService.GetSimManagerService()
+	if err != nil {
+		logrus.Error("Failed to get SimManagerServiceClient. Error: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	simRep, err := simManagerClient.ListSims(ctx, &simMangerPb.ListSimsRequest{})
+	if err != nil {
+		log.Fatalf("Failed to get Sims by subscriber. Error: %v", err)
+	}
+	allSims := simRep.Sims
+
+	var res []*pb.Subscriber
+	for _, sub := range subscribers {
+		simList := []*pb.Sim{}
+		for _, sim := range allSims {
+			if sim.SubscriberID == sub.SubscriberID.String() {
+				simList = append(simList, &pb.Sim{
+					Id:           sim.Id,
+					SubscriberID: sim.SubscriberID,
+					NetworkID:    sim.NetworkID,
+				})
+			}
+		}
+		res = append(res, dbSubscriberToPbSubscriber(&sub, simList))
+	}
+
 	subscriberList := &pb.ListSubscribersResponse{
-		Subscribers: dbsubscriberToPbSubscribers(subscribers),
+		Subscribers: res,
 	}
 
 	return subscriberList, nil
 }
+
 func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
-	networkID := req.GetNetworkID()
-	if networkID == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "networkID must not be empty")
-	}
-
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
-	logrus.Infof("Get subscribers by network: %v ", networkID)
-	networkIDUUID, err := uuid.FromString(networkID)
+	networkIdReq := req.GetNetworkID()
+	logrus.Infof("Get subscribers by network: %v ", networkIdReq)
+	networkID, err := uuid.FromString(networkIdReq)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid networkID: %v", err)
 	}
 
-	subscribers, err := s.subscriberRepo.GetByNetwork(networkIDUUID)
+	subscribers, err := s.subscriberRepo.GetByNetwork(networkID)
 	if err != nil {
 		logrus.WithError(err).Error("error while getting subscribers by network")
 		return nil, grpc.SqlErrorToGrpc(err, "subscribers")
 	}
 
+	smc, err := s.simManagerService.GetSimManagerService()
+	if err != nil {
+		logrus.Error("Failed to get SimManagerServiceClient. Error: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	simRep, err := smc.GetSimsByNetwork(ctx, &simMangerPb.GetSimsByNetworkRequest{NetworkID: networkIdReq})
+	if err != nil {
+		log.Fatalf("Failed to get Sims by network. Error: %v", err)
+	}
+
+	subscriberSims := pbManagerSimsToPbSubscriberSims(simRep.Sims)
 	subscriberList := &pb.GetByNetworkResponse{
-		Subscribers: dbsubscriberToPbSubscribers(subscribers),
+		Subscribers: dbSubScribersToPbSubscribers(subscribers, subscriberSims),
 	}
 
 	return subscriberList, nil
 }
-func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
+
+func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberID()
-	if subscriberIdReq == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "subscriberID must not be empty")
+	subscriberID, error := uuid.FromString(subscriberIdReq)
+
+	if error != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of subscriber uuid. Error %s", error.Error())
 	}
-
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	logrus.Infof("Delete Subscriber : %v ", subscriberID)
+	er := s.subscriberRepo.Delete(subscriberID)
+	if er != nil {
+		logrus.WithError(er).Error("error while deleting subscriber")
+		return nil, grpc.SqlErrorToGrpc(er, "subscriber")
 	}
-	subscribeIDUUID, err := uuid.FromString(subscriberIdReq)
-
-	logrus.Infof("Update Subscriber Id: %v, Email: %v, ProofOfIdentification: %v, Address: %v",
-		req.SubscriberID, req.Email, req.ProofOfIdentification, req.Address)
-
-	updateSubscriber := db.Subscriber{
-		Email:                 req.GetEmail(),
-		PhoneNumber:           req.GetPhoneNumber(),
-		Address:               req.GetAddress(),
-		ProofOfIdentification: req.GetProofOfIdentification(),
-		IdSerial:              req.GetIdSerial(),
-	}
-
-	updatedSubscriberRes, err := s.subscriberRepo.Update(subscribeIDUUID, updateSubscriber)
+	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
+	err := s.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("error while updating a subscriber: %v", err)
-		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-
-	return &pb.UpdateSubscriberResponse{
-		Email:                 updatedSubscriberRes.Email,
-		PhoneNumber:           updatedSubscriberRes.PhoneNumber,
-		Address:               updatedSubscriberRes.Address,
-		IdSerial:              updatedSubscriberRes.IdSerial,
-		ProofOfIdentification: updatedSubscriberRes.ProofOfIdentification,
-	}, nil
+	return &pb.DeleteSubscriberResponse{}, nil
 }
 
-func dbsubscriberToPbSubscribers(subscriber []db.Subscriber) []*pb.Subscriber {
+func getSimListBySubscriber(subscriberID string) []*simMangerPb.Sim {
+	// Call simManager to get list of sims for the given subscriberID
+	var s *SubcriberServer
+	smc, err := s.simManagerService.GetSimManagerService()
+	if err != nil {
+		logrus.Error("Failed to get SimManagerServiceClient. Error: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	simRep, err := smc.GetSimsBySubscriber(ctx, &simMangerPb.GetSimsBySubscriberRequest{
+		SubscriberID: subscriberID,
+	})
+
+	if err != nil {
+		log.Fatalf("Failed to get Sims by subscriber. Error: %v", err)
+	}
+
+	return simRep.Sims
+}
+
+func dbSubScribersToPbSubscribers(subscriber []db.Subscriber, sims []*pb.Sim) []*pb.Subscriber {
 	res := []*pb.Subscriber{}
+
 	for _, u := range subscriber {
-		res = append(res, dbSubscriberToPbSubscribers(&u))
+		subscriberSims := []*pb.Sim{}
+		for _, sim := range sims {
+			if sim.SubscriberID == u.SubscriberID.String() {
+				subscriberSims = append(subscriberSims, sim)
+			}
+		}
+		res = append(res, dbSubscriberToPbSubscriber(&u, subscriberSims))
+	}
+	return res
+}
+func pbManagerSimsToPbSubscriberSims(s []*simMangerPb.Sim) []*pb.Sim {
+	res := []*pb.Sim{}
+	for _, u := range s {
+		ss := &pb.Sim{
+			Id:                 u.Id,
+			SubscriberID:       u.SubscriberID,
+			NetworkID:          u.NetworkID,
+			OrgID:              u.OrgID,
+			Iccid:              u.Iccid,
+			Msisdn:             u.Msisdn,
+			Type:               u.Type,
+			Status:             u.Status,
+			IsPhysical:         u.IsPhysical,
+			FirstActivatedOn:   u.FirstActivatedOn,
+			LastActivatedOn:    u.LastActivatedOn,
+			DeactivationsCount: u.DeactivationsCount,
+			AllocatedAt:        u.AllocatedAt,
+		}
+
+		res = append(res, ss)
 	}
 	return res
 }
 
-func dbSubscriberToPbSubscribers(s *db.Subscriber) *pb.Subscriber {
+func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscriber {
 	pbTimestamp := s.DOB.Format("2006-01-02")
 
-	// Create a slice of mock SIMs
-	simList := []*pb.Sim{
-		{
-			Id:           "12345",
-			SubscriberID: s.SubscriberID.String(),
-			Iccid:        "9876543210",
-			Msisdn:       "123-456-7890",
-			IsPhysical:   true,
-		},
-		{
-			Id:           "54321",
-			SubscriberID: s.SubscriberID.String(),
-			Iccid:        "0123456789",
-			Msisdn:       "123-456-7891",
-			IsPhysical:   false,
-		},
-		{
-			Id:           "67890",
-			SubscriberID: s.SubscriberID.String(),
-			Iccid:        "0123456789",
-			Msisdn:       "123-456-7891",
-			IsPhysical:   false,
-		},
-	}
-
+	// simList := []*pb.Sim{}
 	return &pb.Subscriber{
 		FirstName:             s.FirstName,
 		LastName:              s.LastName,

@@ -7,7 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/grpc"
+<<<<<<< HEAD
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+=======
+>>>>>>> subscriber-sys_sim-manager
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/mocks"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
@@ -17,6 +20,7 @@ import (
 
 func TestGetStats_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
 	reqMock := &pb.GetStatsRequest{
@@ -28,6 +32,18 @@ func TestGetStats_Success(t *testing.T) {
 		SimType:         "inter_mno_data",
 		SmDpAddress:    "http://localhost:8080",
 		IsAllocated:     false,
+=======
+	simService := NewSimServer(mockRepo)
+	reqMock := &pb.GetStatsRequest{
+		SimType: pb.SimType_INTER_MNO_DATA,
+	}
+	mockRepo.On("GetStats", mock.Anything).Return([]db.Sim{{
+		Iccid:          "1234567890123456789",
+		Msisdn:         "2345678901",
+		Sim_type:       "inter_mno_data",
+		SmDpAddress:    "http://localhost:8080",
+		Is_allocated:   false,
+>>>>>>> subscriber-sys_sim-manager
 		ActivationCode: "123456",
 	}}, nil)
 	res, err := simService.GetStats(context.Background(), reqMock)
@@ -37,12 +53,20 @@ func TestGetStats_Success(t *testing.T) {
 
 func TestGetStats_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
 	reqMock := &pb.GetStatsRequest{
 		SimType: pb.SimType_INTER_MNO_DATA,
 	}
 	mockRepo.On("GetSimsByType", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("SimPool record not found!"), "sim-pool"))
+=======
+	simService := NewSimServer(mockRepo)
+	reqMock := &pb.GetStatsRequest{
+		SimType: pb.SimType_INTER_MNO_DATA,
+	}
+	mockRepo.On("GetStats", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("SimPool record not found!"), "sim-pool"))
+>>>>>>> subscriber-sys_sim-manager
 	res, err := simService.GetStats(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
@@ -50,8 +74,12 @@ func TestGetStats_Error(t *testing.T) {
 
 func TestDelete_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
+=======
+	simService := NewSimServer(mockRepo)
+>>>>>>> subscriber-sys_sim-manager
 	reqMock := &pb.DeleteRequest{
 		Id: []uint64{1},
 	}
@@ -63,8 +91,12 @@ func TestDelete_Success(t *testing.T) {
 
 func TestDelete_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
+=======
+	simService := NewSimServer(mockRepo)
+>>>>>>> subscriber-sys_sim-manager
 	reqMock := &pb.DeleteRequest{
 		Id: []uint64{1},
 	}
@@ -76,8 +108,12 @@ func TestDelete_Error(t *testing.T) {
 
 func TestAdd_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
+=======
+	simService := NewSimServer(mockRepo)
+>>>>>>> subscriber-sys_sim-manager
 	reqMock := &pb.AddRequest{
 		Sim: []*pb.AddSim{
 			{
@@ -98,8 +134,12 @@ func TestAdd_Success(t *testing.T) {
 
 func TestAdd_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
+=======
+	simService := NewSimServer(mockRepo)
+>>>>>>> subscriber-sys_sim-manager
 	reqMock := &pb.AddRequest{
 		Sim: []*pb.AddSim{
 			{
@@ -120,8 +160,12 @@ func TestAdd_Error(t *testing.T) {
 
 func TestGet_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
+=======
+	simService := NewSimServer(mockRepo)
+>>>>>>> subscriber-sys_sim-manager
 	reqMock := &pb.GetRequest{
 		IsPhysicalSim: true,
 		SimType:       pb.SimType_INTER_MNO_DATA,
@@ -129,10 +173,17 @@ func TestGet_Success(t *testing.T) {
 	mockRepo.On("Get", mock.Anything, mock.Anything).Return(&db.Sim{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
+<<<<<<< HEAD
 		SimType:         "inter_mno_data",
 		SmDpAddress:    "http://localhost:8080",
 		ActivationCode: "123456",
 		IsPhysical:      false,
+=======
+		Sim_type:       "inter_mno_data",
+		SmDpAddress:    "http://localhost:8080",
+		ActivationCode: "123456",
+		Is_physical:    false,
+>>>>>>> subscriber-sys_sim-manager
 	}, nil)
 	res, err := simService.Get(context.Background(), reqMock)
 	assert.NoError(t, err)
@@ -141,8 +192,12 @@ func TestGet_Success(t *testing.T) {
 
 func TestGet_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
+=======
+	simService := NewSimServer(mockRepo)
+>>>>>>> subscriber-sys_sim-manager
 	reqMock := &pb.GetRequest{
 		IsPhysicalSim: true,
 		SimType:       pb.SimType_INTER_MNO_DATA,
@@ -155,18 +210,29 @@ func TestGet_Error(t *testing.T) {
 
 func TestGetByIccid_Success(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
+=======
+	simService := NewSimServer(mockRepo)
+>>>>>>> subscriber-sys_sim-manager
 	reqMock := &pb.GetByIccidRequest{
 		Iccid: "1234567890123456789",
 	}
 	mockRepo.On("GetByIccid", reqMock.Iccid).Return(&db.Sim{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
+<<<<<<< HEAD
 		SimType:         "inter_mno_data",
 		SmDpAddress:    "http://localhost:8080",
 		ActivationCode: "123456",
 		IsPhysical:      false,
+=======
+		Sim_type:       "inter_mno_data",
+		SmDpAddress:    "http://localhost:8080",
+		ActivationCode: "123456",
+		Is_physical:    false,
+>>>>>>> subscriber-sys_sim-manager
 	}, nil)
 	res, err := simService.GetByIccid(context.Background(), reqMock)
 	assert.NoError(t, err)
@@ -175,8 +241,12 @@ func TestGetByIccid_Success(t *testing.T) {
 
 func TestGetByIccid_Error(t *testing.T) {
 	mockRepo := &mocks.SimRepo{}
+<<<<<<< HEAD
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	simService := NewSimPoolServer(mockRepo, msgbusClient)
+=======
+	simService := NewSimServer(mockRepo)
+>>>>>>> subscriber-sys_sim-manager
 	reqMock := &pb.GetByIccidRequest{
 		Iccid: "1234567890123456789",
 	}

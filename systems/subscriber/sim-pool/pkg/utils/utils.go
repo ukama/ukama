@@ -7,6 +7,7 @@ import (
 )
 
 func PoolStats(slice []db.Sim) *pb.GetStatsResponse {
+<<<<<<< HEAD
     total := len(slice)
     failed := 0
     available := 0
@@ -29,6 +30,27 @@ func PoolStats(slice []db.Sim) *pb.GetStatsResponse {
 }
 
 
+=======
+	total := len(slice)
+	failed := 0
+	available := 0
+	consumed := 0
+	for _, value := range slice {
+		if value.Is_allocated {
+			consumed = consumed + 1
+		} else {
+			available = available + 1
+		}
+	}
+	return &pb.GetStatsResponse{
+		Total:     uint64(total),
+		Failed:    uint64(failed),
+		Available: uint64(available),
+		Consumed:  uint64(consumed),
+	}
+}
+
+>>>>>>> subscriber-sys_sim-manager
 func PbParseToModel(slice []*pb.AddSim) []db.Sim {
 	var sims []db.Sim
 	for _, value := range slice {
@@ -69,8 +91,13 @@ func RawSimToPb(r []RawSim, simType string) []db.Sim {
 			Msisdn:         value.Msisdn,
 			SmDpAddress:    value.SmDpAddress,
 			ActivationCode: value.ActivationCode,
+<<<<<<< HEAD
 			IsPhysical:    value.IsPhysical == "TRUE",
 			SimType:       simType,
+=======
+			Is_physical:    value.IsPhysical == "TRUE",
+			Sim_type:       simType,
+>>>>>>> subscriber-sys_sim-manager
 			QrCode:         value.QrCode,
 		})
 	}

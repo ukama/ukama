@@ -8,7 +8,11 @@ import (
 type SimRepo interface {
 	Get(isPhysicalSim bool, simType string) (*Sim, error)
 	GetByIccid(iccid string) (*Sim, error)
+<<<<<<< HEAD
 	GetSimsByType(simType string) ([]Sim, error)
+=======
+	GetStats(simType string) ([]Sim, error)
+>>>>>>> subscriber-sys_sim-manager
 	Add(sims []Sim) error
 	Delete(id []uint64) error
 }
@@ -25,7 +29,11 @@ func NewSimRepo(db sql.Db) *simRepo {
 
 func (s *simRepo) Get(isPhysicalSim bool, simType string) (*Sim, error) {
 	var sim Sim
+<<<<<<< HEAD
 	result := s.Db.GetGormDb().Where("is_allocated = ?", false).Where("is_physical = ?", isPhysicalSim).Where("sim_type = ?", simType).First(&sim)
+=======
+	result := s.Db.GetGormDb().Where("is_allocated = ?", false).Where("is_physical = ?", isPhysicalSim).Where("sim_type = ?", simType).Find(&sim)
+>>>>>>> subscriber-sys_sim-manager
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -45,9 +53,15 @@ func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
 	return &sim, nil
 }
 
+<<<<<<< HEAD
 func (s *simRepo) GetSimsByType(SimType string) ([]Sim, error) {
 	var sim []Sim
 	result := s.Db.GetGormDb().Where(&Sim{SimType: SimType}).Find(&sim)
+=======
+func (s *simRepo) GetStats(SimType string) ([]Sim, error) {
+	var sim []Sim
+	result := s.Db.GetGormDb().Where(&Sim{Sim_type: SimType}).Find(&sim)
+>>>>>>> subscriber-sys_sim-manager
 
 	if result.Error != nil {
 		return nil, result.Error

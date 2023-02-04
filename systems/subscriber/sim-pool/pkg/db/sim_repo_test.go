@@ -2,8 +2,13 @@ package db
 
 import (
 	extsql "database/sql"
+<<<<<<< HEAD
 	"log"
 	"regexp"
+=======
+	"fmt"
+	"log"
+>>>>>>> subscriber-sys_sim-manager
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -44,7 +49,11 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
+<<<<<<< HEAD
 func Test_GetSimsByType(t *testing.T) {
+=======
+func Test_Get_Stats(t *testing.T) {
+>>>>>>> subscriber-sys_sim-manager
 	t.Run("GetStats", func(t *testing.T) {
 
 		var db *extsql.DB
@@ -83,13 +92,19 @@ func Test_GetSimsByType(t *testing.T) {
 
 		assert.NoError(t, err)
 
+<<<<<<< HEAD
 		sp, err := r.GetSimsByType("inter_ukama_all")
+=======
+		sp, err := r.GetStats("inter_ukama_all")
+		fmt.Println(sp, err)
+>>>>>>> subscriber-sys_sim-manager
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, sp)
 	})
 }
+<<<<<<< HEAD
 
 func Test_GetByIccid(t *testing.T) {
 	t.Run("GetByIccid", func(t *testing.T) {
@@ -269,3 +284,5 @@ func Test_Delete(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+=======
+>>>>>>> subscriber-sys_sim-manager

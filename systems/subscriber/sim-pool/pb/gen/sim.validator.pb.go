@@ -85,6 +85,7 @@ func (this *UploadResponse) Validate() error {
 	return nil
 }
 
+<<<<<<< HEAD
 var _regex_Sim_Iccid = regexp.MustCompile(`^[0-9]{19}$`)
 var _regex_Sim_Msisdn = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
 
@@ -92,12 +93,18 @@ func (this *Sim) Validate() error {
 	if !_regex_Sim_Iccid.MatchString(this.Iccid) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`must be a valid ICCID format`))
 	}
+=======
+var _regex_Sim_Msisdn = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
+
+func (this *Sim) Validate() error {
+>>>>>>> subscriber-sys_sim-manager
 	if !_regex_Sim_Msisdn.MatchString(this.Msisdn) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Msisdn", fmt.Errorf(`must be a phone number format`))
 	}
 	return nil
 }
 
+<<<<<<< HEAD
 var _regex_AddSim_Iccid = regexp.MustCompile(`^[0-9]{19}$`)
 var _regex_AddSim_Msisdn = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
 
@@ -105,6 +112,11 @@ func (this *AddSim) Validate() error {
 	if !_regex_AddSim_Iccid.MatchString(this.Iccid) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`must be a valid ICCID format`))
 	}
+=======
+var _regex_AddSim_Msisdn = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
+
+func (this *AddSim) Validate() error {
+>>>>>>> subscriber-sys_sim-manager
 	if !_regex_AddSim_Msisdn.MatchString(this.Msisdn) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Msisdn", fmt.Errorf(`must be a phone number format`))
 	}

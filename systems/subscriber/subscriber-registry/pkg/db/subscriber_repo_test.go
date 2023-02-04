@@ -12,7 +12,7 @@ import (
 )
 
 func TestSubscriberRepo_Get(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberServiceServer{}
+	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
 
 	t.Run("SubscriberExist", func(t *testing.T) {
 
@@ -57,7 +57,7 @@ func TestSubscriberRepo_Get(t *testing.T) {
 }
 
 func TestSubscriberRepo_Add(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberServiceServer{}
+	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
 	t.Run("Add a Subscriber", func(t *testing.T) {
 
 		subscriberServiceServerMock.On("Add", mock.Anything, &gen.AddSubscriberRequest{
@@ -89,7 +89,7 @@ func TestSubscriberRepo_Add(t *testing.T) {
 }
 
 func TestSubscriberRepo_Update(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberServiceServer{}
+	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
 	t.Run("SubscriberExist", func(t *testing.T) {
 
 		subscriberServiceServerMock.On("Update", mock.Anything, &gen.UpdateSubscriberRequest{
@@ -119,6 +119,39 @@ func TestSubscriberRepo_Update(t *testing.T) {
 
 		assert.Equal(t, expectedResponse, response)
 		assert.Nil(t, err)
+
+	})
+}
+
+func TestSubscriberRepo_Delete(t *testing.T) {
+	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
+
+	t.Run("SubscriberExist", func(t *testing.T) {
+
+		// Set up mock database
+		subscriberServiceServerMock.On("Delete", mock.Anything, &gen.DeleteSubscriberRequest{
+			SubscriberID: "12345",
+		}).Return(&gen.DeleteSubscriberResponse{}, nil)
+		expectedResponse := &gen.DeleteSubscriberResponse{}
+
+		response, err := subscriberServiceServerMock.Delete(context.Background(), &gen.DeleteSubscriberRequest{
+			SubscriberID: "12345",
+		})
+		assert.Equal(t, expectedResponse, response)
+		assert.Nil(t, err)
+		subscriberServiceServerMock.AssertExpectations(t)
+	})
+	t.Run("SubscriberAlreadyDeleted", func(t *testing.T) {
+		subscriberServiceServerMock.On("delete", mock.Anything, &gen.DeleteSubscriberRequest{
+			SubscriberID: "123456",
+		}).Return(nil, errors.New("subscriber not found"))
+		response, err := subscriberServiceServerMock.Delete(context.Background(), &gen.DeleteSubscriberRequest{
+			SubscriberID: "123456",
+		})
+
+		assert.Nil(t, response)
+		assert.EqualError(t, err, "subscriber not found")
+		subscriberServiceServerMock.AssertExpectations(t)
 
 	})
 }
