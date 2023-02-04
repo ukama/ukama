@@ -1,6 +1,6 @@
 syntax = "proto3";
 option go_package = "pb/gen";
-package ukama.sim.v1;
+package ukama.subscriber.sim.v1;
 import "validator.proto";
 
 /*
@@ -67,7 +67,7 @@ message UploadResponse {
 }
 message Sim{
     uint64 id = 1;
-    string iccid = 2;
+    string iccid = 2 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];
     string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}]; 
     bool isAllocated = 4;
     SimType simType = 5;
@@ -80,7 +80,7 @@ message Sim{
     string qrCode=13;
 }
 message AddSim{
-    string iccid = 1;
+    string iccid = 1 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];
     SimType simType = 2;
     string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string smDpAddress = 4;

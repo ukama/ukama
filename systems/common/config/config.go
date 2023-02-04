@@ -120,7 +120,7 @@ type Service struct {
 	Port string `default:"9090"`
 	Uri  string `default:"localhost:9090"`
 }
-
+	
 type Metrics struct {
 	Port    int  `default:"10250"`
 	Enabled bool `default:"true"`
