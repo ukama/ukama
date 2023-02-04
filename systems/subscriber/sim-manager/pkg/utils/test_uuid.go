@@ -39,13 +39,13 @@ var xvalues = [256]byte{
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 }
 
-// testSimUUID return whether or not the provided string matches a test sim UUID.  Both the UUID form of
+// ParseTestUUID return whether or not the provided string matches a test UUID.  Both the UUID form of
 // testuuid-xxxx-xxxx-xxxx-xxxxxxxxxxxx and
 // urn:uuid:testuuid-xxxx-xxxx-xxxx-xxxxxxxxxxxx are supported.
-func testSimUUID(s string) error {
+func ParseTestUUID(s string) error {
 	if len(s) != 36 {
 		if len(s) != 36+9 {
-			return fmt.Errorf("invalid test sim UUID length: %d", len(s))
+			return fmt.Errorf("invalid test UUID length: %d", len(s))
 		}
 		if strings.ToLower(s[:9]) != "urn:uuid:" {
 			return fmt.Errorf("invalid urn prefix: %q", s[:9])
@@ -54,11 +54,11 @@ func testSimUUID(s string) error {
 	}
 
 	if !strings.HasPrefix(s, testUUUIDPrefix) {
-		return fmt.Errorf("invalid test sim uuid prefix: %q", s[:9])
+		return fmt.Errorf("invalid test uuid prefix: %q", s[:9])
 	}
 
 	if s[8] != '-' || s[13] != '-' || s[18] != '-' || s[23] != '-' {
-		return errors.New("invalid test sim UUID format")
+		return errors.New("invalid test UUID format")
 	}
 	for _, x := range [12]int{
 		9, 11,
@@ -67,14 +67,14 @@ func testSimUUID(s string) error {
 		24, 26, 28, 30, 32, 34} {
 		_, ok := xtob(s[x], s[x+1])
 		if !ok {
-			return errors.New("invalid test sim UUID format")
+			return errors.New("invalid test UUID format")
 		}
 	}
 	return nil
 }
 
-func GetIccidFromTestSimUUID(s string) (string, error) {
-	if err := testSimUUID(s); err != nil {
+func GetIccidFromTestUUID(s string) (string, error) {
+	if err := ParseTestUUID(s); err != nil {
 		return "", err
 	}
 

@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
 	"github.com/tj/assert"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -52,11 +52,11 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 func TestSimRepo_Get(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		// Arrange
-		var simID = uuid.New()
-		var netID = uuid.New()
-		var subID = uuid.New()
+		var simID = uuid.NewV4()
+		var netID = uuid.NewV4()
+		var subID = uuid.NewV4()
 
-		var packageID = uuid.New()
+		var packageID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -108,7 +108,7 @@ func TestSimRepo_Get(t *testing.T) {
 
 	t.Run("SimNotFound", func(t *testing.T) {
 		// Arrange
-		var simID = uuid.New()
+		var simID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -150,11 +150,11 @@ func TestSimRepo_Get(t *testing.T) {
 func TestSimRepo_GetBySubscriber(t *testing.T) {
 	t.Run("SubscriberFound", func(t *testing.T) {
 		// Arrange
-		var simID = uuid.New()
-		var netID = uuid.New()
-		var subID = uuid.New()
+		var simID = uuid.NewV4()
+		var netID = uuid.NewV4()
+		var subID = uuid.NewV4()
 
-		var packageID = uuid.New()
+		var packageID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -205,7 +205,7 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {
 		// Arrange
-		var subID = uuid.New()
+		var subID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -247,11 +247,11 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 func TestSimRepo_GetByNetwork(t *testing.T) {
 	t.Run("NetworkFound", func(t *testing.T) {
 		// Arrange
-		var simID = uuid.New()
-		var netID = uuid.New()
-		var subID = uuid.New()
+		var simID = uuid.NewV4()
+		var netID = uuid.NewV4()
+		var subID = uuid.NewV4()
 
-		var packageID = uuid.New()
+		var packageID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -302,7 +302,7 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		var netID = uuid.New()
+		var netID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -347,8 +347,8 @@ func TestSimRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		sim := simdb.Sim{
-			ID:           uuid.New(),
-			SubscriberID: uuid.New(),
+			ID:           uuid.NewV4(),
+			SubscriberID: uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -396,7 +396,7 @@ func TestSimRepo_Delete(t *testing.T) {
 		var db *extsql.DB
 
 		// Arrange
-		var simID = uuid.New()
+		var simID = uuid.NewV4()
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)

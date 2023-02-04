@@ -21,8 +21,6 @@ require (
 	gorm.io/gorm v1.24.3
 )
 
-require github.com/gofrs/uuid v4.2.0+incompatible // indirect
-
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/beorn7/perks v1.0.1 // indirect

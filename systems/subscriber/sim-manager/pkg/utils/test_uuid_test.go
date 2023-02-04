@@ -4,19 +4,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
-func Test_TestSimUUID(t *testing.T) {
+func Test_TestUUID(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		tt := func() string {
-			s := uuid.NewString()
+			s := uuid.NewV4().String()
 			return strings.Replace(s, s[:8], testUUUIDPrefix, 1)
 		}()
 
 		t.Run("testUuudIsValid: "+tt, func(t *testing.T) {
-			err := testSimUUID(tt)
+			err := ParseTestUUID(tt)
 			assert.NoError(t, err)
 		})
 	}
@@ -33,13 +33,13 @@ func Test_TestSimUUID(t *testing.T) {
 		tt := tests[i]
 
 		t.Run("testUuudIsNotValid: "+tt, func(t *testing.T) {
-			err := testSimUUID(tt)
+			err := ParseTestUUID(tt)
 			assert.Error(t, err)
 		})
 	}
 }
 
-func Test_GetIccidFromTestSimUUID(t *testing.T) {
+func Test_GetIccidFromTestUUID(t *testing.T) {
 	tests := []struct {
 		testUUID string
 		iccid    string
@@ -78,7 +78,7 @@ func Test_GetIccidFromTestSimUUID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testUUID, func(t *testing.T) {
-			iccid, _ := GetIccidFromTestSimUUID(tt.testUUID)
+			iccid, _ := GetIccidFromTestUUID(tt.testUUID)
 			assert.Equal(t, iccid, tt.iccid)
 		})
 	}
