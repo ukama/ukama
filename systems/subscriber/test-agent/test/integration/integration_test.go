@@ -1,17 +1,6 @@
 //go:build integration
 // +build integration
 
-<<<<<<< HEAD
-package integration
-
-import (
-	"github.com/ukama/ukama/systems/common/config"
-
-	rconf "github.com/num30/config"
-	"github.com/sirupsen/logrus"
-)
-
-=======
 package integration_test
 
 import (
@@ -32,7 +21,6 @@ type TestConfig struct {
 	ServiceHost string `default:"localhost:9090"`
 }
 
->>>>>>> subscriber-sys_sim-manager
 var tConfig *TestConfig
 
 func init() {
@@ -41,20 +29,6 @@ func init() {
 
 	reader := rconf.NewConfReader("integration")
 
-<<<<<<< HEAD
-	err := reader.Read(tConfig)
-	if err != nil {
-		logrus.Fatalf("Failed to read config: %v", err)
-	}
-
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("Config: %+v\n", tConfig)
-}
-
-type TestConfig struct {
-	ServiceHost string        `default:"localhost:9090"`
-	Queue       *config.Queue `default:"{}"`
-=======
 	if err := reader.Read(tConfig); err != nil {
 		log.Fatalf("Failed to read config: %v", err)
 	}
@@ -169,5 +143,4 @@ func CreateTestAgentClient() (*grpc.ClientConn, pb.TestAgentServiceClient, error
 	c := pb.NewTestAgentServiceClient(conn)
 
 	return conn, c, nil
->>>>>>> subscriber-sys_sim-manager
 }

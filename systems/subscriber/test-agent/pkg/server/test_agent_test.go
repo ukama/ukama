@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-package server
-=======
 package server_test
 
 import (
@@ -428,4 +425,3 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.AssertExpectations(t)
 	})
 }
->>>>>>> subscriber-sys_sim-manager

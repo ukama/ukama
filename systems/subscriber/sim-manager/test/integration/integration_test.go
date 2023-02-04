@@ -8,8 +8,7 @@ import (
 	"testing"
 	"time"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/grpc"
@@ -45,18 +44,18 @@ func init() {
 
 func Test_FullFlow(t *testing.T) {
 	// prerequisites
-	// In order for this to pass without errors, we need to substitute all the uuid.NewV4().String()
+	// In order for this to pass without errors, we need to substitute all the uuid.NewString()
 	// values with real co-related values comming from subscriber-registry and
 	// data-plan/packages with available sims in sim-pool.
 
 	// we need real subscriberID from subscriber-registry
-	subscriberID := uuid.NewV4().String()
+	subscriberID := uuid.NewString()
 
 	// networkID should match with subscriberID
-	networkID := uuid.NewV4().String()
+	networkID := uuid.NewString()
 
 	// we need real and active packageID from data-plan/package
-	packageID := uuid.NewV4().String()
+	packageID := uuid.NewString()
 
 	// simType should match packageID's package SimType
 	simType := "INTER_MNO_ALL"

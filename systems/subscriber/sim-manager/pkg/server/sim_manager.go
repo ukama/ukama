@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -64,7 +64,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-	subscriberID, err := uuid.FromString(req.GetSubscriberID())
+	subscriberID, err := uuid.Parse(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of subscriber uuid. Error %s", err.Error())
@@ -86,7 +86,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"invalid networkId: subscriber is not registered on the provided network")
 	}
 
-	packageID, err := uuid.FromString(req.GetPackageID())
+	packageID, err := uuid.Parse(req.GetPackageID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of package uuid. Error %s", err.Error())
@@ -154,13 +154,13 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		poolSim = remoteSimPoolResp.Sim
 	}
 
-	networkID, err := uuid.FromString(remoteSubResp.Subscriber.NetworkID)
+	networkID, err := uuid.Parse(remoteSubResp.Subscriber.NetworkID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal,
 			"invalid format of subscriber's network uuid. Error %s", err.Error())
 	}
 
-	orgID, err := uuid.FromString(remoteSubResp.Subscriber.OrgID)
+	orgID, err := uuid.Parse(remoteSubResp.Subscriber.OrgID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal,
 			"invalid format of subscriber's org uuid. Error %s", err.Error())
@@ -180,12 +180,12 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
 		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 
-		sim.ID = uuid.NewV4()
+		sim.ID = uuid.New()
 		startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
 		endDate := startDate.Add(time.Duration(remotePkgResp.Package.Duration))
 
 		firstPackage := &sims.Package{
-			ID:        uuid.NewV4(),
+			ID:        uuid.New(),
 			SimID:     sim.ID,
 			StartDate: startDate,
 			EndDate:   endDate,
@@ -219,7 +219,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 }
 
 func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
-	simID, err := uuid.FromString(req.GetSimID())
+	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
@@ -233,12 +233,8 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 	return &pb.GetSimResponse{Sim: dbSimToPbSim(sim)}, nil
 }
 
-func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest) (*pb.ListSimsResponse, error) {
-	return nil, nil
-}
-
 func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetSimsBySubscriberRequest) (*pb.GetSimsBySubscriberResponse, error) {
-	subID, err := uuid.FromString(req.GetSubscriberID())
+	subID, err := uuid.Parse(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of subscriber uuid. Error %s", err.Error())
@@ -258,7 +254,7 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 }
 
 func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSimsByNetworkRequest) (*pb.GetSimsByNetworkResponse, error) {
-	netID, err := uuid.FromString(req.GetNetworkID())
+	netID, err := uuid.Parse(req.GetNetworkID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of network uuid. Error %s", err.Error())
@@ -293,7 +289,7 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 }
 
 func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimRequest) (*pb.DeleteSimResponse, error) {
-	simID, err := uuid.FromString(req.GetSimID())
+	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
@@ -351,7 +347,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			"cannot set package start date on the past: package start date is %s", startDate)
 	}
 
-	simID, err := uuid.FromString(req.GetSimID())
+	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
@@ -362,7 +358,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	packageID, err := uuid.FromString(req.GetPackageID())
+	packageID, err := uuid.Parse(req.GetPackageID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of package uuid. Error %s", err.Error())
@@ -413,7 +409,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	}
 
 	err = s.packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
-		pckg.ID = uuid.NewV4()
+		pckg.ID = uuid.New()
 
 		return nil
 	})
@@ -426,7 +422,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 }
 
 func (s *SimManagerServer) GetPackagesBySim(ctx context.Context, req *pb.GetPackagesBySimRequest) (*pb.GetPackagesBySimResponse, error) {
-	simID, err := uuid.FromString(req.GetSimID())
+	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
@@ -446,7 +442,7 @@ func (s *SimManagerServer) GetPackagesBySim(ctx context.Context, req *pb.GetPack
 }
 
 func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
-	simID, err := uuid.FromString(req.GetSimID())
+	simID, err := uuid.Parse(req.GetSimID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
@@ -462,7 +458,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"cannot set active package on non active sim: sim's status is is %s", sim.Status)
 	}
 
-	packageID, err := uuid.FromString(req.GetPackageID())
+	packageID, err := uuid.Parse(req.GetPackageID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of package uuid. Error %s", err.Error())
@@ -523,7 +519,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 }
 
 func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
-	packageID, err := uuid.FromString(req.GetPackageID())
+	packageID, err := uuid.Parse(req.GetPackageID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of package uuid. Error %s", err.Error())
@@ -548,7 +544,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 }
 
 func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*pb.ToggleSimStatusResponse, error) {
-	simID, err := uuid.FromString(reqSimID)
+	simID, err := uuid.Parse(reqSimID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
@@ -596,7 +592,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 }
 
 func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (*pb.ToggleSimStatusResponse, error) {
-	simID, err := uuid.FromString(reqSimID)
+	simID, err := uuid.Parse(reqSimID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of sim uuid. Error %s", err.Error())
