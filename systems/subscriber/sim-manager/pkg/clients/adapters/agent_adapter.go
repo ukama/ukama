@@ -1,0 +1,65 @@
+package adapters
+
+import (
+	"context"
+	"log"
+	"time"
+
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+)
+
+type AgentAdapter interface {
+	ActivateSim(context.Context, string) error
+	DeactivateSim(context.Context, string) error
+	TerminateSim(context.Context, string) error
+	Close()
+}
+
+type AgentFactory interface {
+	GetAgentAdapter(sims.SimType) (AgentAdapter, bool)
+}
+
+type agentFactory struct {
+	timeout time.Duration
+	factory map[sims.SimType]AgentAdapter
+}
+
+func NewAgentFactory(testAgentHost string, timeout time.Duration) *agentFactory {
+	// we should lookup from provided config to get {realHost, realAgent, timeout} mappings
+	// in order to dynamically fill the factory map with available running agents
+
+	// for each {realHost, realAgent, timeout}}
+	// agent, err := NewRealAgent(realHost, timeout)
+	// handle err
+	// factory[SimTypeForAgent] = agent
+
+	// For now we will only use TestAgent for any sim type
+	agent, err := NewTestAgentAdapter(testAgentHost, timeout)
+	if err != nil {
+		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", testAgentHost, err)
+	}
+
+	var factory = make(map[sims.SimType]AgentAdapter)
+
+	factory[sims.SimTypeInterNone] = agent
+	factory[sims.SimTypeInterMnoAll] = agent
+	factory[sims.SimTypeInterMnoData] = agent
+	factory[sims.SimTypeInterUkamaAll] = agent
+
+	return &agentFactory{
+		timeout: timeout,
+		factory: factory,
+	}
+}
+
+func (a *agentFactory) GetAgentAdapter(simType sims.SimType) (AgentAdapter, bool) {
+	agent, ok := a.factory[simType]
+
+	return agent, ok
+}
+
+func (a *agentFactory) Close() {
+	for _, adapter := range a.factory {
+		adapter.Close()
+	}
+}

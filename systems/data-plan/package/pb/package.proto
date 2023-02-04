@@ -2,6 +2,8 @@ syntax = "proto3";
 package ukama.packages.v1;
 option go_package = "pb/gen";
 
+import "validator.proto";
+
 service PackagesService {
     rpc Get (GetPackageRequest) returns (GetPackageResponse) {}
     rpc Add (AddPackageRequest) returns (AddPackageResponse){}
@@ -11,10 +13,10 @@ service PackagesService {
 
 }
 message GetPackageRequest{
-    uint64 id =1;
+    string packageUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_uuid"];
 }
 message GetByOrgPackageRequest{
-    uint64 orgId =1;
+    string orgId = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
 }
 message GetByOrgPackageResponse{
     repeated Package packages =1;
@@ -24,28 +26,28 @@ message GetPackageResponse{
      Package package =1;
 }
 message DeletePackageRequest {
-    uint64 id =1;
+    string packageUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_uuid"];
 }
 message DeletePackageResponse {
-    
+    string packageUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_uuid"];
 }
 message UpdatePackageRequest {
-    uint64 id=1;
-    string name=2;
-    bool active=3;
-    uint64 duration=4;
-    SimType sim_type=5;
-    int64 sms_volume=6;
-    int64 data_volume=7;
-    int64 voice_volume=8;
-    uint64 org_rates_id=9;
+    string uuid=2  [(validator.field) = {uuid_ver: 0}];
+    string name=3;
+    bool active=4;
+    uint64 duration=5;
+    SimType sim_type=6;
+    int64 sms_volume=7;
+    int64 data_volume=8;
+    int64 voice_volume=9;
+    uint64 org_rates_id=10;
 }
 message UpdatePackageResponse {
     Package package = 1;
 }
 message AddPackageRequest {
     string name =2;
-    uint64 org_id=3;
+    string org_id = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
     bool active =4;
     uint64 duration =5;
     SimType sim_type=6;
@@ -60,23 +62,24 @@ message AddPackageResponse {
 }
 message Package {
     uint64 id =1;
-    string name =2;
-    int64 org_id=3;
-    bool active =4;
-    uint64 duration =5;
-    SimType sim_type=6;
-    string created_at=7;
-    string deleted_at=8;
-    string updated_at=9;
-    int64 sms_volume =10;
-    int64 data_volume=11;
-    int64 voice_volume =12;
-    uint64 org_rates_id=13;
+    string uuid=2  [(validator.field) = {uuid_ver: 0}];
+    string name =3;
+    string org_id = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    bool active =5;
+    uint64 duration =6;
+    SimType sim_type=7;
+    string created_at=8;
+    string deleted_at=9;
+    string updated_at=10;
+    int64 sms_volume =11;
+    int64 data_volume=12;
+    int64 voice_volume =13;
+    uint64 org_rates_id=14;
 }
 
 enum SimType {
-    inter_none=0;
-    inter_mno_data=1;
-    inter_mno_all=2;
-    inter_ukama_all=3;
+    INTER_NONE=0;
+    INTER_MNO_DATA=1;
+    INTER_MNO_ALL=2;
+    INTER_UKAMA_ALL=3;
 }
