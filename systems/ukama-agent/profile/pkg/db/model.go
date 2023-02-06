@@ -12,6 +12,9 @@ type PackageDetails struct {
 	AllowedTimeOfService time.Duration
 	TotalDataBytes       uint64
 	ConsumedDataBytes    uint64
+	UeDlBps              uint64 
+	UeUlBps              uint64
+	ApnName              string 
 }
 
 // Represents record in HSS db
@@ -28,7 +31,7 @@ type Profile struct {
 	UeDlBps              uint64        `gorm:"default:100000"` //TODO: Add it to Package DB in data-plan
 	UeUlBps              uint64        `gorm:"default:10000"`  //TODO: Add it to Package DB in data-plan
 	ApnName              string        `gorm:"default:ukama"`  //TODO: Add it to Package DB in data-plan
-	NetworkID            uuid.UUID     `gorm:"not null;type:uuid"`
+	NetworkId            uuid.UUID     `gorm:"not null;type:uuid"`
 	PackageId            uuid.UUID     `gorm:"not null;type uuid"`
 	AllowedTimeOfService time.Duration `gorm:"default:43200s"` //TODO: Add it to Package DB in data-plan (30*24*60=43200)
 	TotalDataBytes       uint64

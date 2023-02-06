@@ -2,17 +2,16 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"time"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/ukama-agent/profile/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg"
-	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
 )
 
@@ -41,40 +40,37 @@ func NewProfileServer(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceC
 }
 
 func (s *ProfileServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, error) {
-	var sub *db.Profile
+	var p *db.Profile
 	var err error
 
 	switch req.Id.(type) {
 	case *pb.ReadReq_Imsi:
 
-		sub, err = s.profileRepo.GetByImsi(req.GetImsi())
+		p, err = s.profileRepo.GetByImsi(req.GetImsi())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
 		}
 
 	case *pb.ReadReq_Iccid:
-		sub, err = s.profileRepo.GetByIccid(req.GetIccid())
+		p, err = s.profileRepo.GetByIccid(req.GetIccid())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
 		}
 	}
 
-	resp := &pb.ReadResp{Record: &pb.Record{
-		Imsi:  sub.Imsi,
-		Iccid: sub.Iccid,
-		Key:   sub.Key,
-		Amf:   sub.Amf,
-		Op:    sub.Op,
+	resp := &pb.ReadResp{Profile: &pb.Profile{
+		Imsi:    p.Imsi,
+		Iccid:   p.Iccid,
+		UeDlBps: p.UeDlBps,
+		UeUlBps: p.UeUlBps,
 		Apn: &pb.Apn{
-			Name: sub.DefaultApnName,
+			Name: p.ApnName,
 		},
-		AlgoType:    sub.AlgoType,
-		CsgId:       sub.CsgId,
-		CsgIdPrsent: sub.CsgIdPrsent,
-		Sqn:         sub.Sqn,
-		UeDlAmbrBps: sub.UeDlAmbrBps,
-		UeUlAmbrBps: sub.UeDlAmbrBps,
-		PackageId:   sub.PackageId.String(),
+		NetworkId:            p.NetworkId.String(),
+		PackageId:            p.PackageId.String(),
+		AllowedTimeOfService: uint64(p.AllowedTimeOfService.Seconds()),
+		ConsumedDataBytes:    p.ConsumedDataBytes,
+		UpdatedAt:            uint64(p.Model.UpdatedAt.Unix()),
 	}}
 
 	logrus.Infof("Subscriber is having %+v", resp)
@@ -83,79 +79,52 @@ func (s *ProfileServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, 
 
 func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, error) {
 
-	/* Validate network in Org */
-	err := s.network.ValidateNetwork(req.Network, s.Org)
-	if err != nil {
-		return nil, fmt.Errorf("error validating network")
-	}
-
-	/* Send Request to SIM Factory */
-	sim, err := s.factory.ReadSimCardInfo(req.Iccid)
-	if err != nil {
-		return nil, fmt.Errorf("error reading iccid from factory")
-	}
-
 	/* Send message to PCRF */
-	nId, err := uuid.FromString(req.Network)
+	nId, err := uuid.FromString(req.Profile.NetworkId)
 	if err != nil {
 		logrus.Errorf("NetworkId not valid.")
 		return nil, err
 	}
 
-	pId, err := uuid.FromString(req.PackageId)
+	pId, err := uuid.FromString(req.Profile.PackageId)
 	if err != nil {
 		logrus.Errorf("PackageId not valid.")
 	}
 
-	pcrfData := client.PolicyControlSimInfo{
-		Imsi:      sim.Imsi,
-		Iccid:     sim.Iccid,
-		PackageId: pId,
-		NetworkId: nId,
-		Visitor:   false, // We will using this flag on roaming in VLR
+	/* Add to Profile */
+	p := &db.Profile{
+		Iccid:                req.Profile.Iccid,
+		Imsi:                 req.Profile.Imsi,
+		PackageId:            pId,
+		NetworkId:            nId,
+		UeDlBps:              req.Profile.UeDlBps,
+		UeUlBps:              req.Profile.UeUlBps,
+		ApnName:              req.Profile.Apn.Name,
+		AllowedTimeOfService: time.Duration(req.Profile.AllowedTimeOfService) * time.Second,
+		ConsumedDataBytes:    req.Profile.ConsumedDataBytes,
+		TotalDataBytes:       req.Profile.TotalDataBytes,
 	}
 
-	err = s.pcrf.AddSim(pcrfData)
+	err = s.profileRepo.Add(p)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error adding to pcrf")
-	}
-
-	/* Add to ASR */
-	asr := &db.Profile{
-		Iccid:          req.Iccid,
-		Imsi:           sim.Imsi,
-		Op:             sim.Op,
-		Key:            sim.Key,
-		Amf:            sim.Amf,
-		AlgoType:       sim.AlgoType,
-		UeDlAmbrBps:    sim.UeDlAmbrBps,
-		UeUlAmbrBps:    sim.UeUlAmbrBps,
-		Sqn:            uint64(sim.Sqn),
-		CsgIdPrsent:    sim.CsgIdPrsent,
-		CsgId:          sim.CsgId,
-		DefaultApnName: sim.DefaultApnName,
-		PackageId:      pId,
-		NetworkID:      nId,
-	}
-
-	err = s.profileRepo.Add(asr)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating profile")
 	}
 
 	/* Create event */
-	e := &epb.ProfileAddd{
-		Subscriber: &epb.Subscriber{
-			Imsi:    asr.Imsi,
-			Iccid:   asr.Iccid,
-			Network: asr.NetworkID.String(),
-			Package: asr.PackageId.String(),
-			Org:     s.Org,
+	e := &epb.ProfileUpdated{
+		Profile: &epb.Profile{
+			Imsi:                 p.Imsi,
+			Iccid:                p.Iccid,
+			Network:              p.NetworkId.String(),
+			Package:              p.PackageId.String(),
+			Org:                  s.Org,
+			AllowedTimeOfService: uint64(p.AllowedTimeOfService.Seconds()),
+			TotalDataBytes:       p.TotalDataBytes,
 		},
 	}
 
 	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetAction("create").SetObject("activesubscriber").MustBuild()
+		route := s.baseRoutingKey.SetAction("create").SetObject("profile").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
 			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
@@ -166,46 +135,48 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 }
 
 func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
-	asrRecord, err := s.profileRepo.GetByIccid(req.GetIccid())
+	p, err := s.profileRepo.GetByIccid(req.GetIccid())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
 	}
 
 	/* We assum that packageId is validated by subscriber. */
-	pId, err := uuid.FromString(req.PackageId)
+	pId, err := uuid.FromString(req.Package.PackageId)
 	if err != nil {
 		logrus.Errorf("PackageId not valid.")
 		return nil, grpc.SqlErrorToGrpc(err, "error invalid package id")
 	}
 
-	pD := client.PolicyControlSimPackageUpdate{
-		Imsi:      asrRecord.Imsi,
-		PackageId: pId,
+	pack := db.PackageDetails{
+		PackageId:            pId,
+		AllowedTimeOfService: time.Duration(req.Package.AllowedTimeOfService) * time.Second,
+		TotalDataBytes:       req.Package.TotalDataBytes,
+		ConsumedDataBytes:    req.Package.ConsumedDataBytes,
+		UeDlBps:              req.Package.UeDlBps,
+		UeUlBps:              req.Package.UeUlBps,
+		ApnName:              req.Package.Apn.Name,
 	}
 
-	err = s.pcrf.UpdateSim(pD)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
-	}
-
-	err = s.profileRepo.UpdatePackage(asrRecord.Imsi, pId)
+	err = s.profileRepo.UpdatePackage(p.Imsi, pack)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
 	/* Create event */
 	e := &epb.ProfileUpdated{
-		Subscriber: &epb.Subscriber{
-			Imsi:    asrRecord.Imsi,
-			Iccid:   asrRecord.Iccid,
-			Network: asrRecord.NetworkID.String(),
-			Package: req.PackageId,
-			Org:     s.Org,
+		Profile: &epb.Profile{
+			Imsi:                 p.Imsi,
+			Iccid:                p.Iccid,
+			Network:              p.NetworkId.String(),
+			Package:              req.Package.PackageId,
+			Org:                  s.Org,
+			AllowedTimeOfService: req.Package.AllowedTimeOfService,
+			TotalDataBytes:       p.TotalDataBytes,
 		},
 	}
 
 	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetActionUpdate().SetObject("updateactivesubscriber").MustBuild()
+		route := s.baseRoutingKey.SetActionUpdate().SetObject("profile").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
 			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
@@ -240,17 +211,19 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 
 	/* Create event */
 	e := &epb.ProfileRemoved{
-		Subscriber: &epb.Subscriber{
-			Imsi:    delProfile.Imsi,
-			Iccid:   delProfile.Iccid,
-			Network: delProfile.NetworkID.String(),
-			Package: delProfile.PackageId.String(),
-			Org:     s.Org,
+		Profile: &epb.Profile{
+			Imsi:                 delProfile.Imsi,
+			Iccid:                delProfile.Iccid,
+			Network:              delProfile.NetworkId.String(),
+			Package:              delProfile.PackageId.String(),
+			Org:                  s.Org,
+			AllowedTimeOfService: uint64(delProfile.AllowedTimeOfService.Seconds()),
+			TotalDataBytes:       delProfile.TotalDataBytes,
 		},
 	}
 
 	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetActionDelete().SetObject("activesubscriber").MustBuild()
+		route := s.baseRoutingKey.SetActionDelete().SetObject("profile").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
 			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())

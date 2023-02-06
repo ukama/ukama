@@ -45,14 +45,10 @@ func (this *Profile) Validate() error {
 	if !(this.UeUlBps > 0) {
 		return github_com_mwitkow_go_proto_validators.FieldError("UeUlBps", fmt.Errorf(`value '%v' must be greater than '0'`, this.UeUlBps))
 	}
-	if this.ApnName == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must not be an empty string`, this.ApnName))
-	}
-	if !(len(this.ApnName) > 0) {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length greater than '0'`, this.ApnName))
-	}
-	if !(len(this.ApnName) < 30) {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length smaller than '30'`, this.ApnName))
+	if this.Apn != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Apn); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Apn", err)
+		}
 	}
 	if !_regex_Profile_NetworkId.MatchString(this.NetworkId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
@@ -77,6 +73,18 @@ func (this *Profile) Validate() error {
 	}
 	return nil
 }
+func (this *Apn) Validate() error {
+	if this.Name == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
+	}
+	if !(len(this.Name) > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must have a length greater than '0'`, this.Name))
+	}
+	if !(len(this.Name) < 30) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must have a length smaller than '30'`, this.Name))
+	}
+	return nil
+}
 
 var _regex_Package_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
@@ -96,14 +104,10 @@ func (this *Package) Validate() error {
 	if !(this.UeUlBps > 0) {
 		return github_com_mwitkow_go_proto_validators.FieldError("UeUlBps", fmt.Errorf(`value '%v' must be greater than '0'`, this.UeUlBps))
 	}
-	if this.ApnName == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must not be an empty string`, this.ApnName))
-	}
-	if !(len(this.ApnName) > 0) {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length greater than '0'`, this.ApnName))
-	}
-	if !(len(this.ApnName) < 30) {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length smaller than '30'`, this.ApnName))
+	if this.Apn != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Apn); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Apn", err)
+		}
 	}
 	if !_regex_Package_PackageId.MatchString(this.PackageId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageId))
@@ -117,9 +121,6 @@ func (this *Package) Validate() error {
 	if !(this.TotalDataBytes > 0) {
 		return github_com_mwitkow_go_proto_validators.FieldError("TotalDataBytes", fmt.Errorf(`value '%v' must be greater than '0'`, this.TotalDataBytes))
 	}
-	return nil
-}
-func (this *Apn) Validate() error {
 	return nil
 }
 func (this *ReadReq) Validate() error {
@@ -155,24 +156,14 @@ func (this *ReadResp) Validate() error {
 	}
 	return nil
 }
-
-var _regex_AddReq_Network = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *AddReq) Validate() error {
-	if !_regex_AddReq_Network.MatchString(this.Network) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Network", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Network))
+	if nil == this.Profile {
+		return github_com_mwitkow_go_proto_validators.FieldError("Profile", fmt.Errorf("message must exist"))
 	}
-	if this.Network == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Network", fmt.Errorf(`value '%v' must not be an empty string`, this.Network))
-	}
-	if this.Iccid == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
-	}
-	if !(len(this.Iccid) > 18) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '18'`, this.Iccid))
-	}
-	if !(len(this.Iccid) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.Iccid))
+	if this.Profile != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Profile); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Profile", err)
+		}
 	}
 	return nil
 }
