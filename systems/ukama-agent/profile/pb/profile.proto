@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package ukama.subscriber.profile.v1;
+
+import "validator.proto";
+
+/* Active subscriber profile registry
+  Profile service maintains the record of all the active subscribers of a organization and thier config based on the active package id.
+  Profile also provide the input to policy control for enforcing the policies.
+  Initial implementation of Profile service itself will handle the policy control.   
+  
+  RPC exposed by Profile
+    - Add
+    - Remove
+    - UpdatePackage
+    - Sync
+    - Read
+  */
+  service ProfileService {
+
+    /// Use this RPC to add a new subscriber to ASR  
+    rpc Add(AddReq) returns (AddResp);
+    
+    /// Use this RPC to remove a subscriber to ASR  
+    rpc Remove(RemoveReq) returns (RemoveResp);
+
+    /// Use this RPC to update a subscriber package in ASR  
+    rpc UpdatePackage(UpdatePackageReq) returns (UpdatePackageResp); 
+     
+    /// This RPC is called when a Update GUTI message is sent by node  
+    rpc Sync(SyncReq) returns (SyncResp);
+  
+    /// This RPC is used to read the subscriber data from profile based on IMSI or ICCID
+    rpc Read(ReadReq) returns (ReadResp);
+}
+
+
+message Profile {
+    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string Iccid = 2 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="iccid"];
+    uint64 UeDlBps = 3 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="ue_dl_bps"];
+    uint64 UeUlBps = 4 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="ue_ul_bps"];
+    string ApnName = 5 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="apn_name"];
+    string NetworkId = 6 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="network_id"];
+    string PackageId = 7 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="package_id"];
+    uint64 AllowedTimeOfService = 8 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="allowed_time_of_service"];
+    uint64 AvailableDataBytes = 9 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="available_data_bytes"];
+    uint64 ConsumedDataBytes = 10 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="consumed_data_bytes"];
+}
+
+message Package {
+    string Iccid = 1 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="iccid"];
+    uint64 UeDlBps = 2 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="ue_dl_bps"];
+    uint64 UeUlBps = 3 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="ue_ul_bps"];
+    string ApnName = 4 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="apn_name"];
+    string PackageId = 5 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="package_id"];
+    uint64 AllowedTimeOfService = 6 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="allowed_time_of_service"];
+    uint64 AvailableDataBytes = 7 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="available_data_bytes"];
+    uint64 ConsumedDataBytes = 8 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="consumed_data_bytes"];
+}
+
+message Apn {
+    string Name = 1;
+}
+
+message ReadReq {
+    oneof id {
+        string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}]; ///oneof
+        string Iccid = 2 [(validator.field) = {string_not_empty: true, length_gt: 18, length_lt: 22}]; ///oneof
+    }
+}
+
+message ReadResp {
+    Profile Profile = 1;
+}
+message AddReq {
+    string network = 1[(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name="network"];
+    string Iccid = 2 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
+    string PackageId = 3;
+}
+
+message AddResp {
+    ///Empty 
+}
+
+/* Could be called by subscriber manager with ICCID and by billing service with imsi */ 
+message RemoveReq {
+    oneof id {
+        string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}]; /// oneof
+        string Iccid = 2 [(validator.field) = {string_not_empty: true, length_gt: 18, length_lt: 22}]; ///oneof
+    }
+}
+
+message RemoveResp {
+    ///Empty 
+}
+
+message UpdatePackageReq {
+    string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
+    Package Package = 2[(validator.field) = required, json_name="package"]; 
+}
+
+message UpdatePackageResp {
+    ///Empty
+}
+
+message SyncReq {
+    repeated string Iccid = 1 [(validator.field) = required];
+}
+
+message SyncResp {
+    repeated string Iccid = 1 [(validator.field) = required];
+}
