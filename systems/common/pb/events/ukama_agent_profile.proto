@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option go_package = "pb/gen/events";
+
+package ukama.events.v1;
+
+import "validator.proto";
+import "google/protobuf/any.proto";
+
+message Profile {
+    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
+    string Iccid = 2 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="iccid"];
+    string Network = 3[(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name="network"];
+    string Package = 4[(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name="package"];
+    string Org = 5[(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name="org"];
+    uint64 AllowedTimeOfService = 6 [(validator.field) = {int_gt: 0}, json_name="allowed_time_of_service"];
+    uint64 TotalDataBytes = 7 [(validator.field) = {int_gt: 0}, json_name="available_data_bytes"];
+}
+
+message ProfileRemoved {
+    Profile profile = 1 [(validator.field) = {msg_exists : true}, json_name="profile"];
+}
+
+message ProfileAdded{
+    Profile profile = 1 [(validator.field) = {msg_exists : true}, json_name="profile"];
+}
+
+message ProfileUpdated {
+    Profile profile = 1 [(validator.field) = {msg_exists : true}, json_name="profile"];
+}
