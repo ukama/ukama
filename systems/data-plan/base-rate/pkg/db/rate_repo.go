@@ -1,11 +1,12 @@
 package db
 
 import (
+	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
 )
 
 type BaseRateRepo interface {
-	GetBaseRate(Id uint64) (*Rate, error)
+	GetBaseRate(uuid uuid.UUID) (*Rate, error)
 	GetBaseRates(country, network, effectiveAt, simType string) ([]Rate, error)
 	UploadBaseRates(rateList []Rate) error
 }
@@ -20,9 +21,9 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 	}
 }
 
-func (u *baseRateRepo) GetBaseRate(rateId uint64) (*Rate, error) {
+func (u *baseRateRepo) GetBaseRate(uuid uuid.UUID) (*Rate, error) {
 	rate := &Rate{}
-	result := u.Db.GetGormDb().First(rate, "Id=?", rateId)
+	result := u.Db.GetGormDb().First(rate, "Uuid=?", uuid)
 	if result.Error != nil {
 		return nil, result.Error
 	}

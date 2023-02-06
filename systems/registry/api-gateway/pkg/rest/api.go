@@ -51,7 +51,7 @@ type GetNetworksRequest struct {
 }
 
 type GetNetworkRequest struct {
-	NetworkID uint64 `path:"net_id" validate:"required"`
+	NetworkID string `path:"net_id" validate:"required"`
 }
 
 type AddNetworkRequest struct {
@@ -60,10 +60,10 @@ type AddNetworkRequest struct {
 }
 
 type GetSiteRequest struct {
-	NetworkID uint64 `path:"net_id" validate:"required"`
+	NetworkID string `path:"net_id" validate:"required"`
 	SiteName  string `path:"site" validate:"required"`
 }
 type AddSiteRequest struct {
-	NetworkID uint64 `path:"net_id" validate:"required"`
+	NetworkID string `path:"net_id" validate:"required"`
 	SiteName  string `json:"site" validate:"required"`
 }

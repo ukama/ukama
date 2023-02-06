@@ -13,10 +13,9 @@ lint:
 	golangci-lint run
 
 gen:
-	protoc --go_out=. --go_opt=paths=source_relative \
-   --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-   pb/rate.proto
-
+	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
+ 			rate.proto
+	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 	

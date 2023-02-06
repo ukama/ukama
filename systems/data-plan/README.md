@@ -1,6 +1,6 @@
 # Data Plan System
 
-Data Plan system manages all the sim packages and base rates functionality. Data Plan system will include 2 micro services:
+Data Plan system manages all the sim packages and base rates functionality. Data Plan system will include 2 sub-systems:
 
 - API Gateway
 - Base rate sub-system

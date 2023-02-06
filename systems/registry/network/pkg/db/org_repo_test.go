@@ -6,6 +6,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -18,7 +19,7 @@ import (
 func Test_OrgRepo_Get(t *testing.T) {
 	t.Run("OrgExist", func(t *testing.T) {
 		// Arrange
-		const orgId = 1
+		var orgID = uuid.NewV4()
 		const orgName = "ukama"
 
 		var db *extsql.DB
@@ -27,10 +28,10 @@ func Test_OrgRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		rows := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(orgId, orgName)
+			AddRow(orgID, orgName)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgId).
+			WithArgs(orgID).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -50,7 +51,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		org, err := r.Get(orgId)
+		org, err := r.Get(orgID)
 
 		// Assert
 		assert.NoError(t, err)
@@ -62,7 +63,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 
 	t.Run("OrgNotFound", func(t *testing.T) {
 		// Arrange
-		const orgId = 1
+		var orgID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -70,7 +71,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgId).
+			WithArgs(orgID).
 			WillReturnError(sql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
@@ -90,7 +91,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		org, err := r.Get(orgId)
+		org, err := r.Get(orgID)
 
 		// Assert
 		assert.Error(t, err)
@@ -104,7 +105,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 func Test_OrgRepo_GetByName(t *testing.T) {
 	t.Run("OrgExist", func(t *testing.T) {
 		// Arrange
-		const orgId = 1
+		var orgID = uuid.NewV4()
 		const orgName = "ukama"
 
 		var db *extsql.DB
@@ -113,7 +114,7 @@ func Test_OrgRepo_GetByName(t *testing.T) {
 		assert.NoError(t, err)
 
 		rows := sqlmock.NewRows([]string{"id", "name"}).
-			AddRow(orgId, orgName)
+			AddRow(orgID, orgName)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
 			WithArgs(orgName).
@@ -193,6 +194,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		org := net_db.Org{
+			ID:   uuid.NewV4(),
 			Name: "ukama",
 		}
 
@@ -201,9 +203,9 @@ func Test_OrgRepo_Add(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(org.ID, org.Name, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 

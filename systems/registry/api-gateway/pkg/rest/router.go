@@ -53,13 +53,13 @@ type registry interface {
 	UpdateMember(orgName string, userUUID string, isDeactivated bool) error
 	RemoveMember(orgName string, userUUID string) error
 
-	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
-	GetNetwork(netID uint64) (*netpb.GetResponse, error)
+	GetNetwork(netID string) (*netpb.GetResponse, error)
+	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
 
-	AddSite(netID uint64, siteName string) (*netpb.AddSiteResponse, error)
-	GetSite(netID uint64, siteName string) (*netpb.GetSiteResponse, error)
-	GetSites(netID uint64) (*netpb.GetSiteByNetworkResponse, error)
+	AddSite(netID string, siteName string) (*netpb.AddSiteResponse, error)
+	GetSite(netID string, siteName string) (*netpb.GetSiteResponse, error)
+	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -230,7 +230,7 @@ func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*netpb.Get
 	return r.clients.Registry.GetSite(req.NetworkID, req.SiteName)
 }
 
-func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetSiteByNetworkResponse, error) {
+func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetSitesByNetworkResponse, error) {
 	return r.clients.Registry.GetSites(req.NetworkID)
 }
 

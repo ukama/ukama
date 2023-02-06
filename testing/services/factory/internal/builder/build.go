@@ -11,7 +11,7 @@ import (
 	"github.com/ukama/ukama/testing/services/factory/internal/nmr"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	spec "github.com/ukama/ukama/testing/services/factory/specs/factory/spec"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -203,20 +203,6 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 									},
 								},
 								{
-									SecretRef: &v1.SecretEnvSource{
-										LocalObjectReference: v1.LocalObjectReference{
-											Name: internal.ServiceConfig.SecRef,
-										},
-									},
-								},
-							},
-							EnvFrom: []v1.EnvFromSource{
-								{
-									ConfigMapRef: &v1.ConfigMapEnvSource{
-										LocalObjectReference: v1.LocalObjectReference{
-											Name: internal.ServiceConfig.CmRef,
-										},
-									},
 									SecretRef: &v1.SecretEnvSource{
 										LocalObjectReference: v1.LocalObjectReference{
 											Name: internal.ServiceConfig.SecRef,

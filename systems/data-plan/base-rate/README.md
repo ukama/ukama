@@ -129,7 +129,7 @@ Function takes below argument:
 
 ```js
 {
-    [required] rateId => uint64
+    [required] rateUuid => string
 }
 ```
 

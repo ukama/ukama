@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -105,12 +106,21 @@ type GrpcService struct {
 Message Client for a system which talks to MsgBus
 */
 type MsgClient struct {
-	Host          string        `default:"localhost:9091"`
-	Timeout       time.Duration `default:"3s"`
-	RetryCount    int8          `default:"3"`
-	ListnerRoutes []string
+	Host           string        `default:"localhost:9095"`
+	Timeout        time.Duration `default:"3s"`
+	RetryCount     int8          `default:"3"`
+	Exchange       string        `default:"amq.topic"`
+	ListenQueue    string        `default:""`
+	PublishQueue   string        `default:""`
+	ListenerRoutes []string
 }
 
+type Service struct {
+	Host string `default:"localhost"`
+	Port string `default:"9090"`
+	Uri  string `default:"localhost:9090"`
+}
+	
 type Metrics struct {
 	Port    int  `default:"10250"`
 	Enabled bool `default:"true"`
@@ -186,4 +196,24 @@ func DefaultForwardConfig() Forward {
 		Port: 8080,
 		Path: "/",
 	}
+}
+
+func LoadServiceHostConfig(name string) *Service {
+	s := &Service{}
+	svcHost := "_SERVICE_HOST"
+	svcPort := "_SERVICE_PORT"
+
+	val, present := os.LookupEnv(strings.ToUpper(name + svcHost))
+	if present {
+		s.Host = val
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + svcPort))
+	if present {
+		s.Port = val
+	}
+
+	s.Uri = s.Host + ":" + s.Port
+
+	return s
 }

@@ -84,11 +84,11 @@ func (_m *registry) AddOrg(orgName string, owner string, certificate string) (*g
 }
 
 // AddSite provides a mock function with given fields: netID, siteName
-func (_m *registry) AddSite(netID uint64, siteName string) (*pbgen.AddSiteResponse, error) {
+func (_m *registry) AddSite(netID string, siteName string) (*pbgen.AddSiteResponse, error) {
 	ret := _m.Called(netID, siteName)
 
 	var r0 *pbgen.AddSiteResponse
-	if rf, ok := ret.Get(0).(func(uint64, string) *pbgen.AddSiteResponse); ok {
+	if rf, ok := ret.Get(0).(func(string, string) *pbgen.AddSiteResponse); ok {
 		r0 = rf(netID, siteName)
 	} else {
 		if ret.Get(0) != nil {
@@ -97,7 +97,7 @@ func (_m *registry) AddSite(netID uint64, siteName string) (*pbgen.AddSiteRespon
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint64, string) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
 		r1 = rf(netID, siteName)
 	} else {
 		r1 = ret.Error(1)
@@ -153,11 +153,11 @@ func (_m *registry) GetMembers(orgName string) (*gen.GetMembersResponse, error) 
 }
 
 // GetNetwork provides a mock function with given fields: netID
-func (_m *registry) GetNetwork(netID uint64) (*pbgen.GetResponse, error) {
+func (_m *registry) GetNetwork(netID string) (*pbgen.GetResponse, error) {
 	ret := _m.Called(netID)
 
 	var r0 *pbgen.GetResponse
-	if rf, ok := ret.Get(0).(func(uint64) *pbgen.GetResponse); ok {
+	if rf, ok := ret.Get(0).(func(string) *pbgen.GetResponse); ok {
 		r0 = rf(netID)
 	} else {
 		if ret.Get(0) != nil {
@@ -166,7 +166,7 @@ func (_m *registry) GetNetwork(netID uint64) (*pbgen.GetResponse, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint64) error); ok {
+	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(netID)
 	} else {
 		r1 = ret.Error(1)
@@ -245,11 +245,11 @@ func (_m *registry) GetOrgs(ownerUUID string) (*gen.GetByOwnerResponse, error) {
 }
 
 // GetSite provides a mock function with given fields: netID, siteName
-func (_m *registry) GetSite(netID uint64, siteName string) (*pbgen.GetSiteResponse, error) {
+func (_m *registry) GetSite(netID string, siteName string) (*pbgen.GetSiteResponse, error) {
 	ret := _m.Called(netID, siteName)
 
 	var r0 *pbgen.GetSiteResponse
-	if rf, ok := ret.Get(0).(func(uint64, string) *pbgen.GetSiteResponse); ok {
+	if rf, ok := ret.Get(0).(func(string, string) *pbgen.GetSiteResponse); ok {
 		r0 = rf(netID, siteName)
 	} else {
 		if ret.Get(0) != nil {
@@ -258,7 +258,7 @@ func (_m *registry) GetSite(netID uint64, siteName string) (*pbgen.GetSiteRespon
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint64, string) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
 		r1 = rf(netID, siteName)
 	} else {
 		r1 = ret.Error(1)
@@ -268,20 +268,20 @@ func (_m *registry) GetSite(netID uint64, siteName string) (*pbgen.GetSiteRespon
 }
 
 // GetSites provides a mock function with given fields: netID
-func (_m *registry) GetSites(netID uint64) (*pbgen.GetSiteByNetworkResponse, error) {
+func (_m *registry) GetSites(netID string) (*pbgen.GetSitesByNetworkResponse, error) {
 	ret := _m.Called(netID)
 
-	var r0 *pbgen.GetSiteByNetworkResponse
-	if rf, ok := ret.Get(0).(func(uint64) *pbgen.GetSiteByNetworkResponse); ok {
+	var r0 *pbgen.GetSitesByNetworkResponse
+	if rf, ok := ret.Get(0).(func(string) *pbgen.GetSitesByNetworkResponse); ok {
 		r0 = rf(netID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pbgen.GetSiteByNetworkResponse)
+			r0 = ret.Get(0).(*pbgen.GetSitesByNetworkResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint64) error); ok {
+	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(netID)
 	} else {
 		r1 = ret.Error(1)

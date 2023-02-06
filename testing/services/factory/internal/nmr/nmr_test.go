@@ -6,8 +6,8 @@ import (
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
-	"github.com/ukama/ukama/services/common/ukama"
+	sr "github.com/ukama/ukama/systems/common/srvcrouter"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/testing/services/factory/internal"
 )
 

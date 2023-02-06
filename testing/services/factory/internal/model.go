@@ -3,7 +3,7 @@ package internal
 import (
 	"time"
 
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 )
 
 type Module struct {

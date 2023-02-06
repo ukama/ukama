@@ -1,0 +1,58 @@
+version: "3.2"
+services:
+  postgresd:
+    image: postgres:13.3
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=ThisIsUkamaXPass
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
+  sim-manager:
+    build: ./sim-manager
+    ports:
+      - "9090:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+
+
+
+  test-agent:
+    build: ./test-agent
+    ports:
+      - "9091:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+
+
+networks:
+  ukama-net:
+      ipam:
+        driver: default
+        config:
+            - subnet: 10.10.0.0/24
+
+volumes:
+  postgress-data:
