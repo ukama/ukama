@@ -17,7 +17,7 @@ type Config struct {
 	MsgClient              *config.MsgClient `default:"{}"`
 	Key                    string
 	Service                *config.Service
-	PackageHost            string `default:"package:9090"`
+	DataPlanHost           string `default:"data-plan:8080"`
 	SubscriberRegistryHost string `default:"subscriber-registry:9090"`
 	SimPoolHost            string `default:"sim-pool:9090"`
 	TestAgentHost          string `default:"test-agent:9090"`

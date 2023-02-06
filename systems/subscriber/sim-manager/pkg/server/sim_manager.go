@@ -25,7 +25,6 @@ import (
 
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
-	pkgpb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	simpoolpb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	subregpb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 )
@@ -36,7 +35,7 @@ type SimManagerServer struct {
 	simRepo                   sims.SimRepo
 	packageRepo               sims.PackageRepo
 	agentFactory              adapters.AgentFactory
-	packageService            providers.PackageClientProvider
+	packageClient             providers.PackageInfoClient
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	simPoolService            providers.SimPoolClientProvider
 	key                       string
@@ -46,7 +45,7 @@ type SimManagerServer struct {
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	agentFactory adapters.AgentFactory, packageService providers.PackageClientProvider,
+	agentFactory adapters.AgentFactory, packageService providers.PackageInfoClient,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	simPoolService providers.SimPoolClientProvider, key string,
 	msgBus mb.MsgBusServiceClient) *SimManagerServer {
@@ -54,7 +53,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		simRepo:                   simRepo,
 		packageRepo:               packageRepo,
 		agentFactory:              agentFactory,
-		packageService:            packageService,
+		packageClient:             packageService,
 		subscriberRegistryService: subscriberRegistryService,
 		simPoolService:            simPoolService,
 		key:                       key,
@@ -92,34 +91,30 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	packageSvc, err := s.packageService.GetClient()
+	packageInfo, err := s.packageClient.GetPackageInfo(packageID.String())
+	// think about how to handle different types of rest errors
 	if err != nil {
 		return nil, err
 	}
 
-	remotePkgResp, err := packageSvc.Get(ctx,
-		&pkgpb.GetPackageRequest{PackageUuid: packageID.String()})
-	if err != nil {
-		return nil, err
-	}
-
-	if remotePkgResp.Package.OrgId != remoteSubResp.Subscriber.OrgID {
+	if packageInfo.OrgID != remoteSubResp.Subscriber.OrgID {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to subscriber sim: package does not belong to subscriber registerd org")
 	}
 
-	if !remotePkgResp.Package.Active {
+	if !packageInfo.IsActive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to sim: package is no more active within its org")
 	}
 
 	strType := strings.ToLower(req.GetSimType())
 	simType := sims.ParseType(strType)
+	pkgInfoSimType := sims.ParseType(packageInfo.SimType)
 
-	if uint8(simType) != uint8(remotePkgResp.Package.SimType) {
+	if simType != pkgInfoSimType {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid sim type: provided sim type (%s) does not match with package allowed sim type (%s)",
-			simType, remotePkgResp.Package.SimType)
+			simType, pkgInfoSimType)
 	}
 
 	poolSim := new(simpoolpb.Sim)
@@ -182,7 +177,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 		sim.ID = uuid.NewV4()
 		startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
-		endDate := startDate.Add(time.Duration(remotePkgResp.Package.Duration))
+		endDate := startDate.Add(time.Duration(packageInfo.Duration))
 
 		firstPackage := &sims.Package{
 			ID:        uuid.NewV4(),
@@ -368,35 +363,32 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	svc, err := s.packageService.GetClient()
+	pkgInfo, err := s.packageClient.GetPackageInfo(packageID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	remoteResp, err := svc.Get(ctx, &pkgpb.GetPackageRequest{PackageUuid: packageID.String()})
-	if err != nil {
-		return nil, err
-	}
-
-	if !remoteResp.Package.Active {
+	if !pkgInfo.IsActive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to sim: package is no more active within its org")
 	}
 
-	if sim.OrgID.String() != remoteResp.Package.OrgId {
+	if sim.OrgID.String() != pkgInfo.OrgID {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid packageID: provided package does not belong to sim org issuer")
 	}
 
-	if uint8(sim.Type) != uint8(remoteResp.Package.SimType) {
+	pkgInfoSimType := sims.ParseType(pkgInfo.SimType)
+
+	if sim.Type != pkgInfoSimType {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: sim (%s) and packge (%s) sim types mismatch", sim.Type, remoteResp.Package.SimType.String())
+			"invalid sim type: sim (%s) and packge (%s) sim types mismatch", sim.Type, pkgInfoSimType.String())
 	}
 
 	pkg := &sims.Package{
 		SimID:     sim.ID,
 		StartDate: startDate,
-		EndDate:   startDate.Add(time.Duration(remoteResp.Package.Duration)),
+		EndDate:   startDate.Add(time.Duration(pkgInfo.Duration)),
 		PlanID:    packageID,
 		IsActive:  false,
 	}
