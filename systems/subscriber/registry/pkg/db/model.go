@@ -7,7 +7,7 @@ import (
 )
 
 type Subscriber struct {
-	SubscriberID          uuid.UUID `gorm:"primaryKey;type:uuid;unique"`
+	SubscriberID          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	FirstName             string    `gorm:"size:255"`
 	LastName              string    `gorm:"size:255"`
 	NetworkID             uuid.UUID `gorm:"type:uuid;index"`

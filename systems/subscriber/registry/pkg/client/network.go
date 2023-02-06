@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/rest"
+	"github.com/ukama/ukama/systems/common/rest"
 
 	"github.com/sirupsen/logrus"
 )
@@ -64,8 +64,6 @@ func (N *network) ValidateNetwork(networkId string, orgId string) error {
 	if err != nil {
 		logrus.Tracef("Failed to desrialize network info. Error message is %s", err.Error())
 		return fmt.Errorf("network info deserailization failure:" + err.Error())
-	} else {
-		logrus.Infof("Network Info: %+v", network)
 	}
 
 	if orgId != network.OrgId {
