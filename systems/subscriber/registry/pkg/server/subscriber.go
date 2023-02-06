@@ -24,7 +24,7 @@ type SubcriberServer struct {
 	subscriberRepo       db.SubscriberRepo
 	msgbus               mb.MsgBusServiceClient
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
-	pb.UnimplementedSubscriberRegistryServiceServer
+	pb.UnimplementedRegistryServiceServer
 	simManagerService clientPkg.SimManagerClientProvider
 	network           client.Network
 }

@@ -93,7 +93,7 @@ func TestAddSubscriber(t *testing.T) {
 
 }
 
-func CreateSubscriberClient() (*grpc.ClientConn, pb.SubscriberRegistryServiceClient, error) {
+func CreateSubscriberClient() (*grpc.ClientConn, pb.RegistryServiceClient, error) {
 	logrus.Infoln("Connecting to subsriber-registry ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
@@ -102,6 +102,6 @@ func CreateSubscriberClient() (*grpc.ClientConn, pb.SubscriberRegistryServiceCli
 		return nil, nil, err
 	}
 
-	c := pb.NewSubscriberRegistryServiceClient(conn)
+	c := pb.NewRegistryServiceClient(conn)
 	return conn, c, nil
 }

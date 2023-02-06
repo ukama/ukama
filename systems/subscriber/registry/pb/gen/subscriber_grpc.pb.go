@@ -18,10 +18,10 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// SubscriberRegistryServiceClient is the client API for SubscriberRegistryService service.
+// RegistryServiceClient is the client API for RegistryService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type SubscriberRegistryServiceClient interface {
+type RegistryServiceClient interface {
 	// Get method to retrieve a subscriber by subscriber ID
 	Get(ctx context.Context, in *GetSubscriberRequest, opts ...grpc.CallOption) (*GetSubscriberResponse, error)
 	// Add method to add a new subscriber
@@ -36,72 +36,72 @@ type SubscriberRegistryServiceClient interface {
 	ListSubscribers(ctx context.Context, in *ListSubscribersRequest, opts ...grpc.CallOption) (*ListSubscribersResponse, error)
 }
 
-type subscriberRegistryServiceClient struct {
+type registryServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewSubscriberRegistryServiceClient(cc grpc.ClientConnInterface) SubscriberRegistryServiceClient {
-	return &subscriberRegistryServiceClient{cc}
+func NewRegistryServiceClient(cc grpc.ClientConnInterface) RegistryServiceClient {
+	return &registryServiceClient{cc}
 }
 
-func (c *subscriberRegistryServiceClient) Get(ctx context.Context, in *GetSubscriberRequest, opts ...grpc.CallOption) (*GetSubscriberResponse, error) {
+func (c *registryServiceClient) Get(ctx context.Context, in *GetSubscriberRequest, opts ...grpc.CallOption) (*GetSubscriberResponse, error) {
 	out := new(GetSubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.SubscriberRegistryService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *subscriberRegistryServiceClient) Add(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error) {
+func (c *registryServiceClient) Add(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error) {
 	out := new(AddSubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.SubscriberRegistryService/Add", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *subscriberRegistryServiceClient) Update(ctx context.Context, in *UpdateSubscriberRequest, opts ...grpc.CallOption) (*UpdateSubscriberResponse, error) {
+func (c *registryServiceClient) Update(ctx context.Context, in *UpdateSubscriberRequest, opts ...grpc.CallOption) (*UpdateSubscriberResponse, error) {
 	out := new(UpdateSubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.SubscriberRegistryService/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *subscriberRegistryServiceClient) Delete(ctx context.Context, in *DeleteSubscriberRequest, opts ...grpc.CallOption) (*DeleteSubscriberResponse, error) {
+func (c *registryServiceClient) Delete(ctx context.Context, in *DeleteSubscriberRequest, opts ...grpc.CallOption) (*DeleteSubscriberResponse, error) {
 	out := new(DeleteSubscriberResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.SubscriberRegistryService/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *subscriberRegistryServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
+func (c *registryServiceClient) GetByNetwork(ctx context.Context, in *GetByNetworkRequest, opts ...grpc.CallOption) (*GetByNetworkResponse, error) {
 	out := new(GetByNetworkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.SubscriberRegistryService/GetByNetwork", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/GetByNetwork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *subscriberRegistryServiceClient) ListSubscribers(ctx context.Context, in *ListSubscribersRequest, opts ...grpc.CallOption) (*ListSubscribersResponse, error) {
+func (c *registryServiceClient) ListSubscribers(ctx context.Context, in *ListSubscribersRequest, opts ...grpc.CallOption) (*ListSubscribersResponse, error) {
 	out := new(ListSubscribersResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.SubscriberRegistryService/ListSubscribers", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.registry.v1.RegistryService/ListSubscribers", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// SubscriberRegistryServiceServer is the server API for SubscriberRegistryService service.
-// All implementations must embed UnimplementedSubscriberRegistryServiceServer
+// RegistryServiceServer is the server API for RegistryService service.
+// All implementations must embed UnimplementedRegistryServiceServer
 // for forward compatibility
-type SubscriberRegistryServiceServer interface {
+type RegistryServiceServer interface {
 	// Get method to retrieve a subscriber by subscriber ID
 	Get(context.Context, *GetSubscriberRequest) (*GetSubscriberResponse, error)
 	// Add method to add a new subscriber
@@ -114,183 +114,182 @@ type SubscriberRegistryServiceServer interface {
 	GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error)
 	// ListSubscribers method to retrieve a list of all subscribers
 	ListSubscribers(context.Context, *ListSubscribersRequest) (*ListSubscribersResponse, error)
-	mustEmbedUnimplementedSubscriberRegistryServiceServer()
+	mustEmbedUnimplementedRegistryServiceServer()
 }
 
-// UnimplementedSubscriberRegistryServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedSubscriberRegistryServiceServer struct {
+// UnimplementedRegistryServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedRegistryServiceServer struct {
 }
 
-func (UnimplementedSubscriberRegistryServiceServer) Get(context.Context, *GetSubscriberRequest) (*GetSubscriberResponse, error) {
+func (UnimplementedRegistryServiceServer) Get(context.Context, *GetSubscriberRequest) (*GetSubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedSubscriberRegistryServiceServer) Add(context.Context, *AddSubscriberRequest) (*AddSubscriberResponse, error) {
+func (UnimplementedRegistryServiceServer) Add(context.Context, *AddSubscriberRequest) (*AddSubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
-func (UnimplementedSubscriberRegistryServiceServer) Update(context.Context, *UpdateSubscriberRequest) (*UpdateSubscriberResponse, error) {
+func (UnimplementedRegistryServiceServer) Update(context.Context, *UpdateSubscriberRequest) (*UpdateSubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedSubscriberRegistryServiceServer) Delete(context.Context, *DeleteSubscriberRequest) (*DeleteSubscriberResponse, error) {
+func (UnimplementedRegistryServiceServer) Delete(context.Context, *DeleteSubscriberRequest) (*DeleteSubscriberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedSubscriberRegistryServiceServer) GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error) {
+func (UnimplementedRegistryServiceServer) GetByNetwork(context.Context, *GetByNetworkRequest) (*GetByNetworkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByNetwork not implemented")
 }
-func (UnimplementedSubscriberRegistryServiceServer) ListSubscribers(context.Context, *ListSubscribersRequest) (*ListSubscribersResponse, error) {
+func (UnimplementedRegistryServiceServer) ListSubscribers(context.Context, *ListSubscribersRequest) (*ListSubscribersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSubscribers not implemented")
 }
-func (UnimplementedSubscriberRegistryServiceServer) mustEmbedUnimplementedSubscriberRegistryServiceServer() {
-}
+func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
 
-// UnsafeSubscriberRegistryServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to SubscriberRegistryServiceServer will
+// UnsafeRegistryServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RegistryServiceServer will
 // result in compilation errors.
-type UnsafeSubscriberRegistryServiceServer interface {
-	mustEmbedUnimplementedSubscriberRegistryServiceServer()
+type UnsafeRegistryServiceServer interface {
+	mustEmbedUnimplementedRegistryServiceServer()
 }
 
-func RegisterSubscriberRegistryServiceServer(s grpc.ServiceRegistrar, srv SubscriberRegistryServiceServer) {
-	s.RegisterService(&SubscriberRegistryService_ServiceDesc, srv)
+func RegisterRegistryServiceServer(s grpc.ServiceRegistrar, srv RegistryServiceServer) {
+	s.RegisterService(&RegistryService_ServiceDesc, srv)
 }
 
-func _SubscriberRegistryService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RegistryService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSubscriberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SubscriberRegistryServiceServer).Get(ctx, in)
+		return srv.(RegistryServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.registry.v1.SubscriberRegistryService/Get",
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubscriberRegistryServiceServer).Get(ctx, req.(*GetSubscriberRequest))
+		return srv.(RegistryServiceServer).Get(ctx, req.(*GetSubscriberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SubscriberRegistryService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RegistryService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddSubscriberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SubscriberRegistryServiceServer).Add(ctx, in)
+		return srv.(RegistryServiceServer).Add(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.registry.v1.SubscriberRegistryService/Add",
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubscriberRegistryServiceServer).Add(ctx, req.(*AddSubscriberRequest))
+		return srv.(RegistryServiceServer).Add(ctx, req.(*AddSubscriberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SubscriberRegistryService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RegistryService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateSubscriberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SubscriberRegistryServiceServer).Update(ctx, in)
+		return srv.(RegistryServiceServer).Update(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.registry.v1.SubscriberRegistryService/Update",
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubscriberRegistryServiceServer).Update(ctx, req.(*UpdateSubscriberRequest))
+		return srv.(RegistryServiceServer).Update(ctx, req.(*UpdateSubscriberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SubscriberRegistryService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RegistryService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteSubscriberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SubscriberRegistryServiceServer).Delete(ctx, in)
+		return srv.(RegistryServiceServer).Delete(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.registry.v1.SubscriberRegistryService/Delete",
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubscriberRegistryServiceServer).Delete(ctx, req.(*DeleteSubscriberRequest))
+		return srv.(RegistryServiceServer).Delete(ctx, req.(*DeleteSubscriberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SubscriberRegistryService_GetByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RegistryService_GetByNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetByNetworkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SubscriberRegistryServiceServer).GetByNetwork(ctx, in)
+		return srv.(RegistryServiceServer).GetByNetwork(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.registry.v1.SubscriberRegistryService/GetByNetwork",
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/GetByNetwork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubscriberRegistryServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
+		return srv.(RegistryServiceServer).GetByNetwork(ctx, req.(*GetByNetworkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SubscriberRegistryService_ListSubscribers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RegistryService_ListSubscribers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListSubscribersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SubscriberRegistryServiceServer).ListSubscribers(ctx, in)
+		return srv.(RegistryServiceServer).ListSubscribers(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.registry.v1.SubscriberRegistryService/ListSubscribers",
+		FullMethod: "/ukama.subscriber.registry.v1.RegistryService/ListSubscribers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SubscriberRegistryServiceServer).ListSubscribers(ctx, req.(*ListSubscribersRequest))
+		return srv.(RegistryServiceServer).ListSubscribers(ctx, req.(*ListSubscribersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// SubscriberRegistryService_ServiceDesc is the grpc.ServiceDesc for SubscriberRegistryService service.
+// RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var SubscriberRegistryService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.subscriber.registry.v1.SubscriberRegistryService",
-	HandlerType: (*SubscriberRegistryServiceServer)(nil),
+var RegistryService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ukama.subscriber.registry.v1.RegistryService",
+	HandlerType: (*RegistryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Get",
-			Handler:    _SubscriberRegistryService_Get_Handler,
+			Handler:    _RegistryService_Get_Handler,
 		},
 		{
 			MethodName: "Add",
-			Handler:    _SubscriberRegistryService_Add_Handler,
+			Handler:    _RegistryService_Add_Handler,
 		},
 		{
 			MethodName: "Update",
-			Handler:    _SubscriberRegistryService_Update_Handler,
+			Handler:    _RegistryService_Update_Handler,
 		},
 		{
 			MethodName: "Delete",
-			Handler:    _SubscriberRegistryService_Delete_Handler,
+			Handler:    _RegistryService_Delete_Handler,
 		},
 		{
 			MethodName: "GetByNetwork",
-			Handler:    _SubscriberRegistryService_GetByNetwork_Handler,
+			Handler:    _RegistryService_GetByNetwork_Handler,
 		},
 		{
 			MethodName: "ListSubscribers",
-			Handler:    _SubscriberRegistryService_ListSubscribers_Handler,
+			Handler:    _RegistryService_ListSubscribers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

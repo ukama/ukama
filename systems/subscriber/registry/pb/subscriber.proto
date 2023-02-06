@@ -13,7 +13,7 @@ Subscriber-registry sub-system is responsible of:
     - Get single subscriber with Sims associated to them
 */
 // Defines the service for subscriber registry operations
-service SubscriberRegistryService {
+service RegistryService {
 // Get method to retrieve a subscriber by subscriber ID
 rpc Get (GetSubscriberRequest) returns (GetSubscriberResponse) {}
 // Add method to add a new subscriber
