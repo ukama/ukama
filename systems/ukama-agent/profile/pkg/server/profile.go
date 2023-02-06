@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"time"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
@@ -15,8 +14,6 @@ import (
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ProfileServer struct {
@@ -84,7 +81,7 @@ func (s *ProfileServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, 
 	return resp, nil
 }
 
-func (s *ProfileServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
+func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, error) {
 
 	/* Validate network in Org */
 	err := s.network.ValidateNetwork(req.Network, s.Org)
@@ -147,7 +144,7 @@ func (s *ProfileServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.Ac
 	}
 
 	/* Create event */
-	e := &epb.ProfileActivated{
+	e := &epb.ProfileAddd{
 		Subscriber: &epb.Subscriber{
 			Imsi:    asr.Imsi,
 			Iccid:   asr.Iccid,
@@ -165,7 +162,7 @@ func (s *ProfileServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.Ac
 		}
 	}
 
-	return &pb.ActivateResp{}, err
+	return &pb.AddResp{}, err
 }
 
 func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
@@ -217,28 +214,23 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 	return &pb.UpdatePackageResp{}, nil
 }
 
-func (s *ProfileServer) Inactivate(c context.Context, req *pb.InactivateReq) (*pb.InactivateResp, error) {
+func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.RemoveResp, error) {
 	var delProfile *db.Profile
 	var err error
 
 	switch req.Id.(type) {
-	case *pb.InactivateReq_Imsi:
+	case *pb.RemoveReq_Imsi:
 
 		delProfile, err = s.profileRepo.GetByImsi(req.GetImsi())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
 		}
 
-	case *pb.InactivateReq_Iccid:
+	case *pb.RemoveReq_Iccid:
 		delProfile, err = s.profileRepo.GetByIccid(req.GetIccid())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
 		}
-	}
-
-	err = s.pcrf.DeleteSim(delProfile.Imsi)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
 	}
 
 	err = s.profileRepo.Delete(delProfile.Imsi)
@@ -247,7 +239,7 @@ func (s *ProfileServer) Inactivate(c context.Context, req *pb.InactivateReq) (*p
 	}
 
 	/* Create event */
-	e := &epb.ProfileInactivated{
+	e := &epb.ProfileRemoved{
 		Subscriber: &epb.Subscriber{
 			Imsi:    delProfile.Imsi,
 			Iccid:   delProfile.Iccid,
@@ -265,53 +257,11 @@ func (s *ProfileServer) Inactivate(c context.Context, req *pb.InactivateReq) (*p
 		}
 	}
 
-	return &pb.InactivateResp{}, nil
+	return &pb.RemoveResp{}, nil
 
 }
 
-func (s *ProfileServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error) {
-	_, err := s.profileRepo.GetByImsi(req.Imsi)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "imsi")
-	}
+func (s *ProfileServer) Sync(c context.Context, req *pb.SyncReq) (*pb.SyncResp, error) {
 
-	err = s.gutiRepo.Update(&db.Guti{
-		Imsi:            req.Imsi,
-		PlmnId:          req.Guti.PlmnId,
-		Mmegi:           req.Guti.Mmegi,
-		Mmec:            req.Guti.Mmec,
-		MTmsi:           req.Guti.Mtmsi,
-		DeviceUpdatedAt: time.Unix(int64(req.UpdatedAt), 0),
-	})
-	if err != nil {
-		logrus.Errorf("Failed to update GUTI: %s", err.Error())
-		if err.Error() == db.GutiNotUpdatedErr {
-			return nil, status.Errorf(codes.AlreadyExists, err.Error())
-		}
-		return nil, grpc.SqlErrorToGrpc(err, "guti")
-	}
-
-	return &pb.UpdateGutiResp{}, nil
-}
-
-func (s *ProfileServer) UpdateTai(c context.Context, req *pb.UpdateTaiReq) (*pb.UpdateTaiResp, error) {
-	_, err := s.profileRepo.GetByImsi(req.Imsi)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "imsi")
-	}
-
-	err = s.profileRepo.UpdateTai(req.Imsi, db.Tai{
-		PlmnId:          req.PlmnId,
-		Tac:             req.Tac,
-		DeviceUpdatedAt: time.Unix(int64(req.UpdatedAt), 0),
-	})
-
-	if err != nil {
-		if err.Error() == db.TaiNotUpdatedErr {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		return nil, grpc.SqlErrorToGrpc(err, "tai")
-	}
-
-	return &pb.UpdateTaiResp{}, nil
+	return &pb.SyncResp{}, nil
 }

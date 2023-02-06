@@ -17,6 +17,9 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_Profile_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Profile_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *Profile) Validate() error {
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
@@ -36,35 +39,47 @@ func (this *Profile) Validate() error {
 	if !(len(this.Iccid) < 22) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.Iccid))
 	}
+	if !(this.UeDlBps > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UeDlBps", fmt.Errorf(`value '%v' must be greater than '0'`, this.UeDlBps))
+	}
+	if !(this.UeUlBps > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UeUlBps", fmt.Errorf(`value '%v' must be greater than '0'`, this.UeUlBps))
+	}
 	if this.ApnName == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must not be an empty string`, this.ApnName))
 	}
-	if !(len(this.ApnName) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.ApnName))
+	if !(len(this.ApnName) > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length greater than '0'`, this.ApnName))
 	}
-	if !(len(this.ApnName) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.ApnName))
+	if !(len(this.ApnName) < 30) {
+		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length smaller than '30'`, this.ApnName))
+	}
+	if !_regex_Profile_NetworkId.MatchString(this.NetworkId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
 	}
 	if this.NetworkId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
 	}
-	if !(len(this.NetworkId) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.NetworkId))
-	}
-	if !(len(this.NetworkId) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.NetworkId))
+	if !_regex_Profile_PackageId.MatchString(this.PackageId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageId))
 	}
 	if this.PackageId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
 	}
-	if !(len(this.PackageId) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.PackageId))
+	if !(this.AllowedTimeOfService > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("AllowedTimeOfService", fmt.Errorf(`value '%v' must be greater than '0'`, this.AllowedTimeOfService))
 	}
-	if !(len(this.PackageId) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.PackageId))
+	if !(this.TotalDataBytes > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("TotalDataBytes", fmt.Errorf(`value '%v' must be greater than '0'`, this.TotalDataBytes))
+	}
+	if !(this.UpdatedAt > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UpdatedAt", fmt.Errorf(`value '%v' must be greater than '0'`, this.UpdatedAt))
 	}
 	return nil
 }
+
+var _regex_Package_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *Package) Validate() error {
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
@@ -75,23 +90,32 @@ func (this *Package) Validate() error {
 	if !(len(this.Iccid) < 22) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.Iccid))
 	}
+	if !(this.UeDlBps > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UeDlBps", fmt.Errorf(`value '%v' must be greater than '0'`, this.UeDlBps))
+	}
+	if !(this.UeUlBps > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UeUlBps", fmt.Errorf(`value '%v' must be greater than '0'`, this.UeUlBps))
+	}
 	if this.ApnName == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must not be an empty string`, this.ApnName))
 	}
-	if !(len(this.ApnName) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.ApnName))
+	if !(len(this.ApnName) > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length greater than '0'`, this.ApnName))
 	}
-	if !(len(this.ApnName) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.ApnName))
+	if !(len(this.ApnName) < 30) {
+		return github_com_mwitkow_go_proto_validators.FieldError("ApnName", fmt.Errorf(`value '%v' must have a length smaller than '30'`, this.ApnName))
+	}
+	if !_regex_Package_PackageId.MatchString(this.PackageId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageId))
 	}
 	if this.PackageId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
 	}
-	if !(len(this.PackageId) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.PackageId))
+	if !(this.AllowedTimeOfService > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("AllowedTimeOfService", fmt.Errorf(`value '%v' must be greater than '0'`, this.AllowedTimeOfService))
 	}
-	if !(len(this.PackageId) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.PackageId))
+	if !(this.TotalDataBytes > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("TotalDataBytes", fmt.Errorf(`value '%v' must be greater than '0'`, this.TotalDataBytes))
 	}
 	return nil
 }
@@ -208,11 +232,29 @@ func (this *UpdatePackageResp) Validate() error {
 }
 func (this *SyncReq) Validate() error {
 	for _, item := range this.Iccid {
+		if item == "" {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, item))
+		}
+		if !(len(item) > 5) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '5'`, item))
+		}
+		if !(len(item) < 22) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, item))
+		}
 	}
 	return nil
 }
 func (this *SyncResp) Validate() error {
 	for _, item := range this.Iccid {
+		if item == "" {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, item))
+		}
+		if !(len(item) > 5) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '5'`, item))
+		}
+		if !(len(item) < 22) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, item))
+		}
 	}
 	return nil
 }

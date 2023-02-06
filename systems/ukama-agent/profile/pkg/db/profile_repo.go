@@ -3,7 +3,6 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
-	"gorm.io/gorm"
 )
 
 // declare interface so that we can mock it
@@ -12,8 +11,7 @@ type ProfileRepo interface {
 	GetByImsi(imsi string) (*Profile, error)
 	GetByIccid(iccid string) (*Profile, error)
 	UpdatePackage(imsi string, pkg PackageDetails) error
-	DeleteByIccid(iccid string, nestedFunc ...func(*gorm.DB) error) error
-	DeleteByImsi(imsi string, nestedFunc ...func(*gorm.DB) error) error
+	Delete(imsi string) error
 }
 
 type profileRepo struct {
@@ -34,7 +32,7 @@ func (r *profileRepo) Add(rec *Profile) error {
 func (r *profileRepo) UpdatePackage(imsiToUpdate string, p PackageDetails) error {
 	rec := &Profile{PackageId: p.PackageId,
 		AllowedTimeOfService: p.AllowedTimeOfService,
-		AvailableDataBytes:   p.AvailableDataBytes,
+		TotalDataBytes:       p.TotalDataBytes,
 		ConsumedDataBytes:    0,
 	}
 	d := r.db.GetGormDb().Where("imsi=?", imsiToUpdate).Updates(rec)
@@ -61,15 +59,8 @@ func (r *profileRepo) GetByIccid(iccid string) (*Profile, error) {
 	return &pro, nil
 }
 
-func (r *profileRepo) DeleteByImsi(imsi string, nestedFunc ...func(*gorm.DB) error) error {
+func (r *profileRepo) Delete(imsi string) error {
 
 	res := r.db.GetGormDb().Where(&Profile{Imsi: imsi}).Delete(&Profile{})
 	return res.Error
-}
-
-func (r *profileRepo) DeleteByIccid(iccid string, nestedFunc ...func(*gorm.DB) error) error {
-
-	res := r.db.GetGormDb().Where(&Profile{Iccid: iccid}).Delete(&Profile{})
-	return res.Error
-
 }
