@@ -12,8 +12,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
-	client "github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
-	clientPkg "github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/grpc/codes"
@@ -25,11 +24,11 @@ type SubcriberServer struct {
 	msgbus               mb.MsgBusServiceClient
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedRegistryServiceServer
-	simManagerService clientPkg.SimManagerClientProvider
+	simManagerService client.SimManagerClientProvider
 	network           client.Network
 }
 
-func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService clientPkg.SimManagerClientProvider, network client.Network) *SubcriberServer {
+func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, network client.Network) *SubcriberServer {
 	return &SubcriberServer{subscriberRepo: subscriberRepo,
 		msgbus:               msgBus,
 		simManagerService:    simManagerService,

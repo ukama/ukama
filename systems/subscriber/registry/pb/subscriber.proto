@@ -6,7 +6,7 @@ package ukama.subscriber.registry.v1;
 import "validator.proto";
 
 /*
-Subscriber-registry sub-system is responsible of:
+Registry sub-system is responsible of:
     - Creating subscriber
     - Update subscriber
     - Get subscriber by network
