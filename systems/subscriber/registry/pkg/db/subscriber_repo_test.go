@@ -260,3 +260,30 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 		assert.Nil(t, sub)
 	})
 }
+
+func TestSubscriber_Delete(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	gdb, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{})
+	repo := int_db.NewSubscriberRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	var subscriberID = uuid.NewV4()
+
+	mock.ExpectBegin()
+	mock.ExpectExec("DELETE FROM \"subscribers\"").WithArgs(subscriberID).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	err = repo.Delete(subscriberID)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
