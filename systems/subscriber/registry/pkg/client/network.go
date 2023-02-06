@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/rest"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/rest"
 
 	"github.com/sirupsen/logrus"
 )

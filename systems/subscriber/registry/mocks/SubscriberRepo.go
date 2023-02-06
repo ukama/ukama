@@ -4,7 +4,7 @@ package mocks
 
 import (
 	mock "github.com/stretchr/testify/mock"
-	db "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
+	db "github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
