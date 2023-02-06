@@ -31,8 +31,6 @@ var serviceConfig *pkg.Config
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-	pkg.InstanceId = os.Getenv("POD_NAME")
-
 	initConfig()
 	packageDb := initDb()
 	runGrpcServer(packageDb)
@@ -85,7 +83,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient, simMClient, network)
-		pb.RegisterSubscriberRegistryServiceServer(s, srv)
+		pb.RegisterRegistryServiceServer(s, srv)
 
 	})
 	go msgBusListener(mbClient)

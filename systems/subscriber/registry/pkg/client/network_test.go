@@ -1,79 +1,60 @@
 package client
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
-	"time"
-
-	"github.com/jarcoal/httpmock"
-	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 )
 
-var networkBaseUrl = "http://localhost:8080"
+func TestValidateNetwork(t *testing.T) {
+	testCases := []struct {
+		networkId    string
+		orgId        string
+		expectedErr  error
+		statusCode   int
+		responseBody string
+	}{
+		{
+			networkId:    "123",
+			orgId:        "456",
+			expectedErr:  nil,
+			statusCode:   200,
+			responseBody: `{"id": "123", "orgId": "456"}`,
+		},
+		{
+			networkId:    "789",
+			orgId:        "101112",
+			expectedErr:  fmt.Errorf("Network mismatch"),
+			statusCode:   200,
+			responseBody: `{"id": "789", "orgId": "999"}`,
+		},
+		{
+			networkId:    "456",
+			orgId:        "456",
+			expectedErr:  fmt.Errorf(" Network Info failure: Not Found"),
+			statusCode:   404,
+			responseBody: `{"message": "Not Found"}`,
+		},
+	}
 
-func TestNetworkClient_ValidateNetwork(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run(tc.networkId, func(t *testing.T) {
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tc.statusCode)
+				_, _ = w.Write([]byte(tc.responseBody))
+			}))
+			defer ts.Close()
 
-	t.Run("ValidateNetwork_Success", func(t *testing.T) {
+			networkClient, err := NewNetworkClient(ts.URL, false)
+			if err != nil {
+				t.Fatalf("Error creating network client: %s", err)
+			}
 
-		var responder httpmock.Responder
-
-		n, err := NewNetworkClient(networkBaseUrl, pkg.IsDebugMode)
-		assert.NoError(t, err)
-
-		httpmock.ActivateNonDefault(n.R.C.GetClient())
-
-		defer httpmock.DeactivateAndReset()
-
-		nw := NetworkInfo{
-			NetworkId:     "40987edb-ebb6-4f84-a27c-99db7c136127",
-			Name:          "test-network",
-			OrgId:         "40987edb-ebb6-4f84-a27c-99db7c136100",
-			IsDeactivated: false,
-			CreatedAt:     time.Now(),
-		}
-
-		// Arrange
-		orgId := "40987edb-ebb6-4f84-a27c-99db7c136100"
-		networkId := "40987edb-ebb6-4f84-a27c-99db7c136127"
-		responder, err = httpmock.NewJsonResponder(200, &nw)
-		if err != nil {
-			responder = httpmock.NewStringResponder(500, "")
-		}
-
-		url := networkBaseUrl + "/v1/networks/" + networkId
-		httpmock.RegisterResponder("GET", url, responder)
-		assert.NoError(t, err)
-
-		// Act
-		err = n.ValidateNetwork(networkId, orgId)
-		assert.NoError(t, err)
-
-	})
-
-	t.Run("ValidateNetwork_Failure", func(t *testing.T) {
-
-		n, err := NewNetworkClient(networkBaseUrl, pkg.IsDebugMode)
-		assert.NoError(t, err)
-
-		httpmock.ActivateNonDefault(n.R.C.GetClient())
-
-		defer httpmock.DeactivateAndReset()
-
-		// Arrange
-		networkId := "4cdc0020-3d8f-43d8-a13c-930400393ecf"
-		orgId := "39e280e0-36c2-47bf-89b5-6b95115749c8"
-		responder := httpmock.NewStringResponder(400, "")
-		url := networkBaseUrl + "/v1/networks/" + networkId
-		httpmock.RegisterResponder("GET", url, responder)
-		assert.NoError(t, err)
-
-		// Act
-		err = n.ValidateNetwork(networkId, orgId)
-
-		assert.NotNil(t, err)
-
-		assert.Contains(t, " Network Info failure ", err.Error())
-
-	})
-
+			err = networkClient.ValidateNetwork(tc.networkId, tc.orgId)
+			if err != tc.expectedErr {
+				t.Fatalf("Expected error: %v, but got: %v", tc.expectedErr, err)
+			}
+		})
+	}
 }
