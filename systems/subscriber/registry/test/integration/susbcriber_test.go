@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
-	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -30,8 +30,6 @@ func init() {
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	logrus.Infof("%+v", tConfig)
 }
-
-
 
 func TestAddSubscriber(t *testing.T) {
 	const sysName = "sys"
@@ -62,38 +60,36 @@ func TestAddSubscriber(t *testing.T) {
 
 	})
 
-	
 	t.Run("ListSubscribers", func(t *testing.T) {
 		r, err := c.ListSubscribers(ctx, &pb.ListSubscribersRequest{})
 
 		if assert.NoError(t, err) {
-            assert.Equal(t, "johndoe@example.com", r.Subscribers[0].Email)
+			assert.Equal(t, "johndoe@example.com", r.Subscribers[0].Email)
 		}
 	})
 	t.Run("GetByNetwork", func(t *testing.T) {
 		r, err := c.GetByNetwork(ctx, &pb.GetByNetworkRequest{
-			NetworkID:"00000000-0000-0000-0000-000000000000",
+			NetworkID: "00000000-0000-0000-0000-000000000000",
 		})
 
 		if assert.NoError(t, err) {
-            assert.Equal(t, "john", r.Subscribers[0].FirstName)
+			assert.Equal(t, "john", r.Subscribers[0].FirstName)
 		}
 	})
 	t.Run("Get", func(t *testing.T) {
 		_, err := c.Get(ctx, &pb.GetSubscriberRequest{
-		SubscriberID: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
+			SubscriberID: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
 		})
 		assert.Equal(t, "subscriber not found", err.Error())
-		
+
 	})
 	t.Run("Delete", func(t *testing.T) {
 		_, err := c.Delete(ctx, &pb.DeleteSubscriberRequest{
-		SubscriberID: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
+			SubscriberID: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
 		})
 		assert.Equal(t, "subscriber not found", err.Error())
-		
-	})
 
+	})
 
 }
 

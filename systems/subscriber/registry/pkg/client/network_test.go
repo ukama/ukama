@@ -6,7 +6,7 @@ import (
 
 	"github.com/jarcoal/httpmock"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 )
 
 var networkBaseUrl = "http://localhost:8080"

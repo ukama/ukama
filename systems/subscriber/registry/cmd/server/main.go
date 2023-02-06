@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -9,17 +8,16 @@ import (
 	"github.com/num30/config"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/client"
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/server"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/server"
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/cmd/version"
-	clientPkg "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/client"
+	"github.com/ukama/ukama/systems/subscriber/registry/cmd/version"
 
-	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 
 	"github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -77,16 +75,16 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 	network, err := client.NewNetworkClient(serviceConfig.NetworkHost, pkg.IsDebugMode)
 	if err != nil {
-		log.Fatalf("Network Client initilization failed. Error: %v", err)
+		logrus.Error("Network Client initilization failed. Error: %v", err.Error())
 	}
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
-	simMClient := clientPkg.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
-	
+	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient,simMClient,network)
+		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient, simMClient, network)
 		pb.RegisterSubscriberRegistryServiceServer(s, srv)
 
 	})

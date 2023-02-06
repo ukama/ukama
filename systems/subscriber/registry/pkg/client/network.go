@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ukama/ukama/systems/common/rest"
+	// "github.com/ukama/ukama/systems/common/rest"
 
 	"github.com/sirupsen/logrus"
 )

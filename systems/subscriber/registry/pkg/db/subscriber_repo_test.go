@@ -1,157 +1,262 @@
-package db
+package db_test
 
 import (
-	"context"
-	"errors"
+	"database/sql"
+	"log"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen/mocks"
+	int_db "github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func TestSubscriberRepo_Get(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
-
-	t.Run("SubscriberExist", func(t *testing.T) {
-
-		// Set up mock database
-		subscriberServiceServerMock.On("Get", mock.Anything, &gen.GetSubscriberRequest{
-			SubscriberID: "12345",
-		}).Return(&gen.GetSubscriberResponse{
-			Subscriber: &gen.Subscriber{
-				SubscriberID: "12345",
-				FirstName:    "John",
-				LastName:     "Doe",
-			},
-		}, nil)
-		expectedResponse := &gen.GetSubscriberResponse{
-			Subscriber: &gen.Subscriber{
-				SubscriberID: "12345",
-				FirstName:    "John",
-				LastName:     "Doe",
-			},
-		}
-
-		response, err := subscriberServiceServerMock.Get(context.Background(), &gen.GetSubscriberRequest{
-			SubscriberID: "12345",
-		})
-		assert.Equal(t, expectedResponse, response)
-		assert.Nil(t, err)
-		subscriberServiceServerMock.AssertExpectations(t)
-	})
-	t.Run("SubscriberDoesNotExist", func(t *testing.T) {
-		subscriberServiceServerMock.On("Get", mock.Anything, &gen.GetSubscriberRequest{
-			SubscriberID: "123456",
-		}).Return(nil, errors.New("subscriber not found"))
-		response, err := subscriberServiceServerMock.Get(context.Background(), &gen.GetSubscriberRequest{
-			SubscriberID: "123456",
-		})
-
-		assert.Nil(t, response)
-		assert.EqualError(t, err, "subscriber not found")
-		subscriberServiceServerMock.AssertExpectations(t)
-
-	})
+type UkamaDbMock struct {
+	GormDb *gorm.DB
 }
 
-func TestSubscriberRepo_Add(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
-	t.Run("Add a Subscriber", func(t *testing.T) {
-
-		subscriberServiceServerMock.On("Add", mock.Anything, &gen.AddSubscriberRequest{
-			FirstName: "John",
-			LastName:  "Doe",
-		}).Return(&gen.AddSubscriberResponse{
-			Subscriber: &gen.Subscriber{
-				FirstName:    "John",
-				LastName:     "Doe",
-				SubscriberID: "12345",
-			},
-		}, nil)
-		response, err := subscriberServiceServerMock.Add(context.Background(), &gen.AddSubscriberRequest{
-			FirstName: "John",
-			LastName:  "Doe",
-		})
-
-		expectedResponse := &gen.AddSubscriberResponse{
-			Subscriber: &gen.Subscriber{
-				FirstName:    "John",
-				LastName:     "Doe",
-				SubscriberID: "12345",
-			},
-		}
-
-		assert.Equal(t, expectedResponse, response)
-		assert.Nil(t, err)
-	})
+func (u UkamaDbMock) Init(model ...interface{}) error {
+	panic("implement me: Init()")
 }
 
-func TestSubscriberRepo_Update(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
-	t.Run("SubscriberExist", func(t *testing.T) {
-
-		subscriberServiceServerMock.On("Update", mock.Anything, &gen.UpdateSubscriberRequest{
-			SubscriberID:          "12345",
-			IdSerial:              "12345",
-			Email:                 "john@gmail.com",
-			Address:               "kigali",
-			ProofOfIdentification: "0909099",
-		}).Return(&gen.UpdateSubscriberResponse{
-			IdSerial:              "12345",
-			ProofOfIdentification: "0909099",
-			Email:                 "john@gmail.com",
-			Address:               "kigali",
-		}, nil)
-
-		response, err := subscriberServiceServerMock.Update(context.Background(), &gen.UpdateSubscriberRequest{
-			SubscriberID: "12345",
-			Email:        "john@gmail.com",
-			Address:      "kigali",
-		})
-		expectedResponse := &gen.UpdateSubscriberResponse{
-			IdSerial:              "12345",
-			ProofOfIdentification: "0909099",
-			Email:                 "john@gmail.com",
-			Address:               "kigali",
-		}
-
-		assert.Equal(t, expectedResponse, response)
-		assert.Nil(t, err)
-
-	})
+func (u UkamaDbMock) Connect() error {
+	panic("implement me: Connect()")
 }
 
-func TestSubscriberRepo_Delete(t *testing.T) {
-	subscriberServiceServerMock := &mocks.SubscriberRegistryServiceServer{}
+func (u UkamaDbMock) GetGormDb() *gorm.DB {
+	return u.GormDb
+}
 
-	t.Run("SubscriberExist", func(t *testing.T) {
+func (u UkamaDbMock) InitDB() error {
+	return nil
+}
 
-		// Set up mock database
-		subscriberServiceServerMock.On("Delete", mock.Anything, &gen.DeleteSubscriberRequest{
-			SubscriberID: "12345",
-		}).Return(&gen.DeleteSubscriberResponse{}, nil)
-		expectedResponse := &gen.DeleteSubscriberResponse{}
+func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
+	nestedFuncs ...func() error) error {
+	log.Fatal("implement me: ExecuteInTransaction()")
+	return nil
+}
 
-		response, err := subscriberServiceServerMock.Delete(context.Background(), &gen.DeleteSubscriberRequest{
-			SubscriberID: "12345",
-		})
-		assert.Equal(t, expectedResponse, response)
-		assert.Nil(t, err)
-		subscriberServiceServerMock.AssertExpectations(t)
+func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
+	nestedFuncs ...func(tx *gorm.DB) error) error {
+	log.Fatal("implement me: ExecuteInTransaction2()")
+	return nil
+}
+
+func TestSubscriber_Add(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+	gdb, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{})
+	repo := int_db.NewSubscriberRepo(&UkamaDbMock{
+		GormDb: gdb,
 	})
-	t.Run("SubscriberAlreadyDeleted", func(t *testing.T) {
-		subscriberServiceServerMock.On("delete", mock.Anything, &gen.DeleteSubscriberRequest{
-			SubscriberID: "123456",
-		}).Return(nil, errors.New("subscriber not found"))
-		response, err := subscriberServiceServerMock.Delete(context.Background(), &gen.DeleteSubscriberRequest{
-			SubscriberID: "123456",
+	subscriber := int_db.Subscriber{
+		SubscriberID:          uuid.NewV4(),
+		FirstName:             "John",
+		LastName:              "Doe",
+		NetworkID:             uuid.NewV4(),
+		OrgID:                 uuid.NewV4(),
+		Email:                 "johndoe@example.com",
+		PhoneNumber:           "555-555-5555",
+		Gender:                "Male",
+		DOB:                   time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC),
+		ProofOfIdentification: "Driver's License",
+		IdSerial:              "ABC123",
+		Address:               "123 Main St.",
+		CreatedAt:             time.Now(),
+		UpdatedAt:             time.Now(),
+		DeletedAt:             nil,
+	}
+
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO \"subscribers\"").WithArgs(
+		subscriber.SubscriberID,
+		subscriber.FirstName,
+		subscriber.LastName,
+		subscriber.NetworkID,
+		subscriber.OrgID,
+		subscriber.Email,
+		subscriber.PhoneNumber,
+		subscriber.Gender,
+		subscriber.DOB,
+		subscriber.ProofOfIdentification,
+		subscriber.IdSerial,
+		subscriber.Address,
+		subscriber.CreatedAt,
+		subscriber.UpdatedAt,
+		subscriber.DeletedAt).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	err = repo.Add(&subscriber)
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+
+}
+
+func TestSubscriber_Get(t *testing.T) {
+
+	t.Run("SubscriberFound", func(t *testing.T) {
+		var subID = uuid.NewV4()
+
+		// Arrange
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		}
+		defer db.Close()
+		gdb, err := gorm.Open(postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		}), &gorm.Config{})
+
+		subRow := sqlmock.NewRows([]string{"subscriber_id"}).
+			AddRow(subID)
+
+		mock.ExpectQuery(`^SELECT.*subscribers.*`).
+			WithArgs(subID).
+			WillReturnRows(subRow)
+
+		assert.NoError(t, err)
+		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
+			GormDb: gdb,
 		})
+		// Act
+		sub, err := repo.Get(subID)
 
-		assert.Nil(t, response)
-		assert.EqualError(t, err, "subscriber not found")
-		subscriberServiceServerMock.AssertExpectations(t)
+		// Assert
+		assert.NoError(t, err)
 
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.NotNil(t, sub)
+	})
+	t.Run("SubscriberNotFound", func(t *testing.T) {
+		// Arrange
+		var subID = uuid.NewV4()
+
+		// Arrange
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		}
+		defer db.Close()
+		gdb, err := gorm.Open(postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		}), &gorm.Config{})
+
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*subscribers.*`).
+			WithArgs(subID).
+			WillReturnError(sql.ErrNoRows)
+		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+		assert.NoError(t, err)
+
+		// Act
+		sub, err := repo.Get(subID)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.Nil(t, sub)
+	})
+}
+func TestSubscriber_GetByNetwork(t *testing.T) {
+
+	t.Run("NetworkFound", func(t *testing.T) {
+		var networkID = uuid.NewV4()
+
+		// Arrange
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		}
+		defer db.Close()
+		gdb, err := gorm.Open(postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		}), &gorm.Config{})
+
+		subRow := sqlmock.NewRows([]string{"network_id"}).
+			AddRow(networkID)
+
+		mock.ExpectQuery(`^SELECT.*subscribers.*`).
+			WithArgs(networkID).
+			WillReturnRows(subRow)
+
+		assert.NoError(t, err)
+		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+		// Act
+		sub, err := repo.Get(networkID)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.NotNil(t, sub)
+	})
+	t.Run("NetworkNotFound", func(t *testing.T) {
+		// Arrange
+		var networkID = uuid.NewV4()
+
+		// Arrange
+		db, mock, err := sqlmock.New()
+		if err != nil {
+			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+		}
+		defer db.Close()
+		gdb, err := gorm.Open(postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		}), &gorm.Config{})
+
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*subscribers.*`).
+			WithArgs(networkID).
+			WillReturnError(sql.ErrNoRows)
+		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+		assert.NoError(t, err)
+
+		// Act
+		sub, err := repo.Get(networkID)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.Nil(t, sub)
 	})
 }

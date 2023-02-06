@@ -8,11 +8,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	mocks "github.com/ukama/ukama/systems/subscriber/subscriber-registry/mocks"
+	mocks "github.com/ukama/ukama/systems/subscriber/registry/mocks"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/subscriber-registry/pkg/db"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -110,7 +110,7 @@ func TestSubcriberServer_Add(t *testing.T) {
 					return nil, nil
 				},
 			}
-			server := NewSubscriberServer(subscriberRepo, msgbus,nil,network,)
+			server := NewSubscriberServer(subscriberRepo, msgbus, nil, network)
 			resp, err := server.Add(context.Background(), testCase.req)
 
 			assert.Equal(t, testCase.expectedResp, resp)
