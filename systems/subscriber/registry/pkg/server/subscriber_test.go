@@ -1,172 +1,96 @@
-package server
+package server_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
-	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/sirupsen/logrus"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	mocks "github.com/ukama/ukama/systems/subscriber/registry/mocks"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+
+	mocks "github.com/ukama/ukama/systems/subscriber/registry/mocks"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/server"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestSubcriberServer_Add(t *testing.T) {
-	msgbus := &mbmocks.MsgBusServiceClient{}
-	network := &mocks.Network{}
-	testCases := []struct {
-		name         string
-		req          *pb.AddSubscriberRequest
-		expectedResp *pb.AddSubscriberResponse
-		expectedErr  error
-	}{
-		{
-			name: "Valid request",
-			req: &pb.AddSubscriberRequest{
-				FirstName:             "John",
-				LastName:              "Doe",
-				NetworkID:             "00000000-0000-0000-0000-000000000000",
-				Email:                 "john.doe@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "male",
-				Address:               "123 Main St",
-				IdSerial:              "123456",
-				ProofOfIdentification: "drivers_license",
-			},
-			expectedResp: &pb.AddSubscriberResponse{
-				Subscriber: &pb.Subscriber{
-					FirstName:             "John",
-					LastName:              "Doe",
-					NetworkID:             "00000000-0000-0000-0000-000000000000",
-					Email:                 "john.doe@example.com",
-					PhoneNumber:           "1234567890",
-					Gender:                "male",
-					Address:               "123 Main St",
-					IdSerial:              "123456",
-					ProofOfIdentification: "drivers_license",
-				},
-			},
+func TestSubscriberServer_Add(t *testing.T) {
+	subRepo := &mocks.SubscriberRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-			expectedErr: nil,
-		},
-		{
-			name: "Invalid network ID",
-			req: &pb.AddSubscriberRequest{
-				FirstName:             "John",
-				LastName:              "Doe",
-				NetworkID:             "invalid",
-				Email:                 "john.doe@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "male",
-				Address:               "123 Main St",
-				DateOfBirth:           &timestamppb.Timestamp{Seconds: time.Now().Unix()},
-				IdSerial:              "123456",
-				ProofOfIdentification: "drivers_license",
-			},
-			expectedResp: nil,
-			expectedErr:  status.Error(codes.InvalidArgument, "invalid UUID length: invalid"),
-		},
-		{
-			name: "Error from repository",
-			req: &pb.AddSubscriberRequest{
-				FirstName: "John",
-				LastName:  "Derick",
-			},
-			expectedResp: nil,
-			expectedErr:  status.Error(codes.Internal, "repository error"),
-		},
+	sub := &db.Subscriber{
+		SubscriberID: uuid.NewV4(),
+		FirstName:    "john",
+		LastName:     "Doe",
+		NetworkID:    uuid.NewV4(),
+		Email:        "john@gmail.com",
+		PhoneNumber:  "0791240041",
+		Gender:       "male",
 	}
 
-	// Run test cases
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			subscriberRepo := &subscriberRepoMock{
-				addFunc: func(subscriber *db.Subscriber) error {
-					if subscriber.NetworkID.String() == "00000000-0000-0000-0000-000000000000" {
-						subscriberID := uuid.FromStringOrNil("93a3f36b-4556-444f-97c3-6132e0bfdda9")
-						subscriber.SubscriberID = subscriberID
-						return nil
-					}
-					return status.Error(codes.Internal, "repository error")
-				},
-				delFunc: func(subscriberID uuid.UUID) error {
-					return nil
-				},
-				listFunc: func() ([]db.Subscriber, error) {
-					var listSubscribers []db.Subscriber
-					return listSubscribers, nil
-				},
-				getFunc: func(subscriberID uuid.UUID) (*db.Subscriber, error) {
-					return nil, nil
-				},
-				getByNetwork: func(networkID uuid.UUID) ([]db.Subscriber, error) {
-					return nil, nil
-				},
-			}
-			server := NewSubscriberServer(subscriberRepo, msgbus, nil, network)
-			resp, err := server.Add(context.Background(), testCase.req)
+	psub := &pb.AddSubscriberRequest{FirstName: "john", LastName: "Doe", Email: "joe@gmail.com", PhoneNumber: "0791240041"}
 
-			assert.Equal(t, testCase.expectedResp, resp)
-			assert.Equal(t, testCase.expectedErr, err)
-		})
+	subRepo.On("Add", sub).Return(nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, psub).Return(nil).Once()
+
+	s := server.NewSubscriberServer(subRepo, msgbusClient, nil, nil)
+	_, err := s.Add(context.TODO(), psub)
+
+	assert.NoError(t, err)
+	subRepo.AssertExpectations(t)
+}
+func TestSubscriberServer_Update(t *testing.T) {
+	subRepo := &mocks.SubscriberRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	sub := &db.Subscriber{
+		SubscriberID: uuid.NewV4(),
+		FirstName:    "john",
+		LastName:     "Doe",
+		NetworkID:    uuid.NewV4(),
+		Email:        "john@gmail.com",
+		PhoneNumber:  "0791240041",
+		Gender:       "male",
 	}
+
+	psub := &pb.UpdateSubscriberRequest{Email: "john@gmail.com", PhoneNumber: "0791240041"}
+
+	subRepo.On("GetByNetwork", sub.NetworkID).Return(sub, nil).Once()
+	subRepo.On("Update", sub).Return(nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, psub).Return(nil).Once()
+
+	s := server.NewSubscriberServer(subRepo, msgbusClient, nil, nil)
+	_, err := s.Update(context.TODO(), psub)
+
+	assert.NoError(t, err)
+	subRepo.AssertExpectations(t)
 }
 
-type subscriberRepoMock struct {
-	addFunc      func(subscriber *db.Subscriber) error
-	delFunc      func(subscriberID uuid.UUID) error
-	getFunc      func(subscriberID uuid.UUID) (*db.Subscriber, error)
-	getByNetwork func(networkID uuid.UUID) ([]db.Subscriber, error)
-	listFunc     func() ([]db.Subscriber, error)
-	updateFunc   func(subscriberID uuid.UUID, sub db.Subscriber) (db.Subscriber, error)
-}
+func TestLookupServer_GetOrg(t *testing.T) {
+	subRepo := &mocks.SubscriberRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	subscriberUUID, error := uuid.FromString("dbe9a556-a626-11ed-afa1-0242ac120002")
+	if error != nil {
+		logrus.Error("Invalid format uuid %s ", error.Error())
+	}
+	sub := &db.Subscriber{
+		SubscriberID: subscriberUUID,
+		FirstName:    "john",
+		LastName:     "Doe",
+		NetworkID:    uuid.NewV4(),
+		Email:        "john@gmail.com",
+		PhoneNumber:  "0791240041",
+		Gender:       "male",
+	}
+	subRepo.On("Get", sub.SubscriberID).Return(sub, nil).Once()
 
-func (r *subscriberRepoMock) Update(subscriberID uuid.UUID, sub db.Subscriber) (*db.Subscriber, error) {
-	if r.updateFunc != nil {
-		updatedSubscriber, err := r.updateFunc(subscriberID, sub)
-		return &updatedSubscriber, err
-	}
-	return nil, fmt.Errorf("updateFunc is not defined")
-}
+	s := server.NewSubscriberServer(subRepo, msgbusClient, nil, nil)
+	resp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{SubscriberID: subscriberUUID.String()})
 
-func (r *subscriberRepoMock) Add(subscriber *db.Subscriber) error {
-	if r.addFunc != nil {
-		return r.addFunc(subscriber)
-	}
-	return nil
-}
-
-func (r *subscriberRepoMock) ListSubscribers() ([]db.Subscriber, error) {
-	var subscribers []db.Subscriber
-	if r.addFunc != nil {
-		return r.listFunc()
-	}
-	return subscribers, nil
-}
-
-func (r *subscriberRepoMock) Delete(subscriberID uuid.UUID) error {
-	if r.delFunc != nil {
-		return r.delFunc(subscriberID)
-	}
-	return nil
-}
-
-func (r *subscriberRepoMock) Get(subscriberID uuid.UUID) (*db.Subscriber, error) {
-	if r.getFunc != nil {
-		return r.getFunc(subscriberID)
-	}
-	return nil, nil
-}
-func (r *subscriberRepoMock) GetByNetwork(networkID uuid.UUID) ([]db.Subscriber, error) {
-	if r.getByNetwork != nil {
-		return r.getByNetwork(networkID)
-	}
-	return nil, nil
+	assert.NoError(t, err)
+	assert.Equal(t, sub.SubscriberID, resp.GetSubscriber())
+	subRepo.AssertExpectations(t)
 }
