@@ -26,7 +26,7 @@ deps:
 gen:
 	protoc -I ./pb  -I ../../common/pb/dep  --go_out=. --go-grpc_out=. --govalidators_out=. \
                             --go-grpc_opt=require_unimplemented_servers=true \
-                            asr.proto
+                            profile.proto
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 

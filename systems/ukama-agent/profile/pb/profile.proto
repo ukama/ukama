@@ -99,7 +99,7 @@ message RemoveResp {
 
 message UpdatePackageReq {
     string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
-    Package Package = 2[(validator.field) = required, json_name="package"]; 
+    Package Package = 2[(validator.field) = {msg_exists : true}, json_name="package"]; 
 }
 
 message UpdatePackageResp {
@@ -107,9 +107,9 @@ message UpdatePackageResp {
 }
 
 message SyncReq {
-    repeated string Iccid = 1 [(validator.field) = required];
+    repeated string Iccid = 1 [(validator.field) = {msg_exists : true}];
 }
 
 message SyncResp {
-    repeated string Iccid = 1 [(validator.field) = required];
+    repeated string Iccid = 1 [(validator.field) = {msg_exists : true}];
 }
