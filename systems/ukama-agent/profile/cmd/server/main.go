@@ -5,7 +5,6 @@ import (
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pb/gen"
-	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/server"
 	"gopkg.in/yaml.v3"
 
@@ -85,26 +84,10 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Debugf("MessageBus Client is %+v", mbClient)
 	}
 
-	asr := db.NewProfileRepo(gormdb)
-
-	factory, err := client.NewFactoryClient(serviceConfig.FactoryHost, pkg.IsDebugMode)
-	if err != nil {
-		log.Fatalf("Fcatory Client initilization failed. Error: %v", err)
-	}
-
-	network, err := client.NewNetworkClient(serviceConfig.NetworkHost, pkg.IsDebugMode)
-	if err != nil {
-		log.Fatalf("Network Client initilization failed. Error: %v", err)
-	}
-
-	pcrf, err := client.NewPolicyControlClient(serviceConfig.PCRFHost, pkg.IsDebugMode)
-	if err != nil {
-		log.Fatalf("PCRF Client initialization failed. Error: %v", err)
-	}
+	profile := db.NewProfileRepo(gormdb)
 
 	// asr service
-	asrServer, err := server.NewProfileServer(asr,
-		factory, network, pcrf, serviceConfig.Org, mbClient)
+	pServer, err := server.NewProfileServer(profile, serviceConfig.Org, mbClient)
 
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
@@ -112,7 +95,7 @@ func runGrpcServer(gormdb sql.Db) {
 	nSrv := server.NewAsrEventServer(profile)
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		gen.RegisterAsrRecordServiceServer(s, asrServer)
+		gen.RegisterProfileServiceServer(s, pServer)
 		if serviceConfig.IsMsgBus {
 			egen.RegisterEventNotificationServiceServer(s, nSrv)
 		}
