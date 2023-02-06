@@ -1,6 +1,6 @@
 package pkg
 
-const ServiceName = "subscriber_registry"
+const ServiceName = "registry"
 const SystemName = "subscriber"
 
 var IsDebugMode bool = false

@@ -2,7 +2,7 @@ syntax = "proto3";
 option go_package = "pb/gen";
 
 import "google/protobuf/timestamp.proto";
-package ukama.subscriber.subscriber_registry.v1;
+package ukama.subscriber.registry.v1;
 import "validator.proto";
 
 /*
