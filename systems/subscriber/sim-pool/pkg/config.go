@@ -1,17 +1,13 @@
 package pkg
 
 import (
-<<<<<<< HEAD
 	"time"
 
-=======
->>>>>>> subscriber-sys_sim-manager
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-<<<<<<< HEAD
 	DB               *uconf.Database  `default:"{}"`
 	Grpc             *uconf.Grpc      `default:"{}"`
 	Queue            *uconf.Queue     `default:"{}"`
@@ -31,8 +27,4 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{"event.cloud.simManager.sim.allocation"},
 		},
 	}
-=======
-	DB               *uconf.Database `default:"{}"`
-	Grpc             *uconf.Grpc     `default:"{}"`
->>>>>>> subscriber-sys_sim-manager
 }

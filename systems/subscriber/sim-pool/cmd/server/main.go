@@ -3,30 +3,18 @@ package main
 import (
 	"os"
 
-<<<<<<< HEAD
 	"github.com/gofrs/uuid"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
-=======
-	uconf "github.com/ukama/ukama/systems/common/config"
->>>>>>> subscriber-sys_sim-manager
 
 	"github.com/num30/config"
 	pkg "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/server"
 	"gopkg.in/yaml.v3"
 
-<<<<<<< HEAD
-=======
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version"
-
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
-
->>>>>>> subscriber-sys_sim-manager
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-<<<<<<< HEAD
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -34,10 +22,6 @@ import (
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 
-=======
-	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
->>>>>>> subscriber-sys_sim-manager
 	"google.golang.org/grpc"
 )
 
@@ -52,18 +36,8 @@ func main() {
 	runGrpcServer(simDb)
 }
 
-<<<<<<< HEAD
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
-=======
-// initConfig reads in config file, ENV variables, and flags if set.
-func initConfig() {
-	serviceConfig = &pkg.Config{
-		DB: &uconf.Database{
-			DbName: pkg.ServiceName,
-		},
-	}
->>>>>>> subscriber-sys_sim-manager
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -89,7 +63,6 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-<<<<<<< HEAD
 	if pkg.InstanceId == "" {
 		inst, err := uuid.NewV4()
 		if err != nil {
@@ -122,13 +95,3 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}
 }
-=======
-	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-
-		srv := server.NewSimServer(db.NewSimRepo(gormdb))
-		generated.RegisterSimServiceServer(s, srv)
-	})
-
-	grpcServer.StartServer()
-}
->>>>>>> subscriber-sys_sim-manager
