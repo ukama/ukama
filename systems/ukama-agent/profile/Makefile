@@ -2,7 +2,7 @@ include ../../config.mk
 
 .PHONY: integration.test test build lint deps 
 
-build: stubs integration.build
+build: 
 	@echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/ukama-agent/profile/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/profile cmd/server/main.go	
 

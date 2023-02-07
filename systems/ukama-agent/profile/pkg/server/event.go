@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	db "github/ukama/ukama/systems/ukama-agent/profile/pkg/db"
+	db "github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"

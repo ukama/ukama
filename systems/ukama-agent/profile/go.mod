@@ -2,8 +2,6 @@ module github.com/ukama/ukama/systems/ukama-agent/profile
 
 go 1.18
 
-replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
-
 require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0 // indirect
@@ -109,3 +107,5 @@ replace github.com/ukama/ukama/systems/common => ../../common
 replace github.com/ukama/ukama/systems/ukama-agent/profile => ./
 
 replace github.com/ukama/ukama/systems/ukama-agent/profile/mocks => ./mocks
+
+replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
