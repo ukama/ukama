@@ -3,7 +3,7 @@ include ../../config.mk
 .PHONY: integration.test test build lint deps 
 
 build: integration.build 
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/subscriber-registry/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/registry cmd/server/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/registry/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/registry cmd/server/main.go
 
 lint:
 	golangci-lint run
