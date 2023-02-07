@@ -30,7 +30,7 @@ type MsgClientServiceClient interface {
 	StopMsgBusHandler(ctx context.Context, in *StopMsgBusHandlerReq, opts ...grpc.CallOption) (*StopMsgBusHandlerResp, error)
 	/// Unregister service from MsgClient
 	UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error)
-	/// Call this rpc to publisg events
+	/// Call this rpc to publish events
 	PublishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error)
 }
 
@@ -44,7 +44,7 @@ func NewMsgClientServiceClient(cc grpc.ClientConnInterface) MsgClientServiceClie
 
 func (c *msgClientServiceClient) RegisterService(ctx context.Context, in *RegisterServiceReq, opts ...grpc.CallOption) (*RegisterServiceResp, error) {
 	out := new(RegisterServiceResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/RegisterService", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.msgbus.msgClient.v1.MsgClientService/RegisterService", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *msgClientServiceClient) RegisterService(ctx context.Context, in *Regist
 
 func (c *msgClientServiceClient) StartMsgBusHandler(ctx context.Context, in *StartMsgBusHandlerReq, opts ...grpc.CallOption) (*StartMsgBusHandlerResp, error) {
 	out := new(StartMsgBusHandlerResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/StartMsgBusHandler", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.msgbus.msgClient.v1.MsgClientService/StartMsgBusHandler", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func (c *msgClientServiceClient) StartMsgBusHandler(ctx context.Context, in *Sta
 
 func (c *msgClientServiceClient) StopMsgBusHandler(ctx context.Context, in *StopMsgBusHandlerReq, opts ...grpc.CallOption) (*StopMsgBusHandlerResp, error) {
 	out := new(StopMsgBusHandlerResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/StopMsgBusHandler", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.msgbus.msgClient.v1.MsgClientService/StopMsgBusHandler", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (c *msgClientServiceClient) StopMsgBusHandler(ctx context.Context, in *Stop
 
 func (c *msgClientServiceClient) UnregisterService(ctx context.Context, in *UnregisterServiceReq, opts ...grpc.CallOption) (*UnregisterServiceResp, error) {
 	out := new(UnregisterServiceResp)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/UnregisterService", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.msgbus.msgClient.v1.MsgClientService/UnregisterService", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (c *msgClientServiceClient) UnregisterService(ctx context.Context, in *Unre
 
 func (c *msgClientServiceClient) PublishMsg(ctx context.Context, in *PublishMsgRequest, opts ...grpc.CallOption) (*PublishMsgResponse, error) {
 	out := new(PublishMsgResponse)
-	err := c.cc.Invoke(ctx, "/ukama.msgClient.v1.MsgClientService/PublishMsg", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.msgbus.msgClient.v1.MsgClientService/PublishMsg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ type MsgClientServiceServer interface {
 	StopMsgBusHandler(context.Context, *StopMsgBusHandlerReq) (*StopMsgBusHandlerResp, error)
 	/// Unregister service from MsgClient
 	UnregisterService(context.Context, *UnregisterServiceReq) (*UnregisterServiceResp, error)
-	/// Call this rpc to publisg events
+	/// Call this rpc to publish events
 	PublishMsg(context.Context, *PublishMsgRequest) (*PublishMsgResponse, error)
 	mustEmbedUnimplementedMsgClientServiceServer()
 }
@@ -146,7 +146,7 @@ func _MsgClientService_RegisterService_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/RegisterService",
+		FullMethod: "/ukama.msgbus.msgClient.v1.MsgClientService/RegisterService",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgClientServiceServer).RegisterService(ctx, req.(*RegisterServiceReq))
@@ -164,7 +164,7 @@ func _MsgClientService_StartMsgBusHandler_Handler(srv interface{}, ctx context.C
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/StartMsgBusHandler",
+		FullMethod: "/ukama.msgbus.msgClient.v1.MsgClientService/StartMsgBusHandler",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgClientServiceServer).StartMsgBusHandler(ctx, req.(*StartMsgBusHandlerReq))
@@ -182,7 +182,7 @@ func _MsgClientService_StopMsgBusHandler_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/StopMsgBusHandler",
+		FullMethod: "/ukama.msgbus.msgClient.v1.MsgClientService/StopMsgBusHandler",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgClientServiceServer).StopMsgBusHandler(ctx, req.(*StopMsgBusHandlerReq))
@@ -200,7 +200,7 @@ func _MsgClientService_UnregisterService_Handler(srv interface{}, ctx context.Co
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/UnregisterService",
+		FullMethod: "/ukama.msgbus.msgClient.v1.MsgClientService/UnregisterService",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgClientServiceServer).UnregisterService(ctx, req.(*UnregisterServiceReq))
@@ -218,7 +218,7 @@ func _MsgClientService_PublishMsg_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.msgClient.v1.MsgClientService/PublishMsg",
+		FullMethod: "/ukama.msgbus.msgClient.v1.MsgClientService/PublishMsg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgClientServiceServer).PublishMsg(ctx, req.(*PublishMsgRequest))
@@ -230,7 +230,7 @@ func _MsgClientService_PublishMsg_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MsgClientService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.msgClient.v1.MsgClientService",
+	ServiceName: "ukama.msgbus.msgClient.v1.MsgClientService",
 	HandlerType: (*MsgClientServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

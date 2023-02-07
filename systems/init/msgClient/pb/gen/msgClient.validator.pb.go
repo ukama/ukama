@@ -9,6 +9,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/anypb"
+	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -17,6 +18,29 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_NodeFeederReq_Org = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *NodeFeederReq) Validate() error {
+	if !_regex_NodeFeederReq_Org.MatchString(this.Org) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Org))
+	}
+	if this.Org == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must not be an empty string`, this.Org))
+	}
+	if this.Node == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Node", fmt.Errorf(`value '%v' must not be an empty string`, this.Node))
+	}
+	if this.Path == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Path", fmt.Errorf(`value '%v' must not be an empty string`, this.Path))
+	}
+	if this.Method == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Method", fmt.Errorf(`value '%v' must not be an empty string`, this.Method))
+	}
+	return nil
+}
+func (this *NodeFeederResp) Validate() error {
+	return nil
+}
 func (this *RegisterServiceReq) Validate() error {
 	if this.SystemName == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SystemName", fmt.Errorf(`value '%v' must not be an empty string`, this.SystemName))
