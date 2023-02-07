@@ -42,7 +42,7 @@ message Profile {
     string Iccid = 2 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="iccid"];
     uint64 UeDlBps = 3 [(validator.field) = {int_gt: 0}, json_name="ue_dl_bps"];
     uint64 UeUlBps = 4 [(validator.field) = {int_gt: 0}, json_name="ue_ul_bps"];
-    Apn Apn = 5 ;
+    Apn Apn = 5 [json_name="apn"];
     string NetworkId = 6 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name="network_id"];
     string PackageId = 7 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name="package_id"];
     uint64 AllowedTimeOfService = 8 [(validator.field) = {int_gt: 0}, json_name="allowed_time_of_service"]; 
@@ -59,7 +59,7 @@ message Package {
     string Iccid = 1 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 22}, json_name="iccid"];
     uint64 UeDlBps = 2 [(validator.field) = {int_gt: 0}, json_name="ue_dl_bps"];
     uint64 UeUlBps = 3 [(validator.field) = {int_gt: 0}, json_name="ue_ul_bps"];
-    Apn apn = 4;
+    Apn apn = 4 [json_name="apn"];
     string PackageId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name="package_id"];
     uint64 AllowedTimeOfService = 6 [(validator.field) = {int_gt: 0}, json_name="allowed_time_of_service"];
     uint64 TotalDataBytes = 7 [(validator.field) = {int_gt: 0}, json_name="available_data_bytes"];

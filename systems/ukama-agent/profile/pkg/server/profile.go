@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -13,7 +15,10 @@ import (
 	pb "github.com/ukama/ukama/systems/ukama-agent/profile/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
+
+const RESOURCE_PATH_FOR_SUBSCRIBER_ON_NODE = "/v1/epc/pcrf/subscriber"
 
 type ProfileServer struct {
 	pb.UnimplementedProfileServiceServer
@@ -123,13 +128,9 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 		},
 	}
 
-	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetAction("create").SetObject("profile").MustBuild()
-		merr := s.msgbus.PublishRequest(route, e)
-		if merr != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
-		}
-	}
+	_ = s.publishEvent(msgbus.ACTION_CRUD_CREATE, "profile", e)
+
+	s.syncProfile(http.MethodPut, e.Profile.Iccid)
 
 	return &pb.AddResp{}, err
 }
@@ -175,13 +176,10 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 		},
 	}
 
-	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetActionUpdate().SetObject("profile").MustBuild()
-		merr := s.msgbus.PublishRequest(route, e)
-		if merr != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
-		}
-	}
+	_ = s.publishEvent(msgbus.ACTION_CRUD_UPDATE, "profile", e)
+
+	s.syncProfile(http.MethodPut, e.Profile.Iccid)
+
 	return &pb.UpdatePackageResp{}, nil
 }
 
@@ -222,13 +220,9 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 		},
 	}
 
-	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetActionDelete().SetObject("profile").MustBuild()
-		merr := s.msgbus.PublishRequest(route, e)
-		if merr != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
-		}
-	}
+	_ = s.publishEvent(msgbus.ACTION_CRUD_DELETE, "profile", e)
+
+	s.syncProfile(http.MethodDelete, e.Profile.Iccid)
 
 	return &pb.RemoveResp{}, nil
 
@@ -236,5 +230,49 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 
 func (s *ProfileServer) Sync(c context.Context, req *pb.SyncReq) (*pb.SyncResp, error) {
 
+	for _, iccid := range req.Iccid {
+		s.syncProfile(http.MethodPut, iccid)
+	}
+
 	return &pb.SyncResp{}, nil
+}
+
+func (s *ProfileServer) syncProfile(method string, iccid string) {
+	p, err := s.Read(context.Background(), &pb.ReadReq{
+		Id: &pb.ReadReq_Iccid{
+			Iccid: iccid,
+		},
+	})
+	if err != nil {
+		logrus.Errorf("error syncing %s: %s", iccid, err.Error())
+		return
+	}
+
+	body, err := json.Marshal(p.Profile)
+	if err != nil {
+		logrus.Errorf("error marshaling profile: %s", err.Error())
+		return
+	}
+
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetAction("node-feed").SetObject("profile").MustBuild()
+		err = s.msgbus.PublishToNodeFeeder(route, s.Org, "*", RESOURCE_PATH_FOR_SUBSCRIBER_ON_NODE, method, body)
+		if err != nil {
+			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
+		}
+	}
+
+}
+
+func (s *ProfileServer) publishEvent(action string, object string, msg protoreflect.ProtoMessage) error {
+	var err error
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetAction(action).SetObject(object).MustBuild()
+		err = s.msgbus.PublishRequest(route, msg)
+		if err != nil {
+			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+		}
+	}
+
+	return err
 }
