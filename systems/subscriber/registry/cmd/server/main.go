@@ -73,7 +73,7 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 	network, err := client.NewNetworkClient(serviceConfig.NetworkHost, pkg.IsDebugMode)
 	if err != nil {
-		logrus.Error("Network Client initilization failed. Error: %v", err.Error())
+		logrus.Fatal("Network Client initilization failed. Error: %v", err.Error())
 	}
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 

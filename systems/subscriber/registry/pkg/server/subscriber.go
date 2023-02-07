@@ -38,20 +38,20 @@ func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServi
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	logrus.Infof("Adding subscriber: %v", req)
-	networkID, nUuidErr := uuid.FromString(req.GetNetworkID())
-	if nUuidErr != nil {
+	networkID, err := uuid.FromString(req.GetNetworkID())
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of network uuid. Error %s", nUuidErr.Error())
+			"invalid format of network uuid. Error %s", err.Error())
 	}
-	orgID, orgUuidErr := uuid.FromString(req.GetOrgID())
+	orgID, err := uuid.FromString(req.GetOrgID())
 
-	if nUuidErr != nil {
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", orgUuidErr.Error())
+			"invalid format of org uuid. Error %s", err.Error())
 	}
 	subscriberID := uuid.NewV4()
-	err := s.network.ValidateNetwork(networkID.String(), orgID.String())
-	if err != nil {
+	error := s.network.ValidateNetwork(networkID.String(), orgID.String())
+	if error != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
 

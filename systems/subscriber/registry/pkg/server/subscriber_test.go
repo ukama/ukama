@@ -69,7 +69,7 @@ func TestSubscriberServer_Update(t *testing.T) {
 	subRepo.AssertExpectations(t)
 }
 
-func TestLookupServer_GetOrg(t *testing.T) {
+func TestSubscriberServer_Get(t *testing.T) {
 	subRepo := &mocks.SubscriberRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	subscriberUUID, error := uuid.FromString("dbe9a556-a626-11ed-afa1-0242ac120002")
