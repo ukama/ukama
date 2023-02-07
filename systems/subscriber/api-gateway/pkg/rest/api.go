@@ -8,13 +8,13 @@ import (
 )
 
 type SimInfo struct {
-	Iccid          string `json:"iccid" query:"iccid" binding:"required" validate:"required"`
-	SimType        string `json:"simType" query:"simType" binding:"required" validate:"required"`
-	Msidn          string `json:"msidn" query:"msidn" binding:"required" validate:"required"`
-	SmDpAddress    string `json:"smdpAddress" query:"smdpAddress" binding:"required" validate:"required"`
-	ActivationCode string `json:"activationCode" query:"activationCode" binding:"required" validate:"required"`
-	QrCode         string `json:"qrcode" query:"qrcode" binding:"required" validate:"required"`
-	IsPhysicalSim  bool   `json:"isPhysicalSim" query:"isPhysicalSim" binding:"required" validate:"required"`
+	Iccid          string `json:"iccid" binding:"required" validate:"required"`
+	SimType        string `json:"simType" binding:"required" validate:"required"`
+	Msidn          string `json:"msidn"  binding:"required" validate:"required"`
+	SmDpAddress    string `json:"smdpAddress"  binding:"required" validate:"required"`
+	ActivationCode string `json:"activationCode"  binding:"required" validate:"required"`
+	QrCode         string `json:"qrcode"  binding:"required" validate:"required"`
+	IsPhysicalSim  bool   `json:"isPhysicalSim" binding:"required" validate:"required"`
 }
 
 type SimPoolStats struct {
@@ -60,7 +60,7 @@ type Subscriber struct {
 }
 
 type SimByIccidReq struct {
-	Iccid string `form:"iccid" json:"iccid" path:"iccid" binding:"required" validate:"required"`
+	Iccid string `path:"iccid" validate:"required"`
 }
 
 type SimPoolStatByTypeReq struct {

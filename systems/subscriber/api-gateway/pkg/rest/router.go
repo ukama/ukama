@@ -153,12 +153,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) getSimByIccid(c *gin.Context, req *SimByIccidReq) (*simPoolPb.GetByIccidResponse, error) {
-	iccid, ok := c.GetQuery("iccid")
-	if !ok {
-		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-			Message: "Iccid is a mandatory query parameter"}
-	}
-	resp, err := r.clients.sp.Get(iccid)
+	resp, err := r.clients.sp.Get(req.Iccid)
 	if err != nil {
 		return nil, err
 	}
@@ -167,12 +162,7 @@ func (r *Router) getSimByIccid(c *gin.Context, req *SimByIccidReq) (*simPoolPb.G
 }
 
 func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolStatByTypeReq) (*simPoolPb.GetStatsResponse, error) {
-	simType, ok := c.GetQuery("simType")
-	if !ok {
-		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-			Message: "simType is a mandatory query parameter"}
-	}
-	resp, err := r.clients.sp.GetStats(simType)
+	resp, err := r.clients.sp.GetStats(req.SimType)
 	if err != nil {
 		return nil, err
 	}
