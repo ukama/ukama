@@ -94,6 +94,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
+
 	subscriberIdReq := req.GetSubscriberID()
 	subscriberID, err := uuid.FromString(subscriberIdReq)
 	if err != nil {
@@ -109,7 +110,7 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 
 	smc, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
-		logrus.Error("Error while getting SimManagerServiceClient: %v", err)
+		logrus.Error("Error while calling SimManagerServiceClient: %v", err)
 		return nil, err
 	}
 
@@ -162,6 +163,22 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 					Id:           sim.Id,
 					SubscriberID: sim.SubscriberID,
 					NetworkID:    sim.NetworkID,
+					OrgID:        sim.OrgID,
+					Iccid:        sim.Iccid,
+					Msisdn:       sim.Msisdn,
+					Package: &pb.Package{
+						Id:        sim.Package.Id,
+						StartDate: sim.Package.StartDate,
+						EndDate:   sim.Package.EndDate,
+					},
+					Type:               sim.Type,
+					Status:             sim.Status,
+					IsPhysical:         sim.IsPhysical,
+					FirstActivatedOn:   sim.FirstActivatedOn,
+					LastActivatedOn:    sim.LastActivatedOn,
+					ActivationsCount:   sim.ActivationsCount,
+					DeactivationsCount: sim.DeactivationsCount,
+					AllocatedAt:        sim.AllocatedAt,
 				})
 			}
 		}
