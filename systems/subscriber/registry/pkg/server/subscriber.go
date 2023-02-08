@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"time"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
@@ -25,10 +24,10 @@ type SubcriberServer struct {
 	subscriberRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedRegistryServiceServer
 	simManagerService client.SimManagerClientProvider
-	network           client.Network
+	network           client.NetworkInfoClient
 }
 
-func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, network client.Network) *SubcriberServer {
+func NewSubscriberServer(subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, network client.NetworkInfoClient) *SubcriberServer {
 	return &SubcriberServer{subscriberRepo: subscriberRepo,
 		msgbus:               msgBus,
 		simManagerService:    simManagerService,
@@ -50,8 +49,8 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 	subscriberID := uuid.NewV4()
-	error := s.network.ValidateNetwork(networkID.String(), orgID.String())
-	if error != nil {
+	err = s.network.ValidateNetwork(networkID.String(), orgID.String())
+	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
 
@@ -98,30 +97,27 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 	subscriberIdReq := req.GetSubscriberID()
 	subscriberID, err := uuid.FromString(subscriberIdReq)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Invalid subscriberID format: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid subscriberID format: %v", err.Error())
 	}
 
 	logrus.Infof("Getting subscriber with ID: %v", subscriberID)
 	subscriber, err := s.subscriberRepo.Get(subscriberID)
 	if err != nil {
-		logrus.Error("Error while getting subscriber: %v", err)
+		logrus.Errorf("Error while getting subscriber: %s", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
 	smc, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
-		logrus.Error("Error while calling SimManagerServiceClient: %v", err)
+		logrus.Errorf("Error while calling SimManagerServiceClient: %s", err.Error())
 		return nil, err
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 
 	simRep, err := smc.GetSimsBySubscriber(ctx, &simMangerPb.GetSimsBySubscriberRequest{
 		SubscriberID: subscriberID.String(),
 	})
 	if err != nil {
-		logrus.Error("Error while getting Sims by subscriber: %v", err)
+		logrus.Errorf("Error while getting Sims by subscriber: %s", err.Error())
 		return nil, err
 	}
 
@@ -142,15 +138,13 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 
 	simManagerClient, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
-		logrus.Error("Failed to get SimManagerServiceClient. Error: %v", err)
+		logrus.Errorf("Failed to call SimManagerServiceClient. Error: %s", err.Error())
+		return nil, err
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 
 	simRep, err := simManagerClient.ListSims(ctx, &simMangerPb.ListSimsRequest{})
 	if err != nil {
-		logrus.Error("Failed to get Sims by subscriber. Error: %v", err)
+		logrus.Errorf("Failed to get Sims by subscriber. Error: %s", err.Error())
 	}
 	allSims := simRep.Sims
 
@@ -220,15 +214,12 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 
 	smc, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
-		logrus.Error("Failed to get SimManagerServiceClient. Error: %v", err)
+		logrus.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 
 	simRep, err := smc.GetSimsByNetwork(ctx, &simMangerPb.GetSimsByNetworkRequest{NetworkID: networkIdReq})
 	if err != nil {
-		logrus.Error("Failed to get Sims by network. Error: %v", err)
+		logrus.Errorf("Failed to get Sims by network. Error: %s", err.Error())
 	}
 
 	subscriberSims := pbManagerSimsToPbSubscriberSims(simRep.Sims)

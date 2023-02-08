@@ -9,6 +9,8 @@ replace github.com/ukama/ukama/systems/subscriber/sim-manager => ../sim-manager
 replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang/protobuf v1.5.2
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
@@ -23,16 +25,29 @@ require (
 )
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
+	github.com/gin-contrib/cors v1.3.0 // indirect
+	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/jarcoal/httpmock v1.2.0 // indirect
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
+	github.com/jarcoal/httpmock v1.3.0 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/loopfz/gadgeto v0.9.0 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/penglongli/gin-metrics v0.1.9 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
+	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
+	github.com/wI2L/fizz v0.18.1 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
+	github.com/willf/bitset v1.1.11 // indirect
+	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 )
 
 require (
@@ -88,5 +103,5 @@ require (
 	google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/postgres v1.4.5 // indirect
+	gorm.io/driver/postgres v1.4.5
 )

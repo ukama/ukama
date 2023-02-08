@@ -71,9 +71,9 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	network, err := client.NewNetworkClient(serviceConfig.NetworkHost, pkg.IsDebugMode)
+	networkClient, err := client.NewNetworkClient(serviceConfig.NetworkHost, pkg.IsDebugMode)
 	if err != nil {
-		logrus.Fatal("Network Client initilization failed. Error: %v", err.Error())
+		logrus.Fatalf("Network Client initilization failed. Error: %v", err.Error())
 	}
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
@@ -82,7 +82,7 @@ func runGrpcServer(gormdb sql.Db) {
 	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient, simMClient, network)
+		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient, simMClient, networkClient)
 		pb.RegisterRegistryServiceServer(s, srv)
 
 	})

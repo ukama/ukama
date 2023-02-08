@@ -3,9 +3,11 @@ package server_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
@@ -20,26 +22,42 @@ import (
 
 func TestSubscriberServer_Add(t *testing.T) {
 	subRepo := &mocks.SubscriberRepo{}
-	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	netRepo := &mocks.Network{}
 
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	netID := uuid.NewV4()
+	orgID := uuid.NewV4()
+	mockDate := &timestamppb.Timestamp{
+		Seconds: time.Now().Unix(),
+		Nanos:   0,
+	}
 	sub := &db.Subscriber{
-		SubscriberID: uuid.NewV4(),
-		FirstName:    "john",
-		LastName:     "Doe",
-		NetworkID:    uuid.NewV4(),
-		Email:        "john@gmail.com",
-		PhoneNumber:  "0791240041",
-		Gender:       "male",
+		SubscriberID:          uuid.NewV4(),
+		FirstName:             "john",
+		LastName:              "Doe",
+		Email:                 "john@gmail.com",
+		NetworkID:             netID,
+		OrgID:                 orgID,
+		PhoneNumber:           "0791240041",
+		Gender:                "male",
+		IdSerial:              "00000",
+		DOB:                   mockDate.AsTime(),
+		ProofOfIdentification: "passwport",
+		Address:               "kigali",
+		CreatedAt:             time.Now(),
+		UpdatedAt:             time.Now(),
+		DeletedAt:             nil,
 	}
 
-	psub := &pb.AddSubscriberRequest{FirstName: "john", LastName: "Doe", Email: "joe@gmail.com", PhoneNumber: "0791240041"}
+	psub := &pb.AddSubscriberRequest{FirstName: "john", LastName: "Doe", Email: "joe@gmail.com", NetworkID: netID.String(), OrgID: orgID.String(), PhoneNumber: "0791240041", Gender: "male", IdSerial: "00000", DateOfBirth: mockDate, ProofOfIdentification: "passwport", Address: "kigali"}
 
 	subRepo.On("Add", sub).Return(nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, psub).Return(nil).Once()
 
-	s := server.NewSubscriberServer(subRepo, msgbusClient, nil, nil)
+	s := server.NewSubscriberServer(subRepo, msgbusClient, nil, netRepo)
+	// netRepo.On("ValidateNetwork", netID, orgID).Return(pResp)
+	// m.On("Read", mock.Anything, pReq).Return(pResp, nil)
 	_, err := s.Add(context.TODO(), psub)
-
 	assert.NoError(t, err)
 	subRepo.AssertExpectations(t)
 }
@@ -63,6 +81,7 @@ func TestSubscriberServer_Update(t *testing.T) {
 	msgbusClient.On("PublishRequest", mock.Anything, psub).Return(nil).Once()
 
 	s := server.NewSubscriberServer(subRepo, msgbusClient, nil, nil)
+
 	_, err := s.Update(context.TODO(), psub)
 
 	assert.NoError(t, err)
@@ -72,9 +91,9 @@ func TestSubscriberServer_Update(t *testing.T) {
 func TestSubscriberServer_Get(t *testing.T) {
 	subRepo := &mocks.SubscriberRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	subscriberUUID, error := uuid.FromString("dbe9a556-a626-11ed-afa1-0242ac120002")
-	if error != nil {
-		logrus.Error("Invalid format uuid %s ", error.Error())
+	subscriberUUID, err := uuid.FromString("dbe9a556-a626-11ed-afa1-0242ac120002")
+	if err != nil {
+		logrus.Errorf("Invalid format uuid %s", err.Error())
 	}
 	sub := &db.Subscriber{
 		SubscriberID: subscriberUUID,
