@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/cloud/net/pb/gen"
 	"github.com/ukama/ukama/systems/common/ukama"
+
 	"google.golang.org/grpc"
 )
 
@@ -34,11 +34,13 @@ func NewDeviceIpResolver(netHost string, timeoutSecond int) (*deviceIpResolver, 
 }
 
 func (r *deviceIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
-	defer cancel()
-	res, err := r.netClient.Get(ctx, &pb.GetRequest{NodeId: nodeId.String()})
-	if err != nil {
-		return "", err
-	}
-	return res.Ip, nil
+	// TODO: Add a rest client request to registry api-gateway
+
+	// ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
+	// defer cancel()
+	// res, err := r.netClient.Get(ctx, &pb.GetRequest{NodeId: nodeId.String()})
+	// if err != nil {
+	// 	return "", err
+	// }
+	// return res.Ip, nil
 }

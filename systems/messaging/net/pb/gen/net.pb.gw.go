@@ -77,12 +77,13 @@ func RegisterNnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ukama.network.v1.Nns/List", runtime.WithHTTPPathPattern("/v1/nns/list"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/ukama.network.v1.Nns/List", runtime.WithHTTPPathPattern("/v1/nns/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Nns_List_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Nns_List_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -139,12 +140,13 @@ func RegisterNnsHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/ukama.network.v1.Nns/List", runtime.WithHTTPPathPattern("/v1/nns/list"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/ukama.network.v1.Nns/List", runtime.WithHTTPPathPattern("/v1/nns/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Nns_List_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Nns_List_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
