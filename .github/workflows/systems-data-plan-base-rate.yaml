@@ -5,7 +5,7 @@ name: build-data-plan-base-rate
 on:  
   push:   
     paths:
-        - "systems/data-plan/base-rate/**"
+        - "systems/data_plan/base-rate/**"
         - ".github/workflows/systems-data-plan-base-rate.yaml"
  
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
 jobs:  
   build:
     env: 
-      working-directory: systems/data-plan/base-rate
+      working-directory: systems/data_plan/base-rate
 
     name: build and test
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
     name: sonar-scan
     runs-on: ubuntu-latest
     env: 
-      working-directory: systems/data-plan/base-rate
+      working-directory: systems/data_plan/base-rate
     steps:
       - uses: actions/checkout@v3
       - name: scan
@@ -49,7 +49,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: systems/data-plan/base-rate
+      working-directory: systems/data_plan/base-rate
     steps:
       - uses: actions/checkout@v3
       - name: lint
@@ -65,7 +65,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: systems/data-plan/base-rate
+        working-directory: systems/data_plan/base-rate
       steps:
         - uses: actions/checkout@v3
         
