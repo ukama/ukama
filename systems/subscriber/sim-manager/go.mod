@@ -24,7 +24,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-20230104003636-ab3d312e74b3
+	github.com/ukama/ukama/systems/common v0.0.0-20230127114931-6b98871f5756
 	github.com/ukama/ukama/systems/data-plan/package v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/subscriber-registry v0.0.0-00010101000000-000000000000

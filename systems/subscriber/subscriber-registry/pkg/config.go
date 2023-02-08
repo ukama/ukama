@@ -11,11 +11,11 @@ type Config struct {
 	DB               *uconf.Database  `default:"{}"`
 	Grpc             *uconf.Grpc      `default:"{}"`
 	Queue            *uconf.Queue     `default:"{}"`
-	Timeout          time.Duration    `default:"7s"`
+	Timeout          time.Duration    `default:"10s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
-	SimManagerHost           string           `default:"org:9090"`
-	NetworkHost       string            `default:"http://localhost:8085"`
+	SimManagerHost   string `default:"org:9090"`
+	NetworkHost      string `default:"http://localhost:8085"`
 }
 
 func NewConfig(name string) *Config {
@@ -26,7 +26,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        7 * time.Second,
-			ListenerRoutes: []string{""},
+			ListenerRoutes: nil,
 		},
 	}
 }
