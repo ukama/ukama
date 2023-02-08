@@ -5,8 +5,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
+	pb "github.com/ukama/ukama/systems/subscriber/sim_pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -26,7 +26,7 @@ func (l *SimPoolEventServer) EventNotification(ctx context.Context, e *epb.Event
 	switch e.RoutingKey {
 	case "event.cloud.simManager.sim.allocation":
 		msg, err := unmarshalAllocateSim(e.Msg)
-		if err != nil { 
+		if err != nil {
 			return nil, err
 		}
 
@@ -35,7 +35,7 @@ func (l *SimPoolEventServer) EventNotification(ctx context.Context, e *epb.Event
 			return nil, err
 		}
 	default:
-		log.Errorf("handler not registered for %s",e.RoutingKey)
+		log.Errorf("handler not registered for %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil

@@ -7,10 +7,10 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/utils"
+	pb "github.com/ukama/ukama/systems/subscriber/sim_pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/pkg"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/pkg/utils"
 )
 
 type SimPoolServer struct {
@@ -32,7 +32,7 @@ func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), req.GetSimType().String())
 	if err != nil {
 		logrus.Error("error fetching a sim " + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim_pool")
 	}
 
 	return &pb.GetResponse{Sim: dbSimToPbSim(sim)}, nil
@@ -44,7 +44,7 @@ func (p *SimPoolServer) GetByIccid(ctx context.Context, req *pb.GetByIccidReques
 	sim, err := p.simRepo.GetByIccid(req.GetIccid())
 	if err != nil {
 		logrus.Error("error fetching a sim " + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim_pool")
 	}
 
 	return &pb.GetByIccidResponse{Sim: dbSimToPbSim(sim)}, nil
@@ -60,7 +60,7 @@ func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (
 	if err != nil {
 		logrus.Error("error getting a sim pool stats" + err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim_pool")
 	}
 	resp := utils.PoolStats(sim)
 
@@ -73,7 +73,7 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	err := p.simRepo.Add(result)
 	if err != nil {
 		logrus.Error("error adding a sims" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim_pool")
 	}
 	resp := &pb.AddResponse{Sim: dbSimsToPbSim(result)}
 	return resp, nil
@@ -86,7 +86,7 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 	err := p.simRepo.Add(s)
 	if err != nil {
 		logrus.Error("error while Upload sims data" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim_pool")
 	}
 	route := p.baseRoutingKey.SetAction("upload").SetObject("sim").MustBuild()
 	err = p.msgbus.PublishRequest(route, req)
@@ -102,7 +102,7 @@ func (p *SimPoolServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	err := p.simRepo.Delete(req.GetId())
 	if err != nil {
 		logrus.Error("error while delete sims data" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
+		return nil, grpc.SqlErrorToGrpc(err, "sim_pool")
 	}
 	return &pb.DeleteResponse{Id: req.GetId()}, nil
 }

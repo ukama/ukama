@@ -14,7 +14,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/sim_pool/pb/gen"
 	"google.golang.org/grpc"
 )
 

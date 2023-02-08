@@ -56,7 +56,7 @@ Sim pool sub-system is responsible of:
       ├── Makefile
       ├── README.md
       ├── bin
-      │      ├── sim-pool
+      │      ├── sim_pool
       ├── cmd
       │      ├── server
       │      │      ├── main.go

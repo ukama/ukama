@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/mocks"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/mocks"
+	pb "github.com/ukama/ukama/systems/subscriber/sim_pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/pkg/db"
 
 	"context"
 )
@@ -42,7 +42,7 @@ func TestGetStats_Error(t *testing.T) {
 	reqMock := &pb.GetStatsRequest{
 		SimType: pb.SimType_INTER_MNO_DATA,
 	}
-	mockRepo.On("GetSimsByType", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("SimPool record not found!"), "sim-pool"))
+	mockRepo.On("GetSimsByType", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("SimPool record not found!"), "sim_pool"))
 	res, err := simService.GetStats(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
@@ -68,7 +68,7 @@ func TestDelete_Error(t *testing.T) {
 	reqMock := &pb.DeleteRequest{
 		Id: []uint64{1},
 	}
-	mockRepo.On("Delete", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error while deleting record!"), "sim-pool"))
+	mockRepo.On("Delete", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error while deleting record!"), "sim_pool"))
 	res, err := simService.Delete(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
@@ -112,7 +112,7 @@ func TestAdd_Error(t *testing.T) {
 			},
 		},
 	}
-	mockRepo.On("Add", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error creating sims"), "sim-pool"))
+	mockRepo.On("Add", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error creating sims"), "sim_pool"))
 	res, err := simService.Add(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
@@ -147,7 +147,7 @@ func TestGet_Error(t *testing.T) {
 		IsPhysicalSim: true,
 		SimType:       pb.SimType_INTER_MNO_DATA,
 	}
-	mockRepo.On("Get", mock.Anything, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim-pool"))
+	mockRepo.On("Get", mock.Anything, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim_pool"))
 	res, err := simService.Get(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)
@@ -180,7 +180,7 @@ func TestGetByIccid_Error(t *testing.T) {
 	reqMock := &pb.GetByIccidRequest{
 		Iccid: "1234567890123456789",
 	}
-	mockRepo.On("GetByIccid", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim-pool"))
+	mockRepo.On("GetByIccid", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim_pool"))
 	res, err := simService.GetByIccid(context.Background(), reqMock)
 	assert.Error(t, err)
 	assert.Nil(t, res)

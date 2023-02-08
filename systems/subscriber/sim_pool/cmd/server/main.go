@@ -7,8 +7,8 @@ import (
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
 	"github.com/num30/config"
-	pkg "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/server"
+	pkg "github.com/ukama/ukama/systems/subscriber/sim_pool/pkg"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/pkg/server"
 	"gopkg.in/yaml.v3"
 
 	"github.com/sirupsen/logrus"
@@ -18,9 +18,9 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/cmd/version"
+	pb "github.com/ukama/ukama/systems/subscriber/sim_pool/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/sim_pool/pkg/db"
 
 	"google.golang.org/grpc"
 )

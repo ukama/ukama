@@ -4,7 +4,7 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/sim-pool cmd/server/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/sim_pool/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/sim_pool cmd/server/main.go
 
 lint:
 	golangci-lint run

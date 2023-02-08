@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	gen "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	gen "github.com/ukama/ukama/systems/subscriber/sim_pool/pb/gen"
 	grpc "google.golang.org/grpc"
 
 	mock "github.com/stretchr/testify/mock"
