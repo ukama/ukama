@@ -44,3 +44,6 @@ func (o *OperatorAgentAdaper) TerminateSim(ctx context.Context, iccid string) er
 	// think of how to use ctx with restclient
 	return o.client.TerminateSim(iccid)
 }
+
+func (t *OperatorAgentAdaper) Close() {
+}

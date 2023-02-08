@@ -25,7 +25,7 @@ type agentFactory struct {
 	factory map[sims.SimType]AgentAdapter
 }
 
-func NewAgentFactory(testAgentHost string, timeout time.Duration) *agentFactory {
+func NewAgentFactory(testAgentHost, operatorAgentHost string, timeout time.Duration, debug bool) *agentFactory {
 	// we should lookup from provided config to get {realHost, realAgent, timeout} mappings
 	// in order to dynamically fill the factory map with available running agents
 
@@ -35,17 +35,22 @@ func NewAgentFactory(testAgentHost string, timeout time.Duration) *agentFactory 
 	// factory[SimTypeForAgent] = agent
 
 	// For now we will only use TestAgent for any sim type
-	agent, err := NewTestAgentAdapter(testAgentHost, timeout)
+	tAgent, err := NewTestAgentAdapter(testAgentHost, timeout)
 	if err != nil {
 		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", testAgentHost, err)
 	}
 
+	opAgent, err := NewOperatorAgentAdapter(operatorAgentHost, debug)
+	if err != nil {
+		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", operatorAgentHost, err)
+	}
+
 	var factory = make(map[sims.SimType]AgentAdapter)
 
-	factory[sims.SimTypeInterNone] = agent
-	factory[sims.SimTypeInterMnoAll] = agent
-	factory[sims.SimTypeInterMnoData] = agent
-	factory[sims.SimTypeInterUkamaAll] = agent
+	factory[sims.SimTypeInterNone] = tAgent
+	factory[sims.SimTypeInterMnoAll] = tAgent
+	factory[sims.SimTypeInterMnoData] = opAgent
+	factory[sims.SimTypeInterUkamaAll] = tAgent
 
 	return &agentFactory{
 		timeout: timeout,
