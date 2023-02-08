@@ -3,10 +3,8 @@ package providers
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"time"
 
-	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
 )
@@ -46,14 +44,14 @@ func NewPackageInfoClient(url string, debug bool) (*packageInfoClient, error) {
 	return N, nil
 }
 
-func (d *packageInfoClient) GetPackageInfo(packageID string) (*PackageInfo, error) {
+func (p *packageInfoClient) GetPackageInfo(packageID string) (*PackageInfo, error) {
 	errStatus := &rest.ErrorMessage{}
 
 	pkg := &PackageInfo{}
 
-	resp, err := d.R.C.R().
+	resp, err := p.R.C.R().
 		SetError(errStatus).
-		Get(d.R.URL.String() + packageEndpoint + packageID)
+		Get(p.R.URL.String() + packageEndpoint + packageID)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to data-plan/package. Error %s", err.Error())
@@ -77,27 +75,4 @@ func (d *packageInfoClient) GetPackageInfo(packageID string) (*PackageInfo, erro
 	log.Infof("DataPackage Info: %+v", *pkg)
 
 	return pkg, nil
-}
-
-type RestClient struct {
-	C   *resty.Client
-	URL *url.URL
-}
-
-func NewRestClient(path string, debug bool) (*RestClient, error) {
-	url, err := url.Parse(path)
-	if err != nil {
-		return nil, err
-	}
-
-	c := resty.New()
-	c.SetDebug(debug)
-	rc := &RestClient{
-		C:   c,
-		URL: url,
-	}
-
-	log.Tracef("Client created %+v for %s ", rc, rc.URL.String())
-
-	return rc, nil
 }

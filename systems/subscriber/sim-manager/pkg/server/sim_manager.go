@@ -45,7 +45,7 @@ type SimManagerServer struct {
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	agentFactory adapters.AgentFactory, packageService providers.PackageInfoClient,
+	agentFactory adapters.AgentFactory, packageClient providers.PackageInfoClient,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	simPoolService providers.SimPoolClientProvider, key string,
 	msgBus mb.MsgBusServiceClient) *SimManagerServer {
@@ -53,7 +53,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		simRepo:                   simRepo,
 		packageRepo:               packageRepo,
 		agentFactory:              agentFactory,
-		packageClient:             packageService,
+		packageClient:             packageClient,
 		subscriberRegistryService: subscriberRegistryService,
 		simPoolService:            simPoolService,
 		key:                       key,
