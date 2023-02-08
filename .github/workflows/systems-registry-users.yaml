@@ -1,16 +1,19 @@
-name: build-systems-{{SYSTEM_NAME}}-{{SERVICE_NAME}}
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+name: build-systems-registry-users
 on:  
   push:   
     paths:
-        - "{{SERVICE}}/**"
-        - ".github/workflows/{{WORKFLOW_PATH}}.yaml"
+        - "systems/registry/users/**"
+        - ".github/workflows/systems-registry-users.yaml"
  
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: {{SERVICE}}
+      working-directory: systems/registry/users
 
     name: build and test
     runs-on: ubuntu-latest
@@ -20,7 +23,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: {{SYSTEM_NAME}}/{{SERVICE_NAME}}
+        registry-name: registry/users
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -32,7 +35,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     env: 
-      working-directory: {{SERVICE}}
+      working-directory: systems/registry/users
     steps:
       - uses: actions/checkout@v3
       - name: scan
@@ -41,13 +44,13 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_{{SYSTEM_NAME}}_{{SERVICE_NAME}}
+          project-key: ukama_systems_registry_users
 
   lint:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: {{SERVICE}}
+      working-directory: systems/registry/users
     steps:
       - uses: actions/checkout@v3
       - name: lint
@@ -63,7 +66,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: {{SERVICE}}
+        working-directory: systems/registry/users
       steps:
         - uses: actions/checkout@v3
         
@@ -74,8 +77,8 @@ jobs:
         - name: update gitops
           uses: denispalnitsky/gitops-release@v9
           with:
-            filename: "releases/{{HELMFILE_PREFIX}}-helmfile.yaml"
-            key: "{{SANITIZED_NAME}}ImageTag"
+            filename: "releases/registry-helmfile.yaml"
+            key: "usersImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
