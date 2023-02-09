@@ -55,11 +55,11 @@ func (sp *SimPool) Get(iccid string) (*pb.GetByIccidResponse, error) {
 	return sp.client.GetByIccid(ctx, &pb.GetByIccidRequest{Iccid: iccid})
 }
 
-func (sp *SimPool) GetStats(simType string) (*pb.GetStatsResponse, error) {
+func (sp *SimPool) GetStats(sim_type string) (*pb.GetStatsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.GetStats(ctx, &pb.GetStatsRequest{SimType: pb.SimType(pb.SimType_value[simType])})
+	return sp.client.GetStats(ctx, &pb.GetStatsRequest{SimType: pb.SimType(pb.SimType_value[sim_type])})
 }
 
 func (sp *SimPool) AddSimsToSimPool(req *pb.AddRequest) (*pb.AddResponse, error) {

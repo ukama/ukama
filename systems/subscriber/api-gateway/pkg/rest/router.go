@@ -45,7 +45,7 @@ type Clients struct {
 
 type simPool interface {
 	Get(iccid string) (*simPoolPb.GetByIccidResponse, error)
-	GetStats(simType string) (*simPoolPb.GetStatsResponse, error)
+	GetStats(sim_type string) (*simPoolPb.GetStatsResponse, error)
 	AddSimsToSimPool(req *simPoolPb.AddRequest) (*simPoolPb.AddResponse, error)
 	UploadSimsToSimPool(req *simPoolPb.UploadRequest) (*simPoolPb.UploadResponse, error)
 	DeleteSimFromSimPool(id []uint64) (*simPoolPb.DeleteResponse, error)
@@ -53,14 +53,14 @@ type simPool interface {
 
 type simManager interface {
 	AllocateSim(req *simMangPb.AllocateSimRequest) (*simMangPb.AllocateSimResponse, error)
-	GetSim(simId string) (*simMangPb.GetSimResponse, error)
+	GetSim(sim_id string) (*simMangPb.GetSimResponse, error)
 	GetSimsBySub(subscriberId string) (*simMangPb.GetSimsBySubscriberResponse, error)
 	GetSimsByNetwork(networkId string) (*simMangPb.GetSimsByNetworkResponse, error)
-	ToggleSimStatus(simId string, status string) (*simMangPb.ToggleSimStatusResponse, error)
+	ToggleSimStatus(sim_id string, status string) (*simMangPb.ToggleSimStatusResponse, error)
 	AddPackageToSim(req *simMangPb.AddPackageRequest) (*simMangPb.AddPackageResponse, error)
 	RemovePackageForSim(req *simMangPb.RemovePackageRequest) (*simMangPb.RemovePackageResponse, error)
-	DeleteSim(simId string) (*simMangPb.DeleteSimResponse, error)
-	GetPackagesForSim(simId string) (*simMangPb.GetPackagesBySimResponse, error)
+	DeleteSim(sim_id string) (*simMangPb.DeleteSimResponse, error)
+	GetPackagesForSim(sim_id string) (*simMangPb.GetPackagesBySimResponse, error)
 	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
 }
 
@@ -117,32 +117,32 @@ func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "subscriber system ", "Subscriber system version v1")
 	/* These two API will be available based on RBAC */
-	v1.GET("/subscribers/networks/:networkId", formatDoc("List all subscribers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
-	v1.GET("/sims/networks/:networkId", formatDoc("List all sims for a Network", ""), tonic.Handler(r.getSimsByNetwork, http.StatusOK))
+	v1.GET("/subscribers/networks/:network_id", formatDoc("List all subscribers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
+	v1.GET("/sims/networks/:network_id", formatDoc("List all sims for a Network", ""), tonic.Handler(r.getSimsByNetwork, http.StatusOK))
 
 	pool := v1.Group("/simpool", "SIM Pool", "SIM store for Org")
 	pool.GET("/sim/:iccid", formatDoc("Get SIM by Iccid", ""), tonic.Handler(r.getSimByIccid, http.StatusOK))
-	pool.GET("/stats/:simType", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
+	pool.GET("/stats/:sim_type", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
 	pool.PUT("", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
 	pool.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
-	pool.DELETE("/sim/:simId", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
+	pool.DELETE("/sim/:sim_id", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
 
 	subscriber := v1.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
-	subscriber.GET("/:subscriberId", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
+	subscriber.GET("/:subscriber_id", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
 	subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusOK))
-	subscriber.DELETE("/:subscriberId", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
+	subscriber.DELETE("/:subscriber_id", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 	subscriber.PATCH("", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
 
 	sim := v1.Group("/sim", "SIM", "Orgs SIM data base")
-	sim.GET("/:simId", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
-	sim.GET("/subscriber/:subscriberId", formatDoc("Get a SIMs of the subscriber by Subscriber Id", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
-	sim.PATCH("/", formatDoc("Activate/Deactivate sim of subscriber", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
+	sim.GET("/:sim_id", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
+	sim.GET("/subscriber/:subscriber_id", formatDoc("Get a SIMs of the subscriber by Subscriber Id", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
+	sim.GET("/packages/:sim_id", formatDoc("Get packages for sim", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
 	sim.POST("/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.addPkgForSim, http.StatusOK))
-	sim.DELETE("/:simId/package/:packageId", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
 	sim.POST("/", formatDoc("Allocate a new sim to subscriber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
-	sim.DELETE("/:simId", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
-	sim.GET("/packages/:simId", formatDoc("Get packages for sim", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
+	sim.PATCH("/", formatDoc("Activate/Deactivate sim of subscriber", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
 	sim.PATCH("/package", formatDoc("Set active package for sim", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
+	sim.DELETE("/:sim_id/package/:package_id", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
+	sim.DELETE("/:sim_id", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
