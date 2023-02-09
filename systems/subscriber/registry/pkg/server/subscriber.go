@@ -127,6 +127,7 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 	return resp, nil
 }
 
+
 func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
 	logrus.Infof("List all subscribers")
 
@@ -146,58 +147,45 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 	if err != nil {
 		logrus.Errorf("Failed to get Sims by subscriber. Error: %s", err.Error())
 	}
+
 	allSims := simRep.Sims
 
-	var resMap = make(map[string][]*pb.Sim)
-	for _, sub := range subscribers {
-		simList := []*pb.Sim{}
-		for _, sim := range allSims {
-			if sim.SubscriberID == sub.SubscriberID.String() {
-				simList = append(simList, &pb.Sim{
-					Id:           sim.Id,
-					SubscriberID: sim.SubscriberID,
-					NetworkID:    sim.NetworkID,
-					OrgID:        sim.OrgID,
-					Iccid:        sim.Iccid,
-					Msisdn:       sim.Msisdn,
-					Package: &pb.Package{
-						Id:        sim.Package.Id,
-						StartDate: sim.Package.StartDate,
-						EndDate:   sim.Package.EndDate,
-					},
-					Type:               sim.Type,
-					Status:             sim.Status,
-					IsPhysical:         sim.IsPhysical,
-					FirstActivatedOn:   sim.FirstActivatedOn,
-					LastActivatedOn:    sim.LastActivatedOn,
-					ActivationsCount:   sim.ActivationsCount,
-					DeactivationsCount: sim.DeactivationsCount,
-					AllocatedAt:        sim.AllocatedAt,
-				})
-			}
-		}
-		resMap[sub.SubscriberID.String()] = simList
+	// Store Sims by their SubscriberID
+	simMap := make(map[string][]*pb.Sim)
+	for _, sim := range allSims {
+		simMap[sim.SubscriberID] = append(simMap[sim.SubscriberID], &pb.Sim{
+			Id:           sim.Id,
+			SubscriberID: sim.SubscriberID,
+			NetworkID:    sim.NetworkID,
+			OrgID:        sim.OrgID,
+			Iccid:        sim.Iccid,
+			Msisdn:       sim.Msisdn,
+			Package: &pb.Package{
+				Id:        sim.Package.Id,
+				StartDate: sim.Package.StartDate,
+				EndDate:   sim.Package.EndDate,
+			},
+			Type:               sim.Type,
+			Status:             sim.Status,
+			IsPhysical:         sim.IsPhysical,
+			FirstActivatedOn:   sim.FirstActivatedOn,
+			LastActivatedOn:    sim.LastActivatedOn,
+			ActivationsCount:   sim.ActivationsCount,
+			DeactivationsCount: sim.DeactivationsCount,
+			AllocatedAt:        sim.AllocatedAt,
+		})
 	}
 
 	var res []*pb.Subscriber
-	for subID, simList := range resMap {
-		subscriberID, err := uuid.FromString(subID)
-
-		sub, err := s.subscriberRepo.Get(subscriberID)
-		if err != nil {
-			logrus.WithError(err).Error("error while getting subscriber")
-			return nil, grpc.SqlErrorToGrpc(err, "subscriber")
-		}
-		res = append(res, dbSubscriberToPbSubscriber(sub, simList))
+	for _, sub := range subscribers {
+		res = append(res, dbSubscriberToPbSubscriber(&sub, simMap[sub.SubscriberID.String()]))
 	}
-
 	subscriberList := &pb.ListSubscribersResponse{
 		Subscribers: res,
 	}
 
 	return subscriberList, nil
 }
-
 func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	networkIdReq := req.GetNetworkID()
 	logrus.Infof("Get subscribers by network: %v ", networkIdReq)

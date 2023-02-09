@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 func TestSubscriberServer_Add(t *testing.T) {
 	subRepo := &mocks.SubscriberRepo{}
 	netRepo := &mocks.Network{}
+	simRepo := &mocks.SimManagerClientProvider{}
 
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	netID := uuid.NewV4()
@@ -31,6 +33,7 @@ func TestSubscriberServer_Add(t *testing.T) {
 		Seconds: time.Now().Unix(),
 		Nanos:   0,
 	}
+
 	sub := &db.Subscriber{
 		SubscriberID:          uuid.NewV4(),
 		FirstName:             "john",
@@ -49,14 +52,15 @@ func TestSubscriberServer_Add(t *testing.T) {
 		DeletedAt:             nil,
 	}
 
-	psub := &pb.AddSubscriberRequest{FirstName: "john", LastName: "Doe", Email: "joe@gmail.com", NetworkID: netID.String(), OrgID: orgID.String(), PhoneNumber: "0791240041", Gender: "male", IdSerial: "00000", DateOfBirth: mockDate, ProofOfIdentification: "passwport", Address: "kigali"}
+	psub := &pb.AddSubscriberRequest{FirstName: "john", LastName: "Doe", Email: "john@gmail.com", NetworkID: netID.String(), OrgID: orgID.String(), PhoneNumber: "0791240041", Gender: "male", IdSerial: "00000", DateOfBirth: mockDate, ProofOfIdentification: "passwport", Address: "kigali"}
 
 	subRepo.On("Add", sub).Return(nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, psub).Return(nil).Once()
 
 	s := server.NewSubscriberServer(subRepo, msgbusClient, nil, netRepo)
-	// netRepo.On("ValidateNetwork", netID, orgID).Return(pResp)
-	// m.On("Read", mock.Anything, pReq).Return(pResp, nil)
+	simRepo.On("GetClient").Return(nil, nil)
+
+	 netRepo.On("ValidateNetwork", netID.String(), orgID.String()).Return(nil).Once()
 	_, err := s.Add(context.TODO(), psub)
 	assert.NoError(t, err)
 	subRepo.AssertExpectations(t)
@@ -107,7 +111,10 @@ func TestSubscriberServer_Get(t *testing.T) {
 	subRepo.On("Get", sub.SubscriberID).Return(sub, nil).Once()
 
 	s := server.NewSubscriberServer(subRepo, msgbusClient, nil, nil)
+	fmt.Println("BRACKLEY",s)
+
 	resp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{SubscriberID: subscriberUUID.String()})
+	fmt.Println("VANESSA",resp)
 
 	assert.NoError(t, err)
 	assert.Equal(t, sub.SubscriberID, resp.GetSubscriber())

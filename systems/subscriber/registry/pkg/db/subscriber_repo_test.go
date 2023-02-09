@@ -54,7 +54,7 @@ func TestSubscriber_Add(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
-	gdb, err := gorm.Open(postgres.New(postgres.Config{
+	gdb, _ := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  "sqlmock_db_0",
 		DriverName:           "postgres",
 		Conn:                 db,
@@ -267,7 +267,7 @@ func TestSubscriber_Delete(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 	defer db.Close()
-	gdb, err := gorm.Open(postgres.New(postgres.Config{
+	gdb, _ := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  "sqlmock_db_0",
 		DriverName:           "postgres",
 		Conn:                 db,
