@@ -8,7 +8,7 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const operatorEndpoint = "/v1/sim/"
+const operatorEndpoint = "/v1/sims/"
 
 type OperatorClient interface {
 	GetSimInfo(iccid string) (*SimInfo, error)
