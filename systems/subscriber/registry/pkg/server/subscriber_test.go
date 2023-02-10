@@ -62,11 +62,11 @@ func TestAdd(t *testing.T) {
 			subRepo.On("Get", subscriberID).Return(nil, gorm.ErrRecordNotFound).Once()
 
 			s := NewSubscriberServer(subRepo, nil, nil, nil)
-			simResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
+			subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 				SubscriberID: subscriberID.String()})
 	
 			assert.Error(t, err)
-			assert.Nil(t, simResp)
+			assert.Nil(t, subResp)
 			subRepo.AssertExpectations(t)
 		})
 	
