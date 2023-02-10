@@ -28,6 +28,8 @@ type ProfileServiceClient interface {
 	Remove(ctx context.Context, in *RemoveReq, opts ...grpc.CallOption) (*RemoveResp, error)
 	/// Use this RPC to update a subscriber package in ASR
 	UpdatePackage(ctx context.Context, in *UpdatePackageReq, opts ...grpc.CallOption) (*UpdatePackageResp, error)
+	/// Use this RPC to update a subscriber usage
+	UpdateUsage(ctx context.Context, in *UpdateUsageReq, opts ...grpc.CallOption) (*UpdateUsageResp, error)
 	/// This RPC is called when a Update GUTI message is sent by node
 	Sync(ctx context.Context, in *SyncReq, opts ...grpc.CallOption) (*SyncResp, error)
 	/// This RPC is used to read the subscriber data from profile based on IMSI or ICCID
@@ -69,6 +71,15 @@ func (c *profileServiceClient) UpdatePackage(ctx context.Context, in *UpdatePack
 	return out, nil
 }
 
+func (c *profileServiceClient) UpdateUsage(ctx context.Context, in *UpdateUsageReq, opts ...grpc.CallOption) (*UpdateUsageResp, error) {
+	out := new(UpdateUsageResp)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.profile.v1.ProfileService/UpdateUsage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *profileServiceClient) Sync(ctx context.Context, in *SyncReq, opts ...grpc.CallOption) (*SyncResp, error) {
 	out := new(SyncResp)
 	err := c.cc.Invoke(ctx, "/ukama.subscriber.profile.v1.ProfileService/Sync", in, out, opts...)
@@ -97,6 +108,8 @@ type ProfileServiceServer interface {
 	Remove(context.Context, *RemoveReq) (*RemoveResp, error)
 	/// Use this RPC to update a subscriber package in ASR
 	UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error)
+	/// Use this RPC to update a subscriber usage
+	UpdateUsage(context.Context, *UpdateUsageReq) (*UpdateUsageResp, error)
 	/// This RPC is called when a Update GUTI message is sent by node
 	Sync(context.Context, *SyncReq) (*SyncResp, error)
 	/// This RPC is used to read the subscriber data from profile based on IMSI or ICCID
@@ -116,6 +129,9 @@ func (UnimplementedProfileServiceServer) Remove(context.Context, *RemoveReq) (*R
 }
 func (UnimplementedProfileServiceServer) UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePackage not implemented")
+}
+func (UnimplementedProfileServiceServer) UpdateUsage(context.Context, *UpdateUsageReq) (*UpdateUsageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUsage not implemented")
 }
 func (UnimplementedProfileServiceServer) Sync(context.Context, *SyncReq) (*SyncResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sync not implemented")
@@ -190,6 +206,24 @@ func _ProfileService_UpdatePackage_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_UpdateUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUsageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).UpdateUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.subscriber.profile.v1.ProfileService/UpdateUsage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).UpdateUsage(ctx, req.(*UpdateUsageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProfileService_Sync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SyncReq)
 	if err := dec(in); err != nil {
@@ -244,6 +278,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdatePackage",
 			Handler:    _ProfileService_UpdatePackage_Handler,
+		},
+		{
+			MethodName: "UpdateUsage",
+			Handler:    _ProfileService_UpdateUsage_Handler,
 		},
 		{
 			MethodName: "Sync",

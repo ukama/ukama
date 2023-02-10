@@ -71,6 +71,9 @@ func (this *Profile) Validate() error {
 	if !(this.UpdatedAt > 0) {
 		return github_com_mwitkow_go_proto_validators.FieldError("UpdatedAt", fmt.Errorf(`value '%v' must be greater than '0'`, this.UpdatedAt))
 	}
+	if this.LastChange == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("LastChange", fmt.Errorf(`value '%v' must not be an empty string`, this.LastChange))
+	}
 	return nil
 }
 func (this *Apn) Validate() error {
@@ -247,5 +250,20 @@ func (this *SyncResp) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, item))
 		}
 	}
+	return nil
+}
+func (this *UpdateUsageReq) Validate() error {
+	if this.Imsi == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
+	}
+	if !(len(this.Imsi) > 5) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
+	}
+	if !(len(this.Imsi) < 16) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
+	}
+	return nil
+}
+func (this *UpdateUsageResp) Validate() error {
 	return nil
 }

@@ -108,6 +108,7 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 		AllowedTimeOfService: time.Duration(req.Profile.AllowedTimeOfService) * time.Second,
 		ConsumedDataBytes:    req.Profile.ConsumedDataBytes,
 		TotalDataBytes:       req.Profile.TotalDataBytes,
+		LastStatusChangeReasons: db.ACTIVATION,
 	}
 
 	err = s.profileRepo.Add(p)
@@ -183,6 +184,45 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 	return &pb.UpdatePackageResp{}, nil
 }
 
+func (s *ProfileServer) UpdateUsage(c context.Context, req *pb.UpdateUsageReq) (*pb.UpdateUsageResp, error) {
+	p, err := s.profileRepo.GetByImsi(req.GetImsi())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
+	}
+
+	err = s.profileRepo.UpdateUsage(p.Imsi, req.ConsumedDataBytes)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+	}
+
+	/* Create event */
+	e := &epb.ProfileUpdated{
+		Profile: &epb.Profile{
+			Imsi:                 p.Imsi,
+			Iccid:                p.Iccid,
+			Network:              p.NetworkId.String(),
+			Package:              p.PackageId.String(),
+			Org:                  s.Org,
+			AllowedTimeOfService: uint64(p.AllowedTimeOfService.Seconds()),
+			TotalDataBytes:       p.TotalDataBytes,
+		},
+	}
+
+	/* Check for the data */
+	if p.TotalDataBytes <= req.ConsumedDataBytes {
+		err = s.profileRepo.Delete(p.Imsi, db.NO_DATA_AVAILABLE)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+		}
+
+		_ = s.publishEvent(msgbus.ACTION_CRUD_DELETE, "profile", e)
+
+		s.syncProfile(http.MethodDelete, e.Profile.Iccid)
+	}
+
+	return &pb.UpdateUsageResp{}, nil
+}
+
 func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.RemoveResp, error) {
 	var delProfile *db.Profile
 	var err error
@@ -202,7 +242,7 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 		}
 	}
 
-	err = s.profileRepo.Delete(delProfile.Imsi)
+	err = s.profileRepo.Delete(delProfile.Imsi, db.DEACTIVATION)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}

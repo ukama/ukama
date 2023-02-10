@@ -7,6 +7,17 @@ import (
 	"gorm.io/gorm"
 )
 
+type StatusReason int
+
+const (
+	UNKNOWN StatusReason = iota
+	ACTIVATION
+	PACKAGE_UPDATE
+	DEACTIVATION
+	NO_DATA_AVAILABLE 
+)
+
+
 type PackageDetails struct {
 	PackageId            uuid.UUID
 	AllowedTimeOfService time.Duration
@@ -36,6 +47,7 @@ type Profile struct {
 	AllowedTimeOfService time.Duration `gorm:"default:43200s"` //TODO: Add it to Package DB in data-plan (30*24*60=43200)
 	TotalDataBytes       uint64
 	ConsumedDataBytes    uint64
+	LastStatusChangeReasons StatusReason `gorm:"default:"ACTIVATION";type:int32`		// Hold the reason for last status change which is for activation or deactivation
 }
 
 /* May be ignore metrics here and use CDR fir that */
@@ -45,4 +57,35 @@ type Metrics struct {
 	LastSessionAt         time.Time
 	LastSessionTimePeriod time.Duration
 	LastUsedBytes         uint64
+}
+
+
+func StatusReasonFromString(s string) StatusReason {
+    switch s {
+	case "ACTIVATION","activation":
+			return StatusReason(ACTIVATION)
+	case "PACKAGE_UPDATE","package_update":
+			return StatusReason(PACKAGE_UPDATE)
+	case "DEACTIVATION","deactivation":
+			return StatusReason(DEACTIVATION)
+	case "NO_DATA_AVAILABLE","no_data_available":
+			return StatusReason(NO_DATA_AVAILABLE)
+	default:
+			return StatusReason(UNKNOWN)
+	}	
+}
+
+func (s StatusReason) String() string {
+    switch s {
+	case ACTIVATION: 
+			return "ACTIVATION"
+	case PACKAGE_UPDATE:
+			return "PACKAGE_UPDATE"
+	case DEACTIVATION:
+			return "DEACTIVATION"
+	case NO_DATA_AVAILABLE:
+			return "NO_DATA_AVAILABLE"
+	default:
+			return "UNKNOWN"
+	}	
 }

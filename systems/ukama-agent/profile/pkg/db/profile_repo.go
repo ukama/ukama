@@ -2,6 +2,8 @@
 package db
 
 import (
+	"gorm.io/gorm"
+	"github.com/pkg/errors"
 	"github.com/ukama/ukama/systems/common/sql"
 )
 
@@ -11,7 +13,8 @@ type ProfileRepo interface {
 	GetByImsi(imsi string) (*Profile, error)
 	GetByIccid(iccid string) (*Profile, error)
 	UpdatePackage(imsi string, pkg PackageDetails) error
-	Delete(imsi string) error
+	UpdateUsage(imsi string, bytes uint64) error
+	Delete(imsi string, reason StatusReason) error
 }
 
 type profileRepo struct {
@@ -34,8 +37,17 @@ func (r *profileRepo) UpdatePackage(imsiToUpdate string, p PackageDetails) error
 		AllowedTimeOfService: p.AllowedTimeOfService,
 		TotalDataBytes:       p.TotalDataBytes,
 		ConsumedDataBytes:    0,
+		LastStatusChangeReasons: PACKAGE_UPDATE,
 	}
 	d := r.db.GetGormDb().Where("imsi=?", imsiToUpdate).Updates(rec)
+	return d.Error
+}
+
+func (r *profileRepo)  UpdateUsage(imsi string, bytes uint64) error {
+	rec := &Profile{ 
+		ConsumedDataBytes:    bytes,
+	}
+	d := r.db.GetGormDb().Where("imsi=?", imsi).Updates(rec)
 	return d.Error
 }
 
@@ -59,8 +71,22 @@ func (r *profileRepo) GetByIccid(iccid string) (*Profile, error) {
 	return &pro, nil
 }
 
-func (r *profileRepo) Delete(imsi string) error {
+func (r *profileRepo) Delete(imsi string, reason StatusReason) error {
+	
+	p := &Profile{
+		LastStatusChangeReasons: reason,
+	}
 
-	res := r.db.GetGormDb().Where(&Profile{Imsi: imsi}).Delete(&Profile{})
-	return res.Error
+	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		err := tx.Model(&Profile{}).Where("imsi=?", imsi).Updates(p).Error
+		if err != nil {
+			return errors.Wrap(err, "error getting imsi")
+		}
+
+		err = tx.Where(&Profile{Imsi: imsi}).Delete(&Profile{}).Error
+		if err != nil {
+			return errors.Wrap(err, "error removing imsi")
+		}
+		return nil
+	})
 }

@@ -129,6 +129,29 @@ func (_m *ProfileServiceServer) UpdatePackage(_a0 context.Context, _a1 *gen.Upda
 	return r0, r1
 }
 
+// UpdateUsage provides a mock function with given fields: _a0, _a1
+func (_m *ProfileServiceServer) UpdateUsage(_a0 context.Context, _a1 *gen.UpdateUsageReq) (*gen.UpdateUsageResp, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UpdateUsageResp
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateUsageReq) *gen.UpdateUsageResp); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateUsageResp)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateUsageReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // mustEmbedUnimplementedProfileServiceServer provides a mock function with given fields:
 func (_m *ProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {
 	_m.Called()
