@@ -113,9 +113,7 @@ func TestSubscriber_Get(t *testing.T) {
 
 		// Arrange
 		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
+		assert.NoError(t,err)
 		defer db.Close()
 		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -151,9 +149,9 @@ func TestSubscriber_Get(t *testing.T) {
 
 		// Arrange
 		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
+		
+		assert.NoError(t,err)
+
 		defer db.Close()
 		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -190,9 +188,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 
 		// Arrange
 		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
+		assert.NoError(t,err)
 		defer db.Close()
 		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -228,9 +224,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 
 		// Arrange
 		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
+		assert.NoError(t,err)
 		defer db.Close()
 		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -263,9 +257,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 
 func TestSubscriber_Delete(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
+	assert.NoError(t,err)
 	defer db.Close()
 	gdb, _ := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  "sqlmock_db_0",

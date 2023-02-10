@@ -63,9 +63,7 @@ func (N *networkInfoClient) ValidateNetwork(networkID string, orgID string) erro
 	if err != nil {
 		logrus.Tracef("Failed to desrialize network info. Error message is %s", err.Error())
 		return fmt.Errorf("network info deserailization failure:" + err.Error())
-	} else {
-		logrus.Infof("Network Info: %+v", network)
-	}
+	} 
 
 	if orgID != network.OrgId {
 		logrus.Error("Missing network.")
