@@ -112,26 +112,17 @@ func (_m *SubscriberRepo) ListSubscribers() ([]db.Subscriber, error) {
 }
 
 // Update provides a mock function with given fields: subscriberID, sub
-func (_m *SubscriberRepo) Update(subscriberID uuid.UUID, sub db.Subscriber) (*db.Subscriber, error) {
+func (_m *SubscriberRepo) Update(subscriberID uuid.UUID, sub db.Subscriber) error {
 	ret := _m.Called(subscriberID, sub)
 
-	var r0 *db.Subscriber
-	if rf, ok := ret.Get(0).(func(uuid.UUID, db.Subscriber) *db.Subscriber); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID, db.Subscriber) error); ok {
 		r0 = rf(subscriberID, sub)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Subscriber)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(uuid.UUID, db.Subscriber) error); ok {
-		r1 = rf(subscriberID, sub)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 type mockConstructorTestingTNewSubscriberRepo interface {

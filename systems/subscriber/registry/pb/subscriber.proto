@@ -116,17 +116,8 @@ message UpdateSubscriberRequest{
     }
 // UpdateSubscriberResponse defines the response when updating a subscriber
 message UpdateSubscriberResponse{
-    // email is the email address of the subscriber
-    string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
-    // phoneNumber is the phone number of the subscriber
-    string phoneNumber = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    // address is the address of the subscriber
-    string address = 6;
-    // idSerial is the idSerial of the subscriber
-    string idSerial =8;
-    // proofOfIdentification is the proofOfIdentification of the subscriber
-    string proofOfIdentification =11;
-    }
+    //Return nothing when subscriber has been updated 
+ }
 message AddSubscriberResponse{
     Subscriber Subscriber = 1;
 

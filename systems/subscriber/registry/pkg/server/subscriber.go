@@ -146,6 +146,7 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 	simRep, err := simManagerClient.ListSims(ctx, &simMangerPb.ListSimsRequest{})
 	if err != nil {
 		logrus.Errorf("Failed to get Sims by subscriber. Error: %s", err.Error())
+		return nil, err
 	}
 
 	allSims := simRep.Sims
@@ -217,7 +218,29 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 
 	return subscriberList, nil
 }
+func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
+	logrus.Infof("Updating subscriber: %v", req)
+	subscriberID, err := uuid.FromString(req.GetSubscriberID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of subscriber uuid. Error %s", err.Error())
+	}
+	subscriber := &db.Subscriber{
+		Email:                 req.GetEmail(),
+		PhoneNumber:           req.GetPhoneNumber(),
+		Address:               req.GetAddress(),
+		ProofOfIdentification: req.GetProofOfIdentification(),
+		IdSerial:              req.GetIdSerial(),
+	}
 
+	err = s.subscriberRepo.Update(subscriberID,*subscriber)
+	if err != nil {
+		logrus.Error("error while updating subscriber" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
+
+	return &pb.UpdateSubscriberResponse{}, nil
+}
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberID()
 	subscriberID, error := uuid.FromString(subscriberIdReq)

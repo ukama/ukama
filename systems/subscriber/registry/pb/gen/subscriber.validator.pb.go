@@ -164,17 +164,7 @@ func (this *UpdateSubscriberRequest) Validate() error {
 	}
 	return nil
 }
-
-var _regex_UpdateSubscriberResponse_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
-var _regex_UpdateSubscriberResponse_PhoneNumber = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
-
 func (this *UpdateSubscriberResponse) Validate() error {
-	if !_regex_UpdateSubscriberResponse_Email.MatchString(this.Email) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
-	}
-	if !_regex_UpdateSubscriberResponse_PhoneNumber.MatchString(this.PhoneNumber) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
-	}
 	return nil
 }
 func (this *AddSubscriberResponse) Validate() error {
