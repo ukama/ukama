@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -13,7 +13,7 @@ import (
 type SubscriberRegistry struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
-	client  pb.SubscriberRegistryServiceClient
+	client  pb.RegistryServiceClient
 	host    string
 }
 
@@ -25,7 +25,7 @@ func NewSubscriberRegistry(host string, timeout time.Duration) *SubscriberRegist
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
-	client := pb.NewSubscriberRegistryServiceClient(conn)
+	client := pb.NewRegistryServiceClient(conn)
 
 	return &SubscriberRegistry{
 		conn:    conn,
@@ -35,7 +35,7 @@ func NewSubscriberRegistry(host string, timeout time.Duration) *SubscriberRegist
 	}
 }
 
-func NewSubscriberRegistryFromClient(SubscriberRegistryClient pb.SubscriberRegistryServiceClient) *SubscriberRegistry {
+func NewSubscriberRegistryFromClient(SubscriberRegistryClient pb.RegistryServiceClient) *SubscriberRegistry {
 	return &SubscriberRegistry{
 		host:    "localhost",
 		timeout: 1 * time.Second,

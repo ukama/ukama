@@ -13,6 +13,7 @@ services:
       - postgress-data:/var/lib/postgresql
 
   sim-pool:
+    platform: linux/arm64
     build: ./sim-pool
     ports:
       - "9090:9090"
@@ -28,8 +29,9 @@ services:
     depends_on:
       - postgresd
 
-  subscriber-registry:
-    build: ./subscriber-registry
+  registry:
+    platform: linux/arm64
+    build: ./registry
     ports:
       - "9091:9090"
     environment:
@@ -45,6 +47,7 @@ services:
       - postgresd
 
   sim-manager:
+    platform: linux/arm64
     build: ./sim-manager
     ports:
       - "9092:9090"
@@ -61,6 +64,7 @@ services:
       - postgresd
 
   test-agent:
+    platform: linux/arm64
     build: ./test-agent
     ports:
       - "9093:9090"

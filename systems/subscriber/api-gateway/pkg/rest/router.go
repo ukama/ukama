@@ -17,9 +17,9 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/client"
 	"github.com/wI2L/fizz/openapi"
 
+	subRegPb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simMangPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	simPoolPb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
-	subRegPb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 )
 
 const SUBS_URL_PARAMETER = "subscriber"
