@@ -204,11 +204,13 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 	smc, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
 		logrus.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
+		return nil,err
 	}
 
 	simRep, err := smc.GetSimsByNetwork(ctx, &simMangerPb.GetSimsByNetworkRequest{NetworkID: networkIdReq})
 	if err != nil {
 		logrus.Errorf("Failed to get Sims by network. Error: %s", err.Error())
+		return nil,err
 	}
 
 	subscriberSims := pbManagerSimsToPbSubscriberSims(simRep.Sims)
@@ -235,7 +237,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 
 	err = s.subscriberRepo.Update(subscriberID,*subscriber)
 	if err != nil {
-		logrus.Error("error while updating subscriber" + err.Error())
+		logrus.Errorf("error while updating subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 

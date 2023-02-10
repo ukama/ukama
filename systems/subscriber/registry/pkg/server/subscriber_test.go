@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/registry/mocks"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	"gorm.io/gorm"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -50,3 +52,69 @@ func TestAdd(t *testing.T) {
 		assert.Equal(t, "1234567890", resp.Subscriber.PhoneNumber)
 		assert.Equal(t, "Male", resp.Subscriber.Gender)
 	})}
+	func TestSubscriberServer_Get(t *testing.T) {
+	
+		t.Run("SubscriberNotFound", func(t *testing.T) {
+			var subscriberID = uuid.Nil
+	
+			subRepo := &mocks.SubscriberRepo{}
+	
+			subRepo.On("Get", subscriberID).Return(nil, gorm.ErrRecordNotFound).Once()
+
+			s := NewSubscriberServer(subRepo, nil, nil, nil)
+			simResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
+				SubscriberID: subscriberID.String()})
+	
+			assert.Error(t, err)
+			assert.Nil(t, simResp)
+			subRepo.AssertExpectations(t)
+		})
+	
+		t.Run("SubscriberUUIDInvalid", func(t *testing.T) {
+			var subscriberID = "1"
+	
+			subRepo := &mocks.SubscriberRepo{}
+	
+			s := NewSubscriberServer(subRepo, nil, nil, nil)
+			subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
+				SubscriberID: subscriberID})
+	
+			assert.Error(t, err)
+			assert.Nil(t, subResp)
+			subRepo.AssertExpectations(t)
+		})
+	}
+	func TestSubscriberServer_GetbyNetwork(t *testing.T) {
+		
+		
+		  
+		t.Run("NetworkNotFound", func(t *testing.T) {
+			var networkID = uuid.Nil
+	
+			subRepo := &mocks.SubscriberRepo{}
+	
+			subRepo.On("GetByNetwork", networkID).Return(nil, gorm.ErrRecordNotFound).Once()
+	
+			s := NewSubscriberServer(subRepo, nil, nil, nil)
+			subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
+				NetworkID: networkID.String()})
+	
+			assert.Error(t, err)
+			assert.Nil(t, subResp)
+			subRepo.AssertExpectations(t)
+		})
+	
+		t.Run("NetworkUUIDInvalid", func(t *testing.T) {
+			var networkID = "1"
+	
+			subRepo := &mocks.SubscriberRepo{}
+	
+			s := NewSubscriberServer(subRepo, nil, nil, nil)
+			subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
+				NetworkID: networkID})
+	
+			assert.Error(t, err)
+			assert.Nil(t, subResp)
+			subRepo.AssertExpectations(t)
+		})
+	}

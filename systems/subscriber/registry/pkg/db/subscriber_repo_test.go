@@ -279,3 +279,5 @@ func TestSubscriber_Delete(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
+
+
