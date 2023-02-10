@@ -73,9 +73,9 @@ func (s *ProfileServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, 
 		},
 		NetworkId:            p.NetworkId.String(),
 		PackageId:            p.PackageId.String(),
-		AllowedTimeOfService: uint64(p.AllowedTimeOfService.Seconds()),
+		AllowedTimeOfService: int64(p.AllowedTimeOfService.Seconds()),
 		ConsumedDataBytes:    p.ConsumedDataBytes,
-		UpdatedAt:            uint64(p.Model.UpdatedAt.Unix()),
+		UpdatedAt:            int64(p.Model.UpdatedAt.Unix()),
 	}}
 
 	logrus.Infof("Subscriber is having %+v", resp)
@@ -98,17 +98,18 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 
 	/* Add to Profile */
 	p := &db.Profile{
-		Iccid:                req.Profile.Iccid,
-		Imsi:                 req.Profile.Imsi,
-		PackageId:            pId,
-		NetworkId:            nId,
-		UeDlBps:              req.Profile.UeDlBps,
-		UeUlBps:              req.Profile.UeUlBps,
-		ApnName:              req.Profile.Apn.Name,
-		AllowedTimeOfService: time.Duration(req.Profile.AllowedTimeOfService) * time.Second,
-		ConsumedDataBytes:    req.Profile.ConsumedDataBytes,
-		TotalDataBytes:       req.Profile.TotalDataBytes,
+		Iccid:                   req.Profile.Iccid,
+		Imsi:                    req.Profile.Imsi,
+		PackageId:               pId,
+		NetworkId:               nId,
+		UeDlBps:                 req.Profile.UeDlBps,
+		UeUlBps:                 req.Profile.UeUlBps,
+		ApnName:                 req.Profile.Apn.Name,
+		AllowedTimeOfService:    time.Duration(req.Profile.AllowedTimeOfService) * time.Second,
+		ConsumedDataBytes:       req.Profile.ConsumedDataBytes,
+		TotalDataBytes:          req.Profile.TotalDataBytes,
 		LastStatusChangeReasons: db.ACTIVATION,
+		LastStatusChangeAt:      time.Now(),
 	}
 
 	err = s.profileRepo.Add(p)
@@ -124,8 +125,9 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 			Network:              p.NetworkId.String(),
 			Package:              p.PackageId.String(),
 			Org:                  s.Org,
-			AllowedTimeOfService: uint64(p.AllowedTimeOfService.Seconds()),
+			AllowedTimeOfService: int64(p.AllowedTimeOfService.Seconds()),
 			TotalDataBytes:       p.TotalDataBytes,
+			LastStatusChangeAt:   p.LastStatusChangeAt.Unix(),
 		},
 	}
 
@@ -157,6 +159,7 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 		UeDlBps:              req.Package.UeDlBps,
 		UeUlBps:              req.Package.UeUlBps,
 		ApnName:              req.Package.Apn.Name,
+		LastStatusChangeAt:   time.Now(),
 	}
 
 	err = s.profileRepo.UpdatePackage(p.Imsi, pack)
@@ -203,7 +206,7 @@ func (s *ProfileServer) UpdateUsage(c context.Context, req *pb.UpdateUsageReq) (
 			Network:              p.NetworkId.String(),
 			Package:              p.PackageId.String(),
 			Org:                  s.Org,
-			AllowedTimeOfService: uint64(p.AllowedTimeOfService.Seconds()),
+			AllowedTimeOfService: int64(p.AllowedTimeOfService.Seconds()),
 			TotalDataBytes:       p.TotalDataBytes,
 		},
 	}
@@ -255,7 +258,7 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 			Network:              delProfile.NetworkId.String(),
 			Package:              delProfile.PackageId.String(),
 			Org:                  s.Org,
-			AllowedTimeOfService: uint64(delProfile.AllowedTimeOfService.Seconds()),
+			AllowedTimeOfService: int64(delProfile.AllowedTimeOfService.Seconds()),
 			TotalDataBytes:       delProfile.TotalDataBytes,
 		},
 	}

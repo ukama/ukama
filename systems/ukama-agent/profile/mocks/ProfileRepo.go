@@ -26,13 +26,13 @@ func (_m *ProfileRepo) Add(record *db.Profile) error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: imsi
-func (_m *ProfileRepo) Delete(imsi string) error {
-	ret := _m.Called(imsi)
+// Delete provides a mock function with given fields: imsi, reason
+func (_m *ProfileRepo) Delete(imsi string, reason db.StatusReason) error {
+	ret := _m.Called(imsi, reason)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(imsi)
+	if rf, ok := ret.Get(0).(func(string, db.StatusReason) error); ok {
+		r0 = rf(imsi, reason)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -93,6 +93,20 @@ func (_m *ProfileRepo) UpdatePackage(imsi string, pkg db.PackageDetails) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, db.PackageDetails) error); ok {
 		r0 = rf(imsi, pkg)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateUsage provides a mock function with given fields: imsi, bytes
+func (_m *ProfileRepo) UpdateUsage(imsi string, bytes uint64) error {
+	ret := _m.Called(imsi, bytes)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, uint64) error); ok {
+		r0 = rf(imsi, bytes)
 	} else {
 		r0 = ret.Error(0)
 	}
