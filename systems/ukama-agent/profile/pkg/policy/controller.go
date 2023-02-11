@@ -173,7 +173,7 @@ func (p *PolicyController) StopPolicyRoutine() {
 }
 
 func (p *PolicyController) doPolicyCheck() error {
-
+	log.Infof("Policy check routine started at %s.", time.Now().String())
 	pf, err := p.profileRepo.List()
 	if err != nil {
 		log.Errorf("Failed to list profiles: %s.", err.Error())
@@ -183,7 +183,7 @@ func (p *PolicyController) doPolicyCheck() error {
 	for _, profile := range pf {
 		_, _ = p.RunPolicyControl(profile.Imsi)
 	}
-
+	log.Infof("Policy check routine ended at %s.", time.Now().String())
 	return nil
 }
 
