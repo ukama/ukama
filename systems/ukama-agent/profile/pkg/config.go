@@ -20,6 +20,8 @@ type Config struct {
 	FactoryHost       string            `default:"http://localhost:8085"`
 	Org               string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	IsMsgBus          bool              `default:"true"`
+	NodePolicyPath    string            `default:"/v1/epc/pcrf/subscriber"`
+	PolicyCheckPeriod time.Duration     `default:"10s"`
 }
 
 type SimManager struct {

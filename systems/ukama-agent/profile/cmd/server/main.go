@@ -87,7 +87,7 @@ func runGrpcServer(gormdb sql.Db) {
 	profile := db.NewProfileRepo(gormdb)
 
 	// asr service
-	pServer, err := server.NewProfileServer(profile, serviceConfig.Org, mbClient)
+	pServer, err := server.NewProfileServer(profile, serviceConfig.Org, mbClient, serviceConfig.NodePolicyPath, serviceConfig.PolicyCheckPeriod)
 
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)

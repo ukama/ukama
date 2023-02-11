@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -15,33 +16,37 @@ import (
 	pb "github.com/ukama/ukama/systems/ukama-agent/profile/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
+	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/policy"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
-
-const RESOURCE_PATH_FOR_SUBSCRIBER_ON_NODE = "/v1/epc/pcrf/subscriber"
 
 type ProfileServer struct {
 	pb.UnimplementedProfileServiceServer
 	profileRepo db.ProfileRepo
 
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	Org            string
+	msgbus           mb.MsgBusServiceClient
+	baseRoutingKey   msgbus.RoutingKeyBuilder
+	Org              string
+	PolicyController *policy.PolicyController
+	nodePolicyPath   string
 }
 
-func NewProfileServer(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceClient) (*ProfileServer, error) {
+func NewProfileServer(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceClient, nodePath string, period time.Duration) (*ProfileServer, error) {
 
-	asr := ProfileServer{
-		profileRepo: pRepo,
-		Org:         org,
-		msgbus:      msgBus,
+	ps := &ProfileServer{
+		profileRepo:    pRepo,
+		Org:            org,
+		msgbus:         msgBus,
+		nodePolicyPath: nodePath,
 	}
 
 	if msgBus != nil {
-		asr.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)
+		ps.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)
 	}
 
-	return &asr, nil
+	ps.PolicyController = policy.NewPolicyController(pRepo, org, msgBus, nodePath, period)
+
+	return ps, nil
 }
 
 func (s *ProfileServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, error) {
@@ -117,6 +122,16 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 		return nil, grpc.SqlErrorToGrpc(err, "error updating profile")
 	}
 
+	err, pState := s.PolicyController.RunPolicyControl(p.Imsi)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error checking policies")
+	}
+
+	if pState {
+		logrus.Errorf("Policy controller rejceted profile.")
+		return nil, fmt.Errorf("policy control rejected profile")
+	}
+
 	/* Create event */
 	e := &epb.ProfileUpdated{
 		Profile: &epb.Profile{
@@ -144,7 +159,7 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
 	}
 
-	/* We assum that packageId is validated by subscriber. */
+	/* We assume that packageId is validated by subscriber. */
 	pId, err := uuid.FromString(req.Package.PackageId)
 	if err != nil {
 		logrus.Errorf("PackageId not valid.")
@@ -165,6 +180,16 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 	err = s.profileRepo.UpdatePackage(p.Imsi, pack)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+	}
+
+	err, pState := s.PolicyController.RunPolicyControl(p.Imsi)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error checking policies")
+	}
+
+	if pState {
+		logrus.Errorf("Policy controller rejceted profile.")
+		return nil, fmt.Errorf("policy control rejected profile")
 	}
 
 	/* Create event */
@@ -247,7 +272,7 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 
 	err = s.profileRepo.Delete(delProfile.Imsi, db.DEACTIVATION)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating profile db")
 	}
 
 	/* Create event */
@@ -299,7 +324,7 @@ func (s *ProfileServer) syncProfile(method string, iccid string) {
 
 	if s.msgbus != nil {
 		route := s.baseRoutingKey.SetAction("node-feed").SetObject("profile").MustBuild()
-		err = s.msgbus.PublishToNodeFeeder(route, s.Org, "*", RESOURCE_PATH_FOR_SUBSCRIBER_ON_NODE, method, body)
+		err = s.msgbus.PublishToNodeFeeder(route, s.Org, "*", s.nodePolicyPath, method, body)
 		if err != nil {
 			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
 		}

@@ -2,9 +2,9 @@
 package db
 
 import (
-	"gorm.io/gorm"
 	"github.com/pkg/errors"
 	"github.com/ukama/ukama/systems/common/sql"
+	"gorm.io/gorm"
 )
 
 // declare interface so that we can mock it
@@ -15,6 +15,7 @@ type ProfileRepo interface {
 	UpdatePackage(imsi string, pkg PackageDetails) error
 	UpdateUsage(imsi string, bytes uint64) error
 	Delete(imsi string, reason StatusReason) error
+	List() ([]Profile, error)
 }
 
 type profileRepo struct {
@@ -34,18 +35,18 @@ func (r *profileRepo) Add(rec *Profile) error {
 
 func (r *profileRepo) UpdatePackage(imsiToUpdate string, p PackageDetails) error {
 	rec := &Profile{PackageId: p.PackageId,
-		AllowedTimeOfService: p.AllowedTimeOfService,
-		TotalDataBytes:       p.TotalDataBytes,
-		ConsumedDataBytes:    0,
+		AllowedTimeOfService:    p.AllowedTimeOfService,
+		TotalDataBytes:          p.TotalDataBytes,
+		ConsumedDataBytes:       0,
 		LastStatusChangeReasons: PACKAGE_UPDATE,
 	}
 	d := r.db.GetGormDb().Where("imsi=?", imsiToUpdate).Updates(rec)
 	return d.Error
 }
 
-func (r *profileRepo)  UpdateUsage(imsi string, bytes uint64) error {
-	rec := &Profile{ 
-		ConsumedDataBytes:    bytes,
+func (r *profileRepo) UpdateUsage(imsi string, bytes uint64) error {
+	rec := &Profile{
+		ConsumedDataBytes: bytes,
 	}
 	d := r.db.GetGormDb().Where("imsi=?", imsi).Updates(rec)
 	return d.Error
@@ -72,7 +73,7 @@ func (r *profileRepo) GetByIccid(iccid string) (*Profile, error) {
 }
 
 func (r *profileRepo) Delete(imsi string, reason StatusReason) error {
-	
+
 	p := &Profile{
 		LastStatusChangeReasons: reason,
 	}
@@ -89,4 +90,14 @@ func (r *profileRepo) Delete(imsi string, reason StatusReason) error {
 		}
 		return nil
 	})
+}
+
+func (r *profileRepo) List() ([]Profile, error) {
+	var p []Profile
+	result := r.db.GetGormDb().Find(&p)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return p, nil
 }
