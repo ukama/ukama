@@ -26,7 +26,7 @@ func DataCapCheck(pf db.Profile) bool {
 
 /* Allowed Time of service Policy */
 func AllowedTimeOfServiceCheck(pf db.Profile) bool {
-	return (pf.LastStatusChangeAt.Unix() + int64(pf.AllowedTimeOfService)) > time.Now().Unix()
+	return (pf.LastStatusChangeAt.Unix() + pf.AllowedTimeOfService) > time.Now().Unix()
 }
 
 func RemoveProfile(p *PolicyController, pf db.Profile) (error, bool) {
@@ -43,7 +43,7 @@ func RemoveProfile(p *PolicyController, pf db.Profile) (error, bool) {
 			Network:              pf.NetworkId.String(),
 			Package:              pf.PackageId.String(),
 			Org:                  p.Org,
-			AllowedTimeOfService: int64(pf.AllowedTimeOfService.Seconds()),
+			AllowedTimeOfService: pf.AllowedTimeOfService,
 			TotalDataBytes:       pf.TotalDataBytes,
 		},
 	}

@@ -35,7 +35,7 @@ func (r *profileRepo) Add(rec *Profile) error {
 
 func (r *profileRepo) UpdatePackage(imsiToUpdate string, p PackageDetails) error {
 	rec := &Profile{PackageId: p.PackageId,
-		AllowedTimeOfService:    p.AllowedTimeOfService,
+		AllowedTimeOfService:    int64(p.AllowedTimeOfService.Seconds()),
 		TotalDataBytes:          p.TotalDataBytes,
 		ConsumedDataBytes:       0,
 		LastStatusChangeReasons: PACKAGE_UPDATE,

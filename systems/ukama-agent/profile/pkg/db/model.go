@@ -1,6 +1,8 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -39,16 +41,16 @@ type Profile struct {
 	Imsi string `gorm:"index:asr_imsi_idx,unique,where:deleted_at is null;not null;size:15;check:asr_checker,imsi ~ $$^\\d+$$"`
 	// Pre Shared Key. This is optional and configured in operator’s DB in Authentication center and USIM. https://www.3glteinfo.com/lte-security-architecture/
 
-	UeDlBps                 uint64        `gorm:"default:100000"` //TODO: Add it to Package DB in data-plan
-	UeUlBps                 uint64        `gorm:"default:10000"`  //TODO: Add it to Package DB in data-plan
-	ApnName                 string        `gorm:"default:ukama"`  //TODO: Add it to Package DB in data-plan
-	NetworkId               uuid.UUID     `gorm:"not null;type:uuid"`
-	PackageId               uuid.UUID     `gorm:"not null;type uuid"`
-	AllowedTimeOfService    time.Duration `gorm:"default:43200s"` //TODO: Add it to Package DB in data-plan (30*24*60=43200)
+	UeDlBps                 uint64    `gorm:"default:100000"` //TODO: Add it to Package DB in data-plan
+	UeUlBps                 uint64    `gorm:"default:10000"`  //TODO: Add it to Package DB in data-plan
+	ApnName                 string    `gorm:"default:ukama"`  //TODO: Add it to Package DB in data-plan
+	NetworkId               uuid.UUID `gorm:"not null;type:uuid"`
+	PackageId               uuid.UUID `gorm:"not null;type uuid"`
+	AllowedTimeOfService    int64     `gorm:"default:43200"` //TODO: Add it to Package DB in data-plan (30*24*60=43200)
 	TotalDataBytes          uint64
 	ConsumedDataBytes       uint64
 	LastStatusChangeAt      time.Time
-	LastStatusChangeReasons StatusReason `gorm:"default:ACTIVATION;type:int32"` // Hold the reason for last status change which is for activation or deactivation
+	LastStatusChangeReasons StatusReason `gorm:"type:int"` // Hold the reason for last status change which is for activation or deactivation
 }
 
 /* May be ignore metrics here and use CDR fir that */
@@ -88,4 +90,25 @@ func (s StatusReason) String() string {
 	default:
 		return "UNKNOWN"
 	}
+}
+
+func (s StatusReason) Value() (driver.Value, error) {
+	val := int(s)
+
+	return val, nil
+}
+
+func (s *StatusReason) Scan(value interface{}) error {
+	val, ok := value.(int)
+	if !ok {
+		return fmt.Errorf("invalid status value %v", value)
+	}
+	switch StatusReason(val) {
+	case ACTIVATION, PACKAGE_UPDATE, DEACTIVATION, NO_DATA_AVAILABLE:
+		*s = StatusReason(val)
+	default:
+		*s = UNKNOWN
+	}
+
+	return fmt.Errorf("invalid status value %v", value)
 }

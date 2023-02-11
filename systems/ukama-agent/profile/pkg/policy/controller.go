@@ -119,7 +119,7 @@ func (p *PolicyController) RemoveProfile(pf db.Profile) error {
 			Network:              pf.NetworkId.String(),
 			Package:              pf.PackageId.String(),
 			Org:                  p.Org,
-			AllowedTimeOfService: int64(pf.AllowedTimeOfService.Seconds()),
+			AllowedTimeOfService: pf.AllowedTimeOfService,
 			TotalDataBytes:       pf.TotalDataBytes,
 		},
 	}
