@@ -21,18 +21,12 @@ type Policy struct {
 
 /* Data Bytes available Policy */
 func DataCapCheck(pf db.Profile) bool {
-	if pf.ConsumedDataBytes >= pf.TotalDataBytes {
-		return false
-	}
-	return true
+	return pf.ConsumedDataBytes < pf.TotalDataBytes
 }
 
 /* Allowed Time of service Policy */
 func AllowedTimeOfServiceCheck(pf db.Profile) bool {
-	if (pf.LastStatusChangeAt.Unix() + int64(pf.AllowedTimeOfService)) <= time.Now().Unix() {
-		return false
-	}
-	return true
+	return (pf.LastStatusChangeAt.Unix() + int64(pf.AllowedTimeOfService)) > time.Now().Unix()
 }
 
 func RemoveProfile(p *PolicyController, pf db.Profile) (error, bool) {

@@ -86,6 +86,29 @@ func (_m *ProfileRepo) GetByImsi(imsi string) (*db.Profile, error) {
 	return r0, r1
 }
 
+// List provides a mock function with given fields:
+func (_m *ProfileRepo) List() ([]db.Profile, error) {
+	ret := _m.Called()
+
+	var r0 []db.Profile
+	if rf, ok := ret.Get(0).(func() []db.Profile); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Profile)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdatePackage provides a mock function with given fields: imsi, pkg
 func (_m *ProfileRepo) UpdatePackage(imsi string, pkg db.PackageDetails) error {
 	ret := _m.Called(imsi, pkg)
