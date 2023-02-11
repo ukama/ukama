@@ -4,6 +4,7 @@ import (
 	"os"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/server"
 
 	"github.com/num30/config"
@@ -70,19 +71,13 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-
-	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
-		pkg.SystemName,
-		pkg.ServiceName,
-		"data-plan-base-rate",
-		serviceConfig.Queue.Uri,
-		"localhost:9090",
-		serviceConfig.MsgClient.Host,
-		serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue,
-		serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListenerRoutes)
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		inst := uuid.NewV4()
+		instanceId = inst.String()
+	}
+	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
