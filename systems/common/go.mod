@@ -48,7 +48,11 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
+<<<<<<< HEAD
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
+=======
+	github.com/gofrs/uuid v4.2.0+incompatible // indirect
+>>>>>>> main
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

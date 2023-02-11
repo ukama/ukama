@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/testing/services/network/internal"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/fake"

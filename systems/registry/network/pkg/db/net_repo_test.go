@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -51,8 +52,8 @@ func Test_NetRepo_Get(t *testing.T) {
 	t.Run("NetworkExist", func(t *testing.T) {
 		// Arrange
 		const netName = "network1"
-		const netID = 1
-		const orgID = 1
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -95,7 +96,7 @@ func Test_NetRepo_Get(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		const netID = 1
+		var netID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -138,8 +139,8 @@ func Test_NetRepo_GetByName(t *testing.T) {
 	t.Run("NetworkExist", func(t *testing.T) {
 		// Arrange
 		const netName = "network1"
-		const netID = 1
-		const orgID = 1
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 		const orgName = "org1"
 
 		var db *extsql.DB
@@ -227,8 +228,8 @@ func Test_NetRepo_GetByOrgId(t *testing.T) {
 	t.Run("OrgExist", func(t *testing.T) {
 		// Arrange
 		const netName = "network1"
-		const netID = 1
-		const orgID = 1
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -259,7 +260,7 @@ func Test_NetRepo_GetByOrgId(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		networks, err := r.GetAllByOrgId(orgID)
+		networks, err := r.GetByOrg(orgID)
 
 		// Assert
 		assert.NoError(t, err)
@@ -271,7 +272,7 @@ func Test_NetRepo_GetByOrgId(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		const orgID = 1
+		var orgID = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -299,7 +300,7 @@ func Test_NetRepo_GetByOrgId(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		networks, err := r.GetAllByOrgId(orgID)
+		networks, err := r.GetByOrg(orgID)
 
 		// Assert
 		assert.Error(t, err)
@@ -315,17 +316,20 @@ func Test_NetRepo_Add(t *testing.T) {
 		// Arrange
 		var db *extsql.DB
 
-		netName := "network1"
-		orgID := uint(1)
+		network := net_db.Network{
+			ID:    uuid.NewV4(),
+			Name:  "network1",
+			OrgID: uuid.NewV4(),
+		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
 		mock.ExpectBegin()
 
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), netName, orgID, sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(network.ID, network.Name, network.OrgID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
@@ -346,14 +350,13 @@ func Test_NetRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		ntwk, err := r.Add(orgID, netName)
+		err = r.Add(&network)
 
 		// Assert
 		assert.NoError(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.NotNil(t, ntwk)
 	})
 }
 
@@ -363,8 +366,8 @@ func Test_NetRepo_Delete(t *testing.T) {
 
 		const orgName = "org1"
 		const netName = "net1"
-		const netID = 1
-		const orgID = 1
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)

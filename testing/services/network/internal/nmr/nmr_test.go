@@ -6,7 +6,7 @@ import (
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	sr "github.com/ukama/ukama/systems/common/srvcrouter"
 )
 
 const (

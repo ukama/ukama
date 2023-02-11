@@ -1,4 +1,4 @@
-name: build-{{SERVICE_NAME}}
+name: build-systems-{{SYSTEM_NAME}}-{{SERVICE_NAME}}
 on:  
   push:   
     paths:
@@ -20,7 +20,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: {{SERVICE_NAME}}
+        registry-name: {{SYSTEM_NAME}}/{{SERVICE_NAME}}
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -29,6 +29,7 @@ jobs:
     
   sonar-scan:
     name: sonar-scan
+    needs: build
     runs-on: ubuntu-latest
     env: 
       working-directory: {{SERVICE}}
@@ -40,7 +41,7 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_services_{{SERVICE_NAME}}
+          project-key: ukama_systems_{{SYSTEM_NAME}}_{{SERVICE_NAME}}
 
   lint:
     name: lint
