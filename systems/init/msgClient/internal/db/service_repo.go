@@ -33,7 +33,7 @@ func (r *serviceRepo) Register(service *Service) (*Service, error) {
 
 	res := r.db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "name"}},
-		DoUpdates: clause.AssignmentColumns([]string{"instance_id", "msg_bus_uri", "list_queue", "publ_queue", "exchange", "service_uri", "grpc_timeout"}),
+		DoUpdates: clause.AssignmentColumns([]string{"instance_id", "msg_bus_uri", "list_queue", "publ_queue", "exchange", "service_uri", "grpc_timeout", "deleted_at"}),
 	}).Create(service)
 	if res.Error != nil {
 

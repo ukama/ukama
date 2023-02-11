@@ -4,20 +4,25 @@
 
 ## Table of Contents
 
-- [MsgClientService](#ukama.msgClient.v1.MsgClientService)
-- [Directory structure](#directory-structure)
-- [How to use?](#how-to)
-- [pb/msgClient.proto](#pb/msgClient.proto)
-  - [PublishMsgRequest Messages](#ukama.msgClient.v1.PublishMsgRequest)
-  - [PublishMsgResponse Messages](#ukama.msgClient.v1.PublishMsgResponse)
-  - [RegisterServiceReq Messages](#ukama.msgClient.v1.RegisterServiceReq)
-  - [RegisterServiceResp Messages](#ukama.msgClient.v1.RegisterServiceResp)
-  - [StartMsgBusHandlerReq Messages](#ukama.msgClient.v1.StartMsgBusHandlerReq)
-  - [StartMsgBusHandlerResp Messages](#ukama.msgClient.v1.StartMsgBusHandlerResp)
-  - [StopMsgBusHandlerReq Messages](#ukama.msgClient.v1.StopMsgBusHandlerReq)
-  - [StopMsgBusHandlerResp Messages](#ukama.msgClient.v1.StopMsgBusHandlerResp)
-  - [REGISTRAION_STATUS](#ukama.msgClient.v1.REGISTRAION_STATUS)
-- [Scalar Value Types](#scalar-value-types)
+- [Protocol Documentation](#protocol-documentation)
+  - [Table of Contents](#table-of-contents)
+- [MsgClientService](#msgclientservice)
+  - [RPC Functions](#rpc-functions)
+  - [Directory structure](#directory-structure)
+  - [How to use?](#how-to-use)
+  - [pb/msgClient.proto](#pbmsgclientproto)
+    - [PublishMsgRequest](#publishmsgrequest)
+    - [PublishMsgResponse](#publishmsgresponse)
+    - [RegisterServiceReq](#registerservicereq)
+    - [RegisterServiceResp](#registerserviceresp)
+    - [StartMsgBusHandlerReq](#startmsgbushandlerreq)
+    - [StartMsgBusHandlerResp](#startmsgbushandlerresp)
+    - [StopMsgBusHandlerReq](#stopmsgbushandlerreq)
+    - [StopMsgBusHandlerResp](#stopmsgbushandlerresp)
+    - [UnregisterServiceReq](#unregisterservicereq)
+    - [UnregisterServiceResp](#unregisterserviceresp)
+    - [REGISTRAION\_STATUS](#registraion_status)
+  - [Scalar Value Types](#scalar-value-types)
 
 <a name="pb/msgClient.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
@@ -33,6 +38,7 @@
 | RegisterService | [RegisterServiceReq](#ukama.msgClient.v1.RegisterServiceReq) | [RegisterServiceResp](#ukama.msgClient.v1.RegisterServiceReq) | Use this rpc to register system to MsgClient |
 | StartMsgBusHandler | [StartMsgBusHandlerReq](#ukama.msgClient.v1.StartMsgBusHandlerReq) | [StartMsgBusHandlerResp](#ukama.msgClient.v1.StartMsgBusHandlerReq) | Call this rpc to StartMsgBus after registration |
 | StopMsgBusHandler | [StopMsgBusHandlerReq](#ukama.msgClient.v1.StopMsgBusHandlerReq) | [StopMsgBusHandlerResp](#ukama.msgClient.v1.StopMsgBusHandlerReq) | Call this rpc to StopMsgBus |
+| UnregisterService | [UnregisterServiceReq](#ukama.msgClient.v1.UnregisterServiceReq) | [UnregisterServiceResp](#ukama.msgClient.v1.UnregisterServiceReq) | Unregister service from MsgClient |
 | PublishMsg | [PublishMsgRequest](#ukama.msgClient.v1.PublishMsgRequest) | [PublishMsgResponse](#ukama.msgClient.v1.PublishMsgRequest) | Call this rpc to publisg events |
 
 <a name="#directory-structure"></a>
@@ -61,23 +67,17 @@
       │      ├── global.go
       │      ├── queue
       │      │      ├── listener.go
+      │      │      ├── listener_test.go
       │      │      ├── msgbus.go
       │      │      ├── publisher.go
+      │      │      ├── publisher_test.go
       │      ├── server
       │      │      ├── msgClient.go
+      │      │      ├── msgClient_test.go
       ├── mocks
-      │      ├── LookupServiceClient.go
-      │      ├── LookupServiceServer.go
-      │      ├── MsgBusClient.go
-      │      ├── MsgBusServer.go
-      │      ├── NodeRepo.go
-      │      ├── OrgRepo.go
+      │      ├── MsgBusHandlerInterface.go
       │      ├── RouteRepo.go
-      │      ├── RoutingKeyRepo.go
       │      ├── ServiceRepo.go
-      │      ├── SystemRepo.go
-      │      ├── UnsafeLookupServiceServer.go
-      │      ├── UnsafeMsgBusServer.go
       ├── pb
       │      ├── gen
       │      │      ├── mocks
@@ -87,17 +87,20 @@
       │      │      ├── msgClient.pb.go
       │      │      ├── msgClient.validator.pb.go
       │      │      ├── msgClient_grpc.pb.go
-      │      ├── msgClient copy
-      │      ├── msgClient copyproto
       │      ├── msgClient.proto
+      ├── template.tmpl
+      ├── test
+      │      ├── integration
+      │      │      ├── msgclient_test.go
 
 - **cmd**: Contains the server and system/sub-system version. Purpose of this file is to initialize the DB and start server. We use `make server` command to run this file.
 - **mocks**: This directory contains the auto generated file which get generated based on `*.proto`. It contains functions which we can use to write test cases.
 - **pb**: This directory contains the `*.proto` file. In proto file we define service with all the rpc's and messages.
-- **pkg/db**: DB directory under pkg contains 2 files.
+- **internal/db**: DB directory under pkg contains 2 files.
   `model.go` file contains the db model structure/s.
   `*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
-- **pkg/server** This directory contains the file in which all the RPC functions logic is implemented. Those functions call `pkg\*_repo.go` functions to perform db operations.
+- **internal/queue** This dir contains the logic of Queue's. like: Listner queue, Publisher queue.
+- **internal/server** This dir contains the logic of RPC handlers.
 
 <a name="#how-to"></a>
 
@@ -128,27 +131,17 @@ make gen
 
 This command will generate protobuf files from pb/msgClient.proto.
 
-**To Run Server & Test RPC**
+**Make sure rabbitMq is running on docker**
+
+```
+docker run -d --name rabbit -p 5672:5672 -p 5673:5673 -p 15672:15672 rabbitmq:3-management
+```
+
+**To Run Server**
 
 ```
 make server
 ```
-
-This command will run the server on port `9090`. It'll also create the database and table under it.
-
-Server is running, Now we can use any gRPC client to interact with RPC handlers. We're using [Evans](https://github.com/ktr0731/evans). Run below command in new terminal tab:
-
-```
-evans --path /path/to --path . --proto pb/*.proto --host localhost --port 9090
-```
-
-Next run:
-
-```
-show rpc
-```
-
-This command will show all the available RPC calls under base-rate sub-system. To call any RPC function run `call FUNCATION_NAME`.
 
 ## pb/msgClient.proto
 
@@ -189,8 +182,8 @@ This command will show all the available RPC calls under base-rate sub-system. T
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| state | [REGISTRAION_STATUS](#ukama.msgClient.v1.REGISTRAION_STATUS) |  | Status of service after registration |
-| serviceUuid | [string](#string) |  | Uuid of created service |
+| state | [REGISTRAION_STATUS](#ukama.msgClient.v1.REGISTRAION_STATUS) |  |  |
+| serviceUuid | [string](#string) |  |  |
 
 <a name="ukama.msgClient.v1.StartMsgBusHandlerReq"></a>
 
@@ -216,6 +209,18 @@ This command will show all the available RPC calls under base-rate sub-system. T
 
 ### StopMsgBusHandlerResp
 
+<a name="ukama.msgClient.v1.UnregisterServiceReq"></a>
+
+### UnregisterServiceReq
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| serviceUuid | [string](#string) |  | Uuid of service to unregister |
+
+<a name="ukama.msgClient.v1.UnregisterServiceResp"></a>
+
+### UnregisterServiceResp
+
 <a name="ukama.msgClient.v1.REGISTRAION_STATUS"></a>
 
 ### REGISTRAION_STATUS
@@ -225,10 +230,7 @@ Registration status enums
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | REGISTERED | 0 | System registered status |
-| ALLREADY_REGISTERED | 1 | System already registered status |
-| NOT_REGISTERED | 2 | System not registered status |
-| LISTNENING | 3 | Listening to event |
-| LISTNENING_FAILURE | 4 | Listening failed |
+| NOT_REGISTERED | 1 | System not registered status |
 
 ## Scalar Value Types
 

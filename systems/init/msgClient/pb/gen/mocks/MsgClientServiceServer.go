@@ -106,6 +106,29 @@ func (_m *MsgClientServiceServer) StopMsgBusHandler(_a0 context.Context, _a1 *ge
 	return r0, r1
 }
 
+// UnregisterService provides a mock function with given fields: _a0, _a1
+func (_m *MsgClientServiceServer) UnregisterService(_a0 context.Context, _a1 *gen.UnregisterServiceReq) (*gen.UnregisterServiceResp, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UnregisterServiceResp
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UnregisterServiceReq) *gen.UnregisterServiceResp); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UnregisterServiceResp)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UnregisterServiceReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // mustEmbedUnimplementedMsgClientServiceServer provides a mock function with given fields:
 func (_m *MsgClientServiceServer) mustEmbedUnimplementedMsgClientServiceServer() {
 	_m.Called()

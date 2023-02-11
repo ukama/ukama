@@ -4,6 +4,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/protobuf/proto"
@@ -14,7 +15,7 @@ type LookupEventServer struct {
 	systemRepo db.SystemRepo
 	orgRepo    db.OrgRepo
 	nodeRepo   db.NodeRepo
-	pb.UnimplementedEventNotificationServiceServer
+	epb.UnimplementedEventNotificationServiceServer
 }
 
 func NewLookupEventServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo) *LookupEventServer {
@@ -25,7 +26,7 @@ func NewLookupEventServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo d
 	}
 }
 
-func (l *LookupEventServer) EventNotification(ctx context.Context, e *pb.Event) (*pb.EventResponse, error) {
+func (l *LookupEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case "event.cloud.lookup.organization.create":
@@ -42,7 +43,7 @@ func (l *LookupEventServer) EventNotification(ctx context.Context, e *pb.Event) 
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
 
-	return &pb.EventResponse{}, nil
+	return &epb.EventResponse{}, nil
 }
 
 func unmarshalLookupOrganizationCreate(msg *anypb.Any) (*pb.AddOrgRequest, error) {
