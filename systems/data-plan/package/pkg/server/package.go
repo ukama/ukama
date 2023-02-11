@@ -2,12 +2,11 @@ package server
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 	"google.golang.org/grpc/codes"

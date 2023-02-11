@@ -6,8 +6,9 @@ import (
 	"regexp"
 	"testing"
 
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -47,7 +48,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Rate_Get(t *testing.T) {
 	t.Run("GetRate", func(t *testing.T) {
-		var rateId = uuid.New()
+		var rateId = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -112,7 +113,7 @@ func Test_Rates_Get(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "lte", "lte_m", "apn", "end_at", "x2g", "x3g", "x5g", "sim_type", "effective_at"})
 		for i := 1; i <= 3; i++ {
 			rows.AddRow(i,
-				uuid.New(),
+				uuid.NewV4(),
 				"Tycho crater",
 				"Multi Tel",
 				"TTC",
@@ -160,7 +161,7 @@ func Test_Rates_Get(t *testing.T) {
 }
 
 func Test_Rate_Upload(t *testing.T) {
-	var rate_uuid = uuid.New()
+	var rate_uuid = uuid.NewV4()
 	t.Run("UploadRates", func(t *testing.T) {
 		var db *extsql.DB
 

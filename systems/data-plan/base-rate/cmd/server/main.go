@@ -28,8 +28,6 @@ import (
 )
 
 var serviceConfig *pkg.Config
-var host = "localhost"
-var port = 50051
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)

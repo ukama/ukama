@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/mocks"
@@ -101,7 +102,7 @@ func TestRateService_GetRate_Success(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
-	var uuid = uuid.New()
+	var uuid = uuid.NewV4()
 	baseRateRepo.On("GetBaseRate", uuid).Return(&db.Rate{
 		Country: mockCountry,
 	}, nil)
@@ -117,7 +118,7 @@ func TestRateService_GetRate_Error(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
-	var uuid = uuid.New()
+	var uuid = uuid.NewV4()
 	baseRateRepo.On("GetBaseRate", uuid).Return(nil, status.Errorf(codes.NotFound, "record not found"))
 	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
 	assert.Error(t, err)

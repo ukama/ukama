@@ -6,8 +6,9 @@ import (
 	"regexp"
 	"testing"
 
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

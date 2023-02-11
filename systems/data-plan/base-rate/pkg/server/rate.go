@@ -3,11 +3,11 @@ package server
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
@@ -32,14 +32,16 @@ func NewBaseRateServer(baseRateRepo db.BaseRateRepo) *BaseRateServer {
 
 func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
 	logrus.Infof("Get rate %v", req.GetRateUuid())
-	uuid, err := uuid.Parse(req.RateUuid)
+	RateID, err := uuid.FromString(req.GetRateUuid())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of rate uuid. Error %s", err.Error())
 	}
-	rate, err := b.baseRateRepo.GetBaseRate(uuid)
+
+	rate, err := b.baseRateRepo.GetBaseRate(RateID)
 
 	if err != nil {
-		logrus.Error("error while getting rate" + err.Error())
+		logrus.Errorf("error while getting rate" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 	resp := &pb.GetBaseRateResponse{
