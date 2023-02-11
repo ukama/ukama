@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -76,14 +76,17 @@ func (s *ProfileServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, 
 		Apn: &pb.Apn{
 			Name: p.ApnName,
 		},
+		TotalDataBytes:       p.TotalDataBytes,
 		NetworkId:            p.NetworkId.String(),
 		PackageId:            p.PackageId.String(),
 		AllowedTimeOfService: p.AllowedTimeOfService,
 		ConsumedDataBytes:    p.ConsumedDataBytes,
 		UpdatedAt:            int64(p.Model.UpdatedAt.Unix()),
+		LastChange:           p.LastStatusChangeReasons.String(),
+		LastChangeAt:         p.LastStatusChangeAt.Unix(),
 	}}
 
-	logrus.Infof("Subscriber is having %+v", resp)
+	log.Infof("Subscriber is having %+v", resp)
 	return resp, nil
 }
 
@@ -92,13 +95,13 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 	/* Send message to PCRF */
 	nId, err := uuid.FromString(req.Profile.NetworkId)
 	if err != nil {
-		logrus.Errorf("NetworkId not valid.")
+		log.Errorf("NetworkId not valid.")
 		return nil, err
 	}
 
 	pId, err := uuid.FromString(req.Profile.PackageId)
 	if err != nil {
-		logrus.Errorf("PackageId not valid.")
+		log.Errorf("PackageId not valid.")
 	}
 
 	/* Add to Profile */
@@ -128,7 +131,7 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 	}
 
 	if pState {
-		logrus.Errorf("Policy controller rejceted profile.")
+		log.Errorf("Policy controller rejceted profile.")
 		return nil, fmt.Errorf("policy control rejected profile")
 	}
 
@@ -148,12 +151,13 @@ func (s *ProfileServer) Add(c context.Context, req *pb.AddReq) (*pb.AddResp, err
 
 	_ = s.publishEvent(msgbus.ACTION_CRUD_CREATE, "profile", e)
 
-	s.syncProfile(http.MethodPut, e.Profile.Iccid)
+	s.syncProfile(http.MethodPut, p)
 
 	return &pb.AddResp{}, err
 }
 
 func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
+
 	p, err := s.profileRepo.GetByIccid(req.GetIccid())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
@@ -162,7 +166,7 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 	/* We assume that packageId is validated by subscriber. */
 	pId, err := uuid.FromString(req.Package.PackageId)
 	if err != nil {
-		logrus.Errorf("PackageId not valid.")
+		log.Errorf("PackageId not valid.")
 		return nil, grpc.SqlErrorToGrpc(err, "error invalid package id")
 	}
 
@@ -188,7 +192,7 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 	}
 
 	if pState {
-		logrus.Errorf("Policy controller rejceted profile.")
+		log.Errorf("Policy controller rejected profile.")
 		return nil, fmt.Errorf("policy control rejected profile")
 	}
 
@@ -207,7 +211,13 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 
 	_ = s.publishEvent(msgbus.ACTION_CRUD_UPDATE, "profile", e)
 
-	s.syncProfile(http.MethodPut, e.Profile.Iccid)
+	/* Read read profile to sync */
+	p, err = s.profileRepo.GetByIccid(req.GetIccid())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+	}
+
+	s.syncProfile(http.MethodPut, p)
 
 	return &pb.UpdatePackageResp{}, nil
 }
@@ -223,29 +233,15 @@ func (s *ProfileServer) UpdateUsage(c context.Context, req *pb.UpdateUsageReq) (
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	/* Create event */
-	e := &epb.ProfileUpdated{
-		Profile: &epb.Profile{
-			Imsi:                 p.Imsi,
-			Iccid:                p.Iccid,
-			Network:              p.NetworkId.String(),
-			Package:              p.PackageId.String(),
-			Org:                  s.Org,
-			AllowedTimeOfService: p.AllowedTimeOfService,
-			TotalDataBytes:       p.TotalDataBytes,
-		},
+	/* Check for the data */
+	err, pState := s.PolicyController.RunPolicyControl(p.Imsi)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error checking policies")
 	}
 
-	/* Check for the data */
-	if p.TotalDataBytes <= req.ConsumedDataBytes {
-		err = s.profileRepo.Delete(p.Imsi, db.NO_DATA_AVAILABLE)
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
-		}
-
-		_ = s.publishEvent(msgbus.ACTION_CRUD_DELETE, "profile", e)
-
-		s.syncProfile(http.MethodDelete, e.Profile.Iccid)
+	if pState {
+		log.Errorf("Policy controller rejected profile.")
+		return nil, fmt.Errorf("policy control rejected profile")
 	}
 
 	return &pb.UpdateUsageResp{}, nil
@@ -290,7 +286,7 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 
 	_ = s.publishEvent(msgbus.ACTION_CRUD_DELETE, "profile", e)
 
-	s.syncProfile(http.MethodDelete, e.Profile.Iccid)
+	s.syncProfile(http.MethodDelete, delProfile)
 
 	return &pb.RemoveResp{}, nil
 
@@ -299,26 +295,22 @@ func (s *ProfileServer) Remove(c context.Context, req *pb.RemoveReq) (*pb.Remove
 func (s *ProfileServer) Sync(c context.Context, req *pb.SyncReq) (*pb.SyncResp, error) {
 
 	for _, iccid := range req.Iccid {
-		s.syncProfile(http.MethodPut, iccid)
+		p, err := s.profileRepo.GetByIccid(iccid)
+		if err != nil {
+			log.Error("failed to get profile %s", iccid)
+		}
+
+		s.syncProfile(http.MethodPut, p)
 	}
 
 	return &pb.SyncResp{}, nil
 }
 
-func (s *ProfileServer) syncProfile(method string, iccid string) {
-	p, err := s.Read(context.Background(), &pb.ReadReq{
-		Id: &pb.ReadReq_Iccid{
-			Iccid: iccid,
-		},
-	})
-	if err != nil {
-		logrus.Errorf("error syncing %s: %s", iccid, err.Error())
-		return
-	}
+func (s *ProfileServer) syncProfile(method string, p *db.Profile) {
 
-	body, err := json.Marshal(p.Profile)
+	body, err := json.Marshal(p)
 	if err != nil {
-		logrus.Errorf("error marshaling profile: %s", err.Error())
+		log.Errorf("error marshaling profile: %s", err.Error())
 		return
 	}
 
@@ -326,7 +318,7 @@ func (s *ProfileServer) syncProfile(method string, iccid string) {
 		route := s.baseRoutingKey.SetAction("node-feed").SetObject("profile").MustBuild()
 		err = s.msgbus.PublishToNodeFeeder(route, s.Org, "*", s.nodePolicyPath, method, body)
 		if err != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
 		}
 	}
 
@@ -338,7 +330,7 @@ func (s *ProfileServer) publishEvent(action string, object string, msg protorefl
 		route := s.baseRoutingKey.SetAction(action).SetObject(object).MustBuild()
 		err = s.msgbus.PublishRequest(route, msg)
 		if err != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 		}
 	}
 

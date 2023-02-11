@@ -2,14 +2,11 @@ package policy
 
 import (
 	"encoding/json"
-	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -85,7 +82,7 @@ func (p *PolicyController) RunPolicyControl(imsi string) (error, bool) {
 			if valid {
 				continue
 			}
-
+			log.Infof("Policy Controller found profile %s failed to comply policy %s", pf.Imsi, pl.Name)
 			/* if policy check failed, try the action */
 			if pl.Action != nil {
 				err, removed := pl.Action(p, *pf)
@@ -105,37 +102,11 @@ func (p *PolicyController) RunPolicyControl(imsi string) (error, bool) {
 	return nil, removed
 }
 
-func (p *PolicyController) RemoveProfile(pf db.Profile) error {
-	err := p.profileRepo.Delete(pf.Imsi, db.DEACTIVATION)
-	if err != nil {
-		return err
-	}
-
-	/* Create event */
-	e := &epb.ProfileRemoved{
-		Profile: &epb.Profile{
-			Imsi:                 pf.Imsi,
-			Iccid:                pf.Iccid,
-			Network:              pf.NetworkId.String(),
-			Package:              pf.PackageId.String(),
-			Org:                  p.Org,
-			AllowedTimeOfService: pf.AllowedTimeOfService,
-			TotalDataBytes:       pf.TotalDataBytes,
-		},
-	}
-
-	_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "policy", e)
-
-	p.syncProfile(http.MethodDelete, pf)
-
-	return nil
-}
-
 func (p *PolicyController) syncProfile(method string, pf db.Profile) {
 
 	body, err := json.Marshal(pf)
 	if err != nil {
-		logrus.Errorf("error marshaling profile: %s", err.Error())
+		log.Errorf("error marshaling profile: %s", err.Error())
 		return
 	}
 
@@ -143,7 +114,7 @@ func (p *PolicyController) syncProfile(method string, pf db.Profile) {
 		route := p.baseRoutingKey.SetAction("node-feed").SetObject("policy").MustBuild()
 		err = p.msgbus.PublishToNodeFeeder(route, "*", p.Org, p.nodePolicyPath, method, body)
 		if err != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
 		}
 	}
 
@@ -173,8 +144,9 @@ func (p *PolicyController) StopPolicyRoutine() {
 }
 
 func (p *PolicyController) doPolicyCheck() error {
-	log.Infof("Policy check routine started at %s.", time.Now().String())
+
 	pf, err := p.profileRepo.List()
+	log.Infof("Policy check routine started at %s for %d profiles.", time.Now().String(), len(pf))
 	if err != nil {
 		log.Errorf("Failed to list profiles: %s.", err.Error())
 		return err

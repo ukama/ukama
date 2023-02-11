@@ -30,7 +30,7 @@ func AllowedTimeOfServiceCheck(pf db.Profile) bool {
 }
 
 func RemoveProfile(p *PolicyController, pf db.Profile) (error, bool) {
-	err := p.profileRepo.Delete(pf.Imsi, db.DEACTIVATION)
+	err := p.profileRepo.Delete(pf.Imsi, db.POLICY_FAILURE)
 	if err != nil {
 		return err, false
 	}
