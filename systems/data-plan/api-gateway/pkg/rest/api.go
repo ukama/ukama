@@ -1,9 +1,11 @@
 package rest
 
+import "github.com/ukama/ukama/systems/common/uuid"
+
 type AddPackageRequest struct {
 	Name        string `json:"name" validation:"required"`
 	Duration    uint64 `json:"duration" `
-	OrgId       uint64 `json:"org_id" validation:"required"`
+	OrgID       uuid.UUID `json:"org_id" validation:"required"`
 	SimType     string `json:"sim_type" `
 	SmsVolume   int64  `json:"sms_volume" `
 	DataVolume  int64  `json:"data_volume" `
