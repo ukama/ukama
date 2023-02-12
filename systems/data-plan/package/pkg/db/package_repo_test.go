@@ -191,7 +191,7 @@ func Test_Package_Update(t *testing.T) {
 
 		_package := Package{
 			Name:         "Monthly",
-			SimType:     "INTER_UKAMA_ALL",
+			SimType:     ParseType("INTER_UKAMA_ALL"),
 			Active:       false,
 			Duration:     360000,
 			SmsVolume:   10,
@@ -215,7 +215,7 @@ func Test_Package_Add(t *testing.T) {
 		pkg := Package{
 			PackageID:         uuid.NewV4(),
 			Name:         "Monthly",
-			SimType:     "INTER_UKAMA_ALL",
+			SimType:    ParseType( "INTER_UKAMA_ALL"),
 			Active:       false,
 			Duration:     360000,
 			SmsVolume:   10,

@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -76,10 +78,19 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument,
 			"error while parsing org as uuid. Error %s", err.Error())
 	}
+	strType := strings.ToLower(fmt.Sprintf("%v", req.GetSimType()))
+	simType := db.ParseType(strType)
+	
+	if uint8(simType) != uint8(req.SimType) {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: provided sim type (%s) does not match with package allowed sim type (%s)",
+			simType.String(), req.SimType)
+	}
+	
 	_package := &db.Package{
 		PackageID:         uuid.NewV4(),
 		Name:         req.GetName(),
-		SimType:     req.GetSimType().String(),
+		SimType:      db.ParseType(req.GetSimType().String()),
 		OrgID:       orgID,
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
@@ -127,9 +138,17 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	logrus.Infof("Update Package Uuid: %v, Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v",
 		req.PackageID, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
+		strType := strings.ToLower(fmt.Sprintf("%v", req.GetSimType()))
+	simType := db.ParseType(strType)
+	
+	if uint8(simType) != uint8(req.SimType) {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: provided sim type (%s) does not match with package allowed sim type (%s)",
+			simType.String(), req.SimType)
+	}
 	_package := db.Package{
 		Name:         req.GetName(),
-		SimType:     req.GetSimType().String(),
+		SimType:     db.ParseType(req.GetSimType().String()),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
 		SmsVolume:   uint(req.GetSmsVolume()),
@@ -180,7 +199,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		OrgRatesID:  uint64(p.OrgRatesID),
 		DataVolume:  int64(p.DataVolume),
 		VoiceVolume: int64(p.VoiceVolume),
-		SimType:     pb.SimType(pb.SimType_value[p.SimType]),
+		SimType:    pb.SimType(p.SimType),
 		CreatedAt:   p.CreatedAt.String(),
 		UpdatedAt:   p.UpdatedAt.String(),
 		DeletedAt:   p.DeletedAt.Time.String(),
