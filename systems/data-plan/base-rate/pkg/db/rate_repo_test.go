@@ -166,7 +166,7 @@ func Test_Rate_Upload(t *testing.T) {
 		var db *extsql.DB
 
 		rates := []Rate{{
-			Uuid:         rate_uuid,
+			PackageID:         rate_uuid,
 			Country:      "Tycho crater",
 			Data:         "$0.4",
 			Effective_at: "2023-10-10",

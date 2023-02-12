@@ -26,7 +26,7 @@ var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/da
 // Success case
 func TestRateService_UploadRates_Success(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
-	rateService := NewBaseRateServer(mockRepo)
+	rateService := NewBaseRateServer(mockRepo,nil)
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     mockFileUrl,
 		EffectiveAt: mockeEffectiveAt,
@@ -45,7 +45,7 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 // Error case all empty args
 func TestRateService_UploadRates_Error1(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
-	rateService := NewBaseRateServer(mockRepo)
+	rateService := NewBaseRateServer(mockRepo,nil)
 
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     "",
@@ -62,7 +62,7 @@ func TestRateService_UploadRates_Error1(t *testing.T) {
 // Error case invalid effectiveAt
 func TestRateService_UploadRates_Error2(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
-	rateService := NewBaseRateServer(mockRepo)
+	rateService := NewBaseRateServer(mockRepo,nil)
 
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     mockFileUrl,
@@ -80,7 +80,7 @@ func TestRateService_UploadRates_Error2(t *testing.T) {
 // Error case invalid url
 func TestRateService_UploadRates_Error3(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
-	rateService := NewBaseRateServer(mockRepo)
+	rateService := NewBaseRateServer(mockRepo,nil)
 
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     "https://example",
@@ -101,7 +101,7 @@ func TestRateService_UploadRates_Error3(t *testing.T) {
 func TestRateService_GetRate_Success(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
-	s := NewBaseRateServer(baseRateRepo)
+	s := NewBaseRateServer(baseRateRepo,nil)
 	var uuid = uuid.NewV4()
 	baseRateRepo.On("GetBaseRate", uuid).Return(&db.Rate{
 		Country: mockCountry,
@@ -117,7 +117,7 @@ func TestRateService_GetRate_Success(t *testing.T) {
 func TestRateService_GetRate_Error(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
-	s := NewBaseRateServer(baseRateRepo)
+	s := NewBaseRateServer(baseRateRepo,nil)
 	var uuid = uuid.NewV4()
 	baseRateRepo.On("GetBaseRate", uuid).Return(nil, status.Errorf(codes.NotFound, "record not found"))
 	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
@@ -137,7 +137,7 @@ func TestRateService_GetRates_Success(t *testing.T) {
 		SimType:     pb.SimType_INTER_MNO_DATA,
 	}
 	baseRateRepo := &mocks.BaseRateRepo{}
-	s := NewBaseRateServer(baseRateRepo)
+	s := NewBaseRateServer(baseRateRepo,nil)
 
 	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, mockSimTypeStr).Return([]db.Rate{
 		{X2g: "2G",
@@ -171,7 +171,7 @@ func TestRateService_GetRates_Error(t *testing.T) {
 		SimType:     pb.SimType_INTER_MNO_DATA,
 	}
 	baseRateRepo := &mocks.BaseRateRepo{}
-	s := NewBaseRateServer(baseRateRepo)
+	s := NewBaseRateServer(baseRateRepo,nil)
 
 	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, mockSimTypeStr).Return(nil, status.Errorf(codes.NotFound, "record not found"))
 	_rate, err := s.GetBaseRates(context.TODO(), mockFilters)

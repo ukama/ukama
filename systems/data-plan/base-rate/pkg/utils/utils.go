@@ -57,7 +57,7 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {
 	var rates []db.Rate
 	for _, value := range slice {
 		rates = append(rates, db.Rate{
-			Uuid:         uuid.NewV4(),
+			PackageID:         uuid.NewV4(),
 			Country:      value.Country,
 			Network:      value.Network,
 			Vpmn:         value.Vpmn,

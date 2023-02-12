@@ -5,10 +5,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	mbc "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
@@ -16,18 +17,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const uuidParsingError = "Error parsing UUID"
 
 type BaseRateServer struct {
 	baseRateRepo   db.BaseRateRepo
-	msgbus         *mb.MsgBusClient
+	msgbus               mbc.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedBaseRatesServiceServer
 }
 
-func NewBaseRateServer(baseRateRepo db.BaseRateRepo) *BaseRateServer {
-	return &BaseRateServer{baseRateRepo: baseRateRepo}
 
+func NewBaseRateServer(baseRateRepo db.BaseRateRepo, msgBus mbc.MsgBusServiceClient) *BaseRateServer {
+	return &BaseRateServer{
+		baseRateRepo: baseRateRepo,
+		msgbus:               msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
 
 func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
@@ -99,12 +102,12 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	}
 
 	// Publish message to msgbus
-
-	route := b.baseRoutingKey.SetActionUpdate().SetObject("base-rate").MustBuild()
+	route := b.baseRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
 	err = b.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
 
 	rateList := &pb.UploadBaseRatesResponse{
 		Rate: dbratesToPbRates(rates),

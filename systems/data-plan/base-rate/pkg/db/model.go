@@ -8,7 +8,7 @@ import (
 
 type Rate struct {
 	gorm.Model
-	Uuid         uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
+	PackageID          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Country      string
 	Network      string
 	Vpmn         string

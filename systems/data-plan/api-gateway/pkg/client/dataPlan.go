@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	pbBaseRate "github.com/ukama/ukama/systems/data-plan/base-rate/pb"
+	pbBaseRate "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 
 	"google.golang.org/grpc"
