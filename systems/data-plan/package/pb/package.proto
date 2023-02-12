@@ -35,7 +35,7 @@ message UpdatePackageRequest {
     bool active=3;
     uint64 duration=4;
     SimType simType=5;
-    int64 smsvolume=6;
+    int64 smsVolume=6;
     int64 dataVolume=7;
     int64 voiceVolume=8;
     uint64 orgRatesID=9;

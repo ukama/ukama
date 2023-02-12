@@ -65,13 +65,13 @@ func (_m *PackageRepo) Get(_a0 uuid.UUID) (*db.Package, error) {
 	return r0, r1
 }
 
-// GetByOrg provides a mock function with given fields: orgId
-func (_m *PackageRepo) GetByOrg(orgId uuid.UUID) ([]db.Package, error) {
-	ret := _m.Called(orgId)
+// GetByOrg provides a mock function with given fields: orgID
+func (_m *PackageRepo) GetByOrg(orgID uuid.UUID) ([]db.Package, error) {
+	ret := _m.Called(orgID)
 
 	var r0 []db.Package
 	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Package); ok {
-		r0 = rf(orgId)
+		r0 = rf(orgID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Package)
@@ -80,7 +80,7 @@ func (_m *PackageRepo) GetByOrg(orgId uuid.UUID) ([]db.Package, error) {
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(orgId)
+		r1 = rf(orgID)
 	} else {
 		r1 = ret.Error(1)
 	}

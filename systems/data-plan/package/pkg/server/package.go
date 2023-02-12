@@ -126,13 +126,13 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	logrus.Infof("Update Package Uuid: %v, Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v",
-		req.PackageID, req.Name, req.SimType, req.Active, req.Duration, req.Smsvolume, req.DataVolume, req.VoiceVolume)
+		req.PackageID, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 	_package := db.Package{
 		Name:         req.GetName(),
 		SimType:     req.GetSimType().String(),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
-		SmsVolume:   uint(req.GetSmsvolume()),
+		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
 		OrgRatesID: uint(req.GetOrgRatesID()),
