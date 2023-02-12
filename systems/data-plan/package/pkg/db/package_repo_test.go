@@ -48,8 +48,8 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Package_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
-		packageId := uuid.New()
-		orgId := uuid.New()
+		packageId := uuid.NewV4()
+		orgId := uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -90,7 +90,7 @@ func Test_Package_Get(t *testing.T) {
 
 func Test_Package_GetByOrg(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
-		var orgId = uuid.New()
+		var orgId = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -130,7 +130,7 @@ func Test_Package_GetByOrg(t *testing.T) {
 }
 func Test_Package_Delete(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
-		packageId := uuid.New()
+		packageId := uuid.NewV4()
 
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
@@ -165,7 +165,7 @@ func Test_Package_Delete(t *testing.T) {
 
 func Test_Package_Update(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
-		packageId := uuid.New()
+		packageId := uuid.NewV4()
 
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
@@ -191,13 +191,13 @@ func Test_Package_Update(t *testing.T) {
 
 		_package := Package{
 			Name:         "Monthly",
-			Sim_type:     "INTER_UKAMA_ALL",
+			SimType:     "INTER_UKAMA_ALL",
 			Active:       false,
 			Duration:     360000,
-			Sms_volume:   10,
-			Data_volume:  1024,
-			Voice_volume: 10,
-			Org_rates_id: 1,
+			SmsVolume:   10,
+			DataVolume:  1024,
+			VoiceVolume: 10,
+			OrgRatesID: 1,
 		}
 
 		assert.NoError(t, err)
@@ -213,16 +213,16 @@ func Test_Package_Add(t *testing.T) {
 		var db *extsql.DB
 
 		pkg := Package{
-			Uuid:         uuid.New(),
+			PackageID:         uuid.NewV4(),
 			Name:         "Monthly",
-			Sim_type:     "INTER_UKAMA_ALL",
+			SimType:     "INTER_UKAMA_ALL",
 			Active:       false,
 			Duration:     360000,
-			Sms_volume:   10,
-			Data_volume:  1024,
-			Voice_volume: 10,
-			Org_rates_id: 1,
-			Org_id:       uuid.New(),
+			SmsVolume:   10,
+			DataVolume:  1024,
+			VoiceVolume: 10,
+			OrgRatesID: 1,
+			OrgID:       uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New()
@@ -231,8 +231,8 @@ func Test_Package_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.Uuid.String(), pkg.Name, pkg.Sim_type, pkg.Org_id,
-				pkg.Active, pkg.Duration, pkg.Sms_volume, pkg.Data_volume, pkg.Voice_volume, pkg.Org_rates_id).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.PackageID.String(), pkg.Name, pkg.SimType, pkg.OrgID,
+				pkg.Active, pkg.Duration, pkg.SmsVolume, pkg.DataVolume, pkg.VoiceVolume, pkg.OrgRatesID).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

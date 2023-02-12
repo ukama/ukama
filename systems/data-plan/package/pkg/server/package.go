@@ -2,31 +2,42 @@ package server
 
 import (
 	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	mbc "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+
 type PackageServer struct {
-	packageRepo       db.PackageRepo
-	msgbus            *mb.MsgBusClient
+	packageRepo   db.PackageRepo
+	msgbus               mbc.MsgBusServiceClient
 	packageRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
 }
 
-func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
-	return &PackageServer{packageRepo: packageRepo}
+func NewPackageServer(packageRepo db.PackageRepo, msgBus mbc.MsgBusServiceClient) *PackageServer {
+	return &PackageServer{
+		packageRepo: packageRepo,
+		msgbus:               msgBus,
+		packageRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
 
 func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
-	logrus.Infof("GetPackage : %v ", req.GetPackageUuid())
-	_package, err := p.packageRepo.Get(uuid.MustParse(req.GetPackageUuid()))
+	logrus.Infof("GetPackage : %v ", req.GetPackageID())
+	packageID, err := uuid.FromString(req.GetPackageID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+	_package, err := p.packageRepo.Get(packageID)
 
 	if err != nil {
 		logrus.Error("error getting a package" + err.Error())
@@ -39,9 +50,8 @@ func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb
 	return resp, nil
 }
 func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
-	logrus.Infof("GetPackage by Org: %v ", req.GetOrgId())
-
-	orgID, err := uuid.Parse(req.GetOrgId())
+	logrus.Infof("GetPackage by Org: %v ", req.GetOrgID())
+	orgID, err := uuid.FromString(req.GetOrgID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of org uuid. Error %s", err.Error())
@@ -61,20 +71,24 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 }
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	logrus.Infof("Add Package Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v", req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
-
+	orgID, err := uuid.FromString(req.GetOrgID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"error while parsing org as uuid. Error %s", err.Error())
+	}
 	_package := &db.Package{
-		Uuid:         uuid.New(),
+		PackageID:         uuid.NewV4(),
 		Name:         req.GetName(),
-		Sim_type:     req.GetSimType().String(),
-		Org_id:       uuid.MustParse(req.GetOrgId()),
+		SimType:     req.GetSimType().String(),
+		OrgID:       orgID,
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
-		Sms_volume:   uint(req.GetSmsVolume()),
-		Data_volume:  uint(req.GetDataVolume()),
-		Voice_volume: uint(req.GetVoiceVolume()),
-		Org_rates_id: uint(req.GetOrgRatesId()),
+		SmsVolume:   uint(req.GetSmsVolume()),
+		DataVolume:  uint(req.GetDataVolume()),
+		VoiceVolume: uint(req.GetVoiceVolume()),
+		OrgRatesID: uint(req.GetOrgRatesID()),
 	}
-	err := p.packageRepo.Add(_package)
+	err = p.packageRepo.Add(_package)
 	if err != nil {
 
 		logrus.Error("Error while adding a package. " + err.Error())
@@ -86,8 +100,13 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 }
 
 func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
-	logrus.Infof("Delete Packages packageId: %v", req.GetPackageUuid())
-	err := p.packageRepo.Delete(uuid.MustParse(req.GetPackageUuid()))
+	logrus.Infof("Delete Packages packageId: %v", req.GetPackageID())
+	packageID, err := uuid.FromString(req.GetPackageID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+	err = p.packageRepo.Delete(packageID)
 	if err != nil {
 		logrus.Error("error while deleting package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
@@ -102,25 +121,28 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 	}
 
 	return &pb.DeletePackageResponse{
-		PackageUuid: req.PackageUuid,
 	}, nil
 }
 
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	logrus.Infof("Update Package Uuid: %v, Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v",
-		req.Uuid, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
+		req.PackageID, req.Name, req.SimType, req.Active, req.Duration, req.Smsvolume, req.DataVolume, req.VoiceVolume)
 	_package := db.Package{
 		Name:         req.GetName(),
-		Sim_type:     req.GetSimType().String(),
+		SimType:     req.GetSimType().String(),
 		Active:       req.Active,
 		Duration:     uint(req.GetDuration()),
-		Sms_volume:   uint(req.GetSmsVolume()),
-		Data_volume:  uint(req.GetDataVolume()),
-		Voice_volume: uint(req.GetVoiceVolume()),
-		Org_rates_id: uint(req.GetOrgRatesId()),
+		SmsVolume:   uint(req.GetSmsvolume()),
+		DataVolume:  uint(req.GetDataVolume()),
+		VoiceVolume: uint(req.GetVoiceVolume()),
+		OrgRatesID: uint(req.GetOrgRatesID()),
 	}
-
-	_packages, err := p.packageRepo.Update(uuid.MustParse(req.GetUuid()), _package)
+	packageID, err := uuid.FromString(req.GetPackageID())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+	_packages, err := p.packageRepo.Update(packageID, _package)
 	if err != nil {
 		logrus.Error("error while getting updating a package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
@@ -149,16 +171,16 @@ func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {
 
 func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	return &pb.Package{
-		Id:          uint64(p.ID),
+		PackageID:p.PackageID.String(),
 		Name:        p.Name,
-		OrgId:       p.Org_id.String(),
+		OrgID:       p.OrgID.String(),
 		Active:      p.Active,
 		Duration:    uint64(p.Duration),
-		SmsVolume:   int64(p.Sms_volume),
-		OrgRatesId:  uint64(p.Org_rates_id),
-		DataVolume:  int64(p.Data_volume),
-		VoiceVolume: int64(p.Voice_volume),
-		SimType:     pb.SimType(pb.SimType_value[p.Sim_type]),
+		SmsVolume:   int64(p.SmsVolume),
+		OrgRatesID:  uint64(p.OrgRatesID),
+		DataVolume:  int64(p.DataVolume),
+		VoiceVolume: int64(p.VoiceVolume),
+		SimType:     pb.SimType(pb.SimType_value[p.SimType]),
 		CreatedAt:   p.CreatedAt.String(),
 		UpdatedAt:   p.UpdatedAt.String(),
 		DeletedAt:   p.DeletedAt.Time.String(),

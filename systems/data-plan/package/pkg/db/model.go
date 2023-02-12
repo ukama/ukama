@@ -8,14 +8,14 @@ import (
 
 type Package struct {
 	gorm.Model
-	Uuid         uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
+	PackageID          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name         string
-	Sim_type     string
-	Org_id       uuid.UUID `gorm:"not null;type:uuid"`
+	SimType     string
+	OrgID       uuid.UUID `gorm:"not null;type:uuid;index"`
 	Active       bool
 	Duration     uint
-	Sms_volume   uint
-	Data_volume  uint
-	Voice_volume uint
-	Org_rates_id uint
+	SmsVolume   uint
+	DataVolume  uint
+	VoiceVolume uint
+	OrgRatesID uint
 }
