@@ -34,14 +34,14 @@ func NewBaseRateServer(baseRateRepo db.BaseRateRepo, msgBus mbc.MsgBusServiceCli
 }
 
 func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
-	logrus.Infof("Get rate %v", req.GetRateUuid())
-	RateID, err := uuid.FromString(req.GetRateUuid())
+	logrus.Infof("Get rate %v", req.GetRateID())
+	rateID, err := uuid.FromString(req.GetRateID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of rate uuid. Error %s", err.Error())
 	}
 
-	rate, err := b.baseRateRepo.GetBaseRate(RateID)
+	rate, err := b.baseRateRepo.GetBaseRate(rateID)
 
 	if err != nil {
 		logrus.Errorf("error while getting rate" + err.Error())
@@ -126,7 +126,7 @@ func dbratesToPbRates(rates []db.Rate) []*pb.Rate {
 
 func dbRatesToPbRates(r *db.Rate) *pb.Rate {
 	return &pb.Rate{
-		Id:          uint64(r.ID),
+		RateID:         r.RateID.String(),
 		X2G:         r.X2g,
 		X3G:         r.X3g,
 		X5G:         r.X5g,
@@ -135,14 +135,14 @@ func dbRatesToPbRates(r *db.Rate) *pb.Rate {
 		Vpmn:        r.Vpmn,
 		Imsi:        r.Imsi,
 		Data:        r.Data,
-		LteM:        r.Lte_m,
-		SmsMo:       r.Sms_mo,
-		SmsMt:       r.Sms_mt,
-		EndAt:       r.End_at,
+		LteM:        r.LteM,
+		SmsMo:       r.SmsMo,
+		SmsMt:       r.SmsMt,
+		EndAt:       r.EndAt,
 		Network:     r.Network,
 		Country:     r.Country,
-		SimType:     r.Sim_type,
-		EffectiveAt: r.Effective_at,
+		SimType:     r.SimType,
+		EffectiveAt: r.EffectiveAt,
 		CreatedAt:   r.CreatedAt.String(),
 		UpdatedAt:   r.UpdatedAt.String(),
 		DeletedAt:   r.DeletedAt.Time.String(),

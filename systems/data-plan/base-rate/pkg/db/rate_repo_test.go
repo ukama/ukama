@@ -166,22 +166,22 @@ func Test_Rate_Upload(t *testing.T) {
 		var db *extsql.DB
 
 		rates := []Rate{{
-			PackageID:         rate_uuid,
+			RateID:         rate_uuid,
 			Country:      "Tycho crater",
 			Data:         "$0.4",
-			Effective_at: "2023-10-10",
+			EffectiveAt: "2023-10-10",
 			Network:      "Multi Tel",
-			Sim_type:     "INTER_MNO_DATA",
+			SimType:     "INTER_MNO_DATA",
 			X2g:          "",
 			X3g:          "",
 			Apn:          "",
 			Imsi:         "",
 			Lte:          "",
-			Sms_mo:       "",
-			Sms_mt:       "",
+			SmsMo:       "",
+			SmsMt:       "",
 			Vpmn:         "",
-			End_at:       "",
-			Lte_m:        "",
+			EndAt:       "",
+			LteM:        "",
 			X5g:          "",
 		}}
 
@@ -192,7 +192,7 @@ func Test_Rate_Upload(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Country, rates[0].Network,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Data,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), rates[0].Effective_at, sqlmock.AnyArg(), rates[0].Sim_type).
+				sqlmock.AnyArg(), rates[0].EffectiveAt, sqlmock.AnyArg(), rates[0].SimType).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

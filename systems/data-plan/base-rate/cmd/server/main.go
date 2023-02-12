@@ -17,7 +17,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
-	generated "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -77,7 +77,7 @@ func runGrpcServer(d sql.Db) {
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewBaseRateServer(db.NewBaseRateRepo(d), mbClient)
-		generated.RegisterBaseRatesServiceServer(s, srv)
+		pb.RegisterBaseRatesServiceServer(s, srv)
 	})
 
 	go msgBusListener(mbClient)

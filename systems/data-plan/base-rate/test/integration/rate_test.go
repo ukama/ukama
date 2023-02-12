@@ -7,17 +7,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/server"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
-)
-
-var (
-	baseRateServer *server.BaseRateServer
 )
 
 func TestUploadBaseRates(t *testing.T) {
@@ -25,7 +21,8 @@ func TestUploadBaseRates(t *testing.T) {
 	defer cancel()
 
 	// set up connection to server
-	conn, err := grpc.DialContext(ctx, "localhost:9090", grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, "localhost:9090", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}

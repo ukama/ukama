@@ -8,21 +8,21 @@ import (
 
 type Rate struct {
 	gorm.Model
-	PackageID          uuid.UUID `gorm:"primaryKey;type:uuid"`
+	RateID          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Country      string
 	Network      string
 	Vpmn         string
 	Imsi         string
-	Sms_mo       string
-	Sms_mt       string
+	SmsMo       string
+	SmsMt       string
 	Data         string
 	X2g          string
 	X3g          string
 	X5g          string
 	Lte          string
-	Lte_m        string
+	LteM        string
 	Apn          string
-	Effective_at string
-	End_at       string
-	Sim_type     string
+	EffectiveAt string
+	EndAt       string
+	SimType     string
 }

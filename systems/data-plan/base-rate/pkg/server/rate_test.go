@@ -106,7 +106,7 @@ func TestRateService_GetRate_Success(t *testing.T) {
 	baseRateRepo.On("GetBaseRate", uuid).Return(&db.Rate{
 		Country: mockCountry,
 	}, nil)
-	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
+	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateID: uuid.String()})
 	assert.NoError(t, err)
 	assert.Equal(t, mockCountry, rate.Rate.Country)
 	baseRateRepo.AssertExpectations(t)
@@ -120,7 +120,7 @@ func TestRateService_GetRate_Error(t *testing.T) {
 	s := NewBaseRateServer(baseRateRepo,nil)
 	var uuid = uuid.NewV4()
 	baseRateRepo.On("GetBaseRate", uuid).Return(nil, status.Errorf(codes.NotFound, "record not found"))
-	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
+	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateID: uuid.String()})
 	assert.Error(t, err)
 	assert.Nil(t, _rate)
 }
@@ -145,13 +145,13 @@ func TestRateService_GetRates_Success(t *testing.T) {
 			Apn:          "Manual entry required",
 			Country:      "Tycho crater",
 			Data:         "$0.4",
-			Effective_at: "2023-10-10",
+			EffectiveAt: "2023-10-10",
 			Imsi:         "1",
 			Lte:          "LTE",
 			Network:      "Multi Tel",
-			Sim_type:     "INTER_MNO_DATA",
-			Sms_mo:       "$0.1",
-			Sms_mt:       "$0.1",
+			SimType:     "INTER_MNO_DATA",
+			SmsMo:       "$0.1",
+			SmsMt:       "$0.1",
 			Vpmn:         "TTC"},
 	}, nil)
 	rate, err := s.GetBaseRates(context.TODO(), mockFilters)
