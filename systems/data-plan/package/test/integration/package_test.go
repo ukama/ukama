@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package integration
 
 import (
@@ -45,11 +48,12 @@ func Test_FullFlow(t *testing.T) {
 
 	logrus.Infoln("Connecting to service ", tConfig.ServiceHost)
 	conn, c, err := CreatePackageClient()
-	defer conn.Close()
 	if err != nil {
 		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
 		return
 	}
+	defer conn.Close()
+	
 
 	t.Run("Add", func(t *testing.T) {
 		var err error
@@ -59,7 +63,7 @@ func Test_FullFlow(t *testing.T) {
 				OrgID:       "5b5c3f5e-1f3b-4723-8f99-fe0ed6c539d2",
 				Active:      true,
 				Duration:    1,
-				SimType:     pb.SimType_INTER_MNO_ALL,
+				SimType:     "INTER_MNO_ALL",
 				SmsVolume:   20,
 				DataVolume:  12,
 				VoiceVolume: 34,

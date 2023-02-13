@@ -56,7 +56,7 @@ func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 
 func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("GetBaseRates where country =  %s and network =%s and simType =%s", req.GetCountry(), req.GetProvider(), req.GetSimType())
-	rates, err := b.baseRateRepo.GetBaseRates(req.GetCountry(), req.GetProvider(), req.GetEffectiveAt(), req.GetSimType().String())
+	rates, err := b.baseRateRepo.GetBaseRates(req.GetCountry(), req.GetProvider(), req.GetEffectiveAt(),db.ParseType( req.GetSimType()))
 
 	if err != nil {
 		logrus.Error("error while getting rates" + err.Error())
@@ -72,7 +72,7 @@ func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesR
 func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
 	fileUrl := req.GetFileURL()
 	effectiveAt := req.GetEffectiveAt()
-	simType := req.GetSimType().String()
+	simType := req.GetSimType()
 
 	if !validations.IsValidUploadReqArgs(fileUrl, effectiveAt, simType) {
 		logrus.Infof("Please supply valid fileURL: %s, effectiveAt: %s and simType: %s.",
@@ -141,7 +141,7 @@ func dbRatesToPbRates(r *db.Rate) *pb.Rate {
 		EndAt:       r.EndAt,
 		Network:     r.Network,
 		Country:     r.Country,
-		SimType:     r.SimType,
+		SimType:     r.SimType.String(),
 		EffectiveAt: r.EffectiveAt,
 		CreatedAt:   r.CreatedAt.String(),
 		UpdatedAt:   r.UpdatedAt.String(),

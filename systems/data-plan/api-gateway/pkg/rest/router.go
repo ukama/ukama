@@ -147,7 +147,7 @@ func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 	resp, err := p.clients.d.UploadBaseRates(&pbBaseRate.UploadBaseRatesRequest{
 		FileURL:     req.FileURL,
 		EffectiveAt: req.EffectiveAt,
-		SimType:     pbBaseRate.SimType(pbBaseRate.SimType_value[req.SimType]),
+		SimType:     req.SimType,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -183,7 +183,7 @@ func (p *Router) getBaseRatesHandler(c *gin.Context) (*pbBaseRate.GetBaseRatesRe
 		Provider:    provider,
 		To:          to,
 		From:        from,
-		SimType:     pbBaseRate.SimType(pbBaseRate.SimType_value[simType]),
+		SimType:     simType,
 		EffectiveAt: effectiveAt,
 	})
 	if err != nil {
@@ -238,7 +238,7 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
 		PackageID:          packageID.String(),
 		Name:        req.Name,
-		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
+		SimType:     req.SimType,
 		Active:      req.Active,
 		Duration:    req.Duration,
 		SmsVolume:   req.SmsVolume,
@@ -265,7 +265,7 @@ func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,
 		SmsVolume:   req.SmsVolume,
-		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
+		SimType:     req.SimType,
 	}
 
 	return p.clients.d.AddPackage(pack)

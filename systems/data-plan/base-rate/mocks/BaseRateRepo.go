@@ -38,11 +38,11 @@ func (_m *BaseRateRepo) GetBaseRate(_a0 uuid.UUID) (*db.Rate, error) {
 }
 
 // GetBaseRates provides a mock function with given fields: country, network, effectiveAt, simType
-func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt string, simType string) ([]db.Rate, error) {
+func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt string, simType db.SimType) ([]db.Rate, error) {
 	ret := _m.Called(country, network, effectiveAt, simType)
 
 	var r0 []db.Rate
-	if rf, ok := ret.Get(0).(func(string, string, string, string) []db.Rate); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, db.SimType) []db.Rate); ok {
 		r0 = rf(country, network, effectiveAt, simType)
 	} else {
 		if ret.Get(0) != nil {
@@ -51,7 +51,7 @@ func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, string, db.SimType) error); ok {
 		r1 = rf(country, network, effectiveAt, simType)
 	} else {
 		r1 = ret.Error(1)

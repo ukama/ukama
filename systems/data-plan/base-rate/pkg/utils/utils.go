@@ -73,7 +73,7 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {
 			Apn:          value.Apn,
 			EffectiveAt: effective_at,
 			EndAt:       "",
-			SimType:     sim_type,
+			SimType:    db.ParseType( sim_type),
 		})
 	}
 	return rates

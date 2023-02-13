@@ -30,10 +30,10 @@ func (r *packageRepo) Add(_package *Package) error {
 	return result.Error
 }
 
-func (p *packageRepo) Get(uuid uuid.UUID) (*Package, error) {
+func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 	var _package Package
 
-	result := p.Db.GetGormDb().Where("uuid = ?", uuid).First(&_package)
+	result := p.Db.GetGormDb().Where("rate_id = ?", packageID).First(&_package)
 
 	if result.Error != nil {
 		return nil, result.Error

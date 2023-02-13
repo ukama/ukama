@@ -17,18 +17,17 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-
 type PackageServer struct {
-	packageRepo   db.PackageRepo
-	msgbus               mbc.MsgBusServiceClient
+	packageRepo       db.PackageRepo
+	msgbus            mbc.MsgBusServiceClient
 	packageRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
 }
 
 func NewPackageServer(packageRepo db.PackageRepo, msgBus mbc.MsgBusServiceClient) *PackageServer {
 	return &PackageServer{
-		packageRepo: packageRepo,
-		msgbus:               msgBus,
+		packageRepo:       packageRepo,
+		msgbus:            msgBus,
 		packageRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
 
@@ -80,24 +79,24 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	}
 	strType := strings.ToLower(fmt.Sprintf("%v", req.GetSimType()))
 	simType := db.ParseType(strType)
-	
-	if uint8(simType) != uint8(req.SimType) {
+
+	if simType.String() != req.SimType {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid sim type: provided sim type (%s) does not match with package allowed sim type (%s)",
 			simType.String(), req.SimType)
 	}
-	
+
 	_package := &db.Package{
-		PackageID:         uuid.NewV4(),
-		Name:         req.GetName(),
-		SimType:      db.ParseType(req.GetSimType().String()),
+		PackageID:   uuid.NewV4(),
+		Name:        req.GetName(),
+		SimType:     db.ParseType(req.GetSimType()),
 		OrgID:       orgID,
-		Active:       req.Active,
-		Duration:     uint(req.GetDuration()),
+		Active:      req.Active,
+		Duration:    uint(req.GetDuration()),
 		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
-		OrgRatesID: uint(req.GetOrgRatesID()),
+		OrgRatesID:  uint(req.GetOrgRatesID()),
 	}
 	err = p.packageRepo.Add(_package)
 	if err != nil {
@@ -131,30 +130,30 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.DeletePackageResponse{
-	}, nil
+	return &pb.DeletePackageResponse{}, nil
 }
 
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	logrus.Infof("Update Package Uuid: %v, Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v",
 		req.PackageID, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
-		strType := strings.ToLower(fmt.Sprintf("%v", req.GetSimType()))
+
+	strType := strings.ToLower(fmt.Sprintf("%v", req.GetSimType()))
 	simType := db.ParseType(strType)
-	
-	if uint8(simType) != uint8(req.SimType) {
+
+	if simType.String() != req.SimType {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid sim type: provided sim type (%s) does not match with package allowed sim type (%s)",
 			simType.String(), req.SimType)
 	}
 	_package := db.Package{
-		Name:         req.GetName(),
-		SimType:     db.ParseType(req.GetSimType().String()),
-		Active:       req.Active,
-		Duration:     uint(req.GetDuration()),
+		Name:        req.GetName(),
+		SimType:     db.ParseType(req.GetSimType()),
+		Active:      req.Active,
+		Duration:    uint(req.GetDuration()),
 		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
-		OrgRatesID: uint(req.GetOrgRatesID()),
+		OrgRatesID:  uint(req.GetOrgRatesID()),
 	}
 	packageID, err := uuid.FromString(req.GetPackageID())
 	if err != nil {
@@ -190,7 +189,7 @@ func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {
 
 func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	return &pb.Package{
-		PackageID:p.PackageID.String(),
+		PackageID:   p.PackageID.String(),
 		Name:        p.Name,
 		OrgID:       p.OrgID.String(),
 		Active:      p.Active,
@@ -199,7 +198,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		OrgRatesID:  uint64(p.OrgRatesID),
 		DataVolume:  int64(p.DataVolume),
 		VoiceVolume: int64(p.VoiceVolume),
-		SimType:    pb.SimType(p.SimType),
+		SimType:     p.SimType.String(),
 		CreatedAt:   p.CreatedAt.String(),
 		UpdatedAt:   p.UpdatedAt.String(),
 		DeletedAt:   p.DeletedAt.Time.String(),

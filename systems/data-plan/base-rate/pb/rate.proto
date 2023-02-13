@@ -14,7 +14,7 @@ message GetBaseRatesRequest{
     string provider =2;
     uint64 to  =3;
     uint64 from  =4;
-    SimType simType=5;
+    string simType=5;
     string effectiveAt = 6;
 }
 message GetBaseRatesResponse {
@@ -29,7 +29,7 @@ message GetBaseRateRequest{
 message UploadBaseRatesRequest {
     string fileURL = 1;
     string effectiveAt = 2;
-    SimType simType = 3;
+    string simType = 3;
 }
 message UploadBaseRatesResponse {
     repeated Rate rate = 1;
@@ -57,9 +57,3 @@ message Rate{
     string simType=21;
 }
 
-enum SimType {
-    INTER_NONE=0;
-    INTER_MNO_DATA=1;
-    INTER_MNO_ALL=2;
-    INTER_UKAMA_ALL=3;
-}
