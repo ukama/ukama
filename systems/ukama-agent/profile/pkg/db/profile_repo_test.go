@@ -179,3 +179,44 @@ func TestProfileRepo_UpdatePackage(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func TestProfileRepo_UpdateUsage(t *testing.T) {
+	t.Run("UpdatePackage", func(t *testing.T) {
+		var db *extsql.DB
+		var err error
+		var usage uint64 = 1000
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
+			WithArgs(sqlmock.AnyArg(), usage, Imsi).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewProfileRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.UpdateUsage(Imsi, usage)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
