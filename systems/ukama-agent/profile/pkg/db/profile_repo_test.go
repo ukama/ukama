@@ -9,7 +9,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
 	int_db "github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -80,7 +79,7 @@ var profile = int_db.Profile{
 	ConsumedDataBytes:       0,
 	NetworkId:               uuid.FromStringOrNil(Network),
 	PackageId:               uuid.FromStringOrNil(Package),
-	LastStatusChangeReasons: db.ACTIVATION,
+	LastStatusChangeReasons: int_db.ACTIVATION,
 	LastStatusChangeAt:      time.Now(),
 }
 
