@@ -310,3 +310,96 @@ func TestProfileRespo_Get(t *testing.T) {
 
 	})
 }
+
+func TestProfileRepo_Delete(t *testing.T) {
+	t.Run("Delete", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		var err error
+
+		reason := int_db.DEACTIVATION
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
+			WithArgs(sqlmock.AnyArg(), reason, Imsi).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg(), Imsi).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewProfileRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Delete(Imsi, reason)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+	})
+}
+
+func TestProfileRespo_List(t *testing.T) {
+	t.Run("GetByImsi", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+		//WithArgs(int64(pack.AllowedTimeOfService.Seconds()), pack.ApnName, pack.ConsumedDataBytes, pack.LastStatusChangeAt, int_db.PACKAGE_UPDATE, pack.PackageId, pack.TotalDataBytes, pack.UeDlBps, pack.UeUlBps, sqlmock.AnyArg(), Imsi).
+		hrow := sqlmock.NewRows([]string{"iccid", "imsi", "ue_dl_bps", "ue_ul_bps", "apn_name", "network_id", "package_id", "allowed_time_of_service", "total_data_bytes", "consumed_data_bytes", "last_status_change_at", "last_status_change_reason_at"}).
+			AddRow(profile.Iccid, profile.Imsi, profile.UeDlBps, profile.UeUlBps, profile.ApnName, profile.NetworkId, profile.PackageId, profile.AllowedTimeOfService, profile.TotalDataBytes, profile.ConsumedDataBytes, profile.LastStatusChangeAt, profile.LastStatusChangeReasons)
+
+		mock.ExpectQuery(`^SELECT.*profiles.*`).
+			WillReturnRows(hrow)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewProfileRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		prof, err := r.List()
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+		if assert.NotNil(t, prof) {
+			assert.EqualValues(t, prof[0].Imsi, Imsi)
+		}
+
+	})
+}
