@@ -22,7 +22,7 @@ const (
 
 type PackageDetails struct {
 	PackageId            uuid.UUID
-	AllowedTimeOfService time.Duration
+	AllowedTimeOfService time.Duration `default:"2592000s"`
 	TotalDataBytes       uint64
 	ConsumedDataBytes    uint64
 	UeDlBps              uint64
@@ -47,7 +47,7 @@ type Profile struct {
 	ApnName                 string    `gorm:"default:ukama"`  //TODO: Add it to Package DB in data-plan
 	NetworkId               uuid.UUID `gorm:"not null;type:uuid"`
 	PackageId               uuid.UUID `gorm:"not null;type uuid"`
-	AllowedTimeOfService    int64     `gorm:"default:43200"` //TODO: Add it to Package DB in data-plan (30*24*60=43200)
+	AllowedTimeOfService    int64     `gorm:"default:2592000"` //TODO: Add it to Package DB in data-plan (30*24*60*60=2592000s)
 	TotalDataBytes          uint64
 	ConsumedDataBytes       uint64
 	LastStatusChangeAt      time.Time

@@ -34,18 +34,17 @@ func (r *profileRepo) Add(rec *Profile) error {
 }
 
 func (r *profileRepo) UpdatePackage(imsiToUpdate string, p PackageDetails) error {
-	// rec := &Profile{PackageId: p.PackageId,
-	// 	AllowedTimeOfService:    int64(p.AllowedTimeOfService.Seconds()),
-	// 	TotalDataBytes:          p.TotalDataBytes,
-	// 	ConsumedDataBytes:       &sql.N
-	// 	LastStatusChangeReasons: PACKAGE_UPDATE,
-	// }
 
 	data := map[string]interface{}{
+		"PackageId":               p.PackageId,
+		"UeDlBps":                 p.UeDlBps,
+		"UeUlBps":                 p.UeUlBps,
+		"ApnName":                 p.ApnName,
 		"AllowedTimeOfService":    int64(p.AllowedTimeOfService.Seconds()),
 		"TotalDataBytes":          p.TotalDataBytes,
 		"ConsumedDataBytes":       0,
 		"LastStatusChangeReasons": PACKAGE_UPDATE,
+		"LastStatusChangeAt":      p.LastStatusChangeAt,
 	}
 
 	d := r.db.GetGormDb().Model(Profile{}).Where("imsi=?", imsiToUpdate).Updates(data)
