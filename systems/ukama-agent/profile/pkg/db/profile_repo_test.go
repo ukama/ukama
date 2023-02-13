@@ -103,8 +103,6 @@ func TestProfileRepo_Add(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		//row := sqlmock.NewRows([]string{"iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id"}).
-
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
@@ -218,5 +216,97 @@ func TestProfileRepo_UpdateUsage(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+	})
+}
+
+func TestProfileRespo_Get(t *testing.T) {
+	t.Run("GetByImsi", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+		//WithArgs(int64(pack.AllowedTimeOfService.Seconds()), pack.ApnName, pack.ConsumedDataBytes, pack.LastStatusChangeAt, int_db.PACKAGE_UPDATE, pack.PackageId, pack.TotalDataBytes, pack.UeDlBps, pack.UeUlBps, sqlmock.AnyArg(), Imsi).
+		hrow := sqlmock.NewRows([]string{"iccid", "imsi", "ue_dl_bps", "ue_ul_bps", "apn_name", "network_id", "package_id", "allowed_time_of_service", "total_data_bytes", "consumed_data_bytes", "last_status_change_at", "last_status_change_reason_at"}).
+			AddRow(profile.Iccid, profile.Imsi, profile.UeDlBps, profile.UeUlBps, profile.ApnName, profile.NetworkId, profile.PackageId, profile.AllowedTimeOfService, profile.TotalDataBytes, profile.ConsumedDataBytes, profile.LastStatusChangeAt, profile.LastStatusChangeReasons)
+
+		mock.ExpectQuery(`^SELECT.*profiles.*`).
+			WithArgs(Imsi).
+			WillReturnRows(hrow)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewProfileRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		prof, err := r.GetByImsi(Imsi)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+		if assert.NotNil(t, prof) {
+			assert.EqualValues(t, prof.Imsi, Imsi)
+		}
+
+	})
+
+	t.Run("GetByIccid", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+		//WithArgs(int64(pack.AllowedTimeOfService.Seconds()), pack.ApnName, pack.ConsumedDataBytes, pack.LastStatusChangeAt, int_db.PACKAGE_UPDATE, pack.PackageId, pack.TotalDataBytes, pack.UeDlBps, pack.UeUlBps, sqlmock.AnyArg(), Imsi).
+		hrow := sqlmock.NewRows([]string{"iccid", "imsi", "ue_dl_bps", "ue_ul_bps", "apn_name", "network_id", "package_id", "allowed_time_of_service", "total_data_bytes", "consumed_data_bytes", "last_status_change_at", "last_status_change_reason_at"}).
+			AddRow(profile.Iccid, profile.Imsi, profile.UeDlBps, profile.UeUlBps, profile.ApnName, profile.NetworkId, profile.PackageId, profile.AllowedTimeOfService, profile.TotalDataBytes, profile.ConsumedDataBytes, profile.LastStatusChangeAt, profile.LastStatusChangeReasons)
+
+		mock.ExpectQuery(`^SELECT.*profiles.*`).
+			WithArgs(Iccid).
+			WillReturnRows(hrow)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewProfileRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		prof, err := r.GetByIccid(Iccid)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+		if assert.NotNil(t, prof) {
+			assert.EqualValues(t, prof.Iccid, Iccid)
+		}
+
 	})
 }
