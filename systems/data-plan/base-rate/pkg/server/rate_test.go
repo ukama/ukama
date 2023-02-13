@@ -20,7 +20,7 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
 	rateService := NewBaseRateServer(mockRepo,msgbusClient)
-	var mockSimTypeStr = db.SimTypeInterMnoData
+	var mockSimTypeStr = db.SimTypeUkamaData
 var mockeEffectiveAt = time.Now().Add(time.Hour * 24 * 7 * time.Duration(4)).Format(time.RFC3339Nano)
 var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
@@ -38,7 +38,7 @@ var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/da
 	assert.NoError(t, err)
 	for i := range rateRes.Rate {
 		assert.Equal(t, rateRes.Rate[i].EffectiveAt, reqMock.EffectiveAt)
-		 assert.Equal(t, rateRes.Rate[i].SimType, mockSimTypeStr.String())
+		 assert.Equal(t, rateRes.Rate[i].SimType, mockSimTypeStr)
 	}
 }
 func TestRateService_GetRate_Success(t *testing.T) {
@@ -65,12 +65,12 @@ func TestRateService_GetRates_Success(t *testing.T) {
 		Country:     "Tycho crater",
 		Provider:    "ABC Tel",
 		EffectiveAt: "2022-12-01T00:00:00Z",
-		SimType:    db.SimTypeInterMnoData.String(),
+		SimType:    "ukama_data",
 	}
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo,msgbusClient)
 
-	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, db.SimTypeInterMnoData).Return([]db.Rate{
+	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, db.SimTypeUkamaData).Return([]db.Rate{
 		{X2g: "2G",
 			X3g:          "3G",
 			Apn:          "Manual entry required",
@@ -80,7 +80,7 @@ func TestRateService_GetRates_Success(t *testing.T) {
 			Imsi:         "1",
 			Lte:          "LTE",
 			Network:      "Multi Tel",
-			SimType:     db.SimTypeInterMnoData,
+			SimType:     db.SimTypeUkamaData,
 			SmsMo:       "$0.1",
 			SmsMt:       "$0.1",
 			Vpmn:         "TTC"},

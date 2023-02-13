@@ -175,7 +175,7 @@ func Test_Package_Add(t *testing.T) {
 		pkg := int_db.Package{
 			PackageID:uuid.NewV4(),
 			Name:         "Monthly",
-			SimType:     int_db.SimTypeInterMnoData,
+			SimType:     int_db.SimTypeUkamaData,
 			Active:       false,
 			Duration:     360000,
 			SmsVolume:   10,

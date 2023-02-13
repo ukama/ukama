@@ -262,7 +262,7 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 	s := NewPackageServer(packageRepo,msgbusClient)
 
 	packageRepo.On("Get", packID).Return(&db.Package{
-		SimType:     db.SimTypeInterMnoAll,
+		SimType:     db.SimTypeUkamaData,
 		Name:         "Daily-pack",
 		OrgID:       uuid.NewV4(),
 		Active:       true,
@@ -290,7 +290,7 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 
 	packageRepo.On("GetByOrg", orgID).Return([]db.Package{{
 		PackageID: uuid.NewV4(),
-		SimType: db.SimTypeInterMnoData    ,
+		SimType: db.SimTypeUkamaData    ,
 		Name:         "Daily-pack",
 		OrgID:       orgID,
 		Active:       true,
@@ -309,7 +309,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	reqMock:=&pb.AddPackageRequest{
-		SimType: db.SimTypeInterMnoData.String()   ,
+		SimType: "ukama_data"   ,
 		Name:         "Daily-pack",
 		OrgID:       uuid.NewV4().String(),
 		Active:       true,
@@ -324,7 +324,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	s := NewPackageServer(packageRepo,msgbusClient)
 
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
-		SimType: db.SimTypeInterMnoData.String()   ,
+		SimType: "ukama_data",
 		Name:         "Daily-pack",
 		OrgID:       uuid.NewV4().String(),
 		Active:       true,

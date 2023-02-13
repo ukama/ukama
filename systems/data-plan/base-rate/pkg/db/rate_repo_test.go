@@ -72,7 +72,7 @@ func Test_Rate_Get(t *testing.T) {
 			Apn: "apn123",
 			EffectiveAt: "2022-01-01",
 			EndAt: "2022-12-31",
-			SimType: SimTypeInterMnoAll,
+			SimType: SimTypeUkamaData,
 		}
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)

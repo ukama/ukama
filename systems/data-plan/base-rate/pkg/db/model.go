@@ -33,11 +33,12 @@ type SimType uint8
 
 const (
 	SimTypeUnknown SimType = iota
-	SimTypeInterNone
-	SimTypeInterMnoAll
-	SimTypeInterMnoData
-	SimTypeInterUkamaAll
+	SimTypeTest         = 1
+	SimTypeOperatorData = 2
+	SimTypeUkamaData    = 3
+	
 )
+
 
 func (s *SimType) Scan(value interface{}) error {
 	*s = SimType(uint8(value.(int64)))
@@ -49,7 +50,7 @@ func (s SimType) Value() (driver.Value, error) {
 }
 
 func (s SimType) String() string {
-	t := map[SimType]string{0: "unknown", 1: "inter_none", 2: "inter_mno_all", 3: "inter_mno_data", 4: "inter_ukama_all"}
+	t := map[SimType]string{0: "unknown", 1: "test", 2: "operator", 3: "ukama_data"}
 
 	v, ok := t[s]
 	if !ok {
@@ -64,8 +65,7 @@ func ParseType(value string) SimType {
 	if err == nil {
 		return SimType(i)
 	}
-
-	t := map[string]SimType{"unknown": 0, "inter_none": 1, "inter_mno_all": 2, "inter_mno_data": 3, "inter_ukama_all": 4}
+	t := map[string]SimType{"unknown": 0, "test": 1, "operator": 2, "ukama_data": 3}
 
 	v, ok := t[value]
 	if !ok {
