@@ -79,8 +79,8 @@ func (sub *SubscriberRegistry) UpdateSubscriber(subscriber *pb.UpdateSubscriberR
 	})
 }
 
-func (sub *SubscriberRegistry) GetByNetwork(network_id string) (*pb.GetByNetworkResponse, error) {
+func (sub *SubscriberRegistry) GetByNetwork(networkId string) (*pb.GetByNetworkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
-	return sub.client.GetByNetwork(ctx, &pb.GetByNetworkRequest{NetworkID: network_id})
+	return sub.client.GetByNetwork(ctx, &pb.GetByNetworkRequest{NetworkID: networkId})
 }

@@ -45,7 +45,7 @@ type Clients struct {
 
 type simPool interface {
 	Get(iccid string) (*simPoolPb.GetByIccidResponse, error)
-	GetStats(sim_type string) (*simPoolPb.GetStatsResponse, error)
+	GetStats(simType string) (*simPoolPb.GetStatsResponse, error)
 	AddSimsToSimPool(req *simPoolPb.AddRequest) (*simPoolPb.AddResponse, error)
 	UploadSimsToSimPool(req *simPoolPb.UploadRequest) (*simPoolPb.UploadResponse, error)
 	DeleteSimFromSimPool(id []uint64) (*simPoolPb.DeleteResponse, error)
@@ -53,14 +53,14 @@ type simPool interface {
 
 type simManager interface {
 	AllocateSim(req *simMangPb.AllocateSimRequest) (*simMangPb.AllocateSimResponse, error)
-	GetSim(sim_id string) (*simMangPb.GetSimResponse, error)
+	GetSim(simId string) (*simMangPb.GetSimResponse, error)
 	GetSimsBySub(subscriberId string) (*simMangPb.GetSimsBySubscriberResponse, error)
 	GetSimsByNetwork(networkId string) (*simMangPb.GetSimsByNetworkResponse, error)
-	ToggleSimStatus(sim_id string, status string) (*simMangPb.ToggleSimStatusResponse, error)
+	ToggleSimStatus(simId string, status string) (*simMangPb.ToggleSimStatusResponse, error)
 	AddPackageToSim(req *simMangPb.AddPackageRequest) (*simMangPb.AddPackageResponse, error)
 	RemovePackageForSim(req *simMangPb.RemovePackageRequest) (*simMangPb.RemovePackageResponse, error)
-	DeleteSim(sim_id string) (*simMangPb.DeleteSimResponse, error)
-	GetPackagesForSim(sim_id string) (*simMangPb.GetPackagesBySimResponse, error)
+	DeleteSim(simId string) (*simMangPb.DeleteSimResponse, error)
+	GetPackagesForSim(simId string) (*simMangPb.GetPackagesBySimResponse, error)
 	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
 }
 

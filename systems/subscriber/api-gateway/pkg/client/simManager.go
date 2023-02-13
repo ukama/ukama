@@ -63,10 +63,10 @@ func (sm *SimManager) AllocateSim(req *pb.AllocateSimRequest) (*pb.AllocateSimRe
 	return sm.client.AllocateSim(ctx, req)
 }
 
-func (sm *SimManager) GetSim(sim_id string) (*pb.GetSimResponse, error) {
+func (sm *SimManager) GetSim(simId string) (*pb.GetSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-	return sm.client.GetSim(ctx, &pb.GetSimRequest{SimID: sim_id})
+	return sm.client.GetSim(ctx, &pb.GetSimRequest{SimID: simId})
 }
 
 func (sm *SimManager) GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriberResponse, error) {
@@ -75,10 +75,10 @@ func (sm *SimManager) GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriber
 	return sm.client.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{SubscriberID: subscriberId})
 }
 
-func (sm *SimManager) ToggleSimStatus(sim_id string, status string) (*pb.ToggleSimStatusResponse, error) {
+func (sm *SimManager) ToggleSimStatus(simId string, status string) (*pb.ToggleSimStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-	return sm.client.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{SimID: sim_id, Status: status})
+	return sm.client.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{SimID: simId, Status: status})
 }
 
 func (sm *SimManager) AddPackageToSim(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
@@ -93,10 +93,10 @@ func (sm *SimManager) RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.Rem
 	return sm.client.RemovePackageForSim(ctx, req)
 }
 
-func (sm *SimManager) DeleteSim(sim_id string) (*pb.DeleteSimResponse, error) {
+func (sm *SimManager) DeleteSim(simId string) (*pb.DeleteSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-	return sm.client.DeleteSim(ctx, &pb.DeleteSimRequest{SimID: sim_id})
+	return sm.client.DeleteSim(ctx, &pb.DeleteSimRequest{SimID: simId})
 }
 
 func (sm *SimManager) GetSimsByNetwork(networkId string) (*pb.GetSimsByNetworkResponse, error) {
@@ -105,10 +105,10 @@ func (sm *SimManager) GetSimsByNetwork(networkId string) (*pb.GetSimsByNetworkRe
 	return sm.client.GetSimsByNetwork(ctx, &pb.GetSimsByNetworkRequest{NetworkID: networkId})
 }
 
-func (sm *SimManager) GetPackagesForSim(sim_id string) (*pb.GetPackagesBySimResponse, error) {
+func (sm *SimManager) GetPackagesForSim(simId string) (*pb.GetPackagesBySimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
-	return sm.client.GetPackagesBySim(ctx, &pb.GetPackagesBySimRequest{SimID: sim_id})
+	return sm.client.GetPackagesBySim(ctx, &pb.GetPackagesBySimRequest{SimID: simId})
 }
 
 func (sm *SimManager) SetActivePackageForSim(req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
