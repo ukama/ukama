@@ -6,8 +6,7 @@ package ukama.subscriber.profile.v1;
 
 import "validator.proto";
 
-/* Active subscriber profile registry
-  Profile service maintains the record of all the active subscribers of a organization and thier config based on the active package id.
+/* Profile registry maintains the record of all the active subscribers of a organization and thier config based on the active package id.
   Profile also provide the input to policy control for enforcing the policies.
   Initial implementation of Profile service itself will handle the policy control.   
   
@@ -15,27 +14,28 @@ import "validator.proto";
     - Add
     - Remove
     - UpdatePackage
+    - UpdateUsage
     - Sync
     - Read
   */
   service ProfileService {
 
-    /// Use this RPC to add a new subscriber to ASR  
+    /// Use this RPC to add a new subscriber profile 
     rpc Add(AddReq) returns (AddResp);
     
-    /// Use this RPC to remove a subscriber to ASR  
+    /// Use this RPC to remove a subscriber profile
     rpc Remove(RemoveReq) returns (RemoveResp);
 
-    /// Use this RPC to update a subscriber package in ASR  
+    /// Use this RPC to update a active package of the subscriber
     rpc UpdatePackage(UpdatePackageReq) returns (UpdatePackageResp); 
 
-    /// Use this RPC to update a subscriber usage 
+    /// Use this RPC to update a usage of the subscriber 
     rpc UpdateUsage(UpdateUsageReq) returns (UpdateUsageResp); 
      
-    /// This RPC is called when a Update GUTI message is sent by node  
+    ///  Use this RPC to sync records from cloud to node profile registry 
     rpc Sync(SyncReq) returns (SyncResp);
   
-    /// This RPC is used to read the subscriber data from profile based on IMSI or ICCID
+    /// This RPC is used to read the active profiles
     rpc Read(ReadReq) returns (ReadResp);
 }
 

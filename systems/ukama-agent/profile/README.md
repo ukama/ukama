@@ -3,65 +3,59 @@
 
 ## Table of Contents
 
- - [ASR](#ukama.subscriber.asr.v1.AsrRecordService)
+ - [ProfileService](#ukama.subscriber.profile.v1.ProfileService)
 - [Directory structure](#directory-structure)
 - [How to use?](#how-to)
- - [asr.proto](#asr.proto)
-   - [ActivateReq Messages](#ukama.subscriber.asr.v1.ActivateReq)
-   - [ActivateResp Messages](#ukama.subscriber.asr.v1.ActivateResp)
-   - [Apn Messages](#ukama.subscriber.asr.v1.Apn)
-   - [Guti Messages](#ukama.subscriber.asr.v1.Guti)
-   - [InactivateReq Messages](#ukama.subscriber.asr.v1.InactivateReq)
-   - [InactivateResp Messages](#ukama.subscriber.asr.v1.InactivateResp)
-   - [ReadReq Messages](#ukama.subscriber.asr.v1.ReadReq)
-   - [ReadResp Messages](#ukama.subscriber.asr.v1.ReadResp)
-   - [Record Messages](#ukama.subscriber.asr.v1.Record)
-   - [UpdateGutiReq Messages](#ukama.subscriber.asr.v1.UpdateGutiReq)
-   - [UpdateGutiResp Messages](#ukama.subscriber.asr.v1.UpdateGutiResp)
-   - [UpdatePackageReq Messages](#ukama.subscriber.asr.v1.UpdatePackageReq)
-   - [UpdatePackageResp Messages](#ukama.subscriber.asr.v1.UpdatePackageResp)
-   - [UpdateTaiReq Messages](#ukama.subscriber.asr.v1.UpdateTaiReq)
-   - [UpdateTaiResp Messages](#ukama.subscriber.asr.v1.UpdateTaiResp)
+ - [profile.proto](#profile.proto)
+   - [AddReq Messages](#ukama.subscriber.profile.v1.AddReq)
+   - [AddResp Messages](#ukama.subscriber.profile.v1.AddResp)
+   - [Apn Messages](#ukama.subscriber.profile.v1.Apn)
+   - [Package Messages](#ukama.subscriber.profile.v1.Package)
+   - [Profile Messages](#ukama.subscriber.profile.v1.Profile)
+   - [ReadReq Messages](#ukama.subscriber.profile.v1.ReadReq)
+   - [ReadResp Messages](#ukama.subscriber.profile.v1.ReadResp)
+   - [RemoveReq Messages](#ukama.subscriber.profile.v1.RemoveReq)
+   - [RemoveResp Messages](#ukama.subscriber.profile.v1.RemoveResp)
+   - [SyncReq Messages](#ukama.subscriber.profile.v1.SyncReq)
+   - [SyncResp Messages](#ukama.subscriber.profile.v1.SyncResp)
+   - [UpdatePackageReq Messages](#ukama.subscriber.profile.v1.UpdatePackageReq)
+   - [UpdatePackageResp Messages](#ukama.subscriber.profile.v1.UpdatePackageResp)
+   - [UpdateUsageReq Messages](#ukama.subscriber.profile.v1.UpdateUsageReq)
+   - [UpdateUsageResp Messages](#ukama.subscriber.profile.v1.UpdateUsageResp)
   
 - [Scalar Value Types](#scalar-value-types)
 
 
 
-<a name="asr.proto"></a>
+<a name="profile.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
 
-<a name="ukama.subscriber.asr.v1.AsrRecordService"></a>
+<a name="ukama.subscriber.profile.v1.ProfileService"></a>
 
-# ASR aka Active Subscriber Registry
-ASR maintains the record of all the active subscribers of a organization. All the network with in the organization share same ASR.
-Subscriber is added to ASr as soon as its activated and removed from ASR as soon as its deactivated.
+# ProfileService
+Profile registry maintains the record of all the active subscribers of a organization and thier config based on the active package id.
+Profile also provide the input to policy control for enforcing the policies.
+Initial implementation of Profile service itself will handle the policy control.   
 
-ASR has REST ineterfaces to the servics like 
--  Factory, for reading sim data
--  PCRF, for setting policies for subscriber
--  Organization registry for validating network.enum
-
-For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
-
-RPC exposed by ASR
-- Activate
-- Inactivate
+RPC exposed by Profile
+- Add
+- Remove
 - UpdatePackage
-- UpdateGuti
-- UpdateTai
+- UpdateUsage
+- Sync
 - Read
 
 ## RPC Functions
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| Activate | [ActivateReq](#ukama.subscriber.asr.v1.ActivateReq) | [ActivateResp](#ukama.subscriber.asr.v1.ActivateReq) | Use this RPC to activate or add a new subscriber to ASR |
-| Inactivate | [InactivateReq](#ukama.subscriber.asr.v1.InactivateReq) | [InactivateResp](#ukama.subscriber.asr.v1.InactivateReq) | Use this RPC to inactivate or remove a subscriber to ASR |
-| UpdatePackage | [UpdatePackageReq](#ukama.subscriber.asr.v1.UpdatePackageReq) | [UpdatePackageResp](#ukama.subscriber.asr.v1.UpdatePackageReq) | Use this RPC to update a subscriber package in ASR |
-| UpdateGuti | [UpdateGutiReq](#ukama.subscriber.asr.v1.UpdateGutiReq) | [UpdateGutiResp](#ukama.subscriber.asr.v1.UpdateGutiReq) | This RPC is called when a Update GUTI message is sent by node |
-| UpdateTai | [UpdateTaiReq](#ukama.subscriber.asr.v1.UpdateTaiReq) | [UpdateTaiResp](#ukama.subscriber.asr.v1.UpdateTaiReq) | This RPC is called when a Update TAI message is sent by node |
-| Read | [ReadReq](#ukama.subscriber.asr.v1.ReadReq) | [ReadResp](#ukama.subscriber.asr.v1.ReadReq) | This RPC is used to read the subscriber data from ASR based on IMSI or ICCID |
+| Add | [AddReq](#ukama.subscriber.profile.v1.AddReq) | [AddResp](#ukama.subscriber.profile.v1.AddReq) | Use this RPC to add a new subscriber profile |
+| Remove | [RemoveReq](#ukama.subscriber.profile.v1.RemoveReq) | [RemoveResp](#ukama.subscriber.profile.v1.RemoveReq) | Use this RPC to remove a subscriber profile |
+| UpdatePackage | [UpdatePackageReq](#ukama.subscriber.profile.v1.UpdatePackageReq) | [UpdatePackageResp](#ukama.subscriber.profile.v1.UpdatePackageReq) | Use this RPC to update a active package of the subscriber |
+| UpdateUsage | [UpdateUsageReq](#ukama.subscriber.profile.v1.UpdateUsageReq) | [UpdateUsageResp](#ukama.subscriber.profile.v1.UpdateUsageReq) | Use this RPC to update a usage of the subscriber |
+| Sync | [SyncReq](#ukama.subscriber.profile.v1.SyncReq) | [SyncResp](#ukama.subscriber.profile.v1.SyncReq) | Use this RPC to sync records from cloud to node profile registry |
+| Read | [ReadReq](#ukama.subscriber.profile.v1.ReadReq) | [ReadResp](#ukama.subscriber.profile.v1.ReadReq) | This RPC is used to read the active profiles |
 
 
 
@@ -97,7 +91,7 @@ Then navigate into base-rate directory and run below command:
 ```
 make gen
 ```
-This command will generate protobuf files from asr.proto and mocks for the test.
+This command will generate protobuf files from profile.proto and mocks for the test.
 
 
 **To Test**
@@ -107,7 +101,7 @@ For unit tests run below commands:
 ```
 make test
 ```
-This command will run unit tests under all asr.proto directories.
+This command will run unit tests under all profile.proto directories.
 
 
 **Build**
@@ -121,34 +115,32 @@ make
 ./bin/asr
 ```
 
-## asr.proto
+## profile.proto
 
 
 
-<a name="ukama.subscriber.asr.v1.ActivateReq"></a>
+<a name="ukama.subscriber.profile.v1.AddReq"></a>
 
-### ActivateReq
+### AddReq
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| network | [string](#string) |  |  |
-| Iccid | [string](#string) |  |  |
-| PackageId | [string](#string) |  |  |
+| Profile | [Profile](#ukama.subscriber.profile.v1.Profile) |  |  |
 
 
 
 
-<a name="ukama.subscriber.asr.v1.ActivateResp"></a>
+<a name="ukama.subscriber.profile.v1.AddResp"></a>
 
-### ActivateResp
+### AddResp
 Empty
 
 
 
 
-<a name="ukama.subscriber.asr.v1.Apn"></a>
+<a name="ukama.subscriber.profile.v1.Apn"></a>
 
 ### Apn
 
@@ -161,45 +153,51 @@ Empty
 
 
 
-<a name="ukama.subscriber.asr.v1.Guti"></a>
+<a name="ukama.subscriber.profile.v1.Package"></a>
 
-### Guti
+### Package
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| PlmnId | [string](#string) |  |  |
-| Mmegi | [uint32](#uint32) |  |  |
-| Mmec | [uint32](#uint32) |  |  |
-| Mtmsi | [uint32](#uint32) |  |  |
+| UeDlBps | [uint64](#uint64) |  |  |
+| UeUlBps | [uint64](#uint64) |  |  |
+| apn | [Apn](#ukama.subscriber.profile.v1.Apn) |  |  |
+| PackageId | [string](#string) |  |  |
+| AllowedTimeOfService | [int64](#int64) |  |  |
+| TotalDataBytes | [uint64](#uint64) |  |  |
+| ConsumedDataBytes | [uint64](#uint64) |  |  |
 
 
 
 
-<a name="ukama.subscriber.asr.v1.InactivateReq"></a>
+<a name="ukama.subscriber.profile.v1.Profile"></a>
 
-### InactivateReq
-Could be called by subscriber manager with ICCID and by billing service with imsi
+### Profile
+
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| Imsi | [string](#string) |  | oneof |
-| Iccid | [string](#string) |  | oneof |
+| Imsi | [string](#string) |  |  |
+| Iccid | [string](#string) |  |  |
+| UeDlBps | [uint64](#uint64) |  |  |
+| UeUlBps | [uint64](#uint64) |  |  |
+| Apn | [Apn](#ukama.subscriber.profile.v1.Apn) |  |  |
+| NetworkId | [string](#string) |  |  |
+| PackageId | [string](#string) |  |  |
+| AllowedTimeOfService | [int64](#int64) |  |  |
+| TotalDataBytes | [uint64](#uint64) |  |  |
+| ConsumedDataBytes | [uint64](#uint64) |  |  |
+| UpdatedAt | [int64](#int64) |  |  |
+| LastChange | [string](#string) |  |  |
+| LastChangeAt | [int64](#int64) |  |  |
 
 
 
 
-<a name="ukama.subscriber.asr.v1.InactivateResp"></a>
-
-### InactivateResp
-Empty
-
-
-
-
-<a name="ukama.subscriber.asr.v1.ReadReq"></a>
+<a name="ukama.subscriber.profile.v1.ReadReq"></a>
 
 ### ReadReq
 
@@ -213,7 +211,7 @@ Empty
 
 
 
-<a name="ukama.subscriber.asr.v1.ReadResp"></a>
+<a name="ukama.subscriber.profile.v1.ReadResp"></a>
 
 ### ReadResp
 
@@ -221,61 +219,60 @@ Empty
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| Record | [Record](#ukama.subscriber.asr.v1.Record) |  |  |
+| Profile | [Profile](#ukama.subscriber.profile.v1.Profile) |  |  |
 
 
 
 
-<a name="ukama.subscriber.asr.v1.Record"></a>
+<a name="ukama.subscriber.profile.v1.RemoveReq"></a>
 
-### Record
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Imsi | [string](#string) |  |  |
-| SimId | [string](#string) |  |  |
-| Iccid | [string](#string) |  |  |
-| Key | [bytes](#bytes) |  |  |
-| Op | [bytes](#bytes) |  |  |
-| Amf | [bytes](#bytes) |  |  |
-| Apn | [Apn](#ukama.subscriber.asr.v1.Apn) |  |  |
-| AlgoType | [uint32](#uint32) |  |  |
-| UeDlAmbrBps | [uint32](#uint32) |  |  |
-| UeUlAmbrBps | [uint32](#uint32) |  |  |
-| Sqn | [uint64](#uint64) |  |  |
-| CsgIdPrsent | [bool](#bool) |  |  |
-| CsgId | [uint32](#uint32) |  |  |
-| PackageId | [string](#string) |  |  |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.UpdateGutiReq"></a>
-
-### UpdateGutiReq
-
+### RemoveReq
+Could be called by subscriber manager with ICCID and by billing service with imsi
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| Imsi | [string](#string) |  |  |
-| Guti | [Guti](#ukama.subscriber.asr.v1.Guti) |  |  |
-| UpdatedAt | [uint32](#uint32) |  | unix timestamp |
+| Imsi | [string](#string) |  | oneof |
+| Iccid | [string](#string) |  | oneof |
 
 
 
 
-<a name="ukama.subscriber.asr.v1.UpdateGutiResp"></a>
+<a name="ukama.subscriber.profile.v1.RemoveResp"></a>
 
-### UpdateGutiResp
+### RemoveResp
 Empty
 
 
 
 
-<a name="ukama.subscriber.asr.v1.UpdatePackageReq"></a>
+<a name="ukama.subscriber.profile.v1.SyncReq"></a>
+
+### SyncReq
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| Iccid | [string](#string) | repeated |  |
+
+
+
+
+<a name="ukama.subscriber.profile.v1.SyncResp"></a>
+
+### SyncResp
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| Iccid | [string](#string) | repeated |  |
+
+
+
+
+<a name="ukama.subscriber.profile.v1.UpdatePackageReq"></a>
 
 ### UpdatePackageReq
 
@@ -284,12 +281,12 @@ Empty
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | Iccid | [string](#string) |  |  |
-| PackageId | [string](#string) |  |  |
+| Package | [Package](#ukama.subscriber.profile.v1.Package) |  |  |
 
 
 
 
-<a name="ukama.subscriber.asr.v1.UpdatePackageResp"></a>
+<a name="ukama.subscriber.profile.v1.UpdatePackageResp"></a>
 
 ### UpdatePackageResp
 Empty
@@ -297,26 +294,24 @@ Empty
 
 
 
-<a name="ukama.subscriber.asr.v1.UpdateTaiReq"></a>
+<a name="ukama.subscriber.profile.v1.UpdateUsageReq"></a>
 
-### UpdateTaiReq
+### UpdateUsageReq
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | Imsi | [string](#string) |  |  |
-| PlmnId | [string](#string) |  |  |
-| Tac | [uint32](#uint32) |  | 16 bit max |
-| UpdatedAt | [uint32](#uint32) |  | unix timestamp |
+| ConsumedDataBytes | [uint64](#uint64) |  |  |
 
 
 
 
-<a name="ukama.subscriber.asr.v1.UpdateTaiResp"></a>
+<a name="ukama.subscriber.profile.v1.UpdateUsageResp"></a>
 
-### UpdateTaiResp
-Empty
+### UpdateUsageResp
+
 
 
 
