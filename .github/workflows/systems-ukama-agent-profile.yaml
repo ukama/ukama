@@ -32,6 +32,7 @@ jobs:
     
   sonar-scan:
     name: sonar-scan
+    needs: [build]
     runs-on: ubuntu-latest
     env: 
       working-directory: systems/ukama-agent/profile
