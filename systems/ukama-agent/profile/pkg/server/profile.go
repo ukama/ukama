@@ -326,7 +326,7 @@ func (s *ProfileServer) syncProfile(method string, p *db.Profile) {
 
 	if s.msgbus != nil {
 		route := s.baseRoutingKey.SetAction("node-feed").SetObject("server").MustBuild()
-		err = s.msgbus.PublishToNodeFeeder(route, s.Org, "*", s.nodePolicyPath, method, body)
+		err = s.msgbus.PublishToNodeFeeder(route, "*", s.Org, s.nodePolicyPath, method, body)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
 		}

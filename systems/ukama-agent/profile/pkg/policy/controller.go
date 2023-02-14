@@ -57,7 +57,7 @@ func NewPolicyController(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServi
 
 	p.pR = make(chan bool)
 
-	p.StartPolicyRoutine()
+	//	p.StartPolicyRoutine()
 
 	return p
 }
