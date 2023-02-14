@@ -26,8 +26,8 @@ import (
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
 	pkgpb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simpoolpb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
-	subregpb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
 )
 
 const DefaultDaysDelayForPackageStartDate = 1

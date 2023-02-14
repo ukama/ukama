@@ -53,7 +53,7 @@ func (p *SimPoolServer) GetByIccid(ctx context.Context, req *pb.GetByIccidReques
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetSimStats : %v ", req.GetSimType())
 	simType := req.SimType.String()
-	if req.GetSimType() == pb.SimType_ANY {
+	if req.GetSimType() == pb.SimType_ALL {
 		simType = ""
 	}
 	sim, err := p.simRepo.GetSimsByType(simType)

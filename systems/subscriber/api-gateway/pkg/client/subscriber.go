@@ -10,14 +10,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type SubscriberRegistry struct {
+type Registry struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
 	client  pb.RegistryServiceClient
 	host    string
 }
 
-func NewSubscriberRegistry(host string, timeout time.Duration) *SubscriberRegistry {
+func NewRegistry(host string, timeout time.Duration) *Registry {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -27,7 +27,7 @@ func NewSubscriberRegistry(host string, timeout time.Duration) *SubscriberRegist
 	}
 	client := pb.NewRegistryServiceClient(conn)
 
-	return &SubscriberRegistry{
+	return &Registry{
 		conn:    conn,
 		client:  client,
 		timeout: timeout,
@@ -35,38 +35,38 @@ func NewSubscriberRegistry(host string, timeout time.Duration) *SubscriberRegist
 	}
 }
 
-func NewSubscriberRegistryFromClient(SubscriberRegistryClient pb.RegistryServiceClient) *SubscriberRegistry {
-	return &SubscriberRegistry{
+func NewRegistryFromClient(RegistryClient pb.RegistryServiceClient) *Registry {
+	return &Registry{
 		host:    "localhost",
 		timeout: 1 * time.Second,
 		conn:    nil,
-		client:  SubscriberRegistryClient,
+		client:  RegistryClient,
 	}
 }
 
-func (sub *SubscriberRegistry) Close() {
+func (sub *Registry) Close() {
 	sub.conn.Close()
 }
 
-func (sub *SubscriberRegistry) GetSubscriber(sid string) (*pb.GetSubscriberResponse, error) {
+func (sub *Registry) GetSubscriber(sid string) (*pb.GetSubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
 	return sub.client.Get(ctx, &pb.GetSubscriberRequest{SubscriberID: sid})
 }
 
-func (sub *SubscriberRegistry) AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
+func (sub *Registry) AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
 	return sub.client.Add(ctx, req)
 }
 
-func (sub *SubscriberRegistry) DeleteSubscriber(sid string) (*pb.DeleteSubscriberResponse, error) {
+func (sub *Registry) DeleteSubscriber(sid string) (*pb.DeleteSubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
 	return sub.client.Delete(ctx, &pb.DeleteSubscriberRequest{SubscriberID: sid})
 }
 
-func (sub *SubscriberRegistry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
+func (sub *Registry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
 	return sub.client.Update(ctx, &pb.UpdateSubscriberRequest{
@@ -79,7 +79,7 @@ func (sub *SubscriberRegistry) UpdateSubscriber(subscriber *pb.UpdateSubscriberR
 	})
 }
 
-func (sub *SubscriberRegistry) GetByNetwork(networkId string) (*pb.GetByNetworkResponse, error) {
+func (sub *Registry) GetByNetwork(networkId string) (*pb.GetByNetworkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
 	return sub.client.GetByNetwork(ctx, &pb.GetByNetworkRequest{NetworkID: networkId})

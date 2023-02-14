@@ -20,8 +20,8 @@ import (
 	pkgpb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	pkgmocks "github.com/ukama/ukama/systems/data-plan/package/pb/gen/mocks"
 
-	subspb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
-	subsmocks "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen/mocks"
+	subspb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	subsmocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
 
 	splpb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	splmocks "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen/mocks"

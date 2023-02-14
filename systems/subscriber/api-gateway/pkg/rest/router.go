@@ -76,7 +76,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.sp = client.NewSimPool(endpoints.SimPool, endpoints.Timeout)
 	c.sm = client.NewSimManager(endpoints.SimManager, endpoints.Timeout)
-	c.sub = client.NewSubscriberRegistry(endpoints.SubscriberRegistry, endpoints.Timeout)
+	c.sub = client.NewRegistry(endpoints.Registry, endpoints.Timeout)
 	return c
 }
 
@@ -123,7 +123,7 @@ func (r *Router) init() {
 	pool := v1.Group("/simpool", "SIM Pool", "SIM store for Org")
 	pool.GET("/sim/:iccid", formatDoc("Get SIM by Iccid", ""), tonic.Handler(r.getSimByIccid, http.StatusOK))
 	pool.GET("/stats/:sim_type", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
-	pool.POST("", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
+	pool.PUT("", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
 	pool.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
 	pool.DELETE("/sim/:sim_id", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
 

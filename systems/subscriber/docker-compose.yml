@@ -30,7 +30,6 @@ services:
       - postgresd
 
   registry:
-    platform: linux/arm64
     build: ./registry
     ports:
       - "9091:9090"
@@ -47,7 +46,6 @@ services:
       - postgresd
 
   sim-manager:
-    platform: linux/arm64
     build: ./sim-manager
     ports:
       - "9092:9090"
@@ -64,7 +62,6 @@ services:
       - postgresd
 
   test-agent:
-    platform: linux/arm64
     build: ./test-agent
     ports:
       - "9093:9090"

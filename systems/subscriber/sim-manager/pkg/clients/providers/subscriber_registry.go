@@ -6,7 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,11 +15,11 @@ import (
 // SubscriberRegistryClientProvider creates a local client to interact with
 // a remote instance of  Subscriber Registry service.
 type SubscriberRegistryClientProvider interface {
-	GetClient() (pb.SubscriberRegistryServiceClient, error)
+	GetClient() (pb.RegistryServiceClient, error)
 }
 
 type subscriberRegistryClientProvider struct {
-	subscriberRegistryService pb.SubscriberRegistryServiceClient
+	subscriberRegistryService pb.RegistryServiceClient
 	subscriberRegistryHost    string
 }
 
@@ -27,7 +27,7 @@ func NewSubscriberRegistryClientProvider(subscriberRegistryHost string) Subscrib
 	return &subscriberRegistryClientProvider{subscriberRegistryHost: subscriberRegistryHost}
 }
 
-func (p *subscriberRegistryClientProvider) GetClient() (pb.SubscriberRegistryServiceClient, error) {
+func (p *subscriberRegistryClientProvider) GetClient() (pb.RegistryServiceClient, error) {
 	if p.subscriberRegistryService == nil {
 		var conn *grpc.ClientConn
 
@@ -44,7 +44,7 @@ func (p *subscriberRegistryClientProvider) GetClient() (pb.SubscriberRegistrySer
 			return nil, fmt.Errorf("failed to connect to remote Subscriber Registry service: %w", err)
 		}
 
-		p.subscriberRegistryService = pb.NewSubscriberRegistryServiceClient(conn)
+		p.subscriberRegistryService = pb.NewRegistryServiceClient(conn)
 	}
 
 	return p.subscriberRegistryService, nil
