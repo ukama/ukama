@@ -21,31 +21,32 @@ type SubscriberRegistryClientProvider interface {
 type subscriberRegistryClientProvider struct {
 	subscriberRegistryService pb.SubscriberRegistryServiceClient
 	subscriberRegistryHost    string
+	timeout                   time.Duration
 }
 
-func NewSubscriberRegistryClientProvider(subscriberRegistryHost string) SubscriberRegistryClientProvider {
-	return &subscriberRegistryClientProvider{subscriberRegistryHost: subscriberRegistryHost}
+func NewSubscriberRegistryClientProvider(subscriberRegistryHost string, timeout time.Duration) SubscriberRegistryClientProvider {
+	return &subscriberRegistryClientProvider{subscriberRegistryHost: subscriberRegistryHost, timeout: timeout}
 }
 
-func (p *subscriberRegistryClientProvider) GetClient() (pb.SubscriberRegistryServiceClient, error) {
-	if p.subscriberRegistryService == nil {
+func (sr *subscriberRegistryClientProvider) GetClient() (pb.SubscriberRegistryServiceClient, error) {
+	if sr.subscriberRegistryService == nil {
 		var conn *grpc.ClientConn
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancel := context.WithTimeout(context.Background(), sr.timeout)
 		defer cancel()
 
-		log.Infoln("Connecting to Subscriber Registry service ", p.subscriberRegistryHost)
+		log.Infoln("Connecting to Subscriber Registry service ", sr.subscriberRegistryHost)
 
-		conn, err := grpc.DialContext(ctx, p.subscriberRegistryHost, grpc.WithBlock(),
+		conn, err := grpc.DialContext(ctx, sr.subscriberRegistryHost, grpc.WithBlock(),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Errorf("Failed to connect to Subscriber Registry service %s. Error: %v", p.subscriberRegistryHost, err)
+			log.Errorf("Failed to connect to Subscriber Registry service %s. Error: %v", sr.subscriberRegistryHost, err)
 
 			return nil, fmt.Errorf("failed to connect to remote Subscriber Registry service: %w", err)
 		}
 
-		p.subscriberRegistryService = pb.NewSubscriberRegistryServiceClient(conn)
+		sr.subscriberRegistryService = pb.NewSubscriberRegistryServiceClient(conn)
 	}
 
-	return p.subscriberRegistryService, nil
+	return sr.subscriberRegistryService, nil
 }

@@ -21,31 +21,32 @@ type SimPoolClientProvider interface {
 type simPoolClientProvider struct {
 	simPoolService pb.SimServiceClient
 	simPoolHost    string
+	timeout        time.Duration
 }
 
-func NewSimPoolClientProvider(simPoolHost string) SimPoolClientProvider {
-	return &simPoolClientProvider{simPoolHost: simPoolHost}
+func NewSimPoolClientProvider(simPoolHost string, timeout time.Duration) SimPoolClientProvider {
+	return &simPoolClientProvider{simPoolHost: simPoolHost, timeout: timeout}
 }
 
-func (p *simPoolClientProvider) GetClient() (pb.SimServiceClient, error) {
-	if p.simPoolService == nil {
+func (sp *simPoolClientProvider) GetClient() (pb.SimServiceClient, error) {
+	if sp.simPoolService == nil {
 		var conn *grpc.ClientConn
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 		defer cancel()
 
-		log.Infoln("Connecting to Sim Pool service ", p.simPoolHost)
+		log.Infoln("Connecting to Sim Pool service ", sp.simPoolHost)
 
-		conn, err := grpc.DialContext(ctx, p.simPoolHost, grpc.WithBlock(),
+		conn, err := grpc.DialContext(ctx, sp.simPoolHost, grpc.WithBlock(),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Errorf("Failed to connect to Sim Pool service %s. Error: %v", p.simPoolHost, err)
+			log.Errorf("Failed to connect to Sim Pool service %s. Error: %v", sp.simPoolHost, err)
 
 			return nil, fmt.Errorf("failed to connect to remote Sim Pool service: %w", err)
 		}
 
-		p.simPoolService = pb.NewSimServiceClient(conn)
+		sp.simPoolService = pb.NewSimServiceClient(conn)
 	}
 
-	return p.simPoolService, nil
+	return sp.simPoolService, nil
 }
