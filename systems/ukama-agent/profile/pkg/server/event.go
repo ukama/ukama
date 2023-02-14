@@ -15,7 +15,7 @@ type ProfileEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewAsrEventServer(pRepo db.ProfileRepo) *ProfileEventServer {
+func NewProfileEventServer(pRepo db.ProfileRepo) *ProfileEventServer {
 	return &ProfileEventServer{
 		profileRepo: pRepo,
 	}
