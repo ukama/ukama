@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	"github.com/ukama/ukama/systems/common/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	mocks "github.com/ukama/ukama/systems/ukama-agent/profile/mocks"
 	pb "github.com/ukama/ukama/systems/ukama-agent/profile/pb/gen"
 	db "github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
