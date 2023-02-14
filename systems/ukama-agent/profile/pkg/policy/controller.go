@@ -41,7 +41,7 @@ func (p *PolicyController) InitPolicyController() {
 	}
 }
 
-func NewPolicyController(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceClient, path string, period time.Duration) *PolicyController {
+func NewPolicyController(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceClient, path string, monitor bool, period time.Duration) *PolicyController {
 	p := &PolicyController{
 		profileRepo:    pRepo,
 		Org:            org,
@@ -57,7 +57,9 @@ func NewPolicyController(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServi
 
 	p.pR = make(chan bool)
 
-	//	p.StartPolicyRoutine()
+	if monitor {
+		p.StartPolicyRoutine()
+	}
 
 	return p
 }
@@ -102,12 +104,12 @@ func (p *PolicyController) RunPolicyControl(imsi string) (error, bool) {
 	return nil, removed
 }
 
-func (p *PolicyController) syncProfile(method string, pf db.Profile) {
+func (p *PolicyController) syncProfile(method string, pf db.Profile) error {
 
 	body, err := json.Marshal(pf)
 	if err != nil {
 		log.Errorf("error marshaling profile: %s", err.Error())
-		return
+		return err
 	}
 
 	if p.msgbus != nil {
@@ -115,9 +117,11 @@ func (p *PolicyController) syncProfile(method string, pf db.Profile) {
 		err = p.msgbus.PublishToNodeFeeder(route, "*", p.Org, p.nodePolicyPath, method, body)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
+			return err
 		}
 	}
 
+	return nil
 }
 
 func (p *PolicyController) publishEvent(action string, object string, msg protoreflect.ProtoMessage) error {
@@ -127,9 +131,9 @@ func (p *PolicyController) publishEvent(action string, object string, msg protor
 		err = p.msgbus.PublishRequest(route, msg)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+			return err
 		}
 	}
-
 	return err
 }
 

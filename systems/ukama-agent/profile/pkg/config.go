@@ -22,6 +22,7 @@ type Config struct {
 	IsMsgBus          bool              `default:"false"`
 	NodePolicyPath    string            `default:"/v1/epc/pcrf/subscriber"`
 	PolicyCheckPeriod time.Duration     `default:"10s"`
+	PolicyMonitor     bool				`default:"true"`
 }
 
 type SimManager struct {

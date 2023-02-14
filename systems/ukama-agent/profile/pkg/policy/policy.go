@@ -47,7 +47,7 @@ func RemoveProfile(p *PolicyController, pf db.Profile) (error, bool) {
 
 	_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "policy", e)
 
-	p.syncProfile(http.MethodDelete, pf)
+	_ = p.syncProfile(http.MethodDelete, pf)
 
 	return nil, true
 }

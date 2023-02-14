@@ -31,7 +31,7 @@ type ProfileServer struct {
 	nodePolicyPath   string
 }
 
-func NewProfileServer(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceClient, nodePath string, period time.Duration) (*ProfileServer, error) {
+func NewProfileServer(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceClient, nodePath string, monitor bool, period time.Duration) (*ProfileServer, error) {
 
 	ps := &ProfileServer{
 		profileRepo:    pRepo,
@@ -44,7 +44,7 @@ func NewProfileServer(pRepo db.ProfileRepo, org string, msgBus mb.MsgBusServiceC
 		ps.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)
 	}
 
-	ps.PolicyController = policy.NewPolicyController(pRepo, org, msgBus, nodePath, period)
+	ps.PolicyController = policy.NewPolicyController(pRepo, org, msgBus, nodePath, monitor, period)
 
 	return ps, nil
 }
