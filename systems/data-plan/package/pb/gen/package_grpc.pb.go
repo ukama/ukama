@@ -39,7 +39,7 @@ func NewPackagesServiceClient(cc grpc.ClientConnInterface) PackagesServiceClient
 
 func (c *packagesServiceClient) Get(ctx context.Context, in *GetPackageRequest, opts ...grpc.CallOption) (*GetPackageResponse, error) {
 	out := new(GetPackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.packages.v1.PackagesService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.data_plan.package.v1.PackagesService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (c *packagesServiceClient) Get(ctx context.Context, in *GetPackageRequest, 
 
 func (c *packagesServiceClient) Add(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error) {
 	out := new(AddPackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.packages.v1.PackagesService/Add", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.data_plan.package.v1.PackagesService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (c *packagesServiceClient) Add(ctx context.Context, in *AddPackageRequest, 
 
 func (c *packagesServiceClient) Delete(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error) {
 	out := new(DeletePackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.packages.v1.PackagesService/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.data_plan.package.v1.PackagesService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (c *packagesServiceClient) Delete(ctx context.Context, in *DeletePackageReq
 
 func (c *packagesServiceClient) Update(ctx context.Context, in *UpdatePackageRequest, opts ...grpc.CallOption) (*UpdatePackageResponse, error) {
 	out := new(UpdatePackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.packages.v1.PackagesService/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.data_plan.package.v1.PackagesService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (c *packagesServiceClient) Update(ctx context.Context, in *UpdatePackageReq
 
 func (c *packagesServiceClient) GetByOrg(ctx context.Context, in *GetByOrgPackageRequest, opts ...grpc.CallOption) (*GetByOrgPackageResponse, error) {
 	out := new(GetByOrgPackageResponse)
-	err := c.cc.Invoke(ctx, "/ukama.packages.v1.PackagesService/GetByOrg", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.data_plan.package.v1.PackagesService/GetByOrg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func _PackagesService_Get_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.packages.v1.PackagesService/Get",
+		FullMethod: "/ukama.data_plan.package.v1.PackagesService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).Get(ctx, req.(*GetPackageRequest))
@@ -154,7 +154,7 @@ func _PackagesService_Add_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.packages.v1.PackagesService/Add",
+		FullMethod: "/ukama.data_plan.package.v1.PackagesService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).Add(ctx, req.(*AddPackageRequest))
@@ -172,7 +172,7 @@ func _PackagesService_Delete_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.packages.v1.PackagesService/Delete",
+		FullMethod: "/ukama.data_plan.package.v1.PackagesService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).Delete(ctx, req.(*DeletePackageRequest))
@@ -190,7 +190,7 @@ func _PackagesService_Update_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.packages.v1.PackagesService/Update",
+		FullMethod: "/ukama.data_plan.package.v1.PackagesService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).Update(ctx, req.(*UpdatePackageRequest))
@@ -208,7 +208,7 @@ func _PackagesService_GetByOrg_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.packages.v1.PackagesService/GetByOrg",
+		FullMethod: "/ukama.data_plan.package.v1.PackagesService/GetByOrg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).GetByOrg(ctx, req.(*GetByOrgPackageRequest))
@@ -220,7 +220,7 @@ func _PackagesService_GetByOrg_Handler(srv interface{}, ctx context.Context, dec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PackagesService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.packages.v1.PackagesService",
+	ServiceName: "ukama.data_plan.package.v1.PackagesService",
 	HandlerType: (*PackagesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

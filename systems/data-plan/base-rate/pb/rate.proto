@@ -1,6 +1,6 @@
 syntax = "proto3";
 option go_package = "pb/gen";
-package ukama.rate.v1;
+package ukama.data_plan.rate.v1;
 
 import "validator.proto";
 

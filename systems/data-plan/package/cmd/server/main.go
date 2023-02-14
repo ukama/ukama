@@ -78,6 +78,7 @@ func runGrpcServer(d sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewPackageServer(db.NewPackageRepo(d), mbClient)
 		generated.RegisterPackagesServiceServer(s, srv)
+
 	})
 
 	go msgBusListener(mbClient)
