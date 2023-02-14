@@ -20,7 +20,6 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
-const TEMP_ORG_ID = 1
 
 type Router struct {
 	f       *fizz.Fizz
@@ -100,7 +99,7 @@ func (r *Router) init() {
 
 	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
-	packages.GET("/", formatDoc("Get packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
+	packages.GET("/:org/package", formatDoc("Get packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
 	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PATCH("/:package", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
@@ -114,8 +113,10 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 func (p *Router) getPackagesHandler(c *gin.Context) (*pb.GetByOrgPackageResponse, error) {
+	orgID, err := uuid.FromString(c.Param("org"))
+
 	resp, err := p.clients.d.GetPackageByOrg(&pb.GetByOrgPackageRequest{
-		OrgID: strconv.Itoa(TEMP_ORG_ID),
+		OrgID:orgID.String(),
 	})
 	if err != nil {
 		logrus.Error(err)
