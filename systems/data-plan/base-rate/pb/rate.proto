@@ -49,7 +49,7 @@ message Rate{
     string lte=13; 
     string lteM=14;
     string apn=15; 
-    string created_at=16;
+    string createdAt=16;
     string deletedAt=17;
     string updatedAt=18;
     string effectiveAt=19;
