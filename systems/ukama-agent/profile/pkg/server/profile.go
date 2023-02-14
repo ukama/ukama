@@ -297,7 +297,7 @@ func (s *ProfileServer) Sync(c context.Context, req *pb.SyncReq) (*pb.SyncResp, 
 	for _, iccid := range req.Iccid {
 		p, err := s.profileRepo.GetByIccid(iccid)
 		if err != nil {
-			log.Error("failed to get profile %s", iccid)
+			log.Errorf("failed to get profile %s", iccid)
 		}
 
 		s.syncProfile(http.MethodPut, p)
@@ -315,7 +315,7 @@ func (s *ProfileServer) syncProfile(method string, p *db.Profile) {
 	}
 
 	if s.msgbus != nil {
-		route := s.baseRoutingKey.SetAction("node-feed").SetObject("profile").MustBuild()
+		route := s.baseRoutingKey.SetAction("node-feed").SetObject("server").MustBuild()
 		err = s.msgbus.PublishToNodeFeeder(route, s.Org, "*", s.nodePolicyPath, method, body)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", body, route, err.Error())
