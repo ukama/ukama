@@ -36,17 +36,6 @@ var profile = db.Profile{
 	LastStatusChangeAt:      time.Now(),
 }
 
-var pack = db.PackageDetails{
-	PackageId:            uuid.FromStringOrNil(Package),
-	UeDlBps:              10000000,
-	UeUlBps:              1000000,
-	ApnName:              "ukama",
-	AllowedTimeOfService: time.Second * 2592000,
-	TotalDataBytes:       1024000,
-	ConsumedDataBytes:    0,
-	LastStatusChangeAt:   time.Now(),
-}
-
 func TestProfile_Read(t *testing.T) {
 	profileRepo := &mocks.ProfileRepo{}
 	mbC := &cmocks.MsgBusServiceClient{}
