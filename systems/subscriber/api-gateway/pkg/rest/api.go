@@ -87,6 +87,9 @@ type SubscriberAddReq struct {
 	ProofOfIdentification string                 `json:"proof_of_Identification" validate:"required"`
 	IdSerial              string                 `json:"id_serial" validate:"required"`
 	Address               string                 `json:"address" validate:"required"`
+	NetworkID             string                 `json:"network_id" validate:"required"`
+	Gender                string                 `json:"gender" validate:"required"`
+	OrgID                 string                 `json:"org_id" validate:"required"`
 }
 
 type SubscriberGetReq struct {
@@ -103,11 +106,11 @@ type SubscriberByNetworkReq struct {
 
 type SubscriberUpdateReq struct {
 	SubscriberId          string `json:"subscriber_id" validate:"required"`
-	Email                 string `json:"email" validate:"required"`
-	Phone                 string `json:"phone" validate:"required"`
-	Address               string `json:"address" validate:"required"`
-	ProofOfIdentification string `json:"proof_of_Identification" validate:"required"`
-	IdSerial              string `json:"id_serial" validate:"required"`
+	Email                 string `json:"email"`
+	Phone                 string `json:"phone"`
+	Address               string `json:"address"`
+	ProofOfIdentification string `json:"proof_of_Identification"`
+	IdSerial              string `json:"id_serial"`
 }
 
 type SimListReq struct {

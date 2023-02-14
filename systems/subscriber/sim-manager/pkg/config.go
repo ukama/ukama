@@ -17,10 +17,10 @@ type Config struct {
 	MsgClient              *config.MsgClient `default:"{}"`
 	Key                    string
 	Service                *config.Service
-	PackageHost            string `default:"package:9090"`
-	SubscriberRegistryHost string `default:"subscriber-registry:9090"`
+	PackageHost            string `default:"package:9094"`
+	SubscriberRegistryHost string `default:"registry:9091"`
 	SimPoolHost            string `default:"sim-pool:9090"`
-	TestAgentHost          string `default:"test-agent:9090"`
+	TestAgentHost          string `default:"test-agent:9093"`
 }
 
 func NewConfig(name string) *Config {

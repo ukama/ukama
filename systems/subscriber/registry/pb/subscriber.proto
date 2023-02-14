@@ -117,17 +117,17 @@ message UpdateSubscriberRequest{
 // UpdateSubscriberResponse defines the response when updating a subscriber
 message UpdateSubscriberResponse{
     //Return nothing when subscriber has been updated 
- }
+}
 message AddSubscriberResponse{
     Subscriber Subscriber = 1;
 
 }
 message Subscriber{
-    string orgID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    string orgID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "orgID"];
     string firstName  = 2;
     string lastName = 3;
-    string subscriberID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
-    string networkID = 5 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+    string subscriberID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriberID"];
+    string networkID = 5 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "networkID"];
     string email  = 6;
     string phoneNumber  = 7;
     string address  = 8; 
