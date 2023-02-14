@@ -9,14 +9,11 @@ import (
 	"github.com/ukama/ukama/systems/ukama-agent/profile/pkg/db"
 )
 
-type ActionFunc func(pc *PolicyController, pf db.Profile) (error, bool)
-type CheckFunc func(pf db.Profile) bool
-
 type Policy struct {
 	Name   string `json:"name"`
 	ID     uint32 `json:"id"`
-	Check  CheckFunc
-	Action ActionFunc
+	Check  func(pf db.Profile) bool
+	Action func(pc *PolicyController, pf db.Profile) (error, bool)
 }
 
 /* Data Bytes available Policy */
