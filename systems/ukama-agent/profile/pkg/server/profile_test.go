@@ -167,7 +167,7 @@ func TestProfile_Remove(t *testing.T) {
 	profileRepo := &mocks.ProfileRepo{}
 	mbC := &cmocks.MsgBusServiceClient{}
 
-	t.Run("Remove_Success", func(t *testing.T) {
+	t.Run("RemoveByImsi_Success", func(t *testing.T) {
 		reqPb := pb.RemoveReq{
 			Id: &pb.RemoveReq_Imsi{
 				Imsi: Imsi,
@@ -183,6 +183,88 @@ func TestProfile_Remove(t *testing.T) {
 		assert.NoError(t, err)
 
 		_, err = s.Remove(context.Background(), &reqPb)
+		assert.NoError(t, err)
+
+		profileRepo.AssertExpectations(t)
+		assert.NoError(t, err)
+	})
+
+	t.Run("RemoveByIccid_Success", func(t *testing.T) {
+		reqPb := pb.RemoveReq{
+			Id: &pb.RemoveReq_Iccid{
+				Iccid: Iccid,
+			},
+		}
+
+		profileRepo.On("GetByIccid", reqPb.GetIccid()).Return(&profile, nil).Once()
+		profileRepo.On("Delete", profile.Imsi, db.DEACTIVATION).Return(nil).Once()
+		mbC.On("PublishRequest", "event.cloud.profile.profile.delete", mock.Anything).Return(nil).Once()
+		mbC.On("PublishToNodeFeeder", "event.cloud.profile.server.node-feed", mock.Anything, "*", NodePolicyPath, "DELETE", mock.Anything).Return(nil).Once()
+
+		s, err := NewProfileServer(profileRepo, Org, mbC, NodePolicyPath, MonitoringPeriod)
+		assert.NoError(t, err)
+
+		_, err = s.Remove(context.Background(), &reqPb)
+		assert.NoError(t, err)
+
+		profileRepo.AssertExpectations(t)
+		assert.NoError(t, err)
+	})
+
+}
+
+func TestProfile_UpdatePackage(t *testing.T) {
+	profileRepo := &mocks.ProfileRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+	t.Run("UpdatePackage_Success", func(t *testing.T) {
+		reqPb := pb.UpdatePackageReq{
+			Iccid: Iccid,
+			Package: &pb.Package{
+				UeDlBps: profile.UeDlBps,
+				UeUlBps: profile.UeUlBps,
+				Apn: &pb.Apn{
+					Name: profile.ApnName,
+				},
+				PackageId:            profile.PackageId.String(),
+				AllowedTimeOfService: profile.AllowedTimeOfService,
+				TotalDataBytes:       profile.TotalDataBytes,
+				ConsumedDataBytes:    profile.ConsumedDataBytes,
+			},
+		}
+
+		profileRepo.On("GetByIccid", reqPb.GetIccid()).Return(&profile, nil)
+		profileRepo.On("UpdatePackage", profile.Imsi, mock.AnythingOfTypeArgument("db.PackageDetails")).Return(nil).Once()
+		profileRepo.On("GetByImsi", profile.Imsi).Return(&profile, nil).Once()
+		mbC.On("PublishRequest", "event.cloud.profile.profile.update", mock.Anything).Return(nil).Once()
+		mbC.On("PublishToNodeFeeder", "event.cloud.profile.server.node-feed", mock.Anything, "*", NodePolicyPath, "PUT", mock.Anything).Return(nil).Once()
+
+		s, err := NewProfileServer(profileRepo, Org, mbC, NodePolicyPath, MonitoringPeriod)
+		assert.NoError(t, err)
+
+		_, err = s.UpdatePackage(context.Background(), &reqPb)
+		assert.NoError(t, err)
+
+		profileRepo.AssertExpectations(t)
+		assert.NoError(t, err)
+	})
+}
+
+func TestProfile_Sync(t *testing.T) {
+	profileRepo := &mocks.ProfileRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+	t.Run("Sync", func(t *testing.T) {
+		reqPb := pb.SyncReq{
+			Iccid: []string{Iccid},
+		}
+
+		profileRepo.On("GetByIccid", reqPb.Iccid[0]).Return(&profile, nil).Once()
+		profileRepo.On("GetByImsi", profile.Imsi).Return(&profile, nil).Once()
+		mbC.On("PublishToNodeFeeder", "event.cloud.profile.server.node-feed", mock.Anything, "*", NodePolicyPath, "PUT", mock.Anything).Return(nil).Once()
+
+		s, err := NewProfileServer(profileRepo, Org, mbC, NodePolicyPath, MonitoringPeriod)
+		assert.NoError(t, err)
+
+		_, err = s.Sync(context.Background(), &reqPb)
 		assert.NoError(t, err)
 
 		profileRepo.AssertExpectations(t)

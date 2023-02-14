@@ -300,6 +300,16 @@ func (s *ProfileServer) Sync(c context.Context, req *pb.SyncReq) (*pb.SyncResp, 
 			log.Errorf("failed to get profile %s", iccid)
 		}
 
+		err, pState := s.PolicyController.RunPolicyControl(p.Imsi)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "error checking policies")
+		}
+
+		if pState {
+			log.Errorf("Policy controller rejected profile.")
+			return nil, fmt.Errorf("policy control rejected profile")
+		}
+
 		s.syncProfile(http.MethodPut, p)
 	}
 
