@@ -97,18 +97,24 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
+	pckgClient, err := providers.NewPackageInfoClient(svcConf.DataPlan.Uri, pkg.IsDebugMode)
+	if err != nil {
+		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
+			svcConf.DataPlan.Uri, err)
+	}
+
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
-		adapters.NewAgentFactory(svcConf.TestAgentHost, svcConf.Timeout),
-		providers.NewPackageClientProvider(svcConf.PackageHost),
-		providers.NewSubscriberRegistryClientProvider(svcConf.SubscriberRegistryHost),
-		providers.NewSimPoolClientProvider(svcConf.SimPoolHost),
+		adapters.NewAgentFactory(svcConf.TestAgent.Host, svcConf.OperatorAgent.Host, svcConf.Timeout, pkg.IsDebugMode),
+		pckgClient,
+		providers.NewSubscriberRegistryClientProvider(svcConf.SubsRegistry.Host, svcConf.SubsRegistry.Timeout),
+		providers.NewSimPoolClientProvider(svcConf.SimPool.Host, svcConf.SimPool.Timeout),
 		svcConf.Key,
 		mbClient,
 	)
 
-	fsInterceptor := interceptor.NewFakeSimInterceptor(svcConf.TestAgentHost, svcConf.Timeout)
+	fsInterceptor := interceptor.NewFakeSimInterceptor(svcConf.TestAgent.Host, svcConf.TestAgent.Timeout)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)

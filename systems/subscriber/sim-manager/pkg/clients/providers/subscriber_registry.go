@@ -21,17 +21,18 @@ type SubscriberRegistryClientProvider interface {
 type subscriberRegistryClientProvider struct {
 	subscriberRegistryService pb.RegistryServiceClient
 	subscriberRegistryHost    string
+	timeout                   time.Duration
 }
 
-func NewSubscriberRegistryClientProvider(subscriberRegistryHost string) SubscriberRegistryClientProvider {
-	return &subscriberRegistryClientProvider{subscriberRegistryHost: subscriberRegistryHost}
+func NewSubscriberRegistryClientProvider(subscriberRegistryHost string, timeout time.Duration) SubscriberRegistryClientProvider {
+	return &subscriberRegistryClientProvider{subscriberRegistryHost: subscriberRegistryHost, timeout: timeout}
 }
 
 func (p *subscriberRegistryClientProvider) GetClient() (pb.RegistryServiceClient, error) {
 	if p.subscriberRegistryService == nil {
 		var conn *grpc.ClientConn
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 		defer cancel()
 
 		log.Infoln("Connecting to Subscriber Registry service ", p.subscriberRegistryHost)
