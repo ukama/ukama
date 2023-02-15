@@ -36,8 +36,7 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 
 		MsgClient: &config.MsgClient{
-			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{},
+			Timeout: 5 * time.Second,
 		},
 
 		DataPlan: &config.Service{

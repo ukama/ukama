@@ -6,7 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/subscriber-registry/pb/gen"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,11 +15,11 @@ import (
 // SubscriberRegistryClientProvider creates a local client to interact with
 // a remote instance of  Subscriber Registry service.
 type SubscriberRegistryClientProvider interface {
-	GetClient() (pb.SubscriberRegistryServiceClient, error)
+	GetClient() (pb.RegistryServiceClient, error)
 }
 
 type subscriberRegistryClientProvider struct {
-	subscriberRegistryService pb.SubscriberRegistryServiceClient
+	subscriberRegistryService pb.RegistryServiceClient
 	subscriberRegistryHost    string
 	timeout                   time.Duration
 }
@@ -28,25 +28,25 @@ func NewSubscriberRegistryClientProvider(subscriberRegistryHost string, timeout 
 	return &subscriberRegistryClientProvider{subscriberRegistryHost: subscriberRegistryHost, timeout: timeout}
 }
 
-func (sr *subscriberRegistryClientProvider) GetClient() (pb.SubscriberRegistryServiceClient, error) {
-	if sr.subscriberRegistryService == nil {
+func (p *subscriberRegistryClientProvider) GetClient() (pb.RegistryServiceClient, error) {
+	if p.subscriberRegistryService == nil {
 		var conn *grpc.ClientConn
 
-		ctx, cancel := context.WithTimeout(context.Background(), sr.timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 		defer cancel()
 
-		log.Infoln("Connecting to Subscriber Registry service ", sr.subscriberRegistryHost)
+		log.Infoln("Connecting to Subscriber Registry service ", p.subscriberRegistryHost)
 
-		conn, err := grpc.DialContext(ctx, sr.subscriberRegistryHost, grpc.WithBlock(),
+		conn, err := grpc.DialContext(ctx, p.subscriberRegistryHost, grpc.WithBlock(),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Errorf("Failed to connect to Subscriber Registry service %s. Error: %v", sr.subscriberRegistryHost, err)
+			log.Errorf("Failed to connect to Subscriber Registry service %s. Error: %v", p.subscriberRegistryHost, err)
 
 			return nil, fmt.Errorf("failed to connect to remote Subscriber Registry service: %w", err)
 		}
 
-		sr.subscriberRegistryService = pb.NewSubscriberRegistryServiceClient(conn)
+		p.subscriberRegistryService = pb.NewRegistryServiceClient(conn)
 	}
 
-	return sr.subscriberRegistryService, nil
+	return p.subscriberRegistryService, nil
 }

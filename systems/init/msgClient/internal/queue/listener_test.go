@@ -22,7 +22,7 @@ var service = db.Service{
 	Exchange:    "amq.topic",
 	ServiceUri:  "localhost:9090",
 	GrpcTimeout: 5,
-	Routes:      []db.Route{db.Route{Key: "event.cloud.lookup.organization.create"}},
+	Routes:      []db.Route{{Key: "event.cloud.lookup.organization.create"}},
 }
 
 func NewTestQueueListener(s db.Service) *QueueListener {

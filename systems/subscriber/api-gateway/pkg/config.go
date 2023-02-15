@@ -21,10 +21,10 @@ type Kratos struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout            time.Duration
-	SimPool            string
-	SimManager         string
-	SubscriberRegistry string
+	Timeout    time.Duration
+	SimPool    string
+	SimManager string
+	Registry   string
 }
 
 type HttpEndpoints struct {
@@ -43,10 +43,10 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:            3 * time.Second,
-			SimPool:            "0.0.0.0:9090",
-			SimManager:         "0.0.0.0:9091",
-			SubscriberRegistry: "0.0.0.0:9092",
+			Timeout:    3 * time.Second,
+			SimPool:    "0.0.0.0:9090",
+			Registry:   "0.0.0.0:9091",
+			SimManager: "0.0.0.0:9092",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

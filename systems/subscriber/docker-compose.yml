@@ -1,4 +1,4 @@
-version: "3.2"
+version: "3.9"
 services:
   postgresd:
     image: postgres:13.3
@@ -12,8 +12,9 @@ services:
     volumes:
       - postgress-data:/var/lib/postgresql
 
-  sim-manager:
-    build: ./sim-manager
+  sim-pool:
+    platform: linux/arm64
+    build: ./sim-pool
     ports:
       - "9090:9090"
     environment:
@@ -28,10 +29,8 @@ services:
     depends_on:
       - postgresd
 
-
-
-  test-agent:
-    build: ./test-agent
+  registry:
+    build: ./registry
     ports:
       - "9091:9090"
     environment:
@@ -46,6 +45,53 @@ services:
     depends_on:
       - postgresd
 
+  sim-manager:
+    build: ./sim-manager
+    ports:
+      - "9092:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+
+  test-agent:
+    build: ./test-agent
+    ports:
+      - "9093:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+
+  packages:
+    build: ../data-plan/package
+    ports:
+      - "9094:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
 
 networks:
   ukama-net:

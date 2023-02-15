@@ -49,10 +49,10 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 	subscriberID := uuid.NewV4()
-	err = s.network.ValidateNetwork(networkID.String(), orgID.String())
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
-	}
+	// err = s.network.ValidateNetwork(networkID.String(), orgID.String())
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
+	// }
 
 	subscriber := &db.Subscriber{
 		OrgID:                 orgID,
@@ -126,7 +126,6 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 	}
 	return resp, nil
 }
-
 
 func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
 	logrus.Infof("List all subscribers")
@@ -204,13 +203,13 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 	smc, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
 		logrus.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
-		return nil,err
+		return nil, err
 	}
 
 	simRep, err := smc.GetSimsByNetwork(ctx, &simMangerPb.GetSimsByNetworkRequest{NetworkID: networkIdReq})
 	if err != nil {
 		logrus.Errorf("Failed to get Sims by network. Error: %s", err.Error())
-		return nil,err
+		return nil, err
 	}
 
 	subscriberSims := pbManagerSimsToPbSubscriberSims(simRep.Sims)
@@ -235,7 +234,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		IdSerial:              req.GetIdSerial(),
 	}
 
-	err = s.subscriberRepo.Update(subscriberID,*subscriber)
+	err = s.subscriberRepo.Update(subscriberID, *subscriber)
 	if err != nil {
 		logrus.Errorf("error while updating subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")

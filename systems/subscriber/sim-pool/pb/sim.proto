@@ -89,7 +89,7 @@ message AddSim{
     bool isPhysical=7 [json_name = "is_physical"];
 }
 enum SimType {
-    ANY=0;
+    ALL=0;
     INTER_NONE=1;
     INTER_MNO_DATA=2;
     INTER_MNO_ALL=3;

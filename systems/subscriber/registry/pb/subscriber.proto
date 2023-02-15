@@ -77,13 +77,14 @@ Subscriber subscriber = 1;
 
 message AddSubscriberRequest {
     // first name of the subscriber, must not be empty and have a length greater than 1
-    string firstName = 1 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
+    string firstName = 1 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "first_name"];
     // last name of the subscriber, must not be empty and have a length greater than 1
-    string lastName = 2 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
+    string lastName = 2 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "last_name"];
     // email of the subscriber, must be in email format
     string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     // phone number of the subscriber, must be in phone number format
-    string phoneNumber = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string phoneNumber = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"},
+                            json_name = "phone_number"];
     // address of the subscriber
     string address = 5;
     // idSerial of the subscriber
@@ -117,27 +118,27 @@ message UpdateSubscriberRequest{
 // UpdateSubscriberResponse defines the response when updating a subscriber
 message UpdateSubscriberResponse{
     //Return nothing when subscriber has been updated 
- }
+}
 message AddSubscriberResponse{
     Subscriber Subscriber = 1;
 
 }
 message Subscriber{
     string orgID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
-    string firstName  = 2;
-    string lastName = 3;
+    string firstName  = 2 [json_name = "first_name"];
+    string lastName = 3 [json_name = "last_name"];
     string subscriberID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
     string networkID = 5 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
     string email  = 6;
-    string phoneNumber  = 7;
+    string phoneNumber  = 7 [json_name = "phone_number"];
     string address  = 8; 
-    string proofOfIdentification =9;
-    string created_at = 10;
-    string deleted_at = 11;
-    string updated_at = 12;
+    string proofOfIdentification =9 [json_name = "proof_of_identification"];
+    string createdAt = 10;
+    string deletedAt = 11;
+    string updatedAt = 12;
     repeated Sim sim = 13;
-    string date_of_birth = 14;
-    string idSerial =15;
+    string dateOfBirth = 14 [json_name = "date_of_birth"];
+    string idSerial =15 [json_name = "id_serial"];
     string gender =16;
 
 }
