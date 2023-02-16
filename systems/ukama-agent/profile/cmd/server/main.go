@@ -30,8 +30,8 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()
-	hssDb := initDb()
-	runGrpcServer(hssDb)
+	profDb := initDb()
+	runGrpcServer(profDb)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
@@ -86,11 +86,11 @@ func runGrpcServer(gormdb sql.Db) {
 
 	profile := db.NewProfileRepo(gormdb)
 
-	// asr service
+	// profile service
 	pServer, err := server.NewProfileServer(profile, serviceConfig.Org, mbClient, serviceConfig.NodePolicyPath, serviceConfig.PolicyMonitor, serviceConfig.PolicyCheckPeriod)
 
 	if err != nil {
-		log.Fatalf("asr server initialization failed. Error: %v", err)
+		log.Fatalf("profile server initialization failed. Error: %v", err)
 	}
 	nSrv := server.NewProfileEventServer(profile)
 

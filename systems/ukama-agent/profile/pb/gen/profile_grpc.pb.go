@@ -22,17 +22,17 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProfileServiceClient interface {
-	/// Use this RPC to add a new subscriber to ASR
+	/// Use this RPC to add a new subscriber profile
 	Add(ctx context.Context, in *AddReq, opts ...grpc.CallOption) (*AddResp, error)
-	/// Use this RPC to remove a subscriber to ASR
+	/// Use this RPC to remove a subscriber profile
 	Remove(ctx context.Context, in *RemoveReq, opts ...grpc.CallOption) (*RemoveResp, error)
-	/// Use this RPC to update a subscriber package in ASR
+	/// Use this RPC to update a active package of the subscriber
 	UpdatePackage(ctx context.Context, in *UpdatePackageReq, opts ...grpc.CallOption) (*UpdatePackageResp, error)
-	/// Use this RPC to update a subscriber usage
+	/// Use this RPC to update a usage of the subscriber
 	UpdateUsage(ctx context.Context, in *UpdateUsageReq, opts ...grpc.CallOption) (*UpdateUsageResp, error)
-	/// This RPC is called when a Update GUTI message is sent by node
+	///  Use this RPC to sync records from cloud to node profile registry
 	Sync(ctx context.Context, in *SyncReq, opts ...grpc.CallOption) (*SyncResp, error)
-	/// This RPC is used to read the subscriber data from profile based on IMSI or ICCID
+	/// This RPC is used to read the active profiles
 	Read(ctx context.Context, in *ReadReq, opts ...grpc.CallOption) (*ReadResp, error)
 }
 
@@ -102,17 +102,17 @@ func (c *profileServiceClient) Read(ctx context.Context, in *ReadReq, opts ...gr
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility
 type ProfileServiceServer interface {
-	/// Use this RPC to add a new subscriber to ASR
+	/// Use this RPC to add a new subscriber profile
 	Add(context.Context, *AddReq) (*AddResp, error)
-	/// Use this RPC to remove a subscriber to ASR
+	/// Use this RPC to remove a subscriber profile
 	Remove(context.Context, *RemoveReq) (*RemoveResp, error)
-	/// Use this RPC to update a subscriber package in ASR
+	/// Use this RPC to update a active package of the subscriber
 	UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error)
-	/// Use this RPC to update a subscriber usage
+	/// Use this RPC to update a usage of the subscriber
 	UpdateUsage(context.Context, *UpdateUsageReq) (*UpdateUsageResp, error)
-	/// This RPC is called when a Update GUTI message is sent by node
+	///  Use this RPC to sync records from cloud to node profile registry
 	Sync(context.Context, *SyncReq) (*SyncResp, error)
-	/// This RPC is used to read the subscriber data from profile based on IMSI or ICCID
+	/// This RPC is used to read the active profiles
 	Read(context.Context, *ReadReq) (*ReadResp, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }

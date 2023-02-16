@@ -183,7 +183,7 @@ func (s *ProfileServer) UpdatePackage(c context.Context, req *pb.UpdatePackageRe
 
 	err = s.profileRepo.UpdatePackage(p.Imsi, pack)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating profile")
 	}
 
 	err, pState := s.PolicyController.RunPolicyControl(p.Imsi)
@@ -230,7 +230,7 @@ func (s *ProfileServer) UpdateUsage(c context.Context, req *pb.UpdateUsageReq) (
 
 	err = s.profileRepo.UpdateUsage(p.Imsi, req.ConsumedDataBytes)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating profile")
 	}
 
 	/* Check for the data */

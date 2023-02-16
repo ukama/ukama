@@ -1,4 +1,3 @@
-// This is an example of a repositoryasrRepo
 package db
 
 import (
@@ -60,13 +59,13 @@ func (r *profileRepo) UpdateUsage(imsi string, bytes uint64) error {
 }
 
 func (r *profileRepo) GetByImsi(imsi string) (*Profile, error) {
-	var asr Profile
-	result := r.db.GetGormDb().Where("imsi=?", imsi).First(&asr)
+	var p Profile
+	result := r.db.GetGormDb().Where("imsi=?", imsi).First(&p)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return &asr, nil
+	return &p, nil
 }
 
 func (r *profileRepo) GetByIccid(iccid string) (*Profile, error) {
