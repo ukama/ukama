@@ -1,6 +1,8 @@
 syntax = "proto3";
-option go_package = "pb/";
-package ukama.rates.v1;
+option go_package = "pb/gen";
+package ukama.data_plan.rate.v1;
+
+import "validator.proto";
 
 service BaseRatesService {
     rpc GetBaseRates (GetBaseRatesRequest) returns (GetBaseRatesResponse) {}
@@ -12,7 +14,7 @@ message GetBaseRatesRequest{
     string provider =2;
     uint64 to  =3;
     uint64 from  =4;
-    SimType sim_type=5;
+    string simType=5;
     string effectiveAt = 6;
 }
 message GetBaseRatesResponse {
@@ -22,42 +24,36 @@ message GetBaseRateResponse{
     Rate rate =1;
 }
 message GetBaseRateRequest{
-    uint64 rateId =1;
+    string rateID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "rate_id"];
 }
 message UploadBaseRatesRequest {
     string fileURL = 1;
     string effectiveAt = 2;
-    SimType simType = 3;
+    string simType = 3;
 }
 message UploadBaseRatesResponse {
     repeated Rate rate = 1;
 }
 message Rate{
-    uint64 id =1;
-    string country=2;
-    string network = 3;
-    string vpmn =4;
-    string imsi=5;
-    string sms_mo=6;
-    string sms_mt =7;
-    string data =8;
-    string  _2g=9;
-    string _3g=10;
-    string _5g=11;
-    string lte=12; 
-    string lte_m=13;
-    string apn=14; 
-    string created_at=15;
-    string deleted_at=16;
-    string updated_at=17;
-    string effective_at=18;
-    string end_at=19;
-    string sim_type=20;
+    string rateID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "rate_id"];
+    string country=3;
+    string network = 4;
+    string vpmn =5;
+    string imsi=6;
+    string smsMo=7;
+    string smsMt =8;
+    string data =9;
+    string  _2g=10;
+    string _3g=11;
+    string _5g=12;
+    string lte=13; 
+    string lteM=14;
+    string apn=15; 
+    string createdAt=16;
+    string deletedAt=17;
+    string updatedAt=18;
+    string effectiveAt=19;
+    string endAt=20;
+    string simType=21;
 }
 
-enum SimType {
-    inter_none=0;
-    inter_mno_data=1;
-    inter_mno_all=2;
-    inter_ukama_all=3;
-}

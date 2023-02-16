@@ -7,6 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/mwitkow/go-proto-validators"
+	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -15,10 +17,27 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_GetPackageRequest_PackageID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *GetPackageRequest) Validate() error {
+	if !_regex_GetPackageRequest_PackageID.MatchString(this.PackageID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageID))
+	}
+	if this.PackageID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageID))
+	}
 	return nil
 }
+
+var _regex_GetByOrgPackageRequest_OrgID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *GetByOrgPackageRequest) Validate() error {
+	if !_regex_GetByOrgPackageRequest_OrgID.MatchString(this.OrgID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgID))
+	}
+	if this.OrgID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgID))
+	}
 	return nil
 }
 func (this *GetByOrgPackageResponse) Validate() error {
@@ -39,13 +58,31 @@ func (this *GetPackageResponse) Validate() error {
 	}
 	return nil
 }
+
+var _regex_DeletePackageRequest_PackageID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *DeletePackageRequest) Validate() error {
+	if !_regex_DeletePackageRequest_PackageID.MatchString(this.PackageID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageID))
+	}
+	if this.PackageID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageID))
+	}
 	return nil
 }
 func (this *DeletePackageResponse) Validate() error {
 	return nil
 }
+
+var _regex_UpdatePackageRequest_PackageID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *UpdatePackageRequest) Validate() error {
+	if !_regex_UpdatePackageRequest_PackageID.MatchString(this.PackageID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageID))
+	}
+	if this.PackageID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageID))
+	}
 	return nil
 }
 func (this *UpdatePackageResponse) Validate() error {
@@ -56,7 +93,16 @@ func (this *UpdatePackageResponse) Validate() error {
 	}
 	return nil
 }
+
+var _regex_AddPackageRequest_OrgID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *AddPackageRequest) Validate() error {
+	if !_regex_AddPackageRequest_OrgID.MatchString(this.OrgID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgID))
+	}
+	if this.OrgID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgID))
+	}
 	return nil
 }
 func (this *AddPackageResponse) Validate() error {
@@ -67,6 +113,22 @@ func (this *AddPackageResponse) Validate() error {
 	}
 	return nil
 }
+
+var _regex_Package_PackageID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Package_OrgID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *Package) Validate() error {
+	if !_regex_Package_PackageID.MatchString(this.PackageID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageID))
+	}
+	if this.PackageID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PackageID", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageID))
+	}
+	if !_regex_Package_OrgID.MatchString(this.OrgID) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgID))
+	}
+	if this.OrgID == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgID))
+	}
 	return nil
 }

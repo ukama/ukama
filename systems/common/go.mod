@@ -10,6 +10,7 @@ require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -19,6 +20,7 @@ require (
 	github.com/lib/pq v1.10.6
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
 	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/penglongli/gin-metrics v0.1.9
@@ -50,7 +52,6 @@ require (
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -70,7 +71,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

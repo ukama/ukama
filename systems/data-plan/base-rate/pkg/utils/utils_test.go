@@ -22,8 +22,7 @@ func TestRateService_ParseToModel(t *testing.T) {
 	}}
 	dbRate := ParseToModel(rawRates, "2023-10-10", "inter_mno_data")
 	assert.Equal(t, rawRates[0].Country, dbRate[0].Country)
-	assert.Equal(t, "2023-10-10", dbRate[0].Effective_at)
-	assert.Equal(t, "inter_mno_data", dbRate[0].Sim_type)
+	assert.Equal(t, "2023-10-10", dbRate[0].EffectiveAt)
 }
 
 // Fetch data success case

@@ -2,15 +2,16 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
 type PackageRepo interface {
 	Add(_package *Package) error
-	Get(id uint64) (*Package, error)
-	Delete(id uint64) error
-	GetByOrg(orgId uint64) ([]Package, error)
-	Update(Id uint64, pkg Package) (*Package, error)
+	Get(uuid uuid.UUID) (*Package, error)
+	Delete(uuid uuid.UUID) error
+	GetByOrg(orgID uuid.UUID) ([]Package, error)
+	Update(uuid uuid.UUID, pkg Package) (*Package, error)
 }
 
 type packageRepo struct {
@@ -29,10 +30,10 @@ func (r *packageRepo) Add(_package *Package) error {
 	return result.Error
 }
 
-func (p *packageRepo) Get(id uint64) (*Package, error) {
+func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 	var _package Package
 
-	result := p.Db.GetGormDb().Where("id = ?", id).First(&_package)
+	result := p.Db.GetGormDb().Where("rate_id = ?", packageID).First(&_package)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -41,9 +42,9 @@ func (p *packageRepo) Get(id uint64) (*Package, error) {
 	return &_package, nil
 }
 
-func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
+func (p *packageRepo) GetByOrg(orgID uuid.UUID) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where(&Package{Org_id: uint(orgId)}).Find(&packages)
+	result := p.Db.GetGormDb().Where(&Package{OrgID: orgID}).Find(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -51,8 +52,8 @@ func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
 	return packages, nil
 }
 
-func (r *packageRepo) Delete(packageId uint64) error {
-	result := r.Db.GetGormDb().Where("id = ?", packageId).Delete(&Package{})
+func (r *packageRepo) Delete(uuid uuid.UUID) error {
+	result := r.Db.GetGormDb().Where("uuid = ?", uuid).Delete(&Package{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -63,8 +64,8 @@ func (r *packageRepo) Delete(packageId uint64) error {
 	return nil
 }
 
-func (b *packageRepo) Update(Id uint64, pkg Package) (*Package, error) {
-	result := b.Db.GetGormDb().Where(Id).UpdateColumns(pkg)
+func (b *packageRepo) Update(uuid uuid.UUID, pkg Package) (*Package, error) {
+	result := b.Db.GetGormDb().Where("uuid = ?", uuid).UpdateColumns(pkg)
 	if result.Error != nil {
 		return nil, result.Error
 	}
