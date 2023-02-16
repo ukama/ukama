@@ -16,8 +16,8 @@ type ExporterServiceClient struct {
 	mock.Mock
 }
 
-// Activate provides a mock function with given fields: ctx, in, opts
-func (_m *ExporterServiceClient) Activate(ctx context.Context, in *gen.ActivateReq, opts ...grpc.CallOption) (*gen.ActivateResp, error) {
+// Dummy provides a mock function with given fields: ctx, in, opts
+func (_m *ExporterServiceClient) Dummy(ctx context.Context, in *gen.DummyParameter, opts ...grpc.CallOption) (*gen.DummyParameter, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -27,167 +27,17 @@ func (_m *ExporterServiceClient) Activate(ctx context.Context, in *gen.ActivateR
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.ActivateResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ActivateReq, ...grpc.CallOption) *gen.ActivateResp); ok {
+	var r0 *gen.DummyParameter
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DummyParameter, ...grpc.CallOption) *gen.DummyParameter); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ActivateResp)
+			r0 = ret.Get(0).(*gen.DummyParameter)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ActivateReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Inactivate provides a mock function with given fields: ctx, in, opts
-func (_m *ExporterServiceClient) Inactivate(ctx context.Context, in *gen.InactivateReq, opts ...grpc.CallOption) (*gen.InactivateResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.InactivateResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.InactivateReq, ...grpc.CallOption) *gen.InactivateResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.InactivateResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.InactivateReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Read provides a mock function with given fields: ctx, in, opts
-func (_m *ExporterServiceClient) Read(ctx context.Context, in *gen.ReadReq, opts ...grpc.CallOption) (*gen.ReadResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.ReadResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReadReq, ...grpc.CallOption) *gen.ReadResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ReadResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ReadReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateGuti provides a mock function with given fields: ctx, in, opts
-func (_m *ExporterServiceClient) UpdateGuti(ctx context.Context, in *gen.UpdateGutiReq, opts ...grpc.CallOption) (*gen.UpdateGutiResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UpdateGutiResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateGutiReq, ...grpc.CallOption) *gen.UpdateGutiResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateGutiResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateGutiReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdatePackage provides a mock function with given fields: ctx, in, opts
-func (_m *ExporterServiceClient) UpdatePackage(ctx context.Context, in *gen.UpdatePackageReq, opts ...grpc.CallOption) (*gen.UpdatePackageResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UpdatePackageResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdatePackageReq, ...grpc.CallOption) *gen.UpdatePackageResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdatePackageResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdatePackageReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateTai provides a mock function with given fields: ctx, in, opts
-func (_m *ExporterServiceClient) UpdateTai(ctx context.Context, in *gen.UpdateTaiReq, opts ...grpc.CallOption) (*gen.UpdateTaiResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UpdateTaiResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateTaiReq, ...grpc.CallOption) *gen.UpdateTaiResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateTaiResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateTaiReq, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DummyParameter, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

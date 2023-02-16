@@ -14,136 +14,21 @@ type ExporterServiceServer struct {
 	mock.Mock
 }
 
-// Activate provides a mock function with given fields: _a0, _a1
-func (_m *ExporterServiceServer) Activate(_a0 context.Context, _a1 *gen.ActivateReq) (*gen.ActivateResp, error) {
+// Dummy provides a mock function with given fields: _a0, _a1
+func (_m *ExporterServiceServer) Dummy(_a0 context.Context, _a1 *gen.DummyParameter) (*gen.DummyParameter, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.ActivateResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ActivateReq) *gen.ActivateResp); ok {
+	var r0 *gen.DummyParameter
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DummyParameter) *gen.DummyParameter); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ActivateResp)
+			r0 = ret.Get(0).(*gen.DummyParameter)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ActivateReq) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Inactivate provides a mock function with given fields: _a0, _a1
-func (_m *ExporterServiceServer) Inactivate(_a0 context.Context, _a1 *gen.InactivateReq) (*gen.InactivateResp, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.InactivateResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.InactivateReq) *gen.InactivateResp); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.InactivateResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.InactivateReq) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Read provides a mock function with given fields: _a0, _a1
-func (_m *ExporterServiceServer) Read(_a0 context.Context, _a1 *gen.ReadReq) (*gen.ReadResp, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.ReadResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReadReq) *gen.ReadResp); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ReadResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ReadReq) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateGuti provides a mock function with given fields: _a0, _a1
-func (_m *ExporterServiceServer) UpdateGuti(_a0 context.Context, _a1 *gen.UpdateGutiReq) (*gen.UpdateGutiResp, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.UpdateGutiResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateGutiReq) *gen.UpdateGutiResp); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateGutiResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateGutiReq) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdatePackage provides a mock function with given fields: _a0, _a1
-func (_m *ExporterServiceServer) UpdatePackage(_a0 context.Context, _a1 *gen.UpdatePackageReq) (*gen.UpdatePackageResp, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.UpdatePackageResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdatePackageReq) *gen.UpdatePackageResp); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdatePackageResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdatePackageReq) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateTai provides a mock function with given fields: _a0, _a1
-func (_m *ExporterServiceServer) UpdateTai(_a0 context.Context, _a1 *gen.UpdateTaiReq) (*gen.UpdateTaiResp, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.UpdateTaiResp
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateTaiReq) *gen.UpdateTaiResp); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateTaiResp)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateTaiReq) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DummyParameter) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
