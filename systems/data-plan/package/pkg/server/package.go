@@ -16,7 +16,7 @@ import (
 
 type PackageServer struct {
 	packageRepo       db.PackageRepo
-	msgbus            *mb.MsgBusClient
+	msgbus            mb.MsgBusServiceClient
 	packageRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
 }
@@ -100,8 +100,6 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	// Publish message to msgbus
-
 	route := p.packageRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
 	err = p.msgbus.PublishRequest(route, req)
 	if err != nil {
@@ -130,8 +128,6 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		logrus.Error("error while getting updating a package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
-
-	// Publish message to msgbus
 
 	route := p.packageRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
 	err = p.msgbus.PublishRequest(route, req)
