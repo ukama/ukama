@@ -34,12 +34,13 @@ func NewAgentFactory(testAgentHost, operatorAgentHost string, timeout time.Durat
 	// handle err
 	// factory[SimTypeForAgent] = agent
 
-	// For now we will only use TestAgent for any sim type
+	// For now we will only use TestAgent for test sim type
 	tAgent, err := NewTestAgentAdapter(testAgentHost, timeout)
 	if err != nil {
 		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", testAgentHost, err)
 	}
 
+	// And OperatorAgent for telna sim type
 	opAgent, err := NewOperatorAgentAdapter(operatorAgentHost, debug)
 	if err != nil {
 		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", operatorAgentHost, err)
@@ -47,10 +48,8 @@ func NewAgentFactory(testAgentHost, operatorAgentHost string, timeout time.Durat
 
 	var factory = make(map[sims.SimType]AgentAdapter)
 
-	factory[sims.SimTypeInterNone] = tAgent
-	factory[sims.SimTypeInterMnoAll] = tAgent
-	factory[sims.SimTypeInterMnoData] = opAgent
-	factory[sims.SimTypeInterUkamaAll] = tAgent
+	factory[sims.SimTypeTest] = tAgent
+	factory[sims.SimTypeOperatorData] = opAgent
 
 	return &agentFactory{
 		timeout: timeout,
