@@ -5,10 +5,10 @@ import (
 	"regexp"
 
 	extsql "database/sql"
-	"log"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"

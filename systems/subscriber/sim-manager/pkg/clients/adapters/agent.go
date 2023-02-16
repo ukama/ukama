@@ -2,9 +2,9 @@ package adapters
 
 import (
 	"context"
-	"log"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 

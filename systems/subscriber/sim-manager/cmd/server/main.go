@@ -22,7 +22,6 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/interceptor"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -58,7 +57,7 @@ func initConfig() {
 		// output config in debug mode
 		b, err := yaml.Marshal(svcConf)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 
