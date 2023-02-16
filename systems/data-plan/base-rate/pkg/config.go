@@ -3,6 +3,7 @@ package pkg
 import (
 	"time"
 
+	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
@@ -23,9 +24,8 @@ func NewConfig(name string) *Config {
 			DbName: name,
 		},
 		Service: uconf.LoadServiceHostConfig(name),
-		MsgClient: &uconf.MsgClient{
-			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{""},
+		MsgClient: &config.MsgClient{
+			Timeout: 5 * time.Second,
 		},
 	}
 }
