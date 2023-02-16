@@ -3,65 +3,30 @@
 
 ## Table of Contents
 
- - [ASR](#ukama.subscriber.asr.v1.AsrRecordService)
+ - [ExporterService](#ukama.metrics.exporter.v1.ExporterService)
 - [Directory structure](#directory-structure)
 - [How to use?](#how-to)
- - [asr.proto](#asr.proto)
-   - [ActivateReq Messages](#ukama.subscriber.asr.v1.ActivateReq)
-   - [ActivateResp Messages](#ukama.subscriber.asr.v1.ActivateResp)
-   - [Apn Messages](#ukama.subscriber.asr.v1.Apn)
-   - [Guti Messages](#ukama.subscriber.asr.v1.Guti)
-   - [InactivateReq Messages](#ukama.subscriber.asr.v1.InactivateReq)
-   - [InactivateResp Messages](#ukama.subscriber.asr.v1.InactivateResp)
-   - [ReadReq Messages](#ukama.subscriber.asr.v1.ReadReq)
-   - [ReadResp Messages](#ukama.subscriber.asr.v1.ReadResp)
-   - [Record Messages](#ukama.subscriber.asr.v1.Record)
-   - [UpdateGutiReq Messages](#ukama.subscriber.asr.v1.UpdateGutiReq)
-   - [UpdateGutiResp Messages](#ukama.subscriber.asr.v1.UpdateGutiResp)
-   - [UpdatePackageReq Messages](#ukama.subscriber.asr.v1.UpdatePackageReq)
-   - [UpdatePackageResp Messages](#ukama.subscriber.asr.v1.UpdatePackageResp)
-   - [UpdateTaiReq Messages](#ukama.subscriber.asr.v1.UpdateTaiReq)
-   - [UpdateTaiResp Messages](#ukama.subscriber.asr.v1.UpdateTaiResp)
+ - [exporter.proto](#exporter.proto)
+   - [DummyParameter Messages](#ukama.metrics.exporter.v1.DummyParameter)
   
 - [Scalar Value Types](#scalar-value-types)
 
 
 
-<a name="asr.proto"></a>
+<a name="exporter.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
 
-<a name="ukama.subscriber.asr.v1.AsrRecordService"></a>
+<a name="ukama.metrics.exporter.v1.ExporterService"></a>
 
-# ASR aka Active Subscriber Registry
-ASR maintains the record of all the active subscribers of a organization. All the network with in the organization share same ASR.
-Subscriber is added to ASr as soon as its activated and removed from ASR as soon as its deactivated.
+# ExporterService
 
-ASR has REST ineterfaces to the servics like 
--  Factory, for reading sim data
--  PCRF, for setting policies for subscriber
--  Organization registry for validating network.enum
-
-For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
-
-RPC exposed by ASR
-- Activate
-- Inactivate
-- UpdatePackage
-- UpdateGuti
-- UpdateTai
-- Read
 
 ## RPC Functions
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| Activate | [ActivateReq](#ukama.subscriber.asr.v1.ActivateReq) | [ActivateResp](#ukama.subscriber.asr.v1.ActivateReq) | Use this RPC to activate or add a new subscriber to ASR |
-| Inactivate | [InactivateReq](#ukama.subscriber.asr.v1.InactivateReq) | [InactivateResp](#ukama.subscriber.asr.v1.InactivateReq) | Use this RPC to inactivate or remove a subscriber to ASR |
-| UpdatePackage | [UpdatePackageReq](#ukama.subscriber.asr.v1.UpdatePackageReq) | [UpdatePackageResp](#ukama.subscriber.asr.v1.UpdatePackageReq) | Use this RPC to update a subscriber package in ASR |
-| UpdateGuti | [UpdateGutiReq](#ukama.subscriber.asr.v1.UpdateGutiReq) | [UpdateGutiResp](#ukama.subscriber.asr.v1.UpdateGutiReq) | This RPC is called when a Update GUTI message is sent by node |
-| UpdateTai | [UpdateTaiReq](#ukama.subscriber.asr.v1.UpdateTaiReq) | [UpdateTaiResp](#ukama.subscriber.asr.v1.UpdateTaiReq) | This RPC is called when a Update TAI message is sent by node |
-| Read | [ReadReq](#ukama.subscriber.asr.v1.ReadReq) | [ReadResp](#ukama.subscriber.asr.v1.ReadReq) | This RPC is used to read the subscriber data from ASR based on IMSI or ICCID |
+| Dummy | [DummyParameter](#ukama.metrics.exporter.v1.DummyParameter) | [DummyParameter](#ukama.metrics.exporter.v1.DummyParameter) |  |
 
 
 
@@ -97,7 +62,7 @@ Then navigate into base-rate directory and run below command:
 ```
 make gen
 ```
-This command will generate protobuf files from asr.proto and mocks for the test.
+This command will generate protobuf files from exporter.proto and mocks for the test.
 
 
 **To Test**
@@ -107,7 +72,7 @@ For unit tests run below commands:
 ```
 make test
 ```
-This command will run unit tests under all asr.proto directories.
+This command will run unit tests under all exporter.proto directories.
 
 
 **Build**
@@ -118,205 +83,17 @@ make
 
 **Run**
 ```
-./bin/asr
+./bin/exporter
 ```
 
-## asr.proto
+## exporter.proto
 
 
 
-<a name="ukama.subscriber.asr.v1.ActivateReq"></a>
+<a name="ukama.metrics.exporter.v1.DummyParameter"></a>
 
-### ActivateReq
+### DummyParameter
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| network | [string](#string) |  |  |
-| Iccid | [string](#string) |  |  |
-| PackageId | [string](#string) |  |  |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.ActivateResp"></a>
-
-### ActivateResp
-Empty
-
-
-
-
-<a name="ukama.subscriber.asr.v1.Apn"></a>
-
-### Apn
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Name | [string](#string) |  |  |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.Guti"></a>
-
-### Guti
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| PlmnId | [string](#string) |  |  |
-| Mmegi | [uint32](#uint32) |  |  |
-| Mmec | [uint32](#uint32) |  |  |
-| Mtmsi | [uint32](#uint32) |  |  |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.InactivateReq"></a>
-
-### InactivateReq
-Could be called by subscriber manager with ICCID and by billing service with imsi
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Imsi | [string](#string) |  | oneof |
-| Iccid | [string](#string) |  | oneof |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.InactivateResp"></a>
-
-### InactivateResp
-Empty
-
-
-
-
-<a name="ukama.subscriber.asr.v1.ReadReq"></a>
-
-### ReadReq
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Imsi | [string](#string) |  | oneof |
-| Iccid | [string](#string) |  | oneof |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.ReadResp"></a>
-
-### ReadResp
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Record | [Record](#ukama.subscriber.asr.v1.Record) |  |  |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.Record"></a>
-
-### Record
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Imsi | [string](#string) |  |  |
-| SimId | [string](#string) |  |  |
-| Iccid | [string](#string) |  |  |
-| Key | [bytes](#bytes) |  |  |
-| Op | [bytes](#bytes) |  |  |
-| Amf | [bytes](#bytes) |  |  |
-| Apn | [Apn](#ukama.subscriber.asr.v1.Apn) |  |  |
-| AlgoType | [uint32](#uint32) |  |  |
-| UeDlAmbrBps | [uint32](#uint32) |  |  |
-| UeUlAmbrBps | [uint32](#uint32) |  |  |
-| Sqn | [uint64](#uint64) |  |  |
-| CsgIdPrsent | [bool](#bool) |  |  |
-| CsgId | [uint32](#uint32) |  |  |
-| PackageId | [string](#string) |  |  |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.UpdateGutiReq"></a>
-
-### UpdateGutiReq
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Imsi | [string](#string) |  |  |
-| Guti | [Guti](#ukama.subscriber.asr.v1.Guti) |  |  |
-| UpdatedAt | [uint32](#uint32) |  | unix timestamp |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.UpdateGutiResp"></a>
-
-### UpdateGutiResp
-Empty
-
-
-
-
-<a name="ukama.subscriber.asr.v1.UpdatePackageReq"></a>
-
-### UpdatePackageReq
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Iccid | [string](#string) |  |  |
-| PackageId | [string](#string) |  |  |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.UpdatePackageResp"></a>
-
-### UpdatePackageResp
-Empty
-
-
-
-
-<a name="ukama.subscriber.asr.v1.UpdateTaiReq"></a>
-
-### UpdateTaiReq
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| Imsi | [string](#string) |  |  |
-| PlmnId | [string](#string) |  |  |
-| Tac | [uint32](#uint32) |  | 16 bit max |
-| UpdatedAt | [uint32](#uint32) |  | unix timestamp |
-
-
-
-
-<a name="ukama.subscriber.asr.v1.UpdateTaiResp"></a>
-
-### UpdateTaiResp
-Empty
 
 
 

@@ -22,18 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ExporterServiceClient interface {
-	/// Use this RPC to activate or add a new subscriber to ASR
-	Activate(ctx context.Context, in *ActivateReq, opts ...grpc.CallOption) (*ActivateResp, error)
-	/// Use this RPC to inactivate or remove a subscriber to ASR
-	Inactivate(ctx context.Context, in *InactivateReq, opts ...grpc.CallOption) (*InactivateResp, error)
-	/// Use this RPC to update a subscriber package in ASR
-	UpdatePackage(ctx context.Context, in *UpdatePackageReq, opts ...grpc.CallOption) (*UpdatePackageResp, error)
-	/// This RPC is called when a Update GUTI message is sent by node
-	UpdateGuti(ctx context.Context, in *UpdateGutiReq, opts ...grpc.CallOption) (*UpdateGutiResp, error)
-	/// This RPC is called when a Update TAI message is sent by node
-	UpdateTai(ctx context.Context, in *UpdateTaiReq, opts ...grpc.CallOption) (*UpdateTaiResp, error)
-	/// This RPC is used to read the subscriber data from ASR based on IMSI or ICCID
-	Read(ctx context.Context, in *ReadReq, opts ...grpc.CallOption) (*ReadResp, error)
+	Dummy(ctx context.Context, in *DummyParameter, opts ...grpc.CallOption) (*DummyParameter, error)
 }
 
 type exporterServiceClient struct {
@@ -44,54 +33,9 @@ func NewExporterServiceClient(cc grpc.ClientConnInterface) ExporterServiceClient
 	return &exporterServiceClient{cc}
 }
 
-func (c *exporterServiceClient) Activate(ctx context.Context, in *ActivateReq, opts ...grpc.CallOption) (*ActivateResp, error) {
-	out := new(ActivateResp)
-	err := c.cc.Invoke(ctx, "/ukama.metrics.exporter.v1.ExporterService/Activate", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *exporterServiceClient) Inactivate(ctx context.Context, in *InactivateReq, opts ...grpc.CallOption) (*InactivateResp, error) {
-	out := new(InactivateResp)
-	err := c.cc.Invoke(ctx, "/ukama.metrics.exporter.v1.ExporterService/Inactivate", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *exporterServiceClient) UpdatePackage(ctx context.Context, in *UpdatePackageReq, opts ...grpc.CallOption) (*UpdatePackageResp, error) {
-	out := new(UpdatePackageResp)
-	err := c.cc.Invoke(ctx, "/ukama.metrics.exporter.v1.ExporterService/UpdatePackage", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *exporterServiceClient) UpdateGuti(ctx context.Context, in *UpdateGutiReq, opts ...grpc.CallOption) (*UpdateGutiResp, error) {
-	out := new(UpdateGutiResp)
-	err := c.cc.Invoke(ctx, "/ukama.metrics.exporter.v1.ExporterService/UpdateGuti", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *exporterServiceClient) UpdateTai(ctx context.Context, in *UpdateTaiReq, opts ...grpc.CallOption) (*UpdateTaiResp, error) {
-	out := new(UpdateTaiResp)
-	err := c.cc.Invoke(ctx, "/ukama.metrics.exporter.v1.ExporterService/UpdateTai", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *exporterServiceClient) Read(ctx context.Context, in *ReadReq, opts ...grpc.CallOption) (*ReadResp, error) {
-	out := new(ReadResp)
-	err := c.cc.Invoke(ctx, "/ukama.metrics.exporter.v1.ExporterService/Read", in, out, opts...)
+func (c *exporterServiceClient) Dummy(ctx context.Context, in *DummyParameter, opts ...grpc.CallOption) (*DummyParameter, error) {
+	out := new(DummyParameter)
+	err := c.cc.Invoke(ctx, "/ukama.metrics.exporter.v1.ExporterService/Dummy", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -102,18 +46,7 @@ func (c *exporterServiceClient) Read(ctx context.Context, in *ReadReq, opts ...g
 // All implementations must embed UnimplementedExporterServiceServer
 // for forward compatibility
 type ExporterServiceServer interface {
-	/// Use this RPC to activate or add a new subscriber to ASR
-	Activate(context.Context, *ActivateReq) (*ActivateResp, error)
-	/// Use this RPC to inactivate or remove a subscriber to ASR
-	Inactivate(context.Context, *InactivateReq) (*InactivateResp, error)
-	/// Use this RPC to update a subscriber package in ASR
-	UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error)
-	/// This RPC is called when a Update GUTI message is sent by node
-	UpdateGuti(context.Context, *UpdateGutiReq) (*UpdateGutiResp, error)
-	/// This RPC is called when a Update TAI message is sent by node
-	UpdateTai(context.Context, *UpdateTaiReq) (*UpdateTaiResp, error)
-	/// This RPC is used to read the subscriber data from ASR based on IMSI or ICCID
-	Read(context.Context, *ReadReq) (*ReadResp, error)
+	Dummy(context.Context, *DummyParameter) (*DummyParameter, error)
 	mustEmbedUnimplementedExporterServiceServer()
 }
 
@@ -121,23 +54,8 @@ type ExporterServiceServer interface {
 type UnimplementedExporterServiceServer struct {
 }
 
-func (UnimplementedExporterServiceServer) Activate(context.Context, *ActivateReq) (*ActivateResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Activate not implemented")
-}
-func (UnimplementedExporterServiceServer) Inactivate(context.Context, *InactivateReq) (*InactivateResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Inactivate not implemented")
-}
-func (UnimplementedExporterServiceServer) UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdatePackage not implemented")
-}
-func (UnimplementedExporterServiceServer) UpdateGuti(context.Context, *UpdateGutiReq) (*UpdateGutiResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateGuti not implemented")
-}
-func (UnimplementedExporterServiceServer) UpdateTai(context.Context, *UpdateTaiReq) (*UpdateTaiResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateTai not implemented")
-}
-func (UnimplementedExporterServiceServer) Read(context.Context, *ReadReq) (*ReadResp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+func (UnimplementedExporterServiceServer) Dummy(context.Context, *DummyParameter) (*DummyParameter, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Dummy not implemented")
 }
 func (UnimplementedExporterServiceServer) mustEmbedUnimplementedExporterServiceServer() {}
 
@@ -152,110 +70,20 @@ func RegisterExporterServiceServer(s grpc.ServiceRegistrar, srv ExporterServiceS
 	s.RegisterService(&ExporterService_ServiceDesc, srv)
 }
 
-func _ExporterService_Activate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ActivateReq)
+func _ExporterService_Dummy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DummyParameter)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ExporterServiceServer).Activate(ctx, in)
+		return srv.(ExporterServiceServer).Dummy(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.metrics.exporter.v1.ExporterService/Activate",
+		FullMethod: "/ukama.metrics.exporter.v1.ExporterService/Dummy",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExporterServiceServer).Activate(ctx, req.(*ActivateReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ExporterService_Inactivate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InactivateReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ExporterServiceServer).Inactivate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.metrics.exporter.v1.ExporterService/Inactivate",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExporterServiceServer).Inactivate(ctx, req.(*InactivateReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ExporterService_UpdatePackage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdatePackageReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ExporterServiceServer).UpdatePackage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.metrics.exporter.v1.ExporterService/UpdatePackage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExporterServiceServer).UpdatePackage(ctx, req.(*UpdatePackageReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ExporterService_UpdateGuti_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateGutiReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ExporterServiceServer).UpdateGuti(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.metrics.exporter.v1.ExporterService/UpdateGuti",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExporterServiceServer).UpdateGuti(ctx, req.(*UpdateGutiReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ExporterService_UpdateTai_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateTaiReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ExporterServiceServer).UpdateTai(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.metrics.exporter.v1.ExporterService/UpdateTai",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExporterServiceServer).UpdateTai(ctx, req.(*UpdateTaiReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ExporterService_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ExporterServiceServer).Read(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.metrics.exporter.v1.ExporterService/Read",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExporterServiceServer).Read(ctx, req.(*ReadReq))
+		return srv.(ExporterServiceServer).Dummy(ctx, req.(*DummyParameter))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -268,28 +96,8 @@ var ExporterService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ExporterServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Activate",
-			Handler:    _ExporterService_Activate_Handler,
-		},
-		{
-			MethodName: "Inactivate",
-			Handler:    _ExporterService_Inactivate_Handler,
-		},
-		{
-			MethodName: "UpdatePackage",
-			Handler:    _ExporterService_UpdatePackage_Handler,
-		},
-		{
-			MethodName: "UpdateGuti",
-			Handler:    _ExporterService_UpdateGuti_Handler,
-		},
-		{
-			MethodName: "UpdateTai",
-			Handler:    _ExporterService_UpdateTai_Handler,
-		},
-		{
-			MethodName: "Read",
-			Handler:    _ExporterService_Read_Handler,
+			MethodName: "Dummy",
+			Handler:    _ExporterService_Dummy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
