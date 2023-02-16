@@ -3,27 +3,29 @@
 
 ## Table of Contents
 
- - [ProfileService](#ukama.subscriber.profile.v1.ProfileService)
-- [Directory structure](#directory-structure)
-- [How to use?](#how-to)
- - [profile.proto](#profile.proto)
-   - [AddReq Messages](#ukama.subscriber.profile.v1.AddReq)
-   - [AddResp Messages](#ukama.subscriber.profile.v1.AddResp)
-   - [Apn Messages](#ukama.subscriber.profile.v1.Apn)
-   - [Package Messages](#ukama.subscriber.profile.v1.Package)
-   - [Profile Messages](#ukama.subscriber.profile.v1.Profile)
-   - [ReadReq Messages](#ukama.subscriber.profile.v1.ReadReq)
-   - [ReadResp Messages](#ukama.subscriber.profile.v1.ReadResp)
-   - [RemoveReq Messages](#ukama.subscriber.profile.v1.RemoveReq)
-   - [RemoveResp Messages](#ukama.subscriber.profile.v1.RemoveResp)
-   - [SyncReq Messages](#ukama.subscriber.profile.v1.SyncReq)
-   - [SyncResp Messages](#ukama.subscriber.profile.v1.SyncResp)
-   - [UpdatePackageReq Messages](#ukama.subscriber.profile.v1.UpdatePackageReq)
-   - [UpdatePackageResp Messages](#ukama.subscriber.profile.v1.UpdatePackageResp)
-   - [UpdateUsageReq Messages](#ukama.subscriber.profile.v1.UpdateUsageReq)
-   - [UpdateUsageResp Messages](#ukama.subscriber.profile.v1.UpdateUsageResp)
-  
-- [Scalar Value Types](#scalar-value-types)
+- [Protocol Documentation](#protocol-documentation)
+  - [Table of Contents](#table-of-contents)
+- [ProfileService](#profileservice)
+  - [RPC Functions](#rpc-functions)
+  - [Directory structure](#directory-structure)
+  - [How to use?](#how-to-use)
+  - [profile.proto](#profileproto)
+    - [AddReq](#addreq)
+    - [AddResp](#addresp)
+    - [Apn](#apn)
+    - [Package](#package)
+    - [Profile](#profile)
+    - [ReadReq](#readreq)
+    - [ReadResp](#readresp)
+    - [RemoveReq](#removereq)
+    - [RemoveResp](#removeresp)
+    - [SyncReq](#syncreq)
+    - [SyncResp](#syncresp)
+    - [UpdatePackageReq](#updatepackagereq)
+    - [UpdatePackageResp](#updatepackageresp)
+    - [UpdateUsageReq](#updateusagereq)
+    - [UpdateUsageResp](#updateusageresp)
+  - [Scalar Value Types](#scalar-value-types)
 
 
 
@@ -112,7 +114,7 @@ make
 
 **Run**
 ```
-./bin/asr
+./bin/profile
 ```
 
 ## profile.proto
