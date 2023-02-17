@@ -6,6 +6,22 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 )
 
+const (
+	LABEL_ORG        = "org"
+	LABEL_NETWROK    = "network"
+	LABEL_NODE       = "node"
+	LABEL_SUBSCRIBER = "susbscriber"
+)
+
+type MetricType string
+
+const (
+	MetricGuage     MetricType = "guage"
+	MetricCounter   MetricType = "counter"
+	MetricHistogram MetricType = "histogram"
+	MetricSummary   MetricType = "summary"
+)
+
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                *config.Database  `default:"{}"`
@@ -17,6 +33,16 @@ type Config struct {
 	ExporterHost      string            `default:"localhost"`
 	Org               string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	IsMsgBus          bool              `default:"true"`
+	KpiConfig         []KPIConfig       `default:"{}"`
+}
+
+type KPIConfig struct {
+	Name    string
+	Event   string
+	Type    MetricType
+	Units   string
+	Labels  map[string]string
+	Details string
 }
 
 func NewConfig(name string) *Config {
@@ -32,7 +58,17 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{},
+			ListenerRoutes: []string{"event.cloud.simmanager.sim.usage"},
+		},
+		KpiConfig: []KPIConfig{
+			{
+				Name:    "SimUsage",
+				Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
+				Type:    MetricGuage,
+				Units:   "bytes",
+				Labels:  map[string]string{"name": "usage"},
+				Details: "Data Usage of the sim",
+			},
 		},
 	}
 }

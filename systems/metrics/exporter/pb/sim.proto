@@ -1,0 +1,170 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.subscriber.sim_manager.v1;
+
+service SimManagerService {
+    // Sim
+    rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
+    rpc GetSim(GetSimRequest) returns (GetSimResponse);
+    rpc ListSims(ListSimsRequest) returns (ListSimsResponse);
+    rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
+    rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
+    rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
+    rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
+
+    // Sim pacakge
+    rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
+    rpc GetPackagesBySim(GetPackagesBySimRequest) returns (GetPackagesBySimResponse);
+    rpc SetActivePackageForSim(SetActivePackageRequest) returns (SetActivePackageResponse);
+    rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
+}
+
+
+
+message AllocateSimRequest {
+    string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+    string simToken = 2;
+    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "plan_id"];
+    string networkID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+    string simType = 5;
+}
+
+message AllocateSimResponse {
+    Sim sim = 1;
+}
+
+
+message GetSimRequest {
+    string simID = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
+}
+
+message GetSimResponse {
+    Sim sim = 1;
+}
+
+
+message ListSimsRequest{
+}
+
+message ListSimsResponse {
+    repeated Sim sims = 1;
+}
+
+
+message GetSimsBySubscriberRequest {
+    string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+}
+
+message GetSimsBySubscriberResponse {
+    string subscriberID = 1 [json_name = "subscriber_id"];
+    repeated Sim sims = 2;
+}
+
+
+message GetSimsByNetworkRequest {
+    string networkID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+}
+
+message GetSimsByNetworkResponse {
+    string networkID = 1 [json_name = "network_id"];
+    repeated Sim sims = 2;
+}
+
+
+message ToggleSimStatusRequest {
+    string simID = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
+    string status = 2;
+}
+
+message ToggleSimStatusResponse{}
+
+
+message DeleteSimRequest {
+    string simID = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
+}
+
+message DeleteSimResponse{
+}
+
+
+message AddPackageRequest {
+    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_id"];
+    google.protobuf.Timestamp startDate = 4 [json_name = "start_date"];
+}
+
+message AddPackageResponse{
+}
+
+
+message GetPackagesBySimRequest {
+    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+}
+
+message GetPackagesBySimResponse {
+    string simID = 1 [json_name = "sim_id"];
+    repeated Package packages = 2;
+}
+
+
+message SetActivePackageRequest {
+    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_id"];
+}
+
+message SetActivePackageResponse{
+}
+
+
+message RemovePackageRequest {
+    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_id"];
+}
+
+message RemovePackageResponse{
+}
+
+
+message Package {
+    string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
+    google.protobuf.Timestamp startDate = 2 [json_name = "start_date"];
+    google.protobuf.Timestamp endDate = 3 [json_name = "end_date"];
+}
+
+
+message Sim {
+    string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
+    string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+    string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    Package package = 5;
+    string iccid = 6;
+    string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string imsi = 8;
+    string type = 9;
+    string status = 10;
+    bool isPhysical = 11 [json_name = "is_physical"];
+    google.protobuf.Timestamp firstActivatedOn = 12;
+    google.protobuf.Timestamp lastActivatedOn = 13 ;
+    uint64 activationsCount = 14;
+    uint64 deactivationsCount = 15;
+    google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
+}
+
+message SimUsage {
+    string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
+    string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+    string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    string iccid = 5;
+    string msisdn = 6  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string imsi = 7;
+    string type = 8;
+}
