@@ -10,10 +10,12 @@ import (
 
 type Metrics struct {
 	Name      string
+	Type      pkg.MetricType
 	gauge     *prometheus.GaugeVec
 	counter   *prometheus.CounterVec
 	summary   *prometheus.SummaryVec
 	histogram *prometheus.HistogramVec
+	Labels    prometheus.Labels
 }
 
 type MetricsCollector struct {
@@ -64,6 +66,13 @@ func (c *MetricsCollector) AddMetrics(name string, m Metrics) error {
 	return nil
 }
 
+func NewMetrics(name string, mtype pkg.MetricType) *Metrics {
+	m := new(Metrics)
+	m.Name = name
+	m.Type = mtype
+	return m
+}
+
 func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLables []string) {
 	switch config.Type {
 	case pkg.MetricGuage:
@@ -71,7 +80,7 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 			prometheus.GaugeOpts{
 				Name:        config.Name,
 				Help:        config.Details,
-				ConstLabels: config.Labels,
+				ConstLabels: m.Labels,
 			},
 			customLables,
 		)
@@ -80,7 +89,7 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 			prometheus.CounterOpts{
 				Name:        config.Name,
 				Help:        config.Details,
-				ConstLabels: config.Labels,
+				ConstLabels: m.Labels,
 			},
 			customLables,
 		)
@@ -89,7 +98,7 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 			prometheus.SummaryOpts{
 				Name:        config.Name,
 				Help:        config.Details,
-				ConstLabels: config.Labels,
+				ConstLabels: m.Labels,
 			},
 			customLables,
 		)
@@ -98,9 +107,36 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 			prometheus.HistogramOpts{
 				Name:        config.Name,
 				Help:        config.Details,
-				ConstLabels: config.Labels,
+				ConstLabels: m.Labels,
 			},
 			customLables,
 		)
+	}
+}
+
+func (m *Metrics) SetMetric(mType pkg.MetricType, value float64, labels prometheus.Labels) error {
+	switch mType {
+	case pkg.MetricGuage:
+		m.gauge.With(labels).Set(value)
+	case pkg.MetricCounter:
+		m.counter.With(labels).Inc()
+	case pkg.MetricSummary:
+		m.summary.With(labels).Observe(value)
+	case pkg.MetricHistogram:
+		m.histogram.With(labels).Observe(value)
+	default:
+		return fmt.Errorf("unknown metric type %s", mType)
+	}
+	return nil
+}
+
+func (m *Metrics) MergeLabels(static map[string]string, clabels map[string]string) {
+	m.Labels = make(prometheus.Labels)
+	for name, value := range static {
+		m.Labels[name] = value
+	}
+
+	for name, value := range clabels {
+		m.Labels[name] = value
 	}
 }
