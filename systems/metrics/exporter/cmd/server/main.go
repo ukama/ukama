@@ -5,6 +5,7 @@ import (
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
+	"github.com/ukama/ukama/systems/metrics/exporter/pkg/collector"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg/server"
 	"gopkg.in/yaml.v3"
 
@@ -69,16 +70,18 @@ func runGrpcServer() {
 		log.Debugf("MessageBus Client is %+v", mbClient)
 	}
 
+	mc := collector.NewMetricsCollector(serviceConfig.KpiConfig)
+
 	// Exporter service
-	asrServer, err := server.NewExporterServer(serviceConfig.Org, mbClient)
+	exporter, err := server.NewExporterServer(serviceConfig.Org, mbClient)
 
 	if err != nil {
 		log.Fatalf("Exporter server initialization failed. Error: %v", err)
 	}
-	nSrv := server.NewExporterEventServer()
+	nSrv := server.NewExporterEventServer(mc)
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		gen.RegisterExporterServiceServer(s, asrServer)
+		gen.RegisterExporterServiceServer(s, exporter)
 		if serviceConfig.IsMsgBus {
 			egen.RegisterEventNotificationServiceServer(s, nSrv)
 		}
