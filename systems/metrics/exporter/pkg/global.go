@@ -1,7 +1,7 @@
 package pkg
 
-const ServiceName = "profile"
-const SystemName = "ukama_agent"
+const ServiceName = "exporter"
+const SystemName = "metrics"
 const InstanceId = SystemName + "-" + ServiceName + "-debug"
 
 var IsDebugMode bool = true

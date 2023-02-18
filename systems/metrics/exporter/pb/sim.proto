@@ -163,9 +163,6 @@ message SimUsage {
     string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
     string networkID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
     string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
-    string iccid = 5;
-    string msisdn = 6  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string imsi = 7;
-    string type = 8;
-    uint64 bytesUsed = 9;
+    string type = 5;
+    uint64 bytesUsed = 6;
 }
