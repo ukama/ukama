@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 
-	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
@@ -58,12 +57,11 @@ func unmarshalEventSimUsage(msg *anypb.Any) (*pb.SimUsage, error) {
 
 func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
 	n := "usage_" + msg.Id
-	lb := prometheus.Labels{"test": "event"}
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(n)
 	if err == nil {
 		/* Update value */
-		return m.SetMetric(float64(msg.BytesUsed), lb)
+		return m.SetMetric(float64(msg.BytesUsed), nil)
 
 	} else {
 
@@ -82,7 +80,7 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 		labels["sim_type"] = msg.Type
 		nm.MergeLabels(c.Labels, labels)
 
-		nm.InitializeMetric(n, *c, customLabels)
+		nm.InitializeMetric(n, *c, nil)
 
 		/* Add a metric */
 		err = s.mc.AddMetrics(n, *nm)
