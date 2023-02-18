@@ -30,6 +30,7 @@ type MsgBusServiceClient interface {
 	Start() error
 	Stop() error
 	PublishRequest(route string, msg protoreflect.ProtoMessage) error
+	PublishToNodeFeeder(route string, node string, org string, path string, method string, body []byte) error
 }
 
 type msgBusServiceClient struct {
@@ -218,6 +219,22 @@ func (m *msgBusServiceClient) RemoveShovel(name string) error {
 	}
 
 	log.Infof("Shovel %s removed.", name)
+	return nil
+
+}
+
+func (m *msgBusServiceClient) PublishToNodeFeeder(route string, node string, org string, path string, method string, body []byte) error {
+	logrus.Debugf("Posting message to node-feeder % route, %s org %s  node % path %s method %s body %s", route, org, node, path, method, string(body))
+	err := m.PublishRequest(route, &pb.NodeFeederReq{
+		Org:    org,
+		Node:   node,
+		Path:   path,
+		Method: method,
+		Body:   body,
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 
 }
