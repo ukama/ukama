@@ -88,6 +88,9 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 			return err
 		}
 		log.Infof("New metric %s added", n)
+
+		nm.SetMetric(float64(msg.BytesUsed), nil)
+
 	}
 	return nil
 }
