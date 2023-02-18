@@ -28,7 +28,13 @@ runs:
       key: ${{ runner.os }}-go-ukama
       restore-keys: |
         ${{ runner.os }}-go-
-
+  
+  - name: Download code coverage results
+    uses: actions/download-artifact@v3
+    with:
+      name: code-coverage-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}
+    
   - name: SonarCloud Scan
     uses: sonarsource/sonarcloud-github-action@v1.6
     env:

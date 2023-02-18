@@ -60,6 +60,13 @@ runs:
     shell: bash
     run: go test -v ./... -coverprofile="coverage.out"
     working-directory: ${{ inputs.working-directory }}
+        
+  - name: Archive code coverage results
+    uses: actions/upload-artifact@v3
+    with:
+      name: code-coverage-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}/coverage.out
+    
 
   - name: Configure AWS credentials
     uses: aws-actions/configure-aws-credentials@v1

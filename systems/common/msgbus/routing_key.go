@@ -34,10 +34,13 @@ func (k RoutingKey) StringLowercase() string {
  * source:     cloud, device
  * container:  mesh
  * object:     link, cert
- * state:      (actions) connect, fail, active, lost, end, close, valid, invalid, update
+ * state:      (actions) connect, fail, active, lost, end, close, valid, invalid, node-feed
  *             expired
  *
  */
+
+//Node-feeder Routing key:  request.cloud.<system>.imsi.publish
+// "request.cloud.device-feeder"
 
 type RoutingKeyBuilder struct {
 	msgType   string

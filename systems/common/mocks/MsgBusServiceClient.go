@@ -27,6 +27,20 @@ func (_m *MsgBusServiceClient) PublishRequest(route string, msg protoreflect.Pro
 	return r0
 }
 
+// PublishToNodeFeeder provides a mock function with given fields: route, node, org, path, method, body
+func (_m *MsgBusServiceClient) PublishToNodeFeeder(route string, node string, org string, path string, method string, body []byte) error {
+	ret := _m.Called(route, node, org, path, method, body)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, []byte) error); ok {
+		r0 = rf(route, node, org, path, method, body)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Register provides a mock function with given fields:
 func (_m *MsgBusServiceClient) Register() error {
 	ret := _m.Called()
