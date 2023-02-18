@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "pb/gen";
 
-package ukama.subscriber.profile.v1;
+package ukama.ukama_agent.profile.v1;
 
 import "validator.proto";
 

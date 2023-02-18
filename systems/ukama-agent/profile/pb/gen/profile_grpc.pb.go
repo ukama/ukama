@@ -46,7 +46,7 @@ func NewProfileServiceClient(cc grpc.ClientConnInterface) ProfileServiceClient {
 
 func (c *profileServiceClient) Add(ctx context.Context, in *AddReq, opts ...grpc.CallOption) (*AddResp, error) {
 	out := new(AddResp)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.profile.v1.ProfileService/Add", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.ukama_agent.profile.v1.ProfileService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *profileServiceClient) Add(ctx context.Context, in *AddReq, opts ...grpc
 
 func (c *profileServiceClient) Remove(ctx context.Context, in *RemoveReq, opts ...grpc.CallOption) (*RemoveResp, error) {
 	out := new(RemoveResp)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.profile.v1.ProfileService/Remove", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.ukama_agent.profile.v1.ProfileService/Remove", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *profileServiceClient) Remove(ctx context.Context, in *RemoveReq, opts .
 
 func (c *profileServiceClient) UpdatePackage(ctx context.Context, in *UpdatePackageReq, opts ...grpc.CallOption) (*UpdatePackageResp, error) {
 	out := new(UpdatePackageResp)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.profile.v1.ProfileService/UpdatePackage", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.ukama_agent.profile.v1.ProfileService/UpdatePackage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *profileServiceClient) UpdatePackage(ctx context.Context, in *UpdatePack
 
 func (c *profileServiceClient) UpdateUsage(ctx context.Context, in *UpdateUsageReq, opts ...grpc.CallOption) (*UpdateUsageResp, error) {
 	out := new(UpdateUsageResp)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.profile.v1.ProfileService/UpdateUsage", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.ukama_agent.profile.v1.ProfileService/UpdateUsage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *profileServiceClient) UpdateUsage(ctx context.Context, in *UpdateUsageR
 
 func (c *profileServiceClient) Sync(ctx context.Context, in *SyncReq, opts ...grpc.CallOption) (*SyncResp, error) {
 	out := new(SyncResp)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.profile.v1.ProfileService/Sync", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.ukama_agent.profile.v1.ProfileService/Sync", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *profileServiceClient) Sync(ctx context.Context, in *SyncReq, opts ...gr
 
 func (c *profileServiceClient) Read(ctx context.Context, in *ReadReq, opts ...grpc.CallOption) (*ReadResp, error) {
 	out := new(ReadResp)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.profile.v1.ProfileService/Read", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.ukama_agent.profile.v1.ProfileService/Read", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func _ProfileService_Add_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.profile.v1.ProfileService/Add",
+		FullMethod: "/ukama.ukama_agent.profile.v1.ProfileService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProfileServiceServer).Add(ctx, req.(*AddReq))
@@ -180,7 +180,7 @@ func _ProfileService_Remove_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.profile.v1.ProfileService/Remove",
+		FullMethod: "/ukama.ukama_agent.profile.v1.ProfileService/Remove",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProfileServiceServer).Remove(ctx, req.(*RemoveReq))
@@ -198,7 +198,7 @@ func _ProfileService_UpdatePackage_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.profile.v1.ProfileService/UpdatePackage",
+		FullMethod: "/ukama.ukama_agent.profile.v1.ProfileService/UpdatePackage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProfileServiceServer).UpdatePackage(ctx, req.(*UpdatePackageReq))
@@ -216,7 +216,7 @@ func _ProfileService_UpdateUsage_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.profile.v1.ProfileService/UpdateUsage",
+		FullMethod: "/ukama.ukama_agent.profile.v1.ProfileService/UpdateUsage",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProfileServiceServer).UpdateUsage(ctx, req.(*UpdateUsageReq))
@@ -234,7 +234,7 @@ func _ProfileService_Sync_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.profile.v1.ProfileService/Sync",
+		FullMethod: "/ukama.ukama_agent.profile.v1.ProfileService/Sync",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProfileServiceServer).Sync(ctx, req.(*SyncReq))
@@ -252,7 +252,7 @@ func _ProfileService_Read_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.subscriber.profile.v1.ProfileService/Read",
+		FullMethod: "/ukama.ukama_agent.profile.v1.ProfileService/Read",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProfileServiceServer).Read(ctx, req.(*ReadReq))
@@ -264,7 +264,7 @@ func _ProfileService_Read_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ProfileService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.subscriber.profile.v1.ProfileService",
+	ServiceName: "ukama.ukama_agent.profile.v1.ProfileService",
 	HandlerType: (*ProfileServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
