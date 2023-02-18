@@ -14,12 +14,8 @@ import (
 type Metrics struct {
 	Name      string
 	Type      pkg.MetricType
-	gauge     *prometheus.GaugeVec
-	counter   *prometheus.CounterVec
-	summary   *prometheus.SummaryVec
-	histogram *prometheus.HistogramVec
-	//collector prometheus.Collector
-	Labels prometheus.Labels
+	collector prometheus.Collector
+	Labels    prometheus.Labels
 }
 
 type MetricsCollector struct {
@@ -102,7 +98,7 @@ func NewMetrics(name string, mtype pkg.MetricType) *Metrics {
 func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLables []string) {
 	switch config.Type {
 	case pkg.MetricGuage:
-		m.gauge = prometheus.NewGaugeVec(
+		m.collector = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name:        config.Name,
 				Help:        config.Details,
@@ -110,8 +106,9 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 			},
 			customLables,
 		)
+
 	case pkg.MetricCounter:
-		m.counter = prometheus.NewCounterVec(
+		m.collector = prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name:        config.Name,
 				Help:        config.Details,
@@ -119,8 +116,9 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 			},
 			customLables,
 		)
+
 	case pkg.MetricSummary:
-		m.summary = prometheus.NewSummaryVec(
+		m.collector = prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
 				Name:        config.Name,
 				Help:        config.Details,
@@ -128,8 +126,9 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 			},
 			customLables,
 		)
+
 	case pkg.MetricHistogram:
-		m.histogram = prometheus.NewHistogramVec(
+		m.collector = prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:        config.Name,
 				Help:        config.Details,
@@ -141,15 +140,15 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 }
 
 func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
-	switch m.Type {
-	case pkg.MetricGuage:
-		m.gauge.With(labels).Set(value)
-	case pkg.MetricCounter:
-		m.counter.With(labels).Inc()
-	case pkg.MetricSummary:
-		m.summary.With(labels).Observe(value)
-	case pkg.MetricHistogram:
-		m.histogram.With(labels).Observe(value)
+	switch met := m.collector.(type) {
+	case *prometheus.GaugeVec:
+		met.With(labels).Set(value)
+	case *prometheus.CounterVec:
+		met.With(labels).Inc()
+	case *prometheus.SummaryVec:
+		met.With(labels).Observe(value)
+	case *prometheus.HistogramVec:
+		met.With(labels).Observe(value)
 	default:
 		return fmt.Errorf("unknown metric type %s", m.Type)
 	}
@@ -157,17 +156,10 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 }
 
 func (m *Metrics) RegisterMetric(registry *prometheus.Registry) error {
-	switch m.Type {
-	case pkg.MetricGuage:
-		_ = registry.Register(m.gauge)
-	case pkg.MetricCounter:
-		_ = registry.Register(m.counter)
-	case pkg.MetricSummary:
-		_ = registry.Register(m.summary)
-	case pkg.MetricHistogram:
-		_ = registry.Register(m.histogram)
-	default:
-		return fmt.Errorf("unknown metric type %s", m.Type)
+	err := registry.Register(m.collector)
+	if err != nil {
+		log.Errorf("Failed to register metric %s. Err:", m.Name, err.Error())
+		return err
 	}
 	return nil
 }
