@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-var customLabels = []string{""}
+var customLabels = []string{"test"}
 
 type ExporterEventServer struct {
 	mc *collector.MetricsCollector
@@ -57,14 +57,16 @@ func unmarshalEventSimUsage(msg *anypb.Any) (*pb.SimUsage, error) {
 }
 
 func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
-	n := "usage" + msg.Id
-
+	n := "usage_" + msg.Id
+	lb := prometheus.Labels{"test": "event"}
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(n)
-	if err != nil {
+	if err == nil {
 		/* Update value */
-		m.SetMetric(m.Type, float64(msg.BytesUsed), prometheus.Labels{})
+		return m.SetMetric(float64(msg.BytesUsed), lb)
+
 	} else {
+
 		/* Initialize metric first */
 		c, err := s.mc.GetConfigForEvent(key)
 		if err != nil {
@@ -77,7 +79,7 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 		labels["org"] = msg.OrgID
 		labels["network"] = msg.NetworkID
 		labels["subscriber"] = msg.SubscriberID
-
+		labels["sim_type"] = msg.Type
 		nm.MergeLabels(c.Labels, labels)
 
 		nm.InitializeMetric(n, *c, customLabels)
@@ -87,6 +89,7 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 		if err != nil {
 			return err
 		}
+		log.Infof("New metric %s added", n)
 	}
 	return nil
 }

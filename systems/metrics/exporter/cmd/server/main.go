@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/num30/config"
+
 	"github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg/collector"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg/server"
@@ -27,6 +28,9 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()
+
+	//metrics.StartMetricsServer(serviceConfig.Metrics)
+
 	runGrpcServer()
 }
 
@@ -70,7 +74,7 @@ func runGrpcServer() {
 		log.Debugf("MessageBus Client is %+v", mbClient)
 	}
 
-	mc := collector.NewMetricsCollector(serviceConfig.KpiConfig)
+	mc := collector.NewMetricsCollector(serviceConfig.KpiConfig, serviceConfig.Metrics)
 
 	// Exporter service
 	exporter, err := server.NewExporterServer(serviceConfig.Org, mbClient)

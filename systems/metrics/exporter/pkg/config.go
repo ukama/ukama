@@ -34,6 +34,7 @@ type Config struct {
 	Org               string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	IsMsgBus          bool              `default:"true"`
 	KpiConfig         []KPIConfig       `default:"{}"`
+	Metrics           *config.Metrics   `default:"{}"`
 }
 
 type KPIConfig struct {
@@ -52,7 +53,7 @@ func NewConfig(name string) *Config {
 		},
 
 		Grpc: &config.Grpc{
-			Port: 9090,
+			Port: 9092,
 		},
 
 		Service: config.LoadServiceHostConfig(name),
@@ -69,6 +70,9 @@ func NewConfig(name string) *Config {
 				Labels:  map[string]string{"name": "usage"},
 				Details: "Data Usage of the sim",
 			},
+		},
+		Metrics: &config.Metrics{
+			Port: 10251,
 		},
 	}
 }

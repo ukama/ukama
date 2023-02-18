@@ -2,9 +2,12 @@ package collector
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 )
 
@@ -15,22 +18,40 @@ type Metrics struct {
 	counter   *prometheus.CounterVec
 	summary   *prometheus.SummaryVec
 	histogram *prometheus.HistogramVec
-	Labels    prometheus.Labels
+	//collector prometheus.Collector
+	Labels prometheus.Labels
 }
 
 type MetricsCollector struct {
 	MetricsMap map[string]Metrics
 	Config     map[string]pkg.KPIConfig
+	registry   *prometheus.Registry
 }
 
-func NewMetricsCollector(config []pkg.KPIConfig) *MetricsCollector {
+func NewMetricsCollector(config []pkg.KPIConfig, metrics *config.Metrics) *MetricsCollector {
 	m := new(MetricsCollector)
 	m.MetricsMap = make(map[string]Metrics)
 	m.Config = make(map[string]pkg.KPIConfig, len(m.Config))
+	m.registry = prometheus.NewRegistry()
 	for _, c := range config {
 		m.Config[c.Event] = c
 	}
+
+	m.StartMetricServer(metrics)
+
 	return m
+}
+
+func (c *MetricsCollector) StartMetricServer(metrics *config.Metrics) {
+	go func() {
+		handler := promhttp.HandlerFor(c.registry, promhttp.HandlerOpts{})
+		http.Handle("/metrics", handler)
+		log.Infof("Starting metrics server on port %d", metrics.Port)
+		err := http.ListenAndServe(fmt.Sprintf(":%d", metrics.Port), nil)
+		if err != nil {
+			log.Fatalf("Error starting metrics server: %s", err.Error())
+		}
+	}()
 }
 
 func (c *MetricsCollector) GetConfigForEvent(event string) (*pkg.KPIConfig, error) {
@@ -49,7 +70,7 @@ func (c *MetricsCollector) GetMetric(name string) (*Metrics, error) {
 	m, ok := c.MetricsMap[name]
 	if !ok {
 		log.Errorf("Metric %s doesn't exist", name)
-		return nil, fmt.Errorf("Metric %s doesn't exist", name)
+		return nil, fmt.Errorf("metric %s doesn't exist", name)
 	}
 
 	return &m, nil
@@ -59,9 +80,14 @@ func (c *MetricsCollector) AddMetrics(name string, m Metrics) error {
 	_, ok := c.MetricsMap[name]
 	if !ok {
 		c.MetricsMap[name] = m
+		err := m.RegisterMetric(c.registry)
+		if err != nil {
+			log.Errorf("Metrics %s failed to register", name)
+			return err
+		}
 	} else {
 		log.Errorf("Metric %s already exist", name)
-		return fmt.Errorf("Metric %s already exist", name)
+		return fmt.Errorf("metric %s already exist", name)
 	}
 	return nil
 }
@@ -114,8 +140,8 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 	}
 }
 
-func (m *Metrics) SetMetric(mType pkg.MetricType, value float64, labels prometheus.Labels) error {
-	switch mType {
+func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
+	switch m.Type {
 	case pkg.MetricGuage:
 		m.gauge.With(labels).Set(value)
 	case pkg.MetricCounter:
@@ -125,7 +151,23 @@ func (m *Metrics) SetMetric(mType pkg.MetricType, value float64, labels promethe
 	case pkg.MetricHistogram:
 		m.histogram.With(labels).Observe(value)
 	default:
-		return fmt.Errorf("unknown metric type %s", mType)
+		return fmt.Errorf("unknown metric type %s", m.Type)
+	}
+	return nil
+}
+
+func (m *Metrics) RegisterMetric(registry *prometheus.Registry) error {
+	switch m.Type {
+	case pkg.MetricGuage:
+		_ = registry.Register(m.gauge)
+	case pkg.MetricCounter:
+		_ = registry.Register(m.counter)
+	case pkg.MetricSummary:
+		_ = registry.Register(m.summary)
+	case pkg.MetricHistogram:
+		_ = registry.Register(m.histogram)
+	default:
+		return fmt.Errorf("unknown metric type %s", m.Type)
 	}
 	return nil
 }
