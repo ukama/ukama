@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 	org_db "github.com/ukama/ukama/systems/registry/org/pkg/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -54,7 +54,7 @@ func Test_OrgRepo_Get(t *testing.T) {
 		const orgName = "ukama"
 		const orgCert = "ukamacert"
 
-		var orgOwner = uuid.New()
+		var orgOwner = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -103,7 +103,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 
 		org := org_db.Org{
 			Name:        "ukama",
-			Owner:       uuid.New(),
+			Owner:       uuid.NewV4(),
 			Certificate: "ukama_certs",
 		}
 
@@ -154,7 +154,7 @@ func Test_OrgRepo_AddMember(t *testing.T) {
 		member := org_db.OrgUser{
 			OrgID:  1,
 			UserID: 1,
-			Uuid:   uuid.New(),
+			Uuid:   uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -200,7 +200,7 @@ func Test_OrgRepo_GetMember(t *testing.T) {
 		// Arrange
 
 		orgID := uint(1)
-		userUUID := uuid.New()
+		userUUID := uuid.NewV4()
 
 		var db *extsql.DB
 

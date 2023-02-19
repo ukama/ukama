@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

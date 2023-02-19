@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/registry/org/mocks"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
@@ -18,7 +18,7 @@ const testOrgName = "test-org"
 func TestOrgServer_AddOrg(t *testing.T) {
 	// Arrange
 	orgName := "org-1"
-	ownerUUID := uuid.New()
+	ownerUUID := uuid.NewV4()
 	certificate := "ukama_certs"
 
 	orgRepo := &mocks.OrgRepo{}

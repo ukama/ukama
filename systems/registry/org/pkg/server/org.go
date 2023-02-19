@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg"
 
@@ -35,7 +35,7 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo) *OrgService {
 func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	logrus.Infof("Adding org %v", req)
 
-	owner, err := uuid.Parse(req.GetOrg().GetOwner())
+	owner, err := uuid.FromString(req.GetOrg().GetOwner())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner id. Error %s", err.Error())
 	}
@@ -106,7 +106,7 @@ func (r *OrgService) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*
 func (r *OrgService) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) (*pb.GetByOwnerResponse, error) {
 	logrus.Infof("Getting all orgs owned by %v", req.GetUserUuid())
 
-	owner, err := uuid.Parse(req.GetUserUuid())
+	owner, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner uuid. Error %s", err.Error())
 	}
@@ -125,7 +125,7 @@ func (r *OrgService) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) 
 }
 
 func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	uuid, err := uuid.Parse(req.UserUuid)
+	uuid, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner uuid. Error %s", err.Error())
 	}
@@ -150,7 +150,7 @@ func (r *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	}
 
 	// Get the User
-	userUUID, err := uuid.Parse(req.GetUserUuid())
+	userUUID, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
@@ -195,7 +195,7 @@ func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 	}
 
 	// Get the User
-	userUUID, err := uuid.Parse(req.GetUserUuid())
+	userUUID, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
@@ -221,7 +221,7 @@ func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 }
 
 func (r *OrgService) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
-	uuid, err := uuid.Parse(req.GetUserUuid())
+	uuid, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
@@ -260,7 +260,7 @@ func (r *OrgService) GetMembers(ctx context.Context, req *pb.GetMembersRequest) 
 }
 
 func (r *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberRequest) (*pb.MemberResponse, error) {
-	uuid, err := uuid.Parse(req.GetMember().GetUserUuid())
+	uuid, err := uuid.FromString(req.GetMember().GetUserUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}
@@ -285,7 +285,7 @@ func (r *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberReque
 }
 
 func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
-	uuid, err := uuid.Parse(req.GetUserUuid())
+	uuid, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
 	}

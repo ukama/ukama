@@ -26,7 +26,7 @@ func init() {
 
 // func Test_FullFlow(t *testing.T) {
 // orgName := fmt.Sprintf("org-integration-self-test-%d", time.Now().Unix())
-// owner := uuid.NewString()
+// owner := uuid.NewV4().String()
 
 // // connect to Grpc service
 // ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
@@ -81,7 +81,7 @@ func init() {
 
 // func Test_Listener(t *testing.T) {
 // // Arrange
-// ownerId := uuid.NewString()
+// ownerId := uuid.NewV4().String()
 
 // ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 // defer cancel()
