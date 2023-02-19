@@ -29,10 +29,10 @@ service SimManagerService {
 
 
 message AllocateSimRequest {
-    string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+    string subscriberID = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
     string simToken = 2;
-    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "plan_id"];
-    string networkID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
+    string networkID = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
     string simType = 5;
 }
 
@@ -59,7 +59,7 @@ message ListSimsResponse {
 
 
 message GetSimsBySubscriberRequest {
-    string subscriberID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
+    string subscriberID = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
 }
 
 message GetSimsBySubscriberResponse {
@@ -69,7 +69,7 @@ message GetSimsBySubscriberResponse {
 
 
 message GetSimsByNetworkRequest {
-    string networkID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
+    string networkID = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
 }
 
 message GetSimsByNetworkResponse {
@@ -95,8 +95,8 @@ message DeleteSimResponse{
 
 
 message AddPackageRequest {
-    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
-    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_id"];
+    string simID = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     google.protobuf.Timestamp startDate = 4 [json_name = "start_date"];
 }
 
@@ -105,7 +105,7 @@ message AddPackageResponse{
 
 
 message GetPackagesBySimRequest {
-    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
+    string simID = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
 }
 
 message GetPackagesBySimResponse {
@@ -115,8 +115,8 @@ message GetPackagesBySimResponse {
 
 
 message SetActivePackageRequest {
-    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
-    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_id"];
+    string simID = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
 }
 
 message SetActivePackageResponse{
@@ -124,8 +124,8 @@ message SetActivePackageResponse{
 
 
 message RemovePackageRequest {
-    string simID = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "sim_id"];
-    string packageID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "package_id"];
+    string simID = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+    string packageID = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
 }
 
 message RemovePackageResponse{
@@ -133,17 +133,17 @@ message RemovePackageResponse{
 
 
 message Package {
-    string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     google.protobuf.Timestamp startDate = 2 [json_name = "start_date"];
     google.protobuf.Timestamp endDate = 3 [json_name = "end_date"];
 }
 
 
 message Sim {
-    string id = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "id"];
-    string subscriberID = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "subscriber_id"];
-    string networkID = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "network_id"];
-    string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string subscriberID = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkID = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string orgID = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     Package package = 5;
     string iccid = 6;
     string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
