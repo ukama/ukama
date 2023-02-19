@@ -19,13 +19,14 @@ func TestOrgServer_AddOrg(t *testing.T) {
 	// Arrange
 	orgName := "org-1"
 	ownerUUID := uuid.NewV4()
+	orgID := uuid.NewV4()
 	certificate := "ukama_certs"
 
 	orgRepo := &mocks.OrgRepo{}
 	userRepo := &mocks.UserRepo{}
 
 	org := &db.Org{
-		ID:          0,
+		ID:          orgID,
 		Owner:       ownerUUID,
 		Certificate: certificate,
 		Name:        orgName,
@@ -38,17 +39,14 @@ func TestOrgServer_AddOrg(t *testing.T) {
 		Uuid: ownerUUID,
 	}, nil).Once()
 
-	// orgRepo.On("AddMember", &db.OrgUser{
-	// OrgID:  org.ID,
-	// UserID: 1,
-	// Uuid:   ownerUUID,
-	// }).Return(nil).Once()
-
 	s := NewOrgServer(orgRepo, userRepo)
 
 	// Act
 	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
-		Name: orgName, Owner: ownerUUID.String(), Certificate: certificate}})
+		Id:          orgID.String(),
+		Name:        orgName,
+		Owner:       ownerUUID.String(),
+		Certificate: certificate}})
 
 	// Assert
 	assert.NoError(t, err)
@@ -58,17 +56,17 @@ func TestOrgServer_AddOrg(t *testing.T) {
 }
 
 func TestOrgServer_GetOrg(t *testing.T) {
-	orgID := uint64(0)
+	orgID := uuid.NewV4()
 
 	orgRepo := &mocks.OrgRepo{}
 
-	orgRepo.On("Get", mock.Anything).Return(&db.Org{ID: uint(orgID)}, nil).Once()
+	orgRepo.On("Get", mock.Anything).Return(&db.Org{ID: orgID}, nil).Once()
 
 	s := NewOrgServer(orgRepo, nil)
-	orgResp, err := s.Get(context.TODO(), &pb.GetRequest{Id: orgID})
+	orgResp, err := s.Get(context.TODO(), &pb.GetRequest{Id: orgID.String()})
 
 	assert.NoError(t, err)
-	assert.Equal(t, orgID, orgResp.GetOrg().GetId())
+	assert.Equal(t, orgID.String(), orgResp.GetOrg().GetId())
 	orgRepo.AssertExpectations(t)
 }
 

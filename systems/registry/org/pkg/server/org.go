@@ -35,12 +35,20 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo) *OrgService {
 func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	logrus.Infof("Adding org %v", req)
 
+	orgID, err := uuid.FromString(req.GetOrg().GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of org uuid. Error %s", err.Error())
+	}
+
 	owner, err := uuid.FromString(req.GetOrg().GetOwner())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner id. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of owner uuid. Error %s", err.Error())
 	}
 
 	org := &db.Org{
+		ID:          orgID,
 		Name:        req.GetOrg().GetName(),
 		Owner:       owner,
 		Certificate: req.GetOrg().GetCertificate(),
@@ -84,7 +92,13 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 func (r *OrgService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	logrus.Infof("Getting org %v", req)
 
-	org, err := r.orgRepo.Get(uint(req.GetId()))
+	orgID, err := uuid.FromString(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of org uuid. Error %s", err.Error())
+	}
+
+	org, err := r.orgRepo.Get(orgID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -108,7 +122,8 @@ func (r *OrgService) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) 
 
 	owner, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of owner uuid. Error %s", err.Error())
 	}
 
 	orgs, err := r.orgRepo.GetByOwner(owner)
@@ -127,7 +142,8 @@ func (r *OrgService) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) 
 func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 	uuid, err := uuid.FromString(req.UserUuid)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of owner uuid. Error %s", err.Error())
 	}
 
 	user, err := u.userRepo.Update(&db.User{
@@ -144,7 +160,13 @@ func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 
 func (r *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
-	org, err := r.orgRepo.Get(uint(req.GetOrgId()))
+	orgID, err := uuid.FromString(req.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of org uuid. Error %s", err.Error())
+	}
+
+	org, err := r.orgRepo.Get(orgID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -152,12 +174,14 @@ func (r *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	// Get the User
 	userUUID, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
 	}
 
 	_, err = r.userRepo.Get(userUUID)
 	if err == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "user is already registered")
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"user is already registered")
 	}
 
 	user := &db.User{Uuid: userUUID}
@@ -197,7 +221,8 @@ func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 	// Get the User
 	userUUID, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
 	}
 
 	user, err := r.userRepo.Get(userUUID)
@@ -223,7 +248,8 @@ func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 func (r *OrgService) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	uuid, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
 	}
 
 	// Get the Organization
@@ -246,7 +272,7 @@ func (r *OrgService) GetMembers(ctx context.Context, req *pb.GetMembersRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	members, err := r.orgRepo.GetMembers(uint(org.ID))
+	members, err := r.orgRepo.GetMembers(org.ID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "orgs")
 	}
@@ -262,7 +288,8 @@ func (r *OrgService) GetMembers(ctx context.Context, req *pb.GetMembersRequest) 
 func (r *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberRequest) (*pb.MemberResponse, error) {
 	uuid, err := uuid.FromString(req.GetMember().GetUserUuid())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
 	}
 
 	org, err := r.orgRepo.GetByName(req.GetMember().GetOrgName())
@@ -271,7 +298,7 @@ func (r *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberReque
 	}
 
 	member := &db.OrgUser{
-		OrgID:       uint(org.ID),
+		OrgID:       org.ID,
 		Uuid:        uuid,
 		Deactivated: req.GetAttributes().IsDeactivated,
 	}
@@ -287,7 +314,8 @@ func (r *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberReque
 func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
 	uuid, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of user uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
 	}
 
 	org, err := r.orgRepo.GetByName(req.GetOrgName())
@@ -301,14 +329,16 @@ func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 	}
 
 	if org.Owner == member.Uuid {
-		return nil, status.Errorf(codes.FailedPrecondition, "cannot remove the current owner of the Organization")
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot remove the current owner of the Organization")
 	}
 
 	if !member.Deactivated {
-		return nil, status.Errorf(codes.FailedPrecondition, "member must be deactivated first")
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"member must be deactivated first")
 	}
 
-	err = r.orgRepo.RemoveMember(uint(org.ID), uuid)
+	err = r.orgRepo.RemoveMember(org.ID, uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -318,7 +348,7 @@ func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 
 func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 	return &pb.Organization{
-		Id:            uint64(org.ID),
+		Id:            org.ID.String(),
 		Name:          org.Name,
 		Owner:         org.Owner.String(),
 		Certificate:   org.Certificate,
@@ -346,7 +376,7 @@ func dbUserToPbUser(user *db.User) *pb.User {
 
 func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 	return &pb.OrgUser{
-		OrgId:         uint64(member.OrgID),
+		OrgId:         member.OrgID.String(),
 		UserId:        uint64(member.UserID),
 		Uuid:          member.Uuid.String(),
 		IsDeactivated: member.Deactivated,

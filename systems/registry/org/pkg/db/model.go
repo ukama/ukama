@@ -8,7 +8,7 @@ import (
 )
 
 type Org struct {
-	ID          uint      `gorm:"primaryKey"`
+	ID          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string    `gorm:"uniqueIndex"`
 	Owner       uuid.UUID `gorm:"type:uuid"`
 	Certificate string
@@ -27,7 +27,7 @@ type User struct {
 }
 
 type OrgUser struct {
-	OrgID       uint      `gorm:"primaryKey"`
+	OrgID       uuid.UUID `gorm:"primaryKey;type:uuid"`
 	UserID      uint      `gorm:"primaryKey"`
 	Uuid        uuid.UUID `gorm:"not null;type:uuid"`
 	Deactivated bool

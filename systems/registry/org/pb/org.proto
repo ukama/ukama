@@ -38,7 +38,7 @@ message AddResponse{
 }
 
 message GetRequest {
-    uint64 id = 1 [json_name = "org_id"];
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
 
 message GetResponse{
@@ -72,7 +72,7 @@ message MemberResponse{
 }
 
 message RegisterUserRequest{
-    uint64 orgId = 1 [json_name = "org_id"];
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string userUuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
 }
 
@@ -100,7 +100,7 @@ message UpdateUserResponse {
 }
 
 message Organization {
-    uint64 id = 1;
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
     string owner = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string certificate = 4;
@@ -123,7 +123,7 @@ message OrgUserAttributes {
 }
 
 message OrgUser {
-    uint64 orgId = 1 [json_name = "org_id"];
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     uint64 userId = 2 [json_name = "user_id"];
     string uuid = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     bool isDeactivated = 4 [json_name = "is_deactivated"];
