@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -62,7 +64,25 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	}
 }
 
+var numSubscribers = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "subscriber_count",
+	Help: "The total number of subscribers",
+	ConstLabels: map[string]string{
+		"activationsCount":   "20",
+		"deactivationsCount": "20",
+	},
+})
+var activeSubscribers = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "active_subscriber_count",
+	Help: "The total number of active subscribers",
+})
+var inactiveSubscribers = prometheus.NewGauge(prometheus.GaugeOpts{
+	Name: "inactive_subscriber_count",
+	Help: "The total number of inactive subscribers",
+})
+
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
+
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -209,7 +229,13 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+	numSubscribers.Inc()
 
+	if err := push.New("http://localhost:9091/", "subscribers").
+		Collector(numSubscribers).
+		Push(); err != nil {
+		logrus.Errorf("Could not push numSubscribers to Pushgateway: %s", err.Error())
+	}
 	return resp, nil
 }
 
@@ -279,12 +305,15 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 	switch simStatus {
 	case sims.SimStatusActive:
 		return s.activateSim(ctx, req.SimID)
+
 	case sims.SimStatusInactive:
 		return s.deactivateSim(ctx, req.SimID)
+
 	default:
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid status parameter: %s.", strStatus)
 	}
+
 }
 
 func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimRequest) (*pb.DeleteSimResponse, error) {
@@ -583,7 +612,13 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
+	activeSubscribers.Inc()
 
+	if err := push.New("http://localhost:9091/", "subscribers").
+		Collector(activeSubscribers).
+		Push(); err != nil {
+		logrus.Errorf("Could not push activeSubscribers to Pushgateway: %s", err.Error())
+	}
 	return &pb.ToggleSimStatusResponse{}, nil
 }
 
@@ -624,6 +659,13 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+	inactiveSubscribers.Inc()
+
+	if err := push.New("http://localhost:9091/", "subscribers").
+		Collector(inactiveSubscribers).
+		Push(); err != nil {
+		logrus.Errorf("Could not push inactiveSubscribers to Pushgateway: %s", err.Error())
 	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
