@@ -46,17 +46,16 @@ func (r *orgRepo) Add(org *Org, nestedFunc func(*Org, *gorm.DB) error) (err erro
 	}
 
 	err = r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		d := tx.Create(org)
-
-		if d.Error != nil {
-			return d.Error
-		}
-
 		if nestedFunc != nil {
 			nestErr := nestedFunc(org, tx)
 			if nestErr != nil {
 				return nestErr
 			}
+		}
+
+		d := tx.Create(org)
+		if d.Error != nil {
+			return d.Error
 		}
 
 		return nil

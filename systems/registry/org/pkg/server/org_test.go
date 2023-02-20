@@ -19,14 +19,12 @@ func TestOrgServer_AddOrg(t *testing.T) {
 	// Arrange
 	orgName := "org-1"
 	ownerUUID := uuid.NewV4()
-	orgID := uuid.NewV4()
 	certificate := "ukama_certs"
 
 	orgRepo := &mocks.OrgRepo{}
 	userRepo := &mocks.UserRepo{}
 
 	org := &db.Org{
-		ID:          orgID,
 		Owner:       ownerUUID,
 		Certificate: certificate,
 		Name:        orgName,
@@ -43,7 +41,6 @@ func TestOrgServer_AddOrg(t *testing.T) {
 
 	// Act
 	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
-		Id:          orgID.String(),
 		Name:        orgName,
 		Owner:       ownerUUID.String(),
 		Certificate: certificate}})

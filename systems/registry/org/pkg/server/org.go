@@ -35,12 +35,6 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo) *OrgService {
 func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	logrus.Infof("Adding org %v", req)
 
-	orgID, err := uuid.FromString(req.GetOrg().GetId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", err.Error())
-	}
-
 	owner, err := uuid.FromString(req.GetOrg().GetOwner())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -48,13 +42,14 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	}
 
 	org := &db.Org{
-		ID:          orgID,
 		Name:        req.GetOrg().GetName(),
 		Owner:       owner,
 		Certificate: req.GetOrg().GetCertificate(),
 	}
 
 	err = r.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
+		org.ID = uuid.NewV4()
+
 		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 
 		// Adding owner as a member
