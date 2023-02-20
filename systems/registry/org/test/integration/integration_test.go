@@ -6,7 +6,7 @@ package integration
 import (
 	confr "github.com/num30/config"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type TestConfig struct {
@@ -20,8 +20,8 @@ func init() {
 	r := confr.NewConfReader("integration")
 	r.Read(tConfig)
 
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("%+v", tConfig)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("%+v", tConfig)
 }
 
 // func Test_FullFlow(t *testing.T) {
@@ -32,7 +32,7 @@ func init() {
 // ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 // defer cancel()
 
-// logrus.Infoln("Connecting to service ", tConfig.ServiceHost)
+// log.Infoln("Connecting to service ", tConfig.ServiceHost)
 
 // conn, c, err := CreateOrgClient()
 // defer conn.Close()
@@ -67,7 +67,7 @@ func init() {
 // }
 
 // func deleteOrg(t *testing.T, c pb.OrgServiceClient, orgName string) {
-// logrus.Info("Deleting org ", orgName)
+// log.Info("Deleting org ", orgName)
 
 // ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 // defer cancel()
@@ -98,10 +98,10 @@ func init() {
 
 // // Assert
 // assert.NoError(t, err)
-// logrus.Info("Sleeping for 2 seconds")
+// log.Info("Sleeping for 2 seconds")
 // time.Sleep(2 * time.Second)
 
-// logrus.Info("Getting org: " + ownerId)
+// log.Info("Getting org: " + ownerId)
 
 // resp, err := c.Get(ctx, &pb.GetRequest{Name: ownerId})
 // if assert.NoError(t, err) {
@@ -110,7 +110,7 @@ func init() {
 // }
 
 // func CreateOrgClient() (*grpc.ClientConn, pb.OrgServiceClient, error) {
-// logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+// log.Infoln("Connecting to network ", tConfig.ServiceHost)
 
 // context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 // defer cancel()

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -33,7 +33,7 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo) *OrgService {
 }
 
 func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	logrus.Infof("Adding org %v", req)
+	log.Infof("Adding org %v", req)
 
 	owner, err := uuid.FromString(req.GetOrg().GetOwner())
 	if err != nil {
@@ -58,7 +58,7 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 			return err
 		}
 
-		logrus.Infof("Adding owner as member")
+		log.Infof("Adding owner as member")
 		member := &db.OrgUser{
 			OrgID:  org.ID,
 			UserID: user.ID,
@@ -85,7 +85,7 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 }
 
 func (r *OrgService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	logrus.Infof("Getting org %v", req)
+	log.Infof("Getting org %v", req)
 
 	orgID, err := uuid.FromString(req.GetId())
 	if err != nil {
@@ -102,7 +102,7 @@ func (r *OrgService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 }
 
 func (r *OrgService) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
-	logrus.Infof("Getting org %v", req.GetName())
+	log.Infof("Getting org %v", req.GetName())
 
 	org, err := r.orgRepo.GetByName(req.GetName())
 	if err != nil {
@@ -113,7 +113,7 @@ func (r *OrgService) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*
 }
 
 func (r *OrgService) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) (*pb.GetByOwnerResponse, error) {
-	logrus.Infof("Getting all orgs owned by %v", req.GetUserUuid())
+	log.Infof("Getting all orgs owned by %v", req.GetUserUuid())
 
 	owner, err := uuid.FromString(req.GetUserUuid())
 	if err != nil {
@@ -225,7 +225,7 @@ func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	logrus.Infof("Adding member")
+	log.Infof("Adding member")
 	member := &db.OrgUser{
 		OrgID:  org.ID,
 		UserID: user.ID,

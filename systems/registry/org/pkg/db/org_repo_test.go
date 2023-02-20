@@ -2,10 +2,10 @@ package db_test
 
 import (
 	extsql "database/sql"
-	"log"
 	"regexp"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/uuid"
 	org_db "github.com/ukama/ukama/systems/registry/org/pkg/db"
 
