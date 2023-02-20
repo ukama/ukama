@@ -86,14 +86,16 @@ func initDb() sql.Db {
 	if orgDB.Migrator().HasTable(&db.Org{}) {
 		if err := orgDB.First(&db.Org{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Iniiialzing orgs table")
+
 			var ukamaUUID uuid.UUID
 			var err error
 
 			if ukamaUUID, err = uuid.FromString(os.Getenv("UKAMA_UUID")); err != nil {
-				log.Fatalf("Database initialization failed, need valid UKAMA UUID env var. Error: %v", err)
+				log.Fatalf("Database initialization failed, need valid %q var. Error: %v", "UKAMA_UUID", err)
 			}
 
 			org := &db.Org{
+				ID:    uuid.NewV4(),
 				Name:  defaultOrgName,
 				Owner: ukamaUUID,
 			}
@@ -114,7 +116,7 @@ func initDb() sql.Db {
 				if err := tx.Create(&db.OrgUser{
 					OrgID:  org.ID,
 					UserID: usr.ID,
-					Uuid:   ukamaUUID,
+					Uuid:   usr.Uuid,
 				}).Error; err != nil {
 					return err
 				}
