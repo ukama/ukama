@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -207,7 +207,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return resp, nil

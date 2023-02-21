@@ -15,13 +15,13 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
-	Key               string
 	Service           *config.Service
-	DataPlan          *config.Service
-	SubsRegistry      *config.GrpcService
-	SimPool           *config.GrpcService
-	TestAgent         *config.GrpcService
-	OperatorAgent     *config.Service
+	Key               string
+	DataPlan          string `default:"data-plan:8080"`
+	SubsRegistry      string `default:"registry:9091"`
+	SimPool           string `default:"sim-pool:9090"`
+	TestAgent         string `default:"test-agent:9093"`
+	OperatorAgent     string `default:"operator-agent:8080"`
 }
 
 func NewConfig(name string) *Config {
@@ -37,33 +37,6 @@ func NewConfig(name string) *Config {
 
 		MsgClient: &config.MsgClient{
 			Timeout: 5 * time.Second,
-		},
-
-		DataPlan: &config.Service{
-			Host: `default:"data-plan"`,
-			Port: `default:"8080"`,
-			Uri:  `default:"data-plan:8080"`,
-		},
-
-		SubsRegistry: &config.GrpcService{
-			Timeout: 2 * time.Second,
-			Host:    `default:"subscriber-registry:9090"`,
-		},
-
-		SimPool: &config.GrpcService{
-			Timeout: 2 * time.Second,
-			Host:    `default:"sim-pool:9090"`,
-		},
-
-		TestAgent: &config.GrpcService{
-			Timeout: 2 * time.Second,
-			Host:    `default:"test-agent:9090"`,
-		},
-
-		OperatorAgent: &config.Service{
-			Host: `default:"operator-agent"`,
-			Port: `default:"8080"`,
-			Uri:  `default:"operator-agent:8080"`,
 		},
 	}
 }
