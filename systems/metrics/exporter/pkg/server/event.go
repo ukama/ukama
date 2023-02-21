@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -70,6 +71,8 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 		if err != nil {
 			return err
 		}
+
+		c.Name = strings.ReplaceAll(c.Name+"_"+msg.Id, "-", "")
 
 		nm := collector.NewMetrics(n, c.Type)
 
