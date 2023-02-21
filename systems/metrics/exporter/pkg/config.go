@@ -63,7 +63,7 @@ func NewConfig(name string) *Config {
 		},
 		KpiConfig: []KPIConfig{
 			{
-				Name:    "SimUsage",
+				Name:    "subscriber_simusage",
 				Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
 				Type:    MetricGuage,
 				Units:   "bytes",

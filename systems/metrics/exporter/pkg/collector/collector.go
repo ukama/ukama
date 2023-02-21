@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
+	pc "github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
@@ -29,6 +30,8 @@ func NewMetricsCollector(config []pkg.KPIConfig, metrics *config.Metrics) *Metri
 	m.MetricsMap = make(map[string]Metrics)
 	m.Config = make(map[string]pkg.KPIConfig, len(m.Config))
 	m.registry = prometheus.NewRegistry()
+	m.registry.MustRegister(pc.NewGoCollector(), pc.NewProcessCollector(pc.ProcessCollectorOpts{}))
+
 	for _, c := range config {
 		m.Config[c.Event] = c
 	}
