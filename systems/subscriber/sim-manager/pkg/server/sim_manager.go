@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,22 +66,13 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	}
 }
 
-var numSubscribers = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "subscriber_count",
+
+
+var numSubscribers = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "number_of_subscribers",
 	Help: "The total number of subscribers",
-	ConstLabels: map[string]string{
-		"activationsCount":   "20",
-		"deactivationsCount": "20",
-	},
-})
-var activeSubscribers = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "active_subscriber_count",
-	Help: "The total number of active subscribers",
-})
-var inactiveSubscribers = prometheus.NewGauge(prometheus.GaugeOpts{
-	Name: "inactive_subscriber_count",
-	Help: "The total number of inactive subscribers",
-})
+}, []string{"activationsCount", "deactivationsCount"})
+
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
 
@@ -229,13 +222,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	numSubscribers.Inc()
 
-	if err := push.New("http://localhost:9091/", "subscribers").
-		Collector(numSubscribers).
-		Push(); err != nil {
-		logrus.Errorf("Could not push numSubscribers to Pushgateway: %s", err.Error())
-	}
 	return resp, nil
 }
 
@@ -277,7 +264,29 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 
 	return resp, nil
 }
+func (s *SimManagerServer) GetSimCounts(ctx context.Context, req *pb.GetSimCountsRequest) (*pb.GetSimCountsResponse, error) {
+	simsCount, activeCount, deactiveCount, err := s.simRepo.GetSimCounts()
+    if err != nil {
+        log.Fatalf("failed to get Sims counts: %v", err)
+    }
 
+	resp := &pb.GetSimCountsResponse{
+		SimsCount: simsCount,
+		ActiveCount:    activeCount  ,
+		DeactiveCount:deactiveCount,
+	}
+	m:=strconv.FormatInt(simsCount, 10)
+	numSubscribers.With(prometheus.Labels{"activationsCount":activeCount , "deactivationsCount": deactiveCount}).Set(simsCount)
+
+	if err := push.New("http://localhost:9091/", "subscribers").
+		Collector(numSubscribers).
+		Push(); err != nil {
+		logrus.Errorf("Could not push numSubscribers to Pushgateway: %s", err.Error())
+	}
+
+
+	return resp, nil
+}
 func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSimsByNetworkRequest) (*pb.GetSimsByNetworkResponse, error) {
 	netID, err := uuid.FromString(req.GetNetworkID())
 	if err != nil {
@@ -612,13 +621,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	activeSubscribers.Inc()
-
-	if err := push.New("http://localhost:9091/", "subscribers").
-		Collector(activeSubscribers).
-		Push(); err != nil {
-		logrus.Errorf("Could not push activeSubscribers to Pushgateway: %s", err.Error())
-	}
+	
 	return &pb.ToggleSimStatusResponse{}, nil
 }
 
@@ -660,14 +663,8 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	inactiveSubscribers.Inc()
 
-	if err := push.New("http://localhost:9091/", "subscribers").
-		Collector(inactiveSubscribers).
-		Push(); err != nil {
-		logrus.Errorf("Could not push inactiveSubscribers to Pushgateway: %s", err.Error())
-	}
-
+	
 	return &pb.ToggleSimStatusResponse{}, nil
 }
 
