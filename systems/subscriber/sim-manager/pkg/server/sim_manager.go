@@ -66,14 +66,6 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	}
 }
 
-
-
-var numSubscribers = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "number_of_subscribers",
-	Help: "The total number of subscribers",
-}, []string{"activationsCount", "deactivationsCount"})
-
-
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
 
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
@@ -266,24 +258,30 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 }
 func (s *SimManagerServer) GetSimCounts(ctx context.Context, req *pb.GetSimCountsRequest) (*pb.GetSimCountsResponse, error) {
 	simsCount, activeCount, deactiveCount, err := s.simRepo.GetSimCounts()
-    if err != nil {
-        log.Fatalf("failed to get Sims counts: %v", err)
-    }
+	if err != nil {
+		log.Fatalf("failed to get Sims counts: %v", err)
+	}
 
 	resp := &pb.GetSimCountsResponse{
-		SimsCount: simsCount,
-		ActiveCount:    activeCount  ,
-		DeactiveCount:deactiveCount,
+		SimsCount:     simsCount,
+		ActiveCount:   activeCount,
+		DeactiveCount: deactiveCount,
 	}
-	m:=strconv.FormatInt(simsCount, 10)
-	numSubscribers.With(prometheus.Labels{"activationsCount":activeCount , "deactivationsCount": deactiveCount}).Set(simsCount)
 
+	numSubscribers := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "number_of_subscribers",
+		Help: "The total number of subscribers",
+	}, []string{"activationsCount", "deactivationsCount"})
+
+	numSubscribers.With(prometheus.Labels{
+		"activationsCount":   strconv.FormatInt(activeCount, 10),
+		"deactivationsCount": strconv.FormatInt(deactiveCount, 10),
+	}).Set(float64(simsCount))
 	if err := push.New("http://localhost:9091/", "subscribers").
 		Collector(numSubscribers).
 		Push(); err != nil {
 		logrus.Errorf("Could not push numSubscribers to Pushgateway: %s", err.Error())
 	}
-
 
 	return resp, nil
 }
@@ -621,7 +619,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	
+
 	return &pb.ToggleSimStatusResponse{}, nil
 }
 
@@ -664,7 +662,6 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	
 	return &pb.ToggleSimStatusResponse{}, nil
 }
 

@@ -18,7 +18,7 @@ service SimManagerService {
     rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
     rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
     rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
-rpc GetSimCounts(GetSimCountsRequest) returns(GetSimCountsResponse);
+    rpc GetSimCounts(GetSimCountsRequest) returns(GetSimCountsResponse);
     // Sim pacakge
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
     rpc GetPackagesBySim(GetPackagesBySimRequest) returns (GetPackagesBySimResponse);
