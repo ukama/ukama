@@ -66,10 +66,11 @@ func NewConfig(name string) *Config {
 			{
 				Name:    "subscriber_simusage",
 				Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
-				Type:    MetricGuage,
+				Type:    MetricHistogram,
 				Units:   "bytes",
 				Labels:  map[string]string{"name": "usage"},
 				Details: "Data Usage of the sim",
+				Buckets: []float64{1024, 10240, 102400, 1024000, 10240000, 102400000},
 			},
 			{
 				Name:    "subscriber_simusage_duration",
