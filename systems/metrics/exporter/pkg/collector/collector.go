@@ -136,6 +136,7 @@ func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLabl
 				Name:        config.Name,
 				Help:        config.Details,
 				ConstLabels: m.Labels,
+				Buckets:     config.Buckets,
 			},
 			customLables,
 		)
@@ -176,4 +177,30 @@ func (m *Metrics) MergeLabels(static map[string]string, clabels map[string]strin
 	for name, value := range clabels {
 		m.Labels[name] = value
 	}
+}
+
+func SetUpMetric(key string, mc *MetricsCollector, l map[string]string, name string) (*Metrics, error) {
+	/* Initialize metric first */
+	c, err := mc.GetConfigForEvent(key)
+	if err != nil {
+		return nil, err
+	}
+
+	c.Name = name
+
+	nm := NewMetrics(name, c.Type)
+
+	nm.MergeLabels(c.Labels, l)
+
+	nm.InitializeMetric(name, *c, nil)
+
+	/* Add a metric */
+	err = mc.AddMetrics(name, *nm)
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("New metric %s added", name)
+
+	return nm, nil
+
 }

@@ -165,4 +165,7 @@ message SimUsage {
     string orgID = 4 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "org_id"];
     string type = 5;
     uint64 bytesUsed = 6;
+    string sessionId = 7;
+    int64   startTime = 8;
+    int64 endTime = 9;
 }

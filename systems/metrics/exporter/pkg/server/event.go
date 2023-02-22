@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -57,7 +58,27 @@ func unmarshalEventSimUsage(msg *anypb.Any) (*pb.SimUsage, error) {
 }
 
 func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
-	n := "usage_" + msg.Id
+	err := AddSimUsage(key, msg, s)
+	if err != nil {
+		return err
+	}
+
+	err = AddSimUsageDuration(key, msg, s)
+	if err != nil {
+		return err
+	}
+
+	err = AddSimUsageSession(key, msg, s)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AddSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
+	n := strings.ReplaceAll("sim_usage_"+msg.Id, "-", "")
+
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(n)
 	if err == nil {
@@ -65,35 +86,99 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 		return m.SetMetric(float64(msg.BytesUsed), nil)
 
 	} else {
+		l := SetUpLabelsForSimUsage(msg)
 
-		/* Initialize metric first */
-		c, err := s.mc.GetConfigForEvent(key)
+		m, err := collector.SetUpMetric(key, s.mc, l, n)
 		if err != nil {
 			return err
 		}
 
-		c.Name = strings.ReplaceAll(c.Name+"_"+msg.Id, "-", "")
-
-		nm := collector.NewMetrics(n, c.Type)
-
-		labels := make(map[string]string)
-		labels["org"] = msg.OrgID
-		labels["network"] = msg.NetworkID
-		labels["subscriber"] = msg.SubscriberID
-		labels["sim_type"] = msg.Type
-		nm.MergeLabels(c.Labels, labels)
-
-		nm.InitializeMetric(n, *c, nil)
-
-		/* Add a metric */
-		err = s.mc.AddMetrics(n, *nm)
-		if err != nil {
-			return err
-		}
-		log.Infof("New metric %s added", n)
-
-		nm.SetMetric(float64(msg.BytesUsed), nil)
+		m.SetMetric(float64(msg.BytesUsed), nil)
 
 	}
 	return nil
+}
+
+func AddSimUsageDuration(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
+	n := strings.ReplaceAll("sim_duration_"+msg.Id, "-", "")
+
+	/* Check if metric exist */
+	m, err := s.mc.GetMetric(n)
+	if err == nil {
+		/* Update value */
+		return m.SetMetric(float64(msg.BytesUsed), nil)
+
+	} else {
+		l := SetUpLabelsForSimDuration(msg)
+
+		m, err := collector.SetUpMetric(key, s.mc, l, n)
+		if err != nil {
+			return err
+		}
+
+		m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
+
+	}
+	return nil
+}
+
+func AddSimUsageSession(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
+	n := strings.ReplaceAll("sim_usage_sessions_"+msg.Id, "-", "")
+
+	/* Check if metric exist */
+	m, err := s.mc.GetMetric(n)
+	if err == nil {
+		/* Update value */
+		return m.SetMetric(float64(msg.BytesUsed), nil)
+
+	} else {
+		l := SetUpLabelsForSimUsageSession(msg)
+
+		m, err := collector.SetUpMetric(key, s.mc, l, n)
+		if err != nil {
+			return err
+		}
+
+		m.SetMetric(0, nil)
+
+	}
+	return nil
+}
+
+func SetUpLabelsForSimUsage(msg *pb.SimUsage) map[string]string {
+	labels := make(map[string]string)
+	labels["org"] = msg.OrgID
+	labels["network"] = msg.NetworkID
+	labels["subscriber"] = msg.SubscriberID
+	labels["sim_type"] = msg.Type
+	labels["session"] = msg.SessionId
+	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
+	labels["end"] = strconv.FormatInt(msg.StartTime, 10)
+	return labels
+}
+
+func SetUpLabelsForSimDuration(msg *pb.SimUsage) map[string]string {
+	labels := make(map[string]string)
+	labels["org"] = msg.OrgID
+	labels["network"] = msg.NetworkID
+	labels["subscriber"] = msg.SubscriberID
+	labels["sim_type"] = msg.Type
+	labels["session"] = msg.SessionId
+	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
+	labels["end"] = strconv.FormatInt(msg.StartTime, 10)
+
+	return labels
+}
+
+func SetUpLabelsForSimUsageSession(msg *pb.SimUsage) map[string]string {
+	labels := make(map[string]string)
+	labels["org"] = msg.OrgID
+	labels["network"] = msg.NetworkID
+	labels["subscriber"] = msg.SubscriberID
+	labels["sim_type"] = msg.Type
+	labels["session"] = msg.SessionId
+	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
+	labels["end"] = strconv.FormatInt(msg.StartTime, 10)
+
+	return labels
 }
