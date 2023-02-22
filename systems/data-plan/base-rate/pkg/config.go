@@ -15,3 +15,15 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 }
+
+func NewConfig(name string) *Config {
+	return &Config{
+		DB: &uconf.Database{
+			DbName: name,
+		},
+		Service: uconf.LoadServiceHostConfig(name),
+		MsgClient: &uconf.MsgClient{
+			Timeout: 5 * time.Second,
+		},
+	}
+}

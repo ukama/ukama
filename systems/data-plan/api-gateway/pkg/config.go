@@ -42,14 +42,13 @@ func NewConfig() *Config {
 		},
 		Services: GrpcEndpoints{
 			Timeout:  3 * time.Second,
-			Package:  "0.0.0.0:9090",
-			BaseRate: "0.0.0.0:9090",
+			Package:  "0.0.0.0:9094",
+			BaseRate: "0.0.0.0:9095",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
 			NodeMetrics: "http://localhost",
 		},
-
 		Server: rest.HttpConfig{
 			Port: 8080,
 			Cors: defaultCors,

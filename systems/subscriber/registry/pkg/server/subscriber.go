@@ -49,10 +49,10 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 	subscriberID := uuid.NewV4()
-	// err = s.network.ValidateNetwork(networkID.String(), orgID.String())
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
-	// }
+	err = s.network.ValidateNetwork(networkID.String(), orgID.String())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
+	}
 
 	subscriber := &db.Subscriber{
 		OrgID:                 orgID,
@@ -244,20 +244,20 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 }
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberID()
-	subscriberID, error := uuid.FromString(subscriberIdReq)
+	subscriberID, err := uuid.FromString(subscriberIdReq)
 
-	if error != nil {
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of subscriber uuid. Error %s", error.Error())
+			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
 	logrus.Infof("Delete Subscriber : %v ", subscriberID)
-	er := s.subscriberRepo.Delete(subscriberID)
-	if er != nil {
-		logrus.WithError(er).Error("error while deleting subscriber")
-		return nil, grpc.SqlErrorToGrpc(er, "subscriber")
+	err = s.subscriberRepo.Delete(subscriberID)
+	if err != nil {
+		logrus.WithError(err).Error("error while deleting subscriber")
+		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
-	err := s.msgbus.PublishRequest(route, req)
+	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}

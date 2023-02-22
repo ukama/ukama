@@ -26,9 +26,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serviceConfig *pkg.Config
-var host = "localhost"
-var port = 50051
+var svcConf = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -41,27 +39,27 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	serviceConfig = &pkg.Config{
+	svcConf = &pkg.Config{
 		DB: &uconf.Database{
 			DbName: pkg.ServiceName,
 		},
 	}
-	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
+	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
-	} else if serviceConfig.DebugMode {
-		b, err := yaml.Marshal(serviceConfig)
+	} else if svcConf.DebugMode {
+		b, err := yaml.Marshal(svcConf)
 		if err != nil {
 			logrus.Infof("Config:\n%s", string(b))
 		}
 	}
 
-	pkg.IsDebugMode = serviceConfig.DebugMode
+	pkg.IsDebugMode = svcConf.DebugMode
 }
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 	err := d.Init(&db.Rate{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
@@ -70,30 +68,30 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	instanceId := os.Getenv("POD_NAME")
+	// instanceId := os.Getenv("POD_NAME")
 
-	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListenerRoutes)
+	// mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	// 	pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+	// 	serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+	// 	serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+	// 	serviceConfig.MsgClient.RetryCount,
+	// 	serviceConfig.MsgClient.ListenerRoutes)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	// log.Debugf("MessageBus Client is %+v", mbClient)
 
-	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 
 		srv := server.NewBaseRateServer(db.NewBaseRateRepo(gormdb))
 		generated.RegisterBaseRatesServiceServer(s, srv)
 	})
 
-	go msgBusListener(mbClient)
+	// go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 
 }
 
-func msgBusListener(m *mbc.MsgBusClient) {
+func msgBusListener(m mbc.MsgBusServiceClient) {
 
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())

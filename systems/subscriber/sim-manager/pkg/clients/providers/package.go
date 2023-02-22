@@ -62,7 +62,7 @@ func (p *packageInfoClient) GetPackageInfo(packageID string) (*PackageInfo, erro
 	if !resp.IsSuccess() {
 		log.Tracef("Failed to fetch data package info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
 
-		return nil, fmt.Errorf(" data package Info failure %s", errStatus.Message)
+		return nil, fmt.Errorf("data package Info failure %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), pkg)

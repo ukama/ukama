@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
 type BaseRateRepo interface {
@@ -32,7 +32,7 @@ func (u *baseRateRepo) GetBaseRate(uuid uuid.UUID) (*Rate, error) {
 
 func (b *baseRateRepo) GetBaseRates(country, network, effectiveAt, simType string) ([]Rate, error) {
 	var rates []Rate
-	result := b.Db.GetGormDb().Where(&Rate{Country: country, Network: network, Sim_type: simType, Effective_at: effectiveAt}).Find(&rates)
+	result := b.Db.GetGormDb().Where(&Rate{Country: country, Network: network, SimType: simType, EffectiveAt: effectiveAt}).Find(&rates)
 
 	if result.Error != nil {
 		return nil, result.Error

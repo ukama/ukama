@@ -4,7 +4,7 @@ include ../../config.mk
 
 build:
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/base-rate cmd/server/main.go	
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/base-rate cmd/server/main.go	
 
 test:
 	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out

@@ -22,7 +22,6 @@ import (
 	"github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	"google.golang.org/grpc"
 )
@@ -75,18 +74,18 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		logrus.Fatalf("Network Client initilization failed. Error: %v", err.Error())
 	}
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	// mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	logrus.Debugf("MessageBus Client is %+v", mbClient)
+	// logrus.Debugf("MessageBus Client is %+v", mbClient)
 
 	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient, simMClient, networkClient)
+		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), nil, simMClient, networkClient)
 		pb.RegisterRegistryServiceServer(s, srv)
 
 	})
-	go msgBusListener(mbClient)
+	// go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }

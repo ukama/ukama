@@ -3,11 +3,11 @@ package server
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
@@ -20,7 +20,7 @@ const uuidParsingError = "Error parsing UUID"
 
 type BaseRateServer struct {
 	baseRateRepo   db.BaseRateRepo
-	msgbus         *mb.MsgBusClient
+	msgBus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedBaseRatesServiceServer
 }
@@ -31,8 +31,7 @@ func NewBaseRateServer(baseRateRepo db.BaseRateRepo) *BaseRateServer {
 }
 
 func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
-	logrus.Infof("Get rate %v", req.GetRateUuid())
-	uuid, err := uuid.Parse(req.RateUuid)
+	uuid, err := uuid.FromString(req.GetUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -99,7 +98,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	// Publish message to msgbus
 
 	route := b.baseRoutingKey.SetActionUpdate().SetObject("base-rate").MustBuild()
-	err = b.msgbus.PublishRequest(route, req)
+	err = b.msgBus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -121,7 +120,7 @@ func dbratesToPbRates(rates []db.Rate) []*pb.Rate {
 
 func dbRatesToPbRates(r *db.Rate) *pb.Rate {
 	return &pb.Rate{
-		Id:          uint64(r.ID),
+		Uuid:        r.Uuid.String(),
 		X2G:         r.X2g,
 		X3G:         r.X3g,
 		X5G:         r.X5g,
@@ -130,14 +129,14 @@ func dbRatesToPbRates(r *db.Rate) *pb.Rate {
 		Vpmn:        r.Vpmn,
 		Imsi:        r.Imsi,
 		Data:        r.Data,
-		LteM:        r.Lte_m,
-		SmsMo:       r.Sms_mo,
-		SmsMt:       r.Sms_mt,
-		EndAt:       r.End_at,
+		LteM:        r.LteM,
+		SmsMo:       r.SmsMo,
+		SmsMt:       r.SmsMt,
+		EndAt:       r.EndAt,
 		Network:     r.Network,
 		Country:     r.Country,
-		SimType:     r.Sim_type,
-		EffectiveAt: r.Effective_at,
+		SimType:     r.SimType,
+		EffectiveAt: r.EffectiveAt,
 		CreatedAt:   r.CreatedAt.String(),
 		UpdatedAt:   r.UpdatedAt.String(),
 		DeletedAt:   r.DeletedAt.Time.String(),

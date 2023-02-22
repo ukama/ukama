@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
@@ -44,7 +44,7 @@ func (p *packageRepo) Get(uuid uuid.UUID) (*Package, error) {
 
 func (p *packageRepo) GetByOrg(orgId uuid.UUID) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where(&Package{Org_id: orgId}).Find(&packages)
+	result := p.Db.GetGormDb().Where(&Package{OrgId: orgId}).Find(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error

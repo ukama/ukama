@@ -87,14 +87,14 @@ func runGrpcServer(gormDB sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName,
-		pkg.ServiceName, instanceId, svcConf.Queue.Uri,
-		svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange,
-		svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
-		svcConf.MsgClient.RetryCount,
-		svcConf.MsgClient.ListenerRoutes)
+	// mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName,
+	// 	pkg.ServiceName, instanceId, svcConf.Queue.Uri,
+	// 	svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange,
+	// 	svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
+	// 	svcConf.MsgClient.RetryCount,
+	// 	svcConf.MsgClient.ListenerRoutes)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	// log.Debugf("MessageBus Client is %+v", mbClient)
 
 	pckgClient, err := providers.NewPackageInfoClient(svcConf.DataPlan, pkg.IsDebugMode)
 	if err != nil {
@@ -107,10 +107,10 @@ func runGrpcServer(gormDB sql.Db) {
 		db.NewPackageRepo(gormDB),
 		adapters.NewAgentFactory(svcConf.TestAgent, svcConf.OperatorAgent, svcConf.Timeout, pkg.IsDebugMode),
 		pckgClient,
-		providers.NewSubscriberRegistryClientProvider(svcConf.SubsRegistry, svcConf.Timeout),
+		providers.NewSubscriberRegistryClientProvider(svcConf.Registry, svcConf.Timeout),
 		providers.NewSimPoolClientProvider(svcConf.SimPool, svcConf.Timeout),
 		svcConf.Key,
-		mbClient,
+		nil,
 	)
 
 	fsInterceptor := interceptor.NewFakeSimInterceptor(svcConf.TestAgent, svcConf.Timeout)
@@ -122,7 +122,7 @@ func runGrpcServer(gormDB sql.Db) {
 	grpcServer.ExtraUnaryInterceptors = []grpc.UnaryServerInterceptor{
 		fsInterceptor.UnaryServerInterceptor}
 
-	go msgBusListener(mbClient)
+	// go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }

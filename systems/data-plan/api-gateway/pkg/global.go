@@ -1,4 +1,4 @@
 package pkg
 
 const ServiceName = "api-gateway"
-const SystemName = "Data-plan"
+const SystemName = "data_plan"

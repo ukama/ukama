@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/grpc"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/data-plan/package/mocks"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
@@ -21,13 +21,13 @@ import (
 // Success case
 func TestPackageServer_GetPackages_Success(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	packageUUID := uuid.NewString()
+	packageUUID := uuid.NewV4().String()
 
 	var mockFilters = &pb.GetPackageRequest{
-		PackageUuid: packageUUID,
+		Uuid: packageUUID,
 	}
 	s := NewPackageServer(packageRepo)
-	packageRepo.On("Get", uuid.MustParse(packageUUID)).Return(&db.Package{
+	packageRepo.On("Get", packageUUID).Return(&db.Package{
 		Name: "Daily-pack",
 	}, nil)
 	pkg, err := s.Get(context.TODO(), mockFilters)
@@ -40,11 +40,11 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 func TestPackageServer_GetPackages_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
-	packageUUID := uuid.NewString()
+	packageUUID := uuid.NewV4().String()
 	var mockFilters = &pb.GetPackageRequest{
-		PackageUuid: packageUUID,
+		Uuid: packageUUID,
 	}
-	packageRepo.On("Get", uuid.MustParse(packageUUID)).Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
+	packageRepo.On("Get", packageUUID).Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
 	pkg2, err := s.Get(context.TODO(), mockFilters)
 	assert.Error(t, err)
 	assert.Nil(t, pkg2)
@@ -55,7 +55,7 @@ func TestPackageServer_GetPackages_Error1(t *testing.T) {
 // Get Package by org //
 
 func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
-	var orgId = uuid.New()
+	var orgId = uuid.NewV4()
 
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetByOrgPackageRequest{
@@ -64,15 +64,15 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 	s := NewPackageServer(packageRepo)
 
 	packageRepo.On("GetByOrg", orgId).Return([]db.Package{{
-		Sim_type:     pb.SimType_INTER_MNO_ALL.String(),
-		Name:         "Daily-pack",
-		Org_id:       orgId,
-		Active:       true,
-		Duration:     1,
-		Sms_volume:   20,
-		Data_volume:  12,
-		Voice_volume: 34,
-		Org_rates_id: 00,
+		SimType:     pb.SimType_INTER_MNO_ALL.String(),
+		Name:        "Daily-pack",
+		OrgId:       orgId,
+		Active:      true,
+		Duration:    1,
+		SmsVolume:   20,
+		DataVolume:  12,
+		VoiceVolume: 34,
+		OrgRatesId:  00,
 	}}, nil)
 	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
 	assert.NoError(t, err)
@@ -83,7 +83,7 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 // Error cases
 
 func TestPackageServer_GetPackageByOrg_Error(t *testing.T) {
-	var orgId = uuid.New()
+	var orgId = uuid.NewV4()
 
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetByOrgPackageRequest{
@@ -113,7 +113,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active: true,
 		Name:   "daily-pack",
-		OrgId:  uuid.New().String(),
+		OrgId:  uuid.NewV4().String(),
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, ActPackage.Package.Active)
@@ -132,7 +132,7 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active: true,
 		Name:   "daily-pack",
-		OrgId:  uuid.New().String(),
+		OrgId:  uuid.NewV4().String(),
 	})
 	assert.Error(t, err)
 	assert.Nil(t, ActPackage)
@@ -163,10 +163,10 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 func TestPackageServer_UpdatePackage_Error(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
-	packageUUID := uuid.NewString()
-	packageRepo.On("Update", uuid.MustParse(packageUUID), mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
+	packageUUID := uuid.NewV4()
+	packageRepo.On("Update", packageUUID, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
 	pkg, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
-		Uuid: packageUUID,
+		Uuid: packageUUID.String(),
 	})
 	assert.Error(t, err)
 	assert.Nil(t, pkg)
@@ -181,7 +181,7 @@ func TestPackageServer_UpdatePackage_Error(t *testing.T) {
 // s := NewPackageServer(packageRepo)
 // packageUUID := uuid.NewString()
 // var mockFilters = &pb.DeletePackageRequest{
-// PackageUuid: packageUUID,
+// Uuid: packageUUID,
 // }
 // packageRepo.On("Delete", uuid.MustParse(packageUUID)).Return(nil)
 // _, err := s.Delete(context.TODO(), mockFilters)
@@ -193,11 +193,11 @@ func TestPackageServer_UpdatePackage_Error(t *testing.T) {
 func TestPackageServer_DeletePackage_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
-	packageUUID := uuid.NewString()
+	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.DeletePackageRequest{
-		PackageUuid: packageUUID,
+		Uuid: packageUUID.String(),
 	}
-	packageRepo.On("Delete", uuid.MustParse(packageUUID)).
+	packageRepo.On("Delete", packageUUID).
 		Return(status.Errorf(codes.InvalidArgument, "OrgId is required."))
 	pkg1, err := s.Delete(context.TODO(), mockFilters)
 	assert.Error(t, err)
@@ -208,11 +208,11 @@ func TestPackageServer_DeletePackage_Error1(t *testing.T) {
 func TestPackageServer_DeletePackage_Success_Error2(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
-	packageUUID := uuid.NewString()
+	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.DeletePackageRequest{
-		PackageUuid: packageUUID,
+		Uuid: packageUUID.String(),
 	}
-	packageRepo.On("Delete", uuid.MustParse(packageUUID)).
+	packageRepo.On("Delete", packageUUID).
 		Return(status.Errorf(codes.InvalidArgument, "Id is required."))
 	pkg2, err := s.Delete(context.TODO(), mockFilters)
 	assert.Error(t, err)
@@ -223,11 +223,11 @@ func TestPackageServer_DeletePackage_Success_Error2(t *testing.T) {
 func TestPackageServer_DeletePackage_Error3(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
-	packageUUID := uuid.NewString()
+	packageUUID := uuid.NewV4()
 	var mf = &pb.DeletePackageRequest{
-		PackageUuid: packageUUID,
+		Uuid: packageUUID.String(),
 	}
-	packageRepo.On("Delete", uuid.MustParse(packageUUID)).
+	packageRepo.On("Delete", packageUUID).
 		Return(grpc.SqlErrorToGrpc(errors.New("SQL error while deleting record"), "packages"))
 	pkg3, err := s.Delete(context.TODO(), mf)
 	fmt.Println(err)

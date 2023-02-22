@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/gofrs/uuid"
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
 	"github.com/num30/config"
 	pkg "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
@@ -71,17 +70,17 @@ func runGrpcServer(gormdb sql.Db) {
 		pkg.InstanceId = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, pkg.InstanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	// mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, pkg.InstanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 
-		srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), mbClient)
+		srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), nil)
 		nSrv := server.NewSimPoolEventServer(db.NewSimRepo(gormdb))
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 		pb.RegisterSimServiceServer(s, srv)
 
 	})
-	go msgBusListener(mbClient)
+	// go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }

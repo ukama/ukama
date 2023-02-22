@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/google/uuid"
 	"github.com/tj/assert"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -47,7 +47,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Rate_Get(t *testing.T) {
 	t.Run("GetRate", func(t *testing.T) {
-		var rateId = uuid.New()
+		var rateId = uuid.NewV4()
 
 		var db *extsql.DB
 
@@ -112,7 +112,7 @@ func Test_Rates_Get(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"id", "uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "lte", "lte_m", "apn", "end_at", "x2g", "x3g", "x5g", "sim_type", "effective_at"})
 		for i := 1; i <= 3; i++ {
 			rows.AddRow(i,
-				uuid.New(),
+				uuid.NewV4(),
 				"Tycho crater",
 				"Multi Tel",
 				"TTC",
@@ -160,28 +160,28 @@ func Test_Rates_Get(t *testing.T) {
 }
 
 func Test_Rate_Upload(t *testing.T) {
-	var rate_uuid = uuid.New()
+	var rate_uuid = uuid.NewV4()
 	t.Run("UploadRates", func(t *testing.T) {
 		var db *extsql.DB
 
 		rates := []Rate{{
-			Uuid:         rate_uuid,
-			Country:      "Tycho crater",
-			Data:         "$0.4",
-			Effective_at: "2023-10-10",
-			Network:      "Multi Tel",
-			Sim_type:     "INTER_MNO_DATA",
-			X2g:          "",
-			X3g:          "",
-			Apn:          "",
-			Imsi:         "",
-			Lte:          "",
-			Sms_mo:       "",
-			Sms_mt:       "",
-			Vpmn:         "",
-			End_at:       "",
-			Lte_m:        "",
-			X5g:          "",
+			Uuid:        rate_uuid,
+			Country:     "Tycho crater",
+			Data:        "$0.4",
+			EffectiveAt: "2023-10-10",
+			Network:     "Multi Tel",
+			SimType:     "INTER_MNO_DATA",
+			X2g:         "",
+			X3g:         "",
+			Apn:         "",
+			Imsi:        "",
+			Lte:         "",
+			SmsMo:       "",
+			SmsMt:       "",
+			Vpmn:        "",
+			EndAt:       "",
+			LteM:        "",
+			X5g:         "",
 		}}
 
 		db, mock, err := sqlmock.New()
@@ -191,7 +191,7 @@ func Test_Rate_Upload(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Country, rates[0].Network,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Data,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), rates[0].Effective_at, sqlmock.AnyArg(), rates[0].Sim_type).
+				sqlmock.AnyArg(), rates[0].EffectiveAt, sqlmock.AnyArg(), rates[0].SimType).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

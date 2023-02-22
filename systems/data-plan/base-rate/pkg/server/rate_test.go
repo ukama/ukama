@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/mocks"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"google.golang.org/grpc/codes"
@@ -101,11 +101,11 @@ func TestRateService_GetRate_Success(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
-	var uuid = uuid.New()
+	var uuid = uuid.NewV4()
 	baseRateRepo.On("GetBaseRate", uuid).Return(&db.Rate{
 		Country: mockCountry,
 	}, nil)
-	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
+	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{Uuid: uuid.String()})
 	assert.NoError(t, err)
 	assert.Equal(t, mockCountry, rate.Rate.Country)
 	baseRateRepo.AssertExpectations(t)
@@ -117,9 +117,9 @@ func TestRateService_GetRate_Error(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo)
-	var uuid = uuid.New()
+	var uuid = uuid.NewV4()
 	baseRateRepo.On("GetBaseRate", uuid).Return(nil, status.Errorf(codes.NotFound, "record not found"))
-	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{RateUuid: uuid.String()})
+	_rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{Uuid: uuid.String()})
 	assert.Error(t, err)
 	assert.Nil(t, _rate)
 }
@@ -140,18 +140,18 @@ func TestRateService_GetRates_Success(t *testing.T) {
 
 	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, mockSimTypeStr).Return([]db.Rate{
 		{X2g: "2G",
-			X3g:          "3G",
-			Apn:          "Manual entry required",
-			Country:      "Tycho crater",
-			Data:         "$0.4",
-			Effective_at: "2023-10-10",
-			Imsi:         "1",
-			Lte:          "LTE",
-			Network:      "Multi Tel",
-			Sim_type:     "INTER_MNO_DATA",
-			Sms_mo:       "$0.1",
-			Sms_mt:       "$0.1",
-			Vpmn:         "TTC"},
+			X3g:         "3G",
+			Apn:         "Manual entry required",
+			Country:     "Tycho crater",
+			Data:        "$0.4",
+			EffectiveAt: "2023-10-10",
+			Imsi:        "1",
+			Lte:         "LTE",
+			Network:     "Multi Tel",
+			SimType:     "INTER_MNO_DATA",
+			SmsMo:       "$0.1",
+			SmsMt:       "$0.1",
+			Vpmn:        "TTC"},
 	}, nil)
 	rate, err := s.GetBaseRates(context.TODO(), mockFilters)
 	assert.NoError(t, err)

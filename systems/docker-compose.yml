@@ -7,14 +7,11 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=ThisIsUkamaXPass
-    networks:
-      - ukama-net
     volumes:
       - postgress-data:/var/lib/postgresql
 
   sim-pool:
-    platform: linux/arm64
-    build: ./sim-pool
+    build: ./subscriber/sim-pool
     ports:
       - "9090:9090"
     environment:
@@ -24,13 +21,11 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
     restart: always
-    networks:
-      - ukama-net
     depends_on:
       - postgresd
 
   registry:
-    build: ./registry
+    build: ./subscriber/registry
     ports:
       - "9091:9090"
     environment:
@@ -40,13 +35,11 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
     restart: always
-    networks:
-      - ukama-net
     depends_on:
       - postgresd
 
   sim-manager:
-    build: ./sim-manager
+    build: ./subscriber/sim-manager
     ports:
       - "9092:9090"
     environment:
@@ -56,13 +49,11 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
     restart: always
-    networks:
-      - ukama-net
     depends_on:
       - postgresd
 
   test-agent:
-    build: ./test-agent
+    build: ./subscriber/test-agent
     ports:
       - "9093:9090"
     environment:
@@ -72,13 +63,25 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
     restart: always
-    networks:
-      - ukama-net
     depends_on:
       - postgresd
 
-  packages:
-    build: ../data-plan/package
+  # base-rate:
+  #   build: ./data-plan/base-rate
+  #   ports:
+  #     - "9094:9090"
+  #   environment:
+  #     - DEBUGMODE=true
+  #     - DB_HOST=postgresd
+  #     - DB_PASSWORD=ThisIsUkamaXPass
+  #     - DB_USER=postgres
+  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+  #   restart: always
+  #   depends_on:
+  #     - postgresd
+
+  package:
+    build: ./data-plan/package
     ports:
       - "9094:9090"
     environment:
@@ -88,17 +91,18 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
     restart: always
-    networks:
-      - ukama-net
     depends_on:
       - postgresd
 
-networks:
-  ukama-net:
-      ipam:
-        driver: default
-        config:
-            - subnet: 10.10.0.0/24
+  data-plan:
+    build: ./data-plan/api-gateway
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - postgresd
+      # - base-rate
+      - package
 
 volumes:
   postgress-data:
