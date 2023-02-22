@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -267,21 +265,14 @@ func (s *SimManagerServer) GetSimCounts(ctx context.Context, req *pb.GetSimCount
 		ActiveCount:   activeCount,
 		DeactiveCount: deactiveCount,
 	}
-
-	numSubscribers := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "number_of_subscribers",
-		Help: "The total number of subscribers",
-	}, []string{"activationsCount", "deactivationsCount"})
-
-	numSubscribers.With(prometheus.Labels{
+	metricName := "number_of_subscribers"
+	metricJob := "subcribers"
+	metricHelp := "The total number of subscribers"
+	metricLabels := map[string]string{
 		"activationsCount":   strconv.FormatInt(activeCount, 10),
 		"deactivationsCount": strconv.FormatInt(deactiveCount, 10),
-	}).Set(float64(simsCount))
-	if err := push.New("http://localhost:9091/", "subscribers").
-		Collector(numSubscribers).
-		Push(); err != nil {
-		logrus.Errorf("Could not push numSubscribers to Pushgateway: %s", err.Error())
 	}
+	utils.PushMetrics(metricJob, metricName, metricHelp, metricLabels, float64(simsCount))
 
 	return resp, nil
 }
