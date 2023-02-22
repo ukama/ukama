@@ -73,20 +73,12 @@ func NewConfig(name string) *Config {
 			},
 			{
 				Name:    "subscriber_simusage_duration",
-				Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
+				Event:   "event.cloud.simmanager.sim.duration", //"event.cloud.cdr.sim.usage"}
 				Type:    MetricHistogram,
 				Units:   "seconds",
 				Labels:  map[string]string{"name": "usage_duration"},
 				Details: "Data Usage durations",
 				Buckets: []float64{60, 300, 600, 1200, 1800, 2700, 3600, 7200, 18000},
-			},
-			{
-				Name:    "subscriber_simusage_sessions",
-				Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
-				Type:    MetricCounter,
-				Units:   "none",
-				Labels:  map[string]string{"name": "usage_session"},
-				Details: "Data Usage sessions",
 			},
 		},
 		Metrics: &config.Metrics{

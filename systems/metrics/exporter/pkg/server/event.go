@@ -63,12 +63,7 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 		return err
 	}
 
-	err = AddSimUsageDuration(key, msg, s)
-	if err != nil {
-		return err
-	}
-
-	err = AddSimUsageSession(key, msg, s)
+	err = AddSimUsageDuration("event.cloud.simmanager.sim.duration", msg, s)
 	if err != nil {
 		return err
 	}
@@ -106,7 +101,7 @@ func AddSimUsageDuration(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 	m, err := s.mc.GetMetric(n)
 	if err == nil {
 		/* Update value */
-		return m.SetMetric(float64(msg.BytesUsed), nil)
+		return m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
 
 	} else {
 		l := SetUpLabelsForSimDuration(msg)
@@ -117,29 +112,6 @@ func AddSimUsageDuration(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 		}
 
 		m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
-
-	}
-	return nil
-}
-
-func AddSimUsageSession(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
-	n := strings.ReplaceAll("sim_usage_sessions_"+msg.Id, "-", "")
-
-	/* Check if metric exist */
-	m, err := s.mc.GetMetric(n)
-	if err == nil {
-		/* Update value */
-		return m.SetMetric(float64(msg.BytesUsed), nil)
-
-	} else {
-		l := SetUpLabelsForSimUsageSession(msg)
-
-		m, err := collector.SetUpMetric(key, s.mc, l, n)
-		if err != nil {
-			return err
-		}
-
-		m.SetMetric(0, nil)
 
 	}
 	return nil
@@ -158,19 +130,6 @@ func SetUpLabelsForSimUsage(msg *pb.SimUsage) map[string]string {
 }
 
 func SetUpLabelsForSimDuration(msg *pb.SimUsage) map[string]string {
-	labels := make(map[string]string)
-	labels["org"] = msg.OrgID
-	labels["network"] = msg.NetworkID
-	labels["subscriber"] = msg.SubscriberID
-	labels["sim_type"] = msg.Type
-	labels["session"] = msg.SessionId
-	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
-	labels["end"] = strconv.FormatInt(msg.StartTime, 10)
-
-	return labels
-}
-
-func SetUpLabelsForSimUsageSession(msg *pb.SimUsage) map[string]string {
 	labels := make(map[string]string)
 	labels["org"] = msg.OrgID
 	labels["network"] = msg.NetworkID
