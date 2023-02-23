@@ -171,4 +171,4 @@ sum_over_time(sim_usage_b20c61f11c5a4559bfffcd00f746697d_sum[15s])
 {instance="localhost:10251", job="ukama-org", name="usage", network="9fd07299-2826-4f8b-aea9-69da56440bec", org="75ec112a-8745-49f9-ab64-1a37edade794", sim="b20c61f1-1c5a-4559-bfff-cd00f746697d", sim_type="test_simple", subscriber="c214f255-0ed6-4aa1-93e7-e333658c7318", system="dev"}
 	420
 
-	
+*/
