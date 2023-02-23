@@ -108,14 +108,16 @@ func TestCollector_GetMetric(t *testing.T) {
 	nm := NewMetricsCollector(tC.MetricConfig)
 	m := NewMetrics(tC.MetricConfig[0].Name, tC.MetricConfig[0].Type)
 	t.Run("AddMetricsSuccess", func(t *testing.T) {
-		m.InitializeMetric(tC.MetricConfig[1].Name, tC.MetricConfig[1], nil)
-		err := nm.AddMetrics(tC.MetricConfig[1].Name, *m)
+		err := m.InitializeMetric(tC.MetricConfig[1].Name, tC.MetricConfig[1], nil)
+		assert.NoError(t, err)
+		err = nm.AddMetrics(tC.MetricConfig[1].Name, *m)
 		assert.NoError(t, err)
 	})
 
 	t.Run("AddMetricsFailure_AlreadyRegistered", func(t *testing.T) {
-		m.InitializeMetric(tC.MetricConfig[1].Name, tC.MetricConfig[1], nil)
-		err := nm.AddMetrics(tC.MetricConfig[1].Name, *m)
+		err := m.InitializeMetric(tC.MetricConfig[1].Name, tC.MetricConfig[1], nil)
+		assert.NoError(t, err)
+		err = nm.AddMetrics(tC.MetricConfig[1].Name, *m)
 		if assert.Error(t, err) {
 			assert.Contains(t, err.Error(), "already exist")
 		}

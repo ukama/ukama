@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-var customLabelsSimUsage = []string{"session", "start", "end"}
+//var customLabelsSimUsage = []string{"session", "start", "end"}
 
 type ExporterEventServer struct {
 	mc *collector.MetricsCollector
@@ -88,7 +88,10 @@ func AddSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
 			return err
 		}
 
-		m.SetMetric(float64(msg.BytesUsed), nil)
+		err = m.SetMetric(float64(msg.BytesUsed), nil)
+		if err != nil {
+			return err
+		}
 
 	}
 	return nil
@@ -111,7 +114,10 @@ func AddSimUsageDuration(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 			return err
 		}
 
-		m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
+		err = m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
+		if err != nil {
+			return err
+		}
 
 	}
 	return nil
@@ -152,7 +158,6 @@ func SetUpDynamicLabelsForSimUsageDuration(msg *pb.SimUsage) map[string]string {
 	labels["end"] = strconv.FormatInt(msg.EndTime, 10)
 	return labels
 }
-
 
 /*
 
