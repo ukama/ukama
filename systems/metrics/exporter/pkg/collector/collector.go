@@ -12,33 +12,24 @@ import (
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 )
 
-type Metrics struct {
-	Name      string
-	Type      pkg.MetricType
-	collector prometheus.Collector
-	Labels    prometheus.Labels
-}
-
 type MetricsCollector struct {
 	MetricsMap map[string]Metrics
 	Config     map[string]pkg.KPIConfig
 	registry   *prometheus.Registry
 }
 
-func NewMetricsCollector(config []pkg.KPIConfig, metrics *config.Metrics) *MetricsCollector {
-	m := new(MetricsCollector)
-	m.MetricsMap = make(map[string]Metrics)
-	m.Config = make(map[string]pkg.KPIConfig, len(m.Config))
-	m.registry = prometheus.NewRegistry()
-	m.registry.MustRegister(pc.NewGoCollector(), pc.NewProcessCollector(pc.ProcessCollectorOpts{}))
+func NewMetricsCollector(config []pkg.KPIConfig) *MetricsCollector {
+	c := new(MetricsCollector)
+	c.MetricsMap = make(map[string]Metrics)
+	c.Config = make(map[string]pkg.KPIConfig, len(c.Config))
+	c.registry = prometheus.NewRegistry()
+	c.registry.MustRegister(pc.NewGoCollector(), pc.NewProcessCollector(pc.ProcessCollectorOpts{}))
 
-	for _, c := range config {
-		m.Config[c.Event] = c
+	for _, cfg := range config {
+		c.Config[cfg.Event] = cfg
 	}
 
-	m.StartMetricServer(metrics)
-
-	return m
+	return c
 }
 
 func (c *MetricsCollector) StartMetricServer(metrics *config.Metrics) {
@@ -89,118 +80,4 @@ func (c *MetricsCollector) AddMetrics(name string, m Metrics) error {
 		return fmt.Errorf("metric %s already exist", name)
 	}
 	return nil
-}
-
-func NewMetrics(name string, mtype pkg.MetricType) *Metrics {
-	m := new(Metrics)
-	m.Name = name
-	m.Type = mtype
-	return m
-}
-
-func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLables []string) {
-	switch config.Type {
-	case pkg.MetricGuage:
-		m.collector = prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name:        config.Name,
-				Help:        config.Details,
-				ConstLabels: m.Labels,
-			},
-			customLables,
-		)
-
-	case pkg.MetricCounter:
-		m.collector = prometheus.NewCounterVec(
-			prometheus.CounterOpts{
-				Name:        config.Name,
-				Help:        config.Details,
-				ConstLabels: m.Labels,
-			},
-			customLables,
-		)
-
-	case pkg.MetricSummary:
-		m.collector = prometheus.NewSummaryVec(
-			prometheus.SummaryOpts{
-				Name:        config.Name,
-				Help:        config.Details,
-				ConstLabels: m.Labels,
-			},
-			customLables,
-		)
-
-	case pkg.MetricHistogram:
-		m.collector = prometheus.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Name:        config.Name,
-				Help:        config.Details,
-				ConstLabels: m.Labels,
-				Buckets:     config.Buckets,
-			},
-			customLables,
-		)
-	}
-}
-
-func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
-	switch met := m.collector.(type) {
-	case *prometheus.GaugeVec:
-		met.With(labels).Set(value)
-	case *prometheus.CounterVec:
-		met.With(labels).Inc()
-	case *prometheus.SummaryVec:
-		met.With(labels).Observe(value)
-	case *prometheus.HistogramVec:
-		met.With(labels).Observe(value)
-	default:
-		return fmt.Errorf("unknown metric type %s", m.Type)
-	}
-	return nil
-}
-
-func (m *Metrics) RegisterMetric(registry *prometheus.Registry) error {
-	err := registry.Register(m.collector)
-	if err != nil {
-		log.Errorf("Failed to register metric %s. Err:", m.Name, err.Error())
-		return err
-	}
-	return nil
-}
-
-func (m *Metrics) MergeLabels(static map[string]string, clabels map[string]string) {
-	m.Labels = make(prometheus.Labels)
-	for name, value := range static {
-		m.Labels[name] = value
-	}
-
-	for name, value := range clabels {
-		m.Labels[name] = value
-	}
-}
-
-func SetUpMetric(key string, mc *MetricsCollector, l map[string]string, name string, dl []string) (*Metrics, error) {
-	/* Initialize metric first */
-	c, err := mc.GetConfigForEvent(key)
-	if err != nil {
-		return nil, err
-	}
-
-	c.Name = name
-
-	nm := NewMetrics(name, c.Type)
-
-	nm.MergeLabels(c.Labels, l)
-
-	nm.InitializeMetric(name, *c, dl)
-
-	/* Add a metric */
-	err = mc.AddMetrics(name, *nm)
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("New metric %s added", name)
-
-	return nm, nil
-
 }

@@ -13,14 +13,7 @@ const (
 	LABEL_SUBSCRIBER = "susbscriber"
 )
 
-type MetricType string
 
-const (
-	MetricGuage     MetricType = "guage"
-	MetricCounter   MetricType = "counter"
-	MetricHistogram MetricType = "histogram"
-	MetricSummary   MetricType = "summary"
-)
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
@@ -40,7 +33,7 @@ type Config struct {
 type KPIConfig struct {
 	Name    string
 	Event   string
-	Type    MetricType
+	Type    string
 	Units   string
 	Labels  map[string]string
 	Details string
@@ -66,7 +59,7 @@ func NewConfig(name string) *Config {
 			{
 				Name:    "subscriber_simusage",
 				Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
-				Type:    MetricHistogram,
+				Type:    "histogram",
 				Units:   "bytes",
 				Labels:  map[string]string{"name": "usage"},
 				Details: "Data Usage of the sim",
@@ -75,7 +68,7 @@ func NewConfig(name string) *Config {
 			{
 				Name:    "subscriber_simusage_duration",
 				Event:   "event.cloud.simmanager.sim.duration", //"event.cloud.cdr.sim.usage"}
-				Type:    MetricHistogram,
+				Type:    "histogram",
 				Units:   "seconds",
 				Labels:  map[string]string{"name": "usage_duration"},
 				Details: "Data Usage durations",
