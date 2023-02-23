@@ -104,5 +104,17 @@ services:
       # - base-rate
       - package
 
+  subscriber:
+    build: ./subscriber/api-gateway
+    ports:
+      - "8081:8080"
+    restart: always
+    depends_on:
+      - postgresd
+      - sim-manager
+      - sim-pool
+      - test-agent
+      - registry
+
 volumes:
   postgress-data:

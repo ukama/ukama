@@ -49,10 +49,10 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 	subscriberID := uuid.NewV4()
-	err = s.network.ValidateNetwork(networkID.String(), orgID.String())
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
-	}
+	// err = s.network.ValidateNetwork(networkID.String(), orgID.String())
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
+	// }
 
 	subscriber := &db.Subscriber{
 		OrgID:                 orgID,
