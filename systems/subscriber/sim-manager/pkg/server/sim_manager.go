@@ -65,10 +65,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-err:=s.GetSimCounts(ctx)
-	if err!=nil{
-		logrus.Errorf("Error while pushing sim metric to pushgatway %s",err.Error())
-	}
+
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -209,10 +206,10 @@ err:=s.GetSimCounts(ctx)
 	}
 
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
-	// err=s.GetSimCounts(ctx)
-	// if err!=nil{
-	// 	logrus.Errorf("Error while pushing sim metric to pushgatway %s",err.Error())
-	// }
+	err=s.GetSimCounts(ctx)
+	if err!=nil{
+		logrus.Errorf("Error while pushing sim metric to pushgatway %s",err.Error())
+	}
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
@@ -238,6 +235,10 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 }
 
 func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest) (*pb.ListSimsResponse, error) {
+	err:=s.GetSimCounts(ctx)
+	if err!=nil{
+		logrus.Errorf("Error while pushing sim metric to pushgatway %s",err.Error())
+	}
 	return nil, nil
 }
 
@@ -350,6 +351,10 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+	err=s.GetSimCounts(ctx)
+	if err!=nil{
+		logrus.Errorf("Error while pushing sim metric to pushgatway %s",err.Error())
 	}
 
 	route := s.baseRoutingKey.SetAction("delete").SetObject("sim").MustBuild()
