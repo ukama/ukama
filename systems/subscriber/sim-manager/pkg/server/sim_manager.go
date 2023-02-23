@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -64,7 +65,10 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-	
+err:=s.GetSimCounts(ctx)
+	if err!=nil{
+		logrus.Errorf("Error while pushing sim metric to pushgatway %s",err.Error())
+	}
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -205,17 +209,15 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
-	err=s.GetSimCounts(ctx)
-	if err!=nil{
-		logrus.Errorf("Error while pushing sim metric to pushgatway %s",err.Error())
-	}
+	// err=s.GetSimCounts(ctx)
+	// if err!=nil{
+	// 	logrus.Errorf("Error while pushing sim metric to pushgatway %s",err.Error())
+	// }
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-
-	
 
 	return resp, nil
 }
@@ -265,14 +267,7 @@ func (s *SimManagerServer) GetSimCounts(ctx context.Context) error {
 		logrus.Errorf("failed to get Sims counts: %s", err.Error())
 	return err
 	}	
-	metricName := "number_of_subscribers"
-	metricJob := "subcribers"
-	metricHelp := "The total number of subscribers"
-	metricLabels := map[string]string{
-		"activationsCount":   strconv.FormatInt(activeCount, 10),
-		"deactivationsCount": strconv.FormatInt(deactiveCount, 10),
-	}
-	utils.PushMetrics(metricJob, metricName, metricHelp, metricLabels, float64(simsCount))
+	utils.PushMetrics("subcribers", "number_of_subscribers", "The total number of subscribers", prometheus.GaugeValue, map[string]string{"activationsCount": strconv.FormatInt(activeCount, 10),"deactivationsCount": strconv.FormatInt(deactiveCount, 10)},  float64(simsCount))
 
 	return  nil
 }
