@@ -179,7 +179,7 @@ func (m *Metrics) MergeLabels(static map[string]string, clabels map[string]strin
 	}
 }
 
-func SetUpMetric(key string, mc *MetricsCollector, l map[string]string, name string) (*Metrics, error) {
+func SetUpMetric(key string, mc *MetricsCollector, l map[string]string, name string, dl []string) (*Metrics, error) {
 	/* Initialize metric first */
 	c, err := mc.GetConfigForEvent(key)
 	if err != nil {
@@ -192,7 +192,7 @@ func SetUpMetric(key string, mc *MetricsCollector, l map[string]string, name str
 
 	nm.MergeLabels(c.Labels, l)
 
-	nm.InitializeMetric(name, *c, nil)
+	nm.InitializeMetric(name, *c, dl)
 
 	/* Add a metric */
 	err = mc.AddMetrics(name, *nm)
