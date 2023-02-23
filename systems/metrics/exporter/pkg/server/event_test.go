@@ -17,13 +17,13 @@ import (
 )
 
 type TestConfig struct {
-	KpiConfig []pkg.KPIConfig
-	Metrics   *config.Metrics
+	MetricConfig []pkg.MetricConfig
+	Metrics      *config.Metrics
 }
 
 func InitTestConfig() *TestConfig {
 	t := &TestConfig{}
-	t.KpiConfig = []pkg.KPIConfig{
+	t.MetricConfig = []pkg.MetricConfig{
 		{
 			Name:    "subscriber_simusage",
 			Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
@@ -86,7 +86,7 @@ func InitTestConfig() *TestConfig {
 
 func TestEvent_EventNotification(t *testing.T) {
 	tC := InitTestConfig()
-	mc := collector.NewMetricsCollector(tC.KpiConfig)
+	mc := collector.NewMetricsCollector(tC.MetricConfig)
 	s := NewExporterEventServer(mc)
 	simUsage := pb.SimUsage{
 		Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
@@ -104,7 +104,7 @@ func TestEvent_EventNotification(t *testing.T) {
 	assert.NoError(t, err)
 
 	msg := &epb.Event{
-		RoutingKey: tC.KpiConfig[0].Event,
+		RoutingKey: tC.MetricConfig[0].Event,
 		Msg:        anyE,
 	}
 	_, err = s.EventNotification(context.TODO(), msg)

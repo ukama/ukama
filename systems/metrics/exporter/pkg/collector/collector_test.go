@@ -9,13 +9,13 @@ import (
 )
 
 type TestConfig struct {
-	KpiConfig []pkg.KPIConfig
-	Metrics   *config.Metrics
+	MetricConfig []pkg.MetricConfig
+	Metrics      *config.Metrics
 }
 
 func InitTestConfig() *TestConfig {
 	t := &TestConfig{}
-	t.KpiConfig = []pkg.KPIConfig{
+	t.MetricConfig = []pkg.MetricConfig{
 		{
 			Name:    "subscriber_simusage",
 			Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
@@ -78,19 +78,19 @@ func InitTestConfig() *TestConfig {
 
 func TestCollector_NewMetricCollector(t *testing.T) {
 	tC := InitTestConfig()
-	nm := NewMetricsCollector(tC.KpiConfig)
+	nm := NewMetricsCollector(tC.MetricConfig)
 	assert.NotNil(t, nm)
 }
 
 func TestCollector_GetConfigForEvent(t *testing.T) {
 	tC := InitTestConfig()
-	nm := NewMetricsCollector(tC.KpiConfig)
+	nm := NewMetricsCollector(tC.MetricConfig)
 
 	t.Run("GetConfigSuccess", func(t *testing.T) {
-		k, err := nm.GetConfigForEvent(tC.KpiConfig[1].Event)
+		k, err := nm.GetConfigForEvent(tC.MetricConfig[1].Event)
 		assert.NoError(t, err)
 		if assert.NotNil(t, k) {
-			assert.Equal(t, k.Name, tC.KpiConfig[1].Name)
+			assert.Equal(t, k.Name, tC.MetricConfig[1].Name)
 		}
 	})
 
@@ -105,17 +105,17 @@ func TestCollector_GetConfigForEvent(t *testing.T) {
 
 func TestCollector_GetMetric(t *testing.T) {
 	tC := InitTestConfig()
-	nm := NewMetricsCollector(tC.KpiConfig)
-	m := NewMetrics(tC.KpiConfig[0].Name, tC.KpiConfig[0].Type)
+	nm := NewMetricsCollector(tC.MetricConfig)
+	m := NewMetrics(tC.MetricConfig[0].Name, tC.MetricConfig[0].Type)
 	t.Run("AddMetricsSuccess", func(t *testing.T) {
-		m.InitializeMetric(tC.KpiConfig[1].Name, tC.KpiConfig[1], nil)
-		err := nm.AddMetrics(tC.KpiConfig[1].Name, *m)
+		m.InitializeMetric(tC.MetricConfig[1].Name, tC.MetricConfig[1], nil)
+		err := nm.AddMetrics(tC.MetricConfig[1].Name, *m)
 		assert.NoError(t, err)
 	})
 
 	t.Run("AddMetricsFailure_AlreadyRegistered", func(t *testing.T) {
-		m.InitializeMetric(tC.KpiConfig[1].Name, tC.KpiConfig[1], nil)
-		err := nm.AddMetrics(tC.KpiConfig[1].Name, *m)
+		m.InitializeMetric(tC.MetricConfig[1].Name, tC.MetricConfig[1], nil)
+		err := nm.AddMetrics(tC.MetricConfig[1].Name, *m)
 		if assert.Error(t, err) {
 			assert.Contains(t, err.Error(), "already exist")
 		}
