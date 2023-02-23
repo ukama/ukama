@@ -28,7 +28,7 @@ func TestMetrics_MetricTypeFromString(t *testing.T) {
 func TestMetrics_NewMetrics(t *testing.T) {
 	tC := InitTestConfig()
 
-	for _, cfg := range tC.KpiConfig {
+	for _, cfg := range tC.MetricConfig {
 		m := NewMetrics(cfg.Name, cfg.Type)
 		assert.NotNil(t, m)
 		err := m.InitializeMetric(cfg.Name, cfg, nil)
@@ -43,7 +43,7 @@ func TestMetrics_NewMetrics(t *testing.T) {
 func TestMetrics_SetMetrics(t *testing.T) {
 	tC := InitTestConfig()
 
-	for _, cfg := range tC.KpiConfig {
+	for _, cfg := range tC.MetricConfig {
 		m := NewMetrics(cfg.Name, cfg.Type)
 		assert.NotNil(t, m)
 		err := m.InitializeMetric(cfg.Name, cfg, nil)
@@ -64,17 +64,17 @@ func TestMetrics_SetMetrics(t *testing.T) {
 
 func TestMetrics_SetupMetrics(t *testing.T) {
 	tC := InitTestConfig()
-	nm := NewMetricsCollector(tC.KpiConfig)
+	nm := NewMetricsCollector(tC.MetricConfig)
 
 	t.Run("SetUpNewMetric", func(t *testing.T) {
-		m, err := SetUpMetric(tC.KpiConfig[0].Event, nm, tC.KpiConfig[0].Labels, tC.KpiConfig[0].Name, nil)
+		m, err := SetUpMetric(tC.MetricConfig[0].Event, nm, tC.MetricConfig[0].Labels, tC.MetricConfig[0].Name, nil)
 		assert.NoError(t, err)
 		assert.NotNil(t, m)
-		assert.Equal(t, tC.KpiConfig[0].Name, m.Name)
+		assert.Equal(t, tC.MetricConfig[0].Name, m.Name)
 	})
 
 	t.Run("SetUpNewMetric_failure", func(t *testing.T) {
-		_, err := SetUpMetric(tC.KpiConfig[0].Event, nm, tC.KpiConfig[0].Labels, tC.KpiConfig[0].Name, nil)
+		_, err := SetUpMetric(tC.MetricConfig[0].Event, nm, tC.MetricConfig[0].Labels, tC.MetricConfig[0].Name, nil)
 		if assert.Error(t, err) {
 			assert.Contains(t, err.Error(), "already exist")
 		}

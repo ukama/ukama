@@ -47,7 +47,7 @@ func NewMetrics(name string, mtype string) *Metrics {
 	return m
 }
 
-func (m *Metrics) InitializeMetric(name string, config pkg.KPIConfig, customLables []string) error {
+func (m *Metrics) InitializeMetric(name string, config pkg.MetricConfig, customLables []string) error {
 	switch MetricTypeFromString(config.Type) {
 	case MetricGuage:
 		m.collector = prometheus.NewGaugeVec(

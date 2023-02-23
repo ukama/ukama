@@ -14,14 +14,14 @@ import (
 
 type MetricsCollector struct {
 	MetricsMap map[string]Metrics
-	Config     map[string]pkg.KPIConfig
+	Config     map[string]pkg.MetricConfig
 	registry   *prometheus.Registry
 }
 
-func NewMetricsCollector(config []pkg.KPIConfig) *MetricsCollector {
+func NewMetricsCollector(config []pkg.MetricConfig) *MetricsCollector {
 	c := new(MetricsCollector)
 	c.MetricsMap = make(map[string]Metrics)
-	c.Config = make(map[string]pkg.KPIConfig, len(c.Config))
+	c.Config = make(map[string]pkg.MetricConfig, len(c.Config))
 	c.registry = prometheus.NewRegistry()
 	c.registry.MustRegister(pc.NewGoCollector(), pc.NewProcessCollector(pc.ProcessCollectorOpts{}))
 
@@ -44,7 +44,7 @@ func (c *MetricsCollector) StartMetricServer(metrics *config.Metrics) {
 	}()
 }
 
-func (c *MetricsCollector) GetConfigForEvent(event string) (*pkg.KPIConfig, error) {
+func (c *MetricsCollector) GetConfigForEvent(event string) (*pkg.MetricConfig, error) {
 
 	cfg, ok := c.Config[event]
 	if !ok {
