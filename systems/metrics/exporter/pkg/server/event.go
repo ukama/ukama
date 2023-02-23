@@ -78,17 +78,17 @@ func AddSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
 	m, err := s.mc.GetMetric(n)
 	if err == nil {
 		/* Update value */
-		return m.SetMetric(float64(msg.BytesUsed), nil)
+		return m.SetMetric(float64(msg.BytesUsed), SetUpDynamicLabelsForSimUsage(msg))
 
 	} else {
-		l := SetUpLabelsForSimUsage(msg)
+		l := SetUpStaticLabelsForSimUsage(msg)
 
-		m, err := collector.SetUpMetric(key, s.mc, l, n)
+		m, err := collector.SetUpMetric(key, s.mc, l, n, []string{"session", "start", "end"})
 		if err != nil {
 			return err
 		}
 
-		m.SetMetric(float64(msg.BytesUsed), nil)
+		m.SetMetric(float64(msg.BytesUsed), SetUpDynamicLabelsForSimUsage(msg))
 
 	}
 	return nil
@@ -101,43 +101,54 @@ func AddSimUsageDuration(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 	m, err := s.mc.GetMetric(n)
 	if err == nil {
 		/* Update value */
-		return m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
+		return m.SetMetric(float64(msg.EndTime-msg.StartTime), SetUpDynamicLabelsForSimUsageDuration(msg))
 
 	} else {
-		l := SetUpLabelsForSimDuration(msg)
+		l := SetUpStaticLabelsForSimUsageDuration(msg)
 
-		m, err := collector.SetUpMetric(key, s.mc, l, n)
+		m, err := collector.SetUpMetric(key, s.mc, l, n, []string{"session", "start", "end"})
 		if err != nil {
 			return err
 		}
 
-		m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
+		m.SetMetric(float64(msg.EndTime-msg.StartTime), SetUpDynamicLabelsForSimUsageDuration(msg))
 
 	}
 	return nil
 }
 
-func SetUpLabelsForSimUsage(msg *pb.SimUsage) map[string]string {
+func SetUpStaticLabelsForSimUsage(msg *pb.SimUsage) map[string]string {
 	labels := make(map[string]string)
+	labels["sim"] = msg.Id
 	labels["org"] = msg.OrgID
 	labels["network"] = msg.NetworkID
 	labels["subscriber"] = msg.SubscriberID
 	labels["sim_type"] = msg.Type
-	labels["session"] = msg.SessionId
-	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
-	labels["end"] = strconv.FormatInt(msg.StartTime, 10)
 	return labels
 }
 
-func SetUpLabelsForSimDuration(msg *pb.SimUsage) map[string]string {
+func SetUpDynamicLabelsForSimUsage(msg *pb.SimUsage) map[string]string {
 	labels := make(map[string]string)
+	labels["session"] = msg.SessionId
+	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
+	labels["end"] = strconv.FormatInt(msg.EndTime, 10)
+	return labels
+}
+
+func SetUpStaticLabelsForSimUsageDuration(msg *pb.SimUsage) map[string]string {
+	labels := make(map[string]string)
+	labels["sim"] = msg.Id
 	labels["org"] = msg.OrgID
 	labels["network"] = msg.NetworkID
 	labels["subscriber"] = msg.SubscriberID
 	labels["sim_type"] = msg.Type
+	return labels
+}
+
+func SetUpDynamicLabelsForSimUsageDuration(msg *pb.SimUsage) map[string]string {
+	labels := make(map[string]string)
 	labels["session"] = msg.SessionId
 	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
-	labels["end"] = strconv.FormatInt(msg.StartTime, 10)
-
+	labels["end"] = strconv.FormatInt(msg.EndTime, 10)
 	return labels
 }
