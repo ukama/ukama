@@ -3,7 +3,6 @@ package providers
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -12,21 +11,24 @@ import (
 const packageEndpoint = "/v1/packages/"
 
 type PackageInfoClient interface {
-	GetPackageInfo(packageID string) (*PackageInfo, error)
+	GetPackageInfo(uuid string) (*PackageInfo, error)
 }
 
 type packageInfoClient struct {
 	R *RestClient
 }
 
+type PackageEnvelope struct {
+	Package *PackageInfo `json:"package"`
+}
 type PackageInfo struct {
-	ID        string    `json:"uuid"`
-	Name      string    `json:"name"`
-	OrgID     string    `json:"org_id"`
-	SimType   string    `json:"sim_type"`
-	IsActive  bool      `json:"is_active"`
-	Duration  uint      `json:"duration"`
-	CreatedAt time.Time `json:"created_at"`
+	Uuid     string `json:"uuid"`
+	Name     string `json:"name"`
+	OrgId    string `json:"org_id"`
+	SimType  string `json:"sim_type"`
+	Active   bool   `json:"active"`
+	Duration string `json:"duration"`
+	//TODO: Need fix => CreatedAt time.Time `json:"created_at"`
 }
 
 func NewPackageInfoClient(url string, debug bool) (*packageInfoClient, error) {
@@ -44,14 +46,14 @@ func NewPackageInfoClient(url string, debug bool) (*packageInfoClient, error) {
 	return N, nil
 }
 
-func (p *packageInfoClient) GetPackageInfo(packageID string) (*PackageInfo, error) {
+func (p *packageInfoClient) GetPackageInfo(uuid string) (*PackageInfo, error) {
 	errStatus := &rest.ErrorMessage{}
 
-	pkg := &PackageInfo{}
+	pkg := &PackageEnvelope{}
 
 	resp, err := p.R.C.R().
 		SetError(errStatus).
-		Get(p.R.URL.String() + packageEndpoint + packageID)
+		Get(p.R.URL.String() + packageEndpoint + uuid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to data-plan/package. Error %s", err.Error())
@@ -74,5 +76,5 @@ func (p *packageInfoClient) GetPackageInfo(packageID string) (*PackageInfo, erro
 
 	log.Infof("DataPackage Info: %+v", *pkg)
 
-	return pkg, nil
+	return pkg.Package, nil
 }

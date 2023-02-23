@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -182,8 +183,30 @@ func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*simPo
 	return pbResp, nil
 }
 
+func DeleteFile(fileName string) error {
+	e := os.Remove(fileName)
+	if e != nil {
+		return e
+	}
+	return nil
+}
+
 func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*simPoolPb.UploadResponse, error) {
-	data, err := ioutil.ReadAll(c.Request.Body)
+	resp, err := http.Get("https://raw.githubusercontent.com/ukama/ukama/subscriber-system/systems/subscriber/docs/template/SimPool.csv")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	f, err := os.Create("test.csv")
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	// data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := ioutil.ReadAll(resp.Body)
 	c.Request.Body.Close()
 	if err != nil {
 		return nil, err
@@ -191,7 +214,9 @@ func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (
 
 	pbResp, err := r.clients.sp.UploadSimsToSimPool(&simPoolPb.UploadRequest{
 		SimData: data,
+		SimType: simPoolPb.SimType_ALL,
 	})
+
 	if err != nil {
 		return nil, err
 	}

@@ -48,6 +48,7 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - KEY=${KEY}
     restart: always
     depends_on:
       - postgresd

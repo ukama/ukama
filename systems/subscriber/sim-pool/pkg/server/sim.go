@@ -52,11 +52,8 @@ func (p *SimPoolServer) GetByIccid(ctx context.Context, req *pb.GetByIccidReques
 
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetSimStats : %v ", req.GetSimType())
-	simType := req.SimType.String()
-	if req.GetSimType() == pb.SimType_ALL {
-		simType = ""
-	}
-	sim, err := p.simRepo.GetSimsByType(simType)
+
+	sim, err := p.simRepo.GetSimsByType(req.SimType.String())
 	if err != nil {
 		logrus.Error("error getting a sim pool stats" + err.Error())
 
@@ -93,7 +90,6 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-
 	return &pb.UploadResponse{Sim: dbSimsToPbSim(s)}, nil
 }
 

@@ -47,7 +47,7 @@ func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
 
 func (s *simRepo) GetSimsByType(SimType string) ([]Sim, error) {
 	var sim []Sim
-	result := s.Db.GetGormDb().Where(&Sim{SimType: SimType}).Find(&sim)
+	result := s.Db.GetGormDb().Where("sim_type = ?", SimType).Find(&sim)
 
 	if result.Error != nil {
 		return nil, result.Error

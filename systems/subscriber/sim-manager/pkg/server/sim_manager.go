@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -97,12 +98,12 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, err
 	}
 
-	if packageInfo.OrgID != remoteSubResp.Subscriber.OrgID {
+	if packageInfo.OrgId != remoteSubResp.Subscriber.OrgID {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to subscriber sim: package does not belong to subscriber registerd org")
 	}
 
-	if !packageInfo.IsActive {
+	if !packageInfo.Active {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to sim: package is no more active within its org")
 	}
@@ -125,6 +126,9 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	if req.SimToken != "" {
+		log.Info("sim token", req.SimToken)
+		log.Info("server Key", s.key)
+
 		iccid, err := utils.GetIccidFromToken(req.SimToken, s.key)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal,
@@ -172,21 +176,26 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		IsPhysical:   poolSim.IsPhysical,
 	}
 
+	duration, err := strconv.ParseInt(packageInfo.Duration, 10, 64)
+
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid package duration: %s", packageInfo.Duration)
+	}
+	startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
+	endDate := startDate.Add(time.Duration(duration))
+	firstPackage := &sims.Package{
+		ID:        uuid.NewV4(),
+		StartDate: startDate,
+		EndDate:   endDate,
+		PlanID:    packageID,
+		IsActive:  false,
+	}
+
+	sim.ID = uuid.NewV4()
+	firstPackage.SimID = sim.ID
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
 		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
-
-		sim.ID = uuid.NewV4()
-		startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
-		endDate := startDate.Add(time.Duration(packageInfo.Duration))
-
-		firstPackage := &sims.Package{
-			ID:        uuid.NewV4(),
-			SimID:     sim.ID,
-			StartDate: startDate,
-			EndDate:   endDate,
-			PlanID:    packageID,
-			IsActive:  false,
-		}
 
 		// Adding package to new allocated sim
 		err := db.NewPackageRepo(txDb).Add(firstPackage, nil)
@@ -201,7 +210,13 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, status.Errorf(codes.Internal,
 			"failed to allocate sim to subscriber. Error %s", err.Error())
 	}
+	log.Info("Updating sim")
+	err = s.simRepo.Update(sim, nil)
 
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to update sim. Error %s", err.Error())
+	}
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
@@ -368,12 +383,12 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, err
 	}
 
-	if !pkgInfo.IsActive {
+	if !pkgInfo.Active {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to sim: package is no more active within its org")
 	}
 
-	if sim.OrgID.String() != pkgInfo.OrgID {
+	if sim.OrgID.String() != pkgInfo.OrgId {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid packageID: provided package does not belong to sim org issuer")
 	}
@@ -385,10 +400,17 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			"invalid sim type: sim (%s) and packge (%s) sim types mismatch", sim.Type, pkgInfoSimType.String())
 	}
 
+	duration, err := strconv.ParseInt(pkgInfo.Duration, 10, 64)
+
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid package duration: %s", pkgInfo.Duration)
+	}
+
 	pkg := &sims.Package{
 		SimID:     sim.ID,
 		StartDate: startDate,
-		EndDate:   startDate.Add(time.Duration(pkgInfo.Duration)),
+		EndDate:   startDate.Add(time.Duration(duration)),
 		PlanID:    packageID,
 		IsActive:  false,
 	}
@@ -493,7 +515,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			}
 
 			// then deactivate it
-			result := tx.Model(currentActivePackage).Update("is_active", false)
+			result := tx.Model(currentActivePackage).Update("active", false)
 			if result.RowsAffected == 0 {
 				return gorm.ErrRecordNotFound
 			}
