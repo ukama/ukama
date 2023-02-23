@@ -52,12 +52,6 @@ func (this *AllocateSimResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetSimCountsRequest) Validate() error {
-	return nil
-}
-func (this *GetSimCountsResponse) Validate() error {
-	return nil
-}
 func (this *GetSimRequest) Validate() error {
 	if this.SimID == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimID", fmt.Errorf(`value '%v' must not be an empty string`, this.SimID))

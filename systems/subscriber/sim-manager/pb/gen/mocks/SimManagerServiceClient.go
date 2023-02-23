@@ -166,36 +166,6 @@ func (_m *SimManagerServiceClient) GetSim(ctx context.Context, in *gen.GetSimReq
 	return r0, r1
 }
 
-// GetSimCounts provides a mock function with given fields: ctx, in, opts
-func (_m *SimManagerServiceClient) GetSimCounts(ctx context.Context, in *gen.GetSimCountsRequest, opts ...grpc.CallOption) (*gen.GetSimCountsResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.GetSimCountsResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimCountsRequest, ...grpc.CallOption) *gen.GetSimCountsResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSimCountsResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimCountsRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetSimsByNetwork provides a mock function with given fields: ctx, in, opts
 func (_m *SimManagerServiceClient) GetSimsByNetwork(ctx context.Context, in *gen.GetSimsByNetworkRequest, opts ...grpc.CallOption) (*gen.GetSimsByNetworkResponse, error) {
 	_va := make([]interface{}, len(opts))

@@ -127,7 +127,6 @@ func (s *simRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) e
 }
 func (s *simRepo) GetSimCounts() (simsCount int64, activeCount int64, deactiveCount int64, err error) {
 	var deactive int64
-	// var sims Sim
 
 	result := s.Db.GetGormDb().Model(&Sim{}).Count(&simsCount)
 	if result.Error != nil {
