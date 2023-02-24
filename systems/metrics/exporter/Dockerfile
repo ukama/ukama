@@ -1,5 +1,5 @@
 FROM alpine:3.13.5
 
-COPY bin/profile /usr/bin/profile
+COPY bin/exporter /usr/bin/exporter
 
-CMD ["/usr/bin/profile"]
+CMD ["/usr/bin/exporter"]
