@@ -76,14 +76,14 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	_package := &db.Package{
 		Uuid:        uuid.NewV4(),
 		Name:        req.GetName(),
-		SimType:     req.GetSimType().String(),
-		OrgId:       orgID,
+		SimType:     1,
+		OrgID:       orgID,
 		Active:      req.Active,
 		Duration:    uint(req.GetDuration()),
 		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
-		OrgRatesId:  uint(req.GetOrgRatesId()),
+		OrgRatesID:  uint(req.GetOrgRatesId()),
 	}
 	err = p.packageRepo.Add(_package)
 	if err != nil {
@@ -124,13 +124,13 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		req.Uuid, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
 	_package := db.Package{
 		Name:        req.GetName(),
-		SimType:     req.GetSimType().String(),
+		SimType:     1,
 		Active:      req.Active,
 		Duration:    uint(req.GetDuration()),
 		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
-		OrgRatesId:  uint(req.GetOrgRatesId()),
+		OrgRatesID:  uint(req.GetOrgRatesId()),
 	}
 
 	packageID, err := uuid.FromString(req.GetUuid())
@@ -168,14 +168,14 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	return &pb.Package{
 		Uuid:        p.Uuid.String(),
 		Name:        p.Name,
-		OrgId:       p.OrgId.String(),
+		OrgId:       p.OrgID.String(),
 		Active:      p.Active,
 		Duration:    uint64(p.Duration),
 		SmsVolume:   int64(p.SmsVolume),
-		OrgRatesId:  uint64(p.OrgRatesId),
+		OrgRatesId:  uint64(p.OrgRatesID),
 		DataVolume:  int64(p.DataVolume),
 		VoiceVolume: int64(p.VoiceVolume),
-		SimType:     pb.SimType(pb.SimType_value[p.SimType]),
+		SimType:     pb.SimType(p.SimType),
 		CreatedAt:   p.CreatedAt.String(),
 		UpdatedAt:   p.UpdatedAt.String(),
 		DeletedAt:   p.DeletedAt.Time.String(),

@@ -16,7 +16,7 @@ message GetPackageRequest{
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
 message GetByOrgPackageRequest{
-    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string orgID = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
 message GetByOrgPackageResponse{
     repeated Package packages =1;
@@ -29,32 +29,32 @@ message DeletePackageRequest {
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
 message DeletePackageResponse {
-    string packageUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
 message UpdatePackageRequest {
     string uuid=1  [(validator.field) = {uuid_ver: 4}];
     string name=2;
     bool active=3;
     uint64 duration=4;
-    SimType simType=5 [json_name = "sim_type"];
+    string simType=5 [json_name = "sim_type"];
     int64 smsVolume =6 [json_name = "sms_volume"];
     int64 dataVolume=7 [json_name = "data_volume"];
     int64 voiceVolume =8 [json_name = "voice_volume"];
-    uint64 orgRatesId=9 [json_name = "org_rates_id"];
+    uint64 orgRatesID=9 [json_name = "org_rates_id"];
 }
 message UpdatePackageResponse {
     Package package = 1;
 }
 message AddPackageRequest {
     string name=1;
-    string orgId=2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string orgID=2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     bool active=3;
     uint64 duration=4;
-    SimType simType=5 [json_name = "sim_type"];
+    string simType=5 [json_name = "sim_type"];
     int64 smsVolume =6 [json_name = "sms_volume"];
     int64 dataVolume=7 [json_name = "data_volume"];
     int64 voiceVolume =8 [json_name = "voice_volume"];
-    uint64 orgRatesId=9 [json_name = "org_rates_id"];
+    uint64 c=9 [json_name = "org_rates_id"];
 }
 message AddPackageResponse {
     Package package =1;
@@ -63,22 +63,15 @@ message AddPackageResponse {
 message Package {
     string uuid=1  [(validator.field) = {uuid_ver: 4}]  ;
     string name =2;
-    string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string orgID = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     bool active =4;
     uint64 duration =5;
-    SimType simType=6 [json_name = "sim_type"];
+    string simType=6 [json_name = "sim_type"];
     string createdAt=7 [json_name = "created_at"];
     string deletedAt=8 [json_name = "deleted_at"];
     string updatedAt=9 [json_name = "updated_at"];
     int64 smsVolume =10 [json_name = "sms_volume"];
     int64 dataVolume=11 [json_name = "data_volume"];
     int64 voiceVolume =12 [json_name = "voice_volume"];
-    uint64 orgRatesId=13 [json_name = "org_rates_id"];
-}
-
-enum SimType {
-    INTER_NONE=0;
-    INTER_MNO_DATA=1;
-    INTER_MNO_ALL=2;
-    INTER_UKAMA_ALL=3;
+    uint64 orgRatesID=13 [json_name = "org_rates_id"];
 }

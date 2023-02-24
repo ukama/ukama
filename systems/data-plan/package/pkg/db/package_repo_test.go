@@ -55,11 +55,11 @@ func Test_Package_Get(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "uuid", "name", "org_id", "active", "duration", "sms_volume",
+		rows := sqlmock.NewRows([]string{"uuid", "name", "org_id", "active", "duration", "sms_volume",
 			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(1, packageId.String(), "Monthly Super", orgId.String(), "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
+			AddRow(packageId.String(), "Monthly Super", orgId.String(), "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
 
-		mock.ExpectQuery(`^SELECT.*packages.*`).
+		mock.ExpectQuery(`^SELECT.*package.*`).
 			WithArgs(packageId).
 			WillReturnRows(rows)
 
@@ -190,13 +190,13 @@ func Test_Package_Update(t *testing.T) {
 
 		_package := Package{
 			Name:        "Monthly",
-			SimType:     "INTER_UKAMA_ALL",
+			SimType:     1,
 			Active:      false,
 			Duration:    360000,
 			SmsVolume:   10,
 			DataVolume:  1024,
 			VoiceVolume: 10,
-			OrgRatesId:  1,
+			OrgRatesID:  1,
 		}
 
 		assert.NoError(t, err)
@@ -214,14 +214,14 @@ func Test_Package_Add(t *testing.T) {
 		pkg := Package{
 			Uuid:        uuid.NewV4(),
 			Name:        "Monthly",
-			SimType:     "INTER_UKAMA_ALL",
+			SimType:     1,
 			Active:      false,
 			Duration:    360000,
 			SmsVolume:   10,
 			DataVolume:  1024,
 			VoiceVolume: 10,
-			OrgRatesId:  1,
-			OrgId:       uuid.NewV4(),
+			OrgRatesID:  1,
+			OrgID:       uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New()
@@ -230,8 +230,8 @@ func Test_Package_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.Uuid.String(), pkg.Name, pkg.SimType, pkg.OrgId,
-				pkg.Active, pkg.Duration, pkg.SmsVolume, pkg.DataVolume, pkg.VoiceVolume, pkg.OrgRatesId).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.Uuid.String(), pkg.Name, pkg.SimType, pkg.OrgID,
+				pkg.Active, pkg.Duration, pkg.SmsVolume, pkg.DataVolume, pkg.VoiceVolume, pkg.OrgRatesID).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

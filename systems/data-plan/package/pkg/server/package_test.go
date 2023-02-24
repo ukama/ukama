@@ -64,15 +64,15 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 	s := NewPackageServer(packageRepo)
 
 	packageRepo.On("GetByOrg", orgId).Return([]db.Package{{
-		SimType:     pb.SimType_INTER_MNO_ALL.String(),
+		SimType:     1,
 		Name:        "Daily-pack",
-		OrgId:       orgId,
+		OrgID:       orgId,
 		Active:      true,
 		Duration:    1,
 		SmsVolume:   20,
 		DataVolume:  12,
 		VoiceVolume: 34,
-		OrgRatesId:  00,
+		OrgRatesID:  00,
 	}}, nil)
 	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
 	assert.NoError(t, err)
