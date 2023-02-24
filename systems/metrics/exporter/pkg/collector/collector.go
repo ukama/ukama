@@ -4,32 +4,40 @@ import (
 	"fmt"
 	"net/http"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	pc "github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
+	"google.golang.org/grpc"
 )
 
 type MetricsCollector struct {
-	MetricsMap map[string]Metrics
-	Config     map[string]pkg.MetricConfig
-	registry   *prometheus.Registry
+	MetricsMap  map[string]Metrics
+	Config      map[string]pkg.MetricConfig
+	registry    *prometheus.Registry
+	grpcMetrics *grpc_prometheus.ServerMetrics
 }
 
 func NewMetricsCollector(config []pkg.MetricConfig) *MetricsCollector {
 	c := new(MetricsCollector)
 	c.MetricsMap = make(map[string]Metrics)
 	c.Config = make(map[string]pkg.MetricConfig, len(c.Config))
+	c.grpcMetrics = grpc_prometheus.NewServerMetrics()
 	c.registry = prometheus.NewRegistry()
-	c.registry.MustRegister(pc.NewGoCollector(), pc.NewProcessCollector(pc.ProcessCollectorOpts{}))
+	c.registry.MustRegister(pc.NewGoCollector(), pc.NewProcessCollector(pc.ProcessCollectorOpts{}), c.grpcMetrics)
 
 	for _, cfg := range config {
 		c.Config[cfg.Event] = cfg
 	}
 
 	return c
+}
+
+func (c *MetricsCollector) RegisterGrpcService(s *grpc.Server) {
+	c.grpcMetrics.InitializeMetrics(s)
 }
 
 func (c *MetricsCollector) StartMetricServer(metrics *config.Metrics) {

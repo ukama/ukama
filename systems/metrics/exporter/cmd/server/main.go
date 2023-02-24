@@ -89,6 +89,7 @@ func runGrpcServer() {
 		if serviceConfig.IsMsgBus {
 			egen.RegisterEventNotificationServiceServer(s, nSrv)
 		}
+		mc.RegisterGrpcService(s)
 	})
 
 	mc.StartMetricServer(serviceConfig.Metrics)
