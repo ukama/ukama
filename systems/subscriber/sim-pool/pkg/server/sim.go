@@ -29,7 +29,7 @@ func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoo
 func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	logrus.Infof("GetSim isPhysical: %v, simType: %v", req.GetIsPhysicalSim(), req.GetSimType())
 
-	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), req.GetSimType().String())
+	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), req.GetSimType())
 	if err != nil {
 		logrus.Error("error fetching a sim " + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
@@ -53,7 +53,7 @@ func (p *SimPoolServer) GetByIccid(ctx context.Context, req *pb.GetByIccidReques
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetSimStats : %v ", req.GetSimType())
 
-	sim, err := p.simRepo.GetSimsByType(req.SimType.String())
+	sim, err := p.simRepo.GetSimsByType(req.SimType)
 	if err != nil {
 		logrus.Error("error getting a sim pool stats" + err.Error())
 
@@ -79,7 +79,7 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
 	logrus.Infof("Upload Sims to pool")
 	a, _ := utils.ParseBytesToRawSim(req.SimData)
-	s := utils.RawSimToPb(a, req.GetSimType().String())
+	s := utils.RawSimToPb(a, req.GetSimType())
 	err := p.simRepo.Add(s)
 	if err != nil {
 		logrus.Error("error while Upload sims data" + err.Error())
@@ -117,11 +117,13 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		Iccid:          p.Iccid,
 		Msisdn:         p.Msisdn,
 		IsAllocated:    p.IsAllocated,
+		SimType:        p.SimType,
 		SmDpAddress:    p.SmDpAddress,
 		ActivationCode: p.ActivationCode,
 		CreatedAt:      p.CreatedAt.String(),
-		UpdatedAt:      p.UpdatedAt.String(),
 		DeletedAt:      p.DeletedAt.Time.String(),
-		SimType:        pb.SimType(pb.SimType_value[p.SimType]),
+		UpdatedAt:      p.UpdatedAt.String(),
+		IsPhysical:     p.IsPhysical,
+		QrCode:         p.QrCode,
 	}
 }

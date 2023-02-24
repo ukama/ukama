@@ -52,10 +52,10 @@ func Test_FullFlow(t *testing.T) {
 		_, err := c.Add(ctx, &pb.AddRequest{
 			Sim: []*pb.AddSim{
 				{
-					Iccid: "123456789", SimType: pb.SimType_INTER_MNO_DATA, Msisdn: "555-555-1234", SmDpAddress: "http://example.com", ActivationCode: "abc123", QrCode: "qr123", IsPhysical: true,
+					Iccid: "123456789", SimType: "ukama_data", Msisdn: "555-555-1234", SmDpAddress: "http://example.com", ActivationCode: "abc123", QrCode: "qr123", IsPhysical: true,
 				},
 				{
-					Iccid: "12273", SimType: pb.SimType_INTER_MNO_DATA, Msisdn: "583-5343-0234", SmDpAddress: "http://example.com", ActivationCode: "abc123", QrCode: "qr123", IsPhysical: true,
+					Iccid: "12273", SimType: "ukama_data", Msisdn: "583-5343-0234", SmDpAddress: "http://example.com", ActivationCode: "abc123", QrCode: "qr123", IsPhysical: true,
 				},
 			},
 		})
@@ -66,7 +66,7 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		r, err := c.Get(ctx, &pb.GetRequest{
 			IsPhysicalSim: true,
-			SimType:       pb.SimType_INTER_MNO_DATA,
+			SimType:       "ukama_data",
 		})
 
 		if assert.NoError(t, err) {
@@ -85,7 +85,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 	t.Run("GetStats", func(t *testing.T) {
 		r, err := c.GetStats(ctx, &pb.GetStatsRequest{
-			SimType: pb.SimType_INTER_MNO_DATA,
+			SimType: "ukama_data",
 		})
 
 		if assert.NoError(t, err) {

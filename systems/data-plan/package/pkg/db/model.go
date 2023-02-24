@@ -22,6 +22,7 @@ type Package struct {
 	VoiceVolume uint
 	OrgRatesID  uint
 }
+
 type SimType uint8
 
 const (
