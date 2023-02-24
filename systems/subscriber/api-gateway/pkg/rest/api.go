@@ -3,7 +3,7 @@ package rest
 import (
 	"time"
 
-	"github.com/google/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -149,10 +149,9 @@ type GetSimsBySubReq struct {
 	SubscriberId string `form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required`
 }
 type AddPkgToSimReq struct {
-	SimId        string                 `json:"sim_id" validate:"required`
-	SubscriberId string                 `json:"subscriber_id" validate:"required`
-	PackageId    string                 `json:"package_id" validate:"required`
-	StartDate    *timestamppb.Timestamp `json:"start_date" validate:"required`
+	SimId     string                 `json:"sim_id" validate:"required"`
+	PackageId string                 `json:"package_id" validate:"required"`
+	StartDate *timestamppb.Timestamp `json:"start_date" validate:"required"`
 }
 
 type RemovePkgFromSimReq struct {
