@@ -35,12 +35,27 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		simRepo.On("Get", simID).Return(
-			&db.Sim{ID: simID,
-				IsPhysical: false,
-			}, nil).Once()
+		agentFactory := &mocks.AgentFactory{}
 
-		s := NewSimManagerServer(simRepo, nil, nil, nil, nil, nil, "", nil)
+		sim := simRepo.On("Get", simID).
+			Return(&db.Sim{ID: simID,
+				Iccid:      testIccid,
+				Status:     db.SimStatusInactive,
+				Type:       db.SimTypeTest,
+				IsPhysical: false,
+			}, nil).
+			Once().
+			ReturnArguments.Get(0).(*db.Sim)
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("GetSim", mock.Anything,
+			sim.Iccid).Return(nil, nil).Once()
+
+		s := NewSimManagerServer(simRepo, nil, agentFactory, nil, nil, nil, "", nil)
 		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
 			SimID: simID.String()})
 
@@ -322,9 +337,18 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		simRepo.On("Add", sim,
 			mock.Anything).Return(nil).Once()
 
+		pkg := &sims.Package{
+			SimID:    sim.ID,
+			PlanID:   packageID,
+			IsActive: false,
+		}
+
+		packageRepo.On("Add", pkg,
+			mock.Anything).Return(nil).Once()
+
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSimManagerServer(simRepo, nil, nil,
+		s := NewSimManagerServer(simRepo, packageRepo, nil,
 			packageClient, subscriberService, simPoolService, "", msgbusClient)
 
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{

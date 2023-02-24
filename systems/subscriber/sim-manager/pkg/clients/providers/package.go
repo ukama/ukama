@@ -18,17 +18,16 @@ type packageInfoClient struct {
 	R *RestClient
 }
 
-type PackageEnvelope struct {
-	Package *PackageInfo `json:"package"`
+type Package struct {
+	PackageInfo *PackageInfo `json:"package"`
 }
 type PackageInfo struct {
-	Uuid     string `json:"uuid"`
+	ID       string `json:"uuid"`
 	Name     string `json:"name"`
-	OrgId    string `json:"org_id"`
+	OrgID    string `json:"org_id"`
 	SimType  string `json:"sim_type"`
-	Active   bool   `json:"active"`
-	Duration string `json:"duration"`
-	//TODO: Need fix => CreatedAt time.Time `json:"created_at"`
+	IsActive bool   `json:"active"`
+	Duration uint   `json:"duration,string"`
 }
 
 func NewPackageInfoClient(url string, debug bool) (*packageInfoClient, error) {
@@ -49,7 +48,7 @@ func NewPackageInfoClient(url string, debug bool) (*packageInfoClient, error) {
 func (p *packageInfoClient) GetPackageInfo(uuid string) (*PackageInfo, error) {
 	errStatus := &rest.ErrorMessage{}
 
-	pkg := &PackageEnvelope{}
+	pkg := Package{}
 
 	resp, err := p.R.C.R().
 		SetError(errStatus).
@@ -67,14 +66,14 @@ func (p *packageInfoClient) GetPackageInfo(uuid string) (*PackageInfo, error) {
 		return nil, fmt.Errorf("data package Info failure %s", errStatus.Message)
 	}
 
-	err = json.Unmarshal(resp.Body(), pkg)
+	err = json.Unmarshal(resp.Body(), &pkg)
 	if err != nil {
 		log.Tracef("Failed to desrialize data package info. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("data package info deserailization failure: %w", err)
 	}
 
-	log.Infof("DataPackage Info: %+v", *pkg)
+	log.Infof("DataPackage Info: %+v", pkg)
 
-	return pkg.Package, nil
+	return pkg.PackageInfo, nil
 }

@@ -12,17 +12,17 @@ type PackageInfoClient struct {
 	mock.Mock
 }
 
-// GetPackageInfo provides a mock function with given fields: packageID
-func (_m *PackageInfoClient) GetPackageInfo(packageID string) (*providers.PackageInfo, error) {
-	ret := _m.Called(packageID)
+// GetPackageInfo provides a mock function with given fields: uuid
+func (_m *PackageInfoClient) GetPackageInfo(uuid string) (*providers.PackageInfo, error) {
+	ret := _m.Called(uuid)
 
 	var r0 *providers.PackageInfo
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*providers.PackageInfo, error)); ok {
-		return rf(packageID)
+		return rf(uuid)
 	}
 	if rf, ok := ret.Get(0).(func(string) *providers.PackageInfo); ok {
-		r0 = rf(packageID)
+		r0 = rf(uuid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*providers.PackageInfo)
@@ -30,7 +30,7 @@ func (_m *PackageInfoClient) GetPackageInfo(packageID string) (*providers.Packag
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(packageID)
+		r1 = rf(uuid)
 	} else {
 		r1 = ret.Error(1)
 	}

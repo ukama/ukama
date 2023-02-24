@@ -29,17 +29,18 @@ func NewSimRepo(db sql.Db) SimRepo {
 
 func (s *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		log.Info("Adding sim", sim)
-		result := tx.Create(sim)
-		if result.Error != nil {
-			return result.Error
-		}
-		log.Info("Adding package")
+		log.Info("Running nested function")
 		if nestedFunc != nil {
 			nestErr := nestedFunc(sim, tx)
 			if nestErr != nil {
 				return nestErr
 			}
+		}
+
+		log.Info("Adding sim", sim)
+		result := tx.Create(sim)
+		if result.Error != nil {
+			return result.Error
 		}
 
 		return nil
@@ -51,7 +52,7 @@ func (s *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) er
 func (s *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 	var sim Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Preload("Package", "active is true").First(&sim, simID)
+	result := s.Db.GetGormDb().Model(&Sim{}).Preload("Package", "is_active is true").First(&sim, simID)
 	if result.Error != nil {
 		return nil, result.Error
 	}

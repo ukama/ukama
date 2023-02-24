@@ -2,13 +2,11 @@ package server
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,7 +19,6 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -98,12 +95,12 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, err
 	}
 
-	if packageInfo.OrgId != remoteSubResp.Subscriber.OrgID {
+	if packageInfo.OrgID != remoteSubResp.Subscriber.OrgID {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to subscriber sim: package does not belong to subscriber registerd org")
 	}
 
-	if !packageInfo.Active {
+	if !packageInfo.IsActive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to sim: package is no more active within its org")
 	}
@@ -176,32 +173,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		IsPhysical:   poolSim.IsPhysical,
 	}
 
-	duration, err := strconv.ParseInt(packageInfo.Duration, 10, 64)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid package duration: %s", packageInfo.Duration)
-	}
-	startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
-	endDate := startDate.Add(time.Duration(duration))
-	firstPackage := &sims.Package{
-		ID:        uuid.NewV4(),
-		StartDate: startDate,
-		EndDate:   endDate,
-		PlanID:    packageID,
-		IsActive:  false,
-	}
-
-	sim.ID = uuid.NewV4()
-	firstPackage.SimID = sim.ID
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
-		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
-
-		// Adding package to new allocated sim
-		err := db.NewPackageRepo(txDb).Add(firstPackage, nil)
-		if err != nil {
-			return err
-		}
+		sim.ID = uuid.NewV4()
 
 		return nil
 	})
@@ -210,20 +183,35 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, status.Errorf(codes.Internal,
 			"failed to allocate sim to subscriber. Error %s", err.Error())
 	}
-	log.Info("Updating sim")
-	err = s.simRepo.Update(sim, nil)
+
+	firstPackage := &sims.Package{
+		PlanID:   packageID,
+		IsActive: false,
+	}
+
+	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
+		firstPackage.ID = uuid.NewV4()
+		firstPackage.SimID = sim.ID
+
+		firstPackage.StartDate = time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
+		firstPackage.EndDate = firstPackage.StartDate.Add(time.Duration(packageInfo.Duration))
+
+		return nil
+	})
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal,
-			"failed to update sim. Error %s", err.Error())
+			"failed to add initial package to newlly allocated sim. Error %s", err.Error())
 	}
+
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 
-	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
-	err = s.msgbus.PublishRequest(route, resp.Sim)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+	// Uncomment this when msgclient is back
+	// route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
+	// err = s.msgbus.PublishRequest(route, resp.Sim)
+	// if err != nil {
+	// log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	// }
 
 	return resp, nil
 }
@@ -238,6 +226,17 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 	sim, err := s.simRepo.Get(simID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim ID: %q", sim.Type, req.SimID)
+	}
+
+	_, err = simAgent.GetSim(ctx, sim.Iccid)
+	if err != nil {
+		return nil, err
 	}
 
 	return &pb.GetSimResponse{Sim: dbSimToPbSim(sim)}, nil
@@ -383,12 +382,12 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, err
 	}
 
-	if !pkgInfo.Active {
+	if !pkgInfo.IsActive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set package to sim: package is no more active within its org")
 	}
 
-	if sim.OrgID.String() != pkgInfo.OrgId {
+	if sim.OrgID.String() != pkgInfo.OrgID {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid packageID: provided package does not belong to sim org issuer")
 	}
@@ -400,17 +399,10 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			"invalid sim type: sim (%s) and packge (%s) sim types mismatch", sim.Type, pkgInfoSimType.String())
 	}
 
-	duration, err := strconv.ParseInt(pkgInfo.Duration, 10, 64)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid package duration: %s", pkgInfo.Duration)
-	}
-
 	pkg := &sims.Package{
 		SimID:     sim.ID,
 		StartDate: startDate,
-		EndDate:   startDate.Add(time.Duration(duration)),
+		EndDate:   startDate.Add(time.Duration(pkgInfo.Duration)),
 		PlanID:    packageID,
 		IsActive:  false,
 	}

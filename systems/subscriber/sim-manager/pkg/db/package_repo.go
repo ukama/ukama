@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
@@ -30,6 +31,7 @@ func NewPackageRepo(db sql.Db) PackageRepo {
 
 func (p *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.DB) error) error {
 	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		log.Info("Running nested function")
 		if nestedFunc != nil {
 			nestErr := nestedFunc(pkg, tx)
 			if nestErr != nil {
@@ -37,6 +39,7 @@ func (p *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.D
 			}
 		}
 
+		log.Info("Adding package", pkg)
 		result := tx.Create(pkg)
 		if result.Error != nil {
 			return result.Error
