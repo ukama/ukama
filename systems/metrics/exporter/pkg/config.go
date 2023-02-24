@@ -15,7 +15,6 @@ const (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	DB                *config.Database  `default:"{}"`
 	Grpc              *config.Grpc      `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
@@ -40,13 +39,6 @@ type MetricConfig struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
-		DB: &config.Database{
-			DbName: ServiceName,
-		},
-
-		Grpc: &config.Grpc{
-			Port: 9092,
-		},
 
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
