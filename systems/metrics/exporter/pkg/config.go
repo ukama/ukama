@@ -65,8 +65,5 @@ func NewConfig(name string) *Config {
 				Buckets: []float64{60, 300, 600, 1200, 1800, 2700, 3600, 7200, 18000},
 			},
 		},
-		Metrics: &config.Metrics{
-			Port: 10251,
-		},
 	}
 }
