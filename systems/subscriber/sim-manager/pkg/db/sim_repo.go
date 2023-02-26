@@ -14,7 +14,7 @@ type SimRepo interface {
 	GetByNetwork(networkID uuid.UUID) ([]Sim, error)
 	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
-	GetSimCounts() (int64, int64, int64, error)
+	GetSimCounts() (int64, int64, int64, int64, error)
 }
 
 type simRepo struct {
@@ -125,21 +125,24 @@ func (s *simRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) e
 
 	return err
 }
-func (s *simRepo) GetSimCounts() (simsCount int64, activeCount int64, deactiveCount int64, err error) {
-	var deactive int64
+func (s *simRepo) GetSimCounts() (simsCount, activeCount, deactiveCount, terminatedCount int64, err error) {
+	db := s.Db.GetGormDb()
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Count(&simsCount)
-	if result.Error != nil {
-		err = result.Error
-		return
+	if err := db.Model(&Sim{}).Count(&simsCount).Error; err != nil {
+		return 0, 0, 0, 0, err
 	}
 
-	result = s.Db.GetGormDb().Model(&Sim{}).Where("status =?", 2).Count(&activeCount)
-
-	if result.Error != nil {
-		err = result.Error
-		return
+	if err := db.Model(&Sim{}).Where("status = ?", 1).Count(&activeCount).Error; err != nil {
+		return 0, 0, 0, 0, err
 	}
-	deactive = simsCount - activeCount
-	return simsCount, activeCount, deactive, nil
+
+	if err := db.Model(&Sim{}).Where("status = ?", 2).Count(&deactiveCount).Error; err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	if err := db.Model(&Sim{}).Where("status = ?", 3).Count(&terminatedCount).Error; err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	return simsCount, activeCount, deactiveCount, terminatedCount, nil
 }

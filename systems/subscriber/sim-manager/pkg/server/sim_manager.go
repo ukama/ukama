@@ -262,14 +262,15 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 }
 
 func (s *SimManagerServer) GetSimCounts(ctx context.Context) error {
-	simsCount, activeCount, deactiveCount, err := s.simRepo.GetSimCounts()
+	terminatedCount, simsCount, activeCount, deactiveCount, err := s.simRepo.GetSimCounts()
 	if err != nil {
 		logrus.Errorf("failed to get Sims counts: %s", err.Error())
 		return err
 	}
 	customLabels := map[string]string{
-		"active_count":   strconv.FormatInt(activeCount, 10),
-		"deactive_count": strconv.FormatInt(deactiveCount, 10),
+		"active_count":     strconv.FormatInt(activeCount, 10),
+		"deactive_count":   strconv.FormatInt(deactiveCount, 10),
+		"terminated_count": strconv.FormatInt(terminatedCount, 10),
 	}
 	utils.PushMetrics("sim", "number_of_subscriber", "gauge", customLabels, float64(simsCount))
 
