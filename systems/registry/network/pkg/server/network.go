@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 	"google.golang.org/grpc/codes"
@@ -22,19 +25,23 @@ const uuidParsingError = "Error parsing UUID"
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	netRepo    db.NetRepo
-	orgRepo    db.OrgRepo
-	siteRepo   db.SiteRepo
-	orgService providers.OrgClientProvider
+	netRepo        db.NetRepo
+	orgRepo        db.OrgRepo
+	siteRepo       db.SiteRepo
+	orgService     providers.OrgClientProvider
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
 func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider) *NetworkServer {
+	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient) *NetworkServer {
 	return &NetworkServer{
-		netRepo:    netRepo,
-		orgRepo:    orgRepo,
-		siteRepo:   siteRepo,
-		orgService: orgService,
+		netRepo:        netRepo,
+		orgRepo:        orgRepo,
+		siteRepo:       siteRepo,
+		orgService:     orgService,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
@@ -83,7 +90,11 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
-
+	route := n.baseRoutingKey.SetAction("add").SetObject("network").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.AddResponse{
 		Network: dbNtwkToPbNtwk(network),
 		Org:     req.GetOrgName(),
@@ -148,7 +159,11 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	}
 
 	// publish event before returning resp
-
+	route := n.baseRoutingKey.SetAction("delete").SetObject("network").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.DeleteResponse{}, nil
 }
 
@@ -173,6 +188,11 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 	err = n.siteRepo.Add(site)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
+	}
+	route := n.baseRoutingKey.SetAction("add").SetObject("site").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.AddSiteResponse{
