@@ -6,13 +6,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
-
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg"
+	"gorm.io/gorm"
 
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,12 +24,18 @@ type OrgService struct {
 	pb.UnimplementedOrgServiceServer
 	orgRepo  db.OrgRepo
 	userRepo db.UserRepo
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	msgbus               mb.MsgBusServiceClient
+
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo,msgBus mb.MsgBusServiceClient) *OrgService {
 	return &OrgService{
 		orgRepo:  orgRepo,
 		userRepo: userRepo,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		msgbus:               msgBus,
+
 	}
 }
 
