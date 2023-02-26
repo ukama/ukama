@@ -114,7 +114,7 @@ func (_m *SimRepo) GetBySubscriber(subscriberID uuid.UUID) ([]db.Sim, error) {
 }
 
 // GetSimCounts provides a mock function with given fields:
-func (_m *SimRepo) GetSimCounts() (int64, int64, int64, error) {
+func (_m *SimRepo) GetSimCounts() (int64, int64, int64, int64, error) {
 	ret := _m.Called()
 
 	var r0 int64
@@ -138,14 +138,21 @@ func (_m *SimRepo) GetSimCounts() (int64, int64, int64, error) {
 		r2 = ret.Get(2).(int64)
 	}
 
-	var r3 error
-	if rf, ok := ret.Get(3).(func() error); ok {
+	var r3 int64
+	if rf, ok := ret.Get(3).(func() int64); ok {
 		r3 = rf()
 	} else {
-		r3 = ret.Error(3)
+		r3 = ret.Get(3).(int64)
 	}
 
-	return r0, r1, r2, r3
+	var r4 error
+	if rf, ok := ret.Get(4).(func() error); ok {
+		r4 = rf()
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
 }
 
 // Update provides a mock function with given fields: sim, nestedFunc

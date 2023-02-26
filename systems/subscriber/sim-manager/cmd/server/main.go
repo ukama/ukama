@@ -22,7 +22,6 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/interceptor"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -58,7 +57,7 @@ func initConfig() {
 		// output config in debug mode
 		b, err := yaml.Marshal(svcConf)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 
@@ -97,24 +96,24 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	pckgClient, err := providers.NewPackageInfoClient(svcConf.DataPlan.Uri, pkg.IsDebugMode)
+	pckgClient, err := providers.NewPackageInfoClient(svcConf.DataPlan, pkg.IsDebugMode)
 	if err != nil {
 		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
-			svcConf.DataPlan.Uri, err)
+			svcConf.DataPlan, err)
 	}
 
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
-		adapters.NewAgentFactory(svcConf.TestAgent.Host, svcConf.OperatorAgent.Host, svcConf.Timeout, pkg.IsDebugMode),
+		adapters.NewAgentFactory(svcConf.TestAgent, svcConf.OperatorAgent, svcConf.Timeout, pkg.IsDebugMode),
 		pckgClient,
-		providers.NewSubscriberRegistryClientProvider(svcConf.SubsRegistry.Host, svcConf.SubsRegistry.Timeout),
-		providers.NewSimPoolClientProvider(svcConf.SimPool.Host, svcConf.SimPool.Timeout),
+		providers.NewSubscriberRegistryClientProvider(svcConf.SubsRegistry, svcConf.Timeout),
+		providers.NewSimPoolClientProvider(svcConf.SimPool, svcConf.Timeout),
 		svcConf.Key,
 		nil,
 	)
 
-	fsInterceptor := interceptor.NewFakeSimInterceptor(svcConf.TestAgent.Host, svcConf.TestAgent.Timeout)
+	fsInterceptor := interceptor.NewFakeSimInterceptor(svcConf.TestAgent, svcConf.Timeout)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)

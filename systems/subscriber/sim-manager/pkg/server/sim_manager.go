@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -207,12 +208,12 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 	err = s.GetSimCounts(ctx)
 	if err != nil {
-		logrus.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
+		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return resp, nil
@@ -236,7 +237,7 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest) (*pb.ListSimsResponse, error) {
 	err := s.GetSimCounts(ctx)
 	if err != nil {
-		logrus.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
+		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
 	return nil, nil
 }
@@ -264,7 +265,7 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 func (s *SimManagerServer) GetSimCounts(ctx context.Context) error {
 	terminatedCount, simsCount, activeCount, deactiveCount, err := s.simRepo.GetSimCounts()
 	if err != nil {
-		logrus.Errorf("failed to get Sims counts: %s", err.Error())
+		log.Errorf("failed to get Sims counts: %s", err.Error())
 		return err
 	}
 	customLabels := map[string]string{
@@ -359,13 +360,13 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	}
 	err = s.GetSimCounts(ctx)
 	if err != nil {
-		logrus.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
+		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
 
 	route := s.baseRoutingKey.SetAction("delete").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.DeleteSimResponse{}, nil
@@ -641,11 +642,11 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, msg)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
 	err = s.GetSimCounts(ctx)
 	if err != nil {
-		logrus.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
+		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
 	return &pb.ToggleSimStatusResponse{}, nil
 }
@@ -694,11 +695,11 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, msg)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
 	err = s.GetSimCounts(ctx)
 	if err != nil {
-		logrus.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
+		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
 
 	return &pb.ToggleSimStatusResponse{}, nil

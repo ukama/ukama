@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	rconf "github.com/num30/config"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -36,11 +36,11 @@ func init() {
 
 	err := reader.Read(tConfig)
 	if err != nil {
-		logrus.Fatalf("Failed to read config: %v", err)
+		log.Fatalf("Failed to read config: %v", err)
 	}
 
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("Config: %+v\n", tConfig)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("Config: %+v\n", tConfig)
 }
 
 func Test_FullFlow(t *testing.T) {
@@ -67,7 +67,7 @@ func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	logrus.Infoln("Connecting to service ", tConfig.ServiceHost)
+	log.Infoln("Connecting to service ", tConfig.ServiceHost)
 	conn, c, err := CreateSimManagerClient()
 	defer conn.Close()
 	if err != nil {
@@ -178,7 +178,7 @@ func Test_FullFlow(t *testing.T) {
 }
 
 func CreateSimManagerClient() (*grpc.ClientConn, pb.SimManagerServiceClient, error) {
-	logrus.Infoln("Connecting to Sim Manager ", tConfig.ServiceHost)
+	log.Infoln("Connecting to Sim Manager ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))

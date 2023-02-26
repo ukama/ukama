@@ -32,8 +32,8 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	packageDb := initDb()
-	runGrpcServer(packageDb)
+	registryDb := initDb()
+	runGrpcServer(registryDb)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.

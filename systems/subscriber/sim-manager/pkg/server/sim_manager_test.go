@@ -18,9 +18,6 @@ import (
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 
-	pkgpb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
-	pkgmocks "github.com/ukama/ukama/systems/data-plan/package/pb/gen/mocks"
-
 	subspb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	subsmocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
 
@@ -334,7 +331,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberID: subscriberID.String(),
 			NetworkID:    networkID.String(),
 			PackageID:    packageID.String(),
-			SimType:      sims.SimTypeInterNone.String(),
+			SimType:      sims.SimTypeTest.String(),
 			SimToken:     "",
 		})
 
@@ -380,7 +377,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberID: subscriberID.String(),
 			NetworkID:    networkID.String(),
 			PackageID:    packageID.String(),
-			SimType:      sims.SimTypeInterNone.String(),
+			SimType:      sims.SimTypeTest.String(),
 			SimToken:     "",
 		})
 
@@ -431,7 +428,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberID: subscriberID.String(),
 			NetworkID:    networkID.String(),
 			PackageID:    packageID.String(),
-			SimType:      sims.SimTypeInterNone.String(),
+			SimType:      sims.SimTypeTest.String(),
 			SimToken:     "",
 		})
 
@@ -483,7 +480,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberID: subscriberID.String(),
 			NetworkID:    networkID.String(),
 			PackageID:    packageID.String(),
-			SimType:      sims.SimTypeInterNone.String(),
+			SimType:      sims.SimTypeTest.String(),
 			SimToken:     "",
 		})
 
@@ -536,7 +533,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberID: subscriberID.String(),
 			NetworkID:    networkID.String(),
 			PackageID:    packageID.String(),
-			SimType:      sims.SimTypeInterNone.String(),
+			SimType:      sims.SimTypeTest.String(),
 			SimToken:     "",
 		})
 
@@ -798,7 +795,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:      orgID,
 				Iccid:      testIccid,
 				Status:     db.SimStatusInactive,
-				Type:       db.SimTypeInterNone,
+				Type:       db.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
 			Once().
@@ -877,7 +874,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:      orgID,
 				Iccid:      testIccid,
 				Status:     db.SimStatusInactive,
-				Type:       db.SimTypeInterNone,
+				Type:       db.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
 			Once()
@@ -922,7 +919,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:      orgID,
 				Iccid:      testIccid,
 				Status:     db.SimStatusInactive,
-				Type:       db.SimTypeInterNone,
+				Type:       db.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
 			Once()
@@ -967,7 +964,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:      orgID,
 				Iccid:      testIccid,
 				Status:     db.SimStatusInactive,
-				Type:       db.SimTypeInterNone,
+				Type:       db.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
 			Once()
@@ -1012,7 +1009,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:      orgID,
 				Iccid:      testIccid,
 				Status:     db.SimStatusInactive,
-				Type:       db.SimTypeInterNone,
+				Type:       db.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
 			Once().
@@ -1070,7 +1067,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 			Return(&db.Sim{ID: simID,
 				Iccid:      testIccid,
 				Status:     db.SimStatusInactive,
-				Type:       db.SimTypeInterNone,
+				Type:       db.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
 			Once().
@@ -1113,7 +1110,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 			Return(&db.Sim{ID: simID,
 				Iccid:      testIccid,
 				Status:     db.SimStatusActive,
-				Type:       db.SimTypeInterNone,
+				Type:       db.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
 			Once()
@@ -1172,7 +1169,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 			Return(&db.Sim{ID: simID,
 				Iccid:      testIccid,
 				Status:     db.SimStatusInactive,
-				Type:       db.SimTypeInterNone,
+				Type:       db.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
 			Once().
