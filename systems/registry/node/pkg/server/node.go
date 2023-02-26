@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -24,14 +25,17 @@ type NodeServer struct {
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	pb.UnimplementedNodeServiceServer
+	msgbus               mb.MsgBusServiceClient
 }
 
-func NewNodeServer(nodeRepo db.NodeRepo) *NodeServer {
+func NewNodeServer(nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{nodeRepo: nodeRepo,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
+		msgbus:               msgBus,
+
 	}
 }
 
