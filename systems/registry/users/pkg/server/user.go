@@ -8,13 +8,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
 
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 
-	pkg "github.com/ukama/ukama/systems/registry/users/pkg/providers"
+	pkgP "github.com/ukama/ukama/systems/registry/users/pkg/providers"
 
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/registry/users/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -27,13 +30,18 @@ const ukamaOrgID = 1
 type UserService struct {
 	pb.UnimplementedUserServiceServer
 	userRepo   db.UserRepo
-	orgService pkg.OrgClientProvider
+	orgService pkgP.OrgClientProvider
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	msgbus               mb.MsgBusServiceClient
+
 }
 
-func NewUserService(userRepo db.UserRepo, orgService pkg.OrgClientProvider) *UserService {
+func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider,msgBus mb.MsgBusServiceClient) *UserService {
 	return &UserService{
 		userRepo:   userRepo,
 		orgService: orgService,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		msgbus:               msgBus,
 	}
 }
 
