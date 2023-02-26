@@ -73,11 +73,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
-	// grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-	// 	srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient, simMClient, networkClient)
-	// 	pb.RegisterRegistryServiceServer(s, srv)
 
-	// })
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterNetworkServiceServer(s, networkServer)
 	})
@@ -86,33 +82,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	grpcServer.StartServer()
 }
-
-// func runGrpcServer(gormdb sql.Db) {
-// 	instanceId := os.Getenv("POD_NAME")
-// 	if instanceId == "" {
-// 		/* used on local machines */
-// 		inst := uuid.NewV4()
-// 		instanceId = inst.String()
-// 	}
-// 	networkServer := server.NewNetworkServer(db.NewNetRepo(gormdb),
-// 		db.NewOrgRepo(gormdb), db.NewSiteRepo(gormdb),
-// 		providers.NewOrgClientProvider(serviceConfig))
-
-// 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-// 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-// 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-// 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-// 		serviceConfig.MsgClient.RetryCount,
-// 		serviceConfig.MsgClient.ListenerRoutes)
-
-// 	log.Debugf("MessageBus Client is %+v", mbClient)
-
-// 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
-// 		generated.RegisterNetworkServiceServer(s, networkServer)
-// 	})
-
-// 	grpcServer.StartServer()
-// }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
 
