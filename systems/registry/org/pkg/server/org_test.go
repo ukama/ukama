@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 
 	"github.com/ukama/ukama/systems/registry/org/mocks"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
@@ -18,6 +19,8 @@ const testOrgName = "test-org"
 func TestOrgServer_AddOrg(t *testing.T) {
 	// Arrange
 	orgName := "org-1"
+	msgcRepo:=&mbmocks.MsgBusServiceClient{}
+
 	ownerUUID := uuid.New()
 	certificate := "ukama_certs"
 
@@ -44,7 +47,7 @@ func TestOrgServer_AddOrg(t *testing.T) {
 	// Uuid:   ownerUUID,
 	// }).Return(nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo)
+	s := NewOrgServer(orgRepo, userRepo,msgcRepo)
 
 	// Act
 	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
@@ -61,10 +64,11 @@ func TestOrgServer_GetOrg(t *testing.T) {
 	orgID := uint64(0)
 
 	orgRepo := &mocks.OrgRepo{}
+	msgcRepo:=&mbmocks.MsgBusServiceClient{}
 
 	orgRepo.On("Get", mock.Anything).Return(&db.Org{ID: uint(orgID)}, nil).Once()
 
-	s := NewOrgServer(orgRepo, nil)
+	s := NewOrgServer(orgRepo, nil,msgcRepo)
 	orgResp, err := s.Get(context.TODO(), &pb.GetRequest{Id: orgID})
 
 	assert.NoError(t, err)
@@ -74,8 +78,9 @@ func TestOrgServer_GetOrg(t *testing.T) {
 
 func TestOrgServer_AddOrg_fails_without_owner_uuid(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
+	msgcRepo:=&mbmocks.MsgBusServiceClient{}
 
-	s := NewOrgServer(orgRepo, nil)
+	s := NewOrgServer(orgRepo, nil,msgcRepo)
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
 		Org: &pb.Organization{Name: testOrgName},
 	})
@@ -85,9 +90,11 @@ func TestOrgServer_AddOrg_fails_without_owner_uuid(t *testing.T) {
 
 func TestOrgServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
 	owner := "org-1"
+	msgcRepo:=&mbmocks.MsgBusServiceClient{}
+
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil)
+	s := NewOrgServer(orgRepo, nil,msgcRepo)
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
 		Org: &pb.Organization{Owner: owner},
 	})

@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 
 	"github.com/ukama/ukama/systems/registry/users/mocks"
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
@@ -16,6 +17,7 @@ import (
 
 func TestUserService_Add(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
+	msgcRepo := &mbmocks.MsgBusServiceClient{}
 
 	userRequest := &pb.User{
 		Name:  "Joe",
@@ -26,7 +28,7 @@ func TestUserService_Add(t *testing.T) {
 	userRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("AddUser", func(tt *testing.T) {
-		srv := NewUserService(userRepo, nil)
+		srv := NewUserService(userRepo, nil,msgcRepo)
 		addResp, err := srv.Add(context.TODO(), &pb.AddRequest{User: userRequest})
 
 		assert.NoError(t, err)
@@ -43,13 +45,14 @@ func TestUserService_Add(t *testing.T) {
 func TestUserService_Get(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
 	userUUID := uuid.NewString()
+	msgcRepo := &mbmocks.MsgBusServiceClient{}
 
 	userRepo.On("Get", uuid.MustParse(userUUID)).Return(&db.User{
 		Uuid: uuid.MustParse(userUUID),
 	}, nil)
 
 	t.Run("UserFound", func(tt *testing.T) {
-		srv := NewUserService(userRepo, nil)
+		srv := NewUserService(userRepo, nil,msgcRepo)
 
 		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID})
 
@@ -72,6 +75,7 @@ func TestUserService_Get(t *testing.T) {
 func TestUserService_Deactivate(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
 	userUUID := uuid.NewString()
+	msgcRepo := &mbmocks.MsgBusServiceClient{}
 
 	userRepo.On("Get", uuid.MustParse(userUUID)).Return(&db.User{
 		Uuid: uuid.MustParse(userUUID),
@@ -82,7 +86,7 @@ func TestUserService_Deactivate(t *testing.T) {
 	}), mock.Anything).Return(nil)
 
 	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
-		srv := NewUserService(userRepo, nil)
+		srv := NewUserService(userRepo, nil,msgcRepo)
 
 		_, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
 			UserUuid: userUUID,
