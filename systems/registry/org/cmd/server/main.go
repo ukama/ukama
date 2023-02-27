@@ -87,11 +87,11 @@ func initDb() sql.Db {
 		if err := orgDB.First(&db.Org{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Iniiialzing orgs table")
 
-			var orgUUID uuid.UUID
+			var orgOwnerUUID uuid.UUID
 			var err error
 
-			if orgUUID, err = uuid.FromString(os.Getenv("DEFAULT_ORG_UUID")); err != nil {
-				log.Fatalf("Database initialization failed, need valid %q var. Error: %v", "DEFAULT_ORG_UUID", err)
+			if orgOwnerUUID, err = uuid.FromString(os.Getenv("DEFAULT_ORG_OWNER_UUID")); err != nil {
+				log.Fatalf("Database initialization failed, need valid %q var. Error: %v", "DEFAULT_ORG_OWNER_UUID", err)
 			}
 
 			orgName := os.Getenv("DEFAULT_ORG_NAME")
@@ -103,11 +103,11 @@ func initDb() sql.Db {
 			org := &db.Org{
 				ID:    uuid.NewV4(),
 				Name:  orgName,
-				Owner: orgUUID,
+				Owner: orgOwnerUUID,
 			}
 
 			usr := &db.User{
-				Uuid: orgUUID,
+				Uuid: orgOwnerUUID,
 			}
 
 			if err := orgDB.Transaction(func(tx *gorm.DB) error {
