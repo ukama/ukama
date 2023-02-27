@@ -15,7 +15,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	SimManagerHost   string `default:"sim-manager:9090"`
-	NetworkHost      string `default:"http://localhost:8085"`
+	NetworkHost      string `default:"http://registry-api-gw:8080"`
 }
 
 func NewConfig(name string) *Config {

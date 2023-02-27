@@ -117,5 +117,66 @@ services:
       - test-agent
       - registry
 
+  network:
+    build: ./registry/network
+    ports:
+      - "9096:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    depends_on:
+      - postgresd
+      - registry
+
+
+  org:
+    build: ./registry/org
+    ports:
+      - "9097:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - UKAMA_UUID=${UKAMA_UUID}
+    restart: always
+    depends_on:
+      - postgresd
+      - registry
+
+  users:
+    build: ./registry/users
+    ports:
+      - "9098:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - UKAMA_UUID=${UKAMA_UUID}
+    restart: always
+    depends_on:
+      - postgresd
+      - registry
+  registry-api-gw:
+    build: ./registry/api-gateway
+    ports:
+      - "8082:8080"
+    restart: always
+    depends_on:
+      - postgresd
+      - network
+      - registry
+      - subscriber
+      - org
+
 volumes:
   postgress-data:
+
+

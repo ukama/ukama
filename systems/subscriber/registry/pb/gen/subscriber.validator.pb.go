@@ -125,11 +125,6 @@ func (this *AddSubscriberRequest) Validate() error {
 	if !(len(this.ProofOfIdentification) > 1) {
 		return github_com_mwitkow_go_proto_validators.FieldError("ProofOfIdentification", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.ProofOfIdentification))
 	}
-	if this.DateOfBirth != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DateOfBirth); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("DateOfBirth", err)
-		}
-	}
 	if this.Gender == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Gender", fmt.Errorf(`value '%v' must not be an empty string`, this.Gender))
 	}

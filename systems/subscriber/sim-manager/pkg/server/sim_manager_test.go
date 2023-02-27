@@ -106,7 +106,7 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 
 		simRepo.On("GetBySubscriber", subscriberID).Return(
 			[]db.Sim{
-				db.Sim{ID: simID,
+				{ID: simID,
 					SubscriberID: subscriberID,
 					IsPhysical:   false,
 				}}, nil).Once()
@@ -163,7 +163,7 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 
 		simRepo.On("GetByNetwork", networkID).Return(
 			[]db.Sim{
-				db.Sim{ID: simID,
+				{ID: simID,
 					NetworkID:  networkID,
 					IsPhysical: false,
 				}}, nil).Once()
@@ -219,7 +219,7 @@ func TestSimManagerServer_GetPackagesBySim(t *testing.T) {
 
 		packageRepo.On("GetBySim", simID).Return(
 			[]db.Package{
-				db.Package{ID: packageID,
+				{ID: packageID,
 					SimID:    simID,
 					IsActive: false,
 				}}, nil).Once()
@@ -315,12 +315,12 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		simPoolResp := simPoolClient.On("Get", mock.Anything,
 			&splpb.GetRequest{IsPhysicalSim: false,
-				SimType: 1,
+				SimType: "test",
 			}).
 			Return(&splpb.GetResponse{
 				Sim: &splpb.Sim{
 					IsPhysical: false,
-					SimType:    1,
+					SimType:    "test",
 				},
 			}, nil).Once().
 			ReturnArguments.Get(0).(*splpb.GetResponse)
@@ -329,7 +329,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberID: subscriberID,
 			NetworkID:    networkID,
 			OrgID:        orgID,
-			Type:         sims.SimType(simPoolResp.Sim.SimType),
+			Type:         1,
 			Status:       sims.SimStatusInactive,
 			IsPhysical:   simPoolResp.Sim.IsPhysical,
 		}
@@ -1059,7 +1059,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		packageRepo.On("GetOverlap", pkg).
 			Return([]db.Package{
-				db.Package{}, db.Package{},
+				{}, {},
 			}, nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil)

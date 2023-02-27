@@ -141,7 +141,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	} else {
 		remoteSimPoolResp, err := simPoolSvc.Get(ctx,
-			&simpoolpb.GetRequest{IsPhysicalSim: false, SimType: simpoolpb.SimType(simType)})
+			&simpoolpb.GetRequest{IsPhysicalSim: false, SimType: simType.String()})
 
 		if err != nil {
 			return nil, err
