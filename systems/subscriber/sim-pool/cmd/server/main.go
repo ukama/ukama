@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/gofrs/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/num30/config"
 	pkg "github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
