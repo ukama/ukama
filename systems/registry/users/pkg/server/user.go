@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -38,7 +38,7 @@ func NewUserService(userRepo db.UserRepo, orgService pkg.OrgClientProvider) *Use
 }
 
 func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	logrus.Infof("Adding user %v", req)
+	log.Infof("Adding user %v", req)
 
 	user := &db.User{
 		Email: req.User.Email,
@@ -48,7 +48,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	}
 
 	err := u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
-		logrus.Infof("Adding user %s as member of default org", user.Uuid)
+		log.Infof("Adding user %s as member of default org", user.Uuid)
 
 		svc, err := u.orgService.GetClient()
 		if err != nil {
@@ -131,7 +131,7 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	}
 
 	err = u.userRepo.Update(user, func(user *db.User, tx *gorm.DB) error {
-		logrus.Infof("Deactivating remote org user %s", userUUID)
+		log.Infof("Deactivating remote org user %s", userUUID)
 
 		svc, err := u.orgService.GetClient()
 		if err != nil {

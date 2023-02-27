@@ -19,7 +19,6 @@ import (
 
 	provider "github.com/ukama/ukama/systems/registry/users/pkg/providers"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 
@@ -67,7 +66,7 @@ func initConfig() {
 		// output config in debug mode
 		b, err := yaml.Marshal(svcConf)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 
@@ -88,7 +87,7 @@ func initDb() sql.Db {
 
 	if usersDB.Migrator().HasTable(&db.User{}) {
 		if err := usersDB.First(&db.User{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.Info("Iniiialzing users table")
+			log.Info("Iniiialzing users table")
 			var ukamaUUID uuid.UUID
 			var err error
 
