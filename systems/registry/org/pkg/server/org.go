@@ -155,13 +155,7 @@ func (u *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 
 func (r *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
-	orgID, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", err.Error())
-	}
-
-	org, err := r.orgRepo.Get(orgID)
+	org, err := r.orgRepo.GetByName(req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
