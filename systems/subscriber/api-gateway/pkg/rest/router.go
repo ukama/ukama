@@ -192,21 +192,7 @@ func DeleteFile(fileName string) error {
 }
 
 func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*simPoolPb.UploadResponse, error) {
-	resp, err := http.Get("https://raw.githubusercontent.com/ukama/ukama/subscriber-system/systems/subscriber/docs/template/SimPool.csv")
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	f, err := os.Create("test.csv")
-	if err != nil {
-		return nil, err
-	}
-
-	defer f.Close()
-
-	// data, err := ioutil.ReadAll(c.Request.Body)
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := ioutil.ReadAll(c.Request.Body)
 	c.Request.Body.Close()
 	if err != nil {
 		return nil, err

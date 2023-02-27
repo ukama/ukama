@@ -193,7 +193,7 @@ func Test_Add(t *testing.T) {
 				Iccid:          "10101010",
 				Msisdn:         "01010101",
 				IsAllocated:    false,
-				SimType:        "ukama_data",
+				SimType:        ParseType("ukama_data"),
 				SmDpAddress:    "123456789",
 				ActivationCode: "0000",
 				IsPhysical:     true,

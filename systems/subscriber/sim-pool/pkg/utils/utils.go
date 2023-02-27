@@ -69,7 +69,7 @@ func RawSimToPb(r []RawSim, simType string) []db.Sim {
 			SmDpAddress:    value.SmDpAddress,
 			ActivationCode: value.ActivationCode,
 			IsPhysical:     value.IsPhysical == "TRUE",
-			SimType:        simType,
+			SimType:        db.ParseType(simType),
 			QrCode:         value.QrCode,
 		})
 	}

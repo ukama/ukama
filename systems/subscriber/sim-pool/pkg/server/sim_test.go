@@ -25,7 +25,7 @@ func TestGetStats_Success(t *testing.T) {
 	mockRepo.On("GetSimsByType", mock.Anything).Return([]db.Sim{{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
-		SimType:        "inter_mno_data",
+		SimType:        db.ParseType("ukama_data"),
 		SmDpAddress:    "http://localhost:8080",
 		IsAllocated:    false,
 		ActivationCode: "123456",
@@ -129,7 +129,7 @@ func TestGet_Success(t *testing.T) {
 	mockRepo.On("Get", mock.Anything, mock.Anything).Return(&db.Sim{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
-		SimType:        "inter_mno_data",
+		SimType:        db.ParseType("ukama_data"),
 		SmDpAddress:    "http://localhost:8080",
 		ActivationCode: "123456",
 		IsPhysical:     false,
@@ -163,7 +163,7 @@ func TestGetByIccid_Success(t *testing.T) {
 	mockRepo.On("GetByIccid", reqMock.Iccid).Return(&db.Sim{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
-		SimType:        "inter_mno_data",
+		SimType:        db.ParseType("ukama_data"),
 		SmDpAddress:    "http://localhost:8080",
 		ActivationCode: "123456",
 		IsPhysical:     false,

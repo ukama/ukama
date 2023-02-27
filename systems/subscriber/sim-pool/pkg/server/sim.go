@@ -117,7 +117,7 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		Iccid:          p.Iccid,
 		Msisdn:         p.Msisdn,
 		IsAllocated:    p.IsAllocated,
-		SimType:        p.SimType,
+		SimType:        p.SimType.String(),
 		SmDpAddress:    p.SmDpAddress,
 		ActivationCode: p.ActivationCode,
 		CreatedAt:      p.CreatedAt.String(),

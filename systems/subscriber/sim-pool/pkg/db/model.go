@@ -13,7 +13,7 @@ type Sim struct {
 	Msisdn         string
 	IsAllocated    bool
 	IsFailed       bool
-	SimType        string
+	SimType        SimType
 	SmDpAddress    string
 	ActivationCode string
 	QrCode         string
