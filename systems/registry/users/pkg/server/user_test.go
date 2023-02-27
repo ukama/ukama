@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/registry/users/mocks"
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
@@ -42,19 +42,19 @@ func TestUserService_Add(t *testing.T) {
 
 func TestUserService_Get(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
-	userUUID := uuid.NewString()
+	userUUID := uuid.NewV4()
 
-	userRepo.On("Get", uuid.MustParse(userUUID)).Return(&db.User{
-		Uuid: uuid.MustParse(userUUID),
+	userRepo.On("Get", userUUID).Return(&db.User{
+		Uuid: userUUID,
 	}, nil)
 
 	t.Run("UserFound", func(tt *testing.T) {
 		srv := NewUserService(userRepo, nil)
 
-		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID})
+		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID.String()})
 
 		assert.NoError(t, err)
-		assert.Equal(t, userUUID, user.GetUser().Uuid)
+		assert.Equal(t, userUUID.String(), user.GetUser().Uuid)
 		userRepo.AssertExpectations(t)
 	})
 }
@@ -71,21 +71,21 @@ func TestUserService_Get(t *testing.T) {
 
 func TestUserService_Deactivate(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
-	userUUID := uuid.NewString()
+	userUUID := uuid.NewV4()
 
-	userRepo.On("Get", uuid.MustParse(userUUID)).Return(&db.User{
-		Uuid: uuid.MustParse(userUUID),
+	userRepo.On("Get", userUUID).Return(&db.User{
+		Uuid: userUUID,
 	}, nil)
 
 	userRepo.On("Update", mock.MatchedBy(func(u *db.User) bool {
-		return u.Uuid.String() == userUUID
+		return u.Uuid.String() == userUUID.String()
 	}), mock.Anything).Return(nil)
 
 	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
 		srv := NewUserService(userRepo, nil)
 
 		_, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
-			UserUuid: userUUID,
+			UserUuid: userUUID.String(),
 		})
 
 		assert.NoError(t, err, "Error deactivating user")
@@ -279,7 +279,7 @@ func TestUserService_Validation_Update(t *testing.T) {
 
 			// test update request
 			ru := &pb.UpdateRequest{
-				UserUuid: uuid.NewString(),
+				UserUuid: uuid.NewV4().String(),
 				User: &pb.UserAttributes{
 					Phone: test.user.Phone,
 					Email: test.user.Email,

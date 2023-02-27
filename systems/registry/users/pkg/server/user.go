@@ -6,8 +6,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 
-	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 
@@ -44,7 +44,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		Email: req.User.Email,
 		Name:  req.User.Name,
 		Phone: req.User.Phone,
-		Uuid:  uuid.New(),
+		Uuid:  uuid.NewV4(),
 	}
 
 	err := u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
@@ -74,7 +74,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	uuid, err := uuid.Parse(req.UserUuid)
+	uuid, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -88,7 +88,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 }
 
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
-	uuid, err := uuid.Parse(req.UserUuid)
+	uuid, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -110,7 +110,7 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 }
 
 func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest) (*pb.DeactivateResponse, error) {
-	userUUID, err := uuid.Parse(req.UserUuid)
+	userUUID, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -156,7 +156,7 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	userUUID, err := uuid.Parse(req.UserUuid)
+	userUUID, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}

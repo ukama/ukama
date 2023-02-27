@@ -4,9 +4,9 @@ import (
 	"errors"
 	"os"
 
-	"github.com/google/uuid"
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/users/pkg/server"
 	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
@@ -92,7 +92,7 @@ func initDb() sql.Db {
 			var ukamaUUID uuid.UUID
 			var err error
 
-			if ukamaUUID, err = uuid.Parse(os.Getenv("UKAMA_UUID")); err != nil {
+			if ukamaUUID, err = uuid.FromString(os.Getenv("UKAMA_UUID")); err != nil {
 				log.Fatalf("Database initialization failed, need valid UKAMA UUID env var. Error: %v", err)
 			}
 
