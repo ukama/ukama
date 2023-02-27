@@ -4,6 +4,7 @@ import (
 	"os"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/server"
 
 	"github.com/num30/config"
@@ -13,15 +14,15 @@ import (
 
 	"github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version"
 
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
-
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mbc "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	generated "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 
 	"google.golang.org/grpc"
 )
@@ -68,24 +69,23 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	// instanceId := os.Getenv("POD_NAME")
 
-	// mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-	// 	pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-	// 	serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-	// 	serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-	// 	serviceConfig.MsgClient.RetryCount,
-	// 	serviceConfig.MsgClient.ListenerRoutes)
+	if pkg.InstanceId == "" {
+		inst := uuid.NewV4()
+		pkg.InstanceId = inst.String()
+	}
 
-	// log.Debugf("MessageBus Client is %+v", mbClient)
+	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, pkg.InstanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 
-		srv := server.NewBaseRateServer(db.NewBaseRateRepo(gormdb))
+		srv := server.NewBaseRateServer(db.NewBaseRateRepo(gormdb), mbClient)
 		generated.RegisterBaseRatesServiceServer(s, srv)
 	})
 
-	// go msgBusListener(mbClient)
+	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 

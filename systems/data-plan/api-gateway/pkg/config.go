@@ -43,7 +43,7 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout:  3 * time.Second,
 			Package:  "package:9090",
-			BaseRate: "0.0.0.0:9095",
+			BaseRate: "base-rate:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

@@ -63,10 +63,7 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 	if pkg.InstanceId == "" {
-		inst, err := uuid.NewV4()
-		if err != nil {
-			log.Fatalf("Failed to genrate instanceId. Error %s", err.Error())
-		}
+		inst := uuid.NewV4()
 		pkg.InstanceId = inst.String()
 	}
 

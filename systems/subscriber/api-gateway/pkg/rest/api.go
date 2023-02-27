@@ -72,6 +72,7 @@ type SimPoolRemoveSimReq struct {
 }
 
 type SimPoolUploadSimReq struct {
+	SimType string `form:"sim_type" json:"sim_type" path:"sim_type" binding:"required" validate:"required"`
 }
 
 type SimPoolAddSimReq struct {

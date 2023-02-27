@@ -214,7 +214,7 @@ func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (
 
 	pbResp, err := r.clients.sp.UploadSimsToSimPool(&simPoolPb.UploadRequest{
 		SimData: data,
-		SimType: simPoolPb.SimType_ALL,
+		SimType: req.SimType,
 	})
 
 	if err != nil {
@@ -406,7 +406,7 @@ func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*simPoolPb.AddRequest, error) {
 			IsPhysical:     iter.IsPhysicalSim,
 			QrCode:         iter.QrCode,
 			SmDpAddress:    iter.SmDpAddress,
-			SimType:        simPoolPb.SimType(simPoolPb.SimType_value[iter.SimType]),
+			SimType:        iter.SimType,
 		}
 	}
 	pbReq := &simPoolPb.AddRequest{

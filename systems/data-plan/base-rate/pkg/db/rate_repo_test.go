@@ -71,7 +71,7 @@ func Test_Rate_Get(t *testing.T) {
 				"2G",
 				"3G",
 				"",
-				"INTER_MNO_DATA",
+				3,
 				"2023-10-10",
 			)
 
@@ -127,7 +127,7 @@ func Test_Rates_Get(t *testing.T) {
 				"2G",
 				"3G",
 				"",
-				"INTER_MNO_DATA",
+				3,
 				"2023-10-10",
 			)
 		}
@@ -151,7 +151,7 @@ func Test_Rates_Get(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		rates, err := r.GetBaseRates("Tycho crater", "", "", "INTER_MNO_DATA")
+		rates, err := r.GetBaseRates("Tycho crater", "", "", SimTypeUkamaData)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -159,18 +159,18 @@ func Test_Rates_Get(t *testing.T) {
 	})
 }
 
-func Test_Rate_Upload(t *testing.T) {
+func Test_Rate_Add(t *testing.T) {
 	var rate_uuid = uuid.NewV4()
-	t.Run("UploadRates", func(t *testing.T) {
+	t.Run("AddRates", func(t *testing.T) {
 		var db *extsql.DB
 
 		rates := []Rate{{
 			Uuid:        rate_uuid,
 			Country:     "Tycho crater",
-			Data:        "$0.4",
-			EffectiveAt: "2023-10-10",
+			Data:        "1024",
+			EffectiveAt: "2009-11-10T23:00:00",
 			Network:     "Multi Tel",
-			SimType:     "INTER_MNO_DATA",
+			SimType:     3,
 			X2g:         "",
 			X3g:         "",
 			Apn:         "",
@@ -188,11 +188,11 @@ func Test_Rate_Upload(t *testing.T) {
 		assert.NoError(t, err)
 		mock.ExpectBegin()
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Country, rates[0].Network,
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rate_uuid, rates[0].Country, rates[0].Network,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), rates[0].Data,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), rates[0].EffectiveAt, sqlmock.AnyArg(), rates[0].SimType).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+			WillReturnRows(sqlmock.NewRows([]string{"uuid"}).AddRow(rate_uuid))
 
 		mock.ExpectCommit()
 
