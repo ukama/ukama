@@ -77,7 +77,11 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
-
+	route := u.baseRoutingKey.SetAction("add").SetObject("user").MustBuild()
+	err = u.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.AddResponse{User: dbUserToPbUser(user)}, nil
 }
 
@@ -159,7 +163,11 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
-
+	route := u.baseRoutingKey.SetAction("deactivate").SetObject("user").MustBuild()
+	err = u.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.DeactivateResponse{User: dbUserToPbUser(user)}, nil
 }
 
@@ -187,7 +195,11 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
-
+	route := u.baseRoutingKey.SetAction("delete").SetObject("user").MustBuild()
+	err = u.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.DeleteResponse{}, nil
 }
 

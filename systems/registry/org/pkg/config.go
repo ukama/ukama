@@ -28,7 +28,7 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
-		UsersHost         string           `default:"users:9090"`
+	UsersHost         string           `default:"users:9090"`
 
 }
 

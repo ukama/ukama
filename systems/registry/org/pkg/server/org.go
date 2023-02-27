@@ -84,6 +84,11 @@ func (r *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
+	route := r.baseRoutingKey.SetAction("add").SetObject("org").MustBuild()
+	err = r.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 
 	return &pb.AddResponse{Org: dbOrgToPbOrg(org)}, nil
 }
@@ -190,6 +195,7 @@ func (r *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
+	
 
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
@@ -223,7 +229,11 @@ func (r *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
-
+	route := r.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
+	err = r.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
@@ -319,7 +329,11 @@ func (r *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
-
+	route := r.baseRoutingKey.SetAction("delete").SetObject("member").MustBuild()
+	err = r.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.MemberResponse{}, nil
 }
 
