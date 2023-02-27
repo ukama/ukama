@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/grpc"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/data-plan/package/mocks"
@@ -21,10 +21,10 @@ import (
 // Success case
 func TestPackageServer_GetPackages_Success(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	packageUUID := uuid.NewV4().String()
+	packageUUID := uuid.NewV4()
 
 	var mockFilters = &pb.GetPackageRequest{
-		Uuid: packageUUID,
+		Uuid: packageUUID.String(),
 	}
 	s := NewPackageServer(packageRepo)
 	packageRepo.On("Get", packageUUID).Return(&db.Package{
@@ -40,9 +40,9 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 func TestPackageServer_GetPackages_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(packageRepo)
-	packageUUID := uuid.NewV4().String()
+	packageUUID := uuid.NewV4()
 	var mockFilters = &pb.GetPackageRequest{
-		Uuid: packageUUID,
+		Uuid: packageUUID.String(),
 	}
 	packageRepo.On("Get", packageUUID).Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
 	pkg2, err := s.Get(context.TODO(), mockFilters)
@@ -174,19 +174,21 @@ func TestPackageServer_UpdatePackage_Error(t *testing.T) {
 
 // // End Update package //
 
-// // Delete package //
-// // Success case
+// Delete package //
+// Success case
 // func TestPackageServer_DeletePackage_Success(t *testing.T) {
-// packageRepo := &mocks.PackageRepo{}
-// s := NewPackageServer(packageRepo)
-// packageUUID := uuid.NewString()
-// var mockFilters = &pb.DeletePackageRequest{
-// Uuid: packageUUID,
-// }
-// packageRepo.On("Delete", uuid.MustParse(packageUUID)).Return(nil)
-// _, err := s.Delete(context.TODO(), mockFilters)
-// assert.NoError(t, err)
-// packageRepo.AssertExpectations(t)
+// 	packageRepo := &mocks.PackageRepo{}
+// 	s := NewPackageServer(packageRepo)
+// 	packageUUID := uuid.NewV4()
+// 	var mockFilters = &pb.DeletePackageRequest{
+// 		Uuid: packageUUID.String(),
+// 	}
+// 	packageRepo.On("Delete", packageUUID).Return(db.Package{
+// 		Uuid: packageUUID,
+// 	}, nil)
+// 	_, err := s.Delete(context.TODO(), mockFilters)
+// 	assert.NoError(t, err)
+// 	packageRepo.AssertExpectations(t)
 // }
 
 // Error case: OrgID 0

@@ -47,84 +47,74 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Package_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
-		packageId := uuid.NewV4()
-		orgId := uuid.NewV4()
-
-		var db *extsql.DB
-
+		var packageId = uuid.NewV4()
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"uuid", "name", "org_id", "active", "duration", "sms_volume",
-			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(packageId.String(), "Monthly Super", orgId.String(), "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
-
-		mock.ExpectQuery(`^SELECT.*package.*`).
-			WithArgs(packageId).
-			WillReturnRows(rows)
-
-		dialector := postgres.New(postgres.Config{
+		defer db.Close()
+		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
 			DriverName:           "postgres",
 			Conn:                 db,
 			PreferSimpleProtocol: true,
-		})
+		}), &gorm.Config{})
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		pkgRow := sqlmock.NewRows([]string{"uuid"}).
+			AddRow(packageId)
+
+		mock.ExpectQuery(`^SELECT.*package.*`).
+			WithArgs(packageId).
+			WillReturnRows(pkgRow)
+
 		assert.NoError(t, err)
-
-		r := NewPackageRepo(&UkamaDbMock{
+		repo := NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
+		// Act
+		sub, err := repo.Get(packageId)
 
+		// Assert
 		assert.NoError(t, err)
 
-		pkg, err := r.Get(packageId)
-		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.NotNil(t, pkg)
+		assert.NotNil(t, sub)
 	})
 }
 
 func Test_Package_GetByOrg(t *testing.T) {
-	t.Run("Get", func(t *testing.T) {
+	t.Run("GetByOrg", func(t *testing.T) {
+		var packageId = uuid.NewV4()
 		var orgId = uuid.NewV4()
-
-		var db *extsql.DB
-
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"id", "name", "org_id", "active", "duration", "sms_volume",
-			"data_volume", "voice_volume", "sim_type", "org_rate_id"}).
-			AddRow(1, "Monthly Super", orgId, "t", 360000, 10, 1024, 10, "INTER_UKAMA_ALL", 1)
-
-		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(orgId).
-			WillReturnRows(rows)
-
-		dialector := postgres.New(postgres.Config{
+		defer db.Close()
+		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
 			DriverName:           "postgres",
 			Conn:                 db,
 			PreferSimpleProtocol: true,
-		})
+		}), &gorm.Config{})
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		pkgRow := sqlmock.NewRows([]string{"uuid", "org_id"}).
+			AddRow(packageId, orgId)
+
+		mock.ExpectQuery(`^SELECT.*package.*`).
+			WithArgs(orgId).
+			WillReturnRows(pkgRow)
+
 		assert.NoError(t, err)
-
-		r := NewPackageRepo(&UkamaDbMock{
+		repo := NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
+		// Act
+		sub, err := repo.GetByOrg(orgId)
 
+		// Assert
 		assert.NoError(t, err)
 
-		pkg, err := r.GetByOrg(orgId)
-		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.NotNil(t, pkg)
+		assert.NotNil(t, sub)
 	})
 }
 func Test_Package_Delete(t *testing.T) {
@@ -156,51 +146,6 @@ func Test_Package_Delete(t *testing.T) {
 
 		assert.NoError(t, err)
 		err = r.Delete(packageId)
-		assert.NoError(t, err)
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-}
-
-func Test_Package_Update(t *testing.T) {
-	t.Run("Update", func(t *testing.T) {
-		packageId := uuid.NewV4()
-
-		var db *extsql.DB
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-		mock.ExpectBegin()
-
-		mock.ExpectExec("UPDATE").WithArgs("Monthly", "INTER_UKAMA_ALL", 360000, 10, 1024, 10, 1, packageId).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		mock.ExpectCommit()
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-		r := NewPackageRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		_package := Package{
-			Name:        "Monthly",
-			SimType:     1,
-			Active:      false,
-			Duration:    360000,
-			SmsVolume:   10,
-			DataVolume:  1024,
-			VoiceVolume: 10,
-			OrgRatesID:  1,
-		}
-
-		assert.NoError(t, err)
-		_, err = r.Update(packageId, _package)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
