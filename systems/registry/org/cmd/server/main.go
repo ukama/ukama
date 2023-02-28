@@ -89,6 +89,7 @@ func initDb() sql.Db {
 func runGrpcServer(gormdb sql.Db) {
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
+		svcConf.OrgName,
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

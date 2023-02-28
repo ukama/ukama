@@ -37,7 +37,7 @@ func TestOrgServer_AddOrg(t *testing.T) {
 		Uuid: ownerUUID,
 	}, nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo)
+	s := NewOrgServer(orgRepo, userRepo, "")
 
 	// Act
 	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
@@ -59,7 +59,7 @@ func TestOrgServer_GetOrg(t *testing.T) {
 
 	orgRepo.On("Get", mock.Anything).Return(&db.Org{ID: orgID}, nil).Once()
 
-	s := NewOrgServer(orgRepo, nil)
+	s := NewOrgServer(orgRepo, nil, "")
 	orgResp, err := s.Get(context.TODO(), &pb.GetRequest{Id: orgID.String()})
 
 	assert.NoError(t, err)
@@ -70,7 +70,7 @@ func TestOrgServer_GetOrg(t *testing.T) {
 func TestOrgServer_AddOrg_fails_without_owner_uuid(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil)
+	s := NewOrgServer(orgRepo, nil, "")
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
 		Org: &pb.Organization{Name: testOrgName},
 	})
@@ -82,7 +82,7 @@ func TestOrgServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
 	owner := "org-1"
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil)
+	s := NewOrgServer(orgRepo, nil, "")
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
 		Org: &pb.Organization{Owner: owner},
 	})
