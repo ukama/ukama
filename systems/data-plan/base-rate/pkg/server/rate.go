@@ -10,6 +10,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
@@ -27,8 +28,11 @@ type BaseRateServer struct {
 }
 
 func NewBaseRateServer(baseRateRepo db.BaseRateRepo, msgBus mb.MsgBusServiceClient) *BaseRateServer {
-	return &BaseRateServer{baseRateRepo: baseRateRepo, msgBus: msgBus}
-
+	return &BaseRateServer{
+		baseRateRepo:   baseRateRepo,
+		msgBus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+	}
 }
 
 func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
@@ -95,8 +99,6 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		logrus.Error("error inserting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
-
-	// Publish message to msgbus
 
 	route := b.baseRoutingKey.SetActionUpdate().SetObject("rate").MustBuild()
 	err = b.msgBus.PublishRequest(route, req)

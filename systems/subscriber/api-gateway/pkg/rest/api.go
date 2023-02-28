@@ -124,7 +124,7 @@ type SimListResp struct {
 
 type AllocateSimReq struct {
 	SubscriberId string `json:"subscriber_id" validate:"required`
-	SimToken     string `json:"sim_token" validate:"required`
+	SimToken     string `json:"sim_token"`
 	PackageId    string `json:"package_id" validate:"required`
 	NetworkId    string `json:"network_id" validate:"required`
 	SimType      string `json:"sim_type" validate:"required"`

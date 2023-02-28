@@ -21,7 +21,8 @@ type SimPoolServer struct {
 }
 
 func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
-	return &SimPoolServer{simRepo: simRepo,
+	return &SimPoolServer{
+		simRepo:        simRepo,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }

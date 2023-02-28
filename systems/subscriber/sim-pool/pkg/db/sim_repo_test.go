@@ -83,7 +83,7 @@ func Test_GetSimsByType(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		sp, err := r.GetSimsByType("ukama_data")
+		sp, err := r.GetSimsByType(1)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

@@ -9,20 +9,24 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type PackageServer struct {
-	packageRepo       db.PackageRepo
-	msgbus            mb.MsgBusServiceClient
-	packageRoutingKey msgbus.RoutingKeyBuilder
+	packageRepo    db.PackageRepo
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
 }
 
-func NewPackageServer(packageRepo db.PackageRepo) *PackageServer {
-	return &PackageServer{packageRepo: packageRepo}
+func NewPackageServer(packageRepo db.PackageRepo, msgBus mb.MsgBusServiceClient) *PackageServer {
+	return &PackageServer{
+		packageRepo:    packageRepo,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
 
 func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
@@ -110,7 +114,7 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := p.packageRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
+	route := p.baseRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
 	err = p.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -145,7 +149,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := p.packageRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
+	route := p.baseRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
 	err = p.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())

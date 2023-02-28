@@ -62,22 +62,30 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	if pkg.InstanceId == "" {
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
 		inst := uuid.NewV4()
-		pkg.InstanceId = inst.String()
+		instanceId = inst.String()
 	}
 
-	// mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, pkg.InstanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
+	srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), mbClient)
+	nSrv := server.NewSimPoolEventServer(db.NewSimRepo(gormdb))
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-
-		srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), nil)
-		nSrv := server.NewSimPoolEventServer(db.NewSimRepo(gormdb))
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 		pb.RegisterSimServiceServer(s, srv)
-
 	})
-	// go msgBusListener(mbClient)
+
+	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }
@@ -86,7 +94,6 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
-
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}

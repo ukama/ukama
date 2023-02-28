@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/num30/config"
@@ -35,7 +36,6 @@ func main() {
 	runGrpcServer(registryDb)
 }
 
-// initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -66,7 +66,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
-		/* used on local machines */
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
@@ -74,9 +73,9 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		logrus.Fatalf("Network Client initilization failed. Error: %v", err.Error())
 	}
-	// mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	// logrus.Debugf("MessageBus Client is %+v", mbClient)
+	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
 	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
 
@@ -85,17 +84,15 @@ func runGrpcServer(gormdb sql.Db) {
 		pb.RegisterRegistryServiceServer(s, srv)
 
 	})
-	// go msgBusListener(mbClient)
+	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		logrus.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
-
 	if err := m.Start(); err != nil {
 		logrus.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}

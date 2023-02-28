@@ -14,7 +14,7 @@ type Config struct {
 	Metrics          *uconf.Metrics    `default:"{}"`
 	Timeout          time.Duration     `default:"3s"`
 	HeathCheck       HeathCheckRoutine `default:"{}"`
-	System           string            `default:"data_plan"`
+	System           string            `default:"subscriber"`
 }
 
 type HeathCheckRoutine struct {
