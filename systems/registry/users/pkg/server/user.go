@@ -22,7 +22,6 @@ import (
 )
 
 const uuidParsingError = "Error parsing UUID"
-const ukamaOrgID = 1
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
@@ -57,7 +56,6 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 
 		_, err = svc.RegisterUser(ctx, &orgpb.RegisterUserRequest{
 			UserUuid: user.Uuid.String(),
-			OrgId:    ukamaOrgID,
 		})
 		if err != nil {
 			return err
