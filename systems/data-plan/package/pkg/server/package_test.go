@@ -59,7 +59,7 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetByOrgPackageRequest{
-		OrgId: orgId.String(),
+		OrgID: orgId.String(),
 	}
 	s := NewPackageServer(packageRepo)
 
@@ -87,7 +87,7 @@ func TestPackageServer_GetPackageByOrg_Error(t *testing.T) {
 
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetByOrgPackageRequest{
-		OrgId: orgId.String(),
+		OrgID: orgId.String(),
 	}
 	s := NewPackageServer(packageRepo)
 
@@ -113,7 +113,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active: true,
 		Name:   "daily-pack",
-		OrgId:  uuid.NewV4().String(),
+		OrgID:  uuid.NewV4().String(),
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, ActPackage.Package.Active)
@@ -132,7 +132,7 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active: true,
 		Name:   "daily-pack",
-		OrgId:  uuid.NewV4().String(),
+		OrgID:  uuid.NewV4().String(),
 	})
 	assert.Error(t, err)
 	assert.Nil(t, ActPackage)

@@ -12,7 +12,9 @@ test:
 	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
 
 gen:
-	mockery --all --recursive
+	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
+		package.proto
+	mockery --all --recursive --dir ./pkg
 
 clean:
 	rm pb/gen/*.go

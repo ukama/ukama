@@ -46,9 +46,9 @@ func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb
 	return resp, nil
 }
 func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
-	logrus.Infof("GetPackage by Org: %v ", req.GetOrgId())
+	logrus.Infof("GetPackage by Org: %v ", req.GetOrgID())
 
-	orgID, err := uuid.FromString(req.GetOrgId())
+	orgID, err := uuid.FromString(req.GetOrgID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of org uuid. Error %s", err.Error())
@@ -67,7 +67,7 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 	return packageList, nil
 }
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
-	orgID, err := uuid.FromString(req.GetOrgId())
+	orgID, err := uuid.FromString(req.GetOrgID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of org uuid. Error %s", err.Error())
@@ -83,7 +83,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
-		OrgRatesID:  uint(req.GetOrgRatesId()),
+		OrgRatesID:  uint(req.GetOrgRatesID()),
 	}
 	err = p.packageRepo.Add(_package)
 	if err != nil {
@@ -130,7 +130,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
-		OrgRatesID:  uint(req.GetOrgRatesId()),
+		OrgRatesID:  uint(req.GetOrgRatesID()),
 	}
 
 	packageID, err := uuid.FromString(req.GetUuid())
@@ -168,14 +168,14 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	return &pb.Package{
 		Uuid:        p.Uuid.String(),
 		Name:        p.Name,
-		OrgId:       p.OrgID.String(),
+		OrgID:       p.OrgID.String(),
 		Active:      p.Active,
 		Duration:    uint64(p.Duration),
 		SmsVolume:   int64(p.SmsVolume),
-		OrgRatesId:  uint64(p.OrgRatesID),
+		OrgRatesID:  uint64(p.OrgRatesID),
 		DataVolume:  int64(p.DataVolume),
 		VoiceVolume: int64(p.VoiceVolume),
-		SimType:     pb.SimType(p.SimType),
+		SimType:     p.SimType.String(),
 		CreatedAt:   p.CreatedAt.String(),
 		UpdatedAt:   p.UpdatedAt.String(),
 		DeletedAt:   p.DeletedAt.Time.String(),

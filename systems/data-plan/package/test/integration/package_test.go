@@ -61,7 +61,7 @@ func Test_FullFlow(t *testing.T) {
 			OrgID:       "5b5c3f5e-1f3b-4723-8f99-fe0ed6c539d2",
 			Active:      true,
 			Duration:    1,
-			SimType:     "INTER_MNO_ALL",
+			SimType:     "test",
 			SmsVolume:   20,
 			DataVolume:  12,
 			VoiceVolume: 34,

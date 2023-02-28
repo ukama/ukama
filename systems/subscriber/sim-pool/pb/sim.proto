@@ -63,7 +63,7 @@ message UploadRequest{
     string simType = 2 [json_name = "sim_type"]; /// SimType of sim
 }
 message UploadResponse {
-    repeated Sim sim = 1; /// Slice of sims added in sim pool
+    repeated string iccid = 1; /// Slice of sims id added in sim pool
 }
 message Sim{
     uint64 id = 1;

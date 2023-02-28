@@ -184,13 +184,13 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
 		Uuid:        req.Id,
 		Name:        req.Name,
-		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
+		SimType:     req.SimType,
 		Active:      req.Active,
 		Duration:    req.Duration,
 		SmsVolume:   req.SmsVolume,
 		DataVolume:  req.DataVolume,
 		VoiceVolume: req.VoiceVolume,
-		OrgRatesId:  req.OrgRatesId,
+		OrgRatesID:  req.OrgRatesId,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -204,14 +204,14 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
 	pack := &pb.AddPackageRequest{
 		Name:        req.Name,
-		OrgId:       req.OrgId,
+		OrgID:       req.OrgId,
 		Duration:    req.Duration,
-		OrgRatesId:  req.OrgRatesId,
+		OrgRatesID:  req.OrgRatesId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,
 		SmsVolume:   req.SmsVolume,
-		SimType:     pb.SimType(pb.SimType_value[req.SimType]),
+		SimType:     req.SimType,
 	}
 
 	return p.clients.d.AddPackage(pack)

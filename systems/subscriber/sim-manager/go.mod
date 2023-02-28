@@ -6,7 +6,7 @@ replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
 
-replace github.com/ukama/ukama/systems/data-plan/package => ../../data-plan/package
+// replace github.com/ukama/ukama/systems/data-plan/package => ../../data-plan/package
 
 replace github.com/ukama/ukama/systems/subscriber/test-agent => ../test-agent
 

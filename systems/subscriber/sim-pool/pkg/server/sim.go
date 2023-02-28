@@ -53,7 +53,7 @@ func (p *SimPoolServer) GetByIccid(ctx context.Context, req *pb.GetByIccidReques
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetSimStats : %v ", req.GetSimType())
 
-	sim, err := p.simRepo.GetSimsByType(req.SimType)
+	sim, err := p.simRepo.GetSimsByType(db.ParseType(req.SimType))
 	if err != nil {
 		logrus.Error("error getting a sim pool stats" + err.Error())
 
@@ -81,6 +81,7 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 	a, _ := utils.ParseBytesToRawSim(req.SimData)
 	s := utils.RawSimToPb(a, req.GetSimType())
 	err := p.simRepo.Add(s)
+	logrus.Info("ADDING SIMS: ", s, err)
 	if err != nil {
 		logrus.Error("error while Upload sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
@@ -90,7 +91,12 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	return &pb.UploadResponse{Sim: dbSimsToPbSim(s)}, nil
+	iccids := []string{}
+	for _, u := range s {
+		iccids = append(iccids, u.Iccid)
+	}
+
+	return &pb.UploadResponse{Iccid: iccids}, nil
 }
 
 func (p *SimPoolServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {

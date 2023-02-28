@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -183,14 +182,6 @@ func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*simPo
 	return pbResp, nil
 }
 
-func DeleteFile(fileName string) error {
-	e := os.Remove(fileName)
-	if e != nil {
-		return e
-	}
-	return nil
-}
-
 func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*simPoolPb.UploadResponse, error) {
 	data, err := ioutil.ReadAll(c.Request.Body)
 	c.Request.Body.Close()
@@ -284,6 +275,7 @@ func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.Al
 		SimToken:     req.SimToken,
 		PackageID:    req.PackageId,
 		NetworkID:    req.NetworkId,
+		SimType:      req.SimType,
 	}
 	res, err := r.clients.sm.AllocateSim(&simReq)
 	if err != nil {
