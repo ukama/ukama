@@ -5,7 +5,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -124,45 +123,69 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 	}
 	return nil
 }
-func PushMetrics(metricJob, metricName string, metricType string, metricLabels map[string]string, metricValue float64) {
-	labelDimensions := make([]string, 0, len(metricLabels))
 
-	for key := range metricLabels {
-		labelDimensions = append(labelDimensions, key)
-	}
 
-	if collectors, ok := metricCollectors[metricJob]; ok {
-		for _, collector := range collectors {
-			if collector.Name == metricName {
-				// Metric collector exists, set metric value
-				collector.SetMetric(metricValue, prometheus.Labels(metricLabels))
-				return
-			}
-		}
-	}
+func PushMetrics(metricJob string, metrics []struct {
+    Name   string
+    Type   string
+    Labels map[string]string
+    Value  float64
+}) {
+    // Extract the label keys from the first metric in the slice
+    labelDimensions := make([]string, 0, len(metrics[0].Labels))
+    for key := range metrics[0].Labels {
+        labelDimensions = append(labelDimensions, key)
+    }
 
-	metric := NewMetrics(metricName, metricType)
-	err := metric.InitializeMetric(metricName, MetricConfig{
-		Name:   metricName,
-		Type:   string(metricType),
-		Labels: metricLabels,
-	}, labelDimensions)
-	if err != nil {
-		logrus.Errorf("Could not initialize metric collector: %s", err.Error())
-		return
-	}
+    // Initialize a slice of metrics collectors for this job
+    var collectors []*Metrics
+    var ok bool
+    if collectors, ok = metricCollectors[metricJob]; !ok {
+        collectors = make([]*Metrics, 0, len(metrics))
+    }
 
-	metricCollectors[metricJob] = append(metricCollectors[metricJob], metric)
+    // Iterate over each metric in the slice and add it to the collectors
+    for _, metric := range metrics {
+        var m *Metrics
+        // Check if a collector with the same name already exists
+        for _, collector := range collectors {
+            if collector.Name == metric.Name {
+                m = collector
+                break
+            }
+        }
+        if m == nil {
+            // Create a new collector if one doesn't exist
+            m = NewMetrics(metric.Name, metric.Type)
+            err := m.InitializeMetric(metric.Name, MetricConfig{
+                Name:   metric.Name,
+                Type:   metric.Type,
+                Labels: metric.Labels,
+            }, labelDimensions)
+            if err != nil {
+                log.Errorf("Could not initialize metric collector: %s", err.Error())
+                continue
+            }
+            collectors = append(collectors, m)
+        }
+        // Set the value for the current metric
+        err := m.SetMetric(metric.Value, prometheus.Labels(metric.Labels))
+        if err != nil {
+            log.Errorf("Could not set metric value: %s", err.Error())
+            continue
+        }
+    }
 
-	err = metric.SetMetric(metricValue, prometheus.Labels(metricLabels))
-	if err != nil {
-		logrus.Errorf("Could not set metric value: %s", err.Error())
-		return
-	}
+    // Save the collectors for this job
+    metricCollectors[metricJob] = collectors
+    // Push each collector to the Pushgateway
+    for _, collector := range collectors {
+        if err := push.New("http://localhost:9091/", metricJob).
+            Collector(collector.collector).
+            Push(); 
 
-	if err := push.New("http://localhost:9091/", metricJob).
-		Collector(metric.collector).
-		Push(); err != nil {
-		logrus.Errorf("Could not push metric to Pushgateway: %s", err.Error())
-	}
+            err != nil {
+            log.Errorf("Could not push metric to Pushgateway: %s", err.Error())
+        }
+    }
 }

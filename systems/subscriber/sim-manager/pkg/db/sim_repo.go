@@ -132,15 +132,15 @@ func (s *simRepo) GetSimCounts() (simsCount, activeCount, deactiveCount, termina
 		return 0, 0, 0, 0, err
 	}
 
-	if err := db.Model(&Sim{}).Where("status = ?", 1).Count(&activeCount).Error; err != nil {
+	if err := db.Model(&Sim{}).Where("status = ?", SimStatusActive).Count(&activeCount).Error; err != nil {
 		return 0, 0, 0, 0, err
 	}
 
-	if err := db.Model(&Sim{}).Where("status = ?", 2).Count(&deactiveCount).Error; err != nil {
+	if err := db.Model(&Sim{}).Where("status = ?", SimStatusInactive).Count(&deactiveCount).Error; err != nil {
 		return 0, 0, 0, 0, err
 	}
 
-	if err := db.Model(&Sim{}).Where("status = ?", 3).Count(&terminatedCount).Error; err != nil {
+	if err := db.Model(&Sim{}).Where("status = ?", SimStatusTerminated).Count(&terminatedCount).Error; err != nil {
 		return 0, 0, 0, 0, err
 	}
 

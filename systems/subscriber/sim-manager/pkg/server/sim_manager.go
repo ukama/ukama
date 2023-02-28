@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"strconv"
 	"strings"
 	"time"
 
@@ -65,7 +64,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-
+	
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -263,18 +262,53 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 }
 
 func (s *SimManagerServer) GetSimCounts(ctx context.Context) error {
-	terminatedCount, simsCount, activeCount, deactiveCount, err := s.simRepo.GetSimCounts()
+	simsCount, activeCount, inactiveCount, terminatedCount,err:= s.simRepo.GetSimCounts()
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())
 		return err
 	}
-	customLabels := map[string]string{
-		"active_count":     strconv.FormatInt(activeCount, 10),
-		"deactive_count":   strconv.FormatInt(deactiveCount, 10),
-		"terminated_count": strconv.FormatInt(terminatedCount, 10),
+	
+	metrics := []struct {
+		Name   string
+		Type   string
+		Labels map[string]string
+		Value  float64
+	}{
+		{
+			Name: "number_of_subscriber",
+			Type: "gauge",
+			Labels: map[string]string{
+				"type": "total",
+			},
+			Value: float64(simsCount),
+		},
+		{
+			Name: "number_of_subscriber",
+			Type: "gauge",
+			Labels: map[string]string{
+				"type": "active",
+			},
+			Value: float64(activeCount),
+		},
+		{
+			Name: "number_of_subscriber",
+			Type: "gauge",
+			Labels: map[string]string{
+				"type": "inactive",
+			},
+			Value: float64(inactiveCount),
+		},
+		{
+			Name: "number_of_subscriber",
+			Type: "gauge",
+			Labels: map[string]string{
+				"type": "terminated",
+			},
+			Value: float64(terminatedCount),
+		},
 	}
-	utils.PushMetrics("sim", "number_of_subscriber", "gauge", customLabels, float64(simsCount))
-
+	
+	utils.PushMetrics("sim", metrics)
 	return nil
 }
 

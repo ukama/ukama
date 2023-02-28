@@ -110,7 +110,7 @@ func runGrpcServer(gormDB sql.Db) {
 		providers.NewSubscriberRegistryClientProvider(svcConf.SubsRegistry, svcConf.Timeout),
 		providers.NewSimPoolClientProvider(svcConf.SimPool, svcConf.Timeout),
 		svcConf.Key,
-		nil,
+		mbClient,
 	)
 
 	fsInterceptor := interceptor.NewFakeSimInterceptor(svcConf.TestAgent, svcConf.Timeout)
@@ -122,7 +122,7 @@ func runGrpcServer(gormDB sql.Db) {
 	grpcServer.ExtraUnaryInterceptors = []grpc.UnaryServerInterceptor{
 		fsInterceptor.UnaryServerInterceptor}
 
-	// go msgBusListener(mbClient)
+ go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }
