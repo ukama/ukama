@@ -85,24 +85,7 @@ func initDb() sql.Db {
 
 	usersDB := d.GetGormDb()
 
-	if usersDB.Migrator().HasTable(&db.User{}) {
-		if err := usersDB.First(&db.User{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Info("Iniiialzing users table")
-			var ukamaUUID uuid.UUID
-			var err error
-
-			if ukamaUUID, err = uuid.FromString(os.Getenv("UKAMA_UUID")); err != nil {
-				log.Fatalf("Database initialization failed, need valid UKAMA UUID env var. Error: %v", err)
-			}
-
-			usersDB.Create(&db.User{
-				Uuid:  ukamaUUID,
-				Name:  "Ukama Root",
-				Email: "hello@ukama.com",
-				Phone: "0000000000",
-			})
-		}
-	}
+	initUsersDB(usersDB)
 
 	return d
 }
@@ -110,11 +93,32 @@ func initDb() sql.Db {
 func runGrpcServer(gormdb sql.Db) {
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
 
-		provider.NewOrgClientProvider(svcConf.OrgHost),
+		provider.NewOrgClientProvider(svcConf.Org),
 	)
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		gen.RegisterUserServiceServer(s, userService)
 	})
 
 	grpcServer.StartServer()
+}
+
+func initUsersDB(usersDB *gorm.DB) {
+	if usersDB.Migrator().HasTable(&db.User{}) {
+		if err := usersDB.First(&db.User{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Iniiialzing users table")
+			var ownerUUID uuid.UUID
+			var err error
+
+			if ownerUUID, err = uuid.FromString(svcConf.OrgOWnerUUID); err != nil {
+				log.Fatalf("Database initialization failed, need valid %s envronment variable. Error: %v", "ORGOWNERUUID", err)
+			}
+
+			usersDB.Create(&db.User{
+				Uuid:  ownerUUID,
+				Name:  svcConf.OrgOWnerName,
+				Email: svcConf.OrgOWnerEmail,
+				Phone: svcConf.OrgOWnerPhone,
+			})
+		}
+	}
 }
