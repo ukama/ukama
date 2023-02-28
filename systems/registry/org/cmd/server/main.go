@@ -27,8 +27,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-const defaultOrgName = "ukama"
-
 var svcConf *pkg.Config
 
 func main() {
@@ -83,31 +81,43 @@ func initDb() sql.Db {
 
 	orgDB := d.GetGormDb()
 
+	initOrgDB(orgDB)
+
+	return d
+}
+
+func runGrpcServer(gormdb sql.Db) {
+	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
+		db.NewUserRepo(gormdb),
+	)
+
+	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
+		pb.RegisterOrgServiceServer(s, regServer)
+	})
+
+	grpcServer.StartServer()
+}
+
+func initOrgDB(orgDB *gorm.DB) {
 	if orgDB.Migrator().HasTable(&db.Org{}) {
 		if err := orgDB.First(&db.Org{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Iniiialzing orgs table")
 
-			var orgOwnerUUID uuid.UUID
+			var OwnerUUID uuid.UUID
 			var err error
 
-			if orgOwnerUUID, err = uuid.FromString(os.Getenv("DEFAULT_ORG_OWNER_UUID")); err != nil {
-				log.Fatalf("Database initialization failed, need valid %q var. Error: %v", "DEFAULT_ORG_OWNER_UUID", err)
-			}
-
-			orgName := os.Getenv("DEFAULT_ORG_NAME")
-			if orgName == "" {
-				log.Infof("No env var set for %q. Using default value %q", "DEFAULT_ORG_NAME", defaultOrgName)
-				orgName = defaultOrgName
+			if OwnerUUID, err = uuid.FromString(svcConf.OrgOwnerUUID); err != nil {
+				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGOWNERUUID", err)
 			}
 
 			org := &db.Org{
 				ID:    uuid.NewV4(),
-				Name:  orgName,
-				Owner: orgOwnerUUID,
+				Name:  svcConf.OrgName,
+				Owner: OwnerUUID,
 			}
 
 			usr := &db.User{
-				Uuid: orgOwnerUUID,
+				Uuid: OwnerUUID,
 			}
 
 			if err := orgDB.Transaction(func(tx *gorm.DB) error {
@@ -133,18 +143,4 @@ func initDb() sql.Db {
 			}
 		}
 	}
-
-	return d
-}
-
-func runGrpcServer(gormdb sql.Db) {
-	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
-		db.NewUserRepo(gormdb),
-	)
-
-	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
-		pb.RegisterOrgServiceServer(s, regServer)
-	})
-
-	grpcServer.StartServer()
 }
