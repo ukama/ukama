@@ -13,8 +13,33 @@ type Config struct {
 	Server            rest.HttpConfig
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
+	MetricsServer     config.Metrics `mapstructure:"metrics"`
 	MetricsStore      string         `default:"http://localhost:8080"`
+	MetricsConfig     *MetricsConfig
+}
+
+type Metric struct {
+	NeedRate bool   `json:"needRate"`
+	Metric   string `json:"metric"`
+	// Range vector duration used in Rate func https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations
+	// if NeedRate is false then this field is ignored
+	// Example: 1d or 5h, or 30s
+	RateInterval string `json:"rateInterval"`
+
+	// consider adding aggregation function as a parameter
+}
+
+type MetricsConfig struct {
+	Metrics             map[string]Metric `json:"metrics"`
+	MetricsServer       string
+	Timeout             time.Duration
+	DefaultRateInterval string
+}
+
+var defaultPrometheusMetric = map[string]Metric{
+	"cpu":    Metric{false, "trx_soc_cpu_usage", ""},
+	"memory": Metric{false, "trx_memory_ddr_used", ""},
+	"users":  Metric{false, "trx_lte_core_active_ue", ""},
 }
 
 type Kratos struct {
@@ -54,6 +79,13 @@ func NewConfig() *Config {
 			Port: 8080,
 			Cors: defaultCors,
 		},
-		Metrics: *config.DefaultMetrics(),
+		MetricsServer: *config.DefaultMetrics(),
+
+		MetricsConfig: &MetricsConfig{
+			Metrics:             defaultPrometheusMetric,
+			MetricsServer:       "http://localhost:8080",
+			Timeout:             time.Second * 5,
+			DefaultRateInterval: "5m",
+		},
 	}
 }

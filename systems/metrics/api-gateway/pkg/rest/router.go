@@ -2,7 +2,10 @@ package rest
 
 import (
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -18,28 +21,27 @@ import (
 	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 )
 
-const METRICS_URL_PARAMETER = "metrics"
-const EXPORTER_URL_PARAMETER = "exporter"
+const METRICS_URL_PARAMETER = "/metrics"
+const SUBSCRIBER_URL_PARAMETER = "/subscriber"
+const EXPORTER_URL_PARAMETER = "/exporter"
 
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
 	config  *RouterConfig
+	m       *pkg.Metrics
 }
 
 type RouterConfig struct {
-	metricsConfig config.Metrics
-	httpEndpoints *pkg.HttpEndpoints
-	debugMode     bool
-	serverConf    *rest.HttpConfig
+	metricsServerConfig config.Metrics
+	httpEndpoints       *pkg.HttpEndpoints
+	debugMode           bool
+	serverConf          *rest.HttpConfig
+	metricsConf         *pkg.MetricsConfig
 }
 
 type Clients struct {
-	e  exporter
-	ms metrics
-}
-
-type metrics interface {
+	e exporter
 }
 
 type exporter interface {
@@ -47,21 +49,17 @@ type exporter interface {
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints, metricHost string, debug bool) *Clients {
-	var err error
 	c := &Clients{}
 	c.e = client.NewExporter(endpoints.Exporter, endpoints.Timeout)
-	c.ms, err = client.NewMetricsStore(metricHost, debug)
-	if err != nil {
-		log.Fatalf("Intialization failure %s", err.Error())
-	}
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics) *Router {
 
 	r := &Router{
 		clients: clients,
 		config:  config,
+		m:       m,
 	}
 
 	if !config.debugMode {
@@ -73,11 +71,13 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 }
 
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
+
 	return &RouterConfig{
-		metricsConfig: svcConf.Metrics,
-		httpEndpoints: &svcConf.HttpServices,
-		serverConf:    &svcConf.Server,
-		debugMode:     svcConf.DebugMode,
+		metricsServerConfig: svcConf.MetricsServer,
+		httpEndpoints:       &svcConf.HttpServices,
+		serverConf:          &svcConf.Server,
+		metricsConf:         svcConf.MetricsConfig,
+		debugMode:           svcConf.DebugMode,
 	}
 }
 
@@ -94,12 +94,32 @@ func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "metrics system ", "metrics system version v1")
 
+	// metrics
 	metrics := v1.Group(METRICS_URL_PARAMETER, "metrics", "metrics")
-	metrics.GET("", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
+	metrics.GET("", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
+
+	metrics.GET("/subscriber/:subscriber/:metric", []fizz.OperationOption{
+		func(info *openapi.OperationInfo) {
+			info.Description = "Get metrics for a susbcriber. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+		}}, tonic.Handler(r.subscriberMetricHandler, http.StatusOK))
+
+	metrics.GET("/sim/:simid/:metric", []fizz.OperationOption{
+		func(info *openapi.OperationInfo) {
+			info.Description = "Get metrics for a sim. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+		}}, tonic.Handler(r.simMetricHandler, http.StatusOK))
+
+	metrics.GET("/orgs/:org/metrics/:metric", []fizz.OperationOption{
+		func(info *openapi.OperationInfo) {
+			info.Description = "Get metrics for an org. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+		}}, tonic.Handler(r.orgMetricHandler, http.StatusOK))
+
+	metrics.GET("/networks/:networkid/metrics/:metric", []fizz.OperationOption{
+		func(info *openapi.OperationInfo) {
+			info.Description = "Get metrics for an network. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+		}}, tonic.Handler(r.networkMetricHandler, http.StatusOK))
 
 	exp := v1.Group(METRICS_URL_PARAMETER, "exporter", "exporter")
 	exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
-
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -107,6 +127,73 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Subscriber), c.Writer)
+	return httpErrorOrNil(httpCode, err)
+}
+
+func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error {
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Sim), c.Writer)
+	return httpErrorOrNil(httpCode, err)
+}
+
+func (r *Router) networkMetricHandler(c *gin.Context, in *GetNetworkMetricsInput) error {
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Org, in.Network), c.Writer)
+	return httpErrorOrNil(httpCode, err)
+}
+func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {
+	return r.m.List(), nil
+}
+
+func (r *Router) orgMetricHandler(c *gin.Context, in *GetOrgMetricsInput) error {
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Org), c.Writer)
+	return httpErrorOrNil(httpCode, err)
+}
+
+func httpErrorOrNil(httpCode int, err error) error {
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: httpCode,
+			Message:  err.Error()}
+	}
+
+	if httpCode != 200 {
+		return rest.HttpError{
+			HttpCode: httpCode,
+			Message:  "Failed to get metric"}
+	}
+	return nil
+}
+
+func (r *Router) netMetricHandler(c *gin.Context, in *GetNetworkMetricsInput) error {
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Org, in.Network), c.Writer)
+	return httpErrorOrNil(httpCode, err)
+}
+
+func (r *Router) metricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
+	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithNodeId(in.NodeID))
+}
+
+func (r *Router) requestMetricInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {
+	if !r.m.MetricsExist(filterBase.Metric) {
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Metric not found"}
+	}
+
+	to := filterBase.To
+	if to == 0 {
+		to = time.Now().Unix()
+	}
+	httpCode, err := r.m.GetMetric(strings.ToLower(filterBase.Metric), filter, &pkg.Interval{
+		Start: filterBase.From,
+		End:   to,
+		Step:  filterBase.Step,
+	}, writer)
+
+	return httpErrorOrNil(httpCode, err)
 }
 
 func (r *Router) getDummyHandler(c *gin.Context, req *DummyParameters) (*pb.DummyParameter, error) {

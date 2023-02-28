@@ -21,9 +21,14 @@ func main() {
 
 	clientSet := rest.NewClientsSet(&svcConf.Services, svcConf.MetricsStore, svcConf.DebugMode)
 
-	metrics.StartMetricsServer(&svcConf.Metrics)
+	metrics.StartMetricsServer(&svcConf.MetricsServer)
 
-	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf))
+	m, err := pkg.NewMetrics(svcConf.MetricsConfig)
+	if err != nil {
+		panic("Error creating NodeMetrics. Error: " + err.Error())
+	}
+
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), m)
 	r.Run()
 }
 

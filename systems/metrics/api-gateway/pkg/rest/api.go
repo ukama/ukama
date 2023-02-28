@@ -1,85 +1,36 @@
 package rest
 
+type GetNodeMetricsInput struct {
+	FilterBase
+	NodeID string `path:"node" validate:"required"`
+}
+
+type GetOrgMetricsInput struct {
+	Metric string `path:"metric" validate:"required"`
+	Org    string `path:"org" validate:"required"`
+}
+
+type GetNetworkMetricsInput struct {
+	Metric  string `path:"metric" validate:"required"`
+	Org     string `path:"org" validate:"required"`
+	Network string `path:"network" validate:"required"`
+}
+
+type FilterBase struct {
+	Metric string `path:"metric" validate:"required"`
+	From   int64  `query:"from" validate:"required"`
+	To     int64  `query:"to" default:"0"`      // can be omitted, if omitted the Now() is used
+	Step   uint   `query:"step" default:"3600"` // default 1 hour
+}
+
+type GetSubscriberMetricsInput struct {
+	Metric     string `path:"metric" validate:"required"`
+	Subscriber string `path:"subscriber" validate:"required"`
+}
+
+type GetSimMetricsInput struct {
+	Metric string `path:"metric" validate:"required"`
+	Sim    string `path:"sim" validate:"required"`
+}
 type DummyParameters struct {
-}
-
-type AddOrgRequest struct {
-	OrgName     string `path:"org" validate:"required"`
-	Ip          string `json:"ip" validate:"required"`
-	Certificate string `json:"certificate" validate:"required"`
-}
-
-type UpdateOrgRequest struct {
-	OrgName     string `path:"org" validate:"required"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
-}
-
-type GetOrgRequest struct {
-	OrgName string `path:"org" validate:"required"`
-}
-
-type GetOrgResponse struct {
-	OrgName     string `json:"org"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
-}
-
-type AddNodeRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	NodeId  string `path:"node" validate:"required"`
-}
-
-type DeleteNodeRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	NodeId  string `path:"node" validate:"required"`
-}
-
-type GetNodeRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	NodeId  string `path:"node" validate:"required"`
-}
-
-type AddSystemRequest struct {
-	OrgName     string `path:"org" validate:"required"`
-	SysName     string `path:"system" validate:"required"`
-	Ip          string `json:"ip" validate:"required"`
-	Certificate string `json:"certificate" validate:"required"`
-	Port        int32  `json:"port" validate:"required"`
-}
-
-type UpdateSystemRequest struct {
-	OrgName     string `path:"org" validate:"required"`
-	SysName     string `path:"system" validate:"required"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
-	Port        int32  `json:"port"`
-}
-
-type AddSystemResponse struct {
-	OrgName     string `path:"org"`
-	SysName     string `path:"system"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
-	Port        int32  `json:"port"`
-	Health      int32  `json:"health"`
-}
-
-type GetSystemRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	SysName string `path:"system" validate:"required"`
-}
-
-type GetSystemResponse struct {
-	OrgName     string `json:"org"`
-	SystemName  string `json:"system"`
-	Ip          string `json:"ip"`
-	Certificate string `json:"certificate"`
-	Port        string `json:"port"`
-	Health      int32  `json:"health"`
-}
-
-type DeleteSystemRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	SysName string `path:"system" validate:"required"`
 }
