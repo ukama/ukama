@@ -13,6 +13,7 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+	utils "github.com/ukama/ukama/systems/subscriber/registry/pkg/util"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -48,11 +49,16 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of org uuid. Error %s", err.Error())
 	}
+
+	dob, err := utils.ValidateDOB(req.GetDateOfBirth())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
 	subscriberID := uuid.NewV4()
-	// err = s.network.ValidateNetwork(networkID.String(), orgID.String())
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
-	// }
+	err = s.network.ValidateNetwork(networkID.String(), orgID.String())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
+	}
 
 	subscriber := &db.Subscriber{
 		OrgID:                 orgID,
@@ -65,7 +71,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
-		DOB:                   req.DateOfBirth.AsTime(),
+		DOB:                   dob,
 		IdSerial:              req.GetIdSerial(),
 	}
 	err = s.subscriberRepo.Add(subscriber)
@@ -75,19 +81,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}
 
 	return &pb.AddSubscriberResponse{
-		Subscriber: &pb.Subscriber{
-			OrgID:                 orgID.String(),
-			SubscriberID:          subscriberID.String(),
-			FirstName:             req.GetFirstName(),
-			LastName:              req.GetLastName(),
-			NetworkID:             networkID.String(),
-			Email:                 req.GetEmail(),
-			PhoneNumber:           req.GetPhoneNumber(),
-			Gender:                req.GetGender(),
-			Address:               req.GetAddress(),
-			ProofOfIdentification: req.GetProofOfIdentification(),
-			DateOfBirth:           req.GetDateOfBirth().String(),
-			IdSerial:              req.GetIdSerial()},
+		Subscriber: dbSubscriberToPbSubscriber(subscriber, nil),
 	}, nil
 
 }
@@ -244,20 +238,20 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 }
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberID()
-	subscriberID, error := uuid.FromString(subscriberIdReq)
+	subscriberID, err := uuid.FromString(subscriberIdReq)
 
-	if error != nil {
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of subscriber uuid. Error %s", error.Error())
+			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
 	logrus.Infof("Delete Subscriber : %v ", subscriberID)
-	er := s.subscriberRepo.Delete(subscriberID)
-	if er != nil {
-		logrus.WithError(er).Error("error while deleting subscriber")
-		return nil, grpc.SqlErrorToGrpc(er, "subscriber")
+	err = s.subscriberRepo.Delete(subscriberID)
+	if err != nil {
+		logrus.WithError(err).Error("error while deleting subscriber")
+		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
-	err := s.msgbus.PublishRequest(route, req)
+	err = s.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -303,9 +297,7 @@ func pbManagerSimsToPbSubscriberSims(s []*simMangerPb.Sim) []*pb.Sim {
 }
 
 func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscriber {
-	pbTimestamp := s.DOB.Format("2006-01-02")
 
-	// simList := []*pb.Sim{}
 	return &pb.Subscriber{
 		FirstName:             s.FirstName,
 		LastName:              s.LastName,
@@ -321,7 +313,7 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscri
 		Address:               s.Address,
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
-		DateOfBirth:           pbTimestamp,
+		DateOfBirth:           s.DOB.String(),
 	}
 
 }

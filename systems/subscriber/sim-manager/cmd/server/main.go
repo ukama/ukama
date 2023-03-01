@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var svcConf = pkg.NewConfig(pkg.ServiceName)
+var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -39,7 +39,7 @@ func main() {
 
 	initConfig()
 
-	metrics.StartMetricsServer(svcConf.Metrics)
+	metrics.StartMetricsServer(serviceConfig.Metrics)
 
 	simDB := initDb()
 
@@ -50,26 +50,26 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
+	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
-	} else if svcConf.DebugMode {
+	} else if serviceConfig.DebugMode {
 		// output config in debug mode
-		b, err := yaml.Marshal(svcConf)
+		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
 
-	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v", pkg.ServiceName, svcConf.DB, svcConf.Service, svcConf.MsgClient)
+	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v", pkg.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
 
-	pkg.IsDebugMode = svcConf.DebugMode
+	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 
-	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
 
 	err := d.Init(&db.Sim{}, &db.Package{})
 	if err != nil {
@@ -87,35 +87,35 @@ func runGrpcServer(gormDB sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName,
-		pkg.ServiceName, instanceId, svcConf.Queue.Uri,
-		svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange,
-		svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
-		svcConf.MsgClient.RetryCount,
-		svcConf.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	pckgClient, err := providers.NewPackageInfoClient(svcConf.DataPlan, pkg.IsDebugMode)
+	pckgClient, err := providers.NewPackageInfoClient(serviceConfig.DataPlan, pkg.IsDebugMode)
 	if err != nil {
 		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
-			svcConf.DataPlan, err)
+			serviceConfig.DataPlan, err)
 	}
 
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
-		adapters.NewAgentFactory(svcConf.TestAgent, svcConf.OperatorAgent, svcConf.Timeout, pkg.IsDebugMode),
+		adapters.NewAgentFactory(serviceConfig.TestAgent, serviceConfig.OperatorAgent, serviceConfig.Timeout, pkg.IsDebugMode),
 		pckgClient,
-		providers.NewSubscriberRegistryClientProvider(svcConf.SubsRegistry, svcConf.Timeout),
-		providers.NewSimPoolClientProvider(svcConf.SimPool, svcConf.Timeout),
-		svcConf.Key,
+		providers.NewSubscriberRegistryClientProvider(serviceConfig.Registry, serviceConfig.Timeout),
+		providers.NewSimPoolClientProvider(serviceConfig.SimPool, serviceConfig.Timeout),
+		serviceConfig.Key,
 		mbClient,
 	)
 
-	fsInterceptor := interceptor.NewFakeSimInterceptor(svcConf.TestAgent, svcConf.Timeout)
+	fsInterceptor := interceptor.NewFakeSimInterceptor(serviceConfig.TestAgent, serviceConfig.Timeout)
 
-	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)
 	})
 
@@ -131,7 +131,6 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
-
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}

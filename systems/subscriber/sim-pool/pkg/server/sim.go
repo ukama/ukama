@@ -21,7 +21,8 @@ type SimPoolServer struct {
 }
 
 func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoolServer {
-	return &SimPoolServer{simRepo: simRepo,
+	return &SimPoolServer{
+		simRepo:        simRepo,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
@@ -29,7 +30,7 @@ func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoo
 func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	logrus.Infof("GetSim isPhysical: %v, simType: %v", req.GetIsPhysicalSim(), req.GetSimType())
 
-	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), req.GetSimType().String())
+	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), req.GetSimType())
 	if err != nil {
 		logrus.Error("error fetching a sim " + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
@@ -52,11 +53,8 @@ func (p *SimPoolServer) GetByIccid(ctx context.Context, req *pb.GetByIccidReques
 
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	logrus.Infof("GetSimStats : %v ", req.GetSimType())
-	simType := req.SimType.String()
-	if req.GetSimType() == pb.SimType_ALL {
-		simType = ""
-	}
-	sim, err := p.simRepo.GetSimsByType(simType)
+
+	sim, err := p.simRepo.GetSimsByType(db.ParseType(req.SimType))
 	if err != nil {
 		logrus.Error("error getting a sim pool stats" + err.Error())
 
@@ -82,8 +80,9 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
 	logrus.Infof("Upload Sims to pool")
 	a, _ := utils.ParseBytesToRawSim(req.SimData)
-	s := utils.RawSimToPb(a, req.GetSimType().String())
+	s := utils.RawSimToPb(a, req.GetSimType())
 	err := p.simRepo.Add(s)
+	logrus.Info("ADDING SIMS: ", s, err)
 	if err != nil {
 		logrus.Error("error while Upload sims data" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
@@ -93,8 +92,12 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+	iccids := []string{}
+	for _, u := range s {
+		iccids = append(iccids, u.Iccid)
+	}
 
-	return &pb.UploadResponse{Sim: dbSimsToPbSim(s)}, nil
+	return &pb.UploadResponse{Iccid: iccids}, nil
 }
 
 func (p *SimPoolServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -121,11 +124,13 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		Iccid:          p.Iccid,
 		Msisdn:         p.Msisdn,
 		IsAllocated:    p.IsAllocated,
+		SimType:        p.SimType.String(),
 		SmDpAddress:    p.SmDpAddress,
 		ActivationCode: p.ActivationCode,
 		CreatedAt:      p.CreatedAt.String(),
-		UpdatedAt:      p.UpdatedAt.String(),
 		DeletedAt:      p.DeletedAt.Time.String(),
-		SimType:        pb.SimType(pb.SimType_value[p.SimType]),
+		UpdatedAt:      p.UpdatedAt.String(),
+		IsPhysical:     p.IsPhysical,
+		QrCode:         p.QrCode,
 	}
 }

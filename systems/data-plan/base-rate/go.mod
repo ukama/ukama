@@ -2,16 +2,13 @@ module github.com/ukama/ukama/systems/data-plan/base-rate
 
 go 1.18
 
-replace github.com/ukama/ukama/systems/common => /Users/salman/Documents/Github/Ukama/ukama/systems/common
+replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/init/msgClient => /Users/salman/Documents/Github/Ukama/ukama/systems/init/msgClient
-
-replace github.com/ukama/ukama => /Users/salman/Documents/Github/Ukama/ukama
+replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/golang/protobuf v1.5.2
-	github.com/google/uuid v1.3.0
 	github.com/jszwec/csvutil v1.7.1
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
@@ -25,6 +22,8 @@ require (
 	gorm.io/driver/postgres v1.4.6
 	gorm.io/gorm v1.24.3
 )
+
+require github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -64,6 +63,7 @@ require (
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -72,7 +72,6 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
-	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/net v0.4.0 // indirect

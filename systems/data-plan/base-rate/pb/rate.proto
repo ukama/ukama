@@ -1,6 +1,6 @@
 syntax = "proto3";
 option go_package = "pb/gen";
-package ukama.rate.v1;
+package ukama.data_plan.rate.v1;
 
 import "validator.proto";
 
@@ -14,8 +14,8 @@ message GetBaseRatesRequest{
     string provider =2;
     uint64 to  =3;
     uint64 from  =4;
-    SimType sim_type=5;
-    string effectiveAt = 6;
+    string simType=5 [json_name = "sim_type"];
+    string effectiveAt = 6 [json_name = "effective_at"];
 }
 message GetBaseRatesResponse {
     repeated Rate rates = 1;
@@ -24,43 +24,35 @@ message GetBaseRateResponse{
     Rate rate =1;
 }
 message GetBaseRateRequest{
-    string rateUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "rate_uuid"];
+    string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
 message UploadBaseRatesRequest {
-    string fileURL = 1;
-    string effectiveAt = 2;
-    SimType simType = 3;
+    string fileURL = 1 [json_name = "file_url"];
+    string effectiveAt = 2 [json_name = "effective_at"];
+    string simType = 3 [json_name = "sim_type"];
 }
 message UploadBaseRatesResponse {
     repeated Rate rate = 1;
 }
 message Rate{
-    string uuid= 1 [(validator.field) = {uuid_ver: 0}];
-    uint64 id =2;
-    string country=3;
-    string network = 4;
-    string vpmn =5;
-    string imsi=6;
-    string sms_mo=7;
-    string sms_mt =8;
-    string data =9;
-    string  _2g=10;
-    string _3g=11;
-    string _5g=12;
-    string lte=13; 
-    string lte_m=14;
-    string apn=15; 
-    string created_at=16;
-    string deleted_at=17;
-    string updated_at=18;
-    string effective_at=19;
-    string end_at=20;
-    string sim_type=21;
-}
-
-enum SimType {
-    INTER_NONE=0;
-    INTER_MNO_DATA=1;
-    INTER_MNO_ALL=2;
-    INTER_UKAMA_ALL=3;
+    string uuid= 1 [(validator.field) = {uuid_ver: 4}];
+    string country=2;
+    string network = 3;
+    string vpmn =4;
+    string imsi=5;
+    string smsMo=6 [json_name = "sms_mo"];
+    string smsMt =7 [json_name = "sms_mt"];
+    string data =8;
+    string  _2g=9;
+    string _3g=10;
+    string _5g=11;
+    string lte=12; 
+    string lteM=13 [json_name = "lte_m"];
+    string apn=14; 
+    string createdAt=15 [json_name = "created_at"];
+    string deletedAt=16 [json_name = "deleted_at"];
+    string updatedAt=17 [json_name = "updated_at"];
+    string effectiveAt=18 [json_name = "effective_at"];
+    string endAt=19 [json_name = "end_at"];
+    string simType=20 [json_name = "sim_type"];
 }

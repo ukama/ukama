@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/jszwec/csvutil"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 )
@@ -56,23 +56,23 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {
 	var rates []db.Rate
 	for _, value := range slice {
 		rates = append(rates, db.Rate{
-			Uuid:         uuid.New(),
-			Country:      value.Country,
-			Network:      value.Network,
-			Vpmn:         value.Vpmn,
-			Imsi:         value.Imsi,
-			Sms_mo:       value.Sms_mo,
-			Sms_mt:       value.Sms_mt,
-			Data:         value.Data,
-			X2g:          value.X2g,
-			X3g:          value.X3g,
-			X5g:          value.X5g,
-			Lte:          value.Lte,
-			Lte_m:        value.Lte_m,
-			Apn:          value.Apn,
-			Effective_at: effective_at,
-			End_at:       "",
-			Sim_type:     sim_type,
+			Uuid:        uuid.NewV4(),
+			Country:     value.Country,
+			Network:     value.Network,
+			Vpmn:        value.Vpmn,
+			Imsi:        value.Imsi,
+			SmsMo:       value.Sms_mo,
+			SmsMt:       value.Sms_mt,
+			Data:        value.Data,
+			X2g:         value.X2g,
+			X3g:         value.X3g,
+			X5g:         value.X5g,
+			Lte:         value.Lte,
+			LteM:        value.Lte_m,
+			Apn:         value.Apn,
+			EffectiveAt: effective_at,
+			EndAt:       "",
+			SimType:     db.ParseType(sim_type),
 		})
 	}
 	return rates

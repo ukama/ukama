@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/num30/config"
@@ -22,7 +23,6 @@ import (
 	"github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	"google.golang.org/grpc"
 )
@@ -36,7 +36,6 @@ func main() {
 	runGrpcServer(registryDb)
 }
 
-// initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -67,7 +66,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
-		/* used on local machines */
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
@@ -82,7 +80,7 @@ func runGrpcServer(gormdb sql.Db) {
 	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), mbClient, simMClient, networkClient)
+		srv := server.NewSubscriberServer(db.NewSubscriberRepo(gormdb), nil, simMClient, networkClient)
 		pb.RegisterRegistryServiceServer(s, srv)
 
 	})
@@ -92,11 +90,9 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		logrus.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
-
 	if err := m.Start(); err != nil {
 		logrus.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}

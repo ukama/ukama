@@ -7,7 +7,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,7 +19,6 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -140,7 +138,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	} else {
 		remoteSimPoolResp, err := simPoolSvc.Get(ctx,
-			&simpoolpb.GetRequest{IsPhysicalSim: false, SimType: simpoolpb.SimType(simType)})
+			&simpoolpb.GetRequest{IsPhysicalSim: false, SimType: simType.String()})
 
 		if err != nil {
 			return nil, err
@@ -173,26 +171,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
-		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
-
 		sim.ID = uuid.NewV4()
-		startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
-		endDate := startDate.Add(time.Duration(packageInfo.Duration))
-
-		firstPackage := &sims.Package{
-			ID:        uuid.NewV4(),
-			SimID:     sim.ID,
-			StartDate: startDate,
-			EndDate:   endDate,
-			PlanID:    packageID,
-			IsActive:  false,
-		}
-
-		// Adding package to new allocated sim
-		err := db.NewPackageRepo(txDb).Add(firstPackage, nil)
-		if err != nil {
-			return err
-		}
 
 		return nil
 	})
@@ -202,8 +181,29 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"failed to allocate sim to subscriber. Error %s", err.Error())
 	}
 
+	firstPackage := &sims.Package{
+		PlanID:   packageID,
+		IsActive: false,
+	}
+
+	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
+		firstPackage.ID = uuid.NewV4()
+		firstPackage.SimID = sim.ID
+
+		firstPackage.StartDate = time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
+		firstPackage.EndDate = firstPackage.StartDate.Add(time.Duration(packageInfo.Duration))
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to add initial package to newlly allocated sim. Error %s", err.Error())
+	}
+
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 
+	// Uncomment this when msgclient is back
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
@@ -223,6 +223,17 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 	sim, err := s.simRepo.Get(simID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim ID: %q", sim.Type, req.SimID)
+	}
+
+	_, err = simAgent.GetSim(ctx, sim.Iccid)
+	if err != nil {
+		return nil, err
 	}
 
 	return &pb.GetSimResponse{Sim: dbSimToPbSim(sim)}, nil
@@ -493,7 +504,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			}
 
 			// then deactivate it
-			result := tx.Model(currentActivePackage).Update("is_active", false)
+			result := tx.Model(currentActivePackage).Update("active", false)
 			if result.RowsAffected == 0 {
 				return gorm.ErrRecordNotFound
 			}

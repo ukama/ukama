@@ -57,14 +57,14 @@ func Test_GetSimsByType(t *testing.T) {
 			"10101010",
 			"01010101",
 			false,
-			"inter_ukama_all",
+			"ukama_data",
 			"123456789",
 			"0000",
 			true,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs("inter_ukama_all").
+			WithArgs("ukama_data").
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -83,7 +83,7 @@ func Test_GetSimsByType(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		sp, err := r.GetSimsByType("inter_ukama_all")
+		sp, err := r.GetSimsByType(1)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -104,7 +104,7 @@ func Test_GetByIccid(t *testing.T) {
 			iccid,
 			"01010101",
 			false,
-			"inter_ukama_all",
+			"ukama_data",
 			"123456789",
 			"0000",
 			true,
@@ -150,14 +150,14 @@ func Test_Get(t *testing.T) {
 			"10101010",
 			"01010101",
 			false,
-			"inter_ukama_all",
+			"ukama_data",
 			"123456789",
 			"0000",
 			true,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(false, true, "inter_ukama_all").
+			WithArgs(false, true, "ukama_data").
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -176,7 +176,7 @@ func Test_Get(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		sp, err := r.Get(true, "inter_ukama_all")
+		sp, err := r.Get(true, "ukama_data")
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -193,7 +193,7 @@ func Test_Add(t *testing.T) {
 				Iccid:          "10101010",
 				Msisdn:         "01010101",
 				IsAllocated:    false,
-				SimType:        "inter_ukama_all",
+				SimType:        ParseType("ukama_data"),
 				SmDpAddress:    "123456789",
 				ActivationCode: "0000",
 				IsPhysical:     true,

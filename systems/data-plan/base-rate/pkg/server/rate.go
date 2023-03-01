@@ -2,13 +2,15 @@ package server
 
 import (
 	"context"
+	"strings"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/utils"
 	validations "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
@@ -20,19 +22,21 @@ const uuidParsingError = "Error parsing UUID"
 
 type BaseRateServer struct {
 	baseRateRepo   db.BaseRateRepo
-	msgbus         *mb.MsgBusClient
+	msgBus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedBaseRatesServiceServer
 }
 
-func NewBaseRateServer(baseRateRepo db.BaseRateRepo) *BaseRateServer {
-	return &BaseRateServer{baseRateRepo: baseRateRepo}
-
+func NewBaseRateServer(baseRateRepo db.BaseRateRepo, msgBus mb.MsgBusServiceClient) *BaseRateServer {
+	return &BaseRateServer{
+		baseRateRepo:   baseRateRepo,
+		msgBus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+	}
 }
 
 func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
-	logrus.Infof("Get rate %v", req.GetRateUuid())
-	uuid, err := uuid.Parse(req.RateUuid)
+	uuid, err := uuid.FromString(req.GetUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -51,7 +55,7 @@ func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateReq
 
 func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("GetBaseRates where country =  %s and network =%s and simType =%s", req.GetCountry(), req.GetProvider(), req.GetSimType())
-	rates, err := b.baseRateRepo.GetBaseRates(req.GetCountry(), req.GetProvider(), req.GetEffectiveAt(), req.GetSimType().String())
+	rates, err := b.baseRateRepo.GetBaseRates(req.GetCountry(), req.GetProvider(), req.GetEffectiveAt(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Error("error while getting rates" + err.Error())
@@ -67,9 +71,10 @@ func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesR
 func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
 	fileUrl := req.GetFileURL()
 	effectiveAt := req.GetEffectiveAt()
-	simType := req.GetSimType().String()
+	strType := strings.ToLower(req.GetSimType())
+	simType := db.ParseType(strType)
 
-	if !validations.IsValidUploadReqArgs(fileUrl, effectiveAt, simType) {
+	if !validations.IsValidUploadReqArgs(fileUrl, effectiveAt, simType.String()) {
 		logrus.Infof("Please supply valid fileURL: %s, effectiveAt: %s and simType: %s.",
 			fileUrl, effectiveAt, simType)
 		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
@@ -87,8 +92,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	rates := utils.ParseToModel(data, effectiveAt, simType)
-
+	rates := utils.ParseToModel(data, effectiveAt, simType.String())
 	err = b.baseRateRepo.UploadBaseRates(rates)
 
 	if err != nil {
@@ -96,10 +100,8 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
-	// Publish message to msgbus
-
-	route := b.baseRoutingKey.SetActionUpdate().SetObject("base-rate").MustBuild()
-	err = b.msgbus.PublishRequest(route, req)
+	route := b.baseRoutingKey.SetActionUpdate().SetObject("rate").MustBuild()
+	err = b.msgBus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -121,7 +123,7 @@ func dbratesToPbRates(rates []db.Rate) []*pb.Rate {
 
 func dbRatesToPbRates(r *db.Rate) *pb.Rate {
 	return &pb.Rate{
-		Id:          uint64(r.ID),
+		Uuid:        r.Uuid.String(),
 		X2G:         r.X2g,
 		X3G:         r.X3g,
 		X5G:         r.X5g,
@@ -130,14 +132,14 @@ func dbRatesToPbRates(r *db.Rate) *pb.Rate {
 		Vpmn:        r.Vpmn,
 		Imsi:        r.Imsi,
 		Data:        r.Data,
-		LteM:        r.Lte_m,
-		SmsMo:       r.Sms_mo,
-		SmsMt:       r.Sms_mt,
-		EndAt:       r.End_at,
+		LteM:        r.LteM,
+		SmsMo:       r.SmsMo,
+		SmsMt:       r.SmsMt,
+		EndAt:       r.EndAt,
 		Network:     r.Network,
 		Country:     r.Country,
-		SimType:     r.Sim_type,
-		EffectiveAt: r.Effective_at,
+		SimType:     r.SimType.String(),
+		EffectiveAt: r.EffectiveAt,
 		CreatedAt:   r.CreatedAt.String(),
 		UpdatedAt:   r.UpdatedAt.String(),
 		DeletedAt:   r.DeletedAt.Time.String(),

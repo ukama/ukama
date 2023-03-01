@@ -1,6 +1,7 @@
 package db
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
@@ -35,6 +36,7 @@ func (s *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) er
 			}
 		}
 
+		log.Info("Adding sim", sim)
 		result := tx.Create(sim)
 		if result.Error != nil {
 			return result.Error
@@ -71,7 +73,7 @@ func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 func (s *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkID: networkID}).Preload("Package", "is_active is true").Find(&sims)
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkID: networkID}).Preload("Package", "active is true").Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}

@@ -14,7 +14,7 @@ func TestSimPoolStats_Success(t *testing.T) {
 			Msisdn:         "2345678901",
 			ActivationCode: "123456",
 			IsAllocated:    false,
-			SimType:        "inter_ukama_all",
+			SimType:        db.ParseType("ukama_data"),
 			Iccid:          "1234567890123456789",
 			SmDpAddress:    "http://localhost:8080",
 		},
@@ -22,7 +22,7 @@ func TestSimPoolStats_Success(t *testing.T) {
 			Msisdn:         "2345678901",
 			ActivationCode: "123456",
 			IsAllocated:    true,
-			SimType:        "inter_ukama_all",
+			SimType:        db.ParseType("ukama_data"),
 			Iccid:          "1234567890123456789",
 			SmDpAddress:    "http://localhost:8080",
 		},
@@ -37,7 +37,7 @@ func TestPbParseToModel_Success(t *testing.T) {
 	sims := PbParseToModel([]*pb.AddSim{{
 		Iccid:          "1234567890123456789",
 		Msisdn:         "2345678901",
-		SimType:        pb.SimType(pb.SimType_value["inter_ukama_all"]),
+		SimType:        "ukama_data",
 		SmDpAddress:    "http://localhost:8080",
 		ActivationCode: "123456",
 	}})
@@ -52,7 +52,7 @@ func TestBytesToRawSim_Success(t *testing.T) {
 		SmDpAddress:    "http://localhost:8080",
 		ActivationCode: "123456",
 		IsPhysical:     "true",
-	}}, "inter_ukama_all")
+	}}, "ukama_data")
 	assert.NotNil(t, rsims)
 	assert.Equal(t, rsims[0].Iccid, "1234567890123456789")
 }

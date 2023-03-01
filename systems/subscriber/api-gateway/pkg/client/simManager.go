@@ -10,15 +10,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-/* temp */
-type SMDummyReq struct {
-	Dummy string
-}
-
-type SMDummyResp struct {
-	Dummy string
-}
-
 type SimManager struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration

@@ -15,7 +15,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	SimManagerHost   string `default:"sim-manager:9090"`
-	NetworkHost      string `default:"http://localhost:8085"`
+	NetworkHost      string `default:"http://registry-api-gw:8080"`
 }
 
 func NewConfig(name string) *Config {
@@ -25,7 +25,7 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
-			Timeout: 7 * time.Second,
+			Timeout: 5 * time.Second,
 		},
 	}
 }
