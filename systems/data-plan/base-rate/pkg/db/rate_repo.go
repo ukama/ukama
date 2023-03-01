@@ -32,7 +32,7 @@ func (u *baseRateRepo) GetBaseRate(uuid uuid.UUID) (*Rate, error) {
 
 func (b *baseRateRepo) GetBaseRates(country, network, effectiveAt string, simType SimType) ([]Rate, error) {
 	var rates []Rate
-	result := b.Db.GetGormDb().Where(&Rate{Country: country, Network: network, SimType: SimType(simType), EffectiveAt: effectiveAt}).Find(&rates)
+	result := b.Db.GetGormDb().Where(&Rate{Country: country, Network: network, SimType: simType, EffectiveAt: effectiveAt}).Find(&rates)
 
 	if result.Error != nil {
 		return nil, result.Error

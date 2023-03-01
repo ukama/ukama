@@ -31,7 +31,6 @@ func NewPackageRepo(db sql.Db) PackageRepo {
 
 func (p *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.DB) error) error {
 	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		log.Info("Running nested function")
 		if nestedFunc != nil {
 			nestErr := nestedFunc(pkg, tx)
 			if nestErr != nil {

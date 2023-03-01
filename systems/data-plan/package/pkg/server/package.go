@@ -80,7 +80,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	_package := &db.Package{
 		Uuid:        uuid.NewV4(),
 		Name:        req.GetName(),
-		SimType:     1,
+		SimType:     db.ParseType(req.GetSimType()),
 		OrgID:       orgID,
 		Active:      req.Active,
 		Duration:    uint(req.GetDuration()),
@@ -126,9 +126,9 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	logrus.Infof("Update Package Uuid: %v, Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v",
 		req.Uuid, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
-	_package := db.Package{
+	_package := &db.Package{
 		Name:        req.GetName(),
-		SimType:     1,
+		SimType:     db.ParseType(req.GetSimType()),
 		Active:      req.Active,
 		Duration:    uint(req.GetDuration()),
 		SmsVolume:   uint(req.GetSmsVolume()),
@@ -143,7 +143,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	_packages, err := p.packageRepo.Update(packageID, _package)
+	err = p.packageRepo.Update(packageID, _package)
 	if err != nil {
 		logrus.Error("error while getting updating a package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
@@ -155,9 +155,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.UpdatePackageResponse{
-		Package: dbPackageToPbPackages(_packages),
-	}, nil
+	return &pb.UpdatePackageResponse{Package: dbPackageToPbPackages(_package)}, nil
 }
 
 func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {

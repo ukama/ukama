@@ -13,7 +13,7 @@ type AddPackageRequest struct {
 }
 
 type UpdatePackageRequest struct {
-	Id          string `json:"id" validation:"required"`
+	Uuid        string `json:"uuid" validation:"required"`
 	Name        string `json:"name" validation:"required"`
 	Duration    uint64 `json:"duration" validation:"required"`
 	Active      bool   `json:"active" validation:"required"`

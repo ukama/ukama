@@ -64,7 +64,7 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 	s := NewPackageServer(packageRepo, nil)
 
 	packageRepo.On("GetByOrg", orgId).Return([]db.Package{{
-		SimType:     1,
+		SimType:     db.SimTypeTest,
 		Name:        "Daily-pack",
 		OrgID:       orgId,
 		Active:      true,

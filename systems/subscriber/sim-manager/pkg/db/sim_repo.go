@@ -29,7 +29,6 @@ func NewSimRepo(db sql.Db) SimRepo {
 
 func (s *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		log.Info("Running nested function")
 		if nestedFunc != nil {
 			nestErr := nestedFunc(sim, tx)
 			if nestErr != nil {

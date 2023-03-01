@@ -71,7 +71,7 @@ func Test_Rate_Get(t *testing.T) {
 				"2G",
 				"3G",
 				"",
-				3,
+				SimTypeTest,
 				"2023-10-10",
 			)
 
@@ -127,7 +127,7 @@ func Test_Rates_Get(t *testing.T) {
 				"2G",
 				"3G",
 				"",
-				3,
+				SimTypeTest,
 				"2023-10-10",
 			)
 		}
@@ -170,7 +170,7 @@ func Test_Rate_Add(t *testing.T) {
 			Data:        "1024",
 			EffectiveAt: "2009-11-10T23:00:00",
 			Network:     "Multi Tel",
-			SimType:     3,
+			SimType:     SimTypeTest,
 			X2g:         "",
 			X3g:         "",
 			Apn:         "",

@@ -4,6 +4,7 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type PackageRepo interface {
@@ -11,7 +12,7 @@ type PackageRepo interface {
 	Get(uuid uuid.UUID) (*Package, error)
 	Delete(uuid uuid.UUID) error
 	GetByOrg(orgId uuid.UUID) ([]Package, error)
-	Update(uuid uuid.UUID, pkg Package) (*Package, error)
+	Update(uuid uuid.UUID, pkg *Package) error
 }
 
 type packageRepo struct {
@@ -64,11 +65,12 @@ func (r *packageRepo) Delete(uuid uuid.UUID) error {
 	return nil
 }
 
-func (b *packageRepo) Update(uuid uuid.UUID, pkg Package) (*Package, error) {
-	result := b.Db.GetGormDb().Where("uuid = ?", uuid).UpdateColumns(pkg)
-	if result.Error != nil {
-		return nil, result.Error
+func (b *packageRepo) Update(uuid uuid.UUID, pkg *Package) error {
+	d := b.Db.GetGormDb().Clauses(clause.Returning{}).Where("uuid = ?", uuid).Updates(pkg)
+	if d.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
 	}
 
-	return &pkg, nil
+	return d.Error
+
 }

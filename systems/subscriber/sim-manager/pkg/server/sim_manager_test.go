@@ -305,7 +305,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once()
 
 		simPoolClient := simPoolService.On("GetClient").
@@ -315,12 +315,12 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		simPoolResp := simPoolClient.On("Get", mock.Anything,
 			&splpb.GetRequest{IsPhysicalSim: false,
-				SimType: "test",
+				SimType: db.SimTypeTest.String(),
 			}).
 			Return(&splpb.GetResponse{
 				Sim: &splpb.Sim{
 					IsPhysical: false,
-					SimType:    "test",
+					SimType:    db.SimTypeTest.String(),
 				},
 			}, nil).Once().
 			ReturnArguments.Get(0).(*splpb.GetResponse)
@@ -329,7 +329,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberID: subscriberID,
 			NetworkID:    networkID,
 			OrgID:        orgID,
-			Type:         1,
+			Type:         db.SimTypeTest,
 			Status:       sims.SimStatusInactive,
 			IsPhysical:   simPoolResp.Sim.IsPhysical,
 		}
@@ -442,7 +442,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 					OrgID:    uuid.NewV4().String(),
 					IsActive: true,
 					Duration: 3600,
-					SimType:  "1",
+					SimType:  db.SimTypeTest.String(),
 				}, nil).Once()
 
 		s := NewSimManagerServer(nil, nil, nil,
@@ -494,7 +494,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: false,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once()
 
 		s := NewSimManagerServer(nil, nil, nil,
@@ -547,7 +547,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 					OrgID:    orgID.String(),
 					IsActive: true,
 					Duration: 3600,
-					SimType:  "0",
+					SimType:  db.SimTypeUnknown.String(),
 				}, nil).Once()
 
 		s := NewSimManagerServer(nil, nil, nil,
@@ -831,7 +831,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).
 			Once().
 			ReturnArguments.Get(0).(*providers.PackageInfo)
@@ -909,7 +909,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: false,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil)
@@ -954,7 +954,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    uuid.NewV4().String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil)
@@ -999,7 +999,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "0",
+				SimType:  db.SimTypeUnknown.String(),
 			}, nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil)
@@ -1045,7 +1045,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once().
 			ReturnArguments.Get(0).(*providers.PackageInfo)
 

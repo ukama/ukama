@@ -18,8 +18,6 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
-const TEMP_ORG_ID = "1"
-
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -182,7 +180,7 @@ func (p *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb
 func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 
 	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
-		Uuid:        req.Id,
+		Uuid:        req.Uuid,
 		Name:        req.Name,
 		SimType:     req.SimType,
 		Active:      req.Active,

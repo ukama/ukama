@@ -123,9 +123,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	if req.SimToken != "" {
-		log.Info("sim token", req.SimToken)
-		log.Info("server Key", s.key)
-
 		iccid, err := utils.GetIccidFromToken(req.SimToken, s.key)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal,
@@ -207,11 +204,11 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 
 	// Uncomment this when msgclient is back
-	// route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
-	// err = s.msgbus.PublishRequest(route, resp.Sim)
-	// if err != nil {
-	// log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	// }
+	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
+	err = s.msgbus.PublishRequest(route, resp.Sim)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 
 	return resp, nil
 }

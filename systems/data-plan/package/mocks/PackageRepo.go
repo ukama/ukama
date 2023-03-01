@@ -95,29 +95,17 @@ func (_m *PackageRepo) GetByOrg(orgId uuid.UUID) ([]db.Package, error) {
 }
 
 // Update provides a mock function with given fields: _a0, pkg
-func (_m *PackageRepo) Update(_a0 uuid.UUID, pkg db.Package) (*db.Package, error) {
+func (_m *PackageRepo) Update(_a0 uuid.UUID, pkg *db.Package) error {
 	ret := _m.Called(_a0, pkg)
 
-	var r0 *db.Package
-	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, db.Package) (*db.Package, error)); ok {
-		return rf(_a0, pkg)
-	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID, db.Package) *db.Package); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID, *db.Package) error); ok {
 		r0 = rf(_a0, pkg)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Package)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID, db.Package) error); ok {
-		r1 = rf(_a0, pkg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 type mockConstructorTestingTNewPackageRepo interface {

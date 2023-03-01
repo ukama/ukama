@@ -66,21 +66,21 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListenerRoutes)
+	// mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	// 	pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+	// 	serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+	// 	serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+	// 	serviceConfig.MsgClient.RetryCount,
+	// 	serviceConfig.MsgClient.ListenerRoutes)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	// log.Debugf("MessageBus Client is %+v", mbClient)
 
 	srv := server.NewPackageServer(db.NewPackageRepo(gormdb), nil)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterPackagesServiceServer(s, srv)
 	})
 
-	go msgBusListener(mbClient)
+	// go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }

@@ -1,7 +1,7 @@
 include ../../config.mk
 
 .PHONY: integration.test test build lint deps 
-build: gen
+build:
 	@echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/api-gateway/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/package cmd/server/main.go
 
