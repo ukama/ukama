@@ -41,15 +41,15 @@ func (_m *SimRepo) Delete(id []uint64) error {
 }
 
 // Get provides a mock function with given fields: isPhysicalSim, simType
-func (_m *SimRepo) Get(isPhysicalSim bool, simType string) (*db.Sim, error) {
+func (_m *SimRepo) Get(isPhysicalSim bool, simType db.SimType) (*db.Sim, error) {
 	ret := _m.Called(isPhysicalSim, simType)
 
 	var r0 *db.Sim
 	var r1 error
-	if rf, ok := ret.Get(0).(func(bool, string) (*db.Sim, error)); ok {
+	if rf, ok := ret.Get(0).(func(bool, db.SimType) (*db.Sim, error)); ok {
 		return rf(isPhysicalSim, simType)
 	}
-	if rf, ok := ret.Get(0).(func(bool, string) *db.Sim); ok {
+	if rf, ok := ret.Get(0).(func(bool, db.SimType) *db.Sim); ok {
 		r0 = rf(isPhysicalSim, simType)
 	} else {
 		if ret.Get(0) != nil {
@@ -57,7 +57,7 @@ func (_m *SimRepo) Get(isPhysicalSim bool, simType string) (*db.Sim, error) {
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(bool, string) error); ok {
+	if rf, ok := ret.Get(1).(func(bool, db.SimType) error); ok {
 		r1 = rf(isPhysicalSim, simType)
 	} else {
 		r1 = ret.Error(1)

@@ -52,19 +52,21 @@ func Test_GetSimsByType(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "iccid", "msisdn", "is_allocated", "sim_type", "sm_dp_address", "activation_code", "is_physical"})
-		rows.AddRow(1,
-			"10101010",
+		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
+		rows.AddRow(
+			"8910300000003540855",
 			"01010101",
 			false,
-			"ukama_data",
+			false,
+			SimTypeTest,
 			"123456789",
 			"0000",
 			true,
+			"123456789",
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs("ukama_data").
+			WithArgs(SimTypeTest).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -83,7 +85,7 @@ func Test_GetSimsByType(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		sp, err := r.GetSimsByType(1)
+		sp, err := r.GetSimsByType(SimTypeTest)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -95,19 +97,21 @@ func Test_GetByIccid(t *testing.T) {
 	t.Run("GetByIccid", func(t *testing.T) {
 
 		var db *extsql.DB
-		iccid := "10101010"
+		iccid := "8910300000003540855"
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "iccid", "msisdn", "is_allocated", "sim_type", "sm_dp_address", "activation_code", "is_physical"})
-		rows.AddRow(1,
+		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
+		rows.AddRow(
 			iccid,
 			"01010101",
 			false,
-			"ukama_data",
+			false,
+			SimTypeTest,
 			"123456789",
 			"0000",
 			true,
+			"123456789",
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
@@ -145,19 +149,21 @@ func Test_Get(t *testing.T) {
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "iccid", "msisdn", "is_allocated", "sim_type", "sm_dp_address", "activation_code", "is_physical"})
-		rows.AddRow(1,
-			"10101010",
+		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
+		rows.AddRow(
+			"8910300000003540855",
 			"01010101",
 			false,
-			"ukama_data",
+			false,
+			SimTypeTest,
 			"123456789",
 			"0000",
 			true,
+			"123456789",
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(false, true, "ukama_data").
+			WithArgs(false, true, SimTypeTest).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -176,7 +182,7 @@ func Test_Get(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		sp, err := r.Get(true, "ukama_data")
+		sp, err := r.Get(true, SimTypeTest)
 		assert.NoError(t, err)
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -190,10 +196,11 @@ func Test_Add(t *testing.T) {
 
 		sim := []Sim{
 			{
-				Iccid:          "10101010",
+				Iccid:          "8910300000003540855",
 				Msisdn:         "01010101",
 				IsAllocated:    false,
-				SimType:        ParseType("ukama_data"),
+				IsFailed:       false,
+				SimType:        SimTypeTest,
 				SmDpAddress:    "123456789",
 				ActivationCode: "0000",
 				IsPhysical:     true,

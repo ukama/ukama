@@ -30,7 +30,7 @@ func NewSimPoolServer(simRepo db.SimRepo, msgBus mb.MsgBusServiceClient) *SimPoo
 func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	logrus.Infof("GetSim isPhysical: %v, simType: %v", req.GetIsPhysicalSim(), req.GetSimType())
 
-	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), req.GetSimType())
+	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), db.ParseType(req.GetSimType()))
 	if err != nil {
 		logrus.Error("error fetching a sim " + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
