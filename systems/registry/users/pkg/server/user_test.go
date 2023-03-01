@@ -15,30 +15,6 @@ import (
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 )
 
-// func TestUserService_Add(t *testing.T) {
-// 	userRepo := &mocks.UserRepo{}
-// 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-
-// 	userRequest := &pb.User{
-// 		Name:  "Joe",
-// 		Email: "test@example.com",
-// 		Phone: "12324",
-// 	}
-
-// 	userRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
-
-// 	t.Run("AddUser", func(tt *testing.T) {
-// 		srv := NewUserService(userRepo, nil,nil)
-// 		addResp, err := srv.Add(context.TODO(), &pb.AddRequest{User: userRequest})
-// 	 msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddRequest{User: userRequest}).Return(nil).Once()
-
-// 		assert.NoError(t, err)
-// 		assert.NotEmpty(t, addResp.User.Uuid)
-// 		assert.Equal(t, userRequest.Name, addResp.User.Name)
-// 		assert.Equal(t, userRequest.Phone, addResp.User.Phone)
-// 		assert.Equal(t, userRequest.Email, addResp.User.Email)
-// 	})
-// }
 func TestUserService_Add(t *testing.T) {
     userRepo := &mocks.UserRepo{}
     msgclientRepo := &mbmocks.MsgBusServiceClient{}
