@@ -59,7 +59,7 @@ func (N *networkInfoClient) ValidateNetwork(networkID string, orgID string) erro
 
 	if !resp.IsSuccess() {
 		logrus.Tracef("Failed to fetch network info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
-		return fmt.Errorf(" Network Info failure %s", errStatus.Message)
+		return fmt.Errorf("Network Info failure %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), &network)

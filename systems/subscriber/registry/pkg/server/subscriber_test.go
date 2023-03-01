@@ -35,13 +35,13 @@ func TestAdd(t *testing.T) {
 			Email:               "johndoe@example.com",
 			PhoneNumber:         "1234567890",
 			Gender:              "Male",
+			DateOfBirth:"16-04-1995",
 			Address:             "1 Main St",
 			ProofOfIdentification: "Passport",
 			IdSerial: "123456789",
 		}
 
 		resp, err := s.Add(context.Background(), req)
-
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3", resp.Subscriber.OrgID)
