@@ -96,32 +96,6 @@ func TestUserService_Get(t *testing.T) {
 //UserAlreadyDeactivated
 //UserNotAlreadyDeactivate
 
-// func TestUserService_Deactivate(t *testing.T) {
-// 	userRepo := &mocks.UserRepo{}
-// 	userUUID := uuid.NewV4()
-// 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-
-// 	userRepo.On("Get", userUUID).Return(&db.User{
-// 		Uuid: userUUID,
-// 	}, nil)
-
-// 	userRepo.On("Update", mock.MatchedBy(func(u *db.User) bool {
-// 		return u.Uuid.String() == userUUID.String()
-// 	}), mock.Anything).Return(nil)
-
-// 	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
-// 		srv := NewUserService(userRepo, nil,msgclientRepo)
-
-// 		_, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
-// 			UserUuid: userUUID.String(),
-// 		})
-// 		msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeactivateRequest{UserUuid: userUUID.String()}).Return(nil).Once()
-
-
-// 		assert.NoError(t, err, "Error deactivating user")
-// 		userRepo.AssertExpectations(t)
-// 	})
-// }
 func TestUserService_Deactivate(t *testing.T) {
     userRepo := &mocks.UserRepo{}
     userUUID := uuid.NewV4()
