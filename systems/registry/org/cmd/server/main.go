@@ -103,6 +103,7 @@ func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)
 	})
+	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }
