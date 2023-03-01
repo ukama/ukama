@@ -67,19 +67,21 @@ func TestRegistryServer_AddNode(t *testing.T) {
 	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
 		return n.State == db.Pending && n.NodeID == nodeId
 	})).Return(nil).Once()
-
-	s := NewNodeServer(nodeRepo, msgclientRepo)
 	msgclientRepo.On("PublishRequest", "event.cloud.node.node.add",&pb.AddNodeRequest{
 		Node: &pb.Node{
 			NodeId: nodeId,
 			State:  pb.NodeState_PENDING,
+			Name:"weathered-moon",
 		},
 	}).Return(nil).Once()
+	s := NewNodeServer(nodeRepo, msgclientRepo)
+
 	// Act
 	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
 		Node: &pb.Node{
 			NodeId: nodeId,
 			State:  pb.NodeState_PENDING,
+			Name:"weathered-moon",
 		},
 	})
 
