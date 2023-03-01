@@ -97,9 +97,9 @@ func (r *Router) init() {
 	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
 	packages.GET("/", formatDoc("Get packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
-	packages.GET("/:package", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
-	packages.PATCH("/", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
-	packages.DELETE("/:package", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
+	packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
+	packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
+	packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
 }
 
@@ -159,7 +159,7 @@ func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (
 	return resp, nil
 }
 func (p *Router) getPackageHandler(c *gin.Context, req *PackagesRequest) (*pb.GetPackageResponse, error) {
-	resp, err := p.clients.d.GetPackage(req.Id)
+	resp, err := p.clients.d.GetPackage(req.Uuid)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -168,7 +168,7 @@ func (p *Router) getPackageHandler(c *gin.Context, req *PackagesRequest) (*pb.Ge
 	return resp, nil
 }
 func (p *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb.DeletePackageResponse, error) {
-	resp, err := p.clients.d.DeletePackage(req.Id)
+	resp, err := p.clients.d.DeletePackage(req.Uuid)
 	if err != nil {
 		logrus.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err})
@@ -178,7 +178,6 @@ func (p *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb
 	return resp, nil
 }
 func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
-
 	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
 		Uuid:        req.Uuid,
 		Name:        req.Name,

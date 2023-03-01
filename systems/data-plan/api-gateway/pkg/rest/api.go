@@ -13,7 +13,7 @@ type AddPackageRequest struct {
 }
 
 type UpdatePackageRequest struct {
-	Uuid        string `json:"uuid" validation:"required"`
+	Uuid        string `path:"uuid" validate:"required"`
 	Name        string `json:"name" validation:"required"`
 	Duration    uint64 `json:"duration" validation:"required"`
 	Active      bool   `json:"active" validation:"required"`
@@ -25,7 +25,7 @@ type UpdatePackageRequest struct {
 }
 
 type PackagesRequest struct {
-	Id string `form:"package" json:"package" path:"package" binding:"required" validate:"required"`
+	Uuid string `form:"uuid" json:"uuid" path:"uuid" binding:"required" validate:"required"`
 }
 
 type GetBaseRatesRequest struct {
