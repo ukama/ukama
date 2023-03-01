@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -24,14 +25,17 @@ type NodeServer struct {
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	pb.UnimplementedNodeServiceServer
+	msgbus               mb.MsgBusServiceClient
 }
 
-func NewNodeServer(nodeRepo db.NodeRepo) *NodeServer {
+func NewNodeServer(nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{nodeRepo: nodeRepo,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
+		msgbus:               msgBus,
+
 	}
 }
 
@@ -56,8 +60,11 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
-
-	// publish event and return
+	route := n.baseRoutingKey.SetAction("attach").SetObject("node").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 
 	return &pb.AttachNodesResponse{}, nil
 }
@@ -74,7 +81,11 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 	}
 
 	// publish event and return
-
+	route := n.baseRoutingKey.SetAction("detach").SetObject("node").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.DetachNodeResponse{}, nil
 }
 
@@ -101,7 +112,11 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 	}
 
 	// publish event and return
-
+	route := n.baseRoutingKey.SetAction("update").SetObject("node").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return resp, nil
 }
 
@@ -138,7 +153,11 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 	}
 
 	// publish event and return
-
+	route := n.baseRoutingKey.SetAction("update").SetObject("node").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
 }
 
@@ -203,6 +222,11 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 
 		return nil, status.Errorf(codes.Internal, "error adding the node")
 	}
+	route := n.baseRoutingKey.SetAction("add").SetObject("node").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 
 	return &pb.AddNodeResponse{Node: dbNodeToPbNode(node)}, nil
 }
@@ -218,6 +242,11 @@ func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Del
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
+	route := n.baseRoutingKey.SetAction("delete").SetObject("node").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.DeleteResponse{NodeId: req.GetNodeId()}, nil
 }
 
