@@ -4,6 +4,7 @@ option go_package = "pb/gen";
 
 import "validator.proto";
 
+
 service PackagesService {
     rpc Get (GetPackageRequest) returns (GetPackageResponse) {}
     rpc Add (AddPackageRequest) returns (AddPackageResponse){}
@@ -31,6 +32,7 @@ message DeletePackageRequest {
 message DeletePackageResponse {
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
+
 message UpdatePackageRequest {
     string uuid=1  [(validator.field) = {uuid_ver: 4}];
     string name=2;

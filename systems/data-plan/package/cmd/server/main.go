@@ -6,11 +6,10 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/server"
 
 	"github.com/num30/config"
-	"gopkg.in/yaml.v3"
-
+	"github.com/ukama/ukama/systems/data-plan/package/cmd/version"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
-
-	"github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version"
+	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
+	"gopkg.in/yaml.v3"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +19,6 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	generated "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
-	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 	"google.golang.org/grpc"
 )
 
@@ -28,11 +26,12 @@ var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-	pkg.InstanceId = os.Getenv("POD_NAME")
+	log.Infof("Starting the package service")
 
 	initConfig()
-	packageDb := initDb()
-	runGrpcServer(packageDb)
+	db := initDb()
+
+	runGrpcServer(db)
 }
 
 func initConfig() {
@@ -78,6 +77,7 @@ func runGrpcServer(gormdb sql.Db) {
 	srv := server.NewPackageServer(db.NewPackageRepo(gormdb), nil)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterPackagesServiceServer(s, srv)
+
 	})
 
 	go msgBusListener(mbClient)

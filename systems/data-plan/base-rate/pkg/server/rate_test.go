@@ -134,6 +134,7 @@ func TestRateService_GetRate_Error(t *testing.T) {
 // Start GetRates //
 // Success case
 func TestRateService_GetRates_Success(t *testing.T) {
+
 	mockFilters := &pb.GetBaseRatesRequest{
 		Country:     "Tycho crater",
 		Provider:    "ABC Tel",

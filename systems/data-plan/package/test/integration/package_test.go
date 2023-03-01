@@ -41,7 +41,6 @@ func init() {
 	logrus.Infof("Config: %+v\n", tConfig)
 }
 func Test_FullFlow(t *testing.T) {
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 

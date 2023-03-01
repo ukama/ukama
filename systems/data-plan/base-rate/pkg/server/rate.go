@@ -58,7 +58,7 @@ func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesR
 	rates, err := b.baseRateRepo.GetBaseRates(req.GetCountry(), req.GetProvider(), req.GetEffectiveAt(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		logrus.Error("error while getting rates" + err.Error())
+		logrus.Errorf("error while getting rates" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -85,7 +85,13 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		logrus.Infof("Date you provided is not a valid future date. %s", effectiveAt)
 		return nil, status.Errorf(codes.InvalidArgument, "date you provided is not a valid future date %qs", effectiveAt)
 	}
+	sType := db.ParseType(strType)
 
+	if sType.String() != req.SimType {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: provided sim type (%s) does not match with package allowed sim type (%s)",
+			sType.String(), req.SimType)
+	}
 	data, err := utils.FetchData(fileUrl)
 	if err != nil {
 		logrus.Infof("Error fetching data: %v", err.Error())

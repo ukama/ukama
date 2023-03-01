@@ -6,11 +6,10 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/server"
 
 	"github.com/num30/config"
-	"gopkg.in/yaml.v3"
-
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg"
-
 	"github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
+	"gopkg.in/yaml.v3"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +19,6 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	generated "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 
 	"google.golang.org/grpc"
 )
@@ -29,11 +27,11 @@ var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-	pkg.InstanceId = os.Getenv("POD_NAME")
+	log.Infof("Starting the base-rate service")
 
 	initConfig()
-	rateDb := initDb()
-	runGrpcServer(rateDb)
+	db := initDb()
+	runGrpcServer(db)
 }
 
 func initConfig() {
@@ -46,7 +44,6 @@ func initConfig() {
 			logrus.Infof("Config:\n%s", string(b))
 		}
 	}
-
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 

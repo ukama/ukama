@@ -96,7 +96,6 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "Error while adding a package.")
 	}
 	return &pb.AddPackageResponse{Package: dbPackageToPbPackages(_package)}, nil
-
 }
 
 func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
@@ -120,7 +119,9 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	return &pb.DeletePackageResponse{}, nil
+	return &pb.DeletePackageResponse{
+		Uuid: req.GetUuid(),
+	}, nil
 }
 
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
