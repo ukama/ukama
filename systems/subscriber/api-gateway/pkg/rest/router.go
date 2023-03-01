@@ -131,7 +131,7 @@ func (r *Router) init() {
 	subscriber.GET("/:subscriber_id", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
 	subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusOK))
 	subscriber.DELETE("/:subscriber_id", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
-	subscriber.PATCH("", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
+	subscriber.PATCH("/:subscriber_id", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
 
 	sim := v1.Group("/sim", "SIM", "Orgs SIM data base")
 	sim.GET("/:sim_id", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
@@ -139,8 +139,8 @@ func (r *Router) init() {
 	sim.GET("/packages/:sim_id", formatDoc("Get packages for sim", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
 	sim.POST("/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.addPkgForSim, http.StatusOK))
 	sim.POST("/", formatDoc("Allocate a new sim to subscriber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
-	sim.PATCH("/", formatDoc("Activate/Deactivate sim of subscriber", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
-	sim.PATCH("/package", formatDoc("Set active package for sim", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
+	sim.PATCH("/:sim_id", formatDoc("Activate/Deactivate sim of subscriber", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
+	sim.PATCH("/:sim_id/package/:package_id", formatDoc("Set active package for sim", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
 	sim.DELETE("/:sim_id/package/:package_id", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
 	sim.DELETE("/:sim_id", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
 }

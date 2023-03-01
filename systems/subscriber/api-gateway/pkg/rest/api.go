@@ -106,7 +106,7 @@ type SubscriberByNetworkReq struct {
 }
 
 type SubscriberUpdateReq struct {
-	SubscriberId          string `json:"subscriber_id" validate:"required"`
+	SubscriberId          string `path:"subscriber_id" validate:"required"`
 	Email                 string `json:"email"`
 	Phone                 string `json:"phone"`
 	Address               string `json:"address"`
@@ -131,8 +131,8 @@ type AllocateSimReq struct {
 }
 
 type SetActivePackageForSimReq struct {
-	SimId     string `json:"sim_id" validate:"required`
-	PackageId string `json:"package_id" validate:"required`
+	SimId     string `path:"sim_id" validate:"required`
+	PackageId string `path:"package_id" validate:"required`
 }
 type SimReq struct {
 	SimId string `form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required`
@@ -143,7 +143,7 @@ type SimByNetworkReq struct {
 }
 
 type ActivateDeactivateSimReq struct {
-	SimId  string `json:"sim_id" binding:"required" validate:"required`
+	SimId  string `path:"sim_id" validate:"required`
 	Status string `json:"status" binding:"required" validate:"required`
 }
 
