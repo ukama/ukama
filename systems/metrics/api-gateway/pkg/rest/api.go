@@ -24,13 +24,20 @@ type FilterBase struct {
 }
 
 type GetSubscriberMetricsInput struct {
+	FilterBase
 	Metric     string `path:"metric" validate:"required"`
+	Org        string `path:"org" validate:"required"`
+	Network    string `path:"network" validate:"required"`
 	Subscriber string `path:"subscriber" validate:"required"`
 }
 
 type GetSimMetricsInput struct {
-	Metric string `path:"metric" validate:"required"`
-	Sim    string `path:"sim" validate:"required"`
+	FilterBase
+	Metric     string `path:"metric" validate:"required"`
+	Org        string `path:"org" validate:"required"`
+	Network    string `path:"network" validate:"required"`
+	Subscriber string `path:"subscriber" validate:"required"`
+	Sim        string `path:"sim" validate:"required"`
 }
 type DummyParameters struct {
 }

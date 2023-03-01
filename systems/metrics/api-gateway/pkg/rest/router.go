@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz"
@@ -92,18 +93,18 @@ func (rt *Router) Run() {
 func (r *Router) init() {
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
-	v1 := r.f.Group("/v1", "metrics system ", "metrics system version v1")
+	metrics := r.f.Group("/v1", "metrics system ", "metrics system version v1")
 
 	// metrics
-	metrics := v1.Group(METRICS_URL_PARAMETER, "metrics", "metrics")
-	metrics.GET("", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
+	//metrics := v1.Group(METRICS_URL_PARAMETER, "metrics", "metrics")
+	metrics.GET("/metrics", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
 
-	metrics.GET("/subscriber/:subscriber/:metric", []fizz.OperationOption{
+	metrics.GET("/subscriber/:subscriber/orgs/:org/networks/:network/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for a susbcriber. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.subscriberMetricHandler, http.StatusOK))
 
-	metrics.GET("/sim/:simid/:metric", []fizz.OperationOption{
+	metrics.GET("/sims/:sim/orgs/:org/networks/:network/subscribers/:subscriber/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for a sim. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.simMetricHandler, http.StatusOK))
@@ -113,12 +114,17 @@ func (r *Router) init() {
 			info.Description = "Get metrics for an org. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.orgMetricHandler, http.StatusOK))
 
-	metrics.GET("/networks/:networkid/metrics/:metric", []fizz.OperationOption{
+	metrics.GET("/networks/:network/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for an network. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.networkMetricHandler, http.StatusOK))
 
-	exp := v1.Group(METRICS_URL_PARAMETER, "exporter", "exporter")
+	metrics.GET("/node/:node/metrics/:metric", []fizz.OperationOption{
+		func(info *openapi.OperationInfo) {
+			info.Description = "Get metrics for anode. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+		}}, tonic.Handler(r.metricHandler, http.StatusOK))
+
+	exp := metrics.Group(EXPORTER_URL_PARAMETER, "exporter", "exporter")
 	exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
 }
 
@@ -130,13 +136,14 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
-	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Subscriber), c.Writer)
-	return httpErrorOrNil(httpCode, err)
+	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSubscriber(in.Org, in.Network, in.Subscriber))
+	//httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Subscriber), c.Writer)
+	//return httpErrorOrNil(httpCode, err)
 }
 
 func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error {
-	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Sim), c.Writer)
-	return httpErrorOrNil(httpCode, err)
+	logrus.Infof("Request %+v", in)
+	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSim(in.Org, in.Network, in.Subscriber, in.Sim))
 }
 
 func (r *Router) networkMetricHandler(c *gin.Context, in *GetNetworkMetricsInput) error {
@@ -167,11 +174,6 @@ func httpErrorOrNil(httpCode int, err error) error {
 	return nil
 }
 
-func (r *Router) netMetricHandler(c *gin.Context, in *GetNetworkMetricsInput) error {
-	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Org, in.Network), c.Writer)
-	return httpErrorOrNil(httpCode, err)
-}
-
 func (r *Router) metricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
 	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithNodeId(in.NodeID))
 }
@@ -187,6 +189,8 @@ func (r *Router) requestMetricInternal(writer io.Writer, filterBase FilterBase, 
 	if to == 0 {
 		to = time.Now().Unix()
 	}
+
+	logrus.Infof("Metrics request with filters: %+v", filter)
 	httpCode, err := r.m.GetMetric(strings.ToLower(filterBase.Metric), filter, &pkg.Interval{
 		Start: filterBase.From,
 		End:   to,

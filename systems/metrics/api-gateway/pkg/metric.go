@@ -50,6 +50,21 @@ func (f *Filter) WithOrg(org string) *Filter {
 	return f
 }
 
+func (f *Filter) WithSubscriber(org string, network string, subscriber string) *Filter {
+	f.org = org
+	f.network = network
+	f.subscriber = subscriber
+	return f
+}
+
+func (f *Filter) WithSim(org string, network string, subscriber string, sim string) *Filter {
+	f.org = org
+	f.network = network
+	f.subscriber = subscriber
+	f.sim = sim
+	return f
+}
+
 func (f *Filter) HasNetwork() bool {
 	return f.network != ""
 }
@@ -73,10 +88,10 @@ func (f *Filter) GetFilter() string {
 		filter = append(filter, fmt.Sprintf("network='%s'", f.network))
 	}
 	if f.subscriber != "" {
-		filter = append(filter, fmt.Sprintf("subscriber='%s'", f.network))
+		filter = append(filter, fmt.Sprintf("subscriber='%s'", f.subscriber))
 	}
 	if f.sim != "" {
-		filter = append(filter, fmt.Sprintf("sim='%s'", f.network))
+		filter = append(filter, fmt.Sprintf("sim='%s'", f.sim))
 	}
 	return strings.Join(filter, ",")
 }
@@ -143,6 +158,7 @@ func (m *Metrics) processPromRequest(ctx context.Context, url string, data url.V
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
+	logrus.Infof("Request is: %v Body %+v", req, data.Encode())
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to execute request")

@@ -37,9 +37,11 @@ type MetricsConfig struct {
 }
 
 var defaultPrometheusMetric = map[string]Metric{
-	"cpu":    Metric{false, "trx_soc_cpu_usage", ""},
-	"memory": Metric{false, "trx_memory_ddr_used", ""},
-	"users":  Metric{false, "trx_lte_core_active_ue", ""},
+	"cpu":              Metric{false, "trx_soc_cpu_usage", ""},
+	"memory":           Metric{false, "trx_memory_ddr_used", ""},
+	"users":            Metric{false, "trx_lte_core_active_ue", ""},
+	"sim_usage_sum":    Metric{false, "sim_usage_sum", ""},
+	"sim_duration_sum": Metric{false, "sim_duration_sum", ""},
 }
 
 type Kratos struct {
@@ -83,7 +85,7 @@ func NewConfig() *Config {
 
 		MetricsConfig: &MetricsConfig{
 			Metrics:             defaultPrometheusMetric,
-			MetricsServer:       "http://localhost:8080",
+			MetricsServer:       "http://localhost:9090",
 			Timeout:             time.Second * 5,
 			DefaultRateInterval: "5m",
 		},
