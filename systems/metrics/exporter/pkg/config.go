@@ -53,7 +53,7 @@ func NewConfig(name string) *Config {
 		},
 		MetricConfig: []MetricConfig{
 			{
-				Name:          "simusage",
+				Name:          "sim_usage",
 				Event:         "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
 				Type:          "histogram",
 				Units:         "bytes",
@@ -63,7 +63,7 @@ func NewConfig(name string) *Config {
 				Buckets:       []float64{1024, 10240, 102400, 1024000, 10240000, 102400000},
 			},
 			{
-				Name:          "simusage_duration",
+				Name:          "sim_usage_duration",
 				Event:         "event.cloud.simmanager.sim.duration", //"event.cloud.cdr.sim.usage"}
 				Type:          "histogram",
 				Units:         "seconds",
