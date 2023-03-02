@@ -3,17 +3,20 @@ package server
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 
-	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/users/pkg"
 
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 
-	pkg "github.com/ukama/ukama/systems/registry/users/pkg/providers"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	pkgP "github.com/ukama/ukama/systems/registry/users/pkg/providers"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,33 +25,36 @@ import (
 )
 
 const uuidParsingError = "Error parsing UUID"
-const ukamaOrgID = 1
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
 	userRepo   db.UserRepo
-	orgService pkg.OrgClientProvider
+	orgService pkgP.OrgClientProvider
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	msgbus               mb.MsgBusServiceClient
 }
 
-func NewUserService(userRepo db.UserRepo, orgService pkg.OrgClientProvider) *UserService {
+func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider,msgBus mb.MsgBusServiceClient) *UserService {
 	return &UserService{
 		userRepo:   userRepo,
 		orgService: orgService,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		msgbus:               msgBus,
 	}
 }
 
 func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	logrus.Infof("Adding user %v", req)
+	log.Infof("Adding user %v", req)
 
 	user := &db.User{
 		Email: req.User.Email,
 		Name:  req.User.Name,
 		Phone: req.User.Phone,
-		Uuid:  uuid.New(),
+		Uuid:  uuid.NewV4(),
 	}
 
 	err := u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
-		logrus.Infof("Adding user %s as member of default org", user.Uuid)
+		log.Infof("Adding user %s as member of default org", user.Uuid)
 
 		svc, err := u.orgService.GetClient()
 		if err != nil {
@@ -57,7 +63,6 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 
 		_, err = svc.RegisterUser(ctx, &orgpb.RegisterUserRequest{
 			UserUuid: user.Uuid.String(),
-			OrgId:    ukamaOrgID,
 		})
 		if err != nil {
 			return err
@@ -69,12 +74,16 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
-
+	route := u.baseRoutingKey.SetAction("add").SetObject("user").MustBuild()
+	err = u.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.AddResponse{User: dbUserToPbUser(user)}, nil
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	uuid, err := uuid.Parse(req.UserUuid)
+	uuid, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -88,7 +97,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 }
 
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
-	uuid, err := uuid.Parse(req.UserUuid)
+	uuid, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -110,7 +119,7 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 }
 
 func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest) (*pb.DeactivateResponse, error) {
-	userUUID, err := uuid.Parse(req.UserUuid)
+	userUUID, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -131,7 +140,7 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	}
 
 	err = u.userRepo.Update(user, func(user *db.User, tx *gorm.DB) error {
-		logrus.Infof("Deactivating remote org user %s", userUUID)
+		log.Infof("Deactivating remote org user %s", userUUID)
 
 		svc, err := u.orgService.GetClient()
 		if err != nil {
@@ -151,12 +160,16 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
-
+	route := u.baseRoutingKey.SetAction("deactivate").SetObject("user").MustBuild()
+	err = u.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.DeactivateResponse{User: dbUserToPbUser(user)}, nil
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	userUUID, err := uuid.Parse(req.UserUuid)
+	userUUID, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -179,7 +192,11 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
-
+	route := u.baseRoutingKey.SetAction("delete").SetObject("user").MustBuild()
+	err = u.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 	return &pb.DeleteResponse{}, nil
 }
 
