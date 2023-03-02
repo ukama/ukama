@@ -54,11 +54,9 @@ func (p *packageRepo) GetByOrg(orgId uuid.UUID) ([]Package, error) {
 }
 
 func (r *packageRepo) Delete(uuid uuid.UUID) error {
-	result := r.Db.GetGormDb().Where("uuid = ?", uuid).Delete(&Package{})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
+
+	d := r.Db.GetGormDb().Where("uuid = ?", uuid).Delete(&Package{})
+	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
 

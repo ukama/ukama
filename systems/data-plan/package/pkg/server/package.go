@@ -113,7 +113,7 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := p.baseRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
+	route := p.baseRoutingKey.SetAction("delete").SetObject("package").MustBuild()
 	err = p.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -150,7 +150,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := p.baseRoutingKey.SetActionUpdate().SetObject("package").MustBuild()
+	route := p.baseRoutingKey.SetAction("update").SetObject("package").MustBuild()
 	err = p.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
