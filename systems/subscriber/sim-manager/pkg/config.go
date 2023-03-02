@@ -6,6 +6,15 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 )
+type MetricConfig struct {
+	Name    string
+	Event   string
+	Type    string
+	Units   string
+	Labels  map[string]string
+	Details string
+	Buckets []float64
+}
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`

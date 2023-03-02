@@ -6,6 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 )
 
 type MetricType string
@@ -24,15 +25,7 @@ type Metrics struct {
 	collector prometheus.Collector
 	Labels    prometheus.Labels
 }
-type MetricConfig struct {
-	Name    string
-	Event   string
-	Type    string
-	Units   string
-	Labels  map[string]string
-	Details string
-	Buckets []float64
-}
+
 
 func MetricTypeFromString(s string) MetricType {
 	switch s {
@@ -58,7 +51,7 @@ func NewMetrics(name string, mtype string) *Metrics {
 	return m
 }
 
-func (m *Metrics) InitializeMetric(name string, config MetricConfig, customLables []string) error {
+func (m *Metrics) InitializeMetric(name string, config pkg.MetricConfig, customLables []string) error {
 	switch MetricTypeFromString(config.Type) {
 	case MetricGuage:
 		m.collector = prometheus.NewGaugeVec(
@@ -137,55 +130,39 @@ func PushMetrics(metricJob string, metrics []struct {
         labelDimensions = append(labelDimensions, key)
     }
 
-    // Initialize a slice of metrics collectors for this job
-    var collectors []*Metrics
-    var ok bool
-    if collectors, ok = metricCollectors[metricJob]; !ok {
-        collectors = make([]*Metrics, 0, len(metrics))
-    }
-
-    // Iterate over each metric in the slice and add it to the collectors
+    // Check if the metrics already exist and create them if they don't
     for _, metric := range metrics {
-        var m *Metrics
-        // Check if a collector with the same name already exists
-        for _, collector := range collectors {
-            if collector.Name == metric.Name {
-                m = collector
-                break
-            }
-        }
-        if m == nil {
-            // Create a new collector if one doesn't exist
-            m = NewMetrics(metric.Name, metric.Type)
-            err := m.InitializeMetric(metric.Name, MetricConfig{
+        if _, ok := metricCollectors[metric.Name]; !ok {
+            // Metric does not exist, create a new one
+            newMetric := NewMetrics(metric.Name, metric.Type)
+            if err := newMetric.InitializeMetric(metric.Name,pkg.MetricConfig{
                 Name:   metric.Name,
                 Type:   metric.Type,
                 Labels: metric.Labels,
-            }, labelDimensions)
-            if err != nil {
-                log.Errorf("Could not initialize metric collector: %s", err.Error())
+            }, labelDimensions); err != nil {
+                log.Errorf("Failed to initialize metric %s: %v", metric.Name, err)
                 continue
             }
-            collectors = append(collectors, m)
+            metricCollectors[metric.Name] = []*Metrics{newMetric}
         }
-        // Set the value for the current metric
-        err := m.SetMetric(metric.Value, prometheus.Labels(metric.Labels))
-        if err != nil {
-            log.Errorf("Could not set metric value: %s", err.Error())
-            continue
+
+        // Set the metric value
+        for _, m := range metricCollectors[metric.Name] {
+            if err := m.SetMetric(metric.Value, metric.Labels); err != nil {
+                log.Errorf("Failed to set metric %s value: %v", metric.Name, err)
+                continue
+            }
         }
     }
 
-    // Save the collectors for this job
-    metricCollectors[metricJob] = collectors
-    // Push each collector to the Pushgateway
-    for _, collector := range collectors {
-        if err := push.New("http://localhost:9091/", metricJob).
-            Collector(collector.collector).
-            Push(); 
-
-            err != nil {
-            log.Errorf("Could not push metric to Pushgateway: %s", err.Error())
+    // Push all metrics to the Pushgateway
+    pusher := push.New("http://localhost:9091", pkg.SystemName)
+    for _, metrics := range metricCollectors {
+        for _, m := range metrics {
+            pusher.Collector(m.collector)
         }
+    }
+    if err := pusher.Push(); err != nil {
+        fmt.Println("Could not push metrics to Pushgateway:", err)
     }
 }

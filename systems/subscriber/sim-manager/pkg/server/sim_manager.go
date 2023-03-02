@@ -64,7 +64,10 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-	
+	err := s.CollectAndPushSimMetrics(ctx,&req.NetworkID)
+	if err != nil {
+		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
+	}
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -205,7 +208,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
-	err = s.GetSimCounts(ctx)
+	err = s.CollectAndPushSimMetrics(ctx,&req.NetworkID)
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -234,7 +237,7 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 }
 
 func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest) (*pb.ListSimsResponse, error) {
-	err := s.GetSimCounts(ctx)
+	err := s.CollectAndPushSimMetrics(ctx,nil)
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -261,14 +264,14 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 	return resp, nil
 }
 
-func (s *SimManagerServer) GetSimCounts(ctx context.Context) error {
+func (s *SimManagerServer) CollectAndPushSimMetrics(ctx context.Context,networkID *string) error {
 	simsCount, activeCount, inactiveCount, terminatedCount,err:= s.simRepo.GetSimCounts()
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())
 		return err
 	}
 	
-	metrics := []struct {
+	simMetrics := []struct {
 		Name   string
 		Type   string
 		Labels map[string]string
@@ -278,37 +281,44 @@ func (s *SimManagerServer) GetSimCounts(ctx context.Context) error {
 			Name: "number_of_subscriber",
 			Type: "gauge",
 			Labels: map[string]string{
-				"type": "total",
+				"network": "",
 			},
 			Value: float64(simsCount),
 		},
 		{
-			Name: "number_of_subscriber",
+			Name: "active_sim_count",
 			Type: "gauge",
 			Labels: map[string]string{
-				"type": "active",
+				"network": "",
 			},
 			Value: float64(activeCount),
 		},
 		{
-			Name: "number_of_subscriber",
+			Name: "inactive_sim_count",
 			Type: "gauge",
 			Labels: map[string]string{
-				"type": "inactive",
+				"network": "",
 			},
 			Value: float64(inactiveCount),
 		},
 		{
-			Name: "number_of_subscriber",
+			Name: "terminated_sim_count",
 			Type: "gauge",
 			Labels: map[string]string{
-				"type": "terminated",
+				"network": "",
 			},
 			Value: float64(terminatedCount),
 		},
 	}
+	if networkID != nil && *networkID != "" {
+        for i := range simMetrics {
+            if _, ok := simMetrics[i].Labels["network"]; ok {
+                simMetrics[i].Labels["network"] = *networkID
+            }
+        }
+    }
 	
-	utils.PushMetrics("sim", metrics)
+	utils.PushMetrics("sim", simMetrics)
 	return nil
 }
 
@@ -392,7 +402,7 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	err = s.GetSimCounts(ctx)
+	err = s.CollectAndPushSimMetrics(ctx,nil)
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -678,7 +688,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
-	err = s.GetSimCounts(ctx)
+	err = s.CollectAndPushSimMetrics(ctx,nil)
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -731,7 +741,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
-	err = s.GetSimCounts(ctx)
+	err = s.CollectAndPushSimMetrics(ctx,nil)
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
