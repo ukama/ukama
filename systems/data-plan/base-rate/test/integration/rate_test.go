@@ -10,6 +10,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
+	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -36,16 +38,14 @@ func TestUploadBaseRates(t *testing.T) {
 	// test data
 	fileURL := "https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/base-rate/template/template.csv"
 	effectiveAt := "2023-03-01T00:00:00Z"
-	// simType := rate.ParseType("ukama_data")
+	simType := db.ParseType("ukama_data")
 
 	// create request
 	req := &pb.UploadBaseRatesRequest{
 		FileURL:     fileURL,
 		EffectiveAt: effectiveAt,
-		SimType:     "ukama_data",
+		SimType:     simType,
 	}
-
-	// call method
 	res, err := client.UploadBaseRates(ctx, req)
 	if err != nil {
 		s, ok := status.FromError(err)
