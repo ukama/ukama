@@ -62,7 +62,7 @@ packID,_:=uuid.FromString(uuidStr)
 pack:=&int_db.Package{
 		PackageID:packID,
 		Name: "Silver Plan",
-		SimType: 1,
+		SimType: int_db.SimTypeTest,
 		OrgID: uuid.NewV4(),
 		Active: true,
 		Duration: 30,
@@ -123,7 +123,7 @@ packID,_:=uuid.FromString(uuidStr)
 pack:=&int_db.Package{
 		PackageID:packID,
 		Name: "Silver Plan",
-		SimType: 1,
+		SimType: int_db.SimTypeTest,
 		OrgID: uuid.NewV4(),
 		Active: true,
 		Duration: 30,
