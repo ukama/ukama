@@ -170,7 +170,6 @@ services:
       - MSGCLIENT_HOST=msg-client-registry:9095
       - ORG_SERVICE_HOST=org
       - ORG_SERVICE_PORT=9090
-      - UKAMA_UUID=${UKAMA_UUID}
       - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
     restart: always
     depends_on:
@@ -189,7 +188,6 @@ services:
       - MSGCLIENT_HOST=msg-client-registry:9095
       - USERS_SERVICE_HOST=users
       - USERS_SERVICE_PORT=9090
-      - UKAMA_UUID=${UKAMA_UUID}
       - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
     restart: always
     depends_on:
