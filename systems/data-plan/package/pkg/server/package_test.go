@@ -52,7 +52,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	log.Fatal("implement me: ExecuteInTransaction2()")
 	return nil
 }
-
+const testSim="ukama_data"
 func TestPackageServer_GetPackages_Success(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	packageUUID := uuid.NewV4()
@@ -94,7 +94,7 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 	s := NewPackageServer(packageRepo,nil)
 
 	packageRepo.On("GetByOrg", orgID).Return([]db.Package{{
-		SimType:     db.ParseType("INTER_MNO_ALL"),
+		SimType:     db.SimTypeTest,
 		Name:         "Daily-pack",
 		OrgID:       orgID,
 		Active:       true,
@@ -144,7 +144,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 		Active: true,
 		Name:   "daily-pack",
 		OrgID:  uuid.NewV4().String(),
-		SimType:"ukama_data",
+		SimType:testSim,
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, ActPackage.Package.Active)
@@ -164,7 +164,7 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 		Active: true,
 		Name:   "daily-pack",
 		OrgID:  uuid.NewV4().String(),
-		SimType:"ukama_data",
+		SimType:testSim,
 	})
 	assert.Error(t, err)
 	assert.Nil(t, ActPackage)
@@ -178,7 +178,7 @@ func TestPackageServer_UpdatePackage_Error(t *testing.T) {
 	packageRepo.On("Update", packageUUID, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
 	pkg, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
 		PackageID: packageUUID.String(),
-		SimType:"ukama_data",
+		SimType:testSim,
 
 	})
 	assert.Error(t, err)
