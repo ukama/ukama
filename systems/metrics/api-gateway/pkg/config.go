@@ -8,6 +8,11 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
+type NameUpdate struct {
+	Required bool   `json:"required" default:"false"`
+	Slice    string `json:"slice" default:""`
+}
+
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
@@ -24,7 +29,8 @@ type Metric struct {
 	// Range vector duration used in Rate func https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations
 	// if NeedRate is false then this field is ignored
 	// Example: 1d or 5h, or 30s
-	RateInterval string `json:"rateInterval"`
+	RateInterval string     `json:"rateInterval"`
+	Update       NameUpdate `json:"update"`
 
 	// consider adding aggregation function as a parameter
 }
@@ -37,11 +43,11 @@ type MetricsConfig struct {
 }
 
 var defaultPrometheusMetric = map[string]Metric{
-	"cpu":              Metric{false, "trx_soc_cpu_usage", ""},
-	"memory":           Metric{false, "trx_memory_ddr_used", ""},
-	"users":            Metric{false, "trx_lte_core_active_ue", ""},
-	"sim_usage_sum":    Metric{false, "sim_usage_sum", ""},
-	"sim_duration_sum": Metric{false, "sim_duration_sum", ""},
+	"cpu":          Metric{false, "trx_soc_cpu_usage", "", NameUpdate{false, ""}},
+	"memory":       Metric{false, "trx_memory_ddr_used", "", NameUpdate{false, ""}},
+	"users":        Metric{false, "trx_lte_core_active_ue", "", NameUpdate{false, ""}},
+	"sim_usage":    Metric{false, "sim_usage_simid_sum", "", NameUpdate{true, "simid"}}, /* NameUpdate field specify if metric name will generated on fly by replacing simid substring form Metric.Metric with actual simId */
+	"sim_duration": Metric{false, "sim_duration_simid_sum", "", NameUpdate{true, "simid"}},
 }
 
 type Kratos struct {

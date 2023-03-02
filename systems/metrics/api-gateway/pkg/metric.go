@@ -172,10 +172,43 @@ func (m *Metrics) processPromRequest(ctx context.Context, url string, data url.V
 	res.Body.Close()
 	return res.StatusCode, nil
 }
+func UpdatedName(oldName string, slice string, newSlice string) string {
+	return strings.Replace(oldName, slice, newSlice, 1)
+}
 
 func (m *Metrics) MetricsExist(metricType string) bool {
 	_, ok := m.conf.Metrics[metricType]
 	return ok
+}
+
+func (m *Metrics) MetricsUpdateNameAndAppend(metricType string, metric Metric, nName string) (*Metric, bool) {
+
+	/* Create a new metric */
+	k, ok := m.conf.Metrics[metricType]
+	if ok {
+		if k.Update.Required {
+			metric.Metric = nName
+			m.conf.Metrics[metric.Metric] = metric
+		}
+	}
+	return &metric, ok
+}
+
+func (m *Metrics) MetricsUpdateSimIdAndAppendIfReq(metricType string, metric Metric, simId string) (*Metric, bool) {
+	nName := UpdatedName(metric.Metric, metric.Update.Slice, strings.ReplaceAll(simId, "-", ""))
+
+	k, ok := m.conf.Metrics[nName]
+	if ok {
+		/* Metrics laready exist */
+		return &k, ok
+	}
+
+	return m.MetricsUpdateNameAndAppend(metricType, metric, nName)
+}
+
+func (m *Metrics) MetricsCfg(metricType string) (Metric, bool) {
+	me, ok := m.conf.Metrics[metricType]
+	return me, ok
 }
 
 func (m *Metrics) List() (r []string) {

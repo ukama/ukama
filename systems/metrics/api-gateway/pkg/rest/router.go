@@ -143,6 +143,24 @@ func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetric
 
 func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error {
 	logrus.Infof("Request %+v", in)
+	
+	cfg, ok := r.m.MetricsCfg(in.Metric)
+	if !ok {
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Metric not found"}
+	}
+
+	/* Dynamically genrate the metric name at runtime */
+	k, ok := r.m.MetricsUpdateSimIdAndAppendIfReq(in.Metric, cfg, in.Sim)
+	if !ok {
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Metric config could not be generated"}
+	}
+
+	in.FilterBase.Metric = k.Metric
+
 	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSim(in.Org, in.Network, in.Subscriber, in.Sim))
 }
 
@@ -179,7 +197,9 @@ func (r *Router) metricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
 }
 
 func (r *Router) requestMetricInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {
-	if !r.m.MetricsExist(filterBase.Metric) {
+
+	ok := r.m.MetricsExist(filterBase.Metric)
+	if !ok {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
 			Message:  "Metric not found"}
