@@ -15,7 +15,7 @@ func TestNetworkInfoClient_ValidateNetwork(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"network": {"id": "123", "name": "test network", "org_id": "456", "is_deactivated": false, "created_at": "2022-02-28T10:00:00Z"}}`))
+		_, _ = w.Write([]byte(`{"network": {"id": "123", "name": "test network", "org_id": "456", "is_deactivated": false, "created_at": "2022-02-28T10:00:00Z"}}`))
 	}))
 
 	client, err := NewNetworkClient(mockServer.URL, false)
@@ -26,7 +26,7 @@ func TestNetworkInfoClient_ValidateNetwork(t *testing.T) {
 
 	err = client.ValidateNetwork("123", "789")
 	assert.Error(t, err)
-	 assert.EqualError(t, err,"Network mismatch", "Should not be true")
+	assert.EqualError(t, err, "Network mismatch", "Should not be true")
 
 	mockServer404 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -35,6 +35,6 @@ func TestNetworkInfoClient_ValidateNetwork(t *testing.T) {
 	assert.NoError(t, err)
 	err = client404.ValidateNetwork("123", "456")
 	assert.Error(t, err)
-	 assert.EqualError(t, err,"Network Info failure ", "Should be true")
+	assert.EqualError(t, err, "Network Info failure ", "Should be true")
 
 }
