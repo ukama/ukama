@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package integration
 
 import (
@@ -41,8 +44,6 @@ func TestUploadBaseRates(t *testing.T) {
 		EffectiveAt: effectiveAt,
 		SimType:     simType,
 	}
-
-	// call method
 	res, err := client.UploadBaseRates(ctx, req)
 	if err != nil {
 		s, ok := status.FromError(err)
