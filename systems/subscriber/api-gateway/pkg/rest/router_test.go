@@ -33,7 +33,10 @@ var testClientSet *Clients
 func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-		Timeout: 1 * time.Second,
+		Timeout:    1 * time.Second,
+		SimPool:    "0.0.0.0:9090",
+		SimManager: "0.0.0.0:9091",
+		Registry:   "0.0.0.0:9092",
 	})
 }
 
