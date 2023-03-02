@@ -96,11 +96,10 @@ func (r *Router) init() {
 
 	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
-	packages.GET("/", formatDoc("Get packages", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
+	packages.GET("/org/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
 	packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
-
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

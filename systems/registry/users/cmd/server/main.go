@@ -24,8 +24,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 
-	uconf "github.com/ukama/ukama/systems/common/config"
-
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/registry/users/pb/gen"
@@ -47,15 +45,7 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	svcConf = &pkg.Config{
-		DB: &uconf.Database{
-			DbName: pkg.ServiceName,
-		},
-		Grpc: &uconf.Grpc{
-			Port: 9090,
-		},
-	}
-
+	svcConf = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
@@ -96,11 +86,11 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
-	
+
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
 
-		provider.NewOrgClientProvider(svcConf.Org),mbClient,
+		provider.NewOrgClientProvider(svcConf.Org), mbClient,
 	)
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		gen.RegisterUserServiceServer(s, userService)

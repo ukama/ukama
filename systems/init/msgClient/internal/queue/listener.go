@@ -45,7 +45,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(t))
 	defer cancel()
-
+	log.Info("Connecting to... ", s.ServiceUri)
 	conn, err := grpc.DialContext(ctx, s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", s.ServiceUri, err.Error())

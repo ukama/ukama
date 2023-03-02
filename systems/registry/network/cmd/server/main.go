@@ -51,7 +51,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Org{}, &db.Network{}, &db.Network{})
+	err := d.Init(&db.Org{}, &db.Network{}, &db.Site{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -72,7 +72,6 @@ func runGrpcServer(gormdb sql.Db) {
 		providers.NewOrgClientProvider(serviceConfig.OrgHost), mbClient)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
-
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterNetworkServiceServer(s, networkServer)

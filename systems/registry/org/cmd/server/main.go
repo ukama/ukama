@@ -22,7 +22,6 @@ import (
 	"github.com/num30/config"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	uconf "github.com/ukama/ukama/systems/common/config"
 
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -43,16 +42,7 @@ func main() {
 }
 
 func initConfig() {
-	svcConf = &pkg.Config{
-		DB: &uconf.Database{
-			DbName: pkg.ServiceName,
-		},
-		Grpc: &uconf.Grpc{
-			Port: 9090,
-		},
-		
-	}
-
+	svcConf = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
@@ -93,11 +83,11 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
-	
+
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
-		svcConf.OrgName,mbClient,
+		svcConf.OrgName, mbClient,
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

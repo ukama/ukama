@@ -317,7 +317,7 @@ func Test_SiteRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&site)
+		err = r.Add(&site, nil)
 
 		// Assert
 		assert.NoError(t, err)
