@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 	org_db "github.com/ukama/ukama/systems/registry/org/pkg/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -19,7 +19,7 @@ func Test_UserRepo_Get(t *testing.T) {
 		// Arrange
 		var db *extsql.DB
 
-		var userUUID = uuid.New()
+		var userUUID = uuid.NewV4()
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -64,7 +64,7 @@ func Test_UserRepo_Add(t *testing.T) {
 		// Arrange
 		var db *extsql.DB
 
-		var testUUID = uuid.New()
+		var testUUID = uuid.NewV4()
 
 		user := org_db.User{
 			Uuid: testUUID,
@@ -112,7 +112,7 @@ func Test_UserRepo_Delete(t *testing.T) {
 	t.Run("DeleteUser", func(t *testing.T) {
 		var db *extsql.DB
 
-		var userUUID = uuid.New()
+		var userUUID = uuid.NewV4()
 
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
