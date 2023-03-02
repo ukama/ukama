@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serviceConfig *pkg.Config
+var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)

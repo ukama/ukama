@@ -1,5 +1,16 @@
 version: "3.9"
 services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+
+
   postgresd:
     image: postgres:13.3
     ports:
@@ -10,7 +21,7 @@ services:
     volumes:
       - postgress-data:/var/lib/postgresql
 
-  sim-pool:
+  sim:
     build: ./subscriber/sim-pool
     ports:
       - "9090:9090"
@@ -20,6 +31,11 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SIM_POOL_SERVICE_HOST=sim
+      - SIM_POOL_SERVICE_PORT=9090
+      - SIM_SERVICE_HOST=sim
+      - SIM_SERVICE_PORT=9090
     restart: always
     depends_on:
       - postgresd
@@ -34,6 +50,9 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - REGISTRY_SERVICE_HOST=registry
+      - REGISTRY_SERVICE_PORT=9090
     restart: always
     depends_on:
       - postgresd
@@ -49,6 +68,9 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
       - KEY=${KEY}
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SIM_MANAGER_SERVICE_HOST=sim-manager
+      - SIM_MANAGER_SERVICE_PORT=9090
     restart: always
     depends_on:
       - postgresd
@@ -63,6 +85,8 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - TEST_AGENT_SERVICE_HOST=test-agent
+      - TEST_AGENT_SERVICE_PORT=9090
     restart: always
     depends_on:
       - postgresd
@@ -77,6 +101,8 @@ services:
   #     - DB_PASSWORD=ThisIsUkamaXPass
   #     - DB_USER=postgres
   #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+  #     - BASE_RATE_SERVICE_HOST=base-rate
+  #     - BASE_RATE_SERVICE_PORT=9090
   #   restart: always
   #   depends_on:
   #     - postgresd
@@ -84,13 +110,16 @@ services:
   package:
     build: ./data-plan/package
     ports:
-      - "9094:9090"
+      - "9095:9090"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-data-plan:9095
+      - PACKAGE_SERVICE_HOST=package
+      - PACKAGE_SERVICE_PORT=9090
     restart: always
     depends_on:
       - postgresd
@@ -102,7 +131,6 @@ services:
     restart: always
     depends_on:
       - postgresd
-      # - base-rate
       - package
 
   subscriber:
@@ -112,10 +140,6 @@ services:
     restart: always
     depends_on:
       - postgresd
-      - sim-manager
-      - sim-pool
-      - test-agent
-      - registry
 
   network:
     build: ./registry/network
@@ -130,7 +154,6 @@ services:
     restart: always
     depends_on:
       - postgresd
-      - registry
 
 
   org:
@@ -147,7 +170,6 @@ services:
     restart: always
     depends_on:
       - postgresd
-      - registry
 
   users:
     build: ./registry/users
@@ -163,7 +185,7 @@ services:
     restart: always
     depends_on:
       - postgresd
-      - registry
+
   registry-api-gw:
     build: ./registry/api-gateway
     ports:
@@ -175,6 +197,38 @@ services:
       - registry
       - subscriber
       - org
+
+  msg-client-subscriber:
+    build: ./init/msgClient
+    ports:
+      - "9080:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SYSTEM=subscriber
+    restart: always
+    depends_on:
+      - postgresd
+
+  msg-client-data-plan:
+    build: ./init/msgClient
+    ports:
+      - "9099:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-data-plan:9095
+      - SYSTEM=data_plan
+    restart: always
+    depends_on:
+      - postgresd
 
 volumes:
   postgress-data:
