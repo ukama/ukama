@@ -32,8 +32,6 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
       - MSGCLIENT_HOST=msg-client-subscriber:9095
-      - SIM_POOL_SERVICE_HOST=sim
-      - SIM_POOL_SERVICE_PORT=9090
       - SIM_SERVICE_HOST=sim
       - SIM_SERVICE_PORT=9090
     restart: always
@@ -151,6 +149,9 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - NETWORK_SERVICE_HOST=network
+      - NETWORK_SERVICE_PORT=9090
     restart: always
     depends_on:
       - postgresd
@@ -166,7 +167,11 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - ORG_SERVICE_HOST=org
+      - ORG_SERVICE_PORT=9090
       - UKAMA_UUID=${UKAMA_UUID}
+      - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
     restart: always
     depends_on:
       - postgresd
@@ -181,7 +186,11 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - USERS_SERVICE_HOST=users
+      - USERS_SERVICE_PORT=9090
       - UKAMA_UUID=${UKAMA_UUID}
+      - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
     restart: always
     depends_on:
       - postgresd
@@ -226,6 +235,22 @@ services:
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
       - MSGCLIENT_HOST=msg-client-data-plan:9095
       - SYSTEM=data_plan
+    restart: always
+    depends_on:
+      - postgresd
+
+  msg-client-registry:
+    build: ./init/msgClient
+    ports:
+      - "9081:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - SYSTEM=registry
     restart: always
     depends_on:
       - postgresd
