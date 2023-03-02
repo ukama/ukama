@@ -2,9 +2,8 @@ package server
 
 import (
 	"context"
-	"strconv"
-	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
@@ -72,23 +71,30 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 }
 
 func AddSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
-	n := strings.ReplaceAll("sim_usage_"+msg.Id, "-", "")
+
+	cfg, err := s.mc.GetConfigForEvent(key)
+	if err != nil {
+		log.Errorf("Event %s not implemented.", key)
+		return err
+	}
+
+	n := cfg.Name
 
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(n)
 	if err == nil {
 		/* Update value */
-		return m.SetMetric(float64(msg.BytesUsed), nil)
+		return m.SetMetric(float64(msg.BytesUsed), SetUpDynamicLabelsForSim(cfg.DynamicLabels, msg))
 
 	} else {
-		l := SetUpStaticLabelsForSimUsage(msg)
+		l := cfg.Labels
 
-		m, err := collector.SetUpMetric(key, s.mc, l, n, nil)
+		m, err := collector.SetUpMetric(key, s.mc, l, n, cfg.DynamicLabels)
 		if err != nil {
 			return err
 		}
 
-		err = m.SetMetric(float64(msg.BytesUsed), nil)
+		err = m.SetMetric(float64(msg.BytesUsed), SetUpDynamicLabelsForSim(cfg.DynamicLabels, msg))
 		if err != nil {
 			return err
 		}
@@ -98,23 +104,29 @@ func AddSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
 }
 
 func AddSimUsageDuration(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
-	n := strings.ReplaceAll("sim_duration_"+msg.Id, "-", "")
+	cfg, err := s.mc.GetConfigForEvent(key)
+	if err != nil {
+		log.Errorf("Event %s not implemented.", key)
+		return err
+	}
+
+	n := cfg.Name
 
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(n)
 	if err == nil {
 		/* Update value */
-		return m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
+		return m.SetMetric(float64(msg.EndTime-msg.StartTime), SetUpDynamicLabelsForSim(cfg.DynamicLabels, msg))
 
 	} else {
-		l := SetUpStaticLabelsForSimUsageDuration(msg)
+		l := cfg.Labels
 
-		m, err := collector.SetUpMetric(key, s.mc, l, n, nil)
+		m, err := collector.SetUpMetric(key, s.mc, l, n, cfg.DynamicLabels)
 		if err != nil {
 			return err
 		}
 
-		err = m.SetMetric(float64(msg.EndTime-msg.StartTime), nil)
+		err = m.SetMetric(float64(msg.EndTime-msg.StartTime), SetUpDynamicLabelsForSim(cfg.DynamicLabels, msg))
 		if err != nil {
 			return err
 		}
@@ -123,40 +135,24 @@ func AddSimUsageDuration(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 	return nil
 }
 
-func SetUpStaticLabelsForSimUsage(msg *pb.SimUsage) map[string]string {
-	labels := make(map[string]string)
-	labels["sim"] = msg.Id
-	labels["org"] = msg.OrgID
-	labels["network"] = msg.NetworkID
-	labels["subscriber"] = msg.SubscriberID
-	labels["sim_type"] = msg.Type
-	return labels
-}
+func SetUpDynamicLabelsForSim(keys []string, msg *pb.SimUsage) prometheus.Labels {
+	l := make(prometheus.Labels)
+	for _, k := range keys {
+		switch k {
+		case "sim":
+			l[k] = msg.Id
+		case "org":
+			l[k] = msg.OrgID
+		case "network":
+			l[k] = msg.NetworkID
+		case "subscriber":
+			l[k] = msg.SubscriberID
+		case "sim_type":
+			l[k] = msg.Type
+		}
+	}
 
-func SetUpDynamicLabelsForSimUsage(msg *pb.SimUsage) map[string]string {
-	labels := make(map[string]string)
-	labels["session"] = msg.SessionId
-	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
-	labels["end"] = strconv.FormatInt(msg.EndTime, 10)
-	return labels
-}
-
-func SetUpStaticLabelsForSimUsageDuration(msg *pb.SimUsage) map[string]string {
-	labels := make(map[string]string)
-	labels["sim"] = msg.Id
-	labels["org"] = msg.OrgID
-	labels["network"] = msg.NetworkID
-	labels["subscriber"] = msg.SubscriberID
-	labels["sim_type"] = msg.Type
-	return labels
-}
-
-func SetUpDynamicLabelsForSimUsageDuration(msg *pb.SimUsage) map[string]string {
-	labels := make(map[string]string)
-	labels["session"] = msg.SessionId
-	labels["start"] = strconv.FormatInt(msg.StartTime, 10)
-	labels["end"] = strconv.FormatInt(msg.EndTime, 10)
-	return labels
+	return l
 }
 
 /*

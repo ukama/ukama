@@ -144,7 +144,7 @@ func SetUpMetric(key string, mc *MetricsCollector, l map[string]string, name str
 
 	nm := NewMetrics(name, c.Type)
 
-	nm.MergeLabels(c.Labels, l)
+	nm.MergeLabels(nil, l)
 
 	err = nm.InitializeMetric(name, *c, dl)
 	if err != nil {
