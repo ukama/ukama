@@ -48,31 +48,30 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Rate_Get(t *testing.T) {
 
-	
 	t.Run("RateExist", func(t *testing.T) {
 		// Arrange
 		const uuidStr = "51fbba62-c79f-11eb-b8bc-0242ac130003"
-		ratID,_:=uuid.FromString(uuidStr)
+		ratID, _ := uuid.FromString(uuidStr)
 		var db *extsql.DB
 		var err error
-	expectedRate := &Rate{
-			RateID: ratID,
-			Country: "India",
-			Network: "Airtel",
-			Vpmn: "123",
-			Imsi: "456",
-			SmsMo: "0.05",
-			SmsMt: "0.06",
-			Data: "0.07",
-			X2g: "0.08",
-			X3g: "0.09",
-			X5g: "0.1",
-			Lte: "0.11",
-			LteM: "0.12",
-			Apn: "apn123",
+		expectedRate := &Rate{
+			RateID:      ratID,
+			Country:     "India",
+			Network:     "Airtel",
+			Vpmn:        "123",
+			Imsi:        "456",
+			SmsMo:       "0.05",
+			SmsMt:       "0.06",
+			Data:        "0.07",
+			X2g:         "0.08",
+			X3g:         "0.09",
+			X5g:         "0.1",
+			Lte:         "0.11",
+			LteM:        "0.12",
+			Apn:         "apn123",
 			EffectiveAt: "2022-01-01",
-			EndAt: "2022-12-31",
-			SimType: SimTypeUkamaData,
+			EndAt:       "2022-12-31",
+			SimType:     SimTypeUkamaData,
 		}
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -108,10 +107,8 @@ func Test_Rate_Get(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.Equal(t, rate,expectedRate)
+		assert.Equal(t, rate, expectedRate)
 		assert.NotNil(t, rate)
 	})
 
 }
-
-
