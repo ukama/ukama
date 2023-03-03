@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,10 +12,14 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/ukama/ukama/systems/common/rest"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/client"
+	subPb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	submocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
+	smPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	smmocks "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen/mocks"
 	spPb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	spmocks "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen/mocks"
@@ -209,4 +215,390 @@ func TestRouter_deleteSimFromSimPool(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	csp.AssertExpectations(t)
 
+}
+
+func TestRouter_Subscriber(t *testing.T) {
+	csp := &spmocks.SimServiceClient{}
+	csm := &smmocks.SimManagerServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
+	r := NewRouter(&Clients{
+		sp:  client.NewSimPoolFromClient(csp),
+		sm:  client.NewSimManagerFromClient(csm),
+		sub: client.NewRegistryFromClient(csub),
+	}, routerConfig).f.Engine()
+
+	s := &subPb.Subscriber{
+		SubscriberID:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
+		OrgID:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		FirstName:             "John",
+		LastName:              "Doe",
+		NetworkID:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		Email:                 "johndoe@example.com",
+		PhoneNumber:           "1234567890",
+		Gender:                "Male",
+		DateOfBirth:           "16-04-1995",
+		Address:               "1 Main St",
+		ProofOfIdentification: "Passport",
+		IdSerial:              "123456789",
+	}
+
+	t.Run("getSubscriber", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/subscriber/"+s.SubscriberID,
+			nil)
+
+		preq := &subPb.GetSubscriberRequest{
+			SubscriberID: s.SubscriberID,
+		}
+		csub.On("Get", mock.Anything, preq).Return(&subPb.GetSubscriberResponse{
+			Subscriber: s,
+		}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), `"subscriber_id":"`+s.SubscriberID+`"`)
+
+		csp.AssertExpectations(t)
+	})
+
+	t.Run("putSubscriber", func(t *testing.T) {
+		data := SubscriberAddReq{
+			FirstName:             "John",
+			LastName:              "Doe",
+			NetworkID:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+			Email:                 "johndoe@example.com",
+			Phone:                 "1234567890",
+			Gender:                "Male",
+			DOB:                   "16-04-1995",
+			Address:               "1 Main St",
+			ProofOfIdentification: "Passport",
+			IdSerial:              "123456789",
+			OrgID:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		}
+
+		jdata, err := json.Marshal(&data)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("PUT", "/v1/subscriber", bytes.NewReader(jdata))
+		assert.NoError(t, err)
+
+		preq := &subPb.AddSubscriberRequest{
+			FirstName:             data.FirstName,
+			LastName:              data.LastName,
+			Email:                 data.Email,
+			PhoneNumber:           data.Phone,
+			DateOfBirth:           data.DOB,
+			Address:               data.Address,
+			ProofOfIdentification: data.ProofOfIdentification,
+			IdSerial:              data.IdSerial,
+			NetworkID:             data.NetworkID,
+			Gender:                data.Gender,
+			OrgID:                 data.OrgID,
+		}
+
+		csub.On("Add", mock.Anything, preq).Return(&subPb.AddSubscriberResponse{
+			Subscriber: s,
+		}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), `"subscriber_id":"`+s.SubscriberID+`"`)
+		csp.AssertExpectations(t)
+	})
+
+	t.Run("deleteSubscriber", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("DELETE", "/v1/subscriber/"+s.SubscriberID,
+			nil)
+
+		preq := &subPb.DeleteSubscriberRequest{
+			SubscriberID: s.SubscriberID,
+		}
+		csub.On("Delete", mock.Anything, preq).Return(&subPb.DeleteSubscriberResponse{}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		csp.AssertExpectations(t)
+	})
+
+	t.Run("updateSubscriber", func(t *testing.T) {
+		data := SubscriberUpdateReq{
+			Email:                 "johndoe@example.com",
+			Phone:                 "1234567890",
+			Address:               "1 Main St",
+			ProofOfIdentification: "Passport",
+			IdSerial:              "123456789",
+		}
+
+		jdata, err := json.Marshal(&data)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("PATCH", "/v1/subscriber/"+s.SubscriberID, bytes.NewReader(jdata))
+		assert.NoError(t, err)
+
+		preq := &subPb.UpdateSubscriberRequest{
+			SubscriberID:          s.SubscriberID,
+			Email:                 data.Email,
+			PhoneNumber:           data.Phone,
+			Address:               data.Address,
+			ProofOfIdentification: data.ProofOfIdentification,
+			IdSerial:              data.IdSerial,
+		}
+		csub.On("Update", mock.Anything, preq).Return(&subPb.UpdateSubscriberResponse{}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		csp.AssertExpectations(t)
+	})
+}
+
+func TestRouter_SimManager(t *testing.T) {
+	csp := &spmocks.SimServiceClient{}
+	csm := &smmocks.SimManagerServiceClient{}
+	csub := &submocks.RegistryServiceClient{}
+	r := NewRouter(&Clients{
+		sp:  client.NewSimPoolFromClient(csp),
+		sm:  client.NewSimManagerFromClient(csm),
+		sub: client.NewRegistryFromClient(csub),
+	}, routerConfig).f.Engine()
+	subscriberId := "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f"
+	sim := &smPb.Sim{
+		Id:           "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11",
+		SubscriberID: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
+		OrgID:        "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		NetworkID:    "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		Iccid:        "1234567890123456789",
+		Msisdn:       "555-555-1234",
+		Type:         "ukama_data",
+		Imsi:         "01234567891234",
+		IsPhysical:   false,
+		Package: &smPb.Package{
+			Id:        uuid.NewV4().String(),
+			StartDate: timestamppb.New(time.Now().UTC()),
+			EndDate:   timestamppb.New(time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC)),
+		},
+	}
+
+	t.Run("getSims", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/sim/"+sim.Id,
+			nil)
+
+		preq := &smPb.GetSimRequest{
+			SimID: sim.Id,
+		}
+		csm.On("GetSim", mock.Anything, preq).Return(&smPb.GetSimResponse{
+			Sim: sim,
+		}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), `"id":"`+sim.Id+`"`)
+
+		csm.AssertExpectations(t)
+	})
+
+	t.Run("getSimsBySub", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/sim/subscriber/"+subscriberId,
+			nil)
+
+		preq := &smPb.GetSimsBySubscriberRequest{
+			SubscriberID: subscriberId,
+		}
+		csm.On("GetSimsBySubscriber", mock.Anything, preq).Return(&smPb.GetSimsBySubscriberResponse{
+			Sims: []*smPb.Sim{sim},
+		}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), `"subscriber_id":"`+subscriberId+`"`)
+
+		csm.AssertExpectations(t)
+	})
+
+	t.Run("getPackagesForSim", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/sim/packages/"+sim.Id,
+			nil)
+
+		preq := &smPb.GetPackagesBySimRequest{
+			SimID: sim.Id,
+		}
+		csm.On("GetPackagesBySim", mock.Anything, preq).Return(&smPb.GetPackagesBySimResponse{
+			SimID:    sim.Id,
+			Packages: []*smPb.Package{sim.Package},
+		}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), `"sim_id":"`+sim.Id+`"`)
+		assert.Contains(t, w.Body.String(), `"id":"`+sim.Package.Id+`"`)
+		csm.AssertExpectations(t)
+	})
+
+	t.Run("addPkgForSim", func(t *testing.T) {
+		p := AddPkgToSimReq{
+			SimId:     sim.Id,
+			PackageId: sim.Package.Id,
+			StartDate: sim.Package.StartDate,
+		}
+
+		jdata, err := json.Marshal(&p)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("POST", "/v1/sim/package",
+			bytes.NewReader(jdata))
+		assert.NoError(t, err)
+
+		preq := &smPb.AddPackageRequest{
+			SimID:     p.SimId,
+			PackageID: p.PackageId,
+			StartDate: p.StartDate,
+		}
+		csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.AddPackageResponse{}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		csm.AssertExpectations(t)
+
+	})
+
+	t.Run("allocateSim", func(t *testing.T) {
+		p := AllocateSimReq{
+			SubscriberId: sim.SubscriberID,
+			SimToken:     "abcdef",
+			PackageId:    sim.Package.Id,
+			NetworkId:    sim.NetworkID,
+			SimType:      sim.Type,
+		}
+
+		jdata, err := json.Marshal(&p)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("POST", "/v1/sim/",
+			bytes.NewReader(jdata))
+		assert.NoError(t, err)
+
+		preq := &smPb.AllocateSimRequest{
+			SubscriberID: p.SubscriberId,
+			SimToken:     p.SimToken,
+			PackageID:    p.PackageId,
+			NetworkID:    p.NetworkId,
+			SimType:      p.SimType,
+		}
+
+		csm.On("AllocateSim", mock.Anything, preq).Return(&smPb.AllocateSimResponse{}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		csm.AssertExpectations(t)
+	})
+	t.Run("updateSimStatus", func(t *testing.T) {
+		p := ActivateDeactivateSimReq{
+			Status: "active",
+		}
+
+		jdata, err := json.Marshal(&p)
+		assert.NoError(t, err)
+
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("PATCH", "/v1/sim/"+sim.Id,
+			bytes.NewReader(jdata))
+		assert.NoError(t, err)
+
+		preq := &smPb.ToggleSimStatusRequest{
+			SimID:  sim.Id,
+			Status: p.Status,
+		}
+
+		csm.On("ToggleSimStatus", mock.Anything, preq).Return(&smPb.ToggleSimStatusResponse{}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		csm.AssertExpectations(t)
+	})
+	t.Run("setActivePackageForSim", func(t *testing.T) {
+
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("PATCH", "/v1/sim/"+sim.Id+"/package/"+sim.Package.Id,
+			nil)
+		assert.NoError(t, err)
+
+		preq := &smPb.SetActivePackageRequest{
+			SimID:     sim.Id,
+			PackageID: sim.Package.Id,
+		}
+
+		csm.On("SetActivePackageForSim", mock.Anything, preq).Return(&smPb.SetActivePackageResponse{}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		csm.AssertExpectations(t)
+	})
+	t.Run("removePkgForSim", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("DELETE", "/v1/sim/"+sim.Id+"/package/"+sim.Package.Id,
+			nil)
+		assert.NoError(t, err)
+
+		preq := &smPb.RemovePackageRequest{
+			SimID:     sim.Id,
+			PackageID: sim.Package.Id,
+		}
+
+		csm.On("RemovePackageForSim", mock.Anything, preq).Return(&smPb.RemovePackageResponse{}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		csm.AssertExpectations(t)
+	})
+	t.Run("deleteSim", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("DELETE", "/v1/sim/"+sim.Id,
+			nil)
+		assert.NoError(t, err)
+
+		preq := &smPb.DeleteSimRequest{
+			SimID: sim.Id,
+		}
+
+		csm.On("DeleteSim", mock.Anything, preq).Return(&smPb.DeleteSimResponse{}, nil)
+
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		csm.AssertExpectations(t)
+	})
 }
