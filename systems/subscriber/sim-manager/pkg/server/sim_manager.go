@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -32,6 +33,12 @@ import (
 
 const DefaultDaysDelayForPackageStartDate = 1
 
+type Metric struct {
+	Name   string
+	Type   string
+	Labels map[string]string
+	Value  float64
+}
 type SimManagerServer struct {
 	simRepo                   sims.SimRepo
 	packageRepo               sims.PackageRepo
@@ -64,7 +71,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-	err := s.CollectAndPushSimMetrics(ctx,&req.NetworkID)
+	err := s.CollectAndPushSimMetrics(ctx,&req.NetworkID,"number_of_subscriber")
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -208,7 +215,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
-	err = s.CollectAndPushSimMetrics(ctx,&req.NetworkID)
+	err = s.CollectAndPushSimMetrics(ctx,&req.NetworkID,"number_of_subscriber")
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -237,7 +244,7 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 }
 
 func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest) (*pb.ListSimsResponse, error) {
-	err := s.CollectAndPushSimMetrics(ctx,nil)
+	err := s.CollectAndPushSimMetrics(ctx,nil,"number_of_subscriber")
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -264,62 +271,110 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 	return resp, nil
 }
 
-func (s *SimManagerServer) CollectAndPushSimMetrics(ctx context.Context,networkID *string) error {
-	simsCount, activeCount, inactiveCount, terminatedCount,err:= s.simRepo.GetSimCounts()
-	if err != nil {
-		log.Errorf("failed to get Sims counts: %s", err.Error())
-		return err
-	}
-	
-	simMetrics := []struct {
-		Name   string
-		Type   string
-		Labels map[string]string
-		Value  float64
-	}{
-		{
-			Name: "number_of_subscriber",
-			Type: "gauge",
-			Labels: map[string]string{
-				"network": "",
-			},
-			Value: float64(simsCount),
-		},
-		{
-			Name: "active_sim_count",
-			Type: "gauge",
-			Labels: map[string]string{
-				"network": "",
-			},
-			Value: float64(activeCount),
-		},
-		{
-			Name: "inactive_sim_count",
-			Type: "gauge",
-			Labels: map[string]string{
-				"network": "",
-			},
-			Value: float64(inactiveCount),
-		},
-		{
-			Name: "terminated_sim_count",
-			Type: "gauge",
-			Labels: map[string]string{
-				"network": "",
-			},
-			Value: float64(terminatedCount),
-		},
-	}
-	if networkID != nil && *networkID != "" {
+
+
+func (s *SimManagerServer) CollectAndPushSimMetrics(ctx context.Context, networkID *string, metricName string) error {
+    var (
+        simsCount      int64
+        activeCount    int64
+        inactiveCount  int64
+        terminatedCount int64
+        err            error
+    )
+
+    simsCount, activeCount, inactiveCount, terminatedCount, err = s.simRepo.GetSimCounts()
+    if err != nil {
+        log.Errorf("failed to get Sims counts: %s", err.Error())
+        return err
+    }
+
+    var simMetrics []struct {
+        Name   string
+        Type   string
+        Labels map[string]string
+        Value  float64
+    }
+
+    switch metricName {
+    case "number_of_subscriber":
+        simMetrics = []struct {
+            Name   string
+            Type   string
+            Labels map[string]string
+            Value  float64
+        }{
+            {
+                Name: "number_of_subscriber",
+                Type: "gauge",
+                Labels: map[string]string{
+                    "network": "",
+                },
+                Value: float64(simsCount),
+            },
+        }
+    case "active_sim_count":
+        simMetrics = []struct {
+            Name   string
+            Type   string
+            Labels map[string]string
+            Value  float64
+        }{
+            {
+                Name: "active_sim_count",
+                Type: "gauge",
+                Labels: map[string]string{
+                    "network": "",
+                },
+                Value: float64(activeCount),
+            },
+        }
+    case "inactive_sim_count":
+        simMetrics = []struct {
+            Name   string
+            Type   string
+            Labels map[string]string
+            Value  float64
+        }{
+            {
+                Name: "inactive_sim_count",
+                Type: "gauge",
+                Labels: map[string]string{
+                    "network": "",
+                },
+                Value: float64(inactiveCount),
+            },
+        }
+    case "terminated_sim_count":
+        simMetrics = []struct {
+            Name   string
+            Type   string
+            Labels map[string]string
+            Value  float64
+        }{
+            {
+                Name: "terminated_sim_count",
+                Type: "gauge",
+                Labels: map[string]string{
+                    "network": "",
+                },
+                Value: float64(terminatedCount),
+            },
+        }
+    default:
+        log.Errorf("invalid metric name: %s", metricName)
+        return fmt.Errorf("invalid metric name: %s", metricName)
+    }
+
+    if networkID != nil && *networkID != "" {
         for i := range simMetrics {
             if _, ok := simMetrics[i].Labels["network"]; ok {
                 simMetrics[i].Labels["network"] = *networkID
             }
         }
     }
-	
-	utils.PushMetrics("sim", simMetrics)
-	return nil
+
+    utils.PushMetrics("sim", simMetrics)
+    return nil
 }
 
 func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSimsByNetworkRequest) (*pb.GetSimsByNetworkResponse, error) {
@@ -402,7 +457,7 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	err = s.CollectAndPushSimMetrics(ctx,nil)
+	err = s.CollectAndPushSimMetrics(ctx,nil,"number_of_subscriber")
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -637,6 +692,10 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 }
 
 func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*pb.ToggleSimStatusResponse, error) {
+	err := s.CollectAndPushSimMetrics(ctx,nil,"active_sim_count")
+	if err != nil {
+		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
+	}
 	simID, err := uuid.FromString(reqSimID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -688,7 +747,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
-	err = s.CollectAndPushSimMetrics(ctx,nil)
+	err = s.CollectAndPushSimMetrics(ctx,nil,"active_sim_count")
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -696,6 +755,10 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 }
 
 func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (*pb.ToggleSimStatusResponse, error) {
+	err := s.CollectAndPushSimMetrics(ctx,nil,"inactive_sim_count")
+	if err != nil {
+		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
+	}
 	simID, err := uuid.FromString(reqSimID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -741,7 +804,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
-	err = s.CollectAndPushSimMetrics(ctx,nil)
+	err = s.CollectAndPushSimMetrics(ctx,nil,"inactive_sim_count")
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}

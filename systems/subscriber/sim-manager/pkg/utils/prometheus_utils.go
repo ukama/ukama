@@ -124,7 +124,6 @@ func PushMetrics(metricJob string, metrics []struct {
     Labels map[string]string
     Value  float64
 }) {
-    // Extract the label keys from the first metric in the slice
     labelDimensions := make([]string, 0, len(metrics[0].Labels))
     for key := range metrics[0].Labels {
         labelDimensions = append(labelDimensions, key)
