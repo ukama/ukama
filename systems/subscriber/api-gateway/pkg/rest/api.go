@@ -76,7 +76,7 @@ type SimPoolUploadSimReq struct {
 }
 
 type SimPoolAddSimReq struct {
-	SimInfo []SimInfo
+	SimInfo []SimInfo `form:"sim_info" json:"sim_info" binding:"required"`
 }
 
 type SubscriberAddReq struct {
@@ -123,19 +123,19 @@ type SimListResp struct {
 }
 
 type AllocateSimReq struct {
-	SubscriberId string `json:"subscriber_id" validate:"required`
+	SubscriberId string `json:"subscriber_id" validate:"required"`
 	SimToken     string `json:"sim_token"`
-	PackageId    string `json:"package_id" validate:"required`
-	NetworkId    string `json:"network_id" validate:"required`
+	PackageId    string `json:"package_id" validate:"required"`
+	NetworkId    string `json:"network_id" validate:"required"`
 	SimType      string `json:"sim_type" validate:"required"`
 }
 
 type SetActivePackageForSimReq struct {
-	SimId     string `path:"sim_id" validate:"required`
-	PackageId string `path:"package_id" validate:"required`
+	SimId     string `path:"sim_id" validate:"required"`
+	PackageId string `path:"package_id" validate:"required"`
 }
 type SimReq struct {
-	SimId string `form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required`
+	SimId string `form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
 }
 
 type SimByNetworkReq struct {
@@ -143,12 +143,12 @@ type SimByNetworkReq struct {
 }
 
 type ActivateDeactivateSimReq struct {
-	SimId  string `path:"sim_id" validate:"required`
-	Status string `json:"status" binding:"required" validate:"required`
+	SimId  string `path:"sim_id" validate:"required"`
+	Status string `json:"status" binding:"required" validate:"required"`
 }
 
 type GetSimsBySubReq struct {
-	SubscriberId string `form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required`
+	SubscriberId string `form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
 }
 type AddPkgToSimReq struct {
 	SimId     string                 `json:"sim_id" validate:"required"`
@@ -157,6 +157,6 @@ type AddPkgToSimReq struct {
 }
 
 type RemovePkgFromSimReq struct {
-	SimId     string `form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required`
-	PackageId string `form:"package_id" json:"package_id" path:"package_id" binding:"required" validate:"required`
+	SimId     string `form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	PackageId string `form:"package_id" json:"package_id" path:"package_id" binding:"required" validate:"required"`
 }

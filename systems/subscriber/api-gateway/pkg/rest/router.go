@@ -2,7 +2,7 @@ package rest
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -183,7 +183,7 @@ func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*simPo
 }
 
 func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*simPoolPb.UploadResponse, error) {
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	c.Request.Body.Close()
 	if err != nil {
 		return nil, err
