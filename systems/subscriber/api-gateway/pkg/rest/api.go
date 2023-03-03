@@ -76,7 +76,7 @@ type SimPoolUploadSimReq struct {
 }
 
 type SimPoolAddSimReq struct {
-	SimInfo []SimInfo
+	SimInfo []SimInfo `form:"sim_info" json:"sim_info" binding:"required"`
 }
 
 type SubscriberAddReq struct {
