@@ -118,12 +118,7 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 }
 
 
-func PushMetrics(metricJob string, metrics []struct {
-    Name   string
-    Type   string
-    Labels map[string]string
-    Value  float64
-}) {
+func PushMetrics(metricJob string, metrics []pkg.SimMetrics) {
     labelDimensions := make([]string, 0, len(metrics[0].Labels))
     for key := range metrics[0].Labels {
         labelDimensions = append(labelDimensions, key)

@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -71,7 +70,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-	err := s.CollectAndPushSimMetrics(ctx,&req.NetworkID,"number_of_subscriber")
+	err := s.CollectAndPushSimMetrics(ctx,&req.NetworkID,"number_of_subscribers")
 	if err != nil {
 		log.Errorf("Error while pushing sim metric to pushgatway %s", err.Error())
 	}
@@ -271,111 +270,48 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 	return resp, nil
 }
 
-
-
 func (s *SimManagerServer) CollectAndPushSimMetrics(ctx context.Context, networkID *string, metricName string) error {
-    var (
-        simsCount      int64
-        activeCount    int64
-        inactiveCount  int64
-        terminatedCount int64
-        err            error
-    )
-
-    simsCount, activeCount, inactiveCount, terminatedCount, err = s.simRepo.GetSimCounts()
+	simsCount, activeCount, inactiveCount, terminatedCount, err := s.simRepo.GetSimCounts()
     if err != nil {
         log.Errorf("failed to get Sims counts: %s", err.Error())
         return err
     }
+	var metric *pkg.SimMetrics
+	for i := range pkg.MyMetric {
+		if pkg.MyMetric[i].Name == metricName {
+			metric = &pkg.MyMetric[i]
+			break
+		}
+	}
 
-    var simMetrics []struct {
-        Name   string
-        Type   string
-        Labels map[string]string
-        Value  float64
-    }
+	if metric == nil {
+		return nil
+	}
 
-    switch metricName {
-    case "number_of_subscriber":
-        simMetrics = []struct {
-            Name   string
-            Type   string
-            Labels map[string]string
-            Value  float64
-        }{
-            {
-                Name: "number_of_subscriber",
-                Type: "gauge",
-                Labels: map[string]string{
-                    "network": "",
-                },
-                Value: float64(simsCount),
-            },
-        }
-    case "active_sim_count":
-        simMetrics = []struct {
-            Name   string
-            Type   string
-            Labels map[string]string
-            Value  float64
-        }{
-            {
-                Name: "active_sim_count",
-                Type: "gauge",
-                Labels: map[string]string{
-                    "network": "",
-                },
-                Value: float64(activeCount),
-            },
-        }
-    case "inactive_sim_count":
-        simMetrics = []struct {
-            Name   string
-            Type   string
-            Labels map[string]string
-            Value  float64
-        }{
-            {
-                Name: "inactive_sim_count",
-                Type: "gauge",
-                Labels: map[string]string{
-                    "network": "",
-                },
-                Value: float64(inactiveCount),
-            },
-        }
-    case "terminated_sim_count":
-        simMetrics = []struct {
-            Name   string
-            Type   string
-            Labels map[string]string
-            Value  float64
-        }{
-            {
-                Name: "terminated_sim_count",
-                Type: "gauge",
-                Labels: map[string]string{
-                    "network": "",
-                },
-                Value: float64(terminatedCount),
-            },
-        }
-    default:
-        log.Errorf("invalid metric name: %s", metricName)
-        return fmt.Errorf("invalid metric name: %s", metricName)
-    }
+	switch metricName {
+	case "number_of_subscribers":
+		metric.Value = float64(simsCount)
+		metric.Labels["network"] = "my_network"
+		metric.Labels["org"] = "my_org"
+	case "active_sim_count":
+		metric.Value = float64(activeCount)
+		metric.Labels["org"] = "my_org"
+	case "inactive_sim_count":
+		metric.Value = float64(inactiveCount)
+		metric.Labels["org"] = "my_org"
+	case "terminated_sim_count":
+		metric.Value = float64(terminatedCount)
+		metric.Labels["org"] = "my_org"
+	}
 
-    if networkID != nil && *networkID != "" {
-        for i := range simMetrics {
-            if _, ok := simMetrics[i].Labels["network"]; ok {
-                simMetrics[i].Labels["network"] = *networkID
-            }
-        }
-    }
+	if networkID != nil && *networkID != "" {
+		metric.Labels["network"] = *networkID
+	}
 
-    utils.PushMetrics("sim", simMetrics)
-    return nil
+	utils.PushMetrics("sim", []pkg.SimMetrics{*metric})
+	return nil
 }
+
 
 func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSimsByNetworkRequest) (*pb.GetSimsByNetworkResponse, error) {
 	netID, err := uuid.FromString(req.GetNetworkID())

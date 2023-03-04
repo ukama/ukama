@@ -6,6 +6,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 )
+
 type MetricConfig struct {
 	Name    string
 	Event   string
@@ -48,4 +49,33 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 		},
 	}
+}
+
+type SimMetrics struct {
+	Name   string
+	Type   string
+	Labels map[string]string
+	Value  float64
+}
+
+var MyMetric = []SimMetrics{{
+	Name:   "number_of_subscribers",
+	Type:   "gauge",
+	Labels: map[string]string{"network": "", "org": ""},
+	Value:  0},
+	{
+		Name:   "active_count",
+		Type:   "gauge",
+		Labels: map[string]string{"network": "", "org": ""},
+		Value:  0},
+	{
+		Name:   "inactive_count",
+		Type:   "gauge",
+		Labels: map[string]string{"network": "", "org": "" },
+		Value:  0},
+	{
+		Name:   "terminated_count",
+		Type:   "gauge",
+		Labels: map[string]string{"network": "", "org": ""},
+		Value:  0},
 }
