@@ -6,12 +6,16 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 )
-
+const (
+	NumberOfSubscribers = "number_of_subscribers"
+	ActiveCount         = "active_sim_count"
+	InactiveCount       = "inactive_sim_count"
+	TerminatedCount     = "terminated_sim_count"
+	GaugeType           = "gauge"
+)
 type MetricConfig struct {
 	Name    string
-	Event   string
 	Type    string
-	Units   string
 	Labels  map[string]string
 	Details string
 	Buckets []float64
@@ -59,23 +63,23 @@ type SimMetrics struct {
 }
 
 var MyMetric = []SimMetrics{{
-	Name:   "number_of_subscribers",
-	Type:   "gauge",
+	Name:  NumberOfSubscribers,
+	Type:   GaugeType,
 	Labels: map[string]string{"network": "", "org": ""},
 	Value:  0},
 	{
-		Name:   "active_count",
-		Type:   "gauge",
+		Name:  ActiveCount,
+		Type:   GaugeType,
 		Labels: map[string]string{"network": "", "org": ""},
 		Value:  0},
 	{
-		Name:   "inactive_count",
-		Type:   "gauge",
+		Name:   InactiveCount,
+		Type:   GaugeType,
 		Labels: map[string]string{"network": "", "org": "" },
 		Value:  0},
 	{
-		Name:   "terminated_count",
-		Type:   "gauge",
+		Name:   TerminatedCount,
+		Type:  GaugeType,
 		Labels: map[string]string{"network": "", "org": ""},
 		Value:  0},
 }
