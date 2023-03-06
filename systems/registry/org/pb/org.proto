@@ -15,7 +15,7 @@ service OrgService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
-
+    rpc GetRunningOrg(GetRunningOrgRequest) returns (GetRunningOrgResponse);
 
     /* Users */
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
@@ -36,7 +36,12 @@ message AddRequest{
 message AddResponse{
     Organization org = 1;
 }
+message GetRunningOrgRequest{
 
+}
+message GetRunningOrgResponse{
+    uint64 orgID =1;
+}
 message GetRequest {
     uint64 id = 1 [json_name = "org_id"];
 }

@@ -91,6 +91,16 @@ func (r *OrgService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 
 	return &pb.GetResponse{Org: dbOrgToPbOrg(org)}, nil
 }
+func (r *OrgService) GetRunningOrg(ctx context.Context, req *pb.GetRunningOrgRequest) (*pb.GetRunningOrgResponse, error) {
+	logrus.Infof("Getting running org")
+
+	orgID, err := r.orgRepo.GetRunningOrg()
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	return &pb.GetRunningOrgResponse{OrgID: uint64(orgID)}, nil
+}
 
 func (r *OrgService) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
 	logrus.Infof("Getting org %v", req.GetName())

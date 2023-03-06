@@ -38,6 +38,12 @@ func (this *AddResponse) Validate() error {
 	}
 	return nil
 }
+func (this *GetRunningOrgRequest) Validate() error {
+	return nil
+}
+func (this *GetRunningOrgResponse) Validate() error {
+	return nil
+}
 func (this *GetRequest) Validate() error {
 	return nil
 }
