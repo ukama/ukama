@@ -160,3 +160,24 @@ func PushMetrics(metricJob string, metrics []pkg.SimMetrics) {
         fmt.Println("Could not push metrics to Pushgateway:", err)
     }
 }
+
+
+func CollectAndPushSimMetrics(configMetrics []pkg.SimMetrics, selectedMetric string, Value float64, Labels map[string]string) error {
+    var selectedMetrics []pkg.SimMetrics
+    for i, metric := range configMetrics {
+        if metric.Name == selectedMetric {
+            metric.Value = Value
+            for k, v := range Labels {
+                metric.Labels[k] = v
+            }
+            selectedMetrics = append(selectedMetrics, metric)
+            configMetrics[i] = metric
+        }
+    }
+    if len(selectedMetrics) == 0 {
+        return fmt.Errorf("metric %q not found", selectedMetric)
+    }
+    PushMetrics(pkg.SystemName, selectedMetrics)
+    return nil
+}
+

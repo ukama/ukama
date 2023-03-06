@@ -66,20 +66,24 @@ var MyMetric = []SimMetrics{{
 	Name:  NumberOfSubscribers,
 	Type:   GaugeType,
 	Labels: map[string]string{"network": "", "org": ""},
-	Value:  0},
+	Value:  0,
+},
 	{
 		Name:  ActiveCount,
 		Type:   GaugeType,
 		Labels: map[string]string{"network": "", "org": ""},
-		Value:  0},
+		Value:  0,
+	},
 	{
 		Name:   InactiveCount,
 		Type:   GaugeType,
 		Labels: map[string]string{"network": "", "org": "" },
-		Value:  0},
+		Value:  0,
+	},
 	{
 		Name:   TerminatedCount,
 		Type:  GaugeType,
 		Labels: map[string]string{"network": "", "org": ""},
-		Value:  0},
+		Value:  0,
+	},
 }
