@@ -1,8 +1,9 @@
 package rest
 
 import (
+	"encoding/base64"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -183,10 +184,10 @@ func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*simPo
 }
 
 func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*simPoolPb.UploadResponse, error) {
-	data, err := io.ReadAll(c.Request.Body)
-	c.Request.Body.Close()
+
+	data, err := base64.StdEncoding.DecodeString(req.Data)
 	if err != nil {
-		return nil, err
+		log.Fatal("error:", err)
 	}
 
 	pbResp, err := r.clients.sp.UploadSimsToSimPool(&simPoolPb.UploadRequest{
