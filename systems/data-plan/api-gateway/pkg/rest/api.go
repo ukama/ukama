@@ -3,7 +3,7 @@ package rest
 type AddPackageRequest struct {
 	Name        string `example:"Monthly-Data" json:"name" validation:"required"`
 	Duration    uint64 `example:"36000" json:"duration" validation:"required"`
-	OrgId       string `example:"OrgUUID" json:"org_id" validation:"required"`
+	OrgId       string `example:"{{OrgUUID}}" json:"org_id" validation:"required"`
 	SimType     string `example:"test" json:"sim_type" validation:"required"`
 	SmsVolume   int64  `example:"0" json:"sms_volume" validation:"required"`
 	DataVolume  int64  `example:"1024" json:"data_volume" validation:"required"`
@@ -13,10 +13,10 @@ type AddPackageRequest struct {
 }
 
 type UpdatePackageRequest struct {
-	Uuid        string `example:"PackageUUID" json:"uuid" path:"uuid" binding:"required" validation:"required"`
+	Uuid        string `example:"{{PackageUUID}}" json:"uuid" path:"uuid" binding:"required" validation:"required"`
 	Name        string `example:"Monthly-Data-Updated" json:"name" validation:"required"`
 	Duration    uint64 `example:"36000" json:"duration" validation:"required"`
-	OrgId       string `example:"OrgUUID" json:"org_id" validation:"required"`
+	OrgId       string `example:"{{OrgUUID}}" json:"org_id" validation:"required"`
 	SimType     string `example:"test" json:"sim_type" validation:"required"`
 	SmsVolume   int64  `example:"0" json:"sms_volume" validation:"required"`
 	DataVolume  int64  `example:"1024" json:"data_volume" validation:"required"`
@@ -26,7 +26,7 @@ type UpdatePackageRequest struct {
 }
 
 type PackagesRequest struct {
-	Uuid string `example:"PackageUUID" form:"uuid" json:"uuid" path:"uuid" binding:"required" validate:"required"`
+	Uuid string `example:"{{PackageUUID}}" form:"uuid" json:"uuid" path:"uuid" binding:"required" validate:"required"`
 }
 
 type GetBaseRatesRequest struct {
@@ -41,7 +41,7 @@ type GetBaseRateRequest struct {
 	RateId string `form:"base_rate" json:"base_rate" path:"base_rate" binding:"required" validate:"required"`
 }
 type GetPackageByOrgRequest struct {
-	OrgId string `example:"OrgUUID" form:"org_id" json:"org_id" path:"org_id" binding:"required" validate:"required"`
+	OrgId string `example:"{{OrgUUID}}" form:"org_id" json:"org_id" path:"org_id" binding:"required" validate:"required"`
 }
 type UploadBaseRatesRequest struct {
 	FileURL     string `json:"file_url" binding:"required" validate:"required"`

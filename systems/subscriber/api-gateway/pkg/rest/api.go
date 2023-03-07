@@ -88,25 +88,25 @@ type SubscriberAddReq struct {
 	ProofOfIdentification string `example:"passport" json:"proof_of_Identification" validate:"required"`
 	IdSerial              string `example:"123456789" json:"id_serial" validate:"required"`
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address" validate:"required"`
-	NetworkId             string `example:"NetworkUUID" json:"network_id" validate:"required"`
+	NetworkId             string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
 	Gender                string `example:"male" json:"gender" validate:"required"`
-	OrgId                 string `example:"OrgUUID" json:"org_id" validate:"required"`
+	OrgId                 string `example:"{{OrgUUID}}" json:"org_id" validate:"required"`
 }
 
 type SubscriberGetReq struct {
-	SubscriberId string `example:"SubscriberUUID" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
+	SubscriberId string `example:"{{SubscriberUUID}}" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
 }
 
 type SubscriberDeleteReq struct {
-	SubscriberId string `example:"SubscriberUUID" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
+	SubscriberId string `example:"{{SubscriberUUID}}" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
 }
 
 type SubscriberByNetworkReq struct {
-	NetworkId string `example:"NetworkUUID" form:"network_id" json:"network_id" path:"network_id" binding:"required" validate:"required"`
+	NetworkId string `example:"{{NetworkUUID}}" form:"network_id" json:"network_id" path:"network_id" binding:"required" validate:"required"`
 }
 
 type SubscriberUpdateReq struct {
-	SubscriberId          string `example:"SubscriberUUID" path:"subscriber_id" validate:"required"`
+	SubscriberId          string `example:"{{SubscriberUUID}}" path:"subscriber_id" validate:"required"`
 	Email                 string `example:"test@example.com" json:"email"`
 	Phone                 string `example:"4151231234" json:"phone"`
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`
@@ -115,44 +115,44 @@ type SubscriberUpdateReq struct {
 }
 
 type SimListReq struct {
-	NetworkId string `example:"NetworkUUID" form:"network_id" json:"network_id" path:"network_id" binding:"required" validate:"required"`
+	NetworkId string `example:"{{NetworkUUID}}" form:"network_id" json:"network_id" path:"network_id" binding:"required" validate:"required"`
 }
 
 type AllocateSimReq struct {
-	SubscriberId string `example:"SubscriberUUID" json:"subscriber_id" validate:"required"`
+	SubscriberId string `example:"{{SubscriberUUID}}" json:"subscriber_id" validate:"required"`
 	SimToken     string `example:"pj/9A5Hk8VkkZxOJyu0+9fWs7J6HCOjhmD5jEsIvOfZqmFFFMyStgC3Va4l1b6I5+2ibKOsJjR9KGug=" json:"sim_token"`
-	PackageId    string `example:"PackageUUID" json:"package_id" validate:"required"`
-	NetworkId    string `example:"NetworkUUID" json:"network_id" validate:"required"`
+	PackageId    string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
+	NetworkId    string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
 	SimType      string `example:"test" json:"sim_type" validate:"required"`
 }
 
 type SetActivePackageForSimReq struct {
-	SimId     string `example:"SimUUID" path:"sim_id" validate:"required"`
-	PackageId string `example:"PackageUUID" path:"package_id" validate:"required"`
+	SimId     string `example:"{{SimUUID}}" path:"sim_id" validate:"required"`
+	PackageId string `example:"{{PackageUUID}}" path:"package_id" validate:"required"`
 }
 type SimReq struct {
-	SimId string `example:"SimUUID" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	SimId string `example:"{{SimUUID}}" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
 }
 
 type SimByNetworkReq struct {
-	NetworkId string `example:"NetworkUUID" form:"network_id" json:"network_id" path:"network_id" binding:"required" validate:"required"`
+	NetworkId string `example:"{{NetworkUUID}}" form:"network_id" json:"network_id" path:"network_id" binding:"required" validate:"required"`
 }
 
 type ActivateDeactivateSimReq struct {
-	SimId  string `example:"SimUUID" path:"sim_id" validate:"required"`
+	SimId  string `example:"{{SimUUID}}" path:"sim_id" validate:"required"`
 	Status string `example:"active" json:"status" binding:"required" validate:"required"`
 }
 
 type GetSimsBySubReq struct {
-	SubscriberId string `example:"SubscriberUUID" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
+	SubscriberId string `example:"{{SubscriberUUID}}" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
 }
 type AddPkgToSimReq struct {
-	SimId     string                 `example:"SimUUID" json:"sim_id" validate:"required"`
-	PackageId string                 `example:"PackageUUID" json:"package_id" validate:"required"`
+	SimId     string                 `example:"{{SimUUID}}" json:"sim_id" validate:"required"`
+	PackageId string                 `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
 	StartDate *timestamppb.Timestamp `example:"" json:"start_date" validate:"required"`
 }
 
 type RemovePkgFromSimReq struct {
-	SimId     string `example:"SimUUID" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
-	PackageId string `example:"PackageUUID" form:"package_id" json:"package_id" path:"package_id" binding:"required" validate:"required"`
+	SimId     string `example:"{{SimUUID}}" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	PackageId string `example:"{{PackageUUID}}" form:"package_id" json:"package_id" path:"package_id" binding:"required" validate:"required"`
 }
