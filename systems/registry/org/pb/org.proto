@@ -15,7 +15,7 @@ service OrgService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
-    rpc GetRunningOrg(GetRunningOrgRequest) returns (GetRunningOrgResponse);
+
 
     /* Users */
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
@@ -36,14 +36,9 @@ message AddRequest{
 message AddResponse{
     Organization org = 1;
 }
-message GetRunningOrgRequest{
 
-}
-message GetRunningOrgResponse{
-    uint64 orgID =1;
-}
 message GetRequest {
-    uint64 id = 1 [json_name = "org_id"];
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
 
 message GetResponse{
@@ -51,11 +46,11 @@ message GetResponse{
 }
 
 message GetByOwnerRequest{
-    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
+    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message GetByOwnerResponse{
-    string owner = 1 [(validator.field) = {uuid_ver: 0}];
+    string owner = 1 [(validator.field) = {uuid_ver: 4}];
     repeated Organization orgs = 2;
 }
 
@@ -69,7 +64,7 @@ message GetByNameResponse{
 
 message MemberRequest{
     string orgName = 1 [json_name = "org"];
-    string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
+    string userUuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message MemberResponse{
@@ -77,8 +72,7 @@ message MemberResponse{
 }
 
 message RegisterUserRequest{
-    uint64 orgId = 1 [json_name = "org_id"];
-    string userUuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
+    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
 }
 
 message GetMembersRequest {
@@ -96,7 +90,7 @@ message UpdateMemberRequest {
 }
 
 message UpdateUserRequest {
-    string userUuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name = "user_uuid"];
+    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
     UserAttributes attributes = 2;
 }
 
@@ -105,9 +99,9 @@ message UpdateUserResponse {
 }
 
 message Organization {
-    uint64 id = 1;
+    string id = 1 [(validator.field) = {uuid_ver: 4}];
     string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
-    string owner = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string owner = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string certificate = 4;
     bool isDeactivated = 5 [json_name = "is_deactivated"];
     google.protobuf.Timestamp created_at = 6 [json_name = "created_at"];
@@ -119,7 +113,7 @@ message UserAttributes {
 
 message User {
     uint64 userId = 1 [json_name = "user_id"];
-    string uuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string uuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     bool isDeactivated = 3 [json_name = "is_deactivated"];
 }
 
@@ -128,9 +122,9 @@ message OrgUserAttributes {
 }
 
 message OrgUser {
-    uint64 orgId = 1 [json_name = "org_id"];
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     uint64 userId = 2 [json_name = "user_id"];
-    string uuid = 3 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string uuid = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     bool isDeactivated = 4 [json_name = "is_deactivated"];
     google.protobuf.Timestamp created_at = 5 [json_name = "member_since"];
 }
