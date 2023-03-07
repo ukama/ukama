@@ -1,6 +1,7 @@
 package validations
 
 import (
+	"errors"
 	"time"
 )
 
@@ -17,10 +18,23 @@ func IsValidUploadReqArgs(fileUrl, effectiveAt, simType string) bool {
 	return !IsEmpty(fileUrl, effectiveAt, simType)
 }
 
-func IsFutureDate(date string) bool {
-	t, err := time.Parse(time.RFC3339, date)
-	if err != nil {
-		return false
-	}
-	return time.Now().Before(t)
+
+
+func IsFutureDate(date string) error {
+    t, err := time.Parse(time.RFC1123, date)
+    if err != nil {
+        return err
+    }
+    if t.After(time.Now()) {
+        return nil
+    }
+    return errors.New("Date is not in the future")
+}
+
+func ValidateDate(date string) (string, error) {
+    t, err := time.Parse("02-01-2006", date)
+    if err != nil {
+        return "", errors.New("invalid date format, must be dd-mm-yyyy")
+    }
+    return t.Format(time.RFC1123), nil
 }

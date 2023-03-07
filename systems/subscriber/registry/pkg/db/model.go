@@ -15,7 +15,7 @@ type Subscriber struct {
 	Email                 string    `gorm:"size:255"`
 	PhoneNumber           string    `gorm:"size:15"`
 	Gender                string    `gorm:"size:255"`
-	DOB                   time.Time
+	DOB                   string
 	ProofOfIdentification string `gorm:"size:255"`
 	IdSerial              string `gorm:"size:255"`
 	Address               string `gorm:"size:255"`

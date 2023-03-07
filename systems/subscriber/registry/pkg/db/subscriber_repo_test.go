@@ -63,6 +63,8 @@ func TestSubscriber_Add(t *testing.T) {
 	repo := int_db.NewSubscriberRepo(&UkamaDbMock{
 		GormDb: gdb,
 	})
+	dateStr := "07-03-2023"
+
 	subscriber := int_db.Subscriber{
 		SubscriberID:          uuid.NewV4(),
 		FirstName:             "John",
@@ -72,7 +74,7 @@ func TestSubscriber_Add(t *testing.T) {
 		Email:                 "johndoe@example.com",
 		PhoneNumber:           "555-555-5555",
 		Gender:                "Male",
-		DOB:                   time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC),
+		DOB:                   dateStr,
 		ProofOfIdentification: "Driver's License",
 		IdSerial:              "ABC123",
 		Address:               "123 Main St.",

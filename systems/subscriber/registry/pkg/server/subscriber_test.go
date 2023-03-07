@@ -35,7 +35,7 @@ func TestAdd(t *testing.T) {
 			Email:               "johndoe@example.com",
 			PhoneNumber:         "1234567890",
 			Gender:              "Male",
-			DateOfBirth:"16-04-1995",
+			Dob:"16-04-1995",
 			Address:             "1 Main St",
 			ProofOfIdentification: "Passport",
 			IdSerial: "123456789",

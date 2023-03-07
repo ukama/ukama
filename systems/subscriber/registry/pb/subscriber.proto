@@ -94,7 +94,7 @@ message AddSubscriberRequest {
     // proof of identification of the subscriber, must not be empty and have a length greater than 1
     string proofOfIdentification =8 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
     // date of birth of the subscriber
-    string dateOfBirth = 9;
+    string dob = 9;
     // gender of the subscriber, must not be empty and have a length greater than 1
     string gender =10 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
     // org ID of the subscriber, must be a UUID and not empty
@@ -137,7 +137,7 @@ message Subscriber{
     string deletedAt = 11;
     string updatedAt = 12;
     repeated Sim sim = 13;
-    string dateOfBirth = 14 [json_name = "date_of_birth"];
+    string dob = 14 [json_name = "date_of_birth"];
     string idSerial =15 [json_name = "id_serial"];
     string gender =16;
 

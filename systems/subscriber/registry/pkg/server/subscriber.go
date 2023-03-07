@@ -50,7 +50,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 
-	dob, err := utils.ValidateDOB(req.GetDateOfBirth())
+	dob, err := utils.ValidateDOB(req.GetDob())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -313,7 +313,7 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscri
 		Address:               s.Address,
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
-		DateOfBirth:           s.DOB.String(),
+		Dob:           s.DOB,
 	}
 
 }
