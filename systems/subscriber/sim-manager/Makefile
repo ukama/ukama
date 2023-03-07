@@ -19,7 +19,6 @@ deps:
 			github.com/ysugimoto/grpc-graphql-gateway/protoc-gen-graphql/...
 			github.com/vektra/mockery/v2/.../
 
-
 gen:
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
 		sim_manager.proto
@@ -28,9 +27,6 @@ gen:
 
 clean:
 	rm pb/gen/*.go
-
-
-# integration tests
 
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1

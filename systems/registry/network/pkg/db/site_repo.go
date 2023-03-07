@@ -10,7 +10,7 @@ import (
 )
 
 type SiteRepo interface {
-	Add(site *Site) error
+	Add(site *Site, nestedFunc func(*Site, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Site, error)
 	GetByName(netID uuid.UUID, siteName string) (*Site, error)
 	GetByNetwork(netID uuid.UUID) ([]Site, error)
@@ -65,15 +65,29 @@ func (s siteRepo) GetByNetwork(netID uuid.UUID) ([]Site, error) {
 	return sites, nil
 }
 
-func (s siteRepo) Add(site *Site) error {
+func (s siteRepo) Add(site *Site, nestedFunc func(site *Site, tx *gorm.DB) error) error {
 	if !validation.IsValidDnsLabelName(site.Name) {
 		return fmt.Errorf("invalid name. must be less then 253 " +
 			"characters and consist of lowercase characters with a hyphen")
 	}
 
-	result := s.Db.GetGormDb().Create(site)
+	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if nestedFunc != nil {
+			nestErr := nestedFunc(site, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
 
-	return result.Error
+		result := tx.Create(site)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (s siteRepo) Delete(siteID uuid.UUID) error {

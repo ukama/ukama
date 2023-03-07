@@ -4,9 +4,10 @@ import (
 	"errors"
 	"os"
 
-	"github.com/google/uuid"
 	"github.com/num30/config"
-	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/users/pkg/server"
 	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
@@ -22,8 +23,6 @@ import (
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-
-	uconf "github.com/ukama/ukama/systems/common/config"
 
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -41,25 +40,12 @@ func main() {
 
 	usersDb := initDb()
 
-	metrics.StartMetricsServer(svcConf.Metrics)
-
 	runGrpcServer(usersDb)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	svcConf = &pkg.Config{
-		DB: &uconf.Database{
-			DbName: pkg.ServiceName,
-		},
-		Grpc: &uconf.Grpc{
-			Port: 9090,
-		},
-		Metrics: &uconf.Metrics{
-			Port: 10250,
-		},
-	}
-
+	svcConf = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
@@ -67,7 +53,7 @@ func initConfig() {
 		// output config in debug mode
 		b, err := yaml.Marshal(svcConf)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 
@@ -86,36 +72,62 @@ func initDb() sql.Db {
 
 	usersDB := d.GetGormDb()
 
-	if usersDB.Migrator().HasTable(&db.User{}) {
-		if err := usersDB.First(&db.User{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-			logrus.Info("Iniiialzing users table")
-			var ukamaUUID uuid.UUID
-			var err error
-
-			if ukamaUUID, err = uuid.Parse(os.Getenv("UKAMA_UUID")); err != nil {
-				log.Fatalf("Database initialization failed, need valid UKAMA UUID env var. Error: %v", err)
-			}
-
-			usersDB.Create(&db.User{
-				Uuid:  ukamaUUID,
-				Name:  "Ukama Root",
-				Email: "hello@ukama.com",
-				Phone: "0000000000",
-			})
-		}
-	}
+	initUsersDB(usersDB)
 
 	return d
 }
 
 func runGrpcServer(gormdb sql.Db) {
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		inst := uuid.NewV4()
+		instanceId = inst.String()
+	}
+
+	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
+
+	logrus.Debugf("MessageBus Client is %+v", mbClient)
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
 
-		provider.NewOrgClientProvider(svcConf.OrgHost),
+		provider.NewOrgClientProvider(svcConf.Org), mbClient,
 	)
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		gen.RegisterUserServiceServer(s, userService)
 	})
 
+	go msgBusListener(mbClient)
 	grpcServer.StartServer()
+
+}
+
+func initUsersDB(usersDB *gorm.DB) {
+	if usersDB.Migrator().HasTable(&db.User{}) {
+		if err := usersDB.First(&db.User{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Iniiialzing users table")
+			var ownerUUID uuid.UUID
+			var err error
+
+			if ownerUUID, err = uuid.FromString(svcConf.OrgOWnerUUID); err != nil {
+				log.Fatalf("Database initialization failed, need valid %s envronment variable. Error: %v", "ORGOWNERUUID", err)
+			}
+
+			usersDB.Create(&db.User{
+				Uuid:  ownerUUID,
+				Name:  svcConf.OrgOWnerName,
+				Email: svcConf.OrgOWnerEmail,
+				Phone: svcConf.OrgOWnerPhone,
+			})
+		}
+	}
+}
+func msgBusListener(m mb.MsgBusServiceClient) {
+
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }

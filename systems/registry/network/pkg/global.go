@@ -1,7 +1,7 @@
 package pkg
 
 const ServiceName = "network"
-const SystemName = "Registry"
+const SystemName = "registry"
 
 var InstanceId = "debug"
 

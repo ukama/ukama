@@ -31,17 +31,16 @@ type Config struct {
 	MsgClient         *config.MsgClient `default:"{}"`
 	Service           *config.Service
 	Key               string
-	DataPlan          string `default:"data-plan:8080"`
-	SubsRegistry      string `default:"registry:9091"`
-	SimPool           string `default:"sim-pool:9090"`
-	TestAgent         string `default:"test-agent:9093"`
-	OperatorAgent     string `default:"operator-agent:8080"`
+	DataPlan          string `default:"http://data-plan:8080"`
+	Registry          string `default:"registry:9090"`
+	SimPool           string `default:"sim:9090"`
+	TestAgent         string `default:"test-agent:9090"`
+	OperatorAgent     string `default:"http://operator-agent:8080"`
 }
 
 func NewConfig(name string) *Config {
 	// Sanitize name
 	name = strings.ReplaceAll(name, "-", "_")
-
 	return &Config{
 		DB: &config.Database{
 			DbName: name,

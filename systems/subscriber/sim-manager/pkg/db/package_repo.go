@@ -3,6 +3,7 @@ package db
 import (
 	"errors"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
@@ -37,6 +38,7 @@ func (p *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.D
 			}
 		}
 
+		log.Info("Adding package", pkg)
 		result := tx.Create(pkg)
 		if result.Error != nil {
 			return result.Error

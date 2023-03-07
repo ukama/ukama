@@ -10,7 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,7 +22,6 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -33,7 +31,6 @@ import (
 )
 
 const DefaultDaysDelayForPackageStartDate = 1
-
 
 type SimManagerServer struct {
 	simRepo                   sims.SimRepo
@@ -67,8 +64,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-	
-	
+
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -146,7 +142,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	} else {
 		remoteSimPoolResp, err := simPoolSvc.Get(ctx,
-			&simpoolpb.GetRequest{IsPhysicalSim: false, SimType: simpoolpb.SimType(simType)})
+			&simpoolpb.GetRequest{IsPhysicalSim: false, SimType: simType.String()})
 
 		if err != nil {
 			return nil, err
@@ -179,26 +175,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	err = s.simRepo.Add(sim, func(pckg *sims.Sim, tx *gorm.DB) error {
-		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
-
 		sim.ID = uuid.NewV4()
-		startDate := time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
-		endDate := startDate.Add(time.Duration(packageInfo.Duration))
-
-		firstPackage := &sims.Package{
-			ID:        uuid.NewV4(),
-			SimID:     sim.ID,
-			StartDate: startDate,
-			EndDate:   endDate,
-			PlanID:    packageID,
-			IsActive:  false,
-		}
-
-		// Adding package to new allocated sim
-		err := db.NewPackageRepo(txDb).Add(firstPackage, nil)
-		if err != nil {
-			return err
-		}
 
 		return nil
 	})
@@ -208,22 +185,43 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"failed to allocate sim to subscriber. Error %s", err.Error())
 	}
 
+	firstPackage := &sims.Package{
+		PlanID:   packageID,
+		IsActive: false,
+	}
+
+	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
+		firstPackage.ID = uuid.NewV4()
+		firstPackage.SimID = sim.ID
+
+		firstPackage.StartDate = time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
+		firstPackage.EndDate = firstPackage.StartDate.Add(time.Duration(packageInfo.Duration))
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to add initial package to newlly allocated sim. Error %s", err.Error())
+	}
+
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
-	
+
+	// Uncomment this when msgclient is back
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 	simsCount, _, _, _, err := s.simRepo.GetSimCounts()
-    if err != nil {
-        log.Errorf("failed to get Sims counts: %s", err.Error())
-    }
-	
-	err = utils.CollectAndPushSimMetrics(pkg.SimMetric,pkg.NumberOfSubscribers,float64(simsCount),map[string]string{"network": req.NetworkID,"org":orgID.String()})
-    if err != nil {
-        fmt.Println("Error:", err)
-    }
+	if err != nil {
+		log.Errorf("failed to get Sims counts: %s", err.Error())
+	}
+
+	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": orgID.String()})
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 
 	return resp, nil
 }
@@ -238,6 +236,17 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 	sim, err := s.simRepo.Get(simID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim ID: %q", sim.Type, req.SimID)
+	}
+
+	_, err = simAgent.GetSim(ctx, sim.Iccid)
+	if err != nil {
+		return nil, err
 	}
 
 	return &pb.GetSimResponse{Sim: dbSimToPbSim(sim)}, nil
@@ -266,7 +275,6 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 
 	return resp, nil
 }
-
 
 func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSimsByNetworkRequest) (*pb.GetSimsByNetworkResponse, error) {
 	netID, err := uuid.FromString(req.GetNetworkID())
@@ -303,7 +311,6 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid status parameter: %s.", strStatus)
 	}
-	
 
 }
 
@@ -361,13 +368,13 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		log.Errorf("Environment variable not set")
 	}
 	_, _, _, terminatedCount, err := s.simRepo.GetSimCounts()
-    if err != nil {
-        log.Errorf("failed to get Sims counts: %s", err.Error())
-    }
-	err = utils.CollectAndPushSimMetrics(pkg.SimMetric,pkg.TerminatedCount,float64(terminatedCount),map[string]string{"org": org})
-    if err != nil {
-        fmt.Println("Error:", err)
-    }
+	if err != nil {
+		log.Errorf("failed to get Sims counts: %s", err.Error())
+	}
+	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.TerminatedCount, float64(terminatedCount), map[string]string{"org": org})
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 
 	return &pb.DeleteSimResponse{}, nil
 }
@@ -538,7 +545,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			}
 
 			// then deactivate it
-			result := tx.Model(currentActivePackage).Update("is_active", false)
+			result := tx.Model(currentActivePackage).Update("active", false)
 			if result.RowsAffected == 0 {
 				return gorm.ErrRecordNotFound
 			}
@@ -593,7 +600,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 }
 
 func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*pb.ToggleSimStatusResponse, error) {
-	
+
 	simID, err := uuid.FromString(reqSimID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -645,19 +652,19 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
-	
+
 	org, ok := os.LookupEnv("ORG")
 	if !ok {
 		log.Errorf("Environment variable not set")
 	}
 	_, activeCount, _, _, err := s.simRepo.GetSimCounts()
-    if err != nil {
-        log.Errorf("failed to get Sims counts: %s", err.Error())
-    }
-	err = utils.CollectAndPushSimMetrics(pkg.SimMetric,pkg.ActiveCount,float64(activeCount),map[string]string{"org": org})
-    if err != nil {
-        fmt.Println("Error:", err)
-    }
+	if err != nil {
+		log.Errorf("failed to get Sims counts: %s", err.Error())
+	}
+	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.ActiveCount, float64(activeCount), map[string]string{"org": org})
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
 }
@@ -714,13 +721,13 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 		log.Errorf("Environment variable not set")
 	}
 	_, _, inactiveCount, _, err := s.simRepo.GetSimCounts()
-    if err != nil {
-        log.Errorf("failed to get Sims counts: %s", err.Error())
-    }
-	err = utils.CollectAndPushSimMetrics(pkg.SimMetric,pkg.InactiveCount,float64(inactiveCount),map[string]string{"org": org})
-    if err != nil {
-        fmt.Println("Error:", err)
-    }
+	if err != nil {
+		log.Errorf("failed to get Sims counts: %s", err.Error())
+	}
+	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.InactiveCount, float64(inactiveCount), map[string]string{"org": org})
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
 }

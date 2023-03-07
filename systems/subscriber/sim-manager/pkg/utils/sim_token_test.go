@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,13 +12,11 @@ const testKey = "the-key-has-to-be-32-bytes-long!"
 func Test_encrypt(t *testing.T) {
 
 	r, err := encrypt(textToEncode, testKey)
-	fmt.Println(r)
 	if !assert.NoError(t, err) {
 		assert.FailNow(t, "encrypt failed")
 	}
 	res, err := decrypt(r, testKey)
 	assert.NoError(t, err)
-	fmt.Println(res)
 	assert.Equal(t, textToEncode, res)
 }
 

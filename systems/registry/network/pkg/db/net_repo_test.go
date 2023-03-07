@@ -350,7 +350,7 @@ func Test_NetRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&network)
+		err = r.Add(&network, nil)
 
 		// Assert
 		assert.NoError(t, err)

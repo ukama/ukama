@@ -19,6 +19,10 @@ type NetworkInfoClient interface {
 type networkInfoClient struct {
 	R *RestClient
 }
+
+type Network struct {
+	NetworkInfo *NetworkInfo `json:"network"`
+}
 type NetworkInfo struct {
 	NetworkId     string    `json:"id"`
 	Name          string    `json:"name"`
@@ -44,11 +48,10 @@ func NewNetworkClient(url string, debug bool) (*networkInfoClient, error) {
 
 func (N *networkInfoClient) ValidateNetwork(networkID string, orgID string) error {
 	errStatus := &rest.ErrorMessage{}
-	network := &NetworkInfo{}
+	network := &Network{}
 	resp, err := N.R.C.R().
 		SetError(errStatus).
 		Get(N.R.URL.String() + "/v1/networks/" + networkID)
-
 	if err != nil {
 		logrus.Errorf("Failed to send api request to network registry. Error %s", err.Error())
 		return err
@@ -56,16 +59,16 @@ func (N *networkInfoClient) ValidateNetwork(networkID string, orgID string) erro
 
 	if !resp.IsSuccess() {
 		logrus.Tracef("Failed to fetch network info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
-		return fmt.Errorf(" Network Info failure %s", errStatus.Message)
+		return fmt.Errorf("Network Info failure %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), &network)
 	if err != nil {
 		logrus.Tracef("Failed to desrialize network info. Error message is %s", err.Error())
 		return fmt.Errorf("network info deserailization failure:" + err.Error())
-	} 
+	}
 
-	if orgID != network.OrgId {
+	if orgID != network.NetworkInfo.OrgId {
 		logrus.Error("Missing network.")
 		return fmt.Errorf("Network mismatch")
 	}

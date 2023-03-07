@@ -94,7 +94,7 @@ message AddSubscriberRequest {
     // proof of identification of the subscriber, must not be empty and have a length greater than 1
     string proofOfIdentification =8 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
     // date of birth of the subscriber
-    google.protobuf.Timestamp dateOfBirth = 9;
+    string dateOfBirth = 9;
     // gender of the subscriber, must not be empty and have a length greater than 1
     string gender =10 [(validator.field) = { string_not_empty: true, length_gt: 1 }];
     // org ID of the subscriber, must be a UUID and not empty

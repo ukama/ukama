@@ -32,6 +32,7 @@ jobs:
     
   sonar-scan:
     name: sonar-scan
+    needs: [build]
     runs-on: ubuntu-latest
     env: 
       working-directory: systems/subscriber/sim-pool
@@ -43,7 +44,7 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_subscriber_sim_pool
+          project-key: ukama_systems_subscriber_sim-pool
 
   lint:
     name: lint
@@ -76,8 +77,8 @@ jobs:
         - name: update gitops
           uses: denispalnitsky/gitops-release@v9
           with:
-            filename: "releases/data-plan-helmfile.yaml"
-            key: "simPoolImageTag"
+            filename: "releases/subscriber-helmfile.yaml"
+            key: "simpoolImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"

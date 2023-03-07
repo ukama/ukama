@@ -35,12 +35,27 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		simRepo.On("Get", simID).Return(
-			&db.Sim{ID: simID,
-				IsPhysical: false,
-			}, nil).Once()
+		agentFactory := &mocks.AgentFactory{}
 
-		s := NewSimManagerServer(simRepo, nil, nil, nil, nil, nil, "", nil)
+		sim := simRepo.On("Get", simID).
+			Return(&db.Sim{ID: simID,
+				Iccid:      testIccid,
+				Status:     db.SimStatusInactive,
+				Type:       db.SimTypeTest,
+				IsPhysical: false,
+			}, nil).
+			Once().
+			ReturnArguments.Get(0).(*db.Sim)
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("GetSim", mock.Anything,
+			sim.Iccid).Return(nil, nil).Once()
+
+		s := NewSimManagerServer(simRepo, nil, agentFactory, nil, nil, nil, "", nil)
 		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
 			SimID: simID.String()})
 
@@ -91,7 +106,7 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 
 		simRepo.On("GetBySubscriber", subscriberID).Return(
 			[]db.Sim{
-				db.Sim{ID: simID,
+				{ID: simID,
 					SubscriberID: subscriberID,
 					IsPhysical:   false,
 				}}, nil).Once()
@@ -148,7 +163,7 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 
 		simRepo.On("GetByNetwork", networkID).Return(
 			[]db.Sim{
-				db.Sim{ID: simID,
+				{ID: simID,
 					NetworkID:  networkID,
 					IsPhysical: false,
 				}}, nil).Once()
@@ -204,7 +219,7 @@ func TestSimManagerServer_GetPackagesBySim(t *testing.T) {
 
 		packageRepo.On("GetBySim", simID).Return(
 			[]db.Package{
-				db.Package{ID: packageID,
+				{ID: packageID,
 					SimID:    simID,
 					IsActive: false,
 				}}, nil).Once()
@@ -290,7 +305,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once()
 
 		simPoolClient := simPoolService.On("GetClient").
@@ -300,12 +315,12 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		simPoolResp := simPoolClient.On("Get", mock.Anything,
 			&splpb.GetRequest{IsPhysicalSim: false,
-				SimType: 1,
+				SimType: db.SimTypeTest.String(),
 			}).
 			Return(&splpb.GetResponse{
 				Sim: &splpb.Sim{
 					IsPhysical: false,
-					SimType:    1,
+					SimType:    db.SimTypeTest.String(),
 				},
 			}, nil).Once().
 			ReturnArguments.Get(0).(*splpb.GetResponse)
@@ -314,7 +329,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberID: subscriberID,
 			NetworkID:    networkID,
 			OrgID:        orgID,
-			Type:         sims.SimType(simPoolResp.Sim.SimType),
+			Type:         db.SimTypeTest,
 			Status:       sims.SimStatusInactive,
 			IsPhysical:   simPoolResp.Sim.IsPhysical,
 		}
@@ -322,9 +337,18 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		simRepo.On("Add", sim,
 			mock.Anything).Return(nil).Once()
 
+		pkg := &sims.Package{
+			SimID:    sim.ID,
+			PlanID:   packageID,
+			IsActive: false,
+		}
+
+		packageRepo.On("Add", pkg,
+			mock.Anything).Return(nil).Once()
+
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSimManagerServer(simRepo, nil, nil,
+		s := NewSimManagerServer(simRepo, packageRepo, nil,
 			packageClient, subscriberService, simPoolService, "", msgbusClient)
 
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
@@ -418,7 +442,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 					OrgID:    uuid.NewV4().String(),
 					IsActive: true,
 					Duration: 3600,
-					SimType:  "1",
+					SimType:  db.SimTypeTest.String(),
 				}, nil).Once()
 
 		s := NewSimManagerServer(nil, nil, nil,
@@ -470,7 +494,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: false,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once()
 
 		s := NewSimManagerServer(nil, nil, nil,
@@ -523,7 +547,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 					OrgID:    orgID.String(),
 					IsActive: true,
 					Duration: 3600,
-					SimType:  "0",
+					SimType:  db.SimTypeUnknown.String(),
 				}, nil).Once()
 
 		s := NewSimManagerServer(nil, nil, nil,
@@ -807,7 +831,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).
 			Once().
 			ReturnArguments.Get(0).(*providers.PackageInfo)
@@ -885,7 +909,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: false,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil)
@@ -930,7 +954,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    uuid.NewV4().String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil)
@@ -975,7 +999,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "0",
+				SimType:  db.SimTypeUnknown.String(),
 			}, nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil)
@@ -1021,7 +1045,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				OrgID:    orgID.String(),
 				IsActive: true,
 				Duration: 3600,
-				SimType:  "1",
+				SimType:  db.SimTypeTest.String(),
 			}, nil).Once().
 			ReturnArguments.Get(0).(*providers.PackageInfo)
 
@@ -1035,7 +1059,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		packageRepo.On("GetOverlap", pkg).
 			Return([]db.Package{
-				db.Package{}, db.Package{},
+				{}, {},
 			}, nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil)

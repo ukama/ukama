@@ -59,7 +59,7 @@ func (sp *SimPool) GetStats(simType string) (*pb.GetStatsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.GetStats(ctx, &pb.GetStatsRequest{SimType: pb.SimType(pb.SimType_value[simType])})
+	return sp.client.GetStats(ctx, &pb.GetStatsRequest{SimType: simType})
 }
 
 func (sp *SimPool) AddSimsToSimPool(req *pb.AddRequest) (*pb.AddResponse, error) {
