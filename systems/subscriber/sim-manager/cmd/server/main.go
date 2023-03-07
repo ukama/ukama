@@ -101,7 +101,10 @@ func runGrpcServer(gormDB sql.Db) {
 		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
 			serviceConfig.DataPlan, err)
 	}
-
+	runningOrgClient, err := providers.NewOrgRunningClient(serviceConfig.OrgHost, pkg.IsDebugMode)
+	if err != nil {
+		log.Fatalf("org Client initilization failed. Error: %v", err.Error())
+	}
 	simManagerServer := server.NewSimManagerServer(
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
@@ -111,6 +114,7 @@ func runGrpcServer(gormDB sql.Db) {
 		providers.NewSimPoolClientProvider(serviceConfig.SimPool, serviceConfig.Timeout),
 		serviceConfig.Key,
 		mbClient,
+		runningOrgClient,
 	)
 
 	fsInterceptor := interceptor.NewFakeSimInterceptor(serviceConfig.TestAgent, serviceConfig.Timeout)
@@ -122,7 +126,7 @@ func runGrpcServer(gormDB sql.Db) {
 	grpcServer.ExtraUnaryInterceptors = []grpc.UnaryServerInterceptor{
 		fsInterceptor.UnaryServerInterceptor}
 
- go msgBusListener(mbClient)
+	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }

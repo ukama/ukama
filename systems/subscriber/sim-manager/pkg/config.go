@@ -6,6 +6,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 )
+
 const (
 	NumberOfSubscribers = "number_of_subscribers"
 	ActiveCount         = "active_sim_count"
@@ -13,6 +14,7 @@ const (
 	TerminatedCount     = "terminated_sim_count"
 	GaugeType           = "gauge"
 )
+
 type MetricConfig struct {
 	Name    string
 	Type    string
@@ -36,6 +38,7 @@ type Config struct {
 	SimPool           string `default:"sim:9090"`
 	TestAgent         string `default:"test-agent:9090"`
 	OperatorAgent     string `default:"http://operator-agent:8080"`
+	OrgHost           string `default:"http://registry-api-gw:8080"`
 }
 
 func NewConfig(name string) *Config {
@@ -61,14 +64,14 @@ type SimMetrics struct {
 	Value  float64
 }
 
-var MyMetric = []SimMetrics{{
-	Name:  NumberOfSubscribers,
+var SimMetric = []SimMetrics{{
+	Name:   NumberOfSubscribers,
 	Type:   GaugeType,
 	Labels: map[string]string{"network": "", "org": ""},
 	Value:  0,
 },
 	{
-		Name:  ActiveCount,
+		Name:   ActiveCount,
 		Type:   GaugeType,
 		Labels: map[string]string{"network": "", "org": ""},
 		Value:  0,
@@ -76,12 +79,12 @@ var MyMetric = []SimMetrics{{
 	{
 		Name:   InactiveCount,
 		Type:   GaugeType,
-		Labels: map[string]string{"network": "", "org": "" },
+		Labels: map[string]string{"network": "", "org": ""},
 		Value:  0,
 	},
 	{
 		Name:   TerminatedCount,
-		Type:  GaugeType,
+		Type:   GaugeType,
 		Labels: map[string]string{"network": "", "org": ""},
 		Value:  0,
 	},

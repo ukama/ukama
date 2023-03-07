@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -37,6 +36,7 @@ type SimManagerServer struct {
 	packageRepo               sims.PackageRepo
 	agentFactory              adapters.AgentFactory
 	packageClient             providers.PackageInfoClient
+	orgRunningClient          providers.RunningOrgClient
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	simPoolService            providers.SimPoolClientProvider
 	key                       string
@@ -49,7 +49,8 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	agentFactory adapters.AgentFactory, packageClient providers.PackageInfoClient,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	simPoolService providers.SimPoolClientProvider, key string,
-	msgBus mb.MsgBusServiceClient) *SimManagerServer {
+	msgBus mb.MsgBusServiceClient, orgRunningClient providers.RunningOrgClient,
+) *SimManagerServer {
 	return &SimManagerServer{
 		simRepo:                   simRepo,
 		packageRepo:               packageRepo,
@@ -60,6 +61,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		key:                       key,
 		msgbus:                    msgBus,
 		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		orgRunningClient:          orgRunningClient,
 	}
 }
 
@@ -217,8 +219,12 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())
 	}
+	orgId, err := s.orgRunningClient.GetRunningOrg()
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "could not found running org %s", err.Error())
+	}
 
-	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": orgID.String()})
+	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": orgId.String()})
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -363,15 +369,15 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	org, ok := os.LookupEnv("ORG")
-	if !ok {
-		log.Errorf("Environment variable not set")
-	}
 	_, _, _, terminatedCount, err := s.simRepo.GetSimCounts()
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())
 	}
-	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.TerminatedCount, float64(terminatedCount), map[string]string{"org": org})
+	orgId, err := s.orgRunningClient.GetRunningOrg()
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "could not found running org %s", err.Error())
+	}
+	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.TerminatedCount, float64(terminatedCount), map[string]string{"org": orgId.String()})
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -653,15 +659,15 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
 
-	org, ok := os.LookupEnv("ORG")
-	if !ok {
-		log.Errorf("Environment variable not set")
+	orgId, err := s.orgRunningClient.GetRunningOrg()
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "could not found running org %s", err.Error())
 	}
 	_, activeCount, _, _, err := s.simRepo.GetSimCounts()
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())
 	}
-	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.ActiveCount, float64(activeCount), map[string]string{"org": org})
+	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.ActiveCount, float64(activeCount), map[string]string{"org": orgId.String()})
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
@@ -716,15 +722,15 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
-	org, ok := os.LookupEnv("ORG")
-	if !ok {
-		log.Errorf("Environment variable not set")
+	orgId, err := s.orgRunningClient.GetRunningOrg()
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "could not found running org %s", err.Error())
 	}
 	_, _, inactiveCount, _, err := s.simRepo.GetSimCounts()
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())
 	}
-	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.InactiveCount, float64(inactiveCount), map[string]string{"org": org})
+	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.InactiveCount, float64(inactiveCount), map[string]string{"org": orgId.String()})
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
