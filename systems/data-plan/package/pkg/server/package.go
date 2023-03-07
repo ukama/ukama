@@ -50,15 +50,15 @@ func (p *PackageServer) Get(ctx context.Context, req *pb.GetPackageRequest) (*pb
 	return resp, nil
 }
 func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
-	logrus.Infof("GetPackage by Org: %v ", req.GetOrgID())
+	logrus.Infof("GetPackage by Org: %v ", req.GetOrgId())
 
-	orgID, err := uuid.FromString(req.GetOrgID())
+	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 
-	packages, err := p.packageRepo.GetByOrg(orgID)
+	packages, err := p.packageRepo.GetByOrg(orgId)
 	if err != nil {
 		logrus.Error("error while getting package by Org" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
@@ -71,7 +71,7 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 	return packageList, nil
 }
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
-	orgID, err := uuid.FromString(req.GetOrgID())
+	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of org uuid. Error %s", err.Error())
@@ -81,13 +81,13 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Uuid:        uuid.NewV4(),
 		Name:        req.GetName(),
 		SimType:     db.ParseType(req.GetSimType()),
-		OrgID:       orgID,
+		OrgId:       orgId,
 		Active:      req.Active,
 		Duration:    uint(req.GetDuration()),
 		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
-		OrgRatesID:  uint(req.GetOrgRatesID()),
+		OrgRatesId:  uint(req.GetOrgRatesId()),
 	}
 	err = p.packageRepo.Add(_package)
 	if err != nil {
@@ -135,7 +135,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		SmsVolume:   uint(req.GetSmsVolume()),
 		DataVolume:  uint(req.GetDataVolume()),
 		VoiceVolume: uint(req.GetVoiceVolume()),
-		OrgRatesID:  uint(req.GetOrgRatesID()),
+		OrgRatesId:  uint(req.GetOrgRatesId()),
 	}
 
 	packageID, err := uuid.FromString(req.GetUuid())
@@ -171,11 +171,11 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	return &pb.Package{
 		Uuid:        p.Uuid.String(),
 		Name:        p.Name,
-		OrgID:       p.OrgID.String(),
+		OrgId:       p.OrgId.String(),
 		Active:      p.Active,
 		Duration:    uint64(p.Duration),
 		SmsVolume:   int64(p.SmsVolume),
-		OrgRatesID:  uint64(p.OrgRatesID),
+		OrgRatesId:  uint64(p.OrgRatesId),
 		DataVolume:  int64(p.DataVolume),
 		VoiceVolume: int64(p.VoiceVolume),
 		SimType:     p.SimType.String(),

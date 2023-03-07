@@ -87,24 +87,24 @@ func TestPackageServer_GetPackages_Error1(t *testing.T) {
 }
 
 func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
-	var orgID = uuid.NewV4()
+	var orgId = uuid.NewV4()
 
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetByOrgPackageRequest{
-		OrgID: orgID.String(),
+		OrgId: orgId.String(),
 	}
 	s := NewPackageServer(packageRepo, nil)
 
-	packageRepo.On("GetByOrg", orgID).Return([]db.Package{{
+	packageRepo.On("GetByOrg", orgId).Return([]db.Package{{
 		SimType:     db.SimTypeTest,
 		Name:        "Daily-pack",
-		OrgID:       orgID,
+		OrgId:       orgId,
 		Active:      true,
 		Duration:    1,
 		SmsVolume:   20,
 		DataVolume:  12,
 		VoiceVolume: 34,
-		OrgRatesID:  00,
+		OrgRatesId:  00,
 	}}, nil)
 	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
 	assert.NoError(t, err)
@@ -115,15 +115,15 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 // Error cases
 
 func TestPackageServer_GetPackageByOrg_Error(t *testing.T) {
-	var orgID = uuid.NewV4()
+	var orgId = uuid.NewV4()
 
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetByOrgPackageRequest{
-		OrgID: orgID.String(),
+		OrgId: orgId.String(),
 	}
 	s := NewPackageServer(packageRepo, nil)
 
-	packageRepo.On("GetByOrg", orgID).
+	packageRepo.On("GetByOrg", orgId).
 		Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
 	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
 	assert.Error(t, err)
@@ -145,7 +145,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active:  true,
 		Name:    "daily-pack",
-		OrgID:   uuid.NewV4().String(),
+		OrgId:   uuid.NewV4().String(),
 		SimType: testSim,
 	})
 	assert.NoError(t, err)
@@ -165,7 +165,7 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active:  true,
 		Name:    "daily-pack",
-		OrgID:   uuid.NewV4().String(),
+		OrgId:   uuid.NewV4().String(),
 		SimType: testSim,
 	})
 	assert.Error(t, err)
