@@ -107,5 +107,5 @@ func (d *DataPlan) GetBaseRate(id string) (*pbBaseRate.GetBaseRateResponse, erro
 func (d *DataPlan) GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
-	return d.packageClient.GetByOrg(ctx, &pb.GetByOrgPackageRequest{OrgID: orgId})
+	return d.packageClient.GetByOrg(ctx, &pb.GetByOrgPackageRequest{OrgId: orgId})
 }

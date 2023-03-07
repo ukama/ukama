@@ -192,7 +192,7 @@ func Test_Package_Add(t *testing.T) {
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.Uuid, pkg.Name, pkg.SimType, pkg.OrgId, pkg.Active, pkg.Duration, pkg.SmsVolume, pkg.DataVolume, pkg.VoiceVolume, pkg.OrgRatesId).
-			WillReturnRows(sqlmock.NewRows([]string{"package_id"}).AddRow(pkg.Uuid))
+			WillReturnRows(sqlmock.NewRows([]string{"uuid"}).AddRow(pkg.Uuid))
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",

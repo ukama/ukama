@@ -10,10 +10,10 @@ import (
 )
 
 type Sim struct {
-	ID                 uuid.UUID `gorm:"primaryKey;type:uuid"`
-	SubscriberID       uuid.UUID `gorm:"not null;type:uuid"`
-	NetworkID          uuid.UUID `gorm:"not null;type:uuid"`
-	OrgID              uuid.UUID `gorm:"not null;type:uuid"`
+	Id                 uuid.UUID `gorm:"primaryKey;type:uuid"`
+	SubscriberId       uuid.UUID `gorm:"not null;type:uuid"`
+	NetworkId          uuid.UUID `gorm:"not null;type:uuid"`
+	OrgId              uuid.UUID `gorm:"not null;type:uuid"`
 	Package            Package
 	Iccid              string `gorm:"index:idx_iccid,unique"`
 	Msisdn             string
@@ -31,11 +31,11 @@ type Sim struct {
 }
 
 type Package struct {
-	ID        uuid.UUID `gorm:"primaryKey;type:uuid"`
-	SimID     uuid.UUID `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;not null;type:uuid"`
+	Id        uuid.UUID `gorm:"primaryKey;type:uuid"`
+	SimId     uuid.UUID `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;not null;type:uuid"`
 	StartDate time.Time
 	EndDate   time.Time
-	PlanID    uuid.UUID `gorm:"not null;type:uuid"`
+	PackageId uuid.UUID `gorm:"not null;type:uuid"`
 	IsActive  bool      `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;default:false"`
 }
 

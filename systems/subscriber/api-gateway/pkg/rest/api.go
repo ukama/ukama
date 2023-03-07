@@ -52,7 +52,7 @@ type Subscriber struct {
 	LastName              string    `json:"last_name" validate:"required"`
 	Email                 string    `json:"email" validate:"email,required"`
 	Phone                 string    `json:"phone" validate:"required"`
-	DOB                   time.Time `json:"dob" validate:"required"`
+	Dob                   time.Time `json:"dob" validate:"required"`
 	ProofOfIdentification string    `json:"proof_of_Identification" validate:"required"`
 	IdSerial              string    `json:"id_serial" validate:"required"`
 	Address               string    `json:"address" validate:"required"`
@@ -84,13 +84,13 @@ type SubscriberAddReq struct {
 	LastName              string `json:"last_name" validate:"required"`
 	Email                 string `json:"email" validate:"required"`
 	Phone                 string `json:"phone" validate:"required"`
-	DOB                   string `json:"dob" validate:"required"`
+	Dob                   string `json:"dob" validate:"required"`
 	ProofOfIdentification string `json:"proof_of_Identification" validate:"required"`
 	IdSerial              string `json:"id_serial" validate:"required"`
 	Address               string `json:"address" validate:"required"`
-	NetworkID             string `json:"network_id" validate:"required"`
+	NetworkId             string `json:"network_id" validate:"required"`
 	Gender                string `json:"gender" validate:"required"`
-	OrgID                 string `json:"org_id" validate:"required"`
+	OrgId                 string `json:"org_id" validate:"required"`
 }
 
 type SubscriberGetReq struct {

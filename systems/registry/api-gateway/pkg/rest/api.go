@@ -3,7 +3,7 @@ package rest
 // org group
 
 type GetOrgsRequest struct {
-	UserUUID string `form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
+	UserUuid string `form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
 }
 
 type GetOrgRequest struct {
@@ -18,24 +18,24 @@ type AddOrgRequest struct {
 
 type MemberRequest struct {
 	OrgName  string `path:"org" validate:"required"`
-	UserUUID string `json:"user_uuid" validate:"required"`
+	UserUuid string `json:"user_uuid" validate:"required"`
 }
 
 type GetMemberRequest struct {
 	OrgName  string `path:"org" validate:"required"`
-	UserUUID string `path:"user_uuid" validate:"required"`
+	UserUuid string `path:"user_uuid" validate:"required"`
 }
 
 type UpdateMemberRequest struct {
 	OrgName       string `path:"org" validate:"required"`
-	UserUUID      string `path:"user_uuid" validate:"required"`
+	UserUuid      string `path:"user_uuid" validate:"required"`
 	IsDeactivated bool   `json:"isDeactivated,omitempty"`
 }
 
 // Users group
 
 type GetUserRequest struct {
-	UserUUID string `path:"user_uuid" validate:"required"`
+	UserUuid string `path:"user_uuid" validate:"required"`
 }
 
 type AddUserRequest struct {
@@ -51,7 +51,7 @@ type GetNetworksRequest struct {
 }
 
 type GetNetworkRequest struct {
-	NetworkID string `path:"net_id" validate:"required"`
+	NetworkId string `path:"net_id" validate:"required"`
 }
 
 type AddNetworkRequest struct {
@@ -60,10 +60,10 @@ type AddNetworkRequest struct {
 }
 
 type GetSiteRequest struct {
-	NetworkID string `path:"net_id" validate:"required"`
+	NetworkId string `path:"net_id" validate:"required"`
 	SiteName  string `path:"site" validate:"required"`
 }
 type AddSiteRequest struct {
-	NetworkID string `path:"net_id" validate:"required"`
+	NetworkId string `path:"net_id" validate:"required"`
 	SiteName  string `json:"site" validate:"required"`
 }

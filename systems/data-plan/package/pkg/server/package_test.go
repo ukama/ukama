@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/data-plan/package/mocks"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
@@ -175,7 +176,8 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 
 func TestPackageServer_UpdatePackage_Error(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	s := NewPackageServer(packageRepo, nil)
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	s := NewPackageServer(packageRepo, msgbusClient)
 	packageUUID := uuid.NewV4()
 	packageRepo.On("Update", packageUUID, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
 	pkg, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{

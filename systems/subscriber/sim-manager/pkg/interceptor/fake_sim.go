@@ -43,28 +43,28 @@ func (f *FakeSimInterceptor) UnaryServerInterceptor(ctx context.Context, req any
 	switch {
 	case strings.HasSuffix(info.FullMethod, getSimRPCSuffix):
 		if rq, ok := req.(*pb.GetSimRequest); ok {
-			if err := utils.ParseTestUUID(rq.SimID); err == nil {
-				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimID)
+			if err := utils.ParseTestUUID(rq.SimId); err == nil {
+				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimId)
 
-				return f.getSimHandler(ctx, rq.SimID)
+				return f.getSimHandler(ctx, rq.SimId)
 			}
 		}
 
 	case strings.HasSuffix(info.FullMethod, toggleSimStatusRPCSuffix):
 		if rq, ok := req.(*pb.ToggleSimStatusRequest); ok {
-			if err := utils.ParseTestUUID(rq.SimID); err == nil {
-				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimID)
+			if err := utils.ParseTestUUID(rq.SimId); err == nil {
+				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimId)
 
-				return f.toggleSimStatusHandler(ctx, rq.SimID, rq.Status)
+				return f.toggleSimStatusHandler(ctx, rq.SimId, rq.Status)
 			}
 		}
 
 	case strings.HasSuffix(info.FullMethod, deleteSimRPCSuffix):
 		if rq, ok := req.(*pb.DeleteSimRequest); ok {
-			if err := utils.ParseTestUUID(rq.SimID); err == nil {
-				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimID)
+			if err := utils.ParseTestUUID(rq.SimId); err == nil {
+				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimId)
 
-				return f.deleteSimHandler(ctx, rq.SimID)
+				return f.deleteSimHandler(ctx, rq.SimId)
 			}
 		}
 	}
