@@ -78,17 +78,18 @@ func TestOrgServer_GetOrg(t *testing.T) {
 	orgRepo.AssertExpectations(t)
 }
 func TestOrgServer_GetRunningOrg(t *testing.T) {
-	orgID := uint64(0)
+	orgId := uuid.NewV4()
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
 
-	orgRepo.On("GetRunningOrg", mock.Anything).Return(&db.Org{ID: uint(orgID)}, nil).Once()
+	orgRepo.On("GetRunningOrg", mock.Anything).Return(&db.Org{ID: orgId}, nil).Once()
 
-	s := NewOrgServer(orgRepo, nil)
+	s := NewOrgServer(orgRepo, nil,"",msgclientRepo)
 	orgResp, err := s.GetRunningOrg(context.TODO(), &pb.GetRunningOrgRequest{})
 
 	assert.NoError(t, err)
-	assert.Equal(t, orgID, orgResp)
+	assert.Equal(t, orgId, orgResp)
 	orgRepo.AssertExpectations(t)
 }
 
