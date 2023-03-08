@@ -7,13 +7,13 @@ import (
 )
 
 type SimInfo struct {
-	Iccid          string `json:"iccid" binding:"required" validate:"required"`
-	SimType        string `json:"sim_type" binding:"required" validate:"required"`
-	Msidn          string `json:"msidn"  binding:"required" validate:"required"`
-	SmDpAddress    string `json:"smdp_address"  binding:"required" validate:"required"`
-	ActivationCode string `json:"activation_code"  binding:"required" validate:"required"`
-	QrCode         string `json:"qr_code"  binding:"required" validate:"required"`
-	IsPhysicalSim  bool   `json:"is_physical_sim" binding:"required" validate:"required"`
+	Iccid          string `example:"8910300000003540855" json:"iccid" validate:"required"`
+	SimType        string `example:"test" json:"sim_type" validate:"required"`
+	Msidn          string `example:"880170124847571" json:"msidn" validate:"required"`
+	SmDpAddress    string `example:"1001.9.0.0.1" json:"smdp_address" validate:"required"`
+	ActivationCode string `example:"1010" json:"activation_code" validate:"required"`
+	QrCode         string `example:"459081a" json:"qr_code" validate:"required"`
+	IsPhysicalSim  bool   `example:"true" json:"is_physical_sim" validate:"required"`
 }
 
 type SimPoolStats struct {
