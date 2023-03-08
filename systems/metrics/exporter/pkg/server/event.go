@@ -29,7 +29,7 @@ func (s *ExporterEventServer) EventNotification(ctx context.Context, e *epb.Even
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case "event.cloud.simmanager.sim.usage":
+	case "event.cloud.cdr.sim.usage":
 		msg, err := unmarshalEventSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -62,7 +62,7 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 		return err
 	}
 
-	err = AddSimUsageDuration("event.cloud.simmanager.sim.duration", msg, s)
+	err = AddSimUsageDuration("event.cloud.cdr.sim.duration", msg, s)
 	if err != nil {
 		return err
 	}
