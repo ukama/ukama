@@ -29,8 +29,6 @@ func main() {
 
 	initConfig()
 
-	//metrics.StartMetricsServer(serviceConfig.Metrics)
-
 	runGrpcServer()
 }
 
@@ -38,6 +36,7 @@ func main() {
 func initConfig() {
 	log.Infof("Initializing config")
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
+	
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -47,6 +46,7 @@ func initConfig() {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
+	
 	pkg.IsDebugMode = serviceConfig.DebugMode
 	log.Infof("Config: %+v", serviceConfig)
 }
@@ -78,10 +78,10 @@ func runGrpcServer() {
 
 	// Exporter service
 	exporter, err := server.NewExporterServer(serviceConfig.Org, mbClient)
-
 	if err != nil {
 		log.Fatalf("Exporter server initialization failed. Error: %v", err)
 	}
+	
 	nSrv := server.NewExporterEventServer(mc)
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
