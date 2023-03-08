@@ -46,6 +46,7 @@ type Clients struct {
 }
 
 type exporter interface {
+	/* Yet to add RPC for exporteer.*/
 	Dummy(req *pb.DummyParameter) (*pb.DummyParameter, error)
 }
 
@@ -119,7 +120,7 @@ func (r *Router) init() {
 			info.Description = "Get metrics for an network. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.networkMetricHandler, http.StatusOK))
 
-	metrics.GET("/node/:node/metrics/:metric", []fizz.OperationOption{
+	metrics.GET("/nodes/:node/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for anode. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.metricHandler, http.StatusOK))
