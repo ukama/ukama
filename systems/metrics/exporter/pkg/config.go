@@ -52,7 +52,7 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.simmanager.sim.usage"},
+			ListenerRoutes: []string{"event.cloud.cdr.sim.usage"},
 		},
 		MetricConfig: []MetricConfig{
 			{
