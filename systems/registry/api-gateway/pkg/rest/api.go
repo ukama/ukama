@@ -47,7 +47,7 @@ type AddUserRequest struct {
 // Network group
 
 type GetNetworksRequest struct {
-	OrgName string `example:"milky-way" form:"org" json:"org" query:"org" binding:"required" validate:"required"`
+	OrgUuid string `example:"{{OrgUUID}}" form:"org" json:"org" query:"org" binding:"required" validate:"required"`
 }
 
 type GetNetworkRequest struct {
@@ -61,9 +61,9 @@ type AddNetworkRequest struct {
 
 type GetSiteRequest struct {
 	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
-	SiteName  string `example:"S1" path:"site" validate:"required"`
+	SiteName  string `example:"s1-site" path:"site" validate:"required"`
 }
 type AddSiteRequest struct {
 	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
-	SiteName  string `example:"S1" json:"site" validate:"required"`
+	SiteName  string `example:"s1-site" json:"site" validate:"required"`
 }
