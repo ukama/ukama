@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
+	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg/collector"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -57,76 +58,72 @@ func unmarshalEventSimUsage(msg *anypb.Any) (*pb.SimUsage, error) {
 }
 
 func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
-	err := AddSimUsage(key, msg, s)
-	if err != nil {
-		return err
-	}
 
-	err = AddSimUsageDuration("event.cloud.cdr.sim.duration", msg, s)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func AddSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
-
-	cfg, err := s.mc.GetConfigForEvent(key)
+	cfgs, err := s.mc.GetConfigForEvent(key)
 	if err != nil {
 		log.Errorf("Event %s not implemented.", key)
 		return err
 	}
 
-	n := cfg.Name
+	/* Iterating over metrics schema for event */
+	for _, ms := range cfgs.Schema {
 
-	/* Check if metric exist */
-	m, err := s.mc.GetMetric(n)
-	if err == nil {
-		/* Update value */
-		return m.SetMetric(float64(msg.BytesUsed), SetUpDynamicLabelsForSim(cfg.DynamicLabels, msg))
-
-	} else {
-		l := cfg.Labels
-
-		m, err := collector.SetUpMetric(key, s.mc, l, n, cfg.DynamicLabels)
-		if err != nil {
-			return err
-		}
-
-		err = m.SetMetric(float64(msg.BytesUsed), SetUpDynamicLabelsForSim(cfg.DynamicLabels, msg))
-		if err != nil {
-			return err
+		switch ms.Name {
+		case "sim_usage":
+			err := AddSimUsage(msg, s, ms)
+			if err != nil {
+				return err
+			}
+		case "sim_usage_duration":
+			err = AddSimUsageDuration(msg, s, ms)
+			if err != nil {
+				return err
+			}
 		}
 
 	}
 	return nil
 }
 
-func AddSimUsageDuration(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
-	cfg, err := s.mc.GetConfigForEvent(key)
-	if err != nil {
-		log.Errorf("Event %s not implemented.", key)
-		return err
-	}
-
-	n := cfg.Name
+func AddSimUsage(msg *pb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
 
 	/* Check if metric exist */
-	m, err := s.mc.GetMetric(n)
+	m, err := s.mc.GetMetric(ms.Name)
 	if err == nil {
 		/* Update value */
-		return m.SetMetric(float64(msg.EndTime-msg.StartTime), SetUpDynamicLabelsForSim(cfg.DynamicLabels, msg))
+		return m.SetMetric(float64(msg.BytesUsed), SetUpDynamicLabelsForSim(ms.DynamicLabels, msg))
 
 	} else {
-		l := cfg.Labels
 
-		m, err := collector.SetUpMetric(key, s.mc, l, n, cfg.DynamicLabels)
+		m, err := collector.SetUpMetric(s.mc, ms)
 		if err != nil {
 			return err
 		}
 
-		err = m.SetMetric(float64(msg.EndTime-msg.StartTime), SetUpDynamicLabelsForSim(cfg.DynamicLabels, msg))
+		err = m.SetMetric(float64(msg.BytesUsed), SetUpDynamicLabelsForSim(ms.DynamicLabels, msg))
+		if err != nil {
+			return err
+		}
+
+	}
+	return nil
+}
+
+func AddSimUsageDuration(msg *pb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
+
+	/* Check if metric exist */
+	m, err := s.mc.GetMetric(ms.Name)
+	if err == nil {
+		/* Update value */
+		return m.SetMetric(float64(msg.EndTime-msg.StartTime), SetUpDynamicLabelsForSim(ms.DynamicLabels, msg))
+
+	} else {
+		m, err := collector.SetUpMetric(s.mc, ms)
+		if err != nil {
+			return err
+		}
+
+		err = m.SetMetric(float64(msg.EndTime-msg.StartTime), SetUpDynamicLabelsForSim(ms.DynamicLabels, msg))
 		if err != nil {
 			return err
 		}
@@ -154,22 +151,3 @@ func SetUpDynamicLabelsForSim(keys []string, msg *pb.SimUsage) prometheus.Labels
 
 	return l
 }
-
-/*
-
-sum_over_time(sim_usage_b20c61f11c5a4559bfffcd00f746697d_sum[5m])
-
-- increase(sim_usage_b20c61f11c5a4559bfffcd00f746697d_sum[10m])
-{instance="localhost:10251", job="ukama-org", name="usage", network="9fd07299-2826-4f8b-aea9-69da56440bec", org="75ec112a-8745-49f9-ab64-1a37edade794", sim="b20c61f1-1c5a-4559-bfff-cd00f746697d", sim_type="test_simple", subscriber="c214f255-0ed6-4aa1-93e7-e333658c7318", system="dev"}
-	194.87179487179486
-- sum(sim_usage_b20c61f11c5a4559bfffcd00f746697d_sum)
-{} 360
-
-- sum_over_time(sim_usage_b20c61f11c5a4559bfffcd00f746697d_sum[2m])
-{instance="localhost:10251", job="ukama-org", name="usage", network="9fd07299-2826-4f8b-aea9-69da56440bec", org="75ec112a-8745-49f9-ab64-1a37edade794", sim="b20c61f1-1c5a-4559-bfff-cd00f746697d", sim_type="test_simple", subscriber="c214f255-0ed6-4aa1-93e7-e333658c7318", system="dev"} 2880
-
-sum_over_time(sim_usage_b20c61f11c5a4559bfffcd00f746697d_sum[15s])
-{instance="localhost:10251", job="ukama-org", name="usage", network="9fd07299-2826-4f8b-aea9-69da56440bec", org="75ec112a-8745-49f9-ab64-1a37edade794", sim="b20c61f1-1c5a-4559-bfff-cd00f746697d", sim_type="test_simple", subscriber="c214f255-0ed6-4aa1-93e7-e333658c7318", system="dev"}
-	420
-
-*/

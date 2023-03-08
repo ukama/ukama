@@ -47,51 +47,51 @@ func NewMetrics(name string, mtype string) *Metrics {
 	return m
 }
 
-func (m *Metrics) InitializeMetric(name string, config pkg.MetricConfig, customLables []string) error {
-	switch MetricTypeFromString(config.Type) {
+func (m *Metrics) InitializeMetric(ms pkg.MetricSchema) error {
+	switch MetricTypeFromString(ms.Type) {
 	case MetricGuage:
 		m.collector = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
-				Name:        config.Name,
-				Help:        config.Details,
+				Name:        ms.Name,
+				Help:        ms.Details,
 				ConstLabels: m.Labels,
 			},
-			customLables,
+			ms.DynamicLabels,
 		)
 
 	case MetricCounter:
 		m.collector = prometheus.NewCounterVec(
 			prometheus.CounterOpts{
-				Name:        config.Name,
-				Help:        config.Details,
+				Name:        ms.Name,
+				Help:        ms.Details,
 				ConstLabels: m.Labels,
 			},
-			customLables,
+			ms.DynamicLabels,
 		)
 
 	case MetricSummary:
 		m.collector = prometheus.NewSummaryVec(
 			prometheus.SummaryOpts{
-				Name:        config.Name,
-				Help:        config.Details,
+				Name:        ms.Name,
+				Help:        ms.Details,
 				ConstLabels: m.Labels,
 			},
-			customLables,
+			ms.DynamicLabels,
 		)
 
 	case MetricHistogram:
 		m.collector = prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
-				Name:        config.Name,
-				Help:        config.Details,
+				Name:        ms.Name,
+				Help:        ms.Details,
 				ConstLabels: m.Labels,
-				Buckets:     config.Buckets,
+				Buckets:     ms.Buckets,
 			},
-			customLables,
+			ms.DynamicLabels,
 		)
 	default:
-		log.Errorf("Metric %s type %s not supported", config.Name, config.Type)
-		return fmt.Errorf("metric %s type %s not supported", config.Name, config.Type)
+		log.Errorf("Metric %s type %s not supported", ms.Name, ms.Type)
+		return fmt.Errorf("metric %s type %s not supported", ms.Name, ms.Type)
 	}
 
 	return nil
@@ -122,41 +122,31 @@ func (m *Metrics) RegisterMetric(registry *prometheus.Registry) error {
 	return nil
 }
 
-func (m *Metrics) MergeLabels(static map[string]string, clabels map[string]string) {
+func (m *Metrics) SetLabels(clabels map[string]string) {
 	m.Labels = make(prometheus.Labels)
-	for name, value := range static {
-		m.Labels[name] = value
-	}
 
 	for name, value := range clabels {
 		m.Labels[name] = value
 	}
 }
 
-func SetUpMetric(key string, mc *MetricsCollector, l map[string]string, name string, dl []string) (*Metrics, error) {
+func SetUpMetric(mc *MetricsCollector, ms pkg.MetricSchema) (*Metrics, error) {
 	/* Initialize metric first */
-	c, err := mc.GetConfigForEvent(key)
-	if err != nil {
-		return nil, err
-	}
+	nm := NewMetrics(ms.Name, ms.Type)
 
-	c.Name = name
+	nm.SetLabels(ms.Labels)
 
-	nm := NewMetrics(name, c.Type)
-
-	nm.MergeLabels(nil, l)
-
-	err = nm.InitializeMetric(name, *c, dl)
+	err := nm.InitializeMetric(ms)
 	if err != nil {
 		return nil, err
 	}
 
 	/* Add a metric */
-	err = mc.AddMetrics(name, *nm)
+	err = mc.AddMetrics(ms.Name, *nm)
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("New metric %s added", name)
+	log.Infof("New metric %s added", ms.Name)
 
 	return nm, nil
 

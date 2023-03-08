@@ -25,55 +25,73 @@ func InitTestConfig() *TestConfig {
 	t := &TestConfig{}
 	t.MetricConfig = []pkg.MetricConfig{
 		{
-			Name:    "subscriber_simusage",
-			Event:   "event.cloud.simmanager.sim.usage", //"event.cloud.cdr.sim.usage"}
-			Type:    "histogram",
-			Units:   "bytes",
-			Labels:  map[string]string{"name": "usage"},
-			Details: "Data Usage of the sim",
-			Buckets: []float64{1024, 10240, 102400, 1024000, 10240000, 102400000},
+			Event: "event.cloud.cdr.sim.usage",
+			Schema: []pkg.MetricSchema{
+				{
+					Name:    "sim_usage",
+					Type:    "histogram",
+					Units:   "bytes",
+					Labels:  map[string]string{"name": "usage"},
+					Details: "Data Usage of the sim",
+					Buckets: []float64{1024, 10240, 102400, 1024000, 10240000, 102400000},
+				},
+				{
+					Name:    "sim_usage_duration",
+					Type:    "histogram",
+					Units:   "seconds",
+					Labels:  map[string]string{"name": "usage_duration"},
+					Details: "Data Usage durations",
+					Buckets: []float64{60, 300, 600, 1200, 1800, 2700, 3600, 7200, 18000},
+				},
+			},
 		},
 		{
-			Name:    "subscriber_simusage_duration",
-			Event:   "event.cloud.simmanager.sim.duration", //"event.cloud.cdr.sim.usage"}
-			Type:    "histogram",
-			Units:   "seconds",
-			Labels:  map[string]string{"name": "usage_duration"},
-			Details: "Data Usage durations",
-			Buckets: []float64{60, 300, 600, 1200, 1800, 2700, 3600, 7200, 18000},
+			Event: "event.cloud.simmanager.sim.allocate",
+			Schema: []pkg.MetricSchema{
+				{
+					Name:    "simcount",
+					Type:    "counter",
+					Units:   "",
+					Labels:  map[string]string{"name": "simcount"},
+					Details: "Counter test",
+				},
+			},
 		},
 		{
-			Name:    "subscriber_simcount",
-			Event:   "event.cloud.simmanager.sim.count", //"event.cloud.cdr.sim.usage"}
-			Type:    "counter",
-			Units:   "",
-			Labels:  map[string]string{"name": "simcount"},
-			Details: "Counter test",
+			Event: "event.cloud.simmanager.sim.count",
+			Schema: []pkg.MetricSchema{
+				{
+					Name:    "total_sims",
+					Type:    "guage",
+					Units:   "",
+					Labels:  map[string]string{"name": "simcount"},
+					Details: "Counter test",
+				},
+			},
 		},
 		{
-			Name:    "subscriber_activesim",
-			Event:   "event.cloud.simmanager.sim.activecount", //"event.cloud.cdr.sim.usage"}
-			Type:    "gauge",
-			Units:   "",
-			Labels:  map[string]string{"name": "active_simcount"},
-			Details: "Gauge test",
+			Event: "event.cloud.simmanager.sim.count",
+			Schema: []pkg.MetricSchema{
+				{
+					Name:    "subscriber_simcount",
+					Type:    "counter",
+					Units:   "",
+					Labels:  map[string]string{"name": "simcount"},
+					Details: "Counter test",
+				},
+			},
 		},
 		{
-			Name:    "subscriber_simusage_request",
-			Event:   "event.cloud.simmanager.sim.request", //"event.cloud.cdr.sim.usage"}
-			Type:    "summary",
-			Units:   "seconds",
-			Labels:  map[string]string{"name": "sim_usage"},
-			Details: "Summary test",
-			Buckets: []float64{60, 300, 600, 1200, 1800, 2700, 3600, 7200, 18000},
-		},
-		{
-			Name:    "unkown",
-			Event:   "event.cloud.simmanager.sim.unkown", //"event.cloud.cdr.sim.usage"}
-			Type:    "unkown",
-			Units:   "",
-			Labels:  map[string]string{"name": "unkown"},
-			Details: "Data Usage of the sim",
+			Event: "event.cloud.simmanager.sim.count",
+			Schema: []pkg.MetricSchema{
+				{
+					Name:    "subscriber_simcount",
+					Type:    "counter",
+					Units:   "",
+					Labels:  map[string]string{"name": "simcount"},
+					Details: "Counter test",
+				},
+			},
 		},
 	}
 

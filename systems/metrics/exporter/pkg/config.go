@@ -27,15 +27,18 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 }
 
-type MetricConfig struct {
+type MetricSchema struct {
 	Name          string
-	Event         string
 	Type          string
 	Units         string
 	Labels        map[string]string
 	DynamicLabels []string
 	Details       string
 	Buckets       []float64
+}
+type MetricConfig struct {
+	Event  string
+	Schema []MetricSchema `default:"{}"` /* Each event could generate multiple metric data */
 }
 
 func NewConfig(name string) *Config {
@@ -53,24 +56,29 @@ func NewConfig(name string) *Config {
 		},
 		MetricConfig: []MetricConfig{
 			{
-				Name:          "sim_usage",
-				Event:         "event.cloud.cdr.sim.usage",
-				Type:          "histogram",
-				Units:         "bytes",
-				Labels:        map[string]string{"name": "usage"},
-				DynamicLabels: []string{"sim", "org", "network", "subscriber", "sim_type"},
-				Details:       "Data Usage of the sim",
-				Buckets:       []float64{1024, 10240, 102400, 1024000, 10240000, 102400000},
-			},
-			{
-				Name:          "sim_usage_duration",
-				Event:         "event.cloud.cdr.sim.duration",
-				Type:          "histogram",
-				Units:         "seconds",
-				Labels:        map[string]string{"name": "usage_duration"},
-				DynamicLabels: []string{"sim", "org", "network", "subscriber", "sim_type"},
-				Details:       "Data Usage durations",
-				Buckets:       []float64{60, 300, 600, 1200, 1800, 2700, 3600, 7200, 18000},
+				Event: "event.cloud.cdr.sim.usage",
+				Schema: []MetricSchema{
+					{
+						// Data Usage
+						Name:          "sim_usage",
+						Type:          "histogram",
+						Units:         "bytes",
+						Labels:        map[string]string{"name": "usage"},
+						DynamicLabels: []string{"sim", "org", "network", "subscriber", "sim_type"},
+						Details:       "Data Usage of the sim",
+						Buckets:       []float64{1024, 10240, 102400, 1024000, 10240000, 102400000},
+					},
+					{
+						// Data Duration
+						Name:          "sim_usage_duration",
+						Type:          "histogram",
+						Units:         "seconds",
+						Labels:        map[string]string{"name": "usage_duration"},
+						DynamicLabels: []string{"sim", "org", "network", "subscriber", "sim_type"},
+						Details:       "Data Usage durations",
+						Buckets:       []float64{60, 300, 600, 1200, 1800, 2700, 3600, 7200, 18000},
+					},
+				},
 			},
 		},
 	}
