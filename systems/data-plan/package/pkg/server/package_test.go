@@ -174,18 +174,33 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 	packageRepo.AssertExpectations(t)
 }
 
-func TestPackageServer_UpdatePackage_Error(t *testing.T) {
+func TestPackageServer_UpdatePackage(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	s := NewPackageServer(packageRepo, msgbusClient)
 	packageUUID := uuid.NewV4()
-	packageRepo.On("Update", packageUUID, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
+	mockPackage := &pb.UpdatePackageRequest{
+		Name: "Daily-pack-updated",
+	}
+	packageRepo.On("Update", packageUUID, mock.MatchedBy(func(p *db.Package) bool {
+		return p.Active == true && p.Name == "Daily-pack-updated"
+	})).Return(nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 	pkg, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
-		Uuid:    packageUUID.String(),
-		SimType: testSim,
+		Uuid:        packageUUID.String(),
+		SimType:     testSim,
+		Name:        "Daily-pack-updated",
+		Active:      true,
+		Duration:    36000,
+		SmsVolume:   0,
+		DataVolume:  1024,
+		VoiceVolume: 0,
+		OrgRatesId:  1,
 	})
-	assert.Error(t, err)
-	assert.Nil(t, pkg)
+	assert.NoError(t, err)
+	assert.Equal(t, mockPackage.Name, pkg.Package.Name)
+	packageRepo.AssertExpectations(t)
+
 }
 
 func TestPackageServer_DeletePackage_Error1(t *testing.T) {
