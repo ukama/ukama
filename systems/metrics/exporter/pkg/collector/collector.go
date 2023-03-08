@@ -42,13 +42,16 @@ func (c *MetricsCollector) RegisterGrpcService(s *grpc.Server) {
 
 func (c *MetricsCollector) StartMetricServer(metrics *config.Metrics) {
 	go func() {
+		
 		handler := promhttp.HandlerFor(c.registry, promhttp.HandlerOpts{})
 		http.Handle("/metrics", handler)
 		log.Infof("Starting metrics server on port %d", metrics.Port)
+		
 		err := http.ListenAndServe(fmt.Sprintf(":%d", metrics.Port), nil)
 		if err != nil {
 			log.Fatalf("Error starting metrics server: %s", err.Error())
 		}
+
 	}()
 }
 
@@ -78,6 +81,7 @@ func (c *MetricsCollector) AddMetrics(name string, m Metrics) error {
 	_, ok := c.MetricsMap[name]
 	if !ok {
 		c.MetricsMap[name] = m
+		
 		err := m.RegisterMetric(c.registry)
 		if err != nil {
 			log.Errorf("Metrics %s failed to register", name)
