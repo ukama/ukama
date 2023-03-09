@@ -52,8 +52,6 @@ type registry interface {
 	AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
 	UpdateMember(orgName string, userUUID string, isDeactivated bool) error
 	RemoveMember(orgName string, userUUID string) error
-	GetRunningOrg() (*orgpb.GetRunningOrgResponse, error)
-
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
@@ -110,7 +108,6 @@ func (r *Router) init() {
 	const org = "/orgs"
 	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
 	orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
-	orgs.GET("/active", formatDoc("Get Org", "Get running orgID"), tonic.Handler(r.getRunningOrgHandler, http.StatusOK))
 	orgs.POST("", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
 	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 	// update org
@@ -172,10 +169,7 @@ func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.Get
 func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddResponse, error) {
 	return r.clients.Registry.AddOrg(req.OrgName, req.Owner, req.Certificate)
 }
-func (r *Router) getRunningOrgHandler(c *gin.Context)(*orgpb.GetRunningOrgResponse,error){
-	return r.clients.Registry.GetRunningOrg()
 
-}
 
 func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetMembersResponse, error) {
 	return r.clients.Registry.GetMembers(c.Param("org"))

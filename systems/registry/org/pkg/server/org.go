@@ -112,16 +112,6 @@ func (o *OrgService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 
 	return &pb.GetResponse{Org: dbOrgToPbOrg(org)}, nil
 }
-func (r *OrgService) GetRunningOrg(ctx context.Context, req *pb.GetRunningOrgRequest) (*pb.GetRunningOrgResponse, error) {
-	log.Infof("Getting running org")
-
-	orgId, err := r.orgRepo.GetRunningOrg()
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org")
-	}
-
-	return &pb.GetRunningOrgResponse{OrgId: orgId.String()}, nil
-}
 
 func (o *OrgService) GetByName(ctx context.Context, req *pb.GetByNameRequest) (*pb.GetByNameResponse, error) {
 	log.Infof("Getting org %v", req.GetName())

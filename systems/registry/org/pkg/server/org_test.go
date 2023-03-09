@@ -77,21 +77,7 @@ func TestOrgServer_GetOrg(t *testing.T) {
 	assert.Equal(t, orgID.String(), orgResp.GetOrg().GetId())
 	orgRepo.AssertExpectations(t)
 }
-func TestOrgServer_GetRunningOrg(t *testing.T) {
-	orgId := uuid.NewV4()
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-	orgRepo := &mocks.OrgRepo{}
-
-	orgRepo.On("GetRunningOrg", mock.Anything).Return(&db.Org{ID: orgId}, nil).Once()
-
-	s := NewOrgServer(orgRepo, nil,"",msgclientRepo)
-	orgResp, err := s.GetRunningOrg(context.TODO(), &pb.GetRunningOrgRequest{})
-
-	assert.NoError(t, err)
-	assert.Equal(t, orgId, orgResp)
-	orgRepo.AssertExpectations(t)
-}
 
 func TestOrgServer_AddOrg_fails_without_owner_uuid(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}

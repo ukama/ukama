@@ -95,23 +95,6 @@ func (r *Registry) GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error) 
 	return res, nil
 }
 
-func (r *Registry) GetRunningOrg() (*orgpb.GetRunningOrgResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
-
-	res, err := r.orgClient.GetRunningOrg(ctx, &orgpb.GetRunningOrgRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	if res.OrgID == 0 {
-		return &orgpb.GetRunningOrgResponse{OrgID:res.OrgID}, nil
-	}
-
-	return res, nil
-}
-
-
 func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

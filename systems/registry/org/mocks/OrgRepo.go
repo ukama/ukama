@@ -159,29 +159,6 @@ func (_m *OrgRepo) GetMembers(orgID uuid.UUID) ([]db.OrgUser, error) {
 	return r0, r1
 }
 
-// GetRunningOrg provides a mock function with given fields:
-func (_m *OrgRepo) GetRunningOrg() (uuid.UUID, error) {
-	ret := _m.Called()
-
-	var r0 uuid.UUID
-	if rf, ok := ret.Get(0).(func() uuid.UUID); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(uuid.UUID)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RemoveMember provides a mock function with given fields: orgID, userUUID
 func (_m *OrgRepo) RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error {
 	ret := _m.Called(orgID, userUUID)
