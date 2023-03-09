@@ -115,14 +115,13 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 	}
 	return nil
 }
+func PushMetrics(pusMetricHost string, metrics []pkg.SimMetrics) {
 
-func PushMetrics(metrics []pkg.SimMetrics) {
 	labelDimensions := make([]string, 0, len(metrics[0].Labels))
 	for key := range metrics[0].Labels {
 		labelDimensions = append(labelDimensions, key)
 	}
 
-	// Check if the metrics already exist and create them if they don't
 	for _, metric := range metrics {
 		if _, ok := metricCollectors[metric.Name]; !ok {
 			// Metric does not exist, create a new one
@@ -138,7 +137,6 @@ func PushMetrics(metrics []pkg.SimMetrics) {
 			metricCollectors[metric.Name] = []*Metrics{newMetric}
 		}
 
-		// Set the metric value
 		for _, m := range metricCollectors[metric.Name] {
 			if err := m.SetMetric(metric.Value, metric.Labels); err != nil {
 				log.Errorf("Failed to set metric %s value: %v", metric.Name, err)
@@ -147,20 +145,21 @@ func PushMetrics(metrics []pkg.SimMetrics) {
 		}
 	}
 
-	// Push all metrics to the Pushgateway
-	pusher := push.New("http://localhost:9091", pkg.SystemName)
+	pusher := push.New(pusMetricHost, pkg.SystemName)
 	for _, metrics := range metricCollectors {
 		for _, m := range metrics {
 			pusher.Collector(m.collector)
 		}
 	}
 	if err := pusher.Push(); err != nil {
-		fmt.Println("Could not push metrics to Pushgateway:", err)
+		log.Errorf("Could not push metrics to Pushgateway: %s", err.Error())
 	}
 }
 
-func CollectAndPushSimMetrics(configMetrics []pkg.SimMetrics, selectedMetric string, Value float64, Labels map[string]string) error {
+func CollectAndPushSimMetrics(pusMetricHost string, configMetrics []pkg.SimMetrics, selectedMetric string, Value float64, Labels map[string]string) error {
 	var selectedMetrics []pkg.SimMetrics
+	var foundSelectedMetric bool
+
 	for i, metric := range configMetrics {
 		if metric.Name == selectedMetric {
 			metric.Value = Value
@@ -169,11 +168,16 @@ func CollectAndPushSimMetrics(configMetrics []pkg.SimMetrics, selectedMetric str
 			}
 			selectedMetrics = append(selectedMetrics, metric)
 			configMetrics[i] = metric
+			foundSelectedMetric = true
+			break
 		}
 	}
-	if len(selectedMetrics) == 0 {
+
+	if !foundSelectedMetric {
 		return fmt.Errorf("metric %q not found", selectedMetric)
 	}
-	PushMetrics(selectedMetrics)
+
+	PushMetrics(pusMetricHost, selectedMetrics)
+
 	return nil
 }

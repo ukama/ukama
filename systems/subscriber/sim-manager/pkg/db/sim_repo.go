@@ -15,7 +15,7 @@ type SimRepo interface {
 	GetByNetwork(networkID uuid.UUID) ([]Sim, error)
 	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
-	GetSimCounts() (int64, int64, int64, int64, error)
+	GetSimMetrics() (int64, int64, int64, int64, error)
 }
 
 type simRepo struct {
@@ -127,7 +127,7 @@ func (s *simRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) e
 
 	return err
 }
-func (s *simRepo) GetSimCounts() (simsCount, activeCount, deactiveCount, terminatedCount int64, err error) {
+func (s *simRepo) GetSimMetrics() (simsCount, activeCount, deactiveCount, terminatedCount int64, err error) {
 	db := s.Db.GetGormDb()
 
 	if err := db.Model(&Sim{}).Count(&simsCount).Error; err != nil {

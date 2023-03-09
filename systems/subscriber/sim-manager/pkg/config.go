@@ -40,6 +40,7 @@ type Config struct {
 	OperatorAgent     string `default:"http://operator-agent:8080"`
 	OrgHost           string `default:"http://registry-api-gw:8080"`
 	Org               string `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
+	PushMetricHost    string `default:"http://localhost:9091"`
 }
 
 func NewConfig(name string) *Config {
@@ -49,7 +50,6 @@ func NewConfig(name string) *Config {
 		DB: &config.Database{
 			DbName: name,
 		},
-
 		Service: config.LoadServiceHostConfig(name),
 
 		MsgClient: &config.MsgClient{

@@ -114,7 +114,7 @@ func (_m *SimRepo) GetBySubscriber(subscriberID uuid.UUID) ([]db.Sim, error) {
 }
 
 // GetSimCounts provides a mock function with given fields:
-func (_m *SimRepo) GetSimCounts() (int64, int64, int64, int64, error) {
+func (_m *SimRepo) GetSimMetrics() (int64, int64, int64, int64, error) {
 	ret := _m.Called()
 
 	var r0 int64
