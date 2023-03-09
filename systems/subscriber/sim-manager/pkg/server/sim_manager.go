@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -223,7 +222,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": s.Org})
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Errorf("Error while pushing subscriberCount metric %s", err.Error())
 	}
 
 	return resp, nil
@@ -373,7 +372,7 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 
 	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.TerminatedCount, float64(terminatedCount), map[string]string{"org": s.Org})
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Errorf("Error while pushing terminateSimCount metric %s", err.Error())
 	}
 
 	return &pb.DeleteSimResponse{}, nil
@@ -659,7 +658,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	}
 	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.ActiveCount, float64(activeCount), map[string]string{"org": s.Org})
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Errorf("Error while pushing activateCount metric %s", err.Error())
 	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
@@ -719,7 +718,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 	}
 	err = utils.CollectAndPushSimMetrics(pkg.SimMetric, pkg.InactiveCount, float64(inactiveCount), map[string]string{"org": s.Org})
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Errorf("Error while push inactive metrics: %s", err.Error())
 	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
