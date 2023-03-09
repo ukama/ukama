@@ -18,7 +18,7 @@ type OperatorClient interface {
 }
 
 type operatorClient struct {
-	R *RestClient
+	R *rest.RestClient
 }
 
 type SimInfo struct {
@@ -27,7 +27,7 @@ type SimInfo struct {
 }
 
 func NewOperatorClient(url string, debug bool) (*operatorClient, error) {
-	f, err := NewRestClient(url, debug)
+	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
 		log.Errorf("Can't conncet to %s url. Error %s", url, err.Error())
 

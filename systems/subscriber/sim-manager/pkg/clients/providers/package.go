@@ -15,7 +15,7 @@ type PackageInfoClient interface {
 }
 
 type packageInfoClient struct {
-	R *RestClient
+	R *rest.RestClient
 }
 
 type Package struct {
@@ -31,7 +31,7 @@ type PackageInfo struct {
 }
 
 func NewPackageInfoClient(url string, debug bool) (*packageInfoClient, error) {
-	f, err := NewRestClient(url, debug)
+	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
 		log.Errorf("Can't conncet to %s url. Error %s", url, err.Error())
 
