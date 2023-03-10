@@ -1,6 +1,6 @@
 package pkg
 
-const ServiceName = "sim_manager"
+const ServiceName = "simmanager"
 const SystemName = "Subscriber"
 
 var InstanceId = "debug"
