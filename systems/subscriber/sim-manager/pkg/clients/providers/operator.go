@@ -63,14 +63,14 @@ func (o *operatorClient) GetSimInfo(iccid string) (*SimInfo, error) {
 	if !resp.IsSuccess() {
 		log.Tracef("Failed to fetch sim info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
 
-		return nil, fmt.Errorf(" data package Info failure %s", errStatus.Message)
+		return nil, fmt.Errorf(" sim Info failure %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), sim)
 	if err != nil {
-		log.Tracef("Failed to desrialize data package info. Error message is %s", err.Error())
+		log.Tracef("Failed to desrialize sim info. Error message is %s", err.Error())
 
-		return nil, fmt.Errorf("data package info deserailization failure: %w", err)
+		return nil, fmt.Errorf("sim info deserailization failure: %w", err)
 	}
 
 	log.Infof("Sim Info: %+v", *sim)
