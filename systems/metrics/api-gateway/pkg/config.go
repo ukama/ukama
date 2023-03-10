@@ -47,6 +47,10 @@ var defaultPrometheusMetric = map[string]Metric{
 	"users":              Metric{false, "trx_lte_core_active_ue", ""},
 	"sim_usage":          Metric{false, "sim_usage_sum", ""},
 	"sim_usage_duration": Metric{false, "sim_usage_duration_sum", ""},
+	"sim_count":          Metric{false, "number_of_active_sims", ""},
+	"active_sims":        Metric{false, "number_of_active_sims", ""},
+	"inactive_sims":      Metric{false, "number_of_inactive_sims", ""},
+	"terminated_sims":    Metric{false, "number_of_terminated_sims", ""},
 }
 
 type Kratos struct {
