@@ -27,6 +27,7 @@ gen:
 
 clean:
 	rm pb/gen/*.go
+	rm mocks/*.go
 
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
