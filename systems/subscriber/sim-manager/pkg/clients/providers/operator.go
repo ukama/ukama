@@ -21,6 +21,10 @@ type operatorClient struct {
 	R *rest.RestClient
 }
 
+type Sim struct {
+	SimInfo *SimInfo `json:"Sim"`
+}
+
 type SimInfo struct {
 	Iccid string `json:"iccid"`
 	Imsi  string `json:"imsi"`
@@ -44,7 +48,7 @@ func NewOperatorClient(url string, debug bool) (*operatorClient, error) {
 func (o *operatorClient) GetSimInfo(iccid string) (*SimInfo, error) {
 	errStatus := &rest.ErrorMessage{}
 
-	pkg := &SimInfo{}
+	sim := &Sim{}
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
@@ -62,16 +66,16 @@ func (o *operatorClient) GetSimInfo(iccid string) (*SimInfo, error) {
 		return nil, fmt.Errorf(" data package Info failure %s", errStatus.Message)
 	}
 
-	err = json.Unmarshal(resp.Body(), pkg)
+	err = json.Unmarshal(resp.Body(), sim)
 	if err != nil {
 		log.Tracef("Failed to desrialize data package info. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("data package info deserailization failure: %w", err)
 	}
 
-	log.Infof("DataPackage Info: %+v", *pkg)
+	log.Infof("Sim Info: %+v", *sim)
 
-	return pkg, nil
+	return sim.SimInfo, nil
 }
 
 func (o *operatorClient) ActivateSim(iccid string) error {
