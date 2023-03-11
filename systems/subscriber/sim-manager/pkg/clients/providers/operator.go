@@ -8,7 +8,7 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const operatorEndpoint = "/v1/sims/"
+const OperatorEndpoint = "/v1/sims/"
 
 type OperatorClient interface {
 	GetSimInfo(iccid string) (*SimInfo, error)
@@ -52,7 +52,7 @@ func (o *operatorClient) GetSimInfo(iccid string) (*SimInfo, error) {
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
-		Get(o.R.URL.String() + operatorEndpoint + iccid)
+		Get(o.R.URL.String() + OperatorEndpoint + iccid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to operator. Error %s", err.Error())
@@ -83,7 +83,7 @@ func (o *operatorClient) ActivateSim(iccid string) error {
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
-		Put(o.R.URL.String() + operatorEndpoint + iccid)
+		Put(o.R.URL.String() + OperatorEndpoint + iccid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to operator. Error %s", err.Error())
@@ -105,7 +105,7 @@ func (o *operatorClient) DeactivateSim(iccid string) error {
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
-		Patch(o.R.URL.String() + operatorEndpoint + iccid)
+		Patch(o.R.URL.String() + OperatorEndpoint + iccid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to operator. Error %s", err.Error())
@@ -127,7 +127,7 @@ func (o *operatorClient) TerminateSim(iccid string) error {
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
-		Patch(o.R.URL.String() + operatorEndpoint + iccid)
+		Patch(o.R.URL.String() + OperatorEndpoint + iccid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to operator. Error %s", err.Error())
