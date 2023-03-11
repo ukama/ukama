@@ -8,7 +8,7 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const packageEndpoint = "/v1/packages/"
+const PackageEndpoint = "/v1/packages/"
 
 type PackageClient interface {
 	GetPackageInfo(uuid string) (*PackageInfo, error)
@@ -53,7 +53,7 @@ func (p *packageInfoClient) GetPackageInfo(uuid string) (*PackageInfo, error) {
 
 	resp, err := p.R.C.R().
 		SetError(errStatus).
-		Get(p.R.URL.String() + packageEndpoint + uuid)
+		Get(p.R.URL.String() + PackageEndpoint + uuid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to data-plan/package. Error %s", err.Error())

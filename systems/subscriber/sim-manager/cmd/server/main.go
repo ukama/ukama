@@ -14,6 +14,7 @@ import (
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
@@ -113,10 +114,13 @@ func runGrpcServer(gormDB sql.Db) {
 		mbClient,
 	)
 
+	simManagerEventServer := server.NewSimManagerEventServer(simManagerServer)
+
 	fsInterceptor := interceptor.NewFakeSimInterceptor(serviceConfig.TestAgent, serviceConfig.Timeout)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)
+		egenerated.RegisterEventNotificationServiceServer(s, simManagerEventServer)
 	})
 
 	grpcServer.ExtraUnaryInterceptors = []grpc.UnaryServerInterceptor{

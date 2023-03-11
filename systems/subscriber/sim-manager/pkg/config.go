@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/config"
@@ -25,8 +24,6 @@ type Config struct {
 }
 
 func NewConfig(name string) *Config {
-	// Sanitize name
-	name = strings.ReplaceAll(name, "-", "_")
 	return &Config{
 		DB: &config.Database{
 			DbName: name,
