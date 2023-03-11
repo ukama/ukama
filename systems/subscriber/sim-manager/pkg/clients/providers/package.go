@@ -10,7 +10,7 @@ import (
 
 const packageEndpoint = "/v1/packages/"
 
-type PackageInfoClient interface {
+type PackageClient interface {
 	GetPackageInfo(uuid string) (*PackageInfo, error)
 }
 
@@ -21,6 +21,7 @@ type packageInfoClient struct {
 type Package struct {
 	PackageInfo *PackageInfo `json:"package"`
 }
+
 type PackageInfo struct {
 	ID       string `json:"uuid"`
 	Name     string `json:"name"`
@@ -30,7 +31,7 @@ type PackageInfo struct {
 	Duration uint   `json:"duration,string"`
 }
 
-func NewPackageInfoClient(url string, debug bool) (*packageInfoClient, error) {
+func NewPackageClient(url string, debug bool) (*packageInfoClient, error) {
 	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
 		log.Errorf("Can't conncet to %s url. Error %s", url, err.Error())

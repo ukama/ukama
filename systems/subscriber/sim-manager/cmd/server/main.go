@@ -96,7 +96,7 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	pckgClient, err := providers.NewPackageInfoClient(serviceConfig.DataPlan, pkg.IsDebugMode)
+	pckgClient, err := providers.NewPackageClient(serviceConfig.DataPlan, pkg.IsDebugMode)
 	if err != nil {
 		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
 			serviceConfig.DataPlan, err)
