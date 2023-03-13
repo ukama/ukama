@@ -346,6 +346,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			mock.Anything).Return(nil).Once()
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		simRepo.On("GetSimMetrics").Return(int64(0),int64(0),int64(0),int64(0),nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil,
 			packageClient, subscriberService, simPoolService, "", msgbusClient, "", "")
@@ -710,6 +711,8 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 	t.Run("PackageFound", func(t *testing.T) {
 		var packageID = uuid.NewV4()
 		var simID = uuid.NewV4()
+		simRepo := &mocks.SimRepo{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
 		packageRepo := &mocks.PackageRepo{}
 
@@ -722,7 +725,8 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		packageRepo.On("Delete", packageID,
 			mock.Anything).Return(nil).Once()
 
-		s := NewSimManagerServer(nil, packageRepo, nil, nil, nil, nil, "", nil, "", "")
+		s := NewSimManagerServer(simRepo, packageRepo, nil, nil, nil, nil, "", msgbusClient, "", "")
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
 			PackageID: packageID.String(),
@@ -805,6 +809,8 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 	t.Run("SimAndPackageFound", func(t *testing.T) {
 		var simID = uuid.NewV4()
 		var packageID = uuid.NewV4()
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
 		var orgID = uuid.NewV4()
 		startDate := time.Now().UTC().AddDate(0, 0, 1) // tomorrow
 
@@ -847,8 +853,9 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		packageRepo.On("Add", pkg,
 			mock.Anything).Return(nil).Once()
+			msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", nil, "", "")
+		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", msgbusClient, "", "")
 
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimID:     simID.String(),
@@ -1081,6 +1088,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 func TestSimManagerServer_DeleteSim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		var simID = uuid.NewV4()
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
@@ -1109,8 +1117,10 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 				Status: sims.SimStatusTerminated,
 			},
 			mock.Anything).Return(nil).Once()
+			msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+			simRepo.On("GetSimMetrics").Return(int64(0),int64(0),int64(0),int64(0),nil).Once()
 
-		s := NewSimManagerServer(simRepo, nil, agentFactory, nil, nil, nil, "", nil, "", "")
+		s := NewSimManagerServer(simRepo, nil, agentFactory, nil, nil, nil, "", msgbusClient, "", "")
 
 		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
 			SimID: simID.String(),

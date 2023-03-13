@@ -222,10 +222,11 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())
 	}
+	
 
 	err = utils.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": s.Org})
 	if err != nil {
-		log.Errorf("Error while pushing subscriberCount metric %s", err.Error())
+		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 	return resp, nil
 }
@@ -369,12 +370,12 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 
 	_, _, _, terminatedCount, err := s.simRepo.GetSimMetrics()
 	if err != nil {
-		log.Errorf("failed to get Sims counts: %s", err.Error())
+		log.Errorf("Failed to get terminated sim counts: %s", err.Error())
 	}
 
 	err = utils.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.TerminatedCount, float64(terminatedCount), map[string]string{"org": s.Org})
 	if err != nil {
-		log.Errorf("Error while pushing terminateSimCount metric %s", err.Error())
+		log.Errorf("Error while pushing terminateSimCount metric to pushgateway %s", err.Error())
 	}
 
 	return &pb.DeleteSimResponse{}, nil
@@ -656,11 +657,11 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 
 	_, activeCount, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
-		log.Errorf("failed to get Sims counts: %s", err.Error())
+		log.Errorf("Failed to get activated Sims counts: %s", err.Error())
 	}
 	err = utils.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.ActiveCount, float64(activeCount), map[string]string{"org": s.Org})
 	if err != nil {
-		log.Errorf("Error while pushing activateCount metric %s", err.Error())
+		log.Errorf("Error while pushing activateCount metric to pushgateway %s", err.Error())
 	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
@@ -715,11 +716,11 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 	}
 	_, _, inactiveCount, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
-		log.Errorf("failed to get Sims counts: %s", err.Error())
+		log.Errorf("failed to get inactive Sim counts: %s", err.Error())
 	}
 	err = utils.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.InactiveCount, float64(inactiveCount), map[string]string{"org": s.Org})
 	if err != nil {
-		log.Errorf("Error while push inactive metrics: %s", err.Error())
+		log.Errorf("Error while push inactive metrics to pushgateway: %s", err.Error())
 	}
 	return &pb.ToggleSimStatusResponse{}, nil
 }
