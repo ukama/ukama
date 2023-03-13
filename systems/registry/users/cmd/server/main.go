@@ -100,7 +100,9 @@ func runGrpcServer(gormdb sql.Db) {
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
 
-		provider.NewOrgClientProvider(svcConf.Org),mbClient,
+		provider.NewOrgClientProvider(svcConf.OrgHost),mbClient,
+		svcConf.Org,
+		svcConf.PushMetricHost,
 	)
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		gen.RegisterUserServiceServer(s, userService)

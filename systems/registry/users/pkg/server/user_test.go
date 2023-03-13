@@ -29,7 +29,7 @@ func TestUserService_Add(t *testing.T) {
     msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddRequest{User: userRequest}).Return(nil).Once()
 
     t.Run("AddUser", func(tt *testing.T) {
-        srv := NewUserService(userRepo, nil, msgclientRepo)
+        srv := NewUserService(userRepo, nil, msgclientRepo,"","")
         addResp, err := srv.Add(context.Background(), &pb.AddRequest{User: userRequest})
 
         assert.NoError(t, err)
@@ -52,7 +52,7 @@ func TestUserService_Get(t *testing.T) {
 	}, nil)
 
 	t.Run("UserFound", func(tt *testing.T) {
-		srv := NewUserService(userRepo, nil,msgclientRepo)
+		srv := NewUserService(userRepo, nil,msgclientRepo,"","")
 
 		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID.String()})
 
@@ -88,7 +88,7 @@ func TestUserService_Deactivate(t *testing.T) {
     msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeactivateRequest{UserUuid: userUUID.String()}).Return(nil).Once()
 
     t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
-        srv := NewUserService(userRepo, nil, msgclientRepo)
+        srv := NewUserService(userRepo, nil, msgclientRepo,"","")
 
         res, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
             UserUuid: userUUID.String(),
