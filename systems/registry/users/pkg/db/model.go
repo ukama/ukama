@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/google/uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 

@@ -6,7 +6,7 @@ package integration
 import (
 	"github.com/ukama/ukama/systems/common/config"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type TestConfig struct {
@@ -22,8 +22,8 @@ func init() {
 	}
 
 	config.LoadConfig("integration", testConf)
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("%+v", testConf)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("%+v", testConf)
 }
 
 // func Test_UserService(t *testing.T) {
