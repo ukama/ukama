@@ -57,7 +57,7 @@ func (s siteRepo) GetByNetwork(netID uuid.UUID) ([]Site, error) {
 	var sites []Site
 	db := s.Db.GetGormDb()
 
-	result := db.Where(&Site{NetworkID: netID}).Find(&sites)
+	result := db.Where(&Site{NetworkId: netID}).Find(&sites)
 	if result.Error != nil {
 		return nil, result.Error
 	}

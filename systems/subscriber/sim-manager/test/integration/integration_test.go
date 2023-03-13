@@ -81,9 +81,9 @@ func Test_FullFlow(t *testing.T) {
 		var err error
 
 		simResp, err = c.AllocateSim(ctx, &pb.AllocateSimRequest{
-			SubscriberID: subscriberID,
-			NetworkID:    networkID,
-			PackageID:    packageID,
+			SubscriberId: subscriberID,
+			NetworkId:    networkID,
+			PackageId:    packageID,
 			SimToken:     simToken,
 			SimType:      simType,
 		})
@@ -92,14 +92,14 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("GetSim", func(t *testing.T) {
 		_, err := c.GetSim(ctx, &pb.GetSimRequest{
-			SimID: simResp.Sim.Id,
+			SimId: simResp.Sim.Id,
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("ToggleSimStatus", func(t *testing.T) {
 		_, err := c.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{
-			SimID:  simResp.Sim.Id,
+			SimId:  simResp.Sim.Id,
 			Status: "active",
 		})
 		assert.NoError(t, err)
@@ -107,30 +107,30 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("GetSimsBySubscriber", func(t *testing.T) {
 		_, err := c.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{
-			SubscriberID: subscriberID,
+			SubscriberId: subscriberID,
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("GetSimsByNetwork", func(t *testing.T) {
 		_, err := c.GetSimsByNetwork(ctx, &pb.GetSimsByNetworkRequest{
-			NetworkID: networkID,
+			NetworkId: networkID,
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("AddPackageForSim", func(t *testing.T) {
 		_, err := c.AddPackageForSim(ctx, &pb.AddPackageRequest{
-			SimID:     simResp.Sim.Id,
-			PackageID: packageID,
+			SimId:     simResp.Sim.Id,
+			PackageId: packageID,
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("AddPackageForSim", func(t *testing.T) {
 		_, err := c.AddPackageForSim(ctx, &pb.AddPackageRequest{
-			SimID:     simResp.Sim.Id,
-			PackageID: packageID,
+			SimId:     simResp.Sim.Id,
+			PackageId: packageID,
 			StartDate: timestamppb.New(startDate),
 		})
 		assert.NoError(t, err)
@@ -140,30 +140,30 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("GetPackagesBySim", func(t *testing.T) {
 		var err error
 		pkgResp, err = c.GetPackagesBySim(ctx, &pb.GetPackagesBySimRequest{
-			SimID: simResp.Sim.Id,
+			SimId: simResp.Sim.Id,
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("SetActivePackageForSim", func(t *testing.T) {
 		_, err := c.SetActivePackageForSim(ctx, &pb.SetActivePackageRequest{
-			SimID:     simResp.Sim.Id,
-			PackageID: pkgResp.Packages[0].Id,
+			SimId:     simResp.Sim.Id,
+			PackageId: pkgResp.Packages[0].Id,
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("RemovePackageForSim", func(t *testing.T) {
 		_, err := c.RemovePackageForSim(ctx, &pb.RemovePackageRequest{
-			SimID:     simResp.Sim.Id,
-			PackageID: pkgResp.Packages[0].Id,
+			SimId:     simResp.Sim.Id,
+			PackageId: pkgResp.Packages[0].Id,
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("ToggleSimStatus", func(t *testing.T) {
 		_, err := c.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{
-			SimID:  simResp.Sim.Id,
+			SimId:  simResp.Sim.Id,
 			Status: "inactive",
 		})
 		assert.NoError(t, err)
@@ -171,7 +171,7 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("DeleteSim", func(t *testing.T) {
 		_, err := c.DeleteSim(ctx, &pb.DeleteSimRequest{
-			SimID: simResp.Sim.Id,
+			SimId: simResp.Sim.Id,
 		})
 		assert.NoError(t, err)
 	})

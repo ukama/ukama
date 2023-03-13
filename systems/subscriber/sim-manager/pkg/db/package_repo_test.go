@@ -20,8 +20,8 @@ func TestPackageRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		pkg := simdb.Package{
-			ID:    uuid.NewV4(),
-			SimID: uuid.NewV4(),
+			Id:    uuid.NewV4(),
+			SimId: uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -30,7 +30,7 @@ func TestPackageRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(pkg.ID, pkg.SimID, sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 

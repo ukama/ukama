@@ -17,12 +17,15 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
-	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
+)
+
+require (
+	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
 )
 
 require (

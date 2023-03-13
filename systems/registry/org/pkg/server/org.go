@@ -22,20 +22,20 @@ import (
 
 type OrgService struct {
 	pb.UnimplementedOrgServiceServer
-	orgRepo  db.OrgRepo
-	userRepo db.UserRepo
-	orgName  string
+	orgRepo        db.OrgRepo
+	userRepo       db.UserRepo
+	orgName        string
 	baseRoutingKey msgbus.RoutingKeyBuilder
-	msgbus               mb.MsgBusServiceClient
+	msgbus         mb.MsgBusServiceClient
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string,msgBus mb.MsgBusServiceClient) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient) *OrgService {
 	return &OrgService{
-		orgRepo:  orgRepo,
-		userRepo: userRepo,
-		orgName:  defaultOrgName,
+		orgRepo:        orgRepo,
+		userRepo:       userRepo,
+		orgName:        defaultOrgName,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		msgbus:               msgBus,
+		msgbus:         msgBus,
 	}
 }
 
@@ -55,7 +55,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	}
 
 	err = o.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
-		org.ID = uuid.NewV4()
+		org.Id = uuid.NewV4()
 
 		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 
@@ -67,8 +67,8 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 		log.Infof("Adding owner as member")
 		member := &db.OrgUser{
-			OrgID:  org.ID,
-			UserID: user.ID,
+			OrgId:  org.Id,
+			UserId: user.Id,
 			Uuid:   org.Owner,
 		}
 
@@ -192,8 +192,8 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 
 		member := &db.OrgUser{
-			OrgID:  org.ID,
-			UserID: user.ID,
+			OrgId:  org.Id,
+			UserId: user.Id,
 			Uuid:   userUUID,
 		}
 
@@ -237,8 +237,8 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 
 	log.Infof("Adding member")
 	member := &db.OrgUser{
-		OrgID:  org.ID,
-		UserID: user.ID,
+		OrgId:  org.Id,
+		UserId: user.Id,
 		Uuid:   userUUID,
 	}
 
@@ -267,7 +267,7 @@ func (o *OrgService) GetMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	member, err := o.orgRepo.GetMember(org.ID, uuid)
+	member, err := o.orgRepo.GetMember(org.Id, uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -281,7 +281,7 @@ func (o *OrgService) GetMembers(ctx context.Context, req *pb.GetMembersRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	members, err := o.orgRepo.GetMembers(org.ID)
+	members, err := o.orgRepo.GetMembers(org.Id)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "orgs")
 	}
@@ -307,12 +307,12 @@ func (o *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberReque
 	}
 
 	member := &db.OrgUser{
-		OrgID:       org.ID,
+		OrgId:       org.Id,
 		Uuid:        uuid,
 		Deactivated: req.GetAttributes().IsDeactivated,
 	}
 
-	err = o.orgRepo.UpdateMember(member.OrgID, member)
+	err = o.orgRepo.UpdateMember(member.OrgId, member)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -332,7 +332,7 @@ func (o *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	member, err := o.orgRepo.GetMember(org.ID, uuid)
+	member, err := o.orgRepo.GetMember(org.Id, uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -347,7 +347,7 @@ func (o *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 			"member must be deactivated first")
 	}
 
-	err = o.orgRepo.RemoveMember(org.ID, uuid)
+	err = o.orgRepo.RemoveMember(org.Id, uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -361,7 +361,7 @@ func (o *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 
 func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 	return &pb.Organization{
-		Id:            org.ID.String(),
+		Id:            org.Id.String(),
 		Name:          org.Name,
 		Owner:         org.Owner.String(),
 		Certificate:   org.Certificate,
@@ -389,8 +389,8 @@ func dbUserToPbUser(user *db.User) *pb.User {
 
 func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 	return &pb.OrgUser{
-		OrgId:         member.OrgID.String(),
-		UserId:        uint64(member.UserID),
+		OrgId:         member.OrgId.String(),
+		UserId:        uint64(member.UserId),
 		Uuid:          member.Uuid.String(),
 		IsDeactivated: member.Deactivated,
 		CreatedAt:     timestamppb.New(member.CreatedAt),

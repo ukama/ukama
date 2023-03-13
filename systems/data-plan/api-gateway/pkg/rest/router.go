@@ -186,7 +186,7 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 		SmsVolume:   req.SmsVolume,
 		DataVolume:  req.DataVolume,
 		VoiceVolume: req.VoiceVolume,
-		OrgRatesID:  req.OrgRatesId,
+		OrgRatesId:  req.OrgRatesId,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -200,9 +200,9 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
 	pack := &pb.AddPackageRequest{
 		Name:        req.Name,
-		OrgID:       req.OrgId,
+		OrgId:       req.OrgId,
 		Duration:    req.Duration,
-		OrgRatesID:  req.OrgRatesId,
+		OrgRatesId:  req.OrgRatesId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,

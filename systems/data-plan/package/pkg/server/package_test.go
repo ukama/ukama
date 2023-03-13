@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/grpc"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/data-plan/package/mocks"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
@@ -87,24 +88,24 @@ func TestPackageServer_GetPackages_Error1(t *testing.T) {
 }
 
 func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
-	var orgID = uuid.NewV4()
+	var orgId = uuid.NewV4()
 
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetByOrgPackageRequest{
-		OrgID: orgID.String(),
+		OrgId: orgId.String(),
 	}
 	s := NewPackageServer(packageRepo, nil)
 
-	packageRepo.On("GetByOrg", orgID).Return([]db.Package{{
+	packageRepo.On("GetByOrg", orgId).Return([]db.Package{{
 		SimType:     db.SimTypeTest,
 		Name:        "Daily-pack",
-		OrgID:       orgID,
+		OrgId:       orgId,
 		Active:      true,
 		Duration:    1,
 		SmsVolume:   20,
 		DataVolume:  12,
 		VoiceVolume: 34,
-		OrgRatesID:  00,
+		OrgRatesId:  00,
 	}}, nil)
 	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
 	assert.NoError(t, err)
@@ -115,15 +116,15 @@ func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
 // Error cases
 
 func TestPackageServer_GetPackageByOrg_Error(t *testing.T) {
-	var orgID = uuid.NewV4()
+	var orgId = uuid.NewV4()
 
 	packageRepo := &mocks.PackageRepo{}
 	var mockFilters = &pb.GetByOrgPackageRequest{
-		OrgID: orgID.String(),
+		OrgId: orgId.String(),
 	}
 	s := NewPackageServer(packageRepo, nil)
 
-	packageRepo.On("GetByOrg", orgID).
+	packageRepo.On("GetByOrg", orgId).
 		Return(nil, grpc.SqlErrorToGrpc(errors.New("SQL error while fetching records"), "packages"))
 	pkg, err := s.GetByOrg(context.TODO(), mockFilters)
 	assert.Error(t, err)
@@ -145,7 +146,7 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active:  true,
 		Name:    "daily-pack",
-		OrgID:   uuid.NewV4().String(),
+		OrgId:   uuid.NewV4().String(),
 		SimType: testSim,
 	})
 	assert.NoError(t, err)
@@ -165,7 +166,7 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 		Active:  true,
 		Name:    "daily-pack",
-		OrgID:   uuid.NewV4().String(),
+		OrgId:   uuid.NewV4().String(),
 		SimType: testSim,
 	})
 	assert.Error(t, err)
@@ -173,17 +174,33 @@ func TestPackageServer_AddPackage_Error(t *testing.T) {
 	packageRepo.AssertExpectations(t)
 }
 
-func TestPackageServer_UpdatePackage_Error(t *testing.T) {
+func TestPackageServer_UpdatePackage(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
-	s := NewPackageServer(packageRepo, nil)
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	s := NewPackageServer(packageRepo, msgbusClient)
 	packageUUID := uuid.NewV4()
-	packageRepo.On("Update", packageUUID, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error updating records"), "rates"))
+	mockPackage := &pb.UpdatePackageRequest{
+		Name: "Daily-pack-updated",
+	}
+	packageRepo.On("Update", packageUUID, mock.MatchedBy(func(p *db.Package) bool {
+		return p.Active == true && p.Name == "Daily-pack-updated"
+	})).Return(nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 	pkg, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
-		Uuid:    packageUUID.String(),
-		SimType: testSim,
+		Uuid:        packageUUID.String(),
+		SimType:     testSim,
+		Name:        "Daily-pack-updated",
+		Active:      true,
+		Duration:    36000,
+		SmsVolume:   0,
+		DataVolume:  1024,
+		VoiceVolume: 0,
+		OrgRatesId:  1,
 	})
-	assert.Error(t, err)
-	assert.Nil(t, pkg)
+	assert.NoError(t, err)
+	assert.Equal(t, mockPackage.Name, pkg.Package.Name)
+	packageRepo.AssertExpectations(t)
+
 }
 
 func TestPackageServer_DeletePackage_Error1(t *testing.T) {

@@ -63,7 +63,7 @@ func (n netRepo) GetByOrg(orgID uuid.UUID) ([]Network, error) {
 	db := n.Db.GetGormDb()
 	var networks []Network
 
-	result := db.Where(&Network{OrgID: orgID}).Find(&networks)
+	result := db.Where(&Network{OrgId: orgID}).Find(&networks)
 	if result.Error != nil {
 		return nil, result.Error
 	}

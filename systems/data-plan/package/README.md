@@ -156,7 +156,7 @@ This command will show all the available RPC calls under base-rate sub-system. T
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | The name of the package being added |
-| orgID | [string](#string) |  | The ID of the organization the package belongs to |
+| orgId | [string](#string) |  | The ID of the organization the package belongs to |
 | active | [bool](#bool) |  | Whether or not the package is currently active |
 | duration | [uint64](#uint64) |  | The duration of the package in days |
 | simType | [string](#string) |  | The type of SIM card required for the package |
@@ -195,7 +195,7 @@ define a message named GetByOrgPackageRequest
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| orgID | [string](#string) |  | define a string field named orgID with a tag for field validation and JSON name |
+| orgId | [string](#string) |  | define a string field named orgId with a tag for field validation and JSON name |
 
 <a name="ukama.data_plan.package.v1.GetByOrgPackageResponse"></a>
 
@@ -235,7 +235,7 @@ define a message named GetPackageResponse
 | ----- | ---- | ----- | ----------- |
 | packageID | [string](#string) |  | The unique ID of the package |
 | name | [string](#string) |  | The name of the package |
-| orgID | [string](#string) |  | The ID of the organization the package belongs to |
+| orgId | [string](#string) |  | The ID of the organization the package belongs to |
 | active | [bool](#bool) |  | Whether or not the package is currently active |
 | duration | [uint64](#uint64) |  | The duration of the package in days |
 | simType | [string](#string) |  | The type of SIM card required for the package |

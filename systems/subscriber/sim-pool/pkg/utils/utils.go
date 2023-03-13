@@ -37,6 +37,8 @@ func PbParseToModel(slice []*pb.AddSim) []db.Sim {
 			SmDpAddress:    value.SmDpAddress,
 			ActivationCode: value.ActivationCode,
 			QrCode:         value.QrCode,
+			SimType:        db.ParseType(value.SimType),
+			IsPhysical:     value.IsPhysical,
 		})
 	}
 	return sims
