@@ -7,6 +7,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	metric "github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/users/pkg"
@@ -32,25 +33,30 @@ type UserService struct {
 	orgService pkgP.OrgClientProvider
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
+	org string
+	pushMetricHost string
 }
 
-func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider,msgBus mb.MsgBusServiceClient) *UserService {
+func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider,msgBus mb.MsgBusServiceClient,	org string,	pushMetricHost string,) *UserService {
 	return &UserService{
 		userRepo:   userRepo,
 		orgService: orgService,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		msgbus:               msgBus,
+		org:                       org,
+		pushMetricHost :pushMetricHost,
+
 	}
 }
 
 func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding user %v", req)
-
+userId:=uuid.NewV4()
 	user := &db.User{
 		Email: req.User.Email,
 		Name:  req.User.Name,
 		Phone: req.User.Phone,
-		Uuid:  uuid.NewV4(),
+		Uuid:  userId,
 	}
 
 	err := u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
@@ -78,6 +84,16 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	err = u.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+	userCount, _,err := u.userRepo.GetUserCount()
+	if err != nil {
+		log.Errorf("failed to get User count: %s", err.Error())
+	}
+	
+
+	err = metric.CollectAndPushSimMetrics(u.pushMetricHost, pkg.UserMetric, pkg.NumberOfUsers, float64(userCount), map[string]string{"user": userId.String(), "org": u.org},pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 	return &pb.AddResponse{User: dbUserToPbUser(user)}, nil
 }
