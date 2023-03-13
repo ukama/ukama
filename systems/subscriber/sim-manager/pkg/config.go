@@ -20,7 +20,7 @@ type Config struct {
 	DataPlan          string `default:"http://data-plan:8080"`
 	Registry          string `default:"registry:9090"`
 	SimPool           string `default:"sim:9090"`
-	TestAgent         string `default:"test-agent:9090"`
+	TestAgent         string `default:"testagent:9090"`
 	OperatorAgent     string `default:"http://operator-agent:8080"`
 }
 

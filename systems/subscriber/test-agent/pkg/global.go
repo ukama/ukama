@@ -1,7 +1,7 @@
 package pkg
 
 const ServiceName = "testagent"
-const SystemName = "Subscriber"
+const SystemName = "subscriber"
 
 var InstanceId = "debug"
 

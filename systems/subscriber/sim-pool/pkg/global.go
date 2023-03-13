@@ -1,7 +1,7 @@
 package pkg
 
-const ServiceName = "simpool"
-const SystemName = "Subscriber"
+const ServiceName = "sim"
+const SystemName = "subscriber"
 
 var IsDebugMode bool = false
 var InstanceId = ServiceName + "-debug"
