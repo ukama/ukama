@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-func ValidateDOB(dob string) (time.Time, error) {
-	t, err := time.Parse("02-01-2006", dob)
+func ValidateDOB(dob string) (string, error) {
+	t, err := time.Parse(time.RFC1123, dob)
 	if err != nil {
-		return time.Time{}, errors.New("invalid date format, must be dd-mm-yyyy")
+		return "", errors.New("invalid date format, must be RFC1123 standard")
 	}
-	return t, nil
+	return t.Format(time.RFC1123), nil
 }

@@ -64,7 +64,7 @@ func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
 	var packages []Package
 
-	result := p.Db.GetGormDb().Where(&Package{SimID: simID}).Find(&packages)
+	result := p.Db.GetGormDb().Where(&Package{SimId: simID}).Find(&packages)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -75,7 +75,7 @@ func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
 func (p *packageRepo) GetOverlap(pkg *Package) ([]Package, error) {
 	var packages []Package
 
-	result := p.Db.GetGormDb().Where(&Package{SimID: pkg.SimID}).Find(&packages,
+	result := p.Db.GetGormDb().Where(&Package{SimId: pkg.SimId}).Find(&packages,
 		"end_date >= ? AND start_date <= ?", pkg.StartDate, pkg.EndDate)
 
 	if result.Error != nil {

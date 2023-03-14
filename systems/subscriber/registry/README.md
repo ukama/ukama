@@ -1,39 +1,38 @@
 # Protocol Documentation
+
 <a name="top"></a>
 
 ## Table of Contents
 
- - [RegistryService](#ukama.subscriber.registry.v1.RegistryService)
+- [RegistryService](#ukama.subscriber.registry.v1.RegistryService)
 - [Directory structure](#directory-structure)
 - [How to use?](#how-to)
- - [pb/subscriber.proto](#pb/subscriber.proto)
-   - [AddSubscriberRequest Messages](#ukama.subscriber.registry.v1.AddSubscriberRequest)
-   - [AddSubscriberResponse Messages](#ukama.subscriber.registry.v1.AddSubscriberResponse)
-   - [DeleteSubscriberRequest Messages](#ukama.subscriber.registry.v1.DeleteSubscriberRequest)
-   - [DeleteSubscriberResponse Messages](#ukama.subscriber.registry.v1.DeleteSubscriberResponse)
-   - [GetByNetworkRequest Messages](#ukama.subscriber.registry.v1.GetByNetworkRequest)
-   - [GetByNetworkResponse Messages](#ukama.subscriber.registry.v1.GetByNetworkResponse)
-   - [GetSubscriberRequest Messages](#ukama.subscriber.registry.v1.GetSubscriberRequest)
-   - [GetSubscriberResponse Messages](#ukama.subscriber.registry.v1.GetSubscriberResponse)
-   - [ListSubscribersRequest Messages](#ukama.subscriber.registry.v1.ListSubscribersRequest)
-   - [ListSubscribersResponse Messages](#ukama.subscriber.registry.v1.ListSubscribersResponse)
-   - [Package Messages](#ukama.subscriber.registry.v1.Package)
-   - [Sim Messages](#ukama.subscriber.registry.v1.Sim)
-   - [Subscriber Messages](#ukama.subscriber.registry.v1.Subscriber)
-   - [UpdateSubscriberRequest Messages](#ukama.subscriber.registry.v1.UpdateSubscriberRequest)
-   - [UpdateSubscriberResponse Messages](#ukama.subscriber.registry.v1.UpdateSubscriberResponse)
+- [pb/subscriber.proto](#pb/subscriber.proto)
+  - [AddSubscriberRequest Messages](#ukama.subscriber.registry.v1.AddSubscriberRequest)
+  - [AddSubscriberResponse Messages](#ukama.subscriber.registry.v1.AddSubscriberResponse)
+  - [DeleteSubscriberRequest Messages](#ukama.subscriber.registry.v1.DeleteSubscriberRequest)
+  - [DeleteSubscriberResponse Messages](#ukama.subscriber.registry.v1.DeleteSubscriberResponse)
+  - [GetByNetworkRequest Messages](#ukama.subscriber.registry.v1.GetByNetworkRequest)
+  - [GetByNetworkResponse Messages](#ukama.subscriber.registry.v1.GetByNetworkResponse)
+  - [GetSubscriberRequest Messages](#ukama.subscriber.registry.v1.GetSubscriberRequest)
+  - [GetSubscriberResponse Messages](#ukama.subscriber.registry.v1.GetSubscriberResponse)
+  - [ListSubscribersRequest Messages](#ukama.subscriber.registry.v1.ListSubscribersRequest)
+  - [ListSubscribersResponse Messages](#ukama.subscriber.registry.v1.ListSubscribersResponse)
+  - [Package Messages](#ukama.subscriber.registry.v1.Package)
+  - [Sim Messages](#ukama.subscriber.registry.v1.Sim)
+  - [Subscriber Messages](#ukama.subscriber.registry.v1.Subscriber)
+  - [UpdateSubscriberRequest Messages](#ukama.subscriber.registry.v1.UpdateSubscriberRequest)
+  - [UpdateSubscriberResponse Messages](#ukama.subscriber.registry.v1.UpdateSubscriberResponse)
   
 - [Scalar Value Types](#scalar-value-types)
-
-
 
 <a name="pb/subscriber.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-
 <a name="ukama.subscriber.registry.v1.RegistryService"></a>
 
 # RegistryService
+
 Defines the service for subscriber registry operations
 
 ## RPC Functions
@@ -46,9 +45,6 @@ Defines the service for subscriber registry operations
 | Delete | [DeleteSubscriberRequest](#ukama.subscriber.registry.v1.DeleteSubscriberRequest) | [DeleteSubscriberResponse](#ukama.subscriber.registry.v1.DeleteSubscriberRequest) | Delete method to delete a subscriber by subscriber ID |
 | GetByNetwork | [GetByNetworkRequest](#ukama.subscriber.registry.v1.GetByNetworkRequest) | [GetByNetworkResponse](#ukama.subscriber.registry.v1.GetByNetworkRequest) | GetByNetwork method to retrieve subscribers by network ID |
 | ListSubscribers | [ListSubscribersRequest](#ukama.subscriber.registry.v1.ListSubscribersRequest) | [ListSubscribersResponse](#ukama.subscriber.registry.v1.ListSubscribersRequest) | ListSubscribers method to retrieve a list of all subscribers |
-
-
-
 
 <a name="#directory-structure"></a>
 
@@ -160,13 +156,9 @@ This command will show all the available RPC calls under base-rate sub-system. T
 
 ## pb/subscriber.proto
 
-
-
 <a name="ukama.subscriber.registry.v1.AddSubscriberRequest"></a>
 
 ### AddSubscriberRequest
-
-
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -176,127 +168,97 @@ This command will show all the available RPC calls under base-rate sub-system. T
 | phoneNumber | [string](#string) |  | phone number of the subscriber, must be in phone number format |
 | address | [string](#string) |  | address of the subscriber |
 | idSerial | [string](#string) |  | idSerial of the subscriber |
-| networkID | [string](#string) |  | network ID of the subscriber, must be a UUID and not empty |
+| networkId | [string](#string) |  | network ID of the subscriber, must be a UUID and not empty |
 | proofOfIdentification | [string](#string) |  | proof of identification of the subscriber, must not be empty and have a length greater than 1 |
 | dateOfBirth | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | date of birth of the subscriber |
 | gender | [string](#string) |  | gender of the subscriber, must not be empty and have a length greater than 1 |
-| orgID | [string](#string) |  | org ID of the subscriber, must be a UUID and not empty |
-
-
-
+| orgId | [string](#string) |  | org ID of the subscriber, must be a UUID and not empty |
 
 <a name="ukama.subscriber.registry.v1.AddSubscriberResponse"></a>
 
 ### AddSubscriberResponse
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | Subscriber | [Subscriber](#ukama.subscriber.registry.v1.Subscriber) |  |  |
 
-
-
-
 <a name="ukama.subscriber.registry.v1.DeleteSubscriberRequest"></a>
 
 ### DeleteSubscriberRequest
-DeleteSubscriberRequest message is used to delete a subscriber
 
+DeleteSubscriberRequest message is used to delete a subscriber
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| subscriberID | [string](#string) |  | subscriberID field to be deleted |
-
-
-
+| subscriberId | [string](#string) |  | subscriberId field to be deleted |
 
 <a name="ukama.subscriber.registry.v1.DeleteSubscriberResponse"></a>
 
 ### DeleteSubscriberResponse
+
 DeleteSubscriberResponse message is used to delete a subscriber
-
-
-
 
 <a name="ukama.subscriber.registry.v1.GetByNetworkRequest"></a>
 
 ### GetByNetworkRequest
-GetByNetworkRequest message is used to get all subscribers by network id
 
+GetByNetworkRequest message is used to get all subscribers by network id
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| networkID | [string](#string) |  | networkID field is used to specify the network id for getting subscribers |
-
-
-
+| networkId | [string](#string) |  | networkId field is used to specify the network id for getting subscribers |
 
 <a name="ukama.subscriber.registry.v1.GetByNetworkResponse"></a>
 
 ### GetByNetworkResponse
-GetByNetworkResponse message is used to get all subscribers by network id
 
+GetByNetworkResponse message is used to get all subscribers by network id
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | subscribers | [Subscriber](#ukama.subscriber.registry.v1.Subscriber) | repeated | Repeated field of Subscriber message |
 
-
-
-
 <a name="ukama.subscriber.registry.v1.GetSubscriberRequest"></a>
 
 ### GetSubscriberRequest
-GetSubscriberRequest message is used to get a subscriber by subscriber ID
 
+GetSubscriberRequest message is used to get a subscriber by subscriber ID
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| subscriberID | [string](#string) |  | subscriberID field is used to specify the subscriber id for getting |
-
-
-
+| subscriberId | [string](#string) |  | subscriberId field is used to specify the subscriber id for getting |
 
 <a name="ukama.subscriber.registry.v1.GetSubscriberResponse"></a>
 
 ### GetSubscriberResponse
-GetSubscriberResponse message is used to get a subscriber by subscriber ID
 
+GetSubscriberResponse message is used to get a subscriber by subscriber ID
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | subscriber | [Subscriber](#ukama.subscriber.registry.v1.Subscriber) |  | Subscriber field contains the subscriber information |
 
-
-
-
 <a name="ukama.subscriber.registry.v1.ListSubscribersRequest"></a>
 
 ### ListSubscribersRequest
+
 ListSubscribersRequest message is used to list all subscribers
-
-
-
 
 <a name="ukama.subscriber.registry.v1.ListSubscribersResponse"></a>
 
 ### ListSubscribersResponse
-ListSubscribersResponse message is used to list all subscribers
 
+ListSubscribersResponse message is used to list all subscribers
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | subscribers | [Subscriber](#ukama.subscriber.registry.v1.Subscriber) | repeated | Repeated field of Subscriber message |
 
-
-
-
 <a name="ukama.subscriber.registry.v1.Package"></a>
 
 ### Package
-Package message defines the structure for a package object
 
+Package message defines the structure for a package object
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -304,21 +266,16 @@ Package message defines the structure for a package object
 | startDate | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | startDate field is a google.protobuf.Timestamp and its json representation is "start_date" |
 | endDate | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | endDate field is a google.protobuf.Timestamp and its json representation is "end_date" |
 
-
-
-
 <a name="ukama.subscriber.registry.v1.Sim"></a>
 
 ### Sim
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  |  |
-| subscriberID | [string](#string) |  | subscriberID field is a string that must be a valid UUID version 0 and cannot be empty |
-| networkID | [string](#string) |  | networkID field is a string that must be a valid UUID version 0 and cannot be empty |
-| orgID | [string](#string) |  | orgID field is a string that must be a valid UUID version 0 and cannot be empty |
+| subscriberId | [string](#string) |  | subscriberId field is a string that must be a valid UUID version 0 and cannot be empty |
+| networkId | [string](#string) |  | networkId field is a string that must be a valid UUID version 0 and cannot be empty |
+| orgId | [string](#string) |  | orgId field is a string that must be a valid UUID version 0 and cannot be empty |
 | package | [Package](#ukama.subscriber.registry.v1.Package) |  | package field is a package object |
 | iccid | [string](#string) |  | iccid field is a string |
 | msisdn | [string](#string) |  | msisdn field is a string that must match phone number format or be empty. |
@@ -332,22 +289,17 @@ Package message defines the structure for a package object
 | deactivationsCount | [uint64](#uint64) |  | This field stores the number of times the SIM card has been deactivated |
 | allocatedAt | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | This field stores the timestamp when the SIM card was allocated. |
 
-
-
-
 <a name="ukama.subscriber.registry.v1.Subscriber"></a>
 
 ### Subscriber
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| orgID | [string](#string) |  |  |
+| orgId | [string](#string) |  |  |
 | firstName | [string](#string) |  |  |
 | lastName | [string](#string) |  |  |
-| subscriberID | [string](#string) |  |  |
-| networkID | [string](#string) |  |  |
+| subscriberId | [string](#string) |  |  |
+| networkId | [string](#string) |  |  |
 | email | [string](#string) |  |  |
 | phoneNumber | [string](#string) |  |  |
 | address | [string](#string) |  |  |
@@ -360,45 +312,28 @@ Package message defines the structure for a package object
 | idSerial | [string](#string) |  |  |
 | gender | [string](#string) |  |  |
 
-
-
-
 <a name="ukama.subscriber.registry.v1.UpdateSubscriberRequest"></a>
 
 ### UpdateSubscriberRequest
-UpdateSubscriberRequest defines the request to update a subscriber
 
+UpdateSubscriberRequest defines the request to update a subscriber
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| subscriberID | [string](#string) |  | subscriberID is the ID of the subscriber to update |
+| subscriberId | [string](#string) |  | subscriberId is the ID of the subscriber to update |
 | email | [string](#string) |  | email is the new email address of the subscriber |
 | phoneNumber | [string](#string) |  | phoneNumber is the new phone number of the subscriber |
 | address | [string](#string) |  | address is the new address of the subscriber |
 | idSerial | [string](#string) |  | idSerial is the new idSerial of the subscriber |
 | proofOfIdentification | [string](#string) |  | proofOfIdentification is the new proofOfIdentification of the subscriber |
 
-
-
-
 <a name="ukama.subscriber.registry.v1.UpdateSubscriberResponse"></a>
 
 ### UpdateSubscriberResponse
+
 UpdateSubscriberResponse defines the response when updating a subscriber
 
 Return nothing when subscriber has been updated
-
-
-
-
-
-
-
- 
-
-
-
-
 
 ## Scalar Value Types
 

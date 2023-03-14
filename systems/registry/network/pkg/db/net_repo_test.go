@@ -317,9 +317,9 @@ func Test_NetRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		network := net_db.Network{
-			ID:    uuid.NewV4(),
+			Id:    uuid.NewV4(),
 			Name:  "network1",
-			OrgID: uuid.NewV4(),
+			OrgId: uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -328,7 +328,7 @@ func Test_NetRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(network.ID, network.Name, network.OrgID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(network.Id, network.Name, network.OrgId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()

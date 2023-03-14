@@ -22,9 +22,9 @@ type Package struct {
 	PackageInfo *PackageInfo `json:"package"`
 }
 type PackageInfo struct {
-	ID       string `json:"uuid"`
+	Id       string `json:"uuid"`
 	Name     string `json:"name"`
-	OrgID    string `json:"org_id"`
+	OrgId    string `json:"org_id"`
 	SimType  string `json:"sim_type"`
 	IsActive bool   `json:"active"`
 	Duration uint   `json:"duration,string"`
