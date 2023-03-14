@@ -21,7 +21,7 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 
 	rateService := NewBaseRateServer(mockRepo, msgbusClient)
 	var mockSimTypeStr = string("ukama_data")
-	var mockEffectiveAt = time.Now().Add(time.Hour * 24 * 7 * time.Duration(4)).Format("02-01-2006") // fix the date format
+	var mockEffectiveAt = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC1123)
 	var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
 	reqMock := &pb.UploadBaseRatesRequest{
@@ -36,7 +36,7 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 	rateRes, err := rateService.UploadBaseRates(context.Background(), reqMock)
 	assert.NoError(t, err)
 	for i := range rateRes.Rate {
-		assert.Equal(t, rateRes.Rate[i].EffectiveAt, "Tue, 04 Apr 2023 00:00:00 UTC")
+		assert.Equal(t, rateRes.Rate[i].EffectiveAt, mockEffectiveAt)
 		assert.Equal(t, rateRes.Rate[i].SimType, mockSimTypeStr)
 	}
 }

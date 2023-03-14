@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"testing"
+	"time"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -35,7 +36,7 @@ func TestAdd(t *testing.T) {
 			Email:                 "johndoe@example.com",
 			PhoneNumber:           "1234567890",
 			Gender:                "Male",
-			Dob:                   "16-04-1995",
+			Dob:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC1123),
 			Address:               "1 Main St",
 			ProofOfIdentification: "Passport",
 			IdSerial:              "123456789",
