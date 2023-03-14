@@ -1,6 +1,9 @@
-import { MetricServiceValueRes, ParsedCookie } from "../../common/types";
 import {
-    ActivateUserResponse,
+    BoolResponse,
+    MetricServiceValueRes,
+    ParsedCookie
+} from "../../common/types";
+import {
     ConnectedUserDto,
     DeactivateResponse,
     ESimQRCodeRes,
@@ -30,10 +33,7 @@ export interface IUserService {
     ): Promise<DeactivateResponse>;
     getUser(userId: string, cookie: ParsedCookie): Promise<UserResDto>;
     addUser(req: UserInputDto, cookie: ParsedCookie): Promise<UserResDto>;
-    deleteUser(
-        userId: string,
-        cookie: ParsedCookie,
-    ): Promise<ActivateUserResponse>;
+    deleteUser(userId: string, cookie: ParsedCookie): Promise<BoolResponse>;
     getEsimQRCode(
         data: GetESimQRCodeInput,
         cookie: ParsedCookie,

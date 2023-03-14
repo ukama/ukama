@@ -127,9 +127,8 @@ func (r *Router) init() {
 	users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
 	users.PUT("/:user_uuid", formatDoc("Update User", "Update user data"), tonic.Handler(r.updateUserHandler, http.StatusOK))
 	users.PATCH("/:user_uuid", formatDoc("Deactivate User", "Deactivate user"), tonic.Handler(r.deactivateUserHandler, http.StatusOK))
+	users.DELETE("/:user_uuid", formatDoc("Delete User", "Delete a user from the registry"), tonic.Handler(r.deleteUserHandler, http.StatusOK))
 	// user orgs-member
-	// Delete user
-	// users.DELETE("/:user_uuid", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
 
 	// Network routes
 	// Networks
@@ -208,6 +207,10 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*use
 
 func (r *Router) deactivateUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeactivateResponse, error) {
 	return r.clients.User.Deactivate(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
+}
+
+func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeleteResponse, error) {
+	return r.clients.User.Delete(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {

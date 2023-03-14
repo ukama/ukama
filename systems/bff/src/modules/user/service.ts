@@ -1,13 +1,12 @@
 import { Service } from "typedi";
 import { catchAsyncIOMethod } from "../../common";
-import { ParsedCookie } from "../../common/types";
+import { BoolResponse, ParsedCookie } from "../../common/types";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 import { checkError, HTTP404Error, Messages } from "../../errors";
 import { IUserService } from "./interface";
 import UserMapper from "./mapper";
 import {
-    ActivateUserResponse,
     ConnectedUserDto,
     ESimQRCodeRes,
     GetAccountDetailsDto,
@@ -152,14 +151,13 @@ export class UserService implements IUserService {
             firstVisit: res?.traits?.firstVisit,
         };
     };
-
     deleteUser = async (
         userId: string,
         cookie: ParsedCookie,
-    ): Promise<ActivateUserResponse> => {
+    ): Promise<BoolResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.DELETE,
-            path: `${SERVER.ORG}/${cookie.orgId}/users/${userId}`,
+            path: `${SERVER.REGISTRY_USERS_API_URL}/${userId}`,
             headers: cookie.header,
         });
         if (checkError(res)) throw new Error(res.message);

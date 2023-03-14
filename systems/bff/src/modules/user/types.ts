@@ -136,11 +136,6 @@ export class UserFistVisitResDto {
     @Field()
     firstVisit: boolean;
 }
-@ObjectType()
-export class ActivateUserResponse {
-    @Field()
-    success: boolean;
-}
 
 @ObjectType()
 export class GetUserDto {

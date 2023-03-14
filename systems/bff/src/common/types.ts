@@ -170,3 +170,8 @@ export class MetricLatestValueRes {
     @Field()
     value: string;
 }
+@ObjectType()
+export class BoolResponse {
+    @Field()
+    success: boolean;
+}
