@@ -1,4 +1,4 @@
-package utils
+package pushgatewayMetrics
 
 import (
 	"fmt"
@@ -6,8 +6,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 )
+
+type MetricConfig struct {
+	Name    string
+	Type    string
+	Labels  map[string]string
+	Details string
+	Buckets []float64
+	Value  float64
+}
 
 type MetricType string
 
@@ -25,6 +33,7 @@ type Metrics struct {
 	collector prometheus.Collector
 	Labels    prometheus.Labels
 }
+
 
 func MetricTypeFromString(s string) MetricType {
 	switch s {
@@ -50,7 +59,7 @@ func NewMetrics(name string, mtype string) *Metrics {
 	return m
 }
 
-func (m *Metrics) InitializeMetric(name string, config pkg.MetricConfig, customLables []string) error {
+func (m *Metrics) InitializeMetric(name string, config MetricConfig, customLables []string) error {
 	switch MetricTypeFromString(config.Type) {
 	case MetricGuage:
 		m.collector = prometheus.NewGaugeVec(
@@ -115,7 +124,7 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 	}
 	return nil
 }
-func PushMetrics(pusMetricHost string, metrics []pkg.SimMetrics) {
+func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName string) {
 
 	labelDimensions := make([]string, 0, len(metrics[0].Labels))
 	for key := range metrics[0].Labels {
@@ -126,7 +135,7 @@ func PushMetrics(pusMetricHost string, metrics []pkg.SimMetrics) {
 		if _, ok := metricCollectors[metric.Name]; !ok {
 			// Metric does not exist, create a new one
 			newMetric := NewMetrics(metric.Name, metric.Type)
-			if err := newMetric.InitializeMetric(metric.Name, pkg.MetricConfig{
+			if err := newMetric.InitializeMetric(metric.Name, MetricConfig{
 				Name:   metric.Name,
 				Type:   metric.Type,
 				Labels: metric.Labels,
@@ -145,7 +154,7 @@ func PushMetrics(pusMetricHost string, metrics []pkg.SimMetrics) {
 		}
 	}
 
-	pusher := push.New(pusMetricHost, pkg.SystemName)
+	pusher := push.New(pusMetricHost, metriJobName)
 	for _, metrics := range metricCollectors {
 		for _, m := range metrics {
 			pusher.Collector(m.collector)
@@ -156,8 +165,8 @@ func PushMetrics(pusMetricHost string, metrics []pkg.SimMetrics) {
 	}
 }
 
-func CollectAndPushSimMetrics(pusMetricHost string, configMetrics []pkg.SimMetrics, selectedMetric string, Value float64, Labels map[string]string) error {
-	var selectedMetrics []pkg.SimMetrics
+func CollectAndPushSimMetrics(pusMetricHost string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
+	var selectedMetrics []MetricConfig
 	var foundSelectedMetric bool
 
 	for i, metric := range configMetrics {
@@ -177,7 +186,7 @@ func CollectAndPushSimMetrics(pusMetricHost string, configMetrics []pkg.SimMetri
 		return fmt.Errorf("metric %q not found", selectedMetric)
 	}
 
-	PushMetrics(pusMetricHost, selectedMetrics)
+	PushMetrics(pusMetricHost, selectedMetrics, systemName)
 
 	return nil
 }

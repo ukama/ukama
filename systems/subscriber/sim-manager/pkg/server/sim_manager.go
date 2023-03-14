@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	pmetric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -69,7 +70,16 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
+	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
+	if err != nil {
+		log.Errorf("failed to get Sims counts: %s", err.Error())
+	}
+	
 
+	err = pmetric.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": s.Org},pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -218,16 +228,16 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
-	if err != nil {
-		log.Errorf("failed to get Sims counts: %s", err.Error())
-	}
+	// simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
+	// if err != nil {
+	// 	log.Errorf("failed to get Sims counts: %s", err.Error())
+	// }
 	
 
-	err = utils.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": s.Org})
-	if err != nil {
-		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
-	}
+	// err = pmetric.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": s.Org},pkg.SystemName)
+	// if err != nil {
+	// 	log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	// }
 	return resp, nil
 }
 
@@ -373,7 +383,7 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		log.Errorf("Failed to get terminated sim counts: %s", err.Error())
 	}
 
-	err = utils.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.TerminatedCount, float64(terminatedCount), map[string]string{"org": s.Org})
+	err = pmetric.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.TerminatedCount, float64(terminatedCount), map[string]string{"org": s.Org},pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing terminateSimCount metric to pushgateway %s", err.Error())
 	}
@@ -659,7 +669,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 	if err != nil {
 		log.Errorf("Failed to get activated Sims counts: %s", err.Error())
 	}
-	err = utils.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.ActiveCount, float64(activeCount), map[string]string{"org": s.Org})
+	err = pmetric.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.ActiveCount, float64(activeCount), map[string]string{"org": s.Org},pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing activateCount metric to pushgateway %s", err.Error())
 	}
@@ -718,7 +728,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 	if err != nil {
 		log.Errorf("failed to get inactive Sim counts: %s", err.Error())
 	}
-	err = utils.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.InactiveCount, float64(inactiveCount), map[string]string{"org": s.Org})
+	err = pmetric.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.InactiveCount, float64(inactiveCount), map[string]string{"org": s.Org},pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while push inactive metrics to pushgateway: %s", err.Error())
 	}

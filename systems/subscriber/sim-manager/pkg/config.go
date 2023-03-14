@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/config"
+	metric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
 )
 
 const (
@@ -65,7 +66,7 @@ type SimMetrics struct {
 	Value  float64
 }
 
-var SimMetric = []SimMetrics{{
+var SimMetric = []metric.MetricConfig{{
 	Name:   NumberOfSubscribers,
 	Type:   GaugeType,
 	Labels: map[string]string{"network": "", "org": ""},
