@@ -1,10 +1,10 @@
-import { Resolver, Arg, Ctx, Mutation, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { UserInputDto, UserResDto } from "../types";
-import { UserService } from "../service";
+import { parseCookie } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
-import { parseCookie } from "../../../common";
+import { UserService } from "../service";
+import { UserInputDto, UserResDto } from "../types";
 
 @Service()
 @Resolver()
@@ -18,10 +18,6 @@ export class AddUserResolver {
         @Ctx() ctx: Context
     ): Promise<UserResDto> {
         const user = await this.userService.addUser(data, parseCookie(ctx));
-        await this.userService.updateUserRoaming(
-            { simId: user?.iccid || "", userId: user.id, status: data.status },
-            parseCookie(ctx)
-        );
         return user;
     }
 }

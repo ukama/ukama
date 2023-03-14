@@ -15,7 +15,7 @@ export class AddUserResolver {
     @UseMiddleware(Authentication)
     async deleteUser(
         @Arg("userId") userId: string,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<ActivateUserResponse | null> {
         return this.userService.deleteUser(userId, parseCookie(ctx));
     }

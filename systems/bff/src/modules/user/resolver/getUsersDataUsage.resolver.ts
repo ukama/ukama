@@ -1,18 +1,18 @@
 import {
     Arg,
     Ctx,
-    Query,
     PubSub,
-    Resolver,
-    UseMiddleware,
     PubSubEngine,
+    Query,
+    Resolver,
+    UseMiddleware
 } from "type-graphql";
 import { Service } from "typedi";
-import { UserService } from "../service";
 import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
-import { DataUsageInputDto, GetUserDto } from "../types";
 import { Authentication } from "../../../common/Authentication";
+import { Context } from "../../../common/types";
+import { UserService } from "../service";
+import { DataUsageInputDto, GetUserDto } from "../types";
 
 @Service()
 @Resolver()
@@ -34,7 +34,7 @@ export class GetUsersDataUsageResolver {
                     parseCookie(ctx)
                 );
                 pubsub.publish("getUsersSub", user);
-                users.push(user);
+                // users.push(user);
             }
         }
         return users;

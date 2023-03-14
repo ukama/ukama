@@ -125,9 +125,9 @@ func (r *Router) init() {
 	users := v1.Group(user, "Users", "Operations on Users")
 	users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
 	users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+	users.PUT("/:user_uuid", formatDoc("Update User", "Update user data"), tonic.Handler(r.updateUserHandler, http.StatusOK))
+	users.PATCH("/:user_uuid", formatDoc("Deactivate User", "Deactivate user"), tonic.Handler(r.deactivateUserHandler, http.StatusOK))
 	// user orgs-member
-	// update user
-	// Deactivate user
 	// Delete user
 	// users.DELETE("/:user_uuid", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
 
@@ -197,8 +197,21 @@ func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.G
 	return r.clients.User.Get(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
+func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*userspb.UpdateResponse, error) {
+	return r.clients.User.Update(c.Param("user_uuid"), &userspb.UserAttributes{
+		Name:  req.Name,
+		Email: req.Email,
+		Phone: req.Phone,
+	},
+		c.GetString(USER_ID_KEY))
+}
+
+func (r *Router) deactivateUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeactivateResponse, error) {
+	return r.clients.User.Deactivate(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
+}
+
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
-	return r.clients.User.AddUser(&userspb.User{
+	return r.clients.User.AddUser(&userspb.UserAttributes{
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,

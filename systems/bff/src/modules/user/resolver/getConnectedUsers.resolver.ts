@@ -25,7 +25,7 @@ export class GetConnectedUsersResolver {
     async getConnectedUsers(
         @Arg("filter", () => TIME_FILTER) filter: TIME_FILTER,
         @PubSub() pubsub: PubSubEngine,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<ConnectedUserDto> {
         const user = this.userService.getConnectedUsers(parseCookie(ctx));
         pubsub.publish("getConnectedUsers", user);

@@ -37,6 +37,12 @@ type UpdateMemberRequest struct {
 type GetUserRequest struct {
 	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 }
+type UpdateUserRequest struct {
+	UserUUID string `path:"user_uuid" validate:"required"`
+	Name     string `json:"name,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Phone    string `json:"phone,omitempty"`
+}
 
 type AddUserRequest struct {
 	Name  string `example:"John" json:"name,omitempty" validate:"required"`
