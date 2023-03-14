@@ -178,34 +178,46 @@ export const isTowerNode = (nodeId: string): boolean =>
 
 export const getTowerNode = (payload: AddNodeDto): NodeObj => {
     if (isTowerNode(payload.nodeId))
-        return { name: payload.name, nodeId: payload.nodeId };
+        return {
+            name: payload.name,
+            state: payload.state,
+            nodeId: payload.nodeId,
+        };
 
     if (payload.attached)
         for (const node of payload.attached) {
             if (isTowerNode(node.nodeId)) return node;
         }
-    return { name: "", nodeId: "" };
+    return { name: "", nodeId: "", state: "" };
 };
 
 export const getNodes = (payload: AddNodeDto): NodeObj[] => {
     const nodes: NodeObj[] = [];
     if (!isTowerNode(payload.nodeId)) {
-        nodes.push({ name: payload.name, nodeId: payload.nodeId });
+        nodes.push({
+            name: payload.name,
+            state: payload.state,
+            nodeId: payload.nodeId,
+        });
     }
     if (payload.attached)
         for (const node of payload.attached) {
             if (!isTowerNode(node.nodeId))
-                nodes.push({ name: node.name, nodeId: node.nodeId });
+                nodes.push({
+                    name: node.name,
+                    state: payload.state,
+                    nodeId: node.nodeId,
+                });
         }
     return nodes;
 };
 export const linkNodes = (nodes: NodeObj[], rootNodeId: string): LinkNodes => {
     const nodesLinkingObj: LinkNodes = {
         nodeId: rootNodeId,
-        attached: [],
+        attachedNodeIds: [],
     };
     for (const node of nodes) {
-        nodesLinkingObj.attached?.push({ nodeId: node.nodeId });
+        nodesLinkingObj.attachedNodeIds?.push(node.nodeId);
     }
     return nodesLinkingObj;
 };

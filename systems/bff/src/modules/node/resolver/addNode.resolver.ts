@@ -29,11 +29,10 @@ export class AddNodeResolver {
             }
         }
 
-        if (!req.associate) {
-            await this.nodeService.addNode(rootNode, parseCookie(ctx));
-        }
-
-        if (linkedNode.attached && linkedNode.attached.length > 0) {
+        if (
+            linkedNode.attachedNodeIds &&
+            linkedNode.attachedNodeIds.length > 0
+        ) {
             await this.nodeService.linkNodes(linkedNode, parseCookie(ctx));
         }
 

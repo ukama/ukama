@@ -44,7 +44,6 @@ export class NodeService implements INodeService {
             body: {
                 node: {
                     name: req.name,
-                    type: req.type,
                     state: req.state,
                     attached: req.attached,
                 },
