@@ -70,16 +70,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
-	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
-	if err != nil {
-		log.Errorf("failed to get Sims counts: %s", err.Error())
-	}
-	
 
-	err = pmetric.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": s.Org},pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
-	}
 	subscriberID, err := uuid.FromString(req.GetSubscriberID())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -228,16 +219,16 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	// simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
-	// if err != nil {
-	// 	log.Errorf("failed to get Sims counts: %s", err.Error())
-	// }
+	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
+	if err != nil {
+		log.Errorf("failed to get Sims counts: %s", err.Error())
+	}
 	
 
-	// err = pmetric.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": s.Org},pkg.SystemName)
-	// if err != nil {
-	// 	log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
-	// }
+	err = pmetric.CollectAndPushSimMetrics(s.PushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers, float64(simsCount), map[string]string{"network": req.NetworkID, "org": s.Org},pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
 	return resp, nil
 }
 
