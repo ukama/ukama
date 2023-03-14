@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/config"
-	metric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
+	pmetric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
 )
 
 const (
@@ -16,13 +16,6 @@ const (
 	GaugeType           = "gauge"
 )
 
-type MetricConfig struct {
-	Name    string
-	Type    string
-	Labels  map[string]string
-	Details string
-	Buckets []float64
-}
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
@@ -59,14 +52,9 @@ func NewConfig(name string) *Config {
 	}
 }
 
-type SimMetrics struct {
-	Name   string
-	Type   string
-	Labels map[string]string
-	Value  float64
-}
 
-var SimMetric = []metric.MetricConfig{{
+
+var SimMetric = []pmetric.MetricConfig{{
 	Name:   NumberOfSubscribers,
 	Type:   GaugeType,
 	Labels: map[string]string{"network": "", "org": ""},
