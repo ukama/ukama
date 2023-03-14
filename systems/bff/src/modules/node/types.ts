@@ -51,8 +51,8 @@ export class LinkNodes {
     @Field()
     nodeId: string;
 
-    @Field(() => [AttachedNodes])
-    attached?: AttachedNodes[];
+    @Field()
+    attachedNodeIds: string[];
 }
 
 @InputType()
@@ -62,6 +62,14 @@ export class NodeObj {
 
     @Field()
     nodeId: string;
+    @Field()
+    type: string;
+
+    @Field()
+    state: string;
+
+    @Field(() => [NodeObj], { nullable: true })
+    attached?: NodeObj[];
 }
 
 @InputType()
@@ -72,11 +80,14 @@ export class AddNodeDto {
     @Field()
     nodeId: string;
 
-    @Field(() => [NodeObj])
-    attached?: NodeObj[];
+    @Field()
+    type: string;
 
     @Field()
-    associate: boolean;
+    state: string;
+
+    @Field(() => [NodeObj])
+    attached?: NodeObj[];
 }
 
 @InputType()

@@ -44,6 +44,9 @@ export class NodeService implements INodeService {
             body: {
                 node: {
                     name: req.name,
+                    type: req.type,
+                    state: req.state,
+                    attached: req.attached,
                 },
             },
         });
@@ -63,9 +66,7 @@ export class NodeService implements INodeService {
             path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
             headers: cookie.header,
             body: {
-                node: {
-                    attached: req.attached,
-                },
+                attachedNodeIds: req.attachedNodeIds,
             },
         });
 
