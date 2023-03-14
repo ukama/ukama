@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	pmetric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
@@ -24,14 +25,18 @@ type NodeServer struct {
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	pb.UnimplementedNodeServiceServer
+	org string
+	pushMetricHost string
 }
 
-func NewNodeServer(nodeRepo db.NodeRepo) *NodeServer {
+func NewNodeServer(nodeRepo db.NodeRepo,org string,pushMetricHost string ) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{nodeRepo: nodeRepo,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
+		org:org,
+		pushMetricHost:pushMetricHost,
 	}
 }
 
@@ -99,7 +104,23 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 		NodeId: req.GetNodeId(),
 		State:  req.State,
 	}
-
+	_ ,activeNodeCount,inactiveNodeCount ,err := n.nodeRepo.GetNodeCount()
+	if err != nil {
+		logrus.Errorf("Error while getting node count %s", err.Error())
+	}
+	if (dbState ==db.Onboarded){
+		err = pmetric.CollectAndPushSimMetrics(n.pushMetricHost, pkg.NodeMetric, pkg.NumberOfActiveNodes, float64(activeNodeCount), map[string]string{"network": "", "org": n.org},pkg.SystemName)
+		if err != nil {
+			logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+		}
+	}else if (dbState ==db.Pending){
+		err = pmetric.CollectAndPushSimMetrics(n.pushMetricHost, pkg.NodeMetric, pkg.NumberOfInactiveNodes, float64(inactiveNodeCount), map[string]string{"network": "", "org": n.org},pkg.SystemName)
+		if err != nil {
+			logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+		}
+	
+	}
+	
 	// publish event and return
 
 	return resp, nil
@@ -203,6 +224,14 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 
 		return nil, status.Errorf(codes.Internal, "error adding the node")
 	}
+	nodesCount ,_,_ ,err := n.nodeRepo.GetNodeCount()
+	if err != nil {
+		logrus.Errorf("Error while getting node count %s", err.Error())
+	}
+	err = pmetric.CollectAndPushSimMetrics(n.pushMetricHost, pkg.NodeMetric, pkg.NumberOfNodes, float64(nodesCount), map[string]string{"network": "", "org": n.org},pkg.SystemName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
 
 	return &pb.AddNodeResponse{Node: dbNodeToPbNode(node)}, nil
 }
@@ -216,6 +245,14 @@ func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Del
 	err = n.nodeRepo.Delete(nID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+	nodesCount ,_,_ ,err := n.nodeRepo.GetNodeCount()
+	if err != nil {
+		logrus.Errorf("Error while getting node count %s", err.Error())
+	}
+	err = pmetric.CollectAndPushSimMetrics(n.pushMetricHost, pkg.NodeMetric, pkg.NumberOfNodes, float64(nodesCount), map[string]string{"network": "", "org": n.org},pkg.SystemName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
 	return &pb.DeleteResponse{NodeId: req.GetNodeId()}, nil

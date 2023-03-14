@@ -22,7 +22,7 @@ func TestRegistryServer_GetNode(t *testing.T) {
 		State: db.Pending, Type: db.NodeTypeHome,
 	}, nil).Once()
 
-	s := NewNodeServer(nodeRepo)
+	s := NewNodeServer(nodeRepo,"","")
 
 	node, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: testNodeId.String()})
 
@@ -39,7 +39,8 @@ func TestRegistryServer_UpdateNodeState(t *testing.T) {
 		return *ns == db.Onboarded
 	}), (*string)(nil)).Return(nil).Once()
 
-	s := NewNodeServer(nodeRepo)
+	s := NewNodeServer(nodeRepo,"","")
+	nodeRepo.On("GetNodeCount").Return(int64(0),int64(0),int64(0),nil).Once()
 
 	_, err := s.UpdateNodeState(context.TODO(), &pb.UpdateNodeStateRequest{
 		NodeId: testNodeId.String(),
@@ -60,7 +61,8 @@ func TestRegistryServer_AddNode(t *testing.T) {
 		return n.State == db.Pending && n.NodeID == nodeId
 	})).Return(nil).Once()
 
-	s := NewNodeServer(nodeRepo)
+	s := NewNodeServer(nodeRepo,"","")
+	nodeRepo.On("GetNodeCount").Return(int64(0),int64(0),int64(0),nil).Once()
 
 	// Act
 	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
