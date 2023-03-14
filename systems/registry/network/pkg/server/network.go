@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	pmetric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 	"google.golang.org/grpc/codes"
@@ -26,15 +28,19 @@ type NetworkServer struct {
 	orgRepo    db.OrgRepo
 	siteRepo   db.SiteRepo
 	orgService providers.OrgClientProvider
+	org string
+	pushMetricHost string
 }
 
 func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider) *NetworkServer {
+	orgService providers.OrgClientProvider,org string,pushMetricHost string) *NetworkServer {
 	return &NetworkServer{
 		netRepo:    netRepo,
 		orgRepo:    orgRepo,
 		siteRepo:   siteRepo,
 		orgService: orgService,
+		org : org,
+		pushMetricHost: pushMetricHost,
 	}
 }
 
@@ -71,9 +77,9 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 			return nil, grpc.SqlErrorToGrpc(err, "org")
 		}
 	}
-
+networkId:= uuid.NewV4()
 	network := &db.Network{
-		ID:    uuid.NewV4(),
+		ID:    networkId,
 		Name:  networkName,
 		OrgID: org.ID,
 	}
@@ -82,6 +88,16 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	err = n.netRepo.Add(network)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+	networkCount, err := n.netRepo.GetNetworkCount()
+	if err != nil {
+		logrus.Errorf("failed to get network counts: %s", err.Error())
+	}
+	
+
+	err = pmetric.CollectAndPushSimMetrics(n.pushMetricHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"network": networkId.String(), "org": n.org},pkg.SystemName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
 	return &pb.AddResponse{
@@ -148,6 +164,14 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	}
 
 	// publish event before returning resp
+	networkCount, err := n.netRepo.GetNetworkCount()
+	if err != nil {
+		logrus.Errorf("failed to get network counts: %s", err.Error())
+	}
+	err = pmetric.CollectAndPushSimMetrics(n.pushMetricHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"network": "", "org": n.org},pkg.SystemName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
 
 	return &pb.DeleteResponse{}, nil
 }

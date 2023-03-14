@@ -67,7 +67,7 @@ func TestNetworkServer_Get(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil)
+		s := NewNetworkServer(netRepo, nil, nil, nil,"","")
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			NetworkID: netID.String()})
 
@@ -86,7 +86,7 @@ func TestNetworkServer_Get(t *testing.T) {
 
 		netRepo.On("Get", netID).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil)
+		s := NewNetworkServer(netRepo, nil, nil, nil,"","")
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			NetworkID: netID.String()})
 
@@ -111,7 +111,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil)
+		s := NewNetworkServer(netRepo, nil, nil, nil,"","")
 		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
 			Name: netName, OrgName: orgName})
 
@@ -130,7 +130,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 
 		netRepo.On("GetByName", orgName, netName).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil)
+		s := NewNetworkServer(netRepo, nil, nil, nil,"","")
 		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
 			Name: netName, OrgName: orgName})
 
@@ -157,7 +157,7 @@ func TestNetworkServer_GetByOrg(t *testing.T) {
 					Deactivated: false,
 				}}, nil).Once()
 
-		s := NewNetworkServer(netRepo, orgRepo, nil, nil)
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil,"","")
 		netResp, err := s.GetByOrg(context.TODO(),
 			&pb.GetByOrgRequest{OrgID: orgID.String()})
 
@@ -179,7 +179,7 @@ func TestNetworkServer_Delete(t *testing.T) {
 
 		netRepo.On("Delete", orgName, netName).Return(nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil)
+		s := NewNetworkServer(netRepo, nil, nil, nil,"","")
 		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			Name: netName, OrgName: orgName})
 
@@ -197,7 +197,7 @@ func TestNetworkServer_Delete(t *testing.T) {
 
 		netRepo.On("Delete", orgName, netName).Return(gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil)
+		s := NewNetworkServer(netRepo, nil, nil, nil,"","")
 		netResp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			Name: netName, OrgName: orgName})
 
@@ -232,7 +232,7 @@ func TestNetworkServer_AddSite(t *testing.T) {
 
 		siteRepo.On("Add", site).Return(nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil,"","")
 
 		// Act
 		res, err := s.AddSite(context.TODO(), &pb.AddSiteRequest{
@@ -263,7 +263,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(nil, nil, siteRepo, nil)
+		s := NewNetworkServer(nil, nil, siteRepo, nil,"","")
 		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
 			SiteID: siteID.String()})
 
@@ -282,7 +282,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 
 		siteRepo.On("Get", siteID).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(nil, nil, siteRepo, nil)
+		s := NewNetworkServer(nil, nil, siteRepo, nil,"","")
 		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
 			SiteID: fmt.Sprint(siteID)})
 
@@ -317,7 +317,7 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil,"","")
 		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
 			NetworkID: netID.String(), SiteName: siteName})
 
@@ -347,7 +347,7 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 
 		siteRepo.On("GetByName", netID, siteName).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil,"","")
 		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
 			NetworkID: netID.String(), SiteName: siteName})
 
@@ -382,7 +382,7 @@ func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
 					Deactivated: false,
 				}}, nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, siteRepo, nil)
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil,"","")
 		netResp, err := s.GetSitesByNetwork(context.TODO(),
 			&pb.GetSitesByNetworkRequest{NetworkID: netID.String()})
 

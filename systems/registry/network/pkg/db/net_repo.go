@@ -18,6 +18,7 @@ type NetRepo interface {
 	// GetByOrgName(orgName string) ([]Network, error)
 	// Update(orgId uint, network *Network) error
 	Delete(orgName string, network string) error
+	GetNetworkCount() (int64, error)
 }
 
 type netRepo struct {
@@ -89,6 +90,14 @@ func (n netRepo) Add(network *Network) error {
 	result := n.Db.GetGormDb().Create(network)
 
 	return result.Error
+}
+func (n netRepo) GetNetworkCount() (int64, error) {
+	var count int64
+	result := n.Db.GetGormDb().Model(&Network{}).Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return count, nil
 }
 
 func (n netRepo) Delete(orgName string, network string) error {
