@@ -24,7 +24,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.data_plan.base_rate.upload"},
+			ListenerRoutes: []string{"event.cloud.dataplan.baserate.upload"},
 		},
 	}
 }

@@ -15,7 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-20221114075906-a5be6bf1d178
+	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.52.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1

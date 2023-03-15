@@ -17,7 +17,7 @@ deps:
 	go get github.com/vektra/mockery/v2/.../
 
 gen:
-	mockery --all --recursive
+	mockery --all --recursive --dir ./pkg
 
 clean:
 	rm -rf ./bin/ 

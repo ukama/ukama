@@ -48,7 +48,7 @@ type dataPlan interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.d = client.NewDataPlan(endpoints.Package, endpoints.BaseRate, endpoints.Timeout)
+	c.d = client.NewDataPlan(endpoints.Package, endpoints.Rate, endpoints.Timeout)
 
 	return c
 }

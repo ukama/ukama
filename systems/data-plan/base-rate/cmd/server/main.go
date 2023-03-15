@@ -30,11 +30,12 @@ func main() {
 	log.Infof("Starting the base-rate service")
 
 	initConfig()
-	db := initDb()
-	runGrpcServer(db)
+	rateDb := initDb()
+	runGrpcServer(rateDb)
 }
 
 func initConfig() {
+	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -44,6 +45,7 @@ func initConfig() {
 			logrus.Infof("Config:\n%s", string(b))
 		}
 	}
+
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
@@ -51,6 +53,7 @@ func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
 	err := d.Init(&db.Rate{})
+
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
