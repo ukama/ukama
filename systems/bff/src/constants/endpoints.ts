@@ -41,5 +41,5 @@ export const SERVER = {
 export const getMetricUri = (
     orgId: string,
     nodeId: string,
-    endpoint: string
+    endpoint: string,
 ): string => `${SERVER.ORG}/${orgId}/nodes/${nodeId}/metrics/${endpoint}`;

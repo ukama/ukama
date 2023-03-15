@@ -1,7 +1,7 @@
 import {
     BoolResponse,
     MetricServiceValueRes,
-    ParsedCookie
+    ParsedCookie,
 } from "../../common/types";
 import {
     ConnectedUserDto,
@@ -17,7 +17,7 @@ import {
     UpdateUserServiceInput,
     UserAPIResDto,
     UserInputDto,
-    UserResDto
+    UserResDto,
 } from "./types";
 
 export interface IUserService {

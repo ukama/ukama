@@ -15,7 +15,7 @@ export class GetUserResolver {
     @UseMiddleware(Authentication)
     async getUser(
         @Arg("userId") userId: string,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<UserResDto | null> {
         return this.userService.getUser(userId, parseCookie(ctx));
     }

@@ -7,12 +7,12 @@ import {
     OrgMemberAPIResDto,
     OrgMemberResDto,
     UserAPIResDto,
-    UserResDto
+    UserResDto,
 } from "./types";
 
 class UserMapper implements IUserMapper {
     connectedUsersDtoToDto = (
-        res: MetricServiceValueRes[]
+        res: MetricServiceValueRes[],
     ): ConnectedUserDto => {
         if (res.length > 0) {
             const value: any = res[0].value[1];

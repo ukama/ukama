@@ -18,7 +18,7 @@ import {
     UserFistVisitInputDto,
     UserFistVisitResDto,
     UserInputDto,
-    UserResDto
+    UserResDto,
 } from "./types";
 
 @Service()
