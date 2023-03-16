@@ -4,7 +4,7 @@ go 1.18
 
 replace github.com/ukama/ukama/systems/common => ./
 
-replace github.com/ukama/ukama/systems/init/msgClient => ./../init/msgClient
+replace github.com/ukama/ukama/systems/messaging/msgClient => ../messaging/msgClient
 
 require (
 	github.com/gin-contrib/cors v1.3.0
@@ -30,7 +30,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000
 	github.com/vektra/mockery/v2 v2.12.2
 	github.com/wI2L/fizz v0.18.1
 	github.com/wagslane/go-rabbitmq v0.8.1
