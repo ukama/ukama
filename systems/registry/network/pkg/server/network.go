@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/grpc"
-	pmetric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
+	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
@@ -29,18 +29,18 @@ type NetworkServer struct {
 	siteRepo   db.SiteRepo
 	orgService providers.OrgClientProvider
 	org string
-	pushMetricHost string
+	pushGatewayHost string
 }
 
 func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider,org string,pushMetricHost string) *NetworkServer {
+	orgService providers.OrgClientProvider,org string,pushGatewayHost string) *NetworkServer {
 	return &NetworkServer{
 		netRepo:    netRepo,
 		orgRepo:    orgRepo,
 		siteRepo:   siteRepo,
 		orgService: orgService,
 		org : org,
-		pushMetricHost: pushMetricHost,
+		pushGatewayHost: pushGatewayHost,
 	}
 }
 
@@ -95,7 +95,7 @@ networkId:= uuid.NewV4()
 	}
 	
 
-	err = pmetric.CollectAndPushSimMetrics(n.pushMetricHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"network": networkId.String(), "org": n.org},pkg.SystemName)
+	err = pmetric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"network": networkId.String(), "org": n.org},pkg.SystemName)
 	if err != nil {
 		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
@@ -168,7 +168,7 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	if err != nil {
 		logrus.Errorf("failed to get network counts: %s", err.Error())
 	}
-	err = pmetric.CollectAndPushSimMetrics(n.pushMetricHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"network": "", "org": n.org},pkg.SystemName)
+	err = pmetric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"network": "", "org": n.org},pkg.SystemName)
 	if err != nil {
 		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
