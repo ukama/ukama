@@ -316,5 +316,19 @@ services:
     depends_on:
       - postgresd
 
+  bff:
+    build: ./bff
+    ports:
+      - "4000:4000"
+    environment:
+      - CONSOLE_APP_URL=http://localhost:3000
+      - AUTH_APP_URL=http://localhost:4455
+      - PORT=4000
+      - DOMAIN=localhost
+      - API_URL=http://localhost:8082
+    restart: always
+    depends_on:
+      - registry-api-gw
+
 volumes:
   postgress-data:
