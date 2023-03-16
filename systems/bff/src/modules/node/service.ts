@@ -7,12 +7,12 @@ import {
     NodeAppsVersionLogsResponse,
     NodeAppResponse,
     MetricRes,
-    OrgNodeDto,
+    UpdateNodeResponse,
     NodeResponse,
     GetNodeStatusRes,
     GetNodeStatusInput,
     LinkNodes,
-    NodeObj,
+    AddNodeDto,
 } from "./types";
 import {
     ParsedCookie,
@@ -34,19 +34,17 @@ const logger = setupLogger("service");
 @Service()
 export class NodeService implements INodeService {
     addNode = async (
-        req: NodeObj,
+        req: AddNodeDto,
         cookie: ParsedCookie
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.PUT,
-            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
+            type: API_METHOD_TYPE.POST,
+            path: `${SERVER.REGISTRY_NODE_API_URL}`,
             headers: cookie.header,
             body: {
-                node: {
-                    name: req.name,
-                    state: req.state,
-                    attached: req.attached,
-                },
+                name: req.name,
+                node_id: req.nodeId,
+                state: req.state,
             },
         });
 
@@ -54,7 +52,7 @@ export class NodeService implements INodeService {
             logger.error(res);
             throw new Error(res.message);
         }
-        return res;
+        return NodeMapper.dtoToNodeResponsedto(res);
     };
     linkNodes = async (
         req: LinkNodes,
@@ -78,10 +76,10 @@ export class NodeService implements INodeService {
     updateNode = async (
         req: UpdateNodeDto,
         cookie: ParsedCookie
-    ): Promise<OrgNodeDto> => {
+    ): Promise<UpdateNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,
-            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
+            path: `${SERVER.REGISTRY_NODE_API_URL}/${req.nodeId}`,
             headers: cookie.header,
             body: {
                 name: req.name,
@@ -91,16 +89,16 @@ export class NodeService implements INodeService {
             logger.error(res);
             throw new Error(res.message);
         }
-        return res;
+        return NodeMapper.dtoToNodeResponsedto(res);
     };
     deleteNode = async (
-        id: string,
+        nodeId: string,
         cookie: ParsedCookie
     ): Promise<DeleteNodeRes> => {
         const res = await catchAsyncIOMethod({
             headers: cookie.header,
             type: API_METHOD_TYPE.DELETE,
-            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${id}`,
+            path: `${SERVER.REGISTRY_NODE_API_URL}/${nodeId}`,
         });
         if (checkError(res)) {
             logger.error(res);

@@ -1,6 +1,7 @@
 import { BASE_URL, DEV_URL } from "../constants/index";
 
 export const SERVER = {
+    REGISTRY_NODE_API_URL: `${DEV_URL}/v1/nodes`,
     GET_CONNECTED_USERS: `${BASE_URL}/user/get_conneted_users`,
     GET_DATA_USAGE: `${BASE_URL}/data/data_usage`,
     GET_DATA_BILL: `${BASE_URL}/data/data_bill`,

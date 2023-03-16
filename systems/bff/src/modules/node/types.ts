@@ -37,7 +37,37 @@ export class NodeDto {
 @ObjectType()
 export class AddNodeResponse {
     @Field()
-    success: boolean;
+    nodeId: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    state: string;
+
+    @Field()
+    type: string;
+
+    @Field(() => [String])
+    attached: string[];
+}
+
+@ObjectType()
+export class UpdateNodeResponse {
+    @Field()
+    nodeId: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    state: string;
+
+    @Field()
+    type: string;
+
+    @Field(() => [String])
+    attached: string[];
 }
 
 @ObjectType()
@@ -79,9 +109,6 @@ export class AddNodeDto {
 
     @Field()
     state: string;
-
-    @Field(() => [NodeObj], { nullable: true })
-    attached: NodeObj[];
 }
 
 @InputType()
