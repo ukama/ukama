@@ -24,15 +24,15 @@ func TestNetworkServer_Get(t *testing.T) {
 		msgcRepo := &mbmocks.MsgBusServiceClient{}
 
 		netRepo.On("Get", netID).Return(
-			&db.Network{ID: netID,
+			&db.Network{Id: netID,
 				Name:        netName,
-				OrgID:       uuid.NewV4(),
+				OrgId:       uuid.NewV4(),
 				Deactivated: false,
 			}, nil).Once()
 
 		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo)
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
-			NetworkID: netID.String()})
+			NetworkId: netID.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, netResp)
@@ -51,7 +51,7 @@ func TestNetworkServer_Get(t *testing.T) {
 
 		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo)
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
-			NetworkID: netID.String()})
+			NetworkId: netID.String()})
 
 		assert.Error(t, err)
 		assert.Nil(t, netResp)
@@ -69,9 +69,9 @@ func TestNetworkServer_GetByName(t *testing.T) {
 		netRepo := &mocks.NetRepo{}
 
 		netRepo.On("GetByName", orgName, netName).Return(
-			&db.Network{ID: netID,
+			&db.Network{Id: netID,
 				Name:        netName,
-				OrgID:       uuid.NewV4(),
+				OrgId:       uuid.NewV4(),
 				Deactivated: false,
 			}, nil).Once()
 
@@ -117,20 +117,20 @@ func TestNetworkServer_GetByOrg(t *testing.T) {
 
 		netRepo.On("GetByOrg", orgID).Return(
 			[]db.Network{
-				{ID: netID,
+				{Id: netID,
 					Name:        netName,
-					OrgID:       orgID,
+					OrgId:       orgID,
 					Deactivated: false,
 				}}, nil).Once()
 
 		s := NewNetworkServer(netRepo, orgRepo, nil, nil, msgcRepo)
 		netResp, err := s.GetByOrg(context.TODO(),
-			&pb.GetByOrgRequest{OrgID: orgID.String()})
+			&pb.GetByOrgRequest{OrgId: orgID.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, netResp)
 		assert.Equal(t, netID.String(), netResp.GetNetworks()[0].GetId())
-		assert.Equal(t, orgID.String(), netResp.OrgID)
+		assert.Equal(t, orgID.String(), netResp.OrgId)
 		netRepo.AssertExpectations(t)
 	})
 }
@@ -191,26 +191,26 @@ func TestNetworkServer_AddSite(t *testing.T) {
 
 		site := &db.Site{
 			Name:      siteName,
-			NetworkID: netID,
+			NetworkId: netID,
 		}
 
 		netRepo.On("Get", netID).Return(
-			&db.Network{ID: netID,
+			&db.Network{Id: netID,
 				Name:        netName,
-				OrgID:       orgID,
+				OrgId:       orgID,
 				Deactivated: false,
 			}, nil).Once()
 
 		siteRepo.On("Add", site, mock.Anything).Return(nil).Once()
 		msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddSiteRequest{
-			NetworkID: netID.String(),
+			NetworkId: netID.String(),
 			SiteName:  siteName,
 		}).Return(nil).Once()
 		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgclientRepo)
 
 		// Act
 		res, err := s.AddSite(context.TODO(), &pb.AddSiteRequest{
-			NetworkID: netID.String(),
+			NetworkId: netID.String(),
 			SiteName:  siteName,
 		})
 
@@ -218,7 +218,7 @@ func TestNetworkServer_AddSite(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, siteName, res.Site.Name)
-		assert.Equal(t, netID.String(), res.Site.NetworkID)
+		assert.Equal(t, netID.String(), res.Site.NetworkId)
 		netRepo.AssertExpectations(t)
 	})
 }
@@ -232,15 +232,15 @@ func TestNetworkServer_GetSite(t *testing.T) {
 		siteRepo := &mocks.SiteRepo{}
 
 		siteRepo.On("Get", siteID).Return(
-			&db.Site{ID: siteID,
+			&db.Site{Id: siteID,
 				Name:        siteName,
-				NetworkID:   uuid.NewV4(),
+				NetworkId:   uuid.NewV4(),
 				Deactivated: false,
 			}, nil).Once()
 
 		s := NewNetworkServer(nil, nil, siteRepo, nil, msgcRepo)
 		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
-			SiteID: siteID.String()})
+			SiteId: siteID.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, netResp)
@@ -259,7 +259,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 
 		s := NewNetworkServer(nil, nil, siteRepo, nil, msgcRepo)
 		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
-			SiteID: fmt.Sprint(siteID)})
+			SiteId: fmt.Sprint(siteID)})
 
 		assert.Error(t, err)
 		assert.Nil(t, netResp)
@@ -280,22 +280,22 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 		netRepo := &mocks.NetRepo{}
 
 		netRepo.On("Get", netID).Return(
-			&db.Network{ID: netID,
+			&db.Network{Id: netID,
 				Name:        netName,
-				OrgID:       orgID,
+				OrgId:       orgID,
 				Deactivated: false,
 			}, nil).Once()
 
 		siteRepo.On("GetByName", netID, siteName).Return(
-			&db.Site{ID: siteID,
+			&db.Site{Id: siteID,
 				Name:        siteName,
-				NetworkID:   netID,
+				NetworkId:   netID,
 				Deactivated: false,
 			}, nil).Once()
 
 		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo)
 		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
-			NetworkID: netID.String(), SiteName: siteName})
+			NetworkId: netID.String(), SiteName: siteName})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, netResp)
@@ -315,9 +315,9 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 		netRepo := &mocks.NetRepo{}
 
 		netRepo.On("Get", netID).Return(
-			&db.Network{ID: netID,
+			&db.Network{Id: netID,
 				Name:        netName,
-				OrgID:       orgID,
+				OrgId:       orgID,
 				Deactivated: false,
 			}, nil).Once()
 
@@ -325,7 +325,7 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 
 		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo)
 		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
-			NetworkID: netID.String(), SiteName: siteName})
+			NetworkId: netID.String(), SiteName: siteName})
 
 		assert.Error(t, err)
 		assert.Nil(t, netResp)
@@ -345,23 +345,23 @@ func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
 		siteRepo := &mocks.SiteRepo{}
 
 		netRepo.On("Get", netID).Return(
-			&db.Network{ID: netID,
+			&db.Network{Id: netID,
 				Name:        netName,
-				OrgID:       orgID,
+				OrgId:       orgID,
 				Deactivated: false,
 			}, nil).Once()
 
 		siteRepo.On("GetByNetwork", netID).Return(
 			[]db.Site{
-				{ID: netID,
+				{Id: netID,
 					Name:        siteName,
-					NetworkID:   netID,
+					NetworkId:   netID,
 					Deactivated: false,
 				}}, nil).Once()
 
 		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo)
 		netResp, err := s.GetSitesByNetwork(context.TODO(),
-			&pb.GetSitesByNetworkRequest{NetworkID: netID.String()})
+			&pb.GetSitesByNetworkRequest{NetworkId: netID.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, netResp)

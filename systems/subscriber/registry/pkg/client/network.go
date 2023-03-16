@@ -13,7 +13,7 @@ import (
 )
 
 type NetworkInfoClient interface {
-	ValidateNetwork(networkID string, orgID string) error
+	ValidateNetwork(networkId string, orgId string) error
 }
 
 type networkInfoClient struct {
@@ -46,12 +46,12 @@ func NewNetworkClient(url string, debug bool) (*networkInfoClient, error) {
 	return N, nil
 }
 
-func (N *networkInfoClient) ValidateNetwork(networkID string, orgID string) error {
+func (N *networkInfoClient) ValidateNetwork(networkId string, orgId string) error {
 	errStatus := &rest.ErrorMessage{}
 	network := &Network{}
 	resp, err := N.R.C.R().
 		SetError(errStatus).
-		Get(N.R.URL.String() + "/v1/networks/" + networkID)
+		Get(N.R.URL.String() + "/v1/networks/" + networkId)
 	if err != nil {
 		logrus.Errorf("Failed to send api request to network registry. Error %s", err.Error())
 		return err
@@ -68,7 +68,7 @@ func (N *networkInfoClient) ValidateNetwork(networkID string, orgID string) erro
 		return fmt.Errorf("network info deserailization failure:" + err.Error())
 	}
 
-	if orgID != network.NetworkInfo.OrgId {
+	if orgId != network.NetworkInfo.OrgId {
 		logrus.Error("Missing network.")
 		return fmt.Errorf("Network mismatch")
 	}

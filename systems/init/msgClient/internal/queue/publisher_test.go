@@ -16,16 +16,18 @@ var route1 = db.Route{
 }
 
 var ServiceUuid = "1ce2fa2f-2997-422c-83bf-92cf2e7334dd"
-var service1 = db.Service{
-	Name:        "test",
-	InstanceId:  "1",
-	MsgBusUri:   "amqp://guest:guest@localhost:5672",
-	ListQueue:   "",
-	PublQueue:   "",
-	Exchange:    "amq.topic",
-	ServiceUri:  "localhost:9090",
-	GrpcTimeout: 5,
-}
+
+// Commenting below lines because of linting errors
+// var service1 = db.Service{
+// 	Name:        "test",
+// 	InstanceId:  "1",
+// 	MsgBusUri:   "amqp://guest:guest@localhost:5672",
+// 	ListQueue:   "",
+// 	PublQueue:   "",
+// 	Exchange:    "amq.topic",
+// 	ServiceUri:  "localhost:9090",
+// 	GrpcTimeout: 5,
+// }
 
 func TestQueuePublisher_Publish(t *testing.T) {
 	pub := &mocks.QPub{}

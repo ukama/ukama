@@ -8,7 +8,7 @@ import (
 )
 
 type Org struct {
-	ID          uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string    `gorm:"uniqueIndex"`
 	Deactivated bool
 	CreatedAt   time.Time
@@ -17,9 +17,9 @@ type Org struct {
 }
 
 type Network struct {
-	ID          uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string    `gorm:"uniqueIndex:network_name_org_idx"`
-	OrgID       uuid.UUID `gorm:"uniqueIndex:network_name_org_idx;type:uuid"`
+	OrgId       uuid.UUID `gorm:"uniqueIndex:network_name_org_idx;type:uuid"`
 	Org         *Org
 	Deactivated bool
 	CreatedAt   time.Time
@@ -28,9 +28,9 @@ type Network struct {
 }
 
 type Site struct {
-	ID          uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Id          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string    `gorm:"uniqueIndex:site_name_network_idx"`
-	NetworkID   uuid.UUID `gorm:"uniqueIndex:site_name_network_idx;type:uuid"`
+	NetworkId   uuid.UUID `gorm:"uniqueIndex:site_name_network_idx;type:uuid"`
 	Network     *Network
 	Deactivated bool
 	CreatedAt   time.Time

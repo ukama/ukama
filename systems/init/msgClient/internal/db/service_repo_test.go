@@ -12,9 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var route1 = int_db.Route{
-	Key: "event.cloud.lookup.organization.create",
-}
+// Commenting below lines because of linting errors
+// var route1 = int_db.Route{
+// 	Key: "event.cloud.lookup.organization.create",
+// }
 
 var service1 = int_db.Service{
 	Name:        "test",

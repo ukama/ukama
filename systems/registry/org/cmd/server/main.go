@@ -111,7 +111,7 @@ func initOrgDB(orgDB *gorm.DB) {
 			}
 
 			org := &db.Org{
-				ID:    uuid.NewV4(),
+				Id:    uuid.NewV4(),
 				Name:  svcConf.OrgName,
 				Owner: OwnerUUID,
 			}
@@ -130,8 +130,8 @@ func initOrgDB(orgDB *gorm.DB) {
 				}
 
 				if err := tx.Create(&db.OrgUser{
-					OrgID:  org.ID,
-					UserID: usr.ID,
+					OrgId:  org.Id,
+					UserId: usr.Id,
 					Uuid:   usr.Uuid,
 				}).Error; err != nil {
 					return err

@@ -68,7 +68,7 @@ func (o *operatorClient) GetSimInfo(iccid string) (*SimInfo, error) {
 
 	err = json.Unmarshal(resp.Body(), sim)
 	if err != nil {
-		log.Tracef("Failed to desrialize sim info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize sim info. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("sim info deserailization failure: %w", err)
 	}

@@ -14,13 +14,13 @@ type Package struct {
 	Uuid        uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name        string
 	SimType     SimType
-	OrgID       uuid.UUID `gorm:"not null;type:uuid;index"`
+	OrgId       uuid.UUID `gorm:"not null;type:uuid;index"`
 	Active      bool
 	Duration    uint
 	SmsVolume   uint
 	DataVolume  uint
 	VoiceVolume uint
-	OrgRatesID  uint
+	OrgRatesId  uint
 }
 
 type SimType uint8

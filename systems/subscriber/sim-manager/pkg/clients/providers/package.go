@@ -23,9 +23,9 @@ type Package struct {
 }
 
 type PackageInfo struct {
-	ID       string `json:"uuid"`
+	Id       string `json:"uuid"`
 	Name     string `json:"name"`
-	OrgID    string `json:"org_id"`
+	OrgId    string `json:"org_id"`
 	SimType  string `json:"sim_type"`
 	IsActive bool   `json:"active"`
 	Duration uint   `json:"duration,string"`
@@ -69,7 +69,7 @@ func (p *packageInfoClient) GetPackageInfo(uuid string) (*PackageInfo, error) {
 
 	err = json.Unmarshal(resp.Body(), &pkg)
 	if err != nil {
-		log.Tracef("Failed to desrialize data package info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize data package info. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("data package info deserailization failure: %w", err)
 	}

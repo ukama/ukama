@@ -44,7 +44,7 @@ func TestPackageClient_GetPackageInfo(t *testing.T) {
 		p, err := testPackageClient.GetPackageInfo(testUuid)
 
 		assert.NoError(tt, err)
-		assert.Equal(tt, testUuid, p.ID)
+		assert.Equal(tt, testUuid, p.Id)
 	})
 
 	t.Run("PackageNotFound", func(tt *testing.T) {

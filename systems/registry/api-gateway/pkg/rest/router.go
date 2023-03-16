@@ -180,11 +180,11 @@ func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb
 }
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
-	return r.clients.Registry.AddMember(req.OrgName, req.UserUUID)
+	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid)
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUUID, req.IsDeactivated)
+	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {
@@ -209,7 +209,7 @@ func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.
 // Network handlers
 
 func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
-	return r.clients.Registry.GetNetwork(req.NetworkID)
+	return r.clients.Registry.GetNetwork(req.NetworkId)
 }
 
 func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*netpb.GetByOrgResponse, error) {
@@ -227,15 +227,15 @@ func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*ne
 }
 
 func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*netpb.GetSiteResponse, error) {
-	return r.clients.Registry.GetSite(req.NetworkID, req.SiteName)
+	return r.clients.Registry.GetSite(req.NetworkId, req.SiteName)
 }
 
 func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetSitesByNetworkResponse, error) {
-	return r.clients.Registry.GetSites(req.NetworkID)
+	return r.clients.Registry.GetSites(req.NetworkId)
 }
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*netpb.AddSiteResponse, error) {
-	return r.clients.Registry.AddSite(req.NetworkID, req.SiteName)
+	return r.clients.Registry.AddSite(req.NetworkId, req.SiteName)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

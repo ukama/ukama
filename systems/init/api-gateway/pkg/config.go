@@ -48,7 +48,6 @@ func NewConfig() *Config {
 			Timeout:     3 * time.Second,
 			NodeMetrics: "http://localhost",
 		},
-
 		Server: rest.HttpConfig{
 			Port: 8080,
 			Cors: defaultCors,
