@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	pmetric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
+	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

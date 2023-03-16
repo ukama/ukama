@@ -1,4 +1,4 @@
-package pushgatewayMetrics
+package metrics
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ type MetricConfig struct {
 	Labels  map[string]string
 	Details string
 	Buckets []float64
-	Value  float64
+	Value   float64
 }
 
 type MetricType string
@@ -33,7 +33,6 @@ type Metrics struct {
 	collector prometheus.Collector
 	Labels    prometheus.Labels
 }
-
 
 func MetricTypeFromString(s string) MetricType {
 	switch s {
@@ -165,7 +164,7 @@ func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName stri
 	}
 }
 
-func CollectAndPushSimMetrics(pusMetricHost string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
+func CollectAndPushSimMetrics(pushGatewayHost string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
 	var selectedMetrics []MetricConfig
 	var foundSelectedMetric bool
 
@@ -186,7 +185,7 @@ func CollectAndPushSimMetrics(pusMetricHost string, configMetrics []MetricConfig
 		return fmt.Errorf("metric %q not found", selectedMetric)
 	}
 
-	PushMetrics(pusMetricHost, selectedMetrics, systemName)
+	PushMetrics(pushGatewayHost, selectedMetrics, systemName)
 
 	return nil
 }

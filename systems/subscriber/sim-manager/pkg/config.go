@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/config"
-	pmetric "github.com/ukama/ukama/systems/common/pushgatewayMetrics"
+	pmetric "github.com/ukama/ukama/systems/common/metrics"
 )
 
 const (
