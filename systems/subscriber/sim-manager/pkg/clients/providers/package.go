@@ -8,19 +8,20 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const packageEndpoint = "/v1/packages/"
+const PackageEndpoint = "/v1/packages/"
 
-type PackageInfoClient interface {
+type PackageClient interface {
 	GetPackageInfo(uuid string) (*PackageInfo, error)
 }
 
 type packageInfoClient struct {
-	R *RestClient
+	R *rest.RestClient
 }
 
 type Package struct {
 	PackageInfo *PackageInfo `json:"package"`
 }
+
 type PackageInfo struct {
 	Id       string `json:"uuid"`
 	Name     string `json:"name"`
@@ -30,8 +31,8 @@ type PackageInfo struct {
 	Duration uint   `json:"duration,string"`
 }
 
-func NewPackageInfoClient(url string, debug bool) (*packageInfoClient, error) {
-	f, err := NewRestClient(url, debug)
+func NewPackageClient(url string, debug bool) (*packageInfoClient, error) {
+	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
 		log.Errorf("Can't conncet to %s url. Error %s", url, err.Error())
 
@@ -52,7 +53,7 @@ func (p *packageInfoClient) GetPackageInfo(uuid string) (*PackageInfo, error) {
 
 	resp, err := p.R.C.R().
 		SetError(errStatus).
-		Get(p.R.URL.String() + packageEndpoint + uuid)
+		Get(p.R.URL.String() + PackageEndpoint + uuid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to data-plan/package. Error %s", err.Error())
@@ -68,7 +69,7 @@ func (p *packageInfoClient) GetPackageInfo(uuid string) (*PackageInfo, error) {
 
 	err = json.Unmarshal(resp.Body(), &pkg)
 	if err != nil {
-		log.Tracef("Failed to desrialize data package info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize data package info. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("data package info deserailization failure: %w", err)
 	}

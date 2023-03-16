@@ -33,7 +33,7 @@ type SimManagerServer struct {
 	simRepo                   sims.SimRepo
 	packageRepo               sims.PackageRepo
 	agentFactory              adapters.AgentFactory
-	packageClient             providers.PackageInfoClient
+	packageClient             providers.PackageClient
 	subscriberRegistryService providers.SubscriberRegistryClientProvider
 	simPoolService            providers.SimPoolClientProvider
 	key                       string
@@ -43,7 +43,7 @@ type SimManagerServer struct {
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	agentFactory adapters.AgentFactory, packageClient providers.PackageInfoClient,
+	agentFactory adapters.AgentFactory, packageClient providers.PackageClient,
 	subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	simPoolService providers.SimPoolClientProvider, key string,
 	msgBus mb.MsgBusServiceClient) *SimManagerServer {
@@ -203,8 +203,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 
-	// Uncomment this when msgclient is back
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
+
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())

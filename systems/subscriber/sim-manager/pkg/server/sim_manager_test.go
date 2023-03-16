@@ -282,7 +282,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 		simPoolService := &mocks.SimPoolClientProvider{}
 
 		subscriberClient := subscriberService.On("GetClient").
@@ -419,7 +419,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		var orgID = uuid.NewV4()
 
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.SubscriberRegistryServiceClient{}, nil).
@@ -472,7 +472,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		var orgID = uuid.NewV4()
 
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.SubscriberRegistryServiceClient{}, nil).
@@ -524,7 +524,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		var orgID = uuid.NewV4()
 
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.SubscriberRegistryServiceClient{}, nil).
@@ -812,7 +812,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 
 		sim := simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
@@ -891,7 +891,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 
 		simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
@@ -936,7 +936,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 
 		simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
@@ -981,7 +981,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 
 		simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
@@ -1026,7 +1026,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
-		packageClient := &mocks.PackageInfoClient{}
+		packageClient := &mocks.PackageClient{}
 
 		sim := simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,

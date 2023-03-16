@@ -8,7 +8,7 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
-const operatorEndpoint = "/v1/sims/"
+const OperatorEndpoint = "/v1/sims/"
 
 type OperatorClient interface {
 	GetSimInfo(iccid string) (*SimInfo, error)
@@ -18,7 +18,11 @@ type OperatorClient interface {
 }
 
 type operatorClient struct {
-	R *RestClient
+	R *rest.RestClient
+}
+
+type Sim struct {
+	SimInfo *SimInfo `json:"Sim"`
 }
 
 type SimInfo struct {
@@ -27,7 +31,7 @@ type SimInfo struct {
 }
 
 func NewOperatorClient(url string, debug bool) (*operatorClient, error) {
-	f, err := NewRestClient(url, debug)
+	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
 		log.Errorf("Can't conncet to %s url. Error %s", url, err.Error())
 
@@ -44,11 +48,11 @@ func NewOperatorClient(url string, debug bool) (*operatorClient, error) {
 func (o *operatorClient) GetSimInfo(iccid string) (*SimInfo, error) {
 	errStatus := &rest.ErrorMessage{}
 
-	pkg := &SimInfo{}
+	sim := &Sim{}
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
-		Get(o.R.URL.String() + operatorEndpoint + iccid)
+		Get(o.R.URL.String() + OperatorEndpoint + iccid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to operator. Error %s", err.Error())
@@ -59,19 +63,19 @@ func (o *operatorClient) GetSimInfo(iccid string) (*SimInfo, error) {
 	if !resp.IsSuccess() {
 		log.Tracef("Failed to fetch sim info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
 
-		return nil, fmt.Errorf(" data package Info failure %s", errStatus.Message)
+		return nil, fmt.Errorf(" sim Info failure %s", errStatus.Message)
 	}
 
-	err = json.Unmarshal(resp.Body(), pkg)
+	err = json.Unmarshal(resp.Body(), sim)
 	if err != nil {
-		log.Tracef("Failed to desrialize data package info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize sim info. Error message is %s", err.Error())
 
-		return nil, fmt.Errorf("data package info deserailization failure: %w", err)
+		return nil, fmt.Errorf("sim info deserailization failure: %w", err)
 	}
 
-	log.Infof("DataPackage Info: %+v", *pkg)
+	log.Infof("Sim Info: %+v", *sim)
 
-	return pkg, nil
+	return sim.SimInfo, nil
 }
 
 func (o *operatorClient) ActivateSim(iccid string) error {
@@ -79,7 +83,7 @@ func (o *operatorClient) ActivateSim(iccid string) error {
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
-		Put(o.R.URL.String() + operatorEndpoint + iccid)
+		Put(o.R.URL.String() + OperatorEndpoint + iccid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to operator. Error %s", err.Error())
@@ -101,7 +105,7 @@ func (o *operatorClient) DeactivateSim(iccid string) error {
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
-		Patch(o.R.URL.String() + operatorEndpoint + iccid)
+		Patch(o.R.URL.String() + OperatorEndpoint + iccid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to operator. Error %s", err.Error())
@@ -123,7 +127,7 @@ func (o *operatorClient) TerminateSim(iccid string) error {
 
 	resp, err := o.R.C.R().
 		SetError(errStatus).
-		Patch(o.R.URL.String() + operatorEndpoint + iccid)
+		Patch(o.R.URL.String() + OperatorEndpoint + iccid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to operator. Error %s", err.Error())
