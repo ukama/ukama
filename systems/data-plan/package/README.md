@@ -1,35 +1,34 @@
 # Protocol Documentation
+
 <a name="top"></a>
 
 ## Table of Contents
 
- - [PackagesService](#ukama.data_plan.package.v1.PackagesService)
+- [PackagesService](#ukama.data_plan.package.v1.PackagesService)
 - [Directory structure](#directory-structure)
 - [How to use?](#how-to)
- - [pb/package.proto](#pb/package.proto)
-   - [AddPackageRequest Messages](#ukama.data_plan.package.v1.AddPackageRequest)
-   - [AddPackageResponse Messages](#ukama.data_plan.package.v1.AddPackageResponse)
-   - [DeletePackageRequest Messages](#ukama.data_plan.package.v1.DeletePackageRequest)
-   - [DeletePackageResponse Messages](#ukama.data_plan.package.v1.DeletePackageResponse)
-   - [GetByOrgPackageRequest Messages](#ukama.data_plan.package.v1.GetByOrgPackageRequest)
-   - [GetByOrgPackageResponse Messages](#ukama.data_plan.package.v1.GetByOrgPackageResponse)
-   - [GetPackageRequest Messages](#ukama.data_plan.package.v1.GetPackageRequest)
-   - [GetPackageResponse Messages](#ukama.data_plan.package.v1.GetPackageResponse)
-   - [Package Messages](#ukama.data_plan.package.v1.Package)
-   - [UpdatePackageRequest Messages](#ukama.data_plan.package.v1.UpdatePackageRequest)
-   - [UpdatePackageResponse Messages](#ukama.data_plan.package.v1.UpdatePackageResponse)
+- [pb/package.proto](#pb/package.proto)
+  - [AddPackageRequest Messages](#ukama.data_plan.package.v1.AddPackageRequest)
+  - [AddPackageResponse Messages](#ukama.data_plan.package.v1.AddPackageResponse)
+  - [DeletePackageRequest Messages](#ukama.data_plan.package.v1.DeletePackageRequest)
+  - [DeletePackageResponse Messages](#ukama.data_plan.package.v1.DeletePackageResponse)
+  - [GetByOrgPackageRequest Messages](#ukama.data_plan.package.v1.GetByOrgPackageRequest)
+  - [GetByOrgPackageResponse Messages](#ukama.data_plan.package.v1.GetByOrgPackageResponse)
+  - [GetPackageRequest Messages](#ukama.data_plan.package.v1.GetPackageRequest)
+  - [GetPackageResponse Messages](#ukama.data_plan.package.v1.GetPackageResponse)
+  - [Package Messages](#ukama.data_plan.package.v1.Package)
+  - [UpdatePackageRequest Messages](#ukama.data_plan.package.v1.UpdatePackageRequest)
+  - [UpdatePackageResponse Messages](#ukama.data_plan.package.v1.UpdatePackageResponse)
   
 - [Scalar Value Types](#scalar-value-types)
-
-
 
 <a name="pb/package.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-
 <a name="ukama.data_plan.package.v1.PackagesService"></a>
 
 # PackagesService
+
 Defines the service for packages  operations
 
 ## RPC Functions
@@ -41,9 +40,6 @@ Defines the service for packages  operations
 | Delete | [DeletePackageRequest](#ukama.data_plan.package.v1.DeletePackageRequest) | [DeletePackageResponse](#ukama.data_plan.package.v1.DeletePackageRequest) |  |
 | Update | [UpdatePackageRequest](#ukama.data_plan.package.v1.UpdatePackageRequest) | [UpdatePackageResponse](#ukama.data_plan.package.v1.UpdatePackageRequest) |  |
 | GetByOrg | [GetByOrgPackageRequest](#ukama.data_plan.package.v1.GetByOrgPackageRequest) | [GetByOrgPackageResponse](#ukama.data_plan.package.v1.GetByOrgPackageRequest) |  |
-
-
-
 
 <a name="#directory-structure"></a>
 
@@ -153,18 +149,14 @@ This command will show all the available RPC calls under base-rate sub-system. T
 
 ## pb/package.proto
 
-
-
 <a name="ukama.data_plan.package.v1.AddPackageRequest"></a>
 
 ### AddPackageRequest
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | The name of the package being added |
-| orgID | [string](#string) |  | The ID of the organization the package belongs to |
+| orgId | [string](#string) |  | The ID of the organization the package belongs to |
 | active | [bool](#bool) |  | Whether or not the package is currently active |
 | duration | [uint64](#uint64) |  | The duration of the package in days |
 | simType | [string](#string) |  | The type of SIM card required for the package |
@@ -173,106 +165,77 @@ This command will show all the available RPC calls under base-rate sub-system. T
 | voiceVolume | [int64](#int64) |  | The volume of voice minutes included in the package |
 | orgRatesID | [uint64](#uint64) |  | The ID of the organization's rate plan |
 
-
-
-
 <a name="ukama.data_plan.package.v1.AddPackageResponse"></a>
 
 ### AddPackageResponse
-
-
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | package | [Package](#ukama.data_plan.package.v1.Package) |  | The response message for the Add RPC that returns the added package |
 
-
-
-
 <a name="ukama.data_plan.package.v1.DeletePackageRequest"></a>
 
 ### DeletePackageRequest
-define a message named DeletePackageRequest
 
+define a message named DeletePackageRequest
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | packageID | [string](#string) |  | define a string field named packageID with a tag for field validation and JSON name |
-
-
-
 
 <a name="ukama.data_plan.package.v1.DeletePackageResponse"></a>
 
 ### DeletePackageResponse
 
-
-
-
-
 <a name="ukama.data_plan.package.v1.GetByOrgPackageRequest"></a>
 
 ### GetByOrgPackageRequest
-define a message named GetByOrgPackageRequest
 
+define a message named GetByOrgPackageRequest
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| orgID | [string](#string) |  | define a string field named orgID with a tag for field validation and JSON name |
-
-
-
+| orgId | [string](#string) |  | define a string field named orgId with a tag for field validation and JSON name |
 
 <a name="ukama.data_plan.package.v1.GetByOrgPackageResponse"></a>
 
 ### GetByOrgPackageResponse
-define a message named GetByOrgPackageResponse
 
+define a message named GetByOrgPackageResponse
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | packages | [Package](#ukama.data_plan.package.v1.Package) | repeated | define a repeated field of type Package named packages |
 
-
-
-
 <a name="ukama.data_plan.package.v1.GetPackageRequest"></a>
 
 ### GetPackageRequest
-define a message named GetPackageRequest
 
+define a message named GetPackageRequest
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | packageID | [string](#string) |  | define a string field named packageID with a tag for field validation and JSON name |
 
-
-
-
 <a name="ukama.data_plan.package.v1.GetPackageResponse"></a>
 
 ### GetPackageResponse
-define a message named GetPackageResponse
 
+define a message named GetPackageResponse
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | package | [Package](#ukama.data_plan.package.v1.Package) |  | define a field of type Package named package |
 
-
-
-
 <a name="ukama.data_plan.package.v1.Package"></a>
 
 ### Package
-
-
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | packageID | [string](#string) |  | The unique ID of the package |
 | name | [string](#string) |  | The name of the package |
-| orgID | [string](#string) |  | The ID of the organization the package belongs to |
+| orgId | [string](#string) |  | The ID of the organization the package belongs to |
 | active | [bool](#bool) |  | Whether or not the package is currently active |
 | duration | [uint64](#uint64) |  | The duration of the package in days |
 | simType | [string](#string) |  | The type of SIM card required for the package |
@@ -284,14 +247,11 @@ define a message named GetPackageResponse
 | voiceVolume | [int64](#int64) |  | The volume of voice minutes included in the package |
 | orgRatesID | [uint64](#uint64) |  | The ID of the organization's rate plan |
 
-
-
-
 <a name="ukama.data_plan.package.v1.UpdatePackageRequest"></a>
 
 ### UpdatePackageRequest
-define a message named UpdatePackageRequest
 
+define a message named UpdatePackageRequest
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -305,30 +265,13 @@ define a message named UpdatePackageRequest
 | voiceVolume | [int64](#int64) |  | define a int64 field named voiceVolume |
 | orgRatesID | [uint64](#uint64) |  | define a uint64 field named |
 
-
-
-
 <a name="ukama.data_plan.package.v1.UpdatePackageResponse"></a>
 
 ### UpdatePackageResponse
 
-
-
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | package | [Package](#ukama.data_plan.package.v1.Package) |  | The response message for the Update RPC that returns the updated package |
-
-
-
-
-
-
-
- 
-
-
-
-
 
 ## Scalar Value Types
 

@@ -4,8 +4,6 @@ go 1.18
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/data-plan/api-gateway => ./
-
 replace github.com/ukama/ukama/systems/data-plan/package => ../package
 
 replace github.com/ukama/ukama/systems/data-plan/base-rate => ../base-rate
@@ -17,7 +15,8 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
-	github.com/ukama/ukama/systems/data-plan/package v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
+	github.com/ukama/ukama/systems/data-plan/package v0.0.0-20230208235400-d17899b75cbb
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.52.0
 )
@@ -81,7 +80,6 @@ require (
 	github.com/spf13/viper v1.13.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/net v0.4.0 // indirect

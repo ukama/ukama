@@ -75,13 +75,6 @@ func (this *UploadRequest) Validate() error {
 	return nil
 }
 func (this *UploadResponse) Validate() error {
-	for _, item := range this.Sim {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
-			}
-		}
-	}
 	return nil
 }
 

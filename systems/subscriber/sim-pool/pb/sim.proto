@@ -25,8 +25,8 @@ service SimService {
     rpc Upload(UploadRequest) returns (UploadResponse){}
 }
 message GetRequest{
-    bool IsPhysicalSim=1; /// True/False
-    SimType simType = 2; /// SimType string enum
+    bool IsPhysicalSim=1 [json_name = "is_physical_sim"]; /// True/False
+    string simType = 2 [json_name = "sim_type"]; /// SimType string enum
 }
 message GetResponse {
     Sim sim = 1; /// Sim object
@@ -38,7 +38,7 @@ message GetByIccidResponse {
     Sim sim = 1; /// Sim object
 }
 message GetStatsRequest{
-    SimType simType = 1; /// SimType string enum
+    string simType = 1 [json_name = "sim_type"]; /// SimType string enum
 }
 message GetStatsResponse {
     uint64 total = 1; /// Total sims in sim pool
@@ -60,38 +60,31 @@ message DeleteResponse {
 }
 message UploadRequest{
     bytes simData = 1; /// Bytes of CSV file content
-    SimType simType = 2; /// SimType of sim
+    string simType = 2 [json_name = "sim_type"]; /// SimType of sim
 }
 message UploadResponse {
-    repeated Sim sim = 1; /// Slice of sims added in sim pool
+    repeated string iccid = 1; /// Slice of sims id added in sim pool
 }
 message Sim{
     uint64 id = 1;
     string iccid = 2 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];
     string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}]; 
-    bool isAllocated = 4;
-    SimType simType = 5;
-    string smDpAddress = 6;
-    string activationCode = 7;
-    string created_at=9;
-    string deleted_at=10;
-    string updated_at=11;
-    bool isPhysical=12 [json_name = "is_physical"];
-    string qrCode=13;
+    bool isAllocated = 4 [json_name = "is_allocated"];
+    string simType = 5 [json_name = "sim_type"];
+    string smDpAddress = 6 [json_name = "sm_ap_address"];
+    string activationCode = 7 [json_name = "activation_code"];
+    string createdAt= 8 [json_name = "created_at"];
+    string deletedAt= 9 [json_name = "deleted_at"];
+    string updatedAt= 10 [json_name = "updated_at"];
+    bool isPhysical= 11 [json_name = "is_physical"];
+    string qrCode= 12 [json_name = "qr_code"];
 }
 message AddSim{
     string iccid = 1 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];
-    SimType simType = 2;
+    string simType = 2 [json_name = "sim_type"];
     string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string smDpAddress = 4;
-    string activationCode = 5;
-    string qrCode=6;
+    string smDpAddress = 4 [json_name = "sm_ap_address"];
+    string activationCode = 5 [json_name = "activation_code"];
+    string qrCode=6 [json_name = "qr_code"];
     bool isPhysical=7 [json_name = "is_physical"];
-}
-enum SimType {
-    ANY=0;
-    INTER_NONE=1;
-    INTER_MNO_DATA=2;
-    INTER_MNO_ALL=3;
-    INTER_UKAMA_ALL=4;
 }

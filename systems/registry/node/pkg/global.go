@@ -1,6 +1,6 @@
 package pkg
 
 const ServiceName = "node"
-const SystemName = "Registry"
+const SystemName = "registry"
 
 var IsDebugMode = false

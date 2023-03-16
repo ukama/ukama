@@ -1,31 +1,30 @@
 # Protocol Documentation
+
 <a name="top"></a>
 
 ## Table of Contents
 
- - [BaseRatesService](#ukama.data_plan.rate.v1.BaseRatesService)
+- [BaseRatesService](#ukama.data_plan.rate.v1.BaseRatesService)
 - [Directory structure](#directory-structure)
 - [How to use?](#how-to)
- - [pb/rate.proto](#pb/rate.proto)
-   - [GetBaseRateRequest Messages](#ukama.data_plan.rate.v1.GetBaseRateRequest)
-   - [GetBaseRateResponse Messages](#ukama.data_plan.rate.v1.GetBaseRateResponse)
-   - [GetBaseRatesRequest Messages](#ukama.data_plan.rate.v1.GetBaseRatesRequest)
-   - [GetBaseRatesResponse Messages](#ukama.data_plan.rate.v1.GetBaseRatesResponse)
-   - [Rate Messages](#ukama.data_plan.rate.v1.Rate)
-   - [UploadBaseRatesRequest Messages](#ukama.data_plan.rate.v1.UploadBaseRatesRequest)
-   - [UploadBaseRatesResponse Messages](#ukama.data_plan.rate.v1.UploadBaseRatesResponse)
+- [pb/rate.proto](#pb/rate.proto)
+  - [GetBaseRateRequest Messages](#ukama.data_plan.rate.v1.GetBaseRateRequest)
+  - [GetBaseRateResponse Messages](#ukama.data_plan.rate.v1.GetBaseRateResponse)
+  - [GetBaseRatesRequest Messages](#ukama.data_plan.rate.v1.GetBaseRatesRequest)
+  - [GetBaseRatesResponse Messages](#ukama.data_plan.rate.v1.GetBaseRatesResponse)
+  - [Rate Messages](#ukama.data_plan.rate.v1.Rate)
+  - [UploadBaseRatesRequest Messages](#ukama.data_plan.rate.v1.UploadBaseRatesRequest)
+  - [UploadBaseRatesResponse Messages](#ukama.data_plan.rate.v1.UploadBaseRatesResponse)
   
 - [Scalar Value Types](#scalar-value-types)
-
-
 
 <a name="pb/rate.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-
 <a name="ukama.data_plan.rate.v1.BaseRatesService"></a>
 
 # BaseRatesService
+
 Define BaseRatesService service and its methods
 
 ## RPC Functions
@@ -35,9 +34,6 @@ Define BaseRatesService service and its methods
 | GetBaseRates | [GetBaseRatesRequest](#ukama.data_plan.rate.v1.GetBaseRatesRequest) | [GetBaseRatesResponse](#ukama.data_plan.rate.v1.GetBaseRatesRequest) | Method to get base rates based on various parameters |
 | GetBaseRate | [GetBaseRateRequest](#ukama.data_plan.rate.v1.GetBaseRateRequest) | [GetBaseRateResponse](#ukama.data_plan.rate.v1.GetBaseRateRequest) | Method to get base rate for a specific rate ID |
 | UploadBaseRates | [UploadBaseRatesRequest](#ukama.data_plan.rate.v1.UploadBaseRatesRequest) | [UploadBaseRatesResponse](#ukama.data_plan.rate.v1.UploadBaseRatesRequest) | Method to upload base rates |
-
-
-
 
 <a name="#directory-structure"></a>
 
@@ -96,6 +92,92 @@ Define BaseRatesService service and its methods
   `*_repo.go` is reponsible of communicating with db using [gorm](https://gorm.io/docs/).
 - **pkg/server** This directory contains the file in which all the RPC functions logic is implemented. Those functions call `pkg\*_repo.go` functions to perform db operations.
 
+## RPC Functions
+
+### UploadBaseRates
+
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baseRate/UploadBaseRates.png" alt="ukama-uploadRates" width="500"/>
+
+Upload base rates service provides functionality to populate rates from CSV file to DB.
+
+```proto
+service BaseRatesService {
+    rpc UploadBaseRates(UploadBaseRatesRequest) returns (UploadBaseRatesResponse){}
+}
+```
+
+Function takes these arguments:
+
+```js
+{
+    [required] fileUrl => String
+    [required] simType => String
+    [required] effectiveAt => String
+}
+```
+
+**Demo**
+
+<img src="https://user-images.githubusercontent.com/83802574/198561831-0efe13de-0e7e-465f-a6b9-58244296bca5.gif" alt="uploadBaseRates" width="720"/>
+
+---
+
+### GetBaseRates
+
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/GetBaseRates.png" alt="ukama-getBaseRates" width="500"/>
+
+Get base rates service provides functionality to fetch base rates, and filter data on some required and optional arguments.
+
+```proto
+service BaseRatesService {
+    rpc GetBaseRates (GetBaseRatesRequest) returns (GetBaseRatesResponse) {}
+}
+```
+
+Function takes these arguments:
+
+```js
+{
+    [required] country => String
+    [optional] provider => String
+    [optional] to => DateTime
+    [optional] from => DateTime
+    [optional] simType => String
+    [optional] effectiveAt => String
+}
+```
+
+**Demo**
+
+<img src="https://user-images.githubusercontent.com/83802574/198694692-abed26f1-2ed1-4f4a-8e81-f67a9d0c7270.gif" alt="getBaseRates" width="720"/>
+
+---
+
+### GetBaseRate
+
+<img src="https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/digrams/baserate/GetBaseRate.png" alt="ukama-getBaseRate" width="500"/>
+
+Get base rate service provides functionality to fetch base rate by base rate id.
+
+```proto
+service BaseRatesService {
+    rpc GetBaseRate(GetBaseRateRequest) returns (GetBaseRateResponse){}
+}
+```
+
+Function takes below argument:
+
+```js
+{
+    [required] rateUuid => string
+}
+```
+
+**Demo**
+
+<img src="https://user-images.githubusercontent.com/83802574/198693504-ea7339cb-1795-4c1e-9156-6d383471091a.gif" alt="getBaseRate" width="720"/>
+
+---
 <a name="#how-to"></a>
 
 ## How to use?
@@ -148,40 +230,34 @@ show rpc
 This command will show all the available RPC calls under base-rate sub-system. To call any RPC function run `call FUNCATION_NAME`.
 
 ## pb/rate.proto
-Define syntax and package name
 
+Define syntax and package name
 
 <a name="ukama.data_plan.rate.v1.GetBaseRateRequest"></a>
 
 ### GetBaseRateRequest
-Define GetBaseRateRequest message
 
+Define GetBaseRateRequest message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rateID | [string](#string) |  | Rate ID to retrieve |
 
-
-
-
 <a name="ukama.data_plan.rate.v1.GetBaseRateResponse"></a>
 
 ### GetBaseRateResponse
-Define GetBaseRateResponse message
 
+Define GetBaseRateResponse message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rate | [Rate](#ukama.data_plan.rate.v1.Rate) |  | Single rate |
 
-
-
-
 <a name="ukama.data_plan.rate.v1.GetBaseRatesRequest"></a>
 
 ### GetBaseRatesRequest
-Define GetBaseRatesRequest message
 
+Define GetBaseRatesRequest message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -192,27 +268,21 @@ Define GetBaseRatesRequest message
 | simType | [string](#string) |  | SIM type (e.g.unkown, ukama-data) |
 | effectiveAt | [string](#string) |  | Effective date in "YYYY-MM-DD" format |
 
-
-
-
 <a name="ukama.data_plan.rate.v1.GetBaseRatesResponse"></a>
 
 ### GetBaseRatesResponse
-Define GetBaseRatesResponse message
 
+Define GetBaseRatesResponse message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rates | [Rate](#ukama.data_plan.rate.v1.Rate) | repeated | List of rates |
 
-
-
-
 <a name="ukama.data_plan.rate.v1.Rate"></a>
 
 ### Rate
-Define Rate message
 
+Define Rate message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -237,14 +307,11 @@ Define Rate message
 | endAt | [string](#string) |  | endAt the date the rate will end |
 | simType | [string](#string) |  | SIM type (e.g. unkown, ukama-data) |
 
-
-
-
 <a name="ukama.data_plan.rate.v1.UploadBaseRatesRequest"></a>
 
 ### UploadBaseRatesRequest
-Define UploadBaseRatesRequest message
 
+Define UploadBaseRatesRequest message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -252,30 +319,15 @@ Define UploadBaseRatesRequest message
 | effectiveAt | [string](#string) |  | Effective date in "YYYY-MM-DD" format |
 | simType | [string](#string) |  | SIM type (e.g. unkown, ukama-data) |
 
-
-
-
 <a name="ukama.data_plan.rate.v1.UploadBaseRatesResponse"></a>
 
 ### UploadBaseRatesResponse
-Define UploadBaseRatesResponse message
 
+Define UploadBaseRatesResponse message
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rate | [Rate](#ukama.data_plan.rate.v1.Rate) | repeated | List of rates |
-
-
-
-
-
-
-
- 
-
-
-
-
 
 ## Scalar Value Types
 

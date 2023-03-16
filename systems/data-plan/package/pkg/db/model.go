@@ -11,28 +11,26 @@ import (
 
 type Package struct {
 	gorm.Model
-	PackageID          uuid.UUID `gorm:"primaryKey;type:uuid"`
-	Name         string
+	Uuid        uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Name        string
 	SimType     SimType
-	OrgID       uuid.UUID `gorm:"not null;type:uuid;index"`
-	Active       bool
-	Duration     uint
+	OrgId       uuid.UUID `gorm:"not null;type:uuid;index"`
+	Active      bool
+	Duration    uint
 	SmsVolume   uint
 	DataVolume  uint
 	VoiceVolume uint
-	OrgRatesID uint
+	OrgRatesId  uint
 }
+
 type SimType uint8
 
 const (
-	SimTypeUnknown SimType = iota
-	SimTypeTest         = 1
-	SimTypeOperatorData = 2
-	SimTypeUkamaData    = 3
+	SimTypeUnknown      SimType = iota
+	SimTypeTest                 = 1
+	SimTypeOperatorData         = 2
+	SimTypeUkamaData            = 3
 )
-
-	
-
 
 func (s *SimType) Scan(value interface{}) error {
 	*s = SimType(uint8(value.(int64)))

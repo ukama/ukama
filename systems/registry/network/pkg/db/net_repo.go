@@ -11,7 +11,7 @@ import (
 )
 
 type NetRepo interface {
-	Add(network *Network) error
+	Add(network *Network, nestedFunc func(*Network, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Network, error)
 	GetByName(orgName string, network string) (*Network, error)
 	GetByOrg(orgID uuid.UUID) ([]Network, error)
@@ -63,7 +63,7 @@ func (n netRepo) GetByOrg(orgID uuid.UUID) ([]Network, error) {
 	db := n.Db.GetGormDb()
 	var networks []Network
 
-	result := db.Where(&Network{OrgID: orgID}).Find(&networks)
+	result := db.Where(&Network{OrgId: orgID}).Find(&networks)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -80,15 +80,29 @@ func (n netRepo) GetByOrg(orgID uuid.UUID) ([]Network, error) {
 
 // }
 
-func (n netRepo) Add(network *Network) error {
+func (n netRepo) Add(network *Network, nestedFunc func(network *Network, tx *gorm.DB) error) error {
 	if !validation.IsValidDnsLabelName(network.Name) {
 		return fmt.Errorf("invalid name. must be less then 253 " +
 			"characters and consist of lowercase characters with a hyphen")
 	}
 
-	result := n.Db.GetGormDb().Create(network)
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if nestedFunc != nil {
+			nestErr := nestedFunc(network, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
 
-	return result.Error
+		result := tx.Create(network)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (n netRepo) Delete(orgName string, network string) error {

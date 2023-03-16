@@ -8,7 +8,7 @@ import (
 
 type BaseRateRepo interface {
 	GetBaseRate(uuid uuid.UUID) (*Rate, error)
-	GetBaseRates(country, network, effectiveAt string, simType SimType ) ([]Rate, error)
+	GetBaseRates(country, network, effectiveAt string, simType SimType) ([]Rate, error)
 	UploadBaseRates(rateList []Rate) error
 }
 
@@ -22,15 +22,14 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 	}
 }
 
-func (u *baseRateRepo) GetBaseRate(rateID uuid.UUID) (*Rate, error) {
+func (u *baseRateRepo) GetBaseRate(uuid uuid.UUID) (*Rate, error) {
 	rate := &Rate{}
-	result := u.Db.GetGormDb().First(rate, "rate_id=?", rateID)
+	result := u.Db.GetGormDb().First(rate, "Uuid=?", uuid)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return rate, nil
 }
-
 
 func (b *baseRateRepo) GetBaseRates(country, network, effectiveAt string, simType SimType) ([]Rate, error) {
 	var rates []Rate

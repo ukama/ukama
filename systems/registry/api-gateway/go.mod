@@ -20,12 +20,15 @@ require (
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
+	github.com/wI2L/fizz v0.18.1
+	google.golang.org/grpc v1.51.0
+)
+
+require (
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/users v0.0.0-00010101000000-000000000000
-	github.com/wI2L/fizz v0.18.1
-	google.golang.org/grpc v1.51.0
 )
 
 require (

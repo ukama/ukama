@@ -3,21 +3,23 @@ package main
 import (
 	"os"
 
-	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/server"
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/server"
 	"gopkg.in/yaml.v3"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	mbc "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
-	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
+	generated "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+
 	"google.golang.org/grpc"
 )
 
@@ -28,45 +30,44 @@ func main() {
 	log.Infof("Starting the base-rate service")
 
 	initConfig()
-	db := initDb()
-
-	runGrpcServer(db)
-}
-
-func initDb() sql.Db {
-	log.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Rate{})
-	if err != nil {
-		log.Fatalf("Database initialization failed. Error: %v", err)
-	}
-	return d
+	rateDb := initDb()
+	runGrpcServer(rateDb)
 }
 
 func initConfig() {
-	log.Infof("Initializing config")
-
+	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
-			log.Infof("Config:\n%s", string(b))
+			logrus.Infof("Config:\n%s", string(b))
 		}
 	}
+
+	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-func runGrpcServer(d sql.Db) {
+func initDb() sql.Db {
+	log.Infof("Initializing Database")
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+	err := d.Init(&db.Rate{})
 
+	if err != nil {
+		log.Fatalf("Database initialization failed. Error: %v", err)
+	}
+	return d
+}
+
+func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
-		/* used on local machines */
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -75,9 +76,10 @@ func runGrpcServer(d sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
+	srv := server.NewBaseRateServer(db.NewBaseRateRepo(gormdb), mbClient)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewBaseRateServer(db.NewBaseRateRepo(d), mbClient)
-		pb.RegisterBaseRatesServiceServer(s, srv)
+		generated.RegisterBaseRatesServiceServer(s, srv)
 	})
 
 	go msgBusListener(mbClient)
@@ -85,12 +87,10 @@ func runGrpcServer(d sql.Db) {
 	grpcServer.StartServer()
 }
 
-func msgBusListener(m mb.MsgBusServiceClient) {
-
+func msgBusListener(m mbc.MsgBusServiceClient) {
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
-
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}

@@ -48,42 +48,38 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_Rate_Get(t *testing.T) {
 
-	
 	t.Run("RateExist", func(t *testing.T) {
 		// Arrange
-		const uuidStr = "51fbba62-c79f-11eb-b8bc-0242ac130003"
-		ratID,_:=uuid.FromString(uuidStr)
+		ratID := uuid.NewV4()
 		var db *extsql.DB
 		var err error
-	expectedRate := &Rate{
-			RateID: ratID,
-			Country: "India",
-			Network: "Airtel",
-			Vpmn: "123",
-			Imsi: "456",
-			SmsMo: "0.05",
-			SmsMt: "0.06",
-			Data: "0.07",
-			X2g: "0.08",
-			X3g: "0.09",
-			X5g: "0.1",
-			Lte: "0.11",
-			LteM: "0.12",
-			Apn: "apn123",
+		expectedRate := &Rate{
+			Uuid:        ratID,
+			Country:     "India",
+			Network:     "Airtel",
+			Vpmn:        "123",
+			Imsi:        "456",
+			SmsMo:       "0.05",
+			SmsMt:       "0.06",
+			Data:        "0.07",
+			X2g:         "0.08",
+			X3g:         "0.09",
+			X5g:         "0.1",
+			Lte:         "0.11",
+			LteM:        "0.12",
+			Apn:         "apn123",
 			EffectiveAt: "2022-01-01",
-			EndAt: "2022-12-31",
-			SimType: SimTypeUkamaData,
+			EndAt:       "2022-12-31",
+			SimType:     SimTypeUkamaData,
 		}
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		id := uuid.NewV4()
-
-		rows := sqlmock.NewRows([]string{"rate_id", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate.RateID, expectedRate.Country, expectedRate.Network, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
+		rows := sqlmock.NewRows([]string{"uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
+			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Network, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
 
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(id).
+			WithArgs(ratID.String()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -102,16 +98,14 @@ func Test_Rate_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		rate, err := r.GetBaseRate(id)
+		rate, err := r.GetBaseRate(ratID)
 		// Assert
 		assert.NoError(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.Equal(t, rate,expectedRate)
+		assert.Equal(t, rate, expectedRate)
 		assert.NotNil(t, rate)
 	})
 
 }
-
-
