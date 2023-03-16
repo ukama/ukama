@@ -127,7 +127,7 @@ export class NodeService implements INodeService {
     ): Promise<NodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${nodeId}`,
+            path: `${SERVER.REGISTRY_NODE_API_URL}/${nodeId}`,
             headers: cookie.header,
         });
         if (checkError(res)) {
