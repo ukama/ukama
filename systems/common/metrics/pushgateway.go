@@ -1,4 +1,4 @@
-package pushGatewayMetric
+package metrics
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ type MetricConfig struct {
 	Labels  map[string]string
 	Details string
 	Buckets []float64
+	Value   float64
 }
 
 type MetricType string
@@ -31,12 +32,6 @@ type Metrics struct {
 	Type      MetricType
 	collector prometheus.Collector
 	Labels    prometheus.Labels
-}
-type MetriSt struct {
-	Name   string
-	Type   string
-	Labels map[string]string
-	Value  float64
 }
 
 func MetricTypeFromString(s string) MetricType {
@@ -128,7 +123,7 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 	}
 	return nil
 }
-func PushMetrics(pusMetricHost string, metrics []MetriSt, systemName string) {
+func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName string) {
 
 	labelDimensions := make([]string, 0, len(metrics[0].Labels))
 	for key := range metrics[0].Labels {
@@ -158,7 +153,7 @@ func PushMetrics(pusMetricHost string, metrics []MetriSt, systemName string) {
 		}
 	}
 
-	pusher := push.New(pusMetricHost, systemName)
+	pusher := push.New(pusMetricHost, metriJobName)
 	for _, metrics := range metricCollectors {
 		for _, m := range metrics {
 			pusher.Collector(m.collector)
@@ -169,8 +164,8 @@ func PushMetrics(pusMetricHost string, metrics []MetriSt, systemName string) {
 	}
 }
 
-func CollectAndPushSimMetrics(pusMetricHost string, configMetrics []MetriSt, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
-	var selectedMetrics []MetriSt
+func CollectAndPushSimMetrics(pushGatewayHost string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
+	var selectedMetrics []MetricConfig
 	var foundSelectedMetric bool
 
 	for i, metric := range configMetrics {
@@ -190,7 +185,7 @@ func CollectAndPushSimMetrics(pusMetricHost string, configMetrics []MetriSt, sel
 		return fmt.Errorf("metric %q not found", selectedMetric)
 	}
 
-	PushMetrics(pusMetricHost, selectedMetrics, systemName)
+	PushMetrics(pushGatewayHost, selectedMetrics, systemName)
 
 	return nil
 }
