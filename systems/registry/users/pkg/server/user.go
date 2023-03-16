@@ -29,29 +29,28 @@ const uuidParsingError = "Error parsing UUID"
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
-	userRepo   db.UserRepo
-	orgService pkgP.OrgClientProvider
+	userRepo       db.UserRepo
+	orgService     pkgP.OrgClientProvider
 	baseRoutingKey msgbus.RoutingKeyBuilder
-	msgbus               mb.MsgBusServiceClient
-	org string
-	pushMetricHost string
+	msgbus         mb.MsgBusServiceClient
+	org            string
+	pushGatewayHost string
 }
 
-func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider,msgBus mb.MsgBusServiceClient,	org string,	pushMetricHost string,) *UserService {
+func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msgBus mb.MsgBusServiceClient, org string, pushGatewayHost string) *UserService {
 	return &UserService{
-		userRepo:   userRepo,
-		orgService: orgService,
+		userRepo:       userRepo,
+		orgService:     orgService,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		msgbus:               msgBus,
-		org:                       org,
-		pushMetricHost :pushMetricHost,
-
+		msgbus:         msgBus,
+		org:            org,
+		pushGatewayHost: pushGatewayHost,
 	}
 }
 
 func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding user %v", req)
-userId:=uuid.NewV4()
+	userId := uuid.NewV4()
 	user := &db.User{
 		Email: req.User.Email,
 		Name:  req.User.Name,
@@ -85,13 +84,12 @@ userId:=uuid.NewV4()
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	userCount, _,err := u.userRepo.GetUserCount()
+	userCount, _, err := u.userRepo.GetUserCount()
 	if err != nil {
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
-	
 
-	err = metric.CollectAndPushSimMetrics(u.pushMetricHost, pkg.UserMetric, pkg.NumberOfUsers, float64(userCount), map[string]string{"user": userId.String(), "org": u.org},pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfUsers, float64(userCount), map[string]string{"user": userId.String(), "org": u.org}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
