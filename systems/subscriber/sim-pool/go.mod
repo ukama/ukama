@@ -4,7 +4,7 @@ go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
+replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
 
 require (
 	github.com/golang/protobuf v1.5.2
@@ -19,12 +19,13 @@ require (
 	gorm.io/gorm v1.24.3
 )
 
+require github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
+
 require (
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 )
 
