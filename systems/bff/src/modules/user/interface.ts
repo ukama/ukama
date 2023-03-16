@@ -11,8 +11,6 @@ import {
     GetUserDto,
     GetUserResponseDto,
     OrgUserSimDto,
-    SubscriberAPIResDto,
-    SubscriberDto,
     UpdateUserInputDto,
     UpdateUserServiceInput,
     UserAPIResDto,
@@ -48,5 +46,4 @@ export interface IUserMapper {
     connectedUsersDtoToDto(res: MetricServiceValueRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     dtoToUserResDto(res: UserAPIResDto): UserResDto;
-    dtoToSubscriberResDto(res: SubscriberAPIResDto): SubscriberDto;
 }

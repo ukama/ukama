@@ -3,13 +3,13 @@ import { Service } from "typedi";
 import { parseCookie } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { BoolResponse, Context } from "../../../common/types";
-import { UserService } from "../service";
+import { SubscriberService } from "../service";
 import { UpdateSubscriberInputDto } from "../types";
 
 @Service()
 @Resolver()
 export class UpdateSubscriberResolver {
-    constructor(private readonly userService: UserService) {}
+    constructor(private readonly userService: SubscriberService) {}
 
     @Mutation(() => BoolResponse)
     @UseMiddleware(Authentication)
