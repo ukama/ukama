@@ -60,6 +60,8 @@ func (m *MsgBusHandler) CreateServiceMsgBusHandler() error {
 
 	for _, s := range services {
 
+		var listener *QueueListener = nil
+
 		log.Infof("Creating message bus handler  for %s service.", s.ServiceUuid)
 
 		/* Create publisher */
@@ -71,11 +73,13 @@ func (m *MsgBusHandler) CreateServiceMsgBusHandler() error {
 		}
 
 		/*  Create a queue listner for each service */
-		listener, err := NewQueueListener(s)
-		if err != nil {
-			log.Errorf("Failed to create listneer for %s. Error %s", s.Name, err.Error())
-		} else {
-			m.ql[s.ServiceUuid] = listener
+		if len(s.Routes) > 0 {
+			listener, err = NewQueueListener(s)
+			if err != nil {
+				log.Errorf("Failed to create listner for %s. Error %s", s.Name, err.Error())
+			} else {
+				m.ql[s.ServiceUuid] = listener
+			}
 		}
 
 		log.Debugf("Service: %s \n Listner: %+v  \n Publisher: %+v", s.Name, listener, publisher)
@@ -92,7 +96,7 @@ func (m *MsgBusHandler) StartQueueListeners() {
 	for _, q := range m.ql {
 		/*  Create a queue listner for each service */
 		log.Infof("Starting new queue listener routine for service %s on %v routes", q.serviceName, q.routes)
-		go q.startQueueListening()
+		q.startQueueListening()
 
 	}
 
@@ -191,14 +195,15 @@ func (m *MsgBusHandler) StopServiceQueueHandler(service string) (err error) {
 func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) error {
 
 	log.Debugf("Removing old listener and publisher if any for service %s.", s.Name)
-	/* Listener */
+
+	/* Removing Listener */
 	err := m.RemoveServiceQueueListening(s.ServiceUuid)
 	if err != nil {
 		log.Errorf("Failed to stop old listener for %s. Error %s", s.Name, err.Error())
 		return err
 	}
 
-	/* Publisher */
+	/* Removing Publisher */
 	err = m.RemoveServiceQueuePublisher(s.ServiceUuid)
 	if err != nil {
 		log.Errorf("Failed to stop old publisher for %s. Error %s", s.Name, err.Error())
@@ -207,21 +212,26 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) error {
 
 	log.Debugf("Removing old listener and publisher if any for service %s completed.", s.Name)
 
-	listener, err := NewQueueListener(*s)
-	if err != nil {
-		log.Errorf("Failed to create listener for %s. Error %s", s.Name, err.Error())
-		return err
-	} else {
-		m.ql[s.ServiceUuid] = listener
-	}
+	/*	Listener is only created if we have routes to listne on*/
+	if len(s.Routes) > 0 {
 
-	go listener.startQueueListening()
+		listener, err := NewQueueListener(*s)
+		if err != nil {
+			log.Errorf("Failed to create listener for %s. Error %s", s.Name, err.Error())
+			return err
+		} else {
+			m.ql[s.ServiceUuid] = listener
+		}
 
-	/* Check listner state before returning */
-	time.Sleep(500 * time.Millisecond)
+		listener.startQueueListening()
 
-	if !listener.state {
-		return fmt.Errorf("failed to start listener for service %s", listener.serviceName)
+		/* Check listner state before returning */
+		time.Sleep(500 * time.Millisecond)
+
+		if !listener.state {
+			return fmt.Errorf("failed to start listener for service %s", listener.serviceName)
+		}
+
 	}
 
 	publisher, err := NewQueuePublisher(*s)

@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -38,6 +39,10 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 
 	var gc pb.EventNotificationServiceClient
 	var hc hpb.HealthClient
+
+	if len(s.Routes) <= 0 {
+		return nil, fmt.Errorf("%s", "listener must have at least one route")
+	}
 
 	routes := make([]string, len(s.Routes))
 
@@ -83,7 +88,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 	}, nil
 }
 
-func (q *QueueListener) startQueueListening() {
+func (q *QueueListener) queueListenerroutine() {
 
 	log.Debugf("[%s]: Starting listener routine.", q.serviceName)
 	/* Validate routes */ // TODO: Update ParseRoutesList implementation
@@ -111,7 +116,13 @@ func (q *QueueListener) startQueueListening() {
 	log.Infof("[%s] Shutting down queue listener", q.serviceName)
 	q.mConn.Close()
 	q.state = false
+}
 
+func (q *QueueListener) startQueueListening() {
+	/* If we have routes to listen on */
+	if len(q.routes) > 0 {
+		go q.queueListenerroutine()
+	}
 }
 
 func (q *QueueListener) stopQueueListening() {
