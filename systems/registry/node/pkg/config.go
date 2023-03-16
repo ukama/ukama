@@ -10,7 +10,7 @@ type Config struct {
 	DB               *uconf.Database `default:"{}"`
 	Grpc             *uconf.Grpc     `default:"{}"`
 	Metrics          *uconf.Metrics  `default:"{}"`
-	PushMetricHost   string          `default:"http://localhost:9091"`
+	PushGatewayHost   string          `default:"http://localhost:9091"`
 	Org              string          `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 }
 
