@@ -23,63 +23,9 @@ export class UserAPIObj {
     registered_since: string;
 }
 @ObjectType()
-export class OrgMemberAPIObj {
-    @Field()
-    uuid: string;
-
-    @Field()
-    user_id: string;
-
-    @Field()
-    org_id: string;
-
-    @Field()
-    is_deactivated: boolean;
-
-    @Field()
-    member_since: string;
-}
-
-@ObjectType()
 export class UserAPIResDto {
     @Field(() => [UserAPIObj])
     user: UserAPIObj;
-}
-
-@ObjectType()
-export class OrgMemberAPIResDto {
-    @Field()
-    org: string;
-
-    @Field(() => [OrgMemberAPIObj])
-    members: OrgMemberAPIObj[];
-}
-
-@ObjectType()
-export class OrgMemberObj {
-    @Field()
-    uuid: string;
-
-    @Field()
-    userId: string;
-
-    @Field()
-    orgId: string;
-
-    @Field()
-    isDeactivated: boolean;
-
-    @Field()
-    memberSince: string;
-}
-
-@ObjectType()
-export class OrgMemberResDto {
-    @Field()
-    org: string;
-
-    @Field(() => [OrgMemberObj])
-    members: OrgMemberObj[];
 }
 
 @ObjectType()

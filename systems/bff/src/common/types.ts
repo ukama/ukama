@@ -90,6 +90,9 @@ export class ParsedCookie {
     orgId: string;
 
     @Field()
+    userId: string;
+
+    @Field()
     orgName: string;
 }
 
