@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 import { NETWORK_STATUS } from "../../constants";
 
 @ObjectType()
@@ -138,4 +138,19 @@ export class SitesResDto {
 
     @Field(() => [SiteDto])
     sites: SiteDto[];
+}
+
+@InputType()
+export class AddNetworkInputDto {
+    @Field()
+    network_name: string;
+
+    @Field()
+    org: string;
+}
+
+@InputType()
+export class AddSiteInputDto {
+    @Field()
+    site: string;
 }

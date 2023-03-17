@@ -8,6 +8,8 @@ import { checkError } from "../../errors";
 import { INetworkService } from "./interface";
 import NetworkMapper from "./mapper";
 import {
+    AddNetworkInputDto,
+    AddSiteInputDto,
     NetworkDto,
     NetworksResDto,
     NetworkStatusDto,
@@ -95,6 +97,37 @@ export class NetworkService implements INetworkService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.REGISTRY_NETWORKS_API_URL}/${networkId}/sites/${siteId}`,
+            headers: cookie.header,
+        });
+
+        if (checkError(res)) throw new Error(res.message);
+        return NetworkMapper.dtoToSiteDto(res);
+    };
+
+    addNetwork = async (
+        req: AddNetworkInputDto,
+        cookie: ParsedCookie,
+    ): Promise<NetworkDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.POST,
+            path: `${SERVER.REGISTRY_NETWORKS_API_URL}`,
+            body: req,
+            headers: cookie.header,
+        });
+
+        if (checkError(res)) throw new Error(res.message);
+        return NetworkMapper.dtoToNetworkDto(res);
+    };
+
+    addSite = async (
+        networkId: string,
+        req: AddSiteInputDto,
+        cookie: ParsedCookie,
+    ): Promise<SiteDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.POST,
+            path: `${SERVER.REGISTRY_NETWORKS_API_URL}/${networkId}/sites`,
+            body: req,
             headers: cookie.header,
         });
 
