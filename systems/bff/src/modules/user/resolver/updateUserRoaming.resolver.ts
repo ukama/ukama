@@ -15,7 +15,7 @@ export class UpdateUserRoamingResolver {
     @UseMiddleware(Authentication)
     async updateUserRoaming(
         @Arg("data") data: UpdateUserServiceInput,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<OrgUserSimDto> {
         return this.userService.updateUserRoaming(data, parseCookie(ctx));
     }

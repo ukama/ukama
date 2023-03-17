@@ -35,7 +35,7 @@ const logger = setupLogger("service");
 export class NodeService implements INodeService {
     addNode = async (
         req: NodeObj,
-        cookie: ParsedCookie
+        cookie: ParsedCookie,
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -56,7 +56,7 @@ export class NodeService implements INodeService {
     };
     linkNodes = async (
         req: LinkNodes,
-        cookie: ParsedCookie
+        cookie: ParsedCookie,
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,
@@ -77,7 +77,7 @@ export class NodeService implements INodeService {
     };
     updateNode = async (
         req: UpdateNodeDto,
-        cookie: ParsedCookie
+        cookie: ParsedCookie,
     ): Promise<OrgNodeDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,
@@ -95,7 +95,7 @@ export class NodeService implements INodeService {
     };
     deleteNode = async (
         id: string,
-        cookie: ParsedCookie
+        cookie: ParsedCookie,
     ): Promise<DeleteNodeRes> => {
         const res = await catchAsyncIOMethod({
             headers: cookie.header,
@@ -110,7 +110,7 @@ export class NodeService implements INodeService {
         return res;
     };
     getNodesByOrg = async (
-        cookie: ParsedCookie
+        cookie: ParsedCookie,
     ): Promise<OrgNodeResponseDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -125,7 +125,7 @@ export class NodeService implements INodeService {
     };
     getNode = async (
         nodeId: string,
-        cookie: ParsedCookie
+        cookie: ParsedCookie,
     ): Promise<NodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -140,7 +140,7 @@ export class NodeService implements INodeService {
     };
     getNodeStatus = async (
         data: GetNodeStatusInput,
-        cookie: ParsedCookie
+        cookie: ParsedCookie,
     ): Promise<GetNodeStatusRes> => {
         const currentTimestamp = Math.floor(new Date().getTime() / 1000);
         const res = await catchAsyncIOMethod({
@@ -150,7 +150,7 @@ export class NodeService implements INodeService {
                 getMetricUri(
                     cookie.orgId,
                     data.nodeId,
-                    getMetricsByTab(data.nodeType, GRAPHS_TAB.NODE_STATUS)[0]
+                    getMetricsByTab(data.nodeType, GRAPHS_TAB.NODE_STATUS)[0],
                 ) + "/latest",
             params: {
                 from: currentTimestamp,
@@ -168,7 +168,7 @@ export class NodeService implements INodeService {
     getSingleMetric = async (
         data: MetricsInputDTO,
         cookie: ParsedCookie,
-        endpoint: string
+        endpoint: string,
     ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -199,7 +199,7 @@ export class NodeService implements INodeService {
     getMultipleMetrics = async (
         data: MetricsByTabInputDTO,
         cookie: ParsedCookie,
-        endpoints: string[]
+        endpoints: string[],
     ): Promise<MetricRes[]> => {
         return Promise.all(
             endpoints.map(endpoint =>
@@ -232,8 +232,8 @@ export class NodeService implements INodeService {
                                     : [],
                         };
                     }
-                })
-            )
+                }),
+            ),
         );
     };
 }
