@@ -19,140 +19,142 @@ services:
     volumes:
       - postgress-data:/var/lib/postgresql
 
-  # sim:
-  #   build: ./subscriber/sim-pool
-  #   ports:
-  #     - "9090:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - MSGCLIENT_HOST=msg-client-subscriber:9095
-  #     - SIM_SERVICE_HOST=sim
-  #     - SIM_SERVICE_PORT=9090
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
+  sim:
+    build: ./subscriber/sim-pool
+    ports:
+      - "9090:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SIM_SERVICE_HOST=sim
+      - SIM_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
 
-  # registry:
-  #   build: ./subscriber/registry
-  #   ports:
-  #     - "9091:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - MSGCLIENT_HOST=msg-client-subscriber:9095
-  #     - REGISTRY_SERVICE_HOST=registry
-  #     - REGISTRY_SERVICE_PORT=9090
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
+  registry:
+    build: ./subscriber/registry
+    ports:
+      - "9091:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - REGISTRY_SERVICE_HOST=registry
+      - REGISTRY_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
 
-  # sim-manager:
-  #   build: ./subscriber/sim-manager
-  #   ports:
-  #     - "9092:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - KEY=${KEY}
-  #     - MSGCLIENT_HOST=msg-client-subscriber:9095
-  #     - SIM_MANAGER_SERVICE_HOST=sim-manager
-  #     - SIM_MANAGER_SERVICE_PORT=9090
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
+  simmanager:
+    build: ./subscriber/sim-manager
+    ports:
+      - "9092:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - KEY=${KEY}
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SIMMANAGER_SERVICE_HOST=simmanager
+      - SIMMANAGER_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
 
-  # test-agent:
-  #   build: ./subscriber/test-agent
-  #   ports:
-  #     - "9093:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - TEST_AGENT_SERVICE_HOST=test-agent
-  #     - TEST_AGENT_SERVICE_PORT=9090
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
+  testagent:
+    build: ./subscriber/test-agent
+    ports:
+      - "9093:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - TESTAGENT_SERVICE_HOST=testagent
+      - TESTAGENT_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
 
-  # base-rate:
-  #   build: ./data-plan/base-rate
-  #   ports:
-  #     - "9094:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - BASE_RATE_SERVICE_HOST=base-rate
-  #     - BASE_RATE_SERVICE_PORT=9090
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
+  rate:
+    build: ./data-plan/base-rate
+    ports:
+      - "9094:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-dataplan:9095
+      - RATE_SERVICE_HOST=rate
+      - RATE_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
 
-  # package:
-  #   build: ./data-plan/package
-  #   ports:
-  #     - "9095:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - MSGCLIENT_HOST=msg-client-data-plan:9095
-  #     - PACKAGE_SERVICE_HOST=package
-  #     - PACKAGE_SERVICE_PORT=9090
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
+  package:
+    build: ./data-plan/package
+    ports:
+      - "9095:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-dataplan:9095
+      - PACKAGE_SERVICE_HOST=package
+      - PACKAGE_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
 
-  # data-plan:
-  #   build: ./data-plan/api-gateway
-  #   ports:
-  #     - "8080:8080"
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
-  #     - package
+  data-plan:
+    build: ./data-plan/api-gateway
+    ports:
+      - "8080:8080"
+    restart: always
+    depends_on:
+      - postgresd
+      - package
 
-  # subscriber:
-  #   build: ./subscriber/api-gateway
-  #   ports:
-  #     - "8081:8080"
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
+  subscriber:
+    build: ./subscriber/api-gateway
+    ports:
+      - "8081:8080"
+    restart: always
+    depends_on:
+      - postgresd
 
-  # network:
-  #   build: ./registry/network
-  #   ports:
-  #     - "9096:9090"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - MSGCLIENT_HOST=msg-client-registry:9095
-  #     - NETWORK_SERVICE_HOST=network
-  #     - NETWORK_SERVICE_PORT=9090
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
+  network:
+    build: ./registry/network
+    ports:
+      - "9096:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - NETWORK_SERVICE_HOST=network
+      - NETWORK_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
 
   org:
     build: ./registry/org
@@ -190,6 +192,65 @@ services:
     depends_on:
       - postgresd
 
+  registry-api-gw:
+    build: ./registry/api-gateway
+    ports:
+      - "8082:8080"
+    restart: always
+    depends_on:
+      - postgresd
+      - network
+      - registry
+      - subscriber
+      - org
+
+  msg-client-subscriber:
+    build: ./init/msgClient
+    ports:
+      - "9080:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SYSTEM=subscriber
+    restart: always
+    depends_on:
+      - postgresd
+
+  msg-client-dataplan:
+    build: ./init/msgClient
+    ports:
+      - "9099:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-dataplan:9095
+      - SYSTEM=dataplan
+    restart: always
+    depends_on:
+      - postgresd
+
+  msg-client-registry:
+    build: ./init/msgClient
+    ports:
+      - "9081:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - SYSTEM=registry
+    restart: always
+    depends_on:
+      - postgresd
   node:
     build: ./registry/node
     ports:
@@ -208,79 +269,19 @@ services:
     depends_on:
       - postgresd
 
-  registry-api-gw:
-    build: ./registry/api-gateway
+  bff:
+    build: ./bff
     ports:
-      - "8082:8080"
-    restart: always
-    depends_on:
-      - postgresd
-      # - network
-      # - registry
-      # - subscriber
-      - org
-
-  # msg-client-subscriber:
-  #   build: ./init/msgClient
-  #   ports:
-  #     - "9080:9095"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - MSGCLIENT_HOST=msg-client-subscriber:9095
-  #     - SYSTEM=subscriber
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
-
-  # msg-client-data-plan:
-  #   build: ./init/msgClient
-  #   ports:
-  #     - "9099:9095"
-  #   environment:
-  #     - DEBUGMODE=true
-  #     - DB_HOST=postgresd
-  #     - DB_PASSWORD=ThisIsUkamaXPass
-  #     - DB_USER=postgres
-  #     - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-  #     - MSGCLIENT_HOST=msg-client-data-plan:9095
-  #     - SYSTEM=data_plan
-  #   restart: always
-  #   depends_on:
-  #     - postgresd
-
-  msg-client-registry:
-    build: ./init/msgClient
-    ports:
-      - "9081:9095"
+      - "4000:4000"
     environment:
-      - DEBUGMODE=true
-      - DB_HOST=postgresd
-      - DB_PASSWORD=ThisIsUkamaXPass
-      - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - MSGCLIENT_HOST=msg-client-registry:9095
-      - SYSTEM=registry
+      - CONSOLE_APP_URL=http://localhost:3000
+      - AUTH_APP_URL=http://localhost:4455
+      - PORT=4000
+      - DOMAIN=localhost
+      - API_URL=http://localhost:8082
     restart: always
     depends_on:
-      - postgresd
-
-  # bff:
-  #   build: ./bff
-  #   ports:
-  #     - "4000:4000"
-  #   environment:
-  #     - CONSOLE_APP_URL=http://localhost:3000
-  #     - AUTH_APP_URL=http://localhost:4455
-  #     - PORT=4000
-  #     - DOMAIN=localhost
-  #     - API_URL=http://localhost:8082
-  #   restart: always
-  #   depends_on:
-  #     - registry-api-gw
+      - registry-api-gw
 
 volumes:
   postgress-data:
