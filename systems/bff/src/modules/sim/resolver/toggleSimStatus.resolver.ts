@@ -4,19 +4,19 @@ import { parseCookie } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
-import { AllocateSimInputDto, SimResDto } from "../types";
+import { ToggleSimStatusInputDto, SimStatusResDto } from "../types";
 
 @Service()
 @Resolver()
-export class AllocateSimResolver {
+export class ToggleSimStatusResolver {
     constructor(private readonly simService: SimService) {}
 
-    @Mutation(() => SimResDto)
+    @Mutation(() => SimStatusResDto)
     @UseMiddleware(Authentication)
-    async allocateSim(
-        @Arg("data") data: AllocateSimInputDto,
+    async toggleSimStatus(
+        @Arg("data") data: ToggleSimStatusInputDto,
         @Ctx() ctx: Context,
-    ): Promise<SimResDto> {
-        return await this.simService.allocateSim(data, parseCookie(ctx));
+    ): Promise<SimStatusResDto> {
+        return await this.simService.toggleSimStatus(data, parseCookie(ctx));
     }
 }

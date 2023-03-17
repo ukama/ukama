@@ -1,5 +1,5 @@
 import { ISimMapper } from "./interface";
-import { SimAPIResDto, SimResDto } from "./types";
+import { SimAPIResDto, SimResDto, SimDetailsDto } from "./types";
 
 class SimMapper implements ISimMapper {
     dtoToSimResDto = (res: SimAPIResDto): SimResDto => {
@@ -16,5 +16,44 @@ class SimMapper implements ISimMapper {
             smDpAddress: res.sim.smDpAddress,
         };
     };
+    dtoToSimDetailsDto(response: any): SimDetailsDto {
+        const {
+            id,
+            subscriberId,
+            networkId,
+            orgId,
+            Package,
+            iccid,
+            msisdn,
+            imsi,
+            type,
+            status,
+            isPhysical,
+            firstActivatedOn,
+            lastActivatedOn,
+            activationsCount,
+            deactivationsCount,
+            allocatedAt,
+        } = response;
+
+        return {
+            id,
+            subscriberId,
+            networkId,
+            orgId,
+            Package,
+            iccid,
+            msisdn,
+            imsi,
+            type,
+            status,
+            isPhysical,
+            firstActivatedOn: firstActivatedOn?.toDate(),
+            lastActivatedOn: lastActivatedOn?.toDate(),
+            activationsCount,
+            deactivationsCount,
+            allocatedAt: allocatedAt?.toDate(),
+        };
+    }
 }
 export default <ISimMapper>new SimMapper();
