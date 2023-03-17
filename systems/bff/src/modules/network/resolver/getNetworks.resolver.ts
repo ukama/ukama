@@ -4,16 +4,16 @@ import { parseCookie } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { NetworkService } from "../service";
-import { NetworkStatusDto } from "../types";
+import { NetworksResDto } from "../types";
 
 @Service()
 @Resolver()
-export class GetNetworkStatusResolver {
+export class GetNetworksResolver {
     constructor(private readonly networkService: NetworkService) {}
 
-    @Query(() => NetworkStatusDto)
+    @Query(() => NetworksResDto)
     @UseMiddleware(Authentication)
-    async getNetworkStatus(@Ctx() ctx: Context): Promise<NetworkStatusDto> {
-        return this.networkService.getNetworkStatus(parseCookie(ctx));
+    async getNetworks(@Ctx() ctx: Context): Promise<NetworksResDto> {
+        return this.networkService.getNetworks(parseCookie(ctx));
     }
 }
