@@ -38,5 +38,6 @@ export const parseCookie = (ctx: Context): ParsedCookie => {
         header: header,
         orgId: cookieObj["org_id"],
         orgName: cookieObj["org_name"],
+        userId: cookieObj["user_id"],
     };
 };

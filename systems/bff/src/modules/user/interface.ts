@@ -10,8 +10,6 @@ import {
     GetESimQRCodeInput,
     GetUserDto,
     GetUserResponseDto,
-    OrgMemberAPIResDto,
-    OrgMemberResDto,
     OrgUserSimDto,
     UpdateUserInputDto,
     UpdateUserServiceInput,
@@ -47,6 +45,5 @@ export interface IUserService {
 export interface IUserMapper {
     connectedUsersDtoToDto(res: MetricServiceValueRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
-    dtoToUsersDto(res: OrgMemberAPIResDto): OrgMemberResDto;
     dtoToUserResDto(res: UserAPIResDto): UserResDto;
 }

@@ -11,7 +11,6 @@ import {
     ESimQRCodeRes,
     GetAccountDetailsDto,
     GetESimQRCodeInput,
-    OrgMemberResDto,
     OrgUserSimDto,
     UpdateUserInputDto,
     UpdateUserServiceInput,
@@ -98,17 +97,6 @@ export class UserService implements IUserService {
                     ? true
                     : res.traits.firstVisit,
         };
-    };
-    getUsersByOrg = async (cookie: ParsedCookie): Promise<OrgMemberResDto> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: `${SERVER.REGISTRY_ORGS_API_URL}/${cookie.orgName}/members`,
-            headers: cookie.header,
-        });
-
-        if (checkError(res)) throw new Error(res.message);
-        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-        return UserMapper.dtoToUsersDto(res);
     };
     addUser = async (
         req: UserInputDto,

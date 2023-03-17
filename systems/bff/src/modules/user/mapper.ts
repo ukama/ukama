@@ -4,8 +4,6 @@ import {
     ConnectedUserDto,
     GetUserDto,
     GetUserResponseDto,
-    OrgMemberAPIResDto,
-    OrgMemberResDto,
     UserAPIResDto,
     UserResDto,
 } from "./types";
@@ -22,21 +20,6 @@ class UserMapper implements IUserMapper {
     };
     dtoToDto = (res: GetUserResponseDto): GetUserDto[] => {
         return res.data;
-    };
-    dtoToUsersDto = (res: OrgMemberAPIResDto): OrgMemberResDto => {
-        const members: OrgMemberResDto = { org: res.org, members: [] };
-        res.members.forEach(user => {
-            if (!user.is_deactivated) {
-                members.members.push({
-                    uuid: user.uuid,
-                    userId: user.user_id,
-                    orgId: user.org_id,
-                    isDeactivated: user.is_deactivated,
-                    memberSince: user.member_since,
-                });
-            }
-        });
-        return members;
     };
     dtoToUserResDto = (res: UserAPIResDto): UserResDto => {
         return {

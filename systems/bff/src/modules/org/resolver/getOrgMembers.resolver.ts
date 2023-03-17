@@ -3,17 +3,17 @@ import { Service } from "typedi";
 import { parseCookie } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
-import { UserService } from "../service";
-import { OrgMemberResDto } from "../types";
+import { OrgService } from "../service";
+import { OrgMembersResDto } from "../types";
 
 @Service()
 @Resolver()
 export class GetOrgMembersResolver {
-    constructor(private readonly userService: UserService) {}
+    constructor(private readonly orgService: OrgService) {}
 
-    @Query(() => OrgMemberResDto)
+    @Query(() => OrgMembersResDto)
     @UseMiddleware(Authentication)
-    async getOrgMembers(@Ctx() ctx: Context): Promise<OrgMemberResDto> {
-        return this.userService.getUsersByOrg(parseCookie(ctx));
+    async getOrgMembers(@Ctx() ctx: Context): Promise<OrgMembersResDto> {
+        return this.orgService.getOrgMembers(parseCookie(ctx));
     }
 }
