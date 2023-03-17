@@ -66,6 +66,12 @@ export class UpdateUserInputDto {
     @IsEmail()
     email: string;
 
+    @Field()
+    phone: string;
+}
+
+@InputType()
+export class UpdateUserInputDto {
     @Field({ nullable: true })
     @IsPhoneNumber()
     phone: string;
