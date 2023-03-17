@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/metrics/exporter
 
-replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
+replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
 
 go 1.18
 
@@ -22,13 +22,16 @@ require (
 require (
 	github.com/creasty/defaults v1.6.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
-	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
+	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 )
 
-require github.com/num30/config v0.0.7
+require (
+	github.com/num30/config v0.0.7
+	github.com/satori/go.uuid v1.2.0
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -40,7 +43,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/iamolegga/enviper v1.4.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -72,7 +75,6 @@ require (
 	github.com/spf13/viper v1.12.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
-	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898 // indirect
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/text v0.4.0 // indirect
