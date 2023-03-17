@@ -6,7 +6,7 @@ import { MetricLatestValueRes } from "../../common/types";
 class NetworkMapper implements INetworkMapper {
     dtoToDto = (
         totalNodes: number,
-        liveNodes: MetricLatestValueRes
+        liveNodes: MetricLatestValueRes,
     ): NetworkDto => {
         let _liveNodes = 0;
         let status = NETWORK_STATUS.UNDEFINED;

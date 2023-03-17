@@ -8,17 +8,16 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	DB                *config.Database `default:"{}"`
-	Grpc              *config.Grpc     `default:"{}"`
-	Service           *config.Service  `default:"{}"`
-	MsgClient        *config.MsgClient `default:"{}"`
-	Org               string           `default:"org:9090"`
-	OrgOWnerName      string           `default:"Ukama Root"`
-	OrgOWnerEmail     string           `default:"hello@ukama.com"`
-	OrgOWnerPhone     string           `default:"0000000000"`
+	DB                *config.Database  `default:"{}"`
+	Grpc              *config.Grpc      `default:"{}"`
+	Service           *config.Service   `default:"{}"`
+	MsgClient         *config.MsgClient `default:"{}"`
+	Org               string            `default:"org:9090"`
+	OrgOWnerName      string            `default:"Ukama Root"`
+	OrgOWnerEmail     string            `default:"hello@ukama.com"`
+	OrgOWnerPhone     string            `default:"0000000000"`
 	OrgOWnerUUID      string
-	Queue            *config.Queue     `default:"{}"`
-
+	Queue             *config.Queue `default:"{}"`
 }
 
 func NewConfig(name string) *Config {

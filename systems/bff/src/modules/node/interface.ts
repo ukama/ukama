@@ -16,7 +16,7 @@ import { MetricLatestValueRes, ParsedCookie } from "../../common/types";
 export interface INodeService {
     getNodeStatus(
         data: GetNodeStatusInput,
-        cookie: ParsedCookie
+        cookie: ParsedCookie,
     ): Promise<GetNodeStatusRes>;
     getNode(nodeId: string, cookie: ParsedCookie): Promise<NodeResponse>;
     getNodesByOrg(cookie: ParsedCookie): Promise<OrgNodeResponseDto>;

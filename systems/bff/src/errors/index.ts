@@ -22,7 +22,7 @@ export const axiosErrorHandler = (error: any): ErrorType => {
         if (error.response.data) {
             return {
                 code: error.response.status,
-                message: error.response.data.message,
+                message: error.response.data.error,
                 description: error.response.statusText,
             };
         } else {

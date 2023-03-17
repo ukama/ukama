@@ -1,22 +1,21 @@
-import { Resolver, Arg, Ctx, Mutation, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { ActivateUserResponse } from "../types";
-import { UserService } from "../service";
-import { Authentication } from "../../../common/Authentication";
-import { Context } from "../../../common/types";
 import { parseCookie } from "../../../common";
+import { Authentication } from "../../../common/Authentication";
+import { BoolResponse, Context } from "../../../common/types";
+import { UserService } from "../service";
 
 @Service()
 @Resolver()
-export class AddUserResolver {
+export class DeleteUserResolver {
     constructor(private readonly userService: UserService) {}
 
-    @Mutation(() => ActivateUserResponse)
+    @Mutation(() => BoolResponse)
     @UseMiddleware(Authentication)
     async deleteUser(
         @Arg("userId") userId: string,
-        @Ctx() ctx: Context
-    ): Promise<ActivateUserResponse | null> {
+        @Ctx() ctx: Context,
+    ): Promise<BoolResponse> {
         return this.userService.deleteUser(userId, parseCookie(ctx));
     }
 }
