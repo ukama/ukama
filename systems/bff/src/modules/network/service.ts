@@ -33,7 +33,7 @@ export class NetworkService implements INetworkService {
 
         return NetworkMapper.dtoToDto(
             resTotalNodes.nodes.length,
-            resLiveNodes.data.result[0]
+            resLiveNodes.data.result[0],
         );
     };
 }

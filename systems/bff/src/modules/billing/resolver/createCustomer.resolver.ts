@@ -12,7 +12,7 @@ export class CreateCustomerResolver {
     @UseMiddleware(Authentication)
     async createCustomer(
         @Arg("data")
-        req: CreateCustomerDto
+        req: CreateCustomerDto,
     ): Promise<StripeCustomer> {
         const stripe = new Stripe(STRIP_SK, {
             typescript: true,

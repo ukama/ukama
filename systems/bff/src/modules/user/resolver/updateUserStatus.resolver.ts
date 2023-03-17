@@ -15,7 +15,7 @@ export class UpdateUserStatusResolver {
     @UseMiddleware(Authentication)
     async updateUserStatus(
         @Arg("data") data: UpdateUserServiceInput,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<OrgUserSimDto> {
         return this.userService.updateUserStatus(data, parseCookie(ctx));
     }

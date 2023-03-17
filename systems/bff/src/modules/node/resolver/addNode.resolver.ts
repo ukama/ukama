@@ -17,7 +17,7 @@ export class AddNodeResolver {
     async addNode(
         @Arg("data")
         req: AddNodeDto,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<AddNodeResponse | null> {
         const nodes: NodeObj[] = getNodes(req);
         const rootNode: NodeObj = getTowerNode(req);

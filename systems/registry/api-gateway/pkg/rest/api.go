@@ -22,7 +22,25 @@ type GetMemberRoleRequest struct {
 type UpdateMemberRequest struct {
 	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 	IsDeactivated bool   `example:"false" json:"isDeactivated,omitempty"`
-	Role          string `example:"member" json:"role,omitempty"`
+	Role string `example:"member" json:"role,omitempty"`
+}
+
+// Users group
+
+type GetUserRequest struct {
+	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+}
+type UpdateUserRequest struct {
+	UserUUID string `path:"user_uuid" validate:"required"`
+	Name     string `json:"name,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Phone    string `json:"phone,omitempty"`
+}
+
+type AddUserRequest struct {
+	Name  string `example:"John" json:"name,omitempty" validate:"required"`
+	Email string `example:"john@example.com" json:"email" validate:"required"`
+	Phone string `example:"4151231234" json:"phone,omitempty"`
 }
 
 // Network group

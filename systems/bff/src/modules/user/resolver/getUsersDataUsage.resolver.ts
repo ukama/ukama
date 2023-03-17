@@ -1,18 +1,18 @@
 import {
     Arg,
     Ctx,
-    Query,
     PubSub,
+    PubSubEngine,
+    Query,
     Resolver,
     UseMiddleware,
-    PubSubEngine,
 } from "type-graphql";
 import { Service } from "typedi";
-import { UserService } from "../service";
 import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
-import { DataUsageInputDto, GetUserDto } from "../types";
 import { Authentication } from "../../../common/Authentication";
+import { Context } from "../../../common/types";
+import { UserService } from "../service";
+import { DataUsageInputDto, GetUserDto } from "../types";
 
 @Service()
 @Resolver()
@@ -24,17 +24,17 @@ export class GetUsersDataUsageResolver {
     async getUsersDataUsage(
         @Arg("data") data: DataUsageInputDto,
         @PubSub() pubsub: PubSubEngine,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<GetUserDto[]> {
         const users: GetUserDto[] = [];
         if (data.ids.length > 0) {
             for (let i = 0; i < data.ids.length; i++) {
                 const user = await this.userService.getUser(
                     data.ids[i],
-                    parseCookie(ctx)
+                    parseCookie(ctx),
                 );
                 pubsub.publish("getUsersSub", user);
-                users.push(user);
+                // users.push(user);
             }
         }
         return users;

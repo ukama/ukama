@@ -1,6 +1,6 @@
-import "reflect-metadata";
-import { Request } from "express";
 import { IsOptional } from "class-validator";
+import { Request } from "express";
+import "reflect-metadata";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { API_METHOD_TYPE, GRAPHS_TAB, NODE_TYPE } from "../constants";
 
@@ -88,6 +88,9 @@ export class ParsedCookie {
 
     @Field()
     orgId: string;
+
+    @Field()
+    orgName: string;
 }
 
 @InputType()
@@ -166,4 +169,9 @@ export class MetricLatestValueRes {
 
     @Field()
     value: string;
+}
+@ObjectType()
+export class BoolResponse {
+    @Field()
+    success: boolean;
 }

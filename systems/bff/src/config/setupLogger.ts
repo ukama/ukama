@@ -64,7 +64,7 @@ const setupLogger = (sourceLabel: string): Logger => {
                     timestamp(),
                     errors({ stack: true }),
                     splat(),
-                    customFormat
+                    customFormat,
                 ),
             }),
         ],
@@ -74,7 +74,7 @@ const setupLogger = (sourceLabel: string): Logger => {
             timestamp(),
             errors({ stack: true }),
             splat(),
-            customFormat
+            customFormat,
         ),
         exitOnError: false,
         exceptionHandlers: [
@@ -86,7 +86,7 @@ const setupLogger = (sourceLabel: string): Logger => {
                     timestamp(),
                     errors({ stack: true }),
                     splat(),
-                    customFormat
+                    customFormat,
                 ),
             }),
         ],

@@ -23,7 +23,7 @@ export class GetNetworkStatusResolver {
     @UseMiddleware(Authentication)
     async getNetworkStatus(
         @Ctx() ctx: Context,
-        @PubSub() pubsub: PubSubEngine
+        @PubSub() pubsub: PubSubEngine,
     ): Promise<NetworkDto> {
         const network = this.networkService.getNetworkStatus(parseCookie(ctx));
         pubsub.publish("getNetworkStatus", network);

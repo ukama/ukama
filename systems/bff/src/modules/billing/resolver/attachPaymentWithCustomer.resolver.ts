@@ -15,7 +15,7 @@ export class AttachPaymentWithCustomerResolver {
     async attachPaymentWithCustomer(
         @Arg("paymentId")
         paymentId: string,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<boolean> {
         const stripe = new Stripe(STRIP_SK, {
             typescript: true,

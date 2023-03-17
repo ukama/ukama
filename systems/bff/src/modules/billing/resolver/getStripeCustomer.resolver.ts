@@ -19,7 +19,7 @@ export class GetStripeCustomerResolver {
             apiVersion: "2022-08-01",
         });
         const customer: any = await stripe.customers.retrieve(
-            getStripeIdByUserId(parseCookie(ctx).orgId)
+            getStripeIdByUserId(parseCookie(ctx).orgId),
         );
         return {
             id: customer.id,
