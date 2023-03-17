@@ -16,7 +16,7 @@ export class UpdateNodeResolver {
     async updateNode(
         @Arg("data")
         req: UpdateNodeDto,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<OrgNodeDto | null> {
         return this.nodeService.updateNode(req, parseCookie(ctx));
     }

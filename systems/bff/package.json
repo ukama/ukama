@@ -8,6 +8,7 @@
     "dev": "NODE_ENV=development nodemon",
     "lint": "eslint . --ext .ts",
     "start": "NODE_ENV=production ts-node src/index.ts ",
+    "pretty": "prettier --write --config .prettierrc './src/**'",
     "test": "jest",
     "build": "tsc -b"
   },

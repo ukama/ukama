@@ -21,7 +21,7 @@ export class GetAlertsResolver {
     @UseMiddleware(Authentication)
     async getAlerts(
         @Arg("data") data: PaginationDto,
-        @PubSub() pubsub: PubSubEngine
+        @PubSub() pubsub: PubSubEngine,
     ): Promise<AlertsResponse> {
         const alerts = this.alertService.getAlerts(data);
         pubsub.publish("getAlerts", alerts);
