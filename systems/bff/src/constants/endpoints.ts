@@ -1,10 +1,12 @@
 import {
-    REGISTRY_API_URL,
     API_URL,
+    DATA_PLAN_API_URL,
+    REGISTRY_API_URL,
     SUBSCRIBER_API_URL,
 } from "../constants/index";
 
 export const SERVER = {
+    DATA_PLAN_PACKAGES_API_URL: `${DATA_PLAN_API_URL}/v1/packages`,
     REGISTRY_USERS_API_URL: `${REGISTRY_API_URL}/v1/users`,
     REGISTRY_NODE_API_URL: `${REGISTRY_API_URL}/v1/nodes`,
     REGISTRY_ORGS_API_URL: `${REGISTRY_API_URL}/v1/orgs`,
