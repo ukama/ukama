@@ -3,6 +3,7 @@ import { API_URL } from "../constants/index";
 export const SERVER = {
     REGISTRY_USERS_API_URL: `${API_URL}/v1/users`,
     REGISTRY_ORGS_API_URL: `${API_URL}/v1/orgs`,
+    REGISTRY_NETWORKS_API_URL: `${API_URL}/v1/networks`,
     GET_CONNECTED_USERS: `${API_URL}/user/get_conneted_users`,
     GET_DATA_USAGE: `${API_URL}/data/data_usage`,
     GET_DATA_BILL: `${API_URL}/data/data_bill`,
