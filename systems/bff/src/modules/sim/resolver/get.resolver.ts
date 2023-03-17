@@ -17,6 +17,6 @@ export class GetsimResolver {
         @Arg("data") data: GetSimInputDto,
         @Ctx() ctx: Context,
     ): Promise<SimDetailsDto> {
-        return await this.simService.toggleSimStatus(data, parseCookie(ctx));
+        return await this.simService.getSim(data, parseCookie(ctx));
     }
 }

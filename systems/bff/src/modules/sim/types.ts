@@ -146,6 +146,11 @@ export class SimAPIResDto {
     sim: SimAPIDto;
 }
 @ObjectType()
+export class GetSimAPIResDto {
+    @Field(() => SimDetailsDto)
+    sim: SimDetailsDto;
+}
+@ObjectType()
 export class PackageDto {
     @Field()
     id: string;
