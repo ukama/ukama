@@ -13,9 +13,9 @@ export class DeleteUserResolver {
     @Mutation(() => BoolResponse)
     @UseMiddleware(Authentication)
     async deleteUser(
-        @Arg("uuid") uuid: string,
+        @Arg("userId") userId: string,
         @Ctx() ctx: Context,
     ): Promise<BoolResponse> {
-        return this.userService.deleteUser(uuid, parseCookie(ctx));
+        return this.userService.deleteUser(userId, parseCookie(ctx));
     }
 }

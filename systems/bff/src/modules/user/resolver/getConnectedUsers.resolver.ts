@@ -1,19 +1,19 @@
 import {
     Arg,
     Ctx,
-    Query,
     PubSub,
-    Resolver,
     PubSubEngine,
+    Query,
+    Resolver,
     UseMiddleware,
 } from "type-graphql";
 import { Service } from "typedi";
-import { UserService } from "../service";
-import { ConnectedUserDto } from "../types";
 import { parseCookie } from "../../../common";
+import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { TIME_FILTER } from "../../../constants";
-import { Authentication } from "../../../common/Authentication";
+import { UserService } from "../service";
+import { ConnectedUserDto } from "../types";
 
 @Service()
 @Resolver()

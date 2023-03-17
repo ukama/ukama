@@ -55,12 +55,12 @@ export class UserService implements IUserService {
         return UserMapper.dtoToUserResDto(res);
     };
     deactivateUser = async (
-        uuid: string,
+        userId: string,
         cookie: ParsedCookie,
     ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,
-            path: `${SERVER.REGISTRY_USERS_API_URL}/${uuid}`,
+            path: `${SERVER.REGISTRY_USERS_API_URL}/${userId}`,
             headers: cookie.header,
             body: { isDeactivated: true },
         });
