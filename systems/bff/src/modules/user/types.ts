@@ -1,4 +1,4 @@
-import { IsEmail } from "class-validator";
+import { IsEmail, IsPhoneNumber } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { GET_STATUS_TYPE } from "../../constants";
 
@@ -49,9 +49,11 @@ export class UserInputDto {
     name: string;
 
     @Field()
+    @IsEmail()
     email: string;
 
     @Field()
+    @IsPhoneNumber()
     phone: string;
 }
 
@@ -61,9 +63,11 @@ export class UpdateUserInputDto {
     name: string;
 
     @Field({ nullable: true })
+    @IsEmail()
     email: string;
 
     @Field({ nullable: true })
+    @IsPhoneNumber()
     phone: string;
 }
 

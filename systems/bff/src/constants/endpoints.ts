@@ -1,10 +1,15 @@
-import { API_URL } from "../constants/index";
+import {
+    REGISTRY_API_URL,
+    API_URL,
+    SUBSCRIBER_API_URL,
+} from "../constants/index";
 
 export const SERVER = {
-    REGISTRY_USERS_API_URL: `${API_URL}/v1/users`,
-    REGISTRY_NODE_API_URL: `${API_URL}/v1/nodes`,
-    REGISTRY_ORGS_API_URL: `${API_URL}/v1/orgs`,
-    REGISTRY_NETWORKS_API_URL: `${API_URL}/v1/networks`,
+    REGISTRY_USERS_API_URL: `${REGISTRY_API_URL}/v1/users`,
+    REGISTRY_NODE_API_URL: `${REGISTRY_API_URL}/v1/nodes`,
+    REGISTRY_ORGS_API_URL: `${REGISTRY_API_URL}/v1/orgs`,
+    REGISTRY_NETWORKS_API_URL: `${REGISTRY_API_URL}/v1/networks`,
+    SUBSCRIBER_REGISTRY_API_URL: `${SUBSCRIBER_API_URL}/v1/subscriber`,
     GET_CONNECTED_USERS: `${API_URL}/user/get_conneted_users`,
     GET_DATA_USAGE: `${API_URL}/data/data_usage`,
     GET_DATA_BILL: `${API_URL}/data/data_bill`,
