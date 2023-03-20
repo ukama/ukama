@@ -1,5 +1,36 @@
 package rest
 
+// org group
+
+type GetOrgsRequest struct {
+	UserUuid string `example:"{{UserUUID}}" form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
+}
+type GetNodeRequest struct {
+	NodeId string `path:"node_id" validate:"required"`
+}
+type UpdateNodeRequest struct {
+	NodeId string `path:"node_id" validate:"required"`
+	Name   string `json:"name" validate:"required"`
+}
+
+type DeleteNodeNodeRequest struct {
+	NodeId string `path:"node_id" validate:"required"`
+}
+type GetOrgRequest struct {
+	OrgName string `example:"milky-way" path:"org" validate:"required"`
+}
+type AddNodeRequest struct {
+	NodeId string `json:"node_id" validate:"required"`
+	Name   string `json:"name" validate:"required"`
+	State  string `json:"state" validate:"required"`
+}
+
+type AddOrgRequest struct {
+	OrgName     string `example:"milky-way" json:"name" validate:"required"`
+	Owner       string `example:"{{UserUUID}}" json:"owner_uuid" validate:"required"`
+	Certificate string `example:"test_cert" json:"certificate"`
+}
+
 type MemberRequest struct {
 	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
 	Role     string `example:"member" json:"role" validate:"required"`
@@ -22,7 +53,7 @@ type GetMemberRoleRequest struct {
 type UpdateMemberRequest struct {
 	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 	IsDeactivated bool   `example:"false" json:"isDeactivated,omitempty"`
-	Role string `example:"member" json:"role,omitempty"`
+	Role          string `example:"member" json:"role,omitempty"`
 }
 
 // Users group

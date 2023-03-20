@@ -29,8 +29,8 @@ require (
 	github.com/ukama/ukama/systems/registry/member v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
-	github.com/wI2L/fizz v0.22.0
-	google.golang.org/grpc v1.57.0
+	github.com/ukama/ukama/systems/registry/org v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/users v0.0.0-00010101000000-000000000000
 )
 
 require (

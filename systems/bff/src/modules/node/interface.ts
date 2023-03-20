@@ -1,11 +1,12 @@
 import {
     MetricDto,
     AddNodeDto,
-    OrgNodeDto,
     NodeResponse,
     AddNodeResponse,
     OrgNodeResponse,
     GetNodeStatusRes,
+    UpdateNodeResponse,
+    UpdateNodeDto,
     OrgMetricValueDto,
     OrgNodeResponseDto,
     GetNodeStatusInput,
@@ -21,7 +22,10 @@ export interface INodeService {
     getNode(nodeId: string, cookie: ParsedCookie): Promise<NodeResponse>;
     getNodesByOrg(cookie: ParsedCookie): Promise<OrgNodeResponseDto>;
     addNode(req: AddNodeDto, cookie: ParsedCookie): Promise<AddNodeResponse>;
-    updateNode(req: AddNodeDto, cookie: ParsedCookie): Promise<OrgNodeDto>;
+    updateNode(
+        req: UpdateNodeDto,
+        cookie: ParsedCookie
+    ): Promise<UpdateNodeResponse>;
     deleteNode(id: string, cookie: ParsedCookie): Promise<DeleteNodeRes>;
 }
 
@@ -30,4 +34,5 @@ export interface INodeMapper {
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
     dtoToMetricsDto(res: OrgMetricValueDto[]): MetricDto[];
     dtoToNodeStatusDto(res: MetricLatestValueRes): GetNodeStatusRes;
+    dtoToNodeResponsedto(res: any): AddNodeResponse;
 }
