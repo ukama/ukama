@@ -10,6 +10,7 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -20,12 +21,13 @@ type Registry struct {
 	conn          *grpc.ClientConn
 	orgConn       *grpc.ClientConn
 	networkClient pb.NetworkServiceClient
+	nodeClient   nodepb.NodeServiceClient
 	orgClient     orgpb.OrgServiceClient
 	timeout       time.Duration
 	host          string
 }
 
-func NewRegistry(networkHost string, orgHost string, timeout time.Duration) *Registry {
+func NewRegistry(networkHost string, orgHost string, nodeHost string ,timeout time.Duration) *Registry {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -42,9 +44,17 @@ func NewRegistry(networkHost string, orgHost string, timeout time.Duration) *Reg
 	}
 	orgClient := orgpb.NewOrgServiceClient(orgConn)
 
+	nodeConn, err := grpc.DialContext(ctx, nodeHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logrus.Fatalf("did not connect: %v", err)
+	}
+	nodeClient := nodepb.NewNodeServiceClient(nodeConn)
+
+
 	return &Registry{
 		conn:          conn,
 		networkClient: client,
+		nodeClient:    nodeClient,
 		orgConn:       orgConn,
 		orgClient:     orgClient,
 		timeout:       timeout,
@@ -101,6 +111,70 @@ func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*or
 
 	organization := &orgpb.Organization{Name: orgName, Owner: owner, Certificate: certificate}
 	res, err := r.orgClient.Add(ctx, &orgpb.AddRequest{Org: organization})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+func (r *Registry) AddNode (nodeId string,state nodepb.NodeState,name string,) (*nodepb.AddNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	node := &nodepb.Node{
+		NodeId: nodeId,
+		Name: name,
+		State: state,
+	
+	}
+	res, err := r.nodeClient.AddNode(ctx, &nodepb.AddNodeRequest{
+		Node: node,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+func (r *Registry) GetNode (nodeId string) (*nodepb.GetNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.nodeClient.GetNode(ctx, &nodepb.GetNodeRequest{
+		NodeId: nodeId,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+func (r *Registry) UpdateNode (nodeId string,name string,) (*nodepb.UpdateNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.nodeClient.UpdateNode(ctx, &nodepb.UpdateNodeRequest{
+		NodeId: nodeId,
+		Name: name,
+
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+func (r *Registry) DeleteNode (nodeId string) (*nodepb.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.nodeClient.Delete(ctx, &nodepb.DeleteRequest{
+		NodeId: nodeId,
+	})
 
 	if err != nil {
 		return nil, err
