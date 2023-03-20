@@ -52,8 +52,8 @@ export class RemovePackageFormSimInputDto {
 }
 @ObjectType()
 export class GetPackagesForSimResDto {
-    @Field(() => [PackageDto], { nullable: true })
-    Packages?: [PackageDto];
+    @Field(() => [SimPackageDto], { nullable: true })
+    Packages?: [SimPackageDto];
 }
 @InputType()
 export class GetPackagesForSimInputDto {
@@ -151,7 +151,7 @@ export class GetSimAPIResDto {
     sim: SimDetailsDto;
 }
 @ObjectType()
-export class PackageDto {
+export class SimPackageDto {
     @Field()
     id: string;
 
@@ -182,8 +182,8 @@ export class SimDetailsDto {
     @Field()
     orgId: string;
 
-    @Field(() => PackageDto)
-    Package: PackageDto;
+    @Field(() => SimPackageDto)
+    Package: SimPackageDto;
 
     @Field()
     iccid: string;
