@@ -23,7 +23,7 @@ interface Node {
 class NodeMapper implements INodeMapper {
     dtoToNodesDto = (
         orgId: string,
-        req: OrgNodeResponse
+        req: OrgNodeResponse,
     ): OrgNodeResponseDto => {
         let nodesObj;
         let activeNodes = 0;
@@ -55,7 +55,7 @@ class NodeMapper implements INodeMapper {
                 metrics.push({
                     x: item[0],
                     y: item[1],
-                })
+                }),
             );
         return metrics;
     };

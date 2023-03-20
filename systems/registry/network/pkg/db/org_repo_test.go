@@ -194,7 +194,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		org := net_db.Org{
-			ID:   uuid.NewV4(),
+			Id:   uuid.NewV4(),
 			Name: "ukama",
 		}
 
@@ -204,7 +204,7 @@ func Test_OrgRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(org.ID, org.Name, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(org.Id, org.Name, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()

@@ -103,7 +103,7 @@ func TestSimRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, sim)
 		assert.NotNil(t, sim)
-		assert.Equal(t, packageID, sim.Package.ID)
+		assert.Equal(t, packageID, sim.Package.Id)
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
@@ -200,7 +200,7 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, sims)
-		assert.Equal(t, packageID, sims[0].Package.ID)
+		assert.Equal(t, packageID, sims[0].Package.Id)
 	})
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {
@@ -297,7 +297,7 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, sims)
-		assert.Equal(t, packageID, sims[0].Package.ID)
+		assert.Equal(t, packageID, sims[0].Package.Id)
 	})
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
@@ -347,8 +347,8 @@ func TestSimRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		sim := simdb.Sim{
-			ID:           uuid.NewV4(),
-			SubscriberID: uuid.NewV4(),
+			Id:           uuid.NewV4(),
+			SubscriberId: uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -357,7 +357,7 @@ func TestSimRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sim.ID, sim.SubscriberID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(sim.Id, sim.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))

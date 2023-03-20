@@ -13,6 +13,7 @@
     "prettier/prettier": "error",
     "no-empty": "warn",
     "@typescript-eslint/no-empty-function": "warn",
-    "@typescript-eslint/ban-types": "warn"
+    "@typescript-eslint/ban-types": "warn",
+    "comma-dangle": ["warn", "always-multiline"]
   }
 }

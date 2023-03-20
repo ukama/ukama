@@ -32,26 +32,26 @@ func (this *ListSubscribersResponse) Validate() error {
 	return nil
 }
 
-var _regex_DeleteSubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_DeleteSubscriberRequest_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *DeleteSubscriberRequest) Validate() error {
-	if !_regex_DeleteSubscriberRequest_SubscriberID.MatchString(this.SubscriberID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	if !_regex_DeleteSubscriberRequest_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
 	}
-	if this.SubscriberID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
 	}
 	return nil
 }
 
-var _regex_GetByNetworkRequest_NetworkID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_GetByNetworkRequest_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *GetByNetworkRequest) Validate() error {
-	if !_regex_GetByNetworkRequest_NetworkID.MatchString(this.NetworkID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkID))
+	if !_regex_GetByNetworkRequest_NetworkId.MatchString(this.NetworkId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
 	}
-	if this.NetworkID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkID))
+	if this.NetworkId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
 	}
 	return nil
 }
@@ -69,14 +69,14 @@ func (this *DeleteSubscriberResponse) Validate() error {
 	return nil
 }
 
-var _regex_GetSubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_GetSubscriberRequest_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *GetSubscriberRequest) Validate() error {
-	if !_regex_GetSubscriberRequest_SubscriberID.MatchString(this.SubscriberID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	if !_regex_GetSubscriberRequest_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
 	}
-	if this.SubscriberID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
 	}
 	return nil
 }
@@ -91,8 +91,8 @@ func (this *GetSubscriberResponse) Validate() error {
 
 var _regex_AddSubscriberRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 var _regex_AddSubscriberRequest_PhoneNumber = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
-var _regex_AddSubscriberRequest_NetworkID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_AddSubscriberRequest_OrgID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_AddSubscriberRequest_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_AddSubscriberRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *AddSubscriberRequest) Validate() error {
 	if this.FirstName == "" {
@@ -113,11 +113,11 @@ func (this *AddSubscriberRequest) Validate() error {
 	if !_regex_AddSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {
 		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
 	}
-	if !_regex_AddSubscriberRequest_NetworkID.MatchString(this.NetworkID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkID))
+	if !_regex_AddSubscriberRequest_NetworkId.MatchString(this.NetworkId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
 	}
-	if this.NetworkID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkID))
+	if this.NetworkId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
 	}
 	if this.ProofOfIdentification == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("ProofOfIdentification", fmt.Errorf(`value '%v' must not be an empty string`, this.ProofOfIdentification))
@@ -131,25 +131,25 @@ func (this *AddSubscriberRequest) Validate() error {
 	if !(len(this.Gender) > 1) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Gender", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Gender))
 	}
-	if !_regex_AddSubscriberRequest_OrgID.MatchString(this.OrgID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgID))
+	if !_regex_AddSubscriberRequest_OrgId.MatchString(this.OrgId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
 	}
-	if this.OrgID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgID))
+	if this.OrgId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
 	}
 	return nil
 }
 
-var _regex_UpdateSubscriberRequest_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_UpdateSubscriberRequest_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_UpdateSubscriberRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 var _regex_UpdateSubscriberRequest_PhoneNumber = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
 
 func (this *UpdateSubscriberRequest) Validate() error {
-	if !_regex_UpdateSubscriberRequest_SubscriberID.MatchString(this.SubscriberID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	if !_regex_UpdateSubscriberRequest_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
 	}
-	if this.SubscriberID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
 	}
 	if !_regex_UpdateSubscriberRequest_Email.MatchString(this.Email) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
@@ -171,28 +171,28 @@ func (this *AddSubscriberResponse) Validate() error {
 	return nil
 }
 
-var _regex_Subscriber_OrgID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_Subscriber_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_Subscriber_NetworkID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Subscriber_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Subscriber_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Subscriber_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Subscriber) Validate() error {
-	if !_regex_Subscriber_OrgID.MatchString(this.OrgID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgID))
+	if !_regex_Subscriber_OrgId.MatchString(this.OrgId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
 	}
-	if this.OrgID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgID))
+	if this.OrgId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
 	}
-	if !_regex_Subscriber_SubscriberID.MatchString(this.SubscriberID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	if !_regex_Subscriber_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
 	}
-	if this.SubscriberID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
 	}
-	if !_regex_Subscriber_NetworkID.MatchString(this.NetworkID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkID))
+	if !_regex_Subscriber_NetworkId.MatchString(this.NetworkId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
 	}
-	if this.NetworkID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkID))
+	if this.NetworkId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
 	}
 	for _, item := range this.Sim {
 		if item != nil {
@@ -227,9 +227,9 @@ func (this *Package) Validate() error {
 }
 
 var _regex_Sim_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_Sim_SubscriberID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_Sim_NetworkID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_Sim_OrgID = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Sim_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Sim_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Sim_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_Sim_Msisdn = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
 
 func (this *Sim) Validate() error {
@@ -239,23 +239,23 @@ func (this *Sim) Validate() error {
 	if this.Id == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
 	}
-	if !_regex_Sim_SubscriberID.MatchString(this.SubscriberID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberID))
+	if !_regex_Sim_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
 	}
-	if this.SubscriberID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberID", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberID))
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
 	}
-	if !_regex_Sim_NetworkID.MatchString(this.NetworkID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkID))
+	if !_regex_Sim_NetworkId.MatchString(this.NetworkId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
 	}
-	if this.NetworkID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NetworkID", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkID))
+	if this.NetworkId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
 	}
-	if !_regex_Sim_OrgID.MatchString(this.OrgID) {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgID))
+	if !_regex_Sim_OrgId.MatchString(this.OrgId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
 	}
-	if this.OrgID == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgID", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgID))
+	if this.OrgId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
 	}
 	if this.Package != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Package); err != nil {

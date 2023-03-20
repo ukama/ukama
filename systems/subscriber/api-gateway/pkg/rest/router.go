@@ -1,8 +1,9 @@
 package rest
 
 import (
+	"encoding/base64"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -128,7 +129,7 @@ func (r *Router) init() {
 	pool.DELETE("/sim/:sim_id", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
 
 	subscriber := v1.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
-	subscriber.GET("/:subscriber_id", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
+	subscriber.GET("/:subscriber_id", formatDoc("Get subscriber by id", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
 	subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusOK))
 	subscriber.DELETE("/:subscriber_id", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 	subscriber.PATCH("/:subscriber_id", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
@@ -183,10 +184,10 @@ func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*simPo
 }
 
 func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*simPoolPb.UploadResponse, error) {
-	data, err := io.ReadAll(c.Request.Body)
-	c.Request.Body.Close()
+
+	data, err := base64.StdEncoding.DecodeString(req.Data)
 	if err != nil {
-		return nil, err
+		log.Fatal("error:", err)
 	}
 
 	pbResp, err := r.clients.sp.UploadSimsToSimPool(&simPoolPb.UploadRequest{
@@ -227,13 +228,13 @@ func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*subRegPb
 		LastName:              req.LastName,
 		Email:                 req.Email,
 		PhoneNumber:           req.Phone,
-		DateOfBirth:           req.DOB,
+		Dob:                   req.Dob,
 		Address:               req.Address,
 		ProofOfIdentification: req.ProofOfIdentification,
 		IdSerial:              req.IdSerial,
-		NetworkID:             req.NetworkID,
+		NetworkId:             req.NetworkId,
 		Gender:                req.Gender,
-		OrgID:                 req.OrgID,
+		OrgId:                 req.OrgId,
 	})
 
 	if err != nil {
@@ -252,7 +253,7 @@ func (r *Router) deleteSubscriber(c *gin.Context, req *SubscriberDeleteReq) (*su
 func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*subRegPb.UpdateSubscriberResponse, error) {
 
 	res, err := r.clients.sub.UpdateSubscriber(&subRegPb.UpdateSubscriberRequest{
-		SubscriberID:          req.SubscriberId,
+		SubscriberId:          req.SubscriberId,
 		Email:                 req.Email,
 		PhoneNumber:           req.Phone,
 		Address:               req.Address,
@@ -271,10 +272,10 @@ func (r *Router) getSubscriberByNetwork(c *gin.Context, req *SubscriberByNetwork
 
 func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.AllocateSimResponse, error) {
 	simReq := simMangPb.AllocateSimRequest{
-		SubscriberID: req.SubscriberId,
+		SubscriberId: req.SubscriberId,
 		SimToken:     req.SimToken,
-		PackageID:    req.PackageId,
-		NetworkID:    req.NetworkId,
+		PackageId:    req.PackageId,
+		NetworkId:    req.NetworkId,
 		SimType:      req.SimType,
 	}
 	res, err := r.clients.sm.AllocateSim(&simReq)
@@ -318,8 +319,8 @@ func (r *Router) updateSimStatus(c *gin.Context, req *ActivateDeactivateSimReq) 
 
 func (r *Router) addPkgForSim(c *gin.Context, req *AddPkgToSimReq) error {
 	payload := simMangPb.AddPackageRequest{
-		SimID:     req.SimId,
-		PackageID: req.PackageId,
+		SimId:     req.SimId,
+		PackageId: req.PackageId,
 		StartDate: req.StartDate,
 	}
 	_, err := r.clients.sm.AddPackageToSim(&payload)
@@ -331,8 +332,8 @@ func (r *Router) addPkgForSim(c *gin.Context, req *AddPkgToSimReq) error {
 
 func (r *Router) removePkgForSim(c *gin.Context, req *RemovePkgFromSimReq) error {
 	payload := simMangPb.RemovePackageRequest{
-		SimID:     req.SimId,
-		PackageID: req.PackageId,
+		SimId:     req.SimId,
+		PackageId: req.PackageId,
 	}
 	_, err := r.clients.sm.RemovePackageForSim(&payload)
 	if err != nil {
@@ -360,8 +361,8 @@ func (r *Router) getPackagesForSim(c *gin.Context, req *SimReq) (*simMangPb.GetP
 
 func (r *Router) setActivePackageForSim(c *gin.Context, req *SetActivePackageForSimReq) (*simMangPb.SetActivePackageResponse, error) {
 	payload := simMangPb.SetActivePackageRequest{
-		SimID:     req.SimId,
-		PackageID: req.PackageId,
+		SimId:     req.SimId,
+		PackageId: req.PackageId,
 	}
 	resp, err := r.clients.sm.SetActivePackageForSim(&payload)
 	if err != nil {

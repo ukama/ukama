@@ -262,7 +262,7 @@ func (r *Registry) GetNetwork(netID string) (*netpb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.networkClient.Get(ctx, &netpb.GetRequest{NetworkID: netID})
+	res, err := r.networkClient.Get(ctx, &netpb.GetRequest{NetworkId: netID})
 	if err != nil {
 		return nil, err
 	}
@@ -274,13 +274,13 @@ func (r *Registry) GetNetworks(orgID string) (*netpb.GetByOrgResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.networkClient.GetByOrg(ctx, &netpb.GetByOrgRequest{OrgID: orgID})
+	res, err := r.networkClient.GetByOrg(ctx, &netpb.GetByOrgRequest{OrgId: orgID})
 	if err != nil {
 		return nil, err
 	}
 
 	if res.Networks == nil {
-		return &netpb.GetByOrgResponse{Networks: []*netpb.Network{}, OrgID: orgID}, nil
+		return &netpb.GetByOrgResponse{Networks: []*netpb.Network{}, OrgId: orgID}, nil
 	}
 
 	return res, nil
@@ -290,7 +290,7 @@ func (r *Registry) AddSite(netID string, siteName string) (*netpb.AddSiteRespons
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.networkClient.AddSite(ctx, &netpb.AddSiteRequest{NetworkID: netID, SiteName: siteName})
+	res, err := r.networkClient.AddSite(ctx, &netpb.AddSiteRequest{NetworkId: netID, SiteName: siteName})
 
 	if err != nil {
 		return nil, err
@@ -303,7 +303,7 @@ func (r *Registry) GetSite(netID string, siteName string) (*netpb.GetSiteRespons
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.networkClient.GetSiteByName(ctx, &netpb.GetSiteByNameRequest{NetworkID: netID, SiteName: siteName})
+	res, err := r.networkClient.GetSiteByName(ctx, &netpb.GetSiteByNameRequest{NetworkId: netID, SiteName: siteName})
 	if err != nil {
 		return nil, err
 	}
@@ -315,13 +315,13 @@ func (r *Registry) GetSites(netID string) (*netpb.GetSitesByNetworkResponse, err
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.networkClient.GetSitesByNetwork(ctx, &netpb.GetSitesByNetworkRequest{NetworkID: netID})
+	res, err := r.networkClient.GetSitesByNetwork(ctx, &netpb.GetSitesByNetworkRequest{NetworkId: netID})
 	if err != nil {
 		return nil, err
 	}
 
 	if res.Sites == nil {
-		return &netpb.GetSitesByNetworkResponse{Sites: []*netpb.Site{}, NetworkID: netID}, nil
+		return &netpb.GetSitesByNetworkResponse{Sites: []*netpb.Site{}, NetworkId: netID}, nil
 	}
 
 	return res, nil

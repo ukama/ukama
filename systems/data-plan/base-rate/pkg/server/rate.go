@@ -80,11 +80,15 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
 			fileUrl, effectiveAt, simType)
 	}
-
-	if !validations.IsFutureDate(effectiveAt) {
-		logrus.Infof("Date you provided is not a valid future date. %s", effectiveAt)
-		return nil, status.Errorf(codes.InvalidArgument, "date you provided is not a valid future date %qs", effectiveAt)
+	formattedEffectiveAt, err :=validations.ValidateDate(effectiveAt)
+	if err!=nil{
+		return nil ,status.Errorf(codes.InvalidArgument, err.Error())
 	}
+	if err := validations.IsFutureDate(formattedEffectiveAt); err != nil {
+		return nil ,status.Errorf(codes.InvalidArgument, err.Error())
+
+	} 
+
 	sType := db.ParseType(strType)
 
 	if sType.String() != req.SimType {
@@ -98,7 +102,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	rates := utils.ParseToModel(data, effectiveAt, simType.String())
+	rates := utils.ParseToModel(data, formattedEffectiveAt, simType.String())
 	err = b.baseRateRepo.UploadBaseRates(rates)
 
 	if err != nil {

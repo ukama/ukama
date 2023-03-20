@@ -63,16 +63,18 @@ func TestSubscriber_Add(t *testing.T) {
 	repo := int_db.NewSubscriberRepo(&UkamaDbMock{
 		GormDb: gdb,
 	})
+	dateStr := "07-03-2023"
+
 	subscriber := int_db.Subscriber{
-		SubscriberID:          uuid.NewV4(),
+		SubscriberId:          uuid.NewV4(),
 		FirstName:             "John",
 		LastName:              "Doe",
-		NetworkID:             uuid.NewV4(),
-		OrgID:                 uuid.NewV4(),
+		NetworkId:             uuid.NewV4(),
+		OrgId:                 uuid.NewV4(),
 		Email:                 "johndoe@example.com",
 		PhoneNumber:           "555-555-5555",
 		Gender:                "Male",
-		DOB:                   time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC),
+		DOB:                   dateStr,
 		ProofOfIdentification: "Driver's License",
 		IdSerial:              "ABC123",
 		Address:               "123 Main St.",
@@ -83,11 +85,11 @@ func TestSubscriber_Add(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO \"subscribers\"").WithArgs(
-		subscriber.SubscriberID,
+		subscriber.SubscriberId,
 		subscriber.FirstName,
 		subscriber.LastName,
-		subscriber.NetworkID,
-		subscriber.OrgID,
+		subscriber.NetworkId,
+		subscriber.OrgId,
 		subscriber.Email,
 		subscriber.PhoneNumber,
 		subscriber.Gender,
@@ -113,7 +115,7 @@ func TestSubscriber_Get(t *testing.T) {
 
 		// Arrange
 		db, mock, err := sqlmock.New()
-		assert.NoError(t,err)
+		assert.NoError(t, err)
 		defer db.Close()
 		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -149,8 +151,8 @@ func TestSubscriber_Get(t *testing.T) {
 
 		// Arrange
 		db, mock, err := sqlmock.New()
-		
-		assert.NoError(t,err)
+
+		assert.NoError(t, err)
 
 		defer db.Close()
 		gdb, err := gorm.Open(postgres.New(postgres.Config{
@@ -184,11 +186,11 @@ func TestSubscriber_Get(t *testing.T) {
 func TestSubscriber_GetByNetwork(t *testing.T) {
 
 	t.Run("NetworkFound", func(t *testing.T) {
-		var networkID = uuid.NewV4()
+		var networkId = uuid.NewV4()
 
 		// Arrange
 		db, mock, err := sqlmock.New()
-		assert.NoError(t,err)
+		assert.NoError(t, err)
 		defer db.Close()
 		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -198,10 +200,10 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 		}), &gorm.Config{})
 
 		subRow := sqlmock.NewRows([]string{"network_id"}).
-			AddRow(networkID)
+			AddRow(networkId)
 
 		mock.ExpectQuery(`^SELECT.*subscribers.*`).
-			WithArgs(networkID).
+			WithArgs(networkId).
 			WillReturnRows(subRow)
 
 		assert.NoError(t, err)
@@ -209,7 +211,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 			GormDb: gdb,
 		})
 		// Act
-		sub, err := repo.Get(networkID)
+		sub, err := repo.Get(networkId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -220,11 +222,11 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 	})
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		// Arrange
-		var networkID = uuid.NewV4()
+		var networkId = uuid.NewV4()
 
 		// Arrange
 		db, mock, err := sqlmock.New()
-		assert.NoError(t,err)
+		assert.NoError(t, err)
 		defer db.Close()
 		gdb, err := gorm.Open(postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -236,7 +238,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*subscribers.*`).
-			WithArgs(networkID).
+			WithArgs(networkId).
 			WillReturnError(sql.ErrNoRows)
 		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
 			GormDb: gdb,
@@ -244,7 +246,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		sub, err := repo.Get(networkID)
+		sub, err := repo.Get(networkId)
 
 		// Assert
 		assert.Error(t, err)
@@ -257,7 +259,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 
 func TestSubscriber_Delete(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	assert.NoError(t,err)
+	assert.NoError(t, err)
 	defer db.Close()
 	gdb, _ := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  "sqlmock_db_0",
@@ -269,15 +271,13 @@ func TestSubscriber_Delete(t *testing.T) {
 		GormDb: gdb,
 	})
 
-	var subscriberID = uuid.NewV4()
+	var subscriberId = uuid.NewV4()
 
 	mock.ExpectBegin()
-	mock.ExpectExec("DELETE FROM \"subscribers\"").WithArgs(subscriberID).WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec("DELETE FROM \"subscribers\"").WithArgs(subscriberId).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	err = repo.Delete(subscriberID)
+	err = repo.Delete(subscriberId)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
-
-

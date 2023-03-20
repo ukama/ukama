@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -22,12 +21,12 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 
 	rateService := NewBaseRateServer(mockRepo, msgbusClient)
 	var mockSimTypeStr = string("ukama_data")
-	var mockeEffectiveAt = time.Now().Add(time.Hour * 24 * 7 * time.Duration(4)).Format(time.RFC3339Nano)
+	var mockEffectiveAt = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC1123)
 	var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     mockFileUrl,
-		EffectiveAt: mockeEffectiveAt,
+		EffectiveAt: mockEffectiveAt,
 		SimType:     "ukama_data",
 	}
 
@@ -37,7 +36,7 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 	rateRes, err := rateService.UploadBaseRates(context.Background(), reqMock)
 	assert.NoError(t, err)
 	for i := range rateRes.Rate {
-		assert.Equal(t, rateRes.Rate[i].EffectiveAt, reqMock.EffectiveAt)
+		assert.Equal(t, rateRes.Rate[i].EffectiveAt, mockEffectiveAt)
 		assert.Equal(t, rateRes.Rate[i].SimType, mockSimTypeStr)
 	}
 }
@@ -87,8 +86,6 @@ func TestRateService_GetRates_Success(t *testing.T) {
 			Vpmn:        "TTC"},
 	}, nil)
 	rate, err := s.GetBaseRates(context.TODO(), mockFilters)
-	fmt.Println("VANESSA", mockFilters.SimType, rate.Rates[0].SimType)
-
 	assert.NoError(t, err)
 	assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
 	assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)

@@ -1,11 +1,46 @@
 import { IsEmail } from "class-validator";
-import { GET_STATUS_TYPE } from "../../constants";
 import { Field, InputType, ObjectType } from "type-graphql";
+import { GET_STATUS_TYPE } from "../../constants";
 
 @ObjectType()
-export class ConnectedUserDto {
+export class UserAPIObj {
     @Field()
-    totalUser: string;
+    name: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    uuid: string;
+
+    @Field()
+    phone: string;
+
+    @Field()
+    is_deactivated: boolean;
+
+    @Field()
+    registered_since: string;
+}
+@ObjectType()
+export class UserAPIResDto {
+    @Field(() => [UserAPIObj])
+    user: UserAPIObj;
+}
+
+@ObjectType()
+export class DeactivateResponse {
+    @Field()
+    uuid: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    isDeactivated: boolean;
 }
 
 @InputType()
@@ -16,8 +51,26 @@ export class UserInputDto {
     @Field()
     email: string;
 
+    @Field()
+    phone: string;
+}
+
+@InputType()
+export class UpdateUserInputDto {
     @Field({ nullable: true })
-    status: boolean;
+    name: string;
+
+    @Field({ nullable: true })
+    email: string;
+
+    @Field({ nullable: true })
+    phone: string;
+}
+
+@ObjectType()
+export class ConnectedUserDto {
+    @Field()
+    totalUser: string;
 }
 @InputType()
 export class UserFistVisitInputDto {
@@ -29,11 +82,6 @@ export class UserFistVisitResDto {
     @Field()
     firstVisit: boolean;
 }
-@ObjectType()
-export class ActivateUserResponse {
-    @Field()
-    success: boolean;
-}
 
 @ObjectType()
 export class GetUserDto {
@@ -41,29 +89,14 @@ export class GetUserDto {
     id: string;
 
     @Field()
-    status: boolean;
-
-    @Field()
     name: string;
-
-    @Field()
-    eSimNumber?: string;
-
-    @Field()
-    iccid: string;
 
     @Field()
     @IsEmail()
     email: string;
 
     @Field()
-    roaming: boolean;
-
-    @Field()
-    dataPlan: string;
-
-    @Field()
-    dataUsage: string;
+    phone: string;
 }
 @ObjectType()
 export class GetAccountDetailsDto {
@@ -105,21 +138,6 @@ export class GetUserResponseDto {
 }
 
 @ObjectType()
-export class DeactivateResponse {
-    @Field()
-    uuid: string;
-
-    @Field()
-    name: string;
-
-    @Field()
-    email: string;
-
-    @Field()
-    isDeactivated: boolean;
-}
-
-@ObjectType()
 export class DeleteNodeRes {
     @Field()
     nodeId: string;
@@ -149,10 +167,16 @@ export class UserResDto {
     email: string;
 
     @Field()
-    id: string;
+    uuid: string;
 
-    @Field({ nullable: true })
-    iccid?: string;
+    @Field()
+    phone: string;
+
+    @Field()
+    isDeactivated: boolean;
+
+    @Field()
+    registeredSince: string;
 }
 
 @ObjectType()

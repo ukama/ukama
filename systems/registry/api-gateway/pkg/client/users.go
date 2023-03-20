@@ -47,10 +47,21 @@ func (r *Users) Get(userUUID string, requesterId string) (*pbusers.GetResponse, 
 	return r.client.Get(ctx, &pbusers.GetRequest{UserUuid: userUUID})
 }
 
-func (r *Users) AddUser(user *pbusers.User, requesterId string) (*pbusers.AddResponse, error) {
+func (r *Users) Update(userUUID string, user *pbusers.UserAttributes, requesterId string) (*pbusers.UpdateResponse, error) {
 	ctx, cancel := r.getContext(requesterId)
 	defer cancel()
+	return r.client.Update(ctx, &pbusers.UpdateRequest{UserUuid: userUUID, User: user})
+}
 
+func (r *Users) Deactivate(userUUID string, requesterId string) (*pbusers.DeactivateResponse, error) {
+	ctx, cancel := r.getContext(requesterId)
+	defer cancel()
+	return r.client.Deactivate(ctx, &pbusers.DeactivateRequest{UserUuid: userUUID})
+}
+
+func (r *Users) AddUser(user *pbusers.UserAttributes, requesterId string) (*pbusers.AddResponse, error) {
+	ctx, cancel := r.getContext(requesterId)
+	defer cancel()
 	return r.client.Add(ctx, &pbusers.AddRequest{User: user})
 }
 
@@ -68,20 +79,11 @@ func (r *Users) UpdateUser(userUUID string, user *pbusers.UserAttributes, reques
 	})
 }
 
-func (r *Users) Delete(userUUID string, requesterId string) error {
+func (r *Users) Delete(userUUID string, requesterId string) (*pbusers.DeleteResponse, error) {
 	ctx, cancel := r.getContext(requesterId)
 	defer cancel()
 
-	_, err := r.client.Delete(ctx, &pbusers.DeleteRequest{UserUuid: userUUID})
-	return err
-}
-
-func (r *Users) DeactivateUser(userUUID string, requesterId string) error {
-	ctx, cancel := r.getContext(requesterId)
-	defer cancel()
-
-	_, err := r.client.Deactivate(ctx, &pbusers.DeactivateRequest{UserUuid: userUUID})
-	return err
+	return r.client.Delete(ctx, &pbusers.DeleteRequest{UserUuid: userUUID})
 }
 
 func (r *Users) getContext(requester string) (context.Context, context.CancelFunc) {

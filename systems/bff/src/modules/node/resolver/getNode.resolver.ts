@@ -16,7 +16,7 @@ export class GetNodeResolver {
     async getNode(
         @Arg("nodeId")
         nodeId: string,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<NodeResponse> {
         return this.nodeService.getNode(nodeId, parseCookie(ctx));
     }

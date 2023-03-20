@@ -16,7 +16,7 @@ export class AddNodeResolver {
     async addNode(
         @Arg("data")
         req: AddNodeDto,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<AddNodeResponse> {
         return await this.nodeService.addNode(req, parseCookie(ctx));
     }

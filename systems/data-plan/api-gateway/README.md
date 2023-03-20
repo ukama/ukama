@@ -311,7 +311,7 @@ Response:
   {
    "id": "2",
    "name": "some-package-name",
-   "orgId": "orgID",
+   "orgId": "orgId",
    "active": true,
    "duration": "55",
    "simType": "INTER_NONE",

@@ -58,7 +58,7 @@ func TestPingRoute(t *testing.T) {
 	// arrange
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.RegistryServiceClient{}
+	csub := &submocks.SubscriberRegistryServiceClient{}
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
@@ -82,7 +82,7 @@ func TestRouter_getSimByIccid(t *testing.T) {
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.RegistryServiceClient{}
+	csub := &submocks.SubscriberRegistryServiceClient{}
 	preq := &spPb.GetByIccidRequest{
 		Iccid: Iccid,
 	}
@@ -117,7 +117,7 @@ func TestRouter_getSimPoolStats(t *testing.T) {
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.RegistryServiceClient{}
+	csub := &submocks.SubscriberRegistryServiceClient{}
 	preq := &spPb.GetStatsRequest{
 		SimType: "ukama_data",
 	}
@@ -150,7 +150,7 @@ func TestRouter_addSimsToSimPool(t *testing.T) {
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.RegistryServiceClient{}
+	csub := &submocks.SubscriberRegistryServiceClient{}
 	preq := &spPb.AddRequest{
 		Sim: []*spPb.AddSim{
 			{
@@ -194,7 +194,7 @@ func TestRouter_deleteSimFromSimPool(t *testing.T) {
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.RegistryServiceClient{}
+	csub := &submocks.SubscriberRegistryServiceClient{}
 	preq := &spPb.DeleteRequest{
 		Id: []uint64{1},
 	}
@@ -220,7 +220,7 @@ func TestRouter_deleteSimFromSimPool(t *testing.T) {
 func TestRouter_Subscriber(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.RegistryServiceClient{}
+	csub := &submocks.SubscriberRegistryServiceClient{}
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
@@ -228,15 +228,15 @@ func TestRouter_Subscriber(t *testing.T) {
 	}, routerConfig).f.Engine()
 
 	s := &subPb.Subscriber{
-		SubscriberID:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		OrgID:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		SubscriberId:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
+		OrgId:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		FirstName:             "John",
 		LastName:              "Doe",
-		NetworkID:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		NetworkId:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		Email:                 "johndoe@example.com",
 		PhoneNumber:           "1234567890",
 		Gender:                "Male",
-		DateOfBirth:           "16-04-1995",
+		Dob:                   "16-04-1995",
 		Address:               "1 Main St",
 		ProofOfIdentification: "Passport",
 		IdSerial:              "123456789",
@@ -244,11 +244,11 @@ func TestRouter_Subscriber(t *testing.T) {
 
 	t.Run("getSubscriber", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/subscriber/"+s.SubscriberID,
+		req, _ := http.NewRequest("GET", "/v1/subscriber/"+s.SubscriberId,
 			nil)
 
 		preq := &subPb.GetSubscriberRequest{
-			SubscriberID: s.SubscriberID,
+			SubscriberId: s.SubscriberId,
 		}
 		csub.On("Get", mock.Anything, preq).Return(&subPb.GetSubscriberResponse{
 			Subscriber: s,
@@ -258,7 +258,7 @@ func TestRouter_Subscriber(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, w.Body.String(), `"subscriber_id":"`+s.SubscriberID+`"`)
+		assert.Contains(t, w.Body.String(), `"subscriber_id":"`+s.SubscriberId+`"`)
 
 		csp.AssertExpectations(t)
 	})
@@ -267,15 +267,15 @@ func TestRouter_Subscriber(t *testing.T) {
 		data := SubscriberAddReq{
 			FirstName:             "John",
 			LastName:              "Doe",
-			NetworkID:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+			NetworkId:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 			Email:                 "johndoe@example.com",
 			Phone:                 "1234567890",
 			Gender:                "Male",
-			DOB:                   "16-04-1995",
+			Dob:                   "16-04-1995",
 			Address:               "1 Main St",
 			ProofOfIdentification: "Passport",
 			IdSerial:              "123456789",
-			OrgID:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+			OrgId:                 "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		}
 
 		jdata, err := json.Marshal(&data)
@@ -290,13 +290,13 @@ func TestRouter_Subscriber(t *testing.T) {
 			LastName:              data.LastName,
 			Email:                 data.Email,
 			PhoneNumber:           data.Phone,
-			DateOfBirth:           data.DOB,
+			Dob:                   data.Dob,
 			Address:               data.Address,
 			ProofOfIdentification: data.ProofOfIdentification,
 			IdSerial:              data.IdSerial,
-			NetworkID:             data.NetworkID,
+			NetworkId:             data.NetworkId,
 			Gender:                data.Gender,
-			OrgID:                 data.OrgID,
+			OrgId:                 data.OrgId,
 		}
 
 		csub.On("Add", mock.Anything, preq).Return(&subPb.AddSubscriberResponse{
@@ -307,17 +307,17 @@ func TestRouter_Subscriber(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, w.Body.String(), `"subscriber_id":"`+s.SubscriberID+`"`)
+		assert.Contains(t, w.Body.String(), `"subscriber_id":"`+s.SubscriberId+`"`)
 		csp.AssertExpectations(t)
 	})
 
 	t.Run("deleteSubscriber", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("DELETE", "/v1/subscriber/"+s.SubscriberID,
+		req, _ := http.NewRequest("DELETE", "/v1/subscriber/"+s.SubscriberId,
 			nil)
 
 		preq := &subPb.DeleteSubscriberRequest{
-			SubscriberID: s.SubscriberID,
+			SubscriberId: s.SubscriberId,
 		}
 		csub.On("Delete", mock.Anything, preq).Return(&subPb.DeleteSubscriberResponse{}, nil)
 
@@ -342,11 +342,11 @@ func TestRouter_Subscriber(t *testing.T) {
 		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
-		req, err := http.NewRequest("PATCH", "/v1/subscriber/"+s.SubscriberID, bytes.NewReader(jdata))
+		req, err := http.NewRequest("PATCH", "/v1/subscriber/"+s.SubscriberId, bytes.NewReader(jdata))
 		assert.NoError(t, err)
 
 		preq := &subPb.UpdateSubscriberRequest{
-			SubscriberID:          s.SubscriberID,
+			SubscriberId:          s.SubscriberId,
 			Email:                 data.Email,
 			PhoneNumber:           data.Phone,
 			Address:               data.Address,
@@ -367,7 +367,7 @@ func TestRouter_Subscriber(t *testing.T) {
 func TestRouter_SimManager(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
-	csub := &submocks.RegistryServiceClient{}
+	csub := &submocks.SubscriberRegistryServiceClient{}
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
@@ -376,9 +376,9 @@ func TestRouter_SimManager(t *testing.T) {
 	subscriberId := "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f"
 	sim := &smPb.Sim{
 		Id:           "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11",
-		SubscriberID: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		OrgID:        "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
-		NetworkID:    "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		SubscriberId: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
+		OrgId:        "7e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
+		NetworkId:    "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		Iccid:        "1234567890123456789",
 		Msisdn:       "555-555-1234",
 		Type:         "ukama_data",
@@ -397,7 +397,7 @@ func TestRouter_SimManager(t *testing.T) {
 			nil)
 
 		preq := &smPb.GetSimRequest{
-			SimID: sim.Id,
+			SimId: sim.Id,
 		}
 		csm.On("GetSim", mock.Anything, preq).Return(&smPb.GetSimResponse{
 			Sim: sim,
@@ -418,7 +418,7 @@ func TestRouter_SimManager(t *testing.T) {
 			nil)
 
 		preq := &smPb.GetSimsBySubscriberRequest{
-			SubscriberID: subscriberId,
+			SubscriberId: subscriberId,
 		}
 		csm.On("GetSimsBySubscriber", mock.Anything, preq).Return(&smPb.GetSimsBySubscriberResponse{
 			Sims: []*smPb.Sim{sim},
@@ -439,10 +439,10 @@ func TestRouter_SimManager(t *testing.T) {
 			nil)
 
 		preq := &smPb.GetPackagesBySimRequest{
-			SimID: sim.Id,
+			SimId: sim.Id,
 		}
 		csm.On("GetPackagesBySim", mock.Anything, preq).Return(&smPb.GetPackagesBySimResponse{
-			SimID:    sim.Id,
+			SimId:    sim.Id,
 			Packages: []*smPb.Package{sim.Package},
 		}, nil)
 
@@ -471,8 +471,8 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.NoError(t, err)
 
 		preq := &smPb.AddPackageRequest{
-			SimID:     p.SimId,
-			PackageID: p.PackageId,
+			SimId:     p.SimId,
+			PackageId: p.PackageId,
 			StartDate: p.StartDate,
 		}
 		csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.AddPackageResponse{}, nil)
@@ -487,10 +487,10 @@ func TestRouter_SimManager(t *testing.T) {
 
 	t.Run("allocateSim", func(t *testing.T) {
 		p := AllocateSimReq{
-			SubscriberId: sim.SubscriberID,
+			SubscriberId: sim.SubscriberId,
 			SimToken:     "abcdef",
 			PackageId:    sim.Package.Id,
-			NetworkId:    sim.NetworkID,
+			NetworkId:    sim.NetworkId,
 			SimType:      sim.Type,
 		}
 
@@ -503,10 +503,10 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.NoError(t, err)
 
 		preq := &smPb.AllocateSimRequest{
-			SubscriberID: p.SubscriberId,
+			SubscriberId: p.SubscriberId,
 			SimToken:     p.SimToken,
-			PackageID:    p.PackageId,
-			NetworkID:    p.NetworkId,
+			PackageId:    p.PackageId,
+			NetworkId:    p.NetworkId,
 			SimType:      p.SimType,
 		}
 
@@ -532,7 +532,7 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.NoError(t, err)
 
 		preq := &smPb.ToggleSimStatusRequest{
-			SimID:  sim.Id,
+			SimId:  sim.Id,
 			Status: p.Status,
 		}
 
@@ -552,8 +552,8 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.NoError(t, err)
 
 		preq := &smPb.SetActivePackageRequest{
-			SimID:     sim.Id,
-			PackageID: sim.Package.Id,
+			SimId:     sim.Id,
+			PackageId: sim.Package.Id,
 		}
 
 		csm.On("SetActivePackageForSim", mock.Anything, preq).Return(&smPb.SetActivePackageResponse{}, nil)
@@ -571,8 +571,8 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.NoError(t, err)
 
 		preq := &smPb.RemovePackageRequest{
-			SimID:     sim.Id,
-			PackageID: sim.Package.Id,
+			SimId:     sim.Id,
+			PackageId: sim.Package.Id,
 		}
 
 		csm.On("RemovePackageForSim", mock.Anything, preq).Return(&smPb.RemovePackageResponse{}, nil)
@@ -590,7 +590,7 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.NoError(t, err)
 
 		preq := &smPb.DeleteSimRequest{
-			SimID: sim.Id,
+			SimId: sim.Id,
 		}
 
 		csm.On("DeleteSim", mock.Anything, preq).Return(&smPb.DeleteSimResponse{}, nil)

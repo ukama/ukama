@@ -3,7 +3,7 @@ package rest
 // org group
 
 type GetOrgsRequest struct {
-	UserUUID string `form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
+	UserUuid string `example:"{{UserUUID}}" form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
 }
 type GetNodeRequest struct {
 	NodeId string `path:"node_id" validate:"required"`
@@ -17,7 +17,7 @@ type DeleteNodeNodeRequest struct {
 	NodeId string `path:"node_id" validate:"required"`
 }
 type GetOrgRequest struct {
-	OrgName string `path:"org" validate:"required"`
+	OrgName string `example:"milky-way" path:"org" validate:"required"`
 }
 type AddNodeRequest struct {
 	NodeId  string `json:"node_id" validate:"required"`
@@ -26,59 +26,65 @@ type AddNodeRequest struct {
 }
 
 type AddOrgRequest struct {
-	OrgName     string `json:"name" validate:"required"`
-	Owner       string `json:"owner_uuid" validate:"required"`
-	Certificate string `json:"certificate"`
+	OrgName     string `example:"milky-way" json:"name" validate:"required"`
+	Owner       string `example:"{{UserUUID}}" json:"owner_uuid" validate:"required"`
+	Certificate string `example:"test_cert" json:"certificate"`
 }
 
 type MemberRequest struct {
-	OrgName  string `path:"org" validate:"required"`
-	UserUUID string `json:"user_uuid" validate:"required"`
+	OrgName  string `example:"milky-way" path:"org" validate:"required"`
+	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
 }
 
 type GetMemberRequest struct {
-	OrgName  string `path:"org" validate:"required"`
-	UserUUID string `path:"user_uuid" validate:"required"`
+	OrgName  string `example:"milky-way" path:"org" validate:"required"`
+	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 }
 
 type UpdateMemberRequest struct {
-	OrgName       string `path:"org" validate:"required"`
-	UserUUID      string `path:"user_uuid" validate:"required"`
-	IsDeactivated bool   `json:"isDeactivated,omitempty"`
+	OrgName       string `example:"milky-way" path:"org" validate:"required"`
+	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+	IsDeactivated bool   `example:"false" json:"isDeactivated,omitempty"`
 }
 
 // Users group
 
 type GetUserRequest struct {
+	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+}
+type UpdateUserRequest struct {
 	UserUUID string `path:"user_uuid" validate:"required"`
+	Name     string `json:"name,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Phone    string `json:"phone,omitempty"`
 }
 
 type AddUserRequest struct {
-	Name  string `json:"name,omitempty" validate:"required"`
-	Email string `json:"email" validate:"required"`
-	Phone string `json:"phone,omitempty" validate:"required"`
+	Name  string `example:"John" json:"name,omitempty" validate:"required"`
+	Email string `example:"john@example.com" json:"email" validate:"required"`
+	Phone string `example:"4151231234" json:"phone,omitempty" validate:"required"`
 }
 
 // Network group
 
 type GetNetworksRequest struct {
-	OrgName string `form:"org" json:"org" query:"org" binding:"required" validate:"required"`
+	OrgUuid string `example:"{{OrgUUID}}" form:"org" json:"org" query:"org" binding:"required" validate:"required"`
 }
 
 type GetNetworkRequest struct {
-	NetworkID string `path:"net_id" validate:"required"`
+	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
 }
 
 type AddNetworkRequest struct {
-	OrgName string `json:"org" validate:"required"`
-	NetName string `json:"network_name" validate:"required"`
+	OrgName string `example:"milky-way"  json:"org" validate:"required"`
+	NetName string `example:"mesh-network" json:"network_name" validate:"required"`
 }
 
 type GetSiteRequest struct {
-	NetworkID string `path:"net_id" validate:"required"`
-	SiteName  string `path:"site" validate:"required"`
+	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
+	SiteName  string `example:"s1-site" path:"site" validate:"required"`
 }
 type AddSiteRequest struct {
-	NetworkID string `path:"net_id" validate:"required"`
-	SiteName  string `json:"site" validate:"required"`
+	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
+	SiteName  string `example:"s1-site" json:"site" validate:"required"`
 }

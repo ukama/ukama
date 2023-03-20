@@ -1,22 +1,16 @@
-import { GET_STATUS_TYPE } from "../../constants";
+import { MetricServiceValueRes } from "../../common/types";
 import { IUserMapper } from "./interface";
 import {
-    UserResDto,
-    AddUserServiceRes,
     ConnectedUserDto,
     GetUserDto,
     GetUserResponseDto,
-    GetUsersDto,
-    OrgUserDto,
-    OrgUserResponse,
-    GetAccountDetailsDto,
-    OrgUsersResponse,
+    UserAPIResDto,
+    UserResDto,
 } from "./types";
-import { MetricServiceValueRes } from "../../common/types";
 
 class UserMapper implements IUserMapper {
     connectedUsersDtoToDto = (
-        res: MetricServiceValueRes[]
+        res: MetricServiceValueRes[],
     ): ConnectedUserDto => {
         if (res.length > 0) {
             const value: any = res[0].value[1];
@@ -27,56 +21,14 @@ class UserMapper implements IUserMapper {
     dtoToDto = (res: GetUserResponseDto): GetUserDto[] => {
         return res.data;
     };
-    dtoToUsersDto = (req: OrgUsersResponse): GetUsersDto[] => {
-        const res = req.users;
-        const users: GetUsersDto[] = [];
-
-        res.forEach(user => {
-            if (!user.isDeactivated) {
-                const userObj = {
-                    id: user.uuid,
-                    dataPlan: "",
-                    dataUsage: "",
-                    name: user.name,
-                    email: user.email,
-                    isDeactivated: user.isDeactivated,
-                };
-                users.push(userObj);
-            }
-        });
-        users.sort((a, b) =>
-            a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-        );
-        return users;
-    };
-    dtoToUserDto = (req: OrgUserResponse): GetUserDto => {
-        const { user, sim } = req;
+    dtoToUserResDto = (res: UserAPIResDto): UserResDto => {
         return {
-            id: user.uuid,
-            name: user.name,
-            iccid: sim?.iccid || "",
-            email: user.email,
-            eSimNumber: user.uuid,
-            status:
-                sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
-            roaming: sim?.carrier?.services?.data || false,
-            dataPlan: sim.carrier?.usage?.dataAllowanceBytes || "0",
-            dataUsage: sim.carrier?.usage?.dataUsedBytes || "0",
-        };
-    };
-    dtoToUserResDto = (req: OrgUserDto): UserResDto => {
-        return {
-            id: req.uuid,
-            name: req.name,
-            email: req.email,
-        };
-    };
-    dtoToAddUserDto = (req: AddUserServiceRes): UserResDto => {
-        return {
-            name: req.user.name,
-            email: req.user.email,
-            id: req.user.uuid,
-            iccid: req.iccid,
+            uuid: res.user.uuid,
+            email: res.user.email,
+            isDeactivated: res.user.is_deactivated,
+            name: res.user.name,
+            phone: res.user.phone,
+            registeredSince: res.user.registered_since,
         };
     };
 }

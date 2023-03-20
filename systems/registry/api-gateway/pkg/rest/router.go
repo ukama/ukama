@@ -133,11 +133,10 @@ func (r *Router) init() {
 	users := v1.Group(user, "Users", "Operations on Users")
 	users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
 	users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+	users.PUT("/:user_uuid", formatDoc("Update User", "Update user data"), tonic.Handler(r.updateUserHandler, http.StatusOK))
+	users.PATCH("/:user_uuid", formatDoc("Deactivate User", "Deactivate user"), tonic.Handler(r.deactivateUserHandler, http.StatusOK))
+	users.DELETE("/:user_uuid", formatDoc("Delete User", "Delete a user from the registry"), tonic.Handler(r.deleteUserHandler, http.StatusOK))
 	// user orgs-member
-	// update user
-	// Deactivate user
-	// Delete user
-	// users.DELETE("/:user_uuid", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
 
 	// Network routes
 	// Networks
@@ -206,11 +205,11 @@ func (r *Router) patchNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*node
 	return r.clients.Registry.UpdateNode(req.NodeId,req.Name,)
 }
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
-	return r.clients.Registry.AddMember(req.OrgName, req.UserUUID)
+	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid)
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUUID, req.IsDeactivated)
+	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {
@@ -223,8 +222,25 @@ func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.G
 	return r.clients.User.Get(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
+func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*userspb.UpdateResponse, error) {
+	return r.clients.User.Update(c.Param("user_uuid"), &userspb.UserAttributes{
+		Name:  req.Name,
+		Email: req.Email,
+		Phone: req.Phone,
+	},
+		c.GetString(USER_ID_KEY))
+}
+
+func (r *Router) deactivateUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeactivateResponse, error) {
+	return r.clients.User.Deactivate(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
+}
+
+func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeleteResponse, error) {
+	return r.clients.User.Delete(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
+}
+
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
-	return r.clients.User.AddUser(&userspb.User{
+	return r.clients.User.AddUser(&userspb.UserAttributes{
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,
@@ -235,7 +251,7 @@ func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.
 // Network handlers
 
 func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
-	return r.clients.Registry.GetNetwork(req.NetworkID)
+	return r.clients.Registry.GetNetwork(req.NetworkId)
 }
 
 func (r *Router) getNetworksHandler(c *gin.Context, req *GetNetworksRequest) (*netpb.GetByOrgResponse, error) {
@@ -253,15 +269,15 @@ func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*ne
 }
 
 func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*netpb.GetSiteResponse, error) {
-	return r.clients.Registry.GetSite(req.NetworkID, req.SiteName)
+	return r.clients.Registry.GetSite(req.NetworkId, req.SiteName)
 }
 
 func (r *Router) getSitesHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetSitesByNetworkResponse, error) {
-	return r.clients.Registry.GetSites(req.NetworkID)
+	return r.clients.Registry.GetSites(req.NetworkId)
 }
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*netpb.AddSiteResponse, error) {
-	return r.clients.Registry.AddSite(req.NetworkID, req.SiteName)
+	return r.clients.Registry.AddSite(req.NetworkId, req.SiteName)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

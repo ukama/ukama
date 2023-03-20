@@ -62,7 +62,7 @@ func (s *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberID: subscriberID}).Preload("Package", "is_active is true").Find(&sims)
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberId: subscriberID}).Preload("Package", "is_active is true").Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -73,7 +73,7 @@ func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 func (s *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkID: networkID}).Preload("Package", "active is true").Find(&sims)
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkId: networkID}).Preload("Package", "active is true").Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}

@@ -33,7 +33,7 @@ export const gCall = async ({
 export const beforeEachGetCall = (
     path: string,
     response: Object,
-    responseHttpCode: number
+    responseHttpCode: number,
 ): void => {
     beforeEach(() => {
         nock(BASE_URL).get(path).reply(responseHttpCode, response);
@@ -44,7 +44,7 @@ export const beforeEachPostCall = (
     path: string,
     body: any,
     response: Object,
-    responseHttpCode: number
+    responseHttpCode: number,
 ): void => {
     beforeEach(() => {
         nock(BASE_URL).post(path, body).reply(responseHttpCode, response);
