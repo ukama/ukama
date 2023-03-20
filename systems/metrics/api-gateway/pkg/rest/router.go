@@ -22,10 +22,6 @@ import (
 	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 )
 
-const METRICS_URL_PARAMETER = "/metrics"
-const SUBSCRIBER_URL_PARAMETER = "/subscriber"
-const EXPORTER_URL_PARAMETER = "/exporter"
-
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -96,8 +92,6 @@ func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	metrics := r.f.Group("/v1", "metrics system ", "metrics system version v1")
 
-	// metrics
-	//metrics := v1.Group(METRICS_URL_PARAMETER, "metrics", "metrics")
 	metrics.GET("/metrics", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
 
 	metrics.GET("/subscriber/:subscriber/orgs/:org/networks/:network/metrics/:metric", []fizz.OperationOption{
@@ -125,7 +119,7 @@ func (r *Router) init() {
 			info.Description = "Get metrics for anode. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.metricHandler, http.StatusOK))
 
-	exp := metrics.Group(EXPORTER_URL_PARAMETER, "exporter", "exporter")
+	exp := metrics.Group("/exporter", "exporter", "exporter")
 	exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
 }
 
