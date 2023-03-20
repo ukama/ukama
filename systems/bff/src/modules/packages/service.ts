@@ -20,7 +20,7 @@ export class PackageService implements IPackageService {
     ): Promise<PackageDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.DATA_PLAN_PACKAGES_API_URL,
+            path: `${SERVER.DATA_PLAN_PACKAGES_API_URL}/${packageId}`,
             headers: cookie.header,
         });
         if (checkError(res)) throw new Error(res.message);

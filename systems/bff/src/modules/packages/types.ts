@@ -1,4 +1,4 @@
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, InputType, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class PackageAPIDto {
@@ -110,26 +110,26 @@ export class AddPackageInputDto {
     @Field()
     active: boolean;
 
-    @Field()
-    duration: bigint;
+    @Field(() => Int)
+    duration: number;
 
-    @Field()
-    data_volume: bigint;
+    @Field(() => Int)
+    data_volume: number;
 
     @Field()
     org_id: string;
 
-    @Field()
-    org_rates_id: bigint;
+    @Field(() => Int)
+    org_rates_id: number;
 
     @Field()
     sim_type: string;
 
-    @Field()
-    sms_volume: bigint;
+    @Field(() => Int)
+    sms_volume: number;
 
-    @Field()
-    voice_volume: bigint;
+    @Field(() => Int)
+    voice_volume: number;
 }
 
 @InputType()
@@ -140,21 +140,21 @@ export class UpdatePackageInputDto {
     @Field({ nullable: true })
     active: boolean;
 
-    @Field({ nullable: true })
-    duration: bigint;
+    @Field(() => Int, { nullable: true })
+    duration: number;
 
-    @Field({ nullable: true })
-    data_volume: bigint;
+    @Field(() => Int, { nullable: true })
+    data_volume: number;
 
-    @Field({ nullable: true })
-    org_rates_id: bigint;
+    @Field(() => Int, { nullable: true })
+    org_rates_id: number;
 
     @Field({ nullable: true })
     sim_type: string;
 
-    @Field({ nullable: true })
-    sms_volume: bigint;
+    @Field(() => Int, { nullable: true })
+    sms_volume: number;
 
-    @Field({ nullable: true })
-    voice_volume: bigint;
+    @Field(() => Int, { nullable: true })
+    voice_volume: number;
 }
