@@ -37,7 +37,37 @@ export class NodeDto {
 @ObjectType()
 export class AddNodeResponse {
     @Field()
-    success: boolean;
+    nodeId: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    state: string;
+
+    @Field()
+    type: string;
+
+    @Field(() => [String])
+    attached: string[];
+}
+
+@ObjectType()
+export class UpdateNodeResponse {
+    @Field()
+    nodeId: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    state: string;
+
+    @Field()
+    type: string;
+
+    @Field(() => [String])
+    attached: string[];
 }
 
 @ObjectType()
@@ -50,9 +80,8 @@ export class AttachedNodes {
 export class LinkNodes {
     @Field()
     nodeId: string;
-
-    @Field(() => [AttachedNodes])
-    attached?: AttachedNodes[];
+    @Field(() => [String])
+    attachedNodeIds: string[];
 }
 
 @InputType()
@@ -62,6 +91,12 @@ export class NodeObj {
 
     @Field()
     nodeId: string;
+
+    @Field()
+    state: string;
+
+    @Field(() => [NodeObj], { nullable: true })
+    attached?: NodeObj[];
 }
 
 @InputType()
@@ -72,11 +107,8 @@ export class AddNodeDto {
     @Field()
     nodeId: string;
 
-    @Field(() => [NodeObj])
-    attached?: NodeObj[];
-
     @Field()
-    associate: boolean;
+    state: string;
 }
 
 @InputType()
