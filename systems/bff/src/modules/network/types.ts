@@ -2,6 +2,24 @@ import { Field, InputType, ObjectType } from "type-graphql";
 import { NETWORK_STATUS } from "../../constants";
 
 @ObjectType()
+export class SiteAPIDto {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    network_id: string;
+
+    @Field()
+    is_deactivated: string;
+
+    @Field()
+    created_at: string;
+}
+
+@ObjectType()
 export class NetworkStatusDto {
     @Field()
     liveNode: number;
@@ -79,23 +97,6 @@ export class NetworksResDto {
 
     @Field(() => [NetworkDto])
     networks: NetworkDto[];
-}
-
-export class SiteAPIDto {
-    @Field()
-    id: string;
-
-    @Field()
-    name: string;
-
-    @Field()
-    network_id: string;
-
-    @Field()
-    is_deactivated: string;
-
-    @Field()
-    created_at: string;
 }
 
 @ObjectType()

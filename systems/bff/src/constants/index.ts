@@ -2,7 +2,9 @@ import { registerEnumType } from "type-graphql";
 
 export const PORT = process.env.PORT;
 export const BASE_URL = `http://localhost:${PORT}`;
+export const REGISTRY_API_URL = process.env.REGISTRY_API_URL;
 export const API_URL = process.env.API_URL;
+export const SUBSCRIBER_API_URL = process.env.SUBSCRIBER_API_URL;
 export const STRIP_SK =
     "sk_test_51LN9vGHBOiFTwZOs0zrb6CkarnlRRocpGSoIZa3jL7vtMeolNjrzf7PAL3hMDHQZENnxIvbw8X7Bfx5CxsUfVfyu00HIVQCYAm";
 export const HEADER = {
@@ -14,6 +16,11 @@ export const HEADER = {
 export enum CONNECTED_USER_TYPE {
     RESIDENTS = "RESIDENTS",
     GUESTS = "GUESTS",
+}
+export enum GENDER_TYPE {
+    MALE = "male",
+    FEMALE = "female",
+    OTHER = "other",
 }
 registerEnumType(CONNECTED_USER_TYPE, {
     name: "CONNECTED_USER_TYPE",
