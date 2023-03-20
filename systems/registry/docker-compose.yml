@@ -96,13 +96,12 @@ services:
       - org
       - users
 
-
 networks:
   ukama-net:
-      ipam:
-        driver: default
-        config:
-            - subnet: 10.10.0.0/24
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.0.0/24
 
 volumes:
   postgress-data:
