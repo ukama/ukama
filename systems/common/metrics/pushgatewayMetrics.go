@@ -163,29 +163,27 @@ func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName stri
 		log.Errorf("Could not push metrics to Pushgateway: %s", err.Error())
 	}
 }
+func CollectAndPushSimMetrics(pushGatewayHost string, configMetrics []MetricConfig, selectedMetric string, value float64, labels map[string]string, systemName string) error {
+	var selectedMetricConfig MetricConfig
 
-func CollectAndPushSimMetrics(pushGatewayHost string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
-	var selectedMetrics []MetricConfig
-	var foundSelectedMetric bool
-
-	for i, metric := range configMetrics {
+	
+	for _, metric := range configMetrics {
 		if metric.Name == selectedMetric {
-			metric.Value = Value
-			for k, v := range Labels {
-				metric.Labels[k] = v
-			}
-			selectedMetrics = append(selectedMetrics, metric)
-			configMetrics[i] = metric
-			foundSelectedMetric = true
+			selectedMetricConfig = metric
 			break
 		}
 	}
 
-	if !foundSelectedMetric {
-		return fmt.Errorf("metric %q not found", selectedMetric)
+	if selectedMetricConfig.Name == "" {
+		return fmt.Errorf("metric '%s' not found in configuration", selectedMetric)
 	}
 
-	PushMetrics(pushGatewayHost, selectedMetrics, systemName)
+	
+	selectedMetricConfig.Value = value
+	selectedMetricConfig.Labels = labels
+
+	
+	PushMetrics(pushGatewayHost, []MetricConfig{selectedMetricConfig}, systemName)
 
 	return nil
 }
