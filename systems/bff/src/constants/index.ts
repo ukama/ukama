@@ -3,6 +3,7 @@ import { registerEnumType } from "type-graphql";
 export const PORT = process.env.PORT;
 export const BASE_URL = `http://localhost:${PORT}`;
 export const REGISTRY_API_URL = process.env.REGISTRY_API_URL;
+export const DATA_PLAN_API_URL = process.env.DATA_PLAN_API_URL;
 export const API_URL = process.env.API_URL;
 export const SUBSCRIBER_API_URL = process.env.SUBSCRIBER_API_URL;
 export const STRIP_SK =

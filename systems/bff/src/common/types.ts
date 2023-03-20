@@ -178,3 +178,9 @@ export class BoolResponse {
     @Field()
     success: boolean;
 }
+
+@ObjectType()
+export class IdResponse {
+    @Field()
+    uuid: string;
+}

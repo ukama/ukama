@@ -100,21 +100,6 @@ export class NetworksResDto {
 }
 
 @ObjectType()
-export class SiteAPIResDto {
-    @Field(() => SiteAPIDto)
-    site: SiteAPIDto;
-}
-
-@ObjectType()
-export class SitesAPIResDto {
-    @Field()
-    network_id: string;
-
-    @Field(() => [SiteAPIDto])
-    sites: SiteAPIDto[];
-}
-
-@ObjectType()
 export class SiteDto {
     @Field()
     id: string;
@@ -139,6 +124,21 @@ export class SitesResDto {
 
     @Field(() => [SiteDto])
     sites: SiteDto[];
+}
+
+@ObjectType()
+export class SiteAPIResDto {
+    @Field(() => SiteAPIDto)
+    site: SiteAPIDto;
+}
+
+@ObjectType()
+export class SitesAPIResDto {
+    @Field()
+    network_id: string;
+
+    @Field(() => [SiteAPIDto])
+    sites: SiteAPIDto[];
 }
 
 @InputType()
