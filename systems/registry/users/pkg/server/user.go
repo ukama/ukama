@@ -7,11 +7,11 @@ import (
 	"github.com/ukama/ukama/systems/registry/users/pkg/db"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	metric "github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/registry/users/pkg"
-
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+	"github.com/ukama/ukama/systems/registry/users/pkg"
 
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 
@@ -28,18 +28,20 @@ const uuidParsingError = "Error parsing UUID"
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
-	userRepo   db.UserRepo
-	orgService pkgP.OrgClientProvider
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	msgbus               mb.MsgBusServiceClient
+	userRepo        db.UserRepo
+	orgService      pkgP.OrgClientProvider
+	baseRoutingKey  msgbus.RoutingKeyBuilder
+	msgbus          mb.MsgBusServiceClient
+	pushGatewayHost string
 }
 
-func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider,msgBus mb.MsgBusServiceClient) *UserService {
+func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *UserService {
 	return &UserService{
-		userRepo:   userRepo,
-		orgService: orgService,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		msgbus:               msgBus,
+		userRepo:        userRepo,
+		orgService:      orgService,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		msgbus:          msgBus,
+		pushGatewayHost: pushGatewayHost,
 	}
 }
 
@@ -74,11 +76,23 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
+
 	route := u.baseRoutingKey.SetAction("add").SetObject("user").MustBuild()
 	err = u.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
+	userCount, inActiveUser, err := u.userRepo.GetUserCount()
+	if err != nil {
+		log.Errorf("failed to get User count: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfUsers, float64(userCount-inActiveUser), nil, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
+
 	return &pb.AddResponse{User: dbUserToPbUser(user)}, nil
 }
 
@@ -197,6 +211,17 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
+	userCount, inActiveUser, err := u.userRepo.GetUserCount()
+	if err != nil {
+		log.Errorf("failed to get User count: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfUsers, float64(userCount-inActiveUser), nil, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
+
 	return &pb.DeleteResponse{}, nil
 }
 

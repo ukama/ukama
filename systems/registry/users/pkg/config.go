@@ -4,21 +4,36 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/config"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+)
+
+const (
+	NumberOfUsers = "platform_active_users"
+	GaugeType     = "gauge"
 )
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	DB                *config.Database `default:"{}"`
-	Grpc              *config.Grpc     `default:"{}"`
-	Service           *config.Service  `default:"{}"`
-	MsgClient        *config.MsgClient `default:"{}"`
-	Org               string           `default:"org:9090"`
-	OrgOWnerName      string           `default:"Ukama Root"`
-	OrgOWnerEmail     string           `default:"hello@ukama.com"`
-	OrgOWnerPhone     string           `default:"0000000000"`
+	DB                *config.Database  `default:"{}"`
+	Grpc              *config.Grpc      `default:"{}"`
+	Service           *config.Service   `default:"{}"`
+	MsgClient         *config.MsgClient `default:"{}"`
+	Org               string            `default:"org:9090"`
+	OrgOWnerName      string            `default:"Ukama Root"`
+	OrgOWnerEmail     string            `default:"hello@ukama.com"`
+	OrgOWnerPhone     string            `default:"0000000000"`
 	OrgOWnerUUID      string
-	Queue            *config.Queue     `default:"{}"`
+	Queue             *config.Queue `default:"{}"`
+	PushGatewayHost   string        `default:"http://localhost:9091"`
+}
 
+var UserMetric = []metric.MetricConfig{
+	{
+		Name:   NumberOfUsers,
+		Type:   GaugeType,
+		Labels: map[string]string{"org": ""},
+		Value:  0,
+	},
 }
 
 func NewConfig(name string) *Config {
