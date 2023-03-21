@@ -284,9 +284,9 @@ func Test_SiteRepo_Add(t *testing.T) {
 		var db *extsql.DB
 
 		site := net_db.Site{
-			ID:        uuid.NewV4(),
+			Id:        uuid.NewV4(),
 			Name:      "site1",
-			NetworkID: uuid.NewV4(),
+			NetworkId: uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New() // mock sql.DB
@@ -295,7 +295,7 @@ func Test_SiteRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(site.ID, site.Name, site.NetworkID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(site.Id, site.Name, site.NetworkId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -317,7 +317,7 @@ func Test_SiteRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&site)
+		err = r.Add(&site, nil)
 
 		// Assert
 		assert.NoError(t, err)

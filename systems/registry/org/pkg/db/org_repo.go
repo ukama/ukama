@@ -3,7 +3,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -14,7 +14,7 @@ import (
 type OrgRepo interface {
 	/* Orgs */
 	Add(org *Org, nestedFunc func(*Org, *gorm.DB) error) error
-	Get(id uint) (*Org, error)
+	Get(id uuid.UUID) (*Org, error)
 	GetByName(name string) (*Org, error)
 	GetByOwner(uuid uuid.UUID) ([]Org, error)
 	// Update(id uint) error
@@ -23,10 +23,10 @@ type OrgRepo interface {
 
 	/* Members */
 	AddMember(member *OrgUser) error
-	GetMember(orgID uint, userUUID uuid.UUID) (*OrgUser, error)
-	GetMembers(orgID uint) ([]OrgUser, error)
-	UpdateMember(orgID uint, member *OrgUser) error
-	RemoveMember(orgID uint, userUUID uuid.UUID) error
+	GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*OrgUser, error)
+	GetMembers(orgID uuid.UUID) ([]OrgUser, error)
+	UpdateMember(orgID uuid.UUID, member *OrgUser) error
+	RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error
 }
 
 type orgRepo struct {
@@ -46,17 +46,16 @@ func (r *orgRepo) Add(org *Org, nestedFunc func(*Org, *gorm.DB) error) (err erro
 	}
 
 	err = r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		d := tx.Create(org)
-
-		if d.Error != nil {
-			return d.Error
-		}
-
 		if nestedFunc != nil {
 			nestErr := nestedFunc(org, tx)
 			if nestErr != nil {
 				return nestErr
 			}
+		}
+
+		d := tx.Create(org)
+		if d.Error != nil {
+			return d.Error
 		}
 
 		return nil
@@ -65,7 +64,7 @@ func (r *orgRepo) Add(org *Org, nestedFunc func(*Org, *gorm.DB) error) (err erro
 	return err
 }
 
-func (r *orgRepo) Get(id uint) (*Org, error) {
+func (r *orgRepo) Get(id uuid.UUID) (*Org, error) {
 	var org Org
 
 	result := r.Db.GetGormDb().First(&org, id)
@@ -104,7 +103,7 @@ func (r *orgRepo) AddMember(member *OrgUser) error {
 	return d.Error
 }
 
-func (r *orgRepo) GetMember(orgID uint, userUUID uuid.UUID) (*OrgUser, error) {
+func (r *orgRepo) GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*OrgUser, error) {
 	var member OrgUser
 
 	result := r.Db.GetGormDb().Where("org_id = ? And uuid = ?", orgID, userUUID).First(&member)
@@ -115,10 +114,10 @@ func (r *orgRepo) GetMember(orgID uint, userUUID uuid.UUID) (*OrgUser, error) {
 	return &member, nil
 }
 
-func (r *orgRepo) GetMembers(orgID uint) ([]OrgUser, error) {
+func (r *orgRepo) GetMembers(orgID uuid.UUID) ([]OrgUser, error) {
 	var members []OrgUser
 
-	result := r.Db.GetGormDb().Where(&OrgUser{OrgID: uint(orgID)}).Find(&members)
+	result := r.Db.GetGormDb().Where(&OrgUser{OrgId: orgID}).Find(&members)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -126,8 +125,8 @@ func (r *orgRepo) GetMembers(orgID uint) ([]OrgUser, error) {
 	return members, nil
 }
 
-func (r *orgRepo) UpdateMember(orgID uint, member *OrgUser) error {
-	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", member.OrgID, member.Uuid).Updates(member)
+func (r *orgRepo) UpdateMember(orgID uuid.UUID, member *OrgUser) error {
+	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", member.OrgId, member.Uuid).Updates(member)
 	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
@@ -135,7 +134,7 @@ func (r *orgRepo) UpdateMember(orgID uint, member *OrgUser) error {
 	return d.Error
 }
 
-func (r *orgRepo) RemoveMember(orgID uint, userUUID uuid.UUID) error {
+func (r *orgRepo) RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error {
 	var member OrgUser
 
 	// d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", orgID, userUUID).Delete(&member)

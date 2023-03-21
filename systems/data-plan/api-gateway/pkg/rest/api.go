@@ -1,54 +1,50 @@
 package rest
 
-import "github.com/ukama/ukama/systems/common/uuid"
-
 type AddPackageRequest struct {
-	Name        string `json:"name" validation:"required"`
-	Duration    uint64 `json:"duration" `
-	OrgID       uuid.UUID `json:"org_id" validation:"required"`
-	SimType     string `json:"sim_type" `
-	SmsVolume   int64  `json:"sms_volume" `
-	DataVolume  int64  `json:"data_volume" `
-	Active      bool   `json:"active" `
-	VoiceVolume int64  `json:"voice_volume"`
-	OrgRatesId  uint64 `json:"org_rates_id" validation:"required"`
+	Name        string `example:"Monthly-Data" json:"name" validation:"required"`
+	Duration    uint64 `example:"36000" json:"duration" validation:"required"`
+	OrgId       string `example:"{{OrgUUID}}" json:"org_id" validation:"required"`
+	SimType     string `example:"test" json:"sim_type" validation:"required"`
+	SmsVolume   int64  `example:"0" json:"sms_volume" validation:"required"`
+	DataVolume  int64  `example:"1024" json:"data_volume" validation:"required"`
+	Active      bool   `example:"true" json:"active" validation:"required"`
+	VoiceVolume int64  `example:"0" json:"voice_volume" validation:"required"`
+	OrgRatesId  uint64 `example:"1" json:"org_rates_id" validation:"required"`
 }
 
 type UpdatePackageRequest struct {
-	packageID uuid.UUID `path:"package" validate:"required"`
-	Name        string `json:"name" `
-	Duration    uint64 `json:"duration" `
-	Active      bool   `json:"active"`
-	SimType     string `json:"sim_type" `
-	SmsVolume   int64  `json:"sms_volume" `
-	DataVolume  int64  `json:"data_volume" `
-	VoiceVolume int64  `json:"voice_volume" `
-	OrgRatesId  uint64 `json:"org_rates_id"`
-}
-type DeletePackageRequest struct {
-	packageID  uuid.UUID `path:"package" validate:"required"`
+	Uuid        string `example:"{{PackageUUID}}" json:"uuid" path:"uuid" binding:"required" validation:"required"`
+	Name        string `example:"Monthly-Data-Updated" json:"name" validation:"required"`
+	Duration    uint64 `example:"36000" json:"duration" validation:"required"`
+	OrgId       string `example:"{{OrgUUID}}" json:"org_id" validation:"required"`
+	SimType     string `example:"test" json:"sim_type" validation:"required"`
+	SmsVolume   int64  `example:"0" json:"sms_volume" validation:"required"`
+	DataVolume  int64  `example:"1024" json:"data_volume" validation:"required"`
+	Active      bool   `example:"true" json:"active" validation:"required"`
+	VoiceVolume int64  `example:"0" json:"voice_volume" validation:"required"`
+	OrgRatesId  uint64 `example:"1" json:"org_rates_id" validation:"required"`
 }
 
-type GetPackagesRequest struct {
-	packageID  uuid.UUID `path:"package" validate:"required"`
+type PackagesRequest struct {
+	Uuid string `example:"{{PackageUUID}}" form:"uuid" json:"uuid" path:"uuid" binding:"required" validate:"required"`
 }
 
 type GetBaseRatesRequest struct {
-	Country     string `json:"country"`
-	Provider    string `json:"provider"`
-	To          uint64 `json:"to"`
-	From        uint64 `json:"from"`
-	SimType     string `json:"sim_type"`
-	EffectiveAt string `json:"effective_at"`
+	Country     string `json:"country" binding:"required" validate:"required"`
+	Provider    string `json:"provider" binding:"required" validate:"required"`
+	To          uint64 `json:"to" binding:"required" validate:"required"`
+	From        uint64 `json:"from" binding:"required" validate:"required"`
+	SimType     string `json:"sim_type" binding:"required" validate:"required"`
+	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
 }
 type GetBaseRateRequest struct {
-	RateId uuid.UUID `path:"baseRate" validate:"required"`
+	RateId string `form:"base_rate" json:"base_rate" path:"base_rate" binding:"required" validate:"required"`
 }
 type GetPackageByOrgRequest struct {
-	OrgId uuid.UUID `path:"org" validate:"required"`
+	OrgId string `example:"{{OrgUUID}}" form:"org_id" json:"org_id" path:"org_id" binding:"required" validate:"required"`
 }
 type UploadBaseRatesRequest struct {
-	FileURL     string `json:"file_url" validate:"required,url"`
-	EffectiveAt string `json:"effective_at" validate:"required"`
-	SimType     string `json:"sim_type" validate:"required"`
+	FileURL     string `json:"file_url" binding:"required" validate:"required"`
+	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
+	SimType     string `json:"sim_type" binding:"required" validate:"required"`
 }
