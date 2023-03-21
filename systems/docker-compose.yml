@@ -43,7 +43,7 @@ services:
 
 
   msg-client-registry:
-    build: ./init/msgClient
+    build: ./messaging/msgClient
     ports:
       - "9390:9095"
     environment:
@@ -129,7 +129,7 @@ services:
 
 
   msg-client-dataplan:
-    build: ./init/msgClient
+    build: ./messaging/msgClient
     ports:
       - "9490:9095"
     environment:
@@ -194,7 +194,7 @@ services:
 
 
   msg-client-subscriber:
-    build: ./init/msgClient
+    build: ./messaging/msgClient
     ports:
       - "9590:9095"
     environment:
@@ -287,7 +287,7 @@ services:
 # Billing System
 
   msg-client-billing:
-    build: ./init/msgClient
+    build: ./messaging/msgClient
     ports:
       - "9690:9095"
     environment:
@@ -327,7 +327,7 @@ services:
 # Operator System
 
   msg-client-telna:
-    build: ./init/msgClient
+    build: ./messaging/msgClient
     ports:
       - "9790:9095"
     environment:
