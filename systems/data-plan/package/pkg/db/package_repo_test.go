@@ -63,17 +63,17 @@ func Test_Package_Get(t *testing.T) {
 			Uuid:        packID,
 			Name:        "Silver Plan",
 			SimType:     int_db.SimTypeTest,
-			OrgID:       uuid.NewV4(),
+			OrgId:       uuid.NewV4(),
 			Active:      true,
 			Duration:    30,
 			SmsVolume:   1000,
 			DataVolume:  5000000,
 			VoiceVolume: 500,
-			OrgRatesID:  1,
+			OrgRatesId:  1,
 		}
 
 		rows := sqlmock.NewRows([]string{"package_id", "name", "sim_type", "org_id", "active", "duration", "sms_volume", "data_volume", "voice_volume", "org_rate_id"}).
-			AddRow(packID, pack.Name, pack.SimType, pack.OrgID, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.OrgRatesID)
+			AddRow(packID, pack.Name, pack.SimType, pack.OrgId, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.OrgRatesId)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs(id).
@@ -124,17 +124,17 @@ func Test_Package_GetByOrg(t *testing.T) {
 			Uuid:        packID,
 			Name:        "Silver Plan",
 			SimType:     int_db.SimTypeTest,
-			OrgID:       uuid.NewV4(),
+			OrgId:       uuid.NewV4(),
 			Active:      true,
 			Duration:    30,
 			SmsVolume:   1000,
 			DataVolume:  5000000,
 			VoiceVolume: 500,
-			OrgRatesID:  1,
+			OrgRatesId:  1,
 		}
 
 		rows := sqlmock.NewRows([]string{"package_id", "name", "sim_type", "org_id", "active", "duration", "sms_volume", "data_volume", "voice_volume", "org_rate_id"}).
-			AddRow(packID, pack.Name, pack.SimType, pack.OrgID, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.OrgRatesID)
+			AddRow(packID, pack.Name, pack.SimType, pack.OrgId, pack.Active, pack.Duration, pack.SmsVolume, pack.DataVolume, pack.VoiceVolume, pack.OrgRatesId)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs(id).
@@ -181,8 +181,8 @@ func Test_Package_Add(t *testing.T) {
 			SmsVolume:   10,
 			DataVolume:  1024,
 			VoiceVolume: 10,
-			OrgRatesID:  1,
-			OrgID:       uuid.NewV4(),
+			OrgRatesId:  1,
+			OrgId:       uuid.NewV4(),
 		}
 
 		db, mock, err := sqlmock.New()
@@ -191,8 +191,8 @@ func Test_Package_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.Uuid, pkg.Name, pkg.SimType, pkg.OrgID, pkg.Active, pkg.Duration, pkg.SmsVolume, pkg.DataVolume, pkg.VoiceVolume, pkg.OrgRatesID).
-			WillReturnRows(sqlmock.NewRows([]string{"package_id"}).AddRow(pkg.Uuid))
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), pkg.Uuid, pkg.Name, pkg.SimType, pkg.OrgId, pkg.Active, pkg.Duration, pkg.SmsVolume, pkg.DataVolume, pkg.VoiceVolume, pkg.OrgRatesId).
+			WillReturnRows(sqlmock.NewRows([]string{"uuid"}).AddRow(pkg.Uuid))
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",

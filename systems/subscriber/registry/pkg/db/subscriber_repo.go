@@ -8,10 +8,10 @@ import (
 
 type SubscriberRepo interface {
 	Add(subscriber *Subscriber) error
-	Get(subscriberID uuid.UUID) (*Subscriber, error)
-	Delete(subscriberID uuid.UUID) error
-	Update(subscriberID uuid.UUID, sub Subscriber)  error
-	GetByNetwork(networkID uuid.UUID) ([]Subscriber, error)
+	Get(subscriberId uuid.UUID) (*Subscriber, error)
+	Delete(subscriberId uuid.UUID) error
+	Update(subscriberId uuid.UUID, sub Subscriber) error
+	GetByNetwork(networkId uuid.UUID) ([]Subscriber, error)
 	ListSubscribers() ([]Subscriber, error)
 }
 
@@ -62,19 +62,19 @@ func (s *subscriberRepo) Delete(subscriberId uuid.UUID) error {
 	return nil
 }
 
-func (b *subscriberRepo) Update(subscriberID uuid.UUID, sub Subscriber)  error {
+func (b *subscriberRepo) Update(subscriberId uuid.UUID, sub Subscriber) error {
 	var updatedSubscriber Subscriber
 	db := b.Db.GetGormDb()
-	err := db.Model(&Subscriber{}).Where("subscriber_id = ?", subscriberID).Updates(sub).First(&updatedSubscriber).Error
+	err := db.Model(&Subscriber{}).Where("subscriber_id = ?", subscriberId).Updates(sub).First(&updatedSubscriber).Error
 	if err != nil {
-		return  err
+		return err
 	}
-	return  nil
+	return nil
 }
 
-func (s *subscriberRepo) GetByNetwork(networkID uuid.UUID) ([]Subscriber, error) {
+func (s *subscriberRepo) GetByNetwork(networkId uuid.UUID) ([]Subscriber, error) {
 	var subscribers []Subscriber
-	result := s.Db.GetGormDb().Where(&Subscriber{NetworkID: networkID}).Find(&subscribers)
+	result := s.Db.GetGormDb().Where(&Subscriber{NetworkId: networkId}).Find(&subscribers)
 
 	if result.Error != nil {
 		return nil, result.Error

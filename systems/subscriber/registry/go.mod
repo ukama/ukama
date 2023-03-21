@@ -6,7 +6,7 @@ replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/subscriber/sim-manager => ../sim-manager
 
-replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
+replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -24,15 +24,15 @@ require (
 	gorm.io/gorm v1.24.3
 )
 
+require github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
+
 require (
 	github.com/gin-contrib/cors v1.3.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
-	github.com/jarcoal/httpmock v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/loopfz/gadgeto v0.9.0 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
@@ -42,12 +42,10 @@ require (
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
+	github.com/ugorji/go/codec v1.2.6 // indirect; indirect\
 	github.com/wI2L/fizz v0.18.1 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0 // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 )
 

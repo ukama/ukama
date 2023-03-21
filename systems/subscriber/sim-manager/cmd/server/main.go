@@ -14,6 +14,7 @@ import (
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
@@ -96,7 +97,7 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	pckgClient, err := providers.NewPackageInfoClient(serviceConfig.DataPlan, pkg.IsDebugMode)
+	pckgClient, err := providers.NewPackageClient(serviceConfig.DataPlan, pkg.IsDebugMode)
 	if err != nil {
 		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
 			serviceConfig.DataPlan, err)
@@ -115,10 +116,13 @@ func runGrpcServer(gormDB sql.Db) {
 		serviceConfig.PushMetricHost,
 	)
 
+	simManagerEventServer := server.NewSimManagerEventServer(simManagerServer)
+
 	fsInterceptor := interceptor.NewFakeSimInterceptor(serviceConfig.TestAgent, serviceConfig.Timeout)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterSimManagerServiceServer(s, simManagerServer)
+		egenerated.RegisterEventNotificationServiceServer(s, simManagerEventServer)
 	})
 
 	grpcServer.ExtraUnaryInterceptors = []grpc.UnaryServerInterceptor{

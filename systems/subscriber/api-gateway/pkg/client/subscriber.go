@@ -51,7 +51,7 @@ func (sub *Registry) Close() {
 func (sub *Registry) GetSubscriber(sid string) (*pb.GetSubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
-	return sub.client.Get(ctx, &pb.GetSubscriberRequest{SubscriberID: sid})
+	return sub.client.Get(ctx, &pb.GetSubscriberRequest{SubscriberId: sid})
 }
 
 func (sub *Registry) AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
@@ -63,14 +63,14 @@ func (sub *Registry) AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscri
 func (sub *Registry) DeleteSubscriber(sid string) (*pb.DeleteSubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
-	return sub.client.Delete(ctx, &pb.DeleteSubscriberRequest{SubscriberID: sid})
+	return sub.client.Delete(ctx, &pb.DeleteSubscriberRequest{SubscriberId: sid})
 }
 
 func (sub *Registry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
 	return sub.client.Update(ctx, &pb.UpdateSubscriberRequest{
-		SubscriberID:          subscriber.SubscriberID,
+		SubscriberId:          subscriber.SubscriberId,
 		Email:                 subscriber.Email,
 		PhoneNumber:           subscriber.PhoneNumber,
 		Address:               subscriber.Address,
@@ -82,5 +82,5 @@ func (sub *Registry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*
 func (sub *Registry) GetByNetwork(networkId string) (*pb.GetByNetworkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
 	defer cancel()
-	return sub.client.GetByNetwork(ctx, &pb.GetByNetworkRequest{NetworkID: networkId})
+	return sub.client.GetByNetwork(ctx, &pb.GetByNetworkRequest{NetworkId: networkId})
 }

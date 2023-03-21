@@ -4,7 +4,7 @@ go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
+replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
 
 replace github.com/ukama/ukama/systems/subscriber/test-agent => ../test-agent
 
@@ -16,7 +16,6 @@ replace github.com/ukama/ukama/systems/subscriber/sim-manager => ./
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang/protobuf v1.5.2
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
@@ -47,6 +46,7 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -95,7 +95,7 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
+	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wI2L/fizz v0.18.1 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
