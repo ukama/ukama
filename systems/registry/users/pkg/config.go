@@ -31,7 +31,7 @@ var UserMetric = []metric.MetricConfig{
 	{
 		Name:   NumberOfUsers,
 		Type:   GaugeType,
-		Labels: map[string]string{"org": ""},
+		Labels: map[string]string{"users": "active"},
 		Value:  0,
 	},
 }
