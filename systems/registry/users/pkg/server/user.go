@@ -89,7 +89,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfUsers, float64(userCount), map[string]string{"user": userId.String(), "org": u.org}, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfUsers, float64(userCount), map[string]string{"org": u.org}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
@@ -210,6 +210,15 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	err = u.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+	userCount, _, err := u.userRepo.GetUserCount()
+	if err != nil {
+		log.Errorf("failed to get User count: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfUsers, float64(userCount), map[string]string{ "org": u.org}, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 	return &pb.DeleteResponse{}, nil
 }

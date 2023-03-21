@@ -43,7 +43,7 @@ func NewConfig(name string) *Config {
 var UserMetric = []metric.MetricConfig{{
 	Name:   NumberOfUsers,
 	Type:   GaugeType,
-	Labels: map[string]string{"user": "", "org": ""},
+	Labels: map[string]string{ "org": ""},
 	Value:  0,
 },
 }
