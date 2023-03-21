@@ -75,7 +75,6 @@ func (r *orgRepo) Get(id uuid.UUID) (*Org, error) {
 	return &org, nil
 }
 
-
 func (r *orgRepo) GetByName(name string) (*Org, error) {
 	var org Org
 
@@ -118,7 +117,7 @@ func (r *orgRepo) GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*OrgUser, erro
 func (r *orgRepo) GetMembers(orgID uuid.UUID) ([]OrgUser, error) {
 	var members []OrgUser
 
-	result := r.Db.GetGormDb().Where(&OrgUser{OrgID: orgID}).Find(&members)
+	result := r.Db.GetGormDb().Where(&OrgUser{OrgId: orgID}).Find(&members)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -127,7 +126,7 @@ func (r *orgRepo) GetMembers(orgID uuid.UUID) ([]OrgUser, error) {
 }
 
 func (r *orgRepo) UpdateMember(orgID uuid.UUID, member *OrgUser) error {
-	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", member.OrgID, member.Uuid).Updates(member)
+	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", member.OrgId, member.Uuid).Updates(member)
 	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}

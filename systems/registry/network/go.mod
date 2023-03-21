@@ -8,7 +8,7 @@ replace github.com/ukama/ukama/systems/registry/org => ../org
 
 replace github.com/ukama/ukama/systems/registry/network => ./
 
-replace github.com/ukama/ukama/systems/init/msgClient => ../../init/msgClient
+replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -75,7 +75,7 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
-	github.com/ukama/ukama/systems/init/msgClient v0.0.0-00010101000000-000000000000 // indirect
+	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
