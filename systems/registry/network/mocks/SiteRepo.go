@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/registry/network/pkg/db"
+	gorm "gorm.io/gorm"
+
+	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -14,13 +16,13 @@ type SiteRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: site
-func (_m *SiteRepo) Add(site *db.Site) error {
-	ret := _m.Called(site)
+// Add provides a mock function with given fields: site, nestedFunc
+func (_m *SiteRepo) Add(site *db.Site, nestedFunc func(*db.Site, *gorm.DB) error) error {
+	ret := _m.Called(site, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Site) error); ok {
-		r0 = rf(site)
+	if rf, ok := ret.Get(0).(func(*db.Site, func(*db.Site, *gorm.DB) error) error); ok {
+		r0 = rf(site, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}

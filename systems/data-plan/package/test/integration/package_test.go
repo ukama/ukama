@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-
 type TestConfig struct {
 	ServiceHost string        `default:"localhost:9090"`
 	Queue       *config.Queue `default:"{}"`
@@ -42,7 +41,6 @@ func init() {
 	logrus.Infof("Config: %+v\n", tConfig)
 }
 func Test_FullFlow(t *testing.T) {
-	
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
@@ -53,31 +51,30 @@ func Test_FullFlow(t *testing.T) {
 		return
 	}
 	defer conn.Close()
-	
 
 	t.Run("Add", func(t *testing.T) {
 		var err error
-		
-			_, err = c.Add(ctx, &pb.AddPackageRequest{
-				Name:        "Daily-pack",
-				OrgID:       "5b5c3f5e-1f3b-4723-8f99-fe0ed6c539d2",
-				Active:      true,
-				Duration:    1,
-				SimType:     "INTER_MNO_ALL",
-				SmsVolume:   20,
-				DataVolume:  12,
-				VoiceVolume: 34,
-				OrgRatesID:  0,
-			})
-			assert.NoError(t, err)
+
+		_, err = c.Add(ctx, &pb.AddPackageRequest{
+			Name:        "Daily-pack",
+			OrgID:       "5b5c3f5e-1f3b-4723-8f99-fe0ed6c539d2",
+			Active:      true,
+			Duration:    1,
+			SimType:     "test",
+			SmsVolume:   20,
+			DataVolume:  12,
+			VoiceVolume: 34,
+			OrgRatesID:  0,
 		})
 		assert.NoError(t, err)
+	})
+	assert.NoError(t, err)
 
 	t.Run("Update", func(t *testing.T) {
 		var err error
 
 		_, err = c.Update(ctx, &pb.UpdatePackageRequest{
-			PackageID:          uuid.NewV4().String(),
+			PackageID:   uuid.NewV4().String(),
 			Name:        "Updated-Daily-pack",
 			Duration:    2,
 			SmsVolume:   40,
@@ -86,23 +83,23 @@ func Test_FullFlow(t *testing.T) {
 			OrgRatesID:  0,
 		})
 		assert.NoError(t, err)
-		
+
 	})
 	t.Run("Get", func(t *testing.T) {
-        packageResp, err := c.Get(ctx, &pb.GetPackageRequest{
-            PackageID: uuid.NewV4().String(),
-        })
-        assert.NoError(t, err)
-        assert.Equal(t, packageResp.Package.Name, "Weekly-pack")
-        assert.Equal(t, packageResp.Package.Duration, uint64(7))
-    })
+		packageResp, err := c.Get(ctx, &pb.GetPackageRequest{
+			PackageID: uuid.NewV4().String(),
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, packageResp.Package.Name, "Weekly-pack")
+		assert.Equal(t, packageResp.Package.Duration, uint64(7))
+	})
 
-    t.Run("Delete", func(t *testing.T) {
-        _, err := c.Delete(ctx, &pb.DeletePackageRequest{
-            PackageID: uuid.NewV4().String(),
-        })
-        assert.NoError(t, err)
-    })
+	t.Run("Delete", func(t *testing.T) {
+		_, err := c.Delete(ctx, &pb.DeletePackageRequest{
+			PackageID: uuid.NewV4().String(),
+		})
+		assert.NoError(t, err)
+	})
 }
 
 func CreatePackageClient() (*grpc.ClientConn, pb.PackagesServiceClient, error) {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	pb "github.com/ukama/ukama/systems/init/msgClient/pb/gen"
+	pb "github.com/ukama/ukama/systems/messaging/msgClient/pb/gen"
 	"google.golang.org/grpc"
 )
 

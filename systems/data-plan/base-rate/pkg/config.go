@@ -3,7 +3,6 @@ package pkg
 import (
 	"time"
 
-	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
@@ -12,7 +11,6 @@ type Config struct {
 	DB               *uconf.Database  `default:"{}"`
 	Grpc             *uconf.Grpc      `default:"{}"`
 	Queue            *uconf.Queue     `default:"{}"`
-	Metrics          *uconf.Metrics   `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
@@ -24,8 +22,9 @@ func NewConfig(name string) *Config {
 			DbName: name,
 		},
 		Service: uconf.LoadServiceHostConfig(name),
-		MsgClient: &config.MsgClient{
-			Timeout: 5 * time.Second,
+		MsgClient: &uconf.MsgClient{
+			Timeout:        5 * time.Second,
+			ListenerRoutes: nil,
 		},
 	}
 }

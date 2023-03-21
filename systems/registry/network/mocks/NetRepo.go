@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/registry/network/pkg/db"
+	gorm "gorm.io/gorm"
+
+	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -14,13 +16,13 @@ type NetRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: network
-func (_m *NetRepo) Add(network *db.Network) error {
-	ret := _m.Called(network)
+// Add provides a mock function with given fields: network, nestedFunc
+func (_m *NetRepo) Add(network *db.Network, nestedFunc func(*db.Network, *gorm.DB) error) error {
+	ret := _m.Called(network, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Network) error); ok {
-		r0 = rf(network)
+	if rf, ok := ret.Get(0).(func(*db.Network, func(*db.Network, *gorm.DB) error) error); ok {
+		r0 = rf(network, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}

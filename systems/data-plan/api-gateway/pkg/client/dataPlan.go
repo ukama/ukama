@@ -68,11 +68,11 @@ func (d *DataPlan) AddPackage(req *pb.AddPackageRequest) (*pb.AddPackageResponse
 	return d.packageClient.Add(ctx, req)
 }
 
-func (d *DataPlan) DeletePackage(req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
+func (d *DataPlan) DeletePackage(id string) (*pb.DeletePackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 
-	return d.packageClient.Delete(ctx, req)
+	return d.packageClient.Delete(ctx, &pb.DeletePackageRequest{Uuid: id})
 }
 
 func (d *DataPlan) UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
@@ -81,11 +81,11 @@ func (d *DataPlan) UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackag
 
 	return d.packageClient.Update(ctx, req)
 }
-func (d *DataPlan) GetPackage(req *pb.GetPackageRequest) (*pb.GetPackageResponse, error) {
+func (d *DataPlan) GetPackage(id string) (*pb.GetPackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
 
-	return d.packageClient.Get(ctx, req)
+	return d.packageClient.Get(ctx, &pb.GetPackageRequest{Uuid: id})
 }
 
 func (d *DataPlan) UploadBaseRates(req *pbBaseRate.UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
@@ -99,13 +99,13 @@ func (d *DataPlan) GetBaseRates(req *pbBaseRate.GetBaseRatesRequest) (*pbBaseRat
 	defer cancel()
 	return d.baseRateClient.GetBaseRates(ctx, req)
 }
-func (d *DataPlan) GetBaseRate(req *pbBaseRate.GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
+func (d *DataPlan) GetBaseRate(id string) (*pbBaseRate.GetBaseRateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
-	return d.baseRateClient.GetBaseRate(ctx, req)
+	return d.baseRateClient.GetBaseRate(ctx, &pbBaseRate.GetBaseRateRequest{Uuid: id})
 }
-func (d *DataPlan) GetPackageByOrg(req *pb.GetByOrgPackageRequest) (*pb.GetByOrgPackageResponse, error) {
+func (d *DataPlan) GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()
-	return d.packageClient.GetByOrg(ctx, req)
+	return d.packageClient.GetByOrg(ctx, &pb.GetByOrgPackageRequest{OrgId: orgId})
 }
