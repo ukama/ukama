@@ -18,6 +18,7 @@ type NetRepo interface {
 	// GetByOrgName(orgName string) ([]Network, error)
 	// Update(orgId uint, network *Network) error
 	Delete(orgName string, network string) error
+	GetNetworkCount(orgID uuid.UUID) (int64, error)
 }
 
 type netRepo struct {
@@ -124,4 +125,13 @@ func (n netRepo) Delete(orgName string, network string) error {
 	})
 
 	return err
+}
+
+func (n netRepo) GetNetworkCount(orgID uuid.UUID) (int64, error) {
+	var count int64
+	result := n.Db.GetGormDb().Where(&Network{OrgId: orgID}).Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return count, nil
 }

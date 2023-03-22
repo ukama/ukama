@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -26,23 +27,25 @@ const uuidParsingError = "Error parsing UUID"
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	netRepo        db.NetRepo
-	orgRepo        db.OrgRepo
-	siteRepo       db.SiteRepo
-	orgService     providers.OrgClientProvider
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
+	netRepo         db.NetRepo
+	orgRepo         db.OrgRepo
+	siteRepo        db.SiteRepo
+	orgService      providers.OrgClientProvider
+	msgbus          mb.MsgBusServiceClient
+	baseRoutingKey  msgbus.RoutingKeyBuilder
+	pushGatewayHost string
 }
 
 func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient) *NetworkServer {
+	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *NetworkServer {
 	return &NetworkServer{
-		netRepo:        netRepo,
-		orgRepo:        orgRepo,
-		siteRepo:       siteRepo,
-		orgService:     orgService,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		netRepo:         netRepo,
+		orgRepo:         orgRepo,
+		siteRepo:        siteRepo,
+		orgService:      orgService,
+		msgbus:          msgBus,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		pushGatewayHost: pushGatewayHost,
 	}
 }
 
@@ -111,6 +114,16 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
+	networkCount, err := n.netRepo.GetNetworkCount(org.Id)
+	if err != nil {
+		logrus.Errorf("failed to get network counts: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"org": org.Id.String()}, pkg.SystemName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
+
 	return &pb.AddResponse{
 		Network: dbNtwkToPbNtwk(network),
 		Org:     req.GetOrgName(),
@@ -167,7 +180,13 @@ func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (
 func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	logrus.Infof("Deleting network %s", req.Name)
 
-	err := n.netRepo.Delete(req.OrgName, req.Name)
+	org, err := n.orgRepo.GetByName(req.OrgName)
+	if err != nil {
+		logrus.Errorf("Failed to find org %s. Errors %s", req.OrgName, err.Error())
+		return nil, err
+	}
+
+	err = n.netRepo.Delete(req.OrgName, req.Name)
 	if err != nil {
 		logrus.Error(err)
 
@@ -180,6 +199,17 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
+	networkCount, err := n.netRepo.GetNetworkCount(org.Id)
+	if err != nil {
+		logrus.Errorf("failed to get network counts: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"org": org.Id.String()}, pkg.SystemName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
+
 	return &pb.DeleteResponse{}, nil
 }
 
@@ -216,6 +246,16 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 	err = n.msgbus.PublishRequest(route, req)
 	if err != nil {
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
+	siteCount, err := n.siteRepo.GetSiteCount(ntwk.Id)
+	if err != nil {
+		logrus.Errorf("failed to get site count: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": ntwk.OrgId.String(), "network": ntwk.Id.String()}, pkg.SystemName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
 	return &pb.AddSiteResponse{

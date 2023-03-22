@@ -16,6 +16,7 @@ type SiteRepo interface {
 	GetByNetwork(netID uuid.UUID) ([]Site, error)
 	// Update(site *Site) error
 	Delete(id uuid.UUID) error
+	GetSiteCount(netID uuid.UUID) (int64, error)
 
 	// AttachNodes
 	// DetachNodes
@@ -102,4 +103,13 @@ func (s siteRepo) Delete(siteID uuid.UUID) error {
 	})
 
 	return err
+}
+
+func (s siteRepo) GetSiteCount(netID uuid.UUID) (int64, error) {
+	var count int64
+	result := s.Db.GetGormDb().Where(&Site{NetworkId: netID}).Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return count, nil
 }
