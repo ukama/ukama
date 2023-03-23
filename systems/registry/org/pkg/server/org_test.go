@@ -44,6 +44,8 @@ func TestOrgServer_AddOrg(t *testing.T) {
 		Certificate: certificate,
 	}}).Return(nil).Once()
 	orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
+	orgRepo.On("GetMemberCount", mock.Anything).Return(int64(1), int64(0), nil).Once()
+	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "")
 

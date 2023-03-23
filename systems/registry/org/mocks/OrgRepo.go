@@ -136,6 +136,34 @@ func (_m *OrgRepo) GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*db.OrgUser, 
 	return r0, r1
 }
 
+// GetMemberCount provides a mock function with given fields: orgID
+func (_m *OrgRepo) GetMemberCount(orgID uuid.UUID) (int64, int64, error) {
+	ret := _m.Called(orgID)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(uuid.UUID) int64); ok {
+		r0 = rf(orgID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 int64
+	if rf, ok := ret.Get(1).(func(uuid.UUID) int64); ok {
+		r1 = rf(orgID)
+	} else {
+		r1 = ret.Get(1).(int64)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(uuid.UUID) error); ok {
+		r2 = rf(orgID)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // GetMembers provides a mock function with given fields: orgID
 func (_m *OrgRepo) GetMembers(orgID uuid.UUID) ([]db.OrgUser, error) {
 	ret := _m.Called(orgID)
