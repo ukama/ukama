@@ -30,9 +30,12 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 
 		MsgClient: &config.MsgClient{
-			Host:           "msg-client-billing-exporter:9095",
-			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.cdr.sim.usage"},
+			Host:    "msg-client-billing:9095",
+			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.cdr.sim.usage",
+				"event.cloud.registry.subscriber.create",
+			},
 		},
 	}
 }

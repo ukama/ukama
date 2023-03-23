@@ -15,6 +15,7 @@ import (
 
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 
+	client "github.com/ukama/ukama/systems/billing/exporter/pkg/clients"
 	"github.com/ukama/ukama/systems/billing/exporter/pkg/server"
 
 	log "github.com/sirupsen/logrus"
@@ -36,9 +37,6 @@ func main() {
 
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 
-	// simDB := initDb()
-
-	// runGrpcServer(simDB)
 	runGrpcServer()
 
 	log.Infof("Exiting service %s", pkg.ServiceName)
@@ -62,19 +60,6 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-// func initDb() sql.Db {
-// log.Infof("Initializing Database")
-
-// d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-
-// err := d.Init(&db.Sim{}, &db.Package{})
-// if err != nil {
-// log.Fatalf("Database initialization failed. Error: %v", err)
-// }
-
-// return d
-// }
-
 func runGrpcServer() {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
@@ -92,16 +77,12 @@ func runGrpcServer() {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	// pckgClient, err := providers.NewPackageClient(serviceConfig.DataPlan, pkg.IsDebugMode)
-	// if err != nil {
-	// log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
-	// serviceConfig.DataPlan, err)
-	// }
+	lagoClient := client.NewLagoClient(serviceConfig.LagoAPIKey, serviceConfig.LagoHost, serviceConfig.LagoPort)
 
-	simManagerEventServer := server.NewBillingExporterEventServer(serviceConfig.LagoHost, serviceConfig.LagoAPIKey, serviceConfig.LagoPort)
+	eSrv := server.NewBillingExporterEventServer(lagoClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		egenerated.RegisterEventNotificationServiceServer(s, simManagerEventServer)
+		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
 
 	go msgBusListener(mbClient)
