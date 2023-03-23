@@ -29,17 +29,16 @@ services:
 
 # Registry System
 
-  registry-api-gw:
+  registry:
     build: ./registry/api-gateway
     ports:
       - "8380:8080"
     restart: always
     depends_on:
       - postgresd
-      - network
-      - registry
-      - subscriber
       - org
+      - users
+      - network
 
 
   msg-client-registry:
@@ -191,6 +190,10 @@ services:
     restart: always
     depends_on:
       - postgresd
+      - sim
+      - subscriber-registry
+      - simmanager
+      - testagent
 
 
   msg-client-subscriber:
@@ -228,7 +231,7 @@ services:
       - postgresd
 
 
-  registry:
+  subscriber-registry:
     build: ./subscriber/registry
     ports:
       - "9592:9090"
@@ -239,7 +242,7 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
       - MSGCLIENT_HOST=msg-client-subscriber:9095
-      - REGISTRY_SERVICE_HOST=registry
+      - REGISTRY_SERVICE_HOST=subscriber-registry
       - REGISTRY_SERVICE_PORT=9090
     restart: always
     depends_on:
