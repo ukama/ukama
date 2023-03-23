@@ -88,7 +88,7 @@ func runGrpcServer(gormdb sql.Db) {
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
 		svcConf.OrgName, mbClient,
-	)
+		svcConf.PushGatewayHost)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)

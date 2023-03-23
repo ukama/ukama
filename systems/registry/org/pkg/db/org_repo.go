@@ -27,6 +27,7 @@ type OrgRepo interface {
 	GetMembers(orgID uuid.UUID) ([]OrgUser, error)
 	UpdateMember(orgID uuid.UUID, member *OrgUser) error
 	RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error
+	GetOrgCount() (int64, int64, error)
 }
 
 type orgRepo struct {
@@ -144,4 +145,21 @@ func (r *orgRepo) RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error {
 	}
 
 	return d.Error
+}
+
+func (r *orgRepo) GetOrgCount() (int64, int64, error) {
+	var activeOrgCount int64
+	var deactiveOrgCount int64
+
+	result := r.Db.GetGormDb().Model(&Org{}).Where("deactivated = ?", false).Count(&activeOrgCount)
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	result = r.Db.GetGormDb().Model(&Org{}).Where("seactivated = ?", true).Count(&deactiveOrgCount)
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	return activeOrgCount, deactiveOrgCount, nil
 }

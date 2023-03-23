@@ -43,8 +43,9 @@ func TestOrgServer_AddOrg(t *testing.T) {
 		Owner:       ownerUUID.String(),
 		Certificate: certificate,
 	}}).Return(nil).Once()
+	orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo)
+	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "")
 
 	// Act
 	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
@@ -69,7 +70,7 @@ func TestOrgServer_GetOrg(t *testing.T) {
 
 	orgRepo.On("Get", mock.Anything).Return(&db.Org{Id: orgID}, nil).Once()
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
 	orgResp, err := s.Get(context.TODO(), &pb.GetRequest{Id: orgID.String()})
 
 	assert.NoError(t, err)
@@ -81,7 +82,7 @@ func TestOrgServer_AddOrg_fails_without_owner_uuid(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
 		Org: &pb.Organization{Name: testOrgName},
 	})
@@ -94,7 +95,7 @@ func TestOrgServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
 	_, err := s.Add(context.TODO(), &pb.AddRequest{
 		Org: &pb.Organization{Owner: owner},
 	})

@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -22,20 +23,22 @@ import (
 
 type OrgService struct {
 	pb.UnimplementedOrgServiceServer
-	orgRepo        db.OrgRepo
-	userRepo       db.UserRepo
-	orgName        string
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	msgbus         mb.MsgBusServiceClient
+	orgRepo         db.OrgRepo
+	userRepo        db.UserRepo
+	orgName         string
+	baseRoutingKey  msgbus.RoutingKeyBuilder
+	msgbus          mb.MsgBusServiceClient
+	pushGatewayHost string
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *OrgService {
 	return &OrgService{
-		orgRepo:        orgRepo,
-		userRepo:       userRepo,
-		orgName:        defaultOrgName,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		msgbus:         msgBus,
+		orgRepo:         orgRepo,
+		userRepo:        userRepo,
+		orgName:         defaultOrgName,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		msgbus:          msgBus,
+		pushGatewayHost: pushGatewayHost,
 	}
 }
 
@@ -91,6 +94,21 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	err = o.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
+	actOrg, inactOrg, err := o.orgRepo.GetOrgCount()
+	if err != nil {
+		log.Errorf("failed to get Org count: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveOrgs, float64(actOrg), nil, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing active Org metric to pushgaway %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveOrgs, float64(inactOrg), nil, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing inactive Org metric to pushgaway %s", err.Error())
 	}
 
 	return &pb.AddResponse{Org: dbOrgToPbOrg(org)}, nil
