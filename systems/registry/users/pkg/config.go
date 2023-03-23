@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	NumberOfUsers = "platform_active_users"
-	GaugeType     = "gauge"
+	NumberOfActiveUsers   = "platform_active_users"
+	NumberOfInactiveUsers = "platform_inactive_users"
+	GaugeType             = "gauge"
 )
 
 type Config struct {
@@ -29,9 +30,15 @@ type Config struct {
 
 var UserMetric = []metric.MetricConfig{
 	{
-		Name:   NumberOfUsers,
+		Name:   NumberOfActiveUsers,
 		Type:   GaugeType,
-		Labels: map[string]string{"users": "active"},
+		Labels: map[string]string{"state": "active"},
+		Value:  0,
+	},
+	{
+		Name:   NumberOfInactiveUsers,
+		Type:   GaugeType,
+		Labels: map[string]string{"state": "inactive"},
 		Value:  0,
 	},
 }

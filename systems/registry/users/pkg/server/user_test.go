@@ -87,6 +87,7 @@ func TestUserService_Deactivate(t *testing.T) {
 	}), mock.Anything).Return(nil)
 
 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeactivateRequest{UserUuid: userUUID.String()}).Return(nil).Once()
+	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
 		srv := NewUserService(userRepo, nil, msgclientRepo, "")
