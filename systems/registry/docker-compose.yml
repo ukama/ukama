@@ -6,7 +6,7 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Pass2020!
+      - POSTGRES_PASSWORD=ThisIsUkamaXPass
     networks:
       - ukama-net
     volumes:
@@ -32,7 +32,7 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=Pass2020!
+      - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - BOOTSTRAP_URL=bootstrap.dev.ukama.com
       - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
@@ -58,7 +58,7 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=Pass2020!
+      - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
@@ -87,7 +87,7 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=Pass2020!
+      - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
@@ -136,7 +136,7 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=Pass2020!
+      - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
       - SYSTEM=registry
