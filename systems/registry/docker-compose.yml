@@ -6,22 +6,22 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=ThisIsUkamaXPass
+      - POSTGRES_PASSWORD=Pass2020!
     networks:
       - ukama-net
     volumes:
       - postgress-data:/var/lib/postgresql
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-        - 5672:5672
-        - 15672:15672
-    networks:
-      - ukama-net
-    volumes:
-        - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
-        - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   ports:
+  #       - 5672:5672
+  #       - 15672:15672
+  #   networks:
+  #     - ukama-net
+  #   volumes:
+  #       - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
+  #       - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
 
   network:
     build:
@@ -32,18 +32,18 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - BOOTSTRAP_URL=bootstrap.dev.ukama.com
       - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
       - MSGCLIENT_HOST=msgclient:9095
       - NETWORK_SERVICE_HOST=network
       - NETWORK_SERVICE_PORT=9070
-      - PUSHGATEWAY=registryPushgateway:9091
+      - PUSHGATEWAY=192.168.0.14:9091
     restart: always
     networks:
       - ukama-net
@@ -58,7 +58,7 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
@@ -68,11 +68,11 @@ services:
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
       - MSGCLIENT_HOST=msgclient:9095
       - ORG_SERVICE_HOST=org
       - ORG_SERVICE_PORT=9070
-      - PUSHGATEWAY=registryPushgateway:9091
+      - PUSHGATEWAY=192.168.0.14:9091
     restart: always
     networks:
       - ukama-net
@@ -87,18 +87,18 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
       - ORGOWNERNAME=ukama-test-org-owner
       - ORGOWNEREMAIL=ukama-test-org-owner@domain.com
       - ORGOWNERPHONE=0123456789
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
       - MSGCLIENT_HOST=msgclient:9095
       - USERS_SERVICE_HOST=users
       - USERS_SERVICE_PORT=9071
-      - PUSHGATEWAY=registryPushgateway:9091
+      - PUSHGATEWAY=192.168.0.14:9091
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
       # - SIMMANAGER_TIMEOUT=3s
@@ -136,24 +136,23 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
       - SYSTEM=registry
     restart: always
     networks:
       - ukama-net
     depends_on:
       - postgresd
-      - rabbitmq
 
-  registryPushgateway:
-    image: prom/pushgateway
-    restart: unless-stopped
-    ports:
-      - "9078:9091"
-    networks:
-      - ukama-net
+  # registryPushgateway:
+  #   image: prom/pushgateway
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9078:9091"
+  #   networks:
+  #     - ukama-net
 
 networks:
   ukama-net:
