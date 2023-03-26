@@ -10,19 +10,17 @@ services:
         - prometheus-data:/prometheus
     command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-        - 5672:5672
-        - 15672:15672
-    volumes:
-        - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
-        - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   ports:
+  #       - 5672:5672
+  #       - 15672:15672
+  #   volumes:
+  #       - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
+  #       - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
 
   postgresd:
     image: postgres:13.3
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=Pass2020!
@@ -41,7 +39,7 @@ services:
       - DB_HOST=postgresd
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
       - MSGCLIENT_HOST=msgclient:9095
       - EXPORTER_SERVICE_HOST=exporter
       - EXPORTER_SERVICE_PORT=9092
@@ -62,13 +60,13 @@ services:
   msgclient:
     build: ../messaging/msgClient
     ports:
-      - "9080:9095"
+      - "9095:9095"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
       - MSGCLIENT_HOST=msg-client-subscriber:9095
       - SYSTEM=metrics
     restart: always
@@ -78,7 +76,6 @@ services:
   
   pushgateway:
     image: prom/pushgateway
-    container_name: pushgateway
     restart: unless-stopped
     expose:
       - 9091
