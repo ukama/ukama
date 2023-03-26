@@ -437,13 +437,13 @@ func (o *OrgService) pushOrgCountMetric() error {
 		return err
 	}
 
-	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveOrgs, float64(actOrg), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.OrgMetrics, pkg.NumberOfActiveOrgs, float64(actOrg), nil, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing active Org metric to pushgateway %s", err.Error())
 		return err
 	}
 
-	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveOrgs, float64(inactOrg), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.OrgMetrics, pkg.NumberOfInactiveOrgs, float64(inactOrg), nil, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing inactive Org metric to pushgateway %s", err.Error())
 		return err
@@ -459,13 +459,13 @@ func (o *OrgService) pushOrgMemberCountMetric(orgId uuid.UUID) error {
 		return err
 	}
 
-	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveOrgs, float64(actMemOrg), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.OrgMetrics, pkg.NumberOfActiveMembersOfOrgs, float64(actMemOrg), nil, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing active members of Org metric to pushgateway %s", err.Error())
 		return err
 	}
 
-	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveOrgs, float64(inactMemOrg), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.OrgMetrics, pkg.NumberOfInactiveMembersOfOrgs, float64(inactMemOrg), nil, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing inactive members Org metric to pushgateway %s", err.Error())
 		return err
@@ -481,13 +481,13 @@ func (o *OrgService) pushUserCountMetric() error {
 		return err
 	}
 
-	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(actUser), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.OrgMetrics, pkg.NumberOfActiveUsers, float64(actUser), nil, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing active users of Org metric to pushgateway %s", err.Error())
 		return err
 	}
 
-	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inactUser), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(o.pushGatewayHost, pkg.OrgMetrics, pkg.NumberOfInactiveUsers, float64(inactUser), nil, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing inactive users Org metric to pushgateway %s", err.Error())
 		return err

@@ -30,7 +30,7 @@ type Config struct {
 	PushGatewayHost   string `default:"http://localhost:9091"`
 }
 
-var UserMetric = []metric.MetricConfig{
+var OrgMetrics = []metric.MetricConfig{
 	{
 		Name:   NumberOfActiveOrgs,
 		Type:   GaugeType,
