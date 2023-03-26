@@ -43,7 +43,7 @@ services:
       - MSGCLIENT_HOST=msgclient:9095
       - NETWORK_SERVICE_HOST=network
       - NETWORK_SERVICE_PORT=9070
-      - PUSHGATEWAY=192.168.0.14:9091
+      - PUSHGATEWAYHOST=192.168.0.14:9091
     restart: always
     networks:
       - ukama-net
@@ -72,7 +72,7 @@ services:
       - MSGCLIENT_HOST=msgclient:9095
       - ORG_SERVICE_HOST=org
       - ORG_SERVICE_PORT=9070
-      - PUSHGATEWAY=192.168.0.14:9091
+      - PUSHGATEWAYHOST=192.168.0.14:9091
     restart: always
     networks:
       - ukama-net
@@ -98,7 +98,7 @@ services:
       - MSGCLIENT_HOST=msgclient:9095
       - USERS_SERVICE_HOST=users
       - USERS_SERVICE_PORT=9071
-      - PUSHGATEWAY=192.168.0.14:9091
+      - PUSHGATEWAYHOST=192.168.0.14:9091
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
       # - SIMMANAGER_TIMEOUT=3s
