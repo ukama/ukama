@@ -88,12 +88,12 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
@@ -190,11 +190,11 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
@@ -237,7 +237,7 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(u.pushGatewayHost, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
