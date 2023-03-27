@@ -35,7 +35,7 @@ type Package struct {
 	SimId     uuid.UUID `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;not null;type:uuid"`
 	StartDate time.Time
 	EndDate   time.Time
-	PackageId uuid.UUID `gorm:"not null;type:uuid"`
+	PlanId    uuid.UUID `gorm:"not null;type:uuid"`
 	IsActive  bool      `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;default:false"`
 }
 

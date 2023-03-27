@@ -236,6 +236,7 @@ func (this *RemovePackageResponse) Validate() error {
 }
 
 var _regex_Package_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Package_PlanId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Package) Validate() error {
 	if !_regex_Package_Id.MatchString(this.Id) {
@@ -253,6 +254,12 @@ func (this *Package) Validate() error {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.EndDate); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("EndDate", err)
 		}
+	}
+	if !_regex_Package_PlanId.MatchString(this.PlanId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("PlanId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PlanId))
+	}
+	if this.PlanId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("PlanId", fmt.Errorf(`value '%v' must not be an empty string`, this.PlanId))
 	}
 	return nil
 }

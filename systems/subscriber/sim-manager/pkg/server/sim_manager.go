@@ -182,8 +182,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	firstPackage := &sims.Package{
-		PackageId: packageID,
-		IsActive:  false,
+		PlanId:   packageID,
+		IsActive: false,
 	}
 
 	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
@@ -400,7 +400,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		SimId:     sim.Id,
 		StartDate: startDate,
 		EndDate:   startDate.Add(time.Duration(pkgInfo.Duration)),
-		PackageId: packageID,
+		PlanId:    packageID,
 		IsActive:  false,
 	}
 
@@ -520,6 +520,18 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	if err != nil {
 		return nil, status.Errorf(codes.Internal,
 			"failed to set package as active. Error %s", err.Error())
+	}
+
+	sim, err = s.simRepo.Get(simID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	route := s.baseRoutingKey.SetAction("activate").SetObject("package").MustBuild()
+
+	err = s.msgbus.PublishRequest(route, dbSimToPbSim(sim))
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
 	return &pb.SetActivePackageResponse{}, nil
@@ -687,15 +699,16 @@ func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {
 
 func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	res := &pb.Package{
-		Id: pkg.Id.String(),
-	}
-
-	if !pkg.EndDate.IsZero() {
-		res.EndDate = timestamppb.New(pkg.EndDate)
+		Id:     pkg.Id.String(),
+		PlanId: pkg.PlanId.String(),
 	}
 
 	if !pkg.StartDate.IsZero() {
 		res.StartDate = timestamppb.New(pkg.StartDate)
+	}
+
+	if !pkg.EndDate.IsZero() {
+		res.EndDate = timestamppb.New(pkg.EndDate)
 	}
 
 	return res

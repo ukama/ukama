@@ -136,6 +136,7 @@ message Package {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     google.protobuf.Timestamp startDate = 2 [json_name = "start_date"];
     google.protobuf.Timestamp endDate = 3 [json_name = "end_date"];
+    string planId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
 }
 
 

@@ -338,9 +338,9 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			mock.Anything).Return(nil).Once()
 
 		pkg := &sims.Package{
-			SimId:     sim.Id,
-			PackageId: packageID,
-			IsActive:  false,
+			SimId:    sim.Id,
+			PlanId:   packageID,
+			IsActive: false,
 		}
 
 		packageRepo.On("Add", pkg,
@@ -580,6 +580,8 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
 
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
 		simRepo.On("Get", simID).
 			Return(&db.Sim{Id: simID,
 				IsPhysical: false,
@@ -601,7 +603,16 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			},
 			mock.Anything).Return(nil).Once()
 
-		s := NewSimManagerServer(simRepo, packageRepo, nil, nil, nil, nil, "", nil)
+		simRepo.On("Get", simID).
+			Return(&db.Sim{Id: simID,
+				IsPhysical: false,
+				Status:     db.SimStatusActive,
+			}, nil).
+			Once()
+
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		s := NewSimManagerServer(simRepo, packageRepo, nil, nil, nil, nil, "", msgbusClient)
 
 		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
 			SimId:     simID.String(),
@@ -840,7 +851,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			SimId:     sim.Id,
 			StartDate: startDate,
 			EndDate:   startDate.Add(time.Duration(pkgInfo.Duration)),
-			PackageId: packageID,
+			PlanId:    packageID,
 			IsActive:  false,
 		}
 
@@ -1053,7 +1064,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			SimId:     sim.Id,
 			StartDate: startDate,
 			EndDate:   startDate.Add(time.Duration(pkgInfo.Duration)),
-			PackageId: packageID,
+			PlanId:    packageID,
 			IsActive:  false,
 		}
 
