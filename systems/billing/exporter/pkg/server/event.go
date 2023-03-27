@@ -17,9 +17,7 @@ import (
 )
 
 const (
-	simUsageRoutingKey         = "event.cloud.cdr.sim.usage"
-	subscriberCreateRoutingKey = "event.cloud.registry.subscriber.create"
-	handlerTimeoutFactor       = 3
+	handlerTimeoutFactor = 3
 )
 
 type BillingExporterEventServer struct {
@@ -37,7 +35,7 @@ func (b *BillingExporterEventServer) EventNotification(ctx context.Context, e *e
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case simUsageRoutingKey:
+	case "event.cloud.cdr.sim.usage":
 		msg, err := unmarshalOperatorSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -48,13 +46,35 @@ func (b *BillingExporterEventServer) EventNotification(ctx context.Context, e *e
 			return nil, err
 		}
 
-	case subscriberCreateRoutingKey:
+	case "event.cloud.registry.subscriber.create":
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
 		err = handleEventCloudRegistrySubscriberCreate(e.RoutingKey, msg, b)
+		if err != nil {
+			return nil, err
+		}
+
+	case "event.cloud.registry.subscriber.update":
+		msg, err := unmarshalSubscriber(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleEventCloudRegistrySubscriberUpdate(e.RoutingKey, msg, b)
+		if err != nil {
+			return nil, err
+		}
+
+	case "event.cloud.registry.subscriber.delete":
+		msg, err := unmarshalSubscriber(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleEventCloudRegistrySubscriberDelete(e.RoutingKey, msg, b)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +91,7 @@ func unmarshalOperatorSimUsage(msg *anypb.Any) (*operatorPb.SimUsage, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal operator SimUsage message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}
@@ -97,13 +117,13 @@ func handleEventCloudCdrSimUsage(key string, msg *operatorPb.SimUsage, b *Billin
 		},
 	}
 
-	log.Infof("Sending usage event %v to lago billing", eventInput)
+	log.Infof("Sending operator data usage event %v to billing server", eventInput)
 
 	err := b.client.L.Event().Create(ctx, eventInput)
 	if err != nil {
-		log.Errorf("Error while sending data usage to lago instance: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
+		log.Errorf("Error while sending operator data usage event to billing server: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
 
-		return fmt.Errorf("Failed to send data usage to lago instance: %v", err)
+		return fmt.Errorf("failed to send operator data usage event to billing server: %v", err)
 	}
 
 	return nil
@@ -114,7 +134,7 @@ func unmarshalSubscriber(msg *anypb.Any) (*subPb.Subscriber, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}
@@ -136,17 +156,61 @@ func handleEventCloudRegistrySubscriberCreate(key string, msg *subPb.Subscriber,
 		Phone:        msg.PhoneNumber,
 	}
 
-	log.Infof("Sending usage event %v to billing", customerInput)
+	log.Infof("Sending subscriber create event %v to billing server", customerInput)
 
 	customer, err := b.client.L.Customer().Create(ctx, customerInput)
-
 	if err != nil {
-		log.Errorf("Error while sending data usage to billing instance: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
+		log.Errorf("Error while sending subscriber creation event to billing server: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
 
-		return fmt.Errorf("Failed to send data usage to billing instance: %v", err)
+		return fmt.Errorf("failed to send subscriber creation event to billing server: %v", err)
 	}
 
 	log.Infof("Successfuly registered customer %v", customer)
+
+	return nil
+}
+
+func handleEventCloudRegistrySubscriberUpdate(key string, msg *subPb.Subscriber, b *BillingExporterEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	customerInput := &lago.CustomerInput{
+		ExternalID:   msg.SubscriberId,
+		Email:        msg.Email,
+		AddressLine1: msg.Address,
+		Phone:        msg.PhoneNumber,
+	}
+
+	log.Infof("Sending subscriber update event %v to billing", customerInput)
+
+	customer, err := b.client.L.Customer().Update(ctx, customerInput)
+	if err != nil {
+		log.Errorf("Error while sending subscriber update event to billing server: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
+
+		return fmt.Errorf("failed to send subscriber update evetn to billing server: %v", err)
+	}
+
+	log.Infof("Successfuly updated customer %v", customer)
+
+	return nil
+}
+
+func handleEventCloudRegistrySubscriberDelete(key string, msg *subPb.Subscriber, b *BillingExporterEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	customer, err := b.client.L.Customer().Delete(ctx, msg.SubscriberId)
+	if err != nil {
+		log.Errorf("Error while sending subscriber deletion event to billing server: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
+
+		return fmt.Errorf("failed to send subscriber deletion evetn to billing server: %v", err)
+	}
+
+	log.Infof("Successfuly deleted customer %v", customer)
 
 	return nil
 }
