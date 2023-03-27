@@ -36,7 +36,7 @@ type Metric struct {
 
 type MetricsConfig struct {
 	Metrics             map[string]Metric `json:"metrics"`
-	MetricsServer       string
+	MetricsServer       string            `default:"http://localhost:9090"`
 	Timeout             time.Duration
 	DefaultRateInterval string
 }
@@ -51,6 +51,14 @@ var defaultPrometheusMetric = map[string]Metric{
 	"active_sims":        Metric{false, "number_of_active_sims", ""},
 	"inactive_sims":      Metric{false, "number_of_inactive_sims", ""},
 	"terminated_sims":    Metric{false, "number_of_terminated_sims", ""},
+	"active_users":       Metric{false, "number_of_active_users", ""},
+	"inactive_users":     Metric{false, "number_of_inactive_users", ""},
+	"active_orgs":        Metric{false, "number_of_active_org", ""},
+	"inactive_orgs":      Metric{false, "number_of_inactive_org", ""},
+	"active_members":     Metric{false, "number_of_active_org_members", ""},
+	"inactive_members":   Metric{false, "number_of_inactive_org_members", ""},
+	"networks":           Metric{false, "number_of_networks", ""},
+	"sites":              Metric{false, "number_of_sites", ""},
 }
 
 type Kratos struct {
@@ -94,7 +102,6 @@ func NewConfig() *Config {
 
 		MetricsConfig: &MetricsConfig{
 			Metrics:             defaultPrometheusMetric,
-			MetricsServer:       "http://localhost:9090",
 			Timeout:             time.Second * 5,
 			DefaultRateInterval: "5m",
 		},

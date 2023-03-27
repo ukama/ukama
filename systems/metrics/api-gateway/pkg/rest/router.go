@@ -109,7 +109,7 @@ func (r *Router) init() {
 			info.Description = "Get metrics for an org. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.orgMetricHandler, http.StatusOK))
 
-	metrics.GET("/networks/:network/metrics/:metric", []fizz.OperationOption{
+	metrics.GET("/networks/:network/orgs/:org/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for an network. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.networkMetricHandler, http.StatusOK))

@@ -32,7 +32,6 @@ services:
       context: ./exporter
       dockerfile: ./Dockerfile
     ports:
-      - "9092:9092"
       - "10251:10251"
     environment:
       - DEBUGMODE=true
@@ -49,18 +48,22 @@ services:
 
 
   metricsgateway:
-    build: ./api-gateway
+    build: 
+      context: ./api-gateway
+      dockerfile: ./Dockerfile
     ports:
       - "8082:8080"
+    environment:
+      - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
     restart: always
     depends_on:
       - postgresd
       - exporter
 
   msgclient:
-    build: ../messaging/msgClient
-    ports:
-      - "9095:9095"
+    build: 
+      context: ../messaging/msgClient
+      dockerfile: ./Dockerfile
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
@@ -77,8 +80,6 @@ services:
   pushgateway:
     image: prom/pushgateway
     restart: unless-stopped
-    expose:
-      - 9091
     ports:
       - "9091:9091"
 
@@ -86,3 +87,6 @@ volumes:
   postgress-data:
   prometheus-data:
 
+networks:
+  ukama-net:
+    name: metrics_network

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/metrics"
 
 	"github.com/ukama/ukama/systems/metrics/api-gateway/cmd/version"
@@ -19,6 +20,7 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
+	log.Infof("Config %+v", svcConf.MetricsConfig)
 	clientSet := rest.NewClientsSet(&svcConf.Services, svcConf.MetricsStore, svcConf.DebugMode)
 
 	metrics.StartMetricsServer(&svcConf.MetricsServer)
