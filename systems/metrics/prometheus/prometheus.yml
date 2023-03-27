@@ -33,12 +33,10 @@ scrape_configs:
     static_configs:
       - targets: ["pushgateway:9091"]
         labels:
-          orgName: "ukama"
           env: "dev"
 
   - job_name: "ukama-org"
     static_configs:
       - targets: ["exporter:10251"]
         labels:
-          orgName: "ukama"
           env: dev
