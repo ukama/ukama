@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/ms
 
 replace github.com/ukama/ukama/systems/subscriber/registry => ../../subscriber/registry
 
+replace github.com/ukama/ukama/systems/subscriber/sim-manager => ../../subscriber/sim-manager
+
 replace github.com/ukama/telna/cdr => ../../../../telna-agent/cdr
 
 replace github.com/ukama/ukama/systems/billing/exporter => ./
@@ -19,6 +21,7 @@ require (
 	github.com/ukama/telna/cdr v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
 	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v2 v2.4.0

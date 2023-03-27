@@ -9,12 +9,16 @@ import (
 	operatorPb "github.com/ukama/telna/cdr/pb/gen"
 	client "github.com/ukama/ukama/systems/billing/exporter/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	subPb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	smpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	log "github.com/sirupsen/logrus"
 )
+
+// TODO: We need to think about retry policies for failing interaction between our backend and the upstream billing service
+// provider
 
 const (
 	handlerTimeoutFactor = 3
@@ -46,6 +50,7 @@ func (b *BillingExporterEventServer) EventNotification(ctx context.Context, e *e
 			return nil, err
 		}
 
+	// Create customer
 	case "event.cloud.registry.subscriber.create":
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
@@ -57,6 +62,7 @@ func (b *BillingExporterEventServer) EventNotification(ctx context.Context, e *e
 			return nil, err
 		}
 
+	// update customer
 	case "event.cloud.registry.subscriber.update":
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
@@ -68,6 +74,7 @@ func (b *BillingExporterEventServer) EventNotification(ctx context.Context, e *e
 			return nil, err
 		}
 
+	// delete customer
 	case "event.cloud.registry.subscriber.delete":
 		msg, err := unmarshalSubscriber(e.Msg)
 		if err != nil {
@@ -75,6 +82,18 @@ func (b *BillingExporterEventServer) EventNotification(ctx context.Context, e *e
 		}
 
 		err = handleEventCloudRegistrySubscriberDelete(e.RoutingKey, msg, b)
+		if err != nil {
+			return nil, err
+		}
+
+	// add or update subscrition to customer
+	case "event.cloud.simmanager.package.activate":
+		msg, err := unmarshalSim(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleEventCloudSimManagerSetActivePackageForSim(e.RoutingKey, msg, b)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +110,8 @@ func unmarshalOperatorSimUsage(msg *anypb.Any) (*operatorPb.SimUsage, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal operator SimUsage message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal operator SimUsage message with : %+v. Error %s.",
+			msg, err.Error())
 
 		return nil, err
 	}
@@ -121,7 +141,8 @@ func handleEventCloudCdrSimUsage(key string, msg *operatorPb.SimUsage, b *Billin
 
 	err := b.client.L.Event().Create(ctx, eventInput)
 	if err != nil {
-		log.Errorf("Error while sending operator data usage event to billing server: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
+		log.Errorf("Error while sending operator data usage event to billing server: %v, %v, %v",
+			err.Err, err.HTTPStatusCode, err.Msg)
 
 		return fmt.Errorf("failed to send operator data usage event to billing server: %v", err)
 	}
@@ -129,8 +150,8 @@ func handleEventCloudCdrSimUsage(key string, msg *operatorPb.SimUsage, b *Billin
 	return nil
 }
 
-func unmarshalSubscriber(msg *anypb.Any) (*subPb.Subscriber, error) {
-	p := &subPb.Subscriber{}
+func unmarshalSubscriber(msg *anypb.Any) (*subpb.Subscriber, error) {
+	p := &subpb.Subscriber{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
@@ -142,7 +163,7 @@ func unmarshalSubscriber(msg *anypb.Any) (*subPb.Subscriber, error) {
 	return p, nil
 }
 
-func handleEventCloudRegistrySubscriberCreate(key string, msg *subPb.Subscriber, b *BillingExporterEventServer) error {
+func handleEventCloudRegistrySubscriberCreate(key string, msg *subpb.Subscriber, b *BillingExporterEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -160,7 +181,8 @@ func handleEventCloudRegistrySubscriberCreate(key string, msg *subPb.Subscriber,
 
 	customer, err := b.client.L.Customer().Create(ctx, customerInput)
 	if err != nil {
-		log.Errorf("Error while sending subscriber creation event to billing server: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
+		log.Errorf("Error while sending subscriber creation event to billing server: %v, %v, %v",
+			err.Err, err.HTTPStatusCode, err.Msg)
 
 		return fmt.Errorf("failed to send subscriber creation event to billing server: %v", err)
 	}
@@ -170,7 +192,7 @@ func handleEventCloudRegistrySubscriberCreate(key string, msg *subPb.Subscriber,
 	return nil
 }
 
-func handleEventCloudRegistrySubscriberUpdate(key string, msg *subPb.Subscriber, b *BillingExporterEventServer) error {
+func handleEventCloudRegistrySubscriberUpdate(key string, msg *subpb.Subscriber, b *BillingExporterEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -187,7 +209,8 @@ func handleEventCloudRegistrySubscriberUpdate(key string, msg *subPb.Subscriber,
 
 	customer, err := b.client.L.Customer().Update(ctx, customerInput)
 	if err != nil {
-		log.Errorf("Error while sending subscriber update event to billing server: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
+		log.Errorf("Error while sending subscriber update event to billing server: %v, %v, %v",
+			err.Err, err.HTTPStatusCode, err.Msg)
 
 		return fmt.Errorf("failed to send subscriber update evetn to billing server: %v", err)
 	}
@@ -197,7 +220,7 @@ func handleEventCloudRegistrySubscriberUpdate(key string, msg *subPb.Subscriber,
 	return nil
 }
 
-func handleEventCloudRegistrySubscriberDelete(key string, msg *subPb.Subscriber, b *BillingExporterEventServer) error {
+func handleEventCloudRegistrySubscriberDelete(key string, msg *subpb.Subscriber, b *BillingExporterEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -205,12 +228,65 @@ func handleEventCloudRegistrySubscriberDelete(key string, msg *subPb.Subscriber,
 
 	customer, err := b.client.L.Customer().Delete(ctx, msg.SubscriberId)
 	if err != nil {
-		log.Errorf("Error while sending subscriber deletion event to billing server: %v, %v, %v", err.Err, err.HTTPStatusCode, err.Msg)
+		log.Errorf("Error while sending subscriber deletion event to billing server: %v, %v, %v",
+			err.Err, err.HTTPStatusCode, err.Msg)
 
 		return fmt.Errorf("failed to send subscriber deletion evetn to billing server: %v", err)
 	}
 
 	log.Infof("Successfuly deleted customer %v", customer)
+
+	return nil
+}
+
+func unmarshalSim(msg *anypb.Any) (*smpb.Sim, error) {
+	p := &smpb.Sim{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("failed to Unmarshal sim manager's sim message with : %+v. Error %s.", msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func handleEventCloudSimManagerSetActivePackageForSim(key string, msg *smpb.Sim, b *BillingExporterEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	// Terminate the previous subscription for that sim (plan)
+	_, err := b.client.L.Subscription().Terminate(ctx, msg.Id)
+	if err != nil {
+		log.Errorf("Error while sending subscription termination event to billing server: %v, %v, %v",
+			err.Err, err.HTTPStatusCode, err.Msg)
+	}
+
+	subscriptionAt := msg.Package.StartDate.AsTime()
+
+	// Because the Plan object does not expose an external_plan_id, we need to use
+	// our backend plan_id as billing provider's plan_code
+	subscriptionInput := &lago.SubscriptionInput{
+		ExternalID:         msg.Id,
+		ExternalCustomerID: msg.SubscriberId,
+		PlanCode:           msg.Package.PlanId,
+		SubscriptionAt:     &subscriptionAt,
+	}
+
+	log.Infof("Sending sim package activation event %v to billing server", subscriptionInput)
+
+	subscription, err := b.client.L.Subscription().Create(ctx, subscriptionInput)
+	if err != nil {
+		log.Errorf("Error while sending subscription creation event to billing server: %v, %v, %v",
+			err.Err, err.HTTPStatusCode, err.Msg)
+
+		return fmt.Errorf("failed to send subscription creation event to billing server: %v", err)
+	}
+
+	log.Infof("Successfuly created subscription %v", subscription)
 
 	return nil
 }
