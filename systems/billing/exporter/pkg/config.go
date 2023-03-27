@@ -35,6 +35,9 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.cdr.sim.usage",
 				"event.cloud.registry.subscriber.create",
+				"event.cloud.registry.subscriber.update",
+				"event.cloud.registry.subscriber.delete",
+				"event.cloud.simmanager.package.activate",
 			},
 		},
 	}
