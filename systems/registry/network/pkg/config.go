@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	NumberOfNetwork = "number_of_network"
-	NumberOfSites   = "number_of_sites"
-	GaugeType       = "gauge"
+	NumberOfNetworks = "number_of_networks"
+	NumberOfSites    = "number_of_sites"
+	GaugeType        = "gauge"
 )
 
 type Config struct {
@@ -27,7 +27,7 @@ type Config struct {
 
 var NetworkMetric = []metric.MetricConfig{
 	{
-		Name:   NumberOfNetwork,
+		Name:   NumberOfNetworks,
 		Type:   GaugeType,
 		Labels: map[string]string{"org": ""},
 		Value:  0,
