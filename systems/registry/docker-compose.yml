@@ -1,28 +1,5 @@
 version: "3.2"
 services:
-  postgresd:
-    image: postgres:13.3
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Pass2020!
-    networks:
-      - ukama-net
-    volumes:
-      - postgress-data:/var/lib/postgresql
-
-  # rabbitmq:
-  #   image: rabbitmq:3-management
-  #   ports:
-  #       - 5672:5672
-  #       - 15672:15672
-  #   networks:
-  #     - ukama-net
-  #   volumes:
-  #       - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
-  #       - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
-
   network:
     build:
       context: ./network
@@ -39,16 +16,15 @@ services:
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
-      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient:9095
       - NETWORK_SERVICE_HOST=network
       - NETWORK_SERVICE_PORT=9090
-      - PUSHGATEWAYHOST=192.168.0.14:9091
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd
       - msgclient
 
   org:
@@ -68,17 +44,16 @@ services:
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
-      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient:9095
       - ORG_SERVICE_HOST=org
       - ORG_SERVICE_PORT=9070
-      - PUSHGATEWAYHOST=192.168.0.14:9091
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
     restart: always
     networks:
       - ukama-net
     depends_on:
       - msgclient
-      - postgresd
 
   users:
     build: ./users
@@ -94,11 +69,11 @@ services:
       - ORGOWNERNAME=ukama-test-org-owner
       - ORGOWNEREMAIL=ukama-test-org-owner@domain.com
       - ORGOWNERPHONE=0123456789
-      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient:9095
       - USERS_SERVICE_HOST=users
       - USERS_SERVICE_PORT=9071
-      - PUSHGATEWAYHOST=192.168.0.14:9091
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
       # - SIMMANAGER_TIMEOUT=3s
@@ -107,7 +82,6 @@ services:
       - ukama-net
     depends_on:
       - msgclient
-      - postgresd
 
 
   api-gateway:
@@ -138,28 +112,13 @@ services:
       - DB_HOST=postgresd
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - SYSTEM=registry
     restart: always
     networks:
       - ukama-net
-    depends_on:
-      - postgresd
-
-  # registryPushgateway:
-  #   image: prom/pushgateway
-  #   restart: unless-stopped
-  #   ports:
-  #     - "9078:9091"
-  #   networks:
-  #     - ukama-net
-
+      
 networks:
   ukama-net:
-      ipam:
-        driver: default
-        config:
-            - subnet: 10.10.0.0/24
-
-volumes:
-  postgress-data:
+    external:
+      name: ukama_dev-net
