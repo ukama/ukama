@@ -129,7 +129,7 @@ func (n netRepo) Delete(orgName string, network string) error {
 
 func (n netRepo) GetNetworkCount(orgID uuid.UUID) (int64, error) {
 	var count int64
-	result := n.Db.GetGormDb().Where(&Network{OrgId: orgID}).Count(&count)
+	result := n.Db.GetGormDb().Model(&Network{}).Where("org_id = ?", orgID).Count(&count)
 	if result.Error != nil {
 		return 0, result.Error
 	}

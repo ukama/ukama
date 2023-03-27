@@ -42,7 +42,7 @@ services:
       - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
       - MSGCLIENT_HOST=msgclient:9095
       - NETWORK_SERVICE_HOST=network
-      - NETWORK_SERVICE_PORT=9070
+      - NETWORK_SERVICE_PORT=9090
       - PUSHGATEWAYHOST=192.168.0.14:9091
     restart: always
     networks:

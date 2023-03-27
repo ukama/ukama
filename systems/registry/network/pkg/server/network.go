@@ -119,7 +119,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		logrus.Errorf("failed to get network counts: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"org": org.Id.String()}, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"org": org.Id.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
@@ -205,7 +205,7 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 		logrus.Errorf("failed to get network counts: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"org": org.Id.String()}, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetwork, float64(networkCount), map[string]string{"org": org.Id.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
@@ -253,7 +253,7 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 		logrus.Errorf("failed to get site count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": ntwk.OrgId.String(), "network": ntwk.Id.String()}, pkg.SystemName)
+	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": ntwk.OrgId.String(), "network": ntwk.Id.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}

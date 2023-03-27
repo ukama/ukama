@@ -107,7 +107,7 @@ func (s siteRepo) Delete(siteID uuid.UUID) error {
 
 func (s siteRepo) GetSiteCount(netID uuid.UUID) (int64, error) {
 	var count int64
-	result := s.Db.GetGormDb().Where(&Site{NetworkId: netID}).Count(&count)
+	result := s.Db.GetGormDb().Model(&Site{}).Where("network_id = ?", netID).Count(&count)
 	if result.Error != nil {
 		return 0, result.Error
 	}
