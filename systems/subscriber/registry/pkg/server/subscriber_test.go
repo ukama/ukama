@@ -26,6 +26,8 @@ func TestAdd(t *testing.T) {
 		subscriberRepo.On("Add", mock.AnythingOfType("*db.Subscriber")).Return(nil)
 		network.On("ValidateNetwork", mock.Anything, mock.Anything).Return(nil)
 
+		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
+
 		s := NewSubscriberServer(subscriberRepo, msgBus, simManagerService, network)
 
 		req := &pb.AddSubscriberRequest{

@@ -80,10 +80,17 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	return &pb.AddSubscriberResponse{
+	resp := &pb.AddSubscriberResponse{
 		Subscriber: dbSubscriberToPbSubscriber(subscriber, nil),
-	}, nil
+	}
 
+	route := s.subscriberRoutingKey.SetAction("create").SetObject("subscriber").MustBuild()
+	err = s.msgbus.PublishRequest(route, resp.Subscriber)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", resp, route, err.Error())
+	}
+
+	return resp, nil
 }
 
 func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
@@ -234,6 +241,16 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
+	subscriber.SubscriberId = subscriberId
+
+	msg := dbSubscriberToPbSubscriber(subscriber, nil)
+
+	route := s.subscriberRoutingKey.SetAction("update").SetObject("subscriber").MustBuild()
+	err = s.msgbus.PublishRequest(route, msg)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+	}
+
 	return &pb.UpdateSubscriberResponse{}, nil
 }
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
@@ -250,10 +267,13 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		logrus.WithError(err).Error("error while deleting subscriber")
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
+
+	msg := &pb.Subscriber{SubscriberId: string(subscriberId.String())}
+
 	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
-	err = s.msgbus.PublishRequest(route, req)
+	err = s.msgbus.PublishRequest(route, msg)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
 	return &pb.DeleteSubscriberResponse{}, nil
 }
@@ -313,7 +333,7 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscri
 		Address:               s.Address,
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
-		Dob:           s.DOB,
+		Dob:                   s.DOB,
 	}
 
 }
