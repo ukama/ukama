@@ -93,9 +93,14 @@ func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)
 	})
+
+	go grpcServer.StartServer()
+
 	go msgBusListener(mbClient)
 
-	grpcServer.StartServer()
+	_ = regServer.PushMetrics()
+
+	waitForExit()
 }
 
 func initOrgDB(orgDB *gorm.DB) {
@@ -154,4 +159,19 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}
+}
+
+func waitForExit() {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+	go func() {
+
+		sig := <-sigs
+		log.Info(sig)
+		done <- true
+	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", pkg.ServiceName)
 }

@@ -17,6 +17,7 @@ type OrgRepo interface {
 	Get(id uuid.UUID) (*Org, error)
 	GetByName(name string) (*Org, error)
 	GetByOwner(uuid uuid.UUID) ([]Org, error)
+	GetAll() ([]Org, error)
 	// Update(id uint) error
 	// Deactivate(id uint) error
 	// Delete(id uint) error
@@ -92,6 +93,17 @@ func (r *orgRepo) GetByOwner(uuid uuid.UUID) ([]Org, error) {
 	var orgs []Org
 
 	result := r.Db.GetGormDb().Where(&Org{Owner: uuid}).Find(&orgs)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return orgs, nil
+}
+
+func (r *orgRepo) GetAll() ([]Org, error) {
+	var orgs []Org
+
+	result := r.Db.GetGormDb().Where(&Org{}).Find(&orgs)
 	if result.Error != nil {
 		return nil, result.Error
 	}

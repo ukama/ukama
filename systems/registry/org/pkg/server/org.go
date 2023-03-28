@@ -497,3 +497,23 @@ func (o *OrgService) pushUserCountMetric() error {
 	}
 	return nil
 }
+
+func (o *OrgService) PushMetrics() error {
+
+	_ = o.pushOrgCountMetric()
+
+	_ = o.pushUserCountMetric()
+
+	orgs, err := o.orgRepo.GetAll()
+	if err != nil {
+		log.Errorf("Error while reading orgs", err.Error())
+		return err
+	}
+
+	for _, org := range orgs {
+		_ = o.pushOrgMemberCountMetric(org.Id)
+	}
+
+	return nil
+
+}
