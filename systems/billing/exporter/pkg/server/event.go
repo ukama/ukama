@@ -119,21 +119,23 @@ func unmarshalOperatorSimUsage(msg *anypb.Any) (*operatorPb.SimUsage, error) {
 	return p, nil
 }
 
-func handleEventCloudCdrSimUsage(key string, msg *operatorPb.SimUsage, b *BillingExporterEventServer) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
+func handleEventCloudCdrSimUsage(key string, simUsage *operatorPb.SimUsage, b *BillingExporterEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, simUsage)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	eventInput := &lago.EventInput{
-		TransactionID:      fmt.Sprintf("%s%d", msg.Id, time.Now().Unix()),
-		ExternalCustomerID: msg.SubscriberId,
+		// To be replaced by msgClient msgId
+		TransactionID: fmt.Sprintf("%s%d", simUsage.Id, time.Now().Unix()),
+
+		ExternalCustomerID: simUsage.SubscriberId,
 		// ExternalSubscriptionID: msg.SimId,
 		Code:      "data_usage",
 		Timestamp: time.Now().Unix(),
 		Properties: map[string]string{
-			"bytes_used": fmt.Sprint(msg.BytesUsed),
-			"sim_id":     msg.SimId,
+			"bytes_used": fmt.Sprint(simUsage.BytesUsed),
+			"sim_id":     simUsage.SimId,
 		},
 	}
 
@@ -163,18 +165,18 @@ func unmarshalSubscriber(msg *anypb.Any) (*subpb.Subscriber, error) {
 	return p, nil
 }
 
-func handleEventCloudRegistrySubscriberCreate(key string, msg *subpb.Subscriber, b *BillingExporterEventServer) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
+func handleEventCloudRegistrySubscriberCreate(key string, subscriber *subpb.Subscriber, b *BillingExporterEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	customerInput := &lago.CustomerInput{
-		ExternalID:   msg.SubscriberId,
-		Name:         msg.FirstName,
-		Email:        msg.Email,
-		AddressLine1: msg.Address,
-		Phone:        msg.PhoneNumber,
+		ExternalID:   subscriber.SubscriberId,
+		Name:         subscriber.FirstName,
+		Email:        subscriber.Email,
+		AddressLine1: subscriber.Address,
+		Phone:        subscriber.PhoneNumber,
 	}
 
 	log.Infof("Sending subscriber create event %v to billing server", customerInput)
@@ -192,17 +194,17 @@ func handleEventCloudRegistrySubscriberCreate(key string, msg *subpb.Subscriber,
 	return nil
 }
 
-func handleEventCloudRegistrySubscriberUpdate(key string, msg *subpb.Subscriber, b *BillingExporterEventServer) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
+func handleEventCloudRegistrySubscriberUpdate(key string, subscriber *subpb.Subscriber, b *BillingExporterEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	customerInput := &lago.CustomerInput{
-		ExternalID:   msg.SubscriberId,
-		Email:        msg.Email,
-		AddressLine1: msg.Address,
-		Phone:        msg.PhoneNumber,
+		ExternalID:   subscriber.SubscriberId,
+		Email:        subscriber.Email,
+		AddressLine1: subscriber.Address,
+		Phone:        subscriber.PhoneNumber,
 	}
 
 	log.Infof("Sending subscriber update event %v to billing", customerInput)
@@ -220,13 +222,13 @@ func handleEventCloudRegistrySubscriberUpdate(key string, msg *subpb.Subscriber,
 	return nil
 }
 
-func handleEventCloudRegistrySubscriberDelete(key string, msg *subpb.Subscriber, b *BillingExporterEventServer) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
+func handleEventCloudRegistrySubscriberDelete(key string, subscriber *subpb.Subscriber, b *BillingExporterEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	customer, err := b.client.L.Customer().Delete(ctx, msg.SubscriberId)
+	customer, err := b.client.L.Customer().Delete(ctx, subscriber.SubscriberId)
 	if err != nil {
 		log.Errorf("Error while sending subscriber deletion event to billing server: %v, %v, %v",
 			err.Err, err.HTTPStatusCode, err.Msg)
@@ -252,27 +254,27 @@ func unmarshalSim(msg *anypb.Any) (*smpb.Sim, error) {
 	return p, nil
 }
 
-func handleEventCloudSimManagerSetActivePackageForSim(key string, msg *smpb.Sim, b *BillingExporterEventServer) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
+func handleEventCloudSimManagerSetActivePackageForSim(key string, sim *smpb.Sim, b *BillingExporterEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	// Terminate the previous subscription for that sim (plan)
-	_, err := b.client.L.Subscription().Terminate(ctx, msg.Id)
+	_, err := b.client.L.Subscription().Terminate(ctx, sim.Id)
 	if err != nil {
 		log.Errorf("Error while sending subscription termination event to billing server: %v, %v, %v",
 			err.Err, err.HTTPStatusCode, err.Msg)
 	}
 
-	subscriptionAt := msg.Package.StartDate.AsTime()
+	subscriptionAt := sim.Package.StartDate.AsTime()
 
 	// Because the Plan object does not expose an external_plan_id, we need to use
 	// our backend plan_id as billing provider's plan_code
 	subscriptionInput := &lago.SubscriptionInput{
-		ExternalID:         msg.Id,
-		ExternalCustomerID: msg.SubscriberId,
-		PlanCode:           msg.Package.PlanId,
+		ExternalID:         sim.Id,
+		ExternalCustomerID: sim.SubscriberId,
+		PlanCode:           sim.Package.PlanId,
 		SubscriptionAt:     &subscriptionAt,
 	}
 
