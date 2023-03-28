@@ -9,23 +9,8 @@ services:
         - ./prometheus:/etc/prometheus
         - prometheus-data:/prometheus
     command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
-
-  # rabbitmq:
-  #   image: rabbitmq:3-management
-  #   ports:
-  #       - 5672:5672
-  #       - 15672:15672
-  #   volumes:
-  #       - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
-  #       - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
-
-  postgresd:
-    image: postgres:13.3
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Pass2020!
-    volumes:
-      - postgress-data:/var/lib/postgresql
+    networks:
+      - ukama-net
 
   exporter:
     build:
@@ -38,13 +23,13 @@ services:
       - DB_HOST=postgresd
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient:9095
       - EXPORTER_SERVICE_HOST=exporter
       - EXPORTER_SERVICE_PORT=9092
     restart: always
-    depends_on:
-      - postgresd
+    networks:
+      - ukama-net
 
 
   metricsgateway:
@@ -57,8 +42,9 @@ services:
       - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
     restart: always
     depends_on:
-      - postgresd
       - exporter
+    networks:
+      - ukama-net
 
   msgclient:
     build: 
@@ -69,19 +55,22 @@ services:
       - DB_HOST=postgresd
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@192.168.0.14:5672
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msg-client-subscriber:9095
       - SYSTEM=metrics
     restart: always
     depends_on:
-      - postgresd
       - prometheus
+    networks:
+      - ukama-net
   
   pushgateway:
     image: prom/pushgateway
     restart: unless-stopped
     ports:
       - "9091:9091"
+    networks:
+      - ukama-net
 
 volumes:
   postgress-data:
@@ -89,4 +78,5 @@ volumes:
 
 networks:
   ukama-net:
-    name: metrics_network
+    external: true
+    name: ukama_dev-net
