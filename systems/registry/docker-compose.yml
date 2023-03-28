@@ -105,8 +105,6 @@ services:
   
   msgclient:
     build: ../messaging/msgClient
-    ports:
-      - "9080:9095"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
