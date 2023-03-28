@@ -506,7 +506,7 @@ func (o *OrgService) PushMetrics() error {
 
 	orgs, err := o.orgRepo.GetAll()
 	if err != nil {
-		log.Errorf("Error while reading orgs", err.Error())
+		log.Errorf("Error while reading orgs. Error %s", err.Error())
 		return err
 	}
 
