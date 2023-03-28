@@ -94,6 +94,11 @@ func (r *Router) init() {
 
 	metrics.GET("/metrics", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
 
+	metrics.GET("/metrics/:metric", []fizz.OperationOption{
+		func(info *openapi.OperationInfo) {
+			info.Description = "Get metrics. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+		}}, tonic.Handler(r.metricHandler, http.StatusOK))
+
 	metrics.GET("/subscriber/:subscriber/orgs/:org/networks/:network/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for a susbcriber. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
@@ -109,7 +114,7 @@ func (r *Router) init() {
 			info.Description = "Get metrics for an org. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.orgMetricHandler, http.StatusOK))
 
-	metrics.GET("/networks/:network/orgs/:org/metrics/:metric", []fizz.OperationOption{
+	metrics.GET("/networks/:network/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for an network. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 		}}, tonic.Handler(r.networkMetricHandler, http.StatusOK))
@@ -117,7 +122,7 @@ func (r *Router) init() {
 	metrics.GET("/nodes/:node/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for anode. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-		}}, tonic.Handler(r.metricHandler, http.StatusOK))
+		}}, tonic.Handler(r.nodeMetricHandler, http.StatusOK))
 
 	exp := metrics.Group("/exporter", "exporter", "exporter")
 	exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
@@ -128,6 +133,13 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter(), c.Writer)
+	return httpErrorOrNil(httpCode, err)
+	//httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Subscriber), c.Writer)
+	//return httpErrorOrNil(httpCode, err)
 }
 
 func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
@@ -143,7 +155,7 @@ func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error 
 }
 
 func (r *Router) networkMetricHandler(c *gin.Context, in *GetNetworkMetricsInput) error {
-	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Org, in.Network), c.Writer)
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Network), c.Writer)
 	return httpErrorOrNil(httpCode, err)
 }
 func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {
@@ -170,7 +182,7 @@ func httpErrorOrNil(httpCode int, err error) error {
 	return nil
 }
 
-func (r *Router) metricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
+func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
 	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithNodeId(in.NodeID))
 }
 

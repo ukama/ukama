@@ -69,8 +69,7 @@ func (f *Filter) HasNetwork() bool {
 	return f.network != ""
 }
 
-func (f *Filter) WithNetwork(org string, network string) *Filter {
-	f.org = org
+func (f *Filter) WithNetwork(network string) *Filter {
 	f.network = network
 	return f
 }

@@ -12,7 +12,6 @@ type GetOrgMetricsInput struct {
 
 type GetNetworkMetricsInput struct {
 	Metric  string `path:"metric" validate:"required"`
-	Org     string `path:"org" validate:"required"`
 	Network string `path:"network" validate:"required"`
 }
 
@@ -29,6 +28,10 @@ type GetSubscriberMetricsInput struct {
 	Org        string `path:"org" validate:"required"`
 	Network    string `path:"network" validate:"required"`
 	Subscriber string `path:"subscriber" validate:"required"`
+}
+
+type GetMetricsInput struct {
+	Metric string `path:"metric" validate:"required"`
 }
 
 type GetSimMetricsInput struct {

@@ -48,8 +48,8 @@ func TestGetAggregateQuery(t *testing.T) {
 
 	t.Run("AggregateNet", func(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: true}
-		r := m.getAggregateQuery(NewFilter().WithNetwork("org1", "net1"), "sum")
+		r := m.getAggregateQuery(NewFilter().WithNetwork("net1"), "sum")
 
-		assert.Equal(t, "sum(memory {org='org1',network='net1'}) without (job,instance,receive,tenant_id,nodeid)", r)
+		assert.Equal(t, "sum(memory {network='net1'}) without (job,instance,receive,tenant_id,nodeid)", r)
 	})
 }
