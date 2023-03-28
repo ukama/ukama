@@ -138,14 +138,10 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
 	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter(), c.Writer)
 	return httpErrorOrNil(httpCode, err)
-	//httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Subscriber), c.Writer)
-	//return httpErrorOrNil(httpCode, err)
 }
 
 func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
 	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSubscriber(in.Org, in.Network, in.Subscriber))
-	//httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Subscriber), c.Writer)
-	//return httpErrorOrNil(httpCode, err)
 }
 
 func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error {
