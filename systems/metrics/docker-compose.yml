@@ -50,13 +50,14 @@ services:
     build: 
       context: ../messaging/msgClient
       dockerfile: ./Dockerfile
+    ports:
+      - "9092:9092"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msg-client-subscriber:9095
       - SYSTEM=metrics
     restart: always
     depends_on:
