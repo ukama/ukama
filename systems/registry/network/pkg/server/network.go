@@ -232,7 +232,7 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	n.pushSiteCount(ntwk.Org.Id, ntwk.Id)
+	n.pushSiteCount(ntwk.OrgId, ntwk.Id)
 
 	return &pb.AddSiteResponse{
 		Site: dbSiteToPbSite(site)}, nil
@@ -382,7 +382,7 @@ func (n *NetworkServer) PushMetrics() error {
 	}
 
 	for _, network := range networks {
-		n.pushSiteCount(network.Org.Id, network.Id)
+		n.pushSiteCount(network.OrgId, network.Id)
 	}
 
 	return nil
