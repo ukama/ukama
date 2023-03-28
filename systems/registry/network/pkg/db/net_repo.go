@@ -15,6 +15,8 @@ type NetRepo interface {
 	Get(id uuid.UUID) (*Network, error)
 	GetByName(orgName string, network string) (*Network, error)
 	GetByOrg(orgID uuid.UUID) ([]Network, error)
+	GetAll() ([]Network, error)
+	GetDistinctOrg() ([]uuid.UUID, error)
 	// GetByOrgName(orgName string) ([]Network, error)
 	// Update(orgId uint, network *Network) error
 	Delete(orgName string, network string) error
@@ -40,6 +42,27 @@ func (n netRepo) Get(id uuid.UUID) (*Network, error) {
 	}
 
 	return &ntwk, nil
+}
+
+func (n netRepo) GetAll() ([]Network, error) {
+	var ntwk []Network
+
+	result := n.Db.GetGormDb().Model(&Network{}).Find(&ntwk)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return ntwk, nil
+}
+
+func (n netRepo) GetDistinctOrg() ([]uuid.UUID, error) {
+	var orgs []uuid.UUID
+	result := n.Db.GetGormDb().Model(&Network{}).Distinct().Select("network.org_id", &orgs)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return orgs, nil
 }
 
 func (n netRepo) GetByName(orgName string, network string) (*Network, error) {

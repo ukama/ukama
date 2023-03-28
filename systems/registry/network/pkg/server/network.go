@@ -114,15 +114,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	networkCount, err := n.netRepo.GetNetworkCount(org.Id)
-	if err != nil {
-		logrus.Errorf("failed to get network counts: %s", err.Error())
-	}
-
-	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": org.Id.String()}, pkg.SystemName+"-"+pkg.ServiceName)
-	if err != nil {
-		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
-	}
+	n.pushNetworkCount(org.Id)
 
 	return &pb.AddResponse{
 		Network: dbNtwkToPbNtwk(network),
@@ -200,15 +192,7 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	networkCount, err := n.netRepo.GetNetworkCount(org.Id)
-	if err != nil {
-		logrus.Errorf("failed to get network counts: %s", err.Error())
-	}
-
-	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": org.Id.String()}, pkg.SystemName+"-"+pkg.ServiceName)
-	if err != nil {
-		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
-	}
+	n.pushNetworkCount(org.Id)
 
 	return &pb.DeleteResponse{}, nil
 }
@@ -248,15 +232,7 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	siteCount, err := n.siteRepo.GetSiteCount(ntwk.Id)
-	if err != nil {
-		logrus.Errorf("failed to get site count: %s", err.Error())
-	}
-
-	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": ntwk.OrgId.String(), "network": ntwk.Id.String()}, pkg.SystemName+"-"+pkg.ServiceName)
-	if err != nil {
-		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
-	}
+	n.pushSiteCount(ntwk.Org.Id, ntwk.Id)
 
 	return &pb.AddSiteResponse{
 		Site: dbSiteToPbSite(site)}, nil
@@ -359,4 +335,55 @@ func dbSitesToPbSites(sites []db.Site) []*pb.Site {
 	}
 
 	return res
+}
+
+func (n *NetworkServer) pushNetworkCount(orgId uuid.UUID) {
+	networkCount, err := n.netRepo.GetNetworkCount(orgId)
+	if err != nil {
+		logrus.Errorf("failed to get network counts: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": orgId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
+}
+
+func (n *NetworkServer) pushSiteCount(orgId uuid.UUID, netId uuid.UUID) {
+	siteCount, err := n.siteRepo.GetSiteCount(netId)
+	if err != nil {
+		logrus.Errorf("failed to get site count: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": orgId.String(), "network": netId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+	}
+}
+
+func (n *NetworkServer) PushMetrics() error {
+
+	// Push Network count metric per org to pushgateway
+	orgs, err := n.orgRepo.GetAll()
+	if err != nil {
+		logrus.Errorf("Failed to get all networks. Error %s", err.Error())
+		return err
+	}
+
+	for _, org := range orgs {
+		n.pushNetworkCount(org.Id)
+	}
+
+	// Push Site count metric per network to pushgateway
+	networks, err := n.netRepo.GetAll()
+	if err != nil {
+		logrus.Errorf("Failed to get all networks. Error %s", err.Error())
+		return err
+	}
+
+	for _, network := range networks {
+		n.pushSiteCount(network.Org.Id, network.Id)
+	}
+
+	return nil
 }
