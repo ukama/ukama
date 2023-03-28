@@ -121,4 +121,4 @@ services:
 networks:
   ukama-net:
     external:
-      name: ukama_dev-net
+      name: services_dev-net
