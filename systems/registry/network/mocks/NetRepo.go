@@ -67,6 +67,29 @@ func (_m *NetRepo) Get(id uuid.UUID) (*db.Network, error) {
 	return r0, r1
 }
 
+// GetAll provides a mock function with given fields:
+func (_m *NetRepo) GetAll() ([]db.Network, error) {
+	ret := _m.Called()
+
+	var r0 []db.Network
+	if rf, ok := ret.Get(0).(func() []db.Network); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Network)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetByName provides a mock function with given fields: orgName, network
 func (_m *NetRepo) GetByName(orgName string, network string) (*db.Network, error) {
 	ret := _m.Called(orgName, network)
@@ -106,6 +129,29 @@ func (_m *NetRepo) GetByOrg(orgID uuid.UUID) ([]db.Network, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
 		r1 = rf(orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDistinctOrg provides a mock function with given fields:
+func (_m *NetRepo) GetDistinctOrg() ([]uuid.UUID, error) {
+	ret := _m.Called()
+
+	var r0 []uuid.UUID
+	if rf, ok := ret.Get(0).(func() []uuid.UUID); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]uuid.UUID)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
 	} else {
 		r1 = ret.Error(1)
 	}

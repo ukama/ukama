@@ -81,7 +81,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	go msgBusListener(mbClient)
 
-	networkServer.PushMetrics()
+	_ = networkServer.PushMetrics()
 
 	waitForExit()
 }
