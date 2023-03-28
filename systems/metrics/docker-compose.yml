@@ -51,7 +51,7 @@ services:
       context: ../messaging/msgClient
       dockerfile: ./Dockerfile
     ports:
-      - "9092:9092"
+      - "9095:9095"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
