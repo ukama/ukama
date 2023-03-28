@@ -43,6 +43,7 @@ type Package struct {
 	PackageId string    `json:"package_id" validate:"required"`
 	StartDate time.Time `json:"start_date" validate:"required"`
 	EndDate   time.Time `json:"end_date" validate:"required"`
+	PlanId    string    `json:"plan_id" validate:"required"`
 }
 
 type Subscriber struct {
