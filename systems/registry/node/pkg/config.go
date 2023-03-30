@@ -10,7 +10,7 @@ type Config struct {
 	DB               *uconf.Database `default:"{}"`
 	Grpc             *uconf.Grpc     `default:"{}"`
 	Metrics          *uconf.Metrics  `default:"{}"`
-	PushGatewayHost  string          `default:"http://localhost:9091"`
+	PushGateway      string          `default:"http://localhost:9091"`
 }
 
 const (
@@ -22,18 +22,18 @@ const (
 
 var NodeMetric = []metric.MetricConfig{
 	{
-		Name:   NumberOfNodes,
-		Type:   GaugeType,
-		Value:  0,
+		Name:  NumberOfNodes,
+		Type:  GaugeType,
+		Value: 0,
 	},
 	{
-		Name:   NumberOfActiveNodes,
-		Type:   GaugeType,
-		Value:  0,
+		Name:  NumberOfActiveNodes,
+		Type:  GaugeType,
+		Value: 0,
 	},
 	{
-		Name:   NumberOfInactiveNodes,
-		Type:   GaugeType,
-		Value:  0,
+		Name:  NumberOfInactiveNodes,
+		Type:  GaugeType,
+		Value: 0,
 	},
 }

@@ -21,10 +21,10 @@ import (
 )
 
 type NodeServer struct {
-	nodeRepo        db.NodeRepo
-	baseRoutingKey  msgbus.RoutingKeyBuilder
-	nameGenerator   namegenerator.Generator
-	pushGatewayHost string
+	nodeRepo       db.NodeRepo
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	nameGenerator  namegenerator.Generator
+	pushGateway    string
 	pb.UnimplementedNodeServiceServer
 }
 
@@ -32,9 +32,9 @@ func NewNodeServer(nodeRepo db.NodeRepo, pushGateway string) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{nodeRepo: nodeRepo,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		nameGenerator:   namegenerator.NewNameGenerator(seed),
-		pushGatewayHost: pushGateway,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		nameGenerator:  namegenerator.NewNameGenerator(seed),
+		pushGateway:    pushGateway,
 	}
 }
 
@@ -268,11 +268,11 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 	for _, arg := range args {
 		switch arg {
 		case pkg.NumberOfNodes:
-			err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NodeMetric, pkg.NumberOfNodes, float64(nodesCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric, pkg.NumberOfNodes, float64(nodesCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfActiveNodes:
-			err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NodeMetric, pkg.NumberOfActiveNodes, float64(actCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric, pkg.NumberOfActiveNodes, float64(actCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfInactiveNodes:
-			err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NodeMetric, pkg.NumberOfInactiveNodes, float64(inactCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric, pkg.NumberOfInactiveNodes, float64(inactCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		}
 	}
 

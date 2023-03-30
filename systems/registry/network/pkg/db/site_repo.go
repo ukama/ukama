@@ -25,10 +25,7 @@ type SiteRepo interface {
 type siteRepo struct {
 	Db sql.Db
 }
-
-func NewSiteRepo(db sql.Db) SiteRepo {
-	return &siteRepo{
-		Db: db,
+git 
 	}
 }
 

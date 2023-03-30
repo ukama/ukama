@@ -27,25 +27,25 @@ const uuidParsingError = "Error parsing UUID"
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	netRepo         db.NetRepo
-	orgRepo         db.OrgRepo
-	siteRepo        db.SiteRepo
-	orgService      providers.OrgClientProvider
-	msgbus          mb.MsgBusServiceClient
-	baseRoutingKey  msgbus.RoutingKeyBuilder
-	pushGatewayHost string
+	netRepo        db.NetRepo
+	orgRepo        db.OrgRepo
+	siteRepo       db.SiteRepo
+	orgService     providers.OrgClientProvider
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	pushGateway    string
 }
 
 func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *NetworkServer {
+	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
 	return &NetworkServer{
-		netRepo:         netRepo,
-		orgRepo:         orgRepo,
-		siteRepo:        siteRepo,
-		orgService:      orgService,
-		msgbus:          msgBus,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		pushGatewayHost: pushGatewayHost,
+		netRepo:        netRepo,
+		orgRepo:        orgRepo,
+		siteRepo:       siteRepo,
+		orgService:     orgService,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		pushGateway:    pushGateway,
 	}
 }
 
@@ -343,9 +343,9 @@ func (n *NetworkServer) pushNetworkCount(orgId uuid.UUID) {
 		logrus.Errorf("failed to get network counts: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": orgId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": orgId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
-		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+		logrus.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
 	}
 }
 
@@ -355,9 +355,9 @@ func (n *NetworkServer) pushSiteCount(orgId uuid.UUID, netId uuid.UUID) {
 		logrus.Errorf("failed to get site count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(n.pushGatewayHost, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": orgId.String(), "network": netId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": orgId.String(), "network": netId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
-		logrus.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
+		logrus.Errorf("Error while pushing subscriberCount metric to pushgateway %s", err.Error())
 	}
 }
 
