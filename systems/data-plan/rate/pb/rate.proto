@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package ukama.systems.rate.v1;
+
+import "validator.proto";
+
+service RateService {
+
+    /* User */
+    rpc GetMarkup(GetMarkupRequest) returns (GetMarkupResponse);
+    rpc UpdateMarkup(UpdateMarkupRequest) returns (UpdateMarkupResponse);
+    rpc DeleteMarkup(DeleteMarkupRequest) returns (DeleteMarkupResponse);
+    
+    rpc GetMarkupRates (GetMarkupRatesRequest) returns (GetMarkupRatesResponse);
+    rpc GetMarkupRate(GetMarkupRateRequest) returns (GetMarkupRateResponse);
+
+}
+
+
+message UpdateMarkupRequest {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    string Markup = 2;
+}
+
+message UpdateMarkupResponse {
+}
+
+message DeleteMarkupRequest {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message DeleteMarkupResponse {
+}
+
+message GetMarkupRequest {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message GetMarkupResponse {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    string Markup = 2;
+}
+
+message GetMarkupRatesRequest{
+    string country = 1;
+    string provider =2;
+    uint64 to  =3;
+    uint64 from  =4;
+    string simType=5 [json_name = "sim_type"];
+    string effectiveAt = 6 [json_name = "effective_at"];
+}
+
+message GetMarkupRatesResponse {
+    repeated Rate rates = 1;
+}
+
+message GetMarkupRateResponse{
+    Rate rate =1;
+}
+
+message GetMarkupRateRequest{
+    string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message Rate{
+    string uuid= 1 [(validator.field) = {uuid_ver: 4}];
+    string country=2;
+    string network = 3;
+    string vpmn =4;
+    string imsi=5;
+    string smsMo=6 [json_name = "sms_mo"];
+    string smsMt =7 [json_name = "sms_mt"];
+    string data =8;
+    string  _2g=9;
+    string _3g=10;
+    string _5g=11;
+    string lte=12; 
+    string lteM=13 [json_name = "lte_m"];
+    string apn=14; 
+    string createdAt=15 [json_name = "created_at"];
+    string deletedAt=16 [json_name = "deleted_at"];
+    string updatedAt=17 [json_name = "updated_at"];
+    string effectiveAt=18 [json_name = "effective_at"];
+    string endAt=19 [json_name = "end_at"];
+    string simType=20 [json_name = "sim_type"];
+}
