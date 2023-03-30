@@ -357,7 +357,7 @@ func (n *NetworkServer) pushSiteCount(orgId uuid.UUID, netId uuid.UUID) {
 
 	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": orgId.String(), "network": netId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
-		logrus.Errorf("Error while pushing subscriberCount metric to pushgateway %s", err.Error())
+		logrus.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
 	}
 }
 
