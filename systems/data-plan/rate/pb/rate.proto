@@ -2,9 +2,11 @@ syntax = "proto3";
 
 option go_package = "pb/gen";
 
-package ukama.systems.rate.v1;
+package ukama.dataplan.rate.v1;
 
 import "validator.proto";
+
+import "baserate.proto";
 
 service RateService {
 
@@ -13,15 +15,15 @@ service RateService {
     rpc UpdateMarkup(UpdateMarkupRequest) returns (UpdateMarkupResponse);
     rpc DeleteMarkup(DeleteMarkupRequest) returns (DeleteMarkupResponse);
     
-    rpc GetMarkupRates (GetMarkupRatesRequest) returns (GetMarkupRatesResponse);
-    rpc GetMarkupRate(GetMarkupRateRequest) returns (GetMarkupRateResponse);
+    rpc GetRates (GetRatesRequest) returns (GetRatesResponse);
+    rpc GetRate(GetRateRequest) returns (GetRateResponse);
 
 }
 
 
 message UpdateMarkupRequest {
     string ownerId = 1 [(validator.field) = {string_not_empty: true}];
-    string Markup = 2;
+    double Markup = 2;
 }
 
 message UpdateMarkupResponse {
@@ -40,10 +42,10 @@ message GetMarkupRequest {
 
 message GetMarkupResponse {
     string ownerId = 1 [(validator.field) = {string_not_empty: true}];
-    string Markup = 2;
+    double Markup = 2;
 }
 
-message GetMarkupRatesRequest{
+message GetRatesRequest{
     string country = 1;
     string provider =2;
     uint64 to  =3;
@@ -52,37 +54,44 @@ message GetMarkupRatesRequest{
     string effectiveAt = 6 [json_name = "effective_at"];
 }
 
-message GetMarkupRatesResponse {
-    repeated Rate rates = 1;
+message GetRatesResponse {
+    repeated ukama.dataplan.baserate.v1.Rate rates = 1;
 }
 
-message GetMarkupRateResponse{
-    Rate rate =1;
+message GetRateRequest{
+    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string country = 2;
+    string provider =3;
+    uint64 to  =4;
+    uint64 from  =5;
+    string simType=6 [json_name = "sim_type"];
+    string effectiveAt = 7 [json_name = "effective_at"];
 }
 
-message GetMarkupRateRequest{
-    string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+message GetRateResponse{
+    repeated ukama.dataplan.baserate.v1.Rate rates =1;
 }
 
-message Rate{
-    string uuid= 1 [(validator.field) = {uuid_ver: 4}];
-    string country=2;
-    string network = 3;
-    string vpmn =4;
-    string imsi=5;
-    string smsMo=6 [json_name = "sms_mo"];
-    string smsMt =7 [json_name = "sms_mt"];
-    string data =8;
-    string  _2g=9;
-    string _3g=10;
-    string _5g=11;
-    string lte=12; 
-    string lteM=13 [json_name = "lte_m"];
-    string apn=14; 
-    string createdAt=15 [json_name = "created_at"];
-    string deletedAt=16 [json_name = "deleted_at"];
-    string updatedAt=17 [json_name = "updated_at"];
-    string effectiveAt=18 [json_name = "effective_at"];
-    string endAt=19 [json_name = "end_at"];
-    string simType=20 [json_name = "sim_type"];
-}
+// message Rate{
+//     string uuid= 1 [(validator.field) = {uuid_ver: 4}];
+//     string country=2;
+//     string network = 3;
+//     string vpmn =4;
+//     string imsi=5;
+//     double smsMo=6 [json_name = "sms_mo"];
+//     double smsMt =7 [json_name = "sms_mt"];
+//     double data =8;
+//     bool  _2g=9;
+//     bool _3g=10;
+//     bool _5g=11;
+//     bool lte=12; 
+//     bool lteM=13 [json_name = "lte_m"];
+//     string apn=14; 
+//     string createdAt=15 [json_name = "created_at"];
+//     string deletedAt=16 [json_name = "deleted_at"];
+//     string updatedAt=17 [json_name = "updated_at"];
+//     string effectiveAt=18 [json_name = "effective_at"];
+//     string endAt=19 [json_name = "end_at"];
+//     string simType=20 [json_name = "sim_type"];
+//     string currency =21 [json_name = "currency"];
+// }

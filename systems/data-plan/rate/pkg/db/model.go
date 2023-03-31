@@ -8,32 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-type Rate struct {
-	gorm.Model
-	Uuid        uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
-	Country     string
-	Network     string
-	Vpmn        string
-	Imsi        string
-	SmsMo       string
-	SmsMt       string
-	Data        string
-	X2g         string
-	X3g         string
-	X5g         string
-	Lte         string
-	LteM        string
-	Apn         string
-	EffectiveAt string
-	EndAt       string
-	SimType     SimType
-}
-
 type Markups struct {
 	gorm.Model
 	OwnerId uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
-	Markup  int64     `gorm:"type:uint; default:100"`
-	Rate    []Rate    /* No need for this access the data at runtime */
+	Markup  float64   `gorm:"type:float; default:0"`
 }
 
 type SimType uint8

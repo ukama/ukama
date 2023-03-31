@@ -76,8 +76,8 @@ func (_m *RateServiceClient) GetMarkup(ctx context.Context, in *gen.GetMarkupReq
 	return r0, r1
 }
 
-// GetMarkupRate provides a mock function with given fields: ctx, in, opts
-func (_m *RateServiceClient) GetMarkupRate(ctx context.Context, in *gen.GetMarkupRateRequest, opts ...grpc.CallOption) (*gen.GetMarkupRateResponse, error) {
+// GetRate provides a mock function with given fields: ctx, in, opts
+func (_m *RateServiceClient) GetRate(ctx context.Context, in *gen.GetRateRequest, opts ...grpc.CallOption) (*gen.GetRateResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -87,17 +87,17 @@ func (_m *RateServiceClient) GetMarkupRate(ctx context.Context, in *gen.GetMarku
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetMarkupRateResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMarkupRateRequest, ...grpc.CallOption) *gen.GetMarkupRateResponse); ok {
+	var r0 *gen.GetRateResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRateRequest, ...grpc.CallOption) *gen.GetRateResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetMarkupRateResponse)
+			r0 = ret.Get(0).(*gen.GetRateResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMarkupRateRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRateRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -106,8 +106,8 @@ func (_m *RateServiceClient) GetMarkupRate(ctx context.Context, in *gen.GetMarku
 	return r0, r1
 }
 
-// GetMarkupRates provides a mock function with given fields: ctx, in, opts
-func (_m *RateServiceClient) GetMarkupRates(ctx context.Context, in *gen.GetMarkupRatesRequest, opts ...grpc.CallOption) (*gen.GetMarkupRatesResponse, error) {
+// GetRates provides a mock function with given fields: ctx, in, opts
+func (_m *RateServiceClient) GetRates(ctx context.Context, in *gen.GetRatesRequest, opts ...grpc.CallOption) (*gen.GetRatesResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -117,17 +117,17 @@ func (_m *RateServiceClient) GetMarkupRates(ctx context.Context, in *gen.GetMark
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetMarkupRatesResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMarkupRatesRequest, ...grpc.CallOption) *gen.GetMarkupRatesResponse); ok {
+	var r0 *gen.GetRatesResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRatesRequest, ...grpc.CallOption) *gen.GetRatesResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetMarkupRatesResponse)
+			r0 = ret.Get(0).(*gen.GetRatesResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMarkupRatesRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRatesRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

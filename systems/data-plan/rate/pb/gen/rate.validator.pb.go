@@ -47,10 +47,10 @@ func (this *GetMarkupResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetMarkupRatesRequest) Validate() error {
+func (this *GetRatesRequest) Validate() error {
 	return nil
 }
-func (this *GetMarkupRatesResponse) Validate() error {
+func (this *GetRatesResponse) Validate() error {
 	for _, item := range this.Rates {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -60,32 +60,25 @@ func (this *GetMarkupRatesResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetMarkupRateResponse) Validate() error {
-	if this.Rate != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Rate); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Rate", err)
+
+var _regex_GetRateRequest_OwnerId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetRateRequest) Validate() error {
+	if !_regex_GetRateRequest_OwnerId.MatchString(this.OwnerId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OwnerId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OwnerId))
+	}
+	if this.OwnerId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OwnerId", fmt.Errorf(`value '%v' must not be an empty string`, this.OwnerId))
+	}
+	return nil
+}
+func (this *GetRateResponse) Validate() error {
+	for _, item := range this.Rates {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Rates", err)
+			}
 		}
-	}
-	return nil
-}
-
-var _regex_GetMarkupRateRequest_Uuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *GetMarkupRateRequest) Validate() error {
-	if !_regex_GetMarkupRateRequest_Uuid.MatchString(this.Uuid) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Uuid))
-	}
-	if this.Uuid == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must not be an empty string`, this.Uuid))
-	}
-	return nil
-}
-
-var _regex_Rate_Uuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *Rate) Validate() error {
-	if !_regex_Rate_Uuid.MatchString(this.Uuid) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Uuid))
 	}
 	return nil
 }

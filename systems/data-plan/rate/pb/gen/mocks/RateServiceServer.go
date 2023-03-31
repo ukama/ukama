@@ -60,21 +60,21 @@ func (_m *RateServiceServer) GetMarkup(_a0 context.Context, _a1 *gen.GetMarkupRe
 	return r0, r1
 }
 
-// GetMarkupRate provides a mock function with given fields: _a0, _a1
-func (_m *RateServiceServer) GetMarkupRate(_a0 context.Context, _a1 *gen.GetMarkupRateRequest) (*gen.GetMarkupRateResponse, error) {
+// GetRate provides a mock function with given fields: _a0, _a1
+func (_m *RateServiceServer) GetRate(_a0 context.Context, _a1 *gen.GetRateRequest) (*gen.GetRateResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetMarkupRateResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMarkupRateRequest) *gen.GetMarkupRateResponse); ok {
+	var r0 *gen.GetRateResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRateRequest) *gen.GetRateResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetMarkupRateResponse)
+			r0 = ret.Get(0).(*gen.GetRateResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMarkupRateRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRateRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -83,21 +83,21 @@ func (_m *RateServiceServer) GetMarkupRate(_a0 context.Context, _a1 *gen.GetMark
 	return r0, r1
 }
 
-// GetMarkupRates provides a mock function with given fields: _a0, _a1
-func (_m *RateServiceServer) GetMarkupRates(_a0 context.Context, _a1 *gen.GetMarkupRatesRequest) (*gen.GetMarkupRatesResponse, error) {
+// GetRates provides a mock function with given fields: _a0, _a1
+func (_m *RateServiceServer) GetRates(_a0 context.Context, _a1 *gen.GetRatesRequest) (*gen.GetRatesResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetMarkupRatesResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMarkupRatesRequest) *gen.GetMarkupRatesResponse); ok {
+	var r0 *gen.GetRatesResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRatesRequest) *gen.GetRatesResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetMarkupRatesResponse)
+			r0 = ret.Get(0).(*gen.GetRatesResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMarkupRatesRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRatesRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

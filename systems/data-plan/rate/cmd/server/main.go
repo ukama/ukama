@@ -27,7 +27,7 @@ var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-	log.Infof("Starting the base-rate service")
+	log.Infof("Starting the rate service")
 
 	initConfig()
 	rateDb := initDb()
@@ -52,7 +52,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Rate{})
+	err := d.Init(&db.Markups{})
 
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
@@ -76,10 +76,13 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv := server.NewBaseRateServer(db.NewBaseRateRepo(gormdb), mbClient)
+	srv, err := server.NewRateServer(db.NewMarkupsRepo(gormdb), serviceConfig.BaseRate, mbClient, serviceConfig.Timeout)
+	if err != nil {
+		log.Fatalf("Failed to initialize service %s. error: %s", pkg.ServiceName, err)
+	}
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		generated.RegisterBaseRatesServiceServer(s, srv)
+		generated.RegisterRateServiceServer(s, srv)
 	})
 
 	go msgBusListener(mbClient)
