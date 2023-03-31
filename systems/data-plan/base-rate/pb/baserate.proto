@@ -1,6 +1,6 @@
 syntax = "proto3";
 option go_package = "pb/gen";
-package ukama.data_plan.rate.v1;
+package ukama.dataplan.baserate.v1;
 
 import "validator.proto";
 
@@ -34,20 +34,21 @@ message UploadBaseRatesRequest {
 message UploadBaseRatesResponse {
     repeated Rate rate = 1;
 }
+
 message Rate{
     string uuid= 1 [(validator.field) = {uuid_ver: 4}];
     string country=2;
     string network = 3;
     string vpmn =4;
     string imsi=5;
-    string smsMo=6 [json_name = "sms_mo"];
-    string smsMt =7 [json_name = "sms_mt"];
-    string data =8;
-    string  _2g=9;
-    string _3g=10;
-    string _5g=11;
-    string lte=12; 
-    string lteM=13 [json_name = "lte_m"];
+    double smsMo=6 [json_name = "sms_mo"];
+    double smsMt =7 [json_name = "sms_mt"];
+    double data =8;
+    bool  _2g=9;
+    bool _3g=10;
+    bool _5g=11;
+    bool lte=12; 
+    bool lteM=13 [json_name = "lte_m"];
     string apn=14; 
     string createdAt=15 [json_name = "created_at"];
     string deletedAt=16 [json_name = "deleted_at"];
@@ -55,4 +56,5 @@ message Rate{
     string effectiveAt=18 [json_name = "effective_at"];
     string endAt=19 [json_name = "end_at"];
     string simType=20 [json_name = "sim_type"];
+    string currency =21 [json_name = "currency"];
 }
