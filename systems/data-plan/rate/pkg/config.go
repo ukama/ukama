@@ -14,6 +14,7 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
+	BaseRate         string `deafult:"baserate:9090"`
 }
 
 func NewConfig(name string) *Config {

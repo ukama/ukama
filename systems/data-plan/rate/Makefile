@@ -2,16 +2,20 @@ include ../../../systems/config.mk
 
 .PHONY: integration.test test build lint deps 
 
-build: integration.build
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-rate/rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/lookup cmd/lookup/main.go
+build:
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-rate/rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/rate cmd/server/main.go
 
 test:
 	go test -v ./...
 
 gen:
-	protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
+	protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep -I ../base-rate/pb --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
+					  ../base-rate/pb/baserate.proto
+
+	protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep -I ../base-rate/pb --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
 					  rate.proto
-					  
+
+
 	mockery --all --recursive --dir ./internal
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 

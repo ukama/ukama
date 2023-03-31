@@ -26,8 +26,8 @@ type RateServiceClient interface {
 	GetMarkup(ctx context.Context, in *GetMarkupRequest, opts ...grpc.CallOption) (*GetMarkupResponse, error)
 	UpdateMarkup(ctx context.Context, in *UpdateMarkupRequest, opts ...grpc.CallOption) (*UpdateMarkupResponse, error)
 	DeleteMarkup(ctx context.Context, in *DeleteMarkupRequest, opts ...grpc.CallOption) (*DeleteMarkupResponse, error)
-	GetMarkupRates(ctx context.Context, in *GetMarkupRatesRequest, opts ...grpc.CallOption) (*GetMarkupRatesResponse, error)
-	GetMarkupRate(ctx context.Context, in *GetMarkupRateRequest, opts ...grpc.CallOption) (*GetMarkupRateResponse, error)
+	GetRates(ctx context.Context, in *GetRatesRequest, opts ...grpc.CallOption) (*GetRatesResponse, error)
+	GetRate(ctx context.Context, in *GetRateRequest, opts ...grpc.CallOption) (*GetRateResponse, error)
 }
 
 type rateServiceClient struct {
@@ -40,7 +40,7 @@ func NewRateServiceClient(cc grpc.ClientConnInterface) RateServiceClient {
 
 func (c *rateServiceClient) GetMarkup(ctx context.Context, in *GetMarkupRequest, opts ...grpc.CallOption) (*GetMarkupResponse, error) {
 	out := new(GetMarkupResponse)
-	err := c.cc.Invoke(ctx, "/ukama.systems.rate.v1.RateService/GetMarkup", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.rate.v1.RateService/GetMarkup", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (c *rateServiceClient) GetMarkup(ctx context.Context, in *GetMarkupRequest,
 
 func (c *rateServiceClient) UpdateMarkup(ctx context.Context, in *UpdateMarkupRequest, opts ...grpc.CallOption) (*UpdateMarkupResponse, error) {
 	out := new(UpdateMarkupResponse)
-	err := c.cc.Invoke(ctx, "/ukama.systems.rate.v1.RateService/UpdateMarkup", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.rate.v1.RateService/UpdateMarkup", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -58,25 +58,25 @@ func (c *rateServiceClient) UpdateMarkup(ctx context.Context, in *UpdateMarkupRe
 
 func (c *rateServiceClient) DeleteMarkup(ctx context.Context, in *DeleteMarkupRequest, opts ...grpc.CallOption) (*DeleteMarkupResponse, error) {
 	out := new(DeleteMarkupResponse)
-	err := c.cc.Invoke(ctx, "/ukama.systems.rate.v1.RateService/DeleteMarkup", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.rate.v1.RateService/DeleteMarkup", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *rateServiceClient) GetMarkupRates(ctx context.Context, in *GetMarkupRatesRequest, opts ...grpc.CallOption) (*GetMarkupRatesResponse, error) {
-	out := new(GetMarkupRatesResponse)
-	err := c.cc.Invoke(ctx, "/ukama.systems.rate.v1.RateService/GetMarkupRates", in, out, opts...)
+func (c *rateServiceClient) GetRates(ctx context.Context, in *GetRatesRequest, opts ...grpc.CallOption) (*GetRatesResponse, error) {
+	out := new(GetRatesResponse)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.rate.v1.RateService/GetRates", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *rateServiceClient) GetMarkupRate(ctx context.Context, in *GetMarkupRateRequest, opts ...grpc.CallOption) (*GetMarkupRateResponse, error) {
-	out := new(GetMarkupRateResponse)
-	err := c.cc.Invoke(ctx, "/ukama.systems.rate.v1.RateService/GetMarkupRate", in, out, opts...)
+func (c *rateServiceClient) GetRate(ctx context.Context, in *GetRateRequest, opts ...grpc.CallOption) (*GetRateResponse, error) {
+	out := new(GetRateResponse)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.rate.v1.RateService/GetRate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +91,8 @@ type RateServiceServer interface {
 	GetMarkup(context.Context, *GetMarkupRequest) (*GetMarkupResponse, error)
 	UpdateMarkup(context.Context, *UpdateMarkupRequest) (*UpdateMarkupResponse, error)
 	DeleteMarkup(context.Context, *DeleteMarkupRequest) (*DeleteMarkupResponse, error)
-	GetMarkupRates(context.Context, *GetMarkupRatesRequest) (*GetMarkupRatesResponse, error)
-	GetMarkupRate(context.Context, *GetMarkupRateRequest) (*GetMarkupRateResponse, error)
+	GetRates(context.Context, *GetRatesRequest) (*GetRatesResponse, error)
+	GetRate(context.Context, *GetRateRequest) (*GetRateResponse, error)
 	mustEmbedUnimplementedRateServiceServer()
 }
 
@@ -109,11 +109,11 @@ func (UnimplementedRateServiceServer) UpdateMarkup(context.Context, *UpdateMarku
 func (UnimplementedRateServiceServer) DeleteMarkup(context.Context, *DeleteMarkupRequest) (*DeleteMarkupResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteMarkup not implemented")
 }
-func (UnimplementedRateServiceServer) GetMarkupRates(context.Context, *GetMarkupRatesRequest) (*GetMarkupRatesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMarkupRates not implemented")
+func (UnimplementedRateServiceServer) GetRates(context.Context, *GetRatesRequest) (*GetRatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRates not implemented")
 }
-func (UnimplementedRateServiceServer) GetMarkupRate(context.Context, *GetMarkupRateRequest) (*GetMarkupRateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMarkupRate not implemented")
+func (UnimplementedRateServiceServer) GetRate(context.Context, *GetRateRequest) (*GetRateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRate not implemented")
 }
 func (UnimplementedRateServiceServer) mustEmbedUnimplementedRateServiceServer() {}
 
@@ -138,7 +138,7 @@ func _RateService_GetMarkup_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.systems.rate.v1.RateService/GetMarkup",
+		FullMethod: "/ukama.dataplan.rate.v1.RateService/GetMarkup",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RateServiceServer).GetMarkup(ctx, req.(*GetMarkupRequest))
@@ -156,7 +156,7 @@ func _RateService_UpdateMarkup_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.systems.rate.v1.RateService/UpdateMarkup",
+		FullMethod: "/ukama.dataplan.rate.v1.RateService/UpdateMarkup",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RateServiceServer).UpdateMarkup(ctx, req.(*UpdateMarkupRequest))
@@ -174,7 +174,7 @@ func _RateService_DeleteMarkup_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.systems.rate.v1.RateService/DeleteMarkup",
+		FullMethod: "/ukama.dataplan.rate.v1.RateService/DeleteMarkup",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RateServiceServer).DeleteMarkup(ctx, req.(*DeleteMarkupRequest))
@@ -182,38 +182,38 @@ func _RateService_DeleteMarkup_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RateService_GetMarkupRates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMarkupRatesRequest)
+func _RateService_GetRates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRatesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RateServiceServer).GetMarkupRates(ctx, in)
+		return srv.(RateServiceServer).GetRates(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.systems.rate.v1.RateService/GetMarkupRates",
+		FullMethod: "/ukama.dataplan.rate.v1.RateService/GetRates",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RateServiceServer).GetMarkupRates(ctx, req.(*GetMarkupRatesRequest))
+		return srv.(RateServiceServer).GetRates(ctx, req.(*GetRatesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _RateService_GetMarkupRate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMarkupRateRequest)
+func _RateService_GetRate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RateServiceServer).GetMarkupRate(ctx, in)
+		return srv.(RateServiceServer).GetRate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.systems.rate.v1.RateService/GetMarkupRate",
+		FullMethod: "/ukama.dataplan.rate.v1.RateService/GetRate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RateServiceServer).GetMarkupRate(ctx, req.(*GetMarkupRateRequest))
+		return srv.(RateServiceServer).GetRate(ctx, req.(*GetRateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -222,7 +222,7 @@ func _RateService_GetMarkupRate_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var RateService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.systems.rate.v1.RateService",
+	ServiceName: "ukama.dataplan.rate.v1.RateService",
 	HandlerType: (*RateServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -238,12 +238,12 @@ var RateService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _RateService_DeleteMarkup_Handler,
 		},
 		{
-			MethodName: "GetMarkupRates",
-			Handler:    _RateService_GetMarkupRates_Handler,
+			MethodName: "GetRates",
+			Handler:    _RateService_GetRates_Handler,
 		},
 		{
-			MethodName: "GetMarkupRate",
-			Handler:    _RateService_GetMarkupRate_Handler,
+			MethodName: "GetRate",
+			Handler:    _RateService_GetRate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
