@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: rate.proto
+// source: baserate.proto
 
 package gen
 
@@ -37,7 +37,7 @@ func NewBaseRatesServiceClient(cc grpc.ClientConnInterface) BaseRatesServiceClie
 
 func (c *baseRatesServiceClient) GetBaseRates(ctx context.Context, in *GetBaseRatesRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error) {
 	out := new(GetBaseRatesResponse)
-	err := c.cc.Invoke(ctx, "/ukama.data_plan.rate.v1.BaseRatesService/GetBaseRates", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRates", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *baseRatesServiceClient) GetBaseRates(ctx context.Context, in *GetBaseRa
 
 func (c *baseRatesServiceClient) GetBaseRate(ctx context.Context, in *GetBaseRateRequest, opts ...grpc.CallOption) (*GetBaseRateResponse, error) {
 	out := new(GetBaseRateResponse)
-	err := c.cc.Invoke(ctx, "/ukama.data_plan.rate.v1.BaseRatesService/GetBaseRate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *baseRatesServiceClient) GetBaseRate(ctx context.Context, in *GetBaseRat
 
 func (c *baseRatesServiceClient) UploadBaseRates(ctx context.Context, in *UploadBaseRatesRequest, opts ...grpc.CallOption) (*UploadBaseRatesResponse, error) {
 	out := new(UploadBaseRatesResponse)
-	err := c.cc.Invoke(ctx, "/ukama.data_plan.rate.v1.BaseRatesService/UploadBaseRates", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/UploadBaseRates", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func _BaseRatesService_GetBaseRates_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.data_plan.rate.v1.BaseRatesService/GetBaseRates",
+		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRates",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BaseRatesServiceServer).GetBaseRates(ctx, req.(*GetBaseRatesRequest))
@@ -126,7 +126,7 @@ func _BaseRatesService_GetBaseRate_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.data_plan.rate.v1.BaseRatesService/GetBaseRate",
+		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BaseRatesServiceServer).GetBaseRate(ctx, req.(*GetBaseRateRequest))
@@ -144,7 +144,7 @@ func _BaseRatesService_UploadBaseRates_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.data_plan.rate.v1.BaseRatesService/UploadBaseRates",
+		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/UploadBaseRates",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BaseRatesServiceServer).UploadBaseRates(ctx, req.(*UploadBaseRatesRequest))
@@ -156,7 +156,7 @@ func _BaseRatesService_UploadBaseRates_Handler(srv interface{}, ctx context.Cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var BaseRatesService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.data_plan.rate.v1.BaseRatesService",
+	ServiceName: "ukama.dataplan.baserate.v1.BaseRatesService",
 	HandlerType: (*BaseRatesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -173,5 +173,5 @@ var BaseRatesService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "rate.proto",
+	Metadata: "baserate.proto",
 }
