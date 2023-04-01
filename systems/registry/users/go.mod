@@ -8,7 +8,7 @@ replace github.com/ukama/ukama/systems/registry/org => ../org
 
 replace github.com/ukama/ukama/systems/registry/users => ./
 
-replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
+replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
 	github.com/golang/protobuf v1.5.2
@@ -79,7 +79,7 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
-	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
