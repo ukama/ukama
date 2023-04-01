@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-dotenv
+GDAL
+numpy
+gunicorn
+pytest

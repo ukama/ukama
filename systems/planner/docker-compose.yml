@@ -1,0 +1,14 @@
+version: '3.11'
+
+services:
+  planner:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    hostname: planner_system
+    ports:
+      - '8000:8000'
+    tty: true
+    entrypoint: /var/www/app/docker/api/startup.sh
+    volumes:
+      - .:/var/www/app
