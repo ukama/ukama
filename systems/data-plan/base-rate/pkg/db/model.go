@@ -14,19 +14,20 @@ type Rate struct {
 	Country     string
 	Network     string
 	Vpmn        string
-	Imsi        string
-	SmsMo       string
-	SmsMt       string
-	Data        string
-	X2g         string
-	X3g         string
-	X5g         string
-	Lte         string
-	LteM        string
+	Imsi        int64
+	SmsMo       float64 `gorm:"type:float"`
+	SmsMt       float64 `gorm:"type:float"`
+	Data        float64 `gorm:"type:float"`
+	X2g         bool    `gorm:"type:bool default:false"`
+	X3g         bool    `gorm:"type:bool default:false"`
+	X5g         bool    `gorm:"type:bool default:false"`
+	Lte         bool    `gorm:"type:bool default:false"`
+	LteM        bool    `gorm:"type:bool default:false"`
 	Apn         string
 	EffectiveAt string
 	EndAt       string
 	SimType     SimType
+	Currency    string
 }
 
 type SimType uint8

@@ -21,7 +21,8 @@ func TestRateService_ParseToModel(t *testing.T) {
 		Sms_mo:  "$0.1",
 		Sms_mt:  "$0.1",
 	}}
-	dbRate := ParseToModel(rawRates, "2023-10-10", "ukama_data")
+	dbRate, err := ParseToModel(rawRates, "2023-10-10", "ukama_data")
+	assert.NoError(t, err)
 	assert.Equal(t, rawRates[0].Country, dbRate[0].Country)
 	assert.Equal(t, "2023-10-10", dbRate[0].EffectiveAt)
 	assert.Equal(t, db.ParseType("ukama_data"), dbRate[0].SimType)
