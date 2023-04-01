@@ -18,16 +18,16 @@ type Rate struct {
 	SmsMo       float64 `gorm:"type:float"`
 	SmsMt       float64 `gorm:"type:float"`
 	Data        float64 `gorm:"type:float"`
-	X2g         bool    `gorm:"type:bool default:false"`
-	X3g         bool    `gorm:"type:bool default:false"`
-	X5g         bool    `gorm:"type:bool default:false"`
-	Lte         bool    `gorm:"type:bool default:false"`
-	LteM        bool    `gorm:"type:bool default:false"`
+	X2g         bool    `gorm:"type:bool; default:false"`
+	X3g         bool    `gorm:"type:bool; default:false"`
+	X5g         bool    `gorm:"type:bool; default:false"`
+	Lte         bool    `gorm:"type:bool; default:false"`
+	LteM        bool    `gorm:"type:bool; default:false"`
 	Apn         string
 	EffectiveAt string
 	EndAt       string
 	SimType     SimType
-	Currency    string
+	Currency    string `gorm:"not null; default:Dollar"`
 }
 
 type SimType uint8

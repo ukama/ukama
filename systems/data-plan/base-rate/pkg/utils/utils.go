@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -103,10 +104,15 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.Rate, e
 	return rates, nil
 }
 
-func ParseToRates(r string, s string) (float64, error) {
-	val, err := strconv.ParseFloat(r, 64)
+func ParseToRates(str string, s string) (float64, error) {
+	var val float64 = 0
+	var err error
+	sr := strings.Split(str, s)
+	for _, s := range sr {
+		val, err = strconv.ParseFloat(s, 64)
+	}
 	if err != nil {
-		log.Errorf("Failed to parse rate from %s with rate symbol %s.Error: %v", r, s, err)
+		log.Errorf("Failed to parse rate from %s with rate symbol %s.Error: %v", str, s, err)
 		return 0, err
 	}
 	return val, nil
