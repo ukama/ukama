@@ -67,6 +67,29 @@ func (_m *OrgRepo) Get(id uuid.UUID) (*db.Org, error) {
 	return r0, r1
 }
 
+// GetAll provides a mock function with given fields:
+func (_m *OrgRepo) GetAll() ([]db.Org, error) {
+	ret := _m.Called()
+
+	var r0 []db.Org
+	if rf, ok := ret.Get(0).(func() []db.Org); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Org)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetByName provides a mock function with given fields: name
 func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
 	ret := _m.Called(name)
@@ -136,6 +159,34 @@ func (_m *OrgRepo) GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*db.OrgUser, 
 	return r0, r1
 }
 
+// GetMemberCount provides a mock function with given fields: orgID
+func (_m *OrgRepo) GetMemberCount(orgID uuid.UUID) (int64, int64, error) {
+	ret := _m.Called(orgID)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(uuid.UUID) int64); ok {
+		r0 = rf(orgID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 int64
+	if rf, ok := ret.Get(1).(func(uuid.UUID) int64); ok {
+		r1 = rf(orgID)
+	} else {
+		r1 = ret.Get(1).(int64)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(uuid.UUID) error); ok {
+		r2 = rf(orgID)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // GetMembers provides a mock function with given fields: orgID
 func (_m *OrgRepo) GetMembers(orgID uuid.UUID) ([]db.OrgUser, error) {
 	ret := _m.Called(orgID)
@@ -157,6 +208,34 @@ func (_m *OrgRepo) GetMembers(orgID uuid.UUID) ([]db.OrgUser, error) {
 	}
 
 	return r0, r1
+}
+
+// GetOrgCount provides a mock function with given fields:
+func (_m *OrgRepo) GetOrgCount() (int64, int64, error) {
+	ret := _m.Called()
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func() int64); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 int64
+	if rf, ok := ret.Get(1).(func() int64); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Get(1).(int64)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func() error); ok {
+		r2 = rf()
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // RemoveMember provides a mock function with given fields: orgID, userUUID

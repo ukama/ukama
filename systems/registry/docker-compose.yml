@@ -1,73 +1,79 @@
 version: "3.2"
 services:
-  postgresd:
-    image: postgres:13.3
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=ThisIsUkamaXPass
-    networks:
-      - ukama-net
-    volumes:
-      - postgress-data:/var/lib/postgresql
-
   network:
     build:
       context: ./network
       dockerfile: ./Dockerfile
     ports:
-      - "9093:9090"
+      - "9073:9090"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - BOOTSTRAP_URL=bootstrap.dev.ukama.com
       - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient:9095
+      - NETWORK_SERVICE_HOST=network
+      - NETWORK_SERVICE_PORT=9090
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd
+      - msgclient
 
   org:
     build: ./org
     ports:
-      - "9091:9090"
+      - "9070:9090"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - UKAMA_UUID=${UKAMA_UUID}
+      - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
+      - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+      - ORGNAME=ukama-test-org
       - BOOTSTRAP_URL=bootstrap.dev.ukama.com
       - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient:9095
+      - ORG_SERVICE_HOST=org
+      - ORG_SERVICE_PORT=9070
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd
+      - msgclient
 
   users:
     build: ./users
     ports:
-      - "9090:9090"
+      - "9071:9090"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - UKAMA_UUID=${UKAMA_UUID}
-      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
+      - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+      - ORGOWNERNAME=ukama-test-org-owner
+      - ORGOWNEREMAIL=ukama-test-org-owner@domain.com
+      - ORGOWNERPHONE=0123456789
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient:9095
+      - USERS_SERVICE_HOST=users
+      - USERS_SERVICE_PORT=9071
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
       # - SIMMANAGER_TIMEOUT=3s
@@ -75,7 +81,8 @@ services:
     networks:
       - ukama-net
     depends_on:
-      - postgresd
+      - msgclient
+
 
   api-gateway:
     build:
@@ -83,7 +90,7 @@ services:
       context: ./api-gateway
     restart: always
     ports:
-      - "8080:8080"
+      - "8075:8080"
     networks:
       - ukama-net
     environment:
@@ -95,14 +102,21 @@ services:
       - network
       - org
       - users
-
-
+  
+  msgclient:
+    build: ../messaging/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - SYSTEM=registry
+    restart: always
+    networks:
+      - ukama-net
+      
 networks:
   ukama-net:
-      ipam:
-        driver: default
-        config:
-            - subnet: 10.10.0.0/24
-
-volumes:
-  postgress-data:
+    external:
+      name: services_dev-net
