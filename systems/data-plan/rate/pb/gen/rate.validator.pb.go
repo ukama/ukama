@@ -17,6 +17,9 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *MarkupRates) Validate() error {
+	return nil
+}
 func (this *UpdateMarkupRequest) Validate() error {
 	if this.OwnerId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OwnerId", fmt.Errorf(`value '%v' must not be an empty string`, this.OwnerId))
@@ -45,6 +48,50 @@ func (this *GetMarkupResponse) Validate() error {
 	if this.OwnerId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OwnerId", fmt.Errorf(`value '%v' must not be an empty string`, this.OwnerId))
 	}
+	return nil
+}
+func (this *GetDefaultMarkupRequest) Validate() error {
+	return nil
+}
+func (this *GetDefaultMarkupResponse) Validate() error {
+	return nil
+}
+func (this *GetDefaultMarkupHistoryRequest) Validate() error {
+	return nil
+}
+func (this *GetDefaultMarkupHistoryResponse) Validate() error {
+	for _, item := range this.MarkupRates {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("MarkupRates", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *GetMarkupHistoryRequest) Validate() error {
+	if this.OwnerId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OwnerId", fmt.Errorf(`value '%v' must not be an empty string`, this.OwnerId))
+	}
+	return nil
+}
+func (this *GetMarkupHistoryResponse) Validate() error {
+	if this.OwnerId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OwnerId", fmt.Errorf(`value '%v' must not be an empty string`, this.OwnerId))
+	}
+	for _, item := range this.MarkupRates {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("MarkupRates", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *UpdateDefaultMarkupRequest) Validate() error {
+	return nil
+}
+func (this *UpdateDefaultMarkupResponse) Validate() error {
 	return nil
 }
 func (this *GetRatesRequest) Validate() error {

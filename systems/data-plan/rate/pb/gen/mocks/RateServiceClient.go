@@ -46,6 +46,66 @@ func (_m *RateServiceClient) DeleteMarkup(ctx context.Context, in *gen.DeleteMar
 	return r0, r1
 }
 
+// GetDefaultMarkup provides a mock function with given fields: ctx, in, opts
+func (_m *RateServiceClient) GetDefaultMarkup(ctx context.Context, in *gen.GetDefaultMarkupRequest, opts ...grpc.CallOption) (*gen.GetDefaultMarkupResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetDefaultMarkupResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetDefaultMarkupRequest, ...grpc.CallOption) *gen.GetDefaultMarkupResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetDefaultMarkupResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetDefaultMarkupRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDefaultMarkupHistory provides a mock function with given fields: ctx, in, opts
+func (_m *RateServiceClient) GetDefaultMarkupHistory(ctx context.Context, in *gen.GetDefaultMarkupHistoryRequest, opts ...grpc.CallOption) (*gen.GetDefaultMarkupHistoryResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetDefaultMarkupHistoryResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetDefaultMarkupHistoryRequest, ...grpc.CallOption) *gen.GetDefaultMarkupHistoryResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetDefaultMarkupHistoryResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetDefaultMarkupHistoryRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMarkup provides a mock function with given fields: ctx, in, opts
 func (_m *RateServiceClient) GetMarkup(ctx context.Context, in *gen.GetMarkupRequest, opts ...grpc.CallOption) (*gen.GetMarkupResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -68,6 +128,36 @@ func (_m *RateServiceClient) GetMarkup(ctx context.Context, in *gen.GetMarkupReq
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMarkupRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetMarkupHistory provides a mock function with given fields: ctx, in, opts
+func (_m *RateServiceClient) GetMarkupHistory(ctx context.Context, in *gen.GetMarkupHistoryRequest, opts ...grpc.CallOption) (*gen.GetMarkupHistoryResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetMarkupHistoryResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMarkupHistoryRequest, ...grpc.CallOption) *gen.GetMarkupHistoryResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetMarkupHistoryResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMarkupHistoryRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -128,6 +218,36 @@ func (_m *RateServiceClient) GetRates(ctx context.Context, in *gen.GetRatesReque
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRatesRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateDefaultMarkup provides a mock function with given fields: ctx, in, opts
+func (_m *RateServiceClient) UpdateDefaultMarkup(ctx context.Context, in *gen.UpdateDefaultMarkupRequest, opts ...grpc.CallOption) (*gen.UpdateDefaultMarkupResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.UpdateDefaultMarkupResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateDefaultMarkupRequest, ...grpc.CallOption) *gen.UpdateDefaultMarkupResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateDefaultMarkupResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateDefaultMarkupRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

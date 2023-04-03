@@ -11,6 +11,7 @@ type MarkupsRepo interface {
 	CreateMarkupRate(uuid uuid.UUID, markup float64) error
 	DeleteMarkupRate(uuid uuid.UUID) error
 	UpdateMarkupRate(uuid uuid.UUID, markup float64) error
+	GetMarkupRateHistory(uuid uuid.UUID) ([]Markups, error)
 }
 
 type markupsRepo struct {
@@ -66,4 +67,13 @@ func (m *markupsRepo) UpdateMarkupRate(uuid uuid.UUID, markup float64) error {
 	}
 
 	return nil
+}
+
+func (m *markupsRepo) GetMarkupRateHistory(uuid uuid.UUID) ([]Markups, error) {
+	rates := []Markups{}
+	result := m.Db.GetGormDb().Model(&Markups{}).Unscoped().Where("owner_id=?", uuid).Find(&rates)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return rates, nil
 }

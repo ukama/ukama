@@ -8,6 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
+type DefaultMarkup struct {
+	gorm.Model
+	Markup float64 `gorm:"type:float; default:0"`
+}
+
 type Markups struct {
 	gorm.Model
 	OwnerId uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`

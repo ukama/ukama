@@ -10,16 +10,25 @@ import "baserate.proto";
 
 service RateService {
 
-    /* User */
     rpc GetMarkup(GetMarkupRequest) returns (GetMarkupResponse);
     rpc UpdateMarkup(UpdateMarkupRequest) returns (UpdateMarkupResponse);
     rpc DeleteMarkup(DeleteMarkupRequest) returns (DeleteMarkupResponse);
+    rpc GetMarkupHistory(GetMarkupHistoryRequest) returns (GetMarkupHistoryResponse);
+    
+    rpc GetDefaultMarkup(GetDefaultMarkupRequest) returns (GetDefaultMarkupResponse);
+    rpc UpdateDefaultMarkup(UpdateDefaultMarkupRequest) returns (UpdateDefaultMarkupResponse);
+    rpc GetDefaultMarkupHistory(GetDefaultMarkupHistoryRequest) returns (GetDefaultMarkupHistoryResponse);
     
     rpc GetRates (GetRatesRequest) returns (GetRatesResponse);
     rpc GetRate(GetRateRequest) returns (GetRateResponse);
 
 }
 
+message MarkupRates {
+    string createdAt = 1;
+    string deletedAt = 2;
+    double Markup = 3;
+}
 
 message UpdateMarkupRequest {
     string ownerId = 1 [(validator.field) = {string_not_empty: true}];
@@ -43,6 +52,37 @@ message GetMarkupRequest {
 message GetMarkupResponse {
     string ownerId = 1 [(validator.field) = {string_not_empty: true}];
     double Markup = 2;
+}
+
+message GetDefaultMarkupRequest {
+}
+
+message GetDefaultMarkupResponse {
+    double Markup = 1;
+}
+
+message GetDefaultMarkupHistoryRequest {
+}
+
+message GetDefaultMarkupHistoryResponse {
+    repeated MarkupRates markupRates= 1;
+}
+
+message GetMarkupHistoryRequest {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+}
+
+message GetMarkupHistoryResponse {
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    repeated MarkupRates markupRates = 2;
+}
+
+
+message UpdateDefaultMarkupRequest {
+    double Markup = 1;
+}
+
+message UpdateDefaultMarkupResponse {
 }
 
 message GetRatesRequest{

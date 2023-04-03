@@ -8,6 +8,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/rate/pkg"
@@ -22,12 +23,13 @@ const uuidParsingError = "Error parsing UUID"
 type RateServer struct {
 	baseRate       *client.BaseRate
 	markupRepo     db.MarkupsRepo
+	defaultRepo    db.DefaultMarkupRepo
 	msgBus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedRateServiceServer
 }
 
-func NewRateServer(markupRepo db.MarkupsRepo, baseRate string, msgBus mb.MsgBusServiceClient, timeout time.Duration) (*RateServer, error) {
+func NewRateServer(markupRepo db.MarkupsRepo, defualtMarkupRepo db.DefaultMarkupRepo, baseRate string, msgBus mb.MsgBusServiceClient, timeout time.Duration) (*RateServer, error) {
 	b, err := client.NewBaseRate(baseRate, timeout)
 	if err != nil {
 		return nil, err
@@ -36,12 +38,14 @@ func NewRateServer(markupRepo db.MarkupsRepo, baseRate string, msgBus mb.MsgBusS
 	return &RateServer{
 		baseRate:       b,
 		markupRepo:     markupRepo,
+		defaultRepo:    defualtMarkupRepo,
 		msgBus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}, nil
 }
 
 func (r *RateServer) GetMarkup(ctx context.Context, req *pb.GetMarkupRequest) (*pb.GetMarkupResponse, error) {
+	var rate float64 = 0
 	uuid, err := uuid.FromString(req.OwnerId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
@@ -49,13 +53,69 @@ func (r *RateServer) GetMarkup(ctx context.Context, req *pb.GetMarkupRequest) (*
 
 	markup, err := r.markupRepo.GetMarkupRate(uuid)
 	if err != nil {
-		log.Error("error while getting markup" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "markup")
+
+		// Trying to reda default markup
+		defMarkup := &db.DefaultMarkup{}
+		if sql.IsNotFoundError(err) {
+			log.Warn("error while getting specific markup" + err.Error())
+			defMarkup, err = r.defaultRepo.GetDefaultMarkupRate()
+		}
+
+		if err != nil {
+			log.Error("error while getting markup" + err.Error())
+			return nil, grpc.SqlErrorToGrpc(err, "markup")
+		}
+
+		rate = defMarkup.Markup
+
+	} else {
+		rate = markup.Markup
 	}
 
 	resp := &pb.GetMarkupResponse{
 		OwnerId: req.OwnerId,
-		Markup:  markup.Markup,
+		Markup:  rate,
+	}
+
+	return resp, nil
+}
+
+func (r *RateServer) UpdateDefaultMarkup(ctx context.Context, req *pb.UpdateDefaultMarkupRequest) (*pb.UpdateDefaultMarkupResponse, error) {
+
+	err := r.defaultRepo.UpdateDefaultMarkupRate(req.Markup)
+	if err != nil {
+		log.Error("error while updating default markup" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "default markup")
+	}
+
+	return &pb.UpdateDefaultMarkupResponse{}, nil
+}
+
+func (r *RateServer) GetDefaultMarkup(ctx context.Context, req *pb.GetDefaultMarkupRequest) (*pb.GetDefaultMarkupResponse, error) {
+
+	defMarkup, err := r.defaultRepo.GetDefaultMarkupRate()
+	if err != nil {
+		log.Error("error while getting default markup" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "default markup")
+	}
+
+	resp := &pb.GetDefaultMarkupResponse{
+		Markup: defMarkup.Markup,
+	}
+
+	return resp, nil
+}
+
+func (r *RateServer) GetDefaultMarkupHistory(ctx context.Context, req *pb.GetDefaultMarkupHistoryRequest) (*pb.GetDefaultMarkupHistoryResponse, error) {
+
+	defMarkup, err := r.defaultRepo.GetDefaultMarkupRateHistory()
+	if err != nil {
+		log.Error("error while getting default markup" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "default markup")
+	}
+
+	resp := &pb.GetDefaultMarkupHistoryResponse{
+		MarkupRates: defMarkupToPbMarkupRates(defMarkup),
 	}
 
 	return resp, nil
@@ -89,6 +149,25 @@ func (r *RateServer) DeleteMarkup(ctx context.Context, req *pb.DeleteMarkupReque
 	}
 
 	return &pb.DeleteMarkupResponse{}, nil
+}
+
+func (r *RateServer) GetMarkupHistory(ctx context.Context, req *pb.GetMarkupHistoryRequest) (*pb.GetMarkupHistoryResponse, error) {
+	uuid, err := uuid.FromString(req.OwnerId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	markup, err := r.markupRepo.GetMarkupRateHistory(uuid)
+	if err != nil {
+		log.Error("error while getting default markup" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "default markup")
+	}
+
+	resp := &pb.GetMarkupHistoryResponse{
+		MarkupRates: markupToPbMarkupRates(markup),
+	}
+
+	return resp, nil
 }
 
 func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.GetRateResponse, error) {
@@ -140,6 +219,30 @@ func baseRateToMarkupRate(r *pb.Rate, markup float64) *pb.Rate {
 		SmsMo: MarkupRate(r.SmsMo, markup),
 		SmsMt: MarkupRate(r.SmsMt, markup),
 	}
+}
+
+func defMarkupToPbMarkupRates(rates []db.DefaultMarkup) []*pb.MarkupRates {
+	res := []*pb.MarkupRates{}
+	for _, rate := range rates {
+		res = append(res, &pb.MarkupRates{
+			CreatedAt: rate.CreatedAt.Format(time.RFC3339),
+			DeletedAt: rate.CreatedAt.Format(time.RFC3339),
+			Markup:    rate.Markup,
+		})
+	}
+	return res
+}
+
+func markupToPbMarkupRates(rates []db.Markups) []*pb.MarkupRates {
+	res := []*pb.MarkupRates{}
+	for _, rate := range rates {
+		res = append(res, &pb.MarkupRates{
+			CreatedAt: rate.CreatedAt.Format(time.RFC3339),
+			DeletedAt: rate.CreatedAt.Format(time.RFC3339),
+			Markup:    rate.Markup,
+		})
+	}
+	return res
 }
 
 func MarkupRate(cost float64, markup float64) float64 {

@@ -37,6 +37,52 @@ func (_m *RateServiceServer) DeleteMarkup(_a0 context.Context, _a1 *gen.DeleteMa
 	return r0, r1
 }
 
+// GetDefaultMarkup provides a mock function with given fields: _a0, _a1
+func (_m *RateServiceServer) GetDefaultMarkup(_a0 context.Context, _a1 *gen.GetDefaultMarkupRequest) (*gen.GetDefaultMarkupResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetDefaultMarkupResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetDefaultMarkupRequest) *gen.GetDefaultMarkupResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetDefaultMarkupResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetDefaultMarkupRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDefaultMarkupHistory provides a mock function with given fields: _a0, _a1
+func (_m *RateServiceServer) GetDefaultMarkupHistory(_a0 context.Context, _a1 *gen.GetDefaultMarkupHistoryRequest) (*gen.GetDefaultMarkupHistoryResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetDefaultMarkupHistoryResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetDefaultMarkupHistoryRequest) *gen.GetDefaultMarkupHistoryResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetDefaultMarkupHistoryResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetDefaultMarkupHistoryRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMarkup provides a mock function with given fields: _a0, _a1
 func (_m *RateServiceServer) GetMarkup(_a0 context.Context, _a1 *gen.GetMarkupRequest) (*gen.GetMarkupResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -52,6 +98,29 @@ func (_m *RateServiceServer) GetMarkup(_a0 context.Context, _a1 *gen.GetMarkupRe
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMarkupRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetMarkupHistory provides a mock function with given fields: _a0, _a1
+func (_m *RateServiceServer) GetMarkupHistory(_a0 context.Context, _a1 *gen.GetMarkupHistoryRequest) (*gen.GetMarkupHistoryResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetMarkupHistoryResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMarkupHistoryRequest) *gen.GetMarkupHistoryResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetMarkupHistoryResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMarkupHistoryRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -98,6 +167,29 @@ func (_m *RateServiceServer) GetRates(_a0 context.Context, _a1 *gen.GetRatesRequ
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRatesRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateDefaultMarkup provides a mock function with given fields: _a0, _a1
+func (_m *RateServiceServer) UpdateDefaultMarkup(_a0 context.Context, _a1 *gen.UpdateDefaultMarkupRequest) (*gen.UpdateDefaultMarkupResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UpdateDefaultMarkupResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateDefaultMarkupRequest) *gen.UpdateDefaultMarkupResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateDefaultMarkupResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateDefaultMarkupRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

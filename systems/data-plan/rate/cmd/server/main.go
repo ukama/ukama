@@ -76,7 +76,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv, err := server.NewRateServer(db.NewMarkupsRepo(gormdb), serviceConfig.BaseRate, mbClient, serviceConfig.Timeout)
+	srv, err := server.NewRateServer(db.NewMarkupsRepo(gormdb), db.NewDefaultMarkupRepo(gormdb), serviceConfig.BaseRate, mbClient, serviceConfig.Timeout)
 	if err != nil {
 		log.Fatalf("Failed to initialize service %s. error: %s", pkg.ServiceName, err)
 	}
