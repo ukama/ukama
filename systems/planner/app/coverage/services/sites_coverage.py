@@ -5,6 +5,7 @@ from datetime import datetime
 import numpy as np
 from osgeo import gdal, osr
 from typing import List
+from dotenv import load_dotenv
 
 
 from app.models.schema import SiteCoverageReponse
@@ -12,11 +13,12 @@ from app.coverage.schemas.coverage import Site, CoverageResponseSchema
 from app.coverage.enums.coverage import CoverageEnum
 from core import config
 
+load_dotenv()
 
 class SitesCoverage:
     def __init__(self):
         self.RF_SERVER_PATH = config.get_config().RF_SERVER_PATH
-        self.SDF_FILES_PATH = config.get_config().SDF_FILES_PATH
+        self.SDF_FILES_PATH = os.getenv("SDF_DIR", config.get_config().SDF_FILES_PATH)
         self.OUTPUT_PATH = config.get_config().OUTPUT_PATH
         self.TEMP_FOLDER = config.get_config().TEMP_FOLDER
 
@@ -83,6 +85,8 @@ class SitesCoverage:
                 )
             else:
                 return sites_coverage_list[0]
+        finally:
+            self.remove_temp_folder()
 
     def merge_sites_output(
         self, sites_coverage_list, output_file_path, output_folder_path, outputFunc
@@ -299,6 +303,9 @@ class SitesCoverage:
         subprocess.check_output("mkdir -p " + output_folder_path, shell=True)
         subprocess.check_output("mkdir -p " + self.TEMP_FOLDER, shell=True)
         return output_folder_path
-
+    
+    def remove_temp_folder(self):
+        print("removing temporary content in: "+ self.TEMP_FOLDER)
+        subprocess.check_output("rm -rf " + self.TEMP_FOLDER, shell=True)
 
 # endregion

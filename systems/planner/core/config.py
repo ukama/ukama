@@ -14,10 +14,10 @@ class Config(BaseSettings):
 
 
 class DevelopmentConfig(Config):
-    RF_SERVER_PATH: str = "/var/www/app/Signal-Server"
-    SDF_FILES_PATH: str = "/data/sdfData"
+    RF_SERVER_PATH: str = "/var/www/server/Signal-Server"
+    SDF_FILES_PATH: str = "/data/sdfData" # todo load this from env in order to run it with docker.
     OUTPUT_PATH: str = "/var/www/app/output/"
-    TEMP_FOLDER: str = "/var/www/app/tmp/planner/output/"
+    TEMP_FOLDER: str = "/tmp/planner/output/"
 
 
 class LocalConfig(Config): 

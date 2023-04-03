@@ -10,5 +10,9 @@ services:
       - '8000:8000'
     tty: true
     entrypoint: /var/www/app/docker/api/startup.sh
+    environment:
+      - ENV=dev
+      - SDF_DIR
     volumes:
       - .:/var/www/app
+      - $SDF_DIR:/data/sdfData

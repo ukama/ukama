@@ -1,30 +1,22 @@
-# FROM tiangolo/uvicorn-gunicorn-fastapi:python3.11
 FROM continuumio/miniconda3
 
 
 EXPOSE 8000
 
-
 RUN : "---------- install generic build container deps ----------" \
     && set -x \
     && apt-get update \
-    && apt-get install -y --no-install-recommends \
-    g++ cmake libbz2-dev imagemagick
+    && DEBIAN_FRONTEND=noninteractive apt-get -qy install --no-install-recommends \
+    build-essential libgdal-dev git g++ cmake libbz2-dev imagemagick libz-dev
 
+RUN mkdir -p /var/www/server \      
+    && cd /var/www/server \        
+    && git clone https://github.com/Cloud-RF/Signal-Server.git
+RUN cd /var/www/server/Signal-Server/src && cmake . && make
 
 COPY . /var/www/app
 WORKDIR /var/www/app
-ENV ENV=dev
-# Activate the environment, and make sure it's activated:
-RUN cd /var/www/app/Signal-Server/src \
-    && cmake . \
-    && make
 RUN conda create --name myenv 
 SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
-RUN conda install -y --file requirements.txt -c conda-forge
-
-
-
-RUN ["chmod", "+x", "/var/www/app/docker/api/startup.sh"]
-# ENTRYPOINT ["/bin/bash"] 
-ENTRYPOINT ["/var/www/app/docker/api/startup.sh"]
+RUN conda install --file requirements.txt -c conda-forge
+RUN ["chmod", "+x", "/var/www/app/docker/apis/startup.sh"]
