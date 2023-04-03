@@ -20,12 +20,10 @@ class SitesCoverage:
         self.OUTPUT_PATH = config.get_config().OUTPUT_PATH
         self.TEMP_FOLDER = config.get_config().TEMP_FOLDER
 
-
     def calculate_coverage(self, mode, sites: list[Site]) -> CoverageResponseSchema:
         try:
             output_folder_path = self.generate_output_folder()
             sites_coverage_list = []
-            
             for site in sites:
                 params = ["-sdf", self.SDF_FILES_PATH]
                 if site['latitude']:
@@ -60,10 +58,10 @@ class SitesCoverage:
                 output = result.split("|")
 
                 print("Converting to PNG...")
-                rf_convert_command = f"convert {output_file_path}.ppm {output_file_path}.png"
+                rf_convert_command = f"convert {output_file_path}.ppm -transparent white -channel Alpha PNG32:{output_file_path}.png"
                 print(f"Running {rf_convert_command}")
                 subprocess.check_call(rf_convert_command, shell=True)
-
+                print(output)
                 if len(output[1:-1]) == 4:
                     sites_coverage_list.append(
                         CoverageResponseSchema(
