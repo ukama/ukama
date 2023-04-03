@@ -9,6 +9,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/structpb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
@@ -27,6 +28,11 @@ func (this *AddRequest) Validate() error {
 	}
 	if this.SubscriberId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
+	}
+	if this.Period != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Period); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Period", err)
+		}
 	}
 	return nil
 }
@@ -81,14 +87,14 @@ func (this *GetBySubscriberResponse) Validate() error {
 	return nil
 }
 
-var _regex_DeleteRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_DeleteRequest_InvoiceId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *DeleteRequest) Validate() error {
-	if !_regex_DeleteRequest_Id.MatchString(this.Id) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	if !_regex_DeleteRequest_InvoiceId.MatchString(this.InvoiceId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.InvoiceId))
 	}
-	if this.Id == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	if this.InvoiceId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceId", fmt.Errorf(`value '%v' must not be an empty string`, this.InvoiceId))
 	}
 	return nil
 }
@@ -111,6 +117,16 @@ func (this *Invoice) Validate() error {
 	}
 	if this.SubscriberId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
+	}
+	if this.Period != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Period); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Period", err)
+		}
+	}
+	if this.RawInvoice != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.RawInvoice); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("RawInvoice", err)
+		}
 	}
 	if this.CreatedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
