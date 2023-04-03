@@ -10,9 +10,10 @@ import (
 	_ "github.com/mwitkow/go-proto-validators"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -21,6 +22,484 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+type AddRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SubscriberId string `protobuf:"bytes,1,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
+	Period       string `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
+	RawInvoice   string `protobuf:"bytes,3,opt,name=rawInvoice,json=raw_invoice,proto3" json:"rawInvoice,omitempty"`
+}
+
+func (x *AddRequest) Reset() {
+	*x = AddRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AddRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddRequest) ProtoMessage() {}
+
+func (x *AddRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddRequest.ProtoReflect.Descriptor instead.
+func (*AddRequest) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *AddRequest) GetSubscriberId() string {
+	if x != nil {
+		return x.SubscriberId
+	}
+	return ""
+}
+
+func (x *AddRequest) GetPeriod() string {
+	if x != nil {
+		return x.Period
+	}
+	return ""
+}
+
+func (x *AddRequest) GetRawInvoice() string {
+	if x != nil {
+		return x.RawInvoice
+	}
+	return ""
+}
+
+type AddResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Invoice *Invoice `protobuf:"bytes,2,opt,name=invoice,proto3" json:"invoice,omitempty"`
+}
+
+func (x *AddResponse) Reset() {
+	*x = AddResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AddResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddResponse) ProtoMessage() {}
+
+func (x *AddResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddResponse.ProtoReflect.Descriptor instead.
+func (*AddResponse) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *AddResponse) GetInvoice() *Invoice {
+	if x != nil {
+		return x.Invoice
+	}
+	return nil
+}
+
+type GetRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	InvoiceId string `protobuf:"bytes,1,opt,name=invoiceId,json=invoice_id,proto3" json:"invoiceId,omitempty"`
+}
+
+func (x *GetRequest) Reset() {
+	*x = GetRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRequest) ProtoMessage() {}
+
+func (x *GetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
+func (*GetRequest) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetRequest) GetInvoiceId() string {
+	if x != nil {
+		return x.InvoiceId
+	}
+	return ""
+}
+
+type GetResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Invoice *Invoice `protobuf:"bytes,1,opt,name=invoice,proto3" json:"invoice,omitempty"`
+}
+
+func (x *GetResponse) Reset() {
+	*x = GetResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetResponse) ProtoMessage() {}
+
+func (x *GetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
+func (*GetResponse) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetResponse) GetInvoice() *Invoice {
+	if x != nil {
+		return x.Invoice
+	}
+	return nil
+}
+
+type GetBySubscriberRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SubscriberId string `protobuf:"bytes,1,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
+}
+
+func (x *GetBySubscriberRequest) Reset() {
+	*x = GetBySubscriberRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetBySubscriberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBySubscriberRequest) ProtoMessage() {}
+
+func (x *GetBySubscriberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBySubscriberRequest.ProtoReflect.Descriptor instead.
+func (*GetBySubscriberRequest) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetBySubscriberRequest) GetSubscriberId() string {
+	if x != nil {
+		return x.SubscriberId
+	}
+	return ""
+}
+
+type GetBySubscriberResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SubscriberId string     `protobuf:"bytes,1,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
+	Invoices     []*Invoice `protobuf:"bytes,2,rep,name=invoices,proto3" json:"invoices,omitempty"`
+}
+
+func (x *GetBySubscriberResponse) Reset() {
+	*x = GetBySubscriberResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetBySubscriberResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBySubscriberResponse) ProtoMessage() {}
+
+func (x *GetBySubscriberResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBySubscriberResponse.ProtoReflect.Descriptor instead.
+func (*GetBySubscriberResponse) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetBySubscriberResponse) GetSubscriberId() string {
+	if x != nil {
+		return x.SubscriberId
+	}
+	return ""
+}
+
+func (x *GetBySubscriberResponse) GetInvoices() []*Invoice {
+	if x != nil {
+		return x.Invoices
+	}
+	return nil
+}
+
+type DeleteRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *DeleteRequest) Reset() {
+	*x = DeleteRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteRequest) ProtoMessage() {}
+
+func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
+func (*DeleteRequest) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DeleteRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeleteResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *DeleteResponse) Reset() {
+	*x = DeleteResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteResponse) ProtoMessage() {}
+
+func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
+func (*DeleteResponse) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{7}
+}
+
+type Invoice struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	SubscriberId string                 `protobuf:"bytes,2,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
+	Period       string                 `protobuf:"bytes,3,opt,name=period,proto3" json:"period,omitempty"`
+	RawInvoice   string                 `protobuf:"bytes,4,opt,name=rawInvoice,json=raw_invoice,proto3" json:"rawInvoice,omitempty"`
+	IsPaid       bool                   `protobuf:"varint,5,opt,name=isPaid,json=is_paid,proto3" json:"isPaid,omitempty"`
+	CreatedAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`
+}
+
+func (x *Invoice) Reset() {
+	*x = Invoice{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_invoice_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Invoice) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Invoice) ProtoMessage() {}
+
+func (x *Invoice) ProtoReflect() protoreflect.Message {
+	mi := &file_invoice_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Invoice.ProtoReflect.Descriptor instead.
+func (*Invoice) Descriptor() ([]byte, []int) {
+	return file_invoice_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *Invoice) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Invoice) GetSubscriberId() string {
+	if x != nil {
+		return x.SubscriberId
+	}
+	return ""
+}
+
+func (x *Invoice) GetPeriod() string {
+	if x != nil {
+		return x.Period
+	}
+	return ""
+}
+
+func (x *Invoice) GetRawInvoice() string {
+	if x != nil {
+		return x.RawInvoice
+	}
+	return ""
+}
+
+func (x *Invoice) GetIsPaid() bool {
+	if x != nil {
+		return x.IsPaid
+	}
+	return false
+}
+
+func (x *Invoice) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
 
 var File_invoice_proto protoreflect.FileDescriptor
 
@@ -32,18 +511,129 @@ var file_invoice_proto_rawDesc = []byte{
 	0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x74, 0x69, 0x6d, 0x65,
 	0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x67, 0x6f, 0x6f,
 	0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x77, 0x72, 0x61,
-	0x70, 0x70, 0x65, 0x72, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x32, 0x10, 0x0a, 0x0e, 0x49,
-	0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x42, 0x08, 0x5a,
+	0x70, 0x70, 0x65, 0x72, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x75, 0x0a, 0x0a, 0x41,
+	0x64, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2e, 0x0a, 0x0c, 0x73, 0x75, 0x62,
+	0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42,
+	0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x0d, 0x73, 0x75, 0x62, 0x73,
+	0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x70, 0x65, 0x72,
+	0x69, 0x6f, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x70, 0x65, 0x72, 0x69, 0x6f,
+	0x64, 0x12, 0x1f, 0x0a, 0x0a, 0x72, 0x61, 0x77, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x72, 0x61, 0x77, 0x5f, 0x69, 0x6e, 0x76, 0x6f, 0x69,
+	0x63, 0x65, 0x22, 0x4a, 0x0a, 0x0b, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x3b, 0x0a, 0x07, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c, 0x69,
+	0x6e, 0x67, 0x2e, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x49, 0x6e,
+	0x76, 0x6f, 0x69, 0x63, 0x65, 0x52, 0x07, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x22, 0x36,
+	0x0a, 0x0a, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x28, 0x0a, 0x09,
+	0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42,
+	0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x0a, 0x69, 0x6e, 0x76, 0x6f,
+	0x69, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x22, 0x4a, 0x0a, 0x0b, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3b, 0x0a, 0x07, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x62,
+	0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x2e, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x52, 0x07, 0x69, 0x6e, 0x76, 0x6f, 0x69,
+	0x63, 0x65, 0x22, 0x48, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x42, 0x79, 0x53, 0x75, 0x62, 0x73, 0x63,
+	0x72, 0x69, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2e, 0x0a, 0x0c,
+	0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x0d, 0x73,
+	0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x22, 0x7d, 0x0a, 0x17,
+	0x47, 0x65, 0x74, 0x42, 0x79, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x23, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x73, 0x63,
+	0x72, 0x69, 0x62, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x73,
+	0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x12, 0x3d, 0x0a, 0x08,
+	0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x21,
+	0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x2e, 0x69,
+	0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63,
+	0x65, 0x52, 0x08, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x73, 0x22, 0x2a, 0x0a, 0x0d, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x02,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01,
+	0x90, 0x01, 0x04, 0x52, 0x02, 0x69, 0x64, 0x22, 0x10, 0x0a, 0x0e, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xe1, 0x01, 0x0a, 0x07, 0x49, 0x6e,
+	0x76, 0x6f, 0x69, 0x63, 0x65, 0x12, 0x19, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x02, 0x69, 0x64,
+	0x12, 0x2e, 0x0a, 0x0c, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x49, 0x64,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f, 0x05, 0x58, 0x01, 0x90, 0x01,
+	0x04, 0x52, 0x0d, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x5f, 0x69, 0x64,
+	0x12, 0x16, 0x0a, 0x06, 0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x06, 0x70, 0x65, 0x72, 0x69, 0x6f, 0x64, 0x12, 0x1f, 0x0a, 0x0a, 0x72, 0x61, 0x77, 0x49,
+	0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x72, 0x61,
+	0x77, 0x5f, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x12, 0x17, 0x0a, 0x06, 0x69, 0x73, 0x50,
+	0x61, 0x69, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x69, 0x73, 0x5f, 0x70, 0x61,
+	0x69, 0x64, 0x12, 0x39, 0x0a, 0x09, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x18,
+	0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d,
+	0x70, 0x52, 0x0a, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x5f, 0x61, 0x74, 0x32, 0x8d, 0x03,
+	0x0a, 0x0e, 0x49, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
+	0x12, 0x52, 0x0a, 0x03, 0x41, 0x64, 0x64, 0x12, 0x24, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e,
+	0x62, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x2e, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x2e,
+	0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e,
+	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x2e, 0x69, 0x6e,
+	0x76, 0x6f, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x52, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x24, 0x2e, 0x75, 0x6b,
+	0x61, 0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x2e, 0x69, 0x6e, 0x76, 0x6f,
+	0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x25, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c, 0x69, 0x6e,
+	0x67, 0x2e, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x76, 0x0a, 0x0f, 0x47, 0x65, 0x74, 0x42,
+	0x79, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x12, 0x30, 0x2e, 0x75, 0x6b,
+	0x61, 0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x2e, 0x69, 0x6e, 0x76, 0x6f,
+	0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x53, 0x75, 0x62, 0x73,
+	0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e,
+	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x2e, 0x69, 0x6e,
+	0x76, 0x6f, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x79, 0x53, 0x75,
+	0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x5b, 0x0a, 0x06, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12, 0x27, 0x2e, 0x75, 0x6b, 0x61,
+	0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x2e, 0x69, 0x6e, 0x76, 0x6f, 0x69,
+	0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x62, 0x69, 0x6c, 0x6c,
+	0x69, 0x6e, 0x67, 0x2e, 0x69, 0x6e, 0x76, 0x6f, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x08, 0x5a,
 	0x06, 0x70, 0x62, 0x2f, 0x67, 0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var file_invoice_proto_goTypes = []interface{}{}
+var (
+	file_invoice_proto_rawDescOnce sync.Once
+	file_invoice_proto_rawDescData = file_invoice_proto_rawDesc
+)
+
+func file_invoice_proto_rawDescGZIP() []byte {
+	file_invoice_proto_rawDescOnce.Do(func() {
+		file_invoice_proto_rawDescData = protoimpl.X.CompressGZIP(file_invoice_proto_rawDescData)
+	})
+	return file_invoice_proto_rawDescData
+}
+
+var file_invoice_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_invoice_proto_goTypes = []interface{}{
+	(*AddRequest)(nil),              // 0: ukama.billing.invoice.v1.AddRequest
+	(*AddResponse)(nil),             // 1: ukama.billing.invoice.v1.AddResponse
+	(*GetRequest)(nil),              // 2: ukama.billing.invoice.v1.GetRequest
+	(*GetResponse)(nil),             // 3: ukama.billing.invoice.v1.GetResponse
+	(*GetBySubscriberRequest)(nil),  // 4: ukama.billing.invoice.v1.GetBySubscriberRequest
+	(*GetBySubscriberResponse)(nil), // 5: ukama.billing.invoice.v1.GetBySubscriberResponse
+	(*DeleteRequest)(nil),           // 6: ukama.billing.invoice.v1.DeleteRequest
+	(*DeleteResponse)(nil),          // 7: ukama.billing.invoice.v1.DeleteResponse
+	(*Invoice)(nil),                 // 8: ukama.billing.invoice.v1.Invoice
+	(*timestamppb.Timestamp)(nil),   // 9: google.protobuf.Timestamp
+}
 var file_invoice_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	8, // 0: ukama.billing.invoice.v1.AddResponse.invoice:type_name -> ukama.billing.invoice.v1.Invoice
+	8, // 1: ukama.billing.invoice.v1.GetResponse.invoice:type_name -> ukama.billing.invoice.v1.Invoice
+	8, // 2: ukama.billing.invoice.v1.GetBySubscriberResponse.invoices:type_name -> ukama.billing.invoice.v1.Invoice
+	9, // 3: ukama.billing.invoice.v1.Invoice.createdAt:type_name -> google.protobuf.Timestamp
+	0, // 4: ukama.billing.invoice.v1.InvoiceService.Add:input_type -> ukama.billing.invoice.v1.AddRequest
+	2, // 5: ukama.billing.invoice.v1.InvoiceService.Get:input_type -> ukama.billing.invoice.v1.GetRequest
+	4, // 6: ukama.billing.invoice.v1.InvoiceService.GetBySubscriber:input_type -> ukama.billing.invoice.v1.GetBySubscriberRequest
+	6, // 7: ukama.billing.invoice.v1.InvoiceService.Delete:input_type -> ukama.billing.invoice.v1.DeleteRequest
+	1, // 8: ukama.billing.invoice.v1.InvoiceService.Add:output_type -> ukama.billing.invoice.v1.AddResponse
+	3, // 9: ukama.billing.invoice.v1.InvoiceService.Get:output_type -> ukama.billing.invoice.v1.GetResponse
+	5, // 10: ukama.billing.invoice.v1.InvoiceService.GetBySubscriber:output_type -> ukama.billing.invoice.v1.GetBySubscriberResponse
+	7, // 11: ukama.billing.invoice.v1.InvoiceService.Delete:output_type -> ukama.billing.invoice.v1.DeleteResponse
+	8, // [8:12] is the sub-list for method output_type
+	4, // [4:8] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_invoice_proto_init() }
@@ -51,18 +641,129 @@ func file_invoice_proto_init() {
 	if File_invoice_proto != nil {
 		return
 	}
+	if !protoimpl.UnsafeEnabled {
+		file_invoice_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AddRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_invoice_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AddResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_invoice_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_invoice_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_invoice_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetBySubscriberRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_invoice_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetBySubscriberResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_invoice_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_invoice_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_invoice_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Invoice); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_invoice_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   0,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_invoice_proto_goTypes,
 		DependencyIndexes: file_invoice_proto_depIdxs,
+		MessageInfos:      file_invoice_proto_msgTypes,
 	}.Build()
 	File_invoice_proto = out.File
 	file_invoice_proto_rawDesc = nil

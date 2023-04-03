@@ -10,4 +10,56 @@ import "google/protobuf/wrappers.proto";
 package ukama.billing.invoice.v1;
 
 service InvoiceService {
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetBySubscriber(GetBySubscriberRequest) returns (GetBySubscriberResponse);
+    // Update
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
+
+
+message AddRequest{
+    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string period = 2;
+    string rawInvoice = 3 [json_name = "raw_invoice"];
+}
+
+message AddResponse{
+    Invoice invoice = 2;
+}
+
+
+message GetRequest{
+    string invoiceId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "invoice_id"];
+}
+
+message GetResponse{
+    Invoice invoice = 1;
+}
+
+
+message GetBySubscriberRequest{
+    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+}
+
+message GetBySubscriberResponse{
+    string subscriberId = 1 [json_name = "subscriber_id"];
+    repeated Invoice invoices = 2;
+}
+
+message DeleteRequest{
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message DeleteResponse{
+}
+
+
+message Invoice {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string period = 3;
+    string rawInvoice = 4 [json_name = "raw_invoice"];
+    bool isPaid = 5 [json_name = "is_paid"];
+    google.protobuf.Timestamp createdAt = 6 [json_name = "created_at"];
 }

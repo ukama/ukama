@@ -10,9 +10,112 @@ import (
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	regexp "regexp"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+var _regex_AddRequest_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *AddRequest) Validate() error {
+	if !_regex_AddRequest_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
+	}
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
+	}
+	return nil
+}
+func (this *AddResponse) Validate() error {
+	if this.Invoice != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Invoice); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Invoice", err)
+		}
+	}
+	return nil
+}
+
+var _regex_GetRequest_InvoiceId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetRequest) Validate() error {
+	if !_regex_GetRequest_InvoiceId.MatchString(this.InvoiceId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.InvoiceId))
+	}
+	if this.InvoiceId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("InvoiceId", fmt.Errorf(`value '%v' must not be an empty string`, this.InvoiceId))
+	}
+	return nil
+}
+func (this *GetResponse) Validate() error {
+	if this.Invoice != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Invoice); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Invoice", err)
+		}
+	}
+	return nil
+}
+
+var _regex_GetBySubscriberRequest_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetBySubscriberRequest) Validate() error {
+	if !_regex_GetBySubscriberRequest_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
+	}
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
+	}
+	return nil
+}
+func (this *GetBySubscriberResponse) Validate() error {
+	for _, item := range this.Invoices {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Invoices", err)
+			}
+		}
+	}
+	return nil
+}
+
+var _regex_DeleteRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *DeleteRequest) Validate() error {
+	if !_regex_DeleteRequest_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	return nil
+}
+func (this *DeleteResponse) Validate() error {
+	return nil
+}
+
+var _regex_Invoice_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Invoice_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *Invoice) Validate() error {
+	if !_regex_Invoice_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if !_regex_Invoice_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
+	}
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
+	}
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
+	}
+	return nil
+}
