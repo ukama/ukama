@@ -1,4 +1,7 @@
-name: pr-release-{{SYSTEM_NAME}}-{{SERVICE_NAME}}
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+name: pr-release-services-msgClient
 on:  
   workflow_dispatch:
 
@@ -7,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     name: build and release
     env: 
-      working-directory: {{SERVICE}}
+      working-directory: systems/services/msgClient
     steps:
     - uses: actions/checkout@v3
 
@@ -15,7 +18,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: {{SYSTEM_NAME}}/{{SERVICE_NAME}}
+        registry-name: services/msgClient
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -29,7 +32,7 @@ jobs:
       uses: denispalnitsky/gitops-release@v9
       with:
         filename: "releases/ukamax/pr-env.yaml"
-        key: "{{SANITIZED_NAME}}ImageTag"
+        key: "msgClientImageTag"
         value:  ${{ steps.vars_step.outputs.sha-short }}
         github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         github-org-and-repo: "ukama/infra-as-code"
