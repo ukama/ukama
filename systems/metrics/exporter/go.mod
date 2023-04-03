@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/metrics/exporter
 
-replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
+replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 go 1.18
 
@@ -23,7 +23,6 @@ require (
 	github.com/creasty/defaults v1.6.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 )
@@ -32,6 +31,8 @@ require (
 	github.com/num30/config v0.0.7
 	github.com/satori/go.uuid v1.2.0
 )
+
+require github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000 // indirect
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
