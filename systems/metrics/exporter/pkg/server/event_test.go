@@ -10,7 +10,6 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg/collector"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -106,11 +105,11 @@ func TestEvent_EventNotification(t *testing.T) {
 	tC := InitTestConfig()
 	mc := collector.NewMetricsCollector(tC.MetricConfig)
 	s := NewExporterEventServer(mc)
-	simUsage := pb.SimUsage{
+	simUsage := epb.SimUsage{
 		Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
-		SubscriberID: "c214f255-0ed6-4aa1-93e7-e333658c7318",
-		NetworkID:    "9fd07299-2826-4f8b-aea9-69da56440bec",
-		OrgID:        "75ec112a-8745-49f9-ab64-1a37edade794",
+		SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
+		NetworkId:    "9fd07299-2826-4f8b-aea9-69da56440bec",
+		OrgId:        "75ec112a-8745-49f9-ab64-1a37edade794",
 		Type:         "test_simple",
 		BytesUsed:    uint64(rand.Int63n(4096000)),
 		SessionId:    uuid.NewV4().String(),

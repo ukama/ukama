@@ -6,7 +6,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg/collector"
 	"google.golang.org/protobuf/proto"
@@ -47,8 +46,8 @@ func (s *ExporterEventServer) EventNotification(ctx context.Context, e *epb.Even
 	return &epb.EventResponse{}, nil
 }
 
-func unmarshalEventSimUsage(msg *anypb.Any) (*pb.SimUsage, error) {
-	p := &pb.SimUsage{}
+func unmarshalEventSimUsage(msg *anypb.Any) (*epb.SimUsage, error) {
+	p := &epb.SimUsage{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
@@ -57,7 +56,7 @@ func unmarshalEventSimUsage(msg *anypb.Any) (*pb.SimUsage, error) {
 	return p, nil
 }
 
-func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) error {
+func handleEventSimUsage(key string, msg *epb.SimUsage, s *ExporterEventServer) error {
 
 	cfgs, err := s.mc.GetConfigForEvent(key)
 	if err != nil {
@@ -85,7 +84,7 @@ func handleEventSimUsage(key string, msg *pb.SimUsage, s *ExporterEventServer) e
 	return nil
 }
 
-func AddSimUsage(msg *pb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
+func AddSimUsage(msg *epb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
 
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(ms.Name)
@@ -109,7 +108,7 @@ func AddSimUsage(msg *pb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) 
 	return nil
 }
 
-func AddSimUsageDuration(msg *pb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
+func AddSimUsageDuration(msg *epb.SimUsage, s *ExporterEventServer, ms pkg.MetricSchema) error {
 
 	/* Check if metric exist */
 	m, err := s.mc.GetMetric(ms.Name)
@@ -132,18 +131,18 @@ func AddSimUsageDuration(msg *pb.SimUsage, s *ExporterEventServer, ms pkg.Metric
 	return nil
 }
 
-func SetUpDynamicLabelsForSim(keys []string, msg *pb.SimUsage) prometheus.Labels {
+func SetUpDynamicLabelsForSim(keys []string, msg *epb.SimUsage) prometheus.Labels {
 	l := make(prometheus.Labels)
 	for _, k := range keys {
 		switch k {
 		case "sim":
 			l[k] = msg.Id
 		case "org":
-			l[k] = msg.OrgID
+			l[k] = msg.OrgId
 		case "network":
-			l[k] = msg.NetworkID
+			l[k] = msg.NetworkId
 		case "subscriber":
-			l[k] = msg.SubscriberID
+			l[k] = msg.SubscriberId
 		case "sim_type":
 			l[k] = msg.Type
 		}
