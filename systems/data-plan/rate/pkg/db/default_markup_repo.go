@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	"gorm.io/gorm"
 )
 
 type DefaultMarkupRepo interface {
@@ -53,17 +54,23 @@ func (m *defaultMarkupRepo) DeleteDefaultMarkupRate() error {
 
 func (m *defaultMarkupRepo) UpdateDefaultMarkupRate(markup float64) error {
 
-	err := m.DeleteDefaultMarkupRate()
-	if err != nil {
-		return err
-	}
+	err := m.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		def := DefaultMarkup{}
+		result := tx.Model(DefaultMarkup{}).Where("deleted_at = ?", nil).Delete(def)
+		if result.Error != nil {
+			return result.Error
+		}
 
-	err = m.CreateDefaultMarkupRate(markup)
-	if err != nil {
-		return err
-	}
+		def.Markup = markup
+		result = tx.Model(DefaultMarkup{}).Create(def)
+		if result.Error != nil {
+			return result.Error
+		}
 
-	return nil
+		return nil
+	})
+
+	return err
 }
 
 func (m *defaultMarkupRepo) GetDefaultMarkupRateHistory() ([]DefaultMarkup, error) {

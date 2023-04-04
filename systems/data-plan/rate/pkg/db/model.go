@@ -15,7 +15,7 @@ type DefaultMarkup struct {
 
 type Markups struct {
 	gorm.Model
-	OwnerId uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
+	OwnerId uuid.UUID `gorm:"uniqueIndex:owner_id_unique,where:deleted_at is null;not null;type:uuid"`
 	Markup  float64   `gorm:"type:float; default:0"`
 }
 

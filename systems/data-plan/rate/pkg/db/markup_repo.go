@@ -2,6 +2,7 @@ package db
 
 import (
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/sql"
 )
@@ -38,7 +39,7 @@ func (m *markupsRepo) CreateMarkupRate(uuid uuid.UUID, markup float64) error {
 
 func (m *markupsRepo) GetMarkupRate(uuid uuid.UUID) (*Markups, error) {
 	rate := &Markups{}
-	result := m.Db.GetGormDb().Model(&Markups{}).First("owner_id=?", uuid)
+	result := m.Db.GetGormDb().Model(&Markups{}).Where("owner_id=?", uuid).Find(rate)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -54,19 +55,26 @@ func (m *markupsRepo) DeleteMarkupRate(uuid uuid.UUID) error {
 	return nil
 }
 
-func (m *markupsRepo) UpdateMarkupRate(uuid uuid.UUID, markup float64) error {
+func (m *markupsRepo) UpdateMarkupRate(uuid uuid.UUID, mrate float64) error {
+	err := m.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		markup := &Markups{
+			OwnerId: uuid,
+		}
+		result := tx.Model(Markups{}).Where("owner_id = ?", uuid).Delete(markup)
+		if result.Error != nil {
+			return result.Error
+		}
 
-	err := m.DeleteMarkupRate(uuid)
-	if err != nil {
-		return err
-	}
+		markup.Markup = mrate
+		result = tx.Model(Markups{}).Create(markup)
+		if result.Error != nil {
+			return result.Error
+		}
 
-	err = m.CreateMarkupRate(uuid, markup)
-	if err != nil {
-		return err
-	}
+		return nil
+	})
 
-	return nil
+	return err
 }
 
 func (m *markupsRepo) GetMarkupRateHistory(uuid uuid.UUID) ([]Markups, error) {
