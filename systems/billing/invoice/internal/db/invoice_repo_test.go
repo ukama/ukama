@@ -3,11 +3,11 @@ package db_test
 import (
 	"database/sql"
 	extsql "database/sql"
-	"log"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"

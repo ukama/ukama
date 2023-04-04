@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/billing/invoice/internal/db"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -40,7 +40,7 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		RawInvoice:   datatypes.JSON([]byte(req.RawInvoice)),
 	}
 
-	logrus.Infof("Adding invoice for subscriber: %s", subscriberId)
+	log.Infof("Adding invoice for subscriber: %s", subscriberId)
 	err = i.invoiceRepo.Add(invoice, func(*db.Invoice, *gorm.DB) error {
 		invoice.Id = uuid.NewV4()
 
@@ -94,7 +94,7 @@ func (i *InvoiceServer) GetBySubscriber(ctx context.Context, req *pb.GetBySubscr
 }
 
 func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	logrus.Infof("Deleting invoice %s", req.InvoiceId)
+	log.Infof("Deleting invoice %s", req.InvoiceId)
 
 	invoiceId, err := uuid.FromString(req.InvoiceId)
 	if err != nil {
@@ -104,7 +104,7 @@ func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 
 	err = i.invoiceRepo.Delete(invoiceId, nil)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "invoice")
 	}
