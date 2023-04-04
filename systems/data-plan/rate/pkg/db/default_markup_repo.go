@@ -55,8 +55,8 @@ func (m *defaultMarkupRepo) DeleteDefaultMarkupRate() error {
 func (m *defaultMarkupRepo) UpdateDefaultMarkupRate(markup float64) error {
 
 	err := m.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		def := DefaultMarkup{}
-		result := tx.Model(DefaultMarkup{}).Where("deleted_at = ?", nil).Delete(def)
+		def := &DefaultMarkup{}
+		result := tx.Model(DefaultMarkup{}).Delete(def, "*")
 		if result.Error != nil {
 			return result.Error
 		}
