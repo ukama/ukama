@@ -1,19 +1,21 @@
 package db_test
 
 import (
-	"database/sql"
-	extsql "database/sql"
 	"regexp"
 	"testing"
+
+	"database/sql"
+
+	extsql "database/sql"
+
+	invoicedb "github.com/ukama/ukama/systems/billing/invoice/internal/db"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	invoicedb "github.com/ukama/ukama/systems/billing/invoice/internal/db"
 )
 
 type UkamaDbMock struct {

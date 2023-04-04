@@ -5,12 +5,13 @@ import (
 	"testing"
 	"time"
 
+	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/billing/invoice/internal/db"
 	"github.com/ukama/ukama/systems/billing/invoice/internal/server"
 	"github.com/ukama/ukama/systems/billing/invoice/mocks"
-	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
