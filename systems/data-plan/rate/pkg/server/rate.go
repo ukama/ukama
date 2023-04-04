@@ -21,7 +21,7 @@ import (
 const uuidParsingError = "Error parsing UUID"
 
 type RateServer struct {
-	baseRate       *client.BaseRate
+	baseRate       client.BaseRateSrvc
 	markupRepo     db.MarkupsRepo
 	defaultRepo    db.DefaultMarkupRepo
 	msgBus         mb.MsgBusServiceClient
@@ -29,19 +29,15 @@ type RateServer struct {
 	pb.UnimplementedRateServiceServer
 }
 
-func NewRateServer(markupRepo db.MarkupsRepo, defualtMarkupRepo db.DefaultMarkupRepo, baseRate string, msgBus mb.MsgBusServiceClient, timeout time.Duration) (*RateServer, error) {
-	b, err := client.NewBaseRate(baseRate, timeout)
-	if err != nil {
-		return nil, err
-	}
+func NewRateServer(markupRepo db.MarkupsRepo, defualtMarkupRepo db.DefaultMarkupRepo, baseRate client.BaseRateSrvc, msgBus mb.MsgBusServiceClient) *RateServer {
 
 	return &RateServer{
-		baseRate:       b,
+		baseRate:       baseRate,
 		markupRepo:     markupRepo,
 		defaultRepo:    defualtMarkupRepo,
 		msgBus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-	}, nil
+	}
 }
 
 func (r *RateServer) GetMarkup(ctx context.Context, req *pb.GetMarkupRequest) (*pb.GetMarkupResponse, error) {
@@ -57,7 +53,7 @@ func (r *RateServer) GetMarkup(ctx context.Context, req *pb.GetMarkupRequest) (*
 		// Trying to reda default markup
 		defMarkup := &db.DefaultMarkup{}
 		if sql.IsNotFoundError(err) {
-			log.Warn("error while getting specific markup" + err.Error())
+			log.Warn("error while getting specific markup. Error: " + err.Error())
 			defMarkup, err = r.defaultRepo.GetDefaultMarkupRate()
 		}
 

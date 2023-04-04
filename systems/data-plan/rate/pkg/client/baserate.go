@@ -17,6 +17,11 @@ type BaseRate struct {
 	client  pb.BaseRatesServiceClient
 }
 
+type BaseRateSrvc interface {
+	GetBaseRates(req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error)
+	GetBaseRate(id string) (*pb.GetBaseRateResponse, error)
+}
+
 func NewBaseRate(baseRate string, timeout time.Duration) (*BaseRate, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

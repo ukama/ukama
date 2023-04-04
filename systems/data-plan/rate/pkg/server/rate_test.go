@@ -10,84 +10,184 @@ import (
 	mocks "github.com/ukama/ukama/systems/data-plan/rate/mocks"
 	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/rate/pkg/db"
+	"gorm.io/gorm"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-func TestRateService_UploadRates_Success(t *testing.T) {
-	mockRepo := &mocks.BaseRateRepo{}
-	msgbusClient := &mbmocks.MsgBusServiceClient{}
+func TestRateService_GetMarkup(t *testing.T) {
 
-	rateService := NewBaseRateServer(mockRepo, msgbusClient)
-	var mockSimTypeStr = string("ukama_data")
-	var mockEffectiveAt = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC1123)
-	var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
+	t.Run("MarkupforOwnerIdExists", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
 
-	reqMock := &pb.UploadBaseRatesRequest{
-		FileURL:     mockFileUrl,
-		EffectiveAt: mockEffectiveAt,
-		SimType:     "ukama_data",
-	}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-	mockRepo.On("UploadBaseRates", mock.Anything).Return(nil)
-	msgbusClient.On("PublishRequest", mock.Anything, reqMock).Return(nil).Once()
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
 
-	rateRes, err := rateService.UploadBaseRates(context.Background(), reqMock)
-	assert.NoError(t, err)
-	for i := range rateRes.Rate {
-		assert.Equal(t, rateRes.Rate[i].EffectiveAt, mockEffectiveAt)
-		assert.Equal(t, rateRes.Rate[i].SimType, mockSimTypeStr)
-	}
+		markups := &db.Markups{
+			OwnerId: uuid.NewV4(),
+			Markup:  10,
+		}
+
+		req := &pb.GetMarkupRequest{
+			OwnerId: markups.OwnerId.String(),
+		}
+
+		markupRepo.On("GetMarkupRate", markups.OwnerId).Return(markups, nil)
+		rateRes, err := rateService.GetMarkup(context.Background(), req)
+		assert.NoError(t, err)
+
+		assert.Equal(t, rateRes.Markup, markups.Markup)
+		assert.Equal(t, rateRes.OwnerId, markups.OwnerId.String())
+
+		markupRepo.AssertExpectations(t)
+	})
+
+	t.Run("MarkupforOwnerIdDoesn'tExists", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+
+		markups := &db.Markups{
+			OwnerId: uuid.NewV4(),
+			Markup:  10,
+		}
+
+		defMarkup := &db.DefaultMarkup{
+			Markup: 5,
+		}
+
+		req := &pb.GetMarkupRequest{
+			OwnerId: markups.OwnerId.String(),
+		}
+
+		markupRepo.On("GetMarkupRate", markups.OwnerId).Return(nil, gorm.ErrRecordNotFound)
+		defMarkupRepo.On("GetDefaultMarkupRate").Return(defMarkup, nil)
+
+		rateRes, err := rateService.GetMarkup(context.Background(), req)
+		assert.NoError(t, err)
+
+		assert.Equal(t, rateRes.Markup, defMarkup.Markup)
+		assert.Equal(t, rateRes.OwnerId, markups.OwnerId.String())
+
+		markupRepo.AssertExpectations(t)
+		defMarkupRepo.AssertExpectations(t)
+
+	})
+
 }
-func TestRateService_GetRate_Success(t *testing.T) {
+func TestRateService_UpdateDefaultMarkup(t *testing.T) {
 
-	baseRateRepo := &mocks.BaseRateRepo{}
-	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	var mockCountry = "The lunar maria"
-	rateID := uuid.NewV4()
-	s := NewBaseRateServer(baseRateRepo, msgbusClient)
+	t.Run("UpdateDefaultMarkupSuccess", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
 
-	baseRateRepo.On("GetBaseRate", rateID).Return(&db.Rate{
-		Country: mockCountry,
-	}, nil)
-	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{Uuid: rateID.String()})
-	assert.NoError(t, err)
-	assert.Equal(t, mockCountry, rate.Rate.Country)
-	baseRateRepo.AssertExpectations(t)
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+
+		defMarkup := &db.DefaultMarkup{
+			Markup: 5,
+		}
+
+		req := &pb.UpdateDefaultMarkupRequest{
+			Markup: defMarkup.Markup,
+		}
+
+		defMarkupRepo.On("UpdateDefaultMarkupRate", defMarkup.Markup).Return(nil)
+		_, err := rateService.UpdateDefaultMarkup(context.Background(), req)
+		assert.NoError(t, err)
+
+		defMarkupRepo.AssertExpectations(t)
+	})
 
 }
-func TestRateService_GetRates_Success(t *testing.T) {
-	msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-	mockFilters := &pb.GetBaseRatesRequest{
-		Country:     "Tycho crater",
-		Provider:    "ABC Tel",
-		EffectiveAt: "2022-12-01T00:00:00Z",
-		SimType:     "ukama_data",
-	}
+func TestRateService_GetDefaultMarkup(t *testing.T) {
 
-	baseRateRepo := &mocks.BaseRateRepo{}
-	s := NewBaseRateServer(baseRateRepo, msgbusClient)
+	t.Run("GetDefaultMarkupSuccess", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
 
-	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, db.ParseType("ukama_data")).Return([]db.Rate{
-		{X2g: "2G",
-			X3g:         "3G",
-			Apn:         "Manual entry required",
-			Country:     "Tycho crater",
-			Data:        "$0.4",
-			EffectiveAt: "2023-10-10",
-			Imsi:        "1",
-			Lte:         "LTE",
-			Network:     "Multi Tel",
-			SimType:     db.SimTypeUkamaData,
-			SmsMo:       "$0.1",
-			SmsMt:       "$0.1",
-			Vpmn:        "TTC"},
-	}, nil)
-	rate, err := s.GetBaseRates(context.TODO(), mockFilters)
-	assert.NoError(t, err)
-	assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
-	assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)
-	baseRateRepo.AssertExpectations(t)
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+
+		defMarkup := &db.DefaultMarkup{
+			Markup: 5,
+		}
+
+		req := &pb.GetDefaultMarkupRequest{}
+
+		defMarkupRepo.On("GetDefaultMarkupRate").Return(defMarkup, nil)
+		rateRes, err := rateService.GetDefaultMarkup(context.Background(), req)
+		assert.NoError(t, err)
+		assert.Equal(t, rateRes.Markup, defMarkup.Markup)
+		defMarkupRepo.AssertExpectations(t)
+	})
+
+}
+
+func TestRateService_GetDefaultMarkupHistory(t *testing.T) {
+
+	t.Run("GetDefaultMarkupHistorySuccess", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		cTime, err := time.Parse(time.RFC3339, "2021-11-12T11:45:26.371Z")
+		assert.NoError(t, err)
+		uTime, err := time.Parse(time.RFC3339, "2022-10-12T11:45:26.371Z")
+		assert.NoError(t, err)
+		dTime, err := time.Parse(time.RFC3339, "2022-11-12T11:45:26.371Z")
+		DeleteAt := gorm.DeletedAt{
+			Time:  dTime,
+			Valid: true,
+		}
+		assert.NoError(t, err)
+
+		defMarkup := []db.DefaultMarkup{
+			{
+				Model: gorm.Model{
+					ID:        1,
+					CreatedAt: cTime,
+					DeletedAt: DeleteAt,
+					UpdatedAt: uTime,
+				},
+				Markup: 5,
+			},
+			{
+				Model: gorm.Model{
+					ID:        2,
+					CreatedAt: cTime,
+					UpdatedAt: uTime,
+				},
+				Markup: 5,
+			},
+		}
+
+		req := &pb.GetDefaultMarkupHistoryRequest{}
+
+		defMarkupRepo.On("GetDefaultMarkupRateHistory").Return(defMarkup, nil)
+		rateRes, err := rateService.GetDefaultMarkupHistory(context.Background(), req)
+		assert.NoError(t, err)
+		if assert.NotNil(t, rateRes) {
+			for i, rate := range rateRes.MarkupRates {
+				assert.Equal(t, defMarkup[i].Markup, rate.Markup)
+				assert.Equal(t, defMarkup[i].CreatedAt.Format(time.RFC3339), rate.CreatedAt)
+			}
+		}
+	})
+
 }

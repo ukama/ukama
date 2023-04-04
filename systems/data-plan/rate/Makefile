@@ -16,7 +16,7 @@ gen:
 					  rate.proto
 
 
-	mockery --all --recursive --dir ./internal
+	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:

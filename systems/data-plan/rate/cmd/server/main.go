@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/ukama/ukama/systems/data-plan/rate/pkg/client"
 	"github.com/ukama/ukama/systems/data-plan/rate/pkg/server"
 
 	"github.com/num30/config"
@@ -76,10 +77,12 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv, err := server.NewRateServer(db.NewMarkupsRepo(gormdb), db.NewDefaultMarkupRepo(gormdb), serviceConfig.BaseRate, mbClient, serviceConfig.Timeout)
+	b, err := client.NewBaseRate(serviceConfig.BaseRate, serviceConfig.Timeout)
 	if err != nil {
-		log.Fatalf("Failed to initialize service %s. error: %s", pkg.ServiceName, err)
+		log.Fatalf("Failed to connect to base rate service %s. error: %s", serviceConfig.BaseRate, err)
 	}
+
+	srv := server.NewRateServer(db.NewMarkupsRepo(gormdb), db.NewDefaultMarkupRepo(gormdb), b, mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterRateServiceServer(s, srv)
