@@ -8,6 +8,7 @@ replace github.com/ukama/ukama/systems/billing/invoice => ./
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/SebastiaanKlippert/go-wkhtmltopdf v1.9.0
 	github.com/golang/protobuf v1.5.2
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7

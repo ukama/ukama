@@ -7,6 +7,7 @@ import (
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 
 	"github.com/ukama/ukama/systems/billing/invoice/internal/db"
+	"github.com/ukama/ukama/systems/billing/invoice/internal/pdf"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
@@ -111,6 +112,34 @@ func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	}
 
 	return &pb.DeleteResponse{}, nil
+}
+
+func generateInvoicePDF(data, templatePath, outputPath string) error {
+	r := pdf.NewInvoicePDF("")
+
+	templateData := struct {
+		Data string
+	}{
+		Data: data,
+	}
+
+	err := r.ParseTemplate(templatePath, templateData)
+	if err != nil {
+		log.Errorf("failed to parse PDF template: %v", err)
+
+		return err
+	}
+
+	err = r.GeneratePDF(outputPath)
+	if err != nil {
+		log.Errorf("failed to generate PDF invoice: %v", err)
+
+		return err
+	}
+
+	log.Info("PDF invoice generated successfully")
+
+	return nil
 }
 
 func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
