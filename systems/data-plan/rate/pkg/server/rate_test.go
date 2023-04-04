@@ -188,6 +188,75 @@ func TestRateService_GetDefaultMarkupHistory(t *testing.T) {
 				assert.Equal(t, defMarkup[i].CreatedAt.Format(time.RFC3339), rate.CreatedAt)
 			}
 		}
+		defMarkupRepo.AssertExpectations(t)
 	})
 
+}
+
+func TestRateService_GetRate(t *testing.T) {
+	t.Run("GetRate_Success", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		ownerId := uuid.NewV4()
+
+		req := &pb.GetRateRequest{
+			OwnerId:  ownerId.String(),
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+		}
+
+		markups := &db.Markups{
+			OwnerId: ownerId,
+			Markup:  10,
+		}
+
+		rates := &pb.GetBaseRatesResponse{
+			Rates: []*pb.Rate{
+				{
+					X2G:         true,
+					X3G:         true,
+					Apn:         "Manual entry required",
+					Country:     req.Country,
+					Data:        0.0014,
+					EffectiveAt: "2023-10-10",
+					Imsi:        1,
+					Lte:         true,
+					Network:     "Multi Tel",
+					SimType:     req.SimType,
+					SmsMo:       0.0100,
+					SmsMt:       0.0001,
+					Vpmn:        "TTC",
+				},
+			},
+		}
+
+		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
+		baseRate.On("GetBaseRates", &pb.GetBaseRatesRequest{
+			Country:     req.Country,
+			Provider:    req.Provider,
+			To:          req.To,
+			From:        req.From,
+			SimType:     req.SimType,
+			EffectiveAt: req.EffectiveAt,
+		}).Return(rates, nil)
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.NoError(t, err)
+		if assert.NotNil(t, rateRes) {
+			for _, r := range rateRes.Rates {
+				assert.Equal(t, req.Country, r.Country)
+				assert.Equal(t, req.SimType, r.SimType)
+			}
+		}
+
+		markupRepo.AssertExpectations(t)
+		baseRate.AssertExpectations(t)
+		defMarkupRepo.AssertExpectations(t)
+	})
 }

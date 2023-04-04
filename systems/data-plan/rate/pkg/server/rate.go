@@ -168,7 +168,7 @@ func (r *RateServer) GetMarkupHistory(ctx context.Context, req *pb.GetMarkupHist
 
 func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.GetRateResponse, error) {
 
-	log.Infof("GetRates where country =  %s and network =%s and simType =%s", req.GetCountry(), req.GetProvider(), req.GetSimType())
+	log.Infof("GetRates where country  %s and network %s and simType %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
 	uuid, err := uuid.FromString(req.OwnerId)
 	if err != nil {
@@ -210,11 +210,11 @@ func baseratesToMarkupRates(rates []*pb.Rate, markup float64) []*pb.Rate {
 }
 
 func baseRateToMarkupRate(r *pb.Rate, markup float64) *pb.Rate {
-	return &pb.Rate{
-		Data:  MarkupRate(r.Data, markup),
-		SmsMo: MarkupRate(r.SmsMo, markup),
-		SmsMt: MarkupRate(r.SmsMt, markup),
-	}
+	mr := r
+	mr.Data = MarkupRate(r.Data, markup)
+	mr.SmsMo = MarkupRate(r.SmsMo, markup)
+	mr.SmsMt = MarkupRate(r.SmsMt, markup)
+	return mr
 }
 
 func defMarkupToPbMarkupRates(rates []db.DefaultMarkup) []*pb.MarkupRates {
