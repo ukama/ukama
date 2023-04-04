@@ -41,7 +41,7 @@ func NewRateServer(markupRepo db.MarkupsRepo, defualtMarkupRepo db.DefaultMarkup
 }
 
 func (r *RateServer) GetMarkup(ctx context.Context, req *pb.GetMarkupRequest) (*pb.GetMarkupResponse, error) {
-	var rate float64 = 0
+	var rate float64
 	uuid, err := uuid.FromString(req.OwnerId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
@@ -178,7 +178,7 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 	markup, err := r.markupRepo.GetMarkupRate(uuid)
 	if err != nil {
 		log.Error("error while getting markup" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "markup")
+		return nil, err
 	}
 
 	rates, err := r.baseRate.GetBaseRates(&pb.GetBaseRatesRequest{

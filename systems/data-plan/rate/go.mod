@@ -13,21 +13,19 @@ replace github.com/ukama/ukama/systems/data-plan/base-rate => ../base-rate
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/golang/protobuf v1.5.2
-	github.com/jackc/pgtype v1.11.0
-	github.com/jszwec/csvutil v1.8.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.0.7
-	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20230322132225-dc8bafc29750
 	google.golang.org/grpc v1.52.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.4.6
 	gorm.io/gorm v1.24.3
 )
+
+require github.com/satori/go.uuid v1.2.0 // indirect
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -49,7 +47,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v4 v4.16.1 // indirect
 	github.com/jackc/pgx/v5 v5.2.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
