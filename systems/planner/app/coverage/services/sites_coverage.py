@@ -7,8 +7,6 @@ from osgeo import gdal, osr
 from typing import List
 from dotenv import load_dotenv
 
-
-from app.models.schema import SiteCoverageReponse
 from app.coverage.schemas.coverage import Site, CoverageResponseSchema
 from app.coverage.enums.coverage import CoverageEnum
 from core import config
@@ -101,7 +99,7 @@ class SitesCoverage:
         - outputFunc: A function to select minimum or maximum value depending on the mode of prediction.
 
         Returns:
-        - output: The output from the `merge_geo_tiff_files` function, which will be SiteCoverageReponse.
+        - output: The output from the `merge_geo_tiff_files` function, which will be CoverageResponseSchema.
         """
         responseArray = self.create_geo_tiff_files(sites_coverage_list)
         output_file_name = str(uuid.uuid4()) + "_merged.tif"

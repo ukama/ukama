@@ -19,4 +19,4 @@ WORKDIR /var/www/app
 RUN conda create --name myenv 
 SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
 RUN conda install --file requirements.txt -c conda-forge
-RUN ["chmod", "+x", "/var/www/app/docker/apis/startup.sh"]
+RUN ["chmod", "+x", "/var/www/app/docker/api/startup.sh"]
