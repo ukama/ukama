@@ -20,7 +20,7 @@ class SitesCoverage:
         self.OUTPUT_PATH = config.get_config().OUTPUT_PATH
         self.TEMP_FOLDER = config.get_config().TEMP_FOLDER
 
-    def calculate_coverage(self, mode, sites: list[Site]) -> CoverageResponseSchema:
+    def calculate_coverage(self, mode, sites: List[Site]) -> CoverageResponseSchema:
         try:
             output_folder_path = self.generate_output_folder()
             sites_coverage_list = []

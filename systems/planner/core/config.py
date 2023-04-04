@@ -9,25 +9,28 @@ class Config(BaseSettings):
     APP_PORT: int = 8000
     RF_SERVER_PATH: str = "/home/ubuntu/Signal-Server"
     SDF_FILES_PATH: str = "/data/sdfData"
+    HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/home/ubuntu/output/"
     TEMP_FOLDER: str = "/tmp/planner/output/"
 
 
-class DevelopmentConfig(Config):
+class DevelopmentConfig(Config): # Use this for docker 
     RF_SERVER_PATH: str = "/var/www/server/Signal-Server"
-    SDF_FILES_PATH: str = "/data/sdfData" # todo load this from env in order to run it with docker.
+    SDF_FILES_PATH: str = "/data/sdfData"
+    HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/var/www/app/output/"
     TEMP_FOLDER: str = "/tmp/planner/output/"
 
 
-class LocalConfig(Config): 
+class LocalConfig(Config): # use this for running locally
     RF_SERVER_PATH: str = "/home/ubuntu/Signal-Server"
     SDF_FILES_PATH: str = "/data/sdfData"
+    HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/home/ubuntu/output/"
     TEMP_FOLDER: str = "./tmp/planner/output/"
 
 
-class ProductionConfig(Config):
+class ProductionConfig(Config): # use this for production. 
     DEBUG: str = False
     # TODO add according to requirement
 
