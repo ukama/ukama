@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/systems/billing/exporter
+module github.com/ukama/ukama/systems/billing/collector
 
 go 1.19
 
@@ -12,7 +12,7 @@ replace github.com/ukama/ukama/systems/subscriber/sim-manager => ../../subscribe
 
 replace github.com/ukama/telna/cdr => ../../../../telna-agent/cdr
 
-replace github.com/ukama/ukama/systems/billing/exporter => ./
+replace github.com/ukama/ukama/systems/billing/collector => ./
 
 require (
 	github.com/getlago/lago-go-client v0.26.0-beta

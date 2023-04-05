@@ -7,7 +7,7 @@ import (
 
 	lago "github.com/getlago/lago-go-client"
 	operatorPb "github.com/ukama/telna/cdr/pb/gen"
-	client "github.com/ukama/ukama/systems/billing/exporter/pkg/clients"
+	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	smpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
@@ -24,18 +24,18 @@ const (
 	handlerTimeoutFactor = 3
 )
 
-type BillingExporterEventServer struct {
+type BillingCollectorEventServer struct {
 	client *client.LagoClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewBillingExporterEventServer(client *client.LagoClient) *BillingExporterEventServer {
-	return &BillingExporterEventServer{
+func NewBillingCollectorEventServer(client *client.LagoClient) *BillingCollectorEventServer {
+	return &BillingCollectorEventServer{
 		client: client,
 	}
 }
 
-func (b *BillingExporterEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
@@ -119,7 +119,7 @@ func unmarshalOperatorSimUsage(msg *anypb.Any) (*operatorPb.SimUsage, error) {
 	return p, nil
 }
 
-func handleEventCloudCdrSimUsage(key string, simUsage *operatorPb.SimUsage, b *BillingExporterEventServer) error {
+func handleEventCloudCdrSimUsage(key string, simUsage *operatorPb.SimUsage, b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, simUsage)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -165,7 +165,7 @@ func unmarshalSubscriber(msg *anypb.Any) (*subpb.Subscriber, error) {
 	return p, nil
 }
 
-func handleEventCloudRegistrySubscriberCreate(key string, subscriber *subpb.Subscriber, b *BillingExporterEventServer) error {
+func handleEventCloudRegistrySubscriberCreate(key string, subscriber *subpb.Subscriber, b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -194,7 +194,7 @@ func handleEventCloudRegistrySubscriberCreate(key string, subscriber *subpb.Subs
 	return nil
 }
 
-func handleEventCloudRegistrySubscriberUpdate(key string, subscriber *subpb.Subscriber, b *BillingExporterEventServer) error {
+func handleEventCloudRegistrySubscriberUpdate(key string, subscriber *subpb.Subscriber, b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -222,7 +222,7 @@ func handleEventCloudRegistrySubscriberUpdate(key string, subscriber *subpb.Subs
 	return nil
 }
 
-func handleEventCloudRegistrySubscriberDelete(key string, subscriber *subpb.Subscriber, b *BillingExporterEventServer) error {
+func handleEventCloudRegistrySubscriberDelete(key string, subscriber *subpb.Subscriber, b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -254,7 +254,7 @@ func unmarshalSim(msg *anypb.Any) (*smpb.Sim, error) {
 	return p, nil
 }
 
-func handleEventCloudSimManagerSetActivePackageForSim(key string, sim *smpb.Sim, b *BillingExporterEventServer) error {
+func handleEventCloudSimManagerSetActivePackageForSim(key string, sim *smpb.Sim, b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)

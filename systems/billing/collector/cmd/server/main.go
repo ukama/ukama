@@ -8,15 +8,15 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/num30/config"
-	"github.com/ukama/ukama/systems/billing/exporter/cmd/version"
-	"github.com/ukama/ukama/systems/billing/exporter/pkg"
+	"github.com/ukama/ukama/systems/billing/collector/cmd/version"
+	"github.com/ukama/ukama/systems/billing/collector/pkg"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 
-	client "github.com/ukama/ukama/systems/billing/exporter/pkg/clients"
-	"github.com/ukama/ukama/systems/billing/exporter/pkg/server"
+	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
+	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -79,7 +79,7 @@ func runGrpcServer() {
 
 	lagoClient := client.NewLagoClient(serviceConfig.LagoAPIKey, serviceConfig.LagoHost, serviceConfig.LagoPort)
 
-	eSrv := server.NewBillingExporterEventServer(lagoClient)
+	eSrv := server.NewBillingCollectorEventServer(lagoClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)

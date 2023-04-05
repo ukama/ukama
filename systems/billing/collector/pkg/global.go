@@ -1,6 +1,6 @@
 package pkg
 
-const ServiceName = "exporter"
+const ServiceName = "collector"
 const SystemName = "billing"
 
 var InstanceId = "debug"
