@@ -262,3 +262,157 @@ func TestRateService_GetRate(t *testing.T) {
 		defMarkupRepo.AssertExpectations(t)
 	})
 }
+
+func TestRateService_UpdateMarkup(t *testing.T) {
+
+	t.Run("UpdateMarkupSuccess", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+
+		markup := &db.Markups{
+			OwnerId: uuid.NewV4(),
+			Markup:  10,
+		}
+
+		req := &pb.UpdateMarkupRequest{
+			OwnerId: markup.OwnerId.String(),
+			Markup:  markup.Markup,
+		}
+
+		markupRepo.On("UpdateMarkupRate", markup.OwnerId, markup.Markup).Return(nil)
+		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		_, err := rateService.UpdateMarkup(context.Background(), req)
+		assert.NoError(t, err)
+
+		defMarkupRepo.AssertExpectations(t)
+	})
+
+}
+
+func TestRateService_DeleteMarkup(t *testing.T) {
+
+	t.Run("DeleteMarkupSuccess", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+
+		markup := &db.Markups{
+			OwnerId: uuid.NewV4(),
+			Markup:  10,
+		}
+
+		req := &pb.DeleteMarkupRequest{
+			OwnerId: markup.OwnerId.String(),
+		}
+
+		markupRepo.On("DeleteMarkupRate", markup.OwnerId).Return(nil)
+		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		_, err := rateService.DeleteMarkup(context.Background(), req)
+		assert.NoError(t, err)
+
+		defMarkupRepo.AssertExpectations(t)
+	})
+
+}
+
+func TestRateService_GetMarkupVal(t *testing.T) {
+
+	t.Run("GetMarkupSuccess", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+
+		markup := &db.Markups{
+			OwnerId: uuid.NewV4(),
+			Markup:  10,
+		}
+
+		req := &pb.GetMarkupRequest{
+			OwnerId: markup.OwnerId.String(),
+		}
+
+		markupRepo.On("GetMarkupRate", markup.OwnerId).Return(markup, nil)
+		rateRes, err := rateService.GetMarkup(context.Background(), req)
+		assert.NoError(t, err)
+		if assert.NotNil(t, rateRes) {
+			assert.Equal(t, markup.Markup, rateRes.Markup)
+			assert.Equal(t, markup.OwnerId.String(), rateRes.OwnerId)
+		}
+		defMarkupRepo.AssertExpectations(t)
+	})
+
+}
+
+func TestRateService_GetMarkupHistory(t *testing.T) {
+
+	t.Run("GetMarkupHistorySuccess", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baseRate := &mocks.BaseRateSrvc{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+		OwnerId := uuid.NewV4()
+
+		rateService := NewRateServer(markupRepo, defMarkupRepo, baseRate, msgbusClient)
+		cTime, err := time.Parse(time.RFC3339, "2021-11-12T11:45:26.371Z")
+		assert.NoError(t, err)
+		uTime, err := time.Parse(time.RFC3339, "2022-10-12T11:45:26.371Z")
+		assert.NoError(t, err)
+		dTime, err := time.Parse(time.RFC3339, "2022-11-12T11:45:26.371Z")
+		DeleteAt := gorm.DeletedAt{
+			Time:  dTime,
+			Valid: true,
+		}
+		assert.NoError(t, err)
+
+		markup := []db.Markups{
+			{
+				Model: gorm.Model{
+					ID:        1,
+					CreatedAt: cTime,
+					DeletedAt: DeleteAt,
+					UpdatedAt: uTime,
+				},
+				OwnerId: OwnerId,
+				Markup:  5,
+			},
+			{
+				Model: gorm.Model{
+					ID:        2,
+					CreatedAt: cTime,
+					UpdatedAt: uTime,
+				},
+				OwnerId: OwnerId,
+				Markup:  10,
+			},
+		}
+
+		req := &pb.GetMarkupHistoryRequest{
+			OwnerId: OwnerId.String(),
+		}
+
+		markupRepo.On("GetMarkupRateHistory", OwnerId).Return(markup, nil)
+		rateRes, err := rateService.GetMarkupHistory(context.Background(), req)
+		assert.NoError(t, err)
+		if assert.NotNil(t, rateRes) {
+			for i, rate := range rateRes.MarkupRates {
+				assert.Equal(t, markup[i].Markup, rate.Markup)
+				assert.Equal(t, markup[i].CreatedAt.Format(time.RFC3339), rate.CreatedAt)
+			}
+		}
+		defMarkupRepo.AssertExpectations(t)
+	})
+
+}
