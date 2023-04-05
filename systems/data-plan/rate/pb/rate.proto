@@ -8,6 +8,14 @@ import "validator.proto";
 
 import "baserate.proto";
 
+/* 
+
+Rate
+Rate service adds the markup on the current cost i.e base rates and provides the final applicable rate for the user.
+If the user doesn't have any custom rates for him then the default markup is applied otherwise custom markup is considered
+
+*/
+
 service RateService {
 
     rpc GetMarkup(GetMarkupRequest) returns (GetMarkupResponse);

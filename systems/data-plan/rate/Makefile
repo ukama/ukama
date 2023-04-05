@@ -36,6 +36,8 @@ integration.test:
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
 
+docs:
+	protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep -I ../base-rate/pb --doc_out=. --doc_opt=./../../template.tmpl,README.md pb/rate.proto & sh ./../../generate-dir-tree.sh $(PWD)
 
-
-
+server:
+	go run cmd/server/main.go
