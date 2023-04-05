@@ -17,8 +17,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"google.golang.org/grpc"
 )
 
@@ -53,9 +52,9 @@ func Test_FullFlow(t *testing.T) {
 
 	simUsage := pb.SimUsage{
 		Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
-		SubscriberID: "c214f255-0ed6-4aa1-93e7-e333658c7318",
-		NetworkID:    "40987edb-ebb6-4f84-a27c-99db7c136127",
-		OrgID:        "880f7c63-eb57-461a-b514-248ce91e9b3e",
+		SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
+		NetworkId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
+		OrgId:        "880f7c63-eb57-461a-b514-248ce91e9b3e",
 		Type:         "test_simple",
 		BytesUsed:    uint64(rand.Int63n(4096000)),
 		SessionId:    uuid.NewV4().String(),
@@ -68,7 +67,7 @@ func Test_FullFlow(t *testing.T) {
 
 	// Contact the server and print out its response.
 	t.Run("SimUsageEvent", func(t *testing.T) {
-		_, err := c.EventNotification(ctx, &epb.Event{
+		_, err := c.EventNotification(ctx, &pb.Event{
 			RoutingKey: "event.cloud.simmanager.sim.usage",
 			Msg:        anyE,
 		})
@@ -77,7 +76,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 }
 
-func CreateEventClient() (*grpc.ClientConn, epb.EventNotificationServiceClient, error) {
+func CreateEventClient() (*grpc.ClientConn, pb.EventNotificationServiceClient, error) {
 	log.Infoln("Connecting to Lookup ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
@@ -86,6 +85,6 @@ func CreateEventClient() (*grpc.ClientConn, epb.EventNotificationServiceClient, 
 		return nil, nil, err
 	}
 
-	c := epb.NewEventNotificationServiceClient(conn)
+	c := pb.NewEventNotificationServiceClient(conn)
 	return conn, c, nil
 }
