@@ -69,7 +69,7 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 	networkServer := server.NewNetworkServer(db.NewNetRepo(gormdb),
 		db.NewOrgRepo(gormdb), db.NewSiteRepo(gormdb),
-		providers.NewOrgClientProvider(serviceConfig.OrgHost), mbClient)
+		providers.NewOrgClientProvider(serviceConfig.OrgHost), mbClient, serviceConfig.PushGateway)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
@@ -77,9 +77,13 @@ func runGrpcServer(gormdb sql.Db) {
 		generated.RegisterNetworkServiceServer(s, networkServer)
 	})
 
+	go grpcServer.StartServer()
+
 	go msgBusListener(mbClient)
 
-	grpcServer.StartServer()
+	_ = networkServer.PushMetrics()
+
+	waitForExit()
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
@@ -91,4 +95,19 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}
+}
+
+func waitForExit() {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+	go func() {
+
+		sig := <-sigs
+		log.Info(sig)
+		done <- true
+	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", pkg.ServiceName)
 }

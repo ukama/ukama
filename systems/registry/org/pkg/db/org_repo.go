@@ -17,6 +17,7 @@ type OrgRepo interface {
 	Get(id uuid.UUID) (*Org, error)
 	GetByName(name string) (*Org, error)
 	GetByOwner(uuid uuid.UUID) ([]Org, error)
+	GetAll() ([]Org, error)
 	// Update(id uint) error
 	// Deactivate(id uint) error
 	// Delete(id uint) error
@@ -27,6 +28,8 @@ type OrgRepo interface {
 	GetMembers(orgID uuid.UUID) ([]OrgUser, error)
 	UpdateMember(orgID uuid.UUID, member *OrgUser) error
 	RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error
+	GetOrgCount() (int64, int64, error)
+	GetMemberCount(orgID uuid.UUID) (int64, int64, error)
 }
 
 type orgRepo struct {
@@ -97,6 +100,17 @@ func (r *orgRepo) GetByOwner(uuid uuid.UUID) ([]Org, error) {
 	return orgs, nil
 }
 
+func (r *orgRepo) GetAll() ([]Org, error) {
+	var orgs []Org
+
+	result := r.Db.GetGormDb().Where(&Org{}).Find(&orgs)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return orgs, nil
+}
+
 func (r *orgRepo) AddMember(member *OrgUser) error {
 	d := r.Db.GetGormDb().Create(member)
 
@@ -144,4 +158,38 @@ func (r *orgRepo) RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error {
 	}
 
 	return d.Error
+}
+
+func (r *orgRepo) GetOrgCount() (int64, int64, error) {
+	var activeOrgCount int64
+	var deactiveOrgCount int64
+
+	result := r.Db.GetGormDb().Model(&Org{}).Where("deactivated = ?", false).Count(&activeOrgCount)
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	result = r.Db.GetGormDb().Model(&Org{}).Where("deactivated = ?", true).Count(&deactiveOrgCount)
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	return activeOrgCount, deactiveOrgCount, nil
+}
+
+func (r *orgRepo) GetMemberCount(orgID uuid.UUID) (int64, int64, error) {
+	var activeMemberCount int64
+	var deactiveMemberCount int64
+
+	result := r.Db.GetGormDb().Model(&OrgUser{}).Where("org_id = ? AND deactivated = ?", orgID, false).Count(&activeMemberCount)
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	result = r.Db.GetGormDb().Model(&OrgUser{}).Where("org_id = ? AND deactivated = ?", orgID, true).Count(&deactiveMemberCount)
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	return activeMemberCount, deactiveMemberCount, nil
 }

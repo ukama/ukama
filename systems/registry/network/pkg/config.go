@@ -4,6 +4,13 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+)
+
+const (
+	NumberOfNetworks = "number_of_networks"
+	NumberOfSites    = "number_of_sites"
+	GaugeType        = "gauge"
 )
 
 type Config struct {
@@ -15,6 +22,22 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	OrgHost          string           `default:"org:9090"`
 	Service          *uconf.Service
+	PushGateway      string `default:"http://localhost:9091"`
+}
+
+var NetworkMetric = []metric.MetricConfig{
+	{
+		Name:   NumberOfNetworks,
+		Type:   GaugeType,
+		Labels: map[string]string{"org": ""},
+		Value:  0,
+	},
+	{
+		Name:   NumberOfSites,
+		Type:   GaugeType,
+		Labels: map[string]string{"network": "", "org": ""},
+		Value:  0,
+	},
 }
 
 func NewConfig(name string) *Config {
