@@ -10,11 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/common/auth"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )
+
+var SESSION_KEY = "ukama_session"
 
 type Router struct {
 	f *fizz.Fizz
@@ -62,7 +65,7 @@ func (rt *Router) Run() {
 			SecurityScheme: &openapi.SecurityScheme{
 				Type: "oauth2",
 				In:   "header",
-				Name: "ukama_session",
+				Name: SESSION_KEY,
 				Flows: &openapi.OAuthFlows{
 					Implicit: &openapi.OAuthFlow{
 						AuthorizationURL: rt.config.auth.AuthAppUrl + "?redirect=" + rt.config.s.Uri + "/swagger/#/",
@@ -95,7 +98,12 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
-	res, err := pkg.GetUserBySession(c, p.config.r)
+	sessionStr, err := auth.GetSessionFromCookie(c, SESSION_KEY)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := auth.GetUserBySession(sessionStr, p.config.r)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +116,11 @@ func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
 }
 
 func (p *Router) authenticate(c *gin.Context) (*Authenticate, error) {
-	res, err := pkg.GetUserBySession(c, p.config.r)
+	sessionStr, err := auth.GetSessionFromCookie(c, SESSION_KEY)
+	if err != nil {
+		return nil, err
+	}
+	res, err := auth.GetUserBySession(sessionStr, p.config.r)
 	if err != nil {
 		return nil, err
 	}
