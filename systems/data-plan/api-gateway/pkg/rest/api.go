@@ -48,3 +48,40 @@ type UploadBaseRatesRequest struct {
 	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
 	SimType     string `json:"sim_type" binding:"required" validate:"required"`
 }
+
+type GetRateRequest struct {
+	OwnerId     string `json: example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+	Country     string `json:"country" binding:"required" validate:"required"`
+	Provider    string `json:"provider" binding:"required" validate:"required"`
+	To          uint64 `json:"to" binding:"required" validate:"required"`
+	From        uint64 `json:"from" binding:"required" validate:"required"`
+	SimType     string `json:"sim_type" binding:"required" validate:"required"`
+	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
+}
+
+type DeleteMarkupRequest struct {
+	OwnerId string `json: example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+}
+
+type SetMarkupRequest struct {
+	OwnerId string  `json: example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+	Markup  float64 `json: example:"10" json:"markup" path:"markup" binding:"required" validate:"required"`
+}
+
+type GetMarkupRequest struct {
+	OwnerId string `json: example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+}
+
+type GetMarkupHistoryRequest struct {
+	OwnerId string `json: example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+}
+
+type SetDefaultMarkupRequest struct {
+	Markup float64 `json: example:"10" json:"markup" path:"markup" binding:"required" validate:"required"`
+}
+
+type GetDefaultMarkupRequest struct {
+}
+
+type GetDefaultMarkupHistoryRequest struct {
+}
