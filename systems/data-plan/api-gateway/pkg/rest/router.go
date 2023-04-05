@@ -14,6 +14,7 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/client"
 	pbBaseRate "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )
@@ -33,6 +34,18 @@ type RouterConfig struct {
 
 type Clients struct {
 	d dataPlan
+	r rates
+}
+
+type rates interface {
+	GetRate(req *rpb.GetRateRequest) (*rpb.GetRateResponse, error)
+	UpdateDefaultMarkup(req *rpb.UpdateDefaultMarkupRequest) (*rpb.UpdateDefaultMarkupResponse, error)
+	UpdateMarkup(req *rpb.UpdateMarkupRequest) (*rpb.UpdateMarkupResponse, error)
+	GetDefaultMarkup(req *rpb.GetDefaultMarkupRequest) (*rpb.GetDefaultMarkupResponse, error)
+	GetDefaultMarkupHistory(req *rpb.GetDefaultMarkupHistoryRequest) (*rpb.GetDefaultMarkupHistoryResponse, error)
+	GetMarkupHistory(req *rpb.GetMarkupHistoryRequest) (*rpb.GetMarkupHistoryResponse, error)
+	DeleteMarkup(req *rpb.DeleteMarkupRequest) (*rpb.DeleteMarkupResponse, error)
+	GetMarkup(req *rpb.GetMarkupRequest) (*rpb.GetMarkupResponse, error)
 }
 
 type dataPlan interface {
@@ -48,7 +61,8 @@ type dataPlan interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.d = client.NewDataPlan(endpoints.Package, endpoints.Rate, endpoints.Timeout)
+	c.d = client.NewDataPlan(endpoints.Package, endpoints.Baserate, endpoints.Timeout)
+	c.r = client.NewRateClient(endpoints.Rate, endpoints.Timeout)
 
 	return c
 }

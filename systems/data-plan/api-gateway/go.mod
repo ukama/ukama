@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/data-plan/package => ../package
 
 replace github.com/ukama/ukama/systems/data-plan/base-rate => ../base-rate
 
+replace github.com/ukama/ukama/systems/data-plan/rate => ../rate
+
 require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
@@ -17,6 +19,7 @@ require (
 	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
 	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
 	github.com/ukama/ukama/systems/data-plan/package v0.0.0-20230208235400-d17899b75cbb
+	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.52.0
 )
