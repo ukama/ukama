@@ -40,7 +40,6 @@ networks:
         driver: default
         config:
             - subnet: 10.9.0.0/24
-  
             
 volumes:
   postgress-data:
