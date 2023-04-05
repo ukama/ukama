@@ -4,10 +4,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
@@ -84,6 +86,10 @@ func (r *RateServer) UpdateDefaultMarkup(ctx context.Context, req *pb.UpdateDefa
 		return nil, grpc.SqlErrorToGrpc(err, "default markup")
 	}
 
+	if r.msgBus != nil {
+		r.PublishDefaultMarkupEvents(req.Markup, msgbus.ACTION_CRUD_UPDATE)
+	}
+
 	return &pb.UpdateDefaultMarkupResponse{}, nil
 }
 
@@ -129,6 +135,10 @@ func (r *RateServer) UpdateMarkup(ctx context.Context, req *pb.UpdateMarkupReque
 		return nil, grpc.SqlErrorToGrpc(err, "markup")
 	}
 
+	if r.msgBus != nil {
+		r.PublishMarkupEvents(req.OwnerId, req.Markup, msgbus.ACTION_CRUD_UPDATE)
+	}
+
 	return &pb.UpdateMarkupResponse{}, nil
 }
 
@@ -142,6 +152,10 @@ func (r *RateServer) DeleteMarkup(ctx context.Context, req *pb.DeleteMarkupReque
 	if err != nil {
 		log.Error("error while deleting markup" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "markup")
+	}
+
+	if r.msgBus != nil {
+		r.PublishMarkupEvents(req.OwnerId, 0, msgbus.ACTION_CRUD_DELETE)
 	}
 
 	return &pb.DeleteMarkupResponse{}, nil
@@ -199,6 +213,49 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 	}
 
 	return rateList, nil
+}
+
+func (r *RateServer) PublishMarkupEvents(ownerId string, markup float64, action string) {
+	/* Create event */
+	e := &epb.MarkupUpdate{
+		OwnerId: ownerId,
+		Markup:  markup,
+	}
+
+	var route string
+	switch action {
+	case msgbus.ACTION_CRUD_UPDATE:
+		route = r.baseRoutingKey.SetActionUpdate().SetObject("markup").MustBuild()
+	case msgbus.ACTION_CRUD_DELETE:
+		route = r.baseRoutingKey.SetActionDelete().SetObject("markup").MustBuild()
+
+	}
+	err := r.msgBus.PublishRequest(route, e)
+	if err != nil {
+
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+	}
+}
+
+func (r *RateServer) PublishDefaultMarkupEvents(markup float64, action string) {
+	/* Create event */
+	e := &epb.DefaultMarkupUpdate{
+		Markup: markup,
+	}
+
+	var route string
+	switch action {
+	case msgbus.ACTION_CRUD_UPDATE:
+		route = r.baseRoutingKey.SetActionUpdate().SetObject("defaultmarkup").MustBuild()
+	case msgbus.ACTION_CRUD_DELETE:
+		route = r.baseRoutingKey.SetActionDelete().SetObject("defaultmarkup").MustBuild()
+
+	}
+	err := r.msgBus.PublishRequest(route, e)
+	if err != nil {
+
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+	}
 }
 
 func baseratesToMarkupRates(rates []*pb.Rate, markup float64) []*pb.Rate {

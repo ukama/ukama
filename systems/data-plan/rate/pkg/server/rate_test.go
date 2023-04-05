@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestRateService_GetMarkup(t *testing.T) {
@@ -102,6 +103,7 @@ func TestRateService_UpdateDefaultMarkup(t *testing.T) {
 		}
 
 		defMarkupRepo.On("UpdateDefaultMarkupRate", defMarkup.Markup).Return(nil)
+		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
 		_, err := rateService.UpdateDefaultMarkup(context.Background(), req)
 		assert.NoError(t, err)
 
