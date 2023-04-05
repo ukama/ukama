@@ -114,6 +114,19 @@ func (r *Router) init() {
 	packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
 	packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
+
+	rates := v1.Group("/rates", "Rates", "Get rates for a user")
+	rates.GET("", formatDoc("Get Rate for user", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
+
+	rates.GET("/users/:owner_id/markup", formatDoc("get markup rate for user", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
+	rates.DELETE("/users/:owner_id/markup", formatDoc("delete markup rate for user", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
+	rates.POST("/users/:owner_id/markup/:markup", formatDoc("set markup rate for user", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
+	rates.GET("/users/:owner_id/markup/:markup", formatDoc("get markup rate for user", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
+
+	rates.POST("/default/markup/:markup", formatDoc("set default markup rate", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
+	rates.GET("/default/markup/:markup", formatDoc("get default markup rate", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
+	rates.GET("/default/markup/history", formatDoc("get default markup rate history", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusOK))
+
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

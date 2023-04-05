@@ -40,7 +40,7 @@ message Rate{
     string country=2;
     string network = 3;
     string vpmn =4;
-    string imsi=5;
+    int64 imsi=5;
     double smsMo=6 [json_name = "sms_mo"];
     double smsMt =7 [json_name = "sms_mt"];
     double data =8;
