@@ -126,7 +126,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	return rateList, nil
 }
 
-func dbratesToPbRates(rates []db.Rate) []*pb.Rate {
+func dbratesToPbRates(rates []db.BaseRate) []*pb.Rate {
 	res := []*pb.Rate{}
 	for _, u := range rates {
 		res = append(res, dbRatesToPbRates(&u))
@@ -134,7 +134,7 @@ func dbratesToPbRates(rates []db.Rate) []*pb.Rate {
 	return res
 }
 
-func dbRatesToPbRates(r *db.Rate) *pb.Rate {
+func dbRatesToPbRates(r *db.BaseRate) *pb.Rate {
 	return &pb.Rate{
 		Uuid:        r.Uuid.String(),
 		X2G:         r.X2g,

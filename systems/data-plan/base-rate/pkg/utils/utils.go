@@ -57,8 +57,8 @@ func FetchData(url string) ([]RawRates, error) {
 	return r, nil
 }
 
-func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.Rate, error) {
-	var rates []db.Rate
+func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.BaseRate, error) {
+	var rates []db.BaseRate
 	for _, value := range slice {
 
 		imsi, err := ParsedToInt(value.Imsi)
@@ -81,7 +81,7 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.Rate, e
 			return nil, fmt.Errorf("failed parsing Data rate." + err.Error())
 		}
 
-		rates = append(rates, db.Rate{
+		rates = append(rates, db.BaseRate{
 			Uuid:        uuid.NewV4(),
 			Country:     value.Country,
 			Network:     value.Network,

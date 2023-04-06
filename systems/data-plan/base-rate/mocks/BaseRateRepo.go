@@ -15,15 +15,15 @@ type BaseRateRepo struct {
 }
 
 // GetBaseRate provides a mock function with given fields: _a0
-func (_m *BaseRateRepo) GetBaseRate(_a0 uuid.UUID) (*db.Rate, error) {
+func (_m *BaseRateRepo) GetBaseRate(_a0 uuid.UUID) (*db.BaseRate, error) {
 	ret := _m.Called(_a0)
 
-	var r0 *db.Rate
-	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Rate); ok {
+	var r0 *db.BaseRate
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.BaseRate); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Rate)
+			r0 = ret.Get(0).(*db.BaseRate)
 		}
 	}
 
@@ -38,15 +38,15 @@ func (_m *BaseRateRepo) GetBaseRate(_a0 uuid.UUID) (*db.Rate, error) {
 }
 
 // GetBaseRates provides a mock function with given fields: country, network, effectiveAt, simType
-func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt string, simType db.SimType) ([]db.Rate, error) {
+func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt string, simType db.SimType) ([]db.BaseRate, error) {
 	ret := _m.Called(country, network, effectiveAt, simType)
 
-	var r0 []db.Rate
-	if rf, ok := ret.Get(0).(func(string, string, string, db.SimType) []db.Rate); ok {
+	var r0 []db.BaseRate
+	if rf, ok := ret.Get(0).(func(string, string, string, db.SimType) []db.BaseRate); ok {
 		r0 = rf(country, network, effectiveAt, simType)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Rate)
+			r0 = ret.Get(0).([]db.BaseRate)
 		}
 	}
 
@@ -61,11 +61,11 @@ func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt
 }
 
 // UploadBaseRates provides a mock function with given fields: rateList
-func (_m *BaseRateRepo) UploadBaseRates(rateList []db.Rate) error {
+func (_m *BaseRateRepo) UploadBaseRates(rateList []db.BaseRate) error {
 	ret := _m.Called(rateList)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]db.Rate) error); ok {
+	if rf, ok := ret.Get(0).(func([]db.BaseRate) error); ok {
 		r0 = rf(rateList)
 	} else {
 		r0 = ret.Error(0)

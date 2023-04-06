@@ -7,9 +7,9 @@ import (
 )
 
 type BaseRateRepo interface {
-	GetBaseRate(uuid uuid.UUID) (*Rate, error)
-	GetBaseRates(country, network, effectiveAt string, simType SimType) ([]Rate, error)
-	UploadBaseRates(rateList []Rate) error
+	GetBaseRate(uuid uuid.UUID) (*BaseRate, error)
+	GetBaseRates(country, network, effectiveAt string, simType SimType) ([]BaseRate, error)
+	UploadBaseRates(rateList []BaseRate) error
 }
 
 type baseRateRepo struct {
@@ -22,8 +22,8 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 	}
 }
 
-func (u *baseRateRepo) GetBaseRate(uuid uuid.UUID) (*Rate, error) {
-	rate := &Rate{}
+func (u *baseRateRepo) GetBaseRate(uuid uuid.UUID) (*BaseRate, error) {
+	rate := &BaseRate{}
 	result := u.Db.GetGormDb().First(rate, "Uuid=?", uuid)
 	if result.Error != nil {
 		return nil, result.Error
@@ -31,9 +31,9 @@ func (u *baseRateRepo) GetBaseRate(uuid uuid.UUID) (*Rate, error) {
 	return rate, nil
 }
 
-func (b *baseRateRepo) GetBaseRates(country, network, effectiveAt string, simType SimType) ([]Rate, error) {
-	var rates []Rate
-	result := b.Db.GetGormDb().Where(&Rate{Country: country, Network: network, SimType: simType, EffectiveAt: effectiveAt}).Find(&rates)
+func (b *baseRateRepo) GetBaseRates(country, network, effectiveAt string, simType SimType) ([]BaseRate, error) {
+	var rates []BaseRate
+	result := b.Db.GetGormDb().Where(&BaseRate{Country: country, Network: network, SimType: simType, EffectiveAt: effectiveAt}).Find(&rates)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -42,7 +42,7 @@ func (b *baseRateRepo) GetBaseRates(country, network, effectiveAt string, simTyp
 	return rates, nil
 }
 
-func (b *baseRateRepo) UploadBaseRates(rateList []Rate) error {
+func (b *baseRateRepo) UploadBaseRates(rateList []BaseRate) error {
 	e := b.Db.GetGormDb().Create(&rateList)
 	if e != nil {
 		return e.Error

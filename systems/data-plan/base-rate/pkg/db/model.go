@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Rate struct {
+type BaseRate struct {
 	gorm.Model
 	Uuid        uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
 	Country     string
