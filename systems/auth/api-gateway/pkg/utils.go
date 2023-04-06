@@ -13,6 +13,9 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
+var SESSION_KEY = "ukama_session"
+var WHOAMI_PATH = "/sessions/whoami"
+
 type User struct {
 	Id       string       `json:"id"`
 	Identity UserIdentity `json:"identity"`
@@ -28,31 +31,22 @@ type UserTraits struct {
 	Email string `json:"email"`
 }
 
-func parseCookies(c *gin.Context) map[string]string {
+func GetSessionFromCookie(c *gin.Context, sessionKey string) (string, error) {
 	cookies := map[string]string{}
 	for _, cookie := range c.Request.Cookies() {
 		cookies[cookie.Name] = cookie.Value
 	}
-	return cookies
-}
-
-func getSessionCookie(cookies map[string]string) (string, error) {
-	if cookies["ukama_session"] != "" {
-		return cookies["ukama_session"], nil
+	if cookies[sessionKey] != "" {
+		return cookies[sessionKey], nil
 	}
 	return "", fmt.Errorf("no session cookie found")
 }
 
-func GetUserBySession(c *gin.Context, r *rest.RestClient) (*User, error) {
-	cookies := parseCookies(c)
-	session, err := getSessionCookie(cookies)
-	if err != nil {
-		return nil, err
-	}
+func GetUserBySession(cookieStr string, r *rest.RestClient) (*User, error) {
 	urlObj, _ := url.Parse(r.C.BaseURL)
 	cookie := &http.Cookie{
-		Name:  "ukama_session",
-		Value: session,
+		Name:  SESSION_KEY,
+		Value: cookieStr,
 	}
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -64,7 +58,7 @@ func GetUserBySession(c *gin.Context, r *rest.RestClient) (*User, error) {
 	errStatus := &rest.ErrorMessage{}
 	resp, err := r.C.SetCookieJar(jar).R().
 		SetError(errStatus).
-		Get(r.C.BaseURL + "/sessions/whoami")
+		Get(r.C.BaseURL + WHOAMI_PATH)
 
 	if err != nil {
 		return nil, err

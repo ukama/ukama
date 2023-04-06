@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/common/auth"
+
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz"
@@ -97,12 +97,12 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
-	sessionStr, err := auth.GetSessionFromCookie(c, SESSION_KEY)
+	sessionStr, err := pkg.GetSessionFromCookie(c, SESSION_KEY)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := auth.GetUserBySession(sessionStr, p.config.r)
+	res, err := pkg.GetUserBySession(sessionStr, p.config.r)
 	if err != nil {
 		return nil, err
 	}
@@ -115,11 +115,11 @@ func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
 }
 
 func (p *Router) authenticate(c *gin.Context) (*Authenticate, error) {
-	sessionStr, err := auth.GetSessionFromCookie(c, SESSION_KEY)
+	sessionStr, err := pkg.GetSessionFromCookie(c, SESSION_KEY)
 	if err != nil {
 		return nil, err
 	}
-	res, err := auth.GetUserBySession(sessionStr, p.config.r)
+	res, err := pkg.GetUserBySession(sessionStr, p.config.r)
 	if err != nil {
 		return nil, err
 	}
