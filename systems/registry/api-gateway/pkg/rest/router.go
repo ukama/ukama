@@ -25,6 +25,8 @@ import (
 const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
 
+var SESSION_KEY = "ukama_session"
+
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -36,6 +38,7 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
+	auth          *config.Auth
 }
 
 type Clients struct {
@@ -89,12 +92,26 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
 	}
 }
 
 func (rt *Router) Run() {
 	logrus.Info("Listening on port ", rt.config.serverConf.Port)
-
+	rt.f.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
+		"ukama_session": {
+			SecurityScheme: &openapi.SecurityScheme{
+				Type: "oauth2",
+				In:   "header",
+				Name: SESSION_KEY,
+				Flows: &openapi.OAuthFlows{
+					Implicit: &openapi.OAuthFlow{
+						AuthorizationURL: rt.config.auth.AuthAppUrl + "?redirect=http:localhost:8080/swagger/#/",
+					},
+				},
+			},
+		},
+	})
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
 		panic(err)

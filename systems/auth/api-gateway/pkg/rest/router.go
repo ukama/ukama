@@ -20,8 +20,7 @@ import (
 var SESSION_KEY = "ukama_session"
 
 type Router struct {
-	f *fizz.Fizz
-
+	f      *fizz.Fizz
 	config *RouterConfig
 }
 
