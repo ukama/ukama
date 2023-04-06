@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen";
 package ukama.dataplan.baserate.v1;
 
 import "validator.proto";
