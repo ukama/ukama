@@ -9,9 +9,6 @@ test:
 	go test -v ./...
 
 gen:
-	#protoc -I ./pb -I ../../../systems/common/pb -I ../../../systems/common/pb/dep  -I ../base-rate/pb --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
-	#				  ../base-rate/pb/baserate.proto
-
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep  -I ../base-rate/pb --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
 					rate.proto
 
