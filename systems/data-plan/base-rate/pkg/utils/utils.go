@@ -2,9 +2,13 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 
+	log "github.com/sirupsen/logrus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/jszwec/csvutil"
@@ -53,28 +57,76 @@ func FetchData(url string) ([]RawRates, error) {
 	return r, nil
 }
 
-func ParseToModel(slice []RawRates, effective_at, sim_type string) []db.Rate {
+func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.Rate, error) {
 	var rates []db.Rate
 	for _, value := range slice {
+
+		imsi, err := ParsedToInt(value.Imsi)
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing imsi value." + err.Error())
+		}
+
+		smo, err := ParseToRates(value.Sms_mo, "$")
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing SMS MO rate." + err.Error())
+		}
+
+		smt, err := ParseToRates(value.Sms_mt, "$")
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing SMS MT rate." + err.Error())
+		}
+
+		data, err := ParseToRates(value.Data, "$")
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing Data rate." + err.Error())
+		}
+
 		rates = append(rates, db.Rate{
 			Uuid:        uuid.NewV4(),
 			Country:     value.Country,
 			Network:     value.Network,
 			Vpmn:        value.Vpmn,
-			Imsi:        value.Imsi,
-			SmsMo:       value.Sms_mo,
-			SmsMt:       value.Sms_mt,
-			Data:        value.Data,
-			X2g:         value.X2g,
-			X3g:         value.X3g,
-			X5g:         value.X5g,
-			Lte:         value.Lte,
-			LteM:        value.Lte_m,
+			Imsi:        imsi,
+			SmsMo:       smo,
+			SmsMt:       smt,
+			Data:        data,
+			X2g:         ParseToBoolean(value.X2g, "2G"),
+			X3g:         ParseToBoolean(value.X3g, "3G"),
+			X5g:         ParseToBoolean(value.X5g, "5G"),
+			Lte:         ParseToBoolean(value.Lte, "LTE"),
+			LteM:        ParseToBoolean(value.Lte_m, "LTE-M"),
 			Apn:         value.Apn,
 			EffectiveAt: effective_at,
 			EndAt:       "",
 			SimType:     db.ParseType(sim_type),
 		})
 	}
-	return rates
+	return rates, nil
+}
+
+func ParseToRates(str string, s string) (float64, error) {
+	var val float64 = 0
+	var err error
+	sr := strings.Split(str, s)
+	for _, s := range sr {
+		val, err = strconv.ParseFloat(s, 64)
+	}
+	if err != nil {
+		log.Errorf("Failed to parse rate from %s with rate symbol %s.Error: %v", str, s, err)
+		return 0, err
+	}
+	return val, nil
+}
+
+func ParsedToInt(s string) (int64, error) {
+	val, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		log.Errorf("Failed to parse int64 value from  %s.Error: %v", s, err)
+		return 0, err
+	}
+	return val, nil
+}
+
+func ParseToBoolean(val string, s string) bool {
+	return (val == s)
 }

@@ -40,6 +40,7 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 		assert.Equal(t, rateRes.Rate[i].SimType, mockSimTypeStr)
 	}
 }
+
 func TestRateService_GetRate_Success(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
@@ -71,18 +72,19 @@ func TestRateService_GetRates_Success(t *testing.T) {
 	s := NewBaseRateServer(baseRateRepo, msgbusClient)
 
 	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, db.ParseType("ukama_data")).Return([]db.Rate{
-		{X2g: "2G",
-			X3g:         "3G",
+		{
+			X2g:         true,
+			X3g:         true,
 			Apn:         "Manual entry required",
 			Country:     "Tycho crater",
-			Data:        "$0.4",
+			Data:        0.4,
 			EffectiveAt: "2023-10-10",
-			Imsi:        "1",
-			Lte:         "LTE",
+			Imsi:        1,
+			Lte:         true,
 			Network:     "Multi Tel",
 			SimType:     db.SimTypeUkamaData,
-			SmsMo:       "$0.1",
-			SmsMt:       "$0.1",
+			SmsMo:       0.1,
+			SmsMt:       0.1,
 			Vpmn:        "TTC"},
 	}, nil)
 	rate, err := s.GetBaseRates(context.TODO(), mockFilters)

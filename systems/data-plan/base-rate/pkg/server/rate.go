@@ -80,14 +80,14 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
 			fileUrl, effectiveAt, simType)
 	}
-	formattedEffectiveAt, err :=validations.ValidateDate(effectiveAt)
-	if err!=nil{
-		return nil ,status.Errorf(codes.InvalidArgument, err.Error())
+	formattedEffectiveAt, err := validations.ValidateDate(effectiveAt)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 	if err := validations.IsFutureDate(formattedEffectiveAt); err != nil {
-		return nil ,status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
-	} 
+	}
 
 	sType := db.ParseType(strType)
 
@@ -102,7 +102,10 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	rates := utils.ParseToModel(data, formattedEffectiveAt, simType.String())
+	rates, err := utils.ParseToModel(data, formattedEffectiveAt, simType.String())
+	if err != nil {
+		return nil, err
+	}
 	err = b.baseRateRepo.UploadBaseRates(rates)
 
 	if err != nil {
