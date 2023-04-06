@@ -1,4 +1,4 @@
-name: pr-release-{{SERVICE_NAME}}
+name: pr-release-{{SYSTEM_NAME}}-{{SERVICE_NAME}}
 on:  
   workflow_dispatch:
 
@@ -15,7 +15,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: {{SERVICE_NAME}}
+        registry-name: {{SYSTEM_NAME}}/{{SERVICE_NAME}}
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}

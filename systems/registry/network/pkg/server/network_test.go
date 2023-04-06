@@ -30,7 +30,7 @@ func TestNetworkServer_Get(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo, "")
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			NetworkId: netID.String()})
 
@@ -49,7 +49,7 @@ func TestNetworkServer_Get(t *testing.T) {
 
 		netRepo.On("Get", netID).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo, "")
 		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			NetworkId: netID.String()})
 
@@ -75,7 +75,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo, "")
 		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
 			Name: netName, OrgName: orgName})
 
@@ -95,7 +95,7 @@ func TestNetworkServer_GetByName(t *testing.T) {
 
 		netRepo.On("GetByName", orgName, netName).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo, "")
 		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
 			Name: netName, OrgName: orgName})
 
@@ -123,7 +123,7 @@ func TestNetworkServer_GetByOrg(t *testing.T) {
 					Deactivated: false,
 				}}, nil).Once()
 
-		s := NewNetworkServer(netRepo, orgRepo, nil, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil, msgcRepo, "")
 		netResp, err := s.GetByOrg(context.TODO(),
 			&pb.GetByOrgRequest{OrgId: orgID.String()})
 
@@ -138,17 +138,20 @@ func TestNetworkServer_GetByOrg(t *testing.T) {
 func TestNetworkServer_Delete(t *testing.T) {
 	t.Run("Org and Network exist", func(t *testing.T) {
 		const orgName = "org-1"
+		orgId := uuid.NewV4()
 		const netName = "network-1"
 		msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
-
+		orgRepo := &mocks.OrgRepo{}
+		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
 		netRepo.On("Delete", orgName, netName).Return(nil).Once()
 		msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeleteRequest{
 			Name:    netName,
 			OrgName: orgName,
 		}).Return(nil).Once()
-		s := NewNetworkServer(netRepo, nil, nil, nil, msgclientRepo)
+		netRepo.On("GetNetworkCount", orgId).Return(int64(2), nil).Once()
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil, msgclientRepo, "")
 		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			Name: netName, OrgName: orgName})
 
@@ -160,14 +163,16 @@ func TestNetworkServer_Delete(t *testing.T) {
 	t.Run("Network does not exist", func(t *testing.T) {
 		// const netID = 1
 		const orgName = "org-1"
+		orgId := uuid.NewV4()
 		const netName = "network-1"
 		msgcRepo := &mbmocks.MsgBusServiceClient{}
 
 		netRepo := &mocks.NetRepo{}
-
+		orgRepo := &mocks.OrgRepo{}
+		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
 		netRepo.On("Delete", orgName, netName).Return(gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil, msgcRepo, "")
 		netResp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			Name: netName, OrgName: orgName})
 
@@ -206,7 +211,9 @@ func TestNetworkServer_AddSite(t *testing.T) {
 			NetworkId: netID.String(),
 			SiteName:  siteName,
 		}).Return(nil).Once()
-		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgclientRepo)
+		siteRepo.On("GetSiteCount", netID).Return(int64(2), nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgclientRepo, "")
 
 		// Act
 		res, err := s.AddSite(context.TODO(), &pb.AddSiteRequest{
@@ -238,7 +245,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(nil, nil, siteRepo, nil, msgcRepo)
+		s := NewNetworkServer(nil, nil, siteRepo, nil, msgcRepo, "")
 		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
 			SiteId: siteID.String()})
 
@@ -257,7 +264,7 @@ func TestNetworkServer_GetSite(t *testing.T) {
 
 		siteRepo.On("Get", siteID).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(nil, nil, siteRepo, nil, msgcRepo)
+		s := NewNetworkServer(nil, nil, siteRepo, nil, msgcRepo, "")
 		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
 			SiteId: fmt.Sprint(siteID)})
 
@@ -293,7 +300,7 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 				Deactivated: false,
 			}, nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo, "")
 		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
 			NetworkId: netID.String(), SiteName: siteName})
 
@@ -323,7 +330,7 @@ func TestNetworkServer_GetSiteByName(t *testing.T) {
 
 		siteRepo.On("GetByName", netID, siteName).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo, "")
 		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
 			NetworkId: netID.String(), SiteName: siteName})
 
@@ -359,7 +366,7 @@ func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
 					Deactivated: false,
 				}}, nil).Once()
 
-		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo)
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo, "")
 		netResp, err := s.GetSitesByNetwork(context.TODO(),
 			&pb.GetSitesByNetworkRequest{NetworkId: netID.String()})
 

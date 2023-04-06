@@ -13,6 +13,7 @@ type OrgRepo interface {
 	Add(org *Org) error
 	Get(id uuid.UUID) (*Org, error)
 	GetByName(name string) (*Org, error)
+	GetAll() ([]Org, error)
 }
 
 type orgRepo struct {
@@ -45,6 +46,17 @@ func (r *orgRepo) Get(id uuid.UUID) (*Org, error) {
 	}
 
 	return &org, nil
+}
+
+func (r *orgRepo) GetAll() ([]Org, error) {
+	var org []Org
+
+	result := r.Db.GetGormDb().Model(&Org{}).Find(&org)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return org, nil
 }
 
 func (r *orgRepo) GetByName(name string) (*Org, error) {
