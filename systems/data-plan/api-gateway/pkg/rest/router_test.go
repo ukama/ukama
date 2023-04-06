@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/gin-contrib/cors"
@@ -129,5 +130,269 @@ func TestRouter_GetRates(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
+}
+
+func TestRouter_GetUserMarkup(t *testing.T) {
+	ownerId := uuid.NewV4().String()
+	req := GetMarkupRequest{
+		OwnerId: ownerId,
+	}
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/rates/users/"+ownerId+"/markup", nil)
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &rpb.GetMarkupRequest{
+		OwnerId: req.OwnerId,
+	}
+
+	pResp := &rpb.GetMarkupResponse{
+		OwnerId: req.OwnerId,
+		Markup:  10,
+	}
+
+	m.On("GetMarkup", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		d: client.NewPackageFromClient(p, b),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), ownerId)
+	m.AssertExpectations(t)
+}
+
+func TestRouter_DeleteUserMarkup(t *testing.T) {
+	ownerId := uuid.NewV4().String()
+	req := GetMarkupRequest{
+		OwnerId: ownerId,
+	}
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("DELETE", "/v1/rates/users/"+ownerId+"/markup", nil)
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &rpb.DeleteMarkupRequest{
+		OwnerId: req.OwnerId,
+	}
+
+	pResp := &rpb.DeleteMarkupResponse{}
+
+	m.On("DeleteMarkup", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		d: client.NewPackageFromClient(p, b),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
+}
+
+func TestRouter_SetUserMarkup(t *testing.T) {
+	ownerId := uuid.NewV4().String()
+	req := SetMarkupRequest{
+		OwnerId: ownerId,
+		Markup:  10,
+	}
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("POST", "/v1/rates/users/"+ownerId+"/markup/"+strconv.FormatFloat(req.Markup, 'f', 'g', 64), nil)
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &rpb.UpdateMarkupRequest{
+		OwnerId: req.OwnerId,
+		Markup:  req.Markup,
+	}
+
+	pResp := &rpb.UpdateMarkupResponse{}
+
+	m.On("UpdateMarkup", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		d: client.NewPackageFromClient(p, b),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusCreated, w.Code)
+	m.AssertExpectations(t)
+}
+
+func TestRouter_GetUserMarkupHistory(t *testing.T) {
+	ownerId := uuid.NewV4().String()
+	req := GetMarkupRequest{
+		OwnerId: ownerId,
+	}
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/rates/users/"+ownerId+"/markup/history", nil)
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &rpb.GetMarkupHistoryRequest{
+		OwnerId: req.OwnerId,
+	}
+
+	pResp := &rpb.GetMarkupHistoryResponse{
+		OwnerId: req.OwnerId,
+		MarkupRates: []*rpb.MarkupRates{
+			{
+				CreatedAt: "2021-11-12T11:45:26.371Z",
+				DeletedAt: "2022-11-12T11:45:26.371Z",
+				Markup:    5.5,
+			},
+			{
+				CreatedAt: "2022-11-12T11:45:26.371Z",
+				Markup:    10,
+			},
+		},
+	}
+
+	m.On("GetMarkupHistory", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		d: client.NewPackageFromClient(p, b),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), ownerId)
+	assert.Contains(t, w.Body.String(), pResp.MarkupRates[0].CreatedAt)
+	assert.Contains(t, w.Body.String(), pResp.MarkupRates[1].CreatedAt)
+	m.AssertExpectations(t)
+}
+
+func TestRouter_SetDefaultMarkup(t *testing.T) {
+
+	req := SetDefaultMarkupRequest{
+		Markup: 10,
+	}
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("POST", "/v1/rates/default/markup/"+strconv.FormatFloat(req.Markup, 'f', 'g', 64), nil)
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &rpb.UpdateDefaultMarkupRequest{
+		Markup: req.Markup,
+	}
+
+	pResp := &rpb.UpdateDefaultMarkupResponse{}
+
+	m.On("UpdateDefaultMarkup", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		d: client.NewPackageFromClient(p, b),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusCreated, w.Code)
+	m.AssertExpectations(t)
+}
+
+func TestRouter_GetDefaultMarkup(t *testing.T) {
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/rates/default/markup", nil)
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &rpb.GetDefaultMarkupRequest{}
+
+	pResp := &rpb.GetDefaultMarkupResponse{
+		Markup: 10,
+	}
+
+	m.On("GetDefaultMarkup", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		d: client.NewPackageFromClient(p, b),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), strconv.FormatFloat(pResp.Markup, 'f', -1, 64))
+	m.AssertExpectations(t)
+}
+
+func TestRouter_GetDefaultMarkupHistory(t *testing.T) {
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/rates/default/markup/history", nil)
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &rpb.GetDefaultMarkupHistoryRequest{}
+
+	pResp := &rpb.GetDefaultMarkupHistoryResponse{
+		MarkupRates: []*rpb.MarkupRates{
+			{
+				CreatedAt: "2021-11-12T11:45:26.371Z",
+				DeletedAt: "2022-11-12T11:45:26.371Z",
+				Markup:    5.5,
+			},
+			{
+				CreatedAt: "2022-11-12T11:45:26.371Z",
+				Markup:    10,
+			},
+		},
+	}
+
+	m.On("GetDefaultMarkupHistory", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		d: client.NewPackageFromClient(p, b),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), pResp.MarkupRates[0].CreatedAt)
+	assert.Contains(t, w.Body.String(), pResp.MarkupRates[1].CreatedAt)
 	m.AssertExpectations(t)
 }
