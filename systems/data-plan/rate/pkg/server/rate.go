@@ -278,11 +278,18 @@ func baseRateToMarkupRate(r *bpb.Rate, markup float64) *bpb.Rate {
 func defMarkupToPbMarkupRates(rates []db.DefaultMarkup) []*pb.MarkupRates {
 	res := []*pb.MarkupRates{}
 	for _, rate := range rates {
-		res = append(res, &pb.MarkupRates{
-			CreatedAt: rate.CreatedAt.Format(time.RFC3339),
-			DeletedAt: rate.CreatedAt.Format(time.RFC3339),
-			Markup:    rate.Markup,
-		})
+		if rate.DeletedAt.Valid {
+			res = append(res, &pb.MarkupRates{
+				CreatedAt: rate.CreatedAt.Format(time.RFC3339),
+				DeletedAt: rate.DeletedAt.Time.Format(time.RFC3339),
+				Markup:    rate.Markup,
+			})
+		} else {
+			res = append(res, &pb.MarkupRates{
+				CreatedAt: rate.CreatedAt.Format(time.RFC3339),
+				Markup:    rate.Markup,
+			})
+		}
 	}
 	return res
 }
@@ -290,11 +297,19 @@ func defMarkupToPbMarkupRates(rates []db.DefaultMarkup) []*pb.MarkupRates {
 func markupToPbMarkupRates(rates []db.Markups) []*pb.MarkupRates {
 	res := []*pb.MarkupRates{}
 	for _, rate := range rates {
-		res = append(res, &pb.MarkupRates{
-			CreatedAt: rate.CreatedAt.Format(time.RFC3339),
-			DeletedAt: rate.CreatedAt.Format(time.RFC3339),
-			Markup:    rate.Markup,
-		})
+		if rate.DeletedAt.Valid {
+			res = append(res, &pb.MarkupRates{
+				CreatedAt: rate.CreatedAt.Format(time.RFC3339),
+				DeletedAt: rate.DeletedAt.Time.Format(time.RFC3339),
+				Markup:    rate.Markup,
+			})
+		} else {
+			res = append(res, &pb.MarkupRates{
+				CreatedAt: rate.CreatedAt.Format(time.RFC3339),
+				Markup:    rate.Markup,
+			})
+		}
+
 	}
 	return res
 }

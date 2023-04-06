@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
 )
@@ -56,13 +58,18 @@ func (m *defaultMarkupRepo) UpdateDefaultMarkupRate(markup float64) error {
 
 	err := m.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		def := &DefaultMarkup{}
-		result := tx.Model(DefaultMarkup{}).Delete(def, "*")
+		result := tx.Model(DefaultMarkup{}).Where("created_at < ?", time.Now()).Delete(def)
 		if result.Error != nil {
-			return result.Error
+			if !sql.IsNotFoundError(result.Error) {
+				return result.Error
+			}
 		}
 
-		def.Markup = markup
-		result = tx.Model(DefaultMarkup{}).Create(def)
+		new := &DefaultMarkup{
+			Markup: markup,
+		}
+
+		result = tx.Model(DefaultMarkup{}).Create(new)
 		if result.Error != nil {
 			return result.Error
 		}

@@ -164,7 +164,7 @@ func TestDefaultMarkupRepo_Update(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg()).
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
