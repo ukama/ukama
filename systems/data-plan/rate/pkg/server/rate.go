@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -43,17 +44,13 @@ func NewRateServer(markupRepo db.MarkupsRepo, defualtMarkupRepo db.DefaultMarkup
 	}
 }
 
-func (r *RateServer) GetMarkup(ctx context.Context, req *pb.GetMarkupRequest) (*pb.GetMarkupResponse, error) {
+func (r *RateServer) getUserMarkup(uuid uuid.UUID) (float64, error) {
 	var rate float64
-	uuid, err := uuid.FromString(req.OwnerId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
 
 	markup, err := r.markupRepo.GetMarkupRate(uuid)
 	if err != nil {
+		log.Errorf("Failed to get markup for user %s: Error %s", uuid.String(), err.Error())
 
-		// Trying to reda default markup
 		defMarkup := &db.DefaultMarkup{}
 		if sql.IsNotFoundError(err) {
 			log.Warn("error while getting specific markup. Error: " + err.Error())
@@ -61,14 +58,29 @@ func (r *RateServer) GetMarkup(ctx context.Context, req *pb.GetMarkupRequest) (*
 		}
 
 		if err != nil {
-			log.Error("error while getting markup" + err.Error())
-			return nil, grpc.SqlErrorToGrpc(err, "markup")
+			log.Error("error while getting markup. Error: " + err.Error())
+			return 0, grpc.SqlErrorToGrpc(err, "markup")
 		}
 
 		rate = defMarkup.Markup
 
 	} else {
 		rate = markup.Markup
+	}
+
+	return rate, err
+}
+
+func (r *RateServer) GetMarkup(ctx context.Context, req *pb.GetMarkupRequest) (*pb.GetMarkupResponse, error) {
+
+	uuid, err := uuid.FromString(req.OwnerId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	rate, err := r.getUserMarkup(uuid)
+	if err != nil {
+		return nil, err
 	}
 
 	resp := &pb.GetMarkupResponse{
@@ -190,7 +202,7 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	markup, err := r.markupRepo.GetMarkupRate(uuid)
+	markup, err := r.getUserMarkup(uuid)
 	if err != nil {
 		log.Error("error while getting markup" + err.Error())
 		return nil, err
@@ -206,11 +218,16 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 	})
 	if err != nil {
 		log.Errorf("error while getting base rates" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "rates")
+		return nil, grpc.SqlErrorToGrpc(err, "baserates")
+	}
+
+	if rates == nil || len(rates.GetRates()) == 0 {
+		log.Errorf("no valid base rates found")
+		return nil, grpc.SqlErrorToGrpc(fmt.Errorf("no valid base rates found"), "baserates")
 	}
 
 	rateList := &pb.GetRateResponse{
-		Rates: baseratesToMarkupRates(rates.GetRates(), markup.Markup),
+		Rates: baseratesToMarkupRates(rates.GetRates(), markup),
 	}
 
 	return rateList, nil

@@ -39,7 +39,7 @@ func (m *markupsRepo) CreateMarkupRate(uuid uuid.UUID, markup float64) error {
 
 func (m *markupsRepo) GetMarkupRate(uuid uuid.UUID) (*Markups, error) {
 	rate := &Markups{}
-	result := m.Db.GetGormDb().Model(&Markups{}).Where("owner_id=?", uuid).Find(rate)
+	result := m.Db.GetGormDb().Model(&Markups{}).Where("owner_id=?", uuid).First(rate)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -62,16 +62,22 @@ func (m *markupsRepo) UpdateMarkupRate(uuid uuid.UUID, mrate float64) error {
 		}
 		result := tx.Model(Markups{}).Where("owner_id = ?", uuid).Delete(markup)
 		if result.Error != nil {
-			return result.Error
+			if !sql.IsNotFoundError(result.Error) {
+				return result.Error
+			}
 		}
 
-		markup.Markup = mrate
-		result = tx.Model(Markups{}).Create(markup)
+		new := &Markups{
+			OwnerId: uuid,
+			Markup:  mrate,
+		}
+		result = tx.Model(Markups{}).Create(new)
 		if result.Error != nil {
 			return result.Error
 		}
 
 		return nil
+
 	})
 
 	return err

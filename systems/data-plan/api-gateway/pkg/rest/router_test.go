@@ -82,7 +82,7 @@ func TestRouter_GetRates(t *testing.T) {
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("POST", "/v1/rates/users/"+ownerId, bytes.NewReader(jReq))
+	hreq, _ := http.NewRequest("POST", "/v1/rates/users/"+ownerId+"/rate", bytes.NewReader(jReq))
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
@@ -140,7 +140,7 @@ func TestRouter_GetUserMarkup(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("GET", "/v1/rates/users/"+ownerId+"/markup", nil)
+	hreq, _ := http.NewRequest("GET", "/v1/markup/users/"+ownerId, nil)
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
@@ -178,7 +178,7 @@ func TestRouter_DeleteUserMarkup(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("DELETE", "/v1/rates/users/"+ownerId+"/markup", nil)
+	hreq, _ := http.NewRequest("DELETE", "/v1/markup/users/"+ownerId, nil)
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
@@ -213,7 +213,7 @@ func TestRouter_SetUserMarkup(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("POST", "/v1/rates/users/"+ownerId+"/markup/"+strconv.FormatFloat(req.Markup, 'f', 'g', 64), nil)
+	hreq, _ := http.NewRequest("POST", "/v1/markup/"+strconv.FormatFloat(req.Markup, 'f', 'g', 64)+"/users/"+ownerId, nil)
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
@@ -248,7 +248,7 @@ func TestRouter_GetUserMarkupHistory(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("GET", "/v1/rates/users/"+ownerId+"/markup/history", nil)
+	hreq, _ := http.NewRequest("GET", "/v1/markup/users/"+ownerId+"/history", nil)
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
@@ -298,7 +298,7 @@ func TestRouter_SetDefaultMarkup(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("POST", "/v1/rates/default/markup/"+strconv.FormatFloat(req.Markup, 'f', 'g', 64), nil)
+	hreq, _ := http.NewRequest("POST", "/v1/markup/"+strconv.FormatFloat(req.Markup, 'f', 'g', 64)+"/default", nil)
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
@@ -327,7 +327,7 @@ func TestRouter_SetDefaultMarkup(t *testing.T) {
 
 func TestRouter_GetDefaultMarkup(t *testing.T) {
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("GET", "/v1/rates/default/markup", nil)
+	hreq, _ := http.NewRequest("GET", "/v1/markup/default", nil)
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
@@ -358,7 +358,7 @@ func TestRouter_GetDefaultMarkup(t *testing.T) {
 func TestRouter_GetDefaultMarkupHistory(t *testing.T) {
 
 	w := httptest.NewRecorder()
-	hreq, _ := http.NewRequest("GET", "/v1/rates/default/markup/history", nil)
+	hreq, _ := http.NewRequest("GET", "/v1/markup/default/history", nil)
 
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}

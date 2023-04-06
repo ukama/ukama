@@ -50,7 +50,7 @@ type UploadBaseRatesRequest struct {
 }
 
 type GetRateRequest struct {
-	OwnerId     string `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+	OwnerId     string `example:"{{UserUUID}}" path:"user_id" validate:"required"`
 	Country     string `json:"country" binding:"required" validate:"required"`
 	Provider    string `json:"provider" binding:"required" validate:"required"`
 	To          uint64 `json:"to" binding:"required" validate:"required"`
@@ -60,24 +60,24 @@ type GetRateRequest struct {
 }
 
 type DeleteMarkupRequest struct {
-	OwnerId string `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+	OwnerId string `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" validate:"required"`
 }
 
 type SetMarkupRequest struct {
-	OwnerId string  `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
-	Markup  float64 `example:"10" json:"markup" path:"markup" binding:"required" validate:"required"`
+	OwnerId string  `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id"  validate:"required"`
+	Markup  float64 `example:"10" json:"markup" path:"markup" validate:"required"`
 }
 
 type GetMarkupRequest struct {
-	OwnerId string `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+	OwnerId string `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" validate:"required"`
 }
 
 type GetMarkupHistoryRequest struct {
-	OwnerId string `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" binding:"required" validate:"required"`
+	OwnerId string `example:"{{UserUUID}}" form:"user_id" json:"user_id" path:"user_id" validate:"required"`
 }
 
 type SetDefaultMarkupRequest struct {
-	Markup float64 `example:"10" json:"markup" path:"markup" binding:"required" validate:"required"`
+	Markup float64 `example:"10" json:"markup" path:"markup" validate:"required"`
 }
 
 type GetDefaultMarkupRequest struct {
