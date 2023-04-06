@@ -36,6 +36,15 @@ func NewRateClient(rateHost string, timeout time.Duration) *RateClient {
 	}
 }
 
+func NewRateClientFromClient(client pb.RateServiceClient) *RateClient {
+	return &RateClient{
+		host:    "localhost",
+		timeout: 1 * time.Second,
+		conn:    nil,
+		client:  client,
+	}
+}
+
 func (r *RateClient) Close() {
 	r.conn.Close()
 }

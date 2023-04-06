@@ -116,7 +116,7 @@ func (r *Router) init() {
 	packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
 	rates := v1.Group("/rates", "Rates", "Get rates for a user")
-	rates.GET("/users/:user_id", formatDoc("Get Rate for user", ""), tonic.Handler(r.getRateHandler, http.StatusOK))
+	rates.POST("/users/:user_id", formatDoc("Get Rate for user", ""), tonic.Handler(r.getRateHandler, http.StatusOK))
 
 	rates.GET("/users/:user_id/markup", formatDoc("get markup rate for user", ""), tonic.Handler(r.getMarkupHandler, http.StatusOK))
 	rates.DELETE("/users/:user_id/markup", formatDoc("delete markup rate for user", ""), tonic.Handler(r.deleteMarkupHandler, http.StatusOK))
@@ -124,7 +124,7 @@ func (r *Router) init() {
 	rates.GET("/users/:user_id/markup/history", formatDoc("get markup rate history", ""), tonic.Handler(r.getMarkupHistory, http.StatusOK))
 
 	rates.POST("/default/markup/:markup", formatDoc("set default markup rate", ""), tonic.Handler(r.setDefaultMarkupHandler, http.StatusCreated))
-	rates.GET("/default/markup/:markup", formatDoc("get default markup rate", ""), tonic.Handler(r.getDefaultMarkupHandler, http.StatusOK))
+	rates.GET("/default/markup", formatDoc("get default markup rate", ""), tonic.Handler(r.getDefaultMarkupHandler, http.StatusOK))
 	rates.GET("/default/markup/history", formatDoc("get default markup rate history", ""), tonic.Handler(r.getDefaultMarkupHistory, http.StatusOK))
 
 }
