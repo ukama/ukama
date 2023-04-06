@@ -22,6 +22,8 @@ import (
 	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
+var REDIRECT_URI = "http://localhost:4455/?redirect=localhost:8080/swagger/#/"
+
 const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
 
@@ -119,7 +121,7 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, REDIRECT_URI)
 	v1 := r.f.Group("/v1", "API gateway", "Registry system version v1")
 
 	// org routes
