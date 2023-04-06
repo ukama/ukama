@@ -7,6 +7,7 @@ import (
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	mocks "github.com/ukama/ukama/systems/data-plan/rate/mocks"
 	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/rate/pkg/db"
@@ -218,8 +219,8 @@ func TestRateService_GetRate(t *testing.T) {
 			Markup:  10,
 		}
 
-		rates := &pb.GetBaseRatesResponse{
-			Rates: []*pb.Rate{
+		rates := &bpb.GetBaseRatesResponse{
+			Rates: []*bpb.Rate{
 				{
 					X2G:         true,
 					X3G:         true,
@@ -239,7 +240,7 @@ func TestRateService_GetRate(t *testing.T) {
 		}
 
 		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
-		baseRate.On("GetBaseRates", &pb.GetBaseRatesRequest{
+		baseRate.On("GetBaseRates", &bpb.GetBaseRatesRequest{
 			Country:     req.Country,
 			Provider:    req.Provider,
 			To:          req.To,

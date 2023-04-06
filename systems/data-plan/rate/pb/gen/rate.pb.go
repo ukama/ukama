@@ -8,6 +8,7 @@ package gen
 
 import (
 	_ "github.com/mwitkow/go-proto-validators"
+	gen "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -813,7 +814,7 @@ type GetRatesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Rates []*Rate `protobuf:"bytes,1,rep,name=rates,proto3" json:"rates,omitempty"`
+	Rates []*gen.Rate `protobuf:"bytes,1,rep,name=rates,proto3" json:"rates,omitempty"`
 }
 
 func (x *GetRatesResponse) Reset() {
@@ -848,7 +849,7 @@ func (*GetRatesResponse) Descriptor() ([]byte, []int) {
 	return file_rate_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *GetRatesResponse) GetRates() []*Rate {
+func (x *GetRatesResponse) GetRates() []*gen.Rate {
 	if x != nil {
 		return x.Rates
 	}
@@ -955,7 +956,7 @@ type GetRateResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Rates []*Rate `protobuf:"bytes,1,rep,name=rates,proto3" json:"rates,omitempty"`
+	Rates []*gen.Rate `protobuf:"bytes,1,rep,name=rates,proto3" json:"rates,omitempty"`
 }
 
 func (x *GetRateResponse) Reset() {
@@ -990,7 +991,7 @@ func (*GetRateResponse) Descriptor() ([]byte, []int) {
 	return file_rate_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *GetRateResponse) GetRates() []*Rate {
+func (x *GetRateResponse) GetRates() []*gen.Rate {
 	if x != nil {
 		return x.Rates
 	}
@@ -1158,8 +1159,11 @@ var file_rate_proto_rawDesc = []byte{
 	0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x1a, 0x27, 0x2e, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2e, 0x64, 0x61, 0x74, 0x61, 0x70,
 	0x6c, 0x61, 0x6e, 0x2e, 0x72, 0x61, 0x74, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x52,
-	0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x08, 0x5a, 0x06, 0x70,
-	0x62, 0x2f, 0x67, 0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x36, 0x5a, 0x34, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f,
+	0x75, 0x6b, 0x61, 0x6d, 0x61, 0x2f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x64, 0x61,
+	0x74, 0x61, 0x2d, 0x70, 0x6c, 0x61, 0x6e, 0x2f, 0x72, 0x61, 0x74, 0x65, 0x2f, 0x70, 0x62, 0x2f,
+	0x67, 0x65, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1195,7 +1199,7 @@ var file_rate_proto_goTypes = []interface{}{
 	(*GetRatesResponse)(nil),                // 16: ukama.dataplan.rate.v1.GetRatesResponse
 	(*GetRateRequest)(nil),                  // 17: ukama.dataplan.rate.v1.GetRateRequest
 	(*GetRateResponse)(nil),                 // 18: ukama.dataplan.rate.v1.GetRateResponse
-	(*Rate)(nil),                            // 19: ukama.dataplan.baserate.v1.Rate
+	(*gen.Rate)(nil),                        // 19: ukama.dataplan.baserate.v1.Rate
 }
 var file_rate_proto_depIdxs = []int32{
 	0,  // 0: ukama.dataplan.rate.v1.GetDefaultMarkupHistoryResponse.markupRates:type_name -> ukama.dataplan.rate.v1.MarkupRates
@@ -1232,7 +1236,6 @@ func file_rate_proto_init() {
 	if File_rate_proto != nil {
 		return
 	}
-	file_baserate_proto_init()
 	if !protoimpl.UnsafeEnabled {
 		file_rate_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MarkupRates); i {

@@ -12,6 +12,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/rate/pkg"
 	"github.com/ukama/ukama/systems/data-plan/rate/pkg/client"
@@ -195,7 +196,7 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 		return nil, err
 	}
 
-	rates, err := r.baseRate.GetBaseRates(&pb.GetBaseRatesRequest{
+	rates, err := r.baseRate.GetBaseRates(&bpb.GetBaseRatesRequest{
 		Country:     req.Country,
 		Provider:    req.Provider,
 		To:          req.To,
@@ -258,15 +259,15 @@ func (r *RateServer) PublishDefaultMarkupEvents(markup float64, action string) {
 	}
 }
 
-func baseratesToMarkupRates(rates []*pb.Rate, markup float64) []*pb.Rate {
-	res := []*pb.Rate{}
+func baseratesToMarkupRates(rates []*bpb.Rate, markup float64) []*bpb.Rate {
+	res := []*bpb.Rate{}
 	for _, rate := range rates {
 		res = append(res, baseRateToMarkupRate(rate, markup))
 	}
 	return res
 }
 
-func baseRateToMarkupRate(r *pb.Rate, markup float64) *pb.Rate {
+func baseRateToMarkupRate(r *bpb.Rate, markup float64) *bpb.Rate {
 	mr := r
 	mr.Data = MarkupRate(r.Data, markup)
 	mr.SmsMo = MarkupRate(r.SmsMo, markup)

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -14,12 +14,12 @@ import (
 type BaseRate struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
-	client  pb.BaseRatesServiceClient
+	client  bpb.BaseRatesServiceClient
 }
 
 type BaseRateSrvc interface {
-	GetBaseRates(req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error)
-	GetBaseRate(id string) (*pb.GetBaseRateResponse, error)
+	GetBaseRates(req *bpb.GetBaseRatesRequest) (*bpb.GetBaseRatesResponse, error)
+	GetBaseRate(id string) (*bpb.GetBaseRateResponse, error)
 }
 
 func NewBaseRate(baseRate string, timeout time.Duration) (*BaseRate, error) {
@@ -31,7 +31,7 @@ func NewBaseRate(baseRate string, timeout time.Duration) (*BaseRate, error) {
 		logrus.Errorf("Failed to connect to base rate service at %s. Error %s", baseRate, err.Error())
 		return nil, err
 	}
-	client := pb.NewBaseRatesServiceClient(conn)
+	client := bpb.NewBaseRatesServiceClient(conn)
 
 	return &BaseRate{
 		conn:    conn,
@@ -44,14 +44,14 @@ func (c *BaseRate) Close() {
 	c.conn.Close()
 }
 
-func (c *BaseRate) GetBaseRates(req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
+func (c *BaseRate) GetBaseRates(req *bpb.GetBaseRatesRequest) (*bpb.GetBaseRatesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 	return c.client.GetBaseRates(ctx, req)
 }
 
-func (c *BaseRate) GetBaseRate(id string) (*pb.GetBaseRateResponse, error) {
+func (c *BaseRate) GetBaseRate(id string) (*bpb.GetBaseRateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
-	return c.client.GetBaseRate(ctx, &pb.GetBaseRateRequest{Uuid: id})
+	return c.client.GetBaseRate(ctx, &bpb.GetBaseRateRequest{Uuid: id})
 }

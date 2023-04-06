@@ -8,6 +8,7 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
+	_ "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
