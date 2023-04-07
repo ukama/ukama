@@ -11,8 +11,8 @@ import (
 
 type BaseRateRepo interface {
 	GetBaseRateById(uuid uuid.UUID) (*BaseRate, error)
-	GetBaseRatesHistoryByNetwork(country, network string) ([]BaseRate, error)
-	GetBaseRatesByNetwork(country, network string, effectiveAt time.Time, simType SimType) ([]BaseRate, error)
+	GetBaseRatesHistoryByCountry(country, network string) ([]BaseRate, error)
+	GetBaseRatesByCountry(country, network string, effectiveAt time.Time, simType SimType) ([]BaseRate, error)
 	GetBaseRatesForPeriod(country, network string, from, to time.Time, simType SimType) ([]BaseRate, error)
 	UploadBaseRates(rateList []BaseRate) error
 }
@@ -36,7 +36,7 @@ func (u *baseRateRepo) GetBaseRateById(uuid uuid.UUID) (*BaseRate, error) {
 	return rate, nil
 }
 
-func (b *baseRateRepo) GetBaseRatesHistoryByNetwork(country, network string) ([]BaseRate, error) {
+func (b *baseRateRepo) GetBaseRatesHistoryByCountry(country, network string) ([]BaseRate, error) {
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Unscoped().Where(&BaseRate{Country: country, Network: network}).Find(&rates)
 
@@ -47,7 +47,7 @@ func (b *baseRateRepo) GetBaseRatesHistoryByNetwork(country, network string) ([]
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetBaseRatesByNetwork(country, network string, effectiveAt time.Time, simType SimType) ([]BaseRate, error) {
+func (b *baseRateRepo) GetBaseRatesByCountry(country, network string, effectiveAt time.Time, simType SimType) ([]BaseRate, error) {
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Model(BaseRate{}).Where("country = ?", country).Where("network = ?", network).
 		Where("simType = ?", simType).Where("effective_at <= ?", time.Now()).Order("effective_at desc").Find(&rates).Limit(1)

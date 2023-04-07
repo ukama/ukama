@@ -54,14 +54,14 @@ func (b *BaseRateServer) GetBaseRateById(ctx context.Context, req *pb.GetBaseRat
 	return resp, nil
 }
 
-func (b *BaseRateServer) GetBaseRatesByNetwork(ctx context.Context, req *pb.GetBaseRatesByNetworkRequest) (*pb.GetBaseRatesResponse, error) {
+func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
 	ef, err := time.Parse(time.RFC3339, req.GetEffectiveAt())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid time format format for effective at "+err.Error())
 	}
 
-	rates, err := b.baseRateRepo.GetBaseRatesByNetwork(req.GetCountry(), req.GetNetwork(), ef, db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetNetwork(), ef, db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -74,10 +74,10 @@ func (b *BaseRateServer) GetBaseRatesByNetwork(ctx context.Context, req *pb.GetB
 	return rateList, nil
 }
 
-func (b *BaseRateServer) GetBaseRatesHistoryByNetwork(ctx context.Context, req *pb.GetBaseRatesByNetworkRequest) (*pb.GetBaseRatesResponse, error) {
+func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesHistoryByNetwork(req.GetCountry(), req.GetNetwork())
+	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetNetwork())
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())

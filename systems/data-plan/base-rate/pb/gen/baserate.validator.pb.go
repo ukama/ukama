@@ -27,7 +27,7 @@ func (this *GetBaseRatesResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetBaseRatesByNetworkRequest) Validate() error {
+func (this *GetBaseRatesByCountryRequest) Validate() error {
 	return nil
 }
 func (this *GetBaseRatesByPeriodRequest) Validate() error {

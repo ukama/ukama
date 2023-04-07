@@ -6,9 +6,9 @@ import "validator.proto";
 
 service BaseRatesService {
     rpc GetBaseRatesById (GetBaseRatesByIdRequest) returns (GetBaseRatesByIdResponse) {} /* List of base rates by id */
-    rpc GetBaseRatesByNetwork(GetBaseRatesByNetworkRequest) returns (GetBaseRatesResponse){} /* List of all latest base rates version by network till date */
+    rpc GetBaseRatesByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all latest base rates version by network till date */
     rpc GetBaseRatesForPeriod(GetBaseRatesByPeriodRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network in specified period */
-    rpc GetBaseRatesHistoryByNetwork(GetBaseRatesByNetworkRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network till date */
+    rpc GetBaseRatesHistoryByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network till date */
     rpc UploadBaseRates(UploadBaseRatesRequest)returns (UploadBaseRatesResponse){}
 }
 
@@ -16,7 +16,7 @@ message GetBaseRatesResponse {
     repeated Rate rates = 1;
 }
 
-message GetBaseRatesByNetworkRequest{
+message GetBaseRatesByCountryRequest{
     string country = 1;
     string network =2;
     string simType=5 [json_name = "sim_type"];
