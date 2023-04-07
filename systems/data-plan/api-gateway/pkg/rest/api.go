@@ -37,7 +37,7 @@ type GetBaseRatesByCountryRequest struct {
 
 type GetBaseRatesForPeriodRequest struct {
 	Country string `path:"country" binding:"required" validate:"required"`
-	Network string `json:"network"`
+	Network string `json:"network" binding:"required" validate:"required"`
 	To      string `json:"to" binding:"required" validate:"required"`
 	From    string `json:"from" binding:"required" validate:"required"`
 	SimType string `json:"sim_type" binding:"required" validate:"required"`
