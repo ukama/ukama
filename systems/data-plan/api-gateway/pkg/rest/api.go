@@ -44,7 +44,7 @@ type GetBaseRatesForPeriodRequest struct {
 }
 
 type GetBaseRateRequest struct {
-	RateId string `path:"base_rate_id" validate:"required"`
+	RateId string `path:"base_rate" validate:"required"`
 }
 
 type GetPackageByOrgRequest struct {
