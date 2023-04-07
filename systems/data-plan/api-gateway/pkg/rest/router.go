@@ -50,7 +50,7 @@ type rates interface {
 }
 
 type baserate interface {
-	GetBaseRateById(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
+	GetBaseRatesById(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
 	GetBaseRatesByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesHistoryByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesForPeriod(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
@@ -156,7 +156,7 @@ func (r *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest)
 }
 
 func (r *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*bpb.GetBaseRatesByIdResponse, error) {
-	resp, err := r.clients.b.GetBaseRateById(&bpb.GetBaseRatesByIdRequest{
+	resp, err := r.clients.b.GetBaseRatesById(&bpb.GetBaseRatesByIdRequest{
 		Uuid: req.RateId,
 	})
 

@@ -36,7 +36,7 @@ func NewBaseRateServer(baseRateRepo db.BaseRateRepo, msgBus mb.MsgBusServiceClie
 	}
 }
 
-func (b *BaseRateServer) GetBaseRateById(ctx context.Context, req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
+func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
 	uuid, err := uuid.FromString(req.GetUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
@@ -56,12 +56,8 @@ func (b *BaseRateServer) GetBaseRateById(ctx context.Context, req *pb.GetBaseRat
 
 func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
-	ef, err := time.Parse(time.RFC3339, req.GetEffectiveAt())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid time format format for effective at "+err.Error())
-	}
 
-	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetNetwork(), ef, db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetNetwork(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -157,7 +153,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	err = b.baseRateRepo.UploadBaseRates(rates)
 
 	if err != nil {
-		logrus.Error("error inserting rates" + err.Error())
+		logrus.Error("error inserting rates " + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
@@ -183,6 +179,12 @@ func dbratesToPbRates(rates []db.BaseRate) []*pb.Rate {
 }
 
 func dbRatesToPbRates(r *db.BaseRate) *pb.Rate {
+	var del string
+
+	if r.DeletedAt.Valid {
+		del = r.DeletedAt.Time.Format(time.RFC3339)
+	}
+
 	return &pb.Rate{
 		Uuid:        r.Uuid.String(),
 		X2G:         r.X2g,
@@ -202,6 +204,6 @@ func dbRatesToPbRates(r *db.BaseRate) *pb.Rate {
 		EffectiveAt: r.EffectiveAt.Format(time.RFC3339),
 		CreatedAt:   r.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   r.UpdatedAt.Format(time.RFC3339),
-		DeletedAt:   r.DeletedAt.Time.Format(time.RFC3339),
+		DeletedAt:   del,
 	}
 }

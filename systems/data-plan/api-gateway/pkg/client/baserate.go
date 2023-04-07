@@ -49,7 +49,7 @@ func (b *BaseRateClient) Close() {
 	b.conn.Close()
 }
 
-func (b *BaseRateClient) GetBaseRateById(req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
+func (b *BaseRateClient) GetBaseRatesById(req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
 	defer cancel()
 

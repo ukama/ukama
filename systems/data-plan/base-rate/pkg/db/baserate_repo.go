@@ -3,6 +3,7 @@ package db
 import (
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 
@@ -12,7 +13,7 @@ import (
 type BaseRateRepo interface {
 	GetBaseRateById(uuid uuid.UUID) (*BaseRate, error)
 	GetBaseRatesHistoryByCountry(country, network string, sType SimType) ([]BaseRate, error)
-	GetBaseRatesByCountry(country, network string, effectiveAt time.Time, simType SimType) ([]BaseRate, error)
+	GetBaseRatesByCountry(country, network string, simType SimType) ([]BaseRate, error)
 	GetBaseRatesForPeriod(country, network string, from, to time.Time, simType SimType) ([]BaseRate, error)
 	UploadBaseRates(rateList []BaseRate) error
 }
@@ -29,7 +30,7 @@ func NewBaseRateRepo(db sql.Db) *baseRateRepo {
 
 func (u *baseRateRepo) GetBaseRateById(uuid uuid.UUID) (*BaseRate, error) {
 	rate := &BaseRate{}
-	result := u.Db.GetGormDb().First(rate, "Uuid=?", uuid)
+	result := u.Db.GetGormDb().First(rate, "uuid=?", uuid)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -47,10 +48,10 @@ func (b *baseRateRepo) GetBaseRatesHistoryByCountry(country, network string, sTy
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetBaseRatesByCountry(country, network string, effectiveAt time.Time, simType SimType) ([]BaseRate, error) {
+func (b *baseRateRepo) GetBaseRatesByCountry(country, network string, simType SimType) ([]BaseRate, error) {
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Model(BaseRate{}).Where("country = ?", country).Where("network = ?", network).
-		Where("simType = ?", simType).Where("effective_at <= ?", time.Now()).Order("effective_at desc").Find(&rates).Limit(1)
+		Where("sim_type = ?", simType).Where("effective_at <= ?", time.Now()).Order("effective_at desc").Limit(1).Find(&rates)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -62,7 +63,7 @@ func (b *baseRateRepo) GetBaseRatesByCountry(country, network string, effectiveA
 func (b *baseRateRepo) GetBaseRatesForPeriod(country, network string, from, to time.Time, simType SimType) ([]BaseRate, error) {
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Model(BaseRate{}).Unscoped().Where("country = ?", country).Where("network = ?", network).
-		Where("simType = ?", simType).Where("effective_at >= ?", from).Where("effective_at <= ?", to).Find(&rates)
+		Where("sim_type = ?", simType).Where("effective_at >= ?", from).Where("effective_at <= ?", to).Find(&rates)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -81,15 +82,18 @@ func (b *baseRateRepo) UploadBaseRates(rateList []BaseRate) error {
 				EffectiveAt: r.EffectiveAt,
 				SimType:     r.SimType,
 			}
-			result := tx.Model(BaseRate{}).Delete(o)
+			result := tx.Model(BaseRate{}).Where("country = ?", r.Country).Where("network = ?", r.Network).
+				Where("sim_type = ?", r.SimType).Where("effective_at = ?", r.EffectiveAt).Delete(o)
 			if result.Error != nil {
 				if !sql.IsNotFoundError(result.Error) {
+					log.Errorf("Error deleting rate %+v . Error %s", o, result.Error.Error())
 					return result.Error
 				}
 			}
 
-			result = tx.Model(BaseRate{}).Create(r)
+			result = tx.Model(BaseRate{}).Create(&r)
 			if result.Error != nil {
+				log.Errorf("Error creating rate %+v . Error %s", r, result.Error.Error())
 				return result.Error
 			}
 		}
