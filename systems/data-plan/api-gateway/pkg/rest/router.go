@@ -103,10 +103,10 @@ func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
 	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
 
-	baseRates := v1.Group("/baseRates", "BaseRates", "BaseRates operations")
-	baseRates.POST("", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
+	baseRates := v1.Group("/baserates", "BaseRates", "BaseRates operations")
+	baseRates.POST("/upload", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
 	baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
-	baseRates.GET("", formatDoc("Get BaseRates by country", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
+	baseRates.POST("", formatDoc("Get BaseRates by country", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
 
 	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
