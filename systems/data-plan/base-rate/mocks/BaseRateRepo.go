@@ -6,6 +6,8 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 
+	time "time"
+
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -14,8 +16,8 @@ type BaseRateRepo struct {
 	mock.Mock
 }
 
-// GetBaseRate provides a mock function with given fields: _a0
-func (_m *BaseRateRepo) GetBaseRate(_a0 uuid.UUID) (*db.BaseRate, error) {
+// GetBaseRateById provides a mock function with given fields: _a0
+func (_m *BaseRateRepo) GetBaseRateById(_a0 uuid.UUID) (*db.BaseRate, error) {
 	ret := _m.Called(_a0)
 
 	var r0 *db.BaseRate
@@ -37,12 +39,12 @@ func (_m *BaseRateRepo) GetBaseRate(_a0 uuid.UUID) (*db.BaseRate, error) {
 	return r0, r1
 }
 
-// GetBaseRates provides a mock function with given fields: country, network, effectiveAt, simType
-func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt string, simType db.SimType) ([]db.BaseRate, error) {
+// GetBaseRatesByNetwork provides a mock function with given fields: country, network, effectiveAt, simType
+func (_m *BaseRateRepo) GetBaseRatesByNetwork(country string, network string, effectiveAt time.Time, simType db.SimType) ([]db.BaseRate, error) {
 	ret := _m.Called(country, network, effectiveAt, simType)
 
 	var r0 []db.BaseRate
-	if rf, ok := ret.Get(0).(func(string, string, string, db.SimType) []db.BaseRate); ok {
+	if rf, ok := ret.Get(0).(func(string, string, time.Time, db.SimType) []db.BaseRate); ok {
 		r0 = rf(country, network, effectiveAt, simType)
 	} else {
 		if ret.Get(0) != nil {
@@ -51,8 +53,54 @@ func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string, db.SimType) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, time.Time, db.SimType) error); ok {
 		r1 = rf(country, network, effectiveAt, simType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBaseRatesForPeriod provides a mock function with given fields: country, network, from, to, simType
+func (_m *BaseRateRepo) GetBaseRatesForPeriod(country string, network string, from time.Time, to time.Time, simType db.SimType) ([]db.BaseRate, error) {
+	ret := _m.Called(country, network, from, to, simType)
+
+	var r0 []db.BaseRate
+	if rf, ok := ret.Get(0).(func(string, string, time.Time, time.Time, db.SimType) []db.BaseRate); ok {
+		r0 = rf(country, network, from, to, simType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.BaseRate)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string, time.Time, time.Time, db.SimType) error); ok {
+		r1 = rf(country, network, from, to, simType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBaseRatesHistoryByNetwork provides a mock function with given fields: country, network
+func (_m *BaseRateRepo) GetBaseRatesHistoryByNetwork(country string, network string) ([]db.BaseRate, error) {
+	ret := _m.Called(country, network)
+
+	var r0 []db.BaseRate
+	if rf, ok := ret.Get(0).(func(string, string) []db.BaseRate); ok {
+		r0 = rf(country, network)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.BaseRate)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(country, network)
 	} else {
 		r1 = ret.Error(1)
 	}

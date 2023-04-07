@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql/driver"
 	"strconv"
+	"time"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
@@ -10,9 +11,9 @@ import (
 
 type BaseRate struct {
 	gorm.Model
-	Uuid        uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
-	Country     string
-	Network     string
+	Uuid        uuid.UUID `gorm:"uniqueIndex:uuid_idx,where:deleted_at is null;not null;type:uuid"`
+	Country     string    `gorm:"uniqueIndex:baserate_idx,priority:4,where:deleted_at is null;not null;type:string"`
+	Network     string    `gorm:"uniqueIndex:baserate_idx,priority:1,where:deleted_at is null;not null;type:string"`
 	Vpmn        string
 	Imsi        int64
 	SmsMo       float64 `gorm:"type:float"`
@@ -24,10 +25,10 @@ type BaseRate struct {
 	Lte         bool    `gorm:"type:bool; default:false"`
 	LteM        bool    `gorm:"type:bool; default:false"`
 	Apn         string
-	EffectiveAt string
-	EndAt       string
-	SimType     SimType
-	Currency    string `gorm:"not null; default:Dollar"`
+	EffectiveAt time.Time `gorm:"uniqueIndex:baserate_idx,priority:2,where:deleted_at is null;not null"`
+	EndAt       time.Time
+	SimType     SimType `gorm:"uniqueIndex:baserate_idx,priority:3,where:deleted_at is null;not null"`
+	Currency    string  `gorm:"not null; default:Dollar"`
 }
 
 type SimType uint8
