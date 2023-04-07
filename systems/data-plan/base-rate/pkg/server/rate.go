@@ -77,7 +77,7 @@ func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetB
 func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
 	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetNetwork())
+	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetNetwork(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
