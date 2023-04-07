@@ -187,6 +187,7 @@ func (r *RateServer) GetMarkupHistory(ctx context.Context, req *pb.GetMarkupHist
 	}
 
 	resp := &pb.GetMarkupHistoryResponse{
+		OwnerId:     req.OwnerId,
 		MarkupRates: markupToPbMarkupRates(markup),
 	}
 
