@@ -1,4 +1,4 @@
-FROM surnet/alpine-wkhtmltopdf:3.16.2
+FROM alpine:3.13.5
 
 COPY bin/invoice /usr/bin/invoice
 

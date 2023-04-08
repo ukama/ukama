@@ -135,3 +135,67 @@ func (this *Invoice) Validate() error {
 	}
 	return nil
 }
+func (this *RawInvoice) Validate() error {
+	if this.Customer != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Customer); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Customer", err)
+		}
+	}
+	for _, item := range this.Subscriptions {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Subscriptions", err)
+			}
+		}
+	}
+	for _, item := range this.Fees {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Fees", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *Subscription) Validate() error {
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
+	}
+	if this.StartedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("StartedAt", err)
+		}
+	}
+	if this.CanceldAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CanceldAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CanceldAt", err)
+		}
+	}
+	if this.TerminatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TerminatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TerminatedAt", err)
+		}
+	}
+	return nil
+}
+func (this *Customer) Validate() error {
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
+	}
+	return nil
+}
+func (this *Fee) Validate() error {
+	if this.Item != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Item); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Item", err)
+		}
+	}
+	return nil
+}
+func (this *FeeItem) Validate() error {
+	return nil
+}
