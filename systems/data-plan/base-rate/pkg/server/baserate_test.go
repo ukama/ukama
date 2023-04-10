@@ -15,13 +15,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestRateService_UploadRates_Success(t *testing.T) {
+func TestBaseRateService_UploadRates_Success(t *testing.T) {
 	mockRepo := &mocks.BaseRateRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 
 	rateService := NewBaseRateServer(mockRepo, msgbusClient)
 	var mockSimTypeStr = string("ukama_data")
-	var mockEffectiveAt = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC1123)
+	var mockEffectiveAt = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
 	var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
 	reqMock := &pb.UploadBaseRatesRequest{
@@ -41,7 +41,7 @@ func TestRateService_UploadRates_Success(t *testing.T) {
 	}
 }
 
-func TestRateService_GetRate_Success(t *testing.T) {
+func TestBaseRateService_GetBaseRatesById(t *testing.T) {
 
 	baseRateRepo := &mocks.BaseRateRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
@@ -49,21 +49,22 @@ func TestRateService_GetRate_Success(t *testing.T) {
 	rateID := uuid.NewV4()
 	s := NewBaseRateServer(baseRateRepo, msgbusClient)
 
-	baseRateRepo.On("GetBaseRate", rateID).Return(&db.Rate{
+	baseRateRepo.On("GetBaseRate", rateID).Return(&db.BaseRate{
 		Country: mockCountry,
 	}, nil)
-	rate, err := s.GetBaseRate(context.TODO(), &pb.GetBaseRateRequest{Uuid: rateID.String()})
+	rate, err := s.GetBaseRatesById(context.TODO(), &pb.GetBaseRatesByIdRequest{Uuid: rateID.String()})
 	assert.NoError(t, err)
 	assert.Equal(t, mockCountry, rate.Rate.Country)
 	baseRateRepo.AssertExpectations(t)
 
 }
-func TestRateService_GetRates_Success(t *testing.T) {
+
+func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-	mockFilters := &pb.GetBaseRatesRequest{
+	mockFilters := &pb.GetBaseRatesByCountryRequest{
 		Country:     "Tycho crater",
-		Provider:    "ABC Tel",
+		Network:     "ABC Tel",
 		EffectiveAt: "2022-12-01T00:00:00Z",
 		SimType:     "ukama_data",
 	}
@@ -71,14 +72,14 @@ func TestRateService_GetRates_Success(t *testing.T) {
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo, msgbusClient)
 
-	baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, mockFilters.EffectiveAt, db.ParseType("ukama_data")).Return([]db.Rate{
+	baseRateRepo.On("GetBaseRatesByCountryRequest", mockFilters.Country, mockFilters.Network, mockFilters.EffectiveAt, db.ParseType("ukama_data")).Return([]db.BaseRate{
 		{
 			X2g:         true,
 			X3g:         true,
 			Apn:         "Manual entry required",
 			Country:     "Tycho crater",
 			Data:        0.4,
-			EffectiveAt: "2023-10-10",
+			EffectiveAt: time.Now(),
 			Imsi:        1,
 			Lte:         true,
 			Network:     "Multi Tel",
@@ -87,7 +88,43 @@ func TestRateService_GetRates_Success(t *testing.T) {
 			SmsMt:       0.1,
 			Vpmn:        "TTC"},
 	}, nil)
-	rate, err := s.GetBaseRates(context.TODO(), mockFilters)
+	rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
+	assert.NoError(t, err)
+	assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
+	assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)
+	baseRateRepo.AssertExpectations(t)
+}
+
+func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	mockFilters := &pb.GetBaseRatesByCountryRequest{
+		Country:     "Tycho crater",
+		Network:     "ABC Tel",
+		EffectiveAt: "2022-12-01T00:00:00Z",
+		SimType:     "ukama_data",
+	}
+
+	baseRateRepo := &mocks.BaseRateRepo{}
+	s := NewBaseRateServer(baseRateRepo, msgbusClient)
+
+	baseRateRepo.On("GetBaseRatesByCountryRequest", mockFilters.Country, mockFilters.Network, mockFilters.EffectiveAt, db.ParseType("ukama_data")).Return([]db.BaseRate{
+		{
+			X2g:         true,
+			X3g:         true,
+			Apn:         "Manual entry required",
+			Country:     "Tycho crater",
+			Data:        0.4,
+			EffectiveAt: time.Now(),
+			Imsi:        1,
+			Lte:         true,
+			Network:     "Multi Tel",
+			SimType:     db.SimTypeUkamaData,
+			SmsMo:       0.1,
+			SmsMt:       0.1,
+			Vpmn:        "TTC"},
+	}, nil)
+	rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
 	assert.NoError(t, err)
 	assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
 	assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)

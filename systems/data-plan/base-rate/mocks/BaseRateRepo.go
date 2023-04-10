@@ -39,13 +39,13 @@ func (_m *BaseRateRepo) GetBaseRateById(_a0 uuid.UUID) (*db.BaseRate, error) {
 	return r0, r1
 }
 
-// GetBaseRatesByNetwork provides a mock function with given fields: country, network, effectiveAt, simType
-func (_m *BaseRateRepo) GetBaseRatesByNetwork(country string, network string, effectiveAt time.Time, simType db.SimType) ([]db.BaseRate, error) {
-	ret := _m.Called(country, network, effectiveAt, simType)
+// GetBaseRatesByCountry provides a mock function with given fields: country, network, simType
+func (_m *BaseRateRepo) GetBaseRatesByCountry(country string, network string, simType db.SimType) ([]db.BaseRate, error) {
+	ret := _m.Called(country, network, simType)
 
 	var r0 []db.BaseRate
-	if rf, ok := ret.Get(0).(func(string, string, time.Time, db.SimType) []db.BaseRate); ok {
-		r0 = rf(country, network, effectiveAt, simType)
+	if rf, ok := ret.Get(0).(func(string, string, db.SimType) []db.BaseRate); ok {
+		r0 = rf(country, network, simType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.BaseRate)
@@ -53,8 +53,8 @@ func (_m *BaseRateRepo) GetBaseRatesByNetwork(country string, network string, ef
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, time.Time, db.SimType) error); ok {
-		r1 = rf(country, network, effectiveAt, simType)
+	if rf, ok := ret.Get(1).(func(string, string, db.SimType) error); ok {
+		r1 = rf(country, network, simType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -85,13 +85,13 @@ func (_m *BaseRateRepo) GetBaseRatesForPeriod(country string, network string, fr
 	return r0, r1
 }
 
-// GetBaseRatesHistoryByNetwork provides a mock function with given fields: country, network
-func (_m *BaseRateRepo) GetBaseRatesHistoryByNetwork(country string, network string) ([]db.BaseRate, error) {
-	ret := _m.Called(country, network)
+// GetBaseRatesHistoryByCountry provides a mock function with given fields: country, network, sType
+func (_m *BaseRateRepo) GetBaseRatesHistoryByCountry(country string, network string, sType db.SimType) ([]db.BaseRate, error) {
+	ret := _m.Called(country, network, sType)
 
 	var r0 []db.BaseRate
-	if rf, ok := ret.Get(0).(func(string, string) []db.BaseRate); ok {
-		r0 = rf(country, network)
+	if rf, ok := ret.Get(0).(func(string, string, db.SimType) []db.BaseRate); ok {
+		r0 = rf(country, network, sType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.BaseRate)
@@ -99,8 +99,8 @@ func (_m *BaseRateRepo) GetBaseRatesHistoryByNetwork(country string, network str
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(country, network)
+	if rf, ok := ret.Get(1).(func(string, string, db.SimType) error); ok {
+		r1 = rf(country, network, sType)
 	} else {
 		r1 = ret.Error(1)
 	}
