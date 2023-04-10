@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -35,27 +36,70 @@ func NewBaseRateServer(baseRateRepo db.BaseRateRepo, msgBus mb.MsgBusServiceClie
 	}
 }
 
-func (b *BaseRateServer) GetBaseRate(ctx context.Context, req *pb.GetBaseRateRequest) (*pb.GetBaseRateResponse, error) {
+func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {
 	uuid, err := uuid.FromString(req.GetUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
-	rate, err := b.baseRateRepo.GetBaseRate(uuid)
+	rate, err := b.baseRateRepo.GetBaseRateById(uuid)
 
 	if err != nil {
 		logrus.Error("error while getting rate" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
-	resp := &pb.GetBaseRateResponse{
+	resp := &pb.GetBaseRatesByIdResponse{
 		Rate: dbRatesToPbRates(rate),
 	}
 
 	return resp, nil
 }
 
-func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country =  %s and network =%s and simType =%s", req.GetCountry(), req.GetProvider(), req.GetSimType())
-	rates, err := b.baseRateRepo.GetBaseRates(req.GetCountry(), req.GetProvider(), req.GetEffectiveAt(), db.ParseType(req.GetSimType()))
+func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
+
+	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetNetwork(), db.ParseType(req.GetSimType()))
+
+	if err != nil {
+		logrus.Errorf("error while getting rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "rates")
+	}
+	rateList := &pb.GetBaseRatesResponse{
+		Rates: dbratesToPbRates(rates),
+	}
+
+	return rateList, nil
+}
+
+func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
+
+	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetNetwork(), db.ParseType(req.GetSimType()))
+
+	if err != nil {
+		logrus.Errorf("error while getting rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "rates")
+	}
+	rateList := &pb.GetBaseRatesResponse{
+		Rates: dbratesToPbRates(rates),
+	}
+
+	return rateList, nil
+}
+
+func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetBaseRatesByPeriodRequest) (*pb.GetBaseRatesResponse, error) {
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetNetwork(), req.GetSimType(), req.From, req.To)
+
+	from, err := time.Parse(time.RFC3339, req.GetFrom())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for from "+err.Error())
+	}
+
+	to, err := time.Parse(time.RFC3339, req.GetTo())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to "+err.Error())
+	}
+
+	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetNetwork(), from, to, db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -109,7 +153,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	err = b.baseRateRepo.UploadBaseRates(rates)
 
 	if err != nil {
-		logrus.Error("error inserting rates" + err.Error())
+		logrus.Error("error inserting rates " + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rate")
 	}
 
@@ -135,6 +179,12 @@ func dbratesToPbRates(rates []db.BaseRate) []*pb.Rate {
 }
 
 func dbRatesToPbRates(r *db.BaseRate) *pb.Rate {
+	var del string
+
+	if r.DeletedAt.Valid {
+		del = r.DeletedAt.Time.Format(time.RFC3339)
+	}
+
 	return &pb.Rate{
 		Uuid:        r.Uuid.String(),
 		X2G:         r.X2g,
@@ -148,13 +198,12 @@ func dbRatesToPbRates(r *db.BaseRate) *pb.Rate {
 		LteM:        r.LteM,
 		SmsMo:       r.SmsMo,
 		SmsMt:       r.SmsMt,
-		EndAt:       r.EndAt,
 		Network:     r.Network,
 		Country:     r.Country,
 		SimType:     r.SimType.String(),
-		EffectiveAt: r.EffectiveAt,
-		CreatedAt:   r.CreatedAt.String(),
-		UpdatedAt:   r.UpdatedAt.String(),
-		DeletedAt:   r.DeletedAt.Time.String(),
+		EffectiveAt: r.EffectiveAt.Format(time.RFC3339),
+		CreatedAt:   r.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   r.UpdatedAt.Format(time.RFC3339),
+		DeletedAt:   del,
 	}
 }

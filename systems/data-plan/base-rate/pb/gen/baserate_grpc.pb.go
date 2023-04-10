@@ -22,8 +22,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BaseRatesServiceClient interface {
-	GetBaseRates(ctx context.Context, in *GetBaseRatesRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error)
-	GetBaseRate(ctx context.Context, in *GetBaseRateRequest, opts ...grpc.CallOption) (*GetBaseRateResponse, error)
+	GetBaseRatesById(ctx context.Context, in *GetBaseRatesByIdRequest, opts ...grpc.CallOption) (*GetBaseRatesByIdResponse, error)
+	GetBaseRatesByCountry(ctx context.Context, in *GetBaseRatesByCountryRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error)
+	GetBaseRatesForPeriod(ctx context.Context, in *GetBaseRatesByPeriodRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error)
+	GetBaseRatesHistoryByCountry(ctx context.Context, in *GetBaseRatesByCountryRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error)
 	UploadBaseRates(ctx context.Context, in *UploadBaseRatesRequest, opts ...grpc.CallOption) (*UploadBaseRatesResponse, error)
 }
 
@@ -35,18 +37,36 @@ func NewBaseRatesServiceClient(cc grpc.ClientConnInterface) BaseRatesServiceClie
 	return &baseRatesServiceClient{cc}
 }
 
-func (c *baseRatesServiceClient) GetBaseRates(ctx context.Context, in *GetBaseRatesRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error) {
-	out := new(GetBaseRatesResponse)
-	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRates", in, out, opts...)
+func (c *baseRatesServiceClient) GetBaseRatesById(ctx context.Context, in *GetBaseRatesByIdRequest, opts ...grpc.CallOption) (*GetBaseRatesByIdResponse, error) {
+	out := new(GetBaseRatesByIdResponse)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRatesById", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *baseRatesServiceClient) GetBaseRate(ctx context.Context, in *GetBaseRateRequest, opts ...grpc.CallOption) (*GetBaseRateResponse, error) {
-	out := new(GetBaseRateResponse)
-	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRate", in, out, opts...)
+func (c *baseRatesServiceClient) GetBaseRatesByCountry(ctx context.Context, in *GetBaseRatesByCountryRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error) {
+	out := new(GetBaseRatesResponse)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRatesByCountry", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *baseRatesServiceClient) GetBaseRatesForPeriod(ctx context.Context, in *GetBaseRatesByPeriodRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error) {
+	out := new(GetBaseRatesResponse)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRatesForPeriod", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *baseRatesServiceClient) GetBaseRatesHistoryByCountry(ctx context.Context, in *GetBaseRatesByCountryRequest, opts ...grpc.CallOption) (*GetBaseRatesResponse, error) {
+	out := new(GetBaseRatesResponse)
+	err := c.cc.Invoke(ctx, "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRatesHistoryByCountry", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +86,10 @@ func (c *baseRatesServiceClient) UploadBaseRates(ctx context.Context, in *Upload
 // All implementations must embed UnimplementedBaseRatesServiceServer
 // for forward compatibility
 type BaseRatesServiceServer interface {
-	GetBaseRates(context.Context, *GetBaseRatesRequest) (*GetBaseRatesResponse, error)
-	GetBaseRate(context.Context, *GetBaseRateRequest) (*GetBaseRateResponse, error)
+	GetBaseRatesById(context.Context, *GetBaseRatesByIdRequest) (*GetBaseRatesByIdResponse, error)
+	GetBaseRatesByCountry(context.Context, *GetBaseRatesByCountryRequest) (*GetBaseRatesResponse, error)
+	GetBaseRatesForPeriod(context.Context, *GetBaseRatesByPeriodRequest) (*GetBaseRatesResponse, error)
+	GetBaseRatesHistoryByCountry(context.Context, *GetBaseRatesByCountryRequest) (*GetBaseRatesResponse, error)
 	UploadBaseRates(context.Context, *UploadBaseRatesRequest) (*UploadBaseRatesResponse, error)
 	mustEmbedUnimplementedBaseRatesServiceServer()
 }
@@ -76,11 +98,17 @@ type BaseRatesServiceServer interface {
 type UnimplementedBaseRatesServiceServer struct {
 }
 
-func (UnimplementedBaseRatesServiceServer) GetBaseRates(context.Context, *GetBaseRatesRequest) (*GetBaseRatesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBaseRates not implemented")
+func (UnimplementedBaseRatesServiceServer) GetBaseRatesById(context.Context, *GetBaseRatesByIdRequest) (*GetBaseRatesByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBaseRatesById not implemented")
 }
-func (UnimplementedBaseRatesServiceServer) GetBaseRate(context.Context, *GetBaseRateRequest) (*GetBaseRateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBaseRate not implemented")
+func (UnimplementedBaseRatesServiceServer) GetBaseRatesByCountry(context.Context, *GetBaseRatesByCountryRequest) (*GetBaseRatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBaseRatesByCountry not implemented")
+}
+func (UnimplementedBaseRatesServiceServer) GetBaseRatesForPeriod(context.Context, *GetBaseRatesByPeriodRequest) (*GetBaseRatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBaseRatesForPeriod not implemented")
+}
+func (UnimplementedBaseRatesServiceServer) GetBaseRatesHistoryByCountry(context.Context, *GetBaseRatesByCountryRequest) (*GetBaseRatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBaseRatesHistoryByCountry not implemented")
 }
 func (UnimplementedBaseRatesServiceServer) UploadBaseRates(context.Context, *UploadBaseRatesRequest) (*UploadBaseRatesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadBaseRates not implemented")
@@ -98,38 +126,74 @@ func RegisterBaseRatesServiceServer(s grpc.ServiceRegistrar, srv BaseRatesServic
 	s.RegisterService(&BaseRatesService_ServiceDesc, srv)
 }
 
-func _BaseRatesService_GetBaseRates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBaseRatesRequest)
+func _BaseRatesService_GetBaseRatesById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBaseRatesByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BaseRatesServiceServer).GetBaseRates(ctx, in)
+		return srv.(BaseRatesServiceServer).GetBaseRatesById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRates",
+		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRatesById",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BaseRatesServiceServer).GetBaseRates(ctx, req.(*GetBaseRatesRequest))
+		return srv.(BaseRatesServiceServer).GetBaseRatesById(ctx, req.(*GetBaseRatesByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BaseRatesService_GetBaseRate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBaseRateRequest)
+func _BaseRatesService_GetBaseRatesByCountry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBaseRatesByCountryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BaseRatesServiceServer).GetBaseRate(ctx, in)
+		return srv.(BaseRatesServiceServer).GetBaseRatesByCountry(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRate",
+		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRatesByCountry",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BaseRatesServiceServer).GetBaseRate(ctx, req.(*GetBaseRateRequest))
+		return srv.(BaseRatesServiceServer).GetBaseRatesByCountry(ctx, req.(*GetBaseRatesByCountryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BaseRatesService_GetBaseRatesForPeriod_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBaseRatesByPeriodRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BaseRatesServiceServer).GetBaseRatesForPeriod(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRatesForPeriod",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BaseRatesServiceServer).GetBaseRatesForPeriod(ctx, req.(*GetBaseRatesByPeriodRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BaseRatesService_GetBaseRatesHistoryByCountry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBaseRatesByCountryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BaseRatesServiceServer).GetBaseRatesHistoryByCountry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.dataplan.baserate.v1.BaseRatesService/GetBaseRatesHistoryByCountry",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BaseRatesServiceServer).GetBaseRatesHistoryByCountry(ctx, req.(*GetBaseRatesByCountryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -160,12 +224,20 @@ var BaseRatesService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BaseRatesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetBaseRates",
-			Handler:    _BaseRatesService_GetBaseRates_Handler,
+			MethodName: "GetBaseRatesById",
+			Handler:    _BaseRatesService_GetBaseRatesById_Handler,
 		},
 		{
-			MethodName: "GetBaseRate",
-			Handler:    _BaseRatesService_GetBaseRate_Handler,
+			MethodName: "GetBaseRatesByCountry",
+			Handler:    _BaseRatesService_GetBaseRatesByCountry_Handler,
+		},
+		{
+			MethodName: "GetBaseRatesForPeriod",
+			Handler:    _BaseRatesService_GetBaseRatesForPeriod_Handler,
+		},
+		{
+			MethodName: "GetBaseRatesHistoryByCountry",
+			Handler:    _BaseRatesService_GetBaseRatesHistoryByCountry_Handler,
 		},
 		{
 			MethodName: "UploadBaseRates",

@@ -5,27 +5,41 @@ package ukama.dataplan.baserate.v1;
 import "validator.proto";
 
 service BaseRatesService {
-    rpc GetBaseRates (GetBaseRatesRequest) returns (GetBaseRatesResponse) {}
-    rpc GetBaseRate(GetBaseRateRequest) returns (GetBaseRateResponse){}
-    rpc UploadBaseRates(UploadBaseRatesRequest) returns (UploadBaseRatesResponse){}
+    rpc GetBaseRatesById (GetBaseRatesByIdRequest) returns (GetBaseRatesByIdResponse) {} /* List of base rates by id */
+    rpc GetBaseRatesByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all latest base rates version by network till date */
+    rpc GetBaseRatesForPeriod(GetBaseRatesByPeriodRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network in specified period */
+    rpc GetBaseRatesHistoryByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network till date */
+    rpc UploadBaseRates(UploadBaseRatesRequest)returns (UploadBaseRatesResponse){}
 }
-message GetBaseRatesRequest{
-    string country = 1;
-    string provider =2;
-    uint64 to  =3;
-    uint64 from  =4;
-    string simType=5 [json_name = "sim_type"];
-    string effectiveAt = 6 [json_name = "effective_at"];
-}
+
 message GetBaseRatesResponse {
     repeated Rate rates = 1;
 }
-message GetBaseRateResponse{
+
+message GetBaseRatesByCountryRequest{
+    string country = 1;
+    string network =2;
+    string simType=5 [json_name = "sim_type"];
+    string effectiveAt = 6 [json_name = "effective_at"];
+}
+
+message GetBaseRatesByPeriodRequest{
+    string country = 1;
+    string network = 2;
+    string From = 3 [json_name = "from"];
+    string To =4  [json_name = "to"];
+    string simType=5 [json_name = "sim_type"];
+}
+
+
+message GetBaseRatesByIdResponse{
     Rate rate =1;
 }
-message GetBaseRateRequest{
+
+message GetBaseRatesByIdRequest{
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
+
 message UploadBaseRatesRequest {
     string fileURL = 1 [json_name = "file_url"];
     string effectiveAt = 2 [json_name = "effective_at"];

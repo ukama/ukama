@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -81,6 +82,11 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.BaseRat
 			return nil, fmt.Errorf("failed parsing Data rate." + err.Error())
 		}
 
+		bg, err := time.Parse(time.RFC3339, effective_at)
+		if err != nil {
+			return nil, fmt.Errorf("invalid time format for effective at " + err.Error())
+		}
+
 		rates = append(rates, db.BaseRate{
 			Uuid:        uuid.NewV4(),
 			Country:     value.Country,
@@ -96,8 +102,7 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.BaseRat
 			Lte:         ParseToBoolean(value.Lte, "LTE"),
 			LteM:        ParseToBoolean(value.Lte_m, "LTE-M"),
 			Apn:         value.Apn,
-			EffectiveAt: effective_at,
-			EndAt:       "",
+			EffectiveAt: bg,
 			SimType:     db.ParseType(sim_type),
 		})
 	}

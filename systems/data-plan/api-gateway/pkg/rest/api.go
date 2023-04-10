@@ -29,17 +29,24 @@ type PackagesRequest struct {
 	Uuid string `example:"{{PackageUUID}}" form:"uuid" json:"uuid" path:"uuid" binding:"required" validate:"required"`
 }
 
-type GetBaseRatesRequest struct {
-	Country     string `json:"country" binding:"required" validate:"required"`
-	Provider    string `json:"provider" binding:"required" validate:"required"`
-	To          uint64 `json:"to" binding:"required" validate:"required"`
-	From        uint64 `json:"from" binding:"required" validate:"required"`
-	SimType     string `json:"sim_type" binding:"required" validate:"required"`
-	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
+type GetBaseRatesByCountryRequest struct {
+	Country string `path:"country" validate:"required"`
+	Network string `json:"network"`
+	SimType string `json:"sim_type" binding:"required" validate:"required"`
 }
+
+type GetBaseRatesForPeriodRequest struct {
+	Country string `path:"country" validate:"required"`
+	Network string `json:"network" binding:"required" validate:"required"`
+	To      string `json:"to" binding:"required" validate:"required"`
+	From    string `json:"from" binding:"required" validate:"required"`
+	SimType string `json:"sim_type" binding:"required" validate:"required"`
+}
+
 type GetBaseRateRequest struct {
-	RateId string `form:"base_rate" json:"base_rate" path:"base_rate" binding:"required" validate:"required"`
+	RateId string `path:"base_rate" validate:"required"`
 }
+
 type GetPackageByOrgRequest struct {
 	OrgId string `example:"{{OrgUUID}}" form:"org_id" json:"org_id" path:"org_id" binding:"required" validate:"required"`
 }
