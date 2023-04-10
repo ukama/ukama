@@ -403,3 +403,86 @@ func TestRouter_GetDefaultMarkupHistory(t *testing.T) {
 	assert.Contains(t, w.Body.String(), pResp.MarkupRates[1].CreatedAt)
 	m.AssertExpectations(t)
 }
+
+func TestRouter_GetBaseRatesById(t *testing.T) {
+
+	id := uuid.NewV4()
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/baserates/"+id.String(), nil)
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &bpb.GetBaseRatesByIdRequest{
+		Uuid: id.String(),
+	}
+
+	pResp := &bpb.GetBaseRatesByIdResponse{
+		Rate: &bpb.Rate{
+			Uuid: id.String(),
+		},
+	}
+
+	b.On("GetBaseRatesById", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
+	}, routerConfig).f.Engine()
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), id.String())
+	m.AssertExpectations(t)
+}
+
+func TestRouter_UploadBaseRates(t *testing.T) {
+
+	ureq := UploadBaseRatesRequest{
+		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/base-rate/template/template.csv",
+		EffectiveAt: "2023-10-12T07:20:50.52Z",
+		SimType:     "ukama_data",
+	}
+
+	jreq, err := json.Marshal(&ureq)
+	assert.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("POST", "/v1/baserates/upload", bytes.NewReader(jreq))
+
+	m := &rmocks.RateServiceClient{}
+	p := &pmocks.PackagesServiceClient{}
+	b := &bmocks.BaseRatesServiceClient{}
+
+	pReq := &bpb.UploadBaseRatesRequest{
+		FileURL:     ureq.FileURL,
+		EffectiveAt: ureq.EffectiveAt,
+		SimType:     ureq.SimType,
+	}
+
+	pResp := &bpb.UploadBaseRatesResponse{
+		Rate: []*bpb.Rate{
+			{
+				Uuid: uuid.NewV4().String(),
+			},
+		},
+	}
+
+	b.On("UploadBaseRates", mock.Anything, pReq).Return(pResp, nil)
+
+	r := NewRouter(&Clients{
+		r: client.NewRateClientFromClient(m),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
+	}, routerConfig).f.Engine()
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusCreated, w.Code)
+	m.AssertExpectations(t)
+}
