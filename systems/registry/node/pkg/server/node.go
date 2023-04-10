@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	metric "github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -23,15 +24,17 @@ type NodeServer struct {
 	nodeRepo       db.NodeRepo
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
+	pushGateway    string
 	pb.UnimplementedNodeServiceServer
 }
 
-func NewNodeServer(nodeRepo db.NodeRepo) *NodeServer {
+func NewNodeServer(nodeRepo db.NodeRepo, pushGateway string) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{nodeRepo: nodeRepo,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
+		pushGateway:    pushGateway,
 	}
 }
 
@@ -57,7 +60,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	// publish event and return
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
 	return &pb.AttachNodesResponse{}, nil
 }
@@ -73,7 +76,7 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	// publish event and return
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
 	return &pb.DetachNodeResponse{}, nil
 }
@@ -101,6 +104,7 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 	}
 
 	// publish event and return
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
 	return resp, nil
 }
@@ -204,6 +208,8 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		return nil, status.Errorf(codes.Internal, "error adding the node")
 	}
 
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+
 	return &pb.AddNodeResponse{Node: dbNodeToPbNode(node)}, nil
 }
 
@@ -217,6 +223,8 @@ func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Del
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
+
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
 	return &pb.DeleteResponse{NodeId: req.GetNodeId()}, nil
 }
@@ -248,6 +256,33 @@ func (n *NodeServer) processNodeDuplErrors(err error, nodeID string) error {
 	}
 
 	return grpc.SqlErrorToGrpc(err, "node")
+}
+
+func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
+	nodesCount, actCount, inactCount, err := n.nodeRepo.GetNodeCount()
+	if err != nil {
+		logrus.Errorf("Error while getting node count %s", err.Error())
+		return
+	}
+
+	for _, arg := range args {
+		switch arg {
+		case pkg.NumberOfNodes:
+			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric, pkg.NumberOfNodes, float64(nodesCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+		case pkg.NumberOfActiveNodes:
+			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric, pkg.NumberOfActiveNodes, float64(actCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+		case pkg.NumberOfInactiveNodes:
+			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric, pkg.NumberOfInactiveNodes, float64(inactCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+		}
+	}
+
+	if err != nil {
+		logrus.Errorf("Error while pushing node metric to pushgateway %s", err.Error())
+	}
+}
+
+func (n *NodeServer) PushMetrics() {
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 }
 
 func dbNodeToPbNode(dbn *db.Node) *pb.Node {

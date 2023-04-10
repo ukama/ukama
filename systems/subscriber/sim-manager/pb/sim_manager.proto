@@ -18,7 +18,6 @@ service SimManagerService {
     rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
     rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
     rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
-
     // Sim pacakge
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
     rpc GetPackagesBySim(GetPackagesBySimRequest) returns (GetPackagesBySimResponse);
@@ -39,7 +38,6 @@ message AllocateSimRequest {
 message AllocateSimResponse {
     Sim sim = 1;
 }
-
 
 message GetSimRequest {
     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
