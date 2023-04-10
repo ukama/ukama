@@ -49,7 +49,7 @@ func TestBaseRateService_GetBaseRatesById(t *testing.T) {
 	rateID := uuid.NewV4()
 	s := NewBaseRateServer(baseRateRepo, msgbusClient)
 
-	baseRateRepo.On("GetBaseRate", rateID).Return(&db.BaseRate{
+	baseRateRepo.On("GetBaseRateById", rateID).Return(&db.BaseRate{
 		Country: mockCountry,
 	}, nil)
 	rate, err := s.GetBaseRatesById(context.TODO(), &pb.GetBaseRatesByIdRequest{Uuid: rateID.String()})
@@ -72,7 +72,7 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo, msgbusClient)
 
-	baseRateRepo.On("GetBaseRatesByCountryRequest", mockFilters.Country, mockFilters.Network, mockFilters.EffectiveAt, db.ParseType("ukama_data")).Return([]db.BaseRate{
+	baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Network, db.ParseType("ukama_data")).Return([]db.BaseRate{
 		{
 			X2g:         true,
 			X3g:         true,
@@ -108,7 +108,7 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo, msgbusClient)
 
-	baseRateRepo.On("GetBaseRatesByCountryRequest", mockFilters.Country, mockFilters.Network, mockFilters.EffectiveAt, db.ParseType("ukama_data")).Return([]db.BaseRate{
+	baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Network, db.ParseType("ukama_data")).Return([]db.BaseRate{
 		{
 			X2g:         true,
 			X3g:         true,
@@ -124,7 +124,7 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 			SmsMt:       0.1,
 			Vpmn:        "TTC"},
 	}, nil)
-	rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
+	rate, err := s.GetBaseRatesHistoryByCountry(context.TODO(), mockFilters)
 	assert.NoError(t, err)
 	assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
 	assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)

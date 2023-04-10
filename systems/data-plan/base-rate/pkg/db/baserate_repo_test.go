@@ -48,7 +48,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
-func Test_Rate_Get(t *testing.T) {
+func TestBaseRateRepo_dbTest(t *testing.T) {
 
 	t.Run("BaseRateById", func(t *testing.T) {
 		// Arrange
