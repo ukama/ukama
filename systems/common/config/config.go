@@ -129,6 +129,7 @@ type Metrics struct {
 type Auth struct {
 	AuthServerUrl string `default:"http://localhost:4434"`
 	AuthAppUrl    string `default:"http://localhost:4455"`
+	AuthAPIGW     string `default:"http://localhost:8080"`
 }
 
 // LoadConfig loads configuration into `config` object
@@ -231,6 +232,7 @@ func LoadAuthHostConfig(name string) *Auth {
 	s := &Auth{}
 	serverUrl := "_SERVER_URL"
 	appUrl := "_APP_URL"
+	apigwUrl := "_API_GW_URL"
 
 	val, present := os.LookupEnv(strings.ToUpper(name + serverUrl))
 	if present {
@@ -244,6 +246,13 @@ func LoadAuthHostConfig(name string) *Auth {
 		s.AuthAppUrl = val
 	} else {
 		logrus.Errorf("%s app url env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + apigwUrl))
+	if present {
+		s.AuthAPIGW = val
+	} else {
+		logrus.Errorf("%s api gw url env not found", name)
 	}
 
 	return s

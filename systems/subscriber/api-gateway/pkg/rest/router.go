@@ -10,6 +10,7 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/systems/common/rest"
@@ -25,12 +26,13 @@ import (
 
 const SUBS_URL_PARAMETER = "subscriber"
 
-var REDIRECT_URI = "http://localhost:4455/?redirect=localhost:8080/swagger/#/"
+var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f       *fizz.Fizz
-	clients *Clients
-	config  *RouterConfig
+	f              *fizz.Fizz
+	clients        *Clients
+	config         *RouterConfig
+	authRestClient *providers.AuthRestClient
 }
 
 type RouterConfig struct {
@@ -84,11 +86,12 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authRestClient *providers.AuthRestClient) *Router {
 
 	r := &Router{
-		clients: clients,
-		config:  config,
+		clients:        clients,
+		config:         config,
+		authRestClient: authRestClient,
 	}
 
 	if !config.debugMode {
@@ -119,35 +122,48 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, REDIRECT_URI)
-	v1 := r.f.Group("/v1", "subscriber system ", "Subscriber system version v1")
-	/* These two API will be available based on RBAC */
-	v1.GET("/subscribers/networks/:network_id", formatDoc("List all subscribers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
-	v1.GET("/sims/networks/:network_id", formatDoc("List all sims for a Network", ""), tonic.Handler(r.getSimsByNetwork, http.StatusOK))
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
+	auth := r.f.Group("/v1", "Subscriber API GW ", "Subs system version v1", func(ctx *gin.Context) {
+		res, err := r.authRestClient.AuthenticateUser(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if res.StatusCode() != http.StatusOK {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, res.String())
+			return
+		}
+	})
+	auth.Use()
+	{
+		/* These two API will be available based on RBAC */
+		auth.GET("/subscribers/networks/:network_id", formatDoc("List all subscribers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))
+		auth.GET("/sims/networks/:network_id", formatDoc("List all sims for a Network", ""), tonic.Handler(r.getSimsByNetwork, http.StatusOK))
 
-	pool := v1.Group("/simpool", "SIM Pool", "SIM store for Org")
-	pool.GET("/sim/:iccid", formatDoc("Get SIM by Iccid", ""), tonic.Handler(r.getSimByIccid, http.StatusOK))
-	pool.GET("/stats/:sim_type", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
-	pool.PUT("", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
-	pool.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
-	pool.DELETE("/sim/:sim_id", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
+		pool := auth.Group("/simpool", "SIM Pool", "SIM store for Org")
+		pool.GET("/sim/:iccid", formatDoc("Get SIM by Iccid", ""), tonic.Handler(r.getSimByIccid, http.StatusOK))
+		pool.GET("/stats/:sim_type", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
+		pool.PUT("", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
+		pool.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
+		pool.DELETE("/sim/:sim_id", formatDoc("Remove SIM from SIM Pool", ""), tonic.Handler(r.deleteSimFromSimPool, http.StatusOK))
 
-	subscriber := v1.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
-	subscriber.GET("/:subscriber_id", formatDoc("Get subscriber by id", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
-	subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusOK))
-	subscriber.DELETE("/:subscriber_id", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
-	subscriber.PATCH("/:subscriber_id", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
+		subscriber := auth.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
+		subscriber.GET("/:subscriber_id", formatDoc("Get subscriber by id", ""), tonic.Handler(r.getSubscriber, http.StatusOK))
+		subscriber.PUT("", formatDoc("Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusOK))
+		subscriber.DELETE("/:subscriber_id", formatDoc("Delete a subscriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
+		subscriber.PATCH("/:subscriber_id", formatDoc("Update a subscriber", ""), tonic.Handler(r.updateSubscriber, http.StatusOK))
 
-	sim := v1.Group("/sim", "SIM", "Orgs SIM data base")
-	sim.GET("/:sim_id", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
-	sim.GET("/subscriber/:subscriber_id", formatDoc("Get a SIMs of the subscriber by Subscriber Id", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
-	sim.GET("/packages/:sim_id", formatDoc("Get packages for sim", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
-	sim.POST("/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.addPkgForSim, http.StatusOK))
-	sim.POST("/", formatDoc("Allocate a new sim to subscriber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
-	sim.PATCH("/:sim_id", formatDoc("Activate/Deactivate sim of subscriber", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
-	sim.PATCH("/:sim_id/package/:package_id", formatDoc("Set active package for sim", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
-	sim.DELETE("/:sim_id/package/:package_id", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
-	sim.DELETE("/:sim_id", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
+		sim := auth.Group("/sim", "SIM", "Orgs SIM data base")
+		sim.GET("/:sim_id", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
+		sim.GET("/subscriber/:subscriber_id", formatDoc("Get a SIMs of the subscriber by Subscriber Id", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
+		sim.GET("/packages/:sim_id", formatDoc("Get packages for sim", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
+		sim.POST("/package", formatDoc("Add a new package to the subscriber's sim", ""), tonic.Handler(r.addPkgForSim, http.StatusOK))
+		sim.POST("/", formatDoc("Allocate a new sim to subscriber", ""), tonic.Handler(r.allocateSim, http.StatusOK))
+		sim.PATCH("/:sim_id", formatDoc("Activate/Deactivate sim of subscriber", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
+		sim.PATCH("/:sim_id/package/:package_id", formatDoc("Set active package for sim", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
+		sim.DELETE("/:sim_id/package/:package_id", formatDoc("Delete a package from subscriber's sim", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
+		sim.DELETE("/:sim_id", formatDoc("Delete the SIM for the subscriber", ""), tonic.Handler(r.deleteSim, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
