@@ -47,9 +47,9 @@ func init() {
 	b := &bmocks.BaseRatesServiceClient{}
 	testClientSet = &Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}
-
 }
 
 func TestRouter_PingRoute(t *testing.T) {
@@ -122,7 +122,8 @@ func TestRouter_GetRates(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -159,7 +160,8 @@ func TestRouter_GetUserMarkup(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -194,7 +196,8 @@ func TestRouter_DeleteUserMarkup(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -230,7 +233,8 @@ func TestRouter_SetUserMarkup(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -277,7 +281,8 @@ func TestRouter_GetUserMarkupHistory(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -314,7 +319,8 @@ func TestRouter_SetDefaultMarkup(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -343,7 +349,8 @@ func TestRouter_GetDefaultMarkup(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -384,9 +391,9 @@ func TestRouter_GetDefaultMarkupHistory(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewRateClientFromClient(m),
-		d: client.NewPackageFromClient(p, b),
+		b: client.NewBaseRateClientFromClient(b),
+		p: client.NewPackageFromClient(p),
 	}, routerConfig).f.Engine()
-
 	// act
 	r.ServeHTTP(w, hreq)
 
