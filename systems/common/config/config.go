@@ -121,6 +121,11 @@ type Service struct {
 	Uri  string `default:"localhost:9090"`
 }
 
+type Auth struct {
+	AuthServerUrl string `default:"http://localhost:4434"`
+	AuthAppUrl    string `default:"http://localhost:4455"`
+}
+
 type Metrics struct {
 	Port    int  `default:"10250"`
 	Enabled bool `default:"true"`
@@ -206,14 +211,40 @@ func LoadServiceHostConfig(name string) *Service {
 	val, present := os.LookupEnv(strings.ToUpper(name + svcHost))
 	if present {
 		s.Host = val
+	} else {
+		logrus.Errorf("%s server host env not found", name)
 	}
 
 	val, present = os.LookupEnv(strings.ToUpper(name + svcPort))
 	if present {
 		s.Port = val
+	} else {
+		logrus.Errorf("%s server port env not found", name)
 	}
 
 	s.Uri = s.Host + ":" + s.Port
+
+	return s
+}
+
+func LoadAuthHostConfig(name string) *Auth {
+	s := &Auth{}
+	serverUrl := "_SERVER_URL"
+	appUrl := "_APP_URL"
+
+	val, present := os.LookupEnv(strings.ToUpper(name + serverUrl))
+	if present {
+		s.AuthServerUrl = val
+	} else {
+		logrus.Errorf("%s server url env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + appUrl))
+	if present {
+		s.AuthAppUrl = val
+	} else {
+		logrus.Errorf("%s app url env not found", name)
+	}
 
 	return s
 }
