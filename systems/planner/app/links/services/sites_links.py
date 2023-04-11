@@ -61,21 +61,24 @@ class SitesLinks:
                 towers_with_heights[tower2_loc] = (total_height2, loc_elevation2)
         return towers_with_heights
 
-    def get_link_status(self, tower1_height, tower2_height, tower1_loc, tower2_loc) -> bool:
-            distance = haversine(tower1_loc, tower2_loc, unit=Unit.METERS)
+    def get_link_status(self, towerA_height, towerB_height, tower1_loc, tower2_loc) -> bool:
+            distance_A_B_km = haversine(tower1_loc, tower2_loc)
+            # Fresnel zone clearance
+            freq= 5 #Frequency in GHz
+
+            xFresnelClearance = 60
             for i in range(1, 101):
                 fraction = i / 101
-                lat = tower1_loc[0] + fraction * (tower2_loc[0] - tower1_loc[0])
-                lon = tower1_loc[1] + fraction * (tower2_loc[1] - tower1_loc[1])
-                location_height = self.sites_elevation.get_elevation_from_lon_lat(lon, lat)
-                # Calculate the angle between the two towers
-                angle = math.atan((tower2_height[0] - tower1_height[0]) / distance)
-
-                # Calculate the maximum height of a building between the two towers
-                max_building_height = distance * math.tan(angle) + tower1_height[0]
-
-                if location_height > max_building_height:
-                    #print(f"The building with height {location_height} obstructs the line of sight between the two towers. {tower1_loc}, {tower2_loc}")
+                xlat = tower1_loc[0] + fraction * (tower2_loc[0] - tower1_loc[0])
+                xlon = tower1_loc[1] + fraction * (tower2_loc[1] - tower1_loc[1])
+                location_height = self.sites_elevation.get_elevation_from_lon_lat(xlon, xlat)
+                distance_X_A = haversine((xlat, xlon), tower1_loc)
+                xLoS = ((i * (towerB_height[0] - towerA_height[0])) / 100) + towerA_height[0]
+                xFresnelFactor = 17.3 * math.sqrt((distance_X_A * (distance_A_B_km - distance_X_A)) / (distance_A_B_km * freq))
+                xFresnelFactor = xFresnelFactor * xFresnelClearance / 100
+                xFresnelZone = xLoS - xFresnelFactor
+                xObstm = 0 if (xFresnelZone - location_height) >= 0 else xFresnelFactor + location_height
+                if xObstm > 0:
                     return False
             #print(f"There is a line of sight between the two towers. {tower1_loc}, {tower2_loc}")
             return True
