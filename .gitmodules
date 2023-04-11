@@ -52,4 +52,4 @@
 [submodule "systems/planner/Signal-Server"]
         path = systems/planner/Signal-Server
         url = https://github.com/Cloud-RF/Signal-Server.git
-        branch = master
+
