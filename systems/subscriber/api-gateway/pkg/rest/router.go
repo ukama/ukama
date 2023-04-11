@@ -25,6 +25,8 @@ import (
 
 const SUBS_URL_PARAMETER = "subscriber"
 
+var REDIRECT_URI = "http://localhost:4455/?redirect=localhost:8080/swagger/#/"
+
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -115,7 +117,7 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, REDIRECT_URI)
 	v1 := r.f.Group("/v1", "subscriber system ", "Subscriber system version v1")
 	/* These two API will be available based on RBAC */
 	v1.GET("/subscribers/networks/:network_id", formatDoc("List all subscribers for a Network", ""), tonic.Handler(r.getSubscriberByNetwork, http.StatusOK))

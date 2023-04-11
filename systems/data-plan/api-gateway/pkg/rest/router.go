@@ -18,6 +18,8 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
+var REDIRECT_URI = "http://localhost:4455/?redirect=localhost:8080/swagger/#/"
+
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -86,7 +88,7 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, REDIRECT_URI)
 	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
 
 	baseRates := v1.Group("/baseRates", "BaseRates", "BaseRates operations")

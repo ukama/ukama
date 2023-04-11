@@ -18,6 +18,8 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
+var SESSION_KEY = "ukama_session"
+
 type PingResponse struct {
 	Message string `json:"message"`
 	Service string `json:"service"`
@@ -32,7 +34,7 @@ func (g HttpError) Error() string {
 	return g.Message
 }
 
-func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, isDebug bool) *fizz.Fizz {
+func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, isDebug bool, redirectUrl string) *fizz.Fizz {
 
 	gin.SetMode(gin.ReleaseMode)
 	if isDebug {
@@ -53,6 +55,21 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	f.GET("/ping", nil, tonic.Handler(func(c *gin.Context) (*PingResponse, error) {
 		return &PingResponse{Message: "pong", Service: fmt.Sprintf("%s@%s", srvName, srvVersion)}, nil
 	}, http.StatusOK))
+
+	f.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
+		"cookie": {
+			SecurityScheme: &openapi.SecurityScheme{
+				Type: "oauth2",
+				In:   "header",
+				Name: SESSION_KEY,
+				Flows: &openapi.OAuthFlows{
+					Implicit: &openapi.OAuthFlow{
+						AuthorizationURL: redirectUrl,
+					},
+				},
+			},
+		},
+	})
 
 	infos := &openapi.Info{
 		Title:       srvName,
