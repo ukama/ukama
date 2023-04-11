@@ -38,6 +38,7 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
+	auth          *config.Auth
 }
 
 type Clients struct {
@@ -104,6 +105,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
 	}
 }
 
