@@ -20,7 +20,7 @@ func main() {
 	initConfig()
 	rc, err := crest.NewRestClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {
-		logrus.Error("Can't conncet to %s url. Error %s", svcConf.Auth.AuthServerUrl, err.Error())
+		logrus.Errorf("Can't conncet to %v url. Error %v", svcConf.Auth.AuthServerUrl, err.Error())
 	}
 	svcConf.R = rc
 	svcConf.R.C = svcConf.R.C.SetBaseURL(svcConf.Auth.AuthServerUrl)
