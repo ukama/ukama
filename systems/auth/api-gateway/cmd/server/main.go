@@ -4,30 +4,34 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/auth/api-gateway/pkg/rest"
+	"github.com/ukama/ukama/systems/data-plan/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	"github.com/ukama/ukama/systems/common/config"
-	crest "github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/providers"
 )
 
-var svcConf = pkg.NewConfig(pkg.SystemName)
+var svcConf = pkg.NewConfig()
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	rc, err := crest.NewRestClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
+
+	clientSet := rest.NewClientsSet(&svcConf.Services)
+	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {
-		logrus.Errorf("Can't conncet to %v url. Error %v", svcConf.Auth.AuthServerUrl, err.Error())
+		logrus.Errorf("Failed to create auth client: %v", err)
 	}
-	svcConf.R = rc
-	svcConf.R.C = svcConf.R.C.SetBaseURL(svcConf.Auth.AuthServerUrl)
-	r := rest.NewRouter(rest.NewRouterConfig(svcConf))
+	metrics.StartMetricsServer(&svcConf.Metrics)
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac)
 	r.Run()
+
 }
 
 func initConfig() {
+	svcConf = pkg.NewConfig()
 	config.LoadConfig(pkg.ServiceName, svcConf)
 }

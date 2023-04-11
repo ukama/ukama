@@ -11,6 +11,7 @@ import (
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
 
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
@@ -20,8 +21,9 @@ var SESSION_KEY = "ukama_session"
 var REDIRECT_URI = "https://auth.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f      *fizz.Fizz
-	config *RouterConfig
+	f              *fizz.Fizz
+	config         *RouterConfig
+	authRestClient *providers.AuthRestClient
 }
 
 type RouterConfig struct {
@@ -32,10 +34,11 @@ type RouterConfig struct {
 	s          *config.Service
 }
 
-func NewRouter(config *RouterConfig) *Router {
+func NewRouter(config *RouterConfig, authRestClient *providers.AuthRestClient) *Router {
 
 	r := &Router{
-		config: config,
+		config:         config,
+		authRestClient: authRestClient,
 	}
 
 	if !config.debugMode {
@@ -66,10 +69,22 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
-	v1 := r.f.Group("/v1", "Auth API GW", "Auth system version v1")
-
-	v1.GET("/whoami", formatDoc("Get user info", ""), tonic.Handler(r.getUserInfo, http.StatusOK))
-	v1.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))
+	auth := r.f.Group("/v1", "Auth API GW", "Auth system version v1", func(ctx *gin.Context) {
+		res, err := r.authRestClient.AuthenticateUser(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if res.StatusCode() != http.StatusOK {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, res.String())
+			return
+		}
+	})
+	auth.Use()
+	{
+		auth.GET("/whoami", formatDoc("Get user info", ""), tonic.Handler(r.getUserInfo, http.StatusOK))
+		auth.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
