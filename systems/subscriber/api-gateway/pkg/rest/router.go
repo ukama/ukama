@@ -10,6 +10,7 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/systems/common/rest"
@@ -28,9 +29,10 @@ const SUBS_URL_PARAMETER = "subscriber"
 var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f       *fizz.Fizz
-	clients *Clients
-	config  *RouterConfig
+	f              *fizz.Fizz
+	clients        *Clients
+	config         *RouterConfig
+	authRestClient *providers.AuthRestClient
 }
 
 type RouterConfig struct {
@@ -87,8 +89,9 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 
 	r := &Router{
-		clients: clients,
-		config:  config,
+		clients:        clients,
+		config:         config,
+		authRestClient: authRestClient,
 	}
 
 	if !config.debugMode {
