@@ -2,21 +2,26 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 
 	"github.com/ukama/ukama/systems/billing/invoice/internal/db"
 	"github.com/ukama/ukama/systems/billing/invoice/internal/pdf"
+	"github.com/ukama/ukama/systems/billing/invoice/internal/util"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
+
+const defaultTemplate = "templates/test.html.tmpl"
 
 type InvoiceServer struct {
 	pb.UnimplementedInvoiceServiceServer
@@ -65,13 +70,37 @@ func (i *InvoiceServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 			"invalid format of invoice uuid. Error %s", err.Error())
 	}
 
-	nt, err := i.invoiceRepo.Get(invoiceId)
+	invoice, err := i.invoiceRepo.Get(invoiceId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invoice")
 	}
 
+	log.Infof("starting PDF operation")
+
+	rw := &util.RawInvoice{}
+
+	err = json.Unmarshal([]byte(invoice.RawInvoice.String()), rw)
+	if err != nil {
+		log.Errorf("PDF operation failure: %v", err)
+
+		err = nil
+
+		// return nil, status.Errorf(codes.Internal,
+		// "failure to unmarshal raw invoice. Error %s", err.Error())
+	}
+
+	err = generateInvoicePDF(rw, defaultTemplate, "./test.pdf")
+	if err != nil {
+		log.Errorf("PDF operation failure: %v", err)
+
+		err = nil
+
+		// return nil, status.Errorf(codes.Internal,
+		// "failure to generate PDF file. Error %s", err.Error())
+	}
+
 	return &pb.GetResponse{
-		Invoice: dbInvoiceToPbInvoice(nt),
+		Invoice: dbInvoiceToPbInvoice(invoice),
 	}, nil
 }
 
@@ -83,6 +112,10 @@ func (i *InvoiceServer) GetBySubscriber(ctx context.Context, req *pb.GetBySubscr
 	}
 
 	invoices, err := i.invoiceRepo.GetBySubscriber(subscriberId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "invoices")
+	}
+
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invoices")
 	}
@@ -114,27 +147,33 @@ func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	return &pb.DeleteResponse{}, nil
 }
 
-func generateInvoicePDF(data, templatePath, outputPath string) error {
+func generateInvoicePDF(data any, templatePath, outputPath string) error {
 	r := pdf.NewInvoicePDF("")
 
 	templateData := struct {
-		Data string
+		Title    string
+		FileName string
+		Body     string
 	}{
-		Data: data,
+		Title:    "Markdown Preview Tool",
+		FileName: "templateFile",
+		Body:     "hello world",
 	}
 
+	// err := r.ParseSlimTemplate(templatePath, data)
 	err := r.ParseTemplate(templatePath, templateData)
 	if err != nil {
 		log.Errorf("failed to parse PDF template: %v", err)
 
-		return err
+		return fmt.Errorf("failed to parse PDF template: %w", err)
+
 	}
 
 	err = r.GeneratePDF(outputPath)
 	if err != nil {
 		log.Errorf("failed to generate PDF invoice: %v", err)
 
-		return err
+		return fmt.Errorf("failed to generate PDF invoice: %w", err)
 	}
 
 	log.Info("PDF invoice generated successfully")
@@ -151,7 +190,16 @@ func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
 		CreatedAt:    timestamppb.New(invoice.CreatedAt),
 	}
 
-	val, err := structpb.NewValue(invoice.RawInvoice.String())
+	val := &pb.RawInvoice{}
+
+	m := protojson.UnmarshalOptions{
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}
+
+	err := m.Unmarshal([]byte(invoice.RawInvoice.String()), val)
+	//TODO: error handling
+
 	if err == nil {
 		inv.RawInvoice = val
 	}

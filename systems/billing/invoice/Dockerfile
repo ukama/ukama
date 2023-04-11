@@ -1,5 +1,5 @@
-FROM alpine:3.13.5
+FROM surnet/alpine-wkhtmltopdf:3.13.5-0.12.6-small
 
 COPY bin/invoice /usr/bin/invoice
 
-CMD ["/usr/bin/invoice"]
+ENTRYPOINT ["/usr/bin/invoice"]
