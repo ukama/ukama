@@ -6,7 +6,7 @@ package integration
 import (
 	"github.com/ukama/ukama/systems/common/config"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // Before running test for the first time you have to create a test account in Identity manager and provide email and password for it
@@ -20,7 +20,7 @@ var testConf *TestConfig
 func init() {
 	testConf = &TestConfig{}
 
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: BASEDOMAIN")
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: BASEDOMAIN")
 	config.LoadConfig("integration", testConf)
-	logrus.Infof("Config: %+v", testConf)
+	log.Infof("Config: %+v", testConf)
 }

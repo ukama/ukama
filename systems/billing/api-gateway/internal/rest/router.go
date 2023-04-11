@@ -17,7 +17,7 @@ import (
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type Router struct {
@@ -74,7 +74,7 @@ func NewRouterConfig(svcConf *internal.Config) *RouterConfig {
 }
 
 func (rt *Router) Run() {
-	logrus.Info("Listening on port ", rt.config.serverConf.Port)
+	log.Info("Listening on port ", rt.config.serverConf.Port)
 
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
