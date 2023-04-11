@@ -122,6 +122,11 @@ type Service struct {
 	Uri  string `default:"localhost:9090"`
 }
 
+type Auth struct {
+	AuthServerUrl string `default:"http://localhost:4434"`
+	AuthAppUrl    string `default:"http://localhost:4455"`
+}
+
 type Metrics struct {
 	Port    int  `default:"10250"`
 	Enabled bool `default:"true"`
