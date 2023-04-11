@@ -20,6 +20,8 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
+var REDIRECT_URI = "http://localhost:4455/?redirect=localhost:8080/swagger/#/"
+
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients

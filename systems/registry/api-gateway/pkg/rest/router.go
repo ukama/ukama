@@ -24,6 +24,8 @@ import (
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
+var REDIRECT_URI = "http://localhost:4455/?redirect=localhost:8080/swagger/#/"
+
 const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
 
