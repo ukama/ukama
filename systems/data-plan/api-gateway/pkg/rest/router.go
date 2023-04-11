@@ -8,6 +8,8 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/providers"
+
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg"
@@ -19,12 +21,13 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
-var REDIRECT_URI = "http://localhost:4455/?redirect=localhost:8080/swagger/#/"
+var REDIRECT_URI = "https://data-plan.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f       *fizz.Fizz
-	clients *Clients
-	config  *RouterConfig
+	f              *fizz.Fizz
+	clients        *Clients
+	config         *RouterConfig
+	authRestClient *providers.AuthRestClient
 }
 
 type RouterConfig struct {
@@ -78,11 +81,12 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authRestClient *providers.AuthRestClient) *Router {
 
 	r := &Router{
-		clients: clients,
-		config:  config,
+		clients:        clients,
+		config:         config,
+		authRestClient: authRestClient,
 	}
 
 	if !config.debugMode {
@@ -112,38 +116,49 @@ func (r *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, REDIRECT_URI)
-	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
+	auth := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1", func(ctx *gin.Context) {
+		res, err := r.authRestClient.AuthenticateUser(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if res.StatusCode() != http.StatusOK {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, res.String())
+			return
+		}
+	})
+	auth.Use()
+	{
+		baseRates := auth.Group("/baserates", "BaseRates", "BaseRates operations")
+		baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
+		baseRates.POST("/upload", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
+		baseRates.POST("/country/:country", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateByCountryHandler, http.StatusOK))
+		baseRates.POST("/country/:country/history", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHistoryByCountryHandler, http.StatusOK))
+		baseRates.POST("/country/:country/period", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateForPeriodHandler, http.StatusOK))
+		baseRates.POST("/country/:country/package", formatDoc("Get BaseRate for package", ""), tonic.Handler(r.getBaseRateForPackageHandler, http.StatusOK))
 
-	baseRates := v1.Group("/baserates", "BaseRates", "BaseRates operations")
-	baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
-	baseRates.POST("/upload", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
-	baseRates.POST("/country/:country", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateByCountryHandler, http.StatusOK))
-	baseRates.POST("/country/:country/history", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHistoryByCountryHandler, http.StatusOK))
-	baseRates.POST("/country/:country/period", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateForPeriodHandler, http.StatusOK))
-	baseRates.POST("/country/:country/package", formatDoc("Get BaseRate for package", ""), tonic.Handler(r.getBaseRateForPackageHandler, http.StatusOK))
+		packages := auth.Group("/packages", "Packages", "Packages operations")
+		packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
+		packages.GET("/org/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
+		packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
+		packages.GET("/:uuid/details", formatDoc("Get package details", ""), tonic.Handler(r.getPackageDetailsHandler, http.StatusOK))
+		packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
+		packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
-	packages := v1.Group("/packages", "Packages", "Packages operations")
-	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
-	packages.GET("/org/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
-	packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
-	packages.GET("/:uuid/details", formatDoc("Get package details", ""), tonic.Handler(r.getPackageDetailsHandler, http.StatusOK))
-	packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
-	packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
+		rates := auth.Group("/rates", "Rates", "Get rates for a user")
+		rates.POST("/users/:user_id/rate", formatDoc("Get Rate for user", ""), tonic.Handler(r.getRateHandler, http.StatusOK))
 
-	rates := v1.Group("/rates", "Rates", "Get rates for a user")
-	rates.POST("/users/:user_id/rate", formatDoc("Get Rate for user", ""), tonic.Handler(r.getRateHandler, http.StatusOK))
+		markup := auth.Group("/markup", "Rates", "Get rates for a user and set markup percentages for user")
+		markup.GET("/users/:user_id", formatDoc("get markup percentage for user", ""), tonic.Handler(r.getMarkupHandler, http.StatusOK))
+		markup.DELETE("/users/:user_id", formatDoc("delete markup percentage for user", ""), tonic.Handler(r.deleteMarkupHandler, http.StatusOK))
+		markup.POST(":markup/users/:user_id", formatDoc("set markup percentage for user", ""), tonic.Handler(r.setMarkupHandler, http.StatusCreated))
+		markup.GET("/users/:user_id/history", formatDoc("get markup percentage history", ""), tonic.Handler(r.getMarkupHistory, http.StatusOK))
 
-	markup := v1.Group("/markup", "Rates", "Get rates for a user and set markup percentages for user")
-	markup.GET("/users/:user_id", formatDoc("get markup percentage for user", ""), tonic.Handler(r.getMarkupHandler, http.StatusOK))
-	markup.DELETE("/users/:user_id", formatDoc("delete markup percentage for user", ""), tonic.Handler(r.deleteMarkupHandler, http.StatusOK))
-	markup.POST(":markup/users/:user_id", formatDoc("set markup percentage for user", ""), tonic.Handler(r.setMarkupHandler, http.StatusCreated))
-	markup.GET("/users/:user_id/history", formatDoc("get markup percentage history", ""), tonic.Handler(r.getMarkupHistory, http.StatusOK))
-
-	markup.POST("/:markup/default", formatDoc("set default markup percentage", ""), tonic.Handler(r.setDefaultMarkupHandler, http.StatusCreated))
-	markup.GET("/default", formatDoc("get default markup percentage", ""), tonic.Handler(r.getDefaultMarkupHandler, http.StatusOK))
-	markup.GET("/default/history", formatDoc("get default markup percentage history", ""), tonic.Handler(r.getDefaultMarkupHistory, http.StatusOK))
-
+		markup.POST("/:markup/default", formatDoc("set default markup percentage", ""), tonic.Handler(r.setDefaultMarkupHandler, http.StatusCreated))
+		markup.GET("/default", formatDoc("get default markup percentage", ""), tonic.Handler(r.getDefaultMarkupHandler, http.StatusOK))
+		markup.GET("/default/history", formatDoc("get default markup percentage history", ""), tonic.Handler(r.getDefaultMarkupHistory, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -329,12 +344,12 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 
 func (r *Router) getRateHandler(c *gin.Context, req *GetRateRequest) (*rpb.GetRateResponse, error) {
 	resp, err := r.clients.r.GetRate(&rpb.GetRateRequest{
-		OwnerId:     req.OwnerId,
-		Country:     req.Country,
-		Provider:    req.Provider,
-		To:          req.To,
-		From:        req.From,
-		SimType:     req.SimType,
+		OwnerId:  req.OwnerId,
+		Country:  req.Country,
+		Provider: req.Provider,
+		To:       req.To,
+		From:     req.From,
+		SimType:  req.SimType,
 	})
 	if err != nil {
 		logrus.Errorf("Failed to get rate for user %s.Error %s", req.OwnerId, err.Error())

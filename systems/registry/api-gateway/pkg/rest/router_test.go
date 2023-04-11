@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
@@ -49,7 +50,7 @@ func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(testClientSet, routerConfig).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, &providers.AuthRestClient{}).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -72,7 +73,7 @@ func TestGetOrg_NotFound(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Registry: client.NewRegistryFromClient(n, o),
-	}, routerConfig).f.Engine()
+	}, routerConfig, &providers.AuthRestClient{}).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -102,7 +103,7 @@ func TestGetOrg(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Registry: client.NewRegistryFromClient(n, o),
-	}, routerConfig).f.Engine()
+	}, routerConfig, &providers.AuthRestClient{}).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)

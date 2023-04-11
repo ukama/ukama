@@ -43,7 +43,7 @@ require (
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect; indirect\
-	github.com/wI2L/fizz v0.18.1 // indirect
+	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect

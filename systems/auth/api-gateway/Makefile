@@ -4,7 +4,7 @@ include ../../../systems/config.mk
 
 build:
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/systems/auth/api-gateway/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/api-gateway cmd/main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/systems/auth/api-gateway/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/api-gateway cmd/server/main.go
 
 test:
 	go test -v ./...

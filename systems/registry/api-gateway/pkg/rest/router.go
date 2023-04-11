@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
@@ -22,15 +23,16 @@ import (
 	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
-var REDIRECT_URI = "http://localhost:4455/?redirect=localhost:8080/swagger/#/"
+var REDIRECT_URI = "https://registry.ukama.com/swagger/#/"
 
 const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
 
 type Router struct {
-	f       *fizz.Fizz
-	clients *Clients
-	config  *RouterConfig
+	f              *fizz.Fizz
+	clients        *Clients
+	config         *RouterConfig
+	authRestClient *providers.AuthRestClient
 }
 
 type RouterConfig struct {
@@ -72,10 +74,11 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authRestClient *providers.AuthRestClient) *Router {
 	r := &Router{
-		clients: clients,
-		config:  config,
+		clients:        clients,
+		config:         config,
+		authRestClient: authRestClient,
 	}
 
 	if !config.debugMode {
@@ -105,53 +108,65 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, REDIRECT_URI)
-	v1 := r.f.Group("/v1", "API gateway", "Registry system version v1")
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
+	auth := r.f.Group("/v1", "Registry API GW", "Registry system version v1", func(ctx *gin.Context) {
+		res, err := r.authRestClient.AuthenticateUser(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if res.StatusCode() != http.StatusOK {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, res.String())
+			return
+		}
+	})
+	auth.Use()
+	{
+		// org routes
+		const org = "/orgs"
+		orgs := auth.Group(org, "Orgs", "Operations on Orgs")
+		orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
+		orgs.POST("", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
+		orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
+		// update org
+		// Deactivate org
+		// Delete org
+		orgs.GET("/:org/members", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
+		orgs.POST("/:org/members", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
+		orgs.GET("/:org/members/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
+		orgs.PATCH("/:org/members/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
+		orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 
-	// org routes
-	const org = "/orgs"
-	orgs := v1.Group(org, "Orgs", "Operations on Orgs")
-	orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
-	orgs.POST("", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
-	orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
-	// update org
-	// Deactivate org
-	// Delete org
-	orgs.GET("/:org/members", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
-	orgs.POST("/:org/members", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
-	orgs.GET("/:org/members/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
-	orgs.PATCH("/:org/members/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
-	orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
+		// Users routes
+		const user = "/users"
+		users := auth.Group(user, "Users", "Operations on Users")
+		users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
+		users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+		// user orgs-member
+		// update user
+		// Deactivate user
+		// Delete user
+		// users.DELETE("/:user_uuid", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
 
-	// Users routes
-	const user = "/users"
-	users := v1.Group(user, "Users", "Operations on Users")
-	users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
-	users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
-	// user orgs-member
-	// update user
-	// Deactivate user
-	// Delete user
-	// users.DELETE("/:user_uuid", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
+		// Network routes
+		// Networks
+		const net = "/networks"
+		networks := auth.Group(net, "Networks", "Operations on Networks")
+		networks.GET("", formatDoc("Get Networks", "Get all Networks of an organization"), tonic.Handler(r.getNetworksHandler, http.StatusOK))
+		networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
+		networks.GET("/:net_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetworkHandler, http.StatusOK))
+		// update network
+		// networks.DELETE("/:net_id", formatDoc("Remove Network", "Remove a network of an organization"), tonic.Handler(r.removeNetworkHandler, http.StatusOK))
 
-	// Network routes
-	// Networks
-	const net = "/networks"
-	networks := v1.Group(net, "Networks", "Operations on Networks")
-	networks.GET("", formatDoc("Get Networks", "Get all Networks of an organization"), tonic.Handler(r.getNetworksHandler, http.StatusOK))
-	networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
-	networks.GET("/:net_id", formatDoc("Get Network", "Get a specific network"), tonic.Handler(r.getNetworkHandler, http.StatusOK))
-	// update network
-	// networks.DELETE("/:net_id", formatDoc("Remove Network", "Remove a network of an organization"), tonic.Handler(r.removeNetworkHandler, http.StatusOK))
+		// Admins
 
-	// Admins
+		// Vendors
 
-	// Vendors
-
-	// Sites
-	networks.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
-	networks.POST("/:net_id/sites", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
-	networks.GET("/:net_id/sites/:site", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
+		// Sites
+		networks.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
+		networks.POST("/:net_id/sites", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
+		networks.GET("/:net_id/sites/:site", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
+	}
 }
 
 // Org handlers
