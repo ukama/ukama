@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
@@ -22,6 +23,7 @@ import (
 )
 
 const defaultTemplate = "templates/test.html.tmpl"
+const pdfFolder = "/srv/static/"
 
 type InvoiceServer struct {
 	pb.UnimplementedInvoiceServiceServer
@@ -76,28 +78,21 @@ func (i *InvoiceServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 	}
 
 	log.Infof("starting PDF operation")
+	go func() {
+		rw := &util.RawInvoice{}
 
-	rw := &util.RawInvoice{}
+		err := json.Unmarshal([]byte(invoice.RawInvoice.String()), rw)
+		if err != nil {
+			log.Errorf("PDF operation failure: failed to Unmarshal RawInvoice JSON to rawInvoice struct %v", err)
+		}
 
-	err = json.Unmarshal([]byte(invoice.RawInvoice.String()), rw)
-	if err != nil {
-		log.Errorf("PDF operation failure: %v", err)
+		err = generateInvoicePDF(rw, defaultTemplate, filepath.Join(pdfFolder, invoiceId.String()+".pdf"))
+		if err != nil {
+			log.Errorf("PDF operation failure failed to generate invoice PDF: %v", err)
+		}
 
-		err = nil
-
-		// return nil, status.Errorf(codes.Internal,
-		// "failure to unmarshal raw invoice. Error %s", err.Error())
-	}
-
-	err = generateInvoicePDF(rw, defaultTemplate, "./test.pdf")
-	if err != nil {
-		log.Errorf("PDF operation failure: %v", err)
-
-		err = nil
-
-		// return nil, status.Errorf(codes.Internal,
-		// "failure to generate PDF file. Error %s", err.Error())
-	}
+		log.Infof("stopping PDF operation")
+	}()
 
 	return &pb.GetResponse{
 		Invoice: dbInvoiceToPbInvoice(invoice),
