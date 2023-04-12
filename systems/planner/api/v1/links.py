@@ -5,7 +5,7 @@ from app.links.schemas import LinksResponseSchema, LinksRequestSchema
 links_router = APIRouter()
 
 
-@links_router.get(
+@links_router.post(
     "/links",
     response_model=LinksResponseSchema,
 )

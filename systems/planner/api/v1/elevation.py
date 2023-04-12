@@ -6,7 +6,7 @@ from app.elevation.schemas import ElevationResponseSchema, ElevationRequestSchem
 elevation_router = APIRouter()
 
 
-@elevation_router.get(
+@elevation_router.post(
     "/elevation",
     response_model=List[ElevationResponseSchema],
 )
