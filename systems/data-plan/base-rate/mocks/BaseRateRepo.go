@@ -6,6 +6,8 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
 
+	time "time"
+
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -14,16 +16,16 @@ type BaseRateRepo struct {
 	mock.Mock
 }
 
-// GetBaseRate provides a mock function with given fields: _a0
-func (_m *BaseRateRepo) GetBaseRate(_a0 uuid.UUID) (*db.Rate, error) {
+// GetBaseRateById provides a mock function with given fields: _a0
+func (_m *BaseRateRepo) GetBaseRateById(_a0 uuid.UUID) (*db.BaseRate, error) {
 	ret := _m.Called(_a0)
 
-	var r0 *db.Rate
-	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Rate); ok {
+	var r0 *db.BaseRate
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.BaseRate); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Rate)
+			r0 = ret.Get(0).(*db.BaseRate)
 		}
 	}
 
@@ -37,22 +39,68 @@ func (_m *BaseRateRepo) GetBaseRate(_a0 uuid.UUID) (*db.Rate, error) {
 	return r0, r1
 }
 
-// GetBaseRates provides a mock function with given fields: country, network, effectiveAt, simType
-func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt string, simType db.SimType) ([]db.Rate, error) {
-	ret := _m.Called(country, network, effectiveAt, simType)
+// GetBaseRatesByCountry provides a mock function with given fields: country, network, simType
+func (_m *BaseRateRepo) GetBaseRatesByCountry(country string, network string, simType db.SimType) ([]db.BaseRate, error) {
+	ret := _m.Called(country, network, simType)
 
-	var r0 []db.Rate
-	if rf, ok := ret.Get(0).(func(string, string, string, db.SimType) []db.Rate); ok {
-		r0 = rf(country, network, effectiveAt, simType)
+	var r0 []db.BaseRate
+	if rf, ok := ret.Get(0).(func(string, string, db.SimType) []db.BaseRate); ok {
+		r0 = rf(country, network, simType)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Rate)
+			r0 = ret.Get(0).([]db.BaseRate)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string, db.SimType) error); ok {
-		r1 = rf(country, network, effectiveAt, simType)
+	if rf, ok := ret.Get(1).(func(string, string, db.SimType) error); ok {
+		r1 = rf(country, network, simType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBaseRatesForPeriod provides a mock function with given fields: country, network, from, to, simType
+func (_m *BaseRateRepo) GetBaseRatesForPeriod(country string, network string, from time.Time, to time.Time, simType db.SimType) ([]db.BaseRate, error) {
+	ret := _m.Called(country, network, from, to, simType)
+
+	var r0 []db.BaseRate
+	if rf, ok := ret.Get(0).(func(string, string, time.Time, time.Time, db.SimType) []db.BaseRate); ok {
+		r0 = rf(country, network, from, to, simType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.BaseRate)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string, time.Time, time.Time, db.SimType) error); ok {
+		r1 = rf(country, network, from, to, simType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBaseRatesHistoryByCountry provides a mock function with given fields: country, network, sType
+func (_m *BaseRateRepo) GetBaseRatesHistoryByCountry(country string, network string, sType db.SimType) ([]db.BaseRate, error) {
+	ret := _m.Called(country, network, sType)
+
+	var r0 []db.BaseRate
+	if rf, ok := ret.Get(0).(func(string, string, db.SimType) []db.BaseRate); ok {
+		r0 = rf(country, network, sType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.BaseRate)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string, db.SimType) error); ok {
+		r1 = rf(country, network, sType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -61,11 +109,11 @@ func (_m *BaseRateRepo) GetBaseRates(country string, network string, effectiveAt
 }
 
 // UploadBaseRates provides a mock function with given fields: rateList
-func (_m *BaseRateRepo) UploadBaseRates(rateList []db.Rate) error {
+func (_m *BaseRateRepo) UploadBaseRates(rateList []db.BaseRate) error {
 	ret := _m.Called(rateList)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]db.Rate) error); ok {
+	if rf, ok := ret.Get(0).(func([]db.BaseRate) error); ok {
 		r0 = rf(rateList)
 	} else {
 		r0 = ret.Error(0)

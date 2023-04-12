@@ -6,7 +6,7 @@ replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/subscriber/sim-manager => ../sim-manager
 
-replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
+replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -24,7 +24,7 @@ require (
 	gorm.io/gorm v1.24.3
 )
 
-require github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
+require github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000 // indirect
 
 require (
 	github.com/gin-contrib/cors v1.3.0 // indirect

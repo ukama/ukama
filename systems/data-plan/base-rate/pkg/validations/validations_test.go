@@ -20,8 +20,8 @@ func TestRateService_IsValidUploadReqArgs_Error(t *testing.T) {
 	assert.False(t, IsValidUploadReqArgs("", "", ""))
 }
 func TestIsFutureDate(t *testing.T) {
-	var mockeEffectiveAtFuture = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC1123)
-	var mockeEffectiveAtPast = time.Now().Add(time.Hour * 20 * 365 * 15).Format(time.RFC3339)
+	mockeEffectiveAtFuture := time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
+	mockeEffectiveAtPast := "2022-12-01T00:00:00Z"
 
 	testCases := []struct {
 		name     string
@@ -54,7 +54,7 @@ func TestIsFutureDate(t *testing.T) {
 }
 
 func TestValidateDate(t *testing.T) {
-	var mockeEffectiveAtFuture = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC1123)
+	var mockeEffectiveAtFuture = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
 	testCases := []struct {
 		name     string
 		date     string
