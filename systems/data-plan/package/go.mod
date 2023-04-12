@@ -4,7 +4,7 @@ go 1.18
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
+replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -13,7 +13,7 @@ require (
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/common v0.0.0-20221101065518-a25964290acc
+	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -69,7 +69,7 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.1.0 // indirect

@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/data-plan/package => ../package
 
 replace github.com/ukama/ukama/systems/data-plan/base-rate => ../base-rate
 
+replace github.com/ukama/ukama/systems/data-plan/rate => ../rate
+
 require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
@@ -17,6 +19,7 @@ require (
 	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
 	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
 	github.com/ukama/ukama/systems/data-plan/package v0.0.0-20230208235400-d17899b75cbb
+	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.52.0
 )
@@ -86,7 +89,7 @@ require (
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

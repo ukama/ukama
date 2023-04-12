@@ -34,7 +34,7 @@ func (p Database) GetConnString() string {
 		sslMode = "enable"
 	}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s database=%s port=%d sslmode=%s",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
 		p.Host, p.Username, p.Password, p.DbName, p.Port, sslMode)
 	return dsn
 }
@@ -120,7 +120,7 @@ type Service struct {
 	Port string `default:"9090"`
 	Uri  string `default:"localhost:9090"`
 }
-	
+
 type Metrics struct {
 	Port    int  `default:"10250"`
 	Enabled bool `default:"true"`
