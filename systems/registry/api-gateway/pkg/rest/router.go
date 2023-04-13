@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
@@ -74,7 +75,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig, authRestClient *providers.AuthRestClient) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authRestClient *providers.AuthRestClient, authfunc func(*gin.Context, string) (*resty.Response, error)) *Router {
 	r := &Router{
 		clients:        clients,
 		config:         config,
@@ -85,7 +86,7 @@ func NewRouter(clients *Clients, config *RouterConfig, authRestClient *providers
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -107,10 +108,11 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
+func (r *Router) getAuthMiddleware(f func(*gin.Context, string) (*resty.Response, error)) *fizz.RouterGroup {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
-	auth := r.f.Group("/v1", "Registry API GW", "Registry system version v1", func(ctx *gin.Context) {
-		res, err := r.authRestClient.AuthenticateUser(ctx, r.config.auth.AuthAPIGW)
+	a := r.f.Group("/v1", "Registry API GW", "Registry system version v1", func(ctx *gin.Context) {
+
+		res, err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
 			return
@@ -120,6 +122,11 @@ func (r *Router) init() {
 			return
 		}
 	})
+	return a
+}
+
+func (r *Router) init(f func(*gin.Context, string) (*resty.Response, error)) {
+	auth := r.getAuthMiddleware(f)
 	auth.Use()
 	{
 		// org routes

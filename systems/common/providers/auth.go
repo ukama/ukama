@@ -51,9 +51,8 @@ func (a *AuthRestClient) AuthenticateUser(c *gin.Context, u string) (*resty.Resp
 	return resp, err
 }
 
-func (a *AuthRestClient) MockAuthenticateUser() (*resty.Response, error) {
+func (a *AuthRestClient) MockAuthenticateUser(c *gin.Context, u string) (*resty.Response, error) {
 	return &resty.Response{
-		Request: nil,
 		RawResponse: &http.Response{
 			StatusCode: 200,
 			Body:       nil,

@@ -89,7 +89,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
 	st, _ := pkg.SessionType(c, SESSION_KEY)
 	var ss string
-	if st == "session" {
+	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "token" {
 		ss = pkg.GetTokenStr(c)
@@ -116,7 +116,7 @@ func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
 func (p *Router) authenticate(c *gin.Context) (*ory.Session, error) {
 	st, _ := pkg.SessionType(c, SESSION_KEY)
 	var ss string
-	if st == "session" {
+	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
 		ss = pkg.GetTokenStr(c)
@@ -131,6 +131,7 @@ func (p *Router) authenticate(c *gin.Context) (*ory.Session, error) {
 			return nil, err
 		}
 	}
+
 	res, err := pkg.ValidateSession(ss, st, p.config.o)
 	if err != nil {
 		return nil, err
