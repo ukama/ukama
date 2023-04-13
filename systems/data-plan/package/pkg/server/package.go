@@ -71,6 +71,11 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 	return packageList, nil
 }
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+
+	// Need to get Network for ukama_data
+	// Possible activation date
+	// What happens if we have two rates for a period
+	
 	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
