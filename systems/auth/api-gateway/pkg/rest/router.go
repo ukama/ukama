@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
+	ory "github.com/ory/client-go"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
@@ -28,7 +29,9 @@ type RouterConfig struct {
 	serverConf *rest.HttpConfig
 	r          *rest.RestClient
 	auth       *config.Auth
+	o          *ory.APIClient
 	s          *config.Service
+	k          string
 }
 
 func NewRouter(config *RouterConfig) *Router {
@@ -45,13 +48,15 @@ func NewRouter(config *RouterConfig) *Router {
 	return r
 }
 
-func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
+func NewRouterConfig(svcConf *pkg.Config, oc *ory.APIClient, k string) *RouterConfig {
 	return &RouterConfig{
 		serverConf: &svcConf.Server,
 		debugMode:  svcConf.DebugMode,
 		r:          svcConf.R,
 		s:          svcConf.Service,
+		o:          oc,
 		auth:       svcConf.Auth,
+		k:          k,
 	}
 }
 
@@ -69,6 +74,8 @@ func (r *Router) init() {
 
 	v1.GET("/whoami", formatDoc("Get user info", ""), tonic.Handler(r.getUserInfo, http.StatusOK))
 	v1.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))
+	v1.POST("/login", formatDoc("Login user", ""), tonic.Handler(r.login, http.StatusOK))
+	v1.GET("/getSession/:token", formatDoc("Get user session based on session token", ""), tonic.Handler(r.getSession, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -85,35 +92,62 @@ func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
 		return nil, err
 	}
 
-	res, err := pkg.GetUserBySession(sessionStr, p.config.r)
+	res, err := pkg.ValidateSession(sessionStr, p.config.o)
+
 	if err != nil {
 		return nil, err
 	}
 
+	user, err := pkg.GetUserTraitsFromSession(res)
+	if err != nil {
+		return nil, err
+	}
 	return &GetUserInfo{
-		Id:    res.Identity.Id,
-		Name:  res.Identity.Traits.Name,
-		Email: res.Identity.Traits.Email,
+		Id:         user.Id,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		FirstVisit: user.FirstVisit,
 	}, nil
 }
 
-func (p *Router) authenticate(c *gin.Context) (*Authenticate, error) {
+func (p *Router) authenticate(c *gin.Context) (*ory.Session, error) {
 	sessionStr, err := pkg.GetSessionFromCookie(c, SESSION_KEY)
 	if err != nil {
 		return nil, err
 	}
-	res, err := pkg.GetUserBySession(sessionStr, p.config.r)
+
+	res, err := pkg.ValidateSession(sessionStr, p.config.o)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.Identity.Id == "" {
-		return &Authenticate{
-			IsValidSession: false,
-		}, nil
+	return res, nil
+}
+
+func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
+	res, err := pkg.LoginUser(req.Email, req.Password, p.config.o)
+	if err != nil {
+		return nil, err
 	}
 
-	return &Authenticate{
-		IsValidSession: true,
+	token, err := pkg.GenerateJWT(res.SessionToken, res.Session.GetExpiresAt().Format(http.TimeFormat), res.Session.GetAuthenticatedAt().Format(http.TimeFormat), p.config.k)
+	if err != nil {
+		return nil, err
+	}
+	return &LoginRes{
+		Token: token,
 	}, nil
+}
+
+func (p *Router) getSession(c *gin.Context, req *GetSessionReq) (*ory.Session, error) {
+	session, err := pkg.GetSessionFromToken(c.Writer, req.Token, p.config.k)
+	if err != nil {
+		return nil, err
+	}
+	res, err := pkg.CheckSession(session.Session, p.config.o)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

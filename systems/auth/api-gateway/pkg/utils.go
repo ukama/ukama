@@ -1,45 +1,127 @@
 package pkg
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
-	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/ory/client-go"
+	ory "github.com/ory/client-go"
 )
 
 var SESSION_KEY = "ukama_session"
 var WHOAMI_PATH = "/sessions/whoami"
 
-type User struct {
-	Id       string       `json:"id"`
-	Identity UserIdentity `json:"identity"`
-}
-
-type UserIdentity struct {
-	Id     string     `json:"id"`
-	Traits UserTraits `json:"traits"`
+type Session struct {
+	Session         string `json:"session"`
+	ExpiresAt       string `json:"expires_at"`
+	AuthenticatedAt string `json:"authenticated_at"`
 }
 
 type UserTraits struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	Role       string `json:"role"`
+	FirstVisit bool   `json:"firstVisit"`
 }
 
-type ErrorInfo struct {
-	ErrorObj ErrorObj `json:"error"`
+func GetUserTraitsFromSession(s *ory.Session) (*UserTraits, error) {
+	data, err := json.Marshal(s.Identity.Traits)
+	if err != nil {
+		return nil, err
+	}
+
+	var userTraits UserTraits
+	if err := json.Unmarshal(data, &userTraits); err != nil {
+		return nil, err
+	}
+	return &UserTraits{
+		Id:         s.Identity.Id,
+		Name:       userTraits.Name,
+		Email:      userTraits.Email,
+		Role:       userTraits.Role,
+		FirstVisit: userTraits.FirstVisit,
+	}, nil
 }
 
-type ErrorObj struct {
-	Code    int    `json:"code"`
-	Status  string `json:"status"`
-	Reason  string `json:"reason"`
-	Message string `json:"message"`
+func GenerateJWT(s *string, e string, a string, k string) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+
+	claims["session"] = s
+	claims["expires_at"] = e
+	claims["authenticated_at"] = a
+
+	tokenString, err := token.SignedString([]byte(k))
+
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
+
+func ValidateToken(w http.ResponseWriter, t string, k string) (err error) {
+
+	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("there was an error in parsing")
+		}
+		return []byte(k), nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if token == nil {
+		return errors.New("token is nil")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return errors.New("token error")
+	}
+
+	exp := claims["expires_at"].(float64)
+	if int64(exp) < time.Now().Local().Unix() {
+		return errors.New("token expired")
+	}
+
+	return nil
+}
+
+func GetSessionFromToken(w http.ResponseWriter, t string, k string) (*Session, error) {
+
+	token, _ := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("there was an error in parsing")
+		}
+		return []byte(k), nil
+	})
+
+	if token == nil {
+		fmt.Fprintf(w, "invalid token")
+		return nil, errors.New("token error")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		fmt.Fprintf(w, "couldn't parse token")
+		return nil, errors.New("token error")
+	}
+
+	return &Session{
+		Session:         claims["session"].(string),
+		ExpiresAt:       claims["expires_at"].(string),
+		AuthenticatedAt: claims["authenticated_at"].(string),
+	}, nil
 }
 
 func GetSessionFromCookie(c *gin.Context, sessionKey string) (string, error) {
@@ -53,62 +135,50 @@ func GetSessionFromCookie(c *gin.Context, sessionKey string) (string, error) {
 	return "", fmt.Errorf("no session cookie found")
 }
 
-func getErrorObj(code int, status string, reason string, message string) ErrorObj {
-	return ErrorObj{
-		Code:    code,
-		Status:  status,
-		Reason:  reason,
-		Message: message,
-	}
-}
-
-func GetUserBySession(cookieStr string, r *rest.RestClient) (*User, error) {
-	urlObj, _ := url.Parse(r.C.BaseURL)
+func ValidateSession(ss string, o *ory.APIClient) (*client.Session, error) {
+	urlObj, _ := url.Parse(o.GetConfig().Servers[0].URL)
 	cookie := &http.Cookie{
 		Name:  SESSION_KEY,
-		Value: cookieStr,
+		Value: ss,
 	}
-	jar, err := cookiejar.New(nil)
+	o.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
+	resp, r, err := o.FrontendApi.ToSession(context.Background()).Execute()
 	if err != nil {
-		log.Fatalf("Got error while creating cookie jar %s", err.Error())
-		return nil, fmt.Errorf("%v", &ErrorInfo{
-			ErrorObj: getErrorObj(500, "Internal Server Error", "Got error while creating cookie jar", "Got error while creating cookie jar"),
-		})
+		return nil, err
 	}
-	jar.SetCookies(urlObj, []*http.Cookie{cookie})
+	if r.StatusCode == http.StatusUnauthorized {
+		return nil, fmt.Errorf("no valid session cookie found")
+	}
+	return resp, nil
+}
 
-	errStatus := &rest.ErrorMessage{}
-	resp, err := r.C.SetCookieJar(jar).R().
-		SetError(errStatus).
-		Get(r.C.BaseURL + WHOAMI_PATH)
-
+func LoginUser(email string, password string, o *ory.APIClient) (*client.SuccessfulNativeLogin, error) {
+	flow, _, err := o.FrontendApi.CreateNativeLoginFlow(context.Background()).Execute()
 	if err != nil {
-		return nil, fmt.Errorf("%v", &ErrorInfo{
-			ErrorObj: getErrorObj(resp.StatusCode(), "Error while fetching data", "Got error while fetching data", err.Error()),
-		})
+		return nil, err
 	}
-
-	if resp.StatusCode() == http.StatusOK {
-		decoder := json.NewDecoder(strings.NewReader(string(resp.Body())))
-		var data User
-		err = decoder.Decode(&data)
-		if err != nil {
-			return nil, fmt.Errorf("%v", &ErrorInfo{
-				ErrorObj: getErrorObj(resp.StatusCode(), "Success but error decoding data", "Error decoding data", err.Error()),
-			})
-		}
-		return &data, nil
+	b := client.UpdateLoginFlowWithPasswordMethod{
+		Password:           password,
+		Method:             "password",
+		Identifier:         email,
+		PasswordIdentifier: &email,
 	}
-
-	decoder := json.NewDecoder(strings.NewReader(string(resp.Body())))
-	var _error ErrorInfo
-	err = decoder.Decode(&_error)
+	body := client.UpdateLoginFlowBody{
+		UpdateLoginFlowWithPasswordMethod: &b,
+	}
+	flow1, _, err := o.FrontendApi.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
 	if err != nil {
-		return nil, fmt.Errorf("%v", &ErrorInfo{
-			ErrorObj: getErrorObj(resp.StatusCode(), "Success but error decoding data", "Error decoding data", err.Error()),
-		})
+		return nil, err
 	}
-	return nil, fmt.Errorf("%v", &ErrorInfo{
-		ErrorObj: getErrorObj(resp.StatusCode(), _error.ErrorObj.Status, _error.ErrorObj.Reason, _error.ErrorObj.Message),
-	})
+	return flow1, nil
+}
+
+func CheckSession(sessionToken string, o *ory.APIClient) (session *client.Session, err error) {
+	session, _, err = o.FrontendApi.ToSession(context.Background()).
+		XSessionToken(sessionToken).
+		Execute()
+	if err != nil {
+		return nil, err
+	}
+	return session, nil
 }

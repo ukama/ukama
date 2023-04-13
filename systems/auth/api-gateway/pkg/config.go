@@ -12,6 +12,7 @@ type Config struct {
 	Service           *config.Service
 	R                 *rest.RestClient
 	Auth              *config.Auth
+	JwtKey            string
 }
 
 func NewConfig(name string) *Config {
@@ -29,5 +30,6 @@ func NewConfig(name string) *Config {
 		},
 		Service: config.LoadServiceHostConfig(name),
 		Auth:    config.LoadAuthHostConfig(name),
+		JwtKey:  "LFqnDGmgalmaow0vMHUnwI96LQpSP9C/G/7TF8wHj9kjMqQUSHGZTg==",
 	}
 }

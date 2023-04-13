@@ -1,8 +1,11 @@
 package main
 
 import (
+	"net/http"
+	"net/http/cookiejar"
 	"os"
 
+	ory "github.com/ory/client-go"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
@@ -24,7 +27,18 @@ func main() {
 	}
 	svcConf.R = rc
 	svcConf.R.C = svcConf.R.C.SetBaseURL(svcConf.Auth.AuthServerUrl)
-	r := rest.NewRouter(rest.NewRouterConfig(svcConf))
+	configuration := ory.NewConfiguration()
+	configuration.Servers = []ory.ServerConfiguration{
+		{
+			URL: svcConf.Auth.AuthServerUrl,
+		},
+	}
+	jar, _ := cookiejar.New(nil)
+	oc := ory.NewAPIClient(configuration)
+	oc.GetConfig().HTTPClient = &http.Client{
+		Jar: jar,
+	}
+	r := rest.NewRouter(rest.NewRouterConfig(svcConf, oc, svcConf.JwtKey))
 	r.Run()
 }
 
