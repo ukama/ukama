@@ -30,6 +30,6 @@ func NewConfig(name string) *Config {
 		},
 		Service: config.LoadServiceHostConfig(name),
 		Auth:    config.LoadAuthHostConfig(name),
-		JwtKey:  "LFqnDGmgalmaow0vMHUnwI96LQpSP9C/G/7TF8wHj9kjMqQUSHGZTg==",
+		JwtKey:  config.LoadJwtKey(),
 	}
 }
