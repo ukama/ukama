@@ -87,12 +87,14 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
-	sessionStr, err := pkg.GetSessionFromCookie(c, SESSION_KEY)
-	if err != nil {
-		return nil, err
+	st, _ := pkg.SessionType(c, SESSION_KEY)
+	var ss string
+	if st == "session" {
+		ss = pkg.GetCookieStr(c, SESSION_KEY)
+	} else if st == "token" {
+		ss = pkg.GetTokenStr(c)
 	}
-
-	res, err := pkg.ValidateSession(sessionStr, p.config.o)
+	res, err := pkg.ValidateSession(ss, st, p.config.o)
 
 	if err != nil {
 		return nil, err
@@ -112,12 +114,24 @@ func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
 }
 
 func (p *Router) authenticate(c *gin.Context) (*ory.Session, error) {
-	sessionStr, err := pkg.GetSessionFromCookie(c, SESSION_KEY)
-	if err != nil {
-		return nil, err
+	st, _ := pkg.SessionType(c, SESSION_KEY)
+	var ss string
+	if st == "session" {
+		ss = pkg.GetCookieStr(c, SESSION_KEY)
+	} else if st == "header" {
+		ss = pkg.GetTokenStr(c)
+		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
+		if err == nil {
+			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
+			if e != nil {
+				return nil, e
+			}
+			ss = t.Session
+		} else {
+			return nil, err
+		}
 	}
-
-	res, err := pkg.ValidateSession(sessionStr, p.config.o)
+	res, err := pkg.ValidateSession(ss, st, p.config.o)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +144,6 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	token, err := pkg.GenerateJWT(res.SessionToken, res.Session.GetExpiresAt().Format(http.TimeFormat), res.Session.GetAuthenticatedAt().Format(http.TimeFormat), p.config.k)
 	if err != nil {
 		return nil, err

@@ -68,14 +68,12 @@ func GenerateJWT(s *string, e string, a string, k string) (string, error) {
 }
 
 func ValidateToken(w http.ResponseWriter, t string, k string) (err error) {
-
 	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("there was an error in parsing")
 		}
 		return []byte(k), nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -88,17 +86,17 @@ func ValidateToken(w http.ResponseWriter, t string, k string) (err error) {
 	if !ok {
 		return errors.New("token error")
 	}
-
-	exp := claims["expires_at"].(float64)
-	if int64(exp) < time.Now().Local().Unix() {
+	expStr := claims["expires_at"]
+	exp, _ := time.Parse(time.RFC1123, expStr.(string))
+	tUnix := exp.Local().Unix()
+	if tUnix < time.Now().Local().Unix() {
 		return errors.New("token expired")
+	} else {
+		return nil
 	}
-
-	return nil
 }
 
 func GetSessionFromToken(w http.ResponseWriter, t string, k string) (*Session, error) {
-
 	token, _ := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("there was an error in parsing")
@@ -124,24 +122,47 @@ func GetSessionFromToken(w http.ResponseWriter, t string, k string) (*Session, e
 	}, nil
 }
 
-func GetSessionFromCookie(c *gin.Context, sessionKey string) (string, error) {
+func SessionType(c *gin.Context, sessionKey string) (string, error) {
 	cookies := map[string]string{}
 	for _, cookie := range c.Request.Cookies() {
 		cookies[cookie.Name] = cookie.Value
 	}
 	if cookies[sessionKey] != "" {
-		return cookies[sessionKey], nil
+		return "cookie", nil
+	} else if c.Request.Header.Get("X-Session-Token") != "" {
+		return "header", nil
 	}
-	return "", fmt.Errorf("no session cookie found")
+	return "", fmt.Errorf("no cookie/token found")
+
 }
 
-func ValidateSession(ss string, o *ory.APIClient) (*client.Session, error) {
-	urlObj, _ := url.Parse(o.GetConfig().Servers[0].URL)
-	cookie := &http.Cookie{
-		Name:  SESSION_KEY,
-		Value: ss,
+func GetCookieStr(c *gin.Context, sessionKey string) string {
+	cookies := map[string]string{}
+	for _, cookie := range c.Request.Cookies() {
+		cookies[cookie.Name] = cookie.Value
 	}
-	o.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
+	if cookies[sessionKey] != "" {
+		return cookies[sessionKey]
+	}
+	return ""
+}
+
+func GetTokenStr(c *gin.Context) string {
+	token := c.Request.Header.Get("X-Session-Token")
+	return token
+}
+
+func ValidateSession(ss string, t string, o *ory.APIClient) (*client.Session, error) {
+	if t == "cookie" {
+		urlObj, _ := url.Parse(o.GetConfig().Servers[0].URL)
+		cookie := &http.Cookie{
+			Name:  SESSION_KEY,
+			Value: ss,
+		}
+		o.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
+	} else if t == "header" {
+		o.GetConfig().AddDefaultHeader("X-Session-Token", ss)
+	}
 	resp, r, err := o.FrontendApi.ToSession(context.Background()).Execute()
 	if err != nil {
 		return nil, err

@@ -38,7 +38,7 @@ func main() {
 	oc.GetConfig().HTTPClient = &http.Client{
 		Jar: jar,
 	}
-	r := rest.NewRouter(rest.NewRouterConfig(svcConf, oc, svcConf.JwtKey))
+	r := rest.NewRouter(rest.NewRouterConfig(svcConf, oc, svcConf.AuthKey))
 	r.Run()
 }
 
