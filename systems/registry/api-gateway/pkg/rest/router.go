@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ukama/ukama/systems/common/providers"
+	"github.com/go-resty/resty/v2"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
@@ -25,18 +25,15 @@ import (
 	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
-var REDIRECT_URI = "https://registry.ukama.com/swagger/#/"
-
 const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
 
 var REDIRECT_URI = "https://registry.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f              *fizz.Fizz
-	clients        *Clients
-	config         *RouterConfig
-	authRestClient *providers.AuthRestClient
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
 }
 
 type RouterConfig struct {
@@ -85,9 +82,8 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 
 func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
-		clients:        clients,
-		config:         config,
-		authRestClient: authRestClient,
+		clients: clients,
+		config:  config,
 	}
 
 	if !config.debugMode {
