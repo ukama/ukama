@@ -74,7 +74,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv := server.NewPackageServer(db.NewPackageRepo(gormdb), mbClient)
+	srv := server.NewPackageServer(db.NewPackageRepo(gormdb), serviceConfig.Rate, mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterPackagesServiceServer(s, srv)

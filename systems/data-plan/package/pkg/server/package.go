@@ -17,15 +17,17 @@ import (
 
 type PackageServer struct {
 	packageRepo    db.PackageRepo
+	rate           string
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedPackagesServiceServer
 }
 
-func NewPackageServer(packageRepo db.PackageRepo, msgBus mb.MsgBusServiceClient) *PackageServer {
+func NewPackageServer(packageRepo db.PackageRepo, rate string, msgBus mb.MsgBusServiceClient) *PackageServer {
 	return &PackageServer{
 		packageRepo:    packageRepo,
 		msgbus:         msgBus,
+		rate:           rate,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName)}
 }
 
@@ -75,7 +77,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	// Need to get Network for ukama_data
 	// Possible activation date
 	// What happens if we have two rates for a period
-	
+
 	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
