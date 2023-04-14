@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"time"
 
