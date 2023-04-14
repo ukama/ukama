@@ -14,7 +14,7 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service   `default:"{}"`
-	Rate             *uconf.Service   `default:"{}"`
+	Rate             string
 }
 
 func NewConfig(name string) *Config {
@@ -27,8 +27,6 @@ func NewConfig(name string) *Config {
 			Timeout:        5 * time.Second,
 			ListenerRoutes: []string{"event.cloud.dataplan.baserate.upload"},
 		},
-		Rate: &uconf.Service{
-			Uri: "rate:9090",
-		},
+		Rate: "rate:9090",
 	}
 }

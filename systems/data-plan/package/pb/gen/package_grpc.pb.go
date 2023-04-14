@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PackagesServiceClient interface {
 	Get(ctx context.Context, in *GetPackageRequest, opts ...grpc.CallOption) (*GetPackageResponse, error)
+	Getdetails(ctx context.Context, in *GetPackageRequest, opts ...grpc.CallOption) (*GetPackageResponse, error)
 	Add(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	Delete(ctx context.Context, in *DeletePackageRequest, opts ...grpc.CallOption) (*DeletePackageResponse, error)
 	Update(ctx context.Context, in *UpdatePackageRequest, opts ...grpc.CallOption) (*UpdatePackageResponse, error)
@@ -40,6 +41,15 @@ func NewPackagesServiceClient(cc grpc.ClientConnInterface) PackagesServiceClient
 func (c *packagesServiceClient) Get(ctx context.Context, in *GetPackageRequest, opts ...grpc.CallOption) (*GetPackageResponse, error) {
 	out := new(GetPackageResponse)
 	err := c.cc.Invoke(ctx, "/ukama.data_plan.package.v1.PackagesService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *packagesServiceClient) Getdetails(ctx context.Context, in *GetPackageRequest, opts ...grpc.CallOption) (*GetPackageResponse, error) {
+	out := new(GetPackageResponse)
+	err := c.cc.Invoke(ctx, "/ukama.data_plan.package.v1.PackagesService/Getdetails", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +97,7 @@ func (c *packagesServiceClient) GetByOrg(ctx context.Context, in *GetByOrgPackag
 // for forward compatibility
 type PackagesServiceServer interface {
 	Get(context.Context, *GetPackageRequest) (*GetPackageResponse, error)
+	Getdetails(context.Context, *GetPackageRequest) (*GetPackageResponse, error)
 	Add(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	Delete(context.Context, *DeletePackageRequest) (*DeletePackageResponse, error)
 	Update(context.Context, *UpdatePackageRequest) (*UpdatePackageResponse, error)
@@ -100,6 +111,9 @@ type UnimplementedPackagesServiceServer struct {
 
 func (UnimplementedPackagesServiceServer) Get(context.Context, *GetPackageRequest) (*GetPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedPackagesServiceServer) Getdetails(context.Context, *GetPackageRequest) (*GetPackageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Getdetails not implemented")
 }
 func (UnimplementedPackagesServiceServer) Add(context.Context, *AddPackageRequest) (*AddPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
@@ -140,6 +154,24 @@ func _PackagesService_Get_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PackagesServiceServer).Get(ctx, req.(*GetPackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PackagesService_Getdetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PackagesServiceServer).Getdetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.data_plan.package.v1.PackagesService/Getdetails",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PackagesServiceServer).Getdetails(ctx, req.(*GetPackageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -226,6 +258,10 @@ var PackagesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _PackagesService_Get_Handler,
+		},
+		{
+			MethodName: "Getdetails",
+			Handler:    _PackagesService_Getdetails_Handler,
 		},
 		{
 			MethodName: "Add",

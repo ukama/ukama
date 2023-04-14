@@ -100,9 +100,13 @@ func (this *UpdatePackageResponse) Validate() error {
 	return nil
 }
 
+var _regex_AddPackageRequest_Uuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_AddPackageRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *AddPackageRequest) Validate() error {
+	if !_regex_AddPackageRequest_Uuid.MatchString(this.Uuid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Uuid))
+	}
 	if !_regex_AddPackageRequest_OrgId.MatchString(this.OrgId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
 	}
@@ -132,6 +136,28 @@ func (this *Package) Validate() error {
 	}
 	if this.OrgId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
+	}
+	if this.Rate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Rate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Rate", err)
+		}
+	}
+	if this.Markup != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Markup); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Markup", err)
+		}
+	}
+	return nil
+}
+func (this *PackageRates) Validate() error {
+	return nil
+}
+
+var _regex_PackageMarkup_Baserate = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *PackageMarkup) Validate() error {
+	if !_regex_PackageMarkup_Baserate.MatchString(this.Baserate) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Baserate", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Baserate))
 	}
 	return nil
 }

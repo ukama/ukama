@@ -7,28 +7,36 @@ import "validator.proto";
 
 service PackagesService {
     rpc Get (GetPackageRequest) returns (GetPackageResponse) {}
+    rpc Getdetails (GetPackageRequest) returns (GetPackageResponse) {}
     rpc Add (AddPackageRequest) returns (AddPackageResponse){}
     rpc Delete (DeletePackageRequest) returns (DeletePackageResponse){}
     rpc Update (UpdatePackageRequest) returns (UpdatePackageResponse){}
     rpc GetByOrg (GetByOrgPackageRequest) returns (GetByOrgPackageResponse){}
 
+
 }
+
 message GetPackageRequest{
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
+
 message GetByOrgPackageRequest{
     string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
+
 message GetByOrgPackageResponse{
     repeated Package packages =1;
 
 }
+
 message GetPackageResponse{
     Package package =1;
 }
+
 message DeletePackageRequest {
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
+
 message DeletePackageResponse {
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
@@ -43,31 +51,53 @@ message UpdatePackageRequest {
     int64 dataVolume=7 [json_name = "data_volume"];
     int64 voiceVolume =8 [json_name = "voice_volume"];
     uint64 orgRatesId=9 [json_name = "org_rates_id"];
+    string dataUnit = 10;
+    string callUnit = 11;
+    string messageunit = 12;
 }
+
 message UpdatePackageResponse {
     Package package = 1;
 }
+
 message AddPackageRequest {
-    string name=1;
-    string orgId=2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
-    bool active=3;
-    uint64 duration=4;
-    string simType=5 [json_name = "sim_type"];
-    int64 smsVolume =6 [json_name = "sms_volume"];
-    int64 dataVolume=7 [json_name = "data_volume"];
-    int64 voiceVolume =8 [json_name = "voice_volume"];
-    uint64 orgRatesId=9 [json_name = "org_rates_id"];
+    string uuid=1  [(validator.field) = {uuid_ver: 4}]  ;
+    string name =2;
+    string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    bool active =4;
+    uint64 duration = 5;
+    string simType=6 [json_name = "sim_type"];
+    int64 smsVolume =10 [json_name = "sms_volume"];
+    int64 dataVolume=11 [json_name = "data_volume"];
+    int64 voiceVolume =12 [json_name = "voice_volume"];
+    int64 dlbr =13;
+    int64 ulbr = 14;
+    double markup = 16;
+    string type = 17;
+    string dataUnit = 18;
+    string callUnit = 19;
+    string messageunit = 20;
+    bool   flatrate = 21;
+    double flatrateAmount = 22;
+    string effectiveAt  = 23;
+    string endAt = 24;
+    string country=25;
+    string provider= 26;
+    string apn = 27;
+    string baserate = 28;
 }
+
 message AddPackageResponse {
     Package package =1;
 
 }
+
 message Package {
     string uuid=1  [(validator.field) = {uuid_ver: 4}]  ;
     string name =2;
     string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     bool active =4;
-    uint64 duration =5;
+    uint64 duration = 5;
     string simType=6 [json_name = "sim_type"];
     string createdAt=7 [json_name = "created_at"];
     string deletedAt=8 [json_name = "deleted_at"];
@@ -75,5 +105,40 @@ message Package {
     int64 smsVolume =10 [json_name = "sms_volume"];
     int64 dataVolume=11 [json_name = "data_volume"];
     int64 voiceVolume =12 [json_name = "voice_volume"];
-    uint64 orgRatesId=13 [json_name = "org_rates_id"];
+    int64 dlbr =13;
+    int64 ulbr = 14;
+    PackageRates rate = 15;
+    PackageMarkup markup = 16;
+    string type = 17;
+    string dataUnit = 18;
+    string callUnit = 19;
+    string messageunit = 20;
+    bool flatrate = 21;
+    string currency = 22;
+    string effectiveAt  = 23;
+    string endAt = 24;
+    string country=25;
+    string provider= 26;
+    string apn = 27;
+    bool  _2g=28;
+    bool _3g=29;
+    bool _5g=30;
+    bool lte=31; 
+    bool lteM=32 [json_name = "lte_m"];
+    string vpmn =33;
+    int64 imsi=34;
+
+}
+
+message PackageRates{ 
+    double SmsMo=1 [json_name = "sms_mo"];
+    double SmsMt =2 [json_name = "sms_mt"];
+    double Data =3;
+    double FlatRate  = 4;
+
+} 
+
+message PackageMarkup {
+    string baserate = 1  [(validator.field) = {uuid_ver: 4}];
+    double markup = 2;
 }
