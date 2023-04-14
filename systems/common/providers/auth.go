@@ -66,3 +66,12 @@ func (a *AuthRestClient) AuthenticateUser(c *gin.Context, u string) error {
 func (a *AuthRestClient) MockAuthenticateUser(c *gin.Context, u string) error {
 	return nil
 }
+
+func (a *AuthRestClient) MockAuthenticateUser(c *gin.Context, u string) (*resty.Response, error) {
+	return &resty.Response{
+		RawResponse: &http.Response{
+			StatusCode: 200,
+			Body:       nil,
+		},
+	}, nil
+}
