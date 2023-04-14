@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
+	ory "github.com/ory/client-go"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
@@ -29,6 +30,7 @@ type RouterConfig struct {
 	debugMode  bool
 	serverConf *rest.HttpConfig
 	auth       *config.Auth
+	o          *ory.APIClient
 	s          *config.Service
 	k          string
 }
@@ -66,6 +68,7 @@ func NewRouterConfig(svcConf *pkg.Config, k string) *RouterConfig {
 		serverConf: &svcConf.Server,
 		debugMode:  svcConf.DebugMode,
 		s:          svcConf.Service,
+		o:          oc,
 		auth:       svcConf.Auth,
 		k:          k,
 	}
@@ -176,4 +179,16 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 	return &LoginRes{
 		Token: token,
 	}, nil
+}
+
+func (p *Router) getSession(c *gin.Context, req *GetSessionReq) (*ory.Session, error) {
+	session, err := pkg.GetSessionFromToken(c.Writer, req.Token, p.config.k)
+	if err != nil {
+		return nil, err
+	}
+	res, err := pkg.CheckSession(session.Session, p.config.o)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

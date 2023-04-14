@@ -23,3 +23,15 @@ type LoginRes struct {
 type GetSessionReq struct {
 	XSessionToken string `example:"token" json:"x-session-token" header:"x-session-token" validation:"required"`
 }
+
+type LoginReq struct {
+	Email    string `example:"john@example.com" json:"email" validation:"required"`
+	Password string `example:"Password" json:"password" validation:"required"`
+}
+type LoginRes struct {
+	Token string `example:"Token" json:"token" validation:"required"`
+}
+
+type GetSessionReq struct {
+	Token string `example:"token" json:"token" path:"token" validation:"required"`
+}
