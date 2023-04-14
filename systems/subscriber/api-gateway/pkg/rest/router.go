@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-resty/resty/v2"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/systems/common/rest"
@@ -29,10 +29,9 @@ const SUBS_URL_PARAMETER = "subscriber"
 var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f              *fizz.Fizz
-	clients        *Clients
-	config         *RouterConfig
-	authRestClient *providers.AuthRestClient
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
 }
 
 type RouterConfig struct {
@@ -86,19 +85,18 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig, authRestClient *providers.AuthRestClient) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) (*resty.Response, error)) *Router {
 
 	r := &Router{
-		clients:        clients,
-		config:         config,
-		authRestClient: authRestClient,
+		clients: clients,
+		config:  config,
 	}
 
 	if !config.debugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -120,11 +118,11 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
-
+func (r *Router) init(f func(*gin.Context, string) (*resty.Response, error)) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
 	auth := r.f.Group("/v1", "Subscriber API GW ", "Subs system version v1", func(ctx *gin.Context) {
-		res, err := r.authRestClient.AuthenticateUser(ctx, r.config.auth.AuthAPIGW)
+
+		res, err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
 			return

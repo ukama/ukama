@@ -50,3 +50,12 @@ func (a *AuthRestClient) AuthenticateUser(c *gin.Context, u string) (*resty.Resp
 		Get(u + AuthenticateEndpoint)
 	return resp, err
 }
+
+func (a *AuthRestClient) MockAuthenticateUser(c *gin.Context, u string) (*resty.Response, error) {
+	return &resty.Response{
+		RawResponse: &http.Response{
+			StatusCode: 200,
+			Body:       nil,
+		},
+	}, nil
+}

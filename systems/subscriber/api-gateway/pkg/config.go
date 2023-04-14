@@ -17,10 +17,6 @@ type Config struct {
 	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
-type Kratos struct {
-	Url string
-}
-
 type GrpcEndpoints struct {
 	Timeout    time.Duration
 	SimPool    string

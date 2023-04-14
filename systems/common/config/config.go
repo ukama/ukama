@@ -257,3 +257,13 @@ func LoadAuthHostConfig(name string) *Auth {
 
 	return s
 }
+
+func LoadAuthKey() string {
+	val, present := os.LookupEnv(strings.ToUpper("JWT_KEY"))
+	if present {
+		return val
+	} else {
+		logrus.Error("JWT_KEY env not found")
+		return ""
+	}
+}
