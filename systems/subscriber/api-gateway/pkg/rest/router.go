@@ -11,7 +11,6 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/systems/common/rest"
@@ -30,10 +29,9 @@ const SUBS_URL_PARAMETER = "subscriber"
 var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f              *fizz.Fizz
-	clients        *Clients
-	config         *RouterConfig
-	authRestClient *providers.AuthRestClient
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
 }
 
 type RouterConfig struct {
@@ -87,12 +85,11 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig, authRestClient *providers.AuthRestClient, authfunc func(*gin.Context, string) (*resty.Response, error)) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) (*resty.Response, error)) *Router {
 
 	r := &Router{
-		clients:        clients,
-		config:         config,
-		authRestClient: authRestClient,
+		clients: clients,
+		config:  config,
 	}
 
 	if !config.debugMode {
@@ -121,9 +118,9 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) getAuthMiddleware(f func(*gin.Context, string) (*resty.Response, error)) *fizz.RouterGroup {
+func (r *Router) init(f func(*gin.Context, string) (*resty.Response, error)) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
-	a := r.f.Group("/v1", "Subscriber API GW ", "Subs system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "Subscriber API GW ", "Subs system version v1", func(ctx *gin.Context) {
 
 		res, err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
@@ -135,11 +132,6 @@ func (r *Router) getAuthMiddleware(f func(*gin.Context, string) (*resty.Response
 			return
 		}
 	})
-	return a
-}
-
-func (r *Router) init(f func(*gin.Context, string) (*resty.Response, error)) {
-	auth := r.getAuthMiddleware(f)
 	auth.Use()
 	{
 		/* These two API will be available based on RBAC */
