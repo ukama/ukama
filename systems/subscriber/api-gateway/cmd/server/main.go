@@ -28,7 +28,7 @@ func main() {
 	}
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
-	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac)
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
 	r.Run()
 }
 
