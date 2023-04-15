@@ -44,7 +44,8 @@ var routerConfig = &RouterConfig{
 	},
 	auth: &cconfig.Auth{
 		AuthAppUrl:    "http://localhost:4455",
-		AuthServerUrl: "http://localhost:8080",
+		AuthServerUrl: "http://localhost:4434",
+		AuthAPIGW:     "http://localhost:8080",
 	},
 }
 

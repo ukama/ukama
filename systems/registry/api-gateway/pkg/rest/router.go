@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
@@ -73,7 +72,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) (*resty.Response, error)) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
 		clients: clients,
 		config:  config,
@@ -105,16 +104,15 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init(f func(*gin.Context, string) (*resty.Response, error)) {
+func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
 	auth := r.f.Group("/v1", "API gateway", "Registry system version v1", func(ctx *gin.Context) {
-		res, err := f(ctx, r.config.auth.AuthAPIGW)
+		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
 			return
 		}
-		if res.StatusCode() != http.StatusOK {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, res.String())
+		if err == nil {
 			return
 		}
 	})

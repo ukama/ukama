@@ -113,7 +113,7 @@ func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
 	}, nil
 }
 
-func (p *Router) authenticate(c *gin.Context) (*ory.Session, error) {
+func (p *Router) authenticate(c *gin.Context) error {
 	st, _ := pkg.SessionType(c, SESSION_KEY)
 	var ss string
 	if st == "cookie" {
@@ -124,20 +124,20 @@ func (p *Router) authenticate(c *gin.Context) (*ory.Session, error) {
 		if err == nil {
 			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
 			if e != nil {
-				return nil, e
+				return e
 			}
 			ss = t.Session
 		} else {
-			return nil, err
+			return err
 		}
 	}
 
-	res, err := pkg.ValidateSession(ss, st, p.config.o)
+	_, err := pkg.ValidateSession(ss, st, p.config.o)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return res, nil
+	return nil
 }
 
 func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
