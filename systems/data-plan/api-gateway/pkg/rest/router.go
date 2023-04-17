@@ -23,10 +23,9 @@ import (
 var REDIRECT_URI = "https://data-plan.dev.ukama.com/swagger/#/"
 
 type Router struct {
-	f              *fizz.Fizz
-	clients        *Clients
-	config         *RouterConfig
-	authRestClient *providers.AuthRestClient
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
 }
 
 type RouterConfig struct {
@@ -83,9 +82,8 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 
 	r := &Router{
-		clients:        clients,
-		config:         config,
-		authRestClient: authRestClient,
+		clients: clients,
+		config:  config,
 	}
 
 	if !config.debugMode {

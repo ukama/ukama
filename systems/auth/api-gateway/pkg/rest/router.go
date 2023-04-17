@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/auth/api-gateway/pkg/client"
 
 	oc "github.com/ory/client-go"
 	"github.com/ukama/ukama/systems/common/config"
@@ -179,16 +180,4 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 	return &LoginRes{
 		Token: token,
 	}, nil
-}
-
-func (p *Router) getSession(c *gin.Context, req *GetSessionReq) (*ory.Session, error) {
-	session, err := pkg.GetSessionFromToken(c.Writer, req.Token, p.config.k)
-	if err != nil {
-		return nil, err
-	}
-	res, err := pkg.CheckSession(session.Session, p.config.o)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
 }

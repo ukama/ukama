@@ -33,5 +33,5 @@ type LoginRes struct {
 }
 
 type GetSessionReq struct {
-	Token string `example:"token" json:"token" path:"token" validation:"required"`
+	XSessionToken string `example:"token" json:"x-session-token" header:"x-session-token" validation:"required"`
 }

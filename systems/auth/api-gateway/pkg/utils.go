@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -72,6 +71,7 @@ func ValidateToken(w http.ResponseWriter, t string, k string) (err error) {
 		}
 		return []byte(k), nil
 	})
+
 	if err != nil {
 		return err
 	}
