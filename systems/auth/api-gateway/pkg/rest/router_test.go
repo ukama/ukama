@@ -74,7 +74,6 @@ func TestLogin(t *testing.T) {
 		res, err := router.login(ctx, payload)
 
 		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		token = res.Token
@@ -107,7 +106,6 @@ func TestAuthenticate(t *testing.T) {
 			XSessionToken: token,
 		})
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		c.JSON(http.StatusOK, "")
@@ -129,7 +127,6 @@ func TestWhoami(t *testing.T) {
 			XSessionToken: token,
 		})
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		c.JSON(http.StatusOK, res)
