@@ -55,9 +55,9 @@ func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRa
 }
 
 func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetNetwork(), db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -71,9 +71,9 @@ func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetB
 }
 
 func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetNetwork(), db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -87,7 +87,7 @@ func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *
 }
 
 func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetBaseRatesByPeriodRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetNetwork(), req.GetSimType(), req.From, req.To)
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
 
 	from, err := time.Parse(time.RFC3339, req.GetFrom())
 	if err != nil {
@@ -99,7 +99,7 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to "+err.Error())
 	}
 
-	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetNetwork(), from, to, db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -198,7 +198,7 @@ func dbRatesToPbRates(r *db.BaseRate) *pb.Rate {
 		LteM:        r.LteM,
 		SmsMo:       r.SmsMo,
 		SmsMt:       r.SmsMt,
-		Network:     r.Network,
+		Provider:    r.Provider,
 		Country:     r.Country,
 		SimType:     r.SimType.String(),
 		EffectiveAt: r.EffectiveAt.Format(time.RFC3339),

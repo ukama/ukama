@@ -90,7 +90,7 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.BaseRat
 		rates = append(rates, db.BaseRate{
 			Uuid:        uuid.NewV4(),
 			Country:     value.Country,
-			Network:     value.Network,
+			Provider:    value.Network,
 			Vpmn:        value.Vpmn,
 			Imsi:        imsi,
 			SmsMo:       smo,

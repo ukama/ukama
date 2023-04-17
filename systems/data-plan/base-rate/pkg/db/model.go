@@ -13,7 +13,7 @@ type BaseRate struct {
 	gorm.Model
 	Uuid        uuid.UUID `gorm:"uniqueIndex:uuid_idx,where:deleted_at is null;not null;type:uuid"`
 	Country     string    `gorm:"uniqueIndex:baserate_idx,priority:1,where:deleted_at is null;not null;type:string"`
-	Network     string    `gorm:"uniqueIndex:baserate_idx,priority:4,where:deleted_at is null;not null;type:string"`
+	Provider    string    `gorm:"uniqueIndex:baserate_idx,priority:4,where:deleted_at is null;not null;type:string"`
 	Vpmn        string
 	Imsi        int64
 	SmsMo       float64 `gorm:"type:float"`
