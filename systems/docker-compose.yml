@@ -306,8 +306,8 @@ services:
       - postgresd
 
 
-  billing-exporter:
-    build: ./billing/exporter
+  billing-collector:
+    build: ./billing/collector
     ports:
       - "9691:9090"
     environment:
@@ -317,8 +317,8 @@ services:
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
       - MSGCLIENT_HOST=msg-client-billing:9095
-      - EXPORTER_SERVICE_HOST=billing-exporter
-      - EXPORTER_SERVICE_PORT=9090
+      - COLLECTOR_SERVICE_HOST=billing-collector
+      - COLLECTOR_SERVICE_PORT=9090
       - LAGOAPIKEY=b24f7d88-4072-4866-9bbf-5dadd1970597
       - LAGOHOST=${DOCKER_HOST_IP}
     restart: always
