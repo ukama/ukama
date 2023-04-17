@@ -11,6 +11,7 @@ import (
 type Package struct {
 	gorm.Model
 	Uuid         uuid.UUID `gorm:"primaryKey;type:uuid"`
+	OwnerId      uuid.UUID
 	Name         string
 	SimType      SimType
 	OrgId        uuid.UUID       `gorm:"not null;type:uuid;index"`

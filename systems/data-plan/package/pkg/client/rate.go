@@ -19,7 +19,7 @@ type Rate struct {
 
 type RateService interface {
 	GetRates(req *pb.GetRatesRequest) (*pb.GetRatesResponse, error)
-	GetRate(id string) (*pb.GetRateResponse, error)
+	GetRateById(req *pb.GetRateByIdRequest) (*pb.GetRateByIdResponse, error)
 }
 
 func NewRate(rate string, timeout time.Duration) (*Rate, error) {
@@ -50,8 +50,8 @@ func (c *Rate) GetRates(req *pb.GetRatesRequest) (*pb.GetRatesResponse, error) {
 	return c.client.GetRates(ctx, req)
 }
 
-func (c *Rate) GetRate(id string) (*pb.GetRateResponse, error) {
+func (c *Rate) GetRateById(req *pb.GetRateByIdRequest) (*pb.GetRateByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
-	return c.client.GetRate(ctx, &pb.GetRateRequest{Uuid: id})
+	return c.client.GetRateById(ctx, req)
 }

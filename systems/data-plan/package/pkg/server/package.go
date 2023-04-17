@@ -14,6 +14,7 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/client"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
+	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -97,6 +98,7 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 
 	return packageList, nil
 }
+
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 
 	// Need to get Network for ukama_data
@@ -109,8 +111,21 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 
+	ownId, err := uuid.FromString(req.GetOwnerId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of owner uuid. Error %s", err.Error())
+	}
+
+	baserate, err := uuid.FromString(req.GetBaserate())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of base rate. Error %s", err.Error())
+	}
+
 	pr := db.Package{
 		Uuid:         uuid.NewV4(),
+		OwnerId:      ownId,
 		Name:         req.GetName(),
 		SimType:      db.ParseType(req.GetSimType()),
 		OrgId:        orgId,
@@ -127,12 +142,19 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			Amount: req.Amount,
 		},
 		Markup: &db.PackageMarkup{
-			Markup: req.Markup,
+			BaseRateId: baserate,
+			Markup:     req.Markup,
+		},
+		Details: &db.PackageDetails{
+			Apn: req.Apn,
 		},
 	}
 
 	// Request rate
-	rate, err := p.rate.GetRate(req.Baserate)
+	rate, err := p.rate.GetRateById(&rpb.GetRateByIdRequest{
+		OwnerId:  req.OwnerId,
+		BaseRate: req.Baserate,
+	})
 	if err != nil {
 		logrus.Errorf("Failed to get base rate for package. Error: %s", err.Error())
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -140,7 +162,9 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	}
 
 	// calculae rate per unit
-	calculateRatePerUnit(pr.Rate, rate, pr.MessageUnits, pr.DataUnits)
+	calculateRatePerUnit(pr.Rate, rate.Rate, pr.MessageUnits, pr.DataUnits)
+
+	calculateTotalAmount(&pr)
 
 	err = p.packageRepo.Add(&pr)
 	if err != nil {
@@ -263,5 +287,13 @@ func calculateRatePerUnit(pr *db.PackageRate, rate *bpb.Rate, mu db.MessageUnitT
 	pr.SmsMo = (float64)(db.ReturnMessageUnits(mu)) * rate.SmsMo
 	pr.SmsMt = (float64)(db.ReturnMessageUnits(mu)) * rate.SmsMt
 	pr.Data = (float64)(db.ReturnDataUnits(du)) * rate.Data
+
+}
+
+func calculateTotalAmount(pr *db.Package) {
+
+	pr.Rate.Amount = (pr.Rate.SmsMo * float64(pr.SmsVolume)) +
+		(pr.Rate.SmsMt * float64(pr.SmsVolume)) +
+		(pr.Rate.Data * float64(pr.DataVolume))
 
 }
