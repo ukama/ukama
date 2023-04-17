@@ -209,7 +209,8 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 		return nil, err
 	}
 
-	rates, err := r.baseRate.GetBaseRates(&bpb.GetBaseRatesRequest{
+	to := time.Unix(req.To, 0).Format(time.RFC3339)
+	rates, err := r.baseRate.GetBaseRates(&bpb.GetBaseRatesByPeriodRequest{
 		Country:     req.Country,
 		Provider:    req.Provider,
 		To:          req.To,

@@ -9,8 +9,8 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
-	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/client"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
@@ -109,7 +109,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid format of org uuid. Error %s", err.Error())
 	}
 
-	_package := &db.Package{
+	pr := db.Package{
 		Uuid:         uuid.NewV4(),
 		Name:         req.GetName(),
 		SimType:      db.ParseType(req.GetSimType()),
@@ -122,11 +122,9 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		MessageUnits: db.ParseMessageType(req.Messageunit),
 		CallUnits:    db.ParseCallUnitType(req.CallUnit),
 		DataUnits:    db.ParseDataUnitType(req.DataUnit),
-		Dlbr:         uint64(req.Dlbr),
-		Ulbr:         uint64(req.Ulbr),
 		Flatrate:     req.Flatrate,
 		Rate: &db.PackageRate{
-			Flatrate: req.FlatrateAmount,
+			Amount: req.Amount,
 		},
 		Markup: &db.PackageMarkup{
 			Markup: req.Markup,
@@ -136,20 +134,21 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	// Request rate
 	rate, err := p.rate.GetRate(req.Baserate)
 	if err != nil {
-		log.Errorf("Failed to get base rate for package. Error: %s", err.Error()))
-		retuun nil, tatus.Errorf(codes.InvalidArgument,
+		logrus.Errorf("Failed to get base rate for package. Error: %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid base id. Error %s", err.Error())
 	}
 
 	// calculae rate per unit
+	calculateRatePerUnit(pr.Rate, rate, pr.MessageUnits, pr.DataUnits)
 
-	err = p.packageRepo.Add(_package)
+	err = p.packageRepo.Add(&pr)
 	if err != nil {
 
 		logrus.Error("Error while adding a package. " + err.Error())
 		return nil, status.Errorf(codes.Internal, "Error while adding a package.")
 	}
-	return &pb.AddPackageResponse{Package: dbPackageToPbPackages(_package)}, nil
+	return &pb.AddPackageResponse{Package: dbPackageToPbPackages(&pr)}, nil
 }
 
 func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
@@ -237,27 +236,17 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		CreatedAt:   p.CreatedAt.String(),
 		UpdatedAt:   p.UpdatedAt.String(),
 		DeletedAt:   p.DeletedAt.Time.String(),
-		X2G:         p.X2g,
-		X3G:         p.X3g,
-		X5G:         p.X5g,
-		Lte:         p.Lte,
-		LteM:        p.LteM,
-		Apn:         p.Apn,
-		Vpmn:        p.Vpmn,
-		Imsi:        p.Imsi,
 		Rate: &pb.PackageRates{
-			Data:     p.Rate.Data,
-			SmsMo:    p.Rate.SmsMo,
-			SmsMt:    p.Rate.SmsMt,
-			FlatRate: p.Rate.Flatrate,
+			Data:   p.Rate.Data,
+			SmsMo:  p.Rate.SmsMo,
+			SmsMt:  p.Rate.SmsMt,
+			Amount: p.Rate.Amount,
 		},
 		Markup: &pb.PackageMarkup{
 			Baserate: p.Markup.BaseRateId.String(),
 			Markup:   p.Markup.Markup,
 		},
 		Provider:    p.Provider,
-		Dlbr:        int64(p.Dlbr),
-		Ulbr:        int64(p.Ulbr),
 		Messageunit: p.MessageUnits.String(),
 		CallUnit:    p.CallUnits.String(),
 		DataUnit:    p.DataUnits.String(),
@@ -267,4 +256,12 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		EffectiveAt: p.EffectiveAt.Format(time.RFC3339),
 		EndAt:       p.EndAt.Format(time.RFC3339),
 	}
+}
+
+func calculateRatePerUnit(pr *db.PackageRate, rate *bpb.Rate, mu db.MessageUnitType, du db.DataUnitType) {
+
+	pr.SmsMo = (float64)(db.ReturnMessageUnits(mu)) * rate.SmsMo
+	pr.SmsMt = (float64)(db.ReturnMessageUnits(mu)) * rate.SmsMt
+	pr.Data = (float64)(db.ReturnDataUnits(du)) * rate.Data
+
 }

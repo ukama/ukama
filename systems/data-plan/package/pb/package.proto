@@ -78,7 +78,7 @@ message AddPackageRequest {
     string callUnit = 19;
     string messageunit = 20;
     bool   flatrate = 21;
-    double flatrateAmount = 22;
+    double amount = 22;
     string effectiveAt  = 23;
     string endAt = 24;
     string country=25;
@@ -120,21 +120,13 @@ message Package {
     string country=25;
     string provider= 26;
     string apn = 27;
-    bool  _2g=28;
-    bool _3g=29;
-    bool _5g=30;
-    bool lte=31; 
-    bool lteM=32 [json_name = "lte_m"];
-    string vpmn =33;
-    int64 imsi=34;
-
 }
 
 message PackageRates{ 
     double SmsMo=1 [json_name = "sms_mo"];
     double SmsMt =2 [json_name = "sms_mt"];
     double Data =3;
-    double FlatRate  = 4;
+    double Amount  = 4;
 
 } 
 

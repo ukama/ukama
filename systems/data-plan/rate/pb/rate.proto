@@ -29,6 +29,7 @@ service RateService {
     
     rpc GetRates (GetRatesRequest) returns (GetRatesResponse);
     rpc GetRate(GetRateRequest) returns (GetRateResponse);
+    rpc GetRateById(GetRateRequest) returns (GetRateResponse);
 
 }
 

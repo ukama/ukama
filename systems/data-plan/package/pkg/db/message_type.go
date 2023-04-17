@@ -9,7 +9,7 @@ type MessageUnitType uint8
 
 const (
 	MessageUnitTypeUnknown MessageUnitType = iota
-	MeesageUnitTypeInt                     = 1
+	MessageUnitTypeInt                     = 1
 )
 
 func (s *MessageUnitType) Scan(value interface{}) error {
@@ -46,4 +46,14 @@ func ParseMessageType(value string) MessageUnitType {
 	}
 
 	return MessageUnitType(v)
+}
+
+func ReturnMessageUnits(value MessageUnitType) int64 {
+	t := map[MessageUnitType]int64{MessageUnitTypeUnknown: 0, MessageUnitTypeInt: 1}
+
+	v, ok := t[value]
+	if !ok {
+		return 0
+	}
+	return v
 }

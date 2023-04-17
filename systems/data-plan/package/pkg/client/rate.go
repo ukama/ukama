@@ -14,7 +14,7 @@ import (
 type Rate struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
-	client  pb.RatesServiceClient
+	client  pb.RateServiceClient
 }
 
 type RateService interface {
@@ -31,7 +31,7 @@ func NewRate(rate string, timeout time.Duration) (*Rate, error) {
 		logrus.Errorf("Failed to connect to rate service at %s. Error %s", rate, err.Error())
 		return nil, err
 	}
-	client := pb.NewRatesServiceClient(conn)
+	client := pb.NewRateServiceClient(conn)
 
 	return &Rate{
 		conn:    conn,
