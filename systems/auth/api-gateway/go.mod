@@ -29,6 +29,7 @@ require (
 
 require (
 	github.com/ory/client-go v1.1.24
+	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 )
 
@@ -43,7 +44,6 @@ require (
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
-	github.com/golang-jwt/jwt/v5 v5.0.0-rc.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
