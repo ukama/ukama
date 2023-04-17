@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
 )
@@ -41,21 +40,21 @@ func NewAuthClient(u string, debug bool) (*AuthRestClient, error) {
 	return N, nil
 }
 
-func (a *AuthRestClient) AuthenticateUser(c *gin.Context, u string) (*resty.Response, error) {
+func (a *AuthRestClient) AuthenticateUser(c *gin.Context, u string) error {
 	errStatus := &rest.ErrorMessage{}
 	urlObj, _ := url.Parse(u)
 	a.Jar.SetCookies(urlObj, c.Request.Cookies())
-	resp, err := a.R.C.SetCookieJar(a.Jar).R().
+	_, err := a.R.C.SetCookieJar(a.Jar).R().
 		SetError(errStatus).
 		Get(u + AuthenticateEndpoint)
-	return resp, err
+	if err != nil {
+		logrus.Errorf("Got error while authenticating user %s", err.Error())
+		return err
+	}
+
+	return nil
 }
 
-func (a *AuthRestClient) MockAuthenticateUser(c *gin.Context, u string) (*resty.Response, error) {
-	return &resty.Response{
-		RawResponse: &http.Response{
-			StatusCode: 200,
-			Body:       nil,
-		},
-	}, nil
+func (a *AuthRestClient) MockAuthenticateUser(c *gin.Context, u string) error {
+	return nil
 }

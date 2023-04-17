@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/auth/api-gateway/pkg/client"
 
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -75,7 +76,6 @@ func (r *Router) init() {
 	v1.GET("/whoami", formatDoc("Get user info", ""), tonic.Handler(r.getUserInfo, http.StatusOK))
 	v1.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))
 	v1.POST("/login", formatDoc("Login user", ""), tonic.Handler(r.login, http.StatusOK))
-	v1.GET("/getSession/:token", formatDoc("Get user session based on session token", ""), tonic.Handler(r.getSession, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -86,34 +86,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	return opt
 }
 
-func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
-	st, _ := pkg.SessionType(c, SESSION_KEY)
-	var ss string
-	if st == "cookie" {
-		ss = pkg.GetCookieStr(c, SESSION_KEY)
-	} else if st == "token" {
-		ss = pkg.GetTokenStr(c)
-	}
-	res, err := pkg.ValidateSession(ss, st, p.config.o)
-
-	if err != nil {
-		return nil, err
-	}
-
-	user, err := pkg.GetUserTraitsFromSession(res)
-	if err != nil {
-		return nil, err
-	}
-	return &GetUserInfo{
-		Id:         user.Id,
-		Name:       user.Name,
-		Email:      user.Email,
-		Role:       user.Role,
-		FirstVisit: user.FirstVisit,
-	}, nil
-}
-
-func (p *Router) authenticate(c *gin.Context) (*ory.Session, error) {
+func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserInfo, error) {
 	st, _ := pkg.SessionType(c, SESSION_KEY)
 	var ss string
 	if st == "cookie" {
@@ -131,17 +104,52 @@ func (p *Router) authenticate(c *gin.Context) (*ory.Session, error) {
 			return nil, err
 		}
 	}
-
-	res, err := pkg.ValidateSession(ss, st, p.config.o)
+	res, err := client.ValidateSession(ss, st, p.config.o)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, nil
+	user, err := pkg.GetUserTraitsFromSession(res)
+	if err != nil {
+		return nil, err
+	}
+	return &GetUserInfo{
+		Id:         user.Id,
+		Name:       user.Name,
+		Email:      user.Email,
+		Role:       user.Role,
+		FirstVisit: user.FirstVisit,
+	}, nil
+}
+
+func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
+	st, _ := pkg.SessionType(c, SESSION_KEY)
+	var ss string
+	if st == "cookie" {
+		ss = pkg.GetCookieStr(c, SESSION_KEY)
+	} else if st == "header" {
+		ss = pkg.GetTokenStr(c)
+		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
+		if err == nil {
+			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
+			if e != nil {
+				return e
+			}
+			ss = t.Session
+		} else {
+			return err
+		}
+	}
+	_, err := client.ValidateSession(ss, st, p.config.o)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
-	res, err := pkg.LoginUser(req.Email, req.Password, p.config.o)
+	res, err := client.LoginUser(req.Email, req.Password, p.config.o)
 	if err != nil {
 		return nil, err
 	}
@@ -152,16 +160,4 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 	return &LoginRes{
 		Token: token,
 	}, nil
-}
-
-func (p *Router) getSession(c *gin.Context, req *GetSessionReq) (*ory.Session, error) {
-	session, err := pkg.GetSessionFromToken(c.Writer, req.Token, p.config.k)
-	if err != nil {
-		return nil, err
-	}
-	res, err := pkg.CheckSession(session.Session, p.config.o)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
 }
