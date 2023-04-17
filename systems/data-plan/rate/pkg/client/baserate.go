@@ -19,7 +19,7 @@ type BaseRate struct {
 
 type BaseRateSrvc interface {
 	GetBaseRates(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
-	GetBaseRate(id string) (*bpb.GetBaseRatesByIdResponse, error)
+	GetBaseRate(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
 }
 
 func NewBaseRate(baseRate string, timeout time.Duration) (*BaseRate, error) {
@@ -50,8 +50,8 @@ func (c *BaseRate) GetBaseRates(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetB
 	return c.client.GetBaseRatesForPeriod(ctx, req)
 }
 
-func (c *BaseRate) GetBaseRate(id string) (*bpb.GetBaseRatesByIdResponse, error) {
+func (c *BaseRate) GetBaseRate(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
-	return c.client.GetBaseRatesById(ctx, &bpb.GetBaseRatesByIdRequest{Uuid: id})
+	return c.client.GetBaseRatesById(ctx, req)
 }

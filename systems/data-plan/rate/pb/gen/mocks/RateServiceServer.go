@@ -153,20 +153,20 @@ func (_m *RateServiceServer) GetRate(_a0 context.Context, _a1 *gen.GetRateReques
 }
 
 // GetRateById provides a mock function with given fields: _a0, _a1
-func (_m *RateServiceServer) GetRateById(_a0 context.Context, _a1 *gen.GetRateRequest) (*gen.GetRateResponse, error) {
+func (_m *RateServiceServer) GetRateById(_a0 context.Context, _a1 *gen.GetRateByIdRequest) (*gen.GetRateByIdResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetRateResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRateRequest) *gen.GetRateResponse); ok {
+	var r0 *gen.GetRateByIdResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRateByIdRequest) *gen.GetRateByIdResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetRateResponse)
+			r0 = ret.Get(0).(*gen.GetRateByIdResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRateRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRateByIdRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

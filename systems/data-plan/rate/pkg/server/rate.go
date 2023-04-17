@@ -209,14 +209,14 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 		return nil, err
 	}
 
-	to := time.Unix(req.To, 0).Format(time.RFC3339)
+	to := time.Unix(int64(req.To), 0).Format(time.RFC3339)
+	from := time.Unix(int64(req.From), 0).Format(time.RFC3339)
 	rates, err := r.baseRate.GetBaseRates(&bpb.GetBaseRatesByPeriodRequest{
-		Country:     req.Country,
-		Provider:    req.Provider,
-		To:          req.To,
-		From:        req.From,
-		SimType:     req.SimType,
-		EffectiveAt: req.EffectiveAt,
+		Country:  req.Country,
+		Provider: req.Provider,
+		To:       to,
+		From:     from,
+		SimType:  req.SimType,
 	})
 	if err != nil {
 		log.Errorf("error while getting base rates" + err.Error())
@@ -233,6 +233,36 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 	}
 
 	return rateList, nil
+}
+
+func (r *RateServer) GetRateById(ctx context.Context, req *pb.GetRateByIdRequest) (*pb.GetRateByIdResponse, error) {
+
+	log.Infof("GetRates for User %sbase rate %s", req.OwnerId, req.BaseRate)
+
+	uuid, err := uuid.FromString(req.OwnerId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	markup, err := r.getUserMarkup(uuid)
+	if err != nil {
+		log.Error("error while getting markup" + err.Error())
+		return nil, err
+	}
+
+	rates, err := r.baseRate.GetBaseRate(&bpb.GetBaseRatesByIdRequest{
+		Uuid: req.BaseRate,
+	})
+	if err != nil {
+		log.Errorf("error while getting base rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "baserates")
+	}
+
+	rate := &pb.GetRateByIdResponse{
+		Rate: baseRateToMarkupRate(rates.Rate, markup),
+	}
+
+	return rate, nil
 }
 
 func (r *RateServer) PublishMarkupEvents(ownerId string, markup float64, action string) {

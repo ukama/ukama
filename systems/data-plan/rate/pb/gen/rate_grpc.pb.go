@@ -31,7 +31,7 @@ type RateServiceClient interface {
 	GetDefaultMarkupHistory(ctx context.Context, in *GetDefaultMarkupHistoryRequest, opts ...grpc.CallOption) (*GetDefaultMarkupHistoryResponse, error)
 	GetRates(ctx context.Context, in *GetRatesRequest, opts ...grpc.CallOption) (*GetRatesResponse, error)
 	GetRate(ctx context.Context, in *GetRateRequest, opts ...grpc.CallOption) (*GetRateResponse, error)
-	GetRateById(ctx context.Context, in *GetRateRequest, opts ...grpc.CallOption) (*GetRateResponse, error)
+	GetRateById(ctx context.Context, in *GetRateByIdRequest, opts ...grpc.CallOption) (*GetRateByIdResponse, error)
 }
 
 type rateServiceClient struct {
@@ -123,8 +123,8 @@ func (c *rateServiceClient) GetRate(ctx context.Context, in *GetRateRequest, opt
 	return out, nil
 }
 
-func (c *rateServiceClient) GetRateById(ctx context.Context, in *GetRateRequest, opts ...grpc.CallOption) (*GetRateResponse, error) {
-	out := new(GetRateResponse)
+func (c *rateServiceClient) GetRateById(ctx context.Context, in *GetRateByIdRequest, opts ...grpc.CallOption) (*GetRateByIdResponse, error) {
+	out := new(GetRateByIdResponse)
 	err := c.cc.Invoke(ctx, "/ukama.dataplan.rate.v1.RateService/GetRateById", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ type RateServiceServer interface {
 	GetDefaultMarkupHistory(context.Context, *GetDefaultMarkupHistoryRequest) (*GetDefaultMarkupHistoryResponse, error)
 	GetRates(context.Context, *GetRatesRequest) (*GetRatesResponse, error)
 	GetRate(context.Context, *GetRateRequest) (*GetRateResponse, error)
-	GetRateById(context.Context, *GetRateRequest) (*GetRateResponse, error)
+	GetRateById(context.Context, *GetRateByIdRequest) (*GetRateByIdResponse, error)
 	mustEmbedUnimplementedRateServiceServer()
 }
 
@@ -180,7 +180,7 @@ func (UnimplementedRateServiceServer) GetRates(context.Context, *GetRatesRequest
 func (UnimplementedRateServiceServer) GetRate(context.Context, *GetRateRequest) (*GetRateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRate not implemented")
 }
-func (UnimplementedRateServiceServer) GetRateById(context.Context, *GetRateRequest) (*GetRateResponse, error) {
+func (UnimplementedRateServiceServer) GetRateById(context.Context, *GetRateByIdRequest) (*GetRateByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRateById not implemented")
 }
 func (UnimplementedRateServiceServer) mustEmbedUnimplementedRateServiceServer() {}
@@ -359,7 +359,7 @@ func _RateService_GetRate_Handler(srv interface{}, ctx context.Context, dec func
 }
 
 func _RateService_GetRateById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRateRequest)
+	in := new(GetRateByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -371,7 +371,7 @@ func _RateService_GetRateById_Handler(srv interface{}, ctx context.Context, dec 
 		FullMethod: "/ukama.dataplan.rate.v1.RateService/GetRateById",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RateServiceServer).GetRateById(ctx, req.(*GetRateRequest))
+		return srv.(RateServiceServer).GetRateById(ctx, req.(*GetRateByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

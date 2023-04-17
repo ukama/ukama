@@ -29,7 +29,7 @@ service RateService {
     
     rpc GetRates (GetRatesRequest) returns (GetRatesResponse);
     rpc GetRate(GetRateRequest) returns (GetRateResponse);
-    rpc GetRateById(GetRateRequest) returns (GetRateResponse);
+    rpc GetRateById(GetRateByIdRequest) returns (GetRateByIdResponse);
 
 }
 
@@ -119,6 +119,15 @@ message GetRateRequest{
 
 message GetRateResponse{
     repeated ukama.dataplan.baserate.v1.Rate rates =1;
+}
+
+message GetRateByIdRequest {
+    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string baseRate = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message GetRateByIdResponse {
+    ukama.dataplan.baserate.v1.Rate rate =1 ;
 }
 
 // message Rate{
