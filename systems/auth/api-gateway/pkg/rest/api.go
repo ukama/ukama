@@ -8,8 +8,8 @@ type GetUserInfo struct {
 	FirstVisit bool   `example:"true" json:"first_visit" validation:"required"`
 }
 
-type Authenticate struct {
-	IsValidSession bool `example:"1" json:"is_valid_session" validation:"required"`
+type OptionalReqHeader struct {
+	XSessionToken string `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
 }
 
 type LoginReq struct {
@@ -21,5 +21,5 @@ type LoginRes struct {
 }
 
 type GetSessionReq struct {
-	Token string `example:"token" json:"token" path:"token" validation:"required"`
+	XSessionToken string `example:"token" json:"x-session-token" header:"x-session-token" validation:"required"`
 }

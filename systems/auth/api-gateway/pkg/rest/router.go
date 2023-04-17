@@ -75,7 +75,6 @@ func (r *Router) init() {
 	v1.GET("/whoami", formatDoc("Get user info", ""), tonic.Handler(r.getUserInfo, http.StatusOK))
 	v1.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))
 	v1.POST("/login", formatDoc("Login user", ""), tonic.Handler(r.login, http.StatusOK))
-	v1.GET("/getSession/:token", formatDoc("Get user session based on session token", ""), tonic.Handler(r.getSession, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -86,16 +85,25 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	return opt
 }
 
-func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
+func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserInfo, error) {
 	st, _ := pkg.SessionType(c, SESSION_KEY)
 	var ss string
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
-	} else if st == "token" {
+	} else if st == "header" {
 		ss = pkg.GetTokenStr(c)
+		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
+		if err == nil {
+			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
+			if e != nil {
+				return nil, e
+			}
+			ss = t.Session
+		} else {
+			return nil, err
+		}
 	}
 	res, err := pkg.ValidateSession(ss, st, p.config.o)
-
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +121,7 @@ func (p *Router) getUserInfo(c *gin.Context) (*GetUserInfo, error) {
 	}, nil
 }
 
-func (p *Router) authenticate(c *gin.Context) error {
+func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 	st, _ := pkg.SessionType(c, SESSION_KEY)
 	var ss string
 	if st == "cookie" {
@@ -131,7 +139,6 @@ func (p *Router) authenticate(c *gin.Context) error {
 			return err
 		}
 	}
-
 	_, err := pkg.ValidateSession(ss, st, p.config.o)
 	if err != nil {
 		return err
@@ -152,16 +159,4 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 	return &LoginRes{
 		Token: token,
 	}, nil
-}
-
-func (p *Router) getSession(c *gin.Context, req *GetSessionReq) (*ory.Session, error) {
-	session, err := pkg.GetSessionFromToken(c.Writer, req.Token, p.config.k)
-	if err != nil {
-		return nil, err
-	}
-	res, err := pkg.CheckSession(session.Session, p.config.o)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
 }

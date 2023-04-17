@@ -68,12 +68,13 @@ func GenerateJWT(s *string, e string, a string, k string) (string, error) {
 }
 
 func ValidateToken(w http.ResponseWriter, t string, k string) (err error) {
-	token, err := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
+	token, _ := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("there was an error in parsing")
 		}
 		return []byte(k), nil
 	})
+
 	if err != nil {
 		return err
 	}
@@ -192,14 +193,4 @@ func LoginUser(email string, password string, o *ory.APIClient) (*client.Success
 		return nil, err
 	}
 	return flow1, nil
-}
-
-func CheckSession(sessionToken string, o *ory.APIClient) (session *client.Session, err error) {
-	session, _, err = o.FrontendApi.ToSession(context.Background()).
-		XSessionToken(sessionToken).
-		Execute()
-	if err != nil {
-		return nil, err
-	}
-	return session, nil
 }
