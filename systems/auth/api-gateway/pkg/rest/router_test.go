@@ -30,19 +30,20 @@ var routerConfig = &RouterConfig{
 		Cors: defaultCors,
 	},
 	auth: cconfig.LoadAuthHostConfig("auth"),
-	o: ory.NewAPIClient(&ory.Configuration{
-		Servers: []ory.ServerConfiguration{
-			{
-				URL: "http://localhost:4434",
-			},
-		},
-	}),
-	k: cconfig.LoadAuthKey(),
+	o:    nil,
+	k:    cconfig.LoadAuthKey(),
 }
 
 func init() {
 	jar, _ := cookiejar.New(nil)
 	gin.SetMode(gin.TestMode)
+	routerConfig.o = ory.NewAPIClient(&ory.Configuration{
+		Servers: []ory.ServerConfiguration{
+			{
+				URL: routerConfig.auth.AuthServerUrl,
+			},
+		},
+	})
 	routerConfig.o.GetConfig().HTTPClient = &http.Client{
 		Jar: jar,
 	}
@@ -67,8 +68,8 @@ func TestLogin(t *testing.T) {
 		Email:    mockEmail,
 		Password: mockPassword,
 	}
-
 	router.init()
+
 	r.POST("/v1/login", func(ctx *gin.Context) {
 		res, err := router.login(ctx, payload)
 

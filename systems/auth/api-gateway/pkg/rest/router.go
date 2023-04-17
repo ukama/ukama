@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/auth/api-gateway/pkg/client"
 
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -103,7 +104,7 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 			return nil, err
 		}
 	}
-	res, err := pkg.ValidateSession(ss, st, p.config.o)
+	res, err := client.ValidateSession(ss, st, p.config.o)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +140,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 			return err
 		}
 	}
-	_, err := pkg.ValidateSession(ss, st, p.config.o)
+	_, err := client.ValidateSession(ss, st, p.config.o)
 	if err != nil {
 		return err
 	}
@@ -148,7 +149,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 }
 
 func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
-	res, err := pkg.LoginUser(req.Email, req.Password, p.config.o)
+	res, err := client.LoginUser(req.Email, req.Password, p.config.o)
 	if err != nil {
 		return nil, err
 	}
