@@ -22,7 +22,6 @@ require (
 )
 
 require (
-	github.com/go-resty/resty/v2 v2.7.0
 	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
 	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
@@ -40,6 +39,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.11.2 // indirect
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
