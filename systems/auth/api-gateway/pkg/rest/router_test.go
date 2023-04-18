@@ -73,7 +73,10 @@ func TestLogin(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	lg := LoginRes{}
-	json.Unmarshal(w.Body.Bytes(), &lg)
+	err = json.Unmarshal(w.Body.Bytes(), &lg)
+	if err != nil {
+		t.Error(err)
+	}
 	token = lg.Token
 	assert.Equal(t, 200, w.Code)
 }
