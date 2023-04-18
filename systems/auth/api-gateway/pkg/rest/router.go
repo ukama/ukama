@@ -9,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/auth/api-gateway/pkg/client"
 
 	oc "github.com/ory/client-go"
 	"github.com/ukama/ukama/systems/common/config"
@@ -145,7 +144,6 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	if err != nil {
 		return err
 	}
-
 	var ss string
 	var orgId string
 	if st == "cookie" {

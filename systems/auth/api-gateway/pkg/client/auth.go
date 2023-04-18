@@ -187,6 +187,19 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
 
 	if err != nil {
+		if resp.StatusCode == http.StatusBadRequest {
+			u := UIErrorResp{}
+			buf := &bytes.Buffer{}
+			_, e := buf.ReadFrom(resp.Body)
+			if e != nil {
+				return nil, e
+			}
+			e = json.Unmarshal(buf.Bytes(), &u)
+			if e != nil {
+				return nil, e
+			}
+			return nil, fmt.Errorf("%v", u.Ui.Messages[0].Text)
+		}
 		return nil, err
 	}
 	if r.StatusCode == http.StatusUnauthorized {
