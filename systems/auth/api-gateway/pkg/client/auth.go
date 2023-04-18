@@ -40,7 +40,6 @@ func NewAuthManager(serverUrl string, timeout time.Duration, ketoClientUrl strin
 			URL: serverUrl,
 		},
 	}
-
 	jar, _ := cookiejar.New(nil)
 	oc := ory.NewAPIClient(configuration)
 	oc.GetConfig().HTTPClient = &http.Client{
