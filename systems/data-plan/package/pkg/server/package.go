@@ -8,6 +8,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
@@ -215,7 +216,38 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		logrus.Error("Error while adding a package. " + err.Error())
 		return nil, status.Errorf(codes.Internal, "Error while adding a package.")
 	}
-	return &pb.AddPackageResponse{Package: dbPackageToPbPackages(&pr)}, nil
+
+	resp := &pb.AddPackageResponse{Package: dbPackageToPbPackages(&pr)}
+
+	if p.msgbus != nil {
+		route := p.baseRoutingKey.SetActionCreate().SetObject("package").MustBuild()
+		evt := &epb.CreatePackageEvent{
+			Uuid:            resp.Package.Uuid,
+			OrgId:           resp.Package.OrgId,
+			OwnerId:         resp.Package.OwnerId,
+			Type:            resp.Package.Type,
+			Flatrate:        resp.Package.Flatrate,
+			Amount:          resp.Package.Amount,
+			From:            resp.Package.From,
+			To:              resp.Package.To,
+			SimType:         resp.Package.SimType,
+			SmsVolume:       resp.Package.SmsVolume,
+			DataVolume:      resp.Package.DataVolume,
+			VoiceVolume:     resp.Package.VoiceVolume,
+			DataUnit:        resp.Package.DataUnit,
+			VoiceUnit:       resp.Package.VoiceUnit,
+			Messageunit:     resp.Package.Messageunit,
+			DataUnitCost:    pr.PackageRate.Data,
+			MessageUnitCost: pr.PackageRate.SmsMo,
+			VoiceUnitCost:   pr.PackageRate.SmsMt,
+		}
+		err = p.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+
+	}
+	return resp, nil
 }
 
 func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest) (*pb.DeletePackageResponse, error) {
@@ -233,10 +265,16 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := p.baseRoutingKey.SetAction("delete").SetObject("package").MustBuild()
-	err = p.msgbus.PublishRequest(route, req)
-	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	if p.msgbus != nil {
+		evt := &epb.DeletePackageEvent{
+			Uuid:  req.Uuid,
+			OrgId: req.OrgId,
+		}
+		route := p.baseRoutingKey.SetActionDelete().SetObject("package").MustBuild()
+		err = p.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	return &pb.DeletePackageResponse{
@@ -265,13 +303,18 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 	}
 
 	route := p.baseRoutingKey.SetAction("update").SetObject("package").MustBuild()
-	err = p.msgbus.PublishRequest(route, req)
+	evt := &epb.UpdatePackageEvent{
+		Uuid:  req.Uuid,
+		OrgId: req.OrgId,
+	}
+	err = p.msgbus.PublishRequest(route, evt)
 	if err != nil {
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 
 	return &pb.UpdatePackageResponse{Package: dbPackageToPbPackages(_package)}, nil
 }
+
 
 func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {
 	res := []*pb.Package{}

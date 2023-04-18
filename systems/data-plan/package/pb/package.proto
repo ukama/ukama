@@ -1,6 +1,6 @@
 syntax = "proto3";
 package ukama.data_plan.package.v1;
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/data-plan/package/pb/gen";
 
 import "validator.proto";
 
@@ -35,16 +35,19 @@ message GetPackageResponse{
 
 message DeletePackageRequest {
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
 
 message DeletePackageResponse {
     string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
 
 message UpdatePackageRequest {
     string uuid=1  [(validator.field) = {uuid_ver: 4}];
-    string name=2;
-    bool active=3;
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string name=3;
+    bool active=4;
 }
 
 message UpdatePackageResponse {
@@ -115,6 +118,8 @@ message Package {
     string country=25;
     string provider= 26;
     string apn = 27;
+    string OwnerId = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    double amount = 29 [json_name = "amount"];
 
 }
 

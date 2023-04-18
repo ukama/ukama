@@ -37,6 +37,11 @@ func (_m *EventNotificationServiceServer) EventNotification(_a0 context.Context,
 	return r0, r1
 }
 
+// mustEmbedUnimplementedEventNotificationServiceServer provides a mock function with given fields:
+func (_m *EventNotificationServiceServer) mustEmbedUnimplementedEventNotificationServiceServer() {
+	_m.Called()
+}
+
 type mockConstructorTestingTNewEventNotificationServiceServer interface {
 	mock.TestingT
 	Cleanup(func())
