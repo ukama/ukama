@@ -127,6 +127,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		s := fmt.Sprintf("%s, %s, %s", "ukama", pkg.SystemName, ctx.Request.URL.Path)
 		ctx.Request.Header.Set("Meta", s)
 		err := f(ctx, r.config.auth.AuthAPIGW)
+		fmt.Println("ERR:", err)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
 			return
