@@ -44,7 +44,6 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	g := gin.Default()
 	g.Use(gin.Logger())
 	g.Use(cors.New(httpConfig.Cors))
-
 	m := ginmetrics.GetMonitor()
 	m.UseWithoutExposingEndpoint(g)
 
