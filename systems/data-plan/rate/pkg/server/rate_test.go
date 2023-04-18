@@ -7,6 +7,7 @@ import (
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	mocks "github.com/ukama/ukama/systems/data-plan/rate/mocks"
 	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
@@ -212,8 +213,14 @@ func TestRateService_GetRate(t *testing.T) {
 			Country:  "USA",
 			Provider: "Ukama",
 			SimType:  "ukama_data",
+			From:     "2033-04-20T20:31:24-00:00",
+			To:       "2043-04-20T20:31:24-00:00",
 		}
 
+		to, err := validation.FromString(req.To)
+		assert.NoError(t, err)
+		from, err := validation.FromString(req.From)
+		assert.NoError(t, err)
 		markups := &db.Markups{
 			OwnerId: ownerId,
 			Markup:  10,
@@ -227,10 +234,10 @@ func TestRateService_GetRate(t *testing.T) {
 					Apn:         "Manual entry required",
 					Country:     req.Country,
 					Data:        0.0014,
-					EffectiveAt: "2023-10-10",
+					EffectiveAt: "2033-04-20T20:31:24+00:00",
 					Imsi:        1,
 					Lte:         true,
-					Network:     "Multi Tel",
+					Provider:    "Multi Tel",
 					SimType:     req.SimType,
 					SmsMo:       0.0100,
 					SmsMt:       0.0001,
@@ -240,13 +247,12 @@ func TestRateService_GetRate(t *testing.T) {
 		}
 
 		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
-		baseRate.On("GetBaseRates", &bpb.GetBaseRatesRequest{
-			Country:     req.Country,
-			Provider:    req.Provider,
-			To:          req.To,
-			From:        req.From,
-			SimType:     req.SimType,
-			EffectiveAt: req.EffectiveAt,
+		baseRate.On("GetBaseRates", &bpb.GetBaseRatesByPeriodRequest{
+			Country:  req.Country,
+			Provider: req.Provider,
+			To:       to.Format(time.RFC3339),
+			From:     from.Format(time.RFC3339),
+			SimType:  req.SimType,
 		}).Return(rates, nil)
 
 		rateRes, err := rateService.GetRate(context.Background(), req)

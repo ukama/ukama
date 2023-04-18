@@ -97,8 +97,8 @@ message UpdateDefaultMarkupResponse {
 message GetRatesRequest{
     string country = 1;
     string provider =2;
-    uint64 to  =3;
-    uint64 from  =4;
+    string to =3;
+    string from  = 4;
     string simType=5 [json_name = "sim_type"];
     string effectiveAt = 6 [json_name = "effective_at"];
 }
@@ -111,8 +111,8 @@ message GetRateRequest{
     string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string country = 2;
     string provider =3;
-    uint64 to  =4;
-    uint64 from  =5;
+    string to =4;
+    string from  = 5;
     string simType=6 [json_name = "sim_type"];
     string effectiveAt = 7 [json_name = "effective_at"];
 }
