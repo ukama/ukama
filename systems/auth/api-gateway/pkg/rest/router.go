@@ -9,8 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/auth/api-gateway/pkg/client"
 
+	oc "github.com/ory/client-go"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz"
@@ -22,7 +22,7 @@ var SESSION_KEY = "ukama_session"
 type Router struct {
 	f      *fizz.Fizz
 	config *RouterConfig
-	client *client.AuthManager
+	client *Clients
 }
 
 type RouterConfig struct {
@@ -33,12 +33,26 @@ type RouterConfig struct {
 	k          string
 }
 
-func NewRouter(c *client.AuthManager, config *RouterConfig) *Router {
+type AuthManager interface {
+	ValidateSession(ss, t string) (*oc.Session, error)
+	LoginUser(email string, password string) (*oc.SuccessfulNativeLogin, error)
+}
+
+type Clients struct {
+	au AuthManager
+}
+
+func NewClientsSet(a AuthManager) *Clients {
+	c := &Clients{}
+	c.au = a
+	return c
+}
+
+func NewRouter(c *Clients, config *RouterConfig) *Router {
 	r := &Router{
 		config: config,
 		client: c,
 	}
-
 	if !config.debugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -83,7 +97,10 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserInfo, error) {
-	st, _ := pkg.SessionType(c, SESSION_KEY)
+	st, err := pkg.SessionType(c, SESSION_KEY)
+	if err != nil {
+		return nil, err
+	}
 	var ss string
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
@@ -100,7 +117,7 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 			return nil, err
 		}
 	}
-	res, err := p.client.ValidateSession(ss, st)
+	res, err := p.client.au.ValidateSession(ss, st)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +136,10 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 }
 
 func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
-	st, _ := pkg.SessionType(c, SESSION_KEY)
+	st, err := pkg.SessionType(c, SESSION_KEY)
+	if err != nil {
+		return err
+	}
 	var ss string
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
@@ -136,7 +156,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 			return err
 		}
 	}
-	_, err := p.client.ValidateSession(ss, st)
+	_, err = p.client.au.ValidateSession(ss, st)
 	if err != nil {
 		return err
 	}
@@ -145,7 +165,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 }
 
 func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
-	res, err := p.client.LoginUser(req.Email, req.Password)
+	res, err := p.client.au.LoginUser(req.Email, req.Password)
 	if err != nil {
 		return nil, err
 	}

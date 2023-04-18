@@ -19,7 +19,8 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 	am := client.NewAuthManager(svcConf.Auth.AuthServerUrl, 3*time.Second)
-	r := rest.NewRouter(am, rest.NewRouterConfig(svcConf, svcConf.AuthKey))
+	cs := rest.NewClientsSet(am)
+	r := rest.NewRouter(cs, rest.NewRouterConfig(svcConf, svcConf.AuthKey))
 	r.Run()
 }
 

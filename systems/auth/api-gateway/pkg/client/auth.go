@@ -1,7 +1,9 @@
 package client
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
@@ -14,15 +16,15 @@ import (
 
 var SESSION_KEY = "ukama_session"
 
-type Auth interface {
-	ValidateSession(ss, t string) (*client.Session, error)
-	LoginUser(email string, password string) (*client.SuccessfulNativeLogin, error)
-}
-
 type AuthManager struct {
 	client    *ory.APIClient
 	serverUrl string
 	timeout   time.Duration
+}
+
+type UIErrorResp struct {
+	Id string          `json:"id"`
+	Ui ory.UiContainer `json:"ui"`
 }
 
 func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
@@ -49,11 +51,11 @@ func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
 	}
 }
 
-func NewAuthManagerFromClient(AuthManagerClient *ory.APIClient) *AuthManager {
+func NewAuthManagerFromClient() *AuthManager {
 	return &AuthManager{
 		serverUrl: "localhost",
 		timeout:   1 * time.Second,
-		client:    AuthManagerClient,
+		client:    nil,
 	}
 }
 
@@ -92,9 +94,24 @@ func (am *AuthManager) LoginUser(email string, password string) (*client.Success
 	body := client.UpdateLoginFlowBody{
 		UpdateLoginFlowWithPasswordMethod: &b,
 	}
-	flow1, _, err := am.client.FrontendApi.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
+	flow1, resp, err := am.client.FrontendApi.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
+
 	if err != nil {
+		if resp.StatusCode == http.StatusBadRequest {
+			u := UIErrorResp{}
+			buf := &bytes.Buffer{}
+			_, e := buf.ReadFrom(resp.Body)
+			if e != nil {
+				return nil, e
+			}
+			e = json.Unmarshal(buf.Bytes(), &u)
+			if e != nil {
+				return nil, e
+			}
+			return nil, fmt.Errorf("%v", u.Ui.Messages[0].Text)
+		}
 		return nil, err
 	}
+
 	return flow1, nil
 }
