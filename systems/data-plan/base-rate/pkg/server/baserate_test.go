@@ -21,12 +21,14 @@ func TestBaseRateService_UploadRates_Success(t *testing.T) {
 
 	rateService := NewBaseRateServer(mockRepo, msgbusClient)
 	var mockSimTypeStr = string("ukama_data")
-	var mockEffectiveAt = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
+	var mockEffectiveAt = time.Now().Add(time.Hour * 24).Format(time.RFC3339)
+	var mockEndAt = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
 	var mockFileUrl = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
 
 	reqMock := &pb.UploadBaseRatesRequest{
 		FileURL:     mockFileUrl,
 		EffectiveAt: mockEffectiveAt,
+		EndAt:       mockEndAt,
 		SimType:     "ukama_data",
 	}
 
@@ -64,7 +66,7 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 
 	mockFilters := &pb.GetBaseRatesByCountryRequest{
 		Country:     "Tycho crater",
-		Network:     "ABC Tel",
+		Provider:    "ABC Tel",
 		EffectiveAt: "2022-12-01T00:00:00Z",
 		SimType:     "ukama_data",
 	}
@@ -72,7 +74,7 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo, msgbusClient)
 
-	baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Network, db.ParseType("ukama_data")).Return([]db.BaseRate{
+	baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, db.ParseType("ukama_data")).Return([]db.BaseRate{
 		{
 			X2g:         true,
 			X3g:         true,
@@ -82,7 +84,7 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 			EffectiveAt: time.Now(),
 			Imsi:        1,
 			Lte:         true,
-			Network:     "Multi Tel",
+			Provider:    "Multi Tel",
 			SimType:     db.SimTypeUkamaData,
 			SmsMo:       0.1,
 			SmsMt:       0.1,
@@ -100,7 +102,7 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 
 	mockFilters := &pb.GetBaseRatesByCountryRequest{
 		Country:     "Tycho crater",
-		Network:     "ABC Tel",
+		Provider:    "ABC Tel",
 		EffectiveAt: "2022-12-01T00:00:00Z",
 		SimType:     "ukama_data",
 	}
@@ -108,7 +110,7 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 	baseRateRepo := &mocks.BaseRateRepo{}
 	s := NewBaseRateServer(baseRateRepo, msgbusClient)
 
-	baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Network, db.ParseType("ukama_data")).Return([]db.BaseRate{
+	baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Provider, db.ParseType("ukama_data")).Return([]db.BaseRate{
 		{
 			X2g:         true,
 			X3g:         true,
@@ -118,7 +120,7 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 			EffectiveAt: time.Now(),
 			Imsi:        1,
 			Lte:         true,
-			Network:     "Multi Tel",
+			Provider:    "Multi Tel",
 			SimType:     db.SimTypeUkamaData,
 			SmsMo:       0.1,
 			SmsMt:       0.1,

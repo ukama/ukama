@@ -60,7 +60,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		expectedRate := &BaseRate{
 			Uuid:        ratID,
 			Country:     "India",
-			Network:     "Airtel",
+			Provider:    "Airtel",
 			Vpmn:        "123",
 			Imsi:        2,
 			SmsMo:       0.05,
@@ -79,8 +79,8 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Network, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
+		rows := sqlmock.NewRows([]string{"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
+			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
 
 		mock.ExpectQuery(`^SELECT.*rate.*`).
 			WithArgs(ratID.String()).
@@ -122,7 +122,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		expectedRate := &BaseRate{
 			Uuid:        ratID,
 			Country:     "ABC",
-			Network:     "XYZ",
+			Provider:    "XYZ",
 			Vpmn:        "123",
 			Imsi:        2,
 			SmsMo:       0.05,
@@ -141,11 +141,11 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Network, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
+		rows := sqlmock.NewRows([]string{"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
+			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
 
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(expectedRate.Country, expectedRate.Network, expectedRate.SimType, sqlmock.AnyArg()).
+			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -164,7 +164,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		rate, err := r.GetBaseRatesByCountry(expectedRate.Country, expectedRate.Network, expectedRate.SimType)
+		rate, err := r.GetBaseRatesByCountry(expectedRate.Country, expectedRate.Provider, expectedRate.SimType)
 		// Assert
 		assert.NoError(t, err)
 
@@ -189,7 +189,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 			{
 				Uuid:        ratID,
 				Country:     "ABC",
-				Network:     "XYZ",
+				Provider:    "XYZ",
 				Vpmn:        "123",
 				Imsi:        2,
 				SmsMo:       0.05,
@@ -208,7 +208,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 			{
 				Uuid:        uuid.NewV4(),
 				Country:     "ABCDE",
-				Network:     "XYZXX",
+				Provider:    "XYZXX",
 				Vpmn:        "123",
 				Imsi:        2,
 				SmsMo:       0.05,
@@ -229,12 +229,12 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate[0].Uuid, expectedRate[0].Country, expectedRate[0].Network, expectedRate[0].Vpmn, expectedRate[0].Imsi, expectedRate[0].SmsMo, expectedRate[0].SmsMt, expectedRate[0].Data, expectedRate[0].X2g, expectedRate[0].X3g, expectedRate[0].X5g, expectedRate[0].Lte, expectedRate[0].LteM, expectedRate[0].Apn, expectedRate[0].EffectiveAt, expectedRate[0].EndAt, expectedRate[0].SimType, expectedRate[0].CreatedAt, expectedRate[0].UpdatedAt, expectedRate[0].DeletedAt).
-			AddRow(expectedRate[1].Uuid, expectedRate[1].Country, expectedRate[1].Network, expectedRate[1].Vpmn, expectedRate[1].Imsi, expectedRate[1].SmsMo, expectedRate[1].SmsMt, expectedRate[1].Data, expectedRate[1].X2g, expectedRate[1].X3g, expectedRate[1].X5g, expectedRate[1].Lte, expectedRate[1].LteM, expectedRate[1].Apn, expectedRate[1].EffectiveAt, expectedRate[1].EndAt, expectedRate[1].SimType, expectedRate[1].CreatedAt, expectedRate[1].UpdatedAt, expectedRate[1].DeletedAt)
+		rows := sqlmock.NewRows([]string{"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
+			AddRow(expectedRate[0].Uuid, expectedRate[0].Country, expectedRate[0].Provider, expectedRate[0].Vpmn, expectedRate[0].Imsi, expectedRate[0].SmsMo, expectedRate[0].SmsMt, expectedRate[0].Data, expectedRate[0].X2g, expectedRate[0].X3g, expectedRate[0].X5g, expectedRate[0].Lte, expectedRate[0].LteM, expectedRate[0].Apn, expectedRate[0].EffectiveAt, expectedRate[0].EndAt, expectedRate[0].SimType, expectedRate[0].CreatedAt, expectedRate[0].UpdatedAt, expectedRate[0].DeletedAt).
+			AddRow(expectedRate[1].Uuid, expectedRate[1].Country, expectedRate[1].Provider, expectedRate[1].Vpmn, expectedRate[1].Imsi, expectedRate[1].SmsMo, expectedRate[1].SmsMt, expectedRate[1].Data, expectedRate[1].X2g, expectedRate[1].X3g, expectedRate[1].X5g, expectedRate[1].Lte, expectedRate[1].LteM, expectedRate[1].Apn, expectedRate[1].EffectiveAt, expectedRate[1].EndAt, expectedRate[1].SimType, expectedRate[1].CreatedAt, expectedRate[1].UpdatedAt, expectedRate[1].DeletedAt)
 
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(expectedRate[0].Country, expectedRate[0].Network, expectedRate[0].SimType).
+			WithArgs(expectedRate[0].Country, expectedRate[0].Provider, expectedRate[0].SimType).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -253,7 +253,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		rate, err := r.GetBaseRatesHistoryByCountry(expectedRate[0].Country, expectedRate[0].Network, expectedRate[0].SimType)
+		rate, err := r.GetBaseRatesHistoryByCountry(expectedRate[0].Country, expectedRate[0].Provider, expectedRate[0].SimType)
 		// Assert
 		assert.NoError(t, err)
 
@@ -278,7 +278,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		expectedRate := &BaseRate{
 			Uuid:        ratID,
 			Country:     "ABC",
-			Network:     "XYZ",
+			Provider:    "XYZ",
 			Vpmn:        "123",
 			Imsi:        2,
 			SmsMo:       0.05,
@@ -297,11 +297,11 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"uuid", "country", "network", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Network, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
+		rows := sqlmock.NewRows([]string{"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
+			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
 
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(expectedRate.Country, expectedRate.Network, expectedRate.SimType, from, to).
+			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType, from, to).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -320,7 +320,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		rate, err := r.GetBaseRatesForPeriod(expectedRate.Country, expectedRate.Network, from, to, expectedRate.SimType)
+		rate, err := r.GetBaseRatesForPeriod(expectedRate.Country, expectedRate.Provider, from, to, expectedRate.SimType)
 		// Assert
 		assert.NoError(t, err)
 
@@ -345,7 +345,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 
 			Uuid:        ratID,
 			Country:     "ABC",
-			Network:     "XYZ",
+			Provider:    "XYZ",
 			Vpmn:        "123",
 			Imsi:        2,
 			SmsMo:       0.05,
@@ -370,11 +370,11 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).
-			WithArgs(sqlmock.AnyArg(), expectedRate.Country, expectedRate.Network, expectedRate.SimType, expectedRate.EffectiveAt).
+			WithArgs(sqlmock.AnyArg(), expectedRate.Country, expectedRate.Provider, expectedRate.SimType, expectedRate.EffectiveAt).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), expectedRate.Uuid, expectedRate.Country, expectedRate.Network, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.Currency).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.Currency).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
