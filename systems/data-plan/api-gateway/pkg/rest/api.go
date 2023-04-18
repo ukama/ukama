@@ -53,6 +53,7 @@ type GetPackageByOrgRequest struct {
 type UploadBaseRatesRequest struct {
 	FileURL     string `json:"file_url" binding:"required" validate:"required"`
 	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
+	EndAt       string `json:"end_at" binding:"required" validate:"required" default:"2099-12-31T00:00:00+00:00"`
 	SimType     string `json:"sim_type" binding:"required" validate:"required"`
 }
 

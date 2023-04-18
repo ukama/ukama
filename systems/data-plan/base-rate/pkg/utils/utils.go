@@ -58,7 +58,7 @@ func FetchData(url string) ([]RawRates, error) {
 	return r, nil
 }
 
-func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.BaseRate, error) {
+func ParseToModel(slice []RawRates, effective_at, endAt, sim_type string) ([]db.BaseRate, error) {
 	var rates []db.BaseRate
 	for _, value := range slice {
 
@@ -87,6 +87,11 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.BaseRat
 			return nil, fmt.Errorf("invalid time format for effective at " + err.Error())
 		}
 
+		et, err := time.Parse(time.RFC3339, endAt)
+		if err != nil {
+			return nil, fmt.Errorf("invalid time format for end at " + err.Error())
+		}
+
 		rates = append(rates, db.BaseRate{
 			Uuid:        uuid.NewV4(),
 			Country:     value.Country,
@@ -103,6 +108,7 @@ func ParseToModel(slice []RawRates, effective_at, sim_type string) ([]db.BaseRat
 			LteM:        ParseToBoolean(value.Lte_m, "LTE-M"),
 			Apn:         value.Apn,
 			EffectiveAt: bg,
+			EndAt:       et,
 			SimType:     db.ParseType(sim_type),
 		})
 	}

@@ -81,7 +81,7 @@ func (b *BaseRateClient) GetBaseRatesForPackage(req *pb.GetBaseRatesByPeriodRequ
 	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
 	defer cancel()
 
-	return b.client.GetBaseRatesForPeriod(ctx, req)
+	return b.client.GetBaseRatesForPackage(ctx, req)
 }
 
 func (b *BaseRateClient) UploadBaseRates(req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {

@@ -44,7 +44,8 @@ message GetBaseRatesByIdRequest{
 message UploadBaseRatesRequest {
     string fileURL = 1 [json_name = "file_url"];
     string effectiveAt = 2 [json_name = "effective_at"];
-    string simType = 3 [json_name = "sim_type"];
+    string endAt = 3 [json_name = "end_at"];
+    string simType = 4 [json_name = "sim_type"];
 }
 message UploadBaseRatesResponse {
     repeated Rate rate = 1;

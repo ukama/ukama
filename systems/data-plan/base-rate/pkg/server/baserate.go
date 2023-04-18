@@ -141,6 +141,7 @@ func (b *BaseRateServer) GetBaseRatesForPackage(ctx context.Context, req *pb.Get
 func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
 	fileUrl := req.GetFileURL()
 	effectiveAt := req.GetEffectiveAt()
+	endAt := req.GetEndAt()
 	strType := strings.ToLower(req.GetSimType())
 	simType := db.ParseType(strType)
 
@@ -150,11 +151,25 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
 			fileUrl, effectiveAt, simType)
 	}
+
 	formattedEffectiveAt, err := validations.ValidateDate(effectiveAt)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 	if err := validations.IsFutureDate(formattedEffectiveAt); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
+	}
+
+	formattedEndAt, err := validations.ValidateDate(endAt)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := validations.IsFutureDate(formattedEndAt); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
+	}
+	if err := validations.IsAfterDate(formattedEndAt, formattedEffectiveAt); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
 	}
@@ -172,7 +187,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	rates, err := utils.ParseToModel(data, formattedEffectiveAt, simType.String())
+	rates, err := utils.ParseToModel(data, formattedEffectiveAt, formattedEndAt, simType.String())
 	if err != nil {
 		return nil, err
 	}
