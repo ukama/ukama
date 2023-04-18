@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
-	ory "github.com/ory/client-go"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
@@ -23,22 +22,21 @@ var SESSION_KEY = "ukama_session"
 type Router struct {
 	f      *fizz.Fizz
 	config *RouterConfig
+	client *client.AuthManager
 }
 
 type RouterConfig struct {
 	debugMode  bool
 	serverConf *rest.HttpConfig
-	r          *rest.RestClient
 	auth       *config.Auth
-	o          *ory.APIClient
 	s          *config.Service
 	k          string
 }
 
-func NewRouter(config *RouterConfig) *Router {
-
+func NewRouter(c *client.AuthManager, config *RouterConfig) *Router {
 	r := &Router{
 		config: config,
+		client: c,
 	}
 
 	if !config.debugMode {
@@ -49,13 +47,11 @@ func NewRouter(config *RouterConfig) *Router {
 	return r
 }
 
-func NewRouterConfig(svcConf *pkg.Config, oc *ory.APIClient, k string) *RouterConfig {
+func NewRouterConfig(svcConf *pkg.Config, k string) *RouterConfig {
 	return &RouterConfig{
 		serverConf: &svcConf.Server,
 		debugMode:  svcConf.DebugMode,
-		r:          svcConf.R,
 		s:          svcConf.Service,
-		o:          oc,
 		auth:       svcConf.Auth,
 		k:          k,
 	}
@@ -104,7 +100,7 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 			return nil, err
 		}
 	}
-	res, err := client.ValidateSession(ss, st, p.config.o)
+	res, err := p.client.ValidateSession(ss, st)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +136,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 			return err
 		}
 	}
-	_, err := client.ValidateSession(ss, st, p.config.o)
+	_, err := p.client.ValidateSession(ss, st)
 	if err != nil {
 		return err
 	}
@@ -149,7 +145,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 }
 
 func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
-	res, err := client.LoginUser(req.Email, req.Password, p.config.o)
+	res, err := p.client.LoginUser(req.Email, req.Password)
 	if err != nil {
 		return nil, err
 	}

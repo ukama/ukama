@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
+	"time"
 
 	"github.com/ory/client-go"
 	ory "github.com/ory/client-go"
@@ -12,18 +14,61 @@ import (
 
 var SESSION_KEY = "ukama_session"
 
-func ValidateSession(ss string, t string, o *ory.APIClient) (*client.Session, error) {
+type Auth interface {
+	ValidateSession(ss, t string) (*client.Session, error)
+	LoginUser(email string, password string) (*client.SuccessfulNativeLogin, error)
+}
+
+type AuthManager struct {
+	client    *ory.APIClient
+	serverUrl string
+	timeout   time.Duration
+}
+
+func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
+	_, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	configuration := ory.NewConfiguration()
+	configuration.Servers = []ory.ServerConfiguration{
+		{
+			URL: serverUrl,
+		},
+	}
+	jar, _ := cookiejar.New(nil)
+	oc := ory.NewAPIClient(configuration)
+	oc.GetConfig().HTTPClient = &http.Client{
+		Jar: jar,
+	}
+	client := oc
+
+	return &AuthManager{
+		client:    client,
+		timeout:   timeout,
+		serverUrl: serverUrl,
+	}
+}
+
+func NewAuthManagerFromClient(AuthManagerClient *ory.APIClient) *AuthManager {
+	return &AuthManager{
+		serverUrl: "localhost",
+		timeout:   1 * time.Second,
+		client:    AuthManagerClient,
+	}
+}
+
+func (am *AuthManager) ValidateSession(ss string, t string) (*client.Session, error) {
 	if t == "cookie" {
-		urlObj, _ := url.Parse(o.GetConfig().Servers[0].URL)
+		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
 			Name:  SESSION_KEY,
 			Value: ss,
 		}
-		o.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
+		am.client.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
 	} else if t == "header" {
-		o.GetConfig().AddDefaultHeader("X-Session-Token", ss)
+		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
-	resp, r, err := o.FrontendApi.ToSession(context.Background()).Execute()
+	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +78,8 @@ func ValidateSession(ss string, t string, o *ory.APIClient) (*client.Session, er
 	return resp, nil
 }
 
-func LoginUser(email string, password string, o *ory.APIClient) (*client.SuccessfulNativeLogin, error) {
-	flow, _, err := o.FrontendApi.CreateNativeLoginFlow(context.Background()).Execute()
+func (am *AuthManager) LoginUser(email string, password string) (*client.SuccessfulNativeLogin, error) {
+	flow, _, err := am.client.FrontendApi.CreateNativeLoginFlow(context.Background()).Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +92,7 @@ func LoginUser(email string, password string, o *ory.APIClient) (*client.Success
 	body := client.UpdateLoginFlowBody{
 		UpdateLoginFlowWithPasswordMethod: &b,
 	}
-	flow1, _, err := o.FrontendApi.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
+	flow1, _, err := am.client.FrontendApi.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
 	if err != nil {
 		return nil, err
 	}

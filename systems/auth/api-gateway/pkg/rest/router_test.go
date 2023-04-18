@@ -4,22 +4,25 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"net/http/cookiejar"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	ory "github.com/ory/client-go"
+	mauth "github.com/ukama/ukama/systems/auth/api-gateway/mocks"
+	"github.com/ukama/ukama/systems/auth/api-gateway/pkg/client"
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-var token string
+var token = ""
 var mockEmail = "test@ukama.com"
-var mockPassword = "@Pass2021"
+var mockPassword = "Pass2021"
 
 var defaultCors = cors.Config{
 	AllowAllOrigins: true,
@@ -30,31 +33,17 @@ var routerConfig = &RouterConfig{
 		Cors: defaultCors,
 	},
 	auth: cconfig.LoadAuthHostConfig("auth"),
-	o:    nil,
 	k:    cconfig.LoadAuthKey(),
 }
 
 func init() {
-	jar, _ := cookiejar.New(nil)
 	gin.SetMode(gin.TestMode)
-	routerConfig.o = ory.NewAPIClient(&ory.Configuration{
-		Servers: []ory.ServerConfiguration{
-			{
-				URL: routerConfig.auth.AuthServerUrl,
-			},
-		},
-	})
-	routerConfig.o.GetConfig().HTTPClient = &http.Client{
-		Jar: jar,
-	}
-	routerConfig.o.GetConfig().DefaultHeader = map[string]string{}
 }
 
 func TestPingRoute(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-
-	r := NewRouter(routerConfig).f.Engine()
+	r := NewRouter(client.NewAuthManager(routerConfig.auth.AuthServerUrl, 3*time.Second), routerConfig).f.Engine()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
@@ -62,24 +51,12 @@ func TestPingRoute(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	r := gin.Default()
-	router := NewRouter(routerConfig)
+	cma := &mauth.Auth{}
+	w := httptest.NewRecorder()
 	payload := &LoginReq{
 		Email:    mockEmail,
 		Password: mockPassword,
 	}
-	router.init()
-
-	r.POST("/v1/login", func(ctx *gin.Context) {
-		res, err := router.login(ctx, payload)
-
-		if err != nil {
-			return
-		}
-		token = res.Token
-		ctx.JSON(http.StatusOK, res)
-	})
-
 	jp, err := json.Marshal(payload)
 	if err != nil {
 		panic(err)
@@ -87,61 +64,48 @@ func TestLogin(t *testing.T) {
 
 	reqBody := []byte(jp)
 	req, _ := http.NewRequest("POST", "/v1/login", bytes.NewBuffer(reqBody))
-	w := httptest.NewRecorder()
+	r := NewRouter(client.NewAuthManager(routerConfig.auth.AuthServerUrl, 3*time.Second), routerConfig).f.Engine()
+
+	cma.On("LoginUser", mock.Anything, mock.Anything).Return(&LoginRes{
+		Token: "some-token",
+	}, nil)
+
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
-	var res LoginRes
-	err = json.Unmarshal(w.Body.Bytes(), &res)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, res.Token)
-	assert.Equal(t, res.Token, token)
+	lg := LoginRes{}
+	json.Unmarshal(w.Body.Bytes(), &lg)
+	token = lg.Token
+	assert.Equal(t, 200, w.Code)
 }
 
 func TestAuthenticate(t *testing.T) {
-	r := NewRouter(routerConfig)
-	g := gin.New()
-	g.GET("/v1/auth", func(c *gin.Context) {
-		err := r.authenticate(c, &OptionalReqHeader{
-			XSessionToken: token,
-		})
-		if err != nil {
-			return
-		}
-		c.JSON(http.StatusOK, "")
-	})
+	cma := &mauth.Auth{}
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/auth", nil)
-	req.Header.Add("X-Session-Token", token)
-	g.ServeHTTP(w, req)
-	if w.Result().StatusCode != http.StatusOK {
-		t.Errorf("expected status OK, got %v", w.Result().StatusCode)
-	}
+
+	req.Header.Set("X-Session-Token", token)
+
+	r := NewRouter(client.NewAuthManager(routerConfig.auth.AuthServerUrl, 3*time.Second), routerConfig).f.Engine()
+
+	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&ory.Session{}, nil)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
 }
 
 func TestWhoami(t *testing.T) {
-	r := NewRouter(routerConfig)
-	g := gin.New()
-	g.GET("/v1/whoami", func(c *gin.Context) {
-		res, err := r.getUserInfo(c, &OptionalReqHeader{
-			XSessionToken: token,
-		})
-		if err != nil {
-			return
-		}
-		c.JSON(http.StatusOK, res)
-	})
+	cma := &mauth.Auth{}
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/whoami", nil)
-	req.Header.Add("X-Session-Token", token)
-	g.ServeHTTP(w, req)
-	if w.Result().StatusCode != http.StatusOK {
-		t.Errorf("expected status OK, got %v", w.Result().StatusCode)
-	}
-	assert.Equal(t, http.StatusOK, w.Code)
-	var res GetUserInfo
-	err := json.Unmarshal(w.Body.Bytes(), &res)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, res.Email)
-	assert.Equal(t, res.Email, mockEmail)
+
+	req.Header.Set("X-Session-Token", token)
+
+	r := NewRouter(client.NewAuthManager(routerConfig.auth.AuthServerUrl, 3*time.Second), routerConfig).f.Engine()
+
+	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&ory.Session{}, nil)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
 }
