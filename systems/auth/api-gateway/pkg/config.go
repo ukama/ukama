@@ -25,7 +25,7 @@ func NewConfig(name string) *Config {
 			DebugMode: false,
 		},
 		Server: rest.HttpConfig{
-			Port: 8081,
+			Port: 8080,
 			Cors: defaultCors,
 		},
 		Service: config.LoadServiceHostConfig(name),
