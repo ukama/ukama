@@ -122,6 +122,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth := r.f.Group("/v1", "Subscriber API GW ", "Subs system version v1", func(ctx *gin.Context) {
 
 		err := f(ctx, r.config.auth.AuthAPIGW)
+		fmt.Println("ERR:", err)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
 			return

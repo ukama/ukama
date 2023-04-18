@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"errors"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -44,12 +45,17 @@ func (a *AuthRestClient) AuthenticateUser(c *gin.Context, u string) error {
 	errStatus := &rest.ErrorMessage{}
 	urlObj, _ := url.Parse(u)
 	a.Jar.SetCookies(urlObj, c.Request.Cookies())
-	_, err := a.R.C.SetCookieJar(a.Jar).R().
+	res, err := a.R.C.SetCookieJar(a.Jar).R().
 		SetError(errStatus).
 		Get(u + AuthenticateEndpoint)
 	if err != nil {
 		logrus.Errorf("Got error while authenticating user %s", err.Error())
 		return err
+	}
+
+	if res.StatusCode() != http.StatusOK {
+		logrus.Errorf("Got error while authenticating user %s", res.Status())
+		return errors.New(res.String())
 	}
 
 	return nil
