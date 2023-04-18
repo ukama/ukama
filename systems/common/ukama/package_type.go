@@ -1,4 +1,4 @@
-package db
+package ukama
 
 import (
 	"database/sql/driver"

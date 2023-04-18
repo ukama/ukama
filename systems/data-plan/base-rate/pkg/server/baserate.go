@@ -10,6 +10,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
@@ -152,24 +153,24 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 			fileUrl, effectiveAt, endAt, simType)
 	}
 
-	formattedEffectiveAt, err := validations.ValidateDate(effectiveAt)
+	formattedEffectiveAt, err := validation.ValidateDate(effectiveAt)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err := validations.IsFutureDate(formattedEffectiveAt); err != nil {
+	if err := validation.IsFutureDate(formattedEffectiveAt); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
 	}
 
-	formattedEndAt, err := validations.ValidateDate(endAt)
+	formattedEndAt, err := validation.ValidateDate(endAt)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err := validations.IsFutureDate(formattedEndAt); err != nil {
+	if err := validation.IsFutureDate(formattedEndAt); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
 	}
-	if err := validations.IsAfterDate(formattedEndAt, formattedEffectiveAt); err != nil {
+	if err := validation.IsAfterDate(formattedEndAt, formattedEffectiveAt); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
 	}

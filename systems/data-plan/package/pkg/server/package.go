@@ -9,9 +9,10 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/client"
@@ -123,34 +124,34 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid format of base rate. Error %s", err.Error())
 	}
 
-	formattedFrom, err := validations.ValidateDate(req.From)
+	formattedFrom, err := validation.ValidateDate(req.From)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err := validations.IsFutureDate(formattedFrom); err != nil {
+	if err := validation.IsFutureDate(formattedFrom); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
 	}
 
-	formattedTo, err := validations.ValidateDate(req.To)
+	formattedTo, err := validation.ValidateDate(req.To)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err := validations.IsFutureDate(formattedTo); err != nil {
+	if err := validation.IsFutureDate(formattedTo); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
 	}
-	if err := validations.IsAfterDate(formattedTo, formattedFrom); err != nil {
+	if err := validation.IsAfterDate(formattedTo, formattedFrom); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
 	}
 
-	from, err := validations.FromString(formattedFrom)
+	from, err := validation.FromString(formattedFrom)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	to, err := validations.FromString(formattedTo)
+	to, err := validation.FromString(formattedTo)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -167,11 +168,11 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		SmsVolume:    uint64(req.GetSmsVolume()),
 		DataVolume:   uint64(req.GetDataVolume()),
 		VoiceVolume:  uint64(req.GetVoiceVolume()),
-		MessageUnits: db.ParseMessageType(req.Messageunit),
-		VoiceUnits:   db.ParseCallUnitType(req.VoiceUnit),
-		DataUnits:    db.ParseDataUnitType(req.DataUnit),
+		MessageUnits: ukama.ParseMessageType(req.Messageunit),
+		VoiceUnits:   ukama.ParseCallUnitType(req.VoiceUnit),
+		DataUnits:    ukama.ParseDataUnitType(req.DataUnit),
 		Flatrate:     req.Flatrate,
-		Type:         db.ParsePackageType(req.Type),
+		Type:         ukama.ParsePackageType(req.Type),
 		PackageRate: db.PackageRate{
 			Amount: req.Amount,
 		},
@@ -315,7 +316,6 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 	return &pb.UpdatePackageResponse{Package: dbPackageToPbPackages(_package)}, nil
 }
 
-
 func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {
 	res := []*pb.Package{}
 	for _, u := range packages {
@@ -364,11 +364,11 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	}
 }
 
-func calculateRatePerUnit(pr *db.PackageRate, rate *bpb.Rate, mu db.MessageUnitType, du db.DataUnitType) {
+func calculateRatePerUnit(pr *db.PackageRate, rate *bpb.Rate, mu ukama.MessageUnitType, du ukama.DataUnitType) {
 
-	pr.SmsMo = (float64)(db.ReturnMessageUnits(mu)) * rate.SmsMo
-	pr.SmsMt = (float64)(db.ReturnMessageUnits(mu)) * rate.SmsMt
-	pr.Data = (float64)(db.ReturnDataUnits(du)) * rate.Data
+	pr.SmsMo = (float64)(ukama.ReturnMessageUnits(mu)) * rate.SmsMo
+	pr.SmsMt = (float64)(ukama.ReturnMessageUnits(mu)) * rate.SmsMt
+	pr.Data = (float64)(ukama.ReturnDataUnits(du)) * rate.Data
 
 }
 

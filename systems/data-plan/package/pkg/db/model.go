@@ -3,6 +3,7 @@ package db
 import (
 	"time"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
@@ -22,10 +23,10 @@ type Package struct {
 	PackageRate    PackageRate    `gorm:"foreignKey:PackageID;references:Uuid"`
 	PackageMarkup  PackageMarkup  `gorm:"foreignKey:PackageID;references:Uuid"`
 	PackageDetails PackageDetails `gorm:"foreignKey:PackageID;references:Uuid"`
-	Type           PackageType
-	DataUnits      DataUnitType
-	VoiceUnits     CallUnitType
-	MessageUnits   MessageUnitType
+	Type           ukama.PackageType
+	DataUnits      ukama.DataUnitType
+	VoiceUnits     ukama.CallUnitType
+	MessageUnits   ukama.MessageUnitType
 	Flatrate       bool      `gorm:"not null; default:false"`
 	Currency       string    `gorm:"not null; default:Dollar"`
 	From           time.Time `gorm:"not null"`
