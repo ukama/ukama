@@ -32,8 +32,10 @@ var routerConfig = &RouterConfig{
 	serverConf: &rest.HttpConfig{
 		Cors: defaultCors,
 	},
-	auth: cconfig.LoadAuthHostConfig("auth"),
-	k:    cconfig.LoadAuthKey(),
+	auth: &cconfig.Auth{
+		AuthServerUrl: "http://localhost:8080",
+	},
+	k: cconfig.LoadAuthKey(),
 }
 
 func init() {
