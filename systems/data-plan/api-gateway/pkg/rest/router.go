@@ -270,15 +270,9 @@ func (r *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb
 
 func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
 	resp, err := r.clients.p.UpdatePackage(&pb.UpdatePackageRequest{
-		Uuid:        req.Uuid,
-		Name:        req.Name,
-		SimType:     req.SimType,
-		Active:      req.Active,
-		Duration:    req.Duration,
-		SmsVolume:   req.SmsVolume,
-		DataVolume:  req.DataVolume,
-		VoiceVolume: req.VoiceVolume,
-		OrgRatesId:  req.OrgRatesId,
+		Uuid:   req.Uuid,
+		Name:   req.Name,
+		Active: req.Active,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -295,13 +289,21 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 	pack := &pb.AddPackageRequest{
 		Name:        req.Name,
 		OrgId:       req.OrgId,
+		OwnerId:     req.OwnerId,
 		Duration:    req.Duration,
 		Baserate:    req.BaserateId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,
 		SmsVolume:   req.SmsVolume,
+		DataUnit:    req.DataUnit,
+		VoiceUnit:   req.VoiceUnit,
 		SimType:     req.SimType,
+		Apn:         req.Apn,
+		Markup:      req.Markup,
+		Type:        req.Type,
+		Flatrate:    req.Flatrate,
+		Amount:      req.Amount,
 	}
 
 	return r.clients.p.AddPackage(pack)

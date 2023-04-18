@@ -24,7 +24,7 @@ type Package struct {
 	PackageDetails PackageDetails `gorm:"foreignKey:PackageID;references:Uuid"`
 	Type           PackageType
 	DataUnits      DataUnitType
-	CallUnits      CallUnitType
+	VoiceUnits     CallUnitType
 	MessageUnits   MessageUnitType
 	Flatrate       bool      `gorm:"not null; default:false"`
 	Currency       string    `gorm:"not null; default:Dollar"`

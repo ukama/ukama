@@ -45,15 +45,6 @@ message UpdatePackageRequest {
     string uuid=1  [(validator.field) = {uuid_ver: 4}];
     string name=2;
     bool active=3;
-    uint64 duration=4;
-    string simType=5 [json_name = "sim_type"];
-    int64 smsVolume =6 [json_name = "sms_volume"];
-    int64 dataVolume=7 [json_name = "data_volume"];
-    int64 voiceVolume =8 [json_name = "voice_volume"];
-    uint64 orgRatesId=9 [json_name = "org_rates_id"];
-    string dataUnit = 10;
-    string callUnit = 11;
-    string messageunit = 12;
 }
 
 message UpdatePackageResponse {
@@ -75,7 +66,7 @@ message AddPackageRequest {
     double markup = 16;
     string type = 17;
     string dataUnit = 18;
-    string callUnit = 19;
+    string voiceUnit = 19;
     string messageunit = 20;
     bool   flatrate = 21;
     double amount = 22;
@@ -113,7 +104,7 @@ message Package {
     PackageMarkup markup = 16;
     string type = 17;
     string dataUnit = 18;
-    string callUnit = 19;
+    string voiceUnit = 19;
     string messageunit = 20;
     bool flatrate = 21;
     string currency = 22;

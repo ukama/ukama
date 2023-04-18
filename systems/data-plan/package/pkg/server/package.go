@@ -135,9 +135,10 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		DataVolume:   uint64(req.GetDataVolume()),
 		VoiceVolume:  uint64(req.GetVoiceVolume()),
 		MessageUnits: db.ParseMessageType(req.Messageunit),
-		CallUnits:    db.ParseCallUnitType(req.CallUnit),
+		VoiceUnits:   db.ParseCallUnitType(req.VoiceUnit),
 		DataUnits:    db.ParseDataUnitType(req.DataUnit),
 		Flatrate:     req.Flatrate,
+		Type:         db.ParsePackageType(req.Type),
 		PackageRate: db.PackageRate{
 			Amount: req.Amount,
 		},
@@ -161,10 +162,13 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid base id. Error %s", err.Error())
 	}
 
-	// calculae rate per unit
-	calculateRatePerUnit(&pr.PackageRate, rate.Rate, pr.MessageUnits, pr.DataUnits)
+	/* Only when package is not fixed anount */
+	if !pr.Flatrate {
+		// calculae rate per unit
+		calculateRatePerUnit(&pr.PackageRate, rate.Rate, pr.MessageUnits, pr.DataUnits)
 
-	calculateTotalAmount(&pr)
+		calculateTotalAmount(&pr)
+	}
 
 	err = p.packageRepo.Add(&pr)
 	if err != nil {
@@ -202,19 +206,11 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 }
 
 func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
-	logrus.Infof("Update Package Uuid: %v, Name: %v, SimType: %v, Active: %v, Duration: %v, SmsVolume: %v, DataVolume: %v, Voice_volume: %v",
-		req.Uuid, req.Name, req.SimType, req.Active, req.Duration, req.SmsVolume, req.DataVolume, req.VoiceVolume)
+	logrus.Infof("Update Package Uuid: %v, Name: %v,Active: %v",
+		req.Uuid, req.Name, req.Active)
 	_package := &db.Package{
-		Name:         req.GetName(),
-		SimType:      db.ParseType(req.GetSimType()),
-		Active:       req.Active,
-		Duration:     uint64(req.GetDuration()),
-		SmsVolume:    uint64(req.GetSmsVolume()),
-		DataVolume:   uint64(req.GetDataVolume()),
-		VoiceVolume:  uint64(req.GetVoiceVolume()),
-		MessageUnits: db.ParseMessageType(req.Messageunit),
-		CallUnits:    db.ParseCallUnitType(req.CallUnit),
-		DataUnits:    db.ParseDataUnitType(req.DataUnit),
+		Name:   req.GetName(),
+		Active: req.Active,
 	}
 
 	packageID, err := uuid.FromString(req.GetUuid())
@@ -272,7 +268,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		},
 		Provider:    p.Provider,
 		Messageunit: p.MessageUnits.String(),
-		CallUnit:    p.CallUnits.String(),
+		VoiceUnit:   p.VoiceUnits.String(),
 		DataUnit:    p.DataUnits.String(),
 		Country:     p.Country,
 		Currency:    p.Currency,
