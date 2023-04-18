@@ -61,6 +61,7 @@ type packageS interface {
 	AddPackage(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error)
 	UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error)
 	GetPackage(id string) (*pb.GetPackageResponse, error)
+	GetPackageDetails(id string) (*pb.GetPackageResponse, error)
 	GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error)
 	DeletePackage(id string) (*pb.DeletePackageResponse, error)
 }
@@ -122,6 +123,7 @@ func (r *Router) init() {
 	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
 	packages.GET("/org/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
 	packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
+	packages.GET("/:uuid/details", formatDoc("Get package details", ""), tonic.Handler(r.getPackageDetailsHandler, http.StatusOK))
 	packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
 	packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
@@ -237,6 +239,7 @@ func (r *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 	resp, err := r.clients.b.UploadBaseRates(&bpb.UploadBaseRatesRequest{
 		FileURL:     req.FileURL,
 		EffectiveAt: req.EffectiveAt,
+		EndAt:       req.EndAt,
 		SimType:     req.SimType,
 	})
 	if err != nil {
@@ -249,6 +252,16 @@ func (r *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 
 func (r *Router) getPackageHandler(c *gin.Context, req *PackagesRequest) (*pb.GetPackageResponse, error) {
 	resp, err := r.clients.p.GetPackage(req.Uuid)
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getPackageDetailsHandler(c *gin.Context, req *PackagesRequest) (*pb.GetPackageResponse, error) {
+	resp, err := r.clients.p.GetPackageDetails(req.Uuid)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -290,7 +303,8 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Name:        req.Name,
 		OrgId:       req.OrgId,
 		OwnerId:     req.OwnerId,
-		Duration:    req.Duration,
+		From:        req.From,
+		To:          req.To,
 		Baserate:    req.BaserateId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,

@@ -144,12 +144,12 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	endAt := req.GetEndAt()
 	strType := strings.ToLower(req.GetSimType())
 	simType := db.ParseType(strType)
+	logrus.Infof("Upload base rate fileURL: %s, effectiveAt: %s endAt: %s and simType: %s.",
+		fileUrl, effectiveAt, endAt, simType)
 
 	if !validations.IsValidUploadReqArgs(fileUrl, effectiveAt, simType.String()) {
-		logrus.Infof("Please supply valid fileURL: %s, effectiveAt: %s and simType: %s.",
-			fileUrl, effectiveAt, simType)
-		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
-			fileUrl, effectiveAt, simType)
+		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q endAt : %q & simType: %q",
+			fileUrl, effectiveAt, endAt, simType)
 	}
 
 	formattedEffectiveAt, err := validations.ValidateDate(effectiveAt)

@@ -10,6 +10,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/validations"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/client"
@@ -63,7 +64,7 @@ func (p *PackageServer) GetDetails(ctx context.Context, req *pb.GetPackageReques
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	logrus.Infof("GetPackage : %v ", packageID)
+	logrus.Infof("GetPackageDetails : %v ", packageID)
 	_package, err := p.packageRepo.GetDetails(packageID)
 
 	if err != nil {
@@ -101,9 +102,7 @@ func (p *PackageServer) GetByOrg(ctx context.Context, req *pb.GetByOrgPackageReq
 
 func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 
-	// Need to get Network for ukama_data
-	// Possible activation date
-	// What happens if we have two rates for a period
+	logrus.Infof("Adding package %v", req)
 
 	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
@@ -123,6 +122,38 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid format of base rate. Error %s", err.Error())
 	}
 
+	formattedFrom, err := validations.ValidateDate(req.From)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := validations.IsFutureDate(formattedFrom); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
+	}
+
+	formattedTo, err := validations.ValidateDate(req.To)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := validations.IsFutureDate(formattedTo); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
+	}
+	if err := validations.IsAfterDate(formattedTo, formattedFrom); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
+	}
+
+	from, err := validations.FromString(formattedFrom)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	to, err := validations.FromString(formattedTo)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
 	pr := db.Package{
 		Uuid:         uuid.NewV4(),
 		OwnerId:      ownId,
@@ -130,7 +161,8 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		SimType:      db.ParseType(req.GetSimType()),
 		OrgId:        orgId,
 		Active:       req.Active,
-		Duration:     uint64(req.GetDuration()),
+		From:         from,
+		To:           to,
 		SmsVolume:    uint64(req.GetSmsVolume()),
 		DataVolume:   uint64(req.GetDataVolume()),
 		VoiceVolume:  uint64(req.GetVoiceVolume()),
@@ -160,6 +192,13 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		logrus.Errorf("Failed to get base rate for package. Error: %s", err.Error())
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid base id. Error %s", err.Error())
+	}
+
+	pr.Country = rate.Rate.Country
+	pr.Provider = rate.Rate.Provider
+
+	if pr.PackageDetails.Apn == "" {
+		pr.PackageDetails.Apn = rate.Rate.Apn
 	}
 
 	/* Only when package is not fixed anount */
@@ -243,19 +282,24 @@ func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {
 }
 
 func dbPackageToPbPackages(p *db.Package) *pb.Package {
+	var d string
+	if p.DeletedAt.Valid {
+		d = p.DeletedAt.Time.Format(time.RFC3339)
+	}
 	return &pb.Package{
 		Uuid:        p.Uuid.String(),
 		Name:        p.Name,
 		OrgId:       p.OrgId.String(),
 		Active:      p.Active,
-		Duration:    uint64(p.Duration),
+		From:        p.From.Format(time.RFC3339),
+		To:          p.To.Format(time.RFC3339),
 		SmsVolume:   int64(p.SmsVolume),
 		DataVolume:  int64(p.DataVolume),
 		VoiceVolume: int64(p.VoiceVolume),
 		SimType:     p.SimType.String(),
-		//CreatedAt:   p.CreatedAt.String(),
-		//UpdatedAt:   p.UpdatedAt.String(),
-		//DeletedAt:   p.DeletedAt.Time.String(),
+		CreatedAt:   p.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   p.UpdatedAt.Format(time.RFC3339),
+		DeletedAt:   d,
 		Rate: &pb.PackageRates{
 			Data:   p.PackageRate.Data,
 			SmsMo:  p.PackageRate.SmsMo,
@@ -267,14 +311,13 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 			Markup:   p.PackageMarkup.Markup,
 		},
 		Provider:    p.Provider,
+		Type:        p.Type.String(),
 		Messageunit: p.MessageUnits.String(),
 		VoiceUnit:   p.VoiceUnits.String(),
 		DataUnit:    p.DataUnits.String(),
 		Country:     p.Country,
 		Currency:    p.Currency,
 		Flatrate:    p.Flatrate,
-		EffectiveAt: p.EffectiveAt.Format(time.RFC3339),
-		EndAt:       p.EndAt.Format(time.RFC3339),
 	}
 }
 

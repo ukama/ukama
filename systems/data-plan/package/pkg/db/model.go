@@ -28,10 +28,10 @@ type Package struct {
 	MessageUnits   MessageUnitType
 	Flatrate       bool      `gorm:"not null; default:false"`
 	Currency       string    `gorm:"not null; default:Dollar"`
-	EffectiveAt    time.Time `gorm:"not null"`
-	EndAt          time.Time
-	Country        string `gorm:"not null;type:string"`
-	Provider       string `gorm:"not null;type:string"`
+	From           time.Time `gorm:"not null"`
+	To             time.Time `gorm:"not null"`
+	Country        string    `gorm:"not null;type:string"`
+	Provider       string    `gorm:"not null;type:string"`
 }
 
 type PackageDetails struct {

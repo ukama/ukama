@@ -7,7 +7,7 @@ import "validator.proto";
 
 service PackagesService {
     rpc Get (GetPackageRequest) returns (GetPackageResponse) {}
-    rpc Getdetails (GetPackageRequest) returns (GetPackageResponse) {}
+    rpc GetDetails (GetPackageRequest) returns (GetPackageResponse) {}
     rpc Add (AddPackageRequest) returns (AddPackageResponse){}
     rpc Delete (DeletePackageRequest) returns (DeletePackageResponse){}
     rpc Update (UpdatePackageRequest) returns (UpdatePackageResponse){}
@@ -77,6 +77,8 @@ message AddPackageRequest {
     string apn = 27;
     string baserate = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "baserate_id"];
     string ownerId =29[(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "owner_id"];
+    string from = 30;
+    string to = 31;
     
 }
 
@@ -108,11 +110,12 @@ message Package {
     string messageunit = 20;
     bool flatrate = 21;
     string currency = 22;
-    string effectiveAt  = 23;
-    string endAt = 24;
+    string from = 23;
+    string to = 24;
     string country=25;
     string provider= 26;
     string apn = 27;
+
 }
 
 message PackageRates{ 

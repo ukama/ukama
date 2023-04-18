@@ -106,8 +106,8 @@ func (_m *PackagesServiceServer) GetByOrg(_a0 context.Context, _a1 *gen.GetByOrg
 	return r0, r1
 }
 
-// Getdetails provides a mock function with given fields: _a0, _a1
-func (_m *PackagesServiceServer) Getdetails(_a0 context.Context, _a1 *gen.GetPackageRequest) (*gen.GetPackageResponse, error) {
+// GetDetails provides a mock function with given fields: _a0, _a1
+func (_m *PackagesServiceServer) GetDetails(_a0 context.Context, _a1 *gen.GetPackageRequest) (*gen.GetPackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *gen.GetPackageResponse

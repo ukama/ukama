@@ -136,8 +136,8 @@ func (_m *PackagesServiceClient) GetByOrg(ctx context.Context, in *gen.GetByOrgP
 	return r0, r1
 }
 
-// Getdetails provides a mock function with given fields: ctx, in, opts
-func (_m *PackagesServiceClient) Getdetails(ctx context.Context, in *gen.GetPackageRequest, opts ...grpc.CallOption) (*gen.GetPackageResponse, error) {
+// GetDetails provides a mock function with given fields: ctx, in, opts
+func (_m *PackagesServiceClient) GetDetails(ctx context.Context, in *gen.GetPackageRequest, opts ...grpc.CallOption) (*gen.GetPackageResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]

@@ -2,7 +2,8 @@ package rest
 
 type AddPackageRequest struct {
 	Name        string  `example:"Monthly-Data" json:"name" validation:"required"`
-	Duration    uint64  `example:"36000" json:"duration" validation:"required"`
+	From        string  `example:"2023-04-01T00:00:00Z" json:"from" validation:"required"`
+	To          string  `example:"2023-05-01T00:00:00Z" json:"to" validation:"required"`
 	OrgId       string  `example:"{{OrgUUID}}" json:"org_id" validation:"required"`
 	OwnerId     string  `example:"{{OwnerUUID}}" json:"owner_id" validation:"required"`
 	SimType     string  `example:"test" json:"sim_type" validation:"required"`
@@ -21,7 +22,7 @@ type AddPackageRequest struct {
 }
 
 type UpdatePackageRequest struct {
-	Uuid   string `example:"{{PackageUUID}}" json:"uuid" path:"uuid" binding:"required" validation:"required"`
+	Uuid   string `example:"{{PackageUUID}}" json:"uuid" path:"uuid" validation:"required"`
 	Name   string `example:"Monthly-Data-Updated" json:"name" validation:"required"`
 	Active bool   `example:"true" json:"active" validation:"required"`
 }
@@ -54,7 +55,7 @@ type GetPackageByOrgRequest struct {
 type UploadBaseRatesRequest struct {
 	FileURL     string `json:"file_url" binding:"required" validate:"required"`
 	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
-	EndAt       string `json:"end_at" binding:"required" validate:"required" default:"2099-12-31T00:00:00+00:00"`
+	EndAt       string `json:"end_at" validate:"required"`
 	SimType     string `json:"sim_type" binding:"required" validate:"required"`
 }
 

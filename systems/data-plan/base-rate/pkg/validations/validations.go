@@ -52,3 +52,7 @@ func IsAfterDate(date string, after string) error {
 	}
 	return errors.New("date is not after" + a.Format(time.RFC3339))
 }
+
+func FromString(s string) (time.Time, error) {
+	return time.Parse(time.RFC3339, s)
+}
