@@ -9,7 +9,7 @@ type AddPackageRequest struct {
 	DataVolume  int64  `example:"1024" json:"data_volume" validation:"required"`
 	Active      bool   `example:"true" json:"active" validation:"required"`
 	VoiceVolume int64  `example:"0" json:"voice_volume" validation:"required"`
-	OrgRatesId  uint64 `example:"1" json:"org_rates_id" validation:"required"`
+	BaserateId  string `example:"{{baserate}}" json:"baserate_id" validation:"required"`
 }
 
 type UpdatePackageRequest struct {
@@ -30,17 +30,17 @@ type PackagesRequest struct {
 }
 
 type GetBaseRatesByCountryRequest struct {
-	Country string `path:"country" validate:"required"`
-	Network string `json:"network"`
-	SimType string `json:"sim_type" binding:"required" validate:"required"`
+	Country  string `path:"country" validate:"required"`
+	Provider string `json:"network"`
+	SimType  string `json:"sim_type" binding:"required" validate:"required"`
 }
 
 type GetBaseRatesForPeriodRequest struct {
-	Country string `path:"country" validate:"required"`
-	Network string `json:"network" binding:"required" validate:"required"`
-	To      string `json:"to" binding:"required" validate:"required"`
-	From    string `json:"from" binding:"required" validate:"required"`
-	SimType string `json:"sim_type" binding:"required" validate:"required"`
+	Country  string `path:"country" validate:"required"`
+	Provider string `json:"network" binding:"required" validate:"required"`
+	To       string `json:"to" binding:"required" validate:"required"`
+	From     string `json:"from" binding:"required" validate:"required"`
+	SimType  string `json:"sim_type" binding:"required" validate:"required"`
 }
 
 type GetBaseRateRequest struct {

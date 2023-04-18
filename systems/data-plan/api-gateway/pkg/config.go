@@ -42,13 +42,13 @@ func NewConfig() *Config {
 			DebugMode: false,
 		},
 		Services: GrpcEndpoints{
-			Timeout:  3 * time.Second,
+			Timeout:  5 * time.Second,
 			Package:  "package:9090",
 			Baserate: "baserate:9090",
 			Rate:     "rate:9090",
 		},
 		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
+			Timeout:     5 * time.Second,
 			NodeMetrics: "http://localhost",
 		},
 		Server: rest.HttpConfig{

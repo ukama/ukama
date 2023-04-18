@@ -112,6 +112,32 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 	return rateList, nil
 }
 
+func (b *BaseRateServer) GetBaseRatesForPackage(ctx context.Context, req *pb.GetBaseRatesByPeriodRequest) (*pb.GetBaseRatesResponse, error) {
+	logrus.Infof("GetBaseRatesForPackage where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
+
+	from, err := time.Parse(time.RFC3339, req.GetFrom())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for from "+err.Error())
+	}
+
+	to, err := time.Parse(time.RFC3339, req.GetTo())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to "+err.Error())
+	}
+
+	rates, err := b.baseRateRepo.GetBaseRatesForPackage(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
+
+	if err != nil {
+		logrus.Errorf("error while getting rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "rates")
+	}
+	rateList := &pb.GetBaseRatesResponse{
+		Rates: dbratesToPbRates(rates),
+	}
+
+	return rateList, nil
+}
+
 func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
 	fileUrl := req.GetFileURL()
 	effectiveAt := req.GetEffectiveAt()

@@ -58,6 +58,29 @@ func (_m *baserate) GetBaseRatesById(req *gen.GetBaseRatesByIdRequest) (*gen.Get
 	return r0, r1
 }
 
+// GetBaseRatesForPackage provides a mock function with given fields: req
+func (_m *baserate) GetBaseRatesForPackage(req *gen.GetBaseRatesByPeriodRequest) (*gen.GetBaseRatesResponse, error) {
+	ret := _m.Called(req)
+
+	var r0 *gen.GetBaseRatesResponse
+	if rf, ok := ret.Get(0).(func(*gen.GetBaseRatesByPeriodRequest) *gen.GetBaseRatesResponse); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetBaseRatesResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*gen.GetBaseRatesByPeriodRequest) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetBaseRatesForPeriod provides a mock function with given fields: req
 func (_m *baserate) GetBaseRatesForPeriod(req *gen.GetBaseRatesByPeriodRequest) (*gen.GetBaseRatesResponse, error) {
 	ret := _m.Called(req)

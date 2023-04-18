@@ -138,14 +138,14 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		CallUnits:    db.ParseCallUnitType(req.CallUnit),
 		DataUnits:    db.ParseDataUnitType(req.DataUnit),
 		Flatrate:     req.Flatrate,
-		Rate: &db.PackageRate{
+		PackageRate: db.PackageRate{
 			Amount: req.Amount,
 		},
-		Markup: &db.PackageMarkup{
+		PackageMarkup: db.PackageMarkup{
 			BaseRateId: baserate,
 			Markup:     req.Markup,
 		},
-		Details: &db.PackageDetails{
+		PackageDetails: db.PackageDetails{
 			Apn: req.Apn,
 		},
 	}
@@ -162,7 +162,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	}
 
 	// calculae rate per unit
-	calculateRatePerUnit(pr.Rate, rate.Rate, pr.MessageUnits, pr.DataUnits)
+	calculateRatePerUnit(&pr.PackageRate, rate.Rate, pr.MessageUnits, pr.DataUnits)
 
 	calculateTotalAmount(&pr)
 
@@ -257,18 +257,18 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		DataVolume:  int64(p.DataVolume),
 		VoiceVolume: int64(p.VoiceVolume),
 		SimType:     p.SimType.String(),
-		CreatedAt:   p.CreatedAt.String(),
-		UpdatedAt:   p.UpdatedAt.String(),
-		DeletedAt:   p.DeletedAt.Time.String(),
+		//CreatedAt:   p.CreatedAt.String(),
+		//UpdatedAt:   p.UpdatedAt.String(),
+		//DeletedAt:   p.DeletedAt.Time.String(),
 		Rate: &pb.PackageRates{
-			Data:   p.Rate.Data,
-			SmsMo:  p.Rate.SmsMo,
-			SmsMt:  p.Rate.SmsMt,
-			Amount: p.Rate.Amount,
+			Data:   p.PackageRate.Data,
+			SmsMo:  p.PackageRate.SmsMo,
+			SmsMt:  p.PackageRate.SmsMt,
+			Amount: p.PackageRate.Amount,
 		},
 		Markup: &pb.PackageMarkup{
-			Baserate: p.Markup.BaseRateId.String(),
-			Markup:   p.Markup.Markup,
+			Baserate: p.PackageMarkup.BaseRateId.String(),
+			Markup:   p.PackageMarkup.Markup,
 		},
 		Provider:    p.Provider,
 		Messageunit: p.MessageUnits.String(),
@@ -292,8 +292,8 @@ func calculateRatePerUnit(pr *db.PackageRate, rate *bpb.Rate, mu db.MessageUnitT
 
 func calculateTotalAmount(pr *db.Package) {
 
-	pr.Rate.Amount = (pr.Rate.SmsMo * float64(pr.SmsVolume)) +
-		(pr.Rate.SmsMt * float64(pr.SmsVolume)) +
-		(pr.Rate.Data * float64(pr.DataVolume))
+	pr.PackageRate.Amount = (pr.PackageRate.SmsMo * float64(pr.SmsVolume)) +
+		(pr.PackageRate.SmsMt * float64(pr.SmsVolume)) +
+		(pr.PackageRate.Data * float64(pr.DataVolume))
 
 }

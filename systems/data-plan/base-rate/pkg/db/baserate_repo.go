@@ -15,6 +15,7 @@ type BaseRateRepo interface {
 	GetBaseRatesHistoryByCountry(country, provider string, sType SimType) ([]BaseRate, error)
 	GetBaseRatesByCountry(country, provider string, simType SimType) ([]BaseRate, error)
 	GetBaseRatesForPeriod(country, provider string, from, to time.Time, simType SimType) ([]BaseRate, error)
+	GetBaseRatesForPackage(country, provider string, from, to time.Time, simType SimType) ([]BaseRate, error)
 	UploadBaseRates(rateList []BaseRate) error
 }
 
@@ -64,6 +65,18 @@ func (b *baseRateRepo) GetBaseRatesForPeriod(country, provider string, from, to 
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Model(BaseRate{}).Unscoped().Where("country = ?", country).Where("provider = ?", provider).
 		Where("sim_type = ?", simType).Where("effective_at >= ?", from).Where("effective_at <= ?", to).Find(&rates)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return rates, nil
+}
+
+func (b *baseRateRepo) GetBaseRatesForPackage(country, provider string, from, to time.Time, simType SimType) ([]BaseRate, error) {
+	var rates []BaseRate
+	result := b.Db.GetGormDb().Model(BaseRate{}).Unscoped().Where("country = ?", country).Where("provider = ?", provider).
+		Where("sim_type = ?", simType).Where("effective_at <= ?", from).Where("end_at >= ?", to).Find(&rates)
 
 	if result.Error != nil {
 		return nil, result.Error

@@ -54,6 +54,7 @@ type baserate interface {
 	GetBaseRatesByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesHistoryByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesForPeriod(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
+	GetBaseRatesForPackage(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
 	UploadBaseRates(req *bpb.UploadBaseRatesRequest) (*bpb.UploadBaseRatesResponse, error)
 }
 type packageS interface {
@@ -115,6 +116,7 @@ func (r *Router) init() {
 	baseRates.POST("/country/:country", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateByCountryHandler, http.StatusOK))
 	baseRates.POST("/country/:country/history", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHistoryByCountryHandler, http.StatusOK))
 	baseRates.POST("/country/:country/period", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateForPeriodHandler, http.StatusOK))
+	baseRates.POST("/package/country/:country/period", formatDoc("Get BaseRate for package", ""), tonic.Handler(r.getBaseRateForPackageHandler, http.StatusOK))
 
 	packages := v1.Group("/packages", "Packages", "Packages operations")
 	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
@@ -170,9 +172,9 @@ func (r *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*b
 
 func (r *Router) getBaseRateByCountryHandler(c *gin.Context, req *GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error) {
 	resp, err := r.clients.b.GetBaseRatesByCountry(&bpb.GetBaseRatesByCountryRequest{
-		Country: req.Country,
-		Network: req.Network,
-		SimType: req.SimType,
+		Country:  req.Country,
+		Provider: req.Provider,
+		SimType:  req.SimType,
 	})
 
 	if err != nil {
@@ -185,9 +187,9 @@ func (r *Router) getBaseRateByCountryHandler(c *gin.Context, req *GetBaseRatesBy
 
 func (r *Router) getBaseRateHistoryByCountryHandler(c *gin.Context, req *GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error) {
 	resp, err := r.clients.b.GetBaseRatesHistoryByCountry(&bpb.GetBaseRatesByCountryRequest{
-		Country: req.Country,
-		Network: req.Network,
-		SimType: req.SimType,
+		Country:  req.Country,
+		Provider: req.Provider,
+		SimType:  req.SimType,
 	})
 
 	if err != nil {
@@ -200,11 +202,27 @@ func (r *Router) getBaseRateHistoryByCountryHandler(c *gin.Context, req *GetBase
 
 func (r *Router) getBaseRateForPeriodHandler(c *gin.Context, req *GetBaseRatesForPeriodRequest) (*bpb.GetBaseRatesResponse, error) {
 	resp, err := r.clients.b.GetBaseRatesForPeriod(&bpb.GetBaseRatesByPeriodRequest{
-		Country: req.Country,
-		Network: req.Network,
-		SimType: req.SimType,
-		From:    req.From,
-		To:      req.To,
+		Country:  req.Country,
+		Provider: req.Provider,
+		SimType:  req.SimType,
+		From:     req.From,
+		To:       req.To,
+	})
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getBaseRateForPackageHandler(c *gin.Context, req *GetBaseRatesForPeriodRequest) (*bpb.GetBaseRatesResponse, error) {
+	resp, err := r.clients.b.GetBaseRatesForPackage(&bpb.GetBaseRatesByPeriodRequest{
+		Country:  req.Country,
+		Provider: req.Provider,
+		SimType:  req.SimType,
+		From:     req.From,
+		To:       req.To,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -278,7 +296,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Name:        req.Name,
 		OrgId:       req.OrgId,
 		Duration:    req.Duration,
-		OrgRatesId:  req.OrgRatesId,
+		Baserate:    req.BaserateId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,

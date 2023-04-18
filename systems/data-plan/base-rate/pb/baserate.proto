@@ -8,6 +8,7 @@ service BaseRatesService {
     rpc GetBaseRatesById (GetBaseRatesByIdRequest) returns (GetBaseRatesByIdResponse) {} /* List of base rates by id */
     rpc GetBaseRatesByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all latest base rates version by network till date */
     rpc GetBaseRatesForPeriod(GetBaseRatesByPeriodRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network in specified period */
+    rpc GetBaseRatesForPackage(GetBaseRatesByPeriodRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network in specified period */
     rpc GetBaseRatesHistoryByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network till date */
     rpc UploadBaseRates(UploadBaseRatesRequest)returns (UploadBaseRatesResponse){}
 }
