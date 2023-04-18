@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
-	ory "github.com/ory/client-go"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
@@ -31,7 +30,6 @@ type RouterConfig struct {
 	debugMode  bool
 	serverConf *rest.HttpConfig
 	auth       *config.Auth
-	o          *ory.APIClient
 	s          *config.Service
 	k          string
 }
@@ -71,7 +69,6 @@ func NewRouterConfig(svcConf *pkg.Config, k string) *RouterConfig {
 		serverConf: &svcConf.Server,
 		debugMode:  svcConf.DebugMode,
 		s:          svcConf.Service,
-		o:          oc,
 		auth:       svcConf.Auth,
 		k:          k,
 	}
