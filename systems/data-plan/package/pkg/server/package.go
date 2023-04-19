@@ -160,7 +160,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		Uuid:         uuid.NewV4(),
 		OwnerId:      ownId,
 		Name:         req.GetName(),
-		SimType:      db.ParseType(req.GetSimType()),
+		SimType:      ukama.ParseType(req.GetSimType()),
 		OrgId:        orgId,
 		Active:       req.Active,
 		From:         from,

@@ -13,7 +13,7 @@ type Package struct {
 	Uuid           uuid.UUID `gorm:"unique;type:uuid;index"`
 	OwnerId        uuid.UUID
 	Name           string
-	SimType        SimType
+	SimType        ukama.SimType
 	OrgId          uuid.UUID      `gorm:"not null;type:uuid;index"`
 	Active         bool           `gorm:"not null; default:false"`
 	Duration       uint64         `gorm:"not null; default:0"`
