@@ -20,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/client"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	bmocks "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen/mocks"
+	ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	pmocks "github.com/ukama/ukama/systems/data-plan/package/pb/gen/mocks"
 	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	rmocks "github.com/ukama/ukama/systems/data-plan/rate/pb/gen/mocks"
@@ -619,6 +620,154 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		}
 
 		b.On("GetBaseRatesForPeriod", mock.Anything, pReq).Return(pResp, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewRateClientFromClient(m),
+			b: client.NewBaseRateClientFromClient(b),
+			p: client.NewPackageFromClient(p),
+		}, routerConfig).f.Engine()
+		// act
+		r.ServeHTTP(w, hreq)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+
+}
+
+func TestRouter_Package(t *testing.T) {
+	t.Run("GetPackage", func(t *testing.T) {
+		ureq := PackagesRequest{
+			Uuid: uuid.NewV4().String(),
+		}
+
+		w := httptest.NewRecorder()
+		hreq, _ := http.NewRequest("GET", "/v1/packages/"+ureq.Uuid, nil)
+
+		m := &rmocks.RateServiceClient{}
+		p := &pmocks.PackagesServiceClient{}
+		b := &bmocks.BaseRatesServiceClient{}
+
+		pReq := &ppb.GetPackageRequest{
+			Uuid: ureq.Uuid,
+		}
+
+		pResp := &ppb.GetPackageResponse{
+			Package: &ppb.Package{
+				Uuid: ureq.Uuid,
+			},
+		}
+
+		p.On("Get", mock.Anything, pReq).Return(pResp, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewRateClientFromClient(m),
+			b: client.NewBaseRateClientFromClient(b),
+			p: client.NewPackageFromClient(p),
+		}, routerConfig).f.Engine()
+		// act
+		r.ServeHTTP(w, hreq)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+
+	t.Run("GetPackageDetails", func(t *testing.T) {
+		ureq := PackagesRequest{
+			Uuid: uuid.NewV4().String(),
+		}
+
+		w := httptest.NewRecorder()
+		hreq, _ := http.NewRequest("GET", "/v1/packages/"+ureq.Uuid+"/details", nil)
+
+		m := &rmocks.RateServiceClient{}
+		p := &pmocks.PackagesServiceClient{}
+		b := &bmocks.BaseRatesServiceClient{}
+
+		pReq := &ppb.GetPackageRequest{
+			Uuid: ureq.Uuid,
+		}
+
+		pResp := &ppb.GetPackageResponse{
+			Package: &ppb.Package{
+				Uuid: ureq.Uuid,
+			},
+		}
+
+		p.On("GetDetails", mock.Anything, pReq).Return(pResp, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewRateClientFromClient(m),
+			b: client.NewBaseRateClientFromClient(b),
+			p: client.NewPackageFromClient(p),
+		}, routerConfig).f.Engine()
+		// act
+		r.ServeHTTP(w, hreq)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+
+	t.Run("GetPackageByOrgId", func(t *testing.T) {
+		ureq := GetPackageByOrgRequest{
+			OrgId: uuid.NewV4().String(),
+		}
+
+		w := httptest.NewRecorder()
+		hreq, _ := http.NewRequest("GET", "/v1/packages/org/"+ureq.OrgId, nil)
+
+		m := &rmocks.RateServiceClient{}
+		p := &pmocks.PackagesServiceClient{}
+		b := &bmocks.BaseRatesServiceClient{}
+
+		pReq := &ppb.GetByOrgPackageRequest{
+			OrgId: ureq.OrgId,
+		}
+
+		pResp := &ppb.GetByOrgPackageResponse{
+			Packages: []*ppb.Package{
+				{
+					OrgId: ureq.OrgId,
+				},
+			},
+		}
+
+		p.On("GetByOrg", mock.Anything, pReq).Return(pResp, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewRateClientFromClient(m),
+			b: client.NewBaseRateClientFromClient(b),
+			p: client.NewPackageFromClient(p),
+		}, routerConfig).f.Engine()
+		// act
+		r.ServeHTTP(w, hreq)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+	t.Run("DeletePackage", func(t *testing.T) {
+		ureq := PackagesRequest{
+			Uuid: uuid.NewV4().String(),
+		}
+
+		w := httptest.NewRecorder()
+		hreq, _ := http.NewRequest("DELETE", "/v1/packages/"+ureq.Uuid, nil)
+
+		m := &rmocks.RateServiceClient{}
+		p := &pmocks.PackagesServiceClient{}
+		b := &bmocks.BaseRatesServiceClient{}
+
+		pReq := &ppb.DeletePackageRequest{
+			Uuid: ureq.Uuid,
+		}
+
+		pResp := &ppb.DeletePackageResponse{}
+
+		p.On("Delete", mock.Anything, pReq).Return(pResp, nil)
 
 		r := NewRouter(&Clients{
 			r: client.NewRateClientFromClient(m),
