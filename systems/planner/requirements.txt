@@ -7,3 +7,5 @@ gunicorn
 pytest
 haversine
 networkx
+pytest-asyncio
+callee

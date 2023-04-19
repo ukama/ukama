@@ -16,7 +16,6 @@ RUN cd /var/www/server/Signal-Server/src && cmake . && make
 
 COPY . /var/www/app
 WORKDIR /var/www/app
-RUN conda create --name myenv 
+RUN conda env create -f environment.yml
 SHELL ["conda", "run", "-n", "myenv", "/bin/bash", "-c"]
-RUN conda install --file requirements.txt -c conda-forge
 RUN ["chmod", "+x", "/var/www/app/docker/api/startup.sh"]

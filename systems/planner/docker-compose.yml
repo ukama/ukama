@@ -13,6 +13,8 @@ services:
     environment:
       - ENV=dev
       - SDF_DIR
+      - HGT_DIR
     volumes:
       - .:/var/www/app
       - $SDF_DIR:/data/sdfData
+      - $HGT_DIR:/data/hgtData

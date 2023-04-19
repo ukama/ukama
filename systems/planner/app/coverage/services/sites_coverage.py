@@ -25,6 +25,7 @@ class SitesCoverage:
             output_folder_path = self.generate_output_folder()
             sites_coverage_list = []
             for site in sites:
+                site = dict(site)
                 params = ["-sdf", self.SDF_FILES_PATH]
                 if site['latitude']:
                     params.extend(["-lat", str(site['latitude'])])
@@ -81,8 +82,10 @@ class SitesCoverage:
                 return self.merge_sites_output(
                     sites_coverage_list, output_file_path, output_folder_path, output_func
                 )
-            else:
+            elif len(sites_coverage_list) == 1:
                 return sites_coverage_list[0]
+            else:
+                return None
         finally:
             self.remove_temp_folder()
 
@@ -113,14 +116,7 @@ class SitesCoverage:
 
     def translate(self, input_path, output_path, options):
         inputds = gdal.Open(input_path)
-        test = gdal.Translate(output_path, inputds, options=options)
-
-        inputds = None
-        if test == None:
-            return False
-        test = None
-
-        return True
+        gdal.Translate(output_path, inputds, options=options)
 
     def create_geo_tiff_files(self, inputsArr: List[CoverageResponseSchema]):
         responseImages = []
@@ -155,11 +151,7 @@ class SitesCoverage:
         # Rounding of longitude and latitude to match with other images, otherwise no coordinate of any pixel were matching
         roundofCoord = 3
 
-        y_min = float("inf")
-        y_max = float("-inf")
-        x_min = float("inf")
-        x_max = float("-inf")
-        # Loop through the input files
+        y_min, y_max, x_min, x_max = float("inf"), float("-inf"), float("inf"), float("-inf")
         for input_file in inputs:
             # Open the image using GDAL
             ds = gdal.Open(input_file["image_url"])
@@ -169,56 +161,32 @@ class SitesCoverage:
             height, width = ds.RasterYSize, ds.RasterXSize
 
             # Calculate the longitude and latitude of each pixel
-            data_red = ds.GetRasterBand(1).ReadAsArray()
-            data_green = ds.GetRasterBand(2).ReadAsArray()
-            data_blue = ds.GetRasterBand(3).ReadAsArray()
-            data_alpha = ds.GetRasterBand(4).ReadAsArray()
+            data = np.empty((height, width, 4), dtype=np.uint8)
+            for i in range(4):
+                data[:, :, i] = ds.GetRasterBand(i + 1).ReadAsArray()
 
             for row in range(height):
                 for col in range(width):
                     # Calculate the longitude and latitude of the center of the pixel
                     longitude = west + col * pixel_width
                     latitude = north + row * pixel_height
-                    y_min = min(y_min, latitude)
-                    y_max = max(y_max, latitude)
-                    x_min = min(x_min, longitude)
-                    x_max = max(x_max, longitude)
-                    longitude = round(longitude, roundofCoord)
-                    latitude = round(latitude, roundofCoord)
-                    red = (0, longitude, latitude)
-                    green = (1, longitude, latitude)
-                    blue = (2, longitude, latitude)
-                    alpha = (3, longitude, latitude)
-
-                    if data_alpha[row, col] != 0:
-                        rgb = (
-                            data_red[row, col],
-                            data_green[row, col],
-                            data_blue[row, col],
-                        )
-                        if red in combined:
+                    y_min, y_max = min(y_min, latitude), max(y_max, latitude)
+                    x_min, x_max = min(x_min, longitude), max(x_max, longitude)
+                    longitude, latitude = round(longitude, roundofCoord), round(latitude, roundofCoord)
+                    key = (0, longitude, latitude), (1, longitude, latitude), (2, longitude, latitude), (3, longitude, latitude)
+                    if data[row, col, 3] != 0:
+                        rgb = tuple(data[row, col, :3])
+                        if key in combined:
                             if outputFunc == "max":
-                                if (
-                                    color_map[rgb]
-                                    > color_map[
-                                        (combined[red], combined[green], combined[blue])
-                                    ]
-                                ):
-                                    combined[red], combined[green], combined[blue] = rgb
-                                    combined[alpha] = data_alpha[row, col]
+                                if color_map[rgb] > color_map[tuple(combined[key][:3])]:
+                                    combined[key] = tuple(list(rgb) + [data[row, col, 3]])
                             else:
-                                if (
-                                    color_map[rgb]
-                                    < color_map[
-                                        (combined[red], combined[green], combined[blue])
-                                    ]
-                                ):
-                                    combined[red], combined[green], combined[blue] = rgb
-                                    combined[alpha] = data_alpha[row, col]
-
+                                if color_map[rgb] < color_map[tuple(combined[key][:3])]:
+                                    combined[key] = tuple(list(rgb) + [data[row, col, 3]])
                         else:
-                            combined[red], combined[green], combined[blue] = rgb
-                            combined[alpha] = data_alpha[row, col]
+                            combined[key] = tuple(list(rgb) + [data[row, col, 3]])
+
+            ds = None
 
         nrows = int(abs((y_max - y_min) / pixel_height))
         ncols = int(abs((x_max - x_min) / pixel_width))
@@ -228,15 +196,10 @@ class SitesCoverage:
             for col in range(ncols):
                 lon = round(x_min + col * pixel_width, roundofCoord)
                 lat = round(y_max + row * pixel_height, roundofCoord)
-                red = (0, lon, lat)
-                green = (1, lon, lat)
-                blue = (2, lon, lat)
-                alpha = (3, lon, lat)
-                if red in combined:
-                    output_data[row, col, 0] = int(combined[red])
-                    output_data[row, col, 1] = int(combined[green])
-                    output_data[row, col, 2] = int(combined[blue])
-                    output_data[row, col, 3] = int(combined[alpha])
+                key = (0, lon, lat), (1, lon, lat), (2, lon, lat), (3, lon, lat)
+                if key in combined:
+                    output_data[row, col, :3] = combined[key][:3]
+                    output_data[row, col, 3] = combined[key][3]
 
         driver = gdal.GetDriverByName("GTiff")
         output_ds = driver.Create(merged_tif_url, ncols, nrows, 4, gdal.GDT_Byte)
