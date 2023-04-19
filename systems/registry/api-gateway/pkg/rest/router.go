@@ -107,6 +107,8 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
 	auth := r.f.Group("/v1", "API gateway", "Registry system version v1", func(ctx *gin.Context) {
+		s := fmt.Sprintf("%s, %s, %s", "ukama", pkg.SystemName, pkg.ServiceName)
+		ctx.Request.Header.Set("Meta", s)
 		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
