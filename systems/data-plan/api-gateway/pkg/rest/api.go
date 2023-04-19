@@ -66,7 +66,6 @@ type GetRateRequest struct {
 	To          string `json:"to" binding:"required" validate:"required"`
 	From        string `json:"from" binding:"required" validate:"required"`
 	SimType     string `json:"sim_type" binding:"required" validate:"required"`
-	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
 }
 
 type DeleteMarkupRequest struct {

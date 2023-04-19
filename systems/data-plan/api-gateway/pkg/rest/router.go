@@ -331,7 +331,6 @@ func (r *Router) getRateHandler(c *gin.Context, req *GetRateRequest) (*rpb.GetRa
 		To:          req.To,
 		From:        req.From,
 		SimType:     req.SimType,
-		EffectiveAt: req.EffectiveAt,
 	})
 	if err != nil {
 		logrus.Errorf("Failed to get rate for user %s.Error %s", req.OwnerId, err.Error())
