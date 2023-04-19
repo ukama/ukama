@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -72,8 +73,8 @@ func TestRouter_GetRates(t *testing.T) {
 		OwnerId:     ownerId,
 		Country:     "USA",
 		Provider:    "ABC",
-		To:          1680733308,
-		From:        1680703308,
+		To:          time.Now().UTC().Format(time.RFC3339),
+		From:        time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
 		SimType:     "ukama_data",
 		EffectiveAt: "xx",
 	}
@@ -109,7 +110,7 @@ func TestRouter_GetRates(t *testing.T) {
 				EffectiveAt: "2023-10-10",
 				Imsi:        1,
 				Lte:         true,
-				Network:     "Multi Tel",
+				Provider:    "Multi Tel",
 				SimType:     req.SimType,
 				SmsMo:       0.0100,
 				SmsMt:       0.0001,
@@ -445,6 +446,7 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 	ureq := UploadBaseRatesRequest{
 		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/base-rate/template/template.csv",
 		EffectiveAt: "2023-10-12T07:20:50.52Z",
+		EndAt:       "2043-10-12T07:20:50.52Z",
 		SimType:     "ukama_data",
 	}
 
@@ -462,6 +464,7 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 		FileURL:     ureq.FileURL,
 		EffectiveAt: ureq.EffectiveAt,
 		SimType:     ureq.SimType,
+		EndAt:       ureq.EndAt,
 	}
 
 	pResp := &bpb.UploadBaseRatesResponse{
@@ -490,9 +493,9 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 func TestRouter_GetBaseRates(t *testing.T) {
 	t.Run("ByCountry", func(t *testing.T) {
 		ureq := GetBaseRatesByCountryRequest{
-			Country: "ABC",
-			Network: "XYZ",
-			SimType: "ukama_data",
+			Country:  "ABC",
+			Provider: "XYZ",
+			SimType:  "ukama_data",
 		}
 
 		jreq, err := json.Marshal(&ureq)
@@ -506,9 +509,9 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		b := &bmocks.BaseRatesServiceClient{}
 
 		pReq := &bpb.GetBaseRatesByCountryRequest{
-			Country: ureq.Country,
-			Network: ureq.Network,
-			SimType: ureq.SimType,
+			Country:  ureq.Country,
+			Provider: ureq.Provider,
+			SimType:  ureq.SimType,
 		}
 
 		pResp := &bpb.GetBaseRatesResponse{
@@ -536,9 +539,9 @@ func TestRouter_GetBaseRates(t *testing.T) {
 
 	t.Run("HistoryByCountry", func(t *testing.T) {
 		ureq := GetBaseRatesByCountryRequest{
-			Country: "ABC",
-			Network: "XYZ",
-			SimType: "ukama_data",
+			Country:  "ABC",
+			Provider: "XYZ",
+			SimType:  "ukama_data",
 		}
 
 		jreq, err := json.Marshal(&ureq)
@@ -552,9 +555,9 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		b := &bmocks.BaseRatesServiceClient{}
 
 		pReq := &bpb.GetBaseRatesByCountryRequest{
-			Country: ureq.Country,
-			Network: ureq.Network,
-			SimType: ureq.SimType,
+			Country:  ureq.Country,
+			Provider: ureq.Provider,
+			SimType:  ureq.SimType,
 		}
 
 		pResp := &bpb.GetBaseRatesResponse{
@@ -582,11 +585,11 @@ func TestRouter_GetBaseRates(t *testing.T) {
 
 	t.Run("ByCountryForPeriod", func(t *testing.T) {
 		ureq := GetBaseRatesForPeriodRequest{
-			Country: "ABC",
-			Network: "XYZ",
-			SimType: "ukama_data",
-			To:      "2023-10-12T07:20:50.52Z",
-			From:    "2022-10-12T07:20:50.52Z",
+			Country:  "ABC",
+			Provider: "XYZ",
+			SimType:  "ukama_data",
+			To:       "2023-10-12T07:20:50.52Z",
+			From:     "2022-10-12T07:20:50.52Z",
 		}
 
 		jreq, err := json.Marshal(&ureq)
@@ -600,11 +603,11 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		b := &bmocks.BaseRatesServiceClient{}
 
 		pReq := &bpb.GetBaseRatesByPeriodRequest{
-			Country: ureq.Country,
-			Network: ureq.Network,
-			SimType: ureq.SimType,
-			From:    ureq.From,
-			To:      ureq.To,
+			Country:  ureq.Country,
+			Provider: ureq.Provider,
+			SimType:  ureq.SimType,
+			From:     ureq.From,
+			To:       ureq.To,
 		}
 
 		pResp := &bpb.GetBaseRatesResponse{

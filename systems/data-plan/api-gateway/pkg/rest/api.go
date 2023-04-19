@@ -63,8 +63,8 @@ type GetRateRequest struct {
 	OwnerId     string `example:"{{UserUUID}}" path:"user_id" validate:"required"`
 	Country     string `json:"country" binding:"required" validate:"required"`
 	Provider    string `json:"provider" binding:"required" validate:"required"`
-	To          uint64 `json:"to" binding:"required" validate:"required"`
-	From        uint64 `json:"from" binding:"required" validate:"required"`
+	To          string `json:"to" binding:"required" validate:"required"`
+	From        string `json:"from" binding:"required" validate:"required"`
 	SimType     string `json:"sim_type" binding:"required" validate:"required"`
 	EffectiveAt string `json:"effective_at" binding:"required" validate:"required"`
 }
