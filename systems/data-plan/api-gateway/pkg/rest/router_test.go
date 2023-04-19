@@ -71,13 +71,12 @@ func TestRouter_PingRoute(t *testing.T) {
 func TestRouter_GetRates(t *testing.T) {
 	ownerId := uuid.NewV4().String()
 	req := GetRateRequest{
-		OwnerId:     ownerId,
-		Country:     "USA",
-		Provider:    "ABC",
-		To:          time.Now().UTC().Format(time.RFC3339),
-		From:        time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
-		SimType:     "ukama_data",
-		EffectiveAt: "xx",
+		OwnerId:  ownerId,
+		Country:  "USA",
+		Provider: "ABC",
+		To:       time.Now().UTC().Format(time.RFC3339),
+		From:     time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		SimType:  "ukama_data",
 	}
 
 	jReq, err := json.Marshal(req)
@@ -91,13 +90,12 @@ func TestRouter_GetRates(t *testing.T) {
 	b := &bmocks.BaseRatesServiceClient{}
 
 	pReq := &rpb.GetRateRequest{
-		OwnerId:     req.OwnerId,
-		Country:     req.Country,
-		Provider:    req.Provider,
-		To:          req.To,
-		From:        req.From,
-		SimType:     req.SimType,
-		EffectiveAt: req.EffectiveAt,
+		OwnerId:  req.OwnerId,
+		Country:  req.Country,
+		Provider: req.Provider,
+		To:       req.To,
+		From:     req.From,
+		SimType:  req.SimType,
 	}
 
 	pResp := &rpb.GetRateResponse{
