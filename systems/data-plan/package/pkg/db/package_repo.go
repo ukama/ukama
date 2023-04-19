@@ -10,6 +10,7 @@ import (
 type PackageRepo interface {
 	Add(_package *Package) error
 	Get(uuid uuid.UUID) (*Package, error)
+	GetDetails(uuid.UUID) (*Package, error)
 	Delete(uuid uuid.UUID) error
 	GetByOrg(orgId uuid.UUID) ([]Package, error)
 	Update(uuid uuid.UUID, pkg *Package) error
@@ -34,7 +35,19 @@ func (r *packageRepo) Add(_package *Package) error {
 func (p *packageRepo) Get(uuid uuid.UUID) (*Package, error) {
 	var _package Package
 
-	result := p.Db.GetGormDb().Where("uuid = ?", uuid).First(&_package)
+	result := p.Db.GetGormDb().Preload("PackageRate").Where("uuid = ?", uuid).First(&_package)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &_package, nil
+}
+
+func (p *packageRepo) GetDetails(uuid uuid.UUID) (*Package, error) {
+	var _package Package
+
+	result := p.Db.GetGormDb().Preload(clause.Associations).Where("uuid = ?", uuid).First(&_package)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -45,7 +58,7 @@ func (p *packageRepo) Get(uuid uuid.UUID) (*Package, error) {
 
 func (p *packageRepo) GetByOrg(orgId uuid.UUID) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where(&Package{OrgId: orgId}).Find(&packages)
+	result := p.Db.GetGormDb().Preload("PackageRate").Where(&Package{OrgId: orgId}).Find(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -54,7 +67,11 @@ func (p *packageRepo) GetByOrg(orgId uuid.UUID) ([]Package, error) {
 }
 
 func (r *packageRepo) Delete(uuid uuid.UUID) error {
-	d := r.Db.GetGormDb().Where("uuid = ?", uuid).Delete(&Package{})
+	p := &Package{
+		Uuid: uuid,
+	}
+
+	d := r.Db.GetGormDb().Select(clause.Associations).Delete(p)
 	if d.Error != nil {
 		return d.Error
 	}
@@ -67,6 +84,8 @@ func (b *packageRepo) Update(uuid uuid.UUID, pkg *Package) error {
 	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
+
+	//https://stackoverflow.com/questions/65683156/updates-doesnt-seem-to-update-the-associations
 
 	return d.Error
 

@@ -77,6 +77,13 @@ func (d *PackageClient) GetPackage(id string) (*pb.GetPackageResponse, error) {
 	return d.packageClient.Get(ctx, &pb.GetPackageRequest{Uuid: id})
 }
 
+func (d *PackageClient) GetPackageDetails(id string) (*pb.GetPackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+	defer cancel()
+
+	return d.packageClient.GetDetails(ctx, &pb.GetPackageRequest{Uuid: id})
+}
+
 func (d *PackageClient) GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
 	defer cancel()

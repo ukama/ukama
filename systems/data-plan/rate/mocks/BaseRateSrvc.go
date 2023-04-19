@@ -12,22 +12,22 @@ type BaseRateSrvc struct {
 	mock.Mock
 }
 
-// GetBaseRate provides a mock function with given fields: id
-func (_m *BaseRateSrvc) GetBaseRate(id string) (*gen.GetBaseRateResponse, error) {
-	ret := _m.Called(id)
+// GetBaseRate provides a mock function with given fields: req
+func (_m *BaseRateSrvc) GetBaseRate(req *gen.GetBaseRatesByIdRequest) (*gen.GetBaseRatesByIdResponse, error) {
+	ret := _m.Called(req)
 
-	var r0 *gen.GetBaseRateResponse
-	if rf, ok := ret.Get(0).(func(string) *gen.GetBaseRateResponse); ok {
-		r0 = rf(id)
+	var r0 *gen.GetBaseRatesByIdResponse
+	if rf, ok := ret.Get(0).(func(*gen.GetBaseRatesByIdRequest) *gen.GetBaseRatesByIdResponse); ok {
+		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetBaseRateResponse)
+			r0 = ret.Get(0).(*gen.GetBaseRatesByIdResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(*gen.GetBaseRatesByIdRequest) error); ok {
+		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -36,11 +36,11 @@ func (_m *BaseRateSrvc) GetBaseRate(id string) (*gen.GetBaseRateResponse, error)
 }
 
 // GetBaseRates provides a mock function with given fields: req
-func (_m *BaseRateSrvc) GetBaseRates(req *gen.GetBaseRatesRequest) (*gen.GetBaseRatesResponse, error) {
+func (_m *BaseRateSrvc) GetBaseRates(req *gen.GetBaseRatesByPeriodRequest) (*gen.GetBaseRatesResponse, error) {
 	ret := _m.Called(req)
 
 	var r0 *gen.GetBaseRatesResponse
-	if rf, ok := ret.Get(0).(func(*gen.GetBaseRatesRequest) *gen.GetBaseRatesResponse); ok {
+	if rf, ok := ret.Get(0).(func(*gen.GetBaseRatesByPeriodRequest) *gen.GetBaseRatesResponse); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
@@ -49,7 +49,7 @@ func (_m *BaseRateSrvc) GetBaseRates(req *gen.GetBaseRatesRequest) (*gen.GetBase
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*gen.GetBaseRatesRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(*gen.GetBaseRatesByPeriodRequest) error); ok {
 		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)

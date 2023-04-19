@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/ukama/ukama/systems/data-plan/package/pkg/client"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/server"
 
 	"github.com/num30/config"
@@ -51,7 +52,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Package{})
+	err := d.Init(&db.Package{}, &db.PackageRate{}, &db.PackageMarkup{}, &db.PackageDetails{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -74,7 +75,12 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv := server.NewPackageServer(db.NewPackageRepo(gormdb), mbClient)
+	rate, err := client.NewRate(serviceConfig.Rate, serviceConfig.Timeout)
+	if err != nil {
+		log.Fatalf("failed to connect to rate service. Error: %s", err)
+	}
+
+	srv := server.NewPackageServer(db.NewPackageRepo(gormdb), rate, mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterPackagesServiceServer(s, srv)

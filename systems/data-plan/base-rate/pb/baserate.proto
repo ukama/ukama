@@ -8,6 +8,7 @@ service BaseRatesService {
     rpc GetBaseRatesById (GetBaseRatesByIdRequest) returns (GetBaseRatesByIdResponse) {} /* List of base rates by id */
     rpc GetBaseRatesByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all latest base rates version by network till date */
     rpc GetBaseRatesForPeriod(GetBaseRatesByPeriodRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network in specified period */
+    rpc GetBaseRatesForPackage(GetBaseRatesByPeriodRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network in specified period */
     rpc GetBaseRatesHistoryByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network till date */
     rpc UploadBaseRates(UploadBaseRatesRequest)returns (UploadBaseRatesResponse){}
 }
@@ -18,14 +19,14 @@ message GetBaseRatesResponse {
 
 message GetBaseRatesByCountryRequest{
     string country = 1;
-    string network =2;
+    string provider =2;
     string simType=5 [json_name = "sim_type"];
     string effectiveAt = 6 [json_name = "effective_at"];
 }
 
 message GetBaseRatesByPeriodRequest{
     string country = 1;
-    string network = 2;
+    string provider = 2;
     string From = 3 [json_name = "from"];
     string To =4  [json_name = "to"];
     string simType=5 [json_name = "sim_type"];
@@ -43,7 +44,8 @@ message GetBaseRatesByIdRequest{
 message UploadBaseRatesRequest {
     string fileURL = 1 [json_name = "file_url"];
     string effectiveAt = 2 [json_name = "effective_at"];
-    string simType = 3 [json_name = "sim_type"];
+    string endAt = 3 [json_name = "end_at"];
+    string simType = 4 [json_name = "sim_type"];
 }
 message UploadBaseRatesResponse {
     repeated Rate rate = 1;
@@ -52,7 +54,7 @@ message UploadBaseRatesResponse {
 message Rate{
     string uuid= 1 [(validator.field) = {uuid_ver: 4}];
     string country=2;
-    string network = 3;
+    string provider = 3;
     string vpmn =4;
     int64 imsi=5;
     double smsMo=6 [json_name = "sms_mo"];

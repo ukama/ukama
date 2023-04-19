@@ -76,6 +76,36 @@ func (_m *BaseRatesServiceClient) GetBaseRatesById(ctx context.Context, in *gen.
 	return r0, r1
 }
 
+// GetBaseRatesForPackage provides a mock function with given fields: ctx, in, opts
+func (_m *BaseRatesServiceClient) GetBaseRatesForPackage(ctx context.Context, in *gen.GetBaseRatesByPeriodRequest, opts ...grpc.CallOption) (*gen.GetBaseRatesResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetBaseRatesResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBaseRatesByPeriodRequest, ...grpc.CallOption) *gen.GetBaseRatesResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetBaseRatesResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBaseRatesByPeriodRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetBaseRatesForPeriod provides a mock function with given fields: ctx, in, opts
 func (_m *BaseRatesServiceClient) GetBaseRatesForPeriod(ctx context.Context, in *gen.GetBaseRatesByPeriodRequest, opts ...grpc.CallOption) (*gen.GetBaseRatesResponse, error) {
 	_va := make([]interface{}, len(opts))

@@ -29,6 +29,7 @@ service RateService {
     
     rpc GetRates (GetRatesRequest) returns (GetRatesResponse);
     rpc GetRate(GetRateRequest) returns (GetRateResponse);
+    rpc GetRateById(GetRateByIdRequest) returns (GetRateByIdResponse);
 
 }
 
@@ -96,8 +97,8 @@ message UpdateDefaultMarkupResponse {
 message GetRatesRequest{
     string country = 1;
     string provider =2;
-    uint64 to  =3;
-    uint64 from  =4;
+    string to =3;
+    string from  = 4;
     string simType=5 [json_name = "sim_type"];
     string effectiveAt = 6 [json_name = "effective_at"];
 }
@@ -110,8 +111,8 @@ message GetRateRequest{
     string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string country = 2;
     string provider =3;
-    uint64 to  =4;
-    uint64 from  =5;
+    string to =4;
+    string from  = 5;
     string simType=6 [json_name = "sim_type"];
     string effectiveAt = 7 [json_name = "effective_at"];
 }
@@ -120,26 +121,12 @@ message GetRateResponse{
     repeated ukama.dataplan.baserate.v1.Rate rates =1;
 }
 
-// message Rate{
-//     string uuid= 1 [(validator.field) = {uuid_ver: 4}];
-//     string country=2;
-//     string network = 3;
-//     string vpmn =4;
-//     string imsi=5;
-//     double smsMo=6 [json_name = "sms_mo"];
-//     double smsMt =7 [json_name = "sms_mt"];
-//     double data =8;
-//     bool  _2g=9;
-//     bool _3g=10;
-//     bool _5g=11;
-//     bool lte=12; 
-//     bool lteM=13 [json_name = "lte_m"];
-//     string apn=14; 
-//     string createdAt=15 [json_name = "created_at"];
-//     string deletedAt=16 [json_name = "deleted_at"];
-//     string updatedAt=17 [json_name = "updated_at"];
-//     string effectiveAt=18 [json_name = "effective_at"];
-//     string endAt=19 [json_name = "end_at"];
-//     string simType=20 [json_name = "sim_type"];
-//     string currency =21 [json_name = "currency"];
-// }
+message GetRateByIdRequest {
+    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string baseRate = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message GetRateByIdResponse {
+    ukama.dataplan.baserate.v1.Rate rate =1 ;
+}
+

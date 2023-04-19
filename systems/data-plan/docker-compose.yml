@@ -84,7 +84,7 @@ services:
       - baserate
       - rate
   msgclient:
-    build: ../messaging/msgClient
+    build: ../services/msgClient
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd

@@ -22,7 +22,7 @@ func TestRateService_ParseToModel(t *testing.T) {
 		Sms_mo:  "$0.1",
 		Sms_mt:  "$0.1",
 	}}
-	dbRate, err := ParseToModel(rawRates, "2023-04-10T20:05:29Z", "ukama_data")
+	dbRate, err := ParseToModel(rawRates, "2023-04-10T20:05:29Z", "2024-04-10T20:05:29Z", "ukama_data")
 	assert.NoError(t, err)
 	assert.Equal(t, rawRates[0].Country, dbRate[0].Country)
 	assert.Equal(t, "2023-04-10T20:05:29Z", dbRate[0].EffectiveAt.Format(time.RFC3339Nano))

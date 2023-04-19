@@ -10,6 +10,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg"
 	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
@@ -55,9 +56,9 @@ func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRa
 }
 
 func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetNetwork(), db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -71,9 +72,9 @@ func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetB
 }
 
 func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetNetwork(), req.GetSimType())
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetNetwork(), db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -87,7 +88,7 @@ func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *
 }
 
 func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetBaseRatesByPeriodRequest) (*pb.GetBaseRatesResponse, error) {
-	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetNetwork(), req.GetSimType(), req.From, req.To)
+	logrus.Infof("GetBaseRates where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
 
 	from, err := time.Parse(time.RFC3339, req.GetFrom())
 	if err != nil {
@@ -99,7 +100,33 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to "+err.Error())
 	}
 
-	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetNetwork(), from, to, db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
+
+	if err != nil {
+		logrus.Errorf("error while getting rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "rates")
+	}
+	rateList := &pb.GetBaseRatesResponse{
+		Rates: dbratesToPbRates(rates),
+	}
+
+	return rateList, nil
+}
+
+func (b *BaseRateServer) GetBaseRatesForPackage(ctx context.Context, req *pb.GetBaseRatesByPeriodRequest) (*pb.GetBaseRatesResponse, error) {
+	logrus.Infof("GetBaseRatesForPackage where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
+
+	from, err := time.Parse(time.RFC3339, req.GetFrom())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for from "+err.Error())
+	}
+
+	to, err := time.Parse(time.RFC3339, req.GetTo())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to "+err.Error())
+	}
+
+	rates, err := b.baseRateRepo.GetBaseRatesForPackage(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
 
 	if err != nil {
 		logrus.Errorf("error while getting rates" + err.Error())
@@ -115,20 +142,35 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBaseRatesRequest) (*pb.UploadBaseRatesResponse, error) {
 	fileUrl := req.GetFileURL()
 	effectiveAt := req.GetEffectiveAt()
+	endAt := req.GetEndAt()
 	strType := strings.ToLower(req.GetSimType())
 	simType := db.ParseType(strType)
+	logrus.Infof("Upload base rate fileURL: %s, effectiveAt: %s endAt: %s and simType: %s.",
+		fileUrl, effectiveAt, endAt, simType)
 
 	if !validations.IsValidUploadReqArgs(fileUrl, effectiveAt, simType.String()) {
-		logrus.Infof("Please supply valid fileURL: %s, effectiveAt: %s and simType: %s.",
-			fileUrl, effectiveAt, simType)
-		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q & simType: %q",
-			fileUrl, effectiveAt, simType)
+		return nil, status.Errorf(codes.InvalidArgument, "Please supply valid fileURL: %q, effectiveAt: %q endAt : %q & simType: %q",
+			fileUrl, effectiveAt, endAt, simType)
 	}
-	formattedEffectiveAt, err := validations.ValidateDate(effectiveAt)
+
+	formattedEffectiveAt, err := validation.ValidateDate(effectiveAt)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	if err := validations.IsFutureDate(formattedEffectiveAt); err != nil {
+	if err := validation.IsFutureDate(formattedEffectiveAt); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
+	}
+
+	formattedEndAt, err := validation.ValidateDate(endAt)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := validation.IsFutureDate(formattedEndAt); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
+	}
+	if err := validation.IsAfterDate(formattedEndAt, formattedEffectiveAt); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
 	}
@@ -146,7 +188,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	rates, err := utils.ParseToModel(data, formattedEffectiveAt, simType.String())
+	rates, err := utils.ParseToModel(data, formattedEffectiveAt, formattedEndAt, simType.String())
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +240,7 @@ func dbRatesToPbRates(r *db.BaseRate) *pb.Rate {
 		LteM:        r.LteM,
 		SmsMo:       r.SmsMo,
 		SmsMt:       r.SmsMt,
-		Network:     r.Network,
+		Provider:    r.Provider,
 		Country:     r.Country,
 		SimType:     r.SimType.String(),
 		EffectiveAt: r.EffectiveAt.Format(time.RFC3339),

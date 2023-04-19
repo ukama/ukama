@@ -18,8 +18,8 @@ type BaseRate struct {
 }
 
 type BaseRateSrvc interface {
-	GetBaseRates(req *bpb.GetBaseRatesRequest) (*bpb.GetBaseRatesResponse, error)
-	GetBaseRate(id string) (*bpb.GetBaseRateResponse, error)
+	GetBaseRates(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
+	GetBaseRate(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
 }
 
 func NewBaseRate(baseRate string, timeout time.Duration) (*BaseRate, error) {
@@ -44,14 +44,14 @@ func (c *BaseRate) Close() {
 	c.conn.Close()
 }
 
-func (c *BaseRate) GetBaseRates(req *bpb.GetBaseRatesRequest) (*bpb.GetBaseRatesResponse, error) {
+func (c *BaseRate) GetBaseRates(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
-	return c.client.GetBaseRates(ctx, req)
+	return c.client.GetBaseRatesForPeriod(ctx, req)
 }
 
-func (c *BaseRate) GetBaseRate(id string) (*bpb.GetBaseRateResponse, error) {
+func (c *BaseRate) GetBaseRate(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
-	return c.client.GetBaseRate(ctx, &bpb.GetBaseRateRequest{Uuid: id})
+	return c.client.GetBaseRatesById(ctx, req)
 }

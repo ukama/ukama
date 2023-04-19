@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -13,6 +12,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/ukama/ukama/systems/data-plan/rate/pkg"
@@ -209,13 +209,24 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 		return nil, err
 	}
 
-	rates, err := r.baseRate.GetBaseRates(&bpb.GetBaseRatesRequest{
-		Country:     req.Country,
-		Provider:    req.Provider,
-		To:          req.To,
-		From:        req.From,
-		SimType:     req.SimType,
-		EffectiveAt: req.EffectiveAt,
+	toT, err := validation.FromString(req.To)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid date format for to")
+	}
+
+	fromT, err := validation.FromString(req.From)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid date format for from")
+	}
+
+	to := toT.Format(time.RFC3339)
+	from := fromT.Format(time.RFC3339)
+	rates, err := r.baseRate.GetBaseRates(&bpb.GetBaseRatesByPeriodRequest{
+		Country:  req.Country,
+		Provider: req.Provider,
+		To:       to,
+		From:     from,
+		SimType:  req.SimType,
 	})
 	if err != nil {
 		log.Errorf("error while getting base rates" + err.Error())
@@ -232,6 +243,36 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 	}
 
 	return rateList, nil
+}
+
+func (r *RateServer) GetRateById(ctx context.Context, req *pb.GetRateByIdRequest) (*pb.GetRateByIdResponse, error) {
+
+	log.Infof("GetRates for User %sbase rate %s", req.OwnerId, req.BaseRate)
+
+	uuid, err := uuid.FromString(req.OwnerId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	markup, err := r.getUserMarkup(uuid)
+	if err != nil {
+		log.Error("error while getting markup" + err.Error())
+		return nil, err
+	}
+
+	rates, err := r.baseRate.GetBaseRate(&bpb.GetBaseRatesByIdRequest{
+		Uuid: req.BaseRate,
+	})
+	if err != nil {
+		log.Errorf("error while getting base rates" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "baserates")
+	}
+
+	rate := &pb.GetRateByIdResponse{
+		Rate: baseRateToMarkupRate(rates.Rate, markup),
+	}
+
+	return rate, nil
 }
 
 func (r *RateServer) PublishMarkupEvents(ownerId string, markup float64, action string) {
@@ -252,7 +293,7 @@ func (r *RateServer) PublishMarkupEvents(ownerId string, markup float64, action 
 	err := r.msgBus.PublishRequest(route, e)
 	if err != nil {
 
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 	}
 }
 
@@ -273,7 +314,7 @@ func (r *RateServer) PublishDefaultMarkupEvents(markup float64, action string) {
 	err := r.msgBus.PublishRequest(route, e)
 	if err != nil {
 
-		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 	}
 }
 

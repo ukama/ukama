@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/client"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	bmocks "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen/mocks"
+	ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	pmocks "github.com/ukama/ukama/systems/data-plan/package/pb/gen/mocks"
 	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	rmocks "github.com/ukama/ukama/systems/data-plan/rate/pb/gen/mocks"
@@ -69,13 +71,12 @@ func TestRouter_PingRoute(t *testing.T) {
 func TestRouter_GetRates(t *testing.T) {
 	ownerId := uuid.NewV4().String()
 	req := GetRateRequest{
-		OwnerId:     ownerId,
-		Country:     "USA",
-		Provider:    "ABC",
-		To:          1680733308,
-		From:        1680703308,
-		SimType:     "ukama_data",
-		EffectiveAt: "xx",
+		OwnerId:  ownerId,
+		Country:  "USA",
+		Provider: "ABC",
+		To:       time.Now().UTC().Format(time.RFC3339),
+		From:     time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		SimType:  "ukama_data",
 	}
 
 	jReq, err := json.Marshal(req)
@@ -89,13 +90,12 @@ func TestRouter_GetRates(t *testing.T) {
 	b := &bmocks.BaseRatesServiceClient{}
 
 	pReq := &rpb.GetRateRequest{
-		OwnerId:     req.OwnerId,
-		Country:     req.Country,
-		Provider:    req.Provider,
-		To:          req.To,
-		From:        req.From,
-		SimType:     req.SimType,
-		EffectiveAt: req.EffectiveAt,
+		OwnerId:  req.OwnerId,
+		Country:  req.Country,
+		Provider: req.Provider,
+		To:       req.To,
+		From:     req.From,
+		SimType:  req.SimType,
 	}
 
 	pResp := &rpb.GetRateResponse{
@@ -109,7 +109,7 @@ func TestRouter_GetRates(t *testing.T) {
 				EffectiveAt: "2023-10-10",
 				Imsi:        1,
 				Lte:         true,
-				Network:     "Multi Tel",
+				Provider:    "Multi Tel",
 				SimType:     req.SimType,
 				SmsMo:       0.0100,
 				SmsMt:       0.0001,
@@ -445,6 +445,7 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 	ureq := UploadBaseRatesRequest{
 		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/base-rate/template/template.csv",
 		EffectiveAt: "2023-10-12T07:20:50.52Z",
+		EndAt:       "2043-10-12T07:20:50.52Z",
 		SimType:     "ukama_data",
 	}
 
@@ -462,6 +463,7 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 		FileURL:     ureq.FileURL,
 		EffectiveAt: ureq.EffectiveAt,
 		SimType:     ureq.SimType,
+		EndAt:       ureq.EndAt,
 	}
 
 	pResp := &bpb.UploadBaseRatesResponse{
@@ -490,9 +492,9 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 func TestRouter_GetBaseRates(t *testing.T) {
 	t.Run("ByCountry", func(t *testing.T) {
 		ureq := GetBaseRatesByCountryRequest{
-			Country: "ABC",
-			Network: "XYZ",
-			SimType: "ukama_data",
+			Country:  "ABC",
+			Provider: "XYZ",
+			SimType:  "ukama_data",
 		}
 
 		jreq, err := json.Marshal(&ureq)
@@ -506,9 +508,9 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		b := &bmocks.BaseRatesServiceClient{}
 
 		pReq := &bpb.GetBaseRatesByCountryRequest{
-			Country: ureq.Country,
-			Network: ureq.Network,
-			SimType: ureq.SimType,
+			Country:  ureq.Country,
+			Provider: ureq.Provider,
+			SimType:  ureq.SimType,
 		}
 
 		pResp := &bpb.GetBaseRatesResponse{
@@ -536,9 +538,9 @@ func TestRouter_GetBaseRates(t *testing.T) {
 
 	t.Run("HistoryByCountry", func(t *testing.T) {
 		ureq := GetBaseRatesByCountryRequest{
-			Country: "ABC",
-			Network: "XYZ",
-			SimType: "ukama_data",
+			Country:  "ABC",
+			Provider: "XYZ",
+			SimType:  "ukama_data",
 		}
 
 		jreq, err := json.Marshal(&ureq)
@@ -552,9 +554,9 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		b := &bmocks.BaseRatesServiceClient{}
 
 		pReq := &bpb.GetBaseRatesByCountryRequest{
-			Country: ureq.Country,
-			Network: ureq.Network,
-			SimType: ureq.SimType,
+			Country:  ureq.Country,
+			Provider: ureq.Provider,
+			SimType:  ureq.SimType,
 		}
 
 		pResp := &bpb.GetBaseRatesResponse{
@@ -582,11 +584,11 @@ func TestRouter_GetBaseRates(t *testing.T) {
 
 	t.Run("ByCountryForPeriod", func(t *testing.T) {
 		ureq := GetBaseRatesForPeriodRequest{
-			Country: "ABC",
-			Network: "XYZ",
-			SimType: "ukama_data",
-			To:      "2023-10-12T07:20:50.52Z",
-			From:    "2022-10-12T07:20:50.52Z",
+			Country:  "ABC",
+			Provider: "XYZ",
+			SimType:  "ukama_data",
+			To:       "2023-10-12T07:20:50.52Z",
+			From:     "2022-10-12T07:20:50.52Z",
 		}
 
 		jreq, err := json.Marshal(&ureq)
@@ -600,11 +602,11 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		b := &bmocks.BaseRatesServiceClient{}
 
 		pReq := &bpb.GetBaseRatesByPeriodRequest{
-			Country: ureq.Country,
-			Network: ureq.Network,
-			SimType: ureq.SimType,
-			From:    ureq.From,
-			To:      ureq.To,
+			Country:  ureq.Country,
+			Provider: ureq.Provider,
+			SimType:  ureq.SimType,
+			From:     ureq.From,
+			To:       ureq.To,
 		}
 
 		pResp := &bpb.GetBaseRatesResponse{
@@ -616,6 +618,154 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		}
 
 		b.On("GetBaseRatesForPeriod", mock.Anything, pReq).Return(pResp, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewRateClientFromClient(m),
+			b: client.NewBaseRateClientFromClient(b),
+			p: client.NewPackageFromClient(p),
+		}, routerConfig).f.Engine()
+		// act
+		r.ServeHTTP(w, hreq)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+
+}
+
+func TestRouter_Package(t *testing.T) {
+	t.Run("GetPackage", func(t *testing.T) {
+		ureq := PackagesRequest{
+			Uuid: uuid.NewV4().String(),
+		}
+
+		w := httptest.NewRecorder()
+		hreq, _ := http.NewRequest("GET", "/v1/packages/"+ureq.Uuid, nil)
+
+		m := &rmocks.RateServiceClient{}
+		p := &pmocks.PackagesServiceClient{}
+		b := &bmocks.BaseRatesServiceClient{}
+
+		pReq := &ppb.GetPackageRequest{
+			Uuid: ureq.Uuid,
+		}
+
+		pResp := &ppb.GetPackageResponse{
+			Package: &ppb.Package{
+				Uuid: ureq.Uuid,
+			},
+		}
+
+		p.On("Get", mock.Anything, pReq).Return(pResp, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewRateClientFromClient(m),
+			b: client.NewBaseRateClientFromClient(b),
+			p: client.NewPackageFromClient(p),
+		}, routerConfig).f.Engine()
+		// act
+		r.ServeHTTP(w, hreq)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+
+	t.Run("GetPackageDetails", func(t *testing.T) {
+		ureq := PackagesRequest{
+			Uuid: uuid.NewV4().String(),
+		}
+
+		w := httptest.NewRecorder()
+		hreq, _ := http.NewRequest("GET", "/v1/packages/"+ureq.Uuid+"/details", nil)
+
+		m := &rmocks.RateServiceClient{}
+		p := &pmocks.PackagesServiceClient{}
+		b := &bmocks.BaseRatesServiceClient{}
+
+		pReq := &ppb.GetPackageRequest{
+			Uuid: ureq.Uuid,
+		}
+
+		pResp := &ppb.GetPackageResponse{
+			Package: &ppb.Package{
+				Uuid: ureq.Uuid,
+			},
+		}
+
+		p.On("GetDetails", mock.Anything, pReq).Return(pResp, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewRateClientFromClient(m),
+			b: client.NewBaseRateClientFromClient(b),
+			p: client.NewPackageFromClient(p),
+		}, routerConfig).f.Engine()
+		// act
+		r.ServeHTTP(w, hreq)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+
+	t.Run("GetPackageByOrgId", func(t *testing.T) {
+		ureq := GetPackageByOrgRequest{
+			OrgId: uuid.NewV4().String(),
+		}
+
+		w := httptest.NewRecorder()
+		hreq, _ := http.NewRequest("GET", "/v1/packages/org/"+ureq.OrgId, nil)
+
+		m := &rmocks.RateServiceClient{}
+		p := &pmocks.PackagesServiceClient{}
+		b := &bmocks.BaseRatesServiceClient{}
+
+		pReq := &ppb.GetByOrgPackageRequest{
+			OrgId: ureq.OrgId,
+		}
+
+		pResp := &ppb.GetByOrgPackageResponse{
+			Packages: []*ppb.Package{
+				{
+					OrgId: ureq.OrgId,
+				},
+			},
+		}
+
+		p.On("GetByOrg", mock.Anything, pReq).Return(pResp, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewRateClientFromClient(m),
+			b: client.NewBaseRateClientFromClient(b),
+			p: client.NewPackageFromClient(p),
+		}, routerConfig).f.Engine()
+		// act
+		r.ServeHTTP(w, hreq)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+	t.Run("DeletePackage", func(t *testing.T) {
+		ureq := PackagesRequest{
+			Uuid: uuid.NewV4().String(),
+		}
+
+		w := httptest.NewRecorder()
+		hreq, _ := http.NewRequest("DELETE", "/v1/packages/"+ureq.Uuid, nil)
+
+		m := &rmocks.RateServiceClient{}
+		p := &pmocks.PackagesServiceClient{}
+		b := &bmocks.BaseRatesServiceClient{}
+
+		pReq := &ppb.DeletePackageRequest{
+			Uuid: ureq.Uuid,
+		}
+
+		pResp := &ppb.DeletePackageResponse{}
+
+		p.On("Delete", mock.Anything, pReq).Return(pResp, nil)
 
 		r := NewRouter(&Clients{
 			r: client.NewRateClientFromClient(m),
