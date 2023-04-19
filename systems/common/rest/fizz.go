@@ -44,9 +44,6 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	g := gin.Default()
 	g.Use(gin.Logger())
 	g.Use(cors.New(httpConfig.Cors))
-	// g.Use(gin.HandlerFunc(func(c *gin.Context) {
-	// 	c.Header("Cache-Control", "private, no-cache, no-store, must-revalidate")
-	// }))
 
 	m := ginmetrics.GetMonitor()
 	m.UseWithoutExposingEndpoint(g)
