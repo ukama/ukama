@@ -14,35 +14,12 @@ type BaseRatesServiceServer struct {
 	mock.Mock
 }
 
-// GetBaseRate provides a mock function with given fields: _a0, _a1
-func (_m *BaseRatesServiceServer) GetBaseRate(_a0 context.Context, _a1 *gen.GetBaseRateRequest) (*gen.GetBaseRateResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.GetBaseRateResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBaseRateRequest) *gen.GetBaseRateResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetBaseRateResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBaseRateRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetBaseRates provides a mock function with given fields: _a0, _a1
-func (_m *BaseRatesServiceServer) GetBaseRates(_a0 context.Context, _a1 *gen.GetBaseRatesRequest) (*gen.GetBaseRatesResponse, error) {
+// GetBaseRatesByCountry provides a mock function with given fields: _a0, _a1
+func (_m *BaseRatesServiceServer) GetBaseRatesByCountry(_a0 context.Context, _a1 *gen.GetBaseRatesByCountryRequest) (*gen.GetBaseRatesResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *gen.GetBaseRatesResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBaseRatesRequest) *gen.GetBaseRatesResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBaseRatesByCountryRequest) *gen.GetBaseRatesResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -51,7 +28,99 @@ func (_m *BaseRatesServiceServer) GetBaseRates(_a0 context.Context, _a1 *gen.Get
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBaseRatesRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBaseRatesByCountryRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBaseRatesById provides a mock function with given fields: _a0, _a1
+func (_m *BaseRatesServiceServer) GetBaseRatesById(_a0 context.Context, _a1 *gen.GetBaseRatesByIdRequest) (*gen.GetBaseRatesByIdResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetBaseRatesByIdResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBaseRatesByIdRequest) *gen.GetBaseRatesByIdResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetBaseRatesByIdResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBaseRatesByIdRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBaseRatesForPackage provides a mock function with given fields: _a0, _a1
+func (_m *BaseRatesServiceServer) GetBaseRatesForPackage(_a0 context.Context, _a1 *gen.GetBaseRatesByPeriodRequest) (*gen.GetBaseRatesResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetBaseRatesResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBaseRatesByPeriodRequest) *gen.GetBaseRatesResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetBaseRatesResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBaseRatesByPeriodRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBaseRatesForPeriod provides a mock function with given fields: _a0, _a1
+func (_m *BaseRatesServiceServer) GetBaseRatesForPeriod(_a0 context.Context, _a1 *gen.GetBaseRatesByPeriodRequest) (*gen.GetBaseRatesResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetBaseRatesResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBaseRatesByPeriodRequest) *gen.GetBaseRatesResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetBaseRatesResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBaseRatesByPeriodRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetBaseRatesHistoryByCountry provides a mock function with given fields: _a0, _a1
+func (_m *BaseRatesServiceServer) GetBaseRatesHistoryByCountry(_a0 context.Context, _a1 *gen.GetBaseRatesByCountryRequest) (*gen.GetBaseRatesResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetBaseRatesResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBaseRatesByCountryRequest) *gen.GetBaseRatesResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetBaseRatesResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBaseRatesByCountryRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

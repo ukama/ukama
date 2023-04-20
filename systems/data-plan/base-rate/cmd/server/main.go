@@ -35,7 +35,6 @@ func main() {
 }
 
 func initConfig() {
-	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -52,7 +51,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Rate{})
+	err := d.Init(&db.BaseRate{})
 
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)

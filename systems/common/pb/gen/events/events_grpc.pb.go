@@ -43,18 +43,21 @@ func (c *eventNotificationServiceClient) EventNotification(ctx context.Context, 
 }
 
 // EventNotificationServiceServer is the server API for EventNotificationService service.
-// All implementations should embed UnimplementedEventNotificationServiceServer
+// All implementations must embed UnimplementedEventNotificationServiceServer
 // for forward compatibility
 type EventNotificationServiceServer interface {
 	EventNotification(context.Context, *Event) (*EventResponse, error)
+	mustEmbedUnimplementedEventNotificationServiceServer()
 }
 
-// UnimplementedEventNotificationServiceServer should be embedded to have forward compatible implementations.
+// UnimplementedEventNotificationServiceServer must be embedded to have forward compatible implementations.
 type UnimplementedEventNotificationServiceServer struct {
 }
 
 func (UnimplementedEventNotificationServiceServer) EventNotification(context.Context, *Event) (*EventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EventNotification not implemented")
+}
+func (UnimplementedEventNotificationServiceServer) mustEmbedUnimplementedEventNotificationServiceServer() {
 }
 
 // UnsafeEventNotificationServiceServer may be embedded to opt out of forward compatibility for this service.

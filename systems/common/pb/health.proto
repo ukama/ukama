@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "pb/gen/health";
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/health";
 
 package ukama.health.v1;
 
