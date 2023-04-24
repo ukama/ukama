@@ -10,5 +10,5 @@ type GetInvoiceRequest struct {
 
 type AddInvoiceRequest struct {
 	SubscriberId string `example:"SubscriberUUID"  json:"subscriber_id" validate:"required"`
-	RawInvoice   string `example:"mesh-network" json:"raw_invoice" validate:"required"`
+	RawInvoice   string `example:"raw-invoice-json" json:"raw_invoice" validate:"required"`
 }

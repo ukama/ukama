@@ -92,7 +92,7 @@ func (r *Router) init() {
 	invoices := v1.Group(invoice, "Invoices", "Operations on Invoices")
 	invoices.GET("", formatDoc("Get Invoices", "Get all Invoices of a subscriber"), tonic.Handler(r.getInvoicesHandler, http.StatusOK))
 	invoices.GET("/:invoice_id", formatDoc("Get Invoice", "Get a specific invoice"), tonic.Handler(r.GetInvocieHandler, http.StatusOK))
-	invoices.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postInvoiceHandler, http.StatusCreated))
+	invoices.POST("", formatDoc("Add Invoice", "Add a new invoice for a subscriber"), tonic.Handler(r.postInvoiceHandler, http.StatusCreated))
 	// update invoice
 	// delete invoice
 
