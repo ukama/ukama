@@ -114,7 +114,7 @@ func (r *Router) Run() {
 
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
-	auth := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "API Gateway", "Data-plan system version v1", func(ctx *gin.Context) {
 		s := fmt.Sprintf("%s, %s, %s", "ukama", pkg.SystemName, ctx.Request.URL.Path)
 		ctx.Request.Header.Set("Meta", s)
 		err := f(ctx, r.config.auth.AuthAPIGW)

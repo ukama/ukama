@@ -11,6 +11,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	cconfig "github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
 
@@ -38,6 +40,11 @@ var routerConfig = &RouterConfig{
 	httpEndpoints: &pkg.HttpEndpoints{
 		NodeMetrics: "localhost:8080",
 	},
+	auth: &cconfig.Auth{
+		AuthAppUrl:    "http://localhost:4455",
+		AuthServerUrl: "http://localhost:4434",
+		AuthAPIGW:     "http://localhost:8080",
+	},
 }
 
 var testClientSet *Clients
@@ -57,8 +64,9 @@ func init() {
 func TestRouter_PingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
+	arc := &providers.AuthRestClient{}
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(testClientSet, routerConfig).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -88,7 +96,7 @@ func TestRouter_GetRates(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &rpb.GetRateRequest{
 		OwnerId:  req.OwnerId,
 		Country:  req.Country,
@@ -124,7 +132,7 @@ func TestRouter_GetRates(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -146,6 +154,7 @@ func TestRouter_GetUserMarkup(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
+	arc := &providers.AuthRestClient{}
 
 	pReq := &rpb.GetMarkupRequest{
 		OwnerId: req.OwnerId,
@@ -162,7 +171,7 @@ func TestRouter_GetUserMarkup(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -185,7 +194,7 @@ func TestRouter_DeleteUserMarkup(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &rpb.DeleteMarkupRequest{
 		OwnerId: req.OwnerId,
 	}
@@ -198,7 +207,7 @@ func TestRouter_DeleteUserMarkup(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -221,7 +230,7 @@ func TestRouter_SetUserMarkup(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &rpb.UpdateMarkupRequest{
 		OwnerId: req.OwnerId,
 		Markup:  req.Markup,
@@ -235,7 +244,7 @@ func TestRouter_SetUserMarkup(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -257,7 +266,7 @@ func TestRouter_GetUserMarkupHistory(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &rpb.GetMarkupHistoryRequest{
 		OwnerId: req.OwnerId,
 	}
@@ -283,7 +292,7 @@ func TestRouter_GetUserMarkupHistory(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -308,7 +317,7 @@ func TestRouter_SetDefaultMarkup(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &rpb.UpdateDefaultMarkupRequest{
 		Markup: req.Markup,
 	}
@@ -321,7 +330,7 @@ func TestRouter_SetDefaultMarkup(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -338,7 +347,7 @@ func TestRouter_GetDefaultMarkup(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &rpb.GetDefaultMarkupRequest{}
 
 	pResp := &rpb.GetDefaultMarkupResponse{
@@ -351,7 +360,7 @@ func TestRouter_GetDefaultMarkup(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -370,7 +379,7 @@ func TestRouter_GetDefaultMarkupHistory(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &rpb.GetDefaultMarkupHistoryRequest{}
 
 	pResp := &rpb.GetDefaultMarkupHistoryResponse{
@@ -393,7 +402,7 @@ func TestRouter_GetDefaultMarkupHistory(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, hreq)
 
@@ -413,7 +422,7 @@ func TestRouter_GetBaseRatesById(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &bpb.GetBaseRatesByIdRequest{
 		Uuid: id.String(),
 	}
@@ -430,7 +439,7 @@ func TestRouter_GetBaseRatesById(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, hreq)
 
@@ -458,7 +467,7 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 	m := &rmocks.RateServiceClient{}
 	p := &pmocks.PackagesServiceClient{}
 	b := &bmocks.BaseRatesServiceClient{}
-
+	arc := &providers.AuthRestClient{}
 	pReq := &bpb.UploadBaseRatesRequest{
 		FileURL:     ureq.FileURL,
 		EffectiveAt: ureq.EffectiveAt,
@@ -480,7 +489,7 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 		r: client.NewRateClientFromClient(m),
 		b: client.NewBaseRateClientFromClient(b),
 		p: client.NewPackageFromClient(p),
-	}, routerConfig).f.Engine()
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, hreq)
 
@@ -506,7 +515,7 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
-
+		arc := &providers.AuthRestClient{}
 		pReq := &bpb.GetBaseRatesByCountryRequest{
 			Country:  ureq.Country,
 			Provider: ureq.Provider,
@@ -527,7 +536,7 @@ func TestRouter_GetBaseRates(t *testing.T) {
 			r: client.NewRateClientFromClient(m),
 			b: client.NewBaseRateClientFromClient(b),
 			p: client.NewPackageFromClient(p),
-		}, routerConfig).f.Engine()
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 		// act
 		r.ServeHTTP(w, hreq)
 
@@ -552,7 +561,7 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
-
+		arc := &providers.AuthRestClient{}
 		pReq := &bpb.GetBaseRatesByCountryRequest{
 			Country:  ureq.Country,
 			Provider: ureq.Provider,
@@ -573,7 +582,7 @@ func TestRouter_GetBaseRates(t *testing.T) {
 			r: client.NewRateClientFromClient(m),
 			b: client.NewBaseRateClientFromClient(b),
 			p: client.NewPackageFromClient(p),
-		}, routerConfig).f.Engine()
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 		// act
 		r.ServeHTTP(w, hreq)
 
@@ -600,7 +609,7 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
-
+		arc := &providers.AuthRestClient{}
 		pReq := &bpb.GetBaseRatesByPeriodRequest{
 			Country:  ureq.Country,
 			Provider: ureq.Provider,
@@ -623,7 +632,7 @@ func TestRouter_GetBaseRates(t *testing.T) {
 			r: client.NewRateClientFromClient(m),
 			b: client.NewBaseRateClientFromClient(b),
 			p: client.NewPackageFromClient(p),
-		}, routerConfig).f.Engine()
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 		// act
 		r.ServeHTTP(w, hreq)
 
@@ -646,7 +655,7 @@ func TestRouter_Package(t *testing.T) {
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
-
+		arc := &providers.AuthRestClient{}
 		pReq := &ppb.GetPackageRequest{
 			Uuid: ureq.Uuid,
 		}
@@ -663,7 +672,7 @@ func TestRouter_Package(t *testing.T) {
 			r: client.NewRateClientFromClient(m),
 			b: client.NewBaseRateClientFromClient(b),
 			p: client.NewPackageFromClient(p),
-		}, routerConfig).f.Engine()
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 		// act
 		r.ServeHTTP(w, hreq)
 
@@ -683,7 +692,7 @@ func TestRouter_Package(t *testing.T) {
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
-
+		arc := &providers.AuthRestClient{}
 		pReq := &ppb.GetPackageRequest{
 			Uuid: ureq.Uuid,
 		}
@@ -700,7 +709,7 @@ func TestRouter_Package(t *testing.T) {
 			r: client.NewRateClientFromClient(m),
 			b: client.NewBaseRateClientFromClient(b),
 			p: client.NewPackageFromClient(p),
-		}, routerConfig).f.Engine()
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 		// act
 		r.ServeHTTP(w, hreq)
 
@@ -720,7 +729,7 @@ func TestRouter_Package(t *testing.T) {
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
-
+		arc := &providers.AuthRestClient{}
 		pReq := &ppb.GetByOrgPackageRequest{
 			OrgId: ureq.OrgId,
 		}
@@ -739,7 +748,7 @@ func TestRouter_Package(t *testing.T) {
 			r: client.NewRateClientFromClient(m),
 			b: client.NewBaseRateClientFromClient(b),
 			p: client.NewPackageFromClient(p),
-		}, routerConfig).f.Engine()
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 		// act
 		r.ServeHTTP(w, hreq)
 
@@ -758,7 +767,7 @@ func TestRouter_Package(t *testing.T) {
 		m := &rmocks.RateServiceClient{}
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
-
+		arc := &providers.AuthRestClient{}
 		pReq := &ppb.DeletePackageRequest{
 			Uuid: ureq.Uuid,
 		}
@@ -771,7 +780,7 @@ func TestRouter_Package(t *testing.T) {
 			r: client.NewRateClientFromClient(m),
 			b: client.NewBaseRateClientFromClient(b),
 			p: client.NewPackageFromClient(p),
-		}, routerConfig).f.Engine()
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 		// act
 		r.ServeHTTP(w, hreq)
 
