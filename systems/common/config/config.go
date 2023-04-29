@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,7 +17,8 @@ import (
 // Common properties for all configs.
 // Don't forget to use `mapstructure:",squash"`. See unittest for example
 type BaseConfig struct {
-	DebugMode bool
+	DebugMode      bool
+	BypassAuthMode bool
 }
 
 type Database struct {
@@ -127,9 +129,10 @@ type Metrics struct {
 }
 
 type Auth struct {
-	AuthServerUrl string `default:"http://localhost:4434"`
-	AuthAppUrl    string `default:"http://localhost:4455"`
-	AuthAPIGW     string `default:"http://localhost:8080"`
+	AuthServerUrl  string `default:"http://localhost:4434"`
+	AuthAppUrl     string `default:"http://localhost:4455"`
+	AuthAPIGW      string `default:"http://localhost:8080"`
+	BypassAuthMode bool   `default:"false"`
 }
 
 // LoadConfig loads configuration into `config` object
@@ -233,6 +236,7 @@ func LoadAuthHostConfig(name string) *Auth {
 	serverUrl := "_SERVER_URL"
 	appUrl := "_APP_URL"
 	apigwUrl := "_API_GW_URL"
+	bypassAuthMode := "BYPASS_AUTH_MODE"
 
 	val, present := os.LookupEnv(strings.ToUpper(name + serverUrl))
 	if present {
@@ -253,6 +257,15 @@ func LoadAuthHostConfig(name string) *Auth {
 		s.AuthAPIGW = val
 	} else {
 		logrus.Errorf("%s api gw url env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(bypassAuthMode))
+	if present {
+		boolValue, err := strconv.ParseBool(val)
+		if err != nil {
+			logrus.Errorf("Unable to parse %s env value: %s", bypassAuthMode, val)
+		}
+		s.BypassAuthMode = boolValue
 	}
 
 	return s

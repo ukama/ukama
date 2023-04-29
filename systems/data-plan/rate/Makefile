@@ -3,7 +3,7 @@ include ../../../systems/config.mk
 .PHONY: integration.test test build lint deps 
 
 build: integration.build
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/data-rate/rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/rate cmd/server/main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/data-rate/rate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/rate cmd/server/main.go
 
 test:
 	go test -v ./...
