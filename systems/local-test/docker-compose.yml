@@ -1,0 +1,320 @@
+version: '3.9'
+name: ukama-systems
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    logging:
+      driver: none
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+
+  postgresd:
+    image: postgres:13.3
+    container_name: postgresd
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=ThisIsUkamaXPass
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
+  sim:
+    build: ../subscriber/sim-pool
+    container_name: sims
+    ports:
+      - "9060:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SIM_SERVICE_HOST=sim
+      - SIM_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
+
+  registry:
+    build: ../subscriber/registry
+    container_name: registry
+    ports:
+      - "9061:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - REGISTRY_SERVICE_HOST=registry
+      - REGISTRY_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
+
+  simmanager:
+    build: ../subscriber/sim-manager
+    container_name: simmanager
+    ports:
+      - "9062:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - KEY=the-key-has-to-be-32-bytes-long!
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SIMMANAGER_SERVICE_HOST=simmanager
+      - SIMMANAGER_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
+
+  testagent:
+    build: ../subscriber/test-agent
+    container_name: testagent
+    ports:
+      - "9063:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - TESTAGENT_SERVICE_HOST=testagent
+      - TESTAGENT_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
+
+  baserate:
+    build: ../data-plan/base-rate
+    container_name: baserate
+    ports:
+      - "9064:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-dataplan:9095
+      - RATE_SERVICE_HOST=baserate
+      - RATE_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
+
+  package:
+    build: ../data-plan/package
+    container_name: package
+    ports:
+      - "9065:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-dataplan:9095
+      - PACKAGE_SERVICE_HOST=package
+      - PACKAGE_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
+
+  rate:
+    build: ../data-plan/rate
+    container_name: rate
+    ports:
+      - "9066:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-dataplan:9095
+      - RATE_SERVICE_HOST=rate
+      - RATE_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
+
+  network:
+      build: ../registry/network
+      container_name: network
+      ports:
+        - "9067:9090"
+      environment:
+        - DEBUGMODE=true
+        - DB_HOST=postgresd
+        - DB_PASSWORD=ThisIsUkamaXPass
+        - DB_USER=postgres
+        - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+        - MSGCLIENT_HOST=msg-client-registry:9095
+        - NETWORK_SERVICE_HOST=network
+        - NETWORK_SERVICE_PORT=9090
+      restart: always
+      depends_on:
+        - postgresd
+
+  org:
+    build: ../registry/org
+    container_name: org
+    ports:
+      - "9068:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - ORG_SERVICE_HOST=org
+      - ORG_SERVICE_PORT=9090
+      - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
+    restart: always
+    depends_on:
+      - postgresd
+
+  node:
+    build: ../registry/node
+    container_name: node
+    ports:
+      - "9069:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - USERS_SERVICE_HOST=node
+      - USERS_SERVICE_PORT=9090
+      - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
+    restart: always
+    depends_on:
+      - postgresd
+
+  users:
+    build: ../registry/users
+    container_name: users
+    ports:
+      - "9070:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - USERS_SERVICE_HOST=users
+      - USERS_SERVICE_PORT=9090
+      - ORGOWNERUUID=851e0abc-7e91-4206-8c85-498e16f91e67
+    restart: always
+    depends_on:
+      - postgresd
+
+  data-plan:
+    build: ../data-plan/api-gateway
+    container_name: data-plan
+    ports:
+      - "8080:8080"
+    environment:
+      - BYPASS_AUTH_MODE=true
+    restart: always
+    depends_on:
+      - postgresd
+      - package
+
+  subscriber:
+    build: ../subscriber/api-gateway
+    container_name: subscriber
+    ports:
+      - "8081:8080"
+    environment:
+      - BYPASS_AUTH_MODE=true
+    restart: always
+    depends_on:
+      - postgresd
+
+  registry-api-gw:
+    build: ../registry/api-gateway
+    container_name: registry-api-gw
+    ports:
+      - "8082:8080"
+    environment:
+      - BYPASS_AUTH_MODE=true
+    restart: always
+    depends_on:
+      - postgresd
+      - network
+      - registry
+      - subscriber
+      - org
+
+  msg-client-subscriber:
+    build: ../services/msgClient
+    container_name: msg-client-subscriber
+    ports:
+      - "9071:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-subscriber:9095
+      - SYSTEM=subscriber
+    restart: always
+    depends_on:
+      - postgresd
+
+  msg-client-dataplan:
+    build: ../services/msgClient
+    container_name: msg-client-dataplan
+    ports:
+      - "9072:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-dataplan:9095
+      - SYSTEM=dataplan
+    restart: always
+    depends_on:
+      - postgresd
+
+  msg-client-registry:
+    build: ../services/msgClient
+    container_name: msg-client-registry
+    ports:
+      - "9073:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-registry:9095
+      - SYSTEM=registry
+    restart: always
+    depends_on:
+      - postgresd
+
+volumes:
+  postgress-data:
