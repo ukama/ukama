@@ -110,6 +110,25 @@ PACKAGE_RATES_QUERY="INSERT INTO \"public\".\"package_rates\" (\"id\", \"created
 (4, '2023-04-29 15:04:30.429571+00', '2023-04-29 15:04:30.429571+00', NULL, '9bd5dd1f-b8cd-4277-ac46-3695f51596ff', 162.00000000000003, 0, 0, 0.10800000000000001),
 (5, '2023-04-29 15:05:20.793816+00', '2023-04-29 15:05:20.793816+00', NULL, 'a3e18b0e-d33d-4cc4-8a31-afd1e0f25b14', 432.00000000000006, 0, 0, 0.21600000000000003);"
 
+# SUBSCRIBER SUB SYSTEM QUERIES
+SIMPOOL_DB="sim"
+SIMPOOL_QUERY="INSERT INTO \"public\".\"sims\" (\"id\", \"created_at\", \"updated_at\", \"deleted_at\", \"iccid\", \"msisdn\", \"is_allocated\", \"is_failed\", \"sim_type\", \"sm_dp_address\", \"activation_code\", \"qr_code\", \"is_physical\") VALUES
+(1, '2023-04-29 15:37:41.66465+00', '2023-04-29 15:37:41.66465+00', NULL, '8910300000003540855', '880170124847571', 'f', 'f', 1, '1001.9.0.0.1', '1010', '459081a', 't'),
+(2, '2023-04-29 15:37:41.66465+00', '2023-04-29 15:37:41.66465+00', NULL, '8910300000003540845', '880170124847572', 'f', 'f', 1, '1001.9.0.0.2', '1010', '459081b', 't'),
+(3, '2023-04-29 15:37:41.66465+00', '2023-04-29 15:37:41.66465+00', NULL, '8910300000003540835', '880170124847573', 'f', 'f', 1, '1001.9.0.0.3', '1010', '459081c', 't'),
+(4, '2023-04-29 15:37:41.66465+00', '2023-04-29 15:37:41.66465+00', NULL, '8910300000003540825', '880170124847561', 'f', 'f', 1, '1002.9.0.0.1', '1010', '559081a', 't'),
+(5, '2023-04-29 15:37:41.66465+00', '2023-04-29 15:37:41.66465+00', NULL, '8910300000003540815', '880170124847562', 'f', 'f', 1, '1002.9.0.0.2', '1010', '559081b', 't'),
+(6, '2023-04-29 15:37:41.66465+00', '2023-04-29 15:37:41.66465+00', NULL, '8910300000003540805', '880170124847563', 'f', 'f', 1, '1002.9.0.0.3', '1010', '559081c', 't');"
+
+SUBSCRIBER_DB="registry"
+SUBSCRIBER_QUERY="INSERT INTO \"public\".\"subscribers\" (\"subscriber_id\", \"first_name\", \"last_name\", \"network_id\", \"org_id\", \"email\", \"phone_number\", \"gender\", \"dob\", \"proof_of_identification\", \"id_serial\", \"address\", \"created_at\", \"updated_at\", \"deleted_at\") VALUES
+('09736985-8788-4059-bda1-190c8a355651', 'Ben', 'Stock', '06455edb-d33b-49ba-b8ed-589cf718047a', 'bf184df7-0ce6-4100-a9c6-497c181b87cf', 'ben@stock.com', '3001134478', 'male', 'Sun, 02 Jan 2000 15:04:05 MST', 'passport', '123456789', 'House# 190, My Street 4, Princelan, LA 89021', '2023-04-29 15:57:39.863473+00', '2023-04-29 15:57:39.863473+00', NULL),
+('92f24208-e13c-4100-b13d-b9ec6b556160', 'Koil', 'Eve', '06455edb-d33b-49ba-b8ed-589cf718047a', 'bf184df7-0ce6-4100-a9c6-497c181b87cf', 'koil@eve.com', '3001139478', 'male', 'Tue, 02 Jan 2007 15:04:05 MST', 'passport', '123456789', 'House# 2090, My Street 6, Princelan, LA 89021', '2023-04-29 15:58:43.198657+00', '2023-04-29 15:58:43.198657+00', NULL),
+('af913899-d30e-4264-8aa8-c2dfcca5b1b8', 'Tim', 'Stev', 'b884485f-cb43-44b1-be57-0b777b154ff2', 'aac1ed88-2546-4f9c-a808-fb9c4d0ef24b', 'tim@stev.com', '3001134445', 'male', 'Fri, 02 Jan 2004 15:04:05 MST', 'passport', '123456789', 'Mr John Smith. 1, My Street, Kingston, New York 12401', '2023-04-29 15:55:26.194535+00', '2023-04-29 15:55:26.194535+00', NULL),
+('c166eaf1-a7bc-48dd-82a6-951ab8d673c2', 'John', 'Doe', 'b884485f-cb43-44b1-be57-0b777b154ff2', 'aac1ed88-2546-4f9c-a808-fb9c4d0ef24b', 'john@doe.com', '3001122334', 'male', 'Mon, 02 Jan 2006 15:04:05 MST', 'passport', '123456789', 'Mr John Smith. 132, My Street, Kingston, New York 12401', '2023-04-29 15:52:51.760049+00', '2023-04-29 15:52:51.760049+00', NULL),
+('d1de6071-9343-4172-a0ea-7f0bd26f53a5', 'Jim', 'Rod', 'b884485f-cb43-44b1-be57-0b777b154ff2', 'aac1ed88-2546-4f9c-a808-fb9c4d0ef24b', 'jim@rod.com', '3001133445', 'male', 'Fri, 02 Jan 2004 15:04:05 MST', 'passport', '123456789', 'Mr John Smith. 1, My Street, Kingston, New York 12401', '2023-04-29 15:54:34.11235+00', '2023-04-29 15:54:34.11235+00', NULL),
+('e344498f-c045-4530-a1e3-e8c92131da0b', 'Karl', 'Winston', '06455edb-d33b-49ba-b8ed-589cf718047a', 'bf184df7-0ce6-4100-a9c6-497c181b87cf', 'karl@winston.com', '3001439478', 'male', 'Wed, 02 Jan 2002 15:04:05 MST', 'passport', '123456789', 'House# 3490, My Street 6, Princelan, LA 89021', '2023-04-29 15:59:58.30456+00', '2023-04-29 15:59:58.30456+00', NULL);"
+
 export ORG_QUERY
 export USERS_IN_ORG_QUERY
 export ORG_USERS_QUERY
@@ -131,3 +150,9 @@ export PACKAGES_QUERY
 export PACKAGE_DETAILS_QUERY
 export PACKAGE_MARKUPS_QUERY
 export PACKAGE_RATES_QUERY
+
+export SIMPOOL_DB
+export SIMPOOL_QUERY
+
+export SUBSCRIBER_DB
+export SUBSCRIBER_QUERY

@@ -63,7 +63,8 @@ declare -a TABLE_NAMES=(
     "baserate.base_rates"
     "rate.default_markups"
     "rate.markups"
-    "simmanager.packages"
+    "sim.sims"
+    "registry.subscribers"
     "simmanager.sims"
     "sim.sims"
     "msgclient.service_routes"
@@ -121,3 +122,9 @@ docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $PACKAGE_DB -c "$PACK
 docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $PACKAGE_DB -c "$PACKAGE_DETAILS_QUERY"
 docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $PACKAGE_DB -c "$PACKAGE_MARKUPS_QUERY"
 docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $PACKAGE_DB -c "$PACKAGE_RATES_QUERY"
+
+echo "Inserting data into SimPool DB..."
+docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $SIMPOOL_DB -c "$SIMPOOL_QUERY"
+
+echo "Inserting data into Subscriber DB..."
+docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $SUBSCRIBER_DB -c "$SUBSCRIBER_QUERY"
