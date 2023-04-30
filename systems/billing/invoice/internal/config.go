@@ -15,6 +15,9 @@ type Config struct {
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	Service           *config.Service
+	PdfHost           string `default:""`
+	PdfPort           int    `default:"3000"`
+	PdfFolder         string `default:"/srv/static/"`
 }
 
 func NewConfig(name string) *Config {

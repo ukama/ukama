@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
+	fs "github.com/ukama/ukama/systems/billing/invoice/internal/pdf/server"
 	generated "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -88,6 +89,10 @@ func runGrpcServer(gormDB sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterInvoiceServiceServer(s, invoiceServer)
 	})
+
+	pdfServer := fs.NewPDFServer(serviceConfig.PdfHost, serviceConfig.PdfFolder, serviceConfig.PdfPort)
+
+	go pdfServer.Start()
 
 	grpcServer.StartServer()
 }
