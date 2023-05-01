@@ -6,6 +6,7 @@ import (
 	"time"
 
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
@@ -19,13 +20,14 @@ import (
 )
 
 func TestInvoiceServer_Add(t *testing.T) {
-	t.Run("SubscriberFound", func(t *testing.T) {
+	t.Run("SubscriberIsValid", func(t *testing.T) {
 		// Arrange
 		var subscriberId = uuid.NewV4()
 		var period = time.Now().UTC()
 		var raw = "{}"
 
 		invoiceRepo := &mocks.InvoiceRepo{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
 		invoice := &db.Invoice{
 			SubscriberId: subscriberId,
@@ -35,7 +37,9 @@ func TestInvoiceServer_Add(t *testing.T) {
 
 		invoiceRepo.On("Add", invoice, mock.Anything).Return(nil).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		s := server.NewInvoiceServer(invoiceRepo, msgbusClient)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -51,14 +55,14 @@ func TestInvoiceServer_Add(t *testing.T) {
 		invoiceRepo.AssertExpectations(t)
 	})
 
-	t.Run("SubscriberNotFound", func(t *testing.T) {
+	t.Run("SubscriberIsNotValid", func(t *testing.T) {
 		// Arrange
 		var period = time.Now().UTC()
 		var raw = "{}"
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -94,7 +98,7 @@ func TestInvoiceServer_Get(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*db.Invoice)
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId.String()})
 
@@ -112,7 +116,7 @@ func TestInvoiceServer_Get(t *testing.T) {
 
 		invoiceRepo.On("Get", invoiceId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 		resp, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId.String()})
 
@@ -126,7 +130,7 @@ func TestInvoiceServer_Get(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
 			InvoiceId: invoiceId})
 
@@ -150,7 +154,7 @@ func TestInvoiceServer_GetInvoiceBySubscriber(t *testing.T) {
 					IsPaid:       false,
 				}}, nil).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 
 		res, err := s.GetBySubscriber(context.TODO(),
 			&pb.GetBySubscriberRequest{SubscriberId: subscriberId.String()})
@@ -169,7 +173,7 @@ func TestInvoiceServer_GetInvoiceBySubscriber(t *testing.T) {
 
 		invoiceRepo.On("GetBySubscriber", subscriberId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 
 		res, err := s.GetBySubscriber(context.TODO(), &pb.GetBySubscriberRequest{
 			SubscriberId: subscriberId.String()})
@@ -184,7 +188,7 @@ func TestInvoiceServer_GetInvoiceBySubscriber(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 
 		res, err := s.GetBySubscriber(context.TODO(), &pb.GetBySubscriberRequest{
 			SubscriberId: subscriberID})
@@ -200,10 +204,12 @@ func TestInvoiceServer_Delete(t *testing.T) {
 		var invoiceId = uuid.NewV4()
 
 		invoiceRepo := &mocks.InvoiceRepo{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
 		invoiceRepo.On("Delete", invoiceId, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, msgbusClient)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId.String(),
@@ -221,7 +227,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 
 		invoiceRepo.On("Delete", invoiceId, mock.Anything).Return(gorm.ErrRecordNotFound).Once()
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId.String(),
@@ -237,7 +243,7 @@ func TestInvoiceServer_Delete(t *testing.T) {
 
 		invoiceRepo := &mocks.InvoiceRepo{}
 
-		s := server.NewInvoiceServer(invoiceRepo)
+		s := server.NewInvoiceServer(invoiceRepo, nil)
 
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
 			InvoiceId: invoiceId,

@@ -7,12 +7,16 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/billing/invoice/internal"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 
 	"github.com/ukama/ukama/systems/billing/invoice/internal/db"
 	"github.com/ukama/ukama/systems/billing/invoice/internal/pdf"
 	"github.com/ukama/ukama/systems/billing/invoice/internal/util"
 	"github.com/ukama/ukama/systems/common/grpc"
+
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,13 +30,17 @@ const defaultTemplate = "templates/test.html.tmpl"
 const pdfFolder = "/srv/static/"
 
 type InvoiceServer struct {
+	invoiceRepo    db.InvoiceRepo
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedInvoiceServiceServer
-	invoiceRepo db.InvoiceRepo
 }
 
-func NewInvoiceServer(invoiceRepo db.InvoiceRepo) *InvoiceServer {
+func NewInvoiceServer(invoiceRepo db.InvoiceRepo, msgBus mb.MsgBusServiceClient) *InvoiceServer {
 	return &InvoiceServer{
-		invoiceRepo: invoiceRepo,
+		invoiceRepo:    invoiceRepo,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
 	}
 }
 
@@ -60,9 +68,19 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		return nil, grpc.SqlErrorToGrpc(err, "invoice")
 	}
 
-	return &pb.AddResponse{
+	resp := &pb.AddResponse{
 		Invoice: dbInvoiceToPbInvoice(invoice),
-	}, nil
+	}
+
+	route := i.baseRoutingKey.SetAction("generate").SetObject("invoice").MustBuild()
+
+	err = i.msgbus.PublishRequest(route, resp.Invoice)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			req, route, err.Error())
+	}
+
+	return resp, nil
 }
 
 func (i *InvoiceServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -137,6 +155,14 @@ func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 		log.Error(err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "invoice")
+	}
+
+	route := i.baseRoutingKey.SetAction("delete").SetObject("invoice").MustBuild()
+
+	err = i.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			req, route, err.Error())
 	}
 
 	return &pb.DeleteResponse{}, nil

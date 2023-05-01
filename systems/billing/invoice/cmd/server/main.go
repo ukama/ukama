@@ -20,6 +20,7 @@ import (
 	generated "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 )
 
 var serviceConfig = internal.NewConfig(internal.ServiceName)
@@ -82,8 +83,18 @@ func runGrpcServer(gormDB sql.Db) {
 		instanceId = inst.String()
 	}
 
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
+		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
 	invoiceServer := server.NewInvoiceServer(
 		db.NewInvoiceRepo(gormDB),
+		mbClient,
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
