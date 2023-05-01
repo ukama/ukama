@@ -24,16 +24,18 @@
 #define CLIENT_CONFIG "client-config"
 #define REVERSE_PROXY "reverse-proxy"
 
-#define REMOTE_ACCEPT  "remote-accept"
-#define LOCAL_ACCEPT   "local-accept"
-#define REMOTE_CONNECT "remote-connect"
-#define REMOTE_IP_FILE "remote-ip-file"
-#define CONNECT_IP     "connect-ip"
-#define CONNECT_PORT   "connect-port"
-#define HTTP_PATH      "http-path"
-#define AMQP_HOST      "amqp-host"
-#define AMQP_PORT      "amqp-port"
-#define AMQP_EXCHANGE  "amqp-exchange"
+#define REMOTE_ACCEPT    "remote-accept"
+#define LOCAL_ACCEPT     "local-accept"
+#define REMOTE_CONNECT   "remote-connect"
+#define REMOTE_IP_FILE   "remote-ip-file"
+#define CONNECT_IP       "connect-ip"
+#define CONNECT_PORT     "connect-port"
+#define HTTP_PATH        "http-path"
+#define AMQP_HOST        "amqp-host"
+#define AMQP_PORT        "amqp-port"
+#define AMQP_EXCHANGE    "amqp-exchange"
+#define INIT_CLIENT_HOST "init-client-host"
+#define INIT_CLIENT_PORT "init-client-port"
 
 #define CFG_CERT "cert"
 #define CFG_KEY  "key"
@@ -80,6 +82,9 @@ typedef struct {
 	char *amqpHost;       /* Host where AMQP exchange is running (IP) */
 	char *amqpPort;       /* Port where AMQP exchange is listening */
 	char *amqpExchange;   /* AMQP exchange name */
+
+	char *initClientHost; /* Host where initClient is running (IP) */
+	char *initClientPort; /* Port where initClient is listening */
 
 	char *certFile;       /* CA Cert file name. */
 	char *keyFile;        /* Key file name.*/

@@ -45,6 +45,9 @@ void print_config(Config *config) {
 	log_debug("AMQP host: %s:%s", config->amqpHost, config->amqpPort);
 	log_debug("AMQP exchange: %s", config->amqpExchange);
 
+	log_debug("initClient host: %s", config->initClientHost);
+	log_debug("initClient port: %s", config->initClientPort);
+
 	log_debug("Local accept port: %s", config->localAccept);
 
 	if (config->secure) {
@@ -206,13 +209,24 @@ static int parse_config_entries(int secure, Config *config,
 	int ret=TRUE;
 	char *buffer=NULL;
 	toml_datum_t remoteAccept, localAccept, cert, key;
+	toml_datum_t initClientHost, initClientPort;
 
 	config->secure = secure;
-	
+
 	remoteAccept = toml_string_in(configData, REMOTE_ACCEPT);
 	localAccept  = toml_string_in(configData, LOCAL_ACCEPT);
 	cert         = toml_string_in(configData, CFG_CERT);
 	key          = toml_string_in(configData, CFG_KEY);
+
+	initClientHost = toml_string_in(configData, INIT_CLIENT_HOST);
+	initClientPort = toml_string_in(configData, INIT_CLIENT_PORT);
+	if (!initClientHost.ok || !initClientPort.ok) {
+		ret = FALSE;
+		goto done;
+	} else {
+		config->initClientHost = strdup(initClientHost.u.s);
+		config->initClientPort = strdup(initClientPort.u.s);
+	}
 
 	if (!remoteAccept.ok) {
 		log_debug("[%s] is missing, setting to default: %s", REMOTE_ACCEPT,
@@ -250,10 +264,12 @@ static int parse_config_entries(int secure, Config *config,
 
  done:
 	/* clear up toml allocations. */
-	if (key.ok) free(key.u.s);
-	if (cert.ok) free(cert.u.s);
-	if (localAccept.ok) free(localAccept.u.s);
-	if (remoteAccept.ok) free(remoteAccept.u.s);
+	if (key.ok)            free(key.u.s);
+	if (cert.ok)           free(cert.u.s);
+	if (localAccept.ok)    free(localAccept.u.s);
+	if (remoteAccept.ok)   free(remoteAccept.u.s);
+	if (initClientHost.ok) free(initClientHost.u.s);
+	if (initClientPort.ok) free(initClientPort.u.s);
 	if (buffer) free(buffer);
 
 	return ret;
@@ -370,6 +386,8 @@ void clear_config(Config *config) {
 	free(config->localAccept);
 	free(config->certFile);
 	free(config->keyFile);
+	free(config->initClientHost);
+	free(config->initClientPort);
 
 	if (config->proxy) {
 		free(config->reverseProxy->httpPath);
