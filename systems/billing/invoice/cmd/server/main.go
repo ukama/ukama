@@ -90,7 +90,7 @@ func runGrpcServer(gormDB sql.Db) {
 		generated.RegisterInvoiceServiceServer(s, invoiceServer)
 	})
 
-	pdfServer := fs.NewPDFServer(serviceConfig.PdfHost, serviceConfig.PdfFolder, serviceConfig.PdfPort)
+	pdfServer := fs.NewPDFServer(serviceConfig.PdfHost, serviceConfig.PdfFolder, serviceConfig.PdfPrefix, serviceConfig.PdfPort)
 
 	go pdfServer.Start()
 

@@ -17,7 +17,8 @@ type Config struct {
 	Service           *config.Service
 	PdfHost           string `default:""`
 	PdfPort           int    `default:"3000"`
-	PdfFolder         string `default:"/srv/static/"`
+	PdfPrefix         string `default:"/pdf/"`
+	PdfFolder         string `default:"/srv/static"`
 }
 
 func NewConfig(name string) *Config {
