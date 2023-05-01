@@ -196,6 +196,7 @@ func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
 	//TODO: error handling
 
 	if err == nil {
+		val.FileURL = fmt.Sprintf("http://{API_ENDPOINT}/pdf/%s.pdf", invoice.Id.String())
 		inv.RawInvoice = val
 	}
 

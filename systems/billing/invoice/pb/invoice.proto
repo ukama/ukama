@@ -4,7 +4,7 @@ option go_package = "pb/gen";
 
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/struct.proto";
+// import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 
 

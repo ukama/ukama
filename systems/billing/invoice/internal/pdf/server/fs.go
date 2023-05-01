@@ -63,9 +63,5 @@ func isDirOrNotExists(root, fp string) bool {
 }
 
 func hasPdfExt(s string) bool {
-	if strings.HasSuffix(strings.ToLower(s), ".pdf") {
-		return true
-	}
-
-	return false
+	return strings.HasSuffix(strings.ToLower(s), ".pdf")
 }
