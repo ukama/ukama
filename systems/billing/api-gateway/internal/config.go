@@ -38,7 +38,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Invoice: "invoice:9090",
+			Invoice: "billing-invoice:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
