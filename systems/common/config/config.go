@@ -17,8 +17,7 @@ import (
 // Common properties for all configs.
 // Don't forget to use `mapstructure:",squash"`. See unittest for example
 type BaseConfig struct {
-	DebugMode      bool
-	BypassAuthMode bool
+	DebugMode bool
 }
 
 type Database struct {
