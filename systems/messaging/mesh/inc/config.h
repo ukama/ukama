@@ -22,7 +22,6 @@
 /* used in the config file and for parsing. */
 #define SERVER_CONFIG "server-config"
 #define CLIENT_CONFIG "client-config"
-#define REVERSE_PROXY "reverse-proxy"
 
 #define REMOTE_ACCEPT    "remote-accept"
 #define LOCAL_ACCEPT     "local-accept"
@@ -60,16 +59,6 @@
 #define TRUE 1
 #define FALSE 0
 
-/* Struct to define the reverse proxies  */
-typedef struct {
-
-	int  enable;
-
-	char *httpPath;
-	char *ip;
-	char *port;
-} Proxy;
-
 /* Struct to define the server and/or client host cfg. */
 typedef struct {
 
@@ -90,7 +79,6 @@ typedef struct {
 	char *keyFile;        /* Key file name.*/
 
 	DeviceInfo *deviceInfo;   /* Device related info. */
-	Proxy      *reverseProxy; /* define any reverse proxy */
 	WAMQPConn  *conn;         /* Connection to AMQP broker */
 } Config;
 

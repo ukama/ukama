@@ -14,6 +14,7 @@
 #include <uuid/uuid.h>
 
 #include "config.h"
+#include "initClient.h"
 
 #define JSON_MESH_FORWARD    "mesh_forward"
 #define JSON_MESH_CMD        "mesh_cmd"
@@ -60,5 +61,6 @@ int serialize_forward_request(URequest *request, json_t **json,
 int serialize_device_info(json_t **json, DeviceInfo *device);
 int deserialize_forward_request(MRequest **req, json_t *json);
 int deserialize_response(MResponse **response, json_t *json);
+int deserialize_system_info(SystemInfo **systemInfo, json_t *json);
 
 #endif /* MESH_JSERDES_H */
