@@ -57,7 +57,9 @@ func (r *Billing) AddInvoice(subscriberId string, rawInvoice string) (*pb.AddRes
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.invoiceClient.Add(ctx, &pb.AddRequest{SubscriberId: subscriberId, RawInvoice: rawInvoice})
+	res, err := r.invoiceClient.Add(ctx, &pb.AddRequest{
+		SubscriberId: subscriberId,
+		RawInvoice:   rawInvoice})
 
 	if err != nil {
 		return nil, err
@@ -70,9 +72,10 @@ func (b *Billing) GetInvoice(invoiceId string, AsPDF bool) (*pb.GetResponse, err
 	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
 	defer cancel()
 
-	res, err := b.invoiceClient.Get(ctx,
-		&pb.GetRequest{InvoiceId: invoiceId,
-			AsPdf: AsPDF})
+	res, err := b.invoiceClient.Get(ctx, &pb.GetRequest{
+		InvoiceId: invoiceId,
+		AsPdf:     AsPDF})
+
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +90,7 @@ func (r *Billing) GetInvoices(subscriberId string, AsPDF bool) (*pb.GetBySubscri
 	res, err := r.invoiceClient.GetBySubscriber(ctx,
 		&pb.GetBySubscriberRequest{SubscriberId: subscriberId,
 			AsPdf: AsPDF})
+
 	if err != nil {
 		return nil, err
 	}
@@ -96,4 +100,13 @@ func (r *Billing) GetInvoices(subscriberId string, AsPDF bool) (*pb.GetBySubscri
 	}
 
 	return res, nil
+}
+
+func (r *Billing) RemoveInvoice(invoiceId string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	_, err := r.invoiceClient.Delete(ctx, &pb.DeleteRequest{InvoiceId: invoiceId})
+
+	return err
 }

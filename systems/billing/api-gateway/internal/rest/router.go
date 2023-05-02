@@ -41,6 +41,7 @@ type billing interface {
 	AddInvoice(subscriberId string, rawInvoice string) (*pb.AddResponse, error)
 	GetInvoice(invoiceId string, asPDF bool) (*pb.GetResponse, error)
 	GetInvoices(subscriber string, asPDF bool) (*pb.GetBySubscriberResponse, error)
+	RemoveInvoice(invoiceId string) error
 }
 
 func NewClientsSet(endpoints *internal.GrpcEndpoints) *Clients {
@@ -94,7 +95,7 @@ func (r *Router) init() {
 	invoices.GET("/:invoice_id", formatDoc("Get Invoice", "Get a specific invoice"), tonic.Handler(r.GetInvocieHandler, http.StatusOK))
 	invoices.POST("", formatDoc("Add Invoice", "Add a new invoice for a subscriber"), tonic.Handler(r.postInvoiceHandler, http.StatusCreated))
 	// update invoice
-	// delete invoice
+	invoices.DELETE("/:invoice_id", formatDoc("Remove Invoice", "Remove a specific invoice"), tonic.Handler(r.removeInvoiceHandler, http.StatusOK))
 
 }
 
@@ -128,6 +129,10 @@ func (r *Router) getInvoicesHandler(c *gin.Context, req *GetInvoicesRequest) (*p
 
 func (r *Router) postInvoiceHandler(c *gin.Context, req *AddInvoiceRequest) (*pb.AddResponse, error) {
 	return r.clients.Billing.AddInvoice(req.SubscriberId, req.RawInvoice)
+}
+
+func (r *Router) removeInvoiceHandler(c *gin.Context, req *GetInvoiceRequest) error {
+	return r.clients.Billing.RemoveInvoice(req.InvoiceId)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
