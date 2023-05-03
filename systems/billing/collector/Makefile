@@ -23,7 +23,7 @@ gen:
 	# protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
 		# sim_usage.proto
 	# mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
-	mockery --all --recursive --dir ./pkg
+	mockery --all --recursive --dir ./internal
 
 clean:
 	# rm pb/gen/*.go

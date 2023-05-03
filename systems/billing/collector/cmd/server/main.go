@@ -9,14 +9,14 @@ import (
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/billing/collector/cmd/version"
-	"github.com/ukama/ukama/systems/billing/collector/pkg"
+	"github.com/ukama/ukama/systems/billing/collector/internal"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 
-	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
-	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
+	client "github.com/ukama/ukama/systems/billing/collector/internal/clients"
+	"github.com/ukama/ukama/systems/billing/collector/internal/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -24,14 +24,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serviceConfig = pkg.NewConfig(pkg.ServiceName)
+var serviceConfig = internal.NewConfig(internal.ServiceName)
 
 func main() {
-	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+	ccmd.ProcessVersionArgument(internal.ServiceName, os.Args, version.Version)
 
 	/* Log level */
 	log.SetLevel(log.TraceLevel)
-	log.Infof("Starting %s service", pkg.ServiceName)
+	log.Infof("Starting %s service", internal.ServiceName)
 
 	initConfig()
 
@@ -39,12 +39,12 @@ func main() {
 
 	runGrpcServer()
 
-	log.Infof("Exiting service %s", pkg.ServiceName)
+	log.Infof("Exiting service %s", internal.ServiceName)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
+	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
 	} else if serviceConfig.DebugMode {
@@ -55,9 +55,10 @@ func initConfig() {
 		}
 	}
 
-	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v", pkg.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
+	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v",
+		internal.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
 
-	pkg.IsDebugMode = serviceConfig.DebugMode
+	internal.IsDebugMode = serviceConfig.DebugMode
 }
 
 func runGrpcServer() {
@@ -68,8 +69,8 @@ func runGrpcServer() {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
+		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount,
@@ -77,7 +78,8 @@ func runGrpcServer() {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	lagoClient := client.NewLagoClient(serviceConfig.LagoAPIKey, serviceConfig.LagoHost, serviceConfig.LagoPort)
+	lagoClient := client.NewLagoClient(serviceConfig.LagoAPIKey,
+		serviceConfig.LagoHost, serviceConfig.LagoPort)
 
 	eSrv := server.NewBillingCollectorEventServer(lagoClient)
 
@@ -95,6 +97,7 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
 	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s",
+			internal.ServiceName, err.Error())
 	}
 }

@@ -1,4 +1,4 @@
-package pkg
+package internal
 
 const ServiceName = "collector"
 const SystemName = "billing"
