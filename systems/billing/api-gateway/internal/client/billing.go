@@ -12,16 +12,16 @@ import (
 	"google.golang.org/grpc"
 )
 
-const DefaultNetworkName = "default"
-
 type Billing struct {
 	conn          *grpc.ClientConn
 	invoiceClient pb.InvoiceServiceClient
+	pdfClient     PdfClient
 	timeout       time.Duration
-	host          string
+	invoiceHost   string
+	fileHost      string
 }
 
-func NewBilling(invoiceHost string, timeout time.Duration) *Billing {
+func NewBilling(invoiceHost, fileHost string, timeout time.Duration) *Billing {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -30,19 +30,27 @@ func NewBilling(invoiceHost string, timeout time.Duration) *Billing {
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	client := pb.NewInvoiceServiceClient(conn)
+
+	invoiceClient := pb.NewInvoiceServiceClient(conn)
+
+	pdfClient, err := NewPdfClient(fileHost, false)
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
 
 	return &Billing{
 		conn:          conn,
-		invoiceClient: client,
+		invoiceClient: invoiceClient,
+		pdfClient:     pdfClient,
 		timeout:       timeout,
-		host:          invoiceHost,
+		invoiceHost:   invoiceHost,
+		fileHost:      fileHost,
 	}
 }
 
 func NewBillingFromClient(invoiceClient pb.InvoiceServiceClient) *Billing {
 	return &Billing{
-		host:          "localhost",
+		invoiceHost:   "localhost",
 		timeout:       1 * time.Second,
 		conn:          nil,
 		invoiceClient: invoiceClient,
@@ -109,4 +117,14 @@ func (r *Billing) RemoveInvoice(invoiceId string) error {
 	_, err := r.invoiceClient.Delete(ctx, &pb.DeleteRequest{InvoiceId: invoiceId})
 
 	return err
+}
+
+func (b *Billing) GetInvoicePDF(invoiceId string) ([]byte, error) {
+	res, err := b.pdfClient.GetPdf(invoiceId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
