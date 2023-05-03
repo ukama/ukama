@@ -136,7 +136,6 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 }
 
 func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
-	fmt.Println(c.Request.URL.Path)
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
