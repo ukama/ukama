@@ -14,10 +14,7 @@ type Config struct {
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
-}
-
-type Kratos struct {
-	Url string
+	Auth              *config.Auth   `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
@@ -58,5 +55,6 @@ func NewConfig() *Config {
 			Cors: defaultCors,
 		},
 		Metrics: *config.DefaultMetrics(),
+		Auth:    config.LoadAuthHostConfig("auth"),
 	}
 }

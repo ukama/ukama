@@ -629,8 +629,8 @@ github.com/ugorji/go/codec v1.2.6 h1:7kbGefxLoDBuYXOms4yD7223OpNMMPNPZxXk5TvFcyQ
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
 github.com/vektra/mockery/v2 v2.12.2 h1:JbRx9F+XcCJiDTyCm3V5lXYwl56m5ZouV6I9eZa1Dj0=
 github.com/vektra/mockery/v2 v2.12.2/go.mod h1:8vf4KDDUptfkyypzdHLuE7OE2xA7Gdt60WgIS8PgD+U=
-github.com/wI2L/fizz v0.18.1 h1:7MHZ9Q+6TFjgI00xJtypVX5ah4tyOZWSfrNrk6KGUxI=
-github.com/wI2L/fizz v0.18.1/go.mod h1:CMxMR1amz8id9wr2YUpONf+F/F9hW1cqRXxVNNuWVxE=
+github.com/wI2L/fizz v0.22.0 h1:mgRA+uUdESvgsIeBFkMSS/MEIQ4EZ4I2xyRxnCqkhJY=
+github.com/wI2L/fizz v0.22.0/go.mod h1:CMxMR1amz8id9wr2YUpONf+F/F9hW1cqRXxVNNuWVxE=
 github.com/wagslane/go-rabbitmq v0.8.1 h1:9HLHEaFUoVZ7FirwjQ/t+XIW/iP2VoFz/R2+uLI3a/A=
 github.com/wagslane/go-rabbitmq v0.8.1/go.mod h1:SDjKDyaWPAA8eCQfmTns9TSAkz8tsKRS7c6d5ak3pNg=
 github.com/willf/bitset v1.1.11 h1:N7Z7E9UvjW+sGsEl7k/SJrvY2reP1A07MrGuCjIOjRE=

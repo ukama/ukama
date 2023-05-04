@@ -77,7 +77,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), mbClient)
+	srv := server.NewSimPoolServer(db.NewSimRepo(gormdb), nil)
 	nSrv := server.NewSimPoolEventServer(db.NewSimRepo(gormdb))
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {

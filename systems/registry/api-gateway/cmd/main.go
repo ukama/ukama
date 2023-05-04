@@ -3,7 +3,9 @@ package main
 import (
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/providers"
 
 	"github.com/ukama/ukama/systems/registry/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
@@ -20,10 +22,13 @@ func main() {
 	initConfig()
 
 	clientSet := rest.NewClientsSet(&svcConf.Services)
-
+	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
+	if err != nil {
+		logrus.Errorf("Failed to create auth client: %v", err)
+	}
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
-	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf))
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
 	r.Run()
 }
 
