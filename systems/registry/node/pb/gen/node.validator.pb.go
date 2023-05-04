@@ -55,6 +55,32 @@ func (this *GetNodeResponse) Validate() error {
 	}
 	return nil
 }
+func (this *GetAllNodeRequest) Validate() error {
+	return nil
+}
+func (this *GetAllNodeResponse) Validate() error {
+	for _, item := range this.Node {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *GetFreeNodeRequest) Validate() error {
+	return nil
+}
+func (this *GetFreeNodeResponse) Validate() error {
+	for _, item := range this.Node {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *Node) Validate() error {
 	for _, item := range this.Attached {
 		if item != nil {

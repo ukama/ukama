@@ -13,6 +13,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"github.com/ukama/ukama/systems/registry/node/pkg"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
@@ -55,7 +56,12 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 		nds = append(nds, nd)
 	}
 
-	err = n.nodeRepo.AttachNodes(nodeID, nds)
+	net, err := uuid.FromString(req.GetNetwork())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid network id %s. Error %s", req.Network, err.Error())
+	}
+
+	err = n.nodeRepo.AttachNodes(nodeID, nds, net)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -84,7 +90,7 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeStateResponse, error) {
 	logrus.Infof("Updating node state  %v", req.GetNodeId())
 
-	dbState := pbNodeStateToDb(req.State)
+	dbState := db.ParseNodeState(req.State)
 
 	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
@@ -188,7 +194,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 
 	node := &db.Node{
 		NodeID: req.Node.NodeId,
-		State:  pbNodeStateToDb(req.Node.State),
+		State:  db.ParseNodeState(req.Node.State),
 		Type:   toDbNodeType(nID.GetNodeType()),
 		Name:   req.Node.Name,
 	}
@@ -233,21 +239,6 @@ func invalidNodeIDError(nodeID string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeID, err.Error())
 }
 
-func pbNodeStateToDb(state pb.NodeState) db.NodeState {
-	var dbState db.NodeState
-
-	switch state {
-	case pb.NodeState_ONBOARDED:
-		dbState = db.Onboarded
-	case pb.NodeState_PENDING:
-		dbState = db.Pending
-	default:
-		dbState = db.Undefined
-	}
-
-	return dbState
-}
-
 func (n *NodeServer) processNodeDuplErrors(err error, nodeID string) error {
 	var pge *pgconn.PgError
 
@@ -288,7 +279,7 @@ func (n *NodeServer) PushMetrics() {
 func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	n := &pb.Node{
 		NodeId: dbn.NodeID,
-		State:  dbNodeStateToPb(dbn.State),
+		State:  dbn.State.String(),
 		Type:   dbNodeTypeToPb(dbn.Type),
 		Name:   dbn.Name,
 	}
@@ -319,21 +310,6 @@ func dbNodeTypeToPb(nodeType db.NodeType) pb.NodeType {
 	}
 
 	return pbNodeType
-}
-
-func dbNodeStateToPb(state db.NodeState) pb.NodeState {
-	var pbState pb.NodeState
-
-	switch state {
-	case db.Onboarded:
-		pbState = pb.NodeState_ONBOARDED
-	case db.Pending:
-		pbState = pb.NodeState_PENDING
-	default:
-		pbState = pb.NodeState_UNDEFINED
-	}
-
-	return pbState
 }
 
 func toDbNodeType(nodeType string) db.NodeType {

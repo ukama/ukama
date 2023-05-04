@@ -7,6 +7,7 @@ replace github.com/ukama/ukama/systems/common => ../../common
 replace github.com/ukama/ukama/systems/registry/node => ./
 
 require (
+	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/golang/protobuf v1.5.2
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/jackc/pgconn v1.13.0
@@ -14,7 +15,7 @@ require (
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/common v0.0.0-20230504181210-bf6632801c73
 	github.com/vektra/mockery/v2 v2.14.0
 	google.golang.org/grpc v1.51.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
@@ -65,6 +66,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
 	github.com/rs/zerolog v1.27.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/cobra v1.4.0 // indirect
