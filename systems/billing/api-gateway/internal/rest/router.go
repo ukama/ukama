@@ -94,17 +94,17 @@ func (r *Router) init() {
 
 	invoices := v1.Group(invoice, "JSON Invoice", "Operations on Invoices")
 	invoices.GET("", formatDoc("Get Invoices", "Get all Invoices of a subscriber"), tonic.Handler(r.getInvoicesHandler, http.StatusOK))
-	invoices.GET("/:invoice_id", formatDoc("Get Invoice", "Get a specific invoice"), tonic.Handler(r.GetInvocieHandler, http.StatusOK))
+	invoices.GET("/:invoice_id", formatDoc("Get Invoice", "Get a specific invoice"), tonic.Handler(r.GetInvoiceHandler, http.StatusOK))
 	invoices.POST("", formatDoc("Add Invoice", "Add a new invoice for a subscriber"), tonic.Handler(r.postInvoiceHandler, http.StatusCreated))
 	// update invoice
 	invoices.DELETE("/:invoice_id", formatDoc("Remove Invoice", "Remove a specific invoice"), tonic.Handler(r.removeInvoiceHandler, http.StatusOK))
 
 	const pdf = "/pdf"
 	pdfs := v1.Group(pdf, "PDF Invoices", "Operations on invoice PDF files")
-	pdfs.GET("/:invoice_id", formatDoc("Get Invoice PDF file", "Get a specific invoice file as PDF"), tonic.Handler(r.GetInvociePdfHandler, http.StatusOK))
+	pdfs.GET("/:invoice_id", formatDoc("Get Invoice PDF file", "Get a specific invoice file as PDF"), tonic.Handler(r.GetInvoicePdfHandler, http.StatusOK))
 }
 
-func (r *Router) GetInvocieHandler(c *gin.Context, req *GetInvoiceRequest) (*pb.GetResponse, error) {
+func (r *Router) GetInvoiceHandler(c *gin.Context, req *GetInvoiceRequest) (*pb.GetResponse, error) {
 	asPDF := false
 
 	pdf, ok := c.GetQuery("type")
@@ -140,7 +140,7 @@ func (r *Router) removeInvoiceHandler(c *gin.Context, req *GetInvoiceRequest) er
 	return r.clients.Billing.RemoveInvoice(req.InvoiceId)
 }
 
-func (r *Router) GetInvociePdfHandler(c *gin.Context, req *GetInvoiceRequest) error {
+func (r *Router) GetInvoicePdfHandler(c *gin.Context, req *GetInvoiceRequest) error {
 	content, err := r.clients.Billing.GetInvoicePDF(req.InvoiceId)
 	if err != nil {
 		if errors.Is(err, client.ErrInvoicePDFNotFound) {
