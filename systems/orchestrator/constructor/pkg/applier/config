@@ -1,0 +1,132 @@
+package applier
+
+import (
+	"github.com/helmfile/helmfile/pkg/app"
+	"go.uber.org/zap"
+)
+
+// TODO Generalize this and upstream to the helmfile project
+type HelmFileConfig struct {
+	args, env, fileOrDir, kubeContext, ns, helmBinary string
+
+	sels, vals []string
+	set        map[string]interface{}
+	logger     *zap.SugaredLogger
+}
+
+func (c *HelmFileConfig) HelmBinary() string {
+	return c.helmBinary
+}
+
+func (c *HelmFileConfig) KubeContext() string {
+	return c.kubeContext
+}
+
+func (c *HelmFileConfig) Namespace() string {
+	return c.ns
+}
+
+func (c *HelmFileConfig) Selectors() []string {
+	return c.sels
+}
+
+func (c *HelmFileConfig) Set() map[string]interface{} {
+	return c.set
+}
+
+func (c *HelmFileConfig) ValuesFiles() []string {
+	return c.vals
+}
+
+func (c *HelmFileConfig) Logger() *zap.SugaredLogger {
+	return c.logger
+}
+
+func (c *HelmFileConfig) Args() string {
+	return c.args
+}
+
+func (c *HelmFileConfig) Env() string {
+	return c.env
+}
+
+func (c *HelmFileConfig) FileOrDir() string {
+	return c.fileOrDir
+}
+
+type HelmFileDiffConfig struct {
+	args                                        string
+	vals                                        []string
+	concurrency                                 int
+	skipDeps, detailedExitcode, suppressSecrets bool
+}
+
+func (c HelmFileDiffConfig) Args() string {
+	return c.args
+}
+
+func (c HelmFileDiffConfig) Values() []string {
+	return c.vals
+}
+
+func (c HelmFileDiffConfig) SkipDeps() bool {
+	return c.skipDeps
+}
+
+func (c HelmFileDiffConfig) SuppressSecrets() bool {
+	return c.suppressSecrets
+}
+
+func (c HelmFileDiffConfig) DetailedExitcode() bool {
+	return c.detailedExitcode
+}
+
+func (c HelmFileDiffConfig) Concurrency() int {
+	return c.concurrency
+}
+
+type HelmFileApplyConfig struct {
+	args                                          string
+	skipDeps, suppressSecrets, interactive, color bool
+	concurrency                                   int
+	vals                                          []string
+	logger                                        *zap.SugaredLogger
+}
+
+func (c HelmFileApplyConfig) Args() string {
+	return c.args
+}
+
+func (c HelmFileApplyConfig) Values() []string {
+	return c.vals
+}
+
+func (c HelmFileApplyConfig) SkipDeps() bool {
+	return c.skipDeps
+}
+
+func (c HelmFileApplyConfig) SuppressSecrets() bool {
+	return c.suppressSecrets
+}
+
+func (c HelmFileApplyConfig) Concurrency() int {
+	return c.concurrency
+}
+
+func (c HelmFileApplyConfig) Interactive() bool {
+	return c.interactive
+}
+
+func (c HelmFileApplyConfig) Logger() *zap.SugaredLogger {
+	return c.logger
+}
+
+func (c HelmFileApplyConfig) Color() bool {
+	return c.color
+}
+
+var _ app.ConfigProvider = &HelmFileConfig{}
+
+var _ app.DiffConfigProvider = &HelmFileDiffConfig{}
+
+var _ app.ApplyConfigProvider = &HelmFileApplyConfig{}

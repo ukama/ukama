@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/orchestrator/constructor/pb/gen";
+
+package ukama.ochestrator.constructor.v1;
+
+import "validator.proto";
+
+service ConstructorService {
+
+    /* System */
+    rpc BuildOrg(BuildOrgRequest) returns (BuildOrgResponse);
+    rpc UpdateDefaultConstrutorConfig(UpdateDefaultConstrutorConfigRequest) returns (UpdateDefaultConstructorConfigResponse);
+    rpc UpdateConstructorConfig(ConstructorConfigRequest) returns (ConstructorConfigResponse);
+    rpc UpdateImageVersion(UpdateImageVersionRequest) returns (UpdateImageVersionResponse);
+    rpc RemoveOrg(RemoveOrgRequest) returns (RemoveOrgResponse);
+}
+
+
+message BuildOrgRequest {
+    string orgId = 1  [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string orgName = 2 [(validator.field) = {string_not_empty: true}];
+}
+
+message BuildOrgResponse {
+
+}
+
+message ConstructorConfigRequest {
+    string orgId = 1  [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message ConstructorConfigResponse {
+
+}
+
+message UpdateDefaultConstrutorConfigRequest {
+    string orgId = 1  [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message UpdateDefaultConstructorConfigResponse {
+
+}
+
+message UpdateImageVersionRequest { 
+    string orgName = 1  [(validator.field) = {string_not_empty: true}];
+    string certificate = 2;
+    string ip = 3;
+}
+
+message UpdateImageVersionResponse {
+}
+
+
+message RemoveOrgRequest { 
+    string orgId = 1  [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message RemoveOrgResponse {
+}
