@@ -20,8 +20,6 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
-var REDIRECT_URI = "https://data-plan.dev.ukama.com/swagger/#/"
-
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -113,7 +111,7 @@ func (r *Router) Run() {
 }
 
 func (r *Router) init(f func(*gin.Context, string) error) {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect="+REDIRECT_URI)
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	auth := r.f.Group("/v1", "API Gateway", "Data-plan system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			logrus.Info("Bypassing auth")
