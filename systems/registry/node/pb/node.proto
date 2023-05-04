@@ -12,7 +12,7 @@ service NodeService {
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
     rpc GetAllNodes(GetAllNodeRequest) returns (GetAllNodeResponse);
-    rpc GetFreeNodes(GetAllNodeRequest) returns (GetAllNodeResponse);
+    rpc GetFreeNodes(GetFreeNodeRequest) returns (GetFreeNodeResponse);
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc Delete(DeleteRequest) returns (DeleteResponse);
 }

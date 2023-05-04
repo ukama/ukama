@@ -173,6 +173,42 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 	return resp, nil
 }
 
+func (n *NodeServer) GetAllNode(ctx context.Context, req *pb.GetAllNodeRequest) (*pb.GetAllNodeResponse, error) {
+	logrus.Infof("GetAll Nodes.")
+
+	nodes, err := n.nodeRepo.GetAll()
+
+	if err != nil {
+		logrus.Error("error getting all node" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	resp := &pb.GetAllNodeResponse{
+		Node: dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
+func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetFreeNodeRequest) (*pb.GetFreeNodeResponse, error) {
+	logrus.Infof("GetFreeNodes")
+
+	nodes, err := n.nodeRepo.GetFreeNodes()
+
+	if err != nil {
+		logrus.Error("error getting the free node" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	resp := &pb.GetFreeNodeResponse{
+		Node: dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
 func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	logrus.Infof("Adding node  %v", req.Node)
 
@@ -274,6 +310,14 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 
 func (n *NodeServer) PushMetrics() {
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+}
+
+func dbNodesToPbNodes(nodes *[]db.Node) []*pb.Node {
+	pbNodes := []*pb.Node{}
+	for _, n := range *nodes {
+		pbNodes = append(pbNodes, dbNodeToPbNode(&n))
+	}
+	return pbNodes
 }
 
 func dbNodeToPbNode(dbn *db.Node) *pb.Node {
