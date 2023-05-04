@@ -20,8 +20,6 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
-var REDIRECT_URI = "https://data-plan.dev.ukama.com/swagger/#/"
-
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients

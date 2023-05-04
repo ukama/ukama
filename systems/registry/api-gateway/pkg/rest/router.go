@@ -25,8 +25,6 @@ import (
 const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
 
-var REDIRECT_URI = "https://registry.dev.ukama.com/swagger/#/"
-
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
