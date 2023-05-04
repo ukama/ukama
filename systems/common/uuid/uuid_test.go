@@ -397,6 +397,9 @@ func TestUUID_Value(t *testing.T) {
 		}
 
 		got, err := u.Value()
+		if err != nil {
+			t.Error("expected no error but got one")
+		}
 
 		if u.String() != got {
 			t.Errorf("expected %q but got %q", u.String(), got)

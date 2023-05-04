@@ -41,11 +41,11 @@ func (_m *SimRepo) Delete(id []uint64) error {
 }
 
 // Get provides a mock function with given fields: isPhysicalSim, simType
-func (_m *SimRepo) Get(isPhysicalSim bool, simType string) (*db.Sim, error) {
+func (_m *SimRepo) Get(isPhysicalSim bool, simType db.SimType) (*db.Sim, error) {
 	ret := _m.Called(isPhysicalSim, simType)
 
 	var r0 *db.Sim
-	if rf, ok := ret.Get(0).(func(bool, string) *db.Sim); ok {
+	if rf, ok := ret.Get(0).(func(bool, db.SimType) *db.Sim); ok {
 		r0 = rf(isPhysicalSim, simType)
 	} else {
 		if ret.Get(0) != nil {
@@ -54,7 +54,7 @@ func (_m *SimRepo) Get(isPhysicalSim bool, simType string) (*db.Sim, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(bool, string) error); ok {
+	if rf, ok := ret.Get(1).(func(bool, db.SimType) error); ok {
 		r1 = rf(isPhysicalSim, simType)
 	} else {
 		r1 = ret.Error(1)
@@ -87,11 +87,11 @@ func (_m *SimRepo) GetByIccid(iccid string) (*db.Sim, error) {
 }
 
 // GetSimsByType provides a mock function with given fields: simType
-func (_m *SimRepo) GetSimsByType(simType string) ([]db.Sim, error) {
+func (_m *SimRepo) GetSimsByType(simType db.SimType) ([]db.Sim, error) {
 	ret := _m.Called(simType)
 
 	var r0 []db.Sim
-	if rf, ok := ret.Get(0).(func(string) []db.Sim); ok {
+	if rf, ok := ret.Get(0).(func(db.SimType) []db.Sim); ok {
 		r0 = rf(simType)
 	} else {
 		if ret.Get(0) != nil {
@@ -100,7 +100,7 @@ func (_m *SimRepo) GetSimsByType(simType string) ([]db.Sim, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
+	if rf, ok := ret.Get(1).(func(db.SimType) error); ok {
 		r1 = rf(simType)
 	} else {
 		r1 = ret.Error(1)

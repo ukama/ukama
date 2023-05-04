@@ -10,12 +10,13 @@ import (
 )
 
 type SiteRepo interface {
-	Add(site *Site) error
+	Add(site *Site, nestedFunc func(*Site, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Site, error)
 	GetByName(netID uuid.UUID, siteName string) (*Site, error)
 	GetByNetwork(netID uuid.UUID) ([]Site, error)
 	// Update(site *Site) error
 	Delete(id uuid.UUID) error
+	GetSiteCount(netID uuid.UUID) (int64, error)
 
 	// AttachNodes
 	// DetachNodes
@@ -57,7 +58,7 @@ func (s siteRepo) GetByNetwork(netID uuid.UUID) ([]Site, error) {
 	var sites []Site
 	db := s.Db.GetGormDb()
 
-	result := db.Where(&Site{NetworkID: netID}).Find(&sites)
+	result := db.Where(&Site{NetworkId: netID}).Find(&sites)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -65,15 +66,29 @@ func (s siteRepo) GetByNetwork(netID uuid.UUID) ([]Site, error) {
 	return sites, nil
 }
 
-func (s siteRepo) Add(site *Site) error {
+func (s siteRepo) Add(site *Site, nestedFunc func(site *Site, tx *gorm.DB) error) error {
 	if !validation.IsValidDnsLabelName(site.Name) {
 		return fmt.Errorf("invalid name. must be less then 253 " +
 			"characters and consist of lowercase characters with a hyphen")
 	}
 
-	result := s.Db.GetGormDb().Create(site)
+	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if nestedFunc != nil {
+			nestErr := nestedFunc(site, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
 
-	return result.Error
+		result := tx.Create(site)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (s siteRepo) Delete(siteID uuid.UUID) error {
@@ -88,4 +103,13 @@ func (s siteRepo) Delete(siteID uuid.UUID) error {
 	})
 
 	return err
+}
+
+func (s siteRepo) GetSiteCount(netID uuid.UUID) (int64, error) {
+	var count int64
+	result := s.Db.GetGormDb().Model(&Site{}).Where("network_id = ?", netID).Count(&count)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return count, nil
 }

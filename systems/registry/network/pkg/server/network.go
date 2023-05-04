@@ -4,12 +4,17 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	"github.com/ukama/ukama/systems/registry/network/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
@@ -22,19 +27,25 @@ const uuidParsingError = "Error parsing UUID"
 
 type NetworkServer struct {
 	pb.UnimplementedNetworkServiceServer
-	netRepo    db.NetRepo
-	orgRepo    db.OrgRepo
-	siteRepo   db.SiteRepo
-	orgService providers.OrgClientProvider
+	netRepo        db.NetRepo
+	orgRepo        db.OrgRepo
+	siteRepo       db.SiteRepo
+	orgService     providers.OrgClientProvider
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	pushGateway    string
 }
 
 func NewNetworkServer(netRepo db.NetRepo, orgRepo db.OrgRepo, siteRepo db.SiteRepo,
-	orgService providers.OrgClientProvider) *NetworkServer {
+	orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string) *NetworkServer {
 	return &NetworkServer{
-		netRepo:    netRepo,
-		orgRepo:    orgRepo,
-		siteRepo:   siteRepo,
-		orgService: orgService,
+		netRepo:        netRepo,
+		orgRepo:        orgRepo,
+		siteRepo:       siteRepo,
+		orgService:     orgService,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		pushGateway:    pushGateway,
 	}
 }
 
@@ -56,14 +67,22 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 			return nil, err
 		}
 
-		// What should we do if the remote org exists but is deactivated.
+		// What should we do if the remote org exists but is deactivated?
+		// For now we simply abort.
 		if remoteOrg.Org.IsDeactivated {
 			return nil, status.Errorf(codes.FailedPrecondition,
 				"org is deactivated: cannot add network to it")
 		}
 
+		remoteOrgID, err := uuid.FromString(remoteOrg.Org.Id)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid remote org id: %v", err)
+		}
+
 		logrus.Infof("Adding remove org %s to local org repo", orgName)
-		org = &db.Org{Name: remoteOrg.Org.Name,
+		org = &db.Org{
+			Id:          remoteOrgID,
+			Name:        remoteOrg.Org.Name,
 			Deactivated: remoteOrg.Org.IsDeactivated}
 
 		err = n.orgRepo.Add(org)
@@ -73,16 +92,29 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}
 
 	network := &db.Network{
-		ID:    uuid.NewV4(),
 		Name:  networkName,
-		OrgID: org.ID,
+		OrgId: org.Id,
 	}
 
 	logrus.Infof("Adding network %s", networkName)
-	err = n.netRepo.Add(network)
+	err = n.netRepo.Add(network, func(*db.Network, *gorm.DB) error {
+		network.Id = uuid.NewV4()
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
+
+	route := n.baseRoutingKey.SetAction("add").SetObject("network").MustBuild()
+
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
+	n.pushNetworkCount(org.Id)
 
 	return &pb.AddResponse{
 		Network: dbNtwkToPbNtwk(network),
@@ -91,7 +123,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 }
 
 func (n *NetworkServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	netID, err := uuid.FromString(req.NetworkID)
+	netID, err := uuid.FromString(req.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -119,7 +151,7 @@ func (n *NetworkServer) GetByName(ctx context.Context, req *pb.GetByNameRequest)
 }
 
 func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
-	orgID, err := uuid.FromString(req.OrgID)
+	orgID, err := uuid.FromString(req.OrgId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -130,7 +162,7 @@ func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (
 	}
 
 	resp := &pb.GetByOrgResponse{
-		OrgID:    req.OrgID,
+		OrgId:    req.OrgId,
 		Networks: dbNtwksToPbNtwks(ntwks),
 	}
 
@@ -140,7 +172,13 @@ func (n *NetworkServer) GetByOrg(ctx context.Context, req *pb.GetByOrgRequest) (
 func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	logrus.Infof("Deleting network %s", req.Name)
 
-	err := n.netRepo.Delete(req.OrgName, req.Name)
+	org, err := n.orgRepo.GetByName(req.OrgName)
+	if err != nil {
+		logrus.Errorf("Failed to find org %s. Errors %s", req.OrgName, err.Error())
+		return nil, err
+	}
+
+	err = n.netRepo.Delete(req.OrgName, req.Name)
 	if err != nil {
 		logrus.Error(err)
 
@@ -148,12 +186,19 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	}
 
 	// publish event before returning resp
+	route := n.baseRoutingKey.SetAction("delete").SetObject("network").MustBuild()
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
+	n.pushNetworkCount(org.Id)
 
 	return &pb.DeleteResponse{}, nil
 }
 
 func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*pb.AddSiteResponse, error) {
-	netID, err := uuid.FromString(req.NetworkID)
+	netID, err := uuid.FromString(req.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -166,21 +211,35 @@ func (n *NetworkServer) AddSite(ctx context.Context, req *pb.AddSiteRequest) (*p
 	}
 
 	site := &db.Site{
-		NetworkID: ntwk.ID,
+		NetworkId: ntwk.Id,
 		Name:      req.SiteName,
 	}
 
-	err = n.siteRepo.Add(site)
+	err = n.siteRepo.Add(site, func(*db.Site, *gorm.DB) error {
+		site.Id = uuid.NewV4()
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
+
+	route := n.baseRoutingKey.SetAction("add").SetObject("site").MustBuild()
+
+	err = n.msgbus.PublishRequest(route, req)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
+	n.pushSiteCount(ntwk.OrgId, ntwk.Id)
 
 	return &pb.AddSiteResponse{
 		Site: dbSiteToPbSite(site)}, nil
 }
 
 func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*pb.GetSiteResponse, error) {
-	siteID, err := uuid.FromString(req.SiteID)
+	siteID, err := uuid.FromString(req.SiteId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -195,7 +254,7 @@ func (n *NetworkServer) GetSite(ctx context.Context, req *pb.GetSiteRequest) (*p
 }
 
 func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByNameRequest) (*pb.GetSiteResponse, error) {
-	netID, err := uuid.FromString(req.NetworkID)
+	netID, err := uuid.FromString(req.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -205,7 +264,7 @@ func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByName
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
-	site, err := n.siteRepo.GetByName(ntwk.ID, req.SiteName)
+	site, err := n.siteRepo.GetByName(ntwk.Id, req.SiteName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
@@ -215,7 +274,7 @@ func (n *NetworkServer) GetSiteByName(ctx context.Context, req *pb.GetSiteByName
 }
 
 func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesByNetworkRequest) (*pb.GetSitesByNetworkResponse, error) {
-	netID, err := uuid.FromString(req.NetworkID)
+	netID, err := uuid.FromString(req.NetworkId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -225,13 +284,13 @@ func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesB
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
-	sites, err := n.siteRepo.GetByNetwork(ntwk.ID)
+	sites, err := n.siteRepo.GetByNetwork(ntwk.Id)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sites")
 	}
 
 	resp := &pb.GetSitesByNetworkResponse{
-		NetworkID: ntwk.ID.String(),
+		NetworkId: ntwk.Id.String(),
 		Sites:     dbSitesToPbSites(sites),
 	}
 
@@ -240,9 +299,9 @@ func (n *NetworkServer) GetSitesByNetwork(ctx context.Context, req *pb.GetSitesB
 
 func dbNtwkToPbNtwk(ntwk *db.Network) *pb.Network {
 	return &pb.Network{
-		Id:            ntwk.ID.String(),
+		Id:            ntwk.Id.String(),
 		Name:          ntwk.Name,
-		OrgID:         ntwk.OrgID.String(),
+		OrgId:         ntwk.OrgId.String(),
 		IsDeactivated: ntwk.Deactivated,
 		CreatedAt:     timestamppb.New(ntwk.CreatedAt),
 	}
@@ -260,9 +319,9 @@ func dbNtwksToPbNtwks(ntwks []db.Network) []*pb.Network {
 
 func dbSiteToPbSite(site *db.Site) *pb.Site {
 	return &pb.Site{
-		Id:            site.ID.String(),
+		Id:            site.Id.String(),
 		Name:          site.Name,
-		NetworkID:     site.NetworkID.String(),
+		NetworkId:     site.NetworkId.String(),
 		IsDeactivated: site.Deactivated,
 		CreatedAt:     timestamppb.New(site.CreatedAt),
 	}
@@ -276,4 +335,55 @@ func dbSitesToPbSites(sites []db.Site) []*pb.Site {
 	}
 
 	return res
+}
+
+func (n *NetworkServer) pushNetworkCount(orgId uuid.UUID) {
+	networkCount, err := n.netRepo.GetNetworkCount(orgId)
+	if err != nil {
+		logrus.Errorf("failed to get network counts: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": orgId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		logrus.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
+	}
+}
+
+func (n *NetworkServer) pushSiteCount(orgId uuid.UUID, netId uuid.UUID) {
+	siteCount, err := n.siteRepo.GetSiteCount(netId)
+	if err != nil {
+		logrus.Errorf("failed to get site count: %s", err.Error())
+	}
+
+	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"org": orgId.String(), "network": netId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		logrus.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
+	}
+}
+
+func (n *NetworkServer) PushMetrics() error {
+
+	// Push Network count metric per org to pushgateway
+	orgs, err := n.orgRepo.GetAll()
+	if err != nil {
+		logrus.Errorf("Failed to get all networks. Error %s", err.Error())
+		return err
+	}
+
+	for _, org := range orgs {
+		n.pushNetworkCount(org.Id)
+	}
+
+	// Push Site count metric per network to pushgateway
+	networks, err := n.netRepo.GetAll()
+	if err != nil {
+		logrus.Errorf("Failed to get all networks. Error %s", err.Error())
+		return err
+	}
+
+	for _, network := range networks {
+		n.pushSiteCount(network.OrgId, network.Id)
+	}
+
+	return nil
 }

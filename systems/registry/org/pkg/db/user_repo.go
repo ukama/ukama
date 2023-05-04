@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/google/uuid"
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
@@ -11,6 +11,7 @@ type UserRepo interface {
 	Get(uuid uuid.UUID) (*User, error)
 	Update(*User) (*User, error)
 	Delete(uuid uuid.UUID) error
+	GetUserCount() (int64, int64, error)
 }
 
 type userRepo struct {
@@ -95,4 +96,21 @@ func (u *userRepo) Delete(userUUID uuid.UUID) error {
 	})
 
 	return err
+}
+
+func (u *userRepo) GetUserCount() (int64, int64, error) {
+	var activeUserCount int64
+	var deactiveUserCount int64
+
+	result := u.Db.GetGormDb().Model(&User{}).Where("deactivated = ?", false).Count(&activeUserCount)
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	result = u.Db.GetGormDb().Model(&User{}).Where("deactivated = ?", true).Count(&deactiveUserCount)
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	return activeUserCount, deactiveUserCount, nil
 }

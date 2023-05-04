@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/registry/users/mocks"
 	pb "github.com/ukama/ukama/systems/registry/users/pb/gen"
@@ -16,6 +17,7 @@ import (
 
 func TestUserService_Add(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	userRequest := &pb.User{
 		Name:  "Joe",
@@ -24,10 +26,11 @@ func TestUserService_Add(t *testing.T) {
 	}
 
 	userRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
-
+	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddRequest{User: userRequest}).Return(nil).Once()
+	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 	t.Run("AddUser", func(tt *testing.T) {
-		srv := NewUserService(userRepo, nil)
-		addResp, err := srv.Add(context.TODO(), &pb.AddRequest{User: userRequest})
+		srv := NewUserService(userRepo, nil, msgclientRepo, "")
+		addResp, err := srv.Add(context.Background(), &pb.AddRequest{User: userRequest})
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, addResp.User.Uuid)
@@ -42,19 +45,20 @@ func TestUserService_Add(t *testing.T) {
 
 func TestUserService_Get(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
-	userUUID := uuid.NewString()
+	userUUID := uuid.NewV4()
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-	userRepo.On("Get", uuid.MustParse(userUUID)).Return(&db.User{
-		Uuid: uuid.MustParse(userUUID),
+	userRepo.On("Get", userUUID).Return(&db.User{
+		Uuid: userUUID,
 	}, nil)
 
 	t.Run("UserFound", func(tt *testing.T) {
-		srv := NewUserService(userRepo, nil)
+		srv := NewUserService(userRepo, nil, msgclientRepo, "")
 
-		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID})
+		user, err := srv.Get(context.TODO(), &pb.GetRequest{UserUuid: userUUID.String()})
 
 		assert.NoError(t, err)
-		assert.Equal(t, userUUID, user.GetUser().Uuid)
+		assert.Equal(t, userUUID.String(), user.GetUser().Uuid)
 		userRepo.AssertExpectations(t)
 	})
 }
@@ -71,25 +75,32 @@ func TestUserService_Get(t *testing.T) {
 
 func TestUserService_Deactivate(t *testing.T) {
 	userRepo := &mocks.UserRepo{}
-	userUUID := uuid.NewString()
+	userUUID := uuid.NewV4()
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-	userRepo.On("Get", uuid.MustParse(userUUID)).Return(&db.User{
-		Uuid: uuid.MustParse(userUUID),
+	userRepo.On("Get", userUUID).Return(&db.User{
+		Uuid: userUUID,
 	}, nil)
 
 	userRepo.On("Update", mock.MatchedBy(func(u *db.User) bool {
-		return u.Uuid.String() == userUUID
+		return u.Uuid.String() == userUUID.String()
 	}), mock.Anything).Return(nil)
 
-	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
-		srv := NewUserService(userRepo, nil)
+	msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeactivateRequest{UserUuid: userUUID.String()}).Return(nil).Once()
+	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
-		_, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
-			UserUuid: userUUID,
+	t.Run("UserNotAlreadyDeactivated", func(tt *testing.T) {
+		srv := NewUserService(userRepo, nil, msgclientRepo, "")
+
+		res, err := srv.Deactivate(context.Background(), &pb.DeactivateRequest{
+			UserUuid: userUUID.String(),
 		})
 
 		assert.NoError(t, err, "Error deactivating user")
+		assert.NotNil(t, res, "Response should not be nil")
+
 		userRepo.AssertExpectations(t)
+		msgclientRepo.AssertExpectations(t)
 	})
 }
 
@@ -279,7 +290,7 @@ func TestUserService_Validation_Update(t *testing.T) {
 
 			// test update request
 			ru := &pb.UpdateRequest{
-				UserUuid: uuid.NewString(),
+				UserUuid: uuid.NewV4().String(),
 				User: &pb.UserAttributes{
 					Phone: test.user.Phone,
 					Email: test.user.Email,

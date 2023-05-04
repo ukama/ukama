@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/registry/network/pkg/db"
+	gorm "gorm.io/gorm"
+
+	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -14,13 +16,13 @@ type SiteRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: site
-func (_m *SiteRepo) Add(site *db.Site) error {
-	ret := _m.Called(site)
+// Add provides a mock function with given fields: site, nestedFunc
+func (_m *SiteRepo) Add(site *db.Site, nestedFunc func(*db.Site, *gorm.DB) error) error {
+	ret := _m.Called(site, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Site) error); ok {
-		r0 = rf(site)
+	if rf, ok := ret.Get(0).(func(*db.Site, func(*db.Site, *gorm.DB) error) error); ok {
+		r0 = rf(site, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -99,6 +101,27 @@ func (_m *SiteRepo) GetByNetwork(netID uuid.UUID) ([]db.Site, error) {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Site)
 		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(netID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSiteCount provides a mock function with given fields: netID
+func (_m *SiteRepo) GetSiteCount(netID uuid.UUID) (int64, error) {
+	ret := _m.Called(netID)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(uuid.UUID) int64); ok {
+		r0 = rf(netID)
+	} else {
+		r0 = ret.Get(0).(int64)
 	}
 
 	var r1 error

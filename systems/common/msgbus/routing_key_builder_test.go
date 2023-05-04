@@ -1,15 +1,16 @@
 package msgbus
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBuild(t *testing.T) {
 
 	t.Run("basic_usage", func(t *testing.T) {
 		rk, err := NewRoutingKeyBuilder().SetEventType().SetCloudSource().SetObject("some-obj").
-			SetActionCreate().SetCloudSource().SetContainer("some_container").Build()
+			SetAction("create").SetCloudSource().SetContainer("some_container").Build()
 		assert.NoError(t, err)
 		assert.Equal(t, "event.cloud.some_container.some-obj.create", rk)
 	})

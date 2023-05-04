@@ -2,15 +2,18 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type PackageRepo interface {
 	Add(_package *Package) error
-	Get(id uint64) (*Package, error)
-	Delete(id uint64) error
-	GetByOrg(orgId uint64) ([]Package, error)
-	Update(Id uint64, pkg Package) (*Package, error)
+	Get(uuid uuid.UUID) (*Package, error)
+	GetDetails(uuid.UUID) (*Package, error)
+	Delete(uuid uuid.UUID) error
+	GetByOrg(orgId uuid.UUID) ([]Package, error)
+	Update(uuid uuid.UUID, pkg *Package) error
 }
 
 type packageRepo struct {
@@ -29,10 +32,10 @@ func (r *packageRepo) Add(_package *Package) error {
 	return result.Error
 }
 
-func (p *packageRepo) Get(id uint64) (*Package, error) {
+func (p *packageRepo) Get(uuid uuid.UUID) (*Package, error) {
 	var _package Package
 
-	result := p.Db.GetGormDb().Where("id = ?", id).First(&_package)
+	result := p.Db.GetGormDb().Preload("PackageRate").Where("uuid = ?", uuid).First(&_package)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -41,9 +44,21 @@ func (p *packageRepo) Get(id uint64) (*Package, error) {
 	return &_package, nil
 }
 
-func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
+func (p *packageRepo) GetDetails(uuid uuid.UUID) (*Package, error) {
+	var _package Package
+
+	result := p.Db.GetGormDb().Preload(clause.Associations).Where("uuid = ?", uuid).First(&_package)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &_package, nil
+}
+
+func (p *packageRepo) GetByOrg(orgId uuid.UUID) ([]Package, error) {
 	var packages []Package
-	result := p.Db.GetGormDb().Where(&Package{Org_id: uint(orgId)}).Find(&packages)
+	result := p.Db.GetGormDb().Preload("PackageRate").Where(&Package{OrgId: orgId}).Find(&packages)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -51,23 +66,27 @@ func (p *packageRepo) GetByOrg(orgId uint64) ([]Package, error) {
 	return packages, nil
 }
 
-func (r *packageRepo) Delete(packageId uint64) error {
-	result := r.Db.GetGormDb().Where("id = ?", packageId).Delete(&Package{})
-	if result.Error != nil {
-		return result.Error
+func (r *packageRepo) Delete(uuid uuid.UUID) error {
+	p := &Package{
+		Uuid: uuid,
 	}
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+
+	d := r.Db.GetGormDb().Select(clause.Associations).Delete(p)
+	if d.Error != nil {
+		return d.Error
 	}
 
 	return nil
 }
 
-func (b *packageRepo) Update(Id uint64, pkg Package) (*Package, error) {
-	result := b.Db.GetGormDb().Where(Id).UpdateColumns(pkg)
-	if result.Error != nil {
-		return nil, result.Error
+func (b *packageRepo) Update(uuid uuid.UUID, pkg *Package) error {
+	d := b.Db.GetGormDb().Clauses(clause.Returning{}).Where("uuid = ?", uuid).Updates(pkg)
+	if d.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
 	}
 
-	return &pkg, nil
+	//https://stackoverflow.com/questions/65683156/updates-doesnt-seem-to-update-the-associations
+
+	return d.Error
+
 }

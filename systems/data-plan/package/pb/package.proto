@@ -1,82 +1,137 @@
 syntax = "proto3";
-package ukama.packages.v1;
-option go_package = "pb/gen";
+package ukama.data_plan.package.v1;
+option go_package = "github.com/ukama/ukama/systems/data-plan/package/pb/gen";
+
+import "validator.proto";
+
 
 service PackagesService {
     rpc Get (GetPackageRequest) returns (GetPackageResponse) {}
+    rpc GetDetails (GetPackageRequest) returns (GetPackageResponse) {}
     rpc Add (AddPackageRequest) returns (AddPackageResponse){}
     rpc Delete (DeletePackageRequest) returns (DeletePackageResponse){}
     rpc Update (UpdatePackageRequest) returns (UpdatePackageResponse){}
     rpc GetByOrg (GetByOrgPackageRequest) returns (GetByOrgPackageResponse){}
 
+
 }
+
 message GetPackageRequest{
-    uint64 id =1;
+    string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
+
 message GetByOrgPackageRequest{
-    uint64 orgId =1;
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
+
 message GetByOrgPackageResponse{
     repeated Package packages =1;
 
 }
+
 message GetPackageResponse{
-     Package package =1;
+    Package package =1;
 }
+
 message DeletePackageRequest {
-    uint64 id =1;
+    string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
+
 message DeletePackageResponse {
-    
+    string uuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
 }
+
 message UpdatePackageRequest {
-    uint64 id=1;
-    string name=2;
-    bool active=3;
-    uint64 duration=4;
-    SimType sim_type=5;
-    int64 sms_volume=6;
-    int64 data_volume=7;
-    int64 voice_volume=8;
-    uint64 org_rates_id=9;
+    string uuid=1  [(validator.field) = {uuid_ver: 4}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string name=3;
+    bool active=4;
 }
+
 message UpdatePackageResponse {
     Package package = 1;
 }
+
 message AddPackageRequest {
+    string uuid=1  [(validator.field) = {uuid_ver: 4}];
     string name =2;
-    uint64 org_id=3;
+    string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     bool active =4;
-    uint64 duration =5;
-    SimType sim_type=6;
-    int64 sms_volume =10;
-    int64 data_volume=11;
-    int64 voice_volume =12;
-    uint64 org_rates_id=13;
+    uint64 duration = 5;
+    string simType=6 [json_name = "sim_type"];
+    int64 smsVolume =10 [json_name = "sms_volume"];
+    int64 dataVolume=11 [json_name = "data_volume"];
+    int64 voiceVolume =12 [json_name = "voice_volume"];
+    int64 dlbr =13;
+    int64 ulbr = 14;
+    double markup = 16;
+    string type = 17;
+    string dataUnit = 18;
+    string voiceUnit = 19;
+    string messageunit = 20;
+    bool   flatrate = 21;
+    double amount = 22;
+    string effectiveAt  = 23;
+    string endAt = 24;
+    string country=25;
+    string provider= 26;
+    string apn = 27;
+    string baserate = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "baserate_id"];
+    string ownerId =29[(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "owner_id"];
+    string from = 30;
+    string to = 31;
+    
 }
+
 message AddPackageResponse {
-     Package package =1;
+    Package package =1;
 
 }
+
 message Package {
-    uint64 id =1;
+    string uuid=1  [(validator.field) = {uuid_ver: 4}]  ;
     string name =2;
-    int64 org_id=3;
+    string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     bool active =4;
-    uint64 duration =5;
-    SimType sim_type=6;
-    string created_at=7;
-    string deleted_at=8;
-    string updated_at=9;
-    int64 sms_volume =10;
-    int64 data_volume=11;
-    int64 voice_volume =12;
-    uint64 org_rates_id=13;
+    uint64 duration = 5;
+    string simType=6 [json_name = "sim_type"];
+    string createdAt=7 [json_name = "created_at"];
+    string deletedAt=8 [json_name = "deleted_at"];
+    string updatedAt=9 [json_name = "updated_at"];
+    int64 smsVolume =10 [json_name = "sms_volume"];
+    int64 dataVolume=11 [json_name = "data_volume"];
+    int64 voiceVolume =12 [json_name = "voice_volume"];
+    int64 dlbr =13;
+    int64 ulbr = 14;
+    PackageRates rate = 15;
+    PackageMarkup markup = 16;
+    string type = 17;
+    string dataUnit = 18;
+    string voiceUnit = 19;
+    string messageunit = 20;
+    bool flatrate = 21;
+    string currency = 22;
+    string from = 23;
+    string to = 24;
+    string country=25;
+    string provider= 26;
+    string apn = 27;
+    string OwnerId = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    double amount = 29 [json_name = "amount"];
+
 }
 
-enum SimType {
-    inter_none=0;
-    inter_mno_data=1;
-    inter_mno_all=2;
-    inter_ukama_all=3;
+message PackageRates{ 
+    double SmsMo=1 [json_name = "sms_mo"];
+    double SmsMt =2 [json_name = "sms_mt"];
+    double Data =3;
+    double Amount  = 4;
+
+} 
+
+message PackageMarkup {
+    string baserate = 1  [(validator.field) = {uuid_ver: 4}];
+    double markup = 2;
 }

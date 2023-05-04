@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,7 +35,7 @@ func (p Database) GetConnString() string {
 		sslMode = "enable"
 	}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s database=%s port=%d sslmode=%s",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
 		p.Host, p.Username, p.Password, p.DbName, p.Port, sslMode)
 	return dsn
 }
@@ -120,10 +121,17 @@ type Service struct {
 	Port string `default:"9090"`
 	Uri  string `default:"localhost:9090"`
 }
-	
+
 type Metrics struct {
 	Port    int  `default:"10250"`
 	Enabled bool `default:"true"`
+}
+
+type Auth struct {
+	AuthServerUrl  string `default:"http://localhost:4434"`
+	AuthAppUrl     string `default:"http://localhost:4455"`
+	AuthAPIGW      string `default:"http://localhost:8080"`
+	BypassAuthMode bool   `default:"false"`
 }
 
 // LoadConfig loads configuration into `config` object
@@ -206,14 +214,68 @@ func LoadServiceHostConfig(name string) *Service {
 	val, present := os.LookupEnv(strings.ToUpper(name + svcHost))
 	if present {
 		s.Host = val
+	} else {
+		logrus.Errorf("%s server host env not found", name)
 	}
 
 	val, present = os.LookupEnv(strings.ToUpper(name + svcPort))
 	if present {
 		s.Port = val
+	} else {
+		logrus.Errorf("%s server port env not found", name)
 	}
 
 	s.Uri = s.Host + ":" + s.Port
 
 	return s
+}
+
+func LoadAuthHostConfig(name string) *Auth {
+	s := &Auth{}
+	serverUrl := "_SERVER_URL"
+	appUrl := "_APP_URL"
+	apigwUrl := "_API_GW_URL"
+	bypassAuthMode := "BYPASS_AUTH_MODE"
+
+	val, present := os.LookupEnv(strings.ToUpper(name + serverUrl))
+	if present {
+		s.AuthServerUrl = val
+	} else {
+		logrus.Errorf("%s server url env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + appUrl))
+	if present {
+		s.AuthAppUrl = val
+	} else {
+		logrus.Errorf("%s app url env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + apigwUrl))
+	if present {
+		s.AuthAPIGW = val
+	} else {
+		logrus.Errorf("%s api gw url env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(bypassAuthMode))
+	if present {
+		boolValue, err := strconv.ParseBool(val)
+		if err != nil {
+			logrus.Errorf("Unable to parse %s env value: %s", bypassAuthMode, val)
+		}
+		s.BypassAuthMode = boolValue
+	}
+
+	return s
+}
+
+func LoadAuthKey() string {
+	val, present := os.LookupEnv(strings.ToUpper("JWT_KEY"))
+	if present {
+		return val
+	} else {
+		logrus.Error("JWT_KEY env not found")
+		return ""
+	}
 }
