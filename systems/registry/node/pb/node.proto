@@ -81,10 +81,10 @@ message GetFreeNodeResponse{
 
 message Node {
     string nodeId = 1;
-    string state = 4;
-    NodeType type = 5;
-    string name = 6;
-    repeated Node attached = 7;
+    string state = 2;
+    string name = 3;
+    string type = 4;
+    repeated Node attached = 5;
 }
 
 message AddNodeRequest{
@@ -104,9 +104,4 @@ message DeleteResponse{
     string nodeId = 1;
 }
 
-enum NodeType{
-    NODE_TYPE_UNDEFINED = 0;
-    HOME = 1;
-    TOWER = 2;
-    AMPLIFIER = 3;
-}
+

@@ -125,7 +125,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 
 	err = n.nodeRepo.Update(nodeID, nil, &req.Name)
 	if err != nil {
-		duplErr := n.processNodeDuplErrors(err, req.NodeId)
+		duplErr := processNodeDuplErrors(err, req.NodeId)
 		if duplErr != nil {
 			return nil, duplErr
 		}
@@ -218,12 +218,11 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	if req.Node.Type != pb.NodeType_NODE_TYPE_UNDEFINED {
+	if req.Node.Type != ukama.NODE_ID_TYPE_UNDEFINED {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"type is determined from nodeId and can not be set specifically")
 	}
 
-	// Generate random node name if it's missing
 	if len(req.Node.Name) == 0 {
 		req.Node.Name = n.nameGenerator.Generate()
 	}
@@ -231,28 +230,41 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	node := &db.Node{
 		NodeID: req.Node.NodeId,
 		State:  db.ParseNodeState(req.Node.State),
-		Type:   toDbNodeType(nID.GetNodeType()),
+		Type:   nID.GetNodeType(),
 		Name:   req.Node.Name,
-	}
-
-	// adding node to DB and bootstrap in transaction
-	// Rollback trans if bootstrap fails to add a node
-	err = n.nodeRepo.Add(node)
-
-	if err != nil {
-		duplErr := n.processNodeDuplErrors(err, node.NodeID)
-		if duplErr != nil {
-			return nil, duplErr
-		}
-
-		logrus.Error("Error adding the node. " + err.Error())
-
-		return nil, status.Errorf(codes.Internal, "error adding the node")
 	}
 
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
+	err = AddNodeToOrg(n.nodeRepo, node)
+	if err != nil {
+		return nil, err
+	}
+
 	return &pb.AddNodeResponse{Node: dbNodeToPbNode(node)}, nil
+
+}
+
+func AddNodeToOrg(repo db.NodeRepo, node *db.Node) error {
+
+	// Generate random node name if it's missing
+
+	// adding node to DB and bootstrap in transaction
+	// Rollback trans if bootstrap fails to add a node
+	err := repo.Add(node)
+
+	if err != nil {
+		duplErr := processNodeDuplErrors(err, node.NodeID)
+		if duplErr != nil {
+			return duplErr
+		}
+
+		logrus.Error("Error adding the node. " + err.Error())
+
+		return status.Errorf(codes.Internal, "error adding the node")
+	}
+
+	return nil
 }
 
 func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -275,7 +287,7 @@ func invalidNodeIDError(nodeID string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeID, err.Error())
 }
 
-func (n *NodeServer) processNodeDuplErrors(err error, nodeID string) error {
+func processNodeDuplErrors(err error, nodeID string) error {
 	var pge *pgconn.PgError
 
 	if errors.As(err, &pge) && pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
@@ -324,7 +336,7 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	n := &pb.Node{
 		NodeId: dbn.NodeID,
 		State:  dbn.State.String(),
-		Type:   dbNodeTypeToPb(dbn.Type),
+		Type:   dbn.Type,
 		Name:   dbn.Name,
 	}
 
@@ -337,34 +349,4 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	}
 
 	return n
-}
-
-func dbNodeTypeToPb(nodeType db.NodeType) pb.NodeType {
-	var pbNodeType pb.NodeType
-
-	switch nodeType {
-	case db.NodeTypeAmplifier:
-		pbNodeType = pb.NodeType_AMPLIFIER
-	case db.NodeTypeTower:
-		pbNodeType = pb.NodeType_TOWER
-	case db.NodeTypeHome:
-		pbNodeType = pb.NodeType_HOME
-	default:
-		pbNodeType = pb.NodeType_NODE_TYPE_UNDEFINED
-	}
-
-	return pbNodeType
-}
-
-func toDbNodeType(nodeType string) db.NodeType {
-	switch nodeType {
-	case ukama.NODE_ID_TYPE_AMPNODE:
-		return db.NodeTypeAmplifier
-	case ukama.NODE_ID_TYPE_TOWERNODE:
-		return db.NodeTypeTower
-	case ukama.NODE_ID_TYPE_HOMENODE:
-		return db.NodeTypeHome
-	default:
-		return db.NodeTypeUnknown
-	}
 }

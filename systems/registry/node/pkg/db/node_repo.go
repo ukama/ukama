@@ -137,7 +137,7 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 		return err
 	}
 
-	if parentNode.Type != NodeTypeTower {
+	if parentNode.Type != ukama.NODE_ID_TYPE_TOWERNODE {
 		return status.Errorf(codes.InvalidArgument, "node type must be a towernode")
 	}
 
@@ -156,7 +156,7 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 			return err
 		}
 
-		if an.Type != NodeTypeAmplifier {
+		if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
 			return status.Errorf(codes.InvalidArgument, "cannot attach non amplifier node")
 		}
 

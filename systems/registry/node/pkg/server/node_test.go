@@ -19,7 +19,7 @@ func TestRegistryServer_GetNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 
 	nodeRepo.On("Get", testNodeId).Return(&db.Node{NodeID: testNodeId.String(),
-		State: db.Onboarded, Type: db.NodeTypeHome,
+		State: db.Onboarded, Type: ukama.NODE_ID_TYPE_HOMENODE,
 	}, nil).Once()
 
 	s := NewNodeServer(nodeRepo, "")
@@ -28,7 +28,7 @@ func TestRegistryServer_GetNode(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "onboarded", node.Node.State)
-	assert.Equal(t, pb.NodeType_HOME, node.Node.Type)
+	assert.Equal(t, ukama.NODE_ID_TYPE_HOMENODE, node.Node.Type)
 	nodeRepo.AssertExpectations(t)
 }
 
@@ -76,35 +76,4 @@ func TestRegistryServer_AddNode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, actNode.Node.Name)
 	nodeRepo.AssertExpectations(t)
-}
-
-func Test_toDbNodeType(t *testing.T) {
-	tests := []struct {
-		nodeId ukama.NodeID
-		want   db.NodeType
-	}{
-		{
-			nodeId: ukama.NewVirtualHomeNodeId(),
-			want:   db.NodeTypeHome,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE),
-			want:   db.NodeTypeTower,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE),
-			want:   db.NodeTypeAmplifier,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId("unknown"),
-			want:   db.NodeTypeUnknown,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.nodeId.String(), func(t *testing.T) {
-
-			got := toDbNodeType(tt.nodeId.GetNodeType())
-			assert.Equal(t, tt.want, got)
-		})
-	}
 }
