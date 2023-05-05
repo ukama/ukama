@@ -40,7 +40,6 @@ message RemoveNodeFromNetworkResponse {
 message AttachNodesRequest {
     string parentNodeId = 1;
     repeated string  attachedNodeIds = 2;
-    string network = 3;
 }
 
 message AttachNodesResponse {

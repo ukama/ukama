@@ -51,13 +51,13 @@ func (_m *NodeRepo) AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) e
 	return r0
 }
 
-// AttachNodes provides a mock function with given fields: nodeId, attachedNodeId, networkID
-func (_m *NodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID, networkID uuid.UUID) error {
-	ret := _m.Called(nodeId, attachedNodeId, networkID)
+// AttachNodes provides a mock function with given fields: nodeId, attachedNodeId
+func (_m *NodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error {
+	ret := _m.Called(nodeId, attachedNodeId)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, []ukama.NodeID, uuid.UUID) error); ok {
-		r0 = rf(nodeId, attachedNodeId, networkID)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, []ukama.NodeID) error); ok {
+		r0 = rf(nodeId, attachedNodeId)
 	} else {
 		r0 = ret.Error(0)
 	}

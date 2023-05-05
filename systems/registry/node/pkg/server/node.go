@@ -89,12 +89,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 		nds = append(nds, nd)
 	}
 
-	net, err := uuid.FromString(req.GetNetwork())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid network id %s. Error %s", req.Network, err.Error())
-	}
-
-	err = n.nodeRepo.AttachNodes(nodeID, nds, net)
+	err = n.nodeRepo.AttachNodes(nodeID, nds)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
