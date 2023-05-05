@@ -1,75 +1,36 @@
-# Ukama-DASHBOARD 
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Architecture Diagram
+## Getting Started
 
+First, run the development server:
 
-<img width="571" alt="ukama-dashboard-diagram" src="https://github.com/ukama/ukama-dashboard/blob/develop/img/ukama-dashboard-architecture-diagram.png">
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+```
 
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## How to try
-- Clone ukamaDashboard repo.
-- ` git clone https://github.com/ukama/ukama-dashboard.git`
-- Install the dependencies
-- `yarn && yarn start`.
-- Start the project 
-- `yarn start`
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-### Project Folder Structure
+[http://localhost:3000/api/hello](http://localhost:3000/api/hello) is an endpoint that uses [Route Handlers](https://beta.nextjs.org/docs/routing/route-handlers). This endpoint can be edited in `app/api/hello/route.ts`.
 
-    .
-    ├── .github                 # Includes the Workflows YML file for github actions
-    ├── .husky                  # Includes the Pre-commit hook script to validate our commits before pushing to remote.
-    ├── .vscode                 # Includes the VS editor settings file.
-    ├── nginx                   # 
-    ├── public                  # Root folder that gets served up as our react app. This includes the App icon and [Fonts](https://github.com/ukama/ukama-dashboard/blob/37c2ff8b5f1749ed95c395af18383c05e0467275/public/index.html#L48-L51).
-    ├── src                     # Main App folder
-        ├── api                 # Contains the apollo client setup and .graphql in which we define all the queries and mutations.
-        ├── assets              # Contains all the resouces(i.e Icons, SVGs).
-        ├── components          # Include collection of UI components, which build the pages.
-        ├── constants           # Include static data (Objects, Arrays and Columns).
-        ├── generated           # This is codegen generated file (Don't edit it manually).
-        ├── helpers             # This will include all the helpers method.
-        ├── i18n                # Used for multi language support.
-        ├── layout              # Main app layout with Header and Footer.
-        ├── pages               # Include all the pages here.
-        ├── recoil              # Recoil for state management.
-        ├── router              # App routing.
-        ├── styles              # Include global style.
-        ├── theme               # App theming and components customizations here.
-        ├── types               # Includes global types.
-        ├── utils               # Includes all utility methods.
-    └── eslintrc                # Eslint configrations and Rules.
-    └── prettierrc              # Prettier configrations.
-    └── codegen.yml             # Codegen configration file to create hooks based on our Queries and Mutations.
-    └── package.json            # Include app metadata, dependencies and scripts.
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
+## Learn More
 
-### Scripts
+To learn more about Next.js, take a look at the following resources:
 
-    yarn generate
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-If you updated the `src/api/index.graphql` file, You need to run the above script to generate/update the hooks.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-    yarn start
+## Deploy on Vercel
 
-This script will be used to run the app.
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-    yarn pretty
-
-This script go through all files defined in `src` and format them accoring to prettierrc configrations.
-
-    yarn lint:fix
-
-This script will fix all possibly fixable linting issues.
-
-    yarn check-types
-
-To validate typescript types run this script.
-
-    yarn no-console
-
-Checks if there's any console log statement in app which developer forgot to remove.
-
-    yarn pre-commit-checks
-
-Above script runs before commit to validate the commit standerds and possible build failures.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
