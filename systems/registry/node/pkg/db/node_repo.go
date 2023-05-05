@@ -149,52 +149,61 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 		return status.Errorf(codes.InvalidArgument, "max number of attached nodes is %d", MaxAttachedNodes)
 	}
 
-	for _, n := range attachedNodeId {
-		an, err := r.Get(n)
+	err = r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		for _, n := range attachedNodeId {
+			an, err := r.Get(n)
 
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
+
+			if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
+				return status.Errorf(codes.InvalidArgument, "cannot attach non amplifier node")
+			}
+
+			parentNode.Attached = append(parentNode.Attached, an)
+
+			nd := Node{
+				Allocation: true,
+				Network: uuid.NullUUID{
+					UUID:  networkID,
+					Valid: true,
+				},
+			}
+
+			result := tx.Where("node_id=?", n).Updates(nd)
+			if result.Error != nil {
+				return fmt.Errorf("failed to update network id for %s node: error %s", n.StringLowercase(), result.Error)
+			}
 		}
 
-		if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
-			return status.Errorf(codes.InvalidArgument, "cannot attach non amplifier node")
+		parentNode.Network = uuid.NullUUID{
+			UUID:  networkID,
+			Valid: true,
+		}
+		parentNode.Allocation = true
+		d := tx.Save(parentNode)
+		if d.Error != nil {
+			return d.Error
 		}
 
-		parentNode.Attached = append(parentNode.Attached, an)
-	}
+		return nil
+	})
 
-	parentNode.Network = uuid.NullUUID{UUID: networkID}
+	return err
 
-	d := r.Db.GetGormDb().Save(parentNode)
-	if d.Error != nil {
-		return d.Error
-	}
-
-	return d.Error
 }
 
 // DetachNode removes node from parent node
 func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
-	// dNode, err := r.Get(detachNodeId)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// newAttached := make([]*Node, 0)
-	// for _, n := range dNode.Attached {
-	// 	if n.NodeID != detachNodeId.StringLowercase() {
-	// 		newAttached = append(newAttached, n)
-	// 	}
-	// }
 
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		nd := Node{
-			Attached:   nil,
 			Network:    uuid.NullUUID{Valid: false},
 			Allocation: false,
 		}
 
-		result := tx.Where("node_id=?", detachNodeId.StringLowercase()).Updates(nd)
+		result := tx.Where("node_id=?", detachNodeId).Select("network", "allocation").Updates(nd)
 		if result.Error != nil {
 			return fmt.Errorf("failed to update network id for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
 		}
@@ -206,23 +215,8 @@ func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 			return fmt.Errorf("failed to update network id for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
 		}
 
-		// for _, n := range dNode.Attached {
-
-		// 	nd := Node{
-		// 		Attached: newAttached,
-		// 	}
-
-		// 	result := tx.Where("node_id=?", n.NodeID).Updates(nd)
-		// 	if result.Error != nil {
-		// 		return fmt.Errorf("failed to update network id for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
-		// 	}
-		// }
-
 		return nil
 	})
-
-	// db := r.Db.GetGormDb().Exec("delete from attached_nodes where attached_id=(select id from nodes where node_id=?)",
-	// 	detachNodeId.StringLowercase())
 
 	return err
 }
