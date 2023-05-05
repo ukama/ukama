@@ -40,6 +40,32 @@ func (_m *NodeServiceServer) AddNode(_a0 context.Context, _a1 *gen.AddNodeReques
 	return r0, r1
 }
 
+// AddNodeToNetwork provides a mock function with given fields: _a0, _a1
+func (_m *NodeServiceServer) AddNodeToNetwork(_a0 context.Context, _a1 *gen.AddNodeToNetworkRequest) (*gen.AddNodeToNetworkResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.AddNodeToNetworkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeToNetworkRequest) (*gen.AddNodeToNetworkResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeToNetworkRequest) *gen.AddNodeToNetworkResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddNodeToNetworkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddNodeToNetworkRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AttachNodes provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) AttachNodes(_a0 context.Context, _a1 *gen.AttachNodesRequest) (*gen.AttachNodesResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -188,6 +214,32 @@ func (_m *NodeServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeReques
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemoveNodeFromNetwork provides a mock function with given fields: _a0, _a1
+func (_m *NodeServiceServer) RemoveNodeFromNetwork(_a0 context.Context, _a1 *gen.RemoveNodeFromNetworkRequest) (*gen.RemoveNodeFromNetworkResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.RemoveNodeFromNetworkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveNodeFromNetworkRequest) (*gen.RemoveNodeFromNetworkResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveNodeFromNetworkRequest) *gen.RemoveNodeFromNetworkResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemoveNodeFromNetworkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemoveNodeFromNetworkRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

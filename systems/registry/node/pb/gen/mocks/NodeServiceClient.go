@@ -49,6 +49,39 @@ func (_m *NodeServiceClient) AddNode(ctx context.Context, in *gen.AddNodeRequest
 	return r0, r1
 }
 
+// AddNodeToNetwork provides a mock function with given fields: ctx, in, opts
+func (_m *NodeServiceClient) AddNodeToNetwork(ctx context.Context, in *gen.AddNodeToNetworkRequest, opts ...grpc.CallOption) (*gen.AddNodeToNetworkResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.AddNodeToNetworkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeToNetworkRequest, ...grpc.CallOption) (*gen.AddNodeToNetworkResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeToNetworkRequest, ...grpc.CallOption) *gen.AddNodeToNetworkResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddNodeToNetworkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddNodeToNetworkRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AttachNodes provides a mock function with given fields: ctx, in, opts
 func (_m *NodeServiceClient) AttachNodes(ctx context.Context, in *gen.AttachNodesRequest, opts ...grpc.CallOption) (*gen.AttachNodesResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -239,6 +272,39 @@ func (_m *NodeServiceClient) GetNode(ctx context.Context, in *gen.GetNodeRequest
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RemoveNodeFromNetwork provides a mock function with given fields: ctx, in, opts
+func (_m *NodeServiceClient) RemoveNodeFromNetwork(ctx context.Context, in *gen.RemoveNodeFromNetworkRequest, opts ...grpc.CallOption) (*gen.RemoveNodeFromNetworkResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.RemoveNodeFromNetworkResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveNodeFromNetworkRequest, ...grpc.CallOption) (*gen.RemoveNodeFromNetworkResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveNodeFromNetworkRequest, ...grpc.CallOption) *gen.RemoveNodeFromNetworkResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemoveNodeFromNetworkResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemoveNodeFromNetworkRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

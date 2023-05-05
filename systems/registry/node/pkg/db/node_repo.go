@@ -26,6 +26,8 @@ type NodeRepo interface {
 	AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID, networkID uuid.UUID) error
 	DetachNode(detachNodeId ukama.NodeID) error
 	GetNodeCount() (int64, int64, int64, error)
+	AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) error
+	RemoveNodeFromNetwork(nodeId ukama.NodeID) error
 }
 
 type nodeRepo struct {
@@ -129,6 +131,67 @@ func (r *nodeRepo) Update(id ukama.NodeID, state *NodeState, nodeName *string, n
 	}
 
 	return err
+}
+
+func (r *nodeRepo) AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) error {
+	node, err := r.Get(nodeId)
+	if err != nil {
+		return err
+	}
+
+	if node.Allocation {
+		return status.Errorf(codes.InvalidArgument, "node is already assigned to network")
+	}
+
+	nd := Node{
+		Allocation: true,
+		Network: uuid.NullUUID{
+			UUID:  networkID,
+			Valid: true,
+		},
+	}
+
+	result := r.Db.GetGormDb().Where("node_id=?", node.NodeID).Updates(nd)
+	if result.Error != nil {
+		return fmt.Errorf("failed to update network id for %s for node: error %s", nodeId, result.Error)
+	}
+
+	return nil
+
+}
+
+func (r *nodeRepo) RemoveNodeFromNetwork(nodeId ukama.NodeID) error {
+	node, err := r.Get(nodeId)
+	if err != nil {
+		return err
+	}
+
+	if !node.Allocation {
+		return status.Errorf(codes.FailedPrecondition, "node is not yet assigned to network")
+	}
+
+	res := r.Db.GetGormDb().Exec("select * from attached_nodes where attached_id=(select id from nodes where node_id=?) OR node_id=(select id from nodes where node_id=?)",
+		node.NodeID, node.NodeID)
+
+	if res.Error != nil {
+		return status.Errorf(codes.Internal, "failed to get node grouping result. error %s", res.Error.Error())
+	}
+
+	if res.RowsAffected > 0 {
+		return status.Errorf(codes.FailedPrecondition, "node is grouped with other nodes.")
+	}
+
+	nd := Node{
+		Network:    uuid.NullUUID{Valid: false},
+		Allocation: false,
+	}
+
+	result := r.Db.GetGormDb().Where("node_id=?", node.NodeID).Select("network", "allocation").Updates(nd)
+	if result.Error != nil {
+		return fmt.Errorf("failed to remove  node from network id for %s. error %s", nodeId, result.Error)
+	}
+
+	return nil
 }
 
 func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID, networkID uuid.UUID) error {

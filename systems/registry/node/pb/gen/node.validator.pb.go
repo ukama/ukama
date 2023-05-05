@@ -15,6 +15,18 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *AddNodeToNetworkRequest) Validate() error {
+	return nil
+}
+func (this *AddNodeToNetworkResponse) Validate() error {
+	return nil
+}
+func (this *RemoveNodeFromNetworkRequest) Validate() error {
+	return nil
+}
+func (this *RemoveNodeFromNetworkResponse) Validate() error {
+	return nil
+}
 func (this *AttachNodesRequest) Validate() error {
 	return nil
 }

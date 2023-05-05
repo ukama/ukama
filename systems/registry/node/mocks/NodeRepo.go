@@ -37,6 +37,20 @@ func (_m *NodeRepo) Add(node *db.Node, nestedFunc ...func() error) error {
 	return r0
 }
 
+// AddNodeToNetwork provides a mock function with given fields: nodeId, networkID
+func (_m *NodeRepo) AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) error {
+	ret := _m.Called(nodeId, networkID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, uuid.UUID) error); ok {
+		r0 = rf(nodeId, networkID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AttachNodes provides a mock function with given fields: nodeId, attachedNodeId, networkID
 func (_m *NodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID, networkID uuid.UUID) error {
 	ret := _m.Called(nodeId, attachedNodeId, networkID)
@@ -200,6 +214,20 @@ func (_m *NodeRepo) GetNodeCount() (int64, int64, int64, error) {
 	}
 
 	return r0, r1, r2, r3
+}
+
+// RemoveNodeFromNetwork provides a mock function with given fields: nodeId
+func (_m *NodeRepo) RemoveNodeFromNetwork(nodeId ukama.NodeID) error {
+	ret := _m.Called(nodeId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(ukama.NodeID) error); ok {
+		r0 = rf(nodeId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Update provides a mock function with given fields: id, state, nodeName, nestedFunc

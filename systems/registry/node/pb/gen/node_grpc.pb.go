@@ -31,6 +31,8 @@ type NodeServiceClient interface {
 	GetFreeNodes(ctx context.Context, in *GetFreeNodeRequest, opts ...grpc.CallOption) (*GetFreeNodeResponse, error)
 	AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	AddNodeToNetwork(ctx context.Context, in *AddNodeToNetworkRequest, opts ...grpc.CallOption) (*AddNodeToNetworkResponse, error)
+	RemoveNodeFromNetwork(ctx context.Context, in *RemoveNodeFromNetworkRequest, opts ...grpc.CallOption) (*RemoveNodeFromNetworkResponse, error)
 }
 
 type nodeServiceClient struct {
@@ -122,6 +124,24 @@ func (c *nodeServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts 
 	return out, nil
 }
 
+func (c *nodeServiceClient) AddNodeToNetwork(ctx context.Context, in *AddNodeToNetworkRequest, opts ...grpc.CallOption) (*AddNodeToNetworkResponse, error) {
+	out := new(AddNodeToNetworkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.registry.node.v1.NodeService/AddNodeToNetwork", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) RemoveNodeFromNetwork(ctx context.Context, in *RemoveNodeFromNetworkRequest, opts ...grpc.CallOption) (*RemoveNodeFromNetworkResponse, error) {
+	out := new(RemoveNodeFromNetworkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.registry.node.v1.NodeService/RemoveNodeFromNetwork", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NodeServiceServer is the server API for NodeService service.
 // All implementations must embed UnimplementedNodeServiceServer
 // for forward compatibility
@@ -135,6 +155,8 @@ type NodeServiceServer interface {
 	GetFreeNodes(context.Context, *GetFreeNodeRequest) (*GetFreeNodeResponse, error)
 	AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	AddNodeToNetwork(context.Context, *AddNodeToNetworkRequest) (*AddNodeToNetworkResponse, error)
+	RemoveNodeFromNetwork(context.Context, *RemoveNodeFromNetworkRequest) (*RemoveNodeFromNetworkResponse, error)
 	mustEmbedUnimplementedNodeServiceServer()
 }
 
@@ -168,6 +190,12 @@ func (UnimplementedNodeServiceServer) AddNode(context.Context, *AddNodeRequest) 
 }
 func (UnimplementedNodeServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedNodeServiceServer) AddNodeToNetwork(context.Context, *AddNodeToNetworkRequest) (*AddNodeToNetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddNodeToNetwork not implemented")
+}
+func (UnimplementedNodeServiceServer) RemoveNodeFromNetwork(context.Context, *RemoveNodeFromNetworkRequest) (*RemoveNodeFromNetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveNodeFromNetwork not implemented")
 }
 func (UnimplementedNodeServiceServer) mustEmbedUnimplementedNodeServiceServer() {}
 
@@ -344,6 +372,42 @@ func _NodeService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NodeService_AddNodeToNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddNodeToNetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).AddNodeToNetwork(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.registry.node.v1.NodeService/AddNodeToNetwork",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).AddNodeToNetwork(ctx, req.(*AddNodeToNetworkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_RemoveNodeFromNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveNodeFromNetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).RemoveNodeFromNetwork(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.registry.node.v1.NodeService/RemoveNodeFromNetwork",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).RemoveNodeFromNetwork(ctx, req.(*RemoveNodeFromNetworkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NodeService_ServiceDesc is the grpc.ServiceDesc for NodeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -386,6 +450,14 @@ var NodeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _NodeService_Delete_Handler,
+		},
+		{
+			MethodName: "AddNodeToNetwork",
+			Handler:    _NodeService_AddNodeToNetwork_Handler,
+		},
+		{
+			MethodName: "RemoveNodeFromNetwork",
+			Handler:    _NodeService_RemoveNodeFromNetwork_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

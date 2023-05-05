@@ -15,8 +15,27 @@ service NodeService {
     rpc GetFreeNodes(GetFreeNodeRequest) returns (GetFreeNodeResponse);
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc AddNodeToNetwork(AddNodeToNetworkRequest)returns (AddNodeToNetworkResponse);
+    rpc RemoveNodeFromNetwork(RemoveNodeFromNetworkRequest)returns (RemoveNodeFromNetworkResponse);
 }
 
+
+message AddNodeToNetworkRequest {
+    string nodeId = 1;
+    string network = 2;
+}
+
+message AddNodeToNetworkResponse {
+
+}
+
+message RemoveNodeFromNetworkRequest {
+    string nodeId = 1;
+}
+
+message RemoveNodeFromNetworkResponse {
+
+}
 
 message AttachNodesRequest {
     string parentNodeId = 1;
@@ -85,6 +104,8 @@ message Node {
     string name = 3;
     string type = 4;
     repeated Node attached = 5;
+    bool allocated = 6;
+    string network = 7;
 }
 
 message AddNodeRequest{

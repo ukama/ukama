@@ -39,6 +39,39 @@ func NewNodeServer(nodeRepo db.NodeRepo, pushGateway string) *NodeServer {
 	}
 }
 
+func (n *NodeServer) AddNodeToNetwork(ctx context.Context, req *pb.AddNodeToNetworkRequest) (*pb.AddNodeToNetworkResponse, error) {
+	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	if err != nil {
+		return nil, invalidNodeIDError(req.GetNodeId(), err)
+	}
+
+	net, err := uuid.FromString(req.GetNetwork())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid network id %s. Error %s", req.Network, err.Error())
+	}
+
+	err = n.nodeRepo.AddNodeToNetwork(nodeID, net)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	return &pb.AddNodeToNetworkResponse{}, nil
+}
+
+func (n *NodeServer) RemoveNodeFromNetwork(ctx context.Context, req *pb.RemoveNodeFromNetworkRequest) (*pb.RemoveNodeFromNetworkResponse, error) {
+	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	if err != nil {
+		return nil, invalidNodeIDError(req.GetNodeId(), err)
+	}
+
+	err = n.nodeRepo.RemoveNodeFromNetwork(nodeID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	return &pb.RemoveNodeFromNetworkResponse{}, nil
+}
+
 func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest) (*pb.AttachNodesResponse, error) {
 	nodeID, err := ukama.ValidateNodeId(req.GetParentNodeId())
 	if err != nil {
@@ -173,7 +206,7 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 	return resp, nil
 }
 
-func (n *NodeServer) GetAllNode(ctx context.Context, req *pb.GetAllNodeRequest) (*pb.GetAllNodeResponse, error) {
+func (n *NodeServer) GetAllNodes(ctx context.Context, req *pb.GetAllNodeRequest) (*pb.GetAllNodeResponse, error) {
 	logrus.Infof("GetAll Nodes.")
 
 	nodes, err := n.nodeRepo.GetAll()
@@ -332,11 +365,18 @@ func dbNodesToPbNodes(nodes *[]db.Node) []*pb.Node {
 }
 
 func dbNodeToPbNode(dbn *db.Node) *pb.Node {
+	var net string
+	if dbn.Network.Valid {
+		net = dbn.Network.UUID.String()
+	}
+
 	n := &pb.Node{
-		NodeId: dbn.NodeID,
-		State:  dbn.State.String(),
-		Type:   dbn.Type,
-		Name:   dbn.Name,
+		NodeId:    dbn.NodeID,
+		State:     dbn.State.String(),
+		Type:      dbn.Type,
+		Name:      dbn.Name,
+		Network:   net,
+		Allocated: dbn.Allocation,
 	}
 
 	if len(dbn.Attached) > 0 {
