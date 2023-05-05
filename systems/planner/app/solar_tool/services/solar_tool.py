@@ -26,7 +26,6 @@ class SolarTool:
             marginal_cost_battery_cycle =  round(SolarToolEnum.BATTERY_MODULE_COST.value/SolarToolEnum.BATTERY_MODULE_SIZE.value/SolarToolEnum.DEPTH_OF_DISCHARGE_PERCENTAGE.value/SolarToolEnum.BATTERY_CYCLE_LIFE.value, 2)  # Marginal cost of battery cycle ($/kWh)
             marginal_cost_battery_sun_hours = round(((SolarToolEnum.SOLAR_PANEL_COST_USD.value/SolarToolEnum.SOLAR_PANEL_SIZE_W.value)*1000)/(marginal_cost_battery_cycle*SolarToolEnum.SOLAR_PANEL_LIFETIME_YEARS.value*365), 2) # Above this insolation, it is cheaper to use solar; below, it is cheaper to use battery
             
-            import pdb; pdb.set_trace()
             median_insolation = np.percentile(sorted_solar_data_values, 50)
             min_isolation_rel_target = round(np.percentile(sorted_three_days_avg_solar_data_values, (1-reliability_target)*100), 2)
 
@@ -63,7 +62,6 @@ class SolarTool:
             if i < 1:
                 moving_averages[date] = round(values[date], 2)  # Use the same value for i < 1
             elif i == 1:
-                import pdb; pdb.set_trace()
                 prev_dates = list(values.keys())[i-1:i+1]
                 moving_averages[date] = round((sum([values[d] for d in prev_dates]) / len(prev_dates)), 2)  # Average of first and second values
             else:
@@ -108,7 +106,6 @@ class SolarTool:
                 lon_str, lat_str = lon_lat_str.split("_")
                 lon = float(lon_str)
                 lat = float(lat_str)
-                import pdb; pdb.set_trace()
                 if (lon >= longitude_range[0] and lon <= longitude_range[1] and
                     lat >= latitude_range[0] and lat <= latitude_range[1]):
                     return filename
@@ -117,7 +114,6 @@ class SolarTool:
     
     def save_json_into_file(self, output_data, output_filename):
         # Dump the output to the file
-        import pdb; pdb.set_trace()
         out_file = open(self.SOLAR_DATA_DIR + "/" + output_filename, 'w')
         try:
             json.dump(output_data, out_file)
