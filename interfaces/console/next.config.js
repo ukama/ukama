@@ -10,8 +10,8 @@ const nextConfig = {
         destination: '/home',
         permanent: true,
       },
-    ]
+    ];
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
