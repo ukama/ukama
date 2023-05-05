@@ -19,6 +19,7 @@ type Config struct {
 type GrpcEndpoints struct {
 	Timeout time.Duration
 	Invoice string
+	Files   string
 }
 
 type HttpEndpoints struct {
@@ -38,7 +39,8 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Invoice: "invoice:9090",
+			Invoice: "billing-invoice:9090",
+			Files:   `http://billing-invoice:3000`,
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
