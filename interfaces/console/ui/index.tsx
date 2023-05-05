@@ -1,2 +1,2 @@
 // UI code goes here
-export { };
+export {};
