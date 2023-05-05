@@ -1,2 +1,2 @@
 // Index file for wrappers.
-export {}
+export {};
