@@ -8,6 +8,7 @@ class Config(BaseSettings):
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
     RF_SERVER_PATH: str = "/home/ubuntu/Signal-Server"
+    SOLAR_DATA_DIR: str = "/data/solarData"
     SDF_FILES_PATH: str = "/data/sdfData"
     HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/home/ubuntu/output/"
@@ -16,6 +17,7 @@ class Config(BaseSettings):
 
 class DevelopmentConfig(Config): # Use this for docker 
     RF_SERVER_PATH: str = "/var/www/server/Signal-Server"
+    SOLAR_DATA_DIR: str = "/data/solarData"
     SDF_FILES_PATH: str = "/data/sdfData"
     HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/var/www/app/output/"
@@ -24,6 +26,7 @@ class DevelopmentConfig(Config): # Use this for docker
 
 class LocalConfig(Config): # use this for running locally
     RF_SERVER_PATH: str = "/home/ubuntu/Signal-Server"
+    SOLAR_DATA_DIR: str = "E:/Projects/Freelance/UKAMA/Ukama-fork/systems/planner/data/solarData"
     SDF_FILES_PATH: str = "/data/sdfData"
     HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/home/ubuntu/output/"

@@ -9,3 +9,4 @@ haversine
 networkx
 pytest-asyncio
 callee
+requests
