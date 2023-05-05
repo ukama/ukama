@@ -70,7 +70,7 @@ func ParseNodeState(s string) NodeState {
 		return Maintainance
 	case "faulty":
 		return Faulty
-	case "onbarded":
+	case "onboarded":
 		return Onboarded
 	case "configured":
 		return Configured

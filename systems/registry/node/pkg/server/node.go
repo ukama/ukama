@@ -218,11 +218,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	if req.Node.Type != ukama.NODE_ID_TYPE_UNDEFINED {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"type is determined from nodeId and can not be set specifically")
-	}
-
 	if len(req.Node.Name) == 0 {
 		req.Node.Name = n.nameGenerator.Generate()
 	}
@@ -234,6 +229,10 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		Name:   req.Node.Name,
 	}
 
+	if node.State == db.Undefined {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node state %s", req.Node.State)
+	}
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
 	err = AddNodeToOrg(n.nodeRepo, node)

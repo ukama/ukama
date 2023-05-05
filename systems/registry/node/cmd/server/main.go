@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
@@ -42,12 +41,6 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	serviceConfig = &pkg.Config{
-		DB: &uconf.Database{
-			DbName: pkg.ServiceName,
-		},
-	}
-
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)

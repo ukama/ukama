@@ -163,48 +163,31 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 		parentNode.Attached = append(parentNode.Attached, an)
 	}
 
-	err = r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		for _, n := range attachedNodeId {
-			nd := Node{
-				Attached:   parentNode.Attached,
-				Network:    uuid.NullUUID{UUID: networkID},
-				Allocation: true,
-			}
+	parentNode.Network = uuid.NullUUID{UUID: networkID}
 
-			result := tx.Where("node_id=?", n.StringLowercase()).Updates(nd)
-			if result.Error != nil {
-				return fmt.Errorf("failed to update network id for %s node: error %s", n.StringLowercase(), result.Error)
-			}
-		}
+	d := r.Db.GetGormDb().Save(parentNode)
+	if d.Error != nil {
+		return d.Error
+	}
 
-		parentNode.Network = uuid.NullUUID{UUID: networkID}
-
-		d := tx.Save(parentNode)
-		if d.Error != nil {
-			return d.Error
-		}
-
-		return nil
-	})
-
-	return err
+	return d.Error
 }
 
 // DetachNode removes node from parent node
 func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
-	dNode, err := r.Get(detachNodeId)
-	if err != nil {
-		return err
-	}
+	// dNode, err := r.Get(detachNodeId)
+	// if err != nil {
+	// 	return err
+	// }
 
-	newAttached := make([]*Node, 0)
-	for _, n := range dNode.Attached {
-		if n.NodeID != detachNodeId.StringLowercase() {
-			newAttached = append(newAttached, n)
-		}
-	}
+	// newAttached := make([]*Node, 0)
+	// for _, n := range dNode.Attached {
+	// 	if n.NodeID != detachNodeId.StringLowercase() {
+	// 		newAttached = append(newAttached, n)
+	// 	}
+	// }
 
-	err = r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		nd := Node{
 			Attached:   nil,
 			Network:    uuid.NullUUID{Valid: false},
@@ -251,11 +234,11 @@ func (r *nodeRepo) GetNodeCount() (nodeCount, activeNodeCount, inactiveNodeCount
 		return 0, 0, 0, err
 	}
 
-	if err := db.Model(&Node{}).Where("status != ?", Offline).Count(&activeNodeCount).Error; err != nil {
+	if err := db.Model(&Node{}).Where("state != ?", Offline).Count(&activeNodeCount).Error; err != nil {
 		return 0, 0, 0, err
 	}
 
-	if err := db.Model(&Node{}).Where("status = ?", Offline).Count(&inactiveNodeCount).Error; err != nil {
+	if err := db.Model(&Node{}).Where("state = ?", Offline).Count(&inactiveNodeCount).Error; err != nil {
 		return 0, 0, 0, err
 	}
 
