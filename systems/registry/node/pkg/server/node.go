@@ -40,9 +40,9 @@ func NewNodeServer(nodeRepo db.NodeRepo, pushGateway string) *NodeServer {
 }
 
 func (n *NodeServer) AddNodeToNetwork(ctx context.Context, req *pb.AddNodeToNetworkRequest) (*pb.AddNodeToNetworkResponse, error) {
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	nodeID, err := ukama.ValidateNodeId(req.GetNode())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetNodeId(), err)
+		return nil, invalidNodeIDError(req.GetNode(), err)
 	}
 
 	net, err := uuid.FromString(req.GetNetwork())
@@ -58,10 +58,10 @@ func (n *NodeServer) AddNodeToNetwork(ctx context.Context, req *pb.AddNodeToNetw
 	return &pb.AddNodeToNetworkResponse{}, nil
 }
 
-func (n *NodeServer) RemoveNodeFromNetwork(ctx context.Context, req *pb.RemoveNodeFromNetworkRequest) (*pb.RemoveNodeFromNetworkResponse, error) {
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+func (n *NodeServer) RemoveNodeFromNetwork(ctx context.Context, req *pb.ReleaseNodeFromNetworkRequest) (*pb.ReleaseNodeFromNetworkResponse, error) {
+	nodeID, err := ukama.ValidateNodeId(req.GetNode())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetNodeId(), err)
+		return nil, invalidNodeIDError(req.GetNode(), err)
 	}
 
 	err = n.nodeRepo.RemoveNodeFromNetwork(nodeID)
@@ -69,18 +69,18 @@ func (n *NodeServer) RemoveNodeFromNetwork(ctx context.Context, req *pb.RemoveNo
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	return &pb.RemoveNodeFromNetworkResponse{}, nil
+	return &pb.ReleaseNodeFromNetworkResponse{}, nil
 }
 
 func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest) (*pb.AttachNodesResponse, error) {
-	nodeID, err := ukama.ValidateNodeId(req.GetParentNodeId())
+	nodeID, err := ukama.ValidateNodeId(req.GetParentNode())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetParentNodeId(), err)
+		return nil, invalidNodeIDError(req.GetParentNode(), err)
 	}
 
 	nds := make([]ukama.NodeID, 0)
 
-	for _, n := range req.GetAttachedNodeIds() {
+	for _, n := range req.GetAttachedNodes() {
 		nd, err := ukama.ValidateNodeId(n)
 		if err != nil {
 			return nil, invalidNodeIDError(n, err)
@@ -100,9 +100,9 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 }
 
 func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) (*pb.DetachNodeResponse, error) {
-	nodeID, err := ukama.ValidateNodeId(req.DetachedNodeId)
+	nodeID, err := ukama.ValidateNodeId(req.Node)
 	if err != nil {
-		return nil, invalidNodeIDError(req.DetachedNodeId, err)
+		return nil, invalidNodeIDError(req.Node, err)
 	}
 
 	err = n.nodeRepo.DetachNode(nodeID)
@@ -116,11 +116,11 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 }
 
 func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeStateResponse, error) {
-	logrus.Infof("Updating node state  %v", req.GetNodeId())
+	logrus.Infof("Updating node state  %v", req.GetNode())
 
 	dbState := db.ParseNodeState(req.State)
 
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	nodeID, err := ukama.ValidateNodeId(req.GetNode())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -133,8 +133,8 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 	}
 
 	resp := &pb.UpdateNodeStateResponse{
-		NodeId: req.GetNodeId(),
-		State:  req.State,
+		Node:  req.GetNode(),
+		State: req.State,
 	}
 
 	// publish event and return
@@ -144,16 +144,16 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 }
 
 func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
-	logrus.Infof("Updating the node  %v", req.GetNodeId())
+	logrus.Infof("Updating the node  %v", req.GetNode())
 
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	nodeID, err := ukama.ValidateNodeId(req.GetNode())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	err = n.nodeRepo.Update(nodeID, nil, &req.Name)
 	if err != nil {
-		duplErr := processNodeDuplErrors(err, req.NodeId)
+		duplErr := processNodeDuplErrors(err, req.Node)
 		if duplErr != nil {
 			return nil, duplErr
 		}
@@ -163,8 +163,8 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 
 	resp := &pb.UpdateNodeResponse{
 		Node: &pb.Node{
-			NodeId: req.NodeId,
-			Name:   req.Name,
+			Node: req.Node,
+			Name: req.Name,
 		},
 	}
 
@@ -181,9 +181,9 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 }
 
 func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
-	logrus.Infof("Get node  %v", req.GetNodeId())
+	logrus.Infof("Get node  %v", req.GetNode())
 
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	nodeID, err := ukama.ValidateNodeId(req.GetNode())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -201,7 +201,7 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 	return resp, nil
 }
 
-func (n *NodeServer) GetAllNodes(ctx context.Context, req *pb.GetAllNodeRequest) (*pb.GetAllNodeResponse, error) {
+func (n *NodeServer) GetAllNodes(ctx context.Context, req *pb.GetAllNodesRequest) (*pb.GetAllNodesResponse, error) {
 	logrus.Infof("GetAll Nodes.")
 
 	nodes, err := n.nodeRepo.GetAll()
@@ -212,14 +212,14 @@ func (n *NodeServer) GetAllNodes(ctx context.Context, req *pb.GetAllNodeRequest)
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	resp := &pb.GetAllNodeResponse{
+	resp := &pb.GetAllNodesResponse{
 		Node: dbNodesToPbNodes(nodes),
 	}
 
 	return resp, nil
 }
 
-func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetFreeNodeRequest) (*pb.GetFreeNodeResponse, error) {
+func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetFreeNodesRequest) (*pb.GetFreeNodesResponse, error) {
 	logrus.Infof("GetFreeNodes")
 
 	nodes, err := n.nodeRepo.GetFreeNodes()
@@ -230,7 +230,7 @@ func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetFreeNodeReques
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	resp := &pb.GetFreeNodeResponse{
+	resp := &pb.GetFreeNodesResponse{
 		Node: dbNodesToPbNodes(nodes),
 	}
 
@@ -240,7 +240,7 @@ func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetFreeNodeReques
 func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	logrus.Infof("Adding node  %v", req.Node)
 
-	nID, err := ukama.ValidateNodeId(req.Node.NodeId)
+	nID, err := ukama.ValidateNodeId(req.Node.Node)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id. Error %s", err.Error())
@@ -251,7 +251,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	}
 
 	node := &db.Node{
-		NodeID: req.Node.NodeId,
+		NodeID: req.Node.Node,
 		State:  db.ParseNodeState(req.Node.State),
 		Type:   nID.GetNodeType(),
 		Name:   req.Node.Name,
@@ -294,10 +294,10 @@ func AddNodeToOrg(repo db.NodeRepo, node *db.Node) error {
 	return nil
 }
 
-func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	nID, err := ukama.ValidateNodeId(req.GetNodeId())
+func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
+	nID, err := ukama.ValidateNodeId(req.GetNode())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetNodeId(), err)
+		return nil, invalidNodeIDError(req.GetNode(), err)
 	}
 
 	err = n.nodeRepo.Delete(nID)
@@ -307,7 +307,7 @@ func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Del
 
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
-	return &pb.DeleteResponse{NodeId: req.GetNodeId()}, nil
+	return &pb.DeleteNodeResponse{Node: req.GetNode()}, nil
 }
 
 func invalidNodeIDError(nodeID string, err error) error {
@@ -366,7 +366,7 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	}
 
 	n := &pb.Node{
-		NodeId:    dbn.NodeID,
+		Node:      dbn.NodeID,
 		State:     dbn.State.String(),
 		Type:      dbn.Type,
 		Name:      dbn.Name,

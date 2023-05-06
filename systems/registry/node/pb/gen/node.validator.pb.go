@@ -21,10 +21,10 @@ func (this *AddNodeToNetworkRequest) Validate() error {
 func (this *AddNodeToNetworkResponse) Validate() error {
 	return nil
 }
-func (this *RemoveNodeFromNetworkRequest) Validate() error {
+func (this *ReleaseNodeFromNetworkRequest) Validate() error {
 	return nil
 }
-func (this *RemoveNodeFromNetworkResponse) Validate() error {
+func (this *ReleaseNodeFromNetworkResponse) Validate() error {
 	return nil
 }
 func (this *AttachNodesRequest) Validate() error {
@@ -67,10 +67,10 @@ func (this *GetNodeResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetAllNodeRequest) Validate() error {
+func (this *GetAllNodesRequest) Validate() error {
 	return nil
 }
-func (this *GetAllNodeResponse) Validate() error {
+func (this *GetAllNodesResponse) Validate() error {
 	for _, item := range this.Node {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -80,10 +80,10 @@ func (this *GetAllNodeResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetFreeNodeRequest) Validate() error {
+func (this *GetFreeNodesRequest) Validate() error {
 	return nil
 }
-func (this *GetFreeNodeResponse) Validate() error {
+func (this *GetFreeNodesResponse) Validate() error {
 	for _, item := range this.Node {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -119,9 +119,9 @@ func (this *AddNodeResponse) Validate() error {
 	}
 	return nil
 }
-func (this *DeleteRequest) Validate() error {
+func (this *DeleteNodeRequest) Validate() error {
 	return nil
 }
-func (this *DeleteResponse) Validate() error {
+func (this *DeleteNodeResponse) Validate() error {
 	return nil
 }
