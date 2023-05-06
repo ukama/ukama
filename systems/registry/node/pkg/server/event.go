@@ -26,13 +26,23 @@ func NewNodeEventServer(nodeRepo db.NodeRepo) *NodeEventServer {
 func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case "event.cloud.node.node.add":
+	case "event.cloud.node.node.online":
 		msg, err := n.unmarshalNodeOnlineEvent(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
 		err = n.handleNodeOnlineEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+	case "event.cloud.node.node.offline":
+		msg, err := n.unmarshalNodeOfflineEvent(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleNodeOfflineEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +57,7 @@ func (n *NodeEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnl
 	p := &epb.NodeOnlineEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil
@@ -90,7 +100,7 @@ func (n *NodeEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.NodeOf
 	p := &epb.NodeOfflineEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal NodeOffline message with : %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil
