@@ -85,7 +85,7 @@ type UpdateNodeStateRequest struct {
 
 type UpdateNodeRequest struct {
 	Node string `json:"node" path:"node_id" validate:"required"`
-	Name string `json:"name" path:"name" validate:"required"`
+	Name string `json:"name" validate:"required"`
 }
 
 type GetNodeRequest struct {
@@ -98,7 +98,8 @@ type GetFreeNodesRequest struct {
 }
 
 type AddNodeRequest struct {
-	Node string `json:"node" path:"node_id" validate:"required"`
+	Node  string `json:"node" path:"node_id" validate:"required"`
+	State string `json:"state" validate:"required"`
 }
 
 type DeleteNodeRequest struct {

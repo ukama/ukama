@@ -176,13 +176,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nodes := auth.Group(node, "Nodes", "Operations on Nodes")
 		nodes.GET("", formatDoc("Get Nodes", "Get all Nodes of an organization"), tonic.Handler(r.getAllNodesHandler, http.StatusOK))
 		nodes.GET("/free", formatDoc("Get Node", "Get all Free Nodes of an organization"), tonic.Handler(r.getFreeNodesHandler, http.StatusOK))
-		nodes.POST("", formatDoc("Add Node", "Add a new Node to an organization"), tonic.Handler(r.postAddNodeHandler, http.StatusCreated))
+		nodes.POST("/:node_id", formatDoc("Add Node", "Add a new Node to an organization"), tonic.Handler(r.postAddNodeHandler, http.StatusCreated))
 		nodes.GET("/:node_id", formatDoc("Get Node", "Get a specific node"), tonic.Handler(r.getNodeHandler, http.StatusOK))
 		nodes.POST("/attach", formatDoc("Attach Node", "Group nodes"), tonic.Handler(r.postAttachNodesHandler, http.StatusCreated))
 		nodes.POST("/detach", formatDoc("Move node out of group", "Release node form group"), tonic.Handler(r.postDetachNodeHandler, http.StatusCreated))
 		nodes.POST("/:node_id/update", formatDoc("Update node", "Update node name or state"), tonic.Handler(r.postUpdateNodeHandler, http.StatusCreated))
 		nodes.POST("/:node_id/state/:state", formatDoc("Update node state", "Update node state"), tonic.Handler(r.postUpdateNodeStateHandler, http.StatusCreated))
-		nodes.POST("/:node_id/networks/network/assign", formatDoc("Add node to network", "Add node to network"), tonic.Handler(r.postNodeNetworkHandler, http.StatusCreated))
+		nodes.POST("/:node_id/networks/:network_id/assign", formatDoc("Add node to network", "Add node to network"), tonic.Handler(r.postNodeNetworkHandler, http.StatusCreated))
 		nodes.POST("/:node_id/networks/release", formatDoc("Release node from network", "Release node from network"), tonic.Handler(r.postReleaseNodeNetworkHandler, http.StatusCreated))
 		nodes.DELETE("/:node_id", formatDoc("Delete node from org", "Remove node from org"), tonic.Handler(r.postDeleteNodeHandler, http.StatusOK))
 	}
@@ -202,7 +202,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.Ge
 }
 
 func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Node.AddNode(req.Node)
+	return r.clients.Node.AddNode(req.Node, req.State)
 }
 
 func (r *Router) postAttachNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {

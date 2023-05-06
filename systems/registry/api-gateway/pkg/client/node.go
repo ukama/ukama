@@ -147,13 +147,14 @@ func (n *Node) GetFreeNodes() (*pb.GetFreeNodesResponse, error) {
 	return res, nil
 }
 
-func (n *Node) AddNode(node string) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(node, state string) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.AddNode(ctx, &pb.AddNodeRequest{
 		Node: &pb.Node{
-			Node: node,
+			Node:  node,
+			State: state,
 		},
 	})
 	if err != nil {
