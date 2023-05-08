@@ -5,7 +5,7 @@ import numpy as np
 import subprocess
 from math import cos, radians, ceil
 
-from app.solar_tool.schemas.solar_tool import Site, SolarToolResponseSchema
+from app.solar_tool.schemas.solar_tool import SolarToolResponseSchema
 from app.solar_tool.enums.solar_tool import SolarToolEnum
 from core import config
 
@@ -13,7 +13,7 @@ class SolarTool:
     def __init__(self):
         self.SOLAR_DATA_DIR = config.get_config().SOLAR_DATA_DIR
 
-    def predict_solar_tools_requirements(self, site: Site) -> SolarToolResponseSchema:
+    def predict_solar_tools_requirements(self, site) -> SolarToolResponseSchema:
         try:
             subprocess.check_call("mkdir -p " + self.SOLAR_DATA_DIR + "/")
             longitude, latitude, power_budget, reliability_target = site["longitude"], site["latitude"], site["power_budget"], site["reliability_target"]/100
@@ -85,16 +85,20 @@ class SolarTool:
             raise Exception(f"Error: {response.status_code} - {response.reason}")
     
     def calculate_ranges(self, longitude, latitude):
-        area = 1878.4 # Area covered by the NASA API from one point of longitude and latitude in meters
-        # Calculate the range of longitude in degrees
-        d_lon = (2 * area) / (111320 * cos(radians(latitude)))
-        
-        # Calculate the range of latitude in degrees
-        d_lat = (2 * area) / 111320
-        
+        area_in_meters = 1878.4 # Area covered by the NASA API from one point of longitude and latitude in meters
+        # Earth's radius in meters
+        R = 6378137
+        pi = 3.14159
+
+        # Calculate the latitude range
+        delta_lat = area_in_meters / R
+
+        # Calculate the longitude range
+        delta_lon = area_in_meters / (R * cos(radians(latitude)))
+
         # Calculate the longitude and latitude ranges
-        longitude_range = (round(longitude - d_lon/2, 3), round(longitude + d_lon/2, 3))
-        latitude_range = (round(latitude - d_lat/2, 3), round(latitude + d_lat/2, 3))
+        longitude_range = (round(longitude - (delta_lon * 180) / pi, 3), round(longitude + (delta_lon * 180) / pi, 3))
+        latitude_range = (round(latitude - (delta_lat * 180) / pi, 3), round(latitude + (delta_lat * 180) / pi, 3))
         
         return longitude_range, latitude_range
     
@@ -117,6 +121,8 @@ class SolarTool:
         out_file = open(self.SOLAR_DATA_DIR + "/" + output_filename, 'w')
         try:
             json.dump(output_data, out_file)
+        except Exception as ex:
+             raise ex
         finally:
             out_file.close()
 

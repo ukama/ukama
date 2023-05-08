@@ -30,26 +30,3 @@ def test_predict_coverage_success():
 
     # Assert that the response body matches the expected response
     assert response.json() == {"north": 40.1, "east": -70.2, "west": -71.3, "south": 39.4, "url": "/c/output/test13.png"}
-
-
-# def test_predict_coverage_exception():
-#     # Mock the SitesCoverage service's `calculate_coverage` method to raise an exception
-#     SitesCoverage.calculate_coverage = MagicMock(side_effect=Exception("An error occurred"))
-
-#     # Define a request payload
-#     payload = {
-#         "mode": "simple",
-#         "sites": [
-#             {"latitude": 39.9, "longitude": -75.2},
-#             {"latitude": 40.0, "longitude": -75.0},
-#         ],
-#     }
-
-#     # Send a request to the endpoint
-#     response = client.post("/coverage", json=payload)
-
-#     # Assert that the response has a 500 status code
-#     assert response.status_code == 500
-    
-#     # Assert that the response body matches the expected error message
-#     assert "An error occurred" in response.text
