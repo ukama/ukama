@@ -1,6 +1,7 @@
 package applier
 
 import (
+	"context"
 	"io"
 	"os"
 
@@ -10,6 +11,57 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+type Applier struct {
+	Values   map[string]interface{}
+	Set      []string
+	Debug    bool   `default:"true"`
+	LogLevel string `default:"debug"`
+	Source   string
+	App      *app.App
+	Env      string
+	Config   *hconfig.ApplyImpl
+}
+
+func NewApplier(val map[string]interface{}, debug bool, source string, env string) (*Applier, error) {
+
+	globalConfig := new(hconfig.GlobalOptions)
+
+	//valueset := []string{"lookupImageTag", "1ab632f"}
+	//set := map[string]interface{}{}
+	//set[valueset[0]] = valueset[1]
+	applyOptions := &hconfig.ApplyOptions{}
+
+	//globalConfig.StateValuesSet = valueset
+	globalConfig.File = source
+	globalConfig.Debug = debug
+	globalConfig.EnableLiveOutput = true
+	globalConfig.LogLevel = "debug"
+	globalConfig.SetLogger(NewLogger(os.Stdout, "debug"))
+
+	globalImpl := hconfig.NewGlobalImpl(globalConfig)
+	//globalImpl.SetSet(set)
+	globalImpl.SetSet(val)
+
+	applyImpl := hconfig.NewApplyImpl(globalImpl, applyOptions)
+
+	if err := applyImpl.ValidateConfig(); err != nil {
+		log.Errorf("ApplyImpl failed %s", err.Error())
+		return nil, err
+	}
+
+	log.Infof("Applying NewApplyGlobalImpl:\n %+v, \n ApplyOption:\n %+v", applyImpl.GlobalImpl, applyImpl.ApplyOptions)
+
+	app := app.New(applyImpl)
+
+	return &Applier{
+		Source: source,
+		Env:    env,
+		App:    app,
+		Debug:  debug,
+		Config: applyImpl,
+	}, nil
+}
 
 func NewLogger(writer io.Writer, logLevel string) *zap.SugaredLogger {
 	var cfg zapcore.EncoderConfig
@@ -28,6 +80,17 @@ func NewLogger(writer io.Writer, logLevel string) *zap.SugaredLogger {
 	return zap.New(core).Sugar()
 }
 
+func (a *Applier) ApplyHelmfile(ctx context.Context) error {
+	log.Infof("Applying helmfile:\n %+v", a)
+	if err := a.App.Apply(a.Config); err != nil {
+		log.Errorf("Error Applying helmfile %v", err)
+		return err
+	}
+
+	return nil
+}
+
+/*
 func ApplyHelmfile() error {
 	//environment := "default"
 	source := "/home/vishal/cdrive/work/git/ukama/infra-as-code/releases/init-helmfile.yaml"
@@ -127,7 +190,7 @@ func ApplyHelmfile() error {
 	// }
 
 }
-
+*/
 // type Runner struct {
 // 	logger *zap.SugaredLogger
 
