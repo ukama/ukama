@@ -346,6 +346,7 @@ class TestSolarTool:
         assert result.solar_pv_to_install_watts == 9200
         assert result.number_of_batteries == 18
         assert result.batteries_capacity_to_install_kWh == 43.2
+        assert result.max_output_angle == "30 degrees south"
 
     def test_predict_solar_tools_requirements_exception(self, mock_get_solar_radiation):
         """Test predict_solar_tools_requirements function with an exception"""

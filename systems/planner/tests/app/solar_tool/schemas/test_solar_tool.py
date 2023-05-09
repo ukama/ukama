@@ -52,8 +52,9 @@ class TestSolarToolRequestSchema:
 
 class TestSolarToolResponseSchema:
     def test_create_solar_tool_response_schema(self):
-        response = SolarToolResponseSchema(number_of_solar_modules=5, solar_pv_to_install_watts=35.2, number_of_batteries=23, batteries_capacity_to_install_kWh=212.2)
+        response = SolarToolResponseSchema(number_of_solar_modules=5, solar_pv_to_install_watts=35.2, number_of_batteries=23, batteries_capacity_to_install_kWh=212.2, max_output_angle= "10 degrees north")
         assert response.number_of_solar_modules == 5
         assert response.solar_pv_to_install_watts == 35.2
         assert response.number_of_batteries == 23
         assert response.batteries_capacity_to_install_kWh == 212.2
+        assert response.max_output_angle == "10 degrees north"

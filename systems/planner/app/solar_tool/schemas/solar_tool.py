@@ -24,6 +24,7 @@ class SolarToolResponseSchema(BaseModel):
     #pv_module_cost: float
     number_of_batteries: int                    # The battery has to at least be the size of 1 day's energy consumption
     batteries_capacity_to_install_kWh: float    # in kWh
+    max_output_angle: str    
 
     class Config:
         orm_mode = True

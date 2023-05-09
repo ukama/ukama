@@ -47,8 +47,8 @@ class SolarTool:
 
             battery_module_cost = number_of_batteries * SolarToolEnum.BATTERY_MODULE_COST.value
             estimated_capex = battery_module_cost+pv_module_cost+SolarToolEnum.BALANCE_SYSTEM_COST_USD.value
-
-            return SolarToolResponseSchema(number_of_solar_modules=total_solar_modules, solar_pv_to_install_watts=solar_pv_to_install, number_of_batteries=number_of_batteries, batteries_capacity_to_install_kWh=battery_capacity_to_install_kWh)
+            angle = str(max(abs(latitude), 10)) + " degrees " + ("north" if latitude < 0 else "south")
+            return SolarToolResponseSchema(number_of_solar_modules=total_solar_modules, solar_pv_to_install_watts=solar_pv_to_install, number_of_batteries=number_of_batteries, batteries_capacity_to_install_kWh=battery_capacity_to_install_kWh, max_output_angle=angle)
         except Exception as ex:
             raise ex
 
