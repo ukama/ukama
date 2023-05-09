@@ -15,7 +15,7 @@ class SolarTool:
 
     def predict_solar_tools_requirements(self, site) -> SolarToolResponseSchema:
         try:
-            subprocess.check_call("mkdir -p " + self.SOLAR_DATA_DIR + "/")
+            subprocess.check_call("mkdir -p " + self.SOLAR_DATA_DIR + "/", shell=True)
             longitude, latitude, power_budget, reliability_target = site["longitude"], site["latitude"], site["power_budget"], site["reliability_target"]/100
             solar_data = self.get_solar_radiation(longitude, latitude) 
 
