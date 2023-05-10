@@ -12,26 +12,30 @@ import (
 )
 
 type ConstructorServer struct {
-	systemRepo     db.SystemRepo
-	orgRepo        db.OrgRepo
-	nodeRepo       db.NodeRepo
+	oRepo          db.OrgsRepo
+	dRepo          db.DeploymentsRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedConstructorServiceServer
 }
 
-func NewConstructorServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.SystemRepo, msgBus mb.MsgBusServiceClient) *ConstructorServer {
+func NewConstructorServer(o db.OrgsRepo, d db.DeploymentsRepo, msgBus mb.MsgBusServiceClient) *ConstructorServer {
 	return &ConstructorServer{
-		nodeRepo:       nodeRepo,
-		orgRepo:        orgRepo,
-		systemRepo:     systemRepo,
+		dRepo:          d,
+		oRepo:          o,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
 func (c *ConstructorServer) BuildOrg(ctx context.Context, req *pb.BuildOrgRequest) (*pb.BuildOrgResponse, error) {
-	log.Infof("Build System For org %s Id %s", req.GetOrgName(), req.GetOrgId())
+	log.Infof("Build Org Id %s", req.GetOrgId())
 
 	return &pb.BuildOrgResponse{}, nil
+}
+
+func (c *ConstructorServer) removeOrg(ctx context.Context, req *pb.RemoveOrgRequest) (*pb.RemoveOrgResponse, error) {
+	log.Infof("Remove Org %s Id %s", req.GetOrgId())
+
+	return &pb.RemoveOrgResponse{}, nil
 }

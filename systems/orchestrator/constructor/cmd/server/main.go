@@ -16,7 +16,8 @@ import (
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
-	generated "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	generated "github.com/ukama/ukama/systems/orchestrator/constructor/pb/gen"
+	"github.com/ukama/ukama/systems/orchestrator/constructor/pkg/db"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -35,7 +36,7 @@ func main() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Org{}, &db.Node{}, &db.System{})
+	err := d.Init(&db.Orgs{}, &db.Deployments{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -72,17 +73,10 @@ func runGrpcServer(d sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	// applier.ApplyHelmfile()
-
-	// for {
-	// 	time.Sleep(time.Second * 1)
-	// 	log.Info("Waiting....!!")
-	// }
-
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewLookupServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d), mbClient)
-		nSrv := server.NewLookupEventServer(db.NewNodeRepo(d), db.NewOrgRepo(d), db.NewSystemRepo(d))
-		generated.RegisterLookupServiceServer(s, srv)
+		srv := server.NewLookupServer(db.NewOrgsRepo(d), db.NewDeploymentsRepo(d), mbClient)
+		nSrv := server.NewLookupEventServer(db.NewOrgsRepo(d), db.NewDeploymentsRepo(d))
+		generated.RegisterConstructorServiceServer(s, srv)
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 

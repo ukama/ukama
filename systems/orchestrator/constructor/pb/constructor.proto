@@ -10,12 +10,44 @@ service ConstructorService {
 
     /* System */
     rpc BuildOrg(BuildOrgRequest) returns (BuildOrgResponse);
+    rpc RemoveOrg(RemoveOrgRequest) returns (RemoveOrgResponse);
+
     rpc UpdateDefaultConstrutorConfig(UpdateDefaultConstrutorConfigRequest) returns (UpdateDefaultConstructorConfigResponse);
     rpc UpdateConstructorConfig(ConstructorConfigRequest) returns (ConstructorConfigResponse);
     rpc UpdateImageVersion(UpdateImageVersionRequest) returns (UpdateImageVersionResponse);
-    rpc RemoveOrg(RemoveOrgRequest) returns (RemoveOrgResponse);
+    
+    rpc AddOrUpdateDeployments(DeploymentRequests) returns (DeploymentResponse);
+    rpc RemoveDeployments(RemoveDeploymentRequests) returns (RemoveDeploymentResponse);
 }
 
+message DeploymentRequests {
+    repeated DeploymentRequest Deployments = 1 ;
+}
+
+message DeploymentRequest {
+    string orgId = 1  [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string name =2;
+    string source =3;
+    string env = 4;
+    string version = 5;
+    repeated string keyVal = 6;
+}
+
+message DeploymentResponse {
+
+}
+
+message RemoveDeploymentRequest {
+    string orgId = 1  [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string name =2;  
+}
+
+message RemoveDeploymentRequests {
+    repeated RemoveDeploymentRequest removeDeploymentRequest = 1;
+}
+
+message RemoveDeploymentResponse {
+}
 
 message BuildOrgRequest {
     string orgId = 1  [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
