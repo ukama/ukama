@@ -1,0 +1,39 @@
+import { SkeletonRoundedCard } from '@/styles/global';
+import React from 'react';
+
+interface ILoadingWrapper {
+  width?: string | number;
+  height?: string | number;
+  children: React.ReactNode;
+  radius?: 'small' | 'medium';
+  isLoading: boolean | undefined;
+  variant?: 'text' | 'rectangular' | 'circular';
+}
+
+const LoadingWrapper = ({
+  children,
+  width = '100%',
+  height = '100%',
+  radius = 'medium',
+  variant = 'rectangular',
+  isLoading = false,
+}: ILoadingWrapper) => {
+  const borderRadius = radius === 'medium' ? '10px' : '4px';
+  if (isLoading)
+    return (
+      <SkeletonRoundedCard
+        width={width}
+        height={height}
+        variant={variant}
+        sx={{ borderRadius: borderRadius }}
+      />
+    );
+
+  return (
+    <div style={{ height: 'inherit', width: width ? width : 'inherit' }}>
+      {children}
+    </div>
+  );
+};
+
+export default LoadingWrapper;
