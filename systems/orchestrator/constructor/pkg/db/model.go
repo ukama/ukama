@@ -20,13 +20,15 @@ type Deployments struct {
 	Values []string
 	OrgID  uint
 	Org    Orgs
-	Config Config
+	System Systems
 }
 
-type Config struct {
+type Systems struct {
 	gorm.Model
-	Name          string
-	Source        string `gorm:"type:string;index:source_name_idx,not null"`
-	SourceVersion string
-	Values        []string
+	Name         string
+	Chart        string `gorm:"type:string;index:chart_name_idx,not null"`
+	Version      string
+	Values       []string
+	DeploymentID uint
+	Deployment   []Deployments
 }

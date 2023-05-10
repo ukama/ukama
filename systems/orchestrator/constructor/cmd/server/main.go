@@ -36,7 +36,7 @@ func main() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Orgs{}, &db.Deployments{})
+	err := d.Init(&db.Orgs{}, &db.Deployments{}, &db.Systems{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -74,8 +74,8 @@ func runGrpcServer(d sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewLookupServer(db.NewOrgsRepo(d), db.NewDeploymentsRepo(d), mbClient)
-		nSrv := server.NewLookupEventServer(db.NewOrgsRepo(d), db.NewDeploymentsRepo(d))
+		srv := server.NewConstructorServer(db.NewOrgsRepo(d), db.NewDeploymentsRepo(d), db.NewSystemsRepo(d), mbClient)
+		nSrv := server.NewConstructorEventServer(db.NewOrgsRepo(d), db.NewDeploymentsRepo(d), db.NewSystemsRepo(d))
 		generated.RegisterConstructorServiceServer(s, srv)
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})

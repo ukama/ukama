@@ -29,6 +29,6 @@ func (r *orgsRepo) Add(org *Orgs) error {
 
 func (r *orgsRepo) Get(id uuid.UUID) (*Orgs, error) {
 	org := &Orgs{}
-	d := r.Db.GetGormDb().Preload(clause.Associations).Where(&Orgs{OrgID: id}).Updates(org)
+	d := r.Db.GetGormDb().Preload(clause.Associations).Where(&Orgs{OrgID: id}).First(org)
 	return org, d.Error
 }
