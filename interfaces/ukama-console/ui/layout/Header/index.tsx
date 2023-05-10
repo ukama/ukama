@@ -1,0 +1,313 @@
+import { isSkeltonLoading, pageName, user } from '@/app-recoil';
+import {
+  GetLatestAlertsDocument,
+  GetLatestAlertsSubscription,
+  useGetAlertsQuery,
+} from '@/generated';
+import { Doc } from '@/public/svg';
+import { routes } from '@/router/config';
+import { RoundedCard } from '@/styles/global';
+import { colors } from '@/styles/theme';
+import { Alerts, LoadingWrapper } from '@/ui/components';
+import { cloneDeep } from '@apollo/client/utilities';
+import { AccountCircle, Notifications, Settings } from '@mui/icons-material';
+import ExitToAppOutlined from '@mui/icons-material/ExitToAppOutlined';
+import MenuIcon from '@mui/icons-material/Menu';
+import {
+  AppBar,
+  Badge,
+  Box,
+  Button,
+  Divider,
+  IconButton,
+  Popover,
+  Stack,
+  Toolbar,
+  Typography,
+} from '@mui/material';
+import { useRouter } from 'next/router';
+import { useEffect, useRef, useState } from 'react';
+import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
+
+const popupStyle = {
+  background: 'none',
+  boxShadow:
+    '0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)',
+  borderRadius: '4px',
+};
+
+type HeaderProps = {
+  pageName: string;
+  isLoading: boolean;
+  handlePageChange: Function;
+  handleDrawerToggle: Function;
+};
+
+const Header = ({
+  pageName: _pageName,
+  handlePageChange,
+  handleDrawerToggle,
+  isLoading,
+}: HeaderProps) => {
+  const router = useRouter();
+  const ref = useRef(null);
+  const _user: any = useRecoilValue(user);
+  const resetPageName = useResetRecoilState(pageName);
+  const resetData = useResetRecoilState(user);
+  const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
+
+  const [notificationAnchorEl, setNotificationAnchorEl] =
+    useState<HTMLButtonElement | null>(null);
+  const [userAnchorEl, setUserAnchorEl] = useState<HTMLButtonElement | null>(
+    null,
+  );
+  const handleNotificationClick = () => {
+    setNotificationAnchorEl(ref.current);
+  };
+  const handleUserClick = () => {
+    setUserAnchorEl(ref.current);
+  };
+  const handleNotificationClose = () => {
+    setNotificationAnchorEl(null);
+  };
+  const handleUserClose = () => {
+    setUserAnchorEl(null);
+  };
+  const open = Boolean(notificationAnchorEl);
+  const openUserPopover = Boolean(userAnchorEl);
+  const userAnchorElId = openUserPopover ? 'user-popover' : undefined;
+  const notificationAnchorElId = open ? 'simple-popover' : undefined;
+
+  const handleSettingsClick = () => {
+    handlePageChange('Settings');
+    router.push(routes.Settings.path);
+  };
+
+  const { data: alertsInfoRes, subscribeToMore: subscribeToLatestAlerts } =
+    useGetAlertsQuery({
+      variables: {
+        data: {
+          pageNo: 1,
+          pageSize: 50,
+        },
+      },
+    });
+
+  const alertSubscription = () =>
+    subscribeToLatestAlerts<GetLatestAlertsSubscription>({
+      document: GetLatestAlertsDocument,
+      updateQuery: (prev, { subscriptionData }) => {
+        let data = cloneDeep(prev);
+        const latestAlert = subscriptionData.data.getAlerts;
+        if (latestAlert.__typename === 'AlertDto')
+          data.getAlerts.alerts = [latestAlert, ...data.getAlerts.alerts];
+        return data;
+      },
+    });
+
+  useEffect(() => {
+    let unsub = alertSubscription();
+    return () => {
+      unsub && unsub();
+    };
+  }, [alertsInfoRes]);
+
+  const handleLogout = () => {
+    handleUserClose();
+    resetData();
+    resetPageName();
+    setSkeltonLoading(true);
+    typeof window !== 'undefined' &&
+      window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
+  };
+  return (
+    <Box component="div">
+      <Popover
+        open={open}
+        id={notificationAnchorElId}
+        anchorEl={notificationAnchorEl}
+        onClose={handleNotificationClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        PaperProps={{
+          style: {
+            ...popupStyle,
+          },
+        }}
+      >
+        <RoundedCard sx={{ overflow: 'hidden', pr: 0, boxShadow: 'none' }}>
+          <Typography variant="h6" sx={{ mb: '14px' }}>
+            Alerts
+          </Typography>
+          <Alerts alertOptions={alertsInfoRes?.getAlerts?.alerts} />
+        </RoundedCard>
+      </Popover>
+      <Popover
+        open={openUserPopover}
+        id={userAnchorElId}
+        anchorEl={userAnchorEl}
+        onClose={handleUserClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        PaperProps={{
+          style: {
+            ...popupStyle,
+          },
+        }}
+      >
+        <RoundedCard sx={{ minWidth: '200px', p: 0, boxShadow: 'none' }}>
+          <Stack m={'12px 16px'}>
+            <Typography variant="body1">{_user.name}</Typography>
+            <Typography variant="caption" color={'textSecondary'}>
+              {_user.email}
+            </Typography>
+          </Stack>
+          <Divider sx={{ mt: '6px' }} />
+          <Button
+            onClick={handleLogout}
+            startIcon={<ExitToAppOutlined />}
+            sx={{
+              mb: '12px',
+              mx: '16px',
+              typography: 'body1',
+              textTransform: 'capitalize',
+              ':hover': {
+                background: 'none',
+                color: colors.primaryDark,
+                svg: {
+                  fill: colors.primaryDark,
+                },
+              },
+            }}
+          >
+            Sign out
+          </Button>
+        </RoundedCard>
+      </Popover>
+      <AppBar
+        elevation={0}
+        position="relative"
+        color="transparent"
+        sx={{ boxShadow: 'none !important' }}
+      >
+        <Toolbar sx={{ padding: '33px 0px 12px 0px !important' }}>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={() => handleDrawerToggle()}
+            sx={{ mr: 2, display: { sm: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+
+          <LoadingWrapper height={30} width={82} isLoading={isLoading}>
+            <Typography variant="h5">{_pageName}</Typography>
+          </LoadingWrapper>
+          {_pageName === 'Users' && (
+            <Stack spacing={1} direction="row" alignItems={'center'}>
+              <Divider
+                orientation="vertical"
+                sx={{
+                  height: '20px',
+                  borderWidth: '1px',
+                  borderColor: '#4d4d4d',
+                }}
+              />
+              <IconButton
+                sx={{
+                  width: '54px',
+                  height: 'auto',
+                  cursor: 'pointer',
+                  ':hover': {
+                    svg: {
+                      path: {
+                        fill: '#2190F6 !important',
+                      },
+                    },
+                  },
+                }}
+                onClick={() =>
+                  typeof window !== 'undefined' &&
+                  window.open(
+                    'https://docs.dev.ukama.com/docs/Console/Users',
+                    '_target',
+                  )
+                }
+              >
+                <Doc />
+              </IconButton>
+            </Stack>
+          )}
+
+          <Box component="div" sx={{ flexGrow: 1 }} />
+
+          <LoadingWrapper height={30} width={120} isLoading={isLoading}>
+            <Stack
+              spacing={{ xs: 2, md: 3 }}
+              direction="row"
+              sx={{
+                display: { xs: 'flex', md: 'flex' },
+                justifyContent: 'flex-end',
+              }}
+            >
+              <IconButton
+                size="small"
+                color="inherit"
+                aria-label="setting-btn"
+                onClick={handleSettingsClick}
+              >
+                <Settings />
+              </IconButton>
+              <IconButton
+                size="small"
+                color="inherit"
+                aria-label="notification-btn"
+                onClick={handleNotificationClick}
+              >
+                <Badge
+                  badgeContent={alertsInfoRes?.getAlerts?.alerts.length}
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      color: 'inherit',
+                      paddingLeft: '3px',
+                      paddingRight: '3px',
+                      backgroundColor: colors.secondaryMain,
+                    },
+                  }}
+                >
+                  <Notifications
+                    color={notificationAnchorEl ? 'primary' : 'inherit'}
+                  />
+                </Badge>
+              </IconButton>
+              <IconButton
+                size="small"
+                color="inherit"
+                aria-label="account-btn"
+                onClick={handleUserClick}
+              >
+                <AccountCircle />
+              </IconButton>
+            </Stack>
+          </LoadingWrapper>
+        </Toolbar>
+        <Divider ref={ref} sx={{ m: '0px' }} />
+      </AppBar>
+    </Box>
+  );
+};
+
+export default Header;

@@ -1,0 +1,158 @@
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../public/fonts/rubik-v18-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local(''),
+    url('../public/fonts/rubik-v18-latin-regular.eot?#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('../public/fonts/rubik-v18-latin-regular.woff2')
+      format('woff2'),
+    /* Super Modern Browsers */
+      url('../public/fonts/rubik-v18-latin-regular.woff') format('woff'),
+    /* Modern Browsers */ url('../public/fonts/rubik-v18-latin-regular.ttf')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('../public/fonts/rubik-v18-latin-regular.svg#Rubik') format('svg'); /* Legacy iOS */
+  font-display: swap;
+}
+/* rubik-500 - latin */
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 500;
+  src: url('../public/fonts/rubik-v18-latin-500.eot'); /* IE9 Compat Modes */
+  src: local(''),
+    url('../public/fonts/rubik-v18-latin-500.eot?#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('../public/fonts/rubik-v18-latin-500.woff2')
+      format('woff2'),
+    /* Super Modern Browsers */ url('../public/fonts/rubik-v18-latin-500.woff')
+      format('woff'),
+    /* Modern Browsers */ url('../public/fonts/rubik-v18-latin-500.ttf')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('../public/fonts/rubik-v18-latin-500.svg#Rubik') format('svg'); /* Legacy iOS */
+  font-display: swap;
+}
+/* rubik-600 - latin */
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 600;
+  src: url('../public/fonts/rubik-v18-latin-600.eot'); /* IE9 Compat Modes */
+  src: local(''),
+    url('../public/fonts/rubik-v18-latin-600.eot?#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('../public/fonts/rubik-v18-latin-600.woff2')
+      format('woff2'),
+    /* Super Modern Browsers */ url('../public/fonts/rubik-v18-latin-600.woff')
+      format('woff'),
+    /* Modern Browsers */ url('../public/fonts/rubik-v18-latin-600.ttf')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('../public/fonts/rubik-v18-latin-600.svg#Rubik') format('svg'); /* Legacy iOS */
+  font-display: swap;
+}
+/* rubik-700 - latin */
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../public/fonts/rubik-v18-latin-700.eot'); /* IE9 Compat Modes */
+  src: local(''),
+    url('../public/fonts/rubik-v18-latin-700.eot?#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('../public/fonts/rubik-v18-latin-700.woff2')
+      format('woff2'),
+    /* Super Modern Browsers */ url('../public/fonts/rubik-v18-latin-700.woff')
+      format('woff'),
+    /* Modern Browsers */ url('../public/fonts/rubik-v18-latin-700.ttf')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('../public/fonts/rubik-v18-latin-700.svg#Rubik') format('svg'); /* Legacy iOS */
+  font-display: swap;
+}
+
+/* work-sans-regular - latin */
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../public/fonts/work-sans-v16-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local(''),
+    url('../public/fonts/work-sans-v16-latin-regular.eot?#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('../public/fonts/work-sans-v16-latin-regular.woff2')
+      format('woff2'),
+    /* Super Modern Browsers */
+      url('../public/fonts/work-sans-v16-latin-regular.woff') format('woff'),
+    /* Modern Browsers */ url('../public/fonts/work-sans-v16-latin-regular.ttf')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('../public/fonts/work-sans-v16-latin-regular.svg#WorkSans')
+      format('svg'); /* Legacy iOS */
+  font-display: swap;
+}
+/* work-sans-500 - latin */
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 500;
+  src: url('../public/fonts/work-sans-v16-latin-500.eot'); /* IE9 Compat Modes */
+  src: local(''),
+    url('../public/fonts/work-sans-v16-latin-500.eot?#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('../public/fonts/work-sans-v16-latin-500.woff2')
+      format('woff2'),
+    /* Super Modern Browsers */
+      url('../public/fonts/work-sans-v16-latin-500.woff') format('woff'),
+    /* Modern Browsers */ url('../public/fonts/work-sans-v16-latin-500.ttf')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('../public/fonts/work-sans-v16-latin-500.svg#WorkSans') format('svg'); /* Legacy iOS */
+  font-display: swap;
+}
+/* work-sans-600 - latin */
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 600;
+  src: url('../public/fonts/work-sans-v16-latin-600.eot'); /* IE9 Compat Modes */
+  src: local(''),
+    url('../public/fonts/work-sans-v16-latin-600.eot?#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('../public/fonts/work-sans-v16-latin-600.woff2')
+      format('woff2'),
+    /* Super Modern Browsers */
+      url('../public/fonts/work-sans-v16-latin-600.woff') format('woff'),
+    /* Modern Browsers */ url('../public/fonts/work-sans-v16-latin-600.ttf')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('../public/fonts/work-sans-v16-latin-600.svg#WorkSans') format('svg'); /* Legacy iOS */
+  font-display: swap;
+}
+/* work-sans-700 - latin */
+@font-face {
+  font-family: 'Work Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../public/fonts/work-sans-v16-latin-700.eot'); /* IE9 Compat Modes */
+  src: local(''),
+    url('../public/fonts/work-sans-v16-latin-700.eot?#iefix')
+      format('embedded-opentype'),
+    /* IE6-IE8 */ url('../public/fonts/work-sans-v16-latin-700.woff2')
+      format('woff2'),
+    /* Super Modern Browsers */
+      url('../public/fonts/work-sans-v16-latin-700.woff') format('woff'),
+    /* Modern Browsers */ url('../public/fonts/work-sans-v16-latin-700.ttf')
+      format('truetype'),
+    /* Safari, Android, iOS */
+      url('../public/fonts/work-sans-v16-latin-700.svg#WorkSans') format('svg'); /* Legacy iOS */
+  font-display: swap;
+}
+html,
+body {
+  height: 100vh;
+  overflow-x: hidden;
+}
