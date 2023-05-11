@@ -209,15 +209,15 @@ const Nodes = () => {
 
   useGetMetricsByTabSSubscription({
     fetchPolicy: 'network-only',
-    onSubscriptionData: (res) => {
+    onData: (res) => {
       if (
         isMetricPolling &&
-        res?.subscriptionData?.data?.getMetricsByTab &&
-        res?.subscriptionData?.data?.getMetricsByTab.length > 0
+        res?.data.data?.getMetricsByTab &&
+        res?.data.data?.getMetricsByTab.length > 0
       ) {
         const _m: TMetric = {};
 
-        for (const element of res.subscriptionData.data.getMetricsByTab) {
+        for (const element of res.data.data?.getMetricsByTab) {
           const metric = metrics[element.type];
 
           if (
@@ -241,7 +241,7 @@ const Nodes = () => {
         }));
 
         let next = false;
-        for (const element of res.subscriptionData.data.getMetricsByTab) {
+        for (const element of res.data.data?.getMetricsByTab) {
           if (!next && element.next) next = true;
         }
         if (next) {
