@@ -175,7 +175,6 @@ const Sidebar = (
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
-              boxShadow: 'none',
             },
           }}
         >

@@ -51,24 +51,25 @@ const NetworkStatus = ({
     <Grid container spacing={2}>
       <Grid item xs={12} md={8}>
         <LoadingWrapper height={30} isLoading={loading}>
-          <Grid container>
+          <Grid container alignItems={'center'} spacing={1}>
             <Grid item>{getIconByStatus(statusType)}</Grid>
             <Grid item xs={11}>
               <Stack
                 direction={{ xs: 'column', md: 'row' }}
                 alignItems="flex-start"
               >
-                <Typography
-                  variant={'h6'}
-                  sx={{ fontWeight: { xs: 400, md: 500 } }}
-                >
+                <>
                   {getStatusByType(statusType)}
-                  {isSmall &&
-                    totalNodes &&
-                    liveNodes &&
-                    ` ${liveNodes}/${totalNodes} nodes up.`}
-                </Typography>
-
+                  <Typography
+                    variant={'h6'}
+                    sx={{ fontWeight: { xs: 400, md: 500 } }}
+                  >
+                    {isSmall &&
+                      totalNodes &&
+                      liveNodes &&
+                      ` ${liveNodes}/${totalNodes} nodes up.`}
+                  </Typography>
+                </>
                 {!isSmall && totalNodes && liveNodes && (
                   <>
                     <Typography
