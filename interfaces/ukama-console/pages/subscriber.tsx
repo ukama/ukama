@@ -120,9 +120,9 @@ const Subscriber = () => {
 
   useGetUsersDataUsageSSubscription({
     fetchPolicy: 'network-only',
-    onSubscriptionData: (res) => {
-      if (res.subscriptionData.data?.getUsersDataUsage?.id) {
-        const userRes = res.subscriptionData.data?.getUsersDataUsage;
+    onData: (res) => {
+      if (res.data.data?.getUsersDataUsage?.id) {
+        const userRes = res.data.data?.getUsersDataUsage;
         const index = users.findIndex((item) => item.id === userRes.id);
         setUsers([
           ...users.slice(0, index),

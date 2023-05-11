@@ -65,11 +65,7 @@ import {
   StatusCard,
   UserDetailsDialog,
 } from '@/ui/components';
-import {
-  getMetricPayload,
-  // getTowerNodeFromNodes,
-  isContainNodeUpdate,
-} from '@/utils';
+import { getMetricPayload, isContainNodeUpdate } from '@/utils';
 import { Box, Grid } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useState } from 'react';
@@ -300,9 +296,9 @@ const Home = () => {
 
   useGetUsersDataUsageSSubscription({
     fetchPolicy: 'network-only',
-    onSubscriptionData: (res) => {
-      if (res.subscriptionData.data?.getUsersDataUsage?.id) {
-        const userRes = res.subscriptionData.data?.getUsersDataUsage;
+    onData: (res) => {
+      if (res.data.data?.getUsersDataUsage?.id) {
+        const userRes = res.data.data?.getUsersDataUsage;
         const index = users.findIndex((item) => item.id === userRes.id);
         setUsers([
           ...users.slice(0, index),
@@ -404,16 +400,16 @@ const Home = () => {
   }, [getMetricsRes]);
 
   useGetMetricsByTabSSubscription({
-    onSubscriptionData: (res) => {
+    onData: (res) => {
       if (
         isMetricPolling &&
-        res?.subscriptionData?.data?.getMetricsByTab &&
-        res?.subscriptionData?.data?.getMetricsByTab.length > 0
+        res.data.data?.getMetricsByTab &&
+        res.data.data?.getMetricsByTab.length > 0
       ) {
         const _m: TMetric = {
           uptimetrx: null,
         };
-        for (const element of res.subscriptionData.data.getMetricsByTab) {
+        for (const element of res.data.data?.getMetricsByTab) {
           const metric = uptimeMetric[element.type];
           if (
             metric &&
@@ -437,7 +433,7 @@ const Home = () => {
           ...filter,
         }));
 
-        if (res.subscriptionData.data.getMetricsByTab[0].next) {
+        if (res.data.data?.getMetricsByTab[0].next) {
           refetchMetrics();
         }
       }
@@ -870,8 +866,8 @@ const Home = () => {
     });
   };
   return (
-    <Box component="div" sx={{ flexGrow: 1, pb: '18px' }}>
-      <Grid container rowSpacing={3} columnSpacing={3}>
+    <Box sx={{ flexGrow: 1, pb: '18px', overflowX: 'hidden' }}>
+      <Grid container spacing={2} columnSpacing={2} rowSpacing={2}>
         <Grid xs={12} item>
           <NetworkStatus
             handleAddNode={handleAddNode}
@@ -887,12 +883,8 @@ const Home = () => {
             }
           />
         </Grid>
-        <Grid
-          item
-          container
-          columnSpacing={{ xs: 1.5, md: 3 }}
-          rowSpacing={{ xs: 1.5, md: 3 }}
-        >
+
+        <Grid item container>
           <Grid item xs={4} md={6} lg={4}>
             <StatusCard
               Icon={UsersWithBG}
@@ -942,54 +934,59 @@ const Home = () => {
             />
           </Grid>
         </Grid>
-        <Grid xs={12} item>
+
+        <Grid item container>
           <StatsCard
             metricData={uptimeMetric}
             loading={isSkeltonLoad || getMetricLoading}
           />
         </Grid>
-        <Grid xs={12} lg={8} item>
-          <LoadingWrapper
-            height={318}
-            isLoading={nodeLoading || isSkeltonLoad || deleteNodeLoading}
-          >
-            <RoundedCard>
-              <ContainerHeader
-                stats={``}
-                title="My Nodes"
-                showButton={isContainNodeUpdate(nodeRes?.getNodesByOrg.nodes)}
-                buttonSize={'small'}
-                buttonTitle={'Update All'}
-                handleAllNodeUpdate={handleAllNodeUpdate}
-              />
-              <NodeContainer
-                items={nodeRes?.getNodesByOrg.nodes || []}
-                handleItemAction={handleNodeActions}
-              />
-            </RoundedCard>
-          </LoadingWrapper>
-        </Grid>
-        <Grid xs={12} lg={4} item>
-          <LoadingWrapper
-            height={318}
-            isLoading={
-              residentsloading ||
-              deactivateUserLoading ||
-              isSkeltonLoad ||
-              addUserLoading ||
-              updateUserLoading
-            }
-          >
-            <RoundedCard sx={{ height: '100%' }}>
-              <ContainerHeader title="Residents" showButton={false} />
-              <DataTableWithOptions
-                dataset={users}
-                columns={DataTableWithOptionColumns}
-                menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
-                onMenuItemClick={onResidentsTableMenuItem}
-              />
-            </RoundedCard>
-          </LoadingWrapper>
+
+        <Grid item container columnSpacing={2} rowSpacing={2}>
+          <Grid item xs={12} lg={8}>
+            <LoadingWrapper
+              height={318}
+              isLoading={nodeLoading || isSkeltonLoad || deleteNodeLoading}
+            >
+              <RoundedCard>
+                <ContainerHeader
+                  stats={``}
+                  title="My Nodes"
+                  showButton={isContainNodeUpdate(nodeRes?.getNodesByOrg.nodes)}
+                  buttonSize={'small'}
+                  buttonTitle={'Update All'}
+                  handleAllNodeUpdate={handleAllNodeUpdate}
+                />
+                <NodeContainer
+                  items={nodeRes?.getNodesByOrg.nodes || []}
+                  handleItemAction={handleNodeActions}
+                />
+              </RoundedCard>
+            </LoadingWrapper>
+          </Grid>
+
+          <Grid item xs={12} lg={4}>
+            <LoadingWrapper
+              height={318}
+              isLoading={
+                residentsloading ||
+                deactivateUserLoading ||
+                isSkeltonLoad ||
+                addUserLoading ||
+                updateUserLoading
+              }
+            >
+              <RoundedCard sx={{ height: '100%' }}>
+                <ContainerHeader title="Residents" showButton={false} />
+                <DataTableWithOptions
+                  dataset={users}
+                  columns={DataTableWithOptionColumns}
+                  menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
+                  onMenuItemClick={onResidentsTableMenuItem}
+                />
+              </RoundedCard>
+            </LoadingWrapper>
+          </Grid>
         </Grid>
       </Grid>
       <SoftwareUpdateModal

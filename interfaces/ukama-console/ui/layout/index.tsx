@@ -39,6 +39,7 @@ const Layout = (props: any) => {
         sx={{
           width: '100%',
           overflow: 'auto',
+          backgroundColor: 'aliceblue',
           pl: { xs: 2, md: 3, xl: 5 },
           pr: { xs: 2, md: 3, xl: 5 },
         }}
