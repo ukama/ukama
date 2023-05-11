@@ -8,6 +8,7 @@
     "dev": "NODE_ENV=development nodemon",
     "lint": "eslint . --ext .ts",
     "start": "NODE_ENV=production ts-node src/index.ts ",
+    "pretty": "prettier --write --config .prettierrc './src/**'",
     "test": "jest",
     "build": "tsc -b"
   },
@@ -52,7 +53,7 @@
     "express": "^4.17.1",
     "express-graphql": "^0.12.0",
     "express-winston": "^4.1.0",
-    "graphql": "^15.5.0",
+    "graphql": "^15.3.0",
     "lorem-ipsum": "^2.0.4",
     "nock": "^13.2.0",
     "node-schedule": "^2.1.0",

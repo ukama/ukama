@@ -5,7 +5,7 @@ import { AddNodeDto, NodeObj, LinkNodes } from "../modules/node/types";
 export const getPaginatedOutput = (
     page: number,
     pageSize: number,
-    count: number
+    count: number,
 ): Meta => {
     return {
         count,
@@ -19,7 +19,7 @@ export const getUniqueTimeStamp = (index?: number, length?: number): number =>
     new Date().valueOf() - (length ? length - 1000 * (index || 1) : 0);
 
 export const getRecordsLengthByFilter = (
-    filter: string | undefined
+    filter: string | undefined,
 ): number => {
     switch (filter) {
         case GRAPH_FILTER.WEEK:
@@ -36,7 +36,7 @@ export const oneSecSleep = (t = 1000): any =>
 
 export const getMetricsByTab = (
     nodeType: NODE_TYPE,
-    tabType: GRAPHS_TAB
+    tabType: GRAPHS_TAB,
 ): string[] => {
     switch (tabType) {
         case GRAPHS_TAB.OVERVIEW:
@@ -178,34 +178,46 @@ export const isTowerNode = (nodeId: string): boolean =>
 
 export const getTowerNode = (payload: AddNodeDto): NodeObj => {
     if (isTowerNode(payload.nodeId))
-        return { name: payload.name, nodeId: payload.nodeId };
+        return {
+            name: payload.name,
+            state: payload.state,
+            nodeId: payload.nodeId,
+        };
 
-    if (payload.attached)
-        for (const node of payload.attached) {
-            if (isTowerNode(node.nodeId)) return node;
-        }
-    return { name: "", nodeId: "" };
+    // if (payload.attached)
+    //     for (const node of payload.attached) {
+    //         if (isTowerNode(node.nodeId)) return node;
+    //     }
+    return { name: "", nodeId: "", state: "" };
 };
 
 export const getNodes = (payload: AddNodeDto): NodeObj[] => {
     const nodes: NodeObj[] = [];
     if (!isTowerNode(payload.nodeId)) {
-        nodes.push({ name: payload.name, nodeId: payload.nodeId });
+        nodes.push({
+            name: payload.name,
+            state: payload.state,
+            nodeId: payload.nodeId,
+        });
     }
-    if (payload.attached)
-        for (const node of payload.attached) {
-            if (!isTowerNode(node.nodeId))
-                nodes.push({ name: node.name, nodeId: node.nodeId });
-        }
+    // if (payload.attached)
+    //     for (const node of payload.attached) {
+    //         if (!isTowerNode(node.nodeId))
+    //             nodes.push({
+    //                 name: node.name,
+    //                 state: payload.state,
+    //                 nodeId: node.nodeId,
+    //             });
+    //     }
     return nodes;
 };
 export const linkNodes = (nodes: NodeObj[], rootNodeId: string): LinkNodes => {
     const nodesLinkingObj: LinkNodes = {
         nodeId: rootNodeId,
-        attached: [],
+        attachedNodeIds: [],
     };
     for (const node of nodes) {
-        nodesLinkingObj.attached?.push({ nodeId: node.nodeId });
+        nodesLinkingObj.attachedNodeIds?.push(node.nodeId);
     }
     return nodesLinkingObj;
 };

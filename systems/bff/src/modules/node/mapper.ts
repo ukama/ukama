@@ -8,14 +8,22 @@ import {
     OrgMetricValueDto,
     GetNodeStatusRes,
     NodeResponse,
+    AddNodeResponse,
 } from "./types";
 import * as defaultCasual from "casual";
 import { MetricLatestValueRes } from "../../common/types";
+interface Node {
+    nodeId: string;
+    state: string;
+    type: string;
+    name: string;
+    attached: any[]; // You can replace 'any' with a specific type if necessary
+}
 
 class NodeMapper implements INodeMapper {
     dtoToNodesDto = (
         orgId: string,
-        req: OrgNodeResponse
+        req: OrgNodeResponse,
     ): OrgNodeResponseDto => {
         let nodesObj;
         let activeNodes = 0;
@@ -47,7 +55,7 @@ class NodeMapper implements INodeMapper {
                 metrics.push({
                     x: item[0],
                     y: item[1],
-                })
+                }),
             );
         return metrics;
     };
@@ -96,6 +104,16 @@ class NodeMapper implements INodeMapper {
     dtoToGetNodeDto = (res: NodeResponse): NodeResponse => {
         const isTowerNode = res.nodeId.includes("tnode");
         return { ...res, attached: isTowerNode ? res.attached : [] };
+    };
+    dtoToNodeResponsedto = (response: any): Node => {
+        const { nodeId, state, type, name, attached } = response.node;
+        return {
+            nodeId,
+            state,
+            type,
+            name,
+            attached,
+        };
     };
 }
 export default <INodeMapper>new NodeMapper();

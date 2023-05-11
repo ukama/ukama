@@ -1,32 +1,19 @@
-import {
-    Resolver,
-    Query,
-    Arg,
-    UseMiddleware,
-    PubSubEngine,
-    PubSub,
-    Ctx,
-} from "type-graphql";
+import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { NetworkDto } from "../types";
-import { NetworkService } from "../service";
 import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
 import { Authentication } from "../../../common/Authentication";
+import { Context } from "../../../common/types";
+import { NetworkService } from "../service";
+import { NetworkStatusDto } from "../types";
 
 @Service()
 @Resolver()
 export class GetNetworkStatusResolver {
     constructor(private readonly networkService: NetworkService) {}
 
-    @Query(() => NetworkDto)
+    @Query(() => NetworkStatusDto)
     @UseMiddleware(Authentication)
-    async getNetworkStatus(
-        @Ctx() ctx: Context,
-        @PubSub() pubsub: PubSubEngine
-    ): Promise<NetworkDto> {
-        const network = this.networkService.getNetworkStatus(parseCookie(ctx));
-        pubsub.publish("getNetworkStatus", network);
-        return network;
+    async getNetworkStatus(@Ctx() ctx: Context): Promise<NetworkStatusDto> {
+        return this.networkService.getNetworkStatus(parseCookie(ctx));
     }
 }

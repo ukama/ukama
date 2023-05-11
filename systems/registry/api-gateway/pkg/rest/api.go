@@ -5,9 +5,24 @@ package rest
 type GetOrgsRequest struct {
 	UserUuid string `example:"{{UserUUID}}" form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
 }
+type GetNodeRequest struct {
+	NodeId string `path:"node_id" validate:"required"`
+}
+type UpdateNodeRequest struct {
+	NodeId  string `path:"node_id" validate:"required"`
+	Name   string `json:"name" validate:"required"`
+}
 
+type DeleteNodeNodeRequest struct {
+	NodeId string `path:"node_id" validate:"required"`
+}
 type GetOrgRequest struct {
 	OrgName string `example:"milky-way" path:"org" validate:"required"`
+}
+type AddNodeRequest struct {
+	NodeId  string `json:"node_id" validate:"required"`
+	Name   string `json:"name" validate:"required"`
+	State string `json:"state" validate:"required"`
 }
 
 type AddOrgRequest struct {
@@ -36,6 +51,12 @@ type UpdateMemberRequest struct {
 
 type GetUserRequest struct {
 	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+}
+type UpdateUserRequest struct {
+	UserUUID string `path:"user_uuid" validate:"required"`
+	Name     string `json:"name,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Phone    string `json:"phone,omitempty"`
 }
 
 type AddUserRequest struct {

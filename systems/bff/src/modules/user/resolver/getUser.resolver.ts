@@ -1,22 +1,22 @@
-import { Resolver, Arg, Query, UseMiddleware, Ctx } from "type-graphql";
+import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { UserService } from "../service";
-import { GetUserDto } from "../types";
-import { Authentication } from "../../../common/Authentication";
 import { parseCookie } from "../../../common";
+import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
+import { UserService } from "../service";
+import { UserResDto } from "../types";
 
 @Service()
 @Resolver()
 export class GetUserResolver {
     constructor(private readonly userService: UserService) {}
 
-    @Query(() => GetUserDto)
+    @Query(() => UserResDto)
     @UseMiddleware(Authentication)
     async getUser(
         @Arg("userId") userId: string,
-        @Ctx() ctx: Context
-    ): Promise<GetUserDto | null> {
+        @Ctx() ctx: Context,
+    ): Promise<UserResDto | null> {
         return this.userService.getUser(userId, parseCookie(ctx));
     }
 }

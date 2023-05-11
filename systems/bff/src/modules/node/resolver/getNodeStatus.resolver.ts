@@ -15,7 +15,7 @@ export class GetNodeStatusResolver {
     @UseMiddleware(Authentication)
     async getNodeStatus(
         @Arg("data") data: GetNodeStatusInput,
-        @Ctx() ctx: Context
+        @Ctx() ctx: Context,
     ): Promise<GetNodeStatusRes> {
         return this.nodeService.getNodeStatus(data, parseCookie(ctx));
     }
