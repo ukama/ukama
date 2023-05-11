@@ -39,6 +39,7 @@ func initializeData() {
 	NodeId = ukama.NewVirtualHomeNodeId()
 }
 
+
 func TestWorkflow_1(t *testing.T) {
 	host := "http://localhost:8071"
 	init := NewInitSys(host)
