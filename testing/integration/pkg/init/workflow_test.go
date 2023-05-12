@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/ukama"
 	api "github.com/ukama/ukama/systems/init/api-gateway/pkg/rest"
-	"github.com/ukama/ukama/testing/integration/pkg/util"
+	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
 
 var OrgName string
@@ -27,15 +27,15 @@ func init() {
 
 func initializeData() {
 	OrgName = strings.ToLower(faker.FirstName()) + "_org"
-	OrgIP = util.RandomIPv4()
+	OrgIP = utils.RandomIPv4()
 	log.Info(OrgIP)
-	OrgCerts = util.RandomBase64String(2048)
+	OrgCerts = utils.RandomBase64String(2048)
 	SysName = strings.ToLower(faker.FirstName()) + "_sys"
-	SysIP = util.RandomIPv4()
-	SysCerts = util.RandomBase64String(2048)
-	SysPort = int32(util.RandomPort())
-	NodeIP = util.RandomIPv4()
-	NodeCerts = util.RandomBase64String(2048)
+	SysIP = utils.RandomIPv4()
+	SysCerts = utils.RandomBase64String(2048)
+	SysPort = int32(utils.RandomPort())
+	NodeIP = utils.RandomIPv4()
+	NodeCerts = utils.RandomBase64String(2048)
 	NodeId = ukama.NewVirtualHomeNodeId()
 }
 
@@ -72,12 +72,13 @@ func TestWorkflow_1(t *testing.T) {
 		SysName: SysName,
 	}
 
+	w := utils.SetupWatcher([]string{""})
 	resp, err := init.InitAddOrg(reqAddOrg)
 	assert.NoError(t, err)
 	log.Infof("Expected: \n %v \n Actual: %v\n", reqAddOrg, resp)
 	if assert.NotNil(t, resp) {
 		assert.Equal(t, OrgName, resp.OrgName)
-		assert.Equal(t, OrgIP, util.IPv4CIDRToStringNotation(resp.Ip))
+		assert.Equal(t, OrgIP, utils.IPv4CIDRToStringNotation(resp.Ip))
 		assert.Equal(t, OrgCerts, resp.Certificate)
 	}
 
@@ -117,4 +118,5 @@ func TestWorkflow_1(t *testing.T) {
 		assert.Equal(t, OrgName, gNresp.OrgName)
 	}
 
+	assert.Equal(t, true, w.Expections())
 }

@@ -7,20 +7,20 @@ import (
 	log "github.com/sirupsen/logrus"
 	api "github.com/ukama/ukama/systems/init/api-gateway/pkg/rest"
 	lpb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
-	"github.com/ukama/ukama/testing/integration/pkg/util"
+	"github.com/ukama/ukama/testing/integration/pkg/utils"
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
 type InitSys struct {
 	u *url.URL
-	r util.Resty
+	r utils.Resty
 }
 
 func NewInitSys(h string) *InitSys {
 	u, _ := url.Parse(h)
 	return &InitSys{
 		u: u,
-		r: *util.NewResty(),
+		r: *utils.NewResty(),
 	}
 
 }

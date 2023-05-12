@@ -3,6 +3,7 @@ package msgbus
 import (
 	"encoding/json"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/wagslane/go-rabbitmq"
 	"google.golang.org/protobuf/proto"
 )
@@ -17,18 +18,32 @@ type QPub interface {
 // QPub is a simplified AMQP client that publishes messages to a default exchange
 // Client reconnect in case of connection loss.
 type qPub struct {
+	conn        *rabbitmq.Conn
 	publisher   *rabbitmq.Publisher
 	serviceName string
 	instanceId  string
 }
 
 func NewQPub(queueUri string, serviceName string, instanceId string) (*qPub, error) {
-	publisher, err := rabbitmq.NewPublisher(queueUri, rabbitmq.Config{})
+	conn, err := rabbitmq.NewConn(
+		queueUri,
+		rabbitmq.WithConnectionOptionsLogging,
+	)
+	if err != nil {
+		log.Infof("Error creating publisher %s.", err.Error())
+		return nil, err
+	}
+
+	publisher, err := rabbitmq.NewPublisher(conn,
+		rabbitmq.WithPublisherOptionsLogging,
+		rabbitmq.WithPublisherOptionsExchangeDeclare,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &qPub{
+		conn:        conn,
 		publisher:   publisher,
 		serviceName: serviceName,
 		instanceId:  instanceId,
@@ -79,7 +94,8 @@ func (q *qPub) PublishProto(payload proto.Message, routingKey string) error {
 }
 
 func (q *qPub) Close() error {
-	return q.publisher.Close()
+	q.conn.Close()
+	return nil
 }
 
 func (q *qPub) PublishToQueue(queueName string, payload any) error {
