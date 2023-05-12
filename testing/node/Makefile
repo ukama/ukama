@@ -64,7 +64,7 @@ sourcetgz: $(TARGET_EXEC)
 
 container:  sourcetgz
 	@echo Building container
-	buildah bud -f . -t testing/virtualnode:${VERSION}
+	buildah bud -t testing/virtualnode:${VERSION} -f Dockerfile .
 
 all: $(TARGET_EXEC)
 

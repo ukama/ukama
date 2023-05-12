@@ -4,8 +4,6 @@
 
 # Script to create ukama's virtual node.
 
-set -x
-
 # Base parameters
 #UKAMA_OS=`realpath ../../nodes/ukamaOS`
 NODED_ROOT=
