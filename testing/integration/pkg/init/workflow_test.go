@@ -40,6 +40,9 @@ func initializeData() {
 }
 
 func TestWorkflow_1(t *testing.T) {
+
+	log.SetLevel(log.DebugLevel)
+	log.Infof("Starting test.")
 	host := "http://localhost:8071"
 	init := NewInitSys(host)
 
@@ -72,7 +75,7 @@ func TestWorkflow_1(t *testing.T) {
 		SysName: SysName,
 	}
 
-	w := utils.SetupWatcher([]string{""})
+	w := utils.SetupWatcher([]string{"event.cloud.lookup.organization.create", "event.cloud.lookup.node.create", "event.cloud.lookup.system.create"})
 	resp, err := init.InitAddOrg(reqAddOrg)
 	assert.NoError(t, err)
 	log.Infof("Expected: \n %v \n Actual: %v\n", reqAddOrg, resp)
