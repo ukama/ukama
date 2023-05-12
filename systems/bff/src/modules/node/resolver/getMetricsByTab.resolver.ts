@@ -28,13 +28,13 @@ export class GetMetricsByTabResolver {
     async getMetricsByTab(
         @Ctx() ctx: Context,
         @PubSub() pubsub: PubSubEngine,
-        @Arg("data") data: MetricsByTabInputDTO,
+        @Arg("data") data: MetricsByTabInputDTO
     ): Promise<GetMetricsRes | null> {
         const metricsEndpoints = getMetricsByTab(data.nodeType, data.tab);
         const response = await this.nodeService.getMultipleMetrics(
             data,
             parseCookie(ctx),
-            metricsEndpoints,
+            metricsEndpoints
         );
 
         let next = false;
@@ -46,7 +46,7 @@ export class GetMetricsByTabResolver {
                 workerData,
             });
             worker.on("message", (data: any) =>
-                pubsub.publish("metricsByTab", data.metric),
+                pubsub.publish("metricsByTab", data.metric)
             );
             worker.on("exit", (code: any) => {
                 logger.info("Thread exited", code);

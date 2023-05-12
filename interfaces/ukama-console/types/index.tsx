@@ -111,3 +111,18 @@ export type TObject = { [key: string]: boolean | string | number };
 export type TMetric = {
   [key: string]: { name: string; data: MetricDto[] } | null;
 };
+
+export type TUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  isFirstVisit: boolean;
+};
+
+export type TSnackMessage = {
+  id: string;
+  message: string;
+  type: string;
+  show: boolean;
+};

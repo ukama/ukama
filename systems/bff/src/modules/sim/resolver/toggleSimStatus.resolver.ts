@@ -15,7 +15,7 @@ export class ToggleSimStatusResolver {
     @UseMiddleware(Authentication)
     async toggleSimStatus(
         @Arg("data") data: ToggleSimStatusInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SimStatusResDto> {
         return await this.simService.toggleSimStatus(data, parseCookie(ctx));
     }

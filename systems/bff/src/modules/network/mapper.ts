@@ -66,7 +66,7 @@ class NetworkMapper implements INetworkMapper {
     }
     dtoToDto = (
         totalNodes: number,
-        liveNodes: MetricLatestValueRes,
+        liveNodes: MetricLatestValueRes
     ): NetworkStatusDto => {
         let _liveNodes = 0;
         let status = NETWORK_STATUS.UNDEFINED;

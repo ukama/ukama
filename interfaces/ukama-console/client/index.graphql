@@ -1,388 +1,379 @@
-query getDataUsage($filter: TIME_FILTER!) {
-    getDataUsage(filter: $filter) {
-        id
-        dataConsumed
-        dataPackage
-    }
-}
+# query getDataUsage($filter: TIME_FILTER!) {
+#   getDataUsage(filter: $filter) {
+#     id
+#     dataConsumed
+#     dataPackage
+#   }
+# }
 
-subscription getLatestDataUsage {
-    getDataUsage {
-        id
-        dataConsumed
-        dataPackage
-    }
-}
+# subscription getLatestDataUsage {
+#   getDataUsage {
+#     id
+#     dataConsumed
+#     dataPackage
+#   }
+# }
 
-query getConnectedUsers($filter: TIME_FILTER!) {
-    getConnectedUsers(filter: $filter) {
-        totalUser
-    }
-}
+# query getConnectedUsers($filter: TIME_FILTER!) {
+#   getConnectedUsers(filter: $filter) {
+#     totalUser
+#   }
+# }
 
-subscription getLatestConnectedUsers {
-    getConnectedUsers {
-        totalUser
-    }
-}
+# subscription getLatestConnectedUsers {
+#   getConnectedUsers {
+#     totalUser
+#   }
+# }
 
-subscription getLatestDataBill {
-    getDataBill {
-        id
-        dataBill
-        billDue
-    }
-}
-query getBillHistory {
-    getBillHistory {
-        id
-        date
-        description
-        totalUsage
-        subtotal
-    }
-}
-query getCurrentBill {
-    getCurrentBill {
-        bill {
-            id
-            name
-            dataUsed
-            rate
-            subtotal
-        }
-        total
-        billMonth
-        dueDate
-    }
-}
-query getAlerts($data: PaginationDto!) {
-    getAlerts(data: $data) {
-        meta {
-            count
-            page
-            size
-            pages
-        }
-        alerts {
-            id
-            type
-            title
-            description
-            alertDate
-        }
-    }
-}
-query getEsimQR($data: GetESimQRCodeInput!) {
-    getEsimQR(data: $data) {
-        qrCode
-    }
-}
+# subscription getLatestDataBill {
+#   getDataBill {
+#     id
+#     dataBill
+#     billDue
+#   }
+# }
+# query getBillHistory {
+#   getBillHistory {
+#     id
+#     date
+#     description
+#     totalUsage
+#     subtotal
+#   }
+# }
+# query getCurrentBill {
+#   getCurrentBill {
+#     bill {
+#       id
+#       name
+#       dataUsed
+#       rate
+#       subtotal
+#     }
+#     total
+#     billMonth
+#     dueDate
+#   }
+# }
+# query getAlerts($data: PaginationDto!) {
+#   getAlerts(data: $data) {
+#     meta {
+#       count
+#       page
+#       size
+#       pages
+#     }
+#     alerts {
+#       id
+#       type
+#       title
+#       description
+#       alertDate
+#     }
+#   }
+# }
+# query getEsimQR($data: GetESimQRCodeInput!) {
+#   getEsimQR(data: $data) {
+#     qrCode
+#   }
+# }
 
-subscription getLatestAlerts {
-    getAlerts {
-        id
-        type
-        title
-        description
-        alertDate
-    }
-}
+# subscription getLatestAlerts {
+#   getAlerts {
+#     id
+#     type
+#     title
+#     description
+#     alertDate
+#   }
+# }
+# query getNodeAppsVersionLogs {
+#   getNodeAppsVersionLogs {
+#     version
+#     date
+#     notes
+#   }
+# }
+# query getNodeApps {
+#   getNodeApps {
+#     id
+#     title
+#     version
+#     cpu
+#     memory
+#   }
+# }
+# query getUsersByOrg {
+#   getUsersByOrg {
+#     id
+#     name
+#     email
+#     dataPlan
+#     dataUsage
+#   }
+# }
+# query getUser($userId: String!) {
+#   getUser(userId: $userId) {
+#     id
+#     status
+#     name
+#     eSimNumber
+#     iccid
+#     email
+#     roaming
+#     dataPlan
+#     dataUsage
+#   }
+# }
 
-query getNodesByOrg {
-    getNodesByOrg {
-        orgId
-        nodes {
-            id
-            status
-            name
-            type
-            description
-            totalUser
-            isUpdateAvailable
-            updateVersion
-            updateShortNote
-            updateDescription
-        }
-        activeNodes
-        totalNodes
-    }
-}
-query getNodeAppsVersionLogs {
-    getNodeAppsVersionLogs {
-        version
-        date
-        notes
-    }
-}
-query getNodeApps {
-    getNodeApps {
-        id
-        title
-        version
-        cpu
-        memory
-    }
-}
-query getUsersByOrg {
-    getUsersByOrg {
-        id
-        name
-        email
-        dataPlan
-        dataUsage
-    }
-}
-query getUser($userId: String!) {
-    getUser(userId: $userId) {
-        id
-        status
-        name
-        eSimNumber
-        iccid
-        email
-        roaming
-        dataPlan
-        dataUsage
-    }
-}
+# query getNetworkStatus {
+#   getNetworkStatus {
+#     totalNodes
+#     liveNode
+#     status
+#   }
+# }
 
-query getNetworkStatus {
-    getNetworkStatus {
-        totalNodes
-        liveNode
-        status
-    }
-}
+# subscription getNetworkStatusS {
+#   getNetworkStatus {
+#     totalNodes
+#     liveNode
+#     status
+#   }
+# }
 
-subscription getNetworkStatusS {
-    getNetworkStatus {
-        totalNodes
-        liveNode
-        status
-    }
-}
+# mutation deactivateUser($id: String!) {
+#   deactivateUser(id: $id) {
+#     uuid
+#     name
+#     email
+#     isDeactivated
+#   }
+# }
+# mutation addUser($data: UserInputDto!) {
+#   addUser(data: $data) {
+#     name
+#     email
+#     iccid
+#     id
+#   }
+# }
+# mutation updateFirstVisit($data: UserFistVisitInputDto!) {
+#   updateFirstVisit(data: $data) {
+#     firstVisit
+#   }
+# }
 
-mutation deactivateUser($id: String!) {
-    deactivateUser(id: $id) {
-        uuid
-        name
-        email
-        isDeactivated
-    }
-}
-mutation addUser($data: UserInputDto!) {
-    addUser(data: $data) {
-        name
-        email
-        iccid
-        id
-    }
-}
-mutation updateFirstVisit($data: UserFistVisitInputDto!) {
-    updateFirstVisit(data: $data) {
-        firstVisit
-    }
-}
+# mutation deleteNode($id: String!) {
+#   deleteNode(id: $id) {
+#     nodeId
+#   }
+# }
 
-mutation deleteNode($id: String!) {
-    deleteNode(id: $id) {
-        nodeId
-    }
-}
+# mutation updateUser($userId: String!, $data: UserInputDto!) {
+#   updateUser(data: $data, userId: $userId) {
+#     name
+#     email
+#     iccid
+#     id
+#   }
+# }
+# mutation addNode($data: AddNodeDto!) {
+#   addNode(data: $data) {
+#     success
+#   }
+# }
+# mutation updateNode($data: UpdateNodeDto!) {
+#   updateNode(data: $data) {
+#     nodeId
+#     state
+#     type
+#     name
+#   }
+# }
 
-mutation updateUser($userId: String!, $data: UserInputDto!) {
-    updateUser(data: $data, userId: $userId) {
-        name
-        email
-        iccid
-        id
-    }
-}
-mutation addNode($data: AddNodeDto!) {
-    addNode(data: $data) {
-        success
-    }
-}
-mutation updateNode($data: UpdateNodeDto!) {
-    updateNode(data: $data) {
-        nodeId
-        state
-        type
-        name
-    }
-}
+# query getDataBill($data: DATA_BILL_FILTER!) {
+#   getDataBill(filter: $data) {
+#     id
+#     dataBill
+#     billDue
+#   }
+# }
+# query getMetricsByTab($data: MetricsByTabInputDTO!) {
+#   getMetricsByTab(data: $data) {
+#     to
+#     next
+#     metrics {
+#       type
+#       name
+#       next
+#       data {
+#         y
+#         x
+#       }
+#     }
+#   }
+# }
 
-query getDataBill($data: DATA_BILL_FILTER!) {
-    getDataBill(filter: $data) {
-        id
-        dataBill
-        billDue
-    }
-}
-query getMetricsByTab($data: MetricsByTabInputDTO!) {
-    getMetricsByTab(data: $data) {
-        to
-        next
-        metrics {
-            type
-            name
-            next
-            data {
-                y
-                x
-            }
-        }
-    }
-}
+# subscription getMetricsByTabS {
+#   getMetricsByTab {
+#     type
+#     name
+#     next
+#     data {
+#       x
+#       y
+#     }
+#   }
+# }
 
-subscription getMetricsByTabS {
-    getMetricsByTab {
-        type
-        name
-        next
-        data {
-            x
-            y
-        }
-    }
-}
+# mutation updateUserStatus($data: UpdateUserServiceInput!) {
+#   updateUserStatus(data: $data) {
+#     iccid
+#     isPhysical
+#     ukama {
+#       status
+#       services {
+#         voice
+#         data
+#         sms
+#       }
+#     }
+#     carrier {
+#       status
+#       services {
+#         voice
+#         data
+#         sms
+#       }
+#     }
+#   }
+# }
 
-mutation updateUserStatus($data: UpdateUserServiceInput!) {
-    updateUserStatus(data: $data) {
-        iccid
-        isPhysical
-        ukama {
-            status
-            services {
-                voice
-                data
-                sms
-            }
-        }
-        carrier {
-            status
-            services {
-                voice
-                data
-                sms
-            }
-        }
-    }
-}
+# query getNode($nodeId: String!) {
+#   getNode(nodeId: $nodeId) {
+#     nodeId
+#     type
+#     state
+#     name
+#     attached {
+#       nodeId
+#       type
+#       state
+#       name
+#     }
+#   }
+# }
 
-query getNode($nodeId: String!) {
-    getNode(nodeId: $nodeId) {
-        nodeId
-        type
-        state
-        name
-        attached {
-            nodeId
-            type
-            state
-            name
-        }
-    }
-}
+# query getUsersDataUsage($data: DataUsageInputDto!) {
+#   getUsersDataUsage(data: $data) {
+#     id
+#     name
+#     email
+#     dataPlan
+#     dataUsage
+#   }
+# }
 
-query getUsersDataUsage($data: DataUsageInputDto!) {
-    getUsersDataUsage(data: $data) {
-        id
-        name
-        email
-        dataPlan
-        dataUsage
-    }
-}
+# subscription getUsersDataUsageS {
+#   getUsersDataUsage {
+#     id
+#     name
+#     email
+#     dataPlan
+#     dataUsage
+#   }
+# }
 
-subscription getUsersDataUsageS {
-    getUsersDataUsage {
-        id
-        name
-        email
-        dataPlan
-        dataUsage
-    }
-}
+# query getNode($nodeId: String!) {
+#   getNode(nodeId: $nodeId) {
+#     nodeId
+#     type
+#     state
+#     name
+#     attached {
+#       nodeId
+#       type
+#       state
+#       name
+#     }
+#   }
+# }
+# query getAccountDetails {
+#   getAccountDetails {
+#     email
+#     isFirstVisit
+#   }
+# }
 
-query getNode($nodeId: String!) {
-    getNode(nodeId: $nodeId) {
-        nodeId
-        type
-        state
-        name
-        attached {
-            nodeId
-            type
-            state
-            name
-        }
-    }
-}
-query getAccountDetails {
-    getAccountDetails {
-        email
-        isFirstVisit
-    }
-}
+# query getNodeStatus($data: GetNodeStatusInput!) {
+#   getNodeStatus(data: $data) {
+#     uptime
+#     status
+#   }
+# }
 
-query getNodeStatus($data: GetNodeStatusInput!) {
-    getNodeStatus(data: $data) {
-        uptime
-        status
-    }
-}
+# mutation updateUserRoaming($data: UpdateUserServiceInput!) {
+#   updateUserRoaming(data: $data) {
+#     iccid
+#     isPhysical
+#     ukama {
+#       status
+#       services {
+#         data
+#       }
+#     }
+#     carrier {
+#       services {
+#         data
+#       }
+#     }
+#   }
+# }
 
-mutation updateUserRoaming($data: UpdateUserServiceInput!) {
-    updateUserRoaming(data: $data) {
-        iccid
-        isPhysical
-        ukama {
-            status
-            services {
-                data
-            }
-        }
-        carrier {
-            services {
-                data
-            }
-        }
-    }
-}
+# query GetStripeCustomer {
+#   getStripeCustomer {
+#     id
+#     name
+#     email
+#   }
+# }
 
-query GetStripeCustomer {
-    getStripeCustomer {
-        id
-        name
-        email
-    }
-}
+# mutation CreateCustomer($name: String!, $email: String!) {
+#   createCustomer(data: { name: $name, email: $email }) {
+#     id
+#     name
+#     email
+#   }
+# }
 
-mutation CreateCustomer($name: String!, $email: String!) {
-    createCustomer(data: { name: $name, email: $email }) {
-        id
-        name
-        email
-    }
-}
+# mutation AttachPaymentWithCustomer($paymentId: String!) {
+#   attachPaymentWithCustomer(paymentId: $paymentId)
+# }
 
-mutation AttachPaymentWithCustomer($paymentId: String!) {
-    attachPaymentWithCustomer(paymentId: $paymentId)
-}
+# query RetrivePaymentMethods {
+#   retrivePaymentMethods {
+#     id
+#     brand
+#     cvc_check
+#     country
+#     exp_month
+#     exp_year
+#     funding
+#     last4
+#     type
+#     created
+#   }
+# }
 
-query RetrivePaymentMethods {
-    retrivePaymentMethods {
-        id
-        brand
-        cvc_check
-        country
-        exp_month
-        exp_year
-        funding
-        last4
-        type
-        created
-    }
+# API's V2
+query Whoami {
+  whoami {
+    id
+    name
+    email
+    role
+    isFirstVisit
+  }
 }

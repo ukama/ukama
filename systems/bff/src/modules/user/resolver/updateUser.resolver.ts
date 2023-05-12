@@ -16,7 +16,7 @@ export class UpdateUserResolver {
     async updateUser(
         @Arg("userId") userId: string,
         @Arg("data") data: UpdateUserInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<UserResDto | null> {
         return this.userService.updateUser(userId, data, parseCookie(ctx));
     }

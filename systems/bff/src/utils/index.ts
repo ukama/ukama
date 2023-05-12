@@ -1,11 +1,11 @@
 import { Meta } from "../common/types";
 import { GRAPHS_TAB, GRAPH_FILTER, NODE_TYPE } from "../constants";
-import { AddNodeDto, NodeObj, LinkNodes } from "../modules/node/types";
+import { AddNodeDto, LinkNodes, NodeObj } from "../modules/node/types";
 
 export const getPaginatedOutput = (
     page: number,
     pageSize: number,
-    count: number,
+    count: number
 ): Meta => {
     return {
         count,
@@ -19,7 +19,7 @@ export const getUniqueTimeStamp = (index?: number, length?: number): number =>
     new Date().valueOf() - (length ? length - 1000 * (index || 1) : 0);
 
 export const getRecordsLengthByFilter = (
-    filter: string | undefined,
+    filter: string | undefined
 ): number => {
     switch (filter) {
         case GRAPH_FILTER.WEEK:
@@ -36,7 +36,7 @@ export const oneSecSleep = (t = 1000): any =>
 
 export const getMetricsByTab = (
     nodeType: NODE_TYPE,
-    tabType: GRAPHS_TAB,
+    tabType: GRAPHS_TAB
 ): string[] => {
     switch (tabType) {
         case GRAPHS_TAB.OVERVIEW:

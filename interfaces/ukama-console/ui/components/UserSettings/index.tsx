@@ -40,9 +40,9 @@ const UserSettings = () => {
   const handleAccountSettings = () => {
     typeof window !== 'undefined' &&
       window.location.replace(
-        `${process.env.REACT_APP_AUTH_URL}/userAccountSettings?mode=${
-          _isDarkMod ? 1 : 0
-        }`,
+        `${
+          process.env.NEXT_PUBLIC_REACT_APP_API_SOCKET
+        }/userAccountSettings?mode=${_isDarkMod ? 1 : 0}`,
       );
   };
 

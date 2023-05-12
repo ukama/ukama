@@ -1,12 +1,12 @@
 import Stripe from "stripe";
+import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { STRIP_SK } from "../../../constants";
 import { parseCookie } from "../../../common";
-import { StripePaymentMethods } from "../types";
-import { Context } from "../../../common/types";
-import { getStripeIdByUserId } from "../../../utils";
 import { Authentication } from "../../../common/Authentication";
-import { Resolver, Query, UseMiddleware, Ctx } from "type-graphql";
+import { Context } from "../../../common/types";
+import { STRIP_SK } from "../../../constants";
+import { getStripeIdByUserId } from "../../../utils";
+import { StripePaymentMethods } from "../types";
 
 @Service()
 @Resolver()
@@ -14,7 +14,7 @@ export class RetrivePaymentMethodsResolver {
     @Query(() => [StripePaymentMethods])
     @UseMiddleware(Authentication)
     async retrivePaymentMethods(
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<StripePaymentMethods[]> {
         const stripe = new Stripe(STRIP_SK, {
             typescript: true,
@@ -25,7 +25,7 @@ export class RetrivePaymentMethodsResolver {
                 getStripeIdByUserId(parseCookie(ctx).orgId),
                 {
                     type: "card",
-                },
+                }
             );
         const list: StripePaymentMethods[] = [];
         for (const ele of pm.data) {
@@ -37,7 +37,7 @@ export class RetrivePaymentMethodsResolver {
                     brand: ele.card?.brand
                         .toLowerCase()
                         .replace(/\w/, firstLetter =>
-                            firstLetter.toUpperCase(),
+                            firstLetter.toUpperCase()
                         ),
                     last4: ele.card?.last4,
                     funding: ele.card?.funding,

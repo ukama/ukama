@@ -16,7 +16,7 @@ import { GetUserDto } from "../../modules/user/types";
 function randomArray<T>(
     minLength: number,
     maxLength: number,
-    elementGenerator: (index?: number, length?: number) => T,
+    elementGenerator: (index?: number, length?: number) => T
 ): T[] {
     const length = casual.integer(minLength, maxLength);
     const result = [];
@@ -74,7 +74,7 @@ const esim = (): EsimDto => {
     };
     return {
         esim: `# ${defaultCasual.integer(11111, 99999)}-${defaultCasual.date(
-            "DD-MM-YYYY",
+            "DD-MM-YYYY"
         )}-${defaultCasual.integer(1111111, 9999999)}`,
         active: defaultCasual.random_value(boolean),
     };
@@ -136,7 +136,7 @@ interface Generators extends Casual.Generators {
     _randomArray: <T>(
         minLength: number,
         maxLength: number,
-        elementGenerator: (index?: number) => T,
+        elementGenerator: (index?: number) => T
     ) => Array<T>;
 
     _dataUsage: () => DataUsageDto;
@@ -157,7 +157,7 @@ interface Functions extends Casual.functions {
     randomArray: <T>(
         minLength: number,
         maxLength: number,
-        elementGenerator: (index?: number) => T,
+        elementGenerator: (index?: number) => T
     ) => Array<T>;
     dataUsage: () => DataUsageDto;
     dataBill: () => DataBillDto;

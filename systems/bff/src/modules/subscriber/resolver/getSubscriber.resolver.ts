@@ -15,11 +15,11 @@ export class GetSubscriberResolver {
     @UseMiddleware(Authentication)
     async getSubscriber(
         @Arg("subscriberId") subscriberId: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SubscriberDto> {
         return await this.userService.getSubscriber(
             subscriberId,
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
     }
 }

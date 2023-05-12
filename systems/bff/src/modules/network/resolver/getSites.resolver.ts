@@ -15,7 +15,7 @@ export class GetSitesResolver {
     @UseMiddleware(Authentication)
     async getSites(
         @Arg("networkId") networkId: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SitesResDto> {
         return this.networkService.getSites(networkId, parseCookie(ctx));
     }

@@ -15,11 +15,11 @@ export class GetSimBySubscriberResolver {
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: GetSimBySubscriberIdInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SimDetailsDto> {
         return await this.simService.getSimBySubscriberId(
             data,
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
     }
 }

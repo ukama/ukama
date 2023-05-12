@@ -16,7 +16,7 @@ export class GetSiteResolver {
     async getSite(
         @Arg("networkId") networkId: string,
         @Arg("siteId") siteId: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SiteDto> {
         return this.networkService.getSite(networkId, siteId, parseCookie(ctx));
     }

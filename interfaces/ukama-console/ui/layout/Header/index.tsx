@@ -1,15 +1,9 @@
 import { isSkeltonLoading, pageName, user } from '@/app-recoil';
-import {
-  GetLatestAlertsDocument,
-  GetLatestAlertsSubscription,
-  useGetAlertsQuery,
-} from '@/generated';
 import { Doc } from '@/public/svg';
 import { routes } from '@/router/config';
 import { RoundedCard } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { Alerts, LoadingWrapper } from '@/ui/components';
-import { cloneDeep } from '@apollo/client/utilities';
+import { LoadingWrapper } from '@/ui/components';
 import { AccountCircle, Notifications, Settings } from '@mui/icons-material';
 import ExitToAppOutlined from '@mui/icons-material/ExitToAppOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -26,7 +20,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useRouter } from 'next/router';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
 
 const popupStyle = {
@@ -83,34 +77,34 @@ const Header = ({
     router.push(routes.Settings.path);
   };
 
-  const { data: alertsInfoRes, subscribeToMore: subscribeToLatestAlerts } =
-    useGetAlertsQuery({
-      variables: {
-        data: {
-          pageNo: 1,
-          pageSize: 50,
-        },
-      },
-    });
+  // const { data: alertsInfoRes, subscribeToMore: subscribeToLatestAlerts } =
+  //   useGetAlertsQuery({
+  //     variables: {
+  //       data: {
+  //         pageNo: 1,
+  //         pageSize: 50,
+  //       },
+  //     },
+  //   });
 
-  const alertSubscription = () =>
-    subscribeToLatestAlerts<GetLatestAlertsSubscription>({
-      document: GetLatestAlertsDocument,
-      updateQuery: (prev, { subscriptionData }) => {
-        let data = cloneDeep(prev);
-        const latestAlert = subscriptionData.data.getAlerts;
-        if (latestAlert.__typename === 'AlertDto')
-          data.getAlerts.alerts = [latestAlert, ...data.getAlerts.alerts];
-        return data;
-      },
-    });
+  // const alertSubscription = () =>
+  //   subscribeToLatestAlerts<GetLatestAlertsSubscription>({
+  //     document: GetLatestAlertsDocument,
+  //     updateQuery: (prev, { subscriptionData }) => {
+  //       let data = cloneDeep(prev);
+  //       const latestAlert = subscriptionData.data.getAlerts;
+  //       if (latestAlert.__typename === 'AlertDto')
+  //         data.getAlerts.alerts = [latestAlert, ...data.getAlerts.alerts];
+  //       return data;
+  //     },
+  //   });
 
-  useEffect(() => {
-    let unsub = alertSubscription();
-    return () => {
-      unsub && unsub();
-    };
-  }, [alertsInfoRes]);
+  // useEffect(() => {
+  //   let unsub = alertSubscription();
+  //   return () => {
+  //     unsub && unsub();
+  //   };
+  // }, [alertsInfoRes]);
 
   const handleLogout = () => {
     handleUserClose();
@@ -118,7 +112,9 @@ const Header = ({
     resetPageName();
     setSkeltonLoading(true);
     typeof window !== 'undefined' &&
-      window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
+      window.location.replace(
+        `${process.env.NEXT_PUBLIC_REACT_APP_API_SOCKET}/logout`,
+      );
   };
   return (
     <Box component="div">
@@ -145,7 +141,7 @@ const Header = ({
           <Typography variant="h6" sx={{ mb: '14px' }}>
             Alerts
           </Typography>
-          <Alerts alertOptions={alertsInfoRes?.getAlerts?.alerts} />
+          {/* <Alerts alertOptions={} /> */}
         </RoundedCard>
       </Popover>
       <Popover
@@ -278,7 +274,7 @@ const Header = ({
                 onClick={handleNotificationClick}
               >
                 <Badge
-                  badgeContent={alertsInfoRes?.getAlerts?.alerts.length}
+                  badgeContent={'2'}
                   sx={{
                     '& .MuiBadge-badge': {
                       color: 'inherit',

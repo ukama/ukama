@@ -15,7 +15,7 @@ export class AddPackageResolver {
     @UseMiddleware(Authentication)
     async addPackage(
         @Arg("data") data: AddPackageInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<PackageDto> {
         return this.packageService.addPackage(data, parseCookie(ctx));
     }

@@ -76,7 +76,7 @@ export class OrgService implements IOrgService {
     };
     addOrg = async (
         req: AddOrgInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<OrgDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
@@ -91,7 +91,7 @@ export class OrgService implements IOrgService {
     };
     addMember = async (
         userId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<MemberObj> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
@@ -107,7 +107,7 @@ export class OrgService implements IOrgService {
     updateMember = async (
         memberId: string,
         req: UpdateMemberInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<BoolResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,

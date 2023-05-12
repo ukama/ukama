@@ -15,7 +15,7 @@ export class AddUserResolver {
     @UseMiddleware(Authentication)
     async addUser(
         @Arg("data") data: UserInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<UserResDto> {
         const user = await this.userService.addUser(data, parseCookie(ctx));
         return user;

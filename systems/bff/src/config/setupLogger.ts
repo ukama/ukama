@@ -1,4 +1,4 @@
-import { format, transports, createLogger, Logger } from "winston";
+import { Logger, createLogger, format, transports } from "winston";
 const { combine, timestamp, errors, label, printf, splat, colorize } = format;
 
 // Handles pretty printing objects passed to logger rather than `[object Object]
@@ -64,7 +64,7 @@ const setupLogger = (sourceLabel: string): Logger => {
                     timestamp(),
                     errors({ stack: true }),
                     splat(),
-                    customFormat,
+                    customFormat
                 ),
             }),
         ],
@@ -74,7 +74,7 @@ const setupLogger = (sourceLabel: string): Logger => {
             timestamp(),
             errors({ stack: true }),
             splat(),
-            customFormat,
+            customFormat
         ),
         exitOnError: false,
         exceptionHandlers: [
@@ -86,7 +86,7 @@ const setupLogger = (sourceLabel: string): Logger => {
                     timestamp(),
                     errors({ stack: true }),
                     splat(),
-                    customFormat,
+                    customFormat
                 ),
             }),
         ],

@@ -15,7 +15,7 @@ export class DefaultMarkupResolver {
     @UseMiddleware(Authentication)
     async defaultMarkup(
         @Arg("data") data: DefaultMarkupInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<BoolResponse> {
         return this.rateService.defaultMarkup(data, parseCookie(ctx));
     }

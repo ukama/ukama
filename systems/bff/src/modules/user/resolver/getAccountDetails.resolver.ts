@@ -14,7 +14,7 @@ export class GetAccountDetailsResolver {
     @Query(() => GetAccountDetailsDto)
     @UseMiddleware(Authentication)
     async getAccountDetails(
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<GetAccountDetailsDto | null> {
         return this.userService.getAccountDetails(parseCookie(ctx));
     }

@@ -9,7 +9,7 @@ export class ConnectedUsersSubscriptionResolver {
         topics: "getConnectedUsers",
     })
     async getConnectedUsers(
-        @Root() user: ConnectedUserDto,
+        @Root() user: ConnectedUserDto
     ): Promise<ConnectedUserDto> {
         return user;
     }

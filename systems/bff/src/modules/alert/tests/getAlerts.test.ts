@@ -28,7 +28,7 @@ describe("Get Alerts", () => {
     beforeEachGetCall(
         "/alert/get_alerts?pageNo=2&pageSize=3",
         nockResponse,
-        200,
+        200
     );
     it("get alerts", async () => {
         const response = await gCall({

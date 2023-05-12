@@ -1,9 +1,10 @@
+/* eslint-disable prettier/prettier */
 import { Service } from "typedi";
 import { catchAsyncIOMethod } from "../../common";
 import { BoolResponse, ParsedCookie } from "../../common/types";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
-import { checkError, HTTP404Error, Messages } from "../../errors";
+import { HTTP404Error, Messages, checkError } from "../../errors";
 import { IUserService } from "./interface";
 import UserMapper from "./mapper";
 import {
@@ -18,12 +19,13 @@ import {
     UserFistVisitResDto,
     UserInputDto,
     UserResDto,
+    WhoamiDto,
 } from "./types";
 
 @Service()
 export class UserService implements IUserService {
     getConnectedUsers = async (
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<ConnectedUserDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -32,7 +34,7 @@ export class UserService implements IUserService {
         });
         if (checkError(res)) throw new Error(res.message);
         const connectedUsers = UserMapper.connectedUsersDtoToDto(
-            res.data.result,
+            res.data.result
         );
 
         if (!connectedUsers) throw new HTTP404Error(Messages.USERS_NOT_FOUND);
@@ -42,7 +44,7 @@ export class UserService implements IUserService {
     updateUser = async (
         userId: string,
         req: UpdateUserInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -55,7 +57,7 @@ export class UserService implements IUserService {
     };
     deactivateUser = async (
         userId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,
@@ -68,7 +70,7 @@ export class UserService implements IUserService {
     };
     getUser = async (
         userId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -79,8 +81,18 @@ export class UserService implements IUserService {
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return UserMapper.dtoToUserResDto(res);
     };
+    whoami = async (cookie: ParsedCookie): Promise<WhoamiDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.AUTH_API_URL}/whoami`,
+            headers: cookie.header,
+        });
+        if (checkError(res)) throw new Error(res.message);
+        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
+        return UserMapper.dtoToWhoamiResDto(res);
+    };
     getAccountDetails = async (
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<GetAccountDetailsDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -100,7 +112,7 @@ export class UserService implements IUserService {
     };
     addUser = async (
         req: UserInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
@@ -113,7 +125,7 @@ export class UserService implements IUserService {
     };
     updateFirstVisit = async (
         req: UserFistVisitInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<UserFistVisitResDto> => {
         const getUser = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -141,7 +153,7 @@ export class UserService implements IUserService {
     };
     deleteUser = async (
         userId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<BoolResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.DELETE,
@@ -155,7 +167,7 @@ export class UserService implements IUserService {
     };
     updateUserStatus = async (
         data: UpdateUserServiceInput,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<OrgUserSimDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -174,7 +186,7 @@ export class UserService implements IUserService {
     };
     getEsimQRCode = async (
         data: GetESimQRCodeInput,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<ESimQRCodeRes> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -187,7 +199,7 @@ export class UserService implements IUserService {
     };
     updateUserRoaming = async (
         data: UpdateUserServiceInput,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<OrgUserSimDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,

@@ -8,7 +8,7 @@ import {
 
 class RateMapper implements IRateMapper {
     dtoToDefaultMarkupHistoryDto(
-        res: DefaultMarkupHistoryAPIResDto,
+        res: DefaultMarkupHistoryAPIResDto
     ): DefaultMarkupHistoryResDto {
         return {
             markupRates: res.markupRates.map(rate => ({
@@ -19,7 +19,7 @@ class RateMapper implements IRateMapper {
         };
     }
     dtoToDefaultMarkupDto = (
-        res: DefaultMarkupAPIResDto,
+        res: DefaultMarkupAPIResDto
     ): DefaultMarkupResDto => {
         return {
             markup: res.markup,

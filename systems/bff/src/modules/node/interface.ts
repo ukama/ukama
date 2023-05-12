@@ -17,14 +17,14 @@ import { MetricLatestValueRes, ParsedCookie } from "../../common/types";
 export interface INodeService {
     getNodeStatus(
         data: GetNodeStatusInput,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<GetNodeStatusRes>;
     getNode(nodeId: string, cookie: ParsedCookie): Promise<NodeResponse>;
     getNodesByOrg(cookie: ParsedCookie): Promise<OrgNodeResponseDto>;
     addNode(req: AddNodeDto, cookie: ParsedCookie): Promise<AddNodeResponse>;
     updateNode(
         req: UpdateNodeDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<UpdateNodeResponse>;
     deleteNode(id: string, cookie: ParsedCookie): Promise<DeleteNodeRes>;
 }

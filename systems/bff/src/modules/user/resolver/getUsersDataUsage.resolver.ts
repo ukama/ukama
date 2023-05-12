@@ -24,14 +24,14 @@ export class GetUsersDataUsageResolver {
     async getUsersDataUsage(
         @Arg("data") data: DataUsageInputDto,
         @PubSub() pubsub: PubSubEngine,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<GetUserDto[]> {
         const users: GetUserDto[] = [];
         if (data.ids.length > 0) {
             for (let i = 0; i < data.ids.length; i++) {
                 const user = await this.userService.getUser(
                     data.ids[i],
-                    parseCookie(ctx),
+                    parseCookie(ctx)
                 );
                 pubsub.publish("getUsersSub", user);
                 // users.push(user);

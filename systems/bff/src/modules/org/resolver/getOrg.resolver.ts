@@ -15,7 +15,7 @@ export class GetOrgResolver {
     @UseMiddleware(Authentication)
     async getOrg(
         @Arg("orgName") orgName: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<OrgDto> {
         return this.orgService.getOrg(orgName, parseCookie(ctx));
     }

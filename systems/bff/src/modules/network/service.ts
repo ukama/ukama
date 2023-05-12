@@ -20,7 +20,7 @@ const logger = setupLogger("service");
 @Service()
 export class NetworkService implements INetworkService {
     getNetworkStatus = async (
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<NetworkStatusDto> => {
         const resLiveNodes = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -43,7 +43,7 @@ export class NetworkService implements INetworkService {
 
         return NetworkMapper.dtoToDto(
             resTotalNodes.nodes.length,
-            resLiveNodes.data.result[0],
+            resLiveNodes.data.result[0]
         );
     };
 
@@ -63,7 +63,7 @@ export class NetworkService implements INetworkService {
 
     getNetwork = async (
         networkId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<NetworkDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -77,7 +77,7 @@ export class NetworkService implements INetworkService {
 
     getSites = async (
         networkId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SitesResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -92,7 +92,7 @@ export class NetworkService implements INetworkService {
     getSite = async (
         siteId: string,
         networkId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SiteDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -106,7 +106,7 @@ export class NetworkService implements INetworkService {
 
     addNetwork = async (
         req: AddNetworkInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<NetworkDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
@@ -122,7 +122,7 @@ export class NetworkService implements INetworkService {
     addSite = async (
         networkId: string,
         req: AddSiteInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SiteDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,

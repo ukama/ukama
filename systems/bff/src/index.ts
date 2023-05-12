@@ -1,19 +1,19 @@
-import dotenv from "dotenv";
-dotenv.config({ path: ".env" });
-import cors from "cors";
-import "reflect-metadata";
-import { PORT } from "./constants";
-import { createServer } from "http";
-import cookieParser from "cookie-parser";
-import { mockServer } from "./mockServer";
-import { job } from "./jobs/subscriptionJob";
-import setupLogger from "./config/setupLogger";
-import configureExpress from "./config/configureExpress";
-import configureApolloServer from "./config/configureApolloServer";
 import {
     MiddlewareOptions,
     renderPlaygroundPage,
 } from "@apollographql/graphql-playground-html";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env" });
+import { createServer } from "http";
+import "reflect-metadata";
+import configureApolloServer from "./config/configureApolloServer";
+import configureExpress from "./config/configureExpress";
+import setupLogger from "./config/setupLogger";
+import { PORT } from "./constants";
+import { job } from "./jobs/subscriptionJob";
+import { mockServer } from "./mockServer";
 
 const logger = setupLogger("app");
 
@@ -43,12 +43,12 @@ const initializeApp = async () => {
         ]);
         res.header(
             "Access-Control-Allow-Headers",
-            "Origin, X-Requested-With, Content-Type, Accept",
+            "Origin, X-Requested-With, Content-Type, Accept"
         );
         res.setHeader("Access-Control-Allow-Credentials", "true");
         res.header(
             "Access-Control-Allow-Methods",
-            "GET, POST, PUT, DELETE, OPTIONS",
+            "GET, POST, PUT, DELETE, OPTIONS"
         );
         next();
     });
@@ -64,13 +64,13 @@ const initializeApp = async () => {
             };
 
             const playground = renderPlaygroundPage(
-                playgroundRenderPageOptions,
+                playgroundRenderPageOptions
             );
             res.write(playground);
             res.end();
         } else {
             res.redirect(
-                `${process.env.AUTH_APP_URL}?redirect=${req.headers.host}${req.originalUrl}`,
+                `${process.env.AUTH_APP_URL}?redirect=${req.headers.host}${req.originalUrl}`
             );
             res.end();
         }
@@ -95,7 +95,7 @@ const initializeApp = async () => {
                 });
                 res.setHeader(
                     "Access-Control-Allow-Origin",
-                    process.env.AUTH_APP_URL ?? "",
+                    process.env.AUTH_APP_URL ?? ""
                 );
                 res.setHeader("Access-Control-Allow-Credentials", "true");
                 res.send({ success: true });

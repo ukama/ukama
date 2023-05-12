@@ -16,7 +16,7 @@ import {
 export class PackageService implements IPackageService {
     getPackage = async (
         packageId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<PackageDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -39,7 +39,7 @@ export class PackageService implements IPackageService {
     };
     addPackage = async (
         req: AddPackageInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<PackageDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
@@ -53,7 +53,7 @@ export class PackageService implements IPackageService {
     };
     deletePackage = async (
         packageId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<IdResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.DELETE,
@@ -69,7 +69,7 @@ export class PackageService implements IPackageService {
     updatePackage = async (
         packageId: string,
         req: UpdatePackageInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<PackageDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,

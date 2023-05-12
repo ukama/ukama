@@ -16,12 +16,12 @@ export class UpdateSubscriberResolver {
     async updateSubscriber(
         @Arg("subscriberId") subscriberId: string,
         @Arg("data") data: UpdateSubscriberInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<BoolResponse> {
         return await this.userService.updateSubscriber(
             subscriberId,
             data,
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
     }
 }
