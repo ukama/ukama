@@ -15,7 +15,7 @@ export class AddNetworkResolver {
     @UseMiddleware(Authentication)
     async addNetwork(
         @Arg("data") data: AddNetworkInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<NetworkDto> {
         return this.networkService.addNetwork(data, parseCookie(ctx));
     }

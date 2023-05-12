@@ -16,7 +16,7 @@ import {
 export class RateService implements IRateService {
     defaultMarkup = async (
         req: DefaultMarkupInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<BoolResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
@@ -30,7 +30,7 @@ export class RateService implements IRateService {
         };
     };
     getDefaultMarkup = async (
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<DefaultMarkupResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -42,7 +42,7 @@ export class RateService implements IRateService {
         return RateMapper.dtoToDefaultMarkupDto(res);
     };
     getDefaultMarkupHistory = async (
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<DefaultMarkupHistoryResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,

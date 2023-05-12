@@ -31,7 +31,7 @@ import {
 export class SimService implements ISimService {
     allocateSim = async (
         req: AllocateSimInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -44,7 +44,7 @@ export class SimService implements ISimService {
     };
     toggleSimStatus = async (
         req: ToggleSimStatusInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SimStatusResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -60,7 +60,7 @@ export class SimService implements ISimService {
     };
     getSim = async (
         req: GetSimInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SimDetailsDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -75,7 +75,7 @@ export class SimService implements ISimService {
     };
     getSimBySubscriberId = async (
         req: GetSimBySubscriberIdInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SimDetailsDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -90,7 +90,7 @@ export class SimService implements ISimService {
     };
     getSimByNetworkId = async (
         req: GetSimByNetworkInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SimDetailsDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -105,7 +105,7 @@ export class SimService implements ISimService {
     };
     deleteSim = async (
         req: DeleteSimInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<DeleteSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -120,7 +120,7 @@ export class SimService implements ISimService {
     };
     addPackegeToSim = async (
         req: AddPackageToSimInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<AddPackageSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -133,7 +133,7 @@ export class SimService implements ISimService {
     };
     removePackageFromSim = async (
         req: RemovePackageFormSimInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<RemovePackageFromSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -146,7 +146,7 @@ export class SimService implements ISimService {
     };
     getPackagesForSim = async (
         req: GetPackagesForSimInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<GetPackagesForSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -161,7 +161,7 @@ export class SimService implements ISimService {
     };
     setActivePackageForSim = async (
         req: SetActivePackageForSimInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SetActivePackageForSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,

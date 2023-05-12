@@ -14,7 +14,7 @@ export class DeletePackageResolver {
     @UseMiddleware(Authentication)
     async deletePackage(
         @Arg("packageId") packageId: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<IdResponse> {
         return this.packageService.deletePackage(packageId, parseCookie(ctx));
     }

@@ -15,7 +15,7 @@ export class AddSubscriberResolver {
     @UseMiddleware(Authentication)
     async addSubscriber(
         @Arg("data") data: SubscriberInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SubscriberDto> {
         return await this.userService.addSubscriber(data, parseCookie(ctx));
     }

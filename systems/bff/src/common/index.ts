@@ -4,7 +4,7 @@ import { converCookieToObj } from "../utils";
 import { ApiMethodDataDto, Context, ParsedCookie } from "./types";
 
 export const catchAsyncIOMethod = async (
-    req: ApiMethodDataDto,
+    req: ApiMethodDataDto
 ): Promise<any> => {
     try {
         const res = await ApiMethods.fetch({

@@ -18,11 +18,11 @@ export class RemovePackageForSimResolver {
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: RemovePackageFormSimInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<RemovePackageFromSimResDto> {
         return await this.simService.removePackageFromSim(
             data,
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
     }
 }

@@ -15,7 +15,7 @@ export class AddPackageToSimResolver {
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: AddPackageToSimInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<AddPackageSimResDto> {
         return await this.simService.addPackegeToSim(data, parseCookie(ctx));
     }

@@ -20,7 +20,7 @@ export class SubscriberService implements ISubscriberService {
     }
     addSubscriber = async (
         req: SubscriberInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SubscriberDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -34,7 +34,7 @@ export class SubscriberService implements ISubscriberService {
     updateSubscriber = async (
         subscriberId: string,
         req: UpdateSubscriberInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<BoolResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,
@@ -47,7 +47,7 @@ export class SubscriberService implements ISubscriberService {
     };
     deleteSubscriber = async (
         subscriberId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<BoolResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.DELETE,
@@ -59,7 +59,7 @@ export class SubscriberService implements ISubscriberService {
     };
     getSubscriber = async (
         subscriberId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<SubscriberDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,

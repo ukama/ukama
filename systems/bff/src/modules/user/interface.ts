@@ -16,6 +16,8 @@ import {
     UserAPIResDto,
     UserInputDto,
     UserResDto,
+    WhoamiAPIDto,
+    WhoamiDto,
 } from "./types";
 
 export interface IUserService {
@@ -23,22 +25,22 @@ export interface IUserService {
     updateUser(
         userId: string,
         req: UpdateUserInputDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<UserResDto>;
     deactivateUser(
         uuid: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<DeactivateResponse>;
     getUser(userId: string, cookie: ParsedCookie): Promise<UserResDto>;
     addUser(req: UserInputDto, cookie: ParsedCookie): Promise<UserResDto>;
     deleteUser(userId: string, cookie: ParsedCookie): Promise<BoolResponse>;
     getEsimQRCode(
         data: GetESimQRCodeInput,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<ESimQRCodeRes>;
     updateUserRoaming(
         data: UpdateUserServiceInput,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<OrgUserSimDto>;
 }
 
@@ -46,4 +48,5 @@ export interface IUserMapper {
     connectedUsersDtoToDto(res: MetricServiceValueRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     dtoToUserResDto(res: UserAPIResDto): UserResDto;
+    dtoToWhoamiResDto(res: WhoamiAPIDto): WhoamiDto;
 }

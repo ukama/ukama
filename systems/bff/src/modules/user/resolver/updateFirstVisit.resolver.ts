@@ -15,15 +15,15 @@ export class updateFirstVisitResolver {
     @UseMiddleware(Authentication)
     async updateFirstVisit(
         @Arg("data") data: UserFistVisitInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<UserFistVisitResDto> {
         const user = await this.userService.updateFirstVisit(
             data,
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
         await this.userService.updateFirstVisit(
             { firstVisit: data.firstVisit },
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
         return user;
     }

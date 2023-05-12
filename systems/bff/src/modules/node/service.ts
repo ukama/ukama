@@ -1,41 +1,41 @@
 import { Service } from "typedi";
+import { catchAsyncIOMethod } from "../../common";
 import {
+    MetricsByTabInputDTO,
+    MetricsInputDTO,
+    ParsedCookie,
+} from "../../common/types";
+import setupLogger from "../../config/setupLogger";
+import { API_METHOD_TYPE } from "../../constants";
+import { SERVER, getMetricUri } from "../../constants/endpoints";
+import { checkError } from "../../errors";
+import { getMetricTitleByType, getMetricsByTab } from "../../utils";
+import { DeleteNodeRes } from "../user/types";
+import { GRAPHS_TAB } from "./../../constants/index";
+import { INodeService } from "./interface";
+import NodeMapper from "./mapper";
+import {
+    AddNodeDto,
     AddNodeResponse,
+    GetNodeStatusInput,
+    GetNodeStatusRes,
+    LinkNodes,
+    MetricDto,
+    MetricRes,
+    NodeAppResponse,
+    NodeAppsVersionLogsResponse,
+    NodeResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
-    MetricDto,
-    NodeAppsVersionLogsResponse,
-    NodeAppResponse,
-    MetricRes,
     UpdateNodeResponse,
-    NodeResponse,
-    GetNodeStatusRes,
-    GetNodeStatusInput,
-    LinkNodes,
-    AddNodeDto,
 } from "./types";
-import {
-    ParsedCookie,
-    MetricsInputDTO,
-    MetricsByTabInputDTO,
-} from "../../common/types";
-import NodeMapper from "./mapper";
-import { checkError } from "../../errors";
-import { INodeService } from "./interface";
-import { DeleteNodeRes } from "../user/types";
-import { catchAsyncIOMethod } from "../../common";
-import { API_METHOD_TYPE } from "../../constants";
-import setupLogger from "../../config/setupLogger";
-import { GRAPHS_TAB } from "./../../constants/index";
-import { getMetricUri, SERVER } from "../../constants/endpoints";
-import { getMetricsByTab, getMetricTitleByType } from "../../utils";
 
 const logger = setupLogger("service");
 @Service()
 export class NodeService implements INodeService {
     addNode = async (
         req: AddNodeDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
@@ -56,7 +56,7 @@ export class NodeService implements INodeService {
     };
     linkNodes = async (
         req: LinkNodes,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,
@@ -75,7 +75,7 @@ export class NodeService implements INodeService {
     };
     updateNode = async (
         req: UpdateNodeDto,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<UpdateNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PATCH,
@@ -93,7 +93,7 @@ export class NodeService implements INodeService {
     };
     deleteNode = async (
         nodeId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<DeleteNodeRes> => {
         const res = await catchAsyncIOMethod({
             headers: cookie.header,
@@ -108,7 +108,7 @@ export class NodeService implements INodeService {
         return res;
     };
     getNodesByOrg = async (
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<OrgNodeResponseDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -123,7 +123,7 @@ export class NodeService implements INodeService {
     };
     getNode = async (
         nodeId: string,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<NodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -138,7 +138,7 @@ export class NodeService implements INodeService {
     };
     getNodeStatus = async (
         data: GetNodeStatusInput,
-        cookie: ParsedCookie,
+        cookie: ParsedCookie
     ): Promise<GetNodeStatusRes> => {
         const currentTimestamp = Math.floor(new Date().getTime() / 1000);
         const res = await catchAsyncIOMethod({
@@ -148,7 +148,7 @@ export class NodeService implements INodeService {
                 getMetricUri(
                     cookie.orgId,
                     data.nodeId,
-                    getMetricsByTab(data.nodeType, GRAPHS_TAB.NODE_STATUS)[0],
+                    getMetricsByTab(data.nodeType, GRAPHS_TAB.NODE_STATUS)[0]
                 ) + "/latest",
             params: {
                 from: currentTimestamp,
@@ -166,7 +166,7 @@ export class NodeService implements INodeService {
     getSingleMetric = async (
         data: MetricsInputDTO,
         cookie: ParsedCookie,
-        endpoint: string,
+        endpoint: string
     ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -197,7 +197,7 @@ export class NodeService implements INodeService {
     getMultipleMetrics = async (
         data: MetricsByTabInputDTO,
         cookie: ParsedCookie,
-        endpoints: string[],
+        endpoints: string[]
     ): Promise<MetricRes[]> => {
         return Promise.all(
             endpoints.map(endpoint =>
@@ -230,8 +230,8 @@ export class NodeService implements INodeService {
                                     : [],
                         };
                     }
-                }),
-            ),
+                })
+            )
         );
     };
 }

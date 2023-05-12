@@ -7,7 +7,7 @@ export class HTTP500Error extends BaseError {
             "INTERNAL SERVER",
             HttpStatusCode.INTERNAL_SERVER,
             description,
-            true,
+            true
         );
     }
 }

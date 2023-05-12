@@ -15,7 +15,7 @@ export class AllocateSimResolver {
     @UseMiddleware(Authentication)
     async allocateSim(
         @Arg("data") data: AllocateSimInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SimResDto> {
         return await this.simService.allocateSim(data, parseCookie(ctx));
     }

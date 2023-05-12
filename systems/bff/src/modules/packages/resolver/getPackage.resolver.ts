@@ -15,7 +15,7 @@ export class GetPackageResolver {
     @UseMiddleware(Authentication)
     async getPackage(
         @Arg("packageId") packageId: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<PackageDto> {
         return this.packageService.getPackage(packageId, parseCookie(ctx));
     }

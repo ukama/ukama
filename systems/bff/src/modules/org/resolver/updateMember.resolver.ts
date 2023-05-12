@@ -16,7 +16,7 @@ export class updateMemberResolver {
     async updateMember(
         @Arg("memberId") memberId: string,
         @Arg("data") data: UpdateMemberInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<BoolResponse> {
         return this.OrgService.updateMember(memberId, data, parseCookie(ctx));
     }

@@ -6,11 +6,13 @@ import {
     GetUserResponseDto,
     UserAPIResDto,
     UserResDto,
+    WhoamiAPIDto,
+    WhoamiDto,
 } from "./types";
 
 class UserMapper implements IUserMapper {
     connectedUsersDtoToDto = (
-        res: MetricServiceValueRes[],
+        res: MetricServiceValueRes[]
     ): ConnectedUserDto => {
         if (res.length > 0) {
             const value: any = res[0].value[1];
@@ -29,6 +31,15 @@ class UserMapper implements IUserMapper {
             name: res.user.name,
             phone: res.user.phone,
             registeredSince: res.user.registered_since,
+        };
+    };
+    dtoToWhoamiResDto = (res: WhoamiAPIDto): WhoamiDto => {
+        return {
+            id: res.id,
+            email: res.email,
+            name: res.name,
+            role: res.role,
+            isFirstVisit: res.first_visit,
         };
     };
 }

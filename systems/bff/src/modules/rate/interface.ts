@@ -11,6 +11,6 @@ export interface IRateService {}
 export interface IRateMapper {
     dtoToDefaultMarkupDto(res: DefaultMarkupAPIResDto): DefaultMarkupResDto;
     dtoToDefaultMarkupHistoryDto(
-        res: DefaultMarkupHistoryAPIResDto,
+        res: DefaultMarkupHistoryAPIResDto
     ): DefaultMarkupHistoryResDto;
 }

@@ -21,7 +21,7 @@ export class GetDataBillResolver {
     @UseMiddleware(Authentication)
     async getDataBill(
         @Arg("filter", () => DATA_BILL_FILTER) filter: DATA_BILL_FILTER,
-        @PubSub() pubsub: PubSubEngine,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<DataBillDto> {
         const bill = this.dataService.getDataBill(filter);
         pubsub.publish("getDataBill", bill);

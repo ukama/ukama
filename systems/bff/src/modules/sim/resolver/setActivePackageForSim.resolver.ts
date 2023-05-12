@@ -18,11 +18,11 @@ export class SetActivePackageForSimResolver {
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: SetActivePackageForSimInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SetActivePackageForSimResDto> {
         return await this.simService.setActivePackageForSim(
             data,
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
     }
 }
