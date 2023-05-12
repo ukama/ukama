@@ -39,7 +39,6 @@ func initializeData() {
 	NodeId = ukama.NewVirtualHomeNodeId()
 }
 
-
 func TestWorkflow_1(t *testing.T) {
 	host := "http://localhost:8071"
 	init := NewInitSys(host)
@@ -99,6 +98,7 @@ func TestWorkflow_1(t *testing.T) {
 		assert.Equal(t, OrgName, nresp.OrgName)
 	}
 
+	/* Getting system information */
 	gSresp, err := init.InitGetSystem(reqGetSystem)
 	assert.NoError(t, err)
 	if assert.NotNil(t, gSresp) {
@@ -109,6 +109,7 @@ func TestWorkflow_1(t *testing.T) {
 		assert.NotEmpty(t, gSresp.SystemId)
 	}
 
+	/* Node bootstrapping */
 	gNresp, err := init.InitGetNode(reqGetNode)
 	assert.NoError(t, err)
 	if assert.NotNil(t, gNresp) {
