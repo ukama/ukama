@@ -266,3 +266,15 @@ export class GetNodeStatusRes {
     @Field(() => ORG_NODE_STATE)
     status: ORG_NODE_STATE;
 }
+
+@ObjectType()
+export class NodeStatsResponse {
+    @Field()
+    totalCount: number;
+
+    @Field()
+    upCount: number;
+
+    @Field()
+    claimCount: number;
+}

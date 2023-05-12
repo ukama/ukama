@@ -25,6 +25,7 @@ import {
     NodeAppResponse,
     NodeAppsVersionLogsResponse,
     NodeResponse,
+    NodeStatsResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
     UpdateNodeResponse,
@@ -193,6 +194,13 @@ export class NodeService implements INodeService {
             path: SERVER.GET_NODE_APPS,
         });
         return res.data;
+    };
+    getNodesStats = async (): Promise<NodeStatsResponse> => {
+        return {
+            totalCount: 4,
+            upCount: 2,
+            claimCount: 2,
+        };
     };
     getMultipleMetrics = async (
         data: MetricsByTabInputDTO,
