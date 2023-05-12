@@ -143,3 +143,18 @@ export class UpdateSubscriberInputDto {
     @Field({ nullable: true })
     proof_of_identification: string;
 }
+
+@ObjectType()
+export class SubscriberMetricsByNetworkDto {
+    @Field()
+    total: number;
+
+    @Field()
+    active: number;
+
+    @Field()
+    inactive: number;
+
+    @Field()
+    terminated: number;
+}

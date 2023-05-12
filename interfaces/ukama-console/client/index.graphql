@@ -377,3 +377,26 @@ query Whoami {
     isFirstVisit
   }
 }
+
+query GetSubscriberMetricByNetwork($networkId: String!) {
+  getSubscriberMetricsByNetwork(networkId: $networkId) {
+    total
+    active
+    inactive
+    terminated
+  }
+}
+
+query GetNetworkNodesStat($networkId: String!) {
+  getNetworkNodesStat(networkId: $networkId) {
+    totalCount
+    upCount
+    claimCount
+  }
+}
+
+query GetNetworkDataUsage($networkId: String!, $filter: TIME_FILTER!) {
+  getNetworkDataUsage(networkId: $networkId, filter: $filter) {
+    usage
+  }
+}

@@ -1,15 +1,15 @@
 import { Service } from "typedi";
-import { DataBillDto, DataUsageDto } from "./types";
-import { IDataService } from "./interface";
-import { checkError, HTTP404Error, Messages } from "../../errors";
+import { catchAsyncIOMethod } from "../../common";
 import {
     API_METHOD_TYPE,
     DATA_BILL_FILTER,
     TIME_FILTER,
 } from "../../constants";
-import DataMapper from "./mapper";
-import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
+import { HTTP404Error, Messages, checkError } from "../../errors";
+import { IDataService } from "./interface";
+import DataMapper from "./mapper";
+import { DataBillDto, DataUsageDto, DataUsageNetworkResponse } from "./types";
 
 @Service()
 export class DataService implements IDataService {
@@ -26,6 +26,14 @@ export class DataService implements IDataService {
         if (!data) throw new HTTP404Error(Messages.DATA_NOT_FOUND);
 
         return data;
+    };
+
+    getNetworkDataUsage = async (
+        filter: TIME_FILTER
+    ): Promise<DataUsageNetworkResponse> => {
+        return {
+            usage: 1028,
+        };
     };
 
     getDataBill = async (filter: DATA_BILL_FILTER): Promise<DataBillDto> => {

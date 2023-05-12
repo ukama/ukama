@@ -10,6 +10,7 @@ import {
     SubscriberAPIResDto,
     SubscriberDto,
     SubscriberInputDto,
+    SubscriberMetricsByNetworkDto,
     UpdateSubscriberInputDto,
 } from "./types";
 
@@ -69,4 +70,13 @@ export class SubscriberService implements ISubscriberService {
         if (checkError(res)) throw new Error(res.message);
         return SubscriberMapper.dtoToSubscriberResDto(res);
     };
+    getSubMetricsByNetwork =
+        async (): Promise<SubscriberMetricsByNetworkDto> => {
+            return {
+                total: 4,
+                active: 1,
+                inactive: 1,
+                terminated: 1,
+            };
+        };
 }

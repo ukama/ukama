@@ -40,3 +40,9 @@ export class DataBillResponse {
     @Field()
     status: string;
 }
+
+@ObjectType()
+export class DataUsageNetworkResponse {
+    @Field()
+    usage: number;
+}
