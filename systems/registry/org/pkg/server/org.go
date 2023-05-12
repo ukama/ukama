@@ -253,6 +253,7 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		OrgId:  org.Id,
 		UserId: user.Id,
 		Uuid:   userUUID,
+		Role:   req.GetRole(),
 	}
 
 	err = o.orgRepo.AddMember(member)
@@ -415,6 +416,7 @@ func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 		OrgId:         member.OrgId.String(),
 		UserId:        uint64(member.UserId),
 		Uuid:          member.Uuid.String(),
+		Role:          member.Role,
 		IsDeactivated: member.Deactivated,
 		CreatedAt:     timestamppb.New(member.CreatedAt),
 	}

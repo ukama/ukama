@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -33,5 +34,21 @@ type OrgUser struct {
 	Deactivated bool
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	// Role (owner, admin, vendor)
+	Role        string         `gorm:"type:enum('owner', 'admin', 'member','vendor')"`
+}
+
+func (u *OrgUser) Validate(db *gorm.DB) {
+	if !containsRole(u.Role) {
+		db.AddError(errors.New("invalid role"))
+	}
+}
+
+func containsRole(role string) bool {
+	roles := []string{"owner", "admin", "member", "vendor"}
+	for _, r := range roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
 }
