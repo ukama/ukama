@@ -12,7 +12,7 @@ require (
 	github.com/go-playground/assert/v2 v2.0.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-20220909103841-dd001a1af00e
+	github.com/ukama/ukama/systems/common v0.0.0-20230504181210-bf6632801c73
 	github.com/ukama/ukama/systems/init/api-gateway v0.0.0-00010101000000-000000000000
 	k8s.io/apimachinery v0.27.1
 )
@@ -20,6 +20,8 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
+	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 )
@@ -85,6 +87,7 @@ require (
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/ukama/ukama/systems/init/lookup v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0 // indirect
+	github.com/wagslane/go-rabbitmq v0.12.3
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
 	golang.org/x/net v0.8.0 // indirect
