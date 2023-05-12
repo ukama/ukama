@@ -16,12 +16,12 @@ export class UpdatePackageResolver {
     async updatePackage(
         @Arg("packageId") packageId: string,
         @Arg("data") data: UpdatePackageInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<PackageDto> {
         return this.packageService.updatePackage(
             packageId,
             data,
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
     }
 }

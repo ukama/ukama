@@ -15,7 +15,7 @@ export class GetSimByNetworkResolver {
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: GetSimByNetworkInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SimDetailsDto> {
         return await this.simService.getSimByNetworkId(data, parseCookie(ctx));
     }

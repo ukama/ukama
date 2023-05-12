@@ -16,7 +16,7 @@ export class DeleteNodeResolver {
     async deleteNode(
         @Arg("id")
         id: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<DeleteNodeRes | null> {
         return this.nodeService.deleteNode(id, parseCookie(ctx));
     }

@@ -16,7 +16,7 @@ export class addSiteResolver {
     async addSite(
         @Arg("networkId") networkId: string,
         @Arg("data") data: AddSiteInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SiteDto> {
         return this.networkService.addSite(networkId, data, parseCookie(ctx));
     }

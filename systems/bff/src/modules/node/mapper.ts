@@ -1,17 +1,16 @@
+import * as defaultCasual from "casual";
+import { MetricLatestValueRes } from "../../common/types";
 import { NODE_TYPE, ORG_NODE_STATE } from "../../constants";
 import { INodeMapper } from "./interface";
 import {
+    GetNodeStatusRes,
+    MetricDto,
+    NodeDto,
+    NodeResponse,
+    OrgMetricValueDto,
     OrgNodeResponse,
     OrgNodeResponseDto,
-    NodeDto,
-    MetricDto,
-    OrgMetricValueDto,
-    GetNodeStatusRes,
-    NodeResponse,
-    AddNodeResponse,
 } from "./types";
-import * as defaultCasual from "casual";
-import { MetricLatestValueRes } from "../../common/types";
 interface Node {
     nodeId: string;
     state: string;
@@ -23,7 +22,7 @@ interface Node {
 class NodeMapper implements INodeMapper {
     dtoToNodesDto = (
         orgId: string,
-        req: OrgNodeResponse,
+        req: OrgNodeResponse
     ): OrgNodeResponseDto => {
         let nodesObj;
         let activeNodes = 0;
@@ -55,7 +54,7 @@ class NodeMapper implements INodeMapper {
                 metrics.push({
                     x: item[0],
                     y: item[1],
-                }),
+                })
             );
         return metrics;
     };

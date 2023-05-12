@@ -15,7 +15,7 @@ export class GetEsimQRResolver {
     @UseMiddleware(Authentication)
     async getEsimQR(
         @Arg("data") data: GetESimQRCodeInput,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<ESimQRCodeRes | null> {
         return this.userService.getEsimQRCode(data, parseCookie(ctx));
     }

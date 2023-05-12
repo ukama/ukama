@@ -14,11 +14,11 @@ export class DeleteSubscriberResolver {
     @UseMiddleware(Authentication)
     async deleteSubscriber(
         @Arg("subscriberId") subscriberId: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<BoolResponse> {
         return await this.userService.deleteSubscriber(
             subscriberId,
-            parseCookie(ctx),
+            parseCookie(ctx)
         );
     }
 }

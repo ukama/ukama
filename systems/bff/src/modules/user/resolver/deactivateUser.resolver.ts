@@ -16,7 +16,7 @@ export class DeactivateUserResolver {
     async deactivateUser(
         @Arg("uuid")
         uuid: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<UserResDto> {
         return this.userService.deactivateUser(uuid, parseCookie(ctx));
     }

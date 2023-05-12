@@ -15,7 +15,7 @@ export class DeleteSimResolver {
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: DeleteSimInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<DeleteSimResDto> {
         return await this.simService.deleteSim(data, parseCookie(ctx));
     }

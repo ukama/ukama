@@ -14,7 +14,7 @@ export class GetDefaultMarkupHistoryResolver {
     @Query(() => DefaultMarkupHistoryResDto)
     @UseMiddleware(Authentication)
     async getDefaultMarkupHistory(
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<DefaultMarkupHistoryResDto> {
         return this.rateService.getDefaultMarkupHistory(parseCookie(ctx));
     }

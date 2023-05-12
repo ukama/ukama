@@ -1,6 +1,6 @@
-import { IsEmail, IsPhoneNumber } from "class-validator";
+import { IsEmail, IsEnum, IsPhoneNumber } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
-import { GET_STATUS_TYPE } from "../../constants";
+import { GET_STATUS_TYPE, MEMBER_ROLES } from "../../constants";
 
 @ObjectType()
 export class UserAPIObj {
@@ -293,4 +293,41 @@ export class DataUsageInputDto {
 export class ESimQRCodeRes {
     @Field()
     qrCode: string;
+}
+
+@ObjectType()
+export class WhoamiAPIDto {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    role: string;
+
+    @Field()
+    first_visit: boolean;
+}
+
+@ObjectType()
+export class WhoamiDto {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    @IsEnum(MEMBER_ROLES)
+    role: string;
+
+    @Field()
+    isFirstVisit?: boolean;
 }

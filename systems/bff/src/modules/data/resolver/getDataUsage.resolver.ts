@@ -21,7 +21,7 @@ export class DataUsageResolver {
     @UseMiddleware(Authentication)
     async getDataUsage(
         @Arg("filter", () => TIME_FILTER) filter: TIME_FILTER,
-        @PubSub() pubsub: PubSubEngine,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<DataUsageDto | null> {
         const data = await this.dataService.getDataUsage(filter);
         pubsub.publish("getDataUsage", data);

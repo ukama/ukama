@@ -15,7 +15,7 @@ export class GetNetworkResolver {
     @UseMiddleware(Authentication)
     async getNetwork(
         @Arg("networkId") networkId: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<NetworkDto> {
         return this.networkService.getNetwork(networkId, parseCookie(ctx));
     }

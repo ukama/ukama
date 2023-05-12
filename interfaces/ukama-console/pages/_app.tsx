@@ -6,8 +6,11 @@ import {
   user,
 } from '@/app-recoil';
 import client from '@/client/ApolloClient';
+import { useWhoamiLazyQuery } from '@/generated';
 import { theme } from '@/styles/theme';
+import { TSnackMessage, TUser } from '@/types';
 import Layout from '@/ui/layout';
+import ErrorBoundary from '@/ui/wrappers/errorBoundary';
 import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import { ApolloProvider } from '@apollo/client';
 import { Alert, AlertColor, Snackbar } from '@mui/material';
@@ -26,84 +29,113 @@ import '../styles/global.css';
 const SNACKBAR_TIMEOUT = 5000;
 
 const App = ({ Component, pageProps }: AppProps) => {
-  const [_user, _setUser] = useRecoilState<any>(user);
+  const [_user, _setUser] = useRecoilState<TUser>(user);
   const setPage = useSetRecoilState(pageName);
   const _isDarkMod = useRecoilValue<boolean>(isDarkmode);
   const [_snackbarMessage, setSnackbarMessage] =
-    useRecoilState<any>(snackbarMessage);
+    useRecoilState<TSnackMessage>(snackbarMessage);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
   const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
+  const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery();
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const id = new URLSearchParams(window.location.search).get('id');
-      const name = new URLSearchParams(window.location.search).get('name');
-      const email = new URLSearchParams(window.location.search).get('email');
-
-      if (id && name && email) {
-        _setUser({ id, name, email });
-        window.history.pushState(null, '', '/home');
-      }
-      if ((id && name && email) || (_user.id && _user.name && _user.email)) {
-        setPage(getTitleFromPath(window.location.pathname));
-
-        if (
-          !doesHttpOnlyCookieExist('id') &&
-          doesHttpOnlyCookieExist('ukama_session')
-        ) {
-          resetData();
-          resetPageName();
-          window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
-        } else if (
-          doesHttpOnlyCookieExist('id') &&
-          !doesHttpOnlyCookieExist('ukama_session')
-        )
-          handleGoToLogin();
-      } else {
-        if (process.env.NODE_ENV === 'test') return;
-        handleGoToLogin();
-      }
-    }
-
-    setSkeltonLoading(false);
+    if (!_user?.id) getWhoami();
   }, []);
+
+  useEffect(() => {
+    const { id, name, email } = _user;
+    if (id && name && email) {
+      if (
+        !doesHttpOnlyCookieExist('id') &&
+        doesHttpOnlyCookieExist('ukama_session')
+      ) {
+        resetData();
+        resetPageName();
+        window.location.replace(
+          `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout`,
+        );
+      } else if (
+        doesHttpOnlyCookieExist('id') &&
+        !doesHttpOnlyCookieExist('ukama_session')
+      )
+        handleGoToLogin();
+    } else {
+      if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
+      handleGoToLogin();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading) setSkeltonLoading(true);
+  }, [loading]);
+
+  useEffect(() => {
+    if (data?.whoami) {
+      setPage(getTitleFromPath(window.location.pathname));
+      _setUser({
+        id: data.whoami.id,
+        name: data.whoami.name,
+        email: data.whoami.email,
+        role: data.whoami.role,
+        isFirstVisit: data.whoami.isFirstVisit,
+      });
+      setSkeltonLoading(false);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (error) {
+      setSnackbarMessage({
+        id: 'whoami-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+      resetData();
+      window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
+    }
+  }, [error]);
+
   const handleGoToLogin = () => {
     setPage('Home');
     typeof window !== 'undefined' &&
-      window.location.replace(process.env.REACT_APP_AUTH_URL || '');
+      window.location.replace(process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL || '');
   };
 
   const handleSnackbarClose = () =>
     setSnackbarMessage({ ..._snackbarMessage, show: false });
 
   return (
-    <ApolloProvider client={client}>
-      <ThemeProvider theme={theme(_isDarkMod)}>
+    <ThemeProvider theme={theme(_isDarkMod)}>
+      <ErrorBoundary>
         <Layout>
           <Component {...pageProps} />
         </Layout>
-        <Snackbar
-          open={_snackbarMessage.show}
-          autoHideDuration={SNACKBAR_TIMEOUT}
+      </ErrorBoundary>
+      <Snackbar
+        open={_snackbarMessage.show}
+        autoHideDuration={SNACKBAR_TIMEOUT}
+        onClose={handleSnackbarClose}
+      >
+        <Alert
+          id={_snackbarMessage.id}
+          severity={_snackbarMessage.type as AlertColor}
           onClose={handleSnackbarClose}
         >
-          <Alert
-            id={_snackbarMessage.id}
-            severity={_snackbarMessage.type as AlertColor}
-            onClose={handleSnackbarClose}
-          >
-            {_snackbarMessage.message}
-          </Alert>
-        </Snackbar>
-      </ThemeProvider>
-    </ApolloProvider>
+          {_snackbarMessage.message}
+        </Alert>
+      </Snackbar>
+    </ThemeProvider>
   );
 };
 
 const MyApp = (appProps: AppProps) => {
   return (
     <RecoilRoot>
-      <App {...appProps} />
+      <ApolloProvider client={client}>
+        <App {...appProps} />
+      </ApolloProvider>
     </RecoilRoot>
   );
 };

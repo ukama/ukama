@@ -15,7 +15,7 @@ export class AddOrgResolver {
     @UseMiddleware(Authentication)
     async addOrg(
         @Arg("data") data: AddOrgInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<OrgDto> {
         return this.OrgService.addOrg(data, parseCookie(ctx));
     }

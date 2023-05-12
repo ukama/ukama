@@ -15,7 +15,7 @@ export class GetsimResolver {
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: GetSimInputDto,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<SimDetailsDto> {
         return await this.simService.getSim(data, parseCookie(ctx));
     }

@@ -15,7 +15,7 @@ export class AddMemberResolver {
     @UseMiddleware(Authentication)
     async addMember(
         @Arg("userId") userId: string,
-        @Ctx() ctx: Context,
+        @Ctx() ctx: Context
     ): Promise<MemberObj> {
         return this.OrgService.addMember(userId, parseCookie(ctx));
     }

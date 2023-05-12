@@ -1,5 +1,6 @@
 import {
     API_URL,
+    AUTH_API_URL,
     DATA_PLAN_API_URL,
     REGISTRY_API_URL,
     SUBSCRIBER_API_URL,
@@ -8,6 +9,7 @@ import {
 const version = "v1";
 
 export const SERVER = {
+    AUTH_API_URL: `${AUTH_API_URL}/${version}`,
     DATA_PLAN_MARKUP_API_URL: `${DATA_PLAN_API_URL}/${version}/markup`,
     DATA_PLAN_PACKAGES_API_URL: `${DATA_PLAN_API_URL}/${version}/packages`,
     REGISTRY_USERS_API_URL: `${REGISTRY_API_URL}/${version}/users`,
@@ -53,5 +55,5 @@ export const SERVER = {
 export const getMetricUri = (
     orgId: string,
     nodeId: string,
-    endpoint: string,
+    endpoint: string
 ): string => `${SERVER.ORG}/${orgId}/nodes/${nodeId}/metrics/${endpoint}`;

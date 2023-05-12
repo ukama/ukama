@@ -38,7 +38,7 @@ const snackbarMessage = atom({
 
 const user = atom({
   key: 'user',
-  default: { id: '', name: '', email: '', has_logged_once: true },
+  default: { id: '', name: '', email: '', role: '', isFirstVisit: false },
   effects_UNSTABLE: [persistAtom],
 });
 

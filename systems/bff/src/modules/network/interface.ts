@@ -18,7 +18,7 @@ export interface INetworkService {
 export interface INetworkMapper {
     dtoToDto(
         totalNodes: number,
-        liveNodes: MetricLatestValueRes,
+        liveNodes: MetricLatestValueRes
     ): NetworkStatusDto;
     dtoToNetworksDto(res: NetworksAPIResDto): NetworksResDto;
     dtoToNetworkDto(res: NetworkAPIResDto): NetworkDto;
