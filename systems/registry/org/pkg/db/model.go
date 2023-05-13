@@ -1,7 +1,7 @@
 package db
 
 import (
-	"errors"
+	"database/sql/driver"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -34,21 +34,25 @@ type OrgUser struct {
 	Deactivated bool
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	Role        string         `gorm:"type:enum('owner', 'admin', 'member','vendor')"`
+	// Role        string         `gorm:"type:enum('owner', 'admin', 'member','vendor')"`
+	Role RoleType `gorm:"type:uint;not null"`
 }
 
-func (u *OrgUser) Validate(db *gorm.DB) {
-	if !containsRole(u.Role) {
-		db.AddError(errors.New("invalid role"))
-	}
+type RoleType uint8
+
+const (
+	Undefined RoleType = 0
+	Admin     RoleType = 1
+	Member    RoleType = 2
+	Vendor    RoleType = 3
+)
+
+func (e *RoleType) Scan(value interface{}) error {
+	*e = RoleType(uint8(value.(int64)))
+
+	return nil
 }
 
-func containsRole(role string) bool {
-	roles := []string{"owner", "admin", "member", "vendor"}
-	for _, r := range roles {
-		if r == role {
-			return true
-		}
-	}
-	return false
+func (e RoleType) Value() (driver.Value, error) {
+	return uint8(e), nil
 }

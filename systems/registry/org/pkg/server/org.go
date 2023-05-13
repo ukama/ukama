@@ -91,11 +91,11 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	route := o.baseRoutingKey.SetAction("add").SetObject("org").MustBuild()
-	err = o.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+	// route := o.baseRoutingKey.SetAction("add").SetObject("org").MustBuild()
+	// err = o.msgbus.PublishRequest(route, req)
+	// if err != nil {
+	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	// }
 
 	_ = o.pushOrgCountMetric()
 	_ = o.pushOrgMemberCountMetric(org.Id)
@@ -217,11 +217,11 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := o.baseRoutingKey.SetAction("register").SetObject("user").MustBuild()
-	err = o.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+	// route := o.baseRoutingKey.SetAction("register").SetObject("user").MustBuild()
+	// err = o.msgbus.PublishRequest(route, req)
+	// if err != nil {
+	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	// }
 
 	_ = o.pushOrgMemberCountMetric(org.Id)
 	_ = o.pushUserCountMetric()
@@ -253,7 +253,7 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		OrgId:  org.Id,
 		UserId: user.Id,
 		Uuid:   userUUID,
-		Role:   req.GetRole(),
+		Role:   pbRoleTypeToDb(req.GetRole()),
 	}
 
 	err = o.orgRepo.AddMember(member)
@@ -261,11 +261,11 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := o.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
-	err = o.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+	// route := o.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
+	// err = o.msgbus.PublishRequest(route, req)
+	// if err != nil {
+	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	// }
 
 	_ = o.pushOrgMemberCountMetric(org.Id)
 
@@ -328,6 +328,7 @@ func (o *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberReque
 		OrgId:       org.Id,
 		Uuid:        uuid,
 		Deactivated: req.GetAttributes().IsDeactivated,
+		Role:        pbRoleTypeToDb(req.Member.Role),
 	}
 
 	err = o.orgRepo.UpdateMember(member.OrgId, member)
@@ -372,11 +373,11 @@ func (o *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := o.baseRoutingKey.SetAction("remove").SetObject("member").MustBuild()
-	err = o.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
+	// route := o.baseRoutingKey.SetAction("remove").SetObject("member").MustBuild()
+	// err = o.msgbus.PublishRequest(route, req)
+	// if err != nil {
+	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	// }
 
 	_ = o.pushOrgMemberCountMetric(org.Id)
 
@@ -416,7 +417,7 @@ func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 		OrgId:         member.OrgId.String(),
 		UserId:        uint64(member.UserId),
 		Uuid:          member.Uuid.String(),
-		Role:          member.Role,
+		Role:          pb.RoleType(member.Role),
 		IsDeactivated: member.Deactivated,
 		CreatedAt:     timestamppb.New(member.CreatedAt),
 	}
@@ -518,4 +519,19 @@ func (o *OrgService) PushMetrics() error {
 
 	return nil
 
+}
+
+func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
+	var dbRole db.RoleType
+
+	switch role {
+	case pb.RoleType_ADMIN:
+		dbRole = db.Admin
+	case pb.RoleType_MEMBER:
+		dbRole = db.Member
+	default:
+		dbRole = db.Undefined
+	}
+
+	return dbRole
 }
