@@ -34,8 +34,7 @@ type OrgUser struct {
 	Deactivated bool
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	// Role        string         `gorm:"type:enum('owner', 'admin', 'member','vendor')"`
-	Role RoleType `gorm:"type:uint;not null"`
+	Role        RoleType       `gorm:"type:uint;not null"`
 }
 
 type RoleType uint8
