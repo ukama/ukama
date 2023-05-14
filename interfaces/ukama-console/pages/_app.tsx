@@ -5,6 +5,7 @@ import {
   snackbarMessage,
   user,
 } from '@/app-recoil';
+import { networkId } from '@/app-recoil/atom';
 import client from '@/client/ApolloClient';
 import { useWhoamiLazyQuery } from '@/generated';
 import { theme } from '@/styles/theme';
@@ -35,6 +36,7 @@ const App = ({ Component, pageProps }: AppProps) => {
     useRecoilState<TSnackMessage>(snackbarMessage);
   const [skeltonLoading, setSkeltonLoading] =
     useRecoilState<boolean>(isSkeltonLoading);
+  const [network, setNetwork] = useRecoilState<string>(networkId);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
   const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery();
@@ -112,6 +114,7 @@ const App = ({ Component, pageProps }: AppProps) => {
     setSnackbarMessage({ ..._snackbarMessage, show: false });
 
   const handlePageChange = (page: string) => setPage(page);
+  const handleNetworkChange = (id: string) => setNetwork(id);
 
   return (
     <ThemeProvider theme={theme(_isDarkMod)}>
@@ -119,9 +122,23 @@ const App = ({ Component, pageProps }: AppProps) => {
       <ErrorBoundary>
         <Layout
           page={page}
+          networkId={network}
+          networks={[
+            {
+              id: '1',
+              value: "Joe's Testnet",
+              label: "Joe's Testnet",
+            },
+            {
+              id: '2',
+              value: "Sam's Testnet",
+              label: "Sam's Testnet",
+            },
+          ]}
           isDarkMode={_isDarkMod}
           isLoading={skeltonLoading}
           handlePageChange={handlePageChange}
+          handleNetworkChange={handleNetworkChange}
         >
           <Component {...pageProps} />
         </Layout>
