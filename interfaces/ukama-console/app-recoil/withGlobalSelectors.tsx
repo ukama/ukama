@@ -3,7 +3,7 @@ import {
   isDarkmode,
   isFirstVisit,
   isSkeltonLoading,
-  networkName,
+  networkId,
   pageName,
   snackbarMessage,
   user,
@@ -23,9 +23,9 @@ const withIsFirstVisit = selector({
   key: 'withIsFirstVisit',
   get: ({ get }) => get(isFirstVisit),
 });
-const withNetworkName = selector({
+const withNetworkId = selector({
   key: 'withNetworkName',
-  get: ({ get }) => get(networkName),
+  get: ({ get }) => get(networkId),
 });
 const withIsDarkMod = selector({
   key: 'withIsDarkMod',
@@ -43,7 +43,7 @@ const withUser = selector({
 
 export {
   withUser,
-  withNetworkName,
+  withNetworkId,
   withPageName,
   withIsDarkMod,
   withIsFirstVisit,

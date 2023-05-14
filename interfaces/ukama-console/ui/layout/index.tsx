@@ -1,7 +1,7 @@
-'use client';
 import { HorizontalContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { useMediaQuery } from '@mui/material';
+import { SelectItemType } from '@/types';
+import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/router';
@@ -13,18 +13,24 @@ import Sidebar from './Sidebar';
 
 interface ILayoutProps {
   page: string;
+  networkId: string;
   isLoading: boolean;
   isDarkMode: boolean;
   handlePageChange: Function;
+  networks: SelectItemType[];
   children: React.ReactNode;
+  handleNetworkChange: Function;
 }
 
 const Layout = ({
   page,
   children,
+  networks,
   isLoading,
+  networkId,
   isDarkMode,
   handlePageChange,
+  handleNetworkChange,
 }: ILayoutProps) => {
   const theme = useTheme();
   const router = useRouter();
@@ -56,9 +62,12 @@ const Layout = ({
         <Sidebar
           page={page}
           isOpen={open}
+          networks={networks}
+          networkId={networkId}
           isLoading={isLoading}
           onNavigate={onNavigate}
           isDarkMode={isDarkMode}
+          handleNetworkChange={handleNetworkChange}
         />
 
         <Box
@@ -75,8 +84,8 @@ const Layout = ({
           <Box
             sx={{
               p: {
-                xs: '18px 18px 0px 18px !important',
-                md: '32px 32px 0px 32px !important',
+                xs: '8px 18px 0px 18px !important',
+                md: '16px 32px 0px 32px !important',
               },
               m: {
                 xs: `44px 0px 44px 62px !important`,
@@ -95,7 +104,14 @@ const Layout = ({
               height={isLoading ? '100vh' : '100%'}
               cstyle={{ background: isLoading ? colors.white : 'inherit' }}
             >
-              {children}
+              <Stack direction={'column'}>
+                <Box>
+                  <Typography variant="h5">{page}</Typography>
+                  <Divider sx={{ my: 1 }} />
+                </Box>
+
+                {children}
+              </Stack>
             </LoadingWrapper>
           </Box>
         </Box>
