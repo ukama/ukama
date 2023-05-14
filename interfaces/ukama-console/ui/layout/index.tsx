@@ -1,59 +1,107 @@
-import { isSkeltonLoading, pageName } from '@/app-recoil';
-import { Box, Stack } from '@mui/material';
-import { useState } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
+'use client';
+import { HorizontalContainer } from '@/styles/global';
+import { colors } from '@/styles/theme';
+import { useMediaQuery } from '@mui/material';
+import Box from '@mui/material/Box';
+import { useTheme } from '@mui/material/styles';
+import { useRouter } from 'next/router';
+import * as React from 'react';
+import { useEffect } from 'react';
+import { LoadingWrapper } from '../components';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
-const Layout = (props: any) => {
-  const { children } = props;
-  const [page, setPage] = useRecoilState(pageName);
-  const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+interface ILayoutProps {
+  page: string;
+  isLoading: boolean;
+  isDarkMode: boolean;
+  handlePageChange: Function;
+  children: React.ReactNode;
+}
 
-  const [isOpen, setIsOpen] = useState(false);
+const Layout = ({
+  page,
+  children,
+  isLoading,
+  isDarkMode,
+  handlePageChange,
+}: ILayoutProps) => {
+  const theme = useTheme();
+  const router = useRouter();
+  const [open, setOpen] = React.useState(true);
+  const matches = useMediaQuery(theme.breakpoints.down('md'));
 
-  const handlePageChange = (page: string) => {
-    setPage(page);
+  useEffect(() => {
+    if (matches) {
+      setOpen(false);
+    } else {
+      setOpen(true);
+    }
+  }, [matches]);
+
+  const onNavigate = (name: string, path: string) => {
+    handlePageChange(name);
+    router.push(path);
   };
 
-  const handleDrawerToggle = () => setIsOpen(() => !isOpen);
-
   return (
-    <Box
-      component="div"
-      sx={{
-        display: 'flex',
-        height: '100%',
-      }}
-    >
-      <Sidebar
-        page={page}
-        isOpen={isOpen}
-        isLoading={isSkeltonLoad}
-        handlePageChange={handlePageChange}
-        handleDrawerToggle={handleDrawerToggle}
+    <Box sx={{ display: 'flex', overflow: 'hidden' }}>
+      <Header
+        isOpen={open}
+        isLoading={isLoading}
+        onNavigate={onNavigate}
+        isDarkMode={isDarkMode}
       />
-
-      <Stack
-        spacing={{ xs: 2, md: 4 }}
-        sx={{
-          width: '100%',
-          overflow: 'auto',
-          backgroundColor: 'aliceblue',
-          pl: { xs: 2, md: 3, xl: 5 },
-          pr: { xs: 2, md: 3, xl: 5 },
-        }}
-      >
-        <Header
-          pageName={page}
-          isLoading={isSkeltonLoad}
-          handlePageChange={handlePageChange}
-          handleDrawerToggle={handleDrawerToggle}
+      <HorizontalContainer>
+        <Sidebar
+          page={page}
+          isOpen={open}
+          isLoading={isLoading}
+          onNavigate={onNavigate}
+          isDarkMode={isDarkMode}
         />
 
-        {children}
-      </Stack>
+        <Box
+          sx={{
+            width: '100%',
+            height: '100vh',
+            overflow: 'auto',
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? colors.black10
+                : colors.nightGrey,
+          }}
+        >
+          <Box
+            sx={{
+              p: {
+                xs: '18px 18px 0px 18px !important',
+                md: '32px 32px 0px 32px !important',
+              },
+              m: {
+                xs: `44px 0px 44px 62px !important`,
+                md: `60px 0px 60px 218px !important`,
+              },
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'light'
+                  ? colors.black10
+                  : colors.nightGrey,
+            }}
+          >
+            <LoadingWrapper
+              radius="small"
+              width={'100%'}
+              isLoading={isLoading}
+              height={isLoading ? '100vh' : '100%'}
+              cstyle={{ background: isLoading ? colors.white : 'inherit' }}
+            >
+              {children}
+            </LoadingWrapper>
+          </Box>
+        </Box>
+      </HorizontalContainer>
     </Box>
   );
 };
+
 export default Layout;

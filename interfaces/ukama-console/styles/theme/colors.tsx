@@ -13,11 +13,14 @@ const colors = {
   secondaryLight: '#A0A4FF',
   secondaryDark: '#284AC4',
 
+  primaryMain02: 'rgba(33, 144, 246, 0.2)',
+
   black: '#000000',
   black54: '#0000008a',
   black70: '#6B6E73',
   black60: '#999999',
   black38: '#9E9E9E',
+  black10: '#E5E5E5',
   error: '#F50533',
   white: '#FFFFFF',
   lightRed: 'E30000',
@@ -44,5 +47,7 @@ const colors = {
   nightGrey16: '#383838',
   darkGreen05:
     'linear-gradient(0deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)), #121212',
+  darkBlueGradiant:
+    'linear-gradient(0deg, rgba(33, 144, 246, 0.2), rgba(33, 144, 246, 0.2)), #000000;',
 };
 export default colors;

@@ -5,18 +5,18 @@ import { format, intervalToDuration } from 'date-fns';
 import { Alert_Type, Graphs_Tab, NodeDto, Node_Type } from '../generated';
 const getTitleFromPath = (path: string) => {
   switch (path) {
-    case '/':
+    case '/home':
       return 'Home';
     case '/settings':
       return 'Settings';
-    case '/notification':
-      return 'Notification';
-    case '/nodes':
+    case '/site':
+      return 'Sites';
+    case '/node':
       return 'Nodes';
-    case '/users':
-      return 'Users';
-    case '/billing':
-      return 'Billing';
+    case '/subscriber':
+      return 'Subscribers';
+    case '/site_planning':
+      return 'Site Planning';
     default:
       return 'Home';
   }
