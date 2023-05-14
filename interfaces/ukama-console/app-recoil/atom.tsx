@@ -25,8 +25,8 @@ const pageName = atom({
   default: 'Home',
   effects_UNSTABLE: [persistAtom],
 });
-const networkName = atom({
-  key: 'networkName',
+const networkId = atom({
+  key: 'networkId',
   default: '',
   effects_UNSTABLE: [persistAtom],
 });
@@ -45,9 +45,9 @@ const user = atom({
 export {
   user,
   pageName,
+  networkId,
   isDarkmode,
   isFirstVisit,
   snackbarMessage,
-  networkName,
   isSkeltonLoading,
 };
