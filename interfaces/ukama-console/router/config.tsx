@@ -2,6 +2,12 @@ import { CenterContainer } from '@/styles/global';
 import { CircularProgress } from '@mui/material';
 import { ComponentType, LazyExoticComponent, ReactNode, lazy } from 'react';
 
+import HomeIcon from '@mui/icons-material/Home';
+import LayersIcon from '@mui/icons-material/Layers';
+import LocationIcon from '@mui/icons-material/LocationOn';
+import SubscriberIcon from '@mui/icons-material/PeopleAlt';
+import RouterIcon from '@mui/icons-material/Router';
+
 export interface IRoute {
   // Path, like in basic prop
   path: string;
@@ -54,3 +60,41 @@ export const routes = {
   Error: getRouteObject('/*', 'ErrorPage', true, true),
   //
 };
+
+export const NavList = [
+  {
+    name: 'Home',
+    path: '/home',
+    icon: HomeIcon,
+    isPrivate: true,
+    isFullScreen: false,
+  },
+  {
+    name: 'Sites',
+    path: '/site',
+    icon: LocationIcon,
+    isPrivate: true,
+    isFullScreen: false,
+  },
+  {
+    name: 'Nodes',
+    path: '/node',
+    icon: RouterIcon,
+    isPrivate: true,
+    isFullScreen: false,
+  },
+  {
+    name: 'Subscribers',
+    path: '/subscriber',
+    icon: SubscriberIcon,
+    isPrivate: true,
+    isFullScreen: false,
+  },
+  {
+    name: 'Site Planning',
+    path: '/site_planning',
+    icon: LayersIcon,
+    isPrivate: true,
+    isFullScreen: false,
+  },
+];

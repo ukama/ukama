@@ -29,7 +29,7 @@ const theme = (isDarkmode: boolean) =>
           disabled: isDarkmode ? colors.white38 : colors.black38,
         },
         background: {
-          default: isDarkmode ? colors.nightGrey : colors.solitude,
+          default: isDarkmode ? colors.nightGrey5 : colors.solitude,
           paper: isDarkmode ? colors.nightGrey5 : colors.white,
         },
         primary: {
@@ -50,13 +50,20 @@ const theme = (isDarkmode: boolean) =>
         values: {
           xs: 0,
           sm: 600,
-          md: 1280,
-          lg: 1440,
-          xl: 1600,
+          md: 900,
+          lg: 1200,
+          xl: 1536,
         },
         step: 8,
       },
       components: {
+        MuiSkeleton: {
+          styleOverrides: {
+            root: {
+              backgroundColor: 'transparent',
+            },
+          },
+        },
         MuiFormControl: {
           styleOverrides: {
             root: {
@@ -161,6 +168,57 @@ const theme = (isDarkmode: boolean) =>
           styleOverrides: {
             root: {
               boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.05)',
+            },
+          },
+        },
+        MuiListItemButton: {
+          styleOverrides: {
+            root: {
+              marginLeft: 20,
+              marginRight: 20,
+              borderRadius: 4,
+              '@media all and (max-width: 900px)': {
+                marginLeft: 10,
+                marginRight: 10,
+                padding: 8,
+              },
+            },
+          },
+        },
+        MuiListItemIcon: {
+          styleOverrides: {
+            root: {
+              minWidth: 'auto',
+              marginRight: '1.25rem',
+              svg: {
+                width: '1.5rem',
+                height: '1.5rem',
+                fill: isDarkmode ? colors.white : colors.vulcan,
+              },
+            },
+          },
+        },
+        MuiListItemText: {
+          styleOverrides: {
+            root: {
+              '.MuiTypography-root': {
+                fontSize: '1rem',
+                color: isDarkmode ? colors.white : colors.vulcan,
+                fontFamily: 'Work Sans, sans-serif',
+              },
+            },
+          },
+        },
+        MuiToolbar: {
+          styleOverrides: {
+            root: {
+              minHeight: 'inherit !important',
+              paddingLeft: '36px !important',
+              paddingRight: '36px !important',
+              '@media all and (max-width: 900px)': {
+                paddingLeft: '10px !important',
+                paddingRight: '10px !important',
+              },
             },
           },
         },

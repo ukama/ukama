@@ -1,308 +1,109 @@
-import { isSkeltonLoading, pageName, user } from '@/app-recoil';
-import { Doc } from '@/public/svg';
-import { routes } from '@/router/config';
-import { RoundedCard } from '@/styles/global';
+import { HorizontalContainerJustify } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import { LoadingWrapper } from '@/ui/components';
-import { AccountCircle, Notifications, Settings } from '@mui/icons-material';
-import ExitToAppOutlined from '@mui/icons-material/ExitToAppOutlined';
-import MenuIcon from '@mui/icons-material/Menu';
-import {
-  AppBar,
-  Badge,
-  Box,
-  Button,
-  Divider,
-  IconButton,
-  Popover,
-  Stack,
-  Toolbar,
-  Typography,
-} from '@mui/material';
-import { useRouter } from 'next/router';
-import { useRef, useState } from 'react';
-import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { Badge, IconButton, Stack, Toolbar, styled } from '@mui/material';
+import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
+import dynamic from 'next/dynamic';
 
-const popupStyle = {
-  background: 'none',
-  boxShadow:
-    '0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)',
-  borderRadius: '4px',
-};
+const Logo = dynamic(() =>
+  import('../../../public/svg/Logo').then((module) => ({
+    default: module.Logo,
+  })),
+);
 
-type HeaderProps = {
-  pageName: string;
+interface IHeaderProps {
+  isOpen: boolean;
   isLoading: boolean;
-  handlePageChange: Function;
-  handleDrawerToggle: Function;
+  isDarkMode: boolean;
+  onNavigate: Function;
+}
+
+interface AppBarProps extends MuiAppBarProps {
+  open?: boolean;
+  isLoading?: boolean;
+}
+
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<AppBarProps>(({ theme, open, isLoading }) => ({
+  zIndex: theme.zIndex.drawer + 1,
+  boxShadow: 'none',
+  ...(theme.palette.mode === 'dark' && {
+    backgroundImage: 'none',
+    backgroundColor: 'none',
+    background: isLoading ? colors.nightGrey5 : 'none',
+  }),
+  ...(theme.palette.mode === 'light' && {
+    backgroundColor: 'none',
+    backgroundImage: 'none',
+    background: isLoading ? colors.white : colors.darkBlueGradiant,
+  }),
+  ...(open && {
+    width: '100%',
+    height: 60,
+  }),
+}));
+
+const IconStyle = {
+  '.MuiSvgIcon-root': {
+    width: '24px',
+    height: '24px',
+    fill: colors.white,
+  },
+  '.MuiBadge-root': {
+    '.MuiSvgIcon-root': {
+      width: '24px',
+      height: '24px',
+      fill: colors.white,
+    },
+  },
 };
 
-const Header = ({
-  pageName: _pageName,
-  handlePageChange,
-  handleDrawerToggle,
-  isLoading,
-}: HeaderProps) => {
-  const router = useRouter();
-  const ref = useRef(null);
-  const _user: any = useRecoilValue(user);
-  const resetPageName = useResetRecoilState(pageName);
-  const resetData = useResetRecoilState(user);
-  const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
-
-  const [notificationAnchorEl, setNotificationAnchorEl] =
-    useState<HTMLButtonElement | null>(null);
-  const [userAnchorEl, setUserAnchorEl] = useState<HTMLButtonElement | null>(
-    null,
-  );
-  const handleNotificationClick = () => {
-    setNotificationAnchorEl(ref.current);
-  };
-  const handleUserClick = () => {
-    setUserAnchorEl(ref.current);
-  };
-  const handleNotificationClose = () => {
-    setNotificationAnchorEl(null);
-  };
-  const handleUserClose = () => {
-    setUserAnchorEl(null);
-  };
-  const open = Boolean(notificationAnchorEl);
-  const openUserPopover = Boolean(userAnchorEl);
-  const userAnchorElId = openUserPopover ? 'user-popover' : undefined;
-  const notificationAnchorElId = open ? 'simple-popover' : undefined;
-
-  const handleSettingsClick = () => {
-    handlePageChange('Settings');
-    router.push(routes.Settings.path);
-  };
-
-  // const { data: alertsInfoRes, subscribeToMore: subscribeToLatestAlerts } =
-  //   useGetAlertsQuery({
-  //     variables: {
-  //       data: {
-  //         pageNo: 1,
-  //         pageSize: 50,
-  //       },
-  //     },
-  //   });
-
-  // const alertSubscription = () =>
-  //   subscribeToLatestAlerts<GetLatestAlertsSubscription>({
-  //     document: GetLatestAlertsDocument,
-  //     updateQuery: (prev, { subscriptionData }) => {
-  //       let data = cloneDeep(prev);
-  //       const latestAlert = subscriptionData.data.getAlerts;
-  //       if (latestAlert.__typename === 'AlertDto')
-  //         data.getAlerts.alerts = [latestAlert, ...data.getAlerts.alerts];
-  //       return data;
-  //     },
-  //   });
-
-  // useEffect(() => {
-  //   let unsub = alertSubscription();
-  //   return () => {
-  //     unsub && unsub();
-  //   };
-  // }, [alertsInfoRes]);
-
-  const handleLogout = () => {
-    handleUserClose();
-    resetData();
-    resetPageName();
-    setSkeltonLoading(true);
-    typeof window !== 'undefined' &&
-      window.location.replace(
-        `${process.env.NEXT_PUBLIC_REACT_APP_API_SOCKET}/logout`,
-      );
-  };
+const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
   return (
-    <Box component="div">
-      <Popover
-        open={open}
-        id={notificationAnchorElId}
-        anchorEl={notificationAnchorEl}
-        onClose={handleNotificationClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        PaperProps={{
-          style: {
-            ...popupStyle,
-          },
-        }}
+    <AppBar
+      open={isOpen}
+      isLoading={isLoading}
+      sx={{ justifyContent: 'center' }}
+    >
+      <LoadingWrapper
+        radius="none"
+        isLoading={isLoading}
+        cstyle={{ display: 'flex' }}
+        height={isOpen ? '60px' : '44px'}
       >
-        <RoundedCard sx={{ overflow: 'hidden', pr: 0, boxShadow: 'none' }}>
-          <Typography variant="h6" sx={{ mb: '14px' }}>
-            Alerts
-          </Typography>
-          {/* <Alerts alertOptions={} /> */}
-        </RoundedCard>
-      </Popover>
-      <Popover
-        open={openUserPopover}
-        id={userAnchorElId}
-        anchorEl={userAnchorEl}
-        onClose={handleUserClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        PaperProps={{
-          style: {
-            ...popupStyle,
-          },
-        }}
-      >
-        <RoundedCard sx={{ minWidth: '200px', p: 0, boxShadow: 'none' }}>
-          <Stack m={'12px 16px'}>
-            <Typography variant="body1">{_user.name}</Typography>
-            <Typography variant="caption" color={'textSecondary'}>
-              {_user.email}
-            </Typography>
-          </Stack>
-          <Divider sx={{ mt: '6px' }} />
-          <Button
-            onClick={handleLogout}
-            startIcon={<ExitToAppOutlined />}
-            sx={{
-              mb: '12px',
-              mx: '16px',
-              typography: 'body1',
-              textTransform: 'capitalize',
-              ':hover': {
-                background: 'none',
-                color: colors.primaryDark,
-                svg: {
-                  fill: colors.primaryDark,
-                },
-              },
-            }}
-          >
-            Sign out
-          </Button>
-        </RoundedCard>
-      </Popover>
-      <AppBar
-        elevation={0}
-        position="relative"
-        color="transparent"
-        sx={{ boxShadow: 'none !important' }}
-      >
-        <Toolbar sx={{ padding: '33px 0px 12px 0px !important' }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={() => handleDrawerToggle()}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-
-          <LoadingWrapper height={30} width={82} isLoading={isLoading}>
-            <Typography variant="h5">{_pageName}</Typography>
-          </LoadingWrapper>
-          {_pageName === 'Users' && (
-            <Stack spacing={1} direction="row" alignItems={'center'}>
-              <Divider
-                orientation="vertical"
-                sx={{
-                  height: '20px',
-                  borderWidth: '1px',
-                  borderColor: '#4d4d4d',
-                }}
-              />
+        <Toolbar sx={{ alignSelf: 'center', width: '100%' }}>
+          <HorizontalContainerJustify>
+            <IconButton onClick={() => onNavigate('Home', '/home')}>
+              <Logo width={'100%'} height={'28px'} color={colors.white} />
+            </IconButton>
+            <Stack direction={'row'} spacing={1.75}>
               <IconButton
-                sx={{
-                  width: '54px',
-                  height: 'auto',
-                  cursor: 'pointer',
-                  ':hover': {
-                    svg: {
-                      path: {
-                        fill: '#2190F6 !important',
-                      },
-                    },
-                  },
-                }}
-                onClick={() =>
-                  typeof window !== 'undefined' &&
-                  window.open(
-                    'https://docs.dev.ukama.com/docs/Console/Users',
-                    '_target',
-                  )
-                }
+                onClick={() => onNavigate('Setting', '/setting')}
+                sx={{ ...IconStyle }}
               >
-                <Doc />
+                <SettingsIcon />
               </IconButton>
-            </Stack>
-          )}
-
-          <Box component="div" sx={{ flexGrow: 1 }} />
-
-          <LoadingWrapper height={30} width={120} isLoading={isLoading}>
-            <Stack
-              spacing={{ xs: 2, md: 3 }}
-              direction="row"
-              sx={{
-                display: { xs: 'flex', md: 'flex' },
-                justifyContent: 'flex-end',
-              }}
-            >
-              <IconButton
-                size="small"
-                color="inherit"
-                aria-label="setting-btn"
-                onClick={handleSettingsClick}
-              >
-                <Settings />
-              </IconButton>
-              <IconButton
-                size="small"
-                color="inherit"
-                aria-label="notification-btn"
-                onClick={handleNotificationClick}
-              >
-                <Badge
-                  badgeContent={'2'}
-                  sx={{
-                    '& .MuiBadge-badge': {
-                      color: 'inherit',
-                      paddingLeft: '3px',
-                      paddingRight: '3px',
-                      backgroundColor: colors.secondaryMain,
-                    },
-                  }}
-                >
-                  <Notifications
-                    color={notificationAnchorEl ? 'primary' : 'inherit'}
-                  />
+              <IconButton sx={{ ...IconStyle }}>
+                <Badge badgeContent={4} color="secondary">
+                  <NotificationsIcon />
                 </Badge>
               </IconButton>
               <IconButton
-                size="small"
-                color="inherit"
-                aria-label="account-btn"
-                onClick={handleUserClick}
+                sx={{
+                  ...IconStyle,
+                }}
               >
-                <AccountCircle />
+                <AccountCircleIcon />
               </IconButton>
             </Stack>
-          </LoadingWrapper>
+          </HorizontalContainerJustify>
         </Toolbar>
-        <Divider ref={ref} sx={{ m: '0px' }} />
-      </AppBar>
-    </Box>
+      </LoadingWrapper>
+    </AppBar>
   );
 };
 

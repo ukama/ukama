@@ -13,7 +13,7 @@ import Layout from '@/ui/layout';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
 import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import { ApolloProvider } from '@apollo/client';
-import { Alert, AlertColor, Snackbar } from '@mui/material';
+import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import type { AppProps } from 'next/app';
 import { useEffect } from 'react';
@@ -22,7 +22,6 @@ import {
   useRecoilState,
   useRecoilValue,
   useResetRecoilState,
-  useSetRecoilState,
 } from 'recoil';
 import '../styles/global.css';
 
@@ -30,13 +29,14 @@ const SNACKBAR_TIMEOUT = 5000;
 
 const App = ({ Component, pageProps }: AppProps) => {
   const [_user, _setUser] = useRecoilState<TUser>(user);
-  const setPage = useSetRecoilState(pageName);
+  const [page, setPage] = useRecoilState(pageName);
   const _isDarkMod = useRecoilValue<boolean>(isDarkmode);
   const [_snackbarMessage, setSnackbarMessage] =
     useRecoilState<TSnackMessage>(snackbarMessage);
+  const [skeltonLoading, setSkeltonLoading] =
+    useRecoilState<boolean>(isSkeltonLoading);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
-  const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
   const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery();
 
   useEffect(() => {
@@ -45,6 +45,12 @@ const App = ({ Component, pageProps }: AppProps) => {
 
   useEffect(() => {
     const { id, name, email } = _user;
+    const pathname =
+      typeof window !== 'undefined' && window.location.pathname
+        ? window.location.pathname
+        : '';
+
+    setPage(getTitleFromPath(pathname));
     if (id && name && email) {
       if (
         !doesHttpOnlyCookieExist('id') &&
@@ -72,7 +78,6 @@ const App = ({ Component, pageProps }: AppProps) => {
 
   useEffect(() => {
     if (data?.whoami) {
-      setPage(getTitleFromPath(window.location.pathname));
       _setUser({
         id: data.whoami.id,
         name: data.whoami.name,
@@ -106,10 +111,18 @@ const App = ({ Component, pageProps }: AppProps) => {
   const handleSnackbarClose = () =>
     setSnackbarMessage({ ..._snackbarMessage, show: false });
 
+  const handlePageChange = (page: string) => setPage(page);
+
   return (
     <ThemeProvider theme={theme(_isDarkMod)}>
+      <CssBaseline />
       <ErrorBoundary>
-        <Layout>
+        <Layout
+          page={page}
+          isDarkMode={_isDarkMod}
+          isLoading={skeltonLoading}
+          handlePageChange={handlePageChange}
+        >
           <Component {...pageProps} />
         </Layout>
       </ErrorBoundary>
