@@ -1,7 +1,6 @@
 package messaging
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -22,11 +21,18 @@ type listener struct {
 	serviceId string
 	store     map[string]interface{}
 	stop      chan bool
+	uri       string
 }
 
 type ListenerConfig struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Queue             config.Queue
+}
+
+type Listener interface {
+	StartListener()
+	StopListener()
+	GetEvent(key string) (interface{}, bool)
 }
 
 func NewListenerConfig() *ListenerConfig {
@@ -37,7 +43,7 @@ func NewListenerConfig() *ListenerConfig {
 	}
 }
 
-func StartListener(config *ListenerConfig) {
+func NewListener(config *ListenerConfig) Listener {
 	conn, err := rabbitmq.NewConn(
 		config.Queue.Uri,
 		rabbitmq.WithConnectionOptionsLogging,
@@ -47,29 +53,33 @@ func StartListener(config *ListenerConfig) {
 		log.Fatalf("error creating connection. Error: %s", err.Error())
 	}
 
-	defer conn.Close()
-
-	l := listener{
+	l := &listener{
 		conn:      conn,
 		serviceId: os.Getenv(POD_NAME_ENV_VAR),
 		store:     make(map[string]interface{}),
 		stop:      make(chan bool, 1),
+		uri:       config.Queue.Uri,
 	}
+	log.Debugf("Listener created: %+v.", l)
 
-	consumer, err := rabbitmq.NewConsumer(conn, l.incomingMessageHandler, config.Queue.Uri,
+	return l
+}
+func (l *listener) StartListener() {
+
+	consumer, err := rabbitmq.NewConsumer(l.conn, l.incomingMessageHandler, l.uri,
 		rabbitmq.WithConsumerOptionsRoutingKey("#"),
 		rabbitmq.WithConsumerOptionsExchangeName(msgbus.DefaultExchange),
 		rabbitmq.WithConsumerOptionsConsumerName(l.serviceId),
-		rabbitmq.WithConsumerOptionsQueueDurable,
-		rabbitmq.WithConsumerOptionsExchangeDeclare,
 		rabbitmq.WithConsumerOptionsExchangeKind(amqp.ExchangeTopic))
 	if err != nil {
 		log.Fatalf("error creating queue consumer. Error: %s", err.Error())
 	}
 
 	l.cons = consumer
-	log.Infof("Creating listener. Queue: %s.",
-		config.Queue.Uri[strings.LastIndex(config.Queue.Uri, "@"):])
+	log.Infof("Creating listener for Queue: %s. lsitner: %+v",
+		l.uri[strings.LastIndex(l.uri, "@"):], l)
+
+	defer l.conn.Close()
 
 	defer consumer.Close()
 
@@ -82,23 +92,23 @@ func StartListener(config *ListenerConfig) {
 		select {
 		case <-sigs:
 			sig := <-sigs
-			fmt.Println()
-			fmt.Println(sig)
+			log.Println()
+			log.Info(sig)
 			done <- true
 
 		case <-l.stop:
-			fmt.Println("Stopping")
+			log.Info("Stopping")
 			done <- true
 		}
 
 	}()
 
-	fmt.Println("awaiting signal")
+	log.Info("awaiting signal")
 	<-done
-	fmt.Println("stopping consumer")
+	log.Info("stopping consumer")
 }
 
-func (l *listener) StopListner() {
+func (l *listener) StopListener() {
 	l.stop <- true
 }
 
@@ -106,6 +116,7 @@ func (l *listener) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.A
 	log.Infof("Raw message: %+v", delivery)
 
 	l.store[delivery.RoutingKey] = delivery.Body
+	log.Infof("Added message %s with body %v", delivery.RoutingKey, delivery.Body)
 
 	return rabbitmq.Ack
 }
