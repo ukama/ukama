@@ -550,8 +550,10 @@ func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
 		dbRole = db.Admin
 	case pb.RoleType_MEMBER:
 		dbRole = db.Member
+	case pb.RoleType_VENDOR:
+		dbRole = db.Vendor
 	default:
-		dbRole = db.Undefined
+		dbRole = db.Member
 	}
 
 	return dbRole

@@ -139,8 +139,7 @@ message OrgUser {
 }
 
 enum RoleType {
-    UNDEFINED = 0;
-    ADMIN = 1;
-    MEMBER = 2;
-    VENDOR = 3;
+    ADMIN = 0;
+    MEMBER = 1;
+    VENDOR = 2;
 }

@@ -40,10 +40,9 @@ type OrgUser struct {
 type RoleType uint8
 
 const (
-	Undefined RoleType = 0
-	Admin     RoleType = 1
-	Member    RoleType = 2
-	Vendor    RoleType = 3
+	Admin     RoleType = 0
+	Member    RoleType = 1
+	Vendor    RoleType = 2
 )
 
 func (e *RoleType) Scan(value interface{}) error {

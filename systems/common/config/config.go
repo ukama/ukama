@@ -132,6 +132,7 @@ type Auth struct {
 	AuthAppUrl     string `default:"http://localhost:4455"`
 	AuthAPIGW      string `default:"http://localhost:8080"`
 	BypassAuthMode bool   `default:"false"`
+	OrgUrl string `default:"http://localhost:8082"`
 }
 
 // LoadConfig loads configuration into `config` object
@@ -236,8 +237,16 @@ func LoadAuthHostConfig(name string) *Auth {
 	appUrl := "_APP_URL"
 	apigwUrl := "_API_GW_URL"
 	bypassAuthMode := "BYPASS_AUTH_MODE"
+	orgUrl := "_ORG_URL"
 
-	val, present := os.LookupEnv(strings.ToUpper(name + serverUrl))
+	val, present := os.LookupEnv(strings.ToUpper(name + orgUrl))
+	if present {
+		s.OrgUrl = val
+	} else {
+		logrus.Errorf("%s org url env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + serverUrl))
 	if present {
 		s.AuthServerUrl = val
 	} else {
