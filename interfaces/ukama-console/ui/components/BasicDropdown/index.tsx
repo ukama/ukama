@@ -13,7 +13,7 @@ const BasicDropdown = ({
   networkList,
   handleOnChange,
 }: IBasicDropdown) => (
-  <FormControl sx={{ width: '100%' }} size="small">
+  <FormControl sx={{ width: '100%' }} size="small" >
     <Select
       value={value}
       disableUnderline

@@ -2,7 +2,6 @@ import { NavList } from '@/router/config';
 import { colors } from '@/styles/theme';
 import { SelectItemType } from '@/types';
 import { LoadingWrapper } from '@/ui/components';
-import BasicDropdown from '@/ui/components/BasicDropdown';
 import {
   Box,
   Divider,
@@ -14,6 +13,11 @@ import {
   Stack,
   styled,
 } from '@mui/material';
+import dynamic from 'next/dynamic';
+
+const BasicDropdown = dynamic(() => import('@/ui/components/BasicDropdown'), {
+  ssr: false,
+});
 
 const drawerWidth: number = 218;
 
@@ -64,7 +68,7 @@ const Sidebar = ({
     >
       <LoadingWrapper isLoading={isLoading} radius="none">
         <Stack direction={'column'}>
-          <Box mx={{ xs: '18px', md: '28px' }} my={{ xs: 1, md: 1.8 }}>
+          <Box mx={{ xs: '18px', md: '28px' }} my={{ xs: 1, md: 1.7 }}>
             <BasicDropdown
               value={networkId}
               networkList={networks}
