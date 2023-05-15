@@ -160,8 +160,12 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 	if err != nil {
 		return err
 	}
+	orgId,userId:=pkg.GetMemberDetails(c)
+
+fmt.Println("DETAILS:",orgId,userId)
 
 	return nil
+	
 }
 
 func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {

@@ -149,3 +149,10 @@ func GetTokenStr(c *gin.Context) string {
 	token := c.Request.Header.Get("X-Session-Token")
 	return token
 }
+
+func GetMemberDetails(c *gin.Context) (string,string) {
+	userId := c.Request.Header.Get("userID")
+	orgId:= c.Request.Header.Get("orgID")
+
+	return userId,orgId
+}

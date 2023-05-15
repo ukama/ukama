@@ -96,26 +96,10 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*client.Session, er
 
 	role,err := am.orgRegistry.GetMemberRole(userId,orgId )
 	if err != nil {
-		return nil, fmt.Errorf("member not found in the organization: %s", err.Error())
+		return nil, fmt.Errorf("error while getting member role: %s", err.Error())
 	}
-	fmt.Println("RoleAUTH", role)
-
-	// check, r, err := am.ketoClient.PermissionApi.CheckPermission(context.Background()).
-	// Namespace(*&namespace).
-	// Object(*&object).
-	// Relation(*&relation).
-	// SubjectId(*&subjectId).Execute()
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	// 	panic("Encountered error: " + err.Error())
-	// }
-	// if check.Allowed {
-    //     fmt.Println(*&subjectId + " can " + *&relation + " the " + *&object)
-	// 	return resp, nil
-    // }else{
-	// 	log.Errorf("%s cannot %s the %s", subjectId, relation, object)
-	// 	return nil, err
-	// }
+	fmt.Println("Role", role)
+	
 	return resp, nil
 }
 
