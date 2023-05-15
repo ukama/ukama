@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
@@ -13,58 +12,49 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
-type OrgMemberInfoClient interface {
-	GetMember(userId uuid.UUID) (*OrgMemberInfo, error)
+type OrgMemberRoleClient interface {
+	GetMemberRole(userId uuid.UUID,orgId uuid.UUID) ( string, error)
 }
 
-type orgMemberInfoClient struct {
+type orgMemberRoleClient struct {
 	R *RestClient
 }
-type OrgMember struct {
-	OrgMemberInfo *OrgMemberInfo `json:"org_member"`
+type OrgMemberRole struct {
+	Role  string `json:"role"`
 }
 
-type OrgMemberInfo struct {
-	OrgID       uuid.UUID `json:"org_id"`
-	UUID        uuid.UUID `json:"uuid"`
-	UserID      uint      `json:"user_id"`
-	Deactivated bool      `json:"is_deactivated"`
-	CreatedAt   time.Time `json:"created_at"`
-}
 
-func NewOrgMemberInfoClient(url string, debug bool) (*orgMemberInfoClient, error) {
+
+func NewOrgMemberRoleClient(url string, debug bool) (*orgMemberRoleClient, error) {
 	restClient, err := NewRestClient(url, debug)
 	if err != nil {
 		log.Errorf("Failed to connect to %s. Error: %s", url, err.Error())
 		return nil, err
 	}
-	return &orgMemberInfoClient{R: restClient}, nil
+	return &orgMemberRoleClient{R: restClient}, nil
 }
 
-func (N *orgMemberInfoClient) GetMember(userId uuid.UUID) (*OrgMemberInfo, error) {
+func (N *orgMemberRoleClient) GetMemberRole(userId uuid.UUID , orgId uuid.UUID) (string, error) {
 	errStatus := &rest.ErrorMessage{}
-	member := &OrgMember{}
+	var member OrgMemberRole
 	resp, err := N.R.C.R().
 		SetError(errStatus).
-		Get(N.R.URL.String() + "/v1/org/members/" + userId.String())
-
+		Get(N.R.URL.String() + "/v1/orgs/"+orgId.String()+"/members/"+userId.String()+"/role" )
 	if err != nil {
 		logrus.Errorf("Failed to send API request to org registry. Error: %s", err.Error())
-		return nil, err
+		return "", err
 	}
-
 	if !resp.IsSuccess() {
 		logrus.Tracef("Failed to fetch org member info. HTTP response code: %d. Error message: %s", resp.StatusCode(), errStatus.Message)
-		return nil, fmt.Errorf("Org member info failure: %s", errStatus.Message)
+		return "", fmt.Errorf("Org member info failure: %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), &member)
 	if err != nil {
 		logrus.Tracef("Failed to deserialize org member info. Error message: %s", err.Error())
-		return nil, fmt.Errorf("Org member info deserialization failure: %s", err.Error())
+		return "", fmt.Errorf("Org member info deserialization failure: %s", err.Error())
 	}
-
-	return member.OrgMemberInfo, nil
+	return member.Role, nil
 }
 
 type RestClient struct {

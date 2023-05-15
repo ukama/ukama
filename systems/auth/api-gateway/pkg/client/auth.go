@@ -12,14 +12,21 @@ import (
 
 	"github.com/ory/client-go"
 	ory "github.com/ory/client-go"
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 var SESSION_KEY = "ukama_session"
-
+var namespace ="9982-23984-349389"
+var object ="org"
+var relation ="member"
+var subjectId ="user"
 type AuthManager struct {
 	client    *ory.APIClient
 	serverUrl string
 	timeout   time.Duration
+	orgRegistry  OrgMemberRoleClient
+	ketoClient *client.APIClient
+
 }
 
 type UIErrorResp struct {
@@ -27,7 +34,7 @@ type UIErrorResp struct {
 	Ui ory.UiContainer `json:"ui"`
 }
 
-func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
+func NewAuthManager(serverUrl string, timeout time.Duration, orgRegistry OrgMemberRoleClient) *AuthManager {
 	_, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -37,6 +44,8 @@ func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
 			URL: serverUrl,
 		},
 	}
+	
+
 	jar, _ := cookiejar.New(nil)
 	oc := ory.NewAPIClient(configuration)
 	oc.GetConfig().HTTPClient = &http.Client{
@@ -48,6 +57,7 @@ func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
 		client:    client,
 		timeout:   timeout,
 		serverUrl: serverUrl,
+		orgRegistry:   orgRegistry,
 	}
 }
 
@@ -56,10 +66,12 @@ func NewAuthManagerFromClient() *AuthManager {
 		serverUrl: "localhost",
 		timeout:   1 * time.Second,
 		client:    nil,
+		orgRegistry:  nil,
 	}
 }
 
 func (am *AuthManager) ValidateSession(ss string, t string) (*client.Session, error) {
+
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
@@ -69,6 +81,7 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*client.Session, er
 		am.client.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
 	} else if t == "header" {
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
+
 	}
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
 	if err != nil {
@@ -77,6 +90,32 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*client.Session, er
 	if r.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
+	
+	userId, _ := uuid.FromString("28669952-d8ba-47d1-b8a7-59371a667f9b")
+	orgId, _ := uuid.FromString("39a2138f-d6e2-42fb-ae92-9056ad125df4")
+
+	role,err := am.orgRegistry.GetMemberRole(userId,orgId )
+	if err != nil {
+		return nil, fmt.Errorf("member not found in the organization: %s", err.Error())
+	}
+	fmt.Println("RoleAUTH", role)
+
+	// check, r, err := am.ketoClient.PermissionApi.CheckPermission(context.Background()).
+	// Namespace(*&namespace).
+	// Object(*&object).
+	// Relation(*&relation).
+	// SubjectId(*&subjectId).Execute()
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	// 	panic("Encountered error: " + err.Error())
+	// }
+	// if check.Allowed {
+    //     fmt.Println(*&subjectId + " can " + *&relation + " the " + *&object)
+	// 	return resp, nil
+    // }else{
+	// 	log.Errorf("%s cannot %s the %s", subjectId, relation, object)
+	// 	return nil, err
+	// }
 	return resp, nil
 }
 
