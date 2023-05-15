@@ -27,7 +27,7 @@ type GetMemberRequest struct {
 }
 
 type GetMemberRoleRequest struct {
-	OrgId  string `example:"{{OrgId}}" path:"org" validate:"required"`
+	OrgId  string `example:"{{OrgId}}" path:"org_id" validate:"required"`
 	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 }
 type UpdateMemberRequest struct {

@@ -199,7 +199,7 @@ func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb
 	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
 }
 func (r *Router) getMemberRoleHandler(c *gin.Context, req *GetMemberRoleRequest) (*orgpb.GetMemberRoleResponse, error) {
-	return r.clients.Registry.GetMemberRole(c.Param("org"), c.Param("user_uuid"))
+	return r.clients.Registry.GetMemberRole(c.Param("org_id"), c.Param("user_uuid"))
 }
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
