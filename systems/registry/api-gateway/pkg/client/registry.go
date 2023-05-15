@@ -120,6 +120,16 @@ func (r *Registry) GetMember(orgName string, userUUID string) (*orgpb.MemberResp
 
 	return res, nil
 }
+func (r *Registry) GetMemberRole(orgId string, userUUID string) (*orgpb.GetMemberRoleResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+	res, err :=r.orgClient.GetMemberRole(ctx, &orgpb.MemberRoleRequest{OrgId: orgId, UserUuid: userUUID})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 
 func (r *Registry) GetMembers(orgName string) (*orgpb.GetMembersResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)

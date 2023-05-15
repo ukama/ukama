@@ -26,6 +26,10 @@ type GetMemberRequest struct {
 	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 }
 
+type GetMemberRoleRequest struct {
+	OrgId  string `example:"{{OrgId}}" path:"org" validate:"required"`
+	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+}
 type UpdateMemberRequest struct {
 	OrgName       string `example:"milky-way" path:"org" validate:"required"`
 	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
