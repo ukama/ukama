@@ -161,7 +161,7 @@ func (r *Registry) AddMember(orgName string, userUUID string,role string) (*orgp
 	return res, nil
 }
 
-func (r *Registry) UpdateMember(orgName string, userUUID string, isDeactivated bool) error {
+func (r *Registry) UpdateMember(orgName string, userUUID string, isDeactivated bool,role string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 

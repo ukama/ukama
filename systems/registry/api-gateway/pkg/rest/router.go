@@ -51,7 +51,7 @@ type registry interface {
 	GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
 	GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
 	AddMember(orgName string, userUUID string, role string) (*orgpb.MemberResponse, error)
-	UpdateMember(orgName string, userUUID string, isDeactivated bool) error
+	UpdateMember(orgName string, userUUID string, isDeactivated bool,role string) error
 	RemoveMember(orgName string, userUUID string) error
 	GetMemberRole(orgId string, userUUID string) (*orgpb.GetMemberRoleResponse, error)
 
@@ -199,7 +199,7 @@ func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb
 	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
 }
 func (r *Router) getMemberRoleHandler(c *gin.Context, req *GetMemberRoleRequest) (*orgpb.GetMemberRoleResponse, error) {
-	return r.clients.Registry.GetMemberRole(c.Param("org_id"), c.Param("user_uuid"))
+	return r.clients.Registry.GetMemberRole(c.Param("org"), c.Param("user_uuid"))
 }
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
@@ -207,7 +207,7 @@ func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.M
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated)
+	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated,req.Role)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {

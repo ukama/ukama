@@ -28,13 +28,14 @@ type GetMemberRequest struct {
 }
 
 type GetMemberRoleRequest struct {
-	OrgId  string `example:"{{OrgId}}" path:"org_id" validate:"required"`
+	OrgId  string `example:"{{OrgId}}" path:"org" validate:"required"`
 	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 }
 type UpdateMemberRequest struct {
 	OrgName       string `example:"milky-way" path:"org" validate:"required"`
 	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 	IsDeactivated bool   `example:"false" json:"isDeactivated,omitempty"`
+	Role string `example:"member" json:"role,omitempty"`
 }
 
 // Users group
