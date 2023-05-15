@@ -542,19 +542,16 @@ func (o *OrgService) PushMetrics() error {
 
 }
 
+
 func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
-	var dbRole db.RoleType
-
-	switch role {
-	case pb.RoleType_ADMIN:
-		dbRole = db.Admin
-	case pb.RoleType_MEMBER:
-		dbRole = db.Member
-	case pb.RoleType_VENDOR:
-		dbRole = db.Vendor
-	default:
-		dbRole = db.Member
-	}
-
-	return dbRole
+    switch role {
+    case pb.RoleType_ADMIN:
+        return db.Admin
+    case pb.RoleType_VENDOR:
+        return db.Vendor
+    case pb.RoleType_MEMBER:
+        fallthrough
+    default:
+        return db.Member
+    }
 }
