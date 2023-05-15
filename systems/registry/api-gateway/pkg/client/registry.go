@@ -147,7 +147,7 @@ func (r *Registry) GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
 	return res, nil
 }
 
-func (r *Registry) AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error) {
+func (r *Registry) AddMember(orgName string, userUUID string,role string) (*orgpb.MemberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 

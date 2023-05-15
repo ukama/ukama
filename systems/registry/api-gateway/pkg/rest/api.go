@@ -19,6 +19,7 @@ type AddOrgRequest struct {
 type MemberRequest struct {
 	OrgName  string `example:"milky-way" path:"org" validate:"required"`
 	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
+	Role string `example:"member" json:"role" validate:"required"`
 }
 
 type GetMemberRequest struct {

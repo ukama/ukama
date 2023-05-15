@@ -50,7 +50,7 @@ type registry interface {
 	GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error)
 	GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
 	GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
-	AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
+	AddMember(orgName string, userUUID string, role string) (*orgpb.MemberResponse, error)
 	UpdateMember(orgName string, userUUID string, isDeactivated bool) error
 	RemoveMember(orgName string, userUUID string) error
 	GetMemberRole(orgId string, userUUID string) (*orgpb.GetMemberRoleResponse, error)
@@ -203,7 +203,7 @@ func (r *Router) getMemberRoleHandler(c *gin.Context, req *GetMemberRoleRequest)
 }
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
-	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid)
+	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid, req.Role)
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
