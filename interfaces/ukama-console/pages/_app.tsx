@@ -10,13 +10,15 @@ import client from '@/client/ApolloClient';
 import { useWhoamiLazyQuery } from '@/generated';
 import { theme } from '@/styles/theme';
 import { TSnackMessage, TUser } from '@/types';
-import Layout from '@/ui/layout';
+import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
 import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import { ApolloProvider } from '@apollo/client';
+import { CacheProvider, EmotionCache } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import type { AppProps } from 'next/app';
+import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import {
   RecoilRoot,
@@ -25,10 +27,33 @@ import {
   useResetRecoilState,
 } from 'recoil';
 import '../styles/global.css';
-
+const Layout = dynamic(() => import('@/ui/layout'));
 const SNACKBAR_TIMEOUT = 5000;
 
-const App = ({ Component, pageProps }: AppProps) => {
+const clientSideEmotionCache = createEmotionCache();
+
+export interface MyAppProps extends AppProps {
+  emotionCache?: EmotionCache;
+}
+
+const NETWORKS = [
+  {
+    id: '1',
+    value: "Joe's Testnet",
+    label: "Joe's Testnet",
+  },
+  {
+    id: '2',
+    value: "Sam's Testnet",
+    label: "Sam's Testnet",
+  },
+];
+
+const App = ({
+  Component,
+  pageProps,
+  emotionCache = clientSideEmotionCache,
+}: MyAppProps) => {
   const [_user, _setUser] = useRecoilState<TUser>(user);
   const [page, setPage] = useRecoilState(pageName);
   const _isDarkMod = useRecoilValue<boolean>(isDarkmode);
@@ -117,50 +142,41 @@ const App = ({ Component, pageProps }: AppProps) => {
   const handleNetworkChange = (id: string) => setNetwork(id);
 
   return (
-    <ThemeProvider theme={theme(_isDarkMod)}>
-      <CssBaseline />
-      <ErrorBoundary>
-        <Layout
-          page={page}
-          networkId={network}
-          networks={[
-            {
-              id: '1',
-              value: "Joe's Testnet",
-              label: "Joe's Testnet",
-            },
-            {
-              id: '2',
-              value: "Sam's Testnet",
-              label: "Sam's Testnet",
-            },
-          ]}
-          isDarkMode={_isDarkMod}
-          isLoading={skeltonLoading}
-          handlePageChange={handlePageChange}
-          handleNetworkChange={handleNetworkChange}
-        >
-          <Component {...pageProps} />
-        </Layout>
-      </ErrorBoundary>
-      <Snackbar
-        open={_snackbarMessage.show}
-        autoHideDuration={SNACKBAR_TIMEOUT}
-        onClose={handleSnackbarClose}
-      >
-        <Alert
-          id={_snackbarMessage.id}
-          severity={_snackbarMessage.type as AlertColor}
+    <CacheProvider value={emotionCache}>
+      <ThemeProvider theme={theme(_isDarkMod)}>
+        <CssBaseline />
+        <ErrorBoundary>
+          <Layout
+            page={page}
+            networkId={network}
+            networks={NETWORKS}
+            isDarkMode={_isDarkMod}
+            isLoading={skeltonLoading}
+            handlePageChange={handlePageChange}
+            handleNetworkChange={handleNetworkChange}
+          >
+            <Component {...pageProps} />
+          </Layout>
+        </ErrorBoundary>
+        <Snackbar
+          open={_snackbarMessage.show}
+          autoHideDuration={SNACKBAR_TIMEOUT}
           onClose={handleSnackbarClose}
         >
-          {_snackbarMessage.message}
-        </Alert>
-      </Snackbar>
-    </ThemeProvider>
+          <Alert
+            id={_snackbarMessage.id}
+            severity={_snackbarMessage.type as AlertColor}
+            onClose={handleSnackbarClose}
+          >
+            {_snackbarMessage.message}
+          </Alert>
+        </Snackbar>
+      </ThemeProvider>
+    </CacheProvider>
   );
 };
 
-const MyApp = (appProps: AppProps) => {
+const MyApp = (appProps: MyAppProps) => {
   return (
     <RecoilRoot>
       <ApolloProvider client={client}>
