@@ -151,8 +151,8 @@ func GetTokenStr(c *gin.Context) string {
 }
 
 func GetMemberDetails(c *gin.Context) (string,string) {
-	userId := c.Request.Header.Get("userID")
-	orgId:= c.Request.Header.Get("orgID")
+	userId := c.Request.Header.Get("User_id")
+	orgId:= c.Request.Header.Get("Org_id")
 
 	return userId,orgId
 }

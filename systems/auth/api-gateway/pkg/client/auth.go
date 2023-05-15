@@ -70,7 +70,7 @@ func NewAuthManagerFromClient() *AuthManager {
 	}
 }
 
-func (am *AuthManager) ValidateSession(ss string, t string) (*client.Session, error) {
+func (am *AuthManager) ValidateSession(ss string, t string,userId string ,orgId string) (*client.Session, error) {
 
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
@@ -81,7 +81,6 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*client.Session, er
 		am.client.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
 	} else if t == "header" {
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
-
 	}
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
 	if err != nil {
@@ -91,14 +90,17 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*client.Session, er
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
 	
-	userId, _ := uuid.FromString("28669952-d8ba-47d1-b8a7-59371a667f9b")
-	orgId, _ := uuid.FromString("39a2138f-d6e2-42fb-ae92-9056ad125df4")
+	 uId, _ := uuid.FromString(userId)
+	oId, _ := uuid.FromString(orgId)
 
-	role,err := am.orgRegistry.GetMemberRole(userId,orgId )
-	if err != nil {
-		return nil, fmt.Errorf("error while getting member role: %s", err.Error())
-	}
-	fmt.Println("Role", role)
+	fmt.Println("userId", uId)
+	fmt.Println("orgId", oId)
+	
+	// role,err := am.orgRegistry.GetMemberRole(userId,orgId )
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error while getting member role: %s", err.Error())
+	// }
+	// fmt.Println("Role", role)
 	
 	return resp, nil
 }

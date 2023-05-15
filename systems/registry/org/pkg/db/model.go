@@ -34,7 +34,7 @@ type OrgUser struct {
 	Deactivated bool
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	Role        RoleType       `gorm:"type:uint;not null;default:2"` // Set the default value to Member
+	Role        RoleType       `gorm:"type:uint;not null;default:1"` // Set the default value to Member
 }
 
 type RoleType uint8

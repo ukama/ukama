@@ -39,7 +39,7 @@ func (_m *AuthManager) LoginUser(email string, password string) (*client.Success
 }
 
 // ValidateSession provides a mock function with given fields: ss, t
-func (_m *AuthManager) ValidateSession(ss string, t string) (*client.Session, error) {
+func (_m *AuthManager) ValidateSession(ss string, t string ) (*client.Session, error) {
 	ret := _m.Called(ss, t)
 
 	var r0 *client.Session
