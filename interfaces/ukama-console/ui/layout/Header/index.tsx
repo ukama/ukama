@@ -22,24 +22,24 @@ interface IHeaderProps {
 }
 
 interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
-  isLoading?: boolean;
+  open: boolean;
+  isloading: string;
 }
 
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme, open, isLoading }) => ({
+})<AppBarProps>(({ theme, open, isloading }) => ({
   zIndex: theme.zIndex.drawer + 1,
   boxShadow: 'none',
   ...(theme.palette.mode === 'dark' && {
     backgroundImage: 'none',
     backgroundColor: 'none',
-    background: isLoading ? colors.nightGrey5 : 'none',
+    background: isloading === 'true' ? colors.nightGrey5 : 'none',
   }),
   ...(theme.palette.mode === 'light' && {
     backgroundColor: 'none',
     backgroundImage: 'none',
-    background: isLoading ? colors.white : colors.darkBlueGradiant,
+    background: isloading === 'true' ? colors.white : colors.darkBlueGradiant,
   }),
   ...(open && {
     width: '100%',
@@ -66,7 +66,7 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
   return (
     <AppBar
       open={isOpen}
-      isLoading={isLoading}
+      isloading={`${isLoading}`}
       sx={{ justifyContent: 'center' }}
     >
       <LoadingWrapper

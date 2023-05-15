@@ -24,7 +24,7 @@ const theme = (isDarkmode: boolean) =>
       palette: {
         mode: isDarkmode ? 'dark' : 'light',
         text: {
-          primary: isDarkmode ? colors.white : colors.black,
+          primary: isDarkmode ? colors.white : colors.vulcan,
           secondary: isDarkmode ? colors.white70 : colors.black70,
           disabled: isDarkmode ? colors.white38 : colors.black38,
         },
