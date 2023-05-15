@@ -30,6 +30,7 @@ type OrgRepo interface {
 	RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error
 	GetOrgCount() (int64, int64, error)
 	GetMemberCount(orgID uuid.UUID) (int64, int64, error)
+	GetMemberRole(orgID uuid.UUID, userUUID uuid.UUID) (string, error)
 }
 
 type orgRepo struct {
@@ -65,6 +66,28 @@ func (r *orgRepo) Add(org *Org, nestedFunc func(*Org, *gorm.DB) error) (err erro
 	})
 
 	return err
+}
+func (r *orgRepo) GetMemberRole(orgID uuid.UUID, userUUID uuid.UUID) (string, error) {
+	var member OrgUser
+
+	result := r.Db.GetGormDb().Where("org_id = ? And uuid = ?", orgID, userUUID).First(&member)
+	if result.Error != nil {
+		return "", result.Error
+	}
+
+	roleString := ""
+	switch member.Role {
+	case Admin:
+		roleString = "admin"
+	case Member:
+		roleString = "member"
+	case Vendor:
+		roleString = "vendor"
+	default:
+		roleString = "undefined"
+	}
+
+	return roleString, nil
 }
 
 func (r *orgRepo) Get(id uuid.UUID) (*Org, error) {

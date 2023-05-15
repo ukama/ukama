@@ -19,6 +19,27 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+var _regex_MemberRoleRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_MemberRoleRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *MemberRoleRequest) Validate() error {
+	if !_regex_MemberRoleRequest_OrgId.MatchString(this.OrgId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
+	}
+	if this.OrgId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
+	}
+	if !_regex_MemberRoleRequest_UserUuid.MatchString(this.UserUuid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserUuid))
+	}
+	if this.UserUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.UserUuid))
+	}
+	return nil
+}
+func (this *GetMemberRoleResponse) Validate() error {
+	return nil
+}
 func (this *AddRequest) Validate() error {
 	if nil == this.Org {
 		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf("message must exist"))

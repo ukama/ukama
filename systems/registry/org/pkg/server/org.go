@@ -384,6 +384,27 @@ func (o *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 	return &pb.MemberResponse{}, nil
 }
 
+func (o *OrgService) GetMemberRole(ctx context.Context, req *pb.MemberRoleRequest) (*pb.GetMemberRoleResponse, error) {
+
+	userId, err := uuid.FromString(req.GetUserUuid())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
+	}
+	orgId, err := uuid.FromString(req.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of orgId. Error %s", err.Error())
+	}
+
+	memberRole, err := o.orgRepo.GetMemberRole(orgId, userId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "member")
+	}
+
+	return &pb.GetMemberRoleResponse{Role: memberRole}, nil
+
+}
 func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 	return &pb.Organization{
 		Id:            org.Id.String(),
