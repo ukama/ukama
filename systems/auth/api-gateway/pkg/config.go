@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -12,7 +14,9 @@ type Config struct {
 	Service           *config.Service
 	R                 *rest.RestClient
 	Auth              *config.Auth
-	AuthKey           string
+	AuthKey           string            `default:""`
+	Queue             *config.Queue     `default:"{}"`
+	MsgClient         *config.MsgClient `default:"{}"`
 }
 
 func NewConfig(name string) *Config {
@@ -31,5 +35,8 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 		Auth:    config.LoadAuthHostConfig(name),
 		AuthKey: config.LoadAuthKey(),
+		MsgClient: &config.MsgClient{
+			Timeout: 7 * time.Second,
+		},
 	}
 }

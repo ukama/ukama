@@ -73,6 +73,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 			OrgId:  org.Id,
 			UserId: user.Id,
 			Uuid:   org.Owner,
+			Role:   pbRoleTypeToDb(pb.RoleType_OWNER),
 		}
 
 		err = db.NewOrgRepo(txDb).AddMember(member)
@@ -229,7 +230,7 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
-func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
+func (o *OrgService) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
 	org, err := o.orgRepo.GetByName(req.GetOrgName())
 	if err != nil {
@@ -328,7 +329,6 @@ func (o *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberReque
 		OrgId:       org.Id,
 		Uuid:        uuid,
 		Deactivated: req.GetAttributes().IsDeactivated,
-		Role:        pbRoleTypeToDb(req.Member.Role),
 	}
 
 	err = o.orgRepo.UpdateMember(member.OrgId, member)
@@ -384,27 +384,6 @@ func (o *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 	return &pb.MemberResponse{}, nil
 }
 
-func (o *OrgService) GetMemberRole(ctx context.Context, req *pb.MemberRoleRequest) (*pb.GetMemberRoleResponse, error) {
-
-	userId, err := uuid.FromString(req.GetUserUuid())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of user uuid. Error %s", err.Error())
-	}
-	orgId, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of orgId. Error %s", err.Error())
-	}
-
-	memberRole, err := o.orgRepo.GetMemberRole(orgId, userId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "member")
-	}
-
-	return &pb.GetMemberRoleResponse{Role: memberRole}, nil
-
-}
 func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 	return &pb.Organization{
 		Id:            org.Id.String(),
@@ -542,16 +521,17 @@ func (o *OrgService) PushMetrics() error {
 
 }
 
-
 func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
-    switch role {
-    case pb.RoleType_ADMIN:
-        return db.Admin
-    case pb.RoleType_VENDOR:
-        return db.Vendor
-    case pb.RoleType_MEMBER:
-        fallthrough
-    default:
-        return db.Member
-    }
+	switch role {
+	case pb.RoleType_ADMIN:
+		return db.Admin
+	case pb.RoleType_VENDOR:
+		return db.Vendor
+	case pb.RoleType_MEMBER:
+		return db.Member
+	case pb.RoleType_OWNER:
+		return db.Owner
+	default:
+		return db.Member
+	}
 }

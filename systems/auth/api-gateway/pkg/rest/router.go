@@ -34,7 +34,7 @@ type RouterConfig struct {
 }
 
 type AuthManager interface {
-	ValidateSession(ss, t ,userId , orgId string, ) (*oc.Session, error)
+	ValidateSession(ss, t, userId, orgId string) (*oc.Session, error)
 	LoginUser(email string, password string) (*oc.SuccessfulNativeLogin, error)
 }
 
@@ -102,11 +102,11 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 		return nil, err
 	}
 	var ss string
-	var userId ,orgId string
+	var userId, orgId string
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
-		userId,orgId=pkg.GetMemberDetails(c)
+		userId, orgId = pkg.GetMemberDetails(c)
 
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
@@ -120,7 +120,7 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 			return nil, err
 		}
 	}
-	res, err := p.client.au.ValidateSession(ss, st,userId,orgId)
+	res, err := p.client.au.ValidateSession(ss, st, userId, orgId)
 	if err != nil {
 		return nil, err
 	}
@@ -144,13 +144,13 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 		return err
 	}
 	var ss string
-	var userId ,orgId string
+	var userId, orgId string
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
-		userId,orgId=pkg.GetMemberDetails(c)
+		userId, orgId = pkg.GetMemberDetails(c)
 
 		if err == nil {
 			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
@@ -163,14 +163,13 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 		}
 	}
 
-	_, err = p.client.au.ValidateSession(ss, st,userId,orgId)
+	_, err = p.client.au.ValidateSession(ss, st, userId, orgId)
 	if err != nil {
 		return err
 	}
 
-
 	return nil
-	
+
 }
 
 func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {

@@ -31,12 +31,11 @@ type OrgServiceClient interface {
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	// Members
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*MemberResponse, error)
-	AddMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
 	UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
-	GetMemberRole(ctx context.Context, in *MemberRoleRequest, opts ...grpc.CallOption) (*GetMemberRoleResponse, error)
 }
 
 type orgServiceClient struct {
@@ -101,7 +100,7 @@ func (c *orgServiceClient) RegisterUser(ctx context.Context, in *RegisterUserReq
 	return out, nil
 }
 
-func (c *orgServiceClient) AddMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+func (c *orgServiceClient) AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
 	out := new(MemberResponse)
 	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/AddMember", in, out, opts...)
 	if err != nil {
@@ -146,15 +145,6 @@ func (c *orgServiceClient) RemoveMember(ctx context.Context, in *MemberRequest, 
 	return out, nil
 }
 
-func (c *orgServiceClient) GetMemberRole(ctx context.Context, in *MemberRoleRequest, opts ...grpc.CallOption) (*GetMemberRoleResponse, error) {
-	out := new(GetMemberRoleResponse)
-	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/GetMemberRole", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // OrgServiceServer is the server API for OrgService service.
 // All implementations must embed UnimplementedOrgServiceServer
 // for forward compatibility
@@ -168,12 +158,11 @@ type OrgServiceServer interface {
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	// Members
 	RegisterUser(context.Context, *RegisterUserRequest) (*MemberResponse, error)
-	AddMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	AddMember(context.Context, *AddMemberRequest) (*MemberResponse, error)
 	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
 	UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error)
 	RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error)
-	GetMemberRole(context.Context, *MemberRoleRequest) (*GetMemberRoleResponse, error)
 	mustEmbedUnimplementedOrgServiceServer()
 }
 
@@ -199,7 +188,7 @@ func (UnimplementedOrgServiceServer) UpdateUser(context.Context, *UpdateUserRequ
 func (UnimplementedOrgServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterUser not implemented")
 }
-func (UnimplementedOrgServiceServer) AddMember(context.Context, *MemberRequest) (*MemberResponse, error) {
+func (UnimplementedOrgServiceServer) AddMember(context.Context, *AddMemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMember not implemented")
 }
 func (UnimplementedOrgServiceServer) GetMember(context.Context, *MemberRequest) (*MemberResponse, error) {
@@ -213,9 +202,6 @@ func (UnimplementedOrgServiceServer) UpdateMember(context.Context, *UpdateMember
 }
 func (UnimplementedOrgServiceServer) RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveMember not implemented")
-}
-func (UnimplementedOrgServiceServer) GetMemberRole(context.Context, *MemberRoleRequest) (*GetMemberRoleResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMemberRole not implemented")
 }
 func (UnimplementedOrgServiceServer) mustEmbedUnimplementedOrgServiceServer() {}
 
@@ -339,7 +325,7 @@ func _OrgService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _OrgService_AddMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MemberRequest)
+	in := new(AddMemberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -351,7 +337,7 @@ func _OrgService_AddMember_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: "/ukama.org.v1.OrgService/AddMember",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).AddMember(ctx, req.(*MemberRequest))
+		return srv.(OrgServiceServer).AddMember(ctx, req.(*AddMemberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -428,24 +414,6 @@ func _OrgService_RemoveMember_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrgService_GetMemberRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MemberRoleRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrgServiceServer).GetMemberRole(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.org.v1.OrgService/GetMemberRole",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).GetMemberRole(ctx, req.(*MemberRoleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // OrgService_ServiceDesc is the grpc.ServiceDesc for OrgService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -496,10 +464,6 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveMember",
 			Handler:    _OrgService_RemoveMember_Handler,
-		},
-		{
-			MethodName: "GetMemberRole",
-			Handler:    _OrgService_GetMemberRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

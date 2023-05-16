@@ -34,18 +34,17 @@ type OrgUser struct {
 	Deactivated bool
 	CreatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	Role        RoleType       `gorm:"type:uint;not null;default:1"` // Set the default value to Member
+	Role        RoleType       `gorm:"type:uint;not null;default:3"` // Set the default value to Member
 }
 
 type RoleType uint8
 
-
 const (
-    Admin  RoleType = 1
-    Member RoleType = 2
-    Vendor RoleType = 3
+	Owner  RoleType = 0
+	Admin  RoleType = 1
+	Vendor RoleType = 2
+	Member RoleType = 3
 )
-
 
 func (e *RoleType) Scan(value interface{}) error {
 	*e = RoleType(uint8(value.(int64)))
