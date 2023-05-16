@@ -36,6 +36,7 @@ type RouterConfig struct {
 type AuthManager interface {
 	ValidateSession(ss, t, userId, orgId string) (*oc.Session, error)
 	LoginUser(email string, password string) (*oc.SuccessfulNativeLogin, error)
+	UpdateRole(ss, t, orgId, role, kratosId string) (*oc.SuccessfulNativeLogin, error)
 }
 
 type Clients struct {
@@ -86,6 +87,7 @@ func (r *Router) init() {
 	v1.GET("/whoami", formatDoc("Get user info", ""), tonic.Handler(r.getUserInfo, http.StatusOK))
 	v1.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))
 	v1.POST("/login", formatDoc("Login user", ""), tonic.Handler(r.login, http.StatusOK))
+	v1.PUT("/role", formatDoc("Update user role", ""), tonic.Handler(r.updateRole, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -96,7 +98,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	return opt
 }
 
-func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserInfo, error) {
+func (p *Router) getUserInfo(c *gin.Context, req *ReqHeader) (*GetUserInfo, error) {
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return nil, err
@@ -138,7 +140,7 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 	}, nil
 }
 
-func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
+func (p *Router) authenticate(c *gin.Context, req *ReqHeader) error {
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
@@ -184,4 +186,35 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 	return &LoginRes{
 		Token: token,
 	}, nil
+}
+
+func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
+	st, err := pkg.SessionType(c, SESSION_KEY)
+	if err != nil {
+		return err
+	}
+	var ss string
+	if st == "cookie" {
+		ss = pkg.GetCookieStr(c, SESSION_KEY)
+	} else if st == "header" {
+		ss = pkg.GetTokenStr(c)
+		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
+
+		if err == nil {
+			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
+			if e != nil {
+				return e
+			}
+			ss = t.Session
+		} else {
+			return err
+		}
+	}
+
+	_, err = p.client.au.UpdateRole(ss, st, req.OrgId, string(req.Role), req.KId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

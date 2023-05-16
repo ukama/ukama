@@ -132,7 +132,7 @@ type TRole struct {
 	organization string
 }
 
-func (am *AuthManager) UpdateRole(ss string, t string, orgId string, role string, userId string, kratosId string) (*client.Identity, error) {
+func (am *AuthManager) UpdateRole(ss, t, orgId, role, kratosId string) (*client.Identity, error) {
 
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)

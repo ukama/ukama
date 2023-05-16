@@ -38,25 +38,51 @@ func (_m *AuthManager) LoginUser(email string, password string) (*client.Success
 	return r0, r1
 }
 
-// ValidateSession provides a mock function with given fields: ss, t
-func (_m *AuthManager) ValidateSession(ss string, t string ) (*client.Session, error) {
-	ret := _m.Called(ss, t)
+// UpdateRole provides a mock function with given fields: ss, t, orgId, role, kratosId
+func (_m *AuthManager) UpdateRole(ss string, t string, orgId string, role string, kratosId string) (*client.SuccessfulNativeLogin, error) {
+	ret := _m.Called(ss, t, orgId, role, kratosId)
+
+	var r0 *client.SuccessfulNativeLogin
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string) (*client.SuccessfulNativeLogin, error)); ok {
+		return rf(ss, t, orgId, role, kratosId)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string) *client.SuccessfulNativeLogin); ok {
+		r0 = rf(ss, t, orgId, role, kratosId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.SuccessfulNativeLogin)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string) error); ok {
+		r1 = rf(ss, t, orgId, role, kratosId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ValidateSession provides a mock function with given fields: ss, t, userId, orgId
+func (_m *AuthManager) ValidateSession(ss string, t string, userId string, orgId string) (*client.Session, error) {
+	ret := _m.Called(ss, t, userId, orgId)
 
 	var r0 *client.Session
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*client.Session, error)); ok {
-		return rf(ss, t)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (*client.Session, error)); ok {
+		return rf(ss, t, userId, orgId)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *client.Session); ok {
-		r0 = rf(ss, t)
+	if rf, ok := ret.Get(0).(func(string, string, string, string) *client.Session); ok {
+		r0 = rf(ss, t, userId, orgId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.Session)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(ss, t)
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(ss, t, userId, orgId)
 	} else {
 		r1 = ret.Error(1)
 	}

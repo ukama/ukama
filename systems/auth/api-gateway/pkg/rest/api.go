@@ -8,10 +8,10 @@ type GetUserInfo struct {
 	FirstVisit bool   `example:"true" json:"first_visit" validation:"required"`
 }
 
-type OptionalReqHeader struct {
+type ReqHeader struct {
 	XSessionToken string `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
-	OrgId 	   string `example:"" json:"org_id" header:"org_id" validation:"required" required:"true"`
-	UserId 	   string `example:"" json:"user_id" header:"user_id" validation:"required" required:"true"`
+	OrgId         string `example:"" json:"org_id" header:"org_id" validation:"required" required:"true"`
+	UserId        string `example:"" json:"user_id" header:"user_id" validation:"required" required:"true"`
 }
 
 type LoginReq struct {
@@ -25,3 +25,19 @@ type LoginRes struct {
 type GetSessionReq struct {
 	XSessionToken string `example:"token" json:"x-session-token" header:"x-session-token" validation:"required"`
 }
+
+type UpdateRoleReq struct {
+	XSessionToken string   `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
+	OrgId         string   `example:"{{ORG_ID}}" json:"org_id" header:"org_id" validation:"required" required:"true"`
+	Role          RoleType `example:"member" json:"role" validation:"required"`
+	KId           string   `example:"{{K_ID}}" json:"k_id" validation:"required" required:"true"`
+}
+
+type RoleType string
+
+const (
+	Owner  RoleType = "owner"
+	Admin  RoleType = "admin"
+	Vendor RoleType = "vendor"
+	Member RoleType = "member"
+)
