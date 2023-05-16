@@ -51,5 +51,6 @@ func unmarshalAddMemeberReq(msg *anypb.Any) (*pb.AddMemberRequest, error) {
 
 func handleEventCloudAddMember(key string, msg *pb.AddMemberRequest) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
+	// Call Kratos to update user role
 	return nil
 }

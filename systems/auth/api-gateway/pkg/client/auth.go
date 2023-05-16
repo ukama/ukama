@@ -12,21 +12,20 @@ import (
 
 	"github.com/ory/client-go"
 	ory "github.com/ory/client-go"
-	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 var SESSION_KEY = "ukama_session"
-var namespace ="9982-23984-349389"
-var object ="org"
-var relation ="member"
-var subjectId ="user"
-type AuthManager struct {
-	client    *ory.APIClient
-	serverUrl string
-	timeout   time.Duration
-	orgRegistry  OrgMemberRoleClient
-	ketoClient *client.APIClient
+var namespace = "9982-23984-349389"
+var object = "org"
+var relation = "member"
+var subjectId = "user"
 
+type AuthManager struct {
+	client      *ory.APIClient
+	serverUrl   string
+	timeout     time.Duration
+	orgRegistry OrgMemberRoleClient
+	ketoClient  *client.APIClient
 }
 
 type UIErrorResp struct {
@@ -44,7 +43,6 @@ func NewAuthManager(serverUrl string, timeout time.Duration, orgRegistry OrgMemb
 			URL: serverUrl,
 		},
 	}
-	
 
 	jar, _ := cookiejar.New(nil)
 	oc := ory.NewAPIClient(configuration)
@@ -54,23 +52,23 @@ func NewAuthManager(serverUrl string, timeout time.Duration, orgRegistry OrgMemb
 	client := oc
 
 	return &AuthManager{
-		client:    client,
-		timeout:   timeout,
-		serverUrl: serverUrl,
-		orgRegistry:   orgRegistry,
+		client:      client,
+		timeout:     timeout,
+		serverUrl:   serverUrl,
+		orgRegistry: orgRegistry,
 	}
 }
 
 func NewAuthManagerFromClient() *AuthManager {
 	return &AuthManager{
-		serverUrl: "localhost",
-		timeout:   1 * time.Second,
-		client:    nil,
-		orgRegistry:  nil,
+		serverUrl:   "localhost",
+		timeout:     1 * time.Second,
+		client:      nil,
+		orgRegistry: nil,
 	}
 }
 
-func (am *AuthManager) ValidateSession(ss string, t string,userId string ,orgId string) (*client.Session, error) {
+func (am *AuthManager) ValidateSession(ss string, t string, userId string, orgId string) (*client.Session, error) {
 
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
@@ -89,19 +87,7 @@ func (am *AuthManager) ValidateSession(ss string, t string,userId string ,orgId 
 	if r.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
-	
-	 uId, _ := uuid.FromString(userId)
-	oId, _ := uuid.FromString(orgId)
 
-	fmt.Println("userId", uId)
-	fmt.Println("orgId", oId)
-	
-	// role,err := am.orgRegistry.GetMemberRole(userId,orgId )
-	// if err != nil {
-	// 	return nil, fmt.Errorf("error while getting member role: %s", err.Error())
-	// }
-	// fmt.Println("Role", role)
-	
 	return resp, nil
 }
 
@@ -139,4 +125,49 @@ func (am *AuthManager) LoginUser(email string, password string) (*client.Success
 	}
 
 	return flow1, nil
+}
+
+type TRole struct {
+	name         string
+	organization string
+}
+
+func (am *AuthManager) UpdateRole(ss string, t string, orgId string, role string, userId string, kratosId string) (*client.Identity, error) {
+
+	if t == "cookie" {
+		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
+		cookie := &http.Cookie{
+			Name:  SESSION_KEY,
+			Value: ss,
+		}
+		am.client.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
+	} else if t == "header" {
+		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
+	}
+	roles := []TRole{
+		{
+			name:         role,
+			organization: orgId,
+		},
+	}
+	resp, r, err := am.client.IdentityApi.UpdateIdentity(
+		context.Background(), kratosId,
+	).UpdateIdentityBody(
+		client.UpdateIdentityBody(
+			client.UpdateIdentityBody{
+				Traits: map[string]interface{}{
+					"roles": roles,
+				},
+			},
+		),
+	).Execute()
+
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode == http.StatusUnauthorized {
+		return nil, fmt.Errorf("no valid session cookie found")
+	}
+
+	return resp, nil
 }
