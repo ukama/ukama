@@ -48,7 +48,7 @@ services:
 
   msgclient:
     build: 
-      context: ../messaging/msgClient
+      context: ../services/msgClient
       dockerfile: ./Dockerfile
     ports:
       - "9095:9095"

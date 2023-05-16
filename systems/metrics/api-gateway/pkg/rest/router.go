@@ -89,7 +89,7 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode,"")
 	metrics := r.f.Group("/v1", "metrics system ", "metrics system version v1")
 
 	metrics.GET("/metrics", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
