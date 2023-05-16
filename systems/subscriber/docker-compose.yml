@@ -128,5 +128,3 @@ networks:
 
 volumes:
   postgress-data:
-
-

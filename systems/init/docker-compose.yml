@@ -1,0 +1,92 @@
+version: "3.9"
+services:
+  postgresd:
+    image: postgres:13.3
+    ports:
+      - "5400:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
+  lookup:
+    build: ./lookup
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient:9095
+      - LOOKUP_SERVICE_HOST=lookup
+      - LOOKUP_SERVICE_PORT=9090
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient
+      - postgresd
+
+  node-gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./node-gateway
+    restart: always
+    ports:
+      - "8070:8080"
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASSAUTHMODE=true
+      - SERVICES_LOOKUP=lookup:9090
+      # - CORS_ALLOWALLORIGINS=true
+      # - CORS_ALLOWORIGINS=""
+    depends_on:
+      - lookup
+
+  api-gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./api-gateway
+    restart: always
+    ports:
+      - "8071:8080"
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASSAUTHMODE=true
+      - SERVICES_LOOKUP=lookup:9090
+      # - CORS_ALLOWALLORIGINS=true
+      # - CORS_ALLOWORIGINS=""
+    depends_on:
+      - lookup
+
+  msgclient:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - SYSTEM=init
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+      
+networks:
+  ukama-net:
+    external: true
+    name: services_dev-net
+
+volumes:
+  postgress-data:
+
+

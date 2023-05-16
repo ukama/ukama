@@ -95,7 +95,7 @@ services:
       - ukama-net
     environment:
       - DEBUGMODE=true
-      - BYPASSAUTHMODE=true
+      - BYPASS_AUTH_MODE=true
       # - CORS_ALLOWALLORIGINS=true
       # - CORS_ALLOWORIGINS=""
     depends_on:
