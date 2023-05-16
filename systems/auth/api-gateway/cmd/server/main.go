@@ -11,7 +11,6 @@ import (
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg/rest"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	"github.com/ukama/ukama/systems/common/config"
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 var svcConf = pkg.NewConfig(pkg.SystemName)
@@ -28,8 +27,6 @@ func main() {
 	am := client.NewAuthManager(svcConf.Auth.AuthServerUrl, 3*time.Second, orgRegistryClient)
 	cs := rest.NewClientsSet(am)
 	r := rest.NewRouter(cs, rest.NewRouterConfig(svcConf, svcConf.AuthKey))
-	nSrv := rest.NewAuthEventServer()
-	egenerated.RegisterEventNotificationServiceServer(nil, nSrv)
 	r.Run()
 }
 
