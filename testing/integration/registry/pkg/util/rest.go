@@ -109,16 +109,3 @@ func (r *Resty) Patch(b []byte, url string) (*resty.Response, error) {
 
 	return resp, nil
 }
-
-type Organization struct {
-	Id            string `json:"id,omitempty"`
-	Name          string `json:"name,omitempty"` // there is extra vlidation on repository level
-	Owner         string `json:"owner,omitempty"`
-	Certificate   string `json:"certificate,omitempty"`
-	IsDeactivated bool   `json:"isDeactivated,omitempty"`
-	CreatedAt     string `json:"created_at,omitempty, string"`
-}
-
-type GetResponse struct {
-	Org *Organization `json:"org,omitempty"`
-}

@@ -1,14 +1,16 @@
 package pkg
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 
 	log "github.com/sirupsen/logrus"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	jsonpb "google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/ukama/ukama/testing/integration/registry/pkg/util"
-	"k8s.io/apimachinery/pkg/util/json"
 )
 
 type RegistryClient struct {
@@ -26,7 +28,6 @@ func NewRegistryClient(h string) *RegistryClient {
 }
 
 func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, error) {
-
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
@@ -39,7 +40,7 @@ func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, erro
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -47,8 +48,8 @@ func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, erro
 	return rsp, nil
 }
 
-func (s *RegistryClient) GetOrg(req api.GetOrgRequest) (*util.GetResponse, error) {
-	rsp := &util.GetResponse{}
+func (s *RegistryClient) GetOrg(req api.GetOrgRequest) (*orgpb.GetResponse, error) {
+	rsp := &orgpb.GetResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName)
 	if err != nil {
@@ -56,7 +57,7 @@ func (s *RegistryClient) GetOrg(req api.GetOrgRequest) (*util.GetResponse, error
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -78,7 +79,7 @@ func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -87,7 +88,6 @@ func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse
 }
 
 func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*orgpb.MemberResponse, error) {
-
 	rsp := &orgpb.MemberResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName + "/members/" + req.UserUuid)
@@ -97,7 +97,7 @@ func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*orgpb.MemberRespo
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
