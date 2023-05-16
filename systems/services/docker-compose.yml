@@ -1,17 +1,5 @@
 version: "3.2"
 services:
-    postgresd:
-      image: postgres:13.3
-      ports:
-        - "5432:5432"
-      environment:
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=Pass2020!
-      networks:
-        - dev-net
-      volumes:
-        - postgress-data:/var/lib/postgresql
-
     rabbitmq:
       image: rabbitmq:3-management
       ports:

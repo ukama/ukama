@@ -24,7 +24,7 @@ type qPub struct {
 	instanceId  string
 }
 
-func NewQPub(queueUri string, serviceName string, instanceId string) (*qPub, error) {
+func NewQPub(queueUri string, serviceName string, exchange string, instanceId string) (*qPub, error) {
 	conn, err := rabbitmq.NewConn(
 		queueUri,
 		rabbitmq.WithConnectionOptionsLogging,
@@ -36,7 +36,7 @@ func NewQPub(queueUri string, serviceName string, instanceId string) (*qPub, err
 
 	publisher, err := rabbitmq.NewPublisher(conn,
 		rabbitmq.WithPublisherOptionsLogging,
-		rabbitmq.WithPublisherOptionsExchangeDeclare,
+		rabbitmq.WithPublisherOptionsExchangeName(exchange),
 	)
 	if err != nil {
 		return nil, err
@@ -116,3 +116,4 @@ func (q *qPub) PublishToQueue(queueName string, payload any) error {
 
 	return nil
 }
+
