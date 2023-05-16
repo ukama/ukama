@@ -15,6 +15,7 @@ type QueuePublisher struct {
 	name           string
 	exchange       string `default:"amq.topic"`
 	instanceId     string
+	exchange       string
 	pub            mb.QPub
 	baseRoutingKey mb.RoutingKeyBuilder
 }
