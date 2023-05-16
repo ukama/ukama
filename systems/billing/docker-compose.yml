@@ -1,0 +1,95 @@
+version: "3.9"
+
+volumes:
+  postgress-data:
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+
+
+  postgresd:
+    image: postgres:13.3
+    ports:
+      - "15432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=ThisIsUkamaXPass
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
+
+
+# Billing System
+
+  billing:
+    build: ./billing/api-gateway
+    ports:
+      - "8680:8080"
+    restart: always
+    depends_on:
+      - postgresd
+      - billing-invoice
+      - billing-collector
+
+
+  msg-client-billing:
+    build: ./messaging/msgClient
+    ports:
+      - "9690:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-billing:9095
+      - SYSTEM=billing
+    restart: always
+    depends_on:
+      - postgresd
+
+
+  billing-collector:
+    build: ./billing/collector
+    ports:
+      - "9691:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-billing:9095
+      - COLLECTOR_SERVICE_HOST=billing-collector
+      - COLLECTOR_SERVICE_PORT=9090
+      - LAGOAPIKEY=b24f7d88-4072-4866-9bbf-5dadd1970597
+      - LAGOHOST=${DOCKER_HOST_IP}
+    restart: always
+    depends_on:
+      - postgresd
+
+
+  billing-invoice:
+    build: ./billing/invoice
+    ports:
+      - "9692:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - MSGCLIENT_HOST=msg-client-billing:9095
+      - INVOICE_SERVICE_HOST=billing-invoice
+      - INVOICE_SERVICE_PORT=9090
+    restart: always
+    depends_on:
+      - postgresd
