@@ -91,11 +91,11 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	// route := o.baseRoutingKey.SetAction("add").SetObject("org").MustBuild()
-	// err = o.msgbus.PublishRequest(route, req)
-	// if err != nil {
-	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	// }
+	route := o.baseRoutingKey.SetAction("add").SetObject("org").MustBuild()
+	err = o.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 
 	_ = o.pushOrgCountMetric()
 	_ = o.pushOrgMemberCountMetric(org.Id)
@@ -217,11 +217,11 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	// route := o.baseRoutingKey.SetAction("register").SetObject("user").MustBuild()
-	// err = o.msgbus.PublishRequest(route, req)
-	// if err != nil {
-	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	// }
+	route := o.baseRoutingKey.SetAction("register").SetObject("user").MustBuild()
+	err = o.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 
 	_ = o.pushOrgMemberCountMetric(org.Id)
 	_ = o.pushUserCountMetric()
@@ -261,11 +261,11 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	// route := o.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
-	// err = o.msgbus.PublishRequest(route, req)
-	// if err != nil {
-	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	// }
+	route := o.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
+	err = o.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 
 	_ = o.pushOrgMemberCountMetric(org.Id)
 
@@ -373,11 +373,11 @@ func (o *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	// route := o.baseRoutingKey.SetAction("remove").SetObject("member").MustBuild()
-	// err = o.msgbus.PublishRequest(route, req)
-	// if err != nil {
-	// 	log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	// }
+	route := o.baseRoutingKey.SetAction("remove").SetObject("member").MustBuild()
+	err = o.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
 
 	_ = o.pushOrgMemberCountMetric(org.Id)
 
