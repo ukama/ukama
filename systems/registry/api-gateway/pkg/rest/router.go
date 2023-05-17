@@ -51,9 +51,8 @@ type registry interface {
 	GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
 	GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
 	AddMember(orgName string, userUUID string, role string) (*orgpb.MemberResponse, error)
-	UpdateMember(orgName string, userUUID string, isDeactivated bool,role string) error
+	UpdateMember(orgName string, userUUID string, isDeactivated bool, role string) error
 	RemoveMember(orgName string, userUUID string) error
-	GetMemberRole(orgId string, userUUID string) (*orgpb.GetMemberRoleResponse, error)
 
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
@@ -137,7 +136,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		orgs.GET("/:org/members/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
 		orgs.PATCH("/:org/members/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
 		orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
-		orgs.GET("/:org/members/:user_uuid/role", formatDoc("Get Member role", "Get member role within an organization"), tonic.Handler(r.getMemberRoleHandler, http.StatusOK))
 
 		// Users routes
 		const user = "/users"
@@ -198,16 +196,13 @@ func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.G
 func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb.MemberResponse, error) {
 	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
 }
-func (r *Router) getMemberRoleHandler(c *gin.Context, req *GetMemberRoleRequest) (*orgpb.GetMemberRoleResponse, error) {
-	return r.clients.Registry.GetMemberRole(c.Param("org"), c.Param("user_uuid"))
-}
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
 	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid, req.Role)
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated,req.Role)
+	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated, req.Role)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {
