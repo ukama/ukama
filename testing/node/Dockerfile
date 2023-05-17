@@ -14,6 +14,9 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y
 RUN apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake bison python3.9 python3.9-dev libelf-dev cmake curl libtool tcl pkg-config tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript gawk libjansson-dev buildah patchelf vim unzip -y
 
 RUN apt-get -y install fuse-overlayfs
+RUN apt-get -y install podman
+
+RUN mkdir -p /var/lib/shared/overlay-images /var/lib/shared/overlay-layers; touch /var/lib/shared/overlay-images/images.lock; touch /var/lib/shared/overlay-layers/layers.lock
 
 RUN mkdir -p /ukama
 
@@ -34,10 +37,14 @@ COPY virtualNode /sbin/
 
 COPY capps /capps
 
-COPY ukamaOS_*.tgz /ukama
+COPY ukamaOS_*.tgz /ukama/
 
-COPY ./scripts/*.sh /scripts
+COPY ./scripts/*.sh /scripts/
 
 COPY supervisord.conf /
 
-CMD ["/sbin/virtualNode", "--target", "ubuntu:21.04", "--exec", "create", "--c", "/capps/"]
+# Temporary fix, shouldn't be doing this. XXX
+COPY buildah /usr/bin/buildah
+COPY registries.conf /etc/containers/
+
+CMD ["/sbin/virtualNode", "--target", "fedora:latest", "--exec", "create", "--c", "/capps/"]

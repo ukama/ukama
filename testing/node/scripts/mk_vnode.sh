@@ -161,14 +161,13 @@ build_image() {
 	cp ./scripts/waitfor.sh ${BUILD_DIR}/bin/
 	cp ./scripts/kickstart.sh ${BUILD_DIR}/bin/
 
-	buildah bud -f $1 -t ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}
+	buildah bud -f $1 -t ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG} .
 	if [ $? == 0 ]; then
         echo "Buildah created image ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}"
 	else
         echo "Buildah image creation failed"
         exit 1
 	fi
-
 }
 
 #
@@ -177,7 +176,16 @@ build_image() {
 push_image() {
 
 	UUID=$1
+	TARGET=$2
 	TAG=`echo ${UUID} | awk '{print tolower($0)}'`
+
+	if [ ${TARGET} != "REMOTE" ]; then
+		buildah push --tls-verify=false \
+				${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG} \
+				localhost:5000/${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}
+		echo "Image ${REGISTRY_URL}/${REGISTRY_NAME}:${TAG} pushed to ${TARGET}"
+		return
+	fi
 
 	pass=`aws ecr get-login-password`
 
@@ -221,7 +229,7 @@ case "$ACTION" in
 		build_image $2 $3
 		;;
 	"push")
-		push_image $2
+		push_image $2 $3
 		;;
 	"cp")
 		cp $2 ${BUILD_DIR}/$3
