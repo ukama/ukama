@@ -101,13 +101,13 @@ func TestWorkflow_InitSystem(t *testing.T) {
 		return nil
 	}
 
-	w.RegisterTest(&test.Test{
+	w.RegisterTestCase(&test.TestCase{
 
 		Name:        "Add Organization.",
 		Description: "Add organization to Init System",
 		Data:        &pb.AddOrgResponse{},
 		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.Test) error {
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
 			/* Setup required for test case
 			Initialize any test specific data if required
 			*/
@@ -116,7 +116,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 			return nil
 		},
 
-		Fxn: func(ctx context.Context, tc *test.Test) error {
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
 			/* Test Case */
 			var err error
 			a, ok := tc.GetWorkflowData().(*InitData)
@@ -130,7 +130,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 			return err
 		},
 
-		CheckFxn: func(ctx context.Context, tc *test.Test) (bool, error) {
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
 			/* Check for possible failures during test case */
 			check := false
 			d := tc.GetWorkflowData().(*InitData)
@@ -146,7 +146,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 			return check, nil
 		},
 
-		ExitFxn: func(ctx context.Context, tc *test.Test) error {
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
 			/* Here we save any data required to be saved from the test case
 			Cleanup any test specific data
 			*/
