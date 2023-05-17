@@ -120,14 +120,10 @@ func (this *DeleteResponse) Validate() error {
 }
 
 var _regex_UserAttributes_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
-var _regex_UserAttributes_Phone = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
 
 func (this *UserAttributes) Validate() error {
 	if !_regex_UserAttributes_Email.MatchString(this.Email) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
-	}
-	if !_regex_UserAttributes_Phone.MatchString(this.Phone) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Phone", fmt.Errorf(`must be a phone number format`))
 	}
 	return nil
 }
