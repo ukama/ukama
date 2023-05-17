@@ -10,7 +10,7 @@ import (
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	jsonpb "google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/ukama/ukama/testing/integration/registry/pkg/util"
+	"github.com/ukama/ukama/testing/integration/pkg/util"
 )
 
 type RegistryClient struct {
