@@ -8,60 +8,48 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
 
-type WorkflowExitHandlerFxn func(ctx context.Context, w *Workflow) error
-type WorkflowSetupHandlerFxn func(ctx context.Context, w *Workflow) error
-type WorkflowStatusHandlerFxn func(ctx context.Context, w *Workflow) (bool, error)
-
-type ExitHandlerFxn func(ctx context.Context, t *Test) error
-type SetupHandlerFxn func(ctx context.Context, t *Test) error
-type StatusHanderFxn func(ctx context.Context, t *Test) (bool, error)
-type TestFxn func(ctx context.Context, t *Test) error
-
 type Workflow struct {
 	Name        string
 	Description string
 	SetUpFxn    WorkflowSetupHandlerFxn
-	CheckFxn    WorkflowStatusHandlerFxn
+	StateFxn    WorkflowStateCheckHandlerFxn
 	ExitFxn     WorkflowExitHandlerFxn
-	testSeq     []*Test
-	Status      string `default:"waiting"`
+	testSeq     []*TestCase
+	State       StateType `default:"0"`
 	Watcher     *utils.Watcher
 	Data        interface{}
 }
 
-type Test struct {
+type TestCase struct {
 	Name        string
 	Description string
 	SetUpFxn    SetupHandlerFxn
-	CheckFxn    StatusHanderFxn
+	StateFxn    StateHanderFxn
 	ExitFxn     ExitHandlerFxn
 	Fxn         TestFxn
 	Watcher     *utils.Watcher
-	Status      string `default:"waiting"`
+	State       StateType `default:"0"`
 	Data        interface{}
 	Workflow    *Workflow
 }
 
-func (t *Test) GetData() interface{} {
+func (t *TestCase) GetData() interface{} {
 	return t.Data
 }
 
-func (t *Test) GetWorkflowData() interface{} {
+func (t *TestCase) GetWorkflowData() interface{} {
 	return t.Workflow.Data
 }
 
-func (t *Test) SaveWorkflowData(d interface{}) {
+func (t *TestCase) SaveWorkflowData(d interface{}) {
 	t.Workflow.Data = d
 }
 
-func (t *Test) String() string {
-	return fmt.Sprintf(` name       : %s \t\t
-  desc       : %s \t\t
-  status : %s
-`, t.Name, t.Description, t.Status)
+func (t *TestCase) String() string {
+	return fmt.Sprintf(" Test State:: \n \t name		: %s \n \t desc		: %s \n \t status	: %s \n", t.Name, t.Description, t.State.String())
 }
 
-func (t *Test) Run(ctx context.Context) error {
+func (t *TestCase) Run(ctx context.Context) error {
 
 	log.Info("Starting setup for %s", t.String())
 
@@ -77,25 +65,25 @@ func (t *Test) Run(ctx context.Context) error {
 		err := t.Fxn(ctx, t)
 		if err != nil {
 			log.Errorf("Error while executing test %s.", t.Name)
-			t.Status = "Fail"
+			t.State = StateTypeFail
 			return err
 		}
 	} else {
 		log.Errorf("Invalid test %s", t.Name)
-		t.Status = "Invalid"
+		t.State = StateTypeInvalid
 	}
 
-	if t.CheckFxn != nil {
-		status, err := t.CheckFxn(ctx, t)
+	if t.StateFxn != nil {
+		status, err := t.StateFxn(ctx, t)
 		if err != nil {
 			log.Errorf("Error while checking test %s status.", t.Name)
-			t.Status = "Fail"
+			t.State = StateTypeFail
 			return err
 		}
 		if status {
-			t.Status = "Pass"
+			t.State = StateTypePass
 		} else {
-			t.Status = "Fail"
+			t.State = StateTypeFail
 		}
 
 	}
@@ -134,11 +122,11 @@ description : %s
 `, s.Name, s.Description)
 }
 
-func (w *Workflow) RegisterTest(t *Test) {
+func (w *Workflow) RegisterTestCase(t *TestCase) {
 	w.testSeq = append(w.testSeq, t)
 }
 
-func (w *Workflow) ListTest() {
+func (w *Workflow) ListTestCase() {
 	for _, t := range w.testSeq {
 		log.Infof(t.String())
 	}
@@ -157,16 +145,16 @@ func (w *Workflow) Run(ctx context.Context) error {
 	}
 
 	defer func() {
-		if w.CheckFxn != nil {
-			status, err := w.CheckFxn(ctx, w)
+		if w.StateFxn != nil {
+			status, err := w.StateFxn(ctx, w)
 			if err != nil {
 				log.Errorf("Error while checking workflow %s status.", w.Name)
-				w.Status = "Fail"
+				w.State = StateTypeFail
 			}
 			if status {
-				w.Status = "Pass"
+				w.State = StateTypePass
 			} else {
-				w.Status = "Fail"
+				w.State = StateTypeFail
 			}
 		}
 
@@ -182,7 +170,7 @@ func (w *Workflow) Run(ctx context.Context) error {
 		err := t.Run(ctx)
 		if err != nil {
 			log.Errorf("Error while running test for workflow %s test %s.", w.Name, t.Name)
-			w.Status = "failure"
+			w.State = StateTypeFail
 			return err
 		}
 		log.Infof("Test Status: \t %s", t.String())
