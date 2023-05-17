@@ -104,14 +104,14 @@ func TestWorkflow_InitSystem(t *testing.T) {
 	w.RegisterTestCase(&test.TestCase{
 
 		Name:        "Add Organization.",
-		Description: "Add organization to Init System",
+		Description: "Add organization to lookup table",
 		Data:        &pb.AddOrgResponse{},
 		Workflow:    w,
 		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
 			/* Setup required for test case
 			Initialize any test specific data if required
 			*/
-			log.Debugf("Setting up watcher for %s", tc.String())
+			log.Debugf("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher([]string{"event.cloud.lookup.organization.create"})
 			return nil
 		},
@@ -122,7 +122,6 @@ func TestWorkflow_InitSystem(t *testing.T) {
 			a, ok := tc.GetWorkflowData().(*InitData)
 			if ok {
 				tc.Data, err = a.Init.InitAddOrg(a.reqAddOrg)
-				log.Debugf("Expected: \n %v \n Actual:  type %T data: %v\n", a.reqAddOrg, tc.Data, tc.Data)
 			} else {
 				log.Errorf("Invalid data type for Workflow data.")
 				return fmt.Errorf("invalid data type for Workflow data")
@@ -160,8 +159,185 @@ func TestWorkflow_InitSystem(t *testing.T) {
 		},
 	})
 
+	w.RegisterTestCase(&test.TestCase{
+
+		Name:        "Add System.",
+		Description: "Add System to lookup table",
+		Data:        &pb.AddSystemResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher([]string{"event.cloud.lookup.system.create"})
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Init.InitAddSystem(a.reqAddSystem)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+			d := tc.GetWorkflowData().(*InitData)
+			resp := tc.GetData().(*pb.AddSystemResponse)
+			if assert.NotNil(t, resp) {
+				assert.Equal(t, d.SysName, resp.SystemName)
+				assert.Equal(t, d.SysIP, utils.IPv4CIDRToStringNotation(resp.Ip))
+				assert.Equal(t, d.SysCerts, resp.Certificate)
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+			tc.Watcher.Stop()
+			return nil
+		},
+	})
+
+	w.RegisterTestCase(&test.TestCase{
+
+		Name:        "Add Node.",
+		Description: "Add node to a lookup table",
+		Data:        &pb.AddSystemResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher([]string{"event.cloud.lookup.node.create"})
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Init.InitAddNode(a.reqAddNode)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+			d := tc.GetWorkflowData().(*InitData)
+			resp := tc.GetData().(*pb.AddNodeResponse)
+			if assert.NotNil(t, resp) {
+				assert.Equal(t, d.NodeId.String(), resp.NodeId)
+				assert.Equal(t, d.OrgName, resp.OrgName)
+
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+			tc.Watcher.Stop()
+			return nil
+		},
+	})
+
+	w.RegisterTestCase(&test.TestCase{
+
+		Name:        "Bootstrap Node.",
+		Description: "Bootstrap node from a lookup table",
+		Data:        &pb.AddSystemResponse{},
+		Workflow:    w,
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Init.InitGetNode(a.reqGetNode)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+			d := tc.GetWorkflowData().(*InitData)
+			resp := tc.GetData().(*pb.GetNodeResponse)
+			if assert.NotNil(t, resp) {
+				assert.Equal(t, d.NodeId.String(), resp.NodeId)
+				assert.Equal(t, d.OrgName, resp.OrgName)
+				check = true
+			}
+
+			return check, nil
+		},
+	})
+
+	w.RegisterTestCase(&test.TestCase{
+
+		Name:        "Get System.",
+		Description: "get System from a lookup table",
+		Data:        &pb.AddSystemResponse{},
+		Workflow:    w,
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Init.InitGetSystem(a.reqGetSystem)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+			d := tc.GetWorkflowData().(*InitData)
+			resp := tc.GetData().(*pb.GetSystemResponse)
+			if assert.NotNil(t, resp) {
+				assert.Equal(t, d.SysName, resp.SystemName)
+				assert.Equal(t, d.SysIP, utils.IPv4CIDRToStringNotation(resp.Ip))
+				assert.Equal(t, d.SysCerts, resp.Certificate)
+				check = true
+			}
+
+			return check, nil
+		},
+	})
+
 	err := w.Run(context.Background())
 	assert.NoError(t, err)
 
-	log.Infof("Workflow Status: \t %s", w.String())
+	w.Status()
 }
