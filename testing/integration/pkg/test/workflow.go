@@ -117,9 +117,7 @@ func (w *Workflow) SaveData(d interface{}) {
 }
 
 func (s *Workflow) String() string {
-	return fmt.Sprintf(`Workflow name : %s
-description : %s
-`, s.Name, s.Description)
+	return fmt.Sprintf("Workflow: \n\n name 			: %s \n\t description 	: %s \n\t", s.Name, s.Description)
 }
 
 func (w *Workflow) RegisterTestCase(t *TestCase) {
@@ -130,6 +128,11 @@ func (w *Workflow) ListTestCase() {
 	for _, t := range w.testSeq {
 		log.Infof(t.String())
 	}
+}
+
+func (w *Workflow) Status() {
+	log.Infof(w.String())
+	w.ListTestCase()
 }
 
 func (w *Workflow) Run(ctx context.Context) error {
