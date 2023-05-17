@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
 
 type WorkflowExitHandlerFxn func(ctx context.Context, w *Workflow) error
@@ -24,7 +25,8 @@ type Workflow struct {
 	ExitFxn     WorkflowExitHandlerFxn
 	testSeq     []*Test
 	Status      string `default:"waiting"`
-	data        interface{}
+	Watcher     *utils.Watcher
+	Data        interface{}
 }
 
 type Test struct {
@@ -34,12 +36,22 @@ type Test struct {
 	CheckFxn    StatusHanderFxn
 	ExitFxn     ExitHandlerFxn
 	Fxn         TestFxn
+	Watcher     *utils.Watcher
 	Status      string `default:"waiting"`
-	data        interface{}
+	Data        interface{}
+	Workflow    *Workflow
 }
 
-func (t *Test) TestData() interface{} {
-	return t.data
+func (t *Test) GetData() interface{} {
+	return t.Data
+}
+
+func (t *Test) GetWorkflowData() interface{} {
+	return t.Workflow.Data
+}
+
+func (t *Test) SaveWorkflowData(d interface{}) {
+	t.Workflow.Data = d
 }
 
 func (t *Test) String() string {
@@ -69,7 +81,7 @@ func (t *Test) Run(ctx context.Context) error {
 			return err
 		}
 	} else {
-		log.Errorf("Inavlid test %s", t.Name)
+		log.Errorf("Invalid test %s", t.Name)
 		t.Status = "Invalid"
 	}
 
@@ -96,7 +108,6 @@ func (t *Test) Run(ctx context.Context) error {
 		}
 	}
 
-	log.Info("Completed test %s", t.String())
 	return nil
 
 }
@@ -109,8 +120,12 @@ func NewWorkflow(name, desc string) *Workflow {
 	}
 }
 
-func (w *Workflow) TestData() interface{} {
-	return w.data
+func (w *Workflow) GetData() interface{} {
+	return w.Data
+}
+
+func (w *Workflow) SaveData(d interface{}) {
+	w.Data = d
 }
 
 func (s *Workflow) String() string {
@@ -125,12 +140,12 @@ func (w *Workflow) RegisterTest(t *Test) {
 
 func (w *Workflow) ListTest() {
 	for _, t := range w.testSeq {
-		t.String()
+		log.Infof(t.String())
 	}
 }
 
 func (w *Workflow) Run(ctx context.Context) error {
-	log.Info("Starting workflow %s", w.String())
+	log.Infof("Starting workflow %s", w.String())
 	if w.SetUpFxn != nil {
 		log.Info("Starting setup for workflow %s", w.Name)
 
@@ -168,8 +183,11 @@ func (w *Workflow) Run(ctx context.Context) error {
 		if err != nil {
 			log.Errorf("Error while running test for workflow %s test %s.", w.Name, t.Name)
 			w.Status = "failure"
+			return err
 		}
+		log.Infof("Test Status: \t %s", t.String())
 	}
-	log.Info("Workflow %s completed", w.String())
+
+	log.Infof("Workflow data: %+v", w.Data)
 	return nil
 }
