@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	github.com/go-resty/resty/v2 v2.7.0
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/jackc/pgx/v5 v5.2.0 // indirect
 	golang.org/x/oauth2 v0.6.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

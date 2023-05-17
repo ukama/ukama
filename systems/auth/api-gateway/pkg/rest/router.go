@@ -34,9 +34,9 @@ type RouterConfig struct {
 }
 
 type AuthManager interface {
-	ValidateSession(ss, t, userId, orgId string) (*oc.Session, error)
+	ValidateSession(ss, t string) (*oc.Session, error)
 	LoginUser(email string, password string) (*oc.SuccessfulNativeLogin, error)
-	UpdateRole(ss, t, orgId, role, kratosId string) (*oc.SuccessfulNativeLogin, error)
+	UpdateRole(ss, t, orgId, role string, user *pkg.UserTraits) error
 }
 
 type Clients struct {
@@ -98,18 +98,16 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	return opt
 }
 
-func (p *Router) getUserInfo(c *gin.Context, req *ReqHeader) (*GetUserInfo, error) {
+func (p *Router) getUserInfo(c *gin.Context, req *OptReqHeader) (*GetUserInfo, error) {
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return nil, err
 	}
 	var ss string
-	var userId, orgId string
+
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
-		userId, orgId = pkg.GetMemberDetails(c)
-
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
 		if err == nil {
@@ -122,7 +120,7 @@ func (p *Router) getUserInfo(c *gin.Context, req *ReqHeader) (*GetUserInfo, erro
 			return nil, err
 		}
 	}
-	res, err := p.client.au.ValidateSession(ss, st, userId, orgId)
+	res, err := p.client.au.ValidateSession(ss, st)
 	if err != nil {
 		return nil, err
 	}
@@ -140,19 +138,17 @@ func (p *Router) getUserInfo(c *gin.Context, req *ReqHeader) (*GetUserInfo, erro
 	}, nil
 }
 
-func (p *Router) authenticate(c *gin.Context, req *ReqHeader) error {
+func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
 	}
 	var ss string
-	var userId, orgId string
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
-		userId, orgId = pkg.GetMemberDetails(c)
 
 		if err == nil {
 			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
@@ -165,7 +161,7 @@ func (p *Router) authenticate(c *gin.Context, req *ReqHeader) error {
 		}
 	}
 
-	_, err = p.client.au.ValidateSession(ss, st, userId, orgId)
+	_, err = p.client.au.ValidateSession(ss, st)
 	if err != nil {
 		return err
 	}
@@ -210,8 +206,18 @@ func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
 			return err
 		}
 	}
-
-	_, err = p.client.au.UpdateRole(ss, st, req.OrgId, string(req.Role), req.KId)
+	logrus.Info("fetch user session")
+	res, err := p.client.au.ValidateSession(ss, st)
+	if err != nil {
+		return err
+	}
+	logrus.Info("parse response")
+	user, err := pkg.GetUserTraitsFromSession(res)
+	if err != nil {
+		return err
+	}
+	logrus.Info("update role of user %s", user.Id)
+	err = p.client.au.UpdateRole(ss, st, req.OrgId, string(req.Role), user)
 	if err != nil {
 		return err
 	}

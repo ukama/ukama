@@ -20,11 +20,7 @@ func main() {
 	initConfig()
 	logrus.Infof("Starting %s", pkg.ServiceName)
 
-	orgRegistryClient, err := client.NewOrgMemberRoleClient(svcConf.Auth.OrgUrl, pkg.IsDebugMode)
-	if err != nil {
-		logrus.Fatalf("orgRegistry Client initilization failed. Error: %v", err.Error())
-	}
-	am := client.NewAuthManager(svcConf.Auth.AuthServerUrl, 3*time.Second, orgRegistryClient)
+	am := client.NewAuthManager(svcConf.Auth.AuthServerUrl, 3*time.Second)
 	cs := rest.NewClientsSet(am)
 	r := rest.NewRouter(cs, rest.NewRouterConfig(svcConf, svcConf.AuthKey))
 	r.Run()

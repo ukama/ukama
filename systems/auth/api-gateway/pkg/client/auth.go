@@ -10,22 +10,16 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/ory/client-go"
 	ory "github.com/ory/client-go"
+	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
 )
 
 var SESSION_KEY = "ukama_session"
-var namespace = "9982-23984-349389"
-var object = "org"
-var relation = "member"
-var subjectId = "user"
 
 type AuthManager struct {
-	client      *ory.APIClient
-	serverUrl   string
-	timeout     time.Duration
-	orgRegistry OrgMemberRoleClient
-	ketoClient  *client.APIClient
+	client    *ory.APIClient
+	serverUrl string
+	timeout   time.Duration
 }
 
 type UIErrorResp struct {
@@ -33,7 +27,7 @@ type UIErrorResp struct {
 	Ui ory.UiContainer `json:"ui"`
 }
 
-func NewAuthManager(serverUrl string, timeout time.Duration, orgRegistry OrgMemberRoleClient) *AuthManager {
+func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
 	_, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -52,23 +46,21 @@ func NewAuthManager(serverUrl string, timeout time.Duration, orgRegistry OrgMemb
 	client := oc
 
 	return &AuthManager{
-		client:      client,
-		timeout:     timeout,
-		serverUrl:   serverUrl,
-		orgRegistry: orgRegistry,
+		client:    client,
+		timeout:   timeout,
+		serverUrl: serverUrl,
 	}
 }
 
 func NewAuthManagerFromClient() *AuthManager {
 	return &AuthManager{
-		serverUrl:   "localhost",
-		timeout:     1 * time.Second,
-		client:      nil,
-		orgRegistry: nil,
+		serverUrl: "localhost",
+		timeout:   1 * time.Second,
+		client:    nil,
 	}
 }
 
-func (am *AuthManager) ValidateSession(ss string, t string, userId string, orgId string) (*client.Session, error) {
+func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error) {
 
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
@@ -91,18 +83,18 @@ func (am *AuthManager) ValidateSession(ss string, t string, userId string, orgId
 	return resp, nil
 }
 
-func (am *AuthManager) LoginUser(email string, password string) (*client.SuccessfulNativeLogin, error) {
+func (am *AuthManager) LoginUser(email string, password string) (*ory.SuccessfulNativeLogin, error) {
 	flow, _, err := am.client.FrontendApi.CreateNativeLoginFlow(context.Background()).Execute()
 	if err != nil {
 		return nil, err
 	}
-	b := client.UpdateLoginFlowWithPasswordMethod{
+	b := ory.UpdateLoginFlowWithPasswordMethod{
 		Password:           password,
 		Method:             "password",
 		Identifier:         email,
 		PasswordIdentifier: &email,
 	}
-	body := client.UpdateLoginFlowBody{
+	body := ory.UpdateLoginFlowBody{
 		UpdateLoginFlowWithPasswordMethod: &b,
 	}
 	flow1, resp, err := am.client.FrontendApi.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
@@ -132,8 +124,7 @@ type TRole struct {
 	organization string
 }
 
-func (am *AuthManager) UpdateRole(ss, t, orgId, role, kratosId string) (*client.Identity, error) {
-
+func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTraits) error {
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
@@ -150,12 +141,17 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role, kratosId string) (*client.
 			organization: orgId,
 		},
 	}
-	resp, r, err := am.client.IdentityApi.UpdateIdentity(
-		context.Background(), kratosId,
+	_, r, err := am.client.IdentityApi.UpdateIdentity(
+		context.Background(), user.Id,
 	).UpdateIdentityBody(
-		client.UpdateIdentityBody(
-			client.UpdateIdentityBody{
+		ory.UpdateIdentityBody(
+			ory.UpdateIdentityBody{
 				Traits: map[string]interface{}{
+					"name":        user.Name,
+					"email":       user.Email,
+					"first_visit": user.FirstVisit,
+				},
+				MetadataPublic: map[string]interface{}{
 					"roles": roles,
 				},
 			},
@@ -163,11 +159,11 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role, kratosId string) (*client.
 	).Execute()
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if r.StatusCode == http.StatusUnauthorized {
-		return nil, fmt.Errorf("no valid session cookie found")
+		return fmt.Errorf("no valid session cookie found")
 	}
 
-	return resp, nil
+	return nil
 }
