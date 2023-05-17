@@ -7,42 +7,156 @@ import (
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 )
 
-var OrgName string
-var validUserId string
-
-func init() {
-	initializeData()
-}
-
-func initializeData() {
-	OrgName = "milky-way"
-	validUserId = "c9647e7a-8967-4978-b512-38a35899f32d"
-}
-
-func TestOwnerAddsValidMember(t *testing.T) {
+func TestAddMemberWorkflows(t *testing.T) {
 	host := "http://localhost:8082"
 	registryClient := NewRegistryClient(host)
 
-	reqGetOrg := api.GetOrgRequest{OrgName: OrgName}
+	t.Run("Owner adds valid member should succeed", func(t *testing.T) {
+		orgName := "milky-way"
+		nomMemberId := "c9647e7a-8967-4978-b512-38a35899f32d"
 
-	orgResp, err := registryClient.GetOrg(reqGetOrg)
-	assert.NoError(t, err)
-	assert.NotNil(t, orgResp)
-	assert.Equal(t, OrgName, orgResp.Org.Name)
+		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
 
-	reqGetMember := api.GetMemberRequest{
-		OrgName:  OrgName,
-		UserUuid: validUserId}
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
 
-	gmResp, err := registryClient.GetMember(reqGetMember)
-	assert.Error(t, err)
-	assert.Nil(t, gmResp)
+		reqGetMember := api.GetMemberRequest{
+			OrgName:  orgName,
+			UserUuid: nomMemberId}
 
-	reqAddMember := api.MemberRequest{
-		OrgName:  OrgName,
-		UserUuid: validUserId}
+		gmResp, err := registryClient.GetMember(reqGetMember)
+		assert.Error(t, err)
+		assert.Nil(t, gmResp)
 
-	amResp, err := registryClient.AddMember(reqAddMember)
-	assert.NoError(t, err)
-	assert.NotNil(t, amResp)
+		// make sure the owner is the request executor
+		reqAddMember := api.MemberRequest{
+			OrgName:  orgName,
+			UserUuid: nomMemberId}
+
+		amResp, err := registryClient.AddMember(reqAddMember)
+		assert.NoError(t, err)
+		assert.NotNil(t, amResp)
+	})
+
+	t.Run("Non owner adds member should fail", func(t *testing.T) {
+		orgName := "saturn"
+		member := "c9647e7a-8967-4978-b512-38a35899f32d"
+		nonMemberId := "ec4c897e-cc78-43c7-aee3-871a956808c4"
+
+		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
+
+		owner := orgResp.Org.Owner
+		assert.NotEqual(t, owner, member)
+
+		reqGetMember := api.GetMemberRequest{
+			OrgName:  orgName,
+			UserUuid: member}
+
+		gmResp, err := registryClient.GetMember(reqGetMember)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, member, gmResp.Member.Uuid)
+
+		reqGetNonMember := api.GetMemberRequest{
+			OrgName:  orgName,
+			UserUuid: nonMemberId}
+
+		gnResp, err := registryClient.GetMember(reqGetNonMember)
+		assert.Error(t, err)
+		assert.Nil(t, gnResp)
+
+		// make sure the member is the request executor
+		reqAddMember := api.MemberRequest{
+			OrgName:  orgName,
+			UserUuid: nonMemberId}
+
+		amResp, err := registryClient.AddMember(reqAddMember)
+		assert.Error(t, err)
+		assert.Nil(t, amResp)
+	})
+}
+
+func TestUpdateMemberWorkflows(t *testing.T) {
+	host := "http://localhost:8082"
+	registryClient := NewRegistryClient(host)
+
+	t.Run("Owner updates valid member should succeed", func(t *testing.T) {
+		orgName := "saturn"
+		member := "c9647e7a-8967-4978-b512-38a35899f32d"
+
+		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
+
+		reqGetMember := api.GetMemberRequest{
+			OrgName:  orgName,
+			UserUuid: member}
+
+		gmResp, err := registryClient.GetMember(reqGetMember)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, member, gmResp.Member.Uuid)
+
+		// make sure the owner is the request executor
+		reqUpdateMember := api.UpdateMemberRequest{
+			OrgName:       orgName,
+			UserUuid:      member,
+			IsDeactivated: true}
+
+		err = registryClient.UpdateMember(reqUpdateMember)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Non owner updates member should fail", func(t *testing.T) {
+		orgName := "saturn"
+		member := "c9647e7a-8967-4978-b512-38a35899f32d"
+		nonOwner := "022586f0-2d0f-4b30-967d-2156574fece4"
+
+		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
+
+		owner := orgResp.Org.Owner
+		assert.NotEqual(t, owner, nonOwner)
+
+		reqGetMember := api.GetMemberRequest{
+			OrgName:  orgName,
+			UserUuid: member}
+
+		gmResp, err := registryClient.GetMember(reqGetMember)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, member, gmResp.Member.Uuid)
+
+		reqGetNonOwner := api.GetMemberRequest{
+			OrgName:  orgName,
+			UserUuid: nonOwner}
+
+		gnResp, err := registryClient.GetMember(reqGetNonOwner)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, nonOwner, gnResp.Member.Uuid)
+
+		// make sure non owner is the request executor
+		reqUpdateMember := api.UpdateMemberRequest{
+			OrgName:       orgName,
+			UserUuid:      member,
+			IsDeactivated: true}
+
+		err = registryClient.UpdateMember(reqUpdateMember)
+		assert.Error(t, err)
+	})
 }

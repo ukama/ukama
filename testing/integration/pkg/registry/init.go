@@ -104,3 +104,19 @@ func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*orgpb.MemberRespo
 
 	return rsp, nil
 }
+
+func (s *RegistryClient) UpdateMember(req api.UpdateMemberRequest) error {
+	b, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("request marshal error. error: %s", err.Error())
+	}
+
+	_, err = s.r.
+		Patch(b, s.u.String()+"/v1/orgs/"+req.OrgName+"/members/"+req.UserUuid)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+		return err
+	}
+
+	return nil
+}
