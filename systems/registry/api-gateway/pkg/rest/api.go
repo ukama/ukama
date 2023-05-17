@@ -47,7 +47,7 @@ type GetUserRequest struct {
 type AddUserRequest struct {
 	Name  string `example:"John" json:"name,omitempty" validate:"required"`
 	Email string `example:"john@example.com" json:"email" validate:"required"`
-	Phone string `example:"4151231234" json:"phone,omitempty" validate:"required"`
+	Phone string `example:"4151231234" json:"phone,omitempty"`
 }
 
 // Network group
