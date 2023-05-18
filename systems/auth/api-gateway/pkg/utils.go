@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -150,9 +151,14 @@ func GetTokenStr(c *gin.Context) string {
 	return token
 }
 
-func GetMemberDetails(c *gin.Context) (string,string) {
-	userId := c.Request.Header.Get("User_id")
-	orgId:= c.Request.Header.Get("Org_id")
+func GetMemberDetails(c *gin.Context) (string, string) {
+	userId := c.Request.Header.Get("User-id")
+	orgId := c.Request.Header.Get("Org-id")
 
-	return userId,orgId
+	return userId, orgId
+}
+
+func GetMetaHeaderValues(s string) (string, string, string) {
+	parts := strings.Split(s, ",")
+	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), strings.TrimSpace(parts[2])
 }

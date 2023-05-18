@@ -14,6 +14,32 @@ type AuthManager struct {
 	mock.Mock
 }
 
+// AuthorizeUser provides a mock function with given fields: ss, t, role, orgId
+func (_m *AuthManager) AuthorizeUser(ss string, t string, role string, orgId string) (*client.Session, error) {
+	ret := _m.Called(ss, t, role, orgId)
+
+	var r0 *client.Session
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (*client.Session, error)); ok {
+		return rf(ss, t, role, orgId)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string) *client.Session); ok {
+		r0 = rf(ss, t, role, orgId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*client.Session)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(ss, t, role, orgId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // LoginUser provides a mock function with given fields: email, password
 func (_m *AuthManager) LoginUser(email string, password string) (*client.SuccessfulNativeLogin, error) {
 	ret := _m.Called(email, password)

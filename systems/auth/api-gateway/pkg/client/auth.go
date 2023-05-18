@@ -25,12 +25,14 @@ type AuthManager struct {
 	ketoc         *ory.APIClient
 }
 
-var object = "/v1/package"
-var relation = "owner"
-
 type UIErrorResp struct {
 	Id string          `json:"id"`
 	Ui ory.UiContainer `json:"ui"`
+}
+
+type TRole struct {
+	name         string
+	organization string
 }
 
 func NewAuthManager(serverUrl string, timeout time.Duration, ketoClientUrl string) *AuthManager {
@@ -77,7 +79,6 @@ func NewAuthManagerFromClient() *AuthManager {
 }
 
 func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error) {
-
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
@@ -89,7 +90,6 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
-	fmt.Println("KRTAOS_REQ", r.Request.URL.String())
 
 	if err != nil {
 		return nil, err
@@ -97,7 +97,6 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error
 	if r.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
-
 	return resp, nil
 }
 
@@ -136,11 +135,6 @@ func (am *AuthManager) LoginUser(email string, password string) (*ory.Successful
 	return flow1, nil
 }
 
-type TRole struct {
-	name         string
-	organization string
-}
-
 func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTraits) error {
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
@@ -158,7 +152,7 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 			organization: orgId,
 		},
 	}
-	_, r, err := am.client.IdentityApi.UpdateIdentity(
+	res, r, err := am.client.IdentityApi.UpdateIdentity(
 		context.Background(), user.Id,
 	).UpdateIdentityBody(
 		ory.UpdateIdentityBody(
@@ -168,7 +162,7 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 					"email":       user.Email,
 					"first_visit": user.FirstVisit,
 				},
-				MetadataPublic: map[string]interface{}{
+				MetadataPublic: map[string][]TRole{
 					"roles": roles,
 				},
 			},
@@ -185,8 +179,10 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 	return nil
 }
 
-func (am *AuthManager) AuthorizeUser(ss string, t string, role string, orgId string) (*ory.Session, error) {
-
+func (am *AuthManager) AuthorizeUser(ss, t, orgId, role string) (*ory.Session, error) {
+	var object = "/v1/simpool/upload"
+	var relation = "view" // view, update, delete, create
+	var namespace = "ukama"
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
@@ -206,8 +202,8 @@ func (am *AuthManager) AuthorizeUser(ss string, t string, role string, orgId str
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
 
-	check, r, err := am.ketoc.PermissionApi.CheckPermission(context.Background()).
-		Namespace(*&orgId).
+	check, _, err := am.ketoc.PermissionApi.CheckPermission(context.Background()).
+		Namespace(*&namespace).
 		Object(*&object).
 		Relation(*&relation).
 		SubjectId(*&role).Execute()
@@ -217,8 +213,8 @@ func (am *AuthManager) AuthorizeUser(ss string, t string, role string, orgId str
 		return nil, err
 	}
 	if check.Allowed {
-		logrus.Infof(*&role + " can " + *&relation + " the " + *&object)
+		logrus.Infof(*&role + " can " + " the " + *&object)
 		return resp, nil
 	}
-	return nil, fmt.Errorf(role + " is not authorized to " + relation + " the " + object)
+	return nil, fmt.Errorf(role + " is not authorized to " + " the " + object)
 }

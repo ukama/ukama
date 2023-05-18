@@ -146,6 +146,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	if err != nil {
 		return err
 	}
+
 	var ss string
 	var orgId string
 	if st == "cookie" {
@@ -231,6 +232,7 @@ func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
 			return err
 		}
 	}
+
 	logrus.Info("fetch user session")
 	res, err := p.client.au.ValidateSession(ss, st)
 	if err != nil {
@@ -242,6 +244,7 @@ func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
 		return err
 	}
 	logrus.Infof("update role of user %s", user.Id)
+
 	err = p.client.au.UpdateRole(ss, st, req.OrgId, string(req.Role), user)
 	if err != nil {
 		return err
