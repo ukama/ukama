@@ -2,6 +2,7 @@ package init
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -43,6 +44,7 @@ type InitData struct {
 
 func init() {
 	log.SetLevel(log.InfoLevel)
+	log.SetOutput(os.Stderr)
 }
 
 func InitializeData() *InitData {

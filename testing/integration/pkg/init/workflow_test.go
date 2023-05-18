@@ -1,6 +1,7 @@
 package init
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -22,13 +23,14 @@ var NodeId ukama.NodeID
 var NodeIP, NodeCerts string
 
 func init() {
+	log.SetLevel(log.InfoLevel)
+	log.SetOutput(os.Stderr)
 	initializeData()
 }
 
 func initializeData() {
 	OrgName = strings.ToLower(faker.FirstName()) + "_org"
 	OrgIP = utils.RandomIPv4()
-	log.Info(OrgIP)
 	OrgCerts = utils.RandomBase64String(2048)
 	SysName = strings.ToLower(faker.FirstName()) + "_sys"
 	SysIP = utils.RandomIPv4()
@@ -41,8 +43,6 @@ func initializeData() {
 
 func TestWorkflow_1(t *testing.T) {
 
-	log.SetLevel(log.InfoLevel)
-	log.Infof("Starting test.")
 	host := "http://localhost:8071"
 	init := NewInitSys(host)
 
