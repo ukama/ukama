@@ -14,25 +14,25 @@ type registry struct {
 	mock.Mock
 }
 
-// AddMember provides a mock function with given fields: orgName, userUUID
-func (_m *registry) AddMember(orgName string, userUUID string) (*gen.MemberResponse, error) {
-	ret := _m.Called(orgName, userUUID)
+// AddMember provides a mock function with given fields: orgName, userUUID, role
+func (_m *registry) AddMember(orgName string, userUUID string, role string) (*gen.MemberResponse, error) {
+	ret := _m.Called(orgName, userUUID, role)
 
 	var r0 *gen.MemberResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.MemberResponse, error)); ok {
-		return rf(orgName, userUUID)
+	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.MemberResponse, error)); ok {
+		return rf(orgName, userUUID, role)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.MemberResponse); ok {
-		r0 = rf(orgName, userUUID)
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.MemberResponse); ok {
+		r0 = rf(orgName, userUUID, role)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.MemberResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(orgName, userUUID)
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(orgName, userUUID, role)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -340,13 +340,13 @@ func (_m *registry) RemoveMember(orgName string, userUUID string) error {
 	return r0
 }
 
-// UpdateMember provides a mock function with given fields: orgName, userUUID, isDeactivated
-func (_m *registry) UpdateMember(orgName string, userUUID string, isDeactivated bool) error {
-	ret := _m.Called(orgName, userUUID, isDeactivated)
+// UpdateMember provides a mock function with given fields: orgName, userUUID, isDeactivated, role
+func (_m *registry) UpdateMember(orgName string, userUUID string, isDeactivated bool, role string) error {
+	ret := _m.Called(orgName, userUUID, isDeactivated, role)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, bool) error); ok {
-		r0 = rf(orgName, userUUID, isDeactivated)
+	if rf, ok := ret.Get(0).(func(string, string, bool, string) error); ok {
+		r0 = rf(orgName, userUUID, isDeactivated, role)
 	} else {
 		r0 = ret.Error(0)
 	}

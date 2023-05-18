@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -36,6 +37,8 @@ type RouterConfig struct {
 type AuthManager interface {
 	ValidateSession(ss, t string) (*oc.Session, error)
 	LoginUser(email string, password string) (*oc.SuccessfulNativeLogin, error)
+	UpdateRole(ss, t, orgId, role string, user *pkg.UserTraits) error
+	AuthorizeUser(ss, t, orgId, role, relation, object string) (*oc.Session, error)
 }
 
 type Clients struct {
@@ -86,6 +89,7 @@ func (r *Router) init() {
 	v1.GET("/whoami", formatDoc("Get user info", ""), tonic.Handler(r.getUserInfo, http.StatusOK))
 	v1.GET("/auth", formatDoc("Authenticate user", ""), tonic.Handler(r.authenticate, http.StatusOK))
 	v1.POST("/login", formatDoc("Login user", ""), tonic.Handler(r.login, http.StatusOK))
+	v1.PUT("/role", formatDoc("Update user role", ""), tonic.Handler(r.updateRole, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -96,12 +100,13 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	return opt
 }
 
-func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserInfo, error) {
+func (p *Router) getUserInfo(c *gin.Context, req *OptReqHeader) (*GetUserInfo, error) {
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return nil, err
 	}
 	var ss string
+
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
@@ -122,7 +127,7 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 		return nil, err
 	}
 
-	user, err := pkg.GetUserTraitsFromSession(res)
+	user, err := pkg.GetUserTraitsFromSession(req.OrgId, res)
 	if err != nil {
 		return nil, err
 	}
@@ -135,17 +140,21 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptionalReqHeader) (*GetUserIn
 	}, nil
 }
 
-func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
+func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
 	}
+
 	var ss string
+	var orgId string
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
+		_, orgId = pkg.GetMemberDetails(c)
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
+
 		if err == nil {
 			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
 			if e != nil {
@@ -156,10 +165,33 @@ func (p *Router) authenticate(c *gin.Context, req *OptionalReqHeader) error {
 			return err
 		}
 	}
-	_, err = p.client.au.ValidateSession(ss, st)
+	meta := c.Request.Header.Get("meta")
+	_, method, path, err := pkg.GetMetaHeaderValues(meta)
 	if err != nil {
 		return err
 	}
+
+	resp, err := p.client.au.ValidateSession(ss, st)
+	if err != nil {
+		return err
+	}
+
+	user, err := pkg.GetUserTraitsFromSession(req.OrgId, resp)
+	if err != nil {
+		return err
+	}
+
+	if user.Role != "" {
+		_, err := p.client.au.AuthorizeUser(ss, st, user.Role, orgId, method, path)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		logrus.Errorf("No role found for organization %s", orgId)
+		return errors.New("No role found for organization " + orgId)
+	}
+	logrus.Infof("user %s is %s in %s", user.Id, user.Role, orgId)
 
 	return nil
 }
@@ -176,4 +208,48 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 	return &LoginRes{
 		Token: token,
 	}, nil
+}
+
+func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
+
+	st, err := pkg.SessionType(c, SESSION_KEY)
+	if err != nil {
+		return err
+	}
+	var ss string
+	if st == "cookie" {
+		ss = pkg.GetCookieStr(c, SESSION_KEY)
+	} else if st == "header" {
+		ss = pkg.GetTokenStr(c)
+		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
+
+		if err == nil {
+			t, e := pkg.GetSessionFromToken(c.Writer, ss, p.config.k)
+			if e != nil {
+				return e
+			}
+			ss = t.Session
+		} else {
+			return err
+		}
+	}
+
+	logrus.Info("fetch user session")
+	res, err := p.client.au.ValidateSession(ss, st)
+	if err != nil {
+		return err
+	}
+	logrus.Info("parse response")
+	user, err := pkg.GetUserTraitsFromSession(req.OrgId, res)
+	if err != nil {
+		return err
+	}
+	logrus.Infof("update role of user %s", user.Id)
+
+	err = p.client.au.UpdateRole(ss, st, req.OrgId, string(req.Role), user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

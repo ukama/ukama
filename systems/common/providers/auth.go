@@ -45,6 +45,8 @@ func (a *AuthRestClient) AuthenticateUser(c *gin.Context, u string) error {
 	errStatus := &rest.ErrorMessage{}
 	urlObj, _ := url.Parse(u)
 	a.Jar.SetCookies(urlObj, c.Request.Cookies())
+
+	a.R.C.Header = c.Request.Header
 	res, err := a.R.C.SetCookieJar(a.Jar).R().
 		SetError(errStatus).
 		Get(u + AuthenticateEndpoint)

@@ -8,7 +8,6 @@ import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
-
 service OrgService {
     /* Orgs */
     rpc Add(AddRequest) returns (AddResponse);
@@ -22,7 +21,7 @@ service OrgService {
 
     /* Members */
     rpc RegisterUser(RegisterUserRequest) returns (MemberResponse);
-    rpc AddMember(MemberRequest) returns (MemberResponse);
+    rpc AddMember(AddMemberRequest) returns (MemberResponse);
     rpc GetMember(MemberRequest) returns (MemberResponse);
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
     rpc UpdateMember(UpdateMemberRequest) returns (MemberResponse);
@@ -60,6 +59,12 @@ message GetByNameRequest {
 
 message GetByNameResponse{
     Organization org = 1;
+}
+
+message AddMemberRequest{
+    string orgName = 1 [json_name = "org"];
+    string userUuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+    RoleType role = 3;
 }
 
 message MemberRequest{
@@ -124,7 +129,15 @@ message OrgUserAttributes {
 message OrgUser {
     string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     uint64 userId = 2 [json_name = "user_id"];
-    string uuid = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    bool isDeactivated = 4 [json_name = "is_deactivated"];
-    google.protobuf.Timestamp created_at = 5 [json_name = "member_since"];
+    RoleType role = 3 ;
+    string uuid = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    bool isDeactivated = 5 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 6 [json_name = "member_since"];
+}
+
+enum RoleType {
+    OWNER = 0;
+    ADMIN = 1;
+    VENDOR = 2;
+    MEMBER = 3;
 }
