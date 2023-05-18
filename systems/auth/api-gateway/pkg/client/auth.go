@@ -25,10 +25,8 @@ type AuthManager struct {
 	ketoc         *ory.APIClient
 }
 
-var namespace = "videos"
-var object = "/cats"
+var object = "/v1/package"
 var relation = "owner"
-var subjectId = "cat lady"
 
 type UIErrorResp struct {
 	Id string          `json:"id"`
@@ -212,14 +210,14 @@ func (am *AuthManager) AuthorizeUser(ss string, t string, role string, orgId str
 		Namespace(*&orgId).
 		Object(*&object).
 		Relation(*&relation).
-		SubjectId(*&subjectId).Execute()
+		SubjectId(*&role).Execute()
 
 	if err != nil {
 		logrus.Errorf("Encountered error: %v\n", err)
 		return nil, err
 	}
 	if check.Allowed {
-		logrus.Infof(*&subjectId + " can " + *&relation + " the " + *&object)
+		logrus.Infof(*&role + " can " + *&relation + " the " + *&object)
 		return resp, nil
 	}
 	return nil, fmt.Errorf(role + " is not authorized to " + relation + " the " + object)
