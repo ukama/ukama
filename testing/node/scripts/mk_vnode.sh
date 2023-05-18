@@ -181,8 +181,8 @@ push_image() {
 
 	if [ ${TARGET} != "REMOTE" ]; then
 		buildah push --tls-verify=false \
-				${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG} \
-				localhost:5000/${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}
+				${REGISTRY_URL}/${REGISTRY_NAME}:${TAG} \
+				localhost:5000/${REGISTRY_URL}/${REGISTRY_NAME}:${TAG}
 		echo "Image ${REGISTRY_URL}/${REGISTRY_NAME}:${TAG} pushed to ${TARGET}"
 		return
 	fi

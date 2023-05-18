@@ -47,6 +47,12 @@ RUN podman run --network host --privileged  -it \
 	-e REPO_NAME="virtualnode" \
 	localhost/testing/virtualnode:74ba00fc1-dirty
 
+# Pull image from local registry and shut it down.
+RUN podman pull --tls-verify=false \
+	localhost:5000/${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}
+
+RUN sudo docker rm --force registry
+
 # Info on the newly created image.
 RUN buildah info ${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}
 
