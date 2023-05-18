@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"os"
 	"time"
 
 	ory "github.com/ory/client-go"
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
+	keto "github.com/ukama/ukama/systems/auth/api-gateway/pkg/rest"
 )
 
 var SESSION_KEY = "ukama_session"
@@ -21,7 +22,8 @@ type AuthManager struct {
 	client    *ory.APIClient
 	serverUrl string
 	timeout   time.Duration
-	ketoReadClient *ory.APIClient
+	ketoClient           keto.PermissionClient
+
 }
 var namespace = "ukama"
 var object = "v1/org"
@@ -33,7 +35,7 @@ type UIErrorResp struct {
 	Ui ory.UiContainer `json:"ui"`
 }
 
-func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
+func NewAuthManager(serverUrl string, timeout time.Duration, ketoClient keto.PermissionClient) *AuthManager {
 	_, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -43,26 +45,20 @@ func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
 			URL: serverUrl,
 		},
 	}
-	configuration.Servers = []ory.ServerConfiguration{
-        {
-            URL: "http://127.0.0.1:4466", // ory keto's URL
-        },
-    }
-    ketoReadClient := ory.NewAPIClient(configuration)
-
+	
 	jar, _ := cookiejar.New(nil)
 	oc := ory.NewAPIClient(configuration)
 	oc.GetConfig().HTTPClient = &http.Client{
 		Jar: jar,
 	}
 	client := oc
-
+	
 
 	return &AuthManager{
 		client:    client,
 		timeout:   timeout,
 		serverUrl: serverUrl,
-		ketoReadClient: ketoReadClient,
+		ketoClient: ketoClient,
 	}
 }
 
@@ -71,7 +67,6 @@ func NewAuthManagerFromClient() *AuthManager {
 		serverUrl: "localhost",
 		timeout:   1 * time.Second,
 		client:    nil,
-		ketoReadClient: nil,
 	}
 }
 
@@ -94,6 +89,7 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error
 	if r.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
+
 
 	return resp, nil
 }
@@ -196,25 +192,22 @@ func (am *AuthManager) AuthorizeUser(ss string, t string ,role string,orgId stri
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
+
 	if err != nil {
 		return nil, err
 	}
 	if r.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
-	check, r, err := am.client.PermissionApi.CheckPermission(context.Background()).
-	Namespace(*&namespace).
-	Object(*&object).
-	Relation(*&relation).
-	SubjectId(*&subjectId).Execute()
-if err != nil {
-	fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	panic("Encountered error: " + err.Error())
-}
-if check.Allowed {
-	fmt.Println(*&subjectId + " can " + *&relation + " the " + *&object)
-}
-
-	return  resp,nil
+	
+	check,err:= am.ketoClient.CheckPermission(namespace, object, relation, role)
+	if err != nil {
+		logrus.Errorf("failed to check permission %s", err.Error())
+		return nil, err
+	}
+	if check {
+		return resp, nil
+	}
+	return nil, fmt.Errorf(role + " is not authorized to " + relation + " the " + object)
 
 }

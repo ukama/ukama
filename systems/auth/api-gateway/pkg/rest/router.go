@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -142,14 +143,18 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptReqHeader) (*GetUserInfo, e
 }
 
 func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
+
+	
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
 	}
 	var ss string
+	var orgId string
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
+		_,orgId=pkg.GetMemberDetails(c)
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
 
@@ -168,10 +173,29 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	if err != nil {
 		return err
 	}
+	role := ""
+	roles := resp.Identity.MetadataPublic["roles"].([]interface{})
+for i := 0; i < len(roles); i++ {
+	roleData := roles[i].(map[string]interface{})
+	if roleData["organizationId"] == orgId {
+		role = roleData["name"].(string)
+		break
+	}
+}
 
-	fmt.Println("REPONSE :", resp)
+if role != "" {
+	_, err := p.client.au.AuthorizeUser(ss, st, role, orgId)
+	if err != nil {
+		return err
+	}
+
+} else {
+	logrus.Errorf("No role found for organization %s", orgId)
+	return errors.New("No role found for organization " + orgId)
+}
+logrus.Infof("role  found  in org %s", role)
+
 	return nil
-
 }
 
 func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
@@ -220,7 +244,7 @@ func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
 	if err != nil {
 		return err
 	}
-	logrus.Info("update role of user %s", user.Id)
+	logrus.Infof("update role of user %s", user.Id)
 	err = p.client.au.UpdateRole(ss, st, req.OrgId, string(req.Role), user)
 	if err != nil {
 		return err
