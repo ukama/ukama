@@ -39,12 +39,12 @@ func (w *Watcher) Stop() {
 }
 
 func (w *Watcher) Expections() bool {
-
+	time.Sleep(1 * time.Second)
 	for _, e := range w.v {
 		/* For now jsut checking event name  */
 		i, ok := w.l.GetEvent(e.key)
 		if !ok {
-			log.Errorf("Event for %s is missing", e.key, ok)
+			log.Errorf("Event for %s is missing", e.key)
 			return false
 		}
 

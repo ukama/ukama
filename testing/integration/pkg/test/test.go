@@ -23,10 +23,11 @@ const (
 	StateTypePass                = 3
 	StateTypeFail                = 4
 	StateTypeInvalid             = 5
+	StateTypeTested              = 6
 )
 
 func (s StateType) String() string {
-	t := map[StateType]string{0: "unknown", 1: "waiting", 2: "under_test", 3: "pass", 4: "fail", 5: "invalid"}
+	t := map[StateType]string{0: "unknown", 1: "waiting", 2: "under_test", 3: "pass", 4: "fail", 5: "invalid", 6: "tested"}
 
 	v, ok := t[s]
 	if !ok {
@@ -42,7 +43,7 @@ func ParseType(value string) StateType {
 		return StateType(i)
 	}
 
-	t := map[string]StateType{"unknown": 0, "waiting": 1, "under_test": 2, "pass": 3, "fail": 4, "invalid": 5}
+	t := map[string]StateType{"unknown": 0, "waiting": 1, "under_test": 2, "pass": 3, "fail": 4, "invalid": 5, "tested": 6}
 
 	v, ok := t[value]
 	if !ok {
