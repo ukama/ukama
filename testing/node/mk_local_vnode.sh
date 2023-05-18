@@ -2,7 +2,12 @@
 # Copyright (c) 2023-present, Ukama Inc.
 # All rights reserved.
 
-# Script to create ukama's virtual node locally 
+# Script to create ukama's virtual node locally
+
+REPO_SERVER_URL="testing"
+REPO_NAME="virtualnode"
+
+VERSION=`git describe --always --dirty=-dirty`
 
 RUN() {
 
@@ -43,9 +48,9 @@ RUN podman run --network host --privileged  -it \
 	-e VNODE_METADATA="$VNODE_METADATA" \
 	-e VNODE_ID="$VNODE_ID" \
 	-e VNODE_RUN_TARGET="local" \
-	-e REPO_SERVER_URL="testing" \
-	-e REPO_NAME="virtualnode" \
-	localhost/testing/virtualnode:74ba00fc1-dirty
+	-e REPO_SERVER_URL="$REPO_SERVER_URL" \
+	-e REPO_NAME="$REPO_NAME" \
+	localhost/testing/virtualnode:${VERSION}
 
 # Pull image from local registry and shut it down.
 RUN podman pull --tls-verify=false \
@@ -54,6 +59,6 @@ RUN podman pull --tls-verify=false \
 RUN sudo docker rm --force registry
 
 # Info on the newly created image.
-RUN buildah info ${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}
+RUN buildah inspect ${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}
 
 echo "Done"
