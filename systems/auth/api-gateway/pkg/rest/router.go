@@ -26,8 +26,6 @@ type Router struct {
 	client *Clients
 }
 
-
-
 type RouterConfig struct {
 	debugMode  bool
 	serverConf *rest.HttpConfig
@@ -40,7 +38,7 @@ type AuthManager interface {
 	ValidateSession(ss, t string) (*oc.Session, error)
 	LoginUser(email string, password string) (*oc.SuccessfulNativeLogin, error)
 	UpdateRole(ss, t, orgId, role string, user *pkg.UserTraits) error
-	AuthorizeUser(ss, t ,role,orgId string) (*oc.Session,error)
+	AuthorizeUser(ss, t, role, orgId string) (*oc.Session, error)
 }
 
 type Clients struct {
@@ -144,7 +142,6 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptReqHeader) (*GetUserInfo, e
 
 func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 
-	
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
@@ -154,7 +151,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	if st == "cookie" {
 		ss = pkg.GetCookieStr(c, SESSION_KEY)
 	} else if st == "header" {
-		_,orgId=pkg.GetMemberDetails(c)
+		_, orgId = pkg.GetMemberDetails(c)
 		ss = pkg.GetTokenStr(c)
 		err := pkg.ValidateToken(c.Writer, ss, p.config.k)
 
@@ -175,25 +172,25 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 	}
 	role := ""
 	roles := resp.Identity.MetadataPublic["roles"].([]interface{})
-for i := 0; i < len(roles); i++ {
-	roleData := roles[i].(map[string]interface{})
-	if roleData["organizationId"] == orgId {
-		role = roleData["name"].(string)
-		break
-	}
-}
-
-if role != "" {
-	_, err := p.client.au.AuthorizeUser(ss, st, role, orgId)
-	if err != nil {
-		return err
+	for i := 0; i < len(roles); i++ {
+		roleData := roles[i].(map[string]interface{})
+		if roleData["organizationId"] == orgId {
+			role = roleData["name"].(string)
+			break
+		}
 	}
 
-} else {
-	logrus.Errorf("No role found for organization %s", orgId)
-	return errors.New("No role found for organization " + orgId)
-}
-logrus.Infof("role  found  in org %s", role)
+	if role != "" {
+		_, err := p.client.au.AuthorizeUser(ss, st, role, orgId)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		logrus.Errorf("No role found for organization %s", orgId)
+		return errors.New("No role found for organization " + orgId)
+	}
+	logrus.Infof("role  found  in org %s", role)
 
 	return nil
 }
@@ -252,4 +249,3 @@ func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
 
 	return nil
 }
-

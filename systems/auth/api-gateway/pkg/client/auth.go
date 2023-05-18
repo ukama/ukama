@@ -13,29 +13,29 @@ import (
 	ory "github.com/ory/client-go"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
-	keto "github.com/ukama/ukama/systems/auth/api-gateway/pkg/rest"
 )
 
 var SESSION_KEY = "ukama_session"
 
 type AuthManager struct {
-	client    *ory.APIClient
-	serverUrl string
-	timeout   time.Duration
-	ketoClient           keto.PermissionClient
-
+	client        *ory.APIClient
+	serverUrl     string
+	timeout       time.Duration
+	ketoClientUrl string
+	ketoc         *ory.APIClient
 }
-var namespace = "ukama"
-var object = "v1/org"
-var relation = "view"
-var subjectId = "user"
+
+var namespace = "videos"
+var object = "/cats"
+var relation = "owner"
+var subjectId = "cat lady"
 
 type UIErrorResp struct {
 	Id string          `json:"id"`
 	Ui ory.UiContainer `json:"ui"`
 }
 
-func NewAuthManager(serverUrl string, timeout time.Duration, ketoClient keto.PermissionClient) *AuthManager {
+func NewAuthManager(serverUrl string, timeout time.Duration, ketoClientUrl string) *AuthManager {
 	_, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -45,20 +45,28 @@ func NewAuthManager(serverUrl string, timeout time.Duration, ketoClient keto.Per
 			URL: serverUrl,
 		},
 	}
-	
+
 	jar, _ := cookiejar.New(nil)
 	oc := ory.NewAPIClient(configuration)
 	oc.GetConfig().HTTPClient = &http.Client{
 		Jar: jar,
 	}
 	client := oc
-	
+	configuration = ory.NewConfiguration()
+	configuration.Servers = []ory.ServerConfiguration{
+		{
+			URL: ketoClientUrl,
+		},
+	}
+	kc := ory.NewAPIClient(configuration)
+	ketoc := kc
 
 	return &AuthManager{
-		client:    client,
-		timeout:   timeout,
-		serverUrl: serverUrl,
-		ketoClient: ketoClient,
+		client:        client,
+		timeout:       timeout,
+		serverUrl:     serverUrl,
+		ketoc:         ketoc,
+		ketoClientUrl: ketoClientUrl,
 	}
 }
 
@@ -83,13 +91,14 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
+	fmt.Println("KRTAOS_REQ", r.Request.URL.String())
+
 	if err != nil {
 		return nil, err
 	}
 	if r.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
-
 
 	return resp, nil
 }
@@ -109,7 +118,6 @@ func (am *AuthManager) LoginUser(email string, password string) (*ory.Successful
 		UpdateLoginFlowWithPasswordMethod: &b,
 	}
 	flow1, resp, err := am.client.FrontendApi.UpdateLoginFlow(context.Background()).Flow(flow.Id).UpdateLoginFlowBody(body).Execute()
-
 	if err != nil {
 		if resp.StatusCode == http.StatusBadRequest {
 			u := UIErrorResp{}
@@ -179,8 +187,8 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 	return nil
 }
 
-func (am *AuthManager) AuthorizeUser(ss string, t string ,role string,orgId string)(*ory.Session, error){
-	
+func (am *AuthManager) AuthorizeUser(ss string, t string, role string, orgId string) (*ory.Session, error) {
+
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
@@ -199,15 +207,20 @@ func (am *AuthManager) AuthorizeUser(ss string, t string ,role string,orgId stri
 	if r.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
-	
-	check,err:= am.ketoClient.CheckPermission(namespace, object, relation, role)
+
+	check, r, err := am.ketoc.PermissionApi.CheckPermission(context.Background()).
+		Namespace(*&orgId).
+		Object(*&object).
+		Relation(*&relation).
+		SubjectId(*&subjectId).Execute()
+
 	if err != nil {
-		logrus.Errorf("failed to check permission %s", err.Error())
+		logrus.Errorf("Encountered error: %v\n", err)
 		return nil, err
 	}
-	if check {
+	if check.Allowed {
+		logrus.Infof(*&subjectId + " can " + *&relation + " the " + *&object)
 		return resp, nil
 	}
 	return nil, fmt.Errorf(role + " is not authorized to " + relation + " the " + object)
-
 }
