@@ -52,12 +52,12 @@ func (t *TestCase) SaveWorkflowData(d interface{}) {
 }
 
 func (t *TestCase) String() string {
-	return fmt.Sprintf(" Test State:: Name: %s Desc: %s Status: %s", t.Name, t.Description, t.State.String())
+	return fmt.Sprintf("Test State:: Name: %s Desc: %s Status: %s", t.Name, t.Description, t.State.String())
 }
 
 func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 
-	log.Info("Starting setup for %s", t.String())
+	log.Debugf("Starting setup for %s", t.String())
 
 	if t.SetUpFxn != nil {
 		err := t.SetUpFxn(ctx, t)
@@ -135,19 +135,29 @@ func (w *Workflow) RegisterTestCase(t *TestCase) {
 
 func (w *Workflow) ListTestCase() {
 	for _, t := range w.testSeq {
-		log.Infof(t.String())
+		log.WithFields(log.Fields{
+			"Name":        t.Name,
+			"Description": t.Description,
+			"State":       t.State,
+		}).Info("Test Case: ")
 	}
 }
 
 func (w *Workflow) Status() {
-	log.Infof(w.Info())
+	log.WithFields(log.Fields{
+		"Name":     w.Name,
+		"Count":    w.Count,
+		"Pass":     w.Pass,
+		"Fail":     w.Fail,
+		"Untested": w.Untested,
+	}).Info(" Workflow Results")
 	w.ListTestCase()
 }
 
 func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 
 	if w.SetUpFxn != nil {
-		log.Debugf("Starting setup for workflow %s", w.Name)
+		log.Tracef("Starting setup for workflow %s", w.Name)
 
 		err := w.SetUpFxn(ctx, w)
 		if assert.NoError(test, err) {
@@ -187,10 +197,10 @@ func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 		}
 
 		w.stats(tc.State)
-		log.Infof("Test Status: %s", tc.String())
+		log.Debugf("Test Status: %s", tc.String())
 	}
 
-	//.Debugf("Workflow data: %+v", w.Data)
+	log.Tracef("Workflow data: %+v", w.Data)
 	return nil
 }
 
