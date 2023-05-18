@@ -22,6 +22,11 @@ type Session struct {
 	AuthenticatedAt string `json:"authenticated_at"`
 }
 
+type TRole struct {
+	Name           string
+	OrganizationId string
+}
+
 type UserTraits struct {
 	Id         string `json:"id"`
 	Name       string `json:"name"`
@@ -30,8 +35,13 @@ type UserTraits struct {
 	FirstVisit bool   `json:"firstVisit"`
 }
 
-func GetUserTraitsFromSession(s *ory.Session) (*UserTraits, error) {
+func GetUserTraitsFromSession(orgId string, s *ory.Session) (*UserTraits, error) {
 	data, err := json.Marshal(s.Identity.Traits)
+	if err != nil {
+		return nil, err
+	}
+
+	rdata, err := json.Marshal(s.Identity.MetadataPublic["roles"])
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +50,22 @@ func GetUserTraitsFromSession(s *ory.Session) (*UserTraits, error) {
 	if err := json.Unmarshal(data, &userTraits); err != nil {
 		return nil, err
 	}
+	var roles []TRole
+	if err := json.Unmarshal(rdata, &roles); err != nil {
+		return nil, err
+	}
+	var role string = ""
+	for _, r := range roles {
+		if r.OrganizationId == orgId {
+			role = r.Name
+			break
+		}
+	}
 	return &UserTraits{
 		Id:         s.Identity.Id,
 		Name:       userTraits.Name,
 		Email:      userTraits.Email,
-		Role:       userTraits.Role,
+		Role:       role,
 		FirstVisit: userTraits.FirstVisit,
 	}, nil
 }
@@ -158,7 +179,11 @@ func GetMemberDetails(c *gin.Context) (string, string) {
 	return userId, orgId
 }
 
-func GetMetaHeaderValues(s string) (string, string, string) {
+func GetMetaHeaderValues(s string) (string, string, string, error) {
 	parts := strings.Split(s, ",")
-	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), strings.TrimSpace(parts[2])
+	if len(parts) < 3 {
+		return "", "", "", errors.New("meta header not provider")
+	}
+
+	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), strings.TrimSpace(parts[2]), nil
 }

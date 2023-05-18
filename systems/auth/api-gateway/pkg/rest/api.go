@@ -10,9 +10,8 @@ type GetUserInfo struct {
 
 type OptReqHeader struct {
 	XSessionToken string `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
-	OrgId 	   string `example:"ORG_ID" json:"org_id" header:"org_id" validation:"required" required:"false"`
+	OrgId         string `example:"ORG_ID" json:"org_id" header:"org_id" validation:"required" required:"true"`
 }
-
 
 type LoginReq struct {
 	Email    string `example:"john@example.com" json:"email" validation:"required"`

@@ -38,7 +38,7 @@ type AuthManager interface {
 	ValidateSession(ss, t string) (*oc.Session, error)
 	LoginUser(email string, password string) (*oc.SuccessfulNativeLogin, error)
 	UpdateRole(ss, t, orgId, role string, user *pkg.UserTraits) error
-	AuthorizeUser(ss, t, role, orgId string) (*oc.Session, error)
+	AuthorizeUser(ss, t, orgId, role, relation, object string) (*oc.Session, error)
 }
 
 type Clients struct {
@@ -127,7 +127,7 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptReqHeader) (*GetUserInfo, e
 		return nil, err
 	}
 
-	user, err := pkg.GetUserTraitsFromSession(res)
+	user, err := pkg.GetUserTraitsFromSession(req.OrgId, res)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,6 @@ func (p *Router) getUserInfo(c *gin.Context, req *OptReqHeader) (*GetUserInfo, e
 }
 
 func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
-
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
@@ -166,23 +165,24 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 			return err
 		}
 	}
+	meta := c.Request.Header.Get("meta")
+	_, method, path, err := pkg.GetMetaHeaderValues(meta)
+	if err != nil {
+		return err
+	}
 
 	resp, err := p.client.au.ValidateSession(ss, st)
 	if err != nil {
 		return err
 	}
-	role := ""
-	roles := resp.Identity.MetadataPublic["roles"].([]interface{})
-	for i := 0; i < len(roles); i++ {
-		roleData := roles[i].(map[string]interface{})
-		if roleData["organizationId"] == orgId {
-			role = roleData["name"].(string)
-			break
-		}
+
+	user, err := pkg.GetUserTraitsFromSession(req.OrgId, resp)
+	if err != nil {
+		return err
 	}
 
-	if role != "" {
-		_, err := p.client.au.AuthorizeUser(ss, st, role, orgId)
+	if user.Role != "" {
+		_, err := p.client.au.AuthorizeUser(ss, st, user.Role, orgId, method, path)
 		if err != nil {
 			return err
 		}
@@ -191,7 +191,7 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 		logrus.Errorf("No role found for organization %s", orgId)
 		return errors.New("No role found for organization " + orgId)
 	}
-	logrus.Infof("role  found  in org %s", role)
+	logrus.Infof("user %s is %s in %s", user.Id, user.Role, orgId)
 
 	return nil
 }
@@ -211,6 +211,7 @@ func (p *Router) login(c *gin.Context, req *LoginReq) (*LoginRes, error) {
 }
 
 func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
+
 	st, err := pkg.SessionType(c, SESSION_KEY)
 	if err != nil {
 		return err
@@ -239,7 +240,7 @@ func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
 		return err
 	}
 	logrus.Info("parse response")
-	user, err := pkg.GetUserTraitsFromSession(res)
+	user, err := pkg.GetUserTraitsFromSession(req.OrgId, res)
 	if err != nil {
 		return err
 	}

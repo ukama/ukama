@@ -30,11 +30,6 @@ type UIErrorResp struct {
 	Ui ory.UiContainer `json:"ui"`
 }
 
-type TRole struct {
-	name         string
-	organization string
-}
-
 func NewAuthManager(serverUrl string, timeout time.Duration, ketoClientUrl string) *AuthManager {
 	_, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -90,10 +85,10 @@ func (am *AuthManager) ValidateSession(ss string, t string) (*ory.Session, error
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
-
 	if err != nil {
 		return nil, err
 	}
+
 	if r.StatusCode == http.StatusUnauthorized {
 		return nil, fmt.Errorf("no valid session cookie found")
 	}
@@ -146,13 +141,8 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 	} else if t == "header" {
 		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
 	}
-	roles := []TRole{
-		{
-			name:         role,
-			organization: orgId,
-		},
-	}
-	res, r, err := am.client.IdentityApi.UpdateIdentity(
+
+	_, r, err := am.client.IdentityApi.UpdateIdentity(
 		context.Background(), user.Id,
 	).UpdateIdentityBody(
 		ory.UpdateIdentityBody(
@@ -162,8 +152,13 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 					"email":       user.Email,
 					"first_visit": user.FirstVisit,
 				},
-				MetadataPublic: map[string][]TRole{
-					"roles": roles,
+				MetadataPublic: map[string]interface{}{
+					"roles": []map[string]interface{}{
+						{
+							"name":           role,
+							"organizationId": orgId,
+						},
+					},
 				},
 			},
 		),
@@ -179,10 +174,7 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 	return nil
 }
 
-func (am *AuthManager) AuthorizeUser(ss, t, orgId, role string) (*ory.Session, error) {
-	var object = "/v1/simpool/upload"
-	var relation = "view" // view, update, delete, create
-	var namespace = "ukama"
+func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string) (*ory.Session, error) {
 	if t == "cookie" {
 		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
 		cookie := &http.Cookie{
@@ -203,7 +195,7 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role string) (*ory.Session, e
 	}
 
 	check, _, err := am.ketoc.PermissionApi.CheckPermission(context.Background()).
-		Namespace(*&namespace).
+		Namespace(*&orgId).
 		Object(*&object).
 		Relation(*&relation).
 		SubjectId(*&role).Execute()

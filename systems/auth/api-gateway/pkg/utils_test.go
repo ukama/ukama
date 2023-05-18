@@ -32,11 +32,11 @@ func TestGetUserTraitsFromSession(t *testing.T) {
 		Id:         "1234",
 		Name:       "John Doe",
 		Email:      "johndoe@example.com",
-		Role:       "user",
+		Role:       "member",
 		FirstVisit: true,
 	}
 
-	userTraits, err := GetUserTraitsFromSession(s)
+	userTraits, err := GetUserTraitsFromSession("abc-123", s)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
