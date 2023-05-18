@@ -66,3 +66,7 @@ func (a *AuthRestClient) AuthenticateUser(c *gin.Context, u string) error {
 func (a *AuthRestClient) MockAuthenticateUser(c *gin.Context, u string) error {
 	return nil
 }
+
+func (a *AuthRestClient) MockAuthenticateUser(c *gin.Context, u string) error {
+	return nil
+}
