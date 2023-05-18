@@ -70,7 +70,7 @@ func NewListener(config *ListenerConfig) Listener {
 		uri:       config.Queue.Uri,
 		log:       dlog,
 	}
-	log.Debugf("Listener created: %+v.", l)
+	log.Tracef("Listener created: %+v.", l)
 
 	return l
 }
@@ -87,14 +87,14 @@ func (l *listener) StartListener() {
 	}
 
 	l.cons = consumer
-	log.Debugf("Creating listener for Queue: %s. lsitner: %+v",
+	log.Tracef("Creating listener for Queue: %s. lsitner: %+v",
 		l.uri[strings.LastIndex(l.uri, "@"):], l)
 
 	defer l.conn.Close()
 
 	defer consumer.Close()
 
-	log.Debugf("Listening for messages...")
+	log.Tracef("Listening for messages...")
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
@@ -108,15 +108,15 @@ func (l *listener) StartListener() {
 			done <- true
 
 		case <-l.stop:
-			log.Debug("Stopping")
+			log.Trace("Stopping")
 			done <- true
 		}
 
 	}()
 
-	log.Debug("awaiting signal")
+	log.Trace("awaiting signal")
 	<-done
-	log.Debug("stopping consumer")
+	log.Trace("stopping consumer")
 }
 
 func (l *listener) StopListener() {
@@ -124,7 +124,7 @@ func (l *listener) StopListener() {
 }
 
 func (l *listener) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Action {
-	log.Debugf("Raw message: %+v", delivery)
+	log.Tracef("Raw message: %+v", delivery)
 
 	l.store[delivery.RoutingKey] = delivery.Body
 	log.Debugf("Added message %s", delivery.RoutingKey)

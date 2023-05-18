@@ -41,6 +41,10 @@ type InitData struct {
 
 }
 
+func init() {
+	log.SetLevel(log.InfoLevel)
+}
+
 func InitializeData() *InitData {
 	d := &InitData{}
 	d.OrgName = strings.ToLower(faker.FirstName()) + "_org"
@@ -93,8 +97,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 	w := test.NewWorkflow("init_workflow_1", "Adding a system and getting its credentials")
 
 	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
-		log.SetLevel(log.InfoLevel)
-		log.Infof("Initilizing Data for %s.", w.String())
+		log.Debugf("Initilizing Data for %s.", w.String())
 		w.Data = InitializeData()
 
 		log.Debugf("Workflow Data : %+v", w.Data)
