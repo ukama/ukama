@@ -26,7 +26,7 @@ func NewWatcher(v []EventValidator) *Watcher {
 }
 
 func DummyValidator(e string, b []byte) bool {
-	log.Info("Event: %s \n Body: %s", e, b)
+	log.Debugf("Event: %s \n Body: %s", e, b)
 	return true
 }
 

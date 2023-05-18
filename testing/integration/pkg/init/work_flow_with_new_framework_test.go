@@ -93,7 +93,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 	w := test.NewWorkflow("init_workflow_1", "Adding a system and getting its credentials")
 
 	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
-		log.SetLevel(log.DebugLevel)
+		log.SetLevel(log.InfoLevel)
 		log.Infof("Initilizing Data for %s.", w.String())
 		w.Data = InitializeData()
 
@@ -248,7 +248,6 @@ func TestWorkflow_InitSystem(t *testing.T) {
 			if assert.NotNil(t, resp) {
 				assert.Equal(t, d.NodeId.String(), resp.NodeId)
 				assert.Equal(t, d.OrgName, resp.OrgName)
-
 				assert.Equal(t, true, tc.Watcher.Expections())
 				check = true
 			}

@@ -20,6 +20,10 @@ type Workflow struct {
 	State       StateType `default:"0"`
 	Watcher     *utils.Watcher
 	Data        interface{}
+	Count       int64 `default:"0"`
+	Pass        int64 `default:"0"`
+	Fail        int64 `default:"0"`
+	Untested    int64 `default:"0"`
 }
 
 type TestCase struct {
@@ -116,12 +120,17 @@ func (w *Workflow) SaveData(d interface{}) {
 	w.Data = d
 }
 
-func (s *Workflow) String() string {
-	return fmt.Sprintf("Workflow: name: %s Description: %s", s.Name, s.Description)
+func (w *Workflow) String() string {
+	return fmt.Sprintf("Workflow: name: %s Description: %s", w.Name, w.Description)
+}
+
+func (w *Workflow) Info() string {
+	return fmt.Sprintf("Workflow Name: %s Description: %s Count: %d Pass: %d Fail: %d Untested: %d", w.Name, w.Description, w.Count, w.Pass, w.Untested, w.Untested)
 }
 
 func (w *Workflow) RegisterTestCase(t *TestCase) {
 	w.testSeq = append(w.testSeq, t)
+	w.Count++
 }
 
 func (w *Workflow) ListTestCase() {
@@ -131,14 +140,14 @@ func (w *Workflow) ListTestCase() {
 }
 
 func (w *Workflow) Status() {
-	log.Infof(w.String())
+	log.Infof(w.Info())
 	w.ListTestCase()
 }
 
 func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
-	log.Infof("Starting workflow %s", w.String())
+
 	if w.SetUpFxn != nil {
-		log.Info("Starting setup for workflow %s", w.Name)
+		log.Debugf("Starting setup for workflow %s", w.Name)
 
 		err := w.SetUpFxn(ctx, w)
 		if assert.NoError(test, err) {
@@ -176,9 +185,22 @@ func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 		if assert.NoError(test, err) {
 			w.State = StateTypeFail
 		}
+
+		w.stats(tc.State)
 		log.Infof("Test Status: %s", tc.String())
 	}
 
-	log.Infof("Workflow data: %+v", w.Data)
+	//.Debugf("Workflow data: %+v", w.Data)
 	return nil
+}
+
+func (w *Workflow) stats(status StateType) {
+	switch status {
+	case StateTypeFail:
+		w.Fail++
+	case StateTypePass:
+		w.Pass++
+	default:
+		w.Untested++
+	}
 }
