@@ -17,11 +17,14 @@ replace github.com/ukama/ukama/systems/subscriber/sim-pool => ../../systems/subs
 replace github.com/ukama/ukama/systems/subscriber/sim-manager => ../../systems/subscriber/sim-manager
 
 require (
-	github.com/go-playground/assert/v2 v2.2.0
+	github.com/rabbitmq/amqp091-go v1.7.0
 	github.com/sirupsen/logrus v1.9.0
-	github.com/tj/assert v0.0.3
+	github.com/stretchr/testify v1.8.2
 	github.com/ukama/ukama/systems/common v0.0.0-20230504181210-bf6632801c73
 	github.com/ukama/ukama/systems/init/api-gateway v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
 	k8s.io/apimachinery v0.27.1
 )
 
@@ -32,20 +35,14 @@ require (
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rabbitmq/amqp091-go v1.7.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
-	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
-	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000 // indirect
-	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000 // indirect
-	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 )
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/bxcodec/faker/v4 v4.0.0-beta.3
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -94,7 +91,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/satori/go.uuid v1.2.0 // indirect
+	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -114,7 +111,6 @@ require (
 	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57 // indirect
 	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

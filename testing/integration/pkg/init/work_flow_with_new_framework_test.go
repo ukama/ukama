@@ -336,7 +336,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 		},
 	})
 
-	err := w.Run(context.Background())
+	err := w.Run(t, context.Background())
 	assert.NoError(t, err)
 
 	w.Status()

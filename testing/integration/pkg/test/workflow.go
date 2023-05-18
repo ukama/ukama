@@ -3,8 +3,10 @@ package test
 import (
 	"context"
 	"fmt"
+	"testing"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
 
@@ -46,28 +48,26 @@ func (t *TestCase) SaveWorkflowData(d interface{}) {
 }
 
 func (t *TestCase) String() string {
-	return fmt.Sprintf(" Test State:: \n \t name		: %s \n \t desc		: %s \n \t status	: %s \n", t.Name, t.Description, t.State.String())
+	return fmt.Sprintf(" Test State:: Name: %s Desc: %s Status: %s", t.Name, t.Description, t.State.String())
 }
 
-func (t *TestCase) Run(ctx context.Context) error {
+func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 
 	log.Info("Starting setup for %s", t.String())
 
 	if t.SetUpFxn != nil {
 		err := t.SetUpFxn(ctx, t)
-		if err != nil {
-			log.Errorf("Error while doing test setup for %s.", t.Name)
-			return err
+		if assert.NoError(test, err) {
+			t.State = StateTypeUnderTest
 		}
 	}
 
 	if t.Fxn != nil {
 		err := t.Fxn(ctx, t)
-		if err != nil {
-			log.Errorf("Error while executing test %s.", t.Name)
-			t.State = StateTypeFail
-			return err
+		if assert.NoError(test, err) {
+			t.State = StateTypeTested
 		}
+
 	} else {
 		log.Errorf("Invalid test %s", t.Name)
 		t.State = StateTypeInvalid
@@ -75,17 +75,17 @@ func (t *TestCase) Run(ctx context.Context) error {
 
 	if t.StateFxn != nil {
 		status, err := t.StateFxn(ctx, t)
-		if err != nil {
-			log.Errorf("Error while checking test %s status.", t.Name)
-			t.State = StateTypeFail
-			return err
-		}
-		if status {
-			t.State = StateTypePass
+		if assert.NoError(test, err) {
+
+			if assert.EqualValues(test, true, status) {
+				t.State = StateTypePass
+			} else {
+				t.State = StateTypeFail
+			}
+
 		} else {
 			t.State = StateTypeFail
 		}
-
 	}
 
 	if t.ExitFxn != nil {
@@ -117,7 +117,7 @@ func (w *Workflow) SaveData(d interface{}) {
 }
 
 func (s *Workflow) String() string {
-	return fmt.Sprintf("Workflow: \n\n name 			: %s \n\t description 	: %s \n\t", s.Name, s.Description)
+	return fmt.Sprintf("Workflow: name: %s Description: %s", s.Name, s.Description)
 }
 
 func (w *Workflow) RegisterTestCase(t *TestCase) {
@@ -135,28 +135,30 @@ func (w *Workflow) Status() {
 	w.ListTestCase()
 }
 
-func (w *Workflow) Run(ctx context.Context) error {
+func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 	log.Infof("Starting workflow %s", w.String())
 	if w.SetUpFxn != nil {
 		log.Info("Starting setup for workflow %s", w.Name)
 
 		err := w.SetUpFxn(ctx, w)
-		if err != nil {
-			log.Errorf("Error while doing workflow setup for %s.", w.Name)
-			return err
+		if assert.NoError(test, err) {
+			w.State = StateTypeUnderTest
 		}
 	}
 
 	defer func() {
 		if w.StateFxn != nil {
 			status, err := w.StateFxn(ctx, w)
-			if err != nil {
-				log.Errorf("Error while checking workflow %s status.", w.Name)
-				w.State = StateTypeFail
-			}
-			if status {
-				w.State = StateTypePass
+			if assert.NoError(test, err) {
+
+				if assert.EqualValues(test, true, status) {
+					w.State = StateTypePass
+				} else {
+					w.State = StateTypeFail
+				}
+
 			} else {
+				log.Errorf("Error while checking workflow %s status.", w.Name)
 				w.State = StateTypeFail
 			}
 		}
@@ -169,14 +171,12 @@ func (w *Workflow) Run(ctx context.Context) error {
 		}
 	}()
 
-	for _, t := range w.testSeq {
-		err := t.Run(ctx)
-		if err != nil {
-			log.Errorf("Error while running test for workflow %s test %s.", w.Name, t.Name)
+	for _, tc := range w.testSeq {
+		err := tc.Run(test, ctx)
+		if assert.NoError(test, err) {
 			w.State = StateTypeFail
-			return err
 		}
-		log.Infof("Test Status: \t %s", t.String())
+		log.Infof("Test Status: %s", tc.String())
 	}
 
 	log.Infof("Workflow data: %+v", w.Data)
