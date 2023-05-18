@@ -25,6 +25,8 @@ type Router struct {
 	client *Clients
 }
 
+
+
 type RouterConfig struct {
 	debugMode  bool
 	serverConf *rest.HttpConfig
@@ -37,6 +39,7 @@ type AuthManager interface {
 	ValidateSession(ss, t string) (*oc.Session, error)
 	LoginUser(email string, password string) (*oc.SuccessfulNativeLogin, error)
 	UpdateRole(ss, t, orgId, role string, user *pkg.UserTraits) error
+	AuthorizeUser(ss, t ,role,orgId string) (*oc.Session,error)
 }
 
 type Clients struct {
@@ -161,11 +164,12 @@ func (p *Router) authenticate(c *gin.Context, req *OptReqHeader) error {
 		}
 	}
 
-	_, err = p.client.au.ValidateSession(ss, st)
+	resp, err := p.client.au.ValidateSession(ss, st)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("REPONSE :", resp)
 	return nil
 
 }
@@ -224,3 +228,4 @@ func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
 
 	return nil
 }
+

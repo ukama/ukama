@@ -12,6 +12,7 @@ type OptReqHeader struct {
 	XSessionToken string `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
 }
 
+
 type LoginReq struct {
 	Email    string `example:"john@example.com" json:"email" validation:"required"`
 	Password string `example:"Password" json:"password" validation:"required"`

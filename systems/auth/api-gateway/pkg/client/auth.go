@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"time"
 
 	ory "github.com/ory/client-go"
@@ -20,7 +21,12 @@ type AuthManager struct {
 	client    *ory.APIClient
 	serverUrl string
 	timeout   time.Duration
+	ketoReadClient *ory.APIClient
 }
+var namespace = "ukama"
+var object = "v1/org"
+var relation = "view"
+var subjectId = "user"
 
 type UIErrorResp struct {
 	Id string          `json:"id"`
@@ -37,6 +43,12 @@ func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
 			URL: serverUrl,
 		},
 	}
+	configuration.Servers = []ory.ServerConfiguration{
+        {
+            URL: "http://127.0.0.1:4466", // ory keto's URL
+        },
+    }
+    ketoReadClient := ory.NewAPIClient(configuration)
 
 	jar, _ := cookiejar.New(nil)
 	oc := ory.NewAPIClient(configuration)
@@ -45,10 +57,12 @@ func NewAuthManager(serverUrl string, timeout time.Duration) *AuthManager {
 	}
 	client := oc
 
+
 	return &AuthManager{
 		client:    client,
 		timeout:   timeout,
 		serverUrl: serverUrl,
+		ketoReadClient: ketoReadClient,
 	}
 }
 
@@ -57,6 +71,7 @@ func NewAuthManagerFromClient() *AuthManager {
 		serverUrl: "localhost",
 		timeout:   1 * time.Second,
 		client:    nil,
+		ketoReadClient: nil,
 	}
 }
 
@@ -166,4 +181,40 @@ func (am *AuthManager) UpdateRole(ss, t, orgId, role string, user *pkg.UserTrait
 	}
 
 	return nil
+}
+
+func (am *AuthManager) AuthorizeUser(ss string, t string ,role string,orgId string)(*ory.Session, error){
+	
+	if t == "cookie" {
+		urlObj, _ := url.Parse(am.client.GetConfig().Servers[0].URL)
+		cookie := &http.Cookie{
+			Name:  SESSION_KEY,
+			Value: ss,
+		}
+		am.client.GetConfig().HTTPClient.Jar.SetCookies(urlObj, []*http.Cookie{cookie})
+	} else if t == "header" {
+		am.client.GetConfig().AddDefaultHeader("X-Session-Token", ss)
+	}
+	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode == http.StatusUnauthorized {
+		return nil, fmt.Errorf("no valid session cookie found")
+	}
+	check, r, err := am.client.PermissionApi.CheckPermission(context.Background()).
+	Namespace(*&namespace).
+	Object(*&object).
+	Relation(*&relation).
+	SubjectId(*&subjectId).Execute()
+if err != nil {
+	fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	panic("Encountered error: " + err.Error())
+}
+if check.Allowed {
+	fmt.Println(*&subjectId + " can " + *&relation + " the " + *&object)
+}
+
+	return  resp,nil
+
 }
