@@ -16,7 +16,7 @@ type Resty struct {
 func NewResty() *Resty {
 
 	c := resty.New()
-	c.SetDebug(true)
+	c.SetDebug(false)
 
 	return &Resty{
 		C: c,

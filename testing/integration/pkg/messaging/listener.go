@@ -22,6 +22,7 @@ type listener struct {
 	store     map[string]interface{}
 	stop      chan bool
 	uri       string
+	log       *log.Logger
 }
 
 type ListenerConfig struct {
@@ -44,9 +45,17 @@ func NewListenerConfig() *ListenerConfig {
 }
 
 func NewListener(config *ListenerConfig) Listener {
+
+	var dlog = &log.Logger{
+		Out:       os.Stderr,
+		Formatter: new(log.TextFormatter),
+		Hooks:     make(log.LevelHooks),
+		Level:     log.WarnLevel,
+	}
+
 	conn, err := rabbitmq.NewConn(
 		config.Queue.Uri,
-		rabbitmq.WithConnectionOptionsLogging,
+		rabbitmq.WithConnectionOptionsLogger(dlog),
 	)
 
 	if err != nil {
@@ -59,6 +68,7 @@ func NewListener(config *ListenerConfig) Listener {
 		store:     make(map[string]interface{}),
 		stop:      make(chan bool, 1),
 		uri:       config.Queue.Uri,
+		log:       dlog,
 	}
 	log.Debugf("Listener created: %+v.", l)
 
@@ -70,20 +80,21 @@ func (l *listener) StartListener() {
 		rabbitmq.WithConsumerOptionsRoutingKey("#"),
 		rabbitmq.WithConsumerOptionsExchangeName(msgbus.DefaultExchange),
 		rabbitmq.WithConsumerOptionsConsumerName(l.serviceId),
-		rabbitmq.WithConsumerOptionsExchangeKind(amqp.ExchangeTopic))
+		rabbitmq.WithConsumerOptionsExchangeKind(amqp.ExchangeTopic),
+		rabbitmq.WithConsumerOptionsLogger(l.log))
 	if err != nil {
 		log.Fatalf("error creating queue consumer. Error: %s", err.Error())
 	}
 
 	l.cons = consumer
-	log.Infof("Creating listener for Queue: %s. lsitner: %+v",
+	log.Debugf("Creating listener for Queue: %s. lsitner: %+v",
 		l.uri[strings.LastIndex(l.uri, "@"):], l)
 
 	defer l.conn.Close()
 
 	defer consumer.Close()
 
-	log.Info("Listening for messages...")
+	log.Debugf("Listening for messages...")
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
@@ -93,19 +104,19 @@ func (l *listener) StartListener() {
 		case <-sigs:
 			sig := <-sigs
 			log.Println()
-			log.Info(sig)
+			log.Debug(sig)
 			done <- true
 
 		case <-l.stop:
-			log.Info("Stopping")
+			log.Debug("Stopping")
 			done <- true
 		}
 
 	}()
 
-	log.Info("awaiting signal")
+	log.Debug("awaiting signal")
 	<-done
-	log.Info("stopping consumer")
+	log.Debug("stopping consumer")
 }
 
 func (l *listener) StopListener() {
@@ -113,10 +124,10 @@ func (l *listener) StopListener() {
 }
 
 func (l *listener) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Action {
-	log.Infof("Raw message: %+v", delivery)
+	log.Debugf("Raw message: %+v", delivery)
 
 	l.store[delivery.RoutingKey] = delivery.Body
-	log.Infof("Added message %s with body %v", delivery.RoutingKey, delivery.Body)
+	log.Debugf("Added message %s", delivery.RoutingKey)
 
 	return rabbitmq.Ack
 }
