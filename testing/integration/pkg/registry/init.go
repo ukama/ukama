@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
+	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	jsonpb "google.golang.org/protobuf/encoding/protojson"
 
@@ -34,7 +35,7 @@ func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, erro
 	}
 	rsp := &orgpb.AddResponse{}
 
-	resp, err := s.r.Post(b, s.u.String()+"/v1/orgs/"+req.OrgName)
+	resp, err := s.r.Post(b, s.u.String()+"/v1/orgs")
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
@@ -119,4 +120,25 @@ func (s *RegistryClient) UpdateMember(req api.UpdateMemberRequest) error {
 	}
 
 	return nil
+}
+
+func (s *RegistryClient) AddNetwork(req api.AddNetworkRequest) (*netpb.AddResponse, error) {
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	}
+	rsp := &netpb.AddResponse{}
+
+	resp, err := s.r.Post(b, s.u.String()+"/v1/networks")
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+		return nil, err
+	}
+
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
 }

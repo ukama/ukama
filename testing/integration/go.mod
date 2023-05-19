@@ -51,6 +51,7 @@ require (
 	github.com/ukama/ukama/systems/init/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/init/lookup v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/api-gateway v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
@@ -122,7 +123,6 @@ require (
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.9 // indirect
-	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000 // indirect
 	github.com/ukama/ukama/systems/registry/users v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wI2L/fizz v0.22.0 // indirect
 	github.com/willf/bitset v1.1.11 // indirect

@@ -1,8 +1,10 @@
 package pkg
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/bxcodec/faker/v4"
 	"github.com/tj/assert"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 )
@@ -158,5 +160,106 @@ func TestUpdateMemberWorkflows(t *testing.T) {
 
 		err = registryClient.UpdateMember(reqUpdateMember)
 		assert.Error(t, err)
+	})
+}
+
+func TestAddNetworkWorkflows(t *testing.T) {
+	host := "http://localhost:8082"
+	registryClient := NewRegistryClient(host)
+
+	t.Run("Owner-admin adds new network to eshould succeed", func(t *testing.T) {
+		orgName := "saturn"
+
+		// or use and admin member_id instead of owner_id
+		owner := "08a594d7-a292-43cf-9652-54785b03f48f"
+
+		netName := strings.ToLower(faker.FirstName()) + "-net"
+
+		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
+		assert.Equal(t, owner, orgResp.Org.Owner)
+
+		// make sure the owner or admin is the request executor
+		reqAddNetwork := api.AddNetworkRequest{
+			OrgName: orgName,
+			NetName: netName}
+
+		anResp, err := registryClient.AddNetwork(reqAddNetwork)
+		assert.NoError(t, err)
+		assert.NotNil(t, anResp)
+	})
+
+	t.Run("Non owner-admin adds new network should fail", func(t *testing.T) {
+		orgName := "saturn"
+		member := "c9647e7a-8967-4978-b512-38a35899f32d"
+		netName := strings.ToLower(faker.FirstName()) + "-net"
+
+		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
+
+		// make sure the member is not admin
+		owner := orgResp.Org.Owner
+		assert.NotEqual(t, owner, member)
+
+		reqGetMember := api.GetMemberRequest{
+			OrgName:  orgName,
+			UserUuid: member}
+
+		gmResp, err := registryClient.GetMember(reqGetMember)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, member, gmResp.Member.Uuid)
+
+		// make sure the member is not admin
+
+		// make sure the member is the request executor
+		reqAddNetwork := api.AddNetworkRequest{
+			OrgName: orgName,
+			NetName: netName}
+
+		amResp, err := registryClient.AddNetwork(reqAddNetwork)
+		assert.Error(t, err)
+		assert.Nil(t, amResp)
+	})
+
+	t.Run("Owner-admin adds new network to non existing org should fail", func(t *testing.T) {
+		orgName := "saturn"
+		missingOrgName := "non-existing-org"
+
+		// or use and admin member_id instead of owner_id
+		owner := "08a594d7-a292-43cf-9652-54785b03f48f"
+
+		netName := strings.ToLower(faker.FirstName()) + "-net"
+
+		reqGetOrg := api.GetOrgRequest{OrgName: missingOrgName}
+
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.Error(t, err)
+		assert.Nil(t, orgResp)
+
+		reqGetOrg = api.GetOrgRequest{OrgName: orgName}
+
+		orgResp, err = registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
+		assert.Equal(t, owner, orgResp.Org.Owner)
+
+		// make sure the owner or admin is the request executor
+		reqAddNetwork := api.AddNetworkRequest{
+			OrgName: missingOrgName,
+			NetName: netName}
+
+		anResp, err := registryClient.AddNetwork(reqAddNetwork)
+		assert.Error(t, err)
+		assert.Nil(t, anResp)
 	})
 }
