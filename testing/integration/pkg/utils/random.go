@@ -19,6 +19,11 @@ func RandomInt(m int) int {
 	return n[0]
 }
 
+func RandomIntInRange(min int, max int) int {
+	n, _ := faker.RandomInt(min, max, 1)
+	return n[0]
+}
+
 func RandomName() string {
 	seed := time.Now().UTC().UnixNano()
 	nameGenerator := namegenerator.NewNameGenerator(seed)
