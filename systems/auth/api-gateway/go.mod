@@ -24,8 +24,10 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.0.0-rc.2
 	github.com/ory/client-go v1.1.24
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	google.golang.org/protobuf v1.28.1 // indirect
 )
+
+require github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -85,7 +87,6 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

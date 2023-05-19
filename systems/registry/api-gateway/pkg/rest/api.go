@@ -19,6 +19,7 @@ type AddOrgRequest struct {
 type MemberRequest struct {
 	OrgName  string `example:"milky-way" path:"org" validate:"required"`
 	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
+	Role string `example:"member" json:"role" validate:"required"`
 }
 
 type GetMemberRequest struct {
@@ -26,10 +27,15 @@ type GetMemberRequest struct {
 	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 }
 
+type GetMemberRoleRequest struct {
+	OrgId  string `example:"{{OrgId}}" path:"org" validate:"required"`
+	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+}
 type UpdateMemberRequest struct {
 	OrgName       string `example:"milky-way" path:"org" validate:"required"`
 	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 	IsDeactivated bool   `example:"false" json:"isDeactivated,omitempty"`
+	Role string `example:"member" json:"role,omitempty"`
 }
 
 // Users group
@@ -41,7 +47,7 @@ type GetUserRequest struct {
 type AddUserRequest struct {
 	Name  string `example:"John" json:"name,omitempty" validate:"required"`
 	Email string `example:"john@example.com" json:"email" validate:"required"`
-	Phone string `example:"4151231234" json:"phone,omitempty" validate:"required"`
+	Phone string `example:"4151231234" json:"phone,omitempty"`
 }
 
 // Network group

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,11 @@ type Session struct {
 	AuthenticatedAt string `json:"authenticated_at"`
 }
 
+type TRole struct {
+	Name           string `json:"name"`
+	OrganizationId string `json:"organizationId"`
+}
+
 type UserTraits struct {
 	Id         string `json:"id"`
 	Name       string `json:"name"`
@@ -29,8 +35,13 @@ type UserTraits struct {
 	FirstVisit bool   `json:"firstVisit"`
 }
 
-func GetUserTraitsFromSession(s *ory.Session) (*UserTraits, error) {
+func GetUserTraitsFromSession(orgId string, s *ory.Session) (*UserTraits, error) {
 	data, err := json.Marshal(s.Identity.Traits)
+	if err != nil {
+		return nil, err
+	}
+
+	rdata, err := json.Marshal(s.Identity.MetadataPublic["roles"])
 	if err != nil {
 		return nil, err
 	}
@@ -39,11 +50,22 @@ func GetUserTraitsFromSession(s *ory.Session) (*UserTraits, error) {
 	if err := json.Unmarshal(data, &userTraits); err != nil {
 		return nil, err
 	}
+	var roles []TRole
+	if err := json.Unmarshal(rdata, &roles); err != nil {
+		return nil, err
+	}
+	var role string = ""
+	for _, r := range roles {
+		if r.OrganizationId == orgId {
+			role = r.Name
+			break
+		}
+	}
 	return &UserTraits{
 		Id:         s.Identity.Id,
 		Name:       userTraits.Name,
 		Email:      userTraits.Email,
-		Role:       userTraits.Role,
+		Role:       role,
 		FirstVisit: userTraits.FirstVisit,
 	}, nil
 }
@@ -148,4 +170,20 @@ func GetCookieStr(c *gin.Context, sessionKey string) string {
 func GetTokenStr(c *gin.Context) string {
 	token := c.Request.Header.Get("X-Session-Token")
 	return token
+}
+
+func GetMemberDetails(c *gin.Context) (string, string) {
+	userId := c.Request.Header.Get("User-id")
+	orgId := c.Request.Header.Get("Org-id")
+
+	return userId, orgId
+}
+
+func GetMetaHeaderValues(s string) (string, string, string, error) {
+	parts := strings.Split(s, ",")
+	if len(parts) < 3 {
+		return "", "", "", errors.New("meta header not provider")
+	}
+
+	return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1]), strings.TrimSpace(parts[2]), nil
 }
