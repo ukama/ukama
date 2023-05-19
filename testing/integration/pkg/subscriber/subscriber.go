@@ -1,6 +1,7 @@
 package subscriber
 
 import (
+	json "encoding/json"
 	"fmt"
 	"net/url"
 
@@ -10,7 +11,7 @@ import (
 	sPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	pPb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
-	"k8s.io/apimachinery/pkg/util/json"
+	pjson "google.golang.org/protobuf/encoding/protojson"
 )
 
 type SubscriberSys struct {
@@ -41,7 +42,7 @@ func (s *SubscriberSys) SubscriberSimpoolUploadSims(req api.SimPoolUploadSimReq)
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -59,7 +60,7 @@ func (s *SubscriberSys) SubscriberSimpoolGetSimStats(req api.SimPoolStatByTypeRe
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -77,7 +78,7 @@ func (s *SubscriberSys) SubscriberSimpoolGetSimByICCID(req api.SimByIccidReq) (*
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -96,7 +97,7 @@ func (s *SubscriberSys) SubscriberRegistryGetSusbscriber(req api.SubscriberGetRe
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
