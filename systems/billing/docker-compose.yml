@@ -30,7 +30,8 @@ services:
 # Billing System
 
   billing:
-    build: ./billing/api-gateway
+    container_name: billing-api-gateway
+    build: ./api-gateway
     ports:
       - "8680:8080"
     restart: always
@@ -41,7 +42,7 @@ services:
 
 
   msg-client-billing:
-    build: ./messaging/msgClient
+    build: ../messaging/msgClient
     ports:
       - "9690:9095"
     environment:
@@ -58,7 +59,7 @@ services:
 
 
   billing-collector:
-    build: ./billing/collector
+    build: ./collector
     ports:
       - "9691:9090"
     environment:
@@ -70,7 +71,7 @@ services:
       - MSGCLIENT_HOST=msg-client-billing:9095
       - COLLECTOR_SERVICE_HOST=billing-collector
       - COLLECTOR_SERVICE_PORT=9090
-      - LAGOAPIKEY=b24f7d88-4072-4866-9bbf-5dadd1970597
+      - LAGOAPIKEY=${LAGO_API_KEY}
       - LAGOHOST=${DOCKER_HOST_IP}
     restart: always
     depends_on:
@@ -78,7 +79,7 @@ services:
 
 
   billing-invoice:
-    build: ./billing/invoice
+    build: ./invoice
     ports:
       - "9692:9090"
     environment:
