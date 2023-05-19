@@ -30,6 +30,7 @@ type InitData struct {
 	Init                     *InitSys
 	Host                     string
 	ROrgIp                   string
+	MbHost                   string
 
 	/* API requests */
 	reqAddOrg    api.AddOrgRequest
@@ -61,6 +62,7 @@ func InitializeData() *InitData {
 	d.NodeId = ukama.NewVirtualHomeNodeId()
 	d.Host = "http://localhost:8071"
 	d.Init = NewInitSys(d.Host)
+	d.MbHost = "amqp://guest:guest@192.168.0.22:5672/"
 
 	d.reqAddOrg = api.AddOrgRequest{
 		OrgName:     d.OrgName,
@@ -116,8 +118,9 @@ func TestWorkflow_InitSystem(t *testing.T) {
 			/* Setup required for test case
 			Initialize any test specific data if required
 			*/
+			a := tc.GetWorkflowData().(*InitData)
 			log.Debugf("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher([]string{"event.cloud.lookup.organization.create"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.lookup.organization.create"})
 			return nil
 		},
 

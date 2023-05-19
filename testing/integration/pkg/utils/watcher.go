@@ -17,8 +17,8 @@ type Watcher struct {
 	l messaging.Listener
 }
 
-func NewWatcher(v []EventValidator) *Watcher {
-	c := messaging.NewListenerConfig()
+func NewWatcher(v []EventValidator, url string) *Watcher {
+	c := messaging.NewListenerConfig(url)
 	return &Watcher{
 		v: v,
 		l: messaging.NewListener(c),
@@ -39,7 +39,7 @@ func (w *Watcher) Stop() {
 }
 
 func (w *Watcher) Expections() bool {
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 	for _, e := range w.v {
 		/* For now jsut checking event name  */
 		i, ok := w.l.GetEvent(e.key)
@@ -66,7 +66,7 @@ func (w *Watcher) Expections() bool {
 	return true
 }
 
-func SetupWatcher(events []string) *Watcher {
+func SetupWatcher(url string, events []string) *Watcher {
 	Validator := []EventValidator{}
 	for _, e := range events {
 		v := EventValidator{
@@ -77,7 +77,7 @@ func SetupWatcher(events []string) *Watcher {
 		Validator = append(Validator, v)
 	}
 
-	w := NewWatcher(Validator)
+	w := NewWatcher(Validator, url)
 
 	w.Start()
 	time.Sleep(1 * time.Second)

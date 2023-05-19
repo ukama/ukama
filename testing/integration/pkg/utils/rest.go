@@ -16,7 +16,7 @@ type Resty struct {
 func NewResty() *Resty {
 
 	c := resty.New()
-	c.SetDebug(false)
+	c.SetDebug(true)
 
 	return &Resty{
 		C: c,
@@ -38,7 +38,7 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 	}
 
 	if resp.StatusCode() != http.StatusCreated {
-		log.Errorf("Failed to perform PUT operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
+		log.Errorf("Failed to perform PUT operation on %s HTTP resp code %d and Error message is %s", url, resp.StatusCode(), errStatus.Error)
 		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
 	}
 
@@ -60,7 +60,7 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 	}
 
 	if resp.StatusCode() != http.StatusCreated {
-		log.Errorf("Failed to perform POST operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
+		log.Errorf("Failed to perform POST operation on %s HTTP resp code %d and Error message is %s", url, resp.StatusCode(), errStatus.Error)
 		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
 	}
 
@@ -81,7 +81,7 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Errorf("Failed to perform GET operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
+		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s", url, resp.StatusCode(), errStatus.Error)
 		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
 	}
 
@@ -103,7 +103,7 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Errorf("Failed to perform PATCH operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
+		log.Errorf("Failed to perform PATCH operation on %s HTTP resp code %d and Error message is %s", url, resp.StatusCode(), errStatus.Error)
 		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
 	}
 
@@ -124,7 +124,7 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		log.Errorf("Failed to perform Delete operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
+		log.Errorf("Failed to perform Delete operation on %s HTTP resp code %d and Error message is %s", url, resp.StatusCode(), errStatus.Error)
 		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
 	}
 

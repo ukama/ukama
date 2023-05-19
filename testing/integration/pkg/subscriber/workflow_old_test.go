@@ -69,9 +69,9 @@ func TestWorkflow_1(t *testing.T) {
 		Iccid: "01234567890123456789",
 	}
 
-	reqSubscriberGetReq := api.SubscriberGetReq{
-		SubscriberId: uuid.NewV4().String(),
-	}
+	// reqSubscriberGetReq := api.SubscriberGetReq{
+	// 	SubscriberId: uuid.NewV4().String(),
+	// }
 
 	reqSubscriberAddReq := api.SubscriberAddReq{
 		FirstName:             faker.FirstName(),
@@ -87,18 +87,18 @@ func TestWorkflow_1(t *testing.T) {
 		NetworkId:             uuid.NewV4().String(),
 	}
 
-	reqSubscriberDeleteReq := api.SubscriberDeleteReq{
-		SubscriberId: "",
-	}
+	// reqSubscriberDeleteReq := api.SubscriberDeleteReq{
+	// 	SubscriberId: "",
+	// }
 
-	reqSubscriberUpdateReq := api.SubscriberUpdateReq{
-		SubscriberId:          "",
-		Email:                 faker.Email(),
-		Phone:                 faker.Phonenumber(),
-		ProofOfIdentification: "dl",
-		IdSerial:              faker.UUIDDigit(),
-		Address:               faker.Sentence(),
-	}
+	// reqSubscriberUpdateReq := api.SubscriberUpdateReq{
+	// 	SubscriberId:          "",
+	// 	Email:                 faker.Email(),
+	// 	Phone:                 faker.Phonenumber(),
+	// 	ProofOfIdentification: "dl",
+	// 	IdSerial:              faker.UUIDDigit(),
+	// 	Address:               faker.Sentence(),
+	// }
 
 	reqGetSimsBySubReq := api.GetSimsBySubReq{
 		SubscriberId: "",
@@ -122,17 +122,17 @@ func TestWorkflow_1(t *testing.T) {
 		SimType:      "",
 	}
 
-	reqActivateDeactivateSimReq := api.ActivateDeactivateSimReq{
-		SimId:  "",
-		Status: "",
-	}
+	// reqActivateDeactivateSimReq := api.ActivateDeactivateSimReq{
+	// 	SimId:  "",
+	// 	Status: "",
+	// }
 
 	reqSetActivePackageForSimReq := api.SetActivePackageForSimReq{
 		SimId:     "",
 		PackageId: "",
 	}
 
-	w := utils.SetupWatcher([]string{"event.cloud.lookup.organization.create", "event.cloud.lookup.node.create", "event.cloud.lookup.system.create"})
+	w := utils.SetupWatcher("amqp://guest:guest@192.168.0.22:5672/", []string{"event.cloud.lookup.organization.create", "event.cloud.lookup.node.create", "event.cloud.lookup.system.create"})
 
 	resp, err := subs.SubscriberSimpoolUploadSims(reqSimPoolUploadSimReq)
 	assert.NoError(t, err)

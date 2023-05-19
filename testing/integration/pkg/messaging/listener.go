@@ -36,10 +36,10 @@ type Listener interface {
 	GetEvent(key string) (interface{}, bool)
 }
 
-func NewListenerConfig() *ListenerConfig {
+func NewListenerConfig(url string) *ListenerConfig {
 	return &ListenerConfig{
 		Queue: config.Queue{
-			Uri: "amqp://guest:guest@localhost:5672/",
+			Uri: url,
 		},
 	}
 }
