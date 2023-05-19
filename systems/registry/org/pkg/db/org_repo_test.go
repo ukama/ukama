@@ -150,8 +150,6 @@ func Test_OrgRepo_Get(t *testing.T) {
 func Test_OrgRepo_AddMember(t *testing.T) {
 	t.Run("AddMember", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
-
 		member := org_db.OrgUser{
 			OrgId:       uuid.NewV4(),
 			UserId:      1,
@@ -167,7 +165,7 @@ func Test_OrgRepo_AddMember(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(member.OrgId, member.UserId, member.Uuid, member.Deactivated, member.CreatedAt, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(member.OrgId, member.UserId, member.Uuid, member.Deactivated, member.CreatedAt, sqlmock.AnyArg(), org_db.RoleType(member.Role)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -185,8 +183,6 @@ func Test_OrgRepo_AddMember(t *testing.T) {
 		r := org_db.NewOrgRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		err = r.AddMember(&member)

@@ -10,7 +10,7 @@ type GetUserInfo struct {
 
 type OptReqHeader struct {
 	XSessionToken string `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
-	OrgId         string `example:"ORG_ID" json:"org_id" header:"org_id" validation:"required" required:"true"`
+	OrgId         string `example:"ORG_ID" json:"org-id" header:"org-id" validation:"required" required:"true"`
 }
 
 type LoginReq struct {
@@ -27,9 +27,8 @@ type GetSessionReq struct {
 
 type UpdateRoleReq struct {
 	XSessionToken string   `example:"" json:"x-session-token" header:"x-session-token" validation:"required" required:"false"`
-	OrgId         string   `example:"{{ORG_ID}}" json:"org_id" header:"org_id" validation:"required" required:"true"`
-	Role          RoleType `example:"member" json:"role" validation:"required"`
-	KId           string   `example:"{{K_ID}}" json:"k_id" validation:"required" required:"true"`
+	OrgId         string   `example:"{{ORG_ID}}" json:"org-id" header:"org-id" validation:"required" required:"true"`
+	Role          RoleType `example:"member" json:"role" validation:"required" required:"true"`
 }
 
 type RoleType string

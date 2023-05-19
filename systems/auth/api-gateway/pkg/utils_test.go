@@ -19,8 +19,17 @@ func TestGetUserTraitsFromSession(t *testing.T) {
 		Traits: map[string]interface{}{
 			"name":       "John Doe",
 			"email":      "johndoe@example.com",
-			"role":       "user",
+			"role":       "member",
 			"firstVisit": true,
+		},
+		MetadataPublic: map[string]interface{}{
+
+			"roles": []map[string]interface{}{
+				{
+					"name":           "member",
+					"organizationId": "abc-123",
+				},
+			},
 		},
 	}
 

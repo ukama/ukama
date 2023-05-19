@@ -234,7 +234,7 @@ func (p *Router) updateRole(c *gin.Context, req *UpdateRoleReq) error {
 		}
 	}
 
-	logrus.Info("fetch user session")
+	logrus.Infof("fetch user session %s %s", ss, st)
 	res, err := p.client.au.ValidateSession(ss, st)
 	if err != nil {
 		return err

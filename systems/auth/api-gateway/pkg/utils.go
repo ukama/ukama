@@ -23,8 +23,8 @@ type Session struct {
 }
 
 type TRole struct {
-	Name           string
-	OrganizationId string
+	Name           string `json:"name"`
+	OrganizationId string `json:"organizationId"`
 }
 
 type UserTraits struct {
