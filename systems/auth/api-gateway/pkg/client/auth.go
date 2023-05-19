@@ -195,17 +195,17 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string
 	}
 
 	check, _, err := am.ketoc.PermissionApi.CheckPermission(context.Background()).
-		Namespace(*&orgId).
-		Object(*&object).
-		Relation(*&relation).
-		SubjectId(*&role).Execute()
+		Namespace(orgId).
+		Object(object).
+		Relation(relation).
+		SubjectId(role).Execute()
 
 	if err != nil {
 		logrus.Errorf("Encountered error: %v\n", err)
 		return nil, err
 	}
 	if check.Allowed {
-		logrus.Infof(*&role + " can " + " the " + *&object)
+		logrus.Infof(role + " can " + " the " + object)
 		return resp, nil
 	}
 	return nil, fmt.Errorf(role + " is not authorized to " + " the " + object)

@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql/driver"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -14,9 +13,9 @@ type Org struct {
 	Owner       uuid.UUID `gorm:"type:uuid"`
 	Certificate string
 	Members     []*User `gorm:"many2many:org_users"`
+	Deactivated bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Deactivated bool
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
@@ -52,6 +51,6 @@ func (e *RoleType) Scan(value interface{}) error {
 	return nil
 }
 
-func (e RoleType) Value() (driver.Value, error) {
+func (e RoleType) Value() (uint8, error) {
 	return uint8(e), nil
 }

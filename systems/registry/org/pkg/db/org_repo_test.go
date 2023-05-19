@@ -154,7 +154,7 @@ func Test_OrgRepo_AddMember(t *testing.T) {
 			OrgId:       uuid.NewV4(),
 			UserId:      1,
 			Uuid:        uuid.NewV4(),
-			Role:        3,
+			Role:        org_db.Member,
 			Deactivated: false,
 			CreatedAt:   time.Now(),
 		}
@@ -165,7 +165,7 @@ func Test_OrgRepo_AddMember(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(member.OrgId, member.UserId, member.Uuid, member.Deactivated, member.CreatedAt, sqlmock.AnyArg(), org_db.RoleType(member.Role)).
+			WithArgs(member.OrgId, member.UserId, member.Uuid, member.Deactivated, member.CreatedAt, sqlmock.AnyArg(), org_db.RoleType(org_db.Member)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
