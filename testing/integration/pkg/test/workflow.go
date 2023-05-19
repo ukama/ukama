@@ -57,7 +57,7 @@ func (t *TestCase) String() string {
 
 func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 
-	log.Debugf("Starting setup for %s", t.String())
+	log.Debugf("Starting setup for %s", t.Name)
 
 	if t.SetUpFxn != nil {
 		err := t.SetUpFxn(ctx, t)

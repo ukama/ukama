@@ -13,8 +13,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ukama/ukama/systems/common/ukama"
 	api "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
+	rpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	spb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
@@ -23,19 +23,12 @@ import (
 const MAX_POOL = 5
 
 type InitData struct {
-	OrgName                  string
-	OrgIP                    string
-	OrgCerts                 string
-	SysName, SysIP, SysCerts string
-	SysPort                  int32
-	NodeId                   ukama.NodeID
-	NodeIP, NodeCerts        string
-	Sys                      *SubscriberSys
-	Host                     string
-	ROrgIp                   string
-	SimType                  string `default:"ukama_data"`
-	ICCID                    [MAX_POOL]string
-	MbHost                   string
+	Sys          *SubscriberSys
+	Host         string
+	SimType      string `default:"ukama_data"`
+	ICCID        []string
+	MbHost       string
+	SubscriberId string
 
 	/* API requests */
 	reqSimPoolUploadSimReq       api.SimPoolUploadSimReq
@@ -63,16 +56,7 @@ func init() {
 
 func InitializeData() *InitData {
 	d := &InitData{}
-	d.OrgName = strings.ToLower(faker.FirstName()) + "_org"
-	d.OrgIP = utils.RandomIPv4()
-	d.OrgCerts = utils.RandomBase64String(2048)
-	d.SysName = strings.ToLower(faker.FirstName()) + "_sys"
-	d.SysIP = utils.RandomIPv4()
-	d.SysCerts = utils.RandomBase64String(2048)
-	d.SysPort = int32(utils.RandomPort())
-	d.NodeIP = utils.RandomIPv4()
-	d.NodeCerts = utils.RandomBase64String(2048)
-	d.NodeId = ukama.NewVirtualHomeNodeId()
+	d.ICCID = make([]string, MAX_POOL)
 	d.Host = "http://192.168.0.22:8078"
 	d.MbHost = "amqp://guest:guest@192.168.0.22:5672/"
 	d.Sys = NewSubscriberSys(d.Host)
@@ -80,11 +64,11 @@ func InitializeData() *InitData {
 
 	d.reqSimPoolUploadSimReq = api.SimPoolUploadSimReq{
 		SimType: d.SimType,
-		Data:    string(CreateSimPool(MAX_POOL, d.ICCID)),
+		Data:    string(CreateSimPool(MAX_POOL, &d.ICCID)),
 	}
 
 	d.reqSimPoolStatByTypeReq = api.SimPoolStatByTypeReq{
-		SimType: SimType,
+		SimType: d.SimType,
 	}
 
 	d.reqSimByIccidReq = api.SimByIccidReq{
@@ -98,9 +82,9 @@ func InitializeData() *InitData {
 	d.reqSubscriberAddReq = api.SubscriberAddReq{
 		FirstName:             faker.FirstName(),
 		LastName:              faker.LastName(),
-		Email:                 faker.Email(),
+		Email:                 strings.ToLower(faker.FirstName() + "_" + faker.LastName() + "@gmail.com"),
 		Phone:                 faker.Phonenumber(),
-		Dob:                   faker.TimeString(),
+		Dob:                   utils.RandomPastDate(2000),
 		ProofOfIdentification: "passport",
 		IdSerial:              faker.UUIDDigit(),
 		Address:               faker.Sentence(),
@@ -156,13 +140,13 @@ func InitializeData() *InitData {
 	return d
 }
 
-func CreateSimPool(count int, id [MAX_POOL]string) []byte {
+func CreateSimPool(count int, id *[]string) []byte {
 
 	idx := 0
 	str := "ICCID,MSISDN,SmDpAddress,ActivationCode,IsPhysical,QrCode"
 	for count != 0 {
-		id[idx] = fmt.Sprintf("891030000000%d%d", utils.RandomIntInRange(1000, 9999), utils.RandomIntInRange(10000, 99999))
-		str = str + fmt.Sprintf("\n%s,%s,%s,%d,%t,%s", id[idx], faker.Phonenumber(), utils.RandomIPv4(), utils.RandomIntInRange(1000, 9999), false, faker.Word())
+		(*id)[idx] = fmt.Sprintf("891030000000%d%d", utils.RandomIntInRange(1000, 9999), utils.RandomIntInRange(10000, 99999))
+		str = str + fmt.Sprintf("\n%s,%s,%s,%d,%t,%s", (*id)[idx], faker.Phonenumber(), utils.RandomIPv4(), utils.RandomIntInRange(1000, 9999), false, faker.Word())
 		count--
 		idx++
 	}
@@ -173,6 +157,8 @@ func CreateSimPool(count int, id [MAX_POOL]string) []byte {
 }
 
 func TestWorkflow_SubscriberSystem(t *testing.T) {
+
+	/* Sim pool */
 	w := test.NewWorkflow("susbcriber_workflow_1", "Adding sims to sim pool")
 
 	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
@@ -219,6 +205,7 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			if assert.NotNil(t, resp) {
 				data := tc.GetWorkflowData().(*InitData)
 				assert.Equal(t, len(data.ICCID), len(resp.Iccid))
+				assert.Equal(t, data.ICCID, resp.Iccid)
 				assert.Equal(t, true, tc.Watcher.Expections())
 				check = true
 			}
@@ -235,6 +222,134 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 		},
 	})
 
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Get Sim from sim-pool",
+		Description: "Get Sim from sim pool by ICCID",
+		Data:        &spb.GetByIccidResponse{},
+		Workflow:    w,
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.SubscriberSimpoolGetSimByICCID(a.reqSimByIccidReq)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*spb.GetByIccidResponse)
+			if assert.NotNil(t, resp) {
+				data := tc.GetWorkflowData().(*InitData)
+				assert.Equal(t, data.reqSimByIccidReq.Iccid, resp.Sim.Iccid)
+				assert.Equal(t, data.SimType, resp.Sim.SimType)
+				check = true
+			}
+
+			return check, nil
+		},
+	})
+
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Get stats from sim-pool",
+		Description: "Get stats from sim pool by sim type",
+		Data:        &spb.GetStatsResponse{},
+		Workflow:    w,
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.SubscriberSimpoolGetSimStats(a.reqSimPoolStatByTypeReq)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*spb.GetStatsResponse)
+			if assert.NotNil(t, resp) {
+				check = true
+			}
+
+			return check, nil
+		},
+	})
+
+	/* subscriber */
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Add Subscriber",
+		Description: "Add subscriber to registry",
+		Data:        &rpb.AddSubscriberResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			//a := tc.GetWorkflowData().(*InitData)
+			// log.Tracef("Setting up watcher for %s", tc.Name)
+			// tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.sim.sim.upload"})
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.SubscriberRegistryAddSusbscriber(a.reqSubscriberAddReq)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*rpb.AddSubscriberResponse)
+			if assert.NotNil(t, resp) {
+				d := tc.GetWorkflowData().(*InitData)
+				assert.Equal(t, d.reqSubscriberAddReq.Email, resp.Subscriber.Email)
+				assert.Equal(t, d.reqSubscriberAddReq.ProofOfIdentification, resp.Subscriber.ProofOfIdentification)
+				assert.Equal(t, d.reqSubscriberAddReq.IdSerial, resp.Subscriber.IdSerial)
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+			resp := tc.GetData().(*rpb.AddSubscriberResponse)
+			a := tc.GetWorkflowData().(*InitData)
+			a.SubscriberId = resp.Subscriber.SubscriberId
+			tc.SaveWorkflowData(a)
+
+			//tc.Watcher.Stop()
+			return nil
+		},
+	})
+
+	/* Run */
 	err := w.Run(t, context.Background())
 	assert.NoError(t, err)
 

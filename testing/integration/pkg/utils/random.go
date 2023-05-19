@@ -15,7 +15,7 @@ func RandomPort() int {
 }
 
 func RandomInt(m int) int {
-	n, _ := faker.RandomInt(0, m)
+	n, _ := faker.RandomInt(0, m, 1)
 	return n[0]
 }
 
@@ -41,6 +41,12 @@ func RandomBytes(n int) []byte {
 	}
 
 	return b
+}
+
+func RandomPastDate(year int) string {
+	t := time.Date(RandomIntInRange(1900, year), time.Month(RandomInt(12)), RandomInt(28), RandomInt(24), RandomInt(59), 16, 0, time.UTC)
+	tmp := t.Format(time.RFC1123)
+	return tmp
 }
 
 func RandomIPv4() string {
