@@ -38,10 +38,10 @@ fi
 RUN make clean; make container
 
 # Kill an existing running registry
-RUN sudo docker rm --force registry
+RUN sudo docker rm --force local_registry
 
 # Created local registry at port 5000
-RUN sudo docker run -d -p 5000:5000 --name registry registry:latest
+RUN sudo docker run -d -p 5000:5000 --name local_registry registry:latest
 
 # start the virtual node incubator via podman
 RUN podman run --network host --privileged  -it \
@@ -56,7 +56,7 @@ RUN podman run --network host --privileged  -it \
 RUN podman pull --tls-verify=false \
 	localhost:5000/${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}
 
-RUN sudo docker rm --force registry
+RUN sudo docker rm --force local_registry
 
 # Info on the newly created image.
 RUN buildah inspect ${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}

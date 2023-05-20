@@ -43,8 +43,4 @@ COPY ./scripts/*.sh /scripts/
 
 COPY supervisord.conf /
 
-# Temporary fix, shouldn't be doing this. XXX
-COPY buildah /usr/bin/buildah
-COPY registries.conf /etc/containers/
-
-CMD ["/sbin/virtualNode", "--target", "fedora:latest", "--exec", "create", "--c", "/capps/"]
+CMD ["/sbin/virtualNode", "--target", "ubuntu:22.04", "--exec", "create", "--c", "/capps/"]
