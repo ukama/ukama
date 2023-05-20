@@ -1,7 +1,7 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: pr-release-network
+name: pr-release-registry-network
 on:  
   workflow_dispatch:
 
@@ -18,7 +18,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: network
+        registry-name: registry/network
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}

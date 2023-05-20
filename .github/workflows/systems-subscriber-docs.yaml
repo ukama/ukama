@@ -1,19 +1,19 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-systems-subscriber-sim-pool
+name: build-systems-subscriber-docs
 on:  
   push:   
     paths:
-        - "systems/subscriber/sim-pool/**"
-        - ".github/workflows/systems-subscriber-sim-pool.yaml"
+        - "systems/subscriber/docs/**"
+        - ".github/workflows/systems-subscriber-docs.yaml"
  
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: systems/subscriber/sim-pool
+      working-directory: systems/subscriber/docs
 
     name: build and test
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: subscriber/sim-pool
+        registry-name: subscriber/docs
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -35,7 +35,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     env: 
-      working-directory: systems/subscriber/sim-pool
+      working-directory: systems/subscriber/docs
     steps:
       - uses: actions/checkout@v3
       - name: scan
@@ -44,13 +44,13 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_subscriber_sim-pool
+          project-key: ukama_systems_subscriber_docs
 
   lint:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: systems/subscriber/sim-pool
+      working-directory: systems/subscriber/docs
     steps:
       - uses: actions/checkout@v3
       - name: lint
@@ -66,7 +66,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: systems/subscriber/sim-pool
+        working-directory: systems/subscriber/docs
       steps:
         - uses: actions/checkout@v3
         
@@ -78,7 +78,7 @@ jobs:
           uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/subscriber-helmfile.yaml"
-            key: "simpoolImageTag"
+            key: "docsImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
