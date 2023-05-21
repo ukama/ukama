@@ -180,12 +180,8 @@ int main (int argc, char **argv) {
 	}
 
 	/* Step-3: connect with the ukama bootstrap server */
-	if (register_to_server(config->bootstrapServer, nodeID, serverInfo)
-		!= TRUE) {
-		log_error("Error receiving server info from boostrap server: %s for %s",
-				  config->bootstrapServer, nodeID);
-		goto done;
-	}
+    send_request_to_init_with_exponential_backoff(config->bootstrapServer,
+                                                  nodeID, serverInfo);
 	
 	/* Step-4: read mesh config file, update server IP and certs */
 	if (read_mesh_config_file(config->meshConfig, meshConfig) != TRUE) {

@@ -17,13 +17,14 @@
 #define TRUE  1
 #define FALSE 0
 
-#define KEY_NODE         "node"
-#define KEY_LOOKING_FOR  "looking_for"
-#define VALUE_VALIDATION "validation"
+#define API_VERSION "v1"
+#define EP_NODES    "nodes"
 
+#define MAX_BACKOFF     30
 #define MAX_GET_URL_LEN 2048
 
 typedef struct _response {
+
 	char *buffer;
 	size_t size;
 } Response;
@@ -36,7 +37,11 @@ typedef struct {
 	char *org;  /* Organization this Node belong's */
 } ServerInfo;
 
-int register_to_server(char *bootstrapServer, char *uuid, ServerInfo *server);
+int send_request_to_init(char *bootstrapServer, char *uuid, ServerInfo *server,
+                         char **response);
+void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
+                                                   char *uuid,
+                                                   ServerInfo *server);
 void free_server_info(ServerInfo *server);
 void log_debug_server(ServerInfo *server);
 #endif /* SERVER_H */

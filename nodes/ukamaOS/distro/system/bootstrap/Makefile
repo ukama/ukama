@@ -40,6 +40,7 @@ CURL_LIB=-lcurl -lssl -lcrypto
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ltoml
 LIBS+=-ljansson
+LIBS+=-lpthread
 
 # Soruce files
 CFILES   = $(wildcard ./src/*.c)
