@@ -126,9 +126,9 @@ static int process_response_from_server(char *response, ServerInfo *server) {
 
 /*
  * send_request_to_init -- send request to the bootstrap at init system
- *                         TRUE: if successful
- *                         FALSE: if error
- *                         -1: if the nodeid is not found
+ *                         1: if successful
+ *                         0: if error
+ *                        -1: if the nodeid is not found
  *
  */
 int send_request_to_init(char *bootstrapServer, char *uuid, ServerInfo *server,
@@ -160,13 +160,13 @@ int send_request_to_init(char *bootstrapServer, char *uuid, ServerInfo *server,
         break;
     case HttpStatus_NotFound:
         log_debug("NodeID: %s not found on server: %s", uuid, bootstrapServer);
-        /* retry? */
         ret=-1;
         break;
     default:
         log_error("Error sending request to init %s. Error: %s",
                   bootstrapServer, HttpStatusStr(respCode));
         ret=FALSE;
+        break;
     }
 
  done:
@@ -190,7 +190,8 @@ void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
     srand(time(NULL));
 
     do {
-        if (send_request_to_init(bootstrapServer, uuid, server, &responseStr)) {
+        if (send_request_to_init(bootstrapServer, uuid, server, &responseStr) ==
+            TRUE) {
             return;
         }
 
