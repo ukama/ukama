@@ -25,7 +25,6 @@
 #include "toml.h"
 #include "log.h"
 
-static int parse_proxy_entries(Config *config, toml_table_t *proxyData);
 static int parse_config_entries(int secure, Config *config,
 								toml_table_t *configData);
 static int parse_amqp_config(Config *config, toml_table_t *configData);
@@ -44,6 +43,9 @@ void print_config(Config *config) {
 	log_debug("Remote accept port: %s", config->remoteAccept);
 	log_debug("AMQP host: %s:%s", config->amqpHost, config->amqpPort);
 	log_debug("AMQP exchange: %s", config->amqpExchange);
+
+	log_debug("initClient host: %s", config->initClientHost);
+	log_debug("initClient port: %s", config->initClientPort);
 
 	log_debug("Local accept port: %s", config->localAccept);
 
@@ -147,56 +149,6 @@ static int parse_amqp_config(Config *config, toml_table_t *configData) {
 }
 
 /*
- * parse_proxy_entries -- handle reverse-proxy stuff.
- *
- */
-static int parse_proxy_entries(Config *config, toml_table_t *proxyData) {
-
-	toml_datum_t enable, httpPath, ip, port;
-
-	enable = toml_string_in(proxyData, ENABLE);
-
-	if (enable.ok) {
-		if (strcasecmp(enable.u.s, "true")!=0) {
-			config->reverseProxy = NULL;
-			return TRUE;
-		}
-	} else {
-		config->reverseProxy = NULL; /* disable by default. */
-		return TRUE;
-	}
-
-	/* Will only come here if proxy is true. */
-	httpPath = toml_string_in(proxyData, HTTP_PATH);
-	ip       = toml_string_in(proxyData, CONNECT_IP);
-	port     = toml_string_in(proxyData, CONNECT_PORT);
-
-	if (!httpPath.ok && !ip.ok && !port.ok) {
-		log_error("[%s] is missing required argument.", REVERSE_PROXY);
-		return FALSE;
-	}
-
-	config->reverseProxy = (Proxy *)calloc(1, sizeof(Proxy));
-	if (config->reverseProxy == NULL) {
-		log_error("Error allocating memory of size: %s", sizeof(Proxy));
-		return FALSE;
-	}
-
-	config->reverseProxy->enable    = TRUE;
-	config->reverseProxy->httpPath = strdup(httpPath.u.s);
-	config->reverseProxy->ip       = strdup(ip.u.s);
-	config->reverseProxy->port     = strdup(port.u.s);
-
-	free(httpPath.u.s);
-	free(ip.u.s);
-	free(port.u.s);
-	if (enable.ok)
-		free(enable.u.s);
-
-	return TRUE;
-}
-
-/*
  * parse_config_entries -- Server stuff.
  *
  */
@@ -206,13 +158,24 @@ static int parse_config_entries(int secure, Config *config,
 	int ret=TRUE;
 	char *buffer=NULL;
 	toml_datum_t remoteAccept, localAccept, cert, key;
+	toml_datum_t initClientHost, initClientPort;
 
 	config->secure = secure;
-	
+
 	remoteAccept = toml_string_in(configData, REMOTE_ACCEPT);
 	localAccept  = toml_string_in(configData, LOCAL_ACCEPT);
 	cert         = toml_string_in(configData, CFG_CERT);
 	key          = toml_string_in(configData, CFG_KEY);
+
+	initClientHost = toml_string_in(configData, INIT_CLIENT_HOST);
+	initClientPort = toml_string_in(configData, INIT_CLIENT_PORT);
+	if (!initClientHost.ok || !initClientPort.ok) {
+		ret = FALSE;
+		goto done;
+	} else {
+		config->initClientHost = strdup(initClientHost.u.s);
+		config->initClientPort = strdup(initClientPort.u.s);
+	}
 
 	if (!remoteAccept.ok) {
 		log_debug("[%s] is missing, setting to default: %s", REMOTE_ACCEPT,
@@ -250,10 +213,12 @@ static int parse_config_entries(int secure, Config *config,
 
  done:
 	/* clear up toml allocations. */
-	if (key.ok) free(key.u.s);
-	if (cert.ok) free(cert.u.s);
-	if (localAccept.ok) free(localAccept.u.s);
-	if (remoteAccept.ok) free(remoteAccept.u.s);
+	if (key.ok)            free(key.u.s);
+	if (cert.ok)           free(cert.u.s);
+	if (localAccept.ok)    free(localAccept.u.s);
+	if (remoteAccept.ok)   free(remoteAccept.u.s);
+	if (initClientHost.ok) free(initClientHost.u.s);
+	if (initClientPort.ok) free(initClientPort.u.s);
 	if (buffer) free(buffer);
 
 	return ret;
@@ -332,24 +297,6 @@ int process_config_file(int secure, int proxy, char *fileName, Config *config) {
 		fclose(fp);
 	}
 
-	/* If proxies are enable */
-	if (proxy) {
-
-		proxyConfig = toml_table_in(fileData, REVERSE_PROXY);
-		if (proxyConfig == NULL) {
-			log_error("[%s] section parsing error in file: %s\n", SERVER_CONFIG,
-					  fileName);
-			ret = FALSE;
-			goto done;
-		}
-		ret = parse_proxy_entries(config, proxyConfig);
-		if (ret == FALSE) {
-			log_error("[%s] section parsing error in file: %s\n", REVERSE_PROXY,
-					  fileName);
-			goto done;
-		}
-	}
-
  done:
 	toml_free(fileData);
 	return ret;
@@ -370,11 +317,6 @@ void clear_config(Config *config) {
 	free(config->localAccept);
 	free(config->certFile);
 	free(config->keyFile);
-
-	if (config->proxy) {
-		free(config->reverseProxy->httpPath);
-		free(config->reverseProxy->ip);
-		free(config->reverseProxy->port);
-		free(config->reverseProxy);
-	}
+	free(config->initClientHost);
+	free(config->initClientPort);
 }

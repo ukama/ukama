@@ -50,6 +50,8 @@ int serialize_request(Request *request, json_t **json) {
 	  ret = TRUE;
 	} else if (request->reqType == (ReqType)REQ_QUERY) {
 	  ret = TRUE;
+	} else if (request->reqType == (ReqType)REQ_QUERY_SYSTEM) {
+		ret = TRUE;
 	}
 
 	return ret;

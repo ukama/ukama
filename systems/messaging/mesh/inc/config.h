@@ -22,18 +22,19 @@
 /* used in the config file and for parsing. */
 #define SERVER_CONFIG "server-config"
 #define CLIENT_CONFIG "client-config"
-#define REVERSE_PROXY "reverse-proxy"
 
-#define REMOTE_ACCEPT  "remote-accept"
-#define LOCAL_ACCEPT   "local-accept"
-#define REMOTE_CONNECT "remote-connect"
-#define REMOTE_IP_FILE "remote-ip-file"
-#define CONNECT_IP     "connect-ip"
-#define CONNECT_PORT   "connect-port"
-#define HTTP_PATH      "http-path"
-#define AMQP_HOST      "amqp-host"
-#define AMQP_PORT      "amqp-port"
-#define AMQP_EXCHANGE  "amqp-exchange"
+#define REMOTE_ACCEPT    "remote-accept"
+#define LOCAL_ACCEPT     "local-accept"
+#define REMOTE_CONNECT   "remote-connect"
+#define REMOTE_IP_FILE   "remote-ip-file"
+#define CONNECT_IP       "connect-ip"
+#define CONNECT_PORT     "connect-port"
+#define HTTP_PATH        "http-path"
+#define AMQP_HOST        "amqp-host"
+#define AMQP_PORT        "amqp-port"
+#define AMQP_EXCHANGE    "amqp-exchange"
+#define INIT_CLIENT_HOST "init-client-host"
+#define INIT_CLIENT_PORT "init-client-port"
 
 #define CFG_CERT "cert"
 #define CFG_KEY  "key"
@@ -58,16 +59,6 @@
 #define TRUE 1
 #define FALSE 0
 
-/* Struct to define the reverse proxies  */
-typedef struct {
-
-	int  enable;
-
-	char *httpPath;
-	char *ip;
-	char *port;
-} Proxy;
-
 /* Struct to define the server and/or client host cfg. */
 typedef struct {
 
@@ -81,11 +72,13 @@ typedef struct {
 	char *amqpPort;       /* Port where AMQP exchange is listening */
 	char *amqpExchange;   /* AMQP exchange name */
 
+	char *initClientHost; /* Host where initClient is running (IP) */
+	char *initClientPort; /* Port where initClient is listening */
+
 	char *certFile;       /* CA Cert file name. */
 	char *keyFile;        /* Key file name.*/
 
 	DeviceInfo *deviceInfo;   /* Device related info. */
-	Proxy      *reverseProxy; /* define any reverse proxy */
 	WAMQPConn  *conn;         /* Connection to AMQP broker */
 } Config;
 

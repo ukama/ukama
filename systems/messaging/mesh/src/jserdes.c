@@ -14,6 +14,7 @@
 
 #include "mesh.h"
 #include "jserdes.h"
+#include "initClient.h"
 
 /* JSON for the forward request from device to service provider.
 
@@ -55,6 +56,53 @@
    }
    }
 */
+
+static void log_json(json_t *json);
+static int get_json_entry(json_t *json, char *key, json_type type,
+						  char **strValue, int *intValue);
+/*
+ * log_json --
+ *
+ */
+static void log_json(json_t *json) {
+
+	char *str = NULL;
+
+	str = json_dumps(json, 0);
+	if (str) {
+		log_debug("json str: %s", str);
+		free(str);
+	}
+}
+
+/*
+ * get_json_entry --
+ *
+ */
+static int get_json_entry(json_t *json, char *key, json_type type,
+						  char **strValue, int *intValue) {
+
+	json_t *jEntry=NULL;
+
+	if (json == NULL || key == NULL) return FALSE;
+
+	jEntry = json_object_get(json, key);
+	if (jEntry == NULL) {
+		log_error("Missing %s key in json", key);
+		return FALSE;
+	}
+
+	if (type == JSON_STRING) {
+		*strValue = strdup(json_string_value(jEntry));
+	} else if (type == JSON_INTEGER) {
+		*intValue = json_integer_value(jEntry);
+	} else {
+		log_error("Invalid type for json key-value: %d", type);
+		return FALSE;
+	}
+
+	return TRUE;
+}
 
 /*
  * add_map_to_request --
@@ -411,6 +459,46 @@ static void deserialize_map(URequest **request, json_t *json) {
 	} else if (strcasecmp(str, MESH_MAP_TYPE_COOKIE_STR)==0) {
 		deserialize_map_array(&(*request)->map_cookie, json);
 	}
+}
+
+/*
+ * deserialize_system_info --
+ *
+ */
+int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
+
+	int ret=TRUE;
+
+	if (json == NULL) return FALSE;
+	log_json(json);
+
+	*systemInfo = (SystemInfo *)calloc(1, sizeof(SystemInfo));
+	if (*systemInfo == NULL) {
+		log_error("Error allocating memory of size: %lu", sizeof(SystemInfo));
+		return FALSE;
+	}
+
+	ret |= get_json_entry(json, JSON_SYSTEM_NAME, JSON_STRING,
+						  &(*systemInfo)->systemName, NULL);
+	ret |= get_json_entry(json, JSON_SYSTEM_ID, JSON_STRING,
+						  &(*systemInfo)->systemId, NULL);
+	ret |= get_json_entry(json, JSON_CERTIFICATE, JSON_STRING,
+						  &(*systemInfo)->certificate, NULL);
+	ret |= get_json_entry(json, JSON_IP, JSON_STRING,
+						  &(*systemInfo)->ip, NULL);
+	ret |= get_json_entry(json, JSON_PORT, JSON_STRING,
+						  &(*systemInfo)->port, NULL);
+	ret |= get_json_entry(json, JSON_HEALTH, JSON_STRING,
+						  &(*systemInfo)->health, NULL);
+
+	if (ret == FALSE) {
+		log_error("Error deserializing node info");
+		log_json(json);
+		free_system_info(*systemInfo);
+		*systemInfo = NULL;
+	}
+
+	return ret;
 }
 
 /*

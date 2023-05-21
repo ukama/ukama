@@ -91,7 +91,8 @@ static long send_http_request(char *url, Request *request, json_t *json,
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
 	} else if (request->reqType == (ReqType)REQ_UNREGISTER) {
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-	} else if (request->reqType == (ReqType)REQ_QUERY) {
+	} else if (request->reqType == (ReqType)REQ_QUERY ||
+			   request->reqType == (ReqType)REQ_QUERY_SYSTEM) {
 		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
 	} else if (request->reqType == (ReqType)REQ_UPDATE) {
 		json_str = json_dumps(json, 0);
@@ -129,19 +130,30 @@ static long send_http_request(char *url, Request *request, json_t *json,
  * create_url --
  *
  */
-static void create_url(char *url, Config *config, ReqType reqType) {
+static void create_url(char *url, Config *config, char *name,
+					   ReqType reqType) {
+
+	char *systemName=NULL;
 
 	if (reqType == (ReqType)REQ_REGISTER ||
 		reqType == (ReqType)REQ_UNREGISTER ||
 		reqType == (ReqType)REQ_QUERY) {
-		/* URL -> host:port/v1/orgs/{org}/systems/{system} */
-		sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
-				config->initSystemAddr,
-				config->initSystemPort,
-				config->initSystemAPIVer,
-				EP_ORGS, config->systemOrg,
-				EP_SYSTEMS, config->systemName);
+		systemName = config->systemName;
+	} else if (reqType == (ReqType)REQ_QUERY_SYSTEM && name) {
+		systemName = name;
+	} else {
+		systemName = "";
 	}
+
+	/* URL -> host:port/v1/orgs/{org}/systems/{system} */
+	sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
+			config->initSystemAddr,
+			config->initSystemPort,
+			config->initSystemAPIVer,
+			ORGS_STR, config->systemOrg,
+			SYSTEMS_STR, systemName);
+
+	log_debug("Request URL: %s", url);
 }
 
 /*
@@ -259,7 +271,8 @@ static int read_cache_uuid(char *fileName, char **uuid) {
  * send to init
  *
  */
-int send_request_to_init(ReqType reqType, Config *config, char **response) {
+int send_request_to_init(ReqType reqType, Config *config,
+						 char *systemName, char **response) {
 
 	Request *request=NULL;
 	json_t *json=NULL;
@@ -292,7 +305,7 @@ int send_request_to_init(ReqType reqType, Config *config, char **response) {
 	}
 
 	/* Step-3 create URL for init system */
-	create_url(&url[0], config, reqType);
+	create_url(&url[0], config, systemName, reqType);
 
 	/* Step-3 send over the wire */
 	respCode = send_http_request(&url[0], request, json, response);
@@ -302,7 +315,8 @@ int send_request_to_init(ReqType reqType, Config *config, char **response) {
 		if (reqType == (ReqType)REQ_UNREGISTER) {
 			log_debug("Successful unregister");
 			ret = TRUE;
-		} else if (reqType == (ReqType)REQ_QUERY) {
+		} else if (reqType == (ReqType)REQ_QUERY ||
+				   reqType == (ReqType)REQ_QUERY_SYSTEM) {
 			log_debug("Query successful");
 			ret = TRUE;
 		} else if (reqType == (ReqType)REQ_UPDATE) {
@@ -314,6 +328,13 @@ int send_request_to_init(ReqType reqType, Config *config, char **response) {
 		if (reqType == (ReqType)REQ_REGISTER) {
 			log_debug("Successful register");
 			ret = TRUE;
+		}
+		break;
+	case HttpStatus_BadRequest:
+		if (reqType == (ReqType)REQ_QUERY_SYSTEM) {
+			log_debug("Invalid system name: %s Response code: %s", systemName,
+					  HttpStatusStr(respCode));
+			ret = FALSE;
 		}
 		break;
 	default:
@@ -338,7 +359,7 @@ int existing_registration(Config *config, char **cacheUUID,
 	char *str=NULL;
 	QueryResponse *queryResponse=NULL;
 
-	if (send_request_to_init(REQ_QUERY, config, &str)) {
+	if (send_request_to_init(REQ_QUERY, config, NULL, &str)) {
 		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
 			log_error("Error deserialize query response. Str: %s", str);
 			return -1;
@@ -374,6 +395,34 @@ int existing_registration(Config *config, char **cacheUUID,
 	}
 
  return_function:
+	if (str)  free(str);
+	free_query_response(queryResponse);
+
+	return status;
+}
+
+/*
+ * get_system_info -- get info about 'system' from the init.
+ *
+ */
+int get_system_info(Config *config, char *systemName, char **systemInfo) {
+
+	int status=QUERY_OK;
+	char *str=NULL;
+	QueryResponse *queryResponse=NULL;
+
+	if (send_request_to_init(REQ_QUERY_SYSTEM, config, systemName, &str)) {
+		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
+			free(str);
+			log_error("Error deserialize query response. Str: %s", str);
+			return -1;
+		}
+
+		*systemInfo = strdup(str);
+	} else {
+		status = QUERY_ERROR;
+	}
+
 	if (str)  free(str);
 	free_query_response(queryResponse);
 
