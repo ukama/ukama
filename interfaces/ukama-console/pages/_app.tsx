@@ -12,7 +12,6 @@ import { theme } from '@/styles/theme';
 import { TSnackMessage, TUser } from '@/types';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
-import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import { ApolloProvider } from '@apollo/client';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
@@ -67,36 +66,35 @@ const App = ({
   const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery();
 
   useEffect(() => {
-    if (!_user?.id) getWhoami();
+    // if (!_user?.id) getWhoami();
   }, []);
 
   useEffect(() => {
-    const { id, name, email } = _user;
-    const pathname =
-      typeof window !== 'undefined' && window.location.pathname
-        ? window.location.pathname
-        : '';
-
-    setPage(getTitleFromPath(pathname));
-    if (id && name && email) {
-      if (
-        !doesHttpOnlyCookieExist('id') &&
-        doesHttpOnlyCookieExist('ukama_session')
-      ) {
-        resetData();
-        resetPageName();
-        window.location.replace(
-          `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout`,
-        );
-      } else if (
-        doesHttpOnlyCookieExist('id') &&
-        !doesHttpOnlyCookieExist('ukama_session')
-      )
-        handleGoToLogin();
-    } else {
-      if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
-      handleGoToLogin();
-    }
+    // const { id, name, email } = _user;
+    // const pathname =
+    //   typeof window !== 'undefined' && window.location.pathname
+    //     ? window.location.pathname
+    //     : '';
+    // setPage(getTitleFromPath(pathname));
+    // if (id && name && email) {
+    //   if (
+    //     !doesHttpOnlyCookieExist('id') &&
+    //     doesHttpOnlyCookieExist('ukama_session')
+    //   ) {
+    //     resetData();
+    //     resetPageName();
+    //     window.location.replace(
+    //       `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout`,
+    //     );
+    //   } else if (
+    //     doesHttpOnlyCookieExist('id') &&
+    //     !doesHttpOnlyCookieExist('ukama_session')
+    //   )
+    //     handleGoToLogin();
+    // } else {
+    //   if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
+    //   handleGoToLogin();
+    // }
   }, []);
 
   useEffect(() => {
@@ -104,16 +102,16 @@ const App = ({
   }, [loading]);
 
   useEffect(() => {
-    if (data?.whoami) {
-      _setUser({
-        id: data.whoami.id,
-        name: data.whoami.name,
-        email: data.whoami.email,
-        role: data.whoami.role,
-        isFirstVisit: data.whoami.isFirstVisit,
-      });
-      setSkeltonLoading(false);
-    }
+    // if (data?.whoami) {
+    //   _setUser({
+    //     id: data.whoami.id,
+    //     name: data.whoami.name,
+    //     email: data.whoami.email,
+    //     role: data.whoami.role,
+    //     isFirstVisit: data.whoami.isFirstVisit,
+    //   });
+    //   setSkeltonLoading(false);
+    // }
   }, [data]);
 
   useEffect(() => {
@@ -124,8 +122,8 @@ const App = ({
         type: 'error' as AlertColor,
         show: true,
       });
-      resetData();
-      window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
+      // resetData();
+      // window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
     }
   }, [error]);
 

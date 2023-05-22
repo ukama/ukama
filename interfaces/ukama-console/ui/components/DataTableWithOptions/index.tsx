@@ -1,6 +1,4 @@
-import { GetUsersDto } from '@/generated';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
-import { formatBytesToMB } from '@/utils';
 import UserIcon from '@mui/icons-material/Person';
 import {
   Box,
@@ -11,11 +9,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Typography,
 } from '@mui/material';
-import { EmptyView, LoadingWrapper, OptionsPopover } from '..';
+import { EmptyView, OptionsPopover } from '..';
 
 interface DataTableWithOptionsInterface {
-  dataset: GetUsersDto[];
+  dataset: any;
+  emptyViewLabel?: string;
   onMenuItemClick: Function;
   menuOptions: MenuItemType[];
   columns: ColumnsWithOptions[];
@@ -23,7 +23,7 @@ interface DataTableWithOptionsInterface {
 
 type CellValueByTypeProps = {
   type: string;
-  row: GetUsersDto;
+  row: any;
   menuOptions: MenuItemType[];
   onMenuItemClick: Function;
 };
@@ -49,20 +49,20 @@ const CellValueByType = ({
           handleItemClick={onMenuItemClick}
         />
       );
-    case 'dataUsage':
-      return (
-        <LoadingWrapper
-          width="60px"
-          height="23px"
-          radius="small"
-          variant="text"
-          isLoading={!row.dataPlan}
-        >
-          {formatBytesToMB(parseInt(row?.dataUsage || '0'))} MB
-        </LoadingWrapper>
-      );
+    // case 'dataUsage':
+    //   return (
+    //     <LoadingWrapper
+    //       width="60px"
+    //       height="23px"
+    //       radius="small"
+    //       variant="text"
+    //       isLoading={!row.dataPlan}
+    //     >
+    //       {formatBytesToMB(parseInt(row[type] || '0'))} MB
+    //     </LoadingWrapper>
+    //   );
     default:
-      return <></>;
+      return <Typography variant="caption">{row[type]}</Typography>;
   }
 };
 
@@ -71,25 +71,25 @@ const DataTableWithOptions = ({
   dataset,
   menuOptions,
   onMenuItemClick,
+  emptyViewLabel = '',
 }: DataTableWithOptionsInterface) => {
   return (
     <Box
       component="div"
-      mt={1}
       sx={{
+        width: '100%',
         height: '100%',
-        minHeight: 234,
         display: 'flex',
       }}
     >
       {dataset?.length > 0 ? (
-        <TableContainer sx={{ maxHeight: 234 }}>
+        <TableContainer>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
                 {columns?.map((column) => (
                   <TableCell
-                    key={column.id}
+                    key={`header-cell-${column.id}`}
                     align={column.align}
                     style={{
                       fontSize: '0.875rem',
@@ -103,11 +103,11 @@ const DataTableWithOptions = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {dataset?.map((row: GetUsersDto) => (
-                <TableRow role="row" tabIndex={-1} key={row.id}>
+              {dataset?.map((row: any, id: number) => (
+                <TableRow role="row" tabIndex={-1} key={`row-${id}`}>
                   {columns.map((column: ColumnsWithOptions, index: number) => (
                     <TableCell
-                      key={`${row.name}-${index}`}
+                      key={`cell-${index}`}
                       align={column.align}
                       sx={{
                         padding: '13px 12px 13px 0px',
@@ -130,7 +130,7 @@ const DataTableWithOptions = ({
           </Table>
         </TableContainer>
       ) : (
-        <EmptyView size="large" title="No residents yet!" icon={UserIcon} />
+        <EmptyView size="large" title={emptyViewLabel} icon={UserIcon} />
       )}
     </Box>
   );
