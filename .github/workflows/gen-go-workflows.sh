@@ -38,4 +38,8 @@ generate "services/metrics" "metrics"
 generate "systems/init" "init"
 generate "systems/subscriber" "subscriber"
 generate "systems/registry" "registry"
+generate "systems/data-plan" "data-plan"
+generate "systems/services" "services"
+generate "systems/auth" "auth"
 generate "systems/billing" "billing"
+
