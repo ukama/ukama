@@ -44,7 +44,7 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_init_node-gateway
+          project-key: ukama_systems_init_node_gateway
 
   lint:
     name: lint
