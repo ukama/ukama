@@ -1,4 +1,3 @@
-
 package dataplan
 
 import (
@@ -8,9 +7,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	api "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
-	rPb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	bPb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pPb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	rPb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 	pjson "google.golang.org/protobuf/encoding/protojson"
 )
@@ -26,14 +25,14 @@ type DataPlanSys struct {
 
 func NewDataPlanSys(h string) *DataPlanSys {
 	u, _ := url.Parse(h)
-	return &data-planSys{
+	return &DataPlanSys{
 		u: u,
 		r: *utils.NewResty(),
 	}
 
 }
 
-func (s *DataPlanSys) DataPlanBaseRateUpload(req api.UploadBaseRatesRequest) (*bPb.UploadBaseRatesResponse error) {
+func (s *DataPlanSys) DataPlanBaseRateUpload(req api.UploadBaseRatesRequest) (*bPb.UploadBaseRatesResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -59,7 +58,7 @@ func (s *DataPlanSys) DataPlanBaseRateGet(req api.GetBaseRateRequest) (*bPb.GetB
 
 	rsp := &bPb.GetBaseRatesByIdResponse{}
 
-	resp, err := s.r.Get(s.u.String() +BASE_RATE+ "/" + req.RateId )
+	resp, err := s.r.Get(s.u.String() + BASE_RATE + "/" + req.RateId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -83,7 +82,7 @@ func (s *DataPlanSys) DataPlanBaseRateGetByCountry(req api.GetBaseRatesByCountry
 
 	rsp := &bPb.GetBaseRatesResponse{}
 
-	resp, err := s.r.Post(s.u.String() +BASE_RATE+ "/country/" + req.Country, b)
+	resp, err := s.r.Post(s.u.String()+BASE_RATE+"/country/"+req.Country, b)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -107,7 +106,7 @@ func (s *DataPlanSys) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeriodR
 
 	rsp := &bPb.GetBaseRatesResponse{}
 
-	resp, err := s.r.Post(s.u.String() +BASE_RATE+ "/country/period", b)
+	resp, err := s.r.Post(s.u.String()+BASE_RATE+"/country/period", b)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -131,7 +130,7 @@ func (s *DataPlanSys) DataPlanBaseRateGetForPackage(req api.GetBaseRatesForPerio
 
 	rsp := &bPb.GetBaseRatesResponse{}
 
-	resp, err := s.r.Post(s.u.String() +BASE_RATE+ "/country/package", b)
+	resp, err := s.r.Post(s.u.String()+BASE_RATE+"/country/package", b)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -150,7 +149,7 @@ func (s *DataPlanSys) DataPlanUpdateDefaultMarkup(req api.SetDefaultMarkupReques
 
 	rsp := &rPb.UpdateDefaultMarkupResponse{}
 
-	resp, err := s.r.Post(s.u.String() +RATE+ "/"+req.Markup+"/default", nil)
+	resp, err := s.r.Post(fmt.Sprintf("%s/%f/%s", s.u.String()+RATE, req.Markup, "/default"), nil)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -169,7 +168,7 @@ func (s *DataPlanSys) DataPlanGetDefaultMarkup(req api.GetDefaultMarkupRequest) 
 
 	rsp := &rPb.GetDefaultMarkupResponse{}
 
-	resp, err := s.r.Get(s.u.String() +RATE+ "/default")
+	resp, err := s.r.Get(s.u.String() + RATE + "/default")
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -188,7 +187,7 @@ func (s *DataPlanSys) DataPlanGetDefaultMarkupHistory(req api.GetDefaultMarkupHi
 
 	rsp := &rPb.GetDefaultMarkupHistoryResponse{}
 
-	resp, err := s.r.Get(s.u.String() +RATE+ "/default/history")
+	resp, err := s.r.Get(s.u.String() + RATE + "/default/history")
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -205,9 +204,9 @@ func (s *DataPlanSys) DataPlanGetDefaultMarkupHistory(req api.GetDefaultMarkupHi
 
 func (s *DataPlanSys) DataPlanUpdateMarkup(req api.SetMarkupRequest) (*rPb.UpdateMarkupResponse, error) {
 
-	rsp := &bPb.UpdateMarkupResponse{}
+	rsp := &rPb.UpdateMarkupResponse{}
 
-	resp, err := s.r.Post(s.u.String() +RATE+ "/"+req.Markup+"/users/"+req.OwnerId, nil)
+	resp, err := s.r.Post(fmt.Sprintf("%s/%f/%s/%s", s.u.String()+RATE, req.Markup, "/users/"+req.OwnerId), nil)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -226,7 +225,7 @@ func (s *DataPlanSys) DataPlanGetDefaultUserMarkup(req api.GetMarkupRequest) (*r
 
 	rsp := &rPb.GetMarkupResponse{}
 
-	resp, err := s.r.Get(s.u.String() +RATE+ "/users/"+req.OwnerId)
+	resp, err := s.r.Get(s.u.String() + RATE + "/users/" + req.OwnerId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -245,7 +244,7 @@ func (s *DataPlanSys) DataPlanGetMarkupHistory(req api.GetMarkupHistoryRequest) 
 
 	rsp := &rPb.GetMarkupHistoryResponse{}
 
-	resp, err := s.r.Get(s.u.String() +RATE+ "/users/"+req.OwnerId+"/history")
+	resp, err := s.r.Get(s.u.String() + RATE + "/users/" + req.OwnerId + "/history")
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -269,7 +268,7 @@ func (s *DataPlanSys) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateRespo
 
 	rsp := &rPb.GetRateResponse{}
 
-	resp, err := s.r.Post(s.u.String() +"/v1/rates/users/"+req.OwnerId+"/rate", nil)
+	resp, err := s.r.Post(s.u.String()+"/v1/rates/users/"+req.OwnerId+"/rate", b)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -309,14 +308,14 @@ func (s *DataPlanSys) DataPlanPackageAdd(req api.AddPackageRequest) (*pPb.AddPac
 
 func (s *DataPlanSys) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*pPb.GetByOrgPackageResponse, error) {
 
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	}
+	// b, err := json.Marshal(req)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	// }
 
 	rsp := &pPb.GetByOrgPackageResponse{}
 
-	resp, err := s.r.Get(s.u.String() +PACKAGE+"/orgs/"+req.OrgId)
+	resp, err := s.r.Get(s.u.String() + PACKAGE + "/orgs/" + req.OrgId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -333,14 +332,14 @@ func (s *DataPlanSys) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*
 
 func (s *DataPlanSys) DataPlanPackageGetById(req api.PackagesRequest) (*pPb.GetPackageResponse, error) {
 
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	}
+	// b, err := json.Marshal(req)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	// }
 
 	rsp := &pPb.GetPackageResponse{}
 
-	resp, err := s.r.Get(s.u.String() +PACKAGE+"/"+req.Uuid)
+	resp, err := s.r.Get(s.u.String() + PACKAGE + "/" + req.Uuid)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -357,14 +356,14 @@ func (s *DataPlanSys) DataPlanPackageGetById(req api.PackagesRequest) (*pPb.GetP
 
 func (s *DataPlanSys) DataPlanPackageDetails(req api.PackagesRequest) (*pPb.GetPackageResponse, error) {
 
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	}
+	// b, err := json.Marshal(req)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	// }
 
 	rsp := &pPb.GetPackageResponse{}
 
-	resp, err := s.r.Get(s.u.String() +PACKAGE+"/"+req.Uuid+"/details")
+	resp, err := s.r.Get(s.u.String() + PACKAGE + "/" + req.Uuid + "/details")
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -404,14 +403,14 @@ func (s *DataPlanSys) DataPlanPackageUpdate(req api.UpdatePackageRequest) (*pPb.
 
 func (s *DataPlanSys) DataPlanPackageDelete(req api.PackagesRequest) (*pPb.DeletePackageResponse, error) {
 
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	}
+	// b, err := json.Marshal(req)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	// }
 
 	rsp := &pPb.DeletePackageResponse{}
 
-	resp, err := s.r.Delete(s.u.String()+PACKAGE+"/"+req.Uuid)
+	resp, err := s.r.Delete(s.u.String() + PACKAGE + "/" + req.Uuid)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err

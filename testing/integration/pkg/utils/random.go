@@ -49,6 +49,13 @@ func RandomPastDate(year int) string {
 	return tmp
 }
 
+func GenerateFutureDate(a time.Duration) string {
+	t := time.Now()
+	f := t.Add(a)
+	tmp := f.Format(time.RFC3339)
+	return tmp
+}
+
 func RandomIPv4() string {
 	return faker.IPv4()
 }
