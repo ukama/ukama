@@ -263,3 +263,90 @@ func TestAddNetworkWorkflows(t *testing.T) {
 		assert.Nil(t, anResp)
 	})
 }
+
+func TestUpdateNetworkWorkflows(t *testing.T) {
+	host := "http://localhost:8082"
+	registryClient := NewRegistryClient(host)
+
+	t.Run("Owner-admin updates network name should succeed", func(t *testing.T) {
+		orgName := "saturn"
+
+		oldNetId := "b884485f-cb43-44b1-be57-0b777b154ff2"
+		newNetName := strings.ToLower(faker.FirstName()) + "-net"
+
+		owner := "08a594d7-a292-43cf-9652-54785b03f48f"
+
+		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
+		assert.Equal(t, owner, orgResp.Org.Owner)
+
+		reqGetNet := api.GetNetworkRequest{NetworkId: oldNetId}
+
+		netResp, err := registryClient.GetNetwork(reqGetNet)
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, orgResp.Org.Id, netResp.Network.OrgId)
+		assert.NotEqual(t, newNetName, netResp.Network.Name)
+
+		// make sure the owner or admin is the request executor
+		// in order for this test to even compile, we need to implement
+		// missing endppins (PATCH /v1/networks) and missing APIs
+		// requests wrappers (RegistryClient.UpdateNetwork and
+		// systems/registry/api-gateway/pkg/rest/api.go for
+		// api.UpdateNetworkRequest)
+		reqUpdateNetwork := api.UpdateNetworkRequest{
+			NetId:   oldNetId,
+			NetName: newNetName}
+
+		unResp, err := registryClient.UpdateNetwork(reqUpdateNetwork)
+		assert.NoError(t, err)
+		assert.NotNil(t, unResp)
+	})
+
+	t.Run("Non owner-admin updates network name should fail", func(t *testing.T) {
+		orgName := "saturn"
+
+		oldNetId := "b884485f-cb43-44b1-be57-0b777b154ff2"
+		newNetName := strings.ToLower(faker.FirstName()) + "-net"
+
+		member := "c9647e7a-8967-4978-b512-38a35899f32d"
+
+		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+
+		orgResp, err := registryClient.GetOrg(reqGetOrg)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, orgName, orgResp.Org.Name)
+
+		// make sure the member is not admin, nor owner
+		// assertNotEqual(member.Role, "admin")
+		assert.NotEqual(t, member, orgResp.Org.Owner)
+
+		reqGetNet := api.GetNetworkRequest{NetworkId: oldNetId}
+
+		netResp, err := registryClient.GetNetwork(reqGetNet)
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, orgResp.Org.Id, netResp.Network.OrgId)
+		assert.NotEqual(t, newNetName, netResp.Network.Name)
+
+		// make sure the member is the request executor
+		// in order for this test to even compile, we need to implement
+		// missing endppins (PATCH /v1/networks) and missing APIs
+		// requests wrappers (RegistryClient.UpdateNetwork and
+		// systems/registry/api-gateway/pkg/rest/api.go for
+		// api.UpdateNetworkRequest)
+
+		reqUpdateNetwork := api.UpdateNetworkRequest{
+			NetId:   oldNetId,
+			NetName: newNetName}
+
+		unResp, err := registryClient.UpdateNetwork(reqUpdateNetwork)
+		assert.Error(t, err)
+		assert.Nil(t, unResp)
+	})
+}

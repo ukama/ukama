@@ -142,3 +142,20 @@ func (s *RegistryClient) AddNetwork(req api.AddNetworkRequest) (*netpb.AddRespon
 
 	return rsp, nil
 }
+
+func (s *RegistryClient) GetNetwork(req api.GetNetworkRequest) (*netpb.GetResponse, error) {
+	rsp := &netpb.GetResponse{}
+
+	resp, err := s.r.Get(s.u.String() + "/v1/networks/" + req.NetworkId)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+		return nil, err
+	}
+
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
