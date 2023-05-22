@@ -8,12 +8,14 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
+
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/client"
-	pbBaseRate "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
+	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )
@@ -29,31 +31,53 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
+	auth          *config.Auth
 }
 
 type Clients struct {
-	d dataPlan
+	p packageS
+	r rates
+	b baserate
 }
 
-type dataPlan interface {
+type rates interface {
+	GetRate(req *rpb.GetRateRequest) (*rpb.GetRateResponse, error)
+	UpdateDefaultMarkup(req *rpb.UpdateDefaultMarkupRequest) (*rpb.UpdateDefaultMarkupResponse, error)
+	UpdateMarkup(req *rpb.UpdateMarkupRequest) (*rpb.UpdateMarkupResponse, error)
+	GetDefaultMarkup(req *rpb.GetDefaultMarkupRequest) (*rpb.GetDefaultMarkupResponse, error)
+	GetDefaultMarkupHistory(req *rpb.GetDefaultMarkupHistoryRequest) (*rpb.GetDefaultMarkupHistoryResponse, error)
+	GetMarkupHistory(req *rpb.GetMarkupHistoryRequest) (*rpb.GetMarkupHistoryResponse, error)
+	DeleteMarkup(req *rpb.DeleteMarkupRequest) (*rpb.DeleteMarkupResponse, error)
+	GetMarkup(req *rpb.GetMarkupRequest) (*rpb.GetMarkupResponse, error)
+}
+
+type baserate interface {
+	GetBaseRatesById(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
+	GetBaseRatesByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
+	GetBaseRatesHistoryByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
+	GetBaseRatesForPeriod(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
+	GetBaseRatesForPackage(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
+	UploadBaseRates(req *bpb.UploadBaseRatesRequest) (*bpb.UploadBaseRatesResponse, error)
+}
+type packageS interface {
 	AddPackage(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error)
 	UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error)
 	GetPackage(id string) (*pb.GetPackageResponse, error)
+	GetPackageDetails(id string) (*pb.GetPackageResponse, error)
 	GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error)
 	DeletePackage(id string) (*pb.DeletePackageResponse, error)
-	UploadBaseRates(req *pbBaseRate.UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error)
-	GetBaseRates(req *pbBaseRate.GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error)
-	GetBaseRate(id string) (*pbBaseRate.GetBaseRateResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.d = client.NewDataPlan(endpoints.Package, endpoints.Rate, endpoints.Timeout)
+	c.p = client.NewPackageClient(endpoints.Package, endpoints.Timeout)
+	c.b = client.NewBaseRateClient(endpoints.Baserate, endpoints.Timeout)
+	c.r = client.NewRateClient(endpoints.Rate, endpoints.Timeout)
 
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 
 	r := &Router{
 		clients: clients,
@@ -64,7 +88,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -74,32 +98,67 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
 	}
 }
 
-func (rt *Router) Run() {
-	logrus.Info("Listening on port ", rt.config.serverConf.Port)
-	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
+func (r *Router) Run() {
+	logrus.Info("Listening on port ", r.config.serverConf.Port)
+	err := r.f.Engine().Run(fmt.Sprint(":", r.config.serverConf.Port))
 	if err != nil {
 		logrus.Error(err)
 	}
 }
 
-func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
-	v1 := r.f.Group("/v1", "Data-plan system ", "Data-plan  system version v1")
+func (r *Router) init(f func(*gin.Context, string) error) {
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	auth := r.f.Group("/v1", "API Gateway", "Data-plan system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			logrus.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
+		baseRates := auth.Group("/baserates", "BaseRates", "BaseRates operations")
+		baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
+		baseRates.POST("/upload", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
+		baseRates.POST("/country/:country", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateByCountryHandler, http.StatusOK))
+		baseRates.POST("/country/:country/history", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHistoryByCountryHandler, http.StatusOK))
+		baseRates.POST("/country/:country/period", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateForPeriodHandler, http.StatusOK))
+		baseRates.POST("/country/:country/package", formatDoc("Get BaseRate for package", ""), tonic.Handler(r.getBaseRateForPackageHandler, http.StatusOK))
 
-	baseRates := v1.Group("/baseRates", "BaseRates", "BaseRates operations")
-	baseRates.POST("", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
-	baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
-	baseRates.GET("", formatDoc("Get BaseRates by country", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
+		packages := auth.Group("/packages", "Packages", "Packages operations")
+		packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
+		packages.GET("/org/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
+		packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
+		packages.GET("/:uuid/details", formatDoc("Get package details", ""), tonic.Handler(r.getPackageDetailsHandler, http.StatusOK))
+		packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
+		packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
 
-	packages := v1.Group("/packages", "Packages", "Packages operations")
-	packages.POST("", formatDoc("Add Package", ""), tonic.Handler(r.AddPackageHandler, http.StatusCreated))
-	packages.GET("/org/:org_id", formatDoc("Get packages of org", ""), tonic.Handler(r.getPackagesHandler, http.StatusOK))
-	packages.GET("/:uuid", formatDoc("Get package", ""), tonic.Handler(r.getPackageHandler, http.StatusOK))
-	packages.PATCH("/:uuid", formatDoc("Update Package", ""), tonic.Handler(r.UpdatePackageHandler, http.StatusOK))
-	packages.DELETE("/:uuid", formatDoc("Delete Package", ""), tonic.Handler(r.deletePackageHandler, http.StatusOK))
+		rates := auth.Group("/rates", "Rates", "Get rates for a user")
+		rates.POST("/users/:user_id/rate", formatDoc("Get Rate for user", ""), tonic.Handler(r.getRateHandler, http.StatusOK))
+
+		markup := auth.Group("/markup", "Rates", "Get rates for a user and set markup percentages for user")
+		markup.GET("/users/:user_id", formatDoc("get markup percentage for user", ""), tonic.Handler(r.getMarkupHandler, http.StatusOK))
+		markup.DELETE("/users/:user_id", formatDoc("delete markup percentage for user", ""), tonic.Handler(r.deleteMarkupHandler, http.StatusOK))
+		markup.POST(":markup/users/:user_id", formatDoc("set markup percentage for user", ""), tonic.Handler(r.setMarkupHandler, http.StatusCreated))
+		markup.GET("/users/:user_id/history", formatDoc("get markup percentage history", ""), tonic.Handler(r.getMarkupHistory, http.StatusOK))
+
+		markup.POST("/:markup/default", formatDoc("set default markup percentage", ""), tonic.Handler(r.setDefaultMarkupHandler, http.StatusCreated))
+		markup.GET("/default", formatDoc("get default markup percentage", ""), tonic.Handler(r.getDefaultMarkupHandler, http.StatusOK))
+		markup.GET("/default/history", formatDoc("get default markup percentage history", ""), tonic.Handler(r.getDefaultMarkupHistory, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -108,8 +167,9 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Description = description
 	}}
 }
-func (p *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest) (*pb.GetByOrgPackageResponse, error) {
-	resp, err := p.clients.d.GetPackageByOrg(req.OrgId)
+
+func (r *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest) (*pb.GetByOrgPackageResponse, error) {
+	resp, err := r.clients.p.GetPackageByOrg(req.OrgId)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -117,8 +177,12 @@ func (p *Router) getPackagesHandler(c *gin.Context, req *GetPackageByOrgRequest)
 
 	return resp, nil
 }
-func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*pbBaseRate.GetBaseRateResponse, error) {
-	resp, err := p.clients.d.GetBaseRate(req.RateId)
+
+func (r *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*bpb.GetBaseRatesByIdResponse, error) {
+	resp, err := r.clients.b.GetBaseRatesById(&bpb.GetBaseRatesByIdRequest{
+		Uuid: req.RateId,
+	})
+
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -126,11 +190,75 @@ func (p *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*p
 
 	return resp, nil
 }
-func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesRequest) (*pbBaseRate.UploadBaseRatesResponse, error) {
 
-	resp, err := p.clients.d.UploadBaseRates(&pbBaseRate.UploadBaseRatesRequest{
+func (r *Router) getBaseRateByCountryHandler(c *gin.Context, req *GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error) {
+	resp, err := r.clients.b.GetBaseRatesByCountry(&bpb.GetBaseRatesByCountryRequest{
+		Country:  req.Country,
+		Provider: req.Provider,
+		SimType:  req.SimType,
+	})
+
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getBaseRateHistoryByCountryHandler(c *gin.Context, req *GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error) {
+	resp, err := r.clients.b.GetBaseRatesHistoryByCountry(&bpb.GetBaseRatesByCountryRequest{
+		Country:  req.Country,
+		Provider: req.Provider,
+		SimType:  req.SimType,
+	})
+
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getBaseRateForPeriodHandler(c *gin.Context, req *GetBaseRatesForPeriodRequest) (*bpb.GetBaseRatesResponse, error) {
+	resp, err := r.clients.b.GetBaseRatesForPeriod(&bpb.GetBaseRatesByPeriodRequest{
+		Country:  req.Country,
+		Provider: req.Provider,
+		SimType:  req.SimType,
+		From:     req.From,
+		To:       req.To,
+	})
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getBaseRateForPackageHandler(c *gin.Context, req *GetBaseRatesForPeriodRequest) (*bpb.GetBaseRatesResponse, error) {
+	resp, err := r.clients.b.GetBaseRatesForPackage(&bpb.GetBaseRatesByPeriodRequest{
+		Country:  req.Country,
+		Provider: req.Provider,
+		SimType:  req.SimType,
+		From:     req.From,
+		To:       req.To,
+	})
+	if err != nil {
+		logrus.Error(err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesRequest) (*bpb.UploadBaseRatesResponse, error) {
+
+	resp, err := r.clients.b.UploadBaseRates(&bpb.UploadBaseRatesRequest{
 		FileURL:     req.FileURL,
 		EffectiveAt: req.EffectiveAt,
+		EndAt:       req.EndAt,
 		SimType:     req.SimType,
 	})
 	if err != nil {
@@ -140,16 +268,9 @@ func (p *Router) uploadBaseRateHandler(c *gin.Context, req *UploadBaseRatesReque
 
 	return resp, nil
 }
-func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (*pbBaseRate.GetBaseRatesResponse, error) {
 
-	resp, err := p.clients.d.GetBaseRates(&pbBaseRate.GetBaseRatesRequest{
-		Country:     req.Country,
-		Provider:    req.Provider,
-		To:          req.To,
-		From:        req.From,
-		SimType:     req.SimType,
-		EffectiveAt: req.EffectiveAt,
-	})
+func (r *Router) getPackageHandler(c *gin.Context, req *PackagesRequest) (*pb.GetPackageResponse, error) {
+	resp, err := r.clients.p.GetPackage(req.Uuid)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -157,8 +278,9 @@ func (p *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (
 
 	return resp, nil
 }
-func (p *Router) getPackageHandler(c *gin.Context, req *PackagesRequest) (*pb.GetPackageResponse, error) {
-	resp, err := p.clients.d.GetPackage(req.Uuid)
+
+func (r *Router) getPackageDetailsHandler(c *gin.Context, req *PackagesRequest) (*pb.GetPackageResponse, error) {
+	resp, err := r.clients.p.GetPackageDetails(req.Uuid)
 	if err != nil {
 		logrus.Error(err)
 		return nil, err
@@ -166,8 +288,9 @@ func (p *Router) getPackageHandler(c *gin.Context, req *PackagesRequest) (*pb.Ge
 
 	return resp, nil
 }
-func (p *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb.DeletePackageResponse, error) {
-	resp, err := p.clients.d.DeletePackage(req.Uuid)
+
+func (r *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb.DeletePackageResponse, error) {
+	resp, err := r.clients.p.DeletePackage(req.Uuid)
 	if err != nil {
 		logrus.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err})
@@ -176,17 +299,12 @@ func (p *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb
 	}
 	return resp, nil
 }
-func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
-	resp, err := p.clients.d.UpdatePackage(&pb.UpdatePackageRequest{
-		Uuid:        req.Uuid,
-		Name:        req.Name,
-		SimType:     req.SimType,
-		Active:      req.Active,
-		Duration:    req.Duration,
-		SmsVolume:   req.SmsVolume,
-		DataVolume:  req.DataVolume,
-		VoiceVolume: req.VoiceVolume,
-		OrgRatesId:  req.OrgRatesId,
+
+func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
+	resp, err := r.clients.p.UpdatePackage(&pb.UpdatePackageRequest{
+		Uuid:   req.Uuid,
+		Name:   req.Name,
+		Active: req.Active,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -197,18 +315,128 @@ func (p *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	return resp, nil
 
 }
-func (p *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
+
+func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {
+
 	pack := &pb.AddPackageRequest{
 		Name:        req.Name,
 		OrgId:       req.OrgId,
-		Duration:    req.Duration,
-		OrgRatesId:  req.OrgRatesId,
+		OwnerId:     req.OwnerId,
+		From:        req.From,
+		To:          req.To,
+		Baserate:    req.BaserateId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,
 		SmsVolume:   req.SmsVolume,
+		DataUnit:    req.DataUnit,
+		VoiceUnit:   req.VoiceUnit,
 		SimType:     req.SimType,
+		Apn:         req.Apn,
+		Markup:      req.Markup,
+		Type:        req.Type,
+		Flatrate:    req.Flatrate,
+		Amount:      req.Amount,
 	}
 
-	return p.clients.d.AddPackage(pack)
+	return r.clients.p.AddPackage(pack)
+}
+
+func (r *Router) getRateHandler(c *gin.Context, req *GetRateRequest) (*rpb.GetRateResponse, error) {
+	resp, err := r.clients.r.GetRate(&rpb.GetRateRequest{
+		OwnerId:  req.OwnerId,
+		Country:  req.Country,
+		Provider: req.Provider,
+		To:       req.To,
+		From:     req.From,
+		SimType:  req.SimType,
+	})
+	if err != nil {
+		logrus.Errorf("Failed to get rate for user %s.Error %s", req.OwnerId, err.Error())
+		return nil, err
+	}
+
+	return resp, nil
+
+}
+
+func (r *Router) deleteMarkupHandler(c *gin.Context, req *DeleteMarkupRequest) (*rpb.DeleteMarkupResponse, error) {
+	resp, err := r.clients.r.DeleteMarkup(&rpb.DeleteMarkupRequest{
+		OwnerId: req.OwnerId,
+	})
+	if err != nil {
+		logrus.Errorf("Failed to delete markup for user %s. Error %s", req.OwnerId, err.Error())
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) setMarkupHandler(c *gin.Context, req *SetMarkupRequest) (*rpb.UpdateMarkupResponse, error) {
+	resp, err := r.clients.r.UpdateMarkup(&rpb.UpdateMarkupRequest{
+		OwnerId: req.OwnerId,
+		Markup:  req.Markup,
+	})
+	if err != nil {
+		logrus.Errorf("Failed to update markup for user %s. Error %s", req.OwnerId, err.Error())
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getMarkupHandler(c *gin.Context, req *GetMarkupRequest) (*rpb.GetMarkupResponse, error) {
+	resp, err := r.clients.r.GetMarkup(&rpb.GetMarkupRequest{
+		OwnerId: req.OwnerId,
+	})
+	if err != nil {
+		logrus.Errorf("Failed to get markup for user %s. Error %s", req.OwnerId, err.Error())
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getMarkupHistory(c *gin.Context, req *GetMarkupHistoryRequest) (*rpb.GetMarkupHistoryResponse, error) {
+	resp, err := r.clients.r.GetMarkupHistory(&rpb.GetMarkupHistoryRequest{
+		OwnerId: req.OwnerId,
+	})
+	if err != nil {
+		logrus.Errorf("Failed to get markup history for user %s. Error %s", req.OwnerId, err.Error())
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) setDefaultMarkupHandler(c *gin.Context, req *SetDefaultMarkupRequest) (*rpb.UpdateDefaultMarkupResponse, error) {
+	resp, err := r.clients.r.UpdateDefaultMarkup(&rpb.UpdateDefaultMarkupRequest{
+		Markup: req.Markup,
+	})
+	if err != nil {
+		logrus.Errorf("Failed to update default markup. Error %s", err.Error())
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getDefaultMarkupHandler(c *gin.Context, req *GetDefaultMarkupRequest) (*rpb.GetDefaultMarkupResponse, error) {
+	resp, err := r.clients.r.GetDefaultMarkup(&rpb.GetDefaultMarkupRequest{})
+	if err != nil {
+		logrus.Errorf("Failed to get default markup. Error %s", err.Error())
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getDefaultMarkupHistory(c *gin.Context, req *GetDefaultMarkupHistoryRequest) (*rpb.GetDefaultMarkupHistoryResponse, error) {
+	resp, err := r.clients.r.GetDefaultMarkupHistory(&rpb.GetDefaultMarkupHistoryRequest{})
+	if err != nil {
+		logrus.Errorf("Failed to get default markup history. Error %s", err.Error())
+		return nil, err
+	}
+
+	return resp, nil
 }

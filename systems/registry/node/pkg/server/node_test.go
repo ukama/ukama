@@ -22,7 +22,7 @@ func TestRegistryServer_GetNode(t *testing.T) {
 		State: db.Pending, Type: db.NodeTypeHome,
 	}, nil).Once()
 
-	s := NewNodeServer(nodeRepo)
+	s := NewNodeServer(nodeRepo, "")
 
 	node, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: testNodeId.String()})
 
@@ -38,8 +38,9 @@ func TestRegistryServer_UpdateNodeState(t *testing.T) {
 	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeState) bool {
 		return *ns == db.Onboarded
 	}), (*string)(nil)).Return(nil).Once()
+	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
 
-	s := NewNodeServer(nodeRepo)
+	s := NewNodeServer(nodeRepo, "")
 
 	_, err := s.UpdateNodeState(context.TODO(), &pb.UpdateNodeStateRequest{
 		NodeId: testNodeId.String(),
@@ -59,8 +60,9 @@ func TestRegistryServer_AddNode(t *testing.T) {
 	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
 		return n.State == db.Pending && n.NodeID == nodeId
 	})).Return(nil).Once()
+	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
 
-	s := NewNodeServer(nodeRepo)
+	s := NewNodeServer(nodeRepo, "")
 
 	// Act
 	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{

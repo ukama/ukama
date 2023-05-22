@@ -21,6 +21,7 @@ type NodeRepo interface {
 	Update(id ukama.NodeID, state *NodeState, nodeName *string, nestedFunc ...func() error) error
 	AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error
 	DetachNode(detachNodeId ukama.NodeID) error
+	GetNodeCount() (int64, int64, int64, error)
 }
 
 type nodeRepo struct {
@@ -145,4 +146,22 @@ func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 		detachNodeId.StringLowercase())
 
 	return db.Error
+}
+
+func (r *nodeRepo) GetNodeCount() (nodeCount, activeNodeCount, inactiveNodeCount int64, err error) {
+	db := r.Db.GetGormDb()
+
+	if err := db.Model(&Node{}).Count(&nodeCount).Error; err != nil {
+		return 0, 0, 0, err
+	}
+
+	if err := db.Model(&Node{}).Where("status = ?", Onboarded).Count(&activeNodeCount).Error; err != nil {
+		return 0, 0, 0, err
+	}
+
+	if err := db.Model(&Node{}).Where("status = ?", Pending).Count(&inactiveNodeCount).Error; err != nil {
+		return 0, 0, 0, err
+	}
+
+	return nodeCount, activeNodeCount, inactiveNodeCount, nil
 }

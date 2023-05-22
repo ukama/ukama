@@ -78,10 +78,11 @@ func (n NodeID) GetNodeType() string {
 }
 
 func getRandCode(t time.Time) string {
-	rand.Seed(time.Now().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	min := 0x0000
 	max := 0xFFFF
-	val := rand.Intn(max-min+1) + min
+	val := r.Intn(max-min+1) + min
 	hexcode := fmt.Sprintf("%04X", val)
 	return hexcode
 }

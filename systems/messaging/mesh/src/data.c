@@ -18,6 +18,7 @@
 #include "work.h"
 #include "data.h"
 #include "jserdes.h"
+#include "initClient.h"
 
 typedef struct _response {
 	char *buffer;
@@ -152,15 +153,12 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 void handle_recevied_data(MRequest *data, Config *config) {
 
 	int ret=FALSE, retCode=0;
-	Proxy *proxy;
 	URequest *request;
 	char *response=NULL, *jStr=NULL;
+	char *host=NULL, *port=NULL;
 	json_t *jResp=NULL;
 
 	if (data == NULL && config == NULL)
-		return;
-
-	if (config->reverseProxy == NULL)
 		return;
 
 	/* Handling only forward requests. */
@@ -169,15 +167,15 @@ void handle_recevied_data(MRequest *data, Config *config) {
 
 	request = data->requestInfo;
 
-	/* Find matching server for the indicated path. */
-	if (strcmp(request->url_path, config->reverseProxy->httpPath)==0) {
-
-		proxy = config->reverseProxy;
+	if (!get_systemInfo_from_initClient(config, request->url_path,
+										&host, &port)) {
+		/* No match. Ignore. */
+		log_error("No matching server found for path: %s", request->url_path);
+	} else {
 		log_debug("Matching server found for path: %s Server ip: %s port: %s",
-				  proxy->httpPath, proxy->ip, proxy->port);
+				  request->url_path, host, port);
 
-		ret = send_data_to_server(request, proxy->ip, proxy->port, &retCode,
-								  &response);
+		ret = send_data_to_server(request, host, port, &retCode, &response);
 		if (ret == 200) {
 			log_debug("Command success. CURL return code: %d. Return code: %d",
 					  ret, retCode);
@@ -197,12 +195,10 @@ void handle_recevied_data(MRequest *data, Config *config) {
 			free(jStr);
 		} else {
 			log_error("Invalid response type (expected JSON)");
-			goto done;
 		}
-	} else {
-		/* No match. Ignore. */
-		log_error("No matching server found for path: %s", request->url_path);
-		goto done;
+
+		if (host) free(host);
+		if (port) free(port);
 	}
 
  done:

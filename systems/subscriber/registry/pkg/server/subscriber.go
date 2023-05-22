@@ -313,7 +313,7 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*pb.Sim) *pb.Subscri
 		Address:               s.Address,
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
-		Dob:           s.DOB,
+		Dob:                   s.DOB,
 	}
 
 }

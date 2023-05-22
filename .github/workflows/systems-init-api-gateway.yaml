@@ -1,7 +1,7 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-api-gateway
+name: build-systems-init-api-gateway
 on:  
   push:   
     paths:
@@ -32,6 +32,7 @@ jobs:
     
   sonar-scan:
     name: sonar-scan
+    needs: build
     runs-on: ubuntu-latest
     env: 
       working-directory: systems/init/api-gateway

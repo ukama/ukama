@@ -89,7 +89,7 @@ void signal_term_handler(void) {
 	if (state == NULL) exit(1);
 
 	/* un-register the system */
-	if (send_request_to_init(REQ_UNREGISTER, state->config,
+	if (send_request_to_init(REQ_UNREGISTER, state->config, NULL,
 							 &response) != TRUE) {
 		log_error("Error registrating with the init system");
 	}
@@ -239,7 +239,7 @@ int main (int argc, char *argv[]) {
 		break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
-		if (send_request_to_init(REQ_UPDATE, config, &response) != TRUE) {
+		if (send_request_to_init(REQ_UPDATE, config, NULL, &response) != TRUE) {
 			log_error("Error updating with the init system");
 			exitStatus = 1;
 			goto exit_program;
@@ -248,7 +248,8 @@ int main (int argc, char *argv[]) {
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
 		/* first time registering */
-		if (send_request_to_init(REQ_REGISTER, config, &response) != TRUE) {
+		if (send_request_to_init(REQ_REGISTER, config, NULL, &response)
+			!= TRUE) {
 			log_error("Error registrating with the init system");
 			exitStatus = 1;
 			goto exit_program;
@@ -281,7 +282,7 @@ int main (int argc, char *argv[]) {
 
 	log_debug("Goodbye ... ");
 
-	send_request_to_init(REQ_UNREGISTER, config, &response);
+	send_request_to_init(REQ_UNREGISTER, config, NULL, &response);
 	ulfius_stop_framework(&webInst);
 	ulfius_clean_instance(&webInst);
 

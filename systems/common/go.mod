@@ -4,7 +4,7 @@ go 1.18
 
 replace github.com/ukama/ukama/systems/common => ./
 
-replace github.com/ukama/ukama/systems/messaging/msgClient => ../messaging/msgClient
+replace github.com/ukama/ukama/systems/services/msgClient => ../services/msgClient
 
 require (
 	github.com/gin-contrib/cors v1.3.0
@@ -30,9 +30,9 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000
 	github.com/vektra/mockery/v2 v2.12.2
-	github.com/wI2L/fizz v0.18.1
+	github.com/wI2L/fizz v0.22.0
 	github.com/wagslane/go-rabbitmq v0.8.1
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
@@ -55,6 +55,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.0 // indirect

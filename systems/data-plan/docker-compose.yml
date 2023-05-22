@@ -1,0 +1,109 @@
+version: "3.9"
+services:
+  postgresd:
+    image: postgres:13.3
+    ports:
+      - "5400:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
+  baserate:
+    build: ./base-rate
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient:9095
+      - RATE_SERVICE_HOST=rate
+      - RATE_SERVICE_PORT=9090
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient
+      - postgresd
+
+  package:
+    build: ./package
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient:9095
+      - PACKAGE_SERVICE_HOST=package
+      - PACKAGE_SERVICE_PORT=9090
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - baserate
+      - postgresd
+  rate:
+    build: ./rate
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient:9095
+      - RATE_SERVICE_HOST=rate
+      - RATE_SERVICE_PORT=9090
+      - BASERATE=baserate:9090
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - baserate
+      - postgresd
+  api-gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./api-gateway
+    restart: always
+    ports:
+      - "8074:8080"
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASSAUTHMODE=true
+      # - CORS_ALLOWALLORIGINS=true
+      # - CORS_ALLOWORIGINS=""
+    depends_on:
+      - package
+      - baserate
+      - rate
+  msgclient:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - SYSTEM=dataplan
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+      
+networks:
+  ukama-net:
+    external: true
+    name: services_dev-net
+
+volumes:
+  postgress-data:
+
+

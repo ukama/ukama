@@ -102,6 +102,11 @@ func (r RoutingKeyBuilder) SetActionDelete() RoutingKeyBuilder {
 	return r
 }
 
+func (r RoutingKeyBuilder) SetActionCreate() RoutingKeyBuilder {
+	r.action = ACTION_CRUD_CREATE
+	return r
+}
+
 func (r RoutingKeyBuilder) SetAction(action string) RoutingKeyBuilder {
 	r.action = action
 	return r

@@ -42,4 +42,3 @@ generate "systems/data-plan" "data-plan"
 generate "systems/services" "services"
 generate "systems/auth" "auth"
 generate "systems/billing" "billing"
-

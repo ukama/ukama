@@ -1,0 +1,83 @@
+version: "3.9"
+services:
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+        - 9090:9090
+    volumes:
+        - ./prometheus:/etc/prometheus
+        - prometheus-data:/prometheus
+    command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
+    networks:
+      - ukama-net
+
+  exporter:
+    build:
+      context: ./exporter
+      dockerfile: ./Dockerfile
+    ports:
+      - "10251:10251"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient:9095
+      - EXPORTER_SERVICE_HOST=exporter
+      - EXPORTER_SERVICE_PORT=9092
+    restart: always
+    networks:
+      - ukama-net
+
+
+  metricsgateway:
+    build: 
+      context: ./api-gateway
+      dockerfile: ./Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
+    restart: always
+    depends_on:
+      - exporter
+    networks:
+      - ukama-net
+
+  msgclient:
+    build: 
+      context: ../messaging/msgClient
+      dockerfile: ./Dockerfile
+    ports:
+      - "9095:9095"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - SYSTEM=metrics
+    restart: always
+    depends_on:
+      - prometheus
+    networks:
+      - ukama-net
+  
+  pushgateway:
+    image: prom/pushgateway
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    networks:
+      - ukama-net
+
+volumes:
+  postgress-data:
+  prometheus-data:
+
+networks:
+  ukama-net:
+    external: true
+    name: services_dev-net

@@ -48,6 +48,10 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
 	ulfius_add_endpoint_by_val(instance, "GET", EP_PING, NULL, 0,
 							   &callback_ping, config);
 
+	/* EP for client to get system info */
+	ulfius_add_endpoint_by_val(instance, "GET", EP_SYSTEMS, NULL, 0,
+							   &callback_get_systems, config);
+
 	/* default endpoint. */
 	ulfius_set_default_endpoint(instance, &callback_default_webservice, config);
 }

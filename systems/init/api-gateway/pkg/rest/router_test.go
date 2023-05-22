@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	cconfig "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/ukama"
 
@@ -34,6 +35,11 @@ var routerConfig = &RouterConfig{
 	},
 	httpEndpoints: &pkg.HttpEndpoints{
 		NodeMetrics: "localhost:8080",
+	},
+	auth: &cconfig.Auth{
+		AuthAppUrl:    "http://localhost:4455",
+		AuthServerUrl: "http://localhost:4434",
+		AuthAPIGW:     "http://localhost:8080",
 	},
 }
 

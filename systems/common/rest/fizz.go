@@ -18,6 +18,8 @@ import (
 	"github.com/wI2L/fizz/openapi"
 )
 
+var SESSION_KEY = "ukama_session"
+
 type PingResponse struct {
 	Message string `json:"message"`
 	Service string `json:"service"`
@@ -32,7 +34,7 @@ func (g HttpError) Error() string {
 	return g.Message
 }
 
-func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, isDebug bool) *fizz.Fizz {
+func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, isDebug bool, redirectUrl string) *fizz.Fizz {
 
 	gin.SetMode(gin.ReleaseMode)
 	if isDebug {
@@ -54,9 +56,31 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 		return &PingResponse{Message: "pong", Service: fmt.Sprintf("%s@%s", srvName, srvVersion)}, nil
 	}, http.StatusOK))
 
+	f.Generator().SetSecurityRequirement([]*openapi.SecurityRequirement{
+		{
+			"cookie": {"write", "read"},
+		},
+	})
+
+	f.Generator().SetSecuritySchemes(map[string]*openapi.SecuritySchemeOrRef{
+		"cookie": {
+			SecurityScheme: &openapi.SecurityScheme{
+				Type: "oauth2",
+				Flows: &openapi.OAuthFlows{
+					Implicit: &openapi.OAuthFlow{
+						Scopes: map[string]string{
+							"write": "write access",
+							"read":  "read access",
+						},
+						AuthorizationURL: redirectUrl,
+					},
+				},
+			},
+		},
+	})
 	infos := &openapi.Info{
-		Title:       srvName,
-		Description: "Rest API for " + srvName,
+		Title:       fmt.Sprintf("%v System", strings.ToTitle(srvName)),
+		Description: "To play with API's first you need to login via ukama auth app and get cookie. For that first click on Green Authorize button. On Popup model click on Authorize button again. You'll be redirected to ukama auth app. Login with your credentials. After that you'll be redirected back to this page. Now you can play with API's.",
 		Version:     srvVersion,
 	}
 

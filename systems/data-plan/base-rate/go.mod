@@ -4,7 +4,7 @@ go 1.18
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/messaging/msgClient => ../../messaging/msgClient
+replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -15,13 +15,14 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.52.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.4.6
 	gorm.io/gorm v1.24.3
 )
+
+require github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -70,7 +71,7 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	github.com/ukama/ukama/systems/messaging/msgClient v0.0.0-00010101000000-000000000000 // indirect
+	github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/net v0.4.0 // indirect

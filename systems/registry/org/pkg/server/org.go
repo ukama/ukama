@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -27,15 +28,17 @@ type OrgService struct {
 	orgName        string
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	msgbus         mb.MsgBusServiceClient
+	pushgateway    string
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string) *OrgService {
 	return &OrgService{
 		orgRepo:        orgRepo,
 		userRepo:       userRepo,
 		orgName:        defaultOrgName,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		msgbus:         msgBus,
+		pushgateway:    pushgateway,
 	}
 }
 
@@ -70,6 +73,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 			OrgId:  org.Id,
 			UserId: user.Id,
 			Uuid:   org.Owner,
+			Role:   pbRoleTypeToDb(pb.RoleType_OWNER),
 		}
 
 		err = db.NewOrgRepo(txDb).AddMember(member)
@@ -87,11 +91,16 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
+
 	route := o.baseRoutingKey.SetAction("add").SetObject("org").MustBuild()
 	err = o.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
+	_ = o.pushOrgCountMetric()
+	_ = o.pushOrgMemberCountMetric(org.Id)
+	_ = o.pushUserCountMetric()
 
 	return &pb.AddResponse{Org: dbOrgToPbOrg(org)}, nil
 }
@@ -208,15 +217,20 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
+
 	route := o.baseRoutingKey.SetAction("register").SetObject("user").MustBuild()
 	err = o.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
+	_ = o.pushOrgMemberCountMetric(org.Id)
+	_ = o.pushUserCountMetric()
+
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
-func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
+func (o *OrgService) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
 	org, err := o.orgRepo.GetByName(req.GetOrgName())
 	if err != nil {
@@ -240,17 +254,22 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		OrgId:  org.Id,
 		UserId: user.Id,
 		Uuid:   userUUID,
+		Role:   pbRoleTypeToDb(req.GetRole()),
 	}
 
 	err = o.orgRepo.AddMember(member)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
+
 	route := o.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
 	err = o.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
+	_ = o.pushOrgMemberCountMetric(org.Id)
+
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
@@ -317,6 +336,8 @@ func (o *OrgService) UpdateMember(ctx context.Context, req *pb.UpdateMemberReque
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
+	_ = o.pushOrgMemberCountMetric(org.Id)
+
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
@@ -351,11 +372,15 @@ func (o *OrgService) RemoveMember(ctx context.Context, req *pb.MemberRequest) (*
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
+
 	route := o.baseRoutingKey.SetAction("remove").SetObject("member").MustBuild()
 	err = o.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
+
+	_ = o.pushOrgMemberCountMetric(org.Id)
+
 	return &pb.MemberResponse{}, nil
 }
 
@@ -392,8 +417,9 @@ func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 		OrgId:         member.OrgId.String(),
 		UserId:        uint64(member.UserId),
 		Uuid:          member.Uuid.String(),
+		Role:          pb.RoleType(member.Role),
 		IsDeactivated: member.Deactivated,
-		CreatedAt:     timestamppb.New(member.CreatedAt),
+		// CreatedAt:     timestamppb.New(member.CreatedAt),
 	}
 }
 
@@ -405,4 +431,107 @@ func dbMembersToPbMembers(members []db.OrgUser) []*pb.OrgUser {
 	}
 
 	return res
+}
+
+func (o *OrgService) pushOrgCountMetric() error {
+	actOrg, inactOrg, err := o.orgRepo.GetOrgCount()
+	if err != nil {
+		log.Errorf("failed to get Org count: %s", err.Error())
+		return err
+	}
+
+	err = metric.CollectAndPushSimMetrics(o.pushgateway, pkg.OrgMetrics, pkg.NumberOfActiveOrgs, float64(actOrg), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		log.Errorf("Error while pushing active Org metric to pushgateway %s", err.Error())
+		return err
+	}
+
+	err = metric.CollectAndPushSimMetrics(o.pushgateway, pkg.OrgMetrics, pkg.NumberOfInactiveOrgs, float64(inactOrg), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		log.Errorf("Error while pushing inactive Org metric to pushgateway %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (o *OrgService) pushOrgMemberCountMetric(orgId uuid.UUID) error {
+
+	actMemOrg, inactMemOrg, err := o.orgRepo.GetMemberCount(orgId)
+	if err != nil {
+		log.Errorf("failed to get member count for org %s.Error: %s", orgId.String(), err.Error())
+		return err
+	}
+
+	labels := make(map[string]string)
+	labels["org"] = orgId.String()
+
+	err = metric.CollectAndPushSimMetrics(o.pushgateway, pkg.OrgMetrics, pkg.NumberOfActiveMembersOfOrgs, float64(actMemOrg), labels, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		log.Errorf("Error while pushing active members of Org metric to pushgateway %s", err.Error())
+		return err
+	}
+
+	err = metric.CollectAndPushSimMetrics(o.pushgateway, pkg.OrgMetrics, pkg.NumberOfInactiveMembersOfOrgs, float64(inactMemOrg), labels, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		log.Errorf("Error while pushing inactive members Org metric to pushgateway %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (o *OrgService) pushUserCountMetric() error {
+
+	actUser, inactUser, err := o.userRepo.GetUserCount()
+	if err != nil {
+		log.Errorf("failed to get user count.Error: %s", err.Error())
+		return err
+	}
+
+	err = metric.CollectAndPushSimMetrics(o.pushgateway, pkg.OrgMetrics, pkg.NumberOfActiveUsers, float64(actUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		log.Errorf("Error while pushing active users of Org metric to pushgateway %s", err.Error())
+		return err
+	}
+
+	err = metric.CollectAndPushSimMetrics(o.pushgateway, pkg.OrgMetrics, pkg.NumberOfInactiveUsers, float64(inactUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	if err != nil {
+		log.Errorf("Error while pushing inactive users Org metric to pushgateway %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (o *OrgService) PushMetrics() error {
+
+	_ = o.pushOrgCountMetric()
+
+	_ = o.pushUserCountMetric()
+
+	orgs, err := o.orgRepo.GetAll()
+	if err != nil {
+		log.Errorf("Error while reading orgs. Error %s", err.Error())
+		return err
+	}
+
+	for _, org := range orgs {
+		_ = o.pushOrgMemberCountMetric(org.Id)
+	}
+
+	return nil
+
+}
+
+func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
+	switch role {
+	case pb.RoleType_ADMIN:
+		return db.Admin
+	case pb.RoleType_VENDOR:
+		return db.Vendor
+	case pb.RoleType_MEMBER:
+		return db.Member
+	case pb.RoleType_OWNER:
+		return db.Owner
+	default:
+		return db.Member
+	}
 }
