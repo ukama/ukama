@@ -170,7 +170,7 @@ func TestAddNetworkWorkflows(t *testing.T) {
 	t.Run("Owner-admin adds new network to eshould succeed", func(t *testing.T) {
 		orgName := "saturn"
 
-		// or use and admin member_id instead of owner_id
+		// or use an admin member_id instead of owner_id
 		owner := "08a594d7-a292-43cf-9652-54785b03f48f"
 
 		netName := strings.ToLower(faker.FirstName()) + "-net"
@@ -205,7 +205,7 @@ func TestAddNetworkWorkflows(t *testing.T) {
 		assert.NotNil(t, orgResp)
 		assert.Equal(t, orgName, orgResp.Org.Name)
 
-		// make sure the member is not admin
+		// make sure the member is not owner
 		owner := orgResp.Org.Owner
 		assert.NotEqual(t, owner, member)
 
@@ -219,6 +219,7 @@ func TestAddNetworkWorkflows(t *testing.T) {
 		assert.Equal(t, member, gmResp.Member.Uuid)
 
 		// make sure the member is not admin
+		// something like assertNotEqual(member.Role.String(), "admin")
 
 		// make sure the member is the request executor
 		reqAddNetwork := api.AddNetworkRequest{
@@ -234,7 +235,7 @@ func TestAddNetworkWorkflows(t *testing.T) {
 		orgName := "saturn"
 		missingOrgName := "non-existing-org"
 
-		// or use and admin member_id instead of owner_id
+		// or use an admin member_id instead of owner_id
 		owner := "08a594d7-a292-43cf-9652-54785b03f48f"
 
 		netName := strings.ToLower(faker.FirstName()) + "-net"
@@ -323,7 +324,7 @@ func TestUpdateNetworkWorkflows(t *testing.T) {
 		assert.Equal(t, orgName, orgResp.Org.Name)
 
 		// make sure the member is not admin, nor owner
-		// assertNotEqual(member.Role, "admin")
+		// something like assertNotEqual(member.Role.String(), "admin")
 		assert.NotEqual(t, member, orgResp.Org.Owner)
 
 		reqGetNet := api.GetNetworkRequest{NetworkId: oldNetId}
