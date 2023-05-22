@@ -1,7 +1,7 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-lookup
+name: build-systems-init-lookup
 on:  
   push:   
     paths:
@@ -32,6 +32,7 @@ jobs:
     
   sonar-scan:
     name: sonar-scan
+    needs: build
     runs-on: ubuntu-latest
     env: 
       working-directory: systems/init/lookup
@@ -43,7 +44,7 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_init_svc_lookup
+          project-key: ukama_systems_init_lookup
 
   lint:
     name: lint

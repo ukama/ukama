@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
+	cconfig "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/init/node-gateway/pkg"
@@ -33,6 +34,11 @@ var routerConfig = &RouterConfig{
 
 	httpEndpoints: &pkg.HttpEndpoints{
 		NodeMetrics: "localhost:8080",
+	},
+	auth: &cconfig.Auth{
+		AuthAppUrl:    "http://localhost:4455",
+		AuthServerUrl: "http://localhost:4434",
+		AuthAPIGW:     "http://localhost:8080",
 	},
 }
 

@@ -1,7 +1,7 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: pr-release-registry-org
+name: pr-release-init-node-gateway
 on:  
   workflow_dispatch:
 
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     name: build and release
     env: 
-      working-directory: systems/registry/org
+      working-directory: systems/init/node-gateway
     steps:
     - uses: actions/checkout@v3
 
@@ -18,7 +18,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: registry/org
+        registry-name: init/node-gateway
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -32,7 +32,7 @@ jobs:
       uses: denispalnitsky/gitops-release@v9
       with:
         filename: "releases/ukamax/pr-env.yaml"
-        key: "orgImageTag"
+        key: "nodegatewayImageTag"
         value:  ${{ steps.vars_step.outputs.sha-short }}
         github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         github-org-and-repo: "ukama/infra-as-code"

@@ -1,7 +1,7 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-msgClient
+name: build-systems-init-msgClient
 on:  
   push:   
     paths:
@@ -23,7 +23,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: init/msgclient
+        registry-name: init/msgClient
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -32,6 +32,7 @@ jobs:
     
   sonar-scan:
     name: sonar-scan
+    needs: build
     runs-on: ubuntu-latest
     env: 
       working-directory: systems/init/msgClient
@@ -43,7 +44,7 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_init_svc_msgClient
+          project-key: ukama_systems_init_msgClient
 
   lint:
     name: lint

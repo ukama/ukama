@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-20220909103841-dd001a1af00e
 	github.com/ukama/ukama/systems/init/lookup v0.0.0-00010101000000-000000000000
-	github.com/wI2L/fizz v0.18.1
+	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.51.0
 )
 
