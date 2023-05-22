@@ -98,6 +98,18 @@ func (this *GetByNameResponse) Validate() error {
 	return nil
 }
 
+var _regex_AddMemberRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *AddMemberRequest) Validate() error {
+	if !_regex_AddMemberRequest_UserUuid.MatchString(this.UserUuid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserUuid))
+	}
+	if this.UserUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.UserUuid))
+	}
+	return nil
+}
+
 var _regex_MemberRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *MemberRequest) Validate() error {

@@ -137,11 +137,11 @@ func (r *Registry) GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
 	return res, nil
 }
 
-func (r *Registry) AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error) {
+func (r *Registry) AddMember(orgName string, userUUID string, role string) (*orgpb.MemberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	member := &orgpb.MemberRequest{OrgName: orgName, UserUuid: userUUID}
+	member := &orgpb.AddMemberRequest{OrgName: orgName, UserUuid: userUUID, Role: orgpb.RoleType(orgpb.RoleType_value[role])}
 	res, err := r.orgClient.AddMember(ctx, member)
 
 	if err != nil {
@@ -151,7 +151,7 @@ func (r *Registry) AddMember(orgName string, userUUID string) (*orgpb.MemberResp
 	return res, nil
 }
 
-func (r *Registry) UpdateMember(orgName string, userUUID string, isDeactivated bool) error {
+func (r *Registry) UpdateMember(orgName string, userUUID string, isDeactivated bool, role string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 

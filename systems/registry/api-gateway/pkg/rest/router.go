@@ -52,8 +52,8 @@ type registry interface {
 	GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error)
 	GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
 	GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
-	AddMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
-	UpdateMember(orgName string, userUUID string, isDeactivated bool) error
+	AddMember(orgName string, userUUID string, role string) (*orgpb.MemberResponse, error)
+	UpdateMember(orgName string, userUUID string, isDeactivated bool, role string) error
 	RemoveMember(orgName string, userUUID string) error
 
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
@@ -111,7 +111,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 			logrus.Info("Bypassing auth")
 			return
 		}
-		s := fmt.Sprintf("%s, %s, %s", "ukama", pkg.SystemName, ctx.Request.URL.Path)
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
 		ctx.Request.Header.Set("Meta", s)
 		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
@@ -262,11 +262,11 @@ func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb
 }
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
-	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid)
+	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid, req.Role)
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated)
+	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated, req.Role)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {

@@ -73,6 +73,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 			OrgId:  org.Id,
 			UserId: user.Id,
 			Uuid:   org.Owner,
+			Role:   pbRoleTypeToDb(pb.RoleType_OWNER),
 		}
 
 		err = db.NewOrgRepo(txDb).AddMember(member)
@@ -229,7 +230,7 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
 }
 
-func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.MemberResponse, error) {
+func (o *OrgService) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
 	// Get the Organization
 	org, err := o.orgRepo.GetByName(req.GetOrgName())
 	if err != nil {
@@ -253,6 +254,7 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.MemberRequest) (*pb.
 		OrgId:  org.Id,
 		UserId: user.Id,
 		Uuid:   userUUID,
+		Role:   pbRoleTypeToDb(req.GetRole()),
 	}
 
 	err = o.orgRepo.AddMember(member)
@@ -415,8 +417,9 @@ func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 		OrgId:         member.OrgId.String(),
 		UserId:        uint64(member.UserId),
 		Uuid:          member.Uuid.String(),
+		Role:          pb.RoleType(member.Role),
 		IsDeactivated: member.Deactivated,
-		CreatedAt:     timestamppb.New(member.CreatedAt),
+		// CreatedAt:     timestamppb.New(member.CreatedAt),
 	}
 }
 
@@ -516,4 +519,19 @@ func (o *OrgService) PushMetrics() error {
 
 	return nil
 
+}
+
+func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
+	switch role {
+	case pb.RoleType_ADMIN:
+		return db.Admin
+	case pb.RoleType_VENDOR:
+		return db.Vendor
+	case pb.RoleType_MEMBER:
+		return db.Member
+	case pb.RoleType_OWNER:
+		return db.Owner
+	default:
+		return db.Member
+	}
 }

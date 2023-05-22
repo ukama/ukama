@@ -12,7 +12,7 @@ type Config struct {
 	Service           *config.Service
 	R                 *rest.RestClient
 	Auth              *config.Auth
-	AuthKey           string
+	AuthKey           string `default:""`
 }
 
 func NewConfig(name string) *Config {

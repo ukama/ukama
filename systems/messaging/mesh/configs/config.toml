@@ -8,12 +8,7 @@
 	amqp-exchange = "amq.direct"
 	cert          = "/a/b/c/cert.crt"
 	key           = "/x/y/z/pem.key"
-
-# this will be an array to support multiple entries (in future).
-[reverse-proxy]
-	http-path    = "/registry/"
-	connect-ip   = "127.0.0.1"
-	connect-port = "7777"
-	enable       = "true"
+	init-client-host = "localhost"
+	init-client-port = "9091"
 
 #nothing here.

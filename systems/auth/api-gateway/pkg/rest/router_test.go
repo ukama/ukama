@@ -90,10 +90,10 @@ func TestLogin(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 }
 
-func TestAuthenticate(t *testing.T) {
+func TestWhoami(t *testing.T) {
 	cma := &mauth.AuthManager{}
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/auth", nil)
+	req, _ := http.NewRequest("GET", "/v1/whoami", nil)
 
 	req.Header.Set("X-Session-Token", token)
 
@@ -106,16 +106,87 @@ func TestAuthenticate(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 }
 
-func TestWhoami(t *testing.T) {
+func TestUpdateRole(t *testing.T) {
 	cma := &mauth.AuthManager{}
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/whoami", nil)
+	payload := &UpdateRoleReq{
+		XSessionToken: token,
+		OrgId:         "abc-123",
+		Role:          "member",
+	}
+	jp, err := json.Marshal(payload)
+	if err != nil {
+		panic(err)
+	}
+
+	reqBody := []byte(jp)
+	req, _ := http.NewRequest("PUT", "/v1/role", bytes.NewBuffer(reqBody))
+
+	req.Header.Set("meta", "auth, get, v1/test")
+	req.Header.Set("X-Session-Token", token)
+	req.Header.Set("Org-id", "abc-123")
+
+	r := NewRouter(&Clients{au: cma}, routerConfig).f.Engine()
+	identity := client.Identity{
+		Id: "user_123",
+		Traits: map[string]interface{}{
+			"email": mockEmail,
+			"name":  "test",
+		},
+		MetadataPublic: map[string]interface{}{
+			"roles": []map[string]interface{}{
+				{
+					"name":           "member",
+					"organizationId": "abc-123",
+				},
+			},
+		},
+	}
+	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&client.Session{
+		Identity: identity,
+	}, nil)
+
+	cma.On("UpdateRole", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+}
+
+func TestAuthenticate(t *testing.T) {
+	cma := &mauth.AuthManager{}
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/auth", nil)
 
 	req.Header.Set("X-Session-Token", token)
+	req.Header.Set("Org-id", "abc-123")
+	req.Header.Set("Meta", "auth, get, v1/test")
 
 	r := NewRouter(&Clients{au: cma}, routerConfig).f.Engine()
 
-	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&client.Session{}, nil)
+	identity := client.Identity{
+		Id: "user_123",
+		Traits: map[string]interface{}{
+			"email": mockEmail,
+			"name":  "test",
+		},
+		MetadataPublic: map[string]interface{}{
+			"roles": []map[string]interface{}{
+				{
+					"name":           "member",
+					"organizationId": "abc-123",
+				},
+			},
+		},
+	}
+
+	cma.On("AuthorizeUser", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&client.Session{
+		Identity: identity,
+	}, nil)
+
+	cma.On("ValidateSession", mock.Anything, mock.Anything).Return(&client.Session{
+		Identity: identity,
+	}, nil)
 
 	r.ServeHTTP(w, req)
 
