@@ -99,6 +99,7 @@ func (s *DataPlanSys) DataPlanBaseRateGetByCountry(req api.GetBaseRatesByCountry
 
 func (s *DataPlanSys) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeriodRequest) (*bPb.GetBaseRatesResponse, error) {
 
+	log.Debugf("DataPlanSys GetBaseRate by period %v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
@@ -106,7 +107,7 @@ func (s *DataPlanSys) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeriodR
 
 	rsp := &bPb.GetBaseRatesResponse{}
 
-	resp, err := s.r.Post(s.u.String()+BASE_RATE+"/country/period", b)
+	resp, err := s.r.Post(fmt.Sprintf("%s/country/%s/period", s.u.String()+BASE_RATE, req.Country), b)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -206,7 +207,7 @@ func (s *DataPlanSys) DataPlanUpdateMarkup(req api.SetMarkupRequest) (*rPb.Updat
 
 	rsp := &rPb.UpdateMarkupResponse{}
 
-	resp, err := s.r.Post(fmt.Sprintf("%s/%f/%s/%s", s.u.String()+RATE, req.Markup, "/users/"+req.OwnerId), nil)
+	resp, err := s.r.Post(fmt.Sprintf("%s/%f/%s", s.u.String()+RATE, req.Markup, "users/"+req.OwnerId), nil)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -221,7 +222,7 @@ func (s *DataPlanSys) DataPlanUpdateMarkup(req api.SetMarkupRequest) (*rPb.Updat
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanGetDefaultUserMarkup(req api.GetMarkupRequest) (*rPb.GetMarkupResponse, error) {
+func (s *DataPlanSys) DataPlanGetUserMarkup(req api.GetMarkupRequest) (*rPb.GetMarkupResponse, error) {
 
 	rsp := &rPb.GetMarkupResponse{}
 
@@ -284,6 +285,7 @@ func (s *DataPlanSys) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateRespo
 }
 
 func (s *DataPlanSys) DataPlanPackageAdd(req api.AddPackageRequest) (*pPb.AddPackageResponse, error) {
+	log.Debugf("DataPlanSys AddPackageRequest by  %+v", req)
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -315,7 +317,7 @@ func (s *DataPlanSys) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*
 
 	rsp := &pPb.GetByOrgPackageResponse{}
 
-	resp, err := s.r.Get(s.u.String() + PACKAGE + "/orgs/" + req.OrgId)
+	resp, err := s.r.Get(s.u.String() + PACKAGE + "/org/" + req.OrgId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
