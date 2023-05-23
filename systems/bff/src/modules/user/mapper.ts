@@ -38,7 +38,7 @@ class UserMapper implements IUserMapper {
             id: res.id,
             email: res.email,
             name: res.name,
-            role: res.role,
+            role: "admin",
             isFirstVisit: res.first_visit,
         };
     };

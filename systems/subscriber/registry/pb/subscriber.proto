@@ -161,9 +161,9 @@ message Sim {
     string type = 9;
     string status = 10;
     bool isPhysical = 11 [json_name = "is_physical"];
-    google.protobuf.Timestamp firstActivatedOn = 12;
-    google.protobuf.Timestamp lastActivatedOn = 13 ;
-    uint64 activationsCount = 14;
-    uint64 deactivationsCount = 15;
+    google.protobuf.Timestamp firstActivatedOn = 12 [json_name = "first_activated_on"];
+    google.protobuf.Timestamp lastActivatedOn = 13 [json_name = "last_activated_on"];
+    uint64 activationsCount = 14 [json_name = "activations_count"];
+    uint64 deactivationsCount = 15 [json_name = "deactivations_count"];
     google.protobuf.Timestamp allocatedAt = 16 [json_name = "allocated_at"];
 }

@@ -3,6 +3,57 @@ import { Field, InputType, ObjectType } from "type-graphql";
 import { GENDER_TYPE } from "../../constants";
 
 @ObjectType()
+export class SubSimAPIDto {
+    @Field()
+    id: string;
+
+    @Field()
+    subscriber_id: string;
+
+    @Field()
+    network_id: string;
+
+    @Field()
+    org_id: string;
+
+    @Field()
+    iccid: string;
+
+    @Field()
+    msisdn: string;
+
+    @Field()
+    imsi: string;
+
+    @Field()
+    type: string;
+
+    @Field()
+    status: string;
+
+    @Field({ nullable: true })
+    first_activated_on: string;
+
+    @Field({ nullable: true })
+    last_activated_on: string;
+
+    @Field()
+    activations_count: string;
+
+    @Field()
+    deactivations_count: string;
+
+    @Field()
+    allocated_at: string;
+
+    @Field({ nullable: true })
+    is_physical: boolean;
+
+    @Field({ nullable: true })
+    package: string;
+}
+
+@ObjectType()
 export class SubscriberAPIDto {
     @Field()
     subscriber_id: string;
@@ -39,12 +90,15 @@ export class SubscriberAPIDto {
 
     @Field()
     proof_of_identification: string;
+
+    @Field(() => [SubSimAPIDto])
+    sim: SubSimAPIDto[];
 }
 
 @ObjectType()
 export class SubscriberAPIResDto {
     @Field(() => SubscriberAPIDto)
-    Subscriber: SubscriberAPIDto;
+    subscriber: SubscriberAPIDto;
 }
 
 @InputType()
@@ -85,6 +139,57 @@ export class SubscriberInputDto {
     @Field()
     proof_of_identification: string;
 }
+
+@ObjectType()
+export class SimDto {
+    @Field()
+    id: string;
+
+    @Field()
+    subscriberId: string;
+
+    @Field()
+    networkId: string;
+
+    @Field()
+    orgId: string;
+
+    @Field()
+    iccid: string;
+
+    @Field()
+    msisdn: string;
+
+    @Field()
+    imsi: string;
+
+    @Field()
+    type: string;
+
+    @Field()
+    status: string;
+
+    @Field({ nullable: true })
+    firstActivatedOn: string;
+
+    @Field({ nullable: true })
+    lastActivatedOn: string;
+
+    @Field()
+    activationsCount: string;
+
+    @Field()
+    deactivationsCount: string;
+
+    @Field()
+    allocatedAt: string;
+
+    @Field({ nullable: true })
+    isPhysical: boolean;
+
+    @Field({ nullable: true })
+    package: string;
+}
 @ObjectType()
 export class SubscriberDto {
     @Field()
@@ -122,6 +227,9 @@ export class SubscriberDto {
 
     @Field()
     proofOfIdentification: string;
+
+    @Field(() => [SimDto])
+    sim: SimDto[];
 }
 
 @InputType()
