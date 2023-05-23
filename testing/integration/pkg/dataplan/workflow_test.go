@@ -10,11 +10,12 @@ import (
 	"github.com/bxcodec/faker/v4"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	api "github.com/ukama/ukama/systems/data-plan/api-gateway/pkg/rest"
-	//rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
-	//ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
+	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
@@ -26,10 +27,13 @@ type InitData struct {
 	MbHost       string
 	SubscriberId string
 	BaseRateId   []string
+	PackageId    string
 
 	// This data is taken from the https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv */
 	Providers map[string][]string
 	Countries []string
+	OwnerId   string
+	OrgId     string
 
 	/* API requests */
 	reqUploadBaseRatesRequest         api.UploadBaseRatesRequest
@@ -59,17 +63,19 @@ func init() {
 
 func InitializeData() *InitData {
 	d := &InitData{}
-	d.Host = "http://192.168.0.22:8078"
+	d.Host = "http://192.168.0.22:8074"
 	d.MbHost = "amqp://guest:guest@192.168.0.22:5672/"
 	d.Sys = NewDataPlanSys(d.Host)
 	d.SimType = "ukama_data"
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{
-		EffectiveAt: utils.GenerateFutureDate(1 * time.Minute),
+		EffectiveAt: utils.GenerateFutureDate(5 * time.Second),
 		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",
 		EndAt:       utils.GenerateFutureDate(365 * 24 * time.Hour),
 		SimType:     d.SimType,
 	}
 
+	d.OwnerId = uuid.NewV4().String()
+	d.OrgId = uuid.NewV4().String()
 	d.BaseRateId = make([]string, 8)
 	d.Countries = []string{"The Lunar Maria", "Montes Appenninus", "Tycho crater"}
 	d.Providers = make(map[string][]string)
@@ -102,13 +108,18 @@ func InitializeData() *InitData {
 	d.reqGetDefaultMarkupRequest = api.GetDefaultMarkupRequest{}
 	d.reqGetDefaultMarkupHistoryRequest = api.GetDefaultMarkupHistoryRequest{}
 	d.reqSetMarkupRequest = api.SetMarkupRequest{
-		OwnerId: "",
+		OwnerId: d.OwnerId,
 		Markup:  float64(utils.RandomInt(50)),
 	}
-	d.reqGetMarkupRequest = api.GetMarkupRequest{}
-	d.reqGetMarkupHistoryRequest = api.GetMarkupHistoryRequest{}
+	d.reqGetMarkupRequest = api.GetMarkupRequest{
+		OwnerId: d.OwnerId,
+	}
+	d.reqGetMarkupHistoryRequest = api.GetMarkupHistoryRequest{
+		OwnerId: d.OwnerId,
+	}
+
 	d.reqGetRateRequest = api.GetRateRequest{
-		OwnerId:  "",
+		OwnerId:  d.OwnerId,
 		Country:  c,
 		Provider: p[utils.RandomInt(len(p)-1)],
 		SimType:  d.SimType,
@@ -117,30 +128,32 @@ func InitializeData() *InitData {
 	}
 
 	d.reqAddPackageRequest = api.AddPackageRequest{
-		OwnerId:    "",
-		OrgId:      "",
-		Name:       faker.FirstName(),
+		OwnerId:    d.OwnerId,
+		OrgId:      d.OrgId,
+		Name:       faker.FirstName() + "-monthly-pack",
 		SimType:    d.SimType,
 		From:       utils.GenerateFutureDate(24 * time.Hour),
 		To:         utils.GenerateFutureDate(30 * 24 * time.Hour),
 		BaserateId: "",
 		SmsVolume:  100,
 		DataVolume: 1024,
-		DataUnit:   "Mb",
+		DataUnit:   "MegaBytes",
 		Type:       "postpaid",
 		Active:     true,
+		Flatrate:   false,
+		Apn:        "ukama.tel",
 	}
 
 	d.reqGetPackageByOrgRequest = api.GetPackageByOrgRequest{
-		OrgId: "",
+		OrgId: d.OrgId,
 	}
 
 	d.reqPackagesRequest = api.PackagesRequest{
-		Uuid: "",
+		Uuid: d.OwnerId,
 	}
 
 	d.reqUpdatePackageRequest = api.UpdatePackageRequest{
-		Uuid:   "",
+		Uuid:   d.OwnerId,
 		Name:   faker.FirstName(),
 		Active: false,
 	}
@@ -221,7 +234,7 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 	w.RegisterTestCase(&test.TestCase{
 		Name:        "Get Base rate",
 		Description: "Get Base rate by Id",
-		Data:        &bpb.GetBaseRatesResponse{},
+		Data:        &bpb.GetBaseRatesByIdResponse{},
 		Workflow:    w,
 		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
 			/* Setup required for test case
@@ -252,10 +265,10 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 			/* Check for possible failures during test case */
 			check := false
 
-			resp := tc.GetData().(*bpb.GetBaseRatesResponse)
+			resp := tc.GetData().(*bpb.GetBaseRatesByIdResponse)
 			if assert.NotNil(t, resp) {
 				data := tc.GetWorkflowData().(*InitData)
-				assert.Equal(t, data.reqGetBaseRateRequest.RateId, resp.Rates[0].Uuid)
+				assert.Equal(t, data.reqGetBaseRateRequest.RateId, resp.Rate.Uuid)
 				check = true
 			}
 
@@ -316,7 +329,7 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 	/* Get rates by Period */
 	w.RegisterTestCase(&test.TestCase{
 		Name:        "Get base rate for period",
-		Description: "Get bae rate for a period",
+		Description: "Get base rate for a period",
 		Data:        &bpb.GetBaseRatesResponse{},
 		Workflow:    w,
 		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
@@ -356,10 +369,279 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 
 			resp := tc.GetData().(*bpb.GetBaseRatesResponse)
 			if assert.NotNil(t, resp) {
+				if assert.Condition(t, func() bool { return (len(resp.Rates) > 0) }, "somebase rates should be returned.") {
+					data := tc.GetWorkflowData().(*InitData)
+					assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Country, resp.Rates[0].Country)
+					assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Provider, resp.Rates[0].Provider)
+					check = true
+				}
+			}
+
+			return check, nil
+		},
+	})
+
+	// Add Mark ups
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Set Markup",
+		Description: "Add markup rate fpr owner",
+		Data:        &rpb.UpdateMarkupResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*InitData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.rate.markup.update"})
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.DataPlanUpdateMarkup(a.reqSetMarkupRequest)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*rpb.UpdateMarkupResponse)
+			if assert.NotNil(t, resp) {
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+
+			tc.Watcher.Stop()
+			return nil
+		},
+	})
+
+	/* Get Mark up */
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Get markup",
+		Description: "Get markup percentage for the owner",
+		Data:        &rpb.GetMarkupResponse{},
+		Workflow:    w,
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.DataPlanGetUserMarkup(a.reqGetMarkupRequest)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*rpb.GetMarkupResponse)
+			if assert.NotNil(t, resp) {
+				data := tc.GetWorkflowData().(*InitData)
+				assert.Equal(t, data.reqGetMarkupRequest.OwnerId, resp.OwnerId)
+				check = true
+			}
+
+			return check, nil
+		},
+	})
+
+	/* Get rate */
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Get rate for Owner's org",
+		Description: "Get rate for a Owner's org",
+		Data:        &rpb.GetRateResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*InitData)
+			c := a.Countries[len(a.Countries)-1]
+			p := a.Providers[c]
+			a.reqGetRateRequest = api.GetRateRequest{
+				OwnerId:  a.OwnerId,
+				Country:  c,
+				Provider: p[len(p)-1],
+				SimType:  a.SimType,
+				From:     utils.GenerateFutureDate(24 * time.Hour),
+				To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
+			}
+			tc.SaveWorkflowData(a)
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.DataPlanGetRate(a.reqGetRateRequest)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*rpb.GetRateResponse)
+			if assert.NotNil(t, resp) {
 				data := tc.GetWorkflowData().(*InitData)
 				assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Country, resp.Rates[0].Country)
 				assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Provider, resp.Rates[0].Provider)
 				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+
+			if tc.State == test.StateTypePass {
+				resp := tc.GetData().(*rpb.GetRateResponse)
+
+				a := tc.GetWorkflowData().(*InitData)
+				if len(resp.Rates) > 0 {
+					a.reqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
+				}
+
+				tc.SaveWorkflowData(a)
+			}
+			return nil
+		},
+	})
+
+	/* Add a package */
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Create a package",
+		Description: "Cretae package",
+		Data:        &ppb.AddPackageResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*InitData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.package.create"})
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.DataPlanPackageAdd(a.reqAddPackageRequest)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*ppb.AddPackageResponse)
+			if assert.NotNil(t, resp) {
+				data := tc.GetWorkflowData().(*InitData)
+				assert.Equal(t, data.reqAddPackageRequest.OrgId, resp.Package.OrgId)
+				assert.NotNil(t, resp.Package.Uuid)
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+			resp := tc.GetData().(*ppb.AddPackageResponse)
+
+			a := tc.GetWorkflowData().(*InitData)
+			a.PackageId = resp.Package.Uuid
+
+			tc.SaveWorkflowData(a)
+			tc.Watcher.Stop()
+			return nil
+		},
+	})
+
+	/* Get Packages */
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Get packages for org",
+		Description: "Get packages for the organization",
+		Data:        &ppb.GetByOrgPackageResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*InitData)
+			a.reqGetPackageByOrgRequest = api.GetPackageByOrgRequest{
+				OrgId: a.OrgId,
+			}
+			tc.SaveWorkflowData(a)
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.DataPlanPackageGetByOrg(a.reqGetPackageByOrgRequest)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*ppb.GetByOrgPackageResponse)
+			if assert.NotNil(t, resp) {
+				if assert.Condition(t, func() bool { return (len(resp.Packages) > 0) }) {
+					data := tc.GetWorkflowData().(*InitData)
+					assert.Equal(t, data.reqGetPackageByOrgRequest.OrgId, resp.Packages[0].OrgId)
+					check = true
+				}
 			}
 
 			return check, nil
