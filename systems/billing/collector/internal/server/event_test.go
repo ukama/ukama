@@ -15,7 +15,6 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	operatorpb "github.com/ukama/telna/cdr/pb/gen"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
@@ -28,7 +27,7 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).Return(nil).Once()
 
-		simUsage := operatorpb.SimUsage{
+		simUsage := epb.SimUsage{
 			Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
 			NetworkId:    "9fd07299-2826-4f8b-aea9-69da56440bec",
@@ -62,7 +61,7 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).
 			Return(errors.New("failed to send sim usage")).Once()
 
-		simUsage := operatorpb.SimUsage{}
+		simUsage := epb.SimUsage{}
 
 		anyE, err := anypb.New(&simUsage)
 		assert.NoError(t, err)

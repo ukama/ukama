@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	operatorpb "github.com/ukama/telna/cdr/pb/gen"
 	client "github.com/ukama/ukama/systems/billing/collector/internal/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
@@ -41,12 +40,12 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	// Send usage event
 	case "event.cloud.cdr.sim.usage":
-		msg, err := unmarshalOperatorSimUsage(e.Msg)
+		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
-		err = handleCdrSimUsageEvent(e.RoutingKey, msg, b)
+		err = handleSimUsageEvent(e.RoutingKey, msg, b)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +105,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 	return &epb.EventResponse{}, nil
 }
 
-func handleCdrSimUsageEvent(key string, simUsage *operatorpb.SimUsage, b *BillingCollectorEventServer) error {
+func handleSimUsageEvent(key string, simUsage *epb.SimUsage, b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, simUsage)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -127,7 +126,7 @@ func handleCdrSimUsageEvent(key string, simUsage *operatorpb.SimUsage, b *Billin
 		},
 	}
 
-	log.Infof("Sending operator data usage event %v to billing server", event)
+	log.Infof("Sending data usage event %v to billing server", event)
 
 	return b.client.AddUsageEvent(ctx, event)
 }
@@ -265,12 +264,12 @@ func unmarshalSubscriber(msg *anypb.Any) (*subpb.Subscriber, error) {
 	return p, nil
 }
 
-func unmarshalOperatorSimUsage(msg *anypb.Any) (*operatorpb.SimUsage, error) {
-	p := &operatorpb.SimUsage{}
+func unmarshalSimUsage(msg *anypb.Any) (*epb.SimUsage, error) {
+	p := &epb.SimUsage{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal operator SimUsage message with : %+v. Error %s.",
+		log.Errorf("Failed to Unmarshal SimUsage message with : %+v. Error %s.",
 			msg, err.Error())
 
 		return nil, err
