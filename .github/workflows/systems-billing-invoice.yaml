@@ -26,6 +26,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
+        go-version: '1.19.x'
         registry-name: billing/invoice
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
