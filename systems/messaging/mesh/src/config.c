@@ -124,14 +124,6 @@ static int parse_amqp_config(Config *config, toml_table_t *configData) {
 		config->amqpPort = strdup(amqpPort.u.s);
 	}
 
-	/* Check to see if the host:port is reachable. */
-	if (is_valid_url(config->amqpHost, config->amqpPort)==FALSE) {
-		log_error("Invalid host and/or port for AMQP. Host: %s Port %s",
-				  config->amqpHost, config->amqpPort);
-		ret = FALSE;
-		goto done;
-	}
-
 	if (!amqpExchange.ok) {
 		log_debug("[%s] is missing but is mandatory.", AMQP_EXCHANGE);
 		ret = FALSE;

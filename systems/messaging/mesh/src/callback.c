@@ -47,23 +47,17 @@ extern void  websocket_onclose(const URequest *request, WSManager *manager,
 int callback_websocket (const URequest *request, UResponse *response,
 						void *data) {
 	int ret;
-	char *idStr=NULL;
+	char *nodeID=NULL;
 	Config *config = (Config *)data;
-	uuid_t uuid;
 
-	idStr = u_map_get(request->map_header, "User-Agent");
-	if (idStr == NULL) {
-		log_error("Missing UUID as User-Agent");
-		return U_CALLBACK_ERROR;
-	}
-
-	if (uuid_parse(idStr, uuid)==-1) {
-		log_error("Error parsing the UUID into binary: %s", idStr);
+	nodeID = u_map_get(request->map_header, "User-Agent");
+	if (nodeID == NULL) {
+		log_error("Missing NodeID as User-Agent");
 		return U_CALLBACK_ERROR;
 	}
 
 	if (config->deviceInfo) {
-		if (uuid_compare(config->deviceInfo->uuid, uuid) != 0) {
+		if (strcmp(config->deviceInfo->nodeID, nodeID) != 0) {
 			/* Only accept one device at a time until the socket is closed. */
 			log_error("Only accept one device at a time. Ignoring");
 			return U_CALLBACK_ERROR;
@@ -72,20 +66,18 @@ int callback_websocket (const URequest *request, UResponse *response,
 		config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
 		if (config->deviceInfo == NULL) {
 			log_error("Error allocating memory: %d", sizeof(DeviceInfo));
-			free(idStr);
 			return U_CALLBACK_ERROR;
 		}
-		uuid_copy(config->deviceInfo->uuid, uuid);
+        config->deviceInfo->nodeID = strdup(nodeID);
 	}
 
-	/* Publish device (uuid) 'connect' event to AMQP exchange */
+	/* Publish device (nodeID) 'connect' event to AMQP exchange */
 	if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CONNECT,
-						   uuid) == FALSE) {
+						   nodeID) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
-		free(idStr);
 		return U_CALLBACK_ERROR;
 	} else {
-		log_debug("AMQP device connect msg successfull for UUID: %s", idStr);
+		log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 	}
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
@@ -186,7 +178,7 @@ int callback_webservice(const URequest *request, UResponse *response,
 		goto done;
 	}
 
-	ret = serialize_forward_request(request, &jReq, config, map->uuid);
+	ret = serialize_forward_request(request, &jReq, config, map->nodeID);
 	if (ret == FALSE && jReq == NULL) {
 		log_error("Failed to convert request to JSON");
 		statusCode = 400;

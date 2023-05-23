@@ -117,6 +117,6 @@ typedef struct _routing_key {
 WAMQPConn *init_amqp_connection(char *host, char *port);
 void close_amqp_connection(WAMQPConn *conn);
 int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
-					   uuid_t uuid);
+                       char *nodeID);
 
 #endif /* MESH_AMQP_H */

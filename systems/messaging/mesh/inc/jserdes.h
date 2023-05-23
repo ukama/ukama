@@ -55,7 +55,7 @@
 #define JSON_LEN   "len"
 
 /* Function headers. */
-int serialize_response(json_t **json, int size, void *data, uuid_t uuid);
+int serialize_response(json_t **json, int size, void *data, char *nodeID);
 int serialize_forward_request(URequest *request, json_t **json,
 			      Config *config, uuid_t uuid);
 int serialize_device_info(json_t **json, DeviceInfo *device);

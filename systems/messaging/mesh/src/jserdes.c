@@ -167,13 +167,12 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 int serialize_device_info(json_t **json, DeviceInfo *device) {
 
 	json_t *jDevice=NULL;
-	char idStr[36+1];
 
 	if (device == NULL) {
 		return FALSE;
 	}
 
-	if (uuid_is_null(device->uuid)) {
+	if (device->nodeID == NULL) {
 		return FALSE;
 	}
 
@@ -182,7 +181,7 @@ int serialize_device_info(json_t **json, DeviceInfo *device) {
 		return FALSE;
 	}
 
-	/* Add Device info (UUID) */
+	/* Add Device info (nodeID) */
 	json_object_set_new(*json, JSON_DEVICE_INFO, json_object());
 	jDevice = json_object_get(*json, JSON_DEVICE_INFO);
 
@@ -192,8 +191,7 @@ int serialize_device_info(json_t **json, DeviceInfo *device) {
 		return FALSE;
 	}
 
-	uuid_unparse(device->uuid, &idStr[0]);
-	json_object_set_new(jDevice, JSON_ID, json_string(idStr));
+	json_object_set_new(jDevice, JSON_ID, json_string(device->nodeID));
 
 	return TRUE;
 }
@@ -202,15 +200,14 @@ int serialize_device_info(json_t **json, DeviceInfo *device) {
  * serialize_response --
  *
  */
-int serialize_response(json_t **json, int size, void *data, uuid_t uuid) {
+int serialize_response(json_t **json, int size, void *data, char *nodeID) {
 
 	json_t *jResp=NULL, *jRespInfo=NULL, *jRaw=NULL;
 	json_t *jService=NULL;
-	char idStr[36+1];
 	char *jStr;
 
 	/* basic sanity check */
-	if (size == 0 && data == NULL && uuid_is_null(uuid))
+	if (size == 0 && data == NULL && nodeID == NULL)
 		return FALSE;
 
 	*json = json_object();
@@ -231,10 +228,9 @@ int serialize_response(json_t **json, int size, void *data, uuid_t uuid) {
 	json_object_set_new(jResp, JSON_SEQ, json_integer(123)); /* xxx */
 
 	/* Service Info. */
-	uuid_unparse(uuid, &idStr[0]);
 	json_object_set_new(jResp, JSON_SERVICE_INFO, json_object());
 	jService = json_object_get(jResp, JSON_SERVICE_INFO);
-	json_object_set_new(jService, JSON_ID, json_string(&idStr[0]));
+	json_object_set_new(jService, JSON_ID, json_string(nodeID));
 
 	/* Add response info. */
 	json_object_set_new(jResp, JSON_RESPONSE_INFO, json_object());
@@ -287,12 +283,11 @@ int serialize_forward_request(URequest *request, json_t **json,
 	json_object_set_new(jReq, JSON_TYPE, json_string(MESH_TYPE_FWD_REQ));
 	json_object_set_new(jReq, JSON_SEQ, json_integer(123));
 
-	/* Add Device info. Currently only is the UUID. */
+	/* Add Device info. Currently only is the nodeID. */
 	json_object_set_new(jReq, JSON_DEVICE_INFO, json_object());
 	jDevice = json_object_get(jReq, JSON_DEVICE_INFO);
-
-	uuid_unparse(config->deviceInfo->uuid, &idStr[0]);
-	json_object_set_new(jDevice, JSON_ID, json_string(idStr));
+	json_object_set_new(jDevice, JSON_ID,
+                        json_string(config->deviceInfo->nodeID));
 
 	/* Add service info., service is the one whose request is being forward. */
 	uuid_unparse(uuid, &idStr[0]); /* Service UUID. */
@@ -368,7 +363,8 @@ int deserialize_device_info(DeviceInfo **device, json_t *json) {
 		return FALSE;
 	}
 
-	uuid_parse(json_string_value(obj), (*device)->uuid);
+
+	(*device)->nodeID = strdup(json_string_value(obj));
 
 	return TRUE;
 }
