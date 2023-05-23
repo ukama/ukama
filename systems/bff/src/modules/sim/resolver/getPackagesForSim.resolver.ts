@@ -1,4 +1,4 @@
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
 import { parseCookie } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
@@ -11,7 +11,7 @@ import { GetPackagesForSimInputDto, GetPackagesForSimResDto } from "../types";
 export class GetPackagesForSimResolver {
     constructor(private readonly simService: SimService) {}
 
-    @Mutation(() => GetPackagesForSimResDto)
+    @Query(() => GetPackagesForSimResDto)
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: GetPackagesForSimInputDto,
