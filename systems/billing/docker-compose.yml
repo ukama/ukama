@@ -42,7 +42,7 @@ services:
 
 
   msg-client-billing:
-    build: ../messaging/msgClient
+    build: ../services/msgClient
     ports:
       - "9690:9095"
     environment:
