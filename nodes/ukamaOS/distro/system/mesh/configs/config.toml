@@ -1,8 +1,7 @@
 # Config file for mesh.d
 
 [client-config]
-	remote-ip-file = "/conf/ip_file"
-	remote-connect = "9275"
+	remote-ip-file = "./configs/ip_file"
 	local-accept   = "4440"
 	cert           = "/a/b/x/cert.crt"
 	key            = "/a/b/z/pem.key"

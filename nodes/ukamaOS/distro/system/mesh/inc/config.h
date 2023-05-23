@@ -14,7 +14,6 @@
 #define REVERSE_PROXY "reverse-proxy"
 
 #define LOCAL_ACCEPT   "local-accept"
-#define REMOTE_CONNECT "remote-connect"
 #define REMOTE_IP_FILE "remote-ip-file"
 #define CONNECT_IP     "connect-ip"
 #define CONNECT_PORT   "connect-port"

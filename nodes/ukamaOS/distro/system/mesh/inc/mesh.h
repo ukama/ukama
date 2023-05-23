@@ -63,7 +63,8 @@ typedef struct _u_map UMap;
 
 typedef struct {
 
-	uuid_t uuid;
+	char *nodeID;
+    uuid_t uuid;
 } DeviceInfo;
 
 typedef struct {

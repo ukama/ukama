@@ -54,23 +54,18 @@ static int is_valid_request(URequest *request) {
 int callback_websocket (const URequest *request, UResponse *response,
 						void *data) {
 	int ret;
-	char *idStr=NULL;
+	char *nodeID=NULL;
 	Config *config = (Config *)data;
 	uuid_t uuid;
 
-	idStr = u_map_get(request->map_header, "User-Agent");
-	if (idStr == NULL) {
-		log_error("Missing UUID as User-Agent");
-		return U_CALLBACK_ERROR;
-	}
-
-	if (uuid_parse(idStr, uuid)==-1) {
-		log_error("Error parsing the UUID into binary: %s", idStr);
+	nodeID = u_map_get(request->map_header, "User-Agent");
+	if (nodeID == NULL) {
+		log_error("Missing NodeID as User-Agent");
 		return U_CALLBACK_ERROR;
 	}
 
 	if (config->deviceInfo) {
-		if (uuid_compare(config->deviceInfo->uuid, uuid) != 0) {
+		if (strcmp(config->deviceInfo->nodeID, nodeID) != 0) {
 			/* Only accept one device at a time until the socket is closed. */
 			log_error("Only accept one device at a time. Ignoring");
 			return U_CALLBACK_ERROR;
@@ -79,10 +74,10 @@ int callback_websocket (const URequest *request, UResponse *response,
 		config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
 		if (config->deviceInfo == NULL) {
 			log_error("Error allocating memory: %d", sizeof(DeviceInfo));
-			free(idStr);
+            free(nodeID);
 			return U_CALLBACK_ERROR;
 		}
-		uuid_copy(config->deviceInfo->uuid, uuid);
+        config->deviceInfo->nodeID = strdup(nodeID);
 	}
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,

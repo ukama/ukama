@@ -29,8 +29,6 @@ static int parse_proxy_entries(Config *config, toml_table_t *proxyData);
 static int parse_config_entries(int secure, Config *config,
 								toml_table_t *configData);
 static int read_line(char *buffer, int size, FILE *fp);
-static int parse_amqp_config(Config *config, toml_table_t *configData);
-static int is_valid_url(char *name, char *port);
 
 /*
  * print_config --
@@ -73,39 +71,63 @@ static int read_line(char *buffer, int size, FILE *fp) {
 }
 
 /*
- * read_ip -- read IP (hostname) from the passed fileName
+ * split_strings --
  *
  */
+static void split_strings(char *input, char **str1, char **str2) {
 
-static char *read_ip(char *fileName) {
+    char *delimiter=";", *token=NULL;
 
+    token = strtok(input, delimiter);
+
+    if (token != NULL) {
+        *str1 = strdup(token);
+
+        token = strtok(NULL, delimiter);
+        if (token != NULL) {
+            *str2 = strdup(token);
+        }
+    }
+}
+
+/*
+ * read_hostname_and_nodeid -- read hostname (ip:port) and nodeID from the
+ *                             passed file
+ *
+ */
+static int read_hostname_and_nodeid(char *fileName, char **hostname,
+                                    char **nodeID) {
+
+    int ret=TRUE;
 	FILE *fp=NULL;
 	char *buffer=NULL;
 
 	buffer = (char *)malloc(MAX_BUFFER);
 	if (!buffer) {
 		log_error("Error allocating memory of size: %s", MAX_BUFFER);
-		return NULL;
+		return FALSE;
 	}
 
 	fp = fopen(fileName, "r");
 	if (fp == NULL) {
 		log_error("[%s] Error opening file. Error: %s", fileName,
 				  strerror(errno));
-		return NULL;
+		return FALSE;
 	}
 
 	/* Read the file content. */
 	if (read_line(buffer, MAX_BUFFER, fp)<=0) {
 		log_error("[%s] Error reading file. Error: %s", fileName,
 				  strerror(errno));
-		fclose(fp);
-		free(buffer);
-		return NULL;
-	}
+        ret = FALSE;
+	} else {
+        split_strings(buffer, hostname, nodeID);
+    }
 
 	fclose(fp);
-	return buffer;
+    free(buffer);
+
+	return ret;
 }
 
 /*
@@ -167,12 +189,11 @@ static int parse_config_entries(int secure, Config *config,
 								toml_table_t *configData) {
 
 	int ret=TRUE;
-	char *buffer=NULL;
-	toml_datum_t localAccept, remoteConnect, cert, key;
+	char *hostname=NULL, *nodeID=NULL;
+	toml_datum_t localAccept, cert, key;
 	toml_datum_t remoteIPFile;
 
 	remoteIPFile  = toml_string_in(configData, REMOTE_IP_FILE);
-	remoteConnect = toml_string_in(configData, REMOTE_CONNECT);
 	localAccept   = toml_string_in(configData, LOCAL_ACCEPT);
 	cert          = toml_string_in(configData, CFG_CERT);
 	key           = toml_string_in(configData, CFG_KEY);
@@ -180,40 +201,32 @@ static int parse_config_entries(int secure, Config *config,
 	config->secure = secure;
 
 	if (!remoteIPFile.ok) {
-		log_debug("[%s] is missing. using default of 127.0.0.1",
-				  REMOTE_IP_FILE);
+		log_error("[%s] is missing but is mandatory", REMOTE_IP_FILE);
+        ret=FALSE;
+        goto done;
 	} else {
 		/* Read the content of the IP file. */
-		buffer = read_ip(remoteIPFile.u.s);
-		if (buffer == NULL) {
+		if (read_hostname_and_nodeid(remoteIPFile.u.s, &hostname, &nodeID)
+            == FALSE) {
 			goto done;
 		}
 	}
 
-	if (!remoteConnect.ok || buffer == NULL) {
-		log_debug("[%s] is missing, is mandatory", REMOTE_CONNECT);
-		ret = FALSE;
-		goto done;
-	}
-
 	config->remoteConnect = (char *)calloc(1, MAX_BUFFER);
 	if (config->secure) {
-		sprintf(config->remoteConnect, "wss://%s:%s/%s", buffer,
-				remoteConnect.u.s, PREFIX_WEBSOCKET);
+		sprintf(config->remoteConnect, "wss://%s/%s", hostname,
+                PREFIX_WEBSOCKET);
 	} else {
-		sprintf(config->remoteConnect, "ws://%s:%s/%s", buffer,
-				remoteConnect.u.s, PREFIX_WEBSOCKET);
+		sprintf(config->remoteConnect, "ws://%s/%s", hostname,
+				PREFIX_WEBSOCKET);
 	}
 
-	/* For now, assign a random UUID. Eventually this to be replaced with
-	 * the data read from EDR.
-	 */
 	config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
 	if (config->deviceInfo == NULL) {
 		log_error("Error allocating memory of size: %d", sizeof(DeviceInfo));
 		goto done;
 	}
-	uuid_generate(config->deviceInfo->uuid);
+    config->deviceInfo->nodeID = strdup(nodeID);
 
 	if (!localAccept.ok) {
 		log_debug("[%s] is missing, setting to default: %s", LOCAL_ACCEPT,
@@ -240,9 +253,9 @@ static int parse_config_entries(int secure, Config *config,
 	if (key.ok)           free(key.u.s);
 	if (cert.ok)          free(cert.u.s);
 	if (localAccept.ok)   free(localAccept.u.s);
-	if (remoteConnect.ok) free(remoteConnect.u.s);
 	if (remoteIPFile.ok)  free(remoteIPFile.u.s);
-	if (buffer)           free(buffer);
+    if (hostname)         free(hostname);
+    if (nodeID)           free(nodeID);
 
 	return ret;
 }
@@ -257,9 +270,9 @@ int process_config_file(int secure, int proxy, char *fileName, Config *config) {
 	int ret=TRUE;
 	FILE *fp;
 	toml_table_t *fileData=NULL;
-	toml_table_t *serverConfig=NULL, *clientConfig=NULL;
+	toml_table_t *clientConfig=NULL;
 	toml_table_t *proxyConfig=NULL;
-  
+
 	char errBuf[MAX_BUFFER];
 
 	/* Sanity check. */
