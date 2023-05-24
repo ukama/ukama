@@ -1,15 +1,15 @@
 import {
+  commonData,
   isDarkmode,
   isSkeltonLoading,
   pageName,
   snackbarMessage,
   user,
 } from '@/app-recoil';
-import { networkId } from '@/app-recoil/atom';
 import client from '@/client/ApolloClient';
-import { useWhoamiLazyQuery } from '@/generated';
+import { useGetNetworksLazyQuery, useWhoamiLazyQuery } from '@/generated';
 import { theme } from '@/styles/theme';
-import { TSnackMessage, TUser } from '@/types';
+import { TCommonData, TSnackMessage, TUser } from '@/types';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
 import { ApolloProvider } from '@apollo/client';
@@ -60,13 +60,17 @@ const App = ({
     useRecoilState<TSnackMessage>(snackbarMessage);
   const [skeltonLoading, setSkeltonLoading] =
     useRecoilState<boolean>(isSkeltonLoading);
-  const [network, setNetwork] = useRecoilState<string>(networkId);
+  const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
   const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery();
+  const [
+    getNetworks,
+    { data: networksData, error: networdsError, loading: networksLoading },
+  ] = useGetNetworksLazyQuery();
 
   useEffect(() => {
-    // if (!_user?.id) getWhoami();
+    if (!_user?.id) getWhoami();
   }, []);
 
   useEffect(() => {
@@ -102,16 +106,17 @@ const App = ({
   }, [loading]);
 
   useEffect(() => {
-    // if (data?.whoami) {
-    //   _setUser({
-    //     id: data.whoami.id,
-    //     name: data.whoami.name,
-    //     email: data.whoami.email,
-    //     role: data.whoami.role,
-    //     isFirstVisit: data.whoami.isFirstVisit,
-    //   });
-    //   setSkeltonLoading(false);
-    // }
+    if (data?.whoami) {
+      getNetworks();
+      //   _setUser({
+      //     id: data.whoami.id,
+      //     name: data.whoami.name,
+      //     email: data.whoami.email,
+      //     role: data.whoami.role,
+      //     isFirstVisit: data.whoami.isFirstVisit,
+      //   });
+      //   setSkeltonLoading(false);
+    }
   }, [data]);
 
   useEffect(() => {
@@ -137,7 +142,8 @@ const App = ({
     setSnackbarMessage({ ..._snackbarMessage, show: false });
 
   const handlePageChange = (page: string) => setPage(page);
-  const handleNetworkChange = (id: string) => setNetwork(id);
+  const handleNetworkChange = (id: string) =>
+    setCommonData({ ..._commonData, networkId: id });
 
   return (
     <CacheProvider value={emotionCache}>
@@ -146,8 +152,8 @@ const App = ({
         <ErrorBoundary>
           <Layout
             page={page}
-            networkId={network}
-            networks={NETWORKS}
+            networkId={_commonData?.networkId}
+            networks={networksData?.getNetworks.networks}
             isDarkMode={_isDarkMod}
             isLoading={skeltonLoading}
             handlePageChange={handlePageChange}

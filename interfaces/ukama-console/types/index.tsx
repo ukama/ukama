@@ -30,7 +30,6 @@ export type HeaderMenuItemType = {
   Icon: any;
   title: string;
 };
-
 export type SelectItemType = {
   id: number | string;
   label: string;
@@ -46,7 +45,6 @@ export type ExportOptionsType = {
   value: string | number;
   label: string;
 };
-
 export type BillingTableHeaderOptionsType = {
   id?: number;
   label: string;
@@ -119,10 +117,15 @@ export type TUser = {
   role: string;
   isFirstVisit: boolean;
 };
-
 export type TSnackMessage = {
   id: string;
   message: string;
   type: string;
   show: boolean;
+};
+export type TCommonData = {
+  networkId: string;
+  orgId: string;
+  userId: string;
+  orgName: string;
 };
