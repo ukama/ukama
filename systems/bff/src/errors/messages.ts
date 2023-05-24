@@ -1,4 +1,5 @@
 export default {
+    REQUEST_AUTHENTICATION_FAILED: "Request authentication failed",
     SOMETHING_WENT_WRONG: "Something went wrong!",
     DATA_NOT_FOUND: "Data not found",
     ALERTS_NOT_FOUND: "Alerts not found",

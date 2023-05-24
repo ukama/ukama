@@ -8,7 +8,7 @@ import {
     UseMiddleware,
 } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { TIME_FILTER } from "../../../constants";
@@ -27,7 +27,7 @@ export class GetConnectedUsersResolver {
         @PubSub() pubsub: PubSubEngine,
         @Ctx() ctx: Context
     ): Promise<ConnectedUserDto> {
-        const user = this.userService.getConnectedUsers(parseCookie(ctx));
+        const user = this.userService.getConnectedUsers(parseHeaders(ctx));
         pubsub.publish("getConnectedUsers", user);
         return user;
     }

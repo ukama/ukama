@@ -1,6 +1,6 @@
 import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { DefaultMarkupResDto } from "../types";
@@ -14,6 +14,6 @@ export class GetDefaultMarkupResolver {
     @Query(() => DefaultMarkupResDto)
     @UseMiddleware(Authentication)
     async getDefaultMarkup(@Ctx() ctx: Context): Promise<DefaultMarkupResDto> {
-        return this.rateService.getDefaultMarkup(parseCookie(ctx));
+        return this.rateService.getDefaultMarkup(parseHeaders(ctx));
     }
 }

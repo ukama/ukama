@@ -1,9 +1,10 @@
 import { Service } from "typedi";
 import { catchAsyncIOMethod } from "../../common";
-import { BoolResponse, ParsedCookie } from "../../common/types";
+import { BoolResponse, THeaders } from "../../common/types";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
-import { checkError, HTTP404Error, Messages } from "../../errors";
+import { HTTP404Error, Messages, checkError } from "../../errors";
+import { getHeaders } from "../../utils";
 import { IOrgService } from "./interface";
 import OrgMapper from "./mapper";
 import {
@@ -17,33 +18,33 @@ import {
 
 @Service()
 export class OrgService implements IOrgService {
-    getOrgMembers = async (cookie: ParsedCookie): Promise<OrgMembersResDto> => {
+    getOrgMembers = async (headers: THeaders): Promise<OrgMembersResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.REGISTRY_ORGS_API_URL}/${cookie.orgName}/members`,
-            headers: cookie.header,
+            path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members`,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return OrgMapper.dtoToMembersResDto(res);
     };
-    getOrgMember = async (cookie: ParsedCookie): Promise<MemberObj> => {
+    getOrgMember = async (headers: THeaders): Promise<MemberObj> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.REGISTRY_ORGS_API_URL}/${cookie.orgName}/members/${cookie.userId}`,
-            headers: cookie.header,
+            path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members/${headers.userId}`,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return OrgMapper.dtoToMemberResDto(res);
     };
-    removeMember = async (cookie: ParsedCookie): Promise<BoolResponse> => {
+    removeMember = async (headers: THeaders): Promise<BoolResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.DELETE,
-            path: `${SERVER.REGISTRY_ORGS_API_URL}/${cookie.orgName}/members/${cookie.userId}`,
-            headers: cookie.header,
+            path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members/${headers.userId}`,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -52,22 +53,22 @@ export class OrgService implements IOrgService {
             success: true,
         };
     };
-    getOrgs = async (cookie: ParsedCookie): Promise<OrgsResDto> => {
+    getOrgs = async (headers: THeaders): Promise<OrgsResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.REGISTRY_ORGS_API_URL}/${cookie.orgName}`,
-            headers: cookie.header,
+            path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}`,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return OrgMapper.dtoToOrgsResDto(res);
     };
-    getOrg = async (orgName: string, cookie: ParsedCookie): Promise<OrgDto> => {
+    getOrg = async (orgName: string, headers: THeaders): Promise<OrgDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.REGISTRY_ORGS_API_URL}/${orgName}`,
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -76,13 +77,13 @@ export class OrgService implements IOrgService {
     };
     addOrg = async (
         req: AddOrgInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<OrgDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: SERVER.REGISTRY_ORGS_API_URL,
             body: req,
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -91,13 +92,13 @@ export class OrgService implements IOrgService {
     };
     addMember = async (
         userId: string,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<MemberObj> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
-            path: `${SERVER.REGISTRY_ORGS_API_URL}/${cookie.orgName}/members`,
+            path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members`,
             body: { user_uuid: userId },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -107,13 +108,13 @@ export class OrgService implements IOrgService {
     updateMember = async (
         memberId: string,
         req: UpdateMemberInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<BoolResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
-            path: `${SERVER.REGISTRY_ORGS_API_URL}/${cookie.orgName}/members/${memberId}`,
+            path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members/${memberId}`,
             body: req,
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);

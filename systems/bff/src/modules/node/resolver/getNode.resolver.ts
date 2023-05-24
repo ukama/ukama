@@ -1,10 +1,10 @@
+import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { NodeResponse } from "../types";
-import { NodeService } from "../service";
-import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
-import { Resolver, Query, UseMiddleware, Arg, Ctx } from "type-graphql";
+import { Context } from "../../../common/types";
+import { NodeService } from "../service";
+import { NodeResponse } from "../types";
 
 @Service()
 @Resolver()
@@ -18,6 +18,6 @@ export class GetNodeResolver {
         nodeId: string,
         @Ctx() ctx: Context
     ): Promise<NodeResponse> {
-        return this.nodeService.getNode(nodeId, parseCookie(ctx));
+        return this.nodeService.getNode(nodeId, parseHeaders(ctx));
     }
 }

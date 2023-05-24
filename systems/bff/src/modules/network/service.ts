@@ -1,10 +1,11 @@
 import { Service } from "typedi";
 import { catchAsyncIOMethod } from "../../common";
-import { ParsedCookie } from "../../common/types";
+import { THeaders } from "../../common/types";
 import setupLogger from "../../config/setupLogger";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 import { checkError } from "../../errors";
+import { getHeaders } from "../../utils";
 import { INetworkService } from "./interface";
 import NetworkMapper from "./mapper";
 import {
@@ -19,18 +20,16 @@ import {
 const logger = setupLogger("service");
 @Service()
 export class NetworkService implements INetworkService {
-    getNetworkStatus = async (
-        cookie: ParsedCookie
-    ): Promise<NetworkStatusDto> => {
+    getNetworkStatus = async (headers: THeaders): Promise<NetworkStatusDto> => {
         const resLiveNodes = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${cookie.orgId}/metrics/live-nodes`,
-            headers: cookie.header,
+            path: `${SERVER.ORG}/${headers.orgId}/metrics/live-nodes`,
+            headers: getHeaders(headers),
         });
         const resTotalNodes = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${cookie.orgId}/nodes`,
-            headers: cookie.header,
+            path: `${SERVER.ORG}/${headers.orgId}/nodes`,
+            headers: getHeaders(headers),
         });
         if (checkError(resLiveNodes)) {
             logger.error(resLiveNodes);
@@ -47,14 +46,14 @@ export class NetworkService implements INetworkService {
         );
     };
 
-    getNetworks = async (cookie: ParsedCookie): Promise<NetworksResDto> => {
+    getNetworks = async (headers: THeaders): Promise<NetworksResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.REGISTRY_NETWORKS_API_URL}`,
             params: {
-                org: cookie.orgId,
+                org: headers.orgId,
             },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -63,12 +62,12 @@ export class NetworkService implements INetworkService {
 
     getNetwork = async (
         networkId: string,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<NetworkDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.REGISTRY_NETWORKS_API_URL}/${networkId}`,
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -77,12 +76,12 @@ export class NetworkService implements INetworkService {
 
     getSites = async (
         networkId: string,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SitesResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.REGISTRY_NETWORKS_API_URL}/${networkId}/sites`,
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -92,12 +91,12 @@ export class NetworkService implements INetworkService {
     getSite = async (
         siteId: string,
         networkId: string,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SiteDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.REGISTRY_NETWORKS_API_URL}/${networkId}/sites/${siteId}`,
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -106,13 +105,13 @@ export class NetworkService implements INetworkService {
 
     addNetwork = async (
         req: AddNetworkInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<NetworkDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.REGISTRY_NETWORKS_API_URL}`,
             body: req,
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -122,13 +121,13 @@ export class NetworkService implements INetworkService {
     addSite = async (
         networkId: string,
         req: AddSiteInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SiteDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.REGISTRY_NETWORKS_API_URL}/${networkId}/sites`,
             body: req,
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
 
         if (checkError(res)) throw new Error(res.message);

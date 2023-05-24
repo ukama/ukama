@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { UserService } from "../service";
@@ -17,7 +17,7 @@ export class AddUserResolver {
         @Arg("data") data: UserInputDto,
         @Ctx() ctx: Context
     ): Promise<UserResDto> {
-        const user = await this.userService.addUser(data, parseCookie(ctx));
+        const user = await this.userService.addUser(data, parseHeaders(ctx));
         return user;
     }
 }

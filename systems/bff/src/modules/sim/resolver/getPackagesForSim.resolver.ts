@@ -1,6 +1,6 @@
 import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
@@ -17,6 +17,6 @@ export class GetPackagesForSimResolver {
         @Arg("data") data: GetPackagesForSimInputDto,
         @Ctx() ctx: Context
     ): Promise<GetPackagesForSimResDto> {
-        return await this.simService.getPackagesForSim(data, parseCookie(ctx));
+        return await this.simService.getPackagesForSim(data, parseHeaders(ctx));
     }
 }

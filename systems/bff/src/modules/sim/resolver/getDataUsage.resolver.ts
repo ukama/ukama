@@ -1,6 +1,6 @@
 import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
@@ -17,6 +17,6 @@ export class GetDataUsageResolver {
         @Arg("simId") simId: string,
         @Ctx() ctx: Context
     ): Promise<SimDataUsage> {
-        return await this.simService.getDataUsage(simId, parseCookie(ctx));
+        return await this.simService.getDataUsage(simId, parseHeaders(ctx));
     }
 }

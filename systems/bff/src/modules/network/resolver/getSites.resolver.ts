@@ -1,6 +1,6 @@
 import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { NetworkService } from "../service";
@@ -17,6 +17,6 @@ export class GetSitesResolver {
         @Arg("networkId") networkId: string,
         @Ctx() ctx: Context
     ): Promise<SitesResDto> {
-        return this.networkService.getSites(networkId, parseCookie(ctx));
+        return this.networkService.getSites(networkId, parseHeaders(ctx));
     }
 }

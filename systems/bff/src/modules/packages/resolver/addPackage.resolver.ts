@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { AddPackageInputDto, PackageDto } from "../types";
@@ -17,6 +17,6 @@ export class AddPackageResolver {
         @Arg("data") data: AddPackageInputDto,
         @Ctx() ctx: Context
     ): Promise<PackageDto> {
-        return this.packageService.addPackage(data, parseCookie(ctx));
+        return this.packageService.addPackage(data, parseHeaders(ctx));
     }
 }
