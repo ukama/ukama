@@ -68,17 +68,17 @@ message AddPackageRequest {
     int64 ulbr = 14;
     double markup = 16;
     string type = 17;
-    string dataUnit = 18;
-    string voiceUnit = 19;
-    string messageunit = 20;
+    string dataUnit = 18 [json_name = "data_unit"];
+    string voiceUnit = 19 [json_name = "voice_unit"];
+    string messageUnit = 20 [json_name = "message_unit"];
     bool   flatrate = 21;
     double amount = 22;
-    string effectiveAt  = 23;
-    string endAt = 24;
+    string effectiveAt = 23 [json_name = "effective_at"];
+    string endAt = 24 [json_name = "end_at"];
     string country=25;
     string provider= 26;
     string apn = 27;
-    string baserate = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "baserate_id"];
+    string baserateId = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "baserate_id"];
     string ownerId =29[(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "owner_id"];
     string from = 30;
     string to = 31;
@@ -108,9 +108,9 @@ message Package {
     PackageRates rate = 15;
     PackageMarkup markup = 16;
     string type = 17;
-    string dataUnit = 18;
-    string voiceUnit = 19;
-    string messageunit = 20;
+    string dataUnit = 18 [json_name = "data_unit"];
+    string voiceUnit = 19 [json_name = "voice_unit"];
+    string messageUnit = 20 [json_name = "message_unit"];
     bool flatrate = 21;
     string currency = 22;
     string from = 23;
@@ -118,16 +118,16 @@ message Package {
     string country=25;
     string provider= 26;
     string apn = 27;
-    string OwnerId = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string ownerId = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "owner_id"];
     double amount = 29 [json_name = "amount"];
 
 }
 
 message PackageRates{ 
-    double SmsMo=1 [json_name = "sms_mo"];
-    double SmsMt =2 [json_name = "sms_mt"];
-    double Data =3;
-    double Amount  = 4;
+    double smsMo=1 [json_name = "sms_mo"];
+    double smsMt =2 [json_name = "sms_mt"];
+    double data =3;
+    double amount  = 4;
 
 } 
 

@@ -344,6 +344,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		UpdatedAt:   p.UpdatedAt.Format(time.RFC3339),
 		DeletedAt:   d,
 		Rate: &pb.PackageRates{
+			
 			Data:   p.PackageRate.Data,
 			SmsMo:  p.PackageRate.SmsMo,
 			SmsMt:  p.PackageRate.SmsMt,
