@@ -561,6 +561,7 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 			var err error
 			a, ok := tc.GetWorkflowData().(*InitData)
 			if ok {
+
 				tc.Data, err = a.Sys.DataPlanPackageAdd(a.reqAddPackageRequest)
 			} else {
 				log.Errorf("Invalid data type for Workflow data.")
@@ -589,13 +590,13 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 			/* Here we save any data required to be saved from the test case
 			Cleanup any test specific data
 			*/
-			resp := tc.GetData().(*ppb.AddPackageResponse)
+			tc.Watcher.Stop()
 
+			assert.Equal(t, int(tc.State), int(test.StateTypePass))
+			resp := tc.GetData().(*ppb.AddPackageResponse)
 			a := tc.GetWorkflowData().(*InitData)
 			a.PackageId = resp.Package.Uuid
-
 			tc.SaveWorkflowData(a)
-			tc.Watcher.Stop()
 			return nil
 		},
 	})
