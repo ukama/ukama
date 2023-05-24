@@ -228,7 +228,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			OwnerId:         resp.Package.OwnerId,
 			Type:            resp.Package.Type,
 			Flatrate:        resp.Package.Flatrate,
-			Amount:          resp.Package.Amount,
+			Amount:          resp.Package.Rate.Amount,
 			From:            resp.Package.From,
 			To:              resp.Package.To,
 			SimType:         resp.Package.SimType,
@@ -329,6 +329,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 	if p.DeletedAt.Valid {
 		d = p.DeletedAt.Time.Format(time.RFC3339)
 	}
+
 	return &pb.Package{
 		Uuid:        p.Uuid.String(),
 		Name:        p.Name,
@@ -360,6 +361,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		DataUnit:    p.DataUnits.String(),
 		Country:     p.Country,
 		Currency:    p.Currency,
+		Apn:         p.PackageDetails.Apn,
 		Flatrate:    p.Flatrate,
 	}
 }

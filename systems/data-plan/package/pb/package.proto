@@ -119,8 +119,6 @@ message Package {
     string provider= 26;
     string apn = 27;
     string OwnerId = 28 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    double amount = 29 [json_name = "amount"];
-
 }
 
 message PackageRates{ 
