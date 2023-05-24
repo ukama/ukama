@@ -1622,10 +1622,9 @@ export type GetNetworkDataUsageQueryVariables = Exact<{
 
 export type GetNetworkDataUsageQuery = { __typename?: 'Query', getNetworkDataUsage: { __typename?: 'DataUsageNetworkResponse', usage: number } };
 
-export type GetPackagesQueryVariables = Exact<{ [key: string]: never; }>;
+export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
 
-
-export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
+export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
 
 export type AddSubscriberMutationVariables = Exact<{
   data: SubscriberInputDto;
@@ -1670,7 +1669,50 @@ export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
 
 export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
 
+export type GetPackagesQueryVariables = Exact<{ [key: string]: never; }>;
 
+
+export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
+
+export const SubscriberSimFragmentDoc = gql`
+    fragment SubscriberSim on SubscriberDto {
+  sim {
+    id
+    subscriberId
+    networkId
+    orgId
+    iccid
+    msisdn
+    imsi
+    type
+    status
+    firstActivatedOn
+    lastActivatedOn
+    activationsCount
+    deactivationsCount
+    allocatedAt
+    isPhysical
+    package
+  }
+}
+    `;
+export const SubscriberFragmentDoc = gql`
+    fragment Subscriber on SubscriberDto {
+  uuid
+  address
+  dob
+  email
+  firstName
+  lastName
+  gender
+  idSerial
+  networkId
+  orgId
+  phone
+  proofOfIdentification
+  ...SubscriberSim
+}
+    ${SubscriberSimFragmentDoc}`;
 export const WhoamiDocument = gql`
     query Whoami {
   whoami {
@@ -1820,114 +1862,13 @@ export function useGetNetworkDataUsageLazyQuery(baseOptions?: Apollo.LazyQueryHo
 export type GetNetworkDataUsageQueryHookResult = ReturnType<typeof useGetNetworkDataUsageQuery>;
 export type GetNetworkDataUsageLazyQueryHookResult = ReturnType<typeof useGetNetworkDataUsageLazyQuery>;
 export type GetNetworkDataUsageQueryResult = Apollo.QueryResult<GetNetworkDataUsageQuery, GetNetworkDataUsageQueryVariables>;
-export const GetPackagesDocument = gql`
-    query getPackages {
-  getPackages {
-    packages {
-      uuid
-      name
-      orgId
-      active
-      duration
-      simType
-      createdAt
-      deletedAt
-      updatedAt
-      smsVolume
-      dataVolume
-      voiceVolume
-      ulbr
-      dlbr
-      type
-      dataUnit
-      voiceUnit
-      messageUnit
-      flatrate
-      currency
-      from
-      to
-      country
-      provider
-      apn
-      ownerId
-      amount
-      rate {
-        sms_mo
-        sms_mt
-        data
-        amount
-      }
-      markup {
-        baserate
-        markup
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useGetPackagesQuery__
- *
- * To run a query within a React component, call `useGetPackagesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetPackagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetPackagesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetPackagesQuery(baseOptions?: Apollo.QueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
-      }
-export function useGetPackagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
-        }
-export type GetPackagesQueryHookResult = ReturnType<typeof useGetPackagesQuery>;
-export type GetPackagesLazyQueryHookResult = ReturnType<typeof useGetPackagesLazyQuery>;
-export type GetPackagesQueryResult = Apollo.QueryResult<GetPackagesQuery, GetPackagesQueryVariables>;
 export const AddSubscriberDocument = gql`
     mutation addSubscriber($data: SubscriberInputDto!) {
   addSubscriber(data: $data) {
-    uuid
-    address
-    dob
-    email
-    firstName
-    lastName
-    gender
-    idSerial
-    networkId
-    orgId
-    phone
-    proofOfIdentification
-    sim {
-      id
-      subscriberId
-      networkId
-      orgId
-      iccid
-      msisdn
-      imsi
-      type
-      status
-      firstActivatedOn
-      lastActivatedOn
-      activationsCount
-      deactivationsCount
-      allocatedAt
-      isPhysical
-      package
-    }
+    ...Subscriber
   }
 }
-    `;
+    ${SubscriberFragmentDoc}`;
 export type AddSubscriberMutationFn = Apollo.MutationFunction<AddSubscriberMutation, AddSubscriberMutationVariables>;
 
 /**
@@ -1957,39 +1898,10 @@ export type AddSubscriberMutationOptions = Apollo.BaseMutationOptions<AddSubscri
 export const GetSubscriberDocument = gql`
     query getSubscriber($subscriberId: String!) {
   getSubscriber(subscriberId: $subscriberId) {
-    uuid
-    address
-    dob
-    email
-    firstName
-    lastName
-    gender
-    idSerial
-    networkId
-    orgId
-    phone
-    proofOfIdentification
-    sim {
-      id
-      subscriberId
-      networkId
-      orgId
-      iccid
-      msisdn
-      imsi
-      type
-      status
-      firstActivatedOn
-      lastActivatedOn
-      activationsCount
-      deactivationsCount
-      allocatedAt
-      isPhysical
-      package
-    }
+    ...Subscriber
   }
 }
-    `;
+    ${SubscriberFragmentDoc}`;
 
 /**
  * __useGetSubscriberQuery__
@@ -2089,40 +2001,11 @@ export const GetSubscribersByNetworkDocument = gql`
     query getSubscribersByNetwork($networkId: String!) {
   getSubscribersByNetwork(networkId: $networkId) {
     subscribers {
-      uuid
-      address
-      dob
-      email
-      firstName
-      lastName
-      gender
-      idSerial
-      networkId
-      orgId
-      phone
-      proofOfIdentification
-      sim {
-        id
-        subscriberId
-        networkId
-        orgId
-        iccid
-        msisdn
-        imsi
-        type
-        status
-        firstActivatedOn
-        lastActivatedOn
-        activationsCount
-        deactivationsCount
-        allocatedAt
-        isPhysical
-        package
-      }
+      ...Subscriber
     }
   }
 }
-    `;
+    ${SubscriberFragmentDoc}`;
 
 /**
  * __useGetSubscribersByNetworkQuery__
@@ -2189,3 +2072,75 @@ export function useGetSubscriberMetricsByNetworkLazyQuery(baseOptions?: Apollo.L
 export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkQuery>;
 export type GetSubscriberMetricsByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkLazyQuery>;
 export type GetSubscriberMetricsByNetworkQueryResult = Apollo.QueryResult<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>;
+export const GetPackagesDocument = gql`
+    query getPackages {
+  getPackages {
+    packages {
+      uuid
+      name
+      orgId
+      active
+      duration
+      simType
+      createdAt
+      deletedAt
+      updatedAt
+      smsVolume
+      dataVolume
+      voiceVolume
+      ulbr
+      dlbr
+      type
+      dataUnit
+      voiceUnit
+      messageUnit
+      flatrate
+      currency
+      from
+      to
+      country
+      provider
+      apn
+      ownerId
+      amount
+      rate {
+        sms_mo
+        sms_mt
+        data
+        amount
+      }
+      markup {
+        baserate
+        markup
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetPackagesQuery__
+ *
+ * To run a query within a React component, call `useGetPackagesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPackagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPackagesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetPackagesQuery(baseOptions?: Apollo.QueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
+      }
+export function useGetPackagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
+        }
+export type GetPackagesQueryHookResult = ReturnType<typeof useGetPackagesQuery>;
+export type GetPackagesLazyQueryHookResult = ReturnType<typeof useGetPackagesLazyQuery>;
+export type GetPackagesQueryResult = Apollo.QueryResult<GetPackagesQuery, GetPackagesQueryVariables>;
