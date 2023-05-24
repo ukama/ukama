@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  postgresd:
+  postgresd-init:
     image: postgres:13.3
     ports:
       - "5401:5432"
@@ -16,19 +16,19 @@ services:
     build: ./lookup
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-init
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-init:9095
       - LOOKUP_SERVICE_HOST=lookup
       - LOOKUP_SERVICE_PORT=9090
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - msgclient
-      - postgresd
+      - msgclient-init
+      - postgresd-init
 
   node-gateway:
     build:
@@ -66,11 +66,11 @@ services:
     depends_on:
       - lookup
 
-  msgclient:
+  msgclient-init:
     build: ../services/msgClient
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-init
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
@@ -79,7 +79,7 @@ services:
     networks:
       - ukama-net
     depends_on:
-      - postgresd
+      - postgresd-init
       
 networks:
   ukama-net:

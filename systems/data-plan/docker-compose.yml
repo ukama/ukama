@@ -1,9 +1,9 @@
 version: "3.9"
 services:
-  postgresd:
+  postgresd-dataplan:
     image: postgres:13.3
     ports:
-      - "5400:5432"
+      - "5404:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=Pass2020!
@@ -16,29 +16,29 @@ services:
     build: ./base-rate
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-dataplan
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-dataplan:9095
       - RATE_SERVICE_HOST=rate
       - RATE_SERVICE_PORT=9090
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - msgclient
-      - postgresd
+      - msgclient-dataplan
+      - postgresd-dataplan
 
   package:
     build: ./package
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-dataplan
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-dataplan:9095
       - PACKAGE_SERVICE_HOST=package
       - PACKAGE_SERVICE_PORT=9090
     restart: always
@@ -46,16 +46,17 @@ services:
       - ukama-net
     depends_on:
       - baserate
-      - postgresd
+      - postgresd-dataplan
+      - msgclient-dataplan
   rate:
     build: ./rate
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-dataplan
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-dataplan:9095
       - RATE_SERVICE_HOST=rate
       - RATE_SERVICE_PORT=9090
       - BASERATE=baserate:9090
@@ -64,7 +65,9 @@ services:
       - ukama-net
     depends_on:
       - baserate
-      - postgresd
+      - postgresd-dataplan
+      - msgclient-dataplan
+
   api-gateway:
     build:
       dockerfile: ./Dockerfile
@@ -83,11 +86,12 @@ services:
       - package
       - baserate
       - rate
-  msgclient:
+
+  msgclient-dataplan:
     build: ../services/msgClient
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-dataplan
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
@@ -96,7 +100,7 @@ services:
     networks:
       - ukama-net
     depends_on:
-      - postgresd
+      - postgresd-dataplan
       
 networks:
   ukama-net:
