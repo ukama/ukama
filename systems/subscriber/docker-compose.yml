@@ -1,9 +1,9 @@
 version: "3.9"
 services:
-  postgresd:
+  postgresd-subscriber:
     image: postgres:13.3
     ports:
-      - "5432:5432"
+      - "5408:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=Pass2020!
@@ -14,82 +14,77 @@ services:
 
   sim:
     build: ./sim-pool
-    ports:
-      - "9090:9090"
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-subscriber
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
       - SIM_SERVICE_HOST=sim
       - SIM_SERVICE_PORT=9090
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd
-      - msgclient
+      - postgresd-subscriber
+      - msgclient-subscriber
 
   registry:
     build: ./registry
-    ports:
-      - "9091:9090"
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-subscriber
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
       - REGISTRY_SERVICE_HOST=registry
       - REGISTRY_SERVICE_PORT=9090
+      - NETWORKHOST=http://${LOCAL_HOST_IP}:8075
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd
-      - msgclient
+      - postgresd-subscriber
+      - msgclient-subscriber
 
   simmanager:
     build: ./sim-manager
-    ports:
-      - "9092:9090"
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-subscriber
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
       - KEY=${KEY}
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
       - SIMMANAGER_SERVICE_HOST=simmanager
       - SIMMANAGER_SERVICE_PORT=9090
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd
-      - msgclient
+      - postgresd-subscriber
+      - msgclient-subscriber
 
   testagent:
     build: ./test-agent
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-subscriber
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
       - TESTAGENT_SERVICE_HOST=testagent
       - TESTAGENT_SERVICE_PORT=9090
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd
-      - msgclient
+      - postgresd-subscriber
+      - msgclient-subscriber
 
   subscriber:
     build: ./api-gateway
@@ -101,25 +96,27 @@ services:
     networks:
       - ukama-net
     depends_on:
-      - postgresd
-      - msgclient
+      - postgresd-subscriber
+      - msgclient-subscriber
+      - simmanager
+      - registry
 
   
-  msgclient:
+  msgclient-subscriber:
     build: ../services/msgClient
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-subscriber
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
       - SYSTEM=subscriber
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd
+      - postgresd-subscriber
 
 networks:
   ukama-net:
