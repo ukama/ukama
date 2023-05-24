@@ -16,11 +16,21 @@ replace github.com/ukama/ukama/systems/subscriber/sim-pool => ../../systems/subs
 
 replace github.com/ukama/ukama/systems/subscriber/sim-manager => ../../systems/subscriber/sim-manager
 
+replace github.com/ukama/ukama/systems/data-plan/api-gateway => ../../systems/data-plan/api-gateway
+
+replace github.com/ukama/ukama/systems/data-plan/rate => ../../systems/data-plan/rate
+
+replace github.com/ukama/ukama/systems/data-plan/base-rate => ../../systems/data-plan/base-rate
+
+replace github.com/ukama/ukama/systems/data-plan/package => ../../systems/data-plan/package
+
 require (
 	github.com/rabbitmq/amqp091-go v1.7.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
 	github.com/ukama/ukama/systems/common v0.0.0-20230504181210-bf6632801c73
+	github.com/ukama/ukama/systems/data-plan/api-gateway v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
 	github.com/ukama/ukama/systems/init/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/subscriber/sim-manager v0.0.0-00010101000000-000000000000
@@ -33,10 +43,13 @@ require (
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
+	github.com/jackc/pgx/v5 v5.2.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
+	github.com/ukama/ukama/systems/data-plan/package v0.0.0-20230208235400-d17899b75cbb // indirect
+	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 )
@@ -66,9 +79,7 @@ require (
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgtype v1.12.0 // indirect
-	github.com/jackc/pgx/v4 v4.17.2 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -110,10 +121,10 @@ require (
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57 // indirect
 	google.golang.org/grpc v1.53.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.30.0
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.4.5 // indirect
+	gorm.io/driver/postgres v1.4.6 // indirect
 	gorm.io/gorm v1.24.3 // indirect
 )

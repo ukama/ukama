@@ -317,7 +317,7 @@ func (s *DataPlanSys) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*
 
 	rsp := &pPb.GetByOrgPackageResponse{}
 
-	resp, err := s.r.Get(s.u.String() + PACKAGE + "/org/" + req.OrgId)
+	resp, err := s.r.Get(s.u.String() + PACKAGE + "/orgs/" + req.OrgId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
