@@ -1,10 +1,10 @@
+import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { UserService } from "../service";
-import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
-import { ESimQRCodeRes, GetESimQRCodeInput } from "../types";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
-import { Resolver, Arg, Ctx, Query, UseMiddleware } from "type-graphql";
+import { Context } from "../../../common/types";
+import { UserService } from "../service";
+import { ESimQRCodeRes, GetESimQRCodeInput } from "../types";
 
 @Service()
 @Resolver()
@@ -17,6 +17,6 @@ export class GetEsimQRResolver {
         @Arg("data") data: GetESimQRCodeInput,
         @Ctx() ctx: Context
     ): Promise<ESimQRCodeRes | null> {
-        return this.userService.getEsimQRCode(data, parseCookie(ctx));
+        return this.userService.getEsimQRCode(data, parseHeaders(ctx));
     }
 }

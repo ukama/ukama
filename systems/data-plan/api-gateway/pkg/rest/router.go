@@ -324,7 +324,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		OwnerId:     req.OwnerId,
 		From:        req.From,
 		To:          req.To,
-		Baserate:    req.BaserateId,
+		BaserateId:  req.BaserateId,
 		VoiceVolume: req.VoiceVolume,
 		Active:      req.Active,
 		DataVolume:  req.DataVolume,

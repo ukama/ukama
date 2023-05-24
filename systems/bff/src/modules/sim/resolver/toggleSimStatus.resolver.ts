@@ -1,10 +1,10 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
-import { ToggleSimStatusInputDto, SimStatusResDto } from "../types";
+import { SimStatusResDto, ToggleSimStatusInputDto } from "../types";
 
 @Service()
 @Resolver()
@@ -17,6 +17,6 @@ export class ToggleSimStatusResolver {
         @Arg("data") data: ToggleSimStatusInputDto,
         @Ctx() ctx: Context
     ): Promise<SimStatusResDto> {
-        return await this.simService.toggleSimStatus(data, parseCookie(ctx));
+        return await this.simService.toggleSimStatus(data, parseHeaders(ctx));
     }
 }

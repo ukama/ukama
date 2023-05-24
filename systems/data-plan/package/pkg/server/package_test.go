@@ -175,14 +175,14 @@ func TestPackageServer_AddPackage(t *testing.T) {
 	s := NewPackageServer(packageRepo, rate, nil)
 
 	ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
-		Active:   true,
-		Name:     "daily-pack",
-		OrgId:    uuid.NewV4().String(),
-		SimType:  testSim,
-		OwnerId:  ownerId,
-		Baserate: baserate,
-		From:     time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
-		To:       time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+		Active:     true,
+		Name:       "daily-pack",
+		OrgId:      uuid.NewV4().String(),
+		SimType:    testSim,
+		OwnerId:    ownerId,
+		BaserateId: baserate,
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, ActPackage.Package.Active)

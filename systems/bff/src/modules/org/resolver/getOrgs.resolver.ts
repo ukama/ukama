@@ -1,6 +1,6 @@
 import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { OrgService } from "../service";
@@ -14,6 +14,6 @@ export class GetOrgsResolver {
     @Query(() => OrgsResDto)
     @UseMiddleware(Authentication)
     async getOrgs(@Ctx() ctx: Context): Promise<OrgsResDto> {
-        return this.orgService.getOrgs(parseCookie(ctx));
+        return this.orgService.getOrgs(parseHeaders(ctx));
     }
 }

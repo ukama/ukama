@@ -1,6 +1,6 @@
 import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { NetworkService } from "../service";
@@ -14,6 +14,6 @@ export class GetNetworksResolver {
     @Query(() => NetworksResDto)
     @UseMiddleware(Authentication)
     async getNetworks(@Ctx() ctx: Context): Promise<NetworksResDto> {
-        return this.networkService.getNetworks(parseCookie(ctx));
+        return this.networkService.getNetworks(parseHeaders(ctx));
     }
 }

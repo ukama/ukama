@@ -11,7 +11,7 @@ export const STRIP_SK =
     "sk_test_51LN9vGHBOiFTwZOs0zrb6CkarnlRRocpGSoIZa3jL7vtMeolNjrzf7PAL3hMDHQZENnxIvbw8X7Bfx5CxsUfVfyu00HIVQCYAm";
 export const HEADER = {
     headers: {
-        cookie: "ukama_session=test",
+        cookie: "",
     },
 };
 export enum MEMBER_ROLES {

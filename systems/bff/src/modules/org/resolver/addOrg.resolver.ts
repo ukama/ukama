@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { AddOrgInputDto, OrgDto } from "../types";
@@ -17,6 +17,6 @@ export class AddOrgResolver {
         @Arg("data") data: AddOrgInputDto,
         @Ctx() ctx: Context
     ): Promise<OrgDto> {
-        return this.OrgService.addOrg(data, parseCookie(ctx));
+        return this.OrgService.addOrg(data, parseHeaders(ctx));
     }
 }

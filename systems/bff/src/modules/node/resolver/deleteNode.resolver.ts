@@ -1,10 +1,10 @@
+import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { NodeService } from "../service";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
+import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { DeleteNodeRes } from "../../user/types";
-import { Authentication } from "../../../common/Authentication";
-import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
+import { NodeService } from "../service";
 
 @Service()
 @Resolver()
@@ -18,6 +18,6 @@ export class DeleteNodeResolver {
         id: string,
         @Ctx() ctx: Context
     ): Promise<DeleteNodeRes | null> {
-        return this.nodeService.deleteNode(id, parseCookie(ctx));
+        return this.nodeService.deleteNode(id, parseHeaders(ctx));
     }
 }

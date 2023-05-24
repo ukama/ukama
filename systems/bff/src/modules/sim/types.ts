@@ -3,19 +3,19 @@ import { Field, InputType, ObjectType } from "type-graphql";
 @InputType()
 export class AllocateSimInputDto {
     @Field()
-    network_id: string;
+    networkId: string;
 
     @Field()
-    package_id: string;
+    packageId: string;
 
     @Field()
-    sim_token: string;
+    iccid: string;
 
     @Field()
-    sim_type: string;
+    simType: string;
 
     @Field()
-    subscriber_id: string;
+    subscriberId: string;
 }
 @ObjectType()
 export class SimStatusResDto {
@@ -220,3 +220,9 @@ export class SimDetailsDto {
 }
 @ObjectType()
 export class SimResDto extends SimAPIDto {}
+
+@ObjectType()
+export class SimDataUsage {
+    @Field()
+    usage: string;
+}

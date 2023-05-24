@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { PackageService } from "../service";
@@ -21,7 +21,7 @@ export class UpdatePackageResolver {
         return this.packageService.updatePackage(
             packageId,
             data,
-            parseCookie(ctx)
+            parseHeaders(ctx)
         );
     }
 }

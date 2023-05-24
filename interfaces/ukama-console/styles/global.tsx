@@ -25,13 +25,16 @@ const globalUseStyles = makeStyles(() => ({
   },
 }));
 
-const HorizontalContainerJustify = styled(Box)(() => ({
+const HorizontalContainerJustify = styled(Box)((props) => ({
   width: '100%',
   height: 'auto',
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'center',
   justifyContent: 'space-between',
+  [props.theme.breakpoints.down('md')]: {
+    flexDirection: 'column',
+  },
 }));
 
 const HorizontalContainer = styled(Box)({
@@ -44,7 +47,7 @@ const HorizontalContainer = styled(Box)({
 
 const VerticalContainer = styled(Box)({
   width: '100%',
-  height: 'auto',
+  height: '100%',
   display: 'flex',
   alignItems: 'center',
   flexDirection: 'column',
@@ -104,7 +107,7 @@ const SkeletonRoundedCard = styled(Skeleton)(() => ({
   display: 'inline-block',
 }));
 
-const FullscreenContainer = styled(Box)(() => ({
+const ContainerMax = styled(Box)(() => ({
   width: '100%',
   height: '100%',
 }));
@@ -113,9 +116,22 @@ const SimpleCardWithBorder = styled(Box)((props) => ({
   borderRadius: '4px',
   border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.1)}`,
 }));
+
+const PageContainer = styled(Paper)((props) => ({
+  marginTop: '18px',
+  borderRadius: '4px',
+  padding: '24px 32px',
+  height: 'calc(100vh - 164px)',
+  [props.theme.breakpoints.down('sm')]: {
+    marginTop: '12px',
+    padding: '12px 18px',
+  },
+}));
 export {
   LinkStyle,
   RoundedCard,
+  ContainerMax,
+  PageContainer,
   globalUseStyles,
   CenterContainer,
   MessageContainer,
@@ -123,7 +139,6 @@ export {
   SimpleCardWithBorder,
   SkeletonRoundedCard,
   HorizontalContainer,
-  FullscreenContainer,
   ContainerJustifySpaceBtw,
   HorizontalContainerJustify,
 };

@@ -1,6 +1,6 @@
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
@@ -11,12 +11,12 @@ import { GetSimByNetworkInputDto, SimDetailsDto } from "../types";
 export class GetSimByNetworkResolver {
     constructor(private readonly simService: SimService) {}
 
-    @Mutation(() => SimDetailsDto)
+    @Query(() => SimDetailsDto)
     @UseMiddleware(Authentication)
     async getSim(
         @Arg("data") data: GetSimByNetworkInputDto,
         @Ctx() ctx: Context
     ): Promise<SimDetailsDto> {
-        return await this.simService.getSimByNetworkId(data, parseCookie(ctx));
+        return await this.simService.getSimByNetworkId(data, parseHeaders(ctx));
     }
 }
