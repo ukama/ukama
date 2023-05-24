@@ -34,61 +34,61 @@ service RateService {
 }
 
 message MarkupRates {
-    string createdAt = 1;
-    string deletedAt = 2;
-    double Markup = 3;
+    string createdAt = 1 [json_name = "created_at"];
+    string deletedAt = 2 [json_name = "deleted_at"];
+    double markup = 3;
 }
 
 message UpdateMarkupRequest {
-    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
-    double Markup = 2;
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}, json_name = "owner_id"];
+    double markup = 2;
 }
 
 message UpdateMarkupResponse {
 }
 
 message DeleteMarkupRequest {
-    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}, json_name = "owner_id"];
 }
 
 message DeleteMarkupResponse {
 }
 
 message GetMarkupRequest {
-    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}, json_name = "owner_id"];
 }
 
 message GetMarkupResponse {
-    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
-    double Markup = 2;
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}, json_name = "owner_id"];
+    double markup = 2;
 }
 
 message GetDefaultMarkupRequest {
 }
 
 message GetDefaultMarkupResponse {
-    double Markup = 1;
+    double markup = 1;
 }
 
 message GetDefaultMarkupHistoryRequest {
 }
 
 message GetDefaultMarkupHistoryResponse {
-    repeated MarkupRates markupRates= 1;
+    repeated MarkupRates markupRates= 1 [json_name = "markup_rates"];
 }
 
 message GetMarkupHistoryRequest {
-    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}, json_name = "owner_id"];
 }
 
 message GetMarkupHistoryResponse {
-    string ownerId = 1 [(validator.field) = {string_not_empty: true}];
-    repeated MarkupRates markupRates = 2;
+    string ownerId = 1 [(validator.field) = {string_not_empty: true}, json_name = "owner_id"];
+    repeated MarkupRates markupRates = 2 [json_name = "markup_rates"];
 }
 
 
 message UpdateDefaultMarkupRequest {
-    double Markup = 1;
+    double markup = 1;
 }
 
 message UpdateDefaultMarkupResponse {
@@ -108,7 +108,7 @@ message GetRatesResponse {
 }
 
 message GetRateRequest{
-    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "owner_id"];
     string country = 2;
     string provider =3;
     string to =4;
@@ -122,8 +122,8 @@ message GetRateResponse{
 }
 
 message GetRateByIdRequest {
-    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-    string baseRate = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string ownerId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "owner_id"];
+    string baseRate = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "base_rate"];
 }
 
 message GetRateByIdResponse {

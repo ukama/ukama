@@ -118,7 +118,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			"invalid format of owner uuid. Error %s", err.Error())
 	}
 
-	baserate, err := uuid.FromString(req.GetBaserate())
+	baserate, err := uuid.FromString(req.GetBaserateId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of base rate. Error %s", err.Error())
@@ -168,7 +168,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 		SmsVolume:    uint64(req.GetSmsVolume()),
 		DataVolume:   uint64(req.GetDataVolume()),
 		VoiceVolume:  uint64(req.GetVoiceVolume()),
-		MessageUnits: ukama.ParseMessageType(req.Messageunit),
+		MessageUnits: ukama.ParseMessageType(req.MessageUnit),
 		VoiceUnits:   ukama.ParseCallUnitType(req.VoiceUnit),
 		DataUnits:    ukama.ParseDataUnitType(req.DataUnit),
 		Flatrate:     req.Flatrate,
@@ -188,7 +188,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 	// Request rate
 	rate, err := p.rate.GetRateById(&rpb.GetRateByIdRequest{
 		OwnerId:  req.OwnerId,
-		BaseRate: req.Baserate,
+		BaseRate: req.BaserateId,
 	})
 	if err != nil {
 		logrus.Errorf("Failed to get base rate for package. Error: %s", err.Error())
@@ -237,7 +237,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			VoiceVolume:     resp.Package.VoiceVolume,
 			DataUnit:        resp.Package.DataUnit,
 			VoiceUnit:       resp.Package.VoiceUnit,
-			Messageunit:     resp.Package.Messageunit,
+			Messageunit:     resp.Package.MessageUnit,
 			DataUnitCost:    pr.PackageRate.Data,
 			MessageUnitCost: pr.PackageRate.SmsMo,
 			VoiceUnitCost:   pr.PackageRate.SmsMt,
@@ -344,7 +344,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		UpdatedAt:   p.UpdatedAt.Format(time.RFC3339),
 		DeletedAt:   d,
 		Rate: &pb.PackageRates{
-			
+
 			Data:   p.PackageRate.Data,
 			SmsMo:  p.PackageRate.SmsMo,
 			SmsMt:  p.PackageRate.SmsMt,
@@ -356,7 +356,7 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		},
 		Provider:    p.Provider,
 		Type:        p.Type.String(),
-		Messageunit: p.MessageUnits.String(),
+		MessageUnit: p.MessageUnits.String(),
 		VoiceUnit:   p.VoiceUnits.String(),
 		DataUnit:    p.DataUnits.String(),
 		Country:     p.Country,
