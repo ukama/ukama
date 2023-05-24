@@ -25,13 +25,19 @@ func NewResty() *Resty {
 
 func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 
+	resp := &resty.Response{}
+	var err error
 	errStatus := &rest.ErrorResponse{}
-
-	resp, err := r.C.R().
-		SetError(errStatus).
-		SetBody(b).
-		Put(url)
-
+	if b != nil {
+		resp, err = r.C.R().
+			SetError(errStatus).
+			SetBody(b).
+			Put(url)
+	} else {
+		resp, err = r.C.R().
+			SetError(errStatus).
+			Put(url)
+	}
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
@@ -47,19 +53,26 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 
 func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 
+	resp := &resty.Response{}
+	var err error
 	errStatus := &rest.ErrorResponse{}
-
-	resp, err := r.C.R().
-		SetError(errStatus).
-		SetBody(b).
-		Post(url)
+	if b != nil {
+		resp, err = r.C.R().
+			SetError(errStatus).
+			SetBody(b).
+			Post(url)
+	} else {
+		resp, err = r.C.R().
+			SetError(errStatus).
+			Post(url)
+	}
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
 	}
 
-	if resp.StatusCode() != http.StatusCreated {
+	if !((resp.StatusCode() >= http.StatusOK) && resp.StatusCode() < http.StatusBadRequest) {
 		log.Errorf("Failed to perform POST operation on %s HTTP resp code %d and Error message is %s", url, resp.StatusCode(), errStatus.Error)
 		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
 	}
