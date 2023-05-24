@@ -1,5 +1,11 @@
 import { ISubscriberMapper } from "./interface";
-import { SimDto, SubscriberAPIResDto, SubscriberDto } from "./types";
+import {
+    SimDto,
+    SubscriberAPIResDto,
+    SubscriberDto,
+    SubscribersAPIResDto,
+    SubscribersResDto,
+} from "./types";
 
 class SubscriberMapper implements ISubscriberMapper {
     dtoToSubscriberResDto = (res: SubscriberAPIResDto): SubscriberDto => {
@@ -40,6 +46,17 @@ class SubscriberMapper implements ISubscriberMapper {
             firstName: res.subscriber.first_name,
             networkId: res.subscriber.network_id,
             proofOfIdentification: res.subscriber.proof_of_identification,
+        };
+    };
+    dtoToSubscribersResDto = (res: SubscribersAPIResDto): SubscribersResDto => {
+        const subscribers: SubscriberDto[] = [];
+        for (const subscriber of res.subscribers) {
+            const sub = this.dtoToSubscriberResDto({ subscriber: subscriber });
+            subscribers.push(sub);
+        }
+
+        return {
+            subscribers: subscribers,
         };
     };
 }

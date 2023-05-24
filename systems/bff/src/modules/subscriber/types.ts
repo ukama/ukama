@@ -101,6 +101,11 @@ export class SubscriberAPIResDto {
     subscriber: SubscriberAPIDto;
 }
 
+export class SubscribersAPIResDto {
+    @Field(() => [SubscriberAPIDto])
+    subscribers: SubscriberAPIDto[];
+}
+
 @InputType()
 export class SubscriberInputDto {
     @Field()
@@ -230,6 +235,12 @@ export class SubscriberDto {
 
     @Field(() => [SimDto])
     sim: SimDto[];
+}
+
+@ObjectType()
+export class SubscribersResDto {
+    @Field(() => [SubscriberDto])
+    subscribers: SubscriberDto[];
 }
 
 @InputType()

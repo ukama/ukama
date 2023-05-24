@@ -8,18 +8,15 @@ import { getHeaders } from "../../utils";
 import { ISubscriberService } from "./interface";
 import SubscriberMapper from "./mapper";
 import {
-    SubscriberAPIResDto,
     SubscriberDto,
     SubscriberInputDto,
     SubscriberMetricsByNetworkDto,
+    SubscribersResDto,
     UpdateSubscriberInputDto,
 } from "./types";
 
 @Service()
 export class SubscriberService implements ISubscriberService {
-    dtoToSubscriberResDto(res: SubscriberAPIResDto): SubscriberDto {
-        throw new Error("Method not implemented.");
-    }
     addSubscriber = async (
         req: SubscriberInputDto,
         headers: THeaders
@@ -80,4 +77,16 @@ export class SubscriberService implements ISubscriberService {
                 terminated: 1,
             };
         };
+    getSubscribersByNetwork = async (
+        networkId: string,
+        headers: THeaders
+    ): Promise<SubscribersResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.SUBSCRIBER_REGISTRY_API_URL}s/networks/${networkId}`,
+            headers: getHeaders(headers),
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return SubscriberMapper.dtoToSubscribersResDto(res);
+    };
 }

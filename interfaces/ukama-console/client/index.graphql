@@ -400,3 +400,178 @@ query GetNetworkDataUsage($networkId: String!, $filter: TIME_FILTER!) {
     usage
   }
 }
+
+query getPackages {
+  getPackages {
+    packages {
+      uuid
+      name
+      orgId
+      active
+      duration
+      simType
+      createdAt
+      deletedAt
+      updatedAt
+      smsVolume
+      dataVolume
+      voiceVolume
+      ulbr
+      dlbr
+      type
+      dataUnit
+      voiceUnit
+      messageUnit
+      flatrate
+      currency
+      from
+      to
+      country
+      provider
+      apn
+      ownerId
+      amount
+      rate {
+        sms_mo
+        sms_mt
+        data
+        amount
+      }
+      markup {
+        baserate
+        markup
+      }
+    }
+  }
+}
+
+mutation addSubscriber($data: SubscriberInputDto!) {
+  addSubscriber(data: $data) {
+    uuid
+    address
+    dob
+    email
+    firstName
+    lastName
+    gender
+    idSerial
+    networkId
+    orgId
+    phone
+    proofOfIdentification
+    sim {
+      id
+      subscriberId
+      networkId
+      orgId
+      iccid
+      msisdn
+      imsi
+      type
+      status
+      firstActivatedOn
+      lastActivatedOn
+      activationsCount
+      deactivationsCount
+      allocatedAt
+      isPhysical
+      package
+    }
+  }
+}
+
+query getSubscriber($subscriberId: String!) {
+  getSubscriber(subscriberId: $subscriberId) {
+    uuid
+    address
+    dob
+    email
+    firstName
+    lastName
+    gender
+    idSerial
+    networkId
+    orgId
+    phone
+    proofOfIdentification
+    sim {
+      id
+      subscriberId
+      networkId
+      orgId
+      iccid
+      msisdn
+      imsi
+      type
+      status
+      firstActivatedOn
+      lastActivatedOn
+      activationsCount
+      deactivationsCount
+      allocatedAt
+      isPhysical
+      package
+    }
+  }
+}
+
+mutation updateSubscriber(
+  $subscriberId: String!
+  $data: UpdateSubscriberInputDto!
+) {
+  updateSubscriber(subscriberId: $subscriberId, data: $data) {
+    success
+  }
+}
+
+mutation deleteSubscriber($subscriberId: String!) {
+  deleteSubscriber(subscriberId: $subscriberId) {
+    success
+  }
+}
+
+query getSubscribersByNetwork($networkId: String!) {
+  getSubscribersByNetwork(networkId: $networkId) {
+    subscribers {
+      uuid
+      address
+      dob
+      email
+      firstName
+      lastName
+      gender
+      idSerial
+      networkId
+      orgId
+      phone
+      proofOfIdentification
+      sim {
+        id
+        subscriberId
+        networkId
+        orgId
+        iccid
+        msisdn
+        imsi
+        type
+        status
+        firstActivatedOn
+        lastActivatedOn
+        activationsCount
+        deactivationsCount
+        allocatedAt
+        isPhysical
+        package
+      }
+    }
+  }
+}
+
+query getSubscriberMetricsByNetwork($networkId: String!) {
+  getSubscriberMetricsByNetwork(networkId: $networkId) {
+    total
+    active
+    inactive
+    terminated
+  }
+}
