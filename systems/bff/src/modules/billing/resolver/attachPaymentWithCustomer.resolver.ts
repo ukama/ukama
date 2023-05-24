@@ -1,11 +1,11 @@
 import Stripe from "stripe";
+import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { STRIP_SK } from "../../../constants";
-import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
-import { getStripeIdByUserId } from "../../../utils";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
-import { Resolver, UseMiddleware, Mutation, Arg, Ctx } from "type-graphql";
+import { Context } from "../../../common/types";
+import { STRIP_SK } from "../../../constants";
+import { getStripeIdByUserId } from "../../../utils";
 
 @Service()
 @Resolver()
@@ -22,7 +22,7 @@ export class AttachPaymentWithCustomerResolver {
             apiVersion: "2022-08-01",
         });
         const customer = await stripe.paymentMethods.attach(paymentId, {
-            customer: getStripeIdByUserId(parseCookie(ctx).orgId),
+            customer: getStripeIdByUserId(parseHeaders(ctx).orgId),
         });
 
         return customer.id ? true : false;

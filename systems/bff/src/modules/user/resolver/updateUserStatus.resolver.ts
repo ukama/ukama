@@ -1,10 +1,10 @@
+import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { UserService } from "../service";
-import { Context } from "../../../common/types";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
-import { UpdateUserServiceInput, OrgUserSimDto } from "../types";
-import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
-import { parseCookie } from "../../../common";
+import { Context } from "../../../common/types";
+import { UserService } from "../service";
+import { OrgUserSimDto, UpdateUserServiceInput } from "../types";
 
 @Service()
 @Resolver()
@@ -17,6 +17,6 @@ export class UpdateUserStatusResolver {
         @Arg("data") data: UpdateUserServiceInput,
         @Ctx() ctx: Context
     ): Promise<OrgUserSimDto> {
-        return this.userService.updateUserStatus(data, parseCookie(ctx));
+        return this.userService.updateUserStatus(data, parseHeaders(ctx));
     }
 }

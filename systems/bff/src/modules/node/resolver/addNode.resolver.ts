@@ -1,9 +1,9 @@
+import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { NodeService } from "../service";
-import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
-import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
+import { Context } from "../../../common/types";
+import { NodeService } from "../service";
 import { AddNodeDto, AddNodeResponse } from "../types";
 
 @Service()
@@ -18,6 +18,6 @@ export class AddNodeResolver {
         req: AddNodeDto,
         @Ctx() ctx: Context
     ): Promise<AddNodeResponse> {
-        return await this.nodeService.addNode(req, parseCookie(ctx));
+        return await this.nodeService.addNode(req, parseHeaders(ctx));
     }
 }

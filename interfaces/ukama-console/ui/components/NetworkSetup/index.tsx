@@ -42,7 +42,7 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
   const backToSignUp = () => {
     typeof window !== 'undefined' &&
       window.location.replace(
-        `${process.env.NEXT_PUBLIC_REACT_APP_API_SOCKET}/logout?goTo=signUp&name=${getUser?.name}&email=${getUser?.email}`,
+        `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout?goTo=signUp&name=${getUser?.name}&email=${getUser?.email}`,
       );
   };
 

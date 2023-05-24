@@ -1,6 +1,6 @@
 import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { UserService } from "../service";
@@ -17,6 +17,6 @@ export class GetUserResolver {
         @Arg("userId") userId: string,
         @Ctx() ctx: Context
     ): Promise<UserResDto | null> {
-        return this.userService.getUser(userId, parseCookie(ctx));
+        return this.userService.getUser(userId, parseHeaders(ctx));
     }
 }

@@ -1,6 +1,6 @@
+import { NetworkDto } from '@/generated';
 import { HorizontalContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { SelectItemType } from '@/types';
 import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
@@ -17,7 +17,7 @@ interface ILayoutProps {
   isLoading: boolean;
   isDarkMode: boolean;
   handlePageChange: Function;
-  networks: SelectItemType[];
+  networks: NetworkDto[] | undefined;
   children: React.ReactNode;
   handleNetworkChange: Function;
 }
@@ -62,11 +62,11 @@ const Layout = ({
         <Sidebar
           page={page}
           isOpen={open}
-          networks={networks}
           networkId={networkId}
           isLoading={isLoading}
           onNavigate={onNavigate}
           isDarkMode={isDarkMode}
+          networks={networks || []}
           handleNetworkChange={handleNetworkChange}
         />
 

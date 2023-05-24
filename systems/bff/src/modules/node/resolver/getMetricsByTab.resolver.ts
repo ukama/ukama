@@ -1,21 +1,21 @@
 import {
     Arg,
     Ctx,
-    Query,
     PubSub,
-    Resolver,
     PubSubEngine,
+    Query,
+    Resolver,
     UseMiddleware,
 } from "type-graphql";
 import { Service } from "typedi";
 import { Worker } from "worker_threads";
-import { NodeService } from "../service";
-import { GetMetricsRes } from "../types";
-import { parseCookie } from "../../../common";
-import { getMetricsByTab } from "../../../utils";
-import setupLogger from "../../../config/setupLogger";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context, MetricsByTabInputDTO } from "../../../common/types";
+import setupLogger from "../../../config/setupLogger";
+import { getMetricsByTab } from "../../../utils";
+import { NodeService } from "../service";
+import { GetMetricsRes } from "../types";
 
 const logger = setupLogger("Resolver");
 const THREAD = "./MetricsThread.tsx";
@@ -33,7 +33,7 @@ export class GetMetricsByTabResolver {
         const metricsEndpoints = getMetricsByTab(data.nodeType, data.tab);
         const response = await this.nodeService.getMultipleMetrics(
             data,
-            parseCookie(ctx),
+            parseHeaders(ctx),
             metricsEndpoints
         );
 

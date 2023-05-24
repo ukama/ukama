@@ -25,12 +25,11 @@ const pageName = atom({
   default: 'Home',
   effects_UNSTABLE: [persistAtom],
 });
-const networkId = atom({
-  key: 'networkId',
-  default: '',
+const commonData = atom({
+  key: 'commonData',
+  default: { networkId: '', orgId: '', userId: '', orgName: '' },
   effects_UNSTABLE: [persistAtom],
 });
-
 const snackbarMessage = atom({
   key: 'snackbarMessage',
   default: { id: 'message-id', message: '', type: 'info', show: false },
@@ -45,8 +44,8 @@ const user = atom({
 export {
   user,
   pageName,
-  networkId,
   isDarkmode,
+  commonData,
   isFirstVisit,
   snackbarMessage,
   isSkeltonLoading,

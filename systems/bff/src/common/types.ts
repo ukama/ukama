@@ -52,10 +52,35 @@ export class ApiMethodDataDto {
     body?: any;
 }
 
+@ObjectType()
+export class AuthType {
+    @Field()
+    @IsOptional()
+    Cookie?: string;
+
+    @Field()
+    @IsOptional()
+    Authorization?: string;
+}
+
+@ObjectType()
+export class THeaders {
+    @Field(() => AuthType)
+    auth: AuthType;
+
+    @Field()
+    orgId: string;
+
+    @Field()
+    userId: string;
+
+    @Field()
+    orgName: string;
+}
+
 export interface Context {
     req: Request;
-    cookie: string;
-    token: string | undefined;
+    authType: string;
 }
 
 @ObjectType()
@@ -68,32 +93,6 @@ export class ErrorType {
 
     @Field({ nullable: true })
     description?: string;
-}
-
-@ObjectType()
-export class HeaderType {
-    @Field()
-    @IsOptional()
-    Cookie?: string;
-
-    @Field()
-    @IsOptional()
-    Authorization?: string;
-}
-
-@ObjectType()
-export class ParsedCookie {
-    @Field()
-    header: HeaderType;
-
-    @Field()
-    orgId: string;
-
-    @Field()
-    userId: string;
-
-    @Field()
-    orgName: string;
 }
 
 @InputType()

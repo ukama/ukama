@@ -1,6 +1,29 @@
 import { Field, InputType, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
+export class PackageRateAPIDto {
+    @Field()
+    sms_mo: string;
+
+    @Field()
+    sms_mt: number;
+
+    @Field()
+    data: number;
+
+    @Field()
+    amount: number;
+}
+@ObjectType()
+export class PackageMarkupAPIDto {
+    @Field()
+    baserate: string;
+
+    @Field()
+    markup: number;
+}
+
+@ObjectType()
 export class PackageAPIDto {
     @Field()
     uuid: string;
@@ -39,9 +62,56 @@ export class PackageAPIDto {
     voice_volume: string;
 
     @Field()
-    org_rates_id: string;
-}
+    ulbr: string;
 
+    @Field()
+    dlbr: string;
+
+    @Field()
+    type: string;
+
+    @Field()
+    data_unit: string;
+
+    @Field()
+    voice_unit: string;
+
+    @Field()
+    message_unit: string;
+
+    @Field()
+    flatrate: boolean;
+
+    @Field()
+    currency: string;
+
+    @Field()
+    from: string;
+
+    @Field()
+    to: string;
+
+    @Field()
+    country: string;
+
+    @Field()
+    provider: string;
+
+    @Field()
+    apn: string;
+
+    @Field()
+    owner_id: string;
+
+    @Field()
+    amount: number;
+
+    @Field(() => PackageRateAPIDto)
+    rate: PackageRateAPIDto;
+
+    @Field(() => PackageMarkupAPIDto)
+    markup: PackageMarkupAPIDto;
+}
 @ObjectType()
 export class PackageAPIResDto {
     @Field()
@@ -52,6 +122,29 @@ export class PackageAPIResDto {
 export class PackagesAPIResDto {
     @Field(() => [PackageAPIDto])
     packages: PackageAPIDto[];
+}
+
+@ObjectType()
+export class PackageRateDto {
+    @Field()
+    smsMo: string;
+
+    @Field()
+    smsMt: number;
+
+    @Field()
+    data: number;
+
+    @Field()
+    amount: number;
+}
+@ObjectType()
+export class PackageMarkupDto {
+    @Field()
+    baserate: string;
+
+    @Field()
+    markup: number;
 }
 
 @ObjectType()
@@ -93,7 +186,55 @@ export class PackageDto {
     voiceVolume: string;
 
     @Field()
-    orgRatesId: string;
+    ulbr: string;
+
+    @Field()
+    dlbr: string;
+
+    @Field()
+    type: string;
+
+    @Field()
+    dataUnit: string;
+
+    @Field()
+    voiceUnit: string;
+
+    @Field()
+    messageUnit: string;
+
+    @Field()
+    flatrate: boolean;
+
+    @Field()
+    currency: string;
+
+    @Field()
+    from: string;
+
+    @Field()
+    to: string;
+
+    @Field()
+    country: string;
+
+    @Field()
+    provider: string;
+
+    @Field()
+    apn: string;
+
+    @Field()
+    ownerId: string;
+
+    @Field()
+    amount: number;
+
+    @Field(() => PackageRateAPIDto)
+    rate: PackageRateAPIDto;
+
+    @Field(() => PackageMarkupAPIDto)
+    markup: PackageMarkupAPIDto;
 }
 
 @ObjectType()

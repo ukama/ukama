@@ -1,10 +1,10 @@
-import { Resolver, Query, UseMiddleware, Ctx } from "type-graphql";
+import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
+import { parseHeaders } from "../../../common";
+import { Authentication } from "../../../common/Authentication";
+import { Context } from "../../../common/types";
 import { UserService } from "../service";
 import { GetAccountDetailsDto } from "../types";
-import { Authentication } from "../../../common/Authentication";
-import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
 
 @Service()
 @Resolver()
@@ -16,6 +16,6 @@ export class GetAccountDetailsResolver {
     async getAccountDetails(
         @Ctx() ctx: Context
     ): Promise<GetAccountDetailsDto | null> {
-        return this.userService.getAccountDetails(parseCookie(ctx));
+        return this.userService.getAccountDetails(parseHeaders(ctx));
     }
 }

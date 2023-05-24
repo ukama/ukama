@@ -1,6 +1,6 @@
+import { NetworkDto } from '@/generated';
 import { NavList } from '@/router/config';
 import { colors } from '@/styles/theme';
-import { SelectItemType } from '@/types';
 import { LoadingWrapper } from '@/ui/components';
 import {
   Box,
@@ -46,20 +46,27 @@ interface ISidebarProps {
   isLoading: boolean;
   isDarkMode: boolean;
   onNavigate: Function;
-  networks: SelectItemType[];
+  networks: NetworkDto[];
   handleNetworkChange: Function;
 }
 
 const Sidebar = ({
   page,
   isOpen,
-  networks,
   isLoading,
   networkId,
   onNavigate,
   isDarkMode,
+  networks = [],
   handleNetworkChange,
 }: ISidebarProps) => {
+  const getDropDownData = () =>
+    networks?.map((network) => ({
+      id: network.id,
+      label: network.name,
+      value: network.id,
+    }));
+
   return (
     <UkamaDrawer
       open={isOpen}
@@ -71,7 +78,7 @@ const Sidebar = ({
           <Box mx={{ xs: '18px', md: '28px' }} my={{ xs: 1, md: 1.7 }}>
             <BasicDropdown
               value={networkId}
-              networkList={networks}
+              list={getDropDownData()}
               isLoading={isLoading}
               handleOnChange={handleNetworkChange}
             />

@@ -1,12 +1,12 @@
 import Stripe from "stripe";
+import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { StripeCustomer } from "../types";
-import { STRIP_SK } from "../../../constants";
-import { parseCookie } from "../../../common";
-import { Context } from "../../../common/types";
-import { getStripeIdByUserId } from "../../../utils";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
-import { Resolver, Query, UseMiddleware, Ctx } from "type-graphql";
+import { Context } from "../../../common/types";
+import { STRIP_SK } from "../../../constants";
+import { getStripeIdByUserId } from "../../../utils";
+import { StripeCustomer } from "../types";
 
 @Service()
 @Resolver()
@@ -19,7 +19,7 @@ export class GetStripeCustomerResolver {
             apiVersion: "2022-08-01",
         });
         const customer: any = await stripe.customers.retrieve(
-            getStripeIdByUserId(parseCookie(ctx).orgId)
+            getStripeIdByUserId(parseHeaders(ctx).orgId)
         );
         return {
             id: customer.id,

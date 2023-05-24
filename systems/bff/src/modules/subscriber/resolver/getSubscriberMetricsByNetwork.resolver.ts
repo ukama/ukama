@@ -9,7 +9,6 @@ import { SubscriberMetricsByNetworkDto } from "../types";
 @Resolver()
 export class GetSubscriberMetricsByNetworkResolver {
     constructor(private readonly subService: SubscriberService) {}
-
     @Query(() => SubscriberMetricsByNetworkDto)
     @UseMiddleware(Authentication)
     async getSubscriberMetricsByNetwork(

@@ -118,6 +118,9 @@ const theme = (isDarkmode: boolean) =>
                 backgroundColor: 'transparent !important',
               },
             },
+            sizeMedium: {
+              padding: '7px 24px',
+            },
           },
         },
         MuiSelect: {
@@ -168,6 +171,14 @@ const theme = (isDarkmode: boolean) =>
           styleOverrides: {
             root: {
               boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.05)',
+            },
+          },
+        },
+        MuiPopover: {
+          styleOverrides: {
+            paper: {
+              boxShadow:
+                '0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)',
             },
           },
         },

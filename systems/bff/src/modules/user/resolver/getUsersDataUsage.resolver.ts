@@ -8,7 +8,7 @@ import {
     UseMiddleware,
 } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { UserService } from "../service";
@@ -31,7 +31,7 @@ export class GetUsersDataUsageResolver {
             for (let i = 0; i < data.ids.length; i++) {
                 const user = await this.userService.getUser(
                     data.ids[i],
-                    parseCookie(ctx)
+                    parseHeaders(ctx)
                 );
                 pubsub.publish("getUsersSub", user);
                 // users.push(user);

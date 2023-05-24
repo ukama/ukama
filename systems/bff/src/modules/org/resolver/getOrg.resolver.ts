@@ -1,6 +1,6 @@
 import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { OrgService } from "../service";
@@ -17,6 +17,6 @@ export class GetOrgResolver {
         @Arg("orgName") orgName: string,
         @Ctx() ctx: Context
     ): Promise<OrgDto> {
-        return this.orgService.getOrg(orgName, parseCookie(ctx));
+        return this.orgService.getOrg(orgName, parseHeaders(ctx));
     }
 }

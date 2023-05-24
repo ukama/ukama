@@ -6,14 +6,10 @@ interface IBasicDropdown {
   value: string;
   isLoading?: boolean;
   handleOnChange: Function;
-  networkList: SelectItemType[];
+  list: SelectItemType[];
 }
-const BasicDropdown = ({
-  value,
-  networkList,
-  handleOnChange,
-}: IBasicDropdown) => (
-  <FormControl sx={{ width: '100%' }} size="small" >
+const BasicDropdown = ({ value, list, handleOnChange }: IBasicDropdown) => (
+  <FormControl sx={{ width: '100%' }} size="small">
     <Select
       value={value}
       disableUnderline
@@ -31,7 +27,7 @@ const BasicDropdown = ({
         },
       }}
     >
-      {networkList?.map((item: SelectItemType) => (
+      {list?.map((item: SelectItemType) => (
         <MenuItem key={item.id} value={item.value}>
           {item.label}
         </MenuItem>

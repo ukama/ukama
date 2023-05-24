@@ -1,10 +1,10 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
-import { AddPackageToSimInputDto, AddPackageSimResDto } from "../types";
+import { AddPackageSimResDto, AddPackageToSimInputDto } from "../types";
 
 @Service()
 @Resolver()
@@ -17,6 +17,6 @@ export class AddPackageToSimResolver {
         @Arg("data") data: AddPackageToSimInputDto,
         @Ctx() ctx: Context
     ): Promise<AddPackageSimResDto> {
-        return await this.simService.addPackegeToSim(data, parseCookie(ctx));
+        return await this.simService.addPackegeToSim(data, parseHeaders(ctx));
     }
 }

@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { UserService } from "../service";
@@ -18,6 +18,6 @@ export class DeactivateUserResolver {
         uuid: string,
         @Ctx() ctx: Context
     ): Promise<UserResDto> {
-        return this.userService.deactivateUser(uuid, parseCookie(ctx));
+        return this.userService.deactivateUser(uuid, parseHeaders(ctx));
     }
 }

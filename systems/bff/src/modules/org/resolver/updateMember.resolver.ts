@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { BoolResponse, Context } from "../../../common/types";
 import { UpdateMemberInputDto } from "../types";
@@ -18,6 +18,6 @@ export class updateMemberResolver {
         @Arg("data") data: UpdateMemberInputDto,
         @Ctx() ctx: Context
     ): Promise<BoolResponse> {
-        return this.OrgService.updateMember(memberId, data, parseCookie(ctx));
+        return this.OrgService.updateMember(memberId, data, parseHeaders(ctx));
     }
 }

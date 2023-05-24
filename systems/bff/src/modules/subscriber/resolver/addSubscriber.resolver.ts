@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SubscriberService } from "../service";
@@ -17,6 +17,6 @@ export class AddSubscriberResolver {
         @Arg("data") data: SubscriberInputDto,
         @Ctx() ctx: Context
     ): Promise<SubscriberDto> {
-        return await this.userService.addSubscriber(data, parseCookie(ctx));
+        return await this.userService.addSubscriber(data, parseHeaders(ctx));
     }
 }

@@ -29,9 +29,11 @@ const OptionItem = ({
     onClick={() => handleItemClick(type)}
     sx={{ display: isShowUpdate ? 'flex' : 'none' }}
   >
-    <ListItemIcon>
-      <Icon fontSize="small" />
-    </ListItemIcon>
+    {Icon && (
+      <ListItemIcon>
+        <Icon fontSize="small" />
+      </ListItemIcon>
+    )}
     <ListItemText sx={{ mr: 1 }}>{title}</ListItemText>
     {type === 'update' && (
       <div
@@ -106,11 +108,11 @@ const OptionsPopover = ({
       >
         {menuOptions.map(({ id: optId, Icon, title, route }: any) => (
           <OptionItem
-            key={`${cid}-${optId}`}
+            key={`${title}-${optId}`}
             type={route}
             Icon={Icon}
             title={title}
-            isShowUpdate={optId === 3 ? isShowUpdate : true}
+            isShowUpdate={true}
             handleItemClick={(type: string) => {
               handleItemClick(type);
               handlePopoverClose();

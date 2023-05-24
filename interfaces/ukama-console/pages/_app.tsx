@@ -1,18 +1,17 @@
 import {
+  commonData,
   isDarkmode,
   isSkeltonLoading,
   pageName,
   snackbarMessage,
   user,
 } from '@/app-recoil';
-import { networkId } from '@/app-recoil/atom';
 import client from '@/client/ApolloClient';
-import { useWhoamiLazyQuery } from '@/generated';
+import { useGetNetworksLazyQuery, useWhoamiLazyQuery } from '@/generated';
 import { theme } from '@/styles/theme';
-import { TSnackMessage, TUser } from '@/types';
+import { TCommonData, TSnackMessage, TUser } from '@/types';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
-import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import { ApolloProvider } from '@apollo/client';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
@@ -61,42 +60,45 @@ const App = ({
     useRecoilState<TSnackMessage>(snackbarMessage);
   const [skeltonLoading, setSkeltonLoading] =
     useRecoilState<boolean>(isSkeltonLoading);
-  const [network, setNetwork] = useRecoilState<string>(networkId);
+  const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
   const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery();
+  const [
+    getNetworks,
+    { data: networksData, error: networdsError, loading: networksLoading },
+  ] = useGetNetworksLazyQuery();
 
   useEffect(() => {
     if (!_user?.id) getWhoami();
   }, []);
 
   useEffect(() => {
-    const { id, name, email } = _user;
-    const pathname =
-      typeof window !== 'undefined' && window.location.pathname
-        ? window.location.pathname
-        : '';
-
-    setPage(getTitleFromPath(pathname));
-    if (id && name && email) {
-      if (
-        !doesHttpOnlyCookieExist('id') &&
-        doesHttpOnlyCookieExist('ukama_session')
-      ) {
-        resetData();
-        resetPageName();
-        window.location.replace(
-          `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout`,
-        );
-      } else if (
-        doesHttpOnlyCookieExist('id') &&
-        !doesHttpOnlyCookieExist('ukama_session')
-      )
-        handleGoToLogin();
-    } else {
-      if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
-      handleGoToLogin();
-    }
+    // const { id, name, email } = _user;
+    // const pathname =
+    //   typeof window !== 'undefined' && window.location.pathname
+    //     ? window.location.pathname
+    //     : '';
+    // setPage(getTitleFromPath(pathname));
+    // if (id && name && email) {
+    //   if (
+    //     !doesHttpOnlyCookieExist('id') &&
+    //     doesHttpOnlyCookieExist('ukama_session')
+    //   ) {
+    //     resetData();
+    //     resetPageName();
+    //     window.location.replace(
+    //       `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout`,
+    //     );
+    //   } else if (
+    //     doesHttpOnlyCookieExist('id') &&
+    //     !doesHttpOnlyCookieExist('ukama_session')
+    //   )
+    //     handleGoToLogin();
+    // } else {
+    //   if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
+    //   handleGoToLogin();
+    // }
   }, []);
 
   useEffect(() => {
@@ -105,14 +107,15 @@ const App = ({
 
   useEffect(() => {
     if (data?.whoami) {
-      _setUser({
-        id: data.whoami.id,
-        name: data.whoami.name,
-        email: data.whoami.email,
-        role: data.whoami.role,
-        isFirstVisit: data.whoami.isFirstVisit,
-      });
-      setSkeltonLoading(false);
+      getNetworks();
+      //   _setUser({
+      //     id: data.whoami.id,
+      //     name: data.whoami.name,
+      //     email: data.whoami.email,
+      //     role: data.whoami.role,
+      //     isFirstVisit: data.whoami.isFirstVisit,
+      //   });
+      //   setSkeltonLoading(false);
     }
   }, [data]);
 
@@ -124,8 +127,8 @@ const App = ({
         type: 'error' as AlertColor,
         show: true,
       });
-      resetData();
-      window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
+      // resetData();
+      // window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
     }
   }, [error]);
 
@@ -139,7 +142,8 @@ const App = ({
     setSnackbarMessage({ ..._snackbarMessage, show: false });
 
   const handlePageChange = (page: string) => setPage(page);
-  const handleNetworkChange = (id: string) => setNetwork(id);
+  const handleNetworkChange = (id: string) =>
+    setCommonData({ ..._commonData, networkId: id });
 
   return (
     <CacheProvider value={emotionCache}>
@@ -148,8 +152,8 @@ const App = ({
         <ErrorBoundary>
           <Layout
             page={page}
-            networkId={network}
-            networks={NETWORKS}
+            networkId={_commonData?.networkId}
+            networks={networksData?.getNetworks.networks}
             isDarkMode={_isDarkMod}
             isLoading={skeltonLoading}
             handlePageChange={handlePageChange}

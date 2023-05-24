@@ -1,4 +1,4 @@
-import { MenuItemType } from '@/types';
+import { ColumnsWithOptions, MenuItemType } from '@/types';
 import AppsIcon from '@mui/icons-material/Apps';
 import BillingIcon from '@mui/icons-material/CreditCard';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -87,6 +87,25 @@ const TIME_FILTER = [
   { id: 2, label: 'This week', value: 'WEEK' },
   { id: 3, label: 'Month', value: 'MONTH' },
   { id: 4, label: 'Total', value: 'TOTAL' },
+];
+
+export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
+  { id: 'name', label: 'Name', minWidth: 160 },
+  { id: 'network', label: 'Network', minWidth: 180 },
+  { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
+  { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
+  { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
+];
+export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
+  {
+    id: 1,
+    Icon: null,
+    title: 'Edit subscriber',
+    route: 'edit-sub',
+  },
+  { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
+  { id: 3, Icon: null, title: 'Pause service', route: 'pause-service' },
+  { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
 ];
 
 const BASIC_MENU_ACTIONS: MenuItemType[] = [

@@ -1,10 +1,10 @@
-import { Resolver, Query, UseMiddleware, Ctx } from "type-graphql";
+import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { OrgNodeResponseDto } from "../types";
-import { NodeService } from "../service";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
-import { parseCookie } from "../../../common";
+import { NodeService } from "../service";
+import { OrgNodeResponseDto } from "../types";
 
 @Service()
 @Resolver()
@@ -14,6 +14,6 @@ export class GetNodesByOrgResolver {
     @Query(() => OrgNodeResponseDto)
     @UseMiddleware(Authentication)
     async getNodesByOrg(@Ctx() ctx: Context): Promise<OrgNodeResponseDto> {
-        return this.nodeService.getNodesByOrg(parseCookie(ctx));
+        return this.nodeService.getNodesByOrg(parseHeaders(ctx));
     }
 }

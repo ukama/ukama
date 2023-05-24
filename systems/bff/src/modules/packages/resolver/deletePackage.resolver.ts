@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context, IdResponse } from "../../../common/types";
 import { PackageService } from "../service";
@@ -16,6 +16,6 @@ export class DeletePackageResolver {
         @Arg("packageId") packageId: string,
         @Ctx() ctx: Context
     ): Promise<IdResponse> {
-        return this.packageService.deletePackage(packageId, parseCookie(ctx));
+        return this.packageService.deletePackage(packageId, parseHeaders(ctx));
     }
 }

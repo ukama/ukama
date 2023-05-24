@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
@@ -22,7 +22,7 @@ export class RemovePackageForSimResolver {
     ): Promise<RemovePackageFromSimResDto> {
         return await this.simService.removePackageFromSim(
             data,
-            parseCookie(ctx)
+            parseHeaders(ctx)
         );
     }
 }

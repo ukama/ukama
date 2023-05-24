@@ -1,9 +1,9 @@
 import { selector } from 'recoil';
 import {
+  commonData,
   isDarkmode,
   isFirstVisit,
   isSkeltonLoading,
-  networkId,
   pageName,
   snackbarMessage,
   user,
@@ -23,9 +23,9 @@ const withIsFirstVisit = selector({
   key: 'withIsFirstVisit',
   get: ({ get }) => get(isFirstVisit),
 });
-const withNetworkId = selector({
-  key: 'withNetworkName',
-  get: ({ get }) => get(networkId),
+const withCommonData = selector({
+  key: 'withCommonData',
+  get: ({ get }) => get(commonData),
 });
 const withIsDarkMod = selector({
   key: 'withIsDarkMod',
@@ -40,12 +40,11 @@ const withUser = selector({
   key: 'withUser',
   get: ({ get }) => get(user),
 });
-
 export {
   withUser,
-  withNetworkId,
   withPageName,
   withIsDarkMod,
+  withCommonData,
   withIsFirstVisit,
   withSnackbarMessage,
   withIsSkeltonLoading,

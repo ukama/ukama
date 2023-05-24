@@ -41,7 +41,7 @@ const UserSettings = () => {
     typeof window !== 'undefined' &&
       window.location.replace(
         `${
-          process.env.NEXT_PUBLIC_REACT_APP_API_SOCKET
+          process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL
         }/userAccountSettings?mode=${_isDarkMod ? 1 : 0}`,
       );
   };

@@ -400,3 +400,173 @@ query GetNetworkDataUsage($networkId: String!, $filter: TIME_FILTER!) {
     usage
   }
 }
+
+### Subscriber Start ###
+
+fragment SubscriberSim on SubscriberDto {
+  sim {
+    id
+    subscriberId
+    networkId
+    orgId
+    iccid
+    msisdn
+    imsi
+    type
+    status
+    firstActivatedOn
+    lastActivatedOn
+    activationsCount
+    deactivationsCount
+    allocatedAt
+    isPhysical
+    package
+  }
+}
+
+fragment Subscriber on SubscriberDto {
+  uuid
+  address
+  dob
+  email
+  firstName
+  lastName
+  gender
+  idSerial
+  networkId
+  orgId
+  phone
+  proofOfIdentification
+  ...SubscriberSim
+}
+
+mutation addSubscriber($data: SubscriberInputDto!) {
+  addSubscriber(data: $data) {
+    ...Subscriber
+  }
+}
+
+query getSubscriber($subscriberId: String!) {
+  getSubscriber(subscriberId: $subscriberId) {
+    ...Subscriber
+  }
+}
+
+mutation updateSubscriber(
+  $subscriberId: String!
+  $data: UpdateSubscriberInputDto!
+) {
+  updateSubscriber(subscriberId: $subscriberId, data: $data) {
+    success
+  }
+}
+
+mutation deleteSubscriber($subscriberId: String!) {
+  deleteSubscriber(subscriberId: $subscriberId) {
+    success
+  }
+}
+
+query getSubscribersByNetwork($networkId: String!) {
+  getSubscribersByNetwork(networkId: $networkId) {
+    subscribers {
+      ...Subscriber
+    }
+  }
+}
+
+query getSubscriberMetricsByNetwork($networkId: String!) {
+  getSubscriberMetricsByNetwork(networkId: $networkId) {
+    total
+    active
+    inactive
+    terminated
+  }
+}
+### Subscriber End ###
+
+### Network End ###
+fragment Network on NetworkDto {
+  id
+  name
+  orgId
+  isDeactivated
+  createdAt
+}
+
+query getNetwork($networkId: String!) {
+  getNetwork(networkId: $networkId) {
+    ...Network
+  }
+}
+
+query getNetworks {
+  getNetworks {
+    orgId
+    networks {
+      ...Network
+    }
+  }
+}
+### Network End ###
+
+### Package Start ###
+fragment PackageRate on PackageDto {
+  rate {
+    sms_mo
+    sms_mt
+    data
+    amount
+  }
+}
+fragment PackageMarkup on PackageDto {
+  markup {
+    baserate
+    markup
+  }
+}
+fragment Package on PackageDto {
+  uuid
+  name
+  orgId
+  active
+  duration
+  simType
+  createdAt
+  deletedAt
+  updatedAt
+  smsVolume
+  dataVolume
+  voiceVolume
+  ulbr
+  dlbr
+  type
+  dataUnit
+  voiceUnit
+  messageUnit
+  flatrate
+  currency
+  from
+  to
+  country
+  provider
+  apn
+  ownerId
+  amount
+  ...PackageRate
+  ...PackageMarkup
+}
+query getPackages {
+  getPackages {
+    packages {
+      ...Package
+    }
+  }
+}
+query getPackage($packageId: String!) {
+  getPackage(packageId: $packageId) {
+    ...Package
+  }
+}
+
+### Package End ###

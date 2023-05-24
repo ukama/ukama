@@ -1,6 +1,6 @@
 import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { parseCookie } from "../../../common";
+import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
@@ -17,6 +17,6 @@ export class AllocateSimResolver {
         @Arg("data") data: AllocateSimInputDto,
         @Ctx() ctx: Context
     ): Promise<SimResDto> {
-        return await this.simService.allocateSim(data, parseCookie(ctx));
+        return await this.simService.allocateSim(data, parseHeaders(ctx));
     }
 }

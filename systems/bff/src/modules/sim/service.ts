@@ -1,29 +1,32 @@
 import { Service } from "typedi";
 import { catchAsyncIOMethod } from "../../common";
-import { ParsedCookie } from "../../common/types";
+import { THeaders } from "../../common/types";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 import { checkError } from "../../errors";
+import { getHeaders } from "../../utils";
+import generateTokenFromIccid from "../../utils/generateSimToken";
 import { ISimService } from "./interface";
 import SimMapper from "./mapper";
 import {
-    SetActivePackageForSimInputDto,
-    DeleteSimInputDto,
-    SetActivePackageForSimResDto,
-    RemovePackageFromSimResDto,
-    GetPackagesForSimResDto,
-    GetPackagesForSimInputDto,
-    RemovePackageFormSimInputDto,
     AddPackageSimResDto,
     AddPackageToSimInputDto,
-    DeleteSimResDto,
-    GetSimByNetworkInputDto,
     AllocateSimInputDto,
-    GetSimInputDto,
+    DeleteSimInputDto,
+    DeleteSimResDto,
+    GetPackagesForSimInputDto,
+    GetPackagesForSimResDto,
+    GetSimByNetworkInputDto,
     GetSimBySubscriberIdInputDto,
-    SimStatusResDto,
+    GetSimInputDto,
+    RemovePackageFormSimInputDto,
+    RemovePackageFromSimResDto,
+    SetActivePackageForSimInputDto,
+    SetActivePackageForSimResDto,
+    SimDataUsage,
     SimDetailsDto,
     SimResDto,
+    SimStatusResDto,
     ToggleSimStatusInputDto,
 } from "./types";
 
@@ -31,20 +34,27 @@ import {
 export class SimService implements ISimService {
     allocateSim = async (
         req: AllocateSimInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SimResDto> => {
+        const token = generateTokenFromIccid(
+            req.iccid,
+            process.env.ENCRYPTION_KEY || ""
+        );
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
             path: `${SERVER.SUBSCRIBER_REGISTRY_API_URL}`,
-            body: { ...req },
-            headers: cookie.header,
+            body: {
+                ...req,
+                sim_token: token,
+            },
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return SimMapper.dtoToSimResDto(res);
     };
     toggleSimStatus = async (
         req: ToggleSimStatusInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SimStatusResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -53,14 +63,14 @@ export class SimService implements ISimService {
                 simId: req.simId,
                 status: req.status,
             },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return res;
     };
     getSim = async (
         req: GetSimInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SimDetailsDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -68,14 +78,28 @@ export class SimService implements ISimService {
             body: {
                 simId: req.simId,
             },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return SimMapper.dtoToSimDetailsDto(res);
     };
+    getDataUsage = async (
+        simId: string,
+        headers: THeaders
+    ): Promise<SimDataUsage> => {
+        // const res = await catchAsyncIOMethod({
+        //     type: API_METHOD_TYPE.GET,
+        //     path: `${SERVER.SUBSCRIBER_REGISTRY_API_URL}/${simId}`,
+        //     getHeaders(headers)
+        // });
+        // if (checkError(res)) throw new Error(res.message);
+        return {
+            usage: "1240",
+        };
+    };
     getSimBySubscriberId = async (
         req: GetSimBySubscriberIdInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SimDetailsDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -83,14 +107,14 @@ export class SimService implements ISimService {
             body: {
                 subscriberId: req.subscriberId,
             },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return SimMapper.dtoToSimDetailsDto(res);
     };
     getSimByNetworkId = async (
         req: GetSimByNetworkInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SimDetailsDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -98,14 +122,14 @@ export class SimService implements ISimService {
             body: {
                 networkId: req.networkId,
             },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return SimMapper.dtoToSimDetailsDto(res);
     };
     deleteSim = async (
         req: DeleteSimInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<DeleteSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -113,40 +137,40 @@ export class SimService implements ISimService {
             body: {
                 simId: req.simId,
             },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return res;
     };
     addPackegeToSim = async (
         req: AddPackageToSimInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<AddPackageSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
             path: `${SERVER.SUBSCRIBER_REGISTRY_API_URL}`,
             body: { ...req },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return res;
     };
     removePackageFromSim = async (
         req: RemovePackageFormSimInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<RemovePackageFromSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
             path: `${SERVER.SUBSCRIBER_REGISTRY_API_URL}`,
             body: { ...req },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return res;
     };
     getPackagesForSim = async (
         req: GetPackagesForSimInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<GetPackagesForSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
@@ -154,20 +178,20 @@ export class SimService implements ISimService {
             body: {
                 simId: req.simId,
             },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return res;
     };
     setActivePackageForSim = async (
         req: SetActivePackageForSimInputDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<SetActivePackageForSimResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
             path: `${SERVER.SUBSCRIBER_REGISTRY_API_URL}`,
             body: { ...req },
-            headers: cookie.header,
+            headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
         return res;

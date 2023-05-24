@@ -1,4 +1,4 @@
-import { Meta } from "../common/types";
+import { Meta, THeaders } from "../common/types";
 import { GRAPHS_TAB, GRAPH_FILTER, NODE_TYPE } from "../constants";
 import { AddNodeDto, LinkNodes, NodeObj } from "../modules/node/types";
 
@@ -158,7 +158,7 @@ export const getMetricTitleByType = (type: string): string => {
     }
 };
 
-export const converCookieToObj = (cookie: string) => {
+export const convertCookieToObj = (cookie: string) => {
     if (cookie) {
         return cookie.split(";").reduce((res, c) => {
             const [key] = c.trim().split("=").map(decodeURIComponent);
@@ -171,6 +171,21 @@ export const converCookieToObj = (cookie: string) => {
         }, {});
     }
     return null;
+};
+
+export const getHeaders = (headers: THeaders): any => {
+    const reqHeader: any = {
+        "org-id": headers.orgId,
+        "user-id": headers.userId,
+        "org-name": headers.orgName,
+        cookie: "",
+        "x-session-token": "",
+    };
+
+    if (headers.auth.Cookie) reqHeader.cookie = headers.auth.Cookie;
+    else reqHeader["x-session-token"] = headers.auth.Authorization;
+
+    return reqHeader;
 };
 
 export const isTowerNode = (nodeId: string): boolean =>
