@@ -147,11 +147,3 @@ const Page = () => {
 };
 
 export default Page;
-function setSnackbarMessage(arg0: {
-  id: string;
-  message: string;
-  type: AlertColor;
-  show: boolean;
-}) {
-  throw new Error('Function not implemented.');
-}
