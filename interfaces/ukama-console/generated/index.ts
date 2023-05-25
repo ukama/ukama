@@ -1057,7 +1057,8 @@ export type Query = {
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
   getPackages: PackagesResDto;
-  getSim: GetPackagesForSimResDto;
+  getSim: SimDetailsDto;
+  getSimPoolStats: SimPoolStatsDto;
   getSite: SiteDto;
   getSites: SitesResDto;
   getStripeCustomer: StripeCustomer;
@@ -1144,7 +1145,12 @@ export type QueryGetPackageArgs = {
 
 
 export type QueryGetSimArgs = {
-  data: GetPackagesForSimInputDto;
+  data: GetSimInputDto;
+};
+
+
+export type QueryGetSimPoolStatsArgs = {
+  type: Scalars['String'];
 };
 
 
@@ -1274,6 +1280,16 @@ export type SimPackageDto = {
   id: Scalars['String'];
   name: Scalars['String'];
   updatedAt: Scalars['String'];
+};
+
+export type SimPoolStatsDto = {
+  __typename?: 'SimPoolStatsDto';
+  available: Scalars['Float'];
+  consumed: Scalars['Float'];
+  esim: Scalars['Float'];
+  failed: Scalars['Float'];
+  physical: Scalars['Float'];
+  total: Scalars['Float'];
 };
 
 export type SimResDto = {
@@ -1700,6 +1716,13 @@ export type GetPackageQueryVariables = Exact<{
 
 
 export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+
+export type GetSimpoolStatsQueryVariables = Exact<{
+  type: Scalars['String'];
+}>;
+
+
+export type GetSimpoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, physical: number, esim: number } };
 
 export const SubscriberSimFragmentDoc = gql`
     fragment SubscriberSim on SubscriberDto {
@@ -2303,3 +2326,43 @@ export function useGetPackageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type GetPackageQueryHookResult = ReturnType<typeof useGetPackageQuery>;
 export type GetPackageLazyQueryHookResult = ReturnType<typeof useGetPackageLazyQuery>;
 export type GetPackageQueryResult = Apollo.QueryResult<GetPackageQuery, GetPackageQueryVariables>;
+export const GetSimpoolStatsDocument = gql`
+    query getSimpoolStats($type: String!) {
+  getSimPoolStats(type: $type) {
+    total
+    available
+    consumed
+    failed
+    physical
+    esim
+  }
+}
+    `;
+
+/**
+ * __useGetSimpoolStatsQuery__
+ *
+ * To run a query within a React component, call `useGetSimpoolStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimpoolStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimpoolStatsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useGetSimpoolStatsQuery(baseOptions: Apollo.QueryHookOptions<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>(GetSimpoolStatsDocument, options);
+      }
+export function useGetSimpoolStatsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>(GetSimpoolStatsDocument, options);
+        }
+export type GetSimpoolStatsQueryHookResult = ReturnType<typeof useGetSimpoolStatsQuery>;
+export type GetSimpoolStatsLazyQueryHookResult = ReturnType<typeof useGetSimpoolStatsLazyQuery>;
+export type GetSimpoolStatsQueryResult = Apollo.QueryResult<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>;
