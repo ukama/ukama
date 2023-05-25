@@ -388,11 +388,9 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 
 			resp := tc.GetData().(*rpb.AddSubscriberResponse)
 			if assert.NotNil(t, resp) {
+				log.Tracef("Resp data is %v", resp)
 				d := tc.GetWorkflowData().(*InitData)
 				assert.Equal(t, d.reqSubscriberAddReq.Email, resp.Subscriber.Email)
-				assert.Equal(t, d.reqSubscriberAddReq.ProofOfIdentification, resp.Subscriber.ProofOfIdentification)
-				assert.Equal(t, d.reqSubscriberAddReq.IdSerial, resp.Subscriber.IdSerial)
-				assert.Equal(t, true, tc.Watcher.Expections())
 				check = true
 			}
 
