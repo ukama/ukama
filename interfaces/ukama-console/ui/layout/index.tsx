@@ -15,6 +15,7 @@ interface ILayoutProps {
   page: string;
   networkId: string;
   isLoading: boolean;
+  placeholder: string;
   isDarkMode: boolean;
   handlePageChange: Function;
   networks: NetworkDto[] | undefined;
@@ -29,6 +30,7 @@ const Layout = ({
   isLoading,
   networkId,
   isDarkMode,
+  placeholder,
   handlePageChange,
   handleNetworkChange,
 }: ILayoutProps) => {
@@ -66,6 +68,7 @@ const Layout = ({
           isLoading={isLoading}
           onNavigate={onNavigate}
           isDarkMode={isDarkMode}
+          placeholder={placeholder}
           networks={networks || []}
           handleNetworkChange={handleNetworkChange}
         />

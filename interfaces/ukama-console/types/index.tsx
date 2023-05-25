@@ -1,4 +1,6 @@
 import { MetricDto } from '@/generated';
+import { EmotionCache } from '@emotion/react';
+import { AppProps } from 'next/app';
 
 export type MenuItemType = {
   Icon: any;
@@ -129,3 +131,7 @@ export type TCommonData = {
   userId: string;
   orgName: string;
 };
+
+export interface MyAppProps extends AppProps {
+  emotionCache?: EmotionCache;
+}

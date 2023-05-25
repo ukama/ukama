@@ -27,7 +27,12 @@ const pageName = atom({
 });
 const commonData = atom({
   key: 'commonData',
-  default: { networkId: '', orgId: '', userId: '', orgName: '' },
+  default: {
+    networkId: '',
+    orgId: 'bf184df7-0ce6-4100-a9c6-497c181b87cf',
+    userId: 'a9a3dc45-fe06-43d6-b148-7508c9674627',
+    orgName: 'ukama',
+  },
   effects_UNSTABLE: [persistAtom],
 });
 const snackbarMessage = atom({

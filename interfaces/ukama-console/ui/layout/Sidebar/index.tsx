@@ -45,6 +45,7 @@ interface ISidebarProps {
   networkId: string;
   isLoading: boolean;
   isDarkMode: boolean;
+  placeholder: string;
   onNavigate: Function;
   networks: NetworkDto[];
   handleNetworkChange: Function;
@@ -57,6 +58,7 @@ const Sidebar = ({
   networkId,
   onNavigate,
   isDarkMode,
+  placeholder,
   networks = [],
   handleNetworkChange,
 }: ISidebarProps) => {
@@ -78,8 +80,9 @@ const Sidebar = ({
           <Box mx={{ xs: '18px', md: '28px' }} my={{ xs: 1, md: 1.7 }}>
             <BasicDropdown
               value={networkId}
-              list={getDropDownData()}
               isLoading={isLoading}
+              list={getDropDownData()}
+              placeholder={placeholder}
               handleOnChange={handleNetworkChange}
             />
           </Box>
