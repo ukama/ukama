@@ -25,6 +25,7 @@ import {
     SetActivePackageForSimResDto,
     SimDataUsage,
     SimDetailsDto,
+    SimPoolStatsDto,
     SimResDto,
     SimStatusResDto,
     ToggleSimStatusInputDto,
@@ -178,6 +179,18 @@ export class SimService implements ISimService {
             body: {
                 simId: req.simId,
             },
+            headers: getHeaders(headers),
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return res;
+    };
+    getSimPoolStats = async (
+        type: string,
+        headers: THeaders
+    ): Promise<SimPoolStatsDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.SUBSCRIBER_SIMPOOL_API_URL}/stats/${type}`,
             headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
