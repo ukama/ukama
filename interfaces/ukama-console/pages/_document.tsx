@@ -1,4 +1,5 @@
 import { colors } from '@/styles/theme';
+import { MyAppProps } from '@/types';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import createEmotionServer from '@emotion/server/create-instance';
 import { AppType } from 'next/app';
@@ -11,7 +12,6 @@ import Document, {
   NextScript,
 } from 'next/document';
 import * as React from 'react';
-import { MyAppProps } from './_app';
 
 interface MyDocumentProps extends DocumentProps {
   emotionStyleTags: JSX.Element[];
