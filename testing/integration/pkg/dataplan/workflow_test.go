@@ -160,6 +160,486 @@ func InitializeData() *InitData {
 	return d
 }
 
+var tc_dp_add_baserate = &test.TestCase{
+	Name:        "Adding base rate",
+	Description: "Add base rate provided by third parties",
+	Data:        &bpb.UploadBaseRatesResponse{},
+	//Workflow:    w,
+
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		log.Tracef("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.baserate.rate.update"})
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.DataPlanBaseRateUpload(a.reqUploadBaseRatesRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+		resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
+		if resp != nil {
+			if tc.Watcher.Expections() {
+				check = true
+			} else {
+				log.Error("Expected events not found.")
+			}
+		}
+
+		return check, nil
+	},
+
+	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Here we save any data required to be saved from the test case
+		Cleanup any test specific data
+		*/
+		resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
+
+		a := tc.GetWorkflowData().(*InitData)
+		for _, r := range resp.Rate {
+			a.BaseRateId = append(a.BaseRateId, r.Uuid)
+		}
+
+		tc.SaveWorkflowData(a)
+		tc.Watcher.Stop()
+		return nil
+	},
+}
+
+var tc_dp_get_baserate_by_id = &test.TestCase{
+	Name:        "Get Base rate",
+	Description: "Get Base rate by Id",
+	Data:        &bpb.GetBaseRatesByIdResponse{},
+	//Workflow:    w,
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqGetBaseRateRequest = api.GetBaseRateRequest{
+			RateId: a.BaseRateId[len(a.BaseRateId)-1],
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.DataPlanBaseRateGet(a.reqGetBaseRateRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*bpb.GetBaseRatesByIdResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqGetBaseRateRequest.RateId == resp.Rate.Uuid {
+				check = true
+			}
+		}
+		return check, nil
+	},
+}
+
+var tc_dp_get_baserate_by_country = &test.TestCase{
+	Name:        "Get Base rates for country",
+	Description: "Get base rates for country",
+	Data:        &bpb.GetBaseRatesResponse{},
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		c := a.Countries[len(a.Countries)-1]
+		p := a.Providers[c]
+		a.reqGetBaseRatesByCountryRequest = api.GetBaseRatesByCountryRequest{
+			Country:  c,
+			Provider: p[len(p)-1],
+			SimType:  a.SimType,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.DataPlanBaseRateGetByCountry(a.reqGetBaseRatesByCountryRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*bpb.GetBaseRatesResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqGetBaseRatesByCountryRequest.Country == resp.Rates[0].Country &&
+				data.reqGetBaseRatesByCountryRequest.Provider == resp.Rates[0].Provider {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var tc_dp_get_baserate_by_period = &test.TestCase{
+	Name:        "Get base rate for period",
+	Description: "Get base rate for a period",
+	Data:        &bpb.GetBaseRatesResponse{},
+	//Workflow:    w,
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		c := a.Countries[len(a.Countries)-1]
+		p := a.Providers[c]
+		a.reqGetBaseRatesForPeriodRequest = api.GetBaseRatesForPeriodRequest{
+			Country:  c,
+			Provider: p[len(p)-1],
+			SimType:  a.SimType,
+			From:     utils.GenerateFutureDate(24 * time.Hour),
+			To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.DataPlanBaseRateGetByPeriod(a.reqGetBaseRatesForPeriodRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*bpb.GetBaseRatesResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if len(resp.Rates) > 0 &&
+				data.reqGetBaseRatesByCountryRequest.Country == resp.Rates[0].Country &&
+				data.reqGetBaseRatesByCountryRequest.Provider == resp.Rates[0].Provider {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var tc_dp_add_markup = &test.TestCase{
+	Name:        "Set Markup",
+	Description: "Add markup rate fpr owner",
+	Data:        &rpb.UpdateMarkupResponse{},
+	//Workflow:    w,
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		log.Tracef("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.rate.markup.update"})
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.DataPlanUpdateMarkup(a.reqSetMarkupRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*rpb.UpdateMarkupResponse)
+		if resp != nil {
+			if true == tc.Watcher.Expections() {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+
+	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Here we save any data required to be saved from the test case
+		Cleanup any test specific data
+		*/
+
+		tc.Watcher.Stop()
+		return nil
+	},
+}
+
+var tc_dp_get_markup = &test.TestCase{
+	Name:        "Get markup",
+	Description: "Get markup percentage for the owner",
+	Data:        &rpb.GetMarkupResponse{},
+	//Workflow:    w,
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.DataPlanGetUserMarkup(a.reqGetMarkupRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*rpb.GetMarkupResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqGetMarkupRequest.OwnerId == resp.OwnerId {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var tc_dp_get_rate = &test.TestCase{
+	Name:        "Get rate for Owner's org",
+	Description: "Get rate for a Owner's org",
+	Data:        &rpb.GetRateResponse{},
+	//Workflow:    w,
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		c := a.Countries[len(a.Countries)-1]
+		p := a.Providers[c]
+		a.reqGetRateRequest = api.GetRateRequest{
+			OwnerId:  a.OwnerId,
+			Country:  c,
+			Provider: p[len(p)-1],
+			SimType:  a.SimType,
+			From:     utils.GenerateFutureDate(24 * time.Hour),
+			To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.DataPlanGetRate(a.reqGetRateRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*rpb.GetRateResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if len(resp.Rates) > 0 &&
+				data.reqGetBaseRatesByCountryRequest.Country == resp.Rates[0].Country &&
+				data.reqGetBaseRatesByCountryRequest.Provider == resp.Rates[0].Provider {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+
+	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Here we save any data required to be saved from the test case
+		Cleanup any test specific data
+		*/
+
+		if tc.State == test.StateTypePass {
+			resp := tc.GetData().(*rpb.GetRateResponse)
+
+			a := tc.GetWorkflowData().(*InitData)
+			if len(resp.Rates) > 0 {
+				a.reqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
+			}
+
+			tc.SaveWorkflowData(a)
+		}
+		return nil
+	},
+}
+
+var tc_dp_add_package = &test.TestCase{
+	Name:        "Create a package",
+	Description: "Cretae package",
+	Data:        &ppb.AddPackageResponse{},
+	//Workflow:    w,
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		log.Tracef("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.package.create"})
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+
+			tc.Data, err = a.Sys.DataPlanPackageAdd(a.reqAddPackageRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*ppb.AddPackageResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqAddPackageRequest.OrgId == resp.Package.OrgId &&
+				resp.Package.Uuid == "" &&
+				true == tc.Watcher.Expections() {
+				check = true
+			}
+
+		}
+		return check, nil
+	},
+
+	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Here we save any data required to be saved from the test case
+		Cleanup any test specific data
+		*/
+		tc.Watcher.Stop()
+
+		if tc.State == test.StateTypePass {
+			resp := tc.GetData().(*ppb.AddPackageResponse)
+			a := tc.GetWorkflowData().(*InitData)
+			a.PackageId = resp.Package.Uuid
+			tc.SaveWorkflowData(a)
+		}
+
+		return nil
+	},
+}
+
+var tc_dp_get_package_for_org = &test.TestCase{
+	Name:        "Get packages for org",
+	Description: "Get packages for the organization",
+	Data:        &ppb.GetByOrgPackageResponse{},
+	//Workflow:    w,
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqGetPackageByOrgRequest = api.GetPackageByOrgRequest{
+			OrgId: a.OrgId,
+		}
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.DataPlanPackageGetByOrg(a.reqGetPackageByOrgRequest)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*ppb.GetByOrgPackageResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if len(resp.Packages) > 0 &&
+				data.reqGetPackageByOrgRequest.OrgId == resp.Packages[0].OrgId {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
 func TestWorkflow_DataPlanSystem(t *testing.T) {
 
 	/* Sim pool */
@@ -173,481 +653,32 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 		return nil
 	}
 
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Adding base rate",
-		Description: "Add base rate provided by third parties",
-		Data:        &bpb.UploadBaseRatesResponse{},
-		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
-			a := tc.GetWorkflowData().(*InitData)
-			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.baserate.rate.update"})
-			return nil
-		},
+	/* Add baserate */
+	w.RegisterTestCase(tc_dp_add_baserate)
 
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-				tc.Data, err = a.Sys.DataPlanBaseRateUpload(a.reqUploadBaseRatesRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
-			if assert.NotNil(t, resp) {
-				assert.Equal(t, true, tc.Watcher.Expections())
-				check = true
-			}
-
-			return check, nil
-		},
-
-		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Here we save any data required to be saved from the test case
-			Cleanup any test specific data
-			*/
-			resp := tc.GetData().(*bpb.UploadBaseRatesResponse)
-
-			a := tc.GetWorkflowData().(*InitData)
-			for _, r := range resp.Rate {
-				a.BaseRateId = append(a.BaseRateId, r.Uuid)
-			}
-
-			tc.SaveWorkflowData(a)
-			tc.Watcher.Stop()
-			return nil
-		},
-	})
-
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Get Base rate",
-		Description: "Get Base rate by Id",
-		Data:        &bpb.GetBaseRatesByIdResponse{},
-		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
-			a := tc.GetWorkflowData().(*InitData)
-			a.reqGetBaseRateRequest = api.GetBaseRateRequest{
-				RateId: a.BaseRateId[len(a.BaseRateId)-1],
-			}
-			tc.SaveWorkflowData(a)
-			return nil
-		},
-
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-				tc.Data, err = a.Sys.DataPlanBaseRateGet(a.reqGetBaseRateRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*bpb.GetBaseRatesByIdResponse)
-			if assert.NotNil(t, resp) {
-				data := tc.GetWorkflowData().(*InitData)
-				assert.Equal(t, data.reqGetBaseRateRequest.RateId, resp.Rate.Uuid)
-				check = true
-			}
-
-			return check, nil
-		},
-	})
-
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Get Base rates for country",
-		Description: "Get base rates for country",
-		Data:        &bpb.GetBaseRatesResponse{},
-		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
-			a := tc.GetWorkflowData().(*InitData)
-			c := a.Countries[len(a.Countries)-1]
-			p := a.Providers[c]
-			a.reqGetBaseRatesByCountryRequest = api.GetBaseRatesByCountryRequest{
-				Country:  c,
-				Provider: p[len(p)-1],
-				SimType:  a.SimType,
-			}
-			tc.SaveWorkflowData(a)
-			return nil
-		},
-
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-				tc.Data, err = a.Sys.DataPlanBaseRateGetByCountry(a.reqGetBaseRatesByCountryRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*bpb.GetBaseRatesResponse)
-			if assert.NotNil(t, resp) {
-				data := tc.GetWorkflowData().(*InitData)
-				assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Country, resp.Rates[0].Country)
-				assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Provider, resp.Rates[0].Provider)
-				check = true
-			}
-
-			return check, nil
-		},
-	})
+	/* Get baserate by Id */
+	w.RegisterTestCase(tc_dp_get_baserate_by_id)
 
 	/* Get rates by Period */
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Get base rate for period",
-		Description: "Get base rate for a period",
-		Data:        &bpb.GetBaseRatesResponse{},
-		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
-			a := tc.GetWorkflowData().(*InitData)
-			c := a.Countries[len(a.Countries)-1]
-			p := a.Providers[c]
-			a.reqGetBaseRatesForPeriodRequest = api.GetBaseRatesForPeriodRequest{
-				Country:  c,
-				Provider: p[len(p)-1],
-				SimType:  a.SimType,
-				From:     utils.GenerateFutureDate(24 * time.Hour),
-				To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
-			}
-			tc.SaveWorkflowData(a)
-			return nil
-		},
+	w.RegisterTestCase(tc_dp_get_baserate_by_period)
 
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-				tc.Data, err = a.Sys.DataPlanBaseRateGetByPeriod(a.reqGetBaseRatesForPeriodRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*bpb.GetBaseRatesResponse)
-			if assert.NotNil(t, resp) {
-				if assert.Condition(t, func() bool { return (len(resp.Rates) > 0) }, "somebase rates should be returned.") {
-					data := tc.GetWorkflowData().(*InitData)
-					assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Country, resp.Rates[0].Country)
-					assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Provider, resp.Rates[0].Provider)
-					check = true
-				}
-			}
-
-			return check, nil
-		},
-	})
+	/* Get rates by Country */
+	w.RegisterTestCase(tc_dp_get_baserate_by_country)
 
 	// Add Mark ups
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Set Markup",
-		Description: "Add markup rate fpr owner",
-		Data:        &rpb.UpdateMarkupResponse{},
-		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
-			a := tc.GetWorkflowData().(*InitData)
-			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.rate.markup.update"})
-			return nil
-		},
-
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-				tc.Data, err = a.Sys.DataPlanUpdateMarkup(a.reqSetMarkupRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*rpb.UpdateMarkupResponse)
-			if assert.NotNil(t, resp) {
-				assert.Equal(t, true, tc.Watcher.Expections())
-				check = true
-			}
-
-			return check, nil
-		},
-
-		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Here we save any data required to be saved from the test case
-			Cleanup any test specific data
-			*/
-
-			tc.Watcher.Stop()
-			return nil
-		},
-	})
+	w.RegisterTestCase(tc_dp_add_markup)
 
 	/* Get Mark up */
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Get markup",
-		Description: "Get markup percentage for the owner",
-		Data:        &rpb.GetMarkupResponse{},
-		Workflow:    w,
-
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-				tc.Data, err = a.Sys.DataPlanGetUserMarkup(a.reqGetMarkupRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*rpb.GetMarkupResponse)
-			if assert.NotNil(t, resp) {
-				data := tc.GetWorkflowData().(*InitData)
-				assert.Equal(t, data.reqGetMarkupRequest.OwnerId, resp.OwnerId)
-				check = true
-			}
-
-			return check, nil
-		},
-	})
+	w.RegisterTestCase(tc_dp_get_markup)
 
 	/* Get rate */
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Get rate for Owner's org",
-		Description: "Get rate for a Owner's org",
-		Data:        &rpb.GetRateResponse{},
-		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
-			a := tc.GetWorkflowData().(*InitData)
-			c := a.Countries[len(a.Countries)-1]
-			p := a.Providers[c]
-			a.reqGetRateRequest = api.GetRateRequest{
-				OwnerId:  a.OwnerId,
-				Country:  c,
-				Provider: p[len(p)-1],
-				SimType:  a.SimType,
-				From:     utils.GenerateFutureDate(24 * time.Hour),
-				To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
-			}
-			tc.SaveWorkflowData(a)
-			return nil
-		},
-
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-				tc.Data, err = a.Sys.DataPlanGetRate(a.reqGetRateRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*rpb.GetRateResponse)
-			if assert.NotNil(t, resp) {
-				data := tc.GetWorkflowData().(*InitData)
-				assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Country, resp.Rates[0].Country)
-				assert.Equal(t, data.reqGetBaseRatesByCountryRequest.Provider, resp.Rates[0].Provider)
-				check = true
-			}
-
-			return check, nil
-		},
-
-		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Here we save any data required to be saved from the test case
-			Cleanup any test specific data
-			*/
-
-			if tc.State == test.StateTypePass {
-				resp := tc.GetData().(*rpb.GetRateResponse)
-
-				a := tc.GetWorkflowData().(*InitData)
-				if len(resp.Rates) > 0 {
-					a.reqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
-				}
-
-				tc.SaveWorkflowData(a)
-			}
-			return nil
-		},
-	})
+	w.RegisterTestCase(tc_dp_get_rate)
 
 	/* Add a package */
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Create a package",
-		Description: "Cretae package",
-		Data:        &ppb.AddPackageResponse{},
-		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
-			a := tc.GetWorkflowData().(*InitData)
-			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.package.create"})
-			return nil
-		},
-
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-
-				tc.Data, err = a.Sys.DataPlanPackageAdd(a.reqAddPackageRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*ppb.AddPackageResponse)
-			if assert.NotNil(t, resp) {
-				data := tc.GetWorkflowData().(*InitData)
-				assert.Equal(t, data.reqAddPackageRequest.OrgId, resp.Package.OrgId)
-				assert.NotNil(t, resp.Package.Uuid)
-				assert.Equal(t, true, tc.Watcher.Expections())
-				check = true
-			}
-
-			return check, nil
-		},
-
-		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Here we save any data required to be saved from the test case
-			Cleanup any test specific data
-			*/
-			tc.Watcher.Stop()
-
-			assert.Equal(t, int(tc.State), int(test.StateTypePass))
-			resp := tc.GetData().(*ppb.AddPackageResponse)
-			a := tc.GetWorkflowData().(*InitData)
-			a.PackageId = resp.Package.Uuid
-			tc.SaveWorkflowData(a)
-			return nil
-		},
-	})
+	w.RegisterTestCase(tc_dp_add_package)
 
 	/* Get Packages */
-	w.RegisterTestCase(&test.TestCase{
-		Name:        "Get packages for org",
-		Description: "Get packages for the organization",
-		Data:        &ppb.GetByOrgPackageResponse{},
-		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Setup required for test case
-			Initialize any test specific data if required
-			*/
-			a := tc.GetWorkflowData().(*InitData)
-			a.reqGetPackageByOrgRequest = api.GetPackageByOrgRequest{
-				OrgId: a.OrgId,
-			}
-			tc.SaveWorkflowData(a)
-			return nil
-		},
-
-		Fxn: func(ctx context.Context, tc *test.TestCase) error {
-			/* Test Case */
-			var err error
-			a, ok := tc.GetWorkflowData().(*InitData)
-			if ok {
-				tc.Data, err = a.Sys.DataPlanPackageGetByOrg(a.reqGetPackageByOrgRequest)
-			} else {
-				log.Errorf("Invalid data type for Workflow data.")
-				return fmt.Errorf("invalid data type for Workflow data")
-			}
-			return err
-		},
-
-		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
-			/* Check for possible failures during test case */
-			check := false
-
-			resp := tc.GetData().(*ppb.GetByOrgPackageResponse)
-			if assert.NotNil(t, resp) {
-				if assert.Condition(t, func() bool { return (len(resp.Packages) > 0) }) {
-					data := tc.GetWorkflowData().(*InitData)
-					assert.Equal(t, data.reqGetPackageByOrgRequest.OrgId, resp.Packages[0].OrgId)
-					check = true
-				}
-			}
-
-			return check, nil
-		},
-	})
+	w.RegisterTestCase(tc_dp_add_package)
 
 	/* Run */
 	err := w.Run(t, context.Background())
