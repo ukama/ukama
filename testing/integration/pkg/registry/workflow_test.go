@@ -1,353 +1,526 @@
-package pkg
+package pkg_test
 
 import (
+	"context"
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/bxcodec/faker/v4"
-	"github.com/tj/assert"
+	"github.com/stretchr/testify/assert"
+	pkg "github.com/ukama/ukama/testing/integration/pkg/registry"
+	"github.com/ukama/ukama/testing/integration/pkg/test"
+	"github.com/ukama/ukama/testing/integration/pkg/utils"
+
+	log "github.com/sirupsen/logrus"
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
+	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	userpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
-func TestAddMemberWorkflows(t *testing.T) {
-	host := "http://localhost:8082"
-	registryClient := NewRegistryClient(host)
+type RegistryData struct {
+	Name           string
+	Email          string
+	Phone          string
+	OwnerId        string
+	MemberId       string
+	OrgId          string
+	OrgName        string
+	NetName        string
+	RegistryClient *pkg.RegistryClient
+	Host           string
+	MbHost         string
 
-	t.Run("Owner adds valid member should succeed", func(t *testing.T) {
-		orgName := "milky-way"
-		nomMemberId := "c9647e7a-8967-4978-b512-38a35899f32d"
-
-		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
-
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
-
-		reqGetMember := api.GetMemberRequest{
-			OrgName:  orgName,
-			UserUuid: nomMemberId}
-
-		gmResp, err := registryClient.GetMember(reqGetMember)
-		assert.Error(t, err)
-		assert.Nil(t, gmResp)
-
-		// make sure the owner is the request executor
-		reqAddMember := api.MemberRequest{
-			OrgName:  orgName,
-			UserUuid: nomMemberId}
-
-		amResp, err := registryClient.AddMember(reqAddMember)
-		assert.NoError(t, err)
-		assert.NotNil(t, amResp)
-	})
-
-	t.Run("Non owner adds member should fail", func(t *testing.T) {
-		orgName := "saturn"
-		member := "c9647e7a-8967-4978-b512-38a35899f32d"
-		nonMemberId := "ec4c897e-cc78-43c7-aee3-871a956808c4"
-
-		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
-
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
-
-		owner := orgResp.Org.Owner
-		assert.NotEqual(t, owner, member)
-
-		reqGetMember := api.GetMemberRequest{
-			OrgName:  orgName,
-			UserUuid: member}
-
-		gmResp, err := registryClient.GetMember(reqGetMember)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, member, gmResp.Member.Uuid)
-
-		reqGetNonMember := api.GetMemberRequest{
-			OrgName:  orgName,
-			UserUuid: nonMemberId}
-
-		gnResp, err := registryClient.GetMember(reqGetNonMember)
-		assert.Error(t, err)
-		assert.Nil(t, gnResp)
-
-		// make sure the member is the request executor
-		reqAddMember := api.MemberRequest{
-			OrgName:  orgName,
-			UserUuid: nonMemberId}
-
-		amResp, err := registryClient.AddMember(reqAddMember)
-		assert.Error(t, err)
-		assert.Nil(t, amResp)
-	})
+	// API requests
+	reqAddUser    api.AddUserRequest
+	reqAddOrg     api.AddOrgRequest
+	reqAddMember  api.MemberRequest
+	reqAddNetwork api.AddNetworkRequest
 }
 
-func TestUpdateMemberWorkflows(t *testing.T) {
-	host := "http://localhost:8082"
-	registryClient := NewRegistryClient(host)
-
-	t.Run("Owner updates valid member should succeed", func(t *testing.T) {
-		orgName := "saturn"
-		member := "c9647e7a-8967-4978-b512-38a35899f32d"
-
-		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
-
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
-
-		reqGetMember := api.GetMemberRequest{
-			OrgName:  orgName,
-			UserUuid: member}
-
-		gmResp, err := registryClient.GetMember(reqGetMember)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, member, gmResp.Member.Uuid)
-
-		// make sure the owner is the request executor
-		reqUpdateMember := api.UpdateMemberRequest{
-			OrgName:       orgName,
-			UserUuid:      member,
-			IsDeactivated: true}
-
-		err = registryClient.UpdateMember(reqUpdateMember)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Non owner updates member should fail", func(t *testing.T) {
-		orgName := "saturn"
-		member := "c9647e7a-8967-4978-b512-38a35899f32d"
-		nonOwner := "022586f0-2d0f-4b30-967d-2156574fece4"
-
-		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
-
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
-
-		owner := orgResp.Org.Owner
-		assert.NotEqual(t, owner, nonOwner)
-
-		reqGetMember := api.GetMemberRequest{
-			OrgName:  orgName,
-			UserUuid: member}
-
-		gmResp, err := registryClient.GetMember(reqGetMember)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, member, gmResp.Member.Uuid)
-
-		reqGetNonOwner := api.GetMemberRequest{
-			OrgName:  orgName,
-			UserUuid: nonOwner}
-
-		gnResp, err := registryClient.GetMember(reqGetNonOwner)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, nonOwner, gnResp.Member.Uuid)
-
-		// make sure non owner is the request executor
-		reqUpdateMember := api.UpdateMemberRequest{
-			OrgName:       orgName,
-			UserUuid:      member,
-			IsDeactivated: true}
-
-		err = registryClient.UpdateMember(reqUpdateMember)
-		assert.Error(t, err)
-	})
+type TestData struct {
+	Input   *RegistryData
+	Results interface{}
 }
 
-func TestAddNetworkWorkflows(t *testing.T) {
-	host := "http://localhost:8082"
-	registryClient := NewRegistryClient(host)
-
-	t.Run("Owner-admin adds new network to eshould succeed", func(t *testing.T) {
-		orgName := "saturn"
-
-		// or use an admin member_id instead of owner_id
-		owner := "08a594d7-a292-43cf-9652-54785b03f48f"
-
-		netName := strings.ToLower(faker.FirstName()) + "-net"
-
-		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
-
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
-		assert.Equal(t, owner, orgResp.Org.Owner)
-
-		// make sure the owner or admin is the request executor
-		reqAddNetwork := api.AddNetworkRequest{
-			OrgName: orgName,
-			NetName: netName}
-
-		anResp, err := registryClient.AddNetwork(reqAddNetwork)
-		assert.NoError(t, err)
-		assert.NotNil(t, anResp)
-	})
-
-	t.Run("Non owner-admin adds new network should fail", func(t *testing.T) {
-		orgName := "saturn"
-		member := "c9647e7a-8967-4978-b512-38a35899f32d"
-		netName := strings.ToLower(faker.FirstName()) + "-net"
-
-		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
-
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
-
-		// make sure the member is not owner
-		owner := orgResp.Org.Owner
-		assert.NotEqual(t, owner, member)
-
-		reqGetMember := api.GetMemberRequest{
-			OrgName:  orgName,
-			UserUuid: member}
-
-		gmResp, err := registryClient.GetMember(reqGetMember)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, member, gmResp.Member.Uuid)
-
-		// make sure the member is not admin
-		// something like assertNotEqual(member.Role.String(), "admin")
-
-		// make sure the member is the request executor
-		reqAddNetwork := api.AddNetworkRequest{
-			OrgName: orgName,
-			NetName: netName}
-
-		amResp, err := registryClient.AddNetwork(reqAddNetwork)
-		assert.Error(t, err)
-		assert.Nil(t, amResp)
-	})
-
-	t.Run("Owner-admin adds new network to non existing org should fail", func(t *testing.T) {
-		orgName := "saturn"
-		missingOrgName := "non-existing-org"
-
-		// or use an admin member_id instead of owner_id
-		owner := "08a594d7-a292-43cf-9652-54785b03f48f"
-
-		netName := strings.ToLower(faker.FirstName()) + "-net"
-
-		reqGetOrg := api.GetOrgRequest{OrgName: missingOrgName}
-
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.Error(t, err)
-		assert.Nil(t, orgResp)
-
-		reqGetOrg = api.GetOrgRequest{OrgName: orgName}
-
-		orgResp, err = registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
-		assert.Equal(t, owner, orgResp.Org.Owner)
-
-		// make sure the owner or admin is the request executor
-		reqAddNetwork := api.AddNetworkRequest{
-			OrgName: missingOrgName,
-			NetName: netName}
-
-		anResp, err := registryClient.AddNetwork(reqAddNetwork)
-		assert.Error(t, err)
-		assert.Nil(t, anResp)
-	})
+func init() {
+	log.SetLevel(log.InfoLevel)
+	log.SetOutput(os.Stderr)
 }
 
-func TestUpdateNetworkWorkflows(t *testing.T) {
-	host := "http://localhost:8082"
-	registryClient := NewRegistryClient(host)
+func InitializeData() *RegistryData {
+	d := &RegistryData{}
 
-	t.Run("Owner-admin updates network name should succeed", func(t *testing.T) {
-		orgName := "saturn"
+	d.Name = strings.ToLower(faker.FirstName())
+	d.Email = strings.ToLower(faker.Email())
+	d.Phone = strings.ToLower(faker.Phonenumber())
 
-		oldNetId := "b884485f-cb43-44b1-be57-0b777b154ff2"
-		newNetName := strings.ToLower(faker.FirstName()) + "-net"
+	d.OrgName = strings.ToLower(faker.FirstName()) + "-org"
 
-		owner := "08a594d7-a292-43cf-9652-54785b03f48f"
+	d.Host = "http://localhost:8082"
+	d.RegistryClient = pkg.NewRegistryClient(d.Host)
+	d.MbHost = "amqp://guest:guest@localhost:5672/"
 
-		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+	d.reqAddUser = api.AddUserRequest{
+		Name:  d.Name,
+		Email: d.Email,
+		Phone: d.Phone,
+	}
 
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
-		assert.Equal(t, owner, orgResp.Org.Owner)
+	d.reqAddOrg = api.AddOrgRequest{
+		OrgName: d.OrgName,
+	}
 
-		reqGetNet := api.GetNetworkRequest{NetworkId: oldNetId}
+	d.reqAddMember = api.MemberRequest{
+		OrgName: d.OrgName,
+	}
 
-		netResp, err := registryClient.GetNetwork(reqGetNet)
-		assert.NoError(t, err)
-		assert.NotNil(t, netResp)
-		assert.Equal(t, orgResp.Org.Id, netResp.Network.OrgId)
-		assert.NotEqual(t, newNetName, netResp.Network.Name)
+	d.reqAddNetwork = api.AddNetworkRequest{
+		OrgName: d.OrgName,
+	}
 
-		// make sure the owner or admin is the request executor
-		// in order for this test to even compile, we need to implement
-		// missing endppins (PATCH /v1/networks) and missing APIs
-		// requests wrappers (RegistryClient.UpdateNetwork and
-		// systems/registry/api-gateway/pkg/rest/api.go for
-		// api.UpdateNetworkRequest)
-		reqUpdateNetwork := api.UpdateNetworkRequest{
-			NetId:   oldNetId,
-			NetName: newNetName}
+	return d
+}
 
-		unResp, err := registryClient.UpdateNetwork(reqUpdateNetwork)
-		assert.NoError(t, err)
-		assert.NotNil(t, unResp)
+func TestWorkflow_RegistrySystem(t *testing.T) {
+	w := test.NewWorkflow("Registry Workflows", "Various use cases whille adding registry items")
+
+	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
+		log.Debugf("Initilizing Data for %s.", w.String())
+		var err error
+
+		d := InitializeData()
+
+		w.Data = d
+
+		log.Debugf("Workflow Data : %+v", w.Data)
+
+		return err
+	}
+
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Add User",
+		Description: "Register a new user to the system",
+		Data:        &userpb.AddResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Setup required for test case Initialize any
+			// test specific data if required
+			a, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				[]string{"event.cloud.users.user.add"})
+
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+
+			td, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			// // make sure the owner or admin is the request executor
+			tc.Data, err = td.RegistryClient.AddUser(td.reqAddUser)
+
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during test case
+			check := false
+
+			d, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			tr, ok := tc.GetData().(*userpb.AddResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			if assert.NotNil(t, tr) {
+				assert.Equal(t, d.Name, tr.User.Name)
+				assert.Equal(t, d.Email, tr.User.Email)
+				assert.Equal(t, d.Phone, tr.User.Phone)
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Here we save any data required to be saved from the
+			// test case Cleanup any test specific data
+
+			resp, ok := tc.GetData().(*userpb.AddResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a.OwnerId = resp.User.Uuid
+
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
 	})
 
-	t.Run("Non owner-admin updates network name should fail", func(t *testing.T) {
-		orgName := "saturn"
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Add org",
+		Description: "Add an organization",
+		Data:        &orgpb.AddResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Setup required for test case Initialize any
+			// test specific data if required
+			a, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
 
-		oldNetId := "b884485f-cb43-44b1-be57-0b777b154ff2"
-		newNetName := strings.ToLower(faker.FirstName()) + "-net"
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
 
-		member := "c9647e7a-8967-4978-b512-38a35899f32d"
+			a.reqAddOrg = api.AddOrgRequest{
+				OrgName: a.OrgName,
+				Owner:   a.OwnerId,
+			}
 
-		reqGetOrg := api.GetOrgRequest{OrgName: orgName}
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				[]string{"event.cloud.org.org.add"})
 
-		orgResp, err := registryClient.GetOrg(reqGetOrg)
-		assert.NoError(t, err)
-		assert.NotNil(t, orgResp)
-		assert.Equal(t, orgName, orgResp.Org.Name)
+			return nil
+		},
 
-		// make sure the member is not admin, nor owner
-		// something like assertNotEqual(member.Role.String(), "admin")
-		assert.NotEqual(t, member, orgResp.Org.Owner)
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
 
-		reqGetNet := api.GetNetworkRequest{NetworkId: oldNetId}
+			td, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
 
-		netResp, err := registryClient.GetNetwork(reqGetNet)
-		assert.NoError(t, err)
-		assert.NotNil(t, netResp)
-		assert.Equal(t, orgResp.Org.Id, netResp.Network.OrgId)
-		assert.NotEqual(t, newNetName, netResp.Network.Name)
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
 
-		// make sure the member is the request executor
-		// in order for this test to even compile, we need to implement
-		// missing endppins (PATCH /v1/networks) and missing APIs
-		// requests wrappers (RegistryClient.UpdateNetwork and
-		// systems/registry/api-gateway/pkg/rest/api.go for
-		// api.UpdateNetworkRequest)
+			// // make sure the owner or admin is the request executor
+			tc.Data, err = td.RegistryClient.AddOrg(td.reqAddOrg)
 
-		reqUpdateNetwork := api.UpdateNetworkRequest{
-			NetId:   oldNetId,
-			NetName: newNetName}
+			return err
+		},
 
-		unResp, err := registryClient.UpdateNetwork(reqUpdateNetwork)
-		assert.Error(t, err)
-		assert.Nil(t, unResp)
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during test case
+			check := false
+
+			d, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			tr, ok := tc.GetData().(*orgpb.AddResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			if assert.NotNil(t, tr) {
+				assert.Equal(t, d.OrgName, tr.Org.Name)
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Here we save any data required to be saved from the
+			// test case Cleanup any test specific data
+
+			resp, ok := tc.GetData().(*orgpb.AddResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a.OrgId = resp.Org.Id
+
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
 	})
+
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Add member",
+		Description: "Add a user to an organization",
+		Data:        &orgpb.MemberResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Setup required for test case Initialize any
+			// test specific data if required
+			a, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			// we need to setup a new user not member of the org
+
+			name := strings.ToLower(faker.FirstName())
+			email := strings.ToLower(faker.Email())
+			phone := strings.ToLower(faker.Phonenumber())
+
+			res, err := a.RegistryClient.AddUser(api.AddUserRequest{
+				Name:  name,
+				Email: email,
+				Phone: phone,
+			})
+
+			if assert.NoError(t, err) {
+				assert.NotNil(t, res)
+				assert.Equal(t, name, res.User.Name)
+				assert.Equal(t, email, res.User.Email)
+				assert.Equal(t, phone, res.User.Phone)
+			}
+
+			a.MemberId = res.User.Uuid
+
+			a.reqAddMember = api.MemberRequest{
+				OrgName:  a.OrgName,
+				UserUuid: a.MemberId,
+			}
+
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				[]string{"event.cloud.org.member.add"})
+
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+
+			td, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			// // make sure the owner or admin is the request executor
+			tc.Data, err = td.RegistryClient.AddMember(td.reqAddMember)
+
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during test case
+			check := false
+
+			d, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			tr, ok := tc.GetData().(*orgpb.MemberResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			if assert.NotNil(t, tr) {
+				assert.Equal(t, d.MemberId, tr.Member.Uuid)
+				assert.Equal(t, d.OrgId, tr.Member.OrgId)
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Here we save any data required to be saved from the
+			// test case Cleanup any test specific data
+
+			resp, ok := tc.GetData().(*orgpb.MemberResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	})
+
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Add network",
+		Description: "Add network to an organization",
+		Data:        &TestData{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Setup required for test case Initialize any
+			// test specific data if required
+			a, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a.NetName = strings.ToLower(faker.FirstName()) + "-net"
+			a.reqAddNetwork = api.AddNetworkRequest{
+				OrgName: a.OrgName,
+				NetName: a.NetName,
+			}
+
+			tc.Data = &TestData{Input: a}
+
+			log.Debugf("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				[]string{"event.cloud.network.network.add"})
+
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Test Case
+			var err error
+
+			td, ok := tc.GetData().(*TestData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			ti := td.Input
+
+			// // make sure the owner or admin is the request executor
+			tr, err := ti.RegistryClient.AddNetwork(ti.reqAddNetwork)
+			tc.Data = &TestData{Input: ti, Results: tr}
+
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			// Check for possible failures during test case
+			check := false
+
+			td, ok := tc.GetData().(*TestData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			ti := td.Input
+
+			tr, ok := td.Results.(*netpb.AddResponse)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			if assert.NotNil(t, tr) {
+				assert.Equal(t, ti.NetName, tr.Network.Name)
+				assert.Equal(t, ti.OrgId, tr.Network.OrgId)
+				assert.Equal(t, true, tc.Watcher.Expections())
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			// Here we save any data required to be saved from the
+			// test case Cleanup any test specific data
+
+			resp, ok := tc.GetData().(*TestData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			a, ok := tc.GetWorkflowData().(*RegistryData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			tc.SaveWorkflowData(a)
+			log.Debugf("Read resp Data %v \n Written data: %v", resp, a)
+			tc.Watcher.Stop()
+
+			return nil
+		},
+	})
+
+	err := w.Run(t, context.Background())
+	assert.NoError(t, err)
+
+	w.Status()
 }
