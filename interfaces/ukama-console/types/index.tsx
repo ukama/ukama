@@ -127,6 +127,7 @@ export type TSnackMessage = {
 };
 export type TCommonData = {
   networkId: string;
+  networkName: string;
   orgId: string;
   userId: string;
   orgName: string;

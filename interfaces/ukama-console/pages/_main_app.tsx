@@ -73,6 +73,7 @@ const MainApp = ({
         setCommonData({
           ..._commonData,
           networkId: data.getNetworks.networks[0].id,
+          networkName: data.getNetworks.networks[0].name,
         });
       }
     },
@@ -142,7 +143,13 @@ const MainApp = ({
 
   const handlePageChange = (page: string) => setPage(page);
   const handleNetworkChange = (id: string) =>
-    setCommonData({ ..._commonData, networkId: id });
+    setCommonData({
+      ..._commonData,
+      networkId: id,
+      networkName:
+        networksData?.getNetworks.networks.filter((n) => n.id === id)[0].name ??
+        '',
+    });
 
   return (
     <CacheProvider value={emotionCache}>

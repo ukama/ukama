@@ -73,6 +73,19 @@ const Page = () => {
     console.log(id, type);
   };
 
+  const structureData = (data: SubscribersResDto) =>
+    data.subscribers.map((subscriber) => ({
+      id: subscriber.uuid,
+      network:
+        _commonData.networkId === subscriber.networkId
+          ? _commonData.networkName
+          : subscriber.networkId,
+      name: `${subscriber.firstName} ${subscriber.lastName}`,
+      dataUsage: '',
+      dataPlan: '',
+      actions: '',
+    }));
+
   return (
     <PageContainer>
       <HorizontalContainerJustify>
@@ -120,22 +133,7 @@ const Page = () => {
         <ContainerMax mt={4.5}>
           <DataTableWithOptions
             columns={SUBSCRIBER_TABLE_COLUMNS}
-            dataset={[
-              {
-                name: 'John Doe',
-                network: 'Globe',
-                dataUsage: '1.2 GB',
-                dataPlan: '1.5 GB',
-                actions: 'actions',
-              },
-              {
-                name: 'John Do',
-                network: 'Earth',
-                dataUsage: '1.1 GB',
-                dataPlan: '1.9 GB',
-                actions: 'actions',
-              },
-            ]}
+            dataset={structureData(subscriber)}
             menuOptions={SUBSCRIBER_TABLE_MENU}
             onMenuItemClick={onTableMenuItem}
             emptyViewLabel={'No subscribers yet!'}
