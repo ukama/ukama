@@ -1,4 +1,9 @@
+import { commonData, snackbarMessage } from '@/app-recoil';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
+import {
+  SubscribersResDto,
+  useGetSubscribersByNetworkQuery,
+} from '@/generated';
 import {
   ContainerMax,
   HorizontalContainerJustify,
@@ -6,15 +11,68 @@ import {
   VerticalContainer,
 } from '@/styles/global';
 import { colors } from '@/styles/theme';
+import { TCommonData, TSnackMessage } from '@/types';
 import { DataTableWithOptions } from '@/ui/components';
 import { Search } from '@mui/icons-material';
-import { Button, Grid, TextField, Typography } from '@mui/material';
+import { AlertColor, Button, Grid, TextField, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
-const SUB_COUNT = 1;
-export default function Page() {
-  const onResidentsTableMenuItem = (id: string, type: string) => {
+const Page = () => {
+  const [search, setSearch] = useState<string>('');
+  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+  const [subscriber, setSubscriber] = useState<SubscribersResDto>({
+    subscribers: [],
+  });
+
+  const { loading, data } = useGetSubscribersByNetworkQuery({
+    variables: { networkId: _commonData.networkId },
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      if (data.getSubscribersByNetwork.subscribers.length > 0) {
+        setSubscriber((prev) => ({
+          subscribers: [
+            ...prev.subscribers,
+            ...data.getSubscribersByNetwork.subscribers,
+          ],
+        }));
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'subscriber-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (search.length > 3) {
+      const subscribers = data?.getSubscribersByNetwork.subscribers.filter(
+        (subscriber) => {
+          const s = search.toLowerCase();
+          if (
+            subscriber.firstName.toLowerCase().includes(s) ||
+            subscriber.lastName.toLowerCase().includes(s)
+          )
+            return subscriber;
+        },
+      );
+      setSubscriber({ subscribers: subscribers ?? [] });
+    } else if (search.length === 0) {
+      setSubscriber({
+        subscribers: data?.getSubscribersByNetwork.subscribers ?? [],
+      });
+    }
+  }, [search]);
+
+  const onTableMenuItem = (id: string, type: string) => {
     console.log(id, type);
   };
+
   return (
     <PageContainer>
       <HorizontalContainerJustify>
@@ -26,7 +84,10 @@ export default function Page() {
               </Typography>
             </Grid>
             <Grid item xs={'auto'}>
-              <Typography variant="subtitle2" mr={1.4}>{`(${0})`}</Typography>
+              <Typography
+                variant="subtitle2"
+                mr={1.4}
+              >{`(${subscriber.subscribers.length})`}</Typography>
             </Grid>
             <Grid item xs={12} md={'auto'}>
               <TextField
@@ -34,6 +95,8 @@ export default function Page() {
                 label="Search"
                 variant="outlined"
                 size="small"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 sx={{ width: { xs: '100%', lg: '250px' } }}
                 InputProps={{
                   endAdornment: <Search htmlColor={colors.black54} />,
@@ -74,11 +137,21 @@ export default function Page() {
               },
             ]}
             menuOptions={SUBSCRIBER_TABLE_MENU}
-            onMenuItemClick={onResidentsTableMenuItem}
-            emptyViewLabel={'No subscribers yet! [100] SIMs left in pool.'}
+            onMenuItemClick={onTableMenuItem}
+            emptyViewLabel={'No subscribers yet!'}
           />
         </ContainerMax>
       </VerticalContainer>
     </PageContainer>
   );
+};
+
+export default Page;
+function setSnackbarMessage(arg0: {
+  id: string;
+  message: string;
+  type: AlertColor;
+  show: boolean;
+}) {
+  throw new Error('Function not implemented.');
 }

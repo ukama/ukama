@@ -2,11 +2,11 @@
 import { commonData } from '@/app-recoil';
 import client from '@/client/ApolloClient';
 import { MyAppProps, TCommonData } from '@/types';
+import ErrorBoundary from '@/ui/wrappers/errorBoundary';
 import { ApolloProvider, HttpLink } from '@apollo/client';
 import dynamic from 'next/dynamic';
 import { RecoilRoot, useRecoilValue } from 'recoil';
 import '../styles/global.css';
-import ErrorBoundary from '@/ui/wrappers/errorBoundary';
 
 const MainApp = dynamic(() => import('@/pages/_main_app'));
 
