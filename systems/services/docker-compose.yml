@@ -20,8 +20,8 @@ services:
       networks:
         - dev-net
       volumes:
-          - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
-          - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
+                  - ~/.docker-conf/rabbitmq/data/:/tmp/rabbitmq/
+        #  - ~/.docker-conf/rabbitmq/log/:/tmp/rabbitmq
     
     pg4admin:
       image: dpage/pgadmin4
@@ -39,7 +39,7 @@ networks:
       ipam:
         driver: default
         config:
-            - subnet: 10.9.0.0/24
+            - subnet: 10.1.0.0/24
             
 volumes:
   postgress-data:

@@ -3,7 +3,7 @@ services:
   postgresd:
       image: postgres:13.3
       ports:
-        - "5432:5432"
+        - "5433:5433"
       environment:
         - POSTGRES_USER=postgres
         - POSTGRES_PASSWORD=Pass2020!
@@ -27,11 +27,11 @@ services:
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - QUEUE_URI=amqp://guest:guest@10.0.0.106:5672
       - MSGCLIENT_HOST=msgclient:9095
       - NETWORK_SERVICE_HOST=network
       - NETWORK_SERVICE_PORT=9090
-      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+      - PUSHGATEWAYHOST=10.0.0.106:9091
     restart: always
     networks:
       - ukama-net
@@ -58,11 +58,11 @@ services:
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - QUEUE_URI=amqp://guest:guest@10.0.0.106:5672
       - MSGCLIENT_HOST=msgclient:9095
       - ORG_SERVICE_HOST=org
       - ORG_SERVICE_PORT=9090
-      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+      - PUSHGATEWAYHOST=10.0.0.106:9091
     restart: always
     networks:
       - ukama-net
@@ -86,7 +86,7 @@ services:
       - ORGOWNERNAME=ukama-test-org-owner
       - ORGOWNEREMAIL=ukama-test-org-owner@domain.com
       - ORGOWNERPHONE=0123456789
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - QUEUE_URI=amqp://guest:guest@10.0.0.106:5672
       - MSGCLIENT_HOST=msgclient:9095
       - USERS_SERVICE_HOST=users
       - USERS_SERVICE_PORT=9090
@@ -147,7 +147,6 @@ services:
       - org
       - users
       - postgresd
-
   
   msgclient:
     build:
@@ -165,7 +164,26 @@ services:
       - postgresd
     networks:
       - ukama-net
-      
+ 
+  initclient:
+    build:
+      dockerfile: ./Dockerfile
+      context: ../services/initClient
+    environment:
+      - ENV_SYSTEM_ORG=ukama001
+      - ENV_SYSTEM_NAME=registry
+      - ENV_SYSTEM_ADDR=192.168.0.0
+      - ENV_SYSTEM_PORT=8889
+      - ENV_SYSTEM_CERT=This-is-a-certificate
+      - ENV_INIT_SYSTEM_ADDR=localhost
+      - ENV_INIT_SYSTEM_PORT=8071
+      - ENV_INIT_CLIENT_ADDR=localhost
+      - ENV_INIT_CLIENT_PORT=9091
+      - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+    restart: always
+    networks:
+      - ukama-net
+     
 networks:
   ukama-net:
     external: true
