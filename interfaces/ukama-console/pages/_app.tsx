@@ -1,3 +1,4 @@
+'use client';
 import {
   commonData,
   isDarkmode,
@@ -12,7 +13,7 @@ import { theme } from '@/styles/theme';
 import { TCommonData, TSnackMessage, TUser } from '@/types';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import ErrorBoundary from '@/ui/wrappers/errorBoundary';
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider, HttpLink } from '@apollo/client';
 import { CacheProvider, EmotionCache } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
@@ -26,6 +27,7 @@ import {
   useResetRecoilState,
 } from 'recoil';
 import '../styles/global.css';
+
 const Layout = dynamic(() => import('@/ui/layout'));
 const SNACKBAR_TIMEOUT = 5000;
 
@@ -34,19 +36,6 @@ const clientSideEmotionCache = createEmotionCache();
 export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
-
-const NETWORKS = [
-  {
-    id: '1',
-    value: "Joe's Testnet",
-    label: "Joe's Testnet",
-  },
-  {
-    id: '2',
-    value: "Sam's Testnet",
-    label: "Sam's Testnet",
-  },
-];
 
 const App = ({
   Component,
@@ -180,14 +169,36 @@ const App = ({
   );
 };
 
-const MyApp = (appProps: MyAppProps) => {
+const ClientWrapper = (appProps: MyAppProps) => {
+  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const httpLink = new HttpLink({
+    uri: process.env.NEXT_PUBLIC_REACT_APP_API,
+    credentials: 'include',
+    headers: {
+      'org-id': _commonData.orgId,
+      'user-id': _commonData.userId,
+      'org-name': _commonData.orgName,
+    },
+  });
+
+  const getClient = (): any => {
+    client.setLink(httpLink);
+    return client;
+  };
+
+  return (
+    <ApolloProvider client={getClient()}>
+      <App {...appProps} />
+    </ApolloProvider>
+  );
+};
+
+const RootWrapper = (appProps: MyAppProps) => {
   return (
     <RecoilRoot>
-      <ApolloProvider client={client}>
-        <App {...appProps} />
-      </ApolloProvider>
+      <ClientWrapper {...appProps} />
     </RecoilRoot>
   );
 };
 
-export default MyApp;
+export default RootWrapper;
