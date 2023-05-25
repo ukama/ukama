@@ -105,12 +105,15 @@ const Page = () => {
             <Grid item xs={12} md={'auto'}>
               <TextField
                 id="subscriber-search"
-                label="Search"
                 variant="outlined"
                 size="small"
+                placeholder="Search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 sx={{ width: { xs: '100%', lg: '250px' } }}
+                InputLabelProps={{
+                  shrink: false,
+                }}
                 InputProps={{
                   endAdornment: <Search htmlColor={colors.black54} />,
                 }}
