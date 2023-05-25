@@ -17,6 +17,7 @@ export const SERVER = {
     REGISTRY_ORGS_API_URL: `${REGISTRY_API_URL}/${version}/orgs`,
     REGISTRY_NETWORKS_API_URL: `${REGISTRY_API_URL}/${version}/networks`,
     SUBSCRIBER_REGISTRY_API_URL: `${SUBSCRIBER_API_URL}/${version}/subscriber`,
+    SUBSCRIBER_SIMPOOL_API_URL: `${SUBSCRIBER_API_URL}/${version}/simpool`,
     GET_CONNECTED_USERS: `${API_URL}/user/get_conneted_users`,
     GET_DATA_USAGE: `${API_URL}/data/data_usage`,
     GET_DATA_BILL: `${API_URL}/data/data_bill`,

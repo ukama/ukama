@@ -4,19 +4,19 @@ import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
-import { GetSimInputDto, SimDetailsDto } from "../types";
+import { SimPoolStatsDto } from "../types";
 
 @Service()
 @Resolver()
-export class GetSimResolver {
+export class GetSimPoolStatsResolver {
     constructor(private readonly simService: SimService) {}
 
-    @Query(() => SimDetailsDto)
+    @Query(() => SimPoolStatsDto)
     @UseMiddleware(Authentication)
-    async getSim(
-        @Arg("data") data: GetSimInputDto,
+    async getSimPoolStats(
+        @Arg("type") type: string,
         @Ctx() ctx: Context
-    ): Promise<SimDetailsDto> {
-        return await this.simService.getSim(data, parseHeaders(ctx));
+    ): Promise<SimPoolStatsDto> {
+        return await this.simService.getSimPoolStats(type, parseHeaders(ctx));
     }
 }

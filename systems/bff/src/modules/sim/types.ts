@@ -226,3 +226,18 @@ export class SimDataUsage {
     @Field()
     usage: string;
 }
+
+@ObjectType()
+export class SimPoolStatsDto {
+    @Field()
+    total: number;
+
+    @Field()
+    available: number;
+
+    @Field()
+    consumed: number;
+
+    @Field()
+    failed: number;
+}
