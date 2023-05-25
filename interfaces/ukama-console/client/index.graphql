@@ -570,3 +570,16 @@ query getPackage($packageId: String!) {
 }
 
 ### Package End ###
+
+### SimPool Start ###
+query getSimpoolStats($type: String!) {
+  getSimPoolStats(type: $type) {
+    total
+    available
+    consumed
+    failed
+    physical
+    esim
+  }
+}
+### SimPool End ###
