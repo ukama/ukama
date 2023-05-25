@@ -106,7 +106,7 @@ func (s *SubscriberSys) SubscriberRegistryGetSusbscriber(req api.SubscriberGetRe
 }
 
 func (s *SubscriberSys) SubscriberRegistryAddSusbscriber(req api.SubscriberAddReq) (*rPb.AddSubscriberResponse, error) {
-
+	log.Debugf("Adding Subscriber to subscriber registry: %+v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())

@@ -13,9 +13,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
+	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	api "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
 	rpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	spb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/testing/integration/pkg/registry"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
@@ -24,11 +26,18 @@ const MAX_POOL = 5
 
 type InitData struct {
 	Sys          *SubscriberSys
+	Reg          *registry.RegistrySys
 	Host         string
+	RegHost      string
 	SimType      string `default:"ukama_data"`
 	ICCID        []string
 	MbHost       string
 	SubscriberId string
+	OrgId        string
+	OrgName      string
+	NetworkId    string
+	NetworkName  string
+	UserId       string
 
 	/* API requests */
 	reqSimPoolUploadSimReq       api.SimPoolUploadSimReq
@@ -44,6 +53,9 @@ type InitData struct {
 	reqAllocateSimReq            api.AllocateSimReq
 	reqActivateDeactivateSimReq  api.ActivateDeactivateSimReq
 	reqSetActivePackageForSimReq api.SetActivePackageForSimReq
+	reqAddOrgRequest             rapi.AddOrgRequest
+	reqAddNetworkRequest         rapi.AddNetworkRequest
+	reqAddUserRequest            rapi.AddUserRequest
 
 	/* API responses */
 
@@ -58,9 +70,20 @@ func InitializeData() *InitData {
 	d := &InitData{}
 	d.ICCID = make([]string, MAX_POOL)
 	d.Host = "http://192.168.0.22:8078"
+	d.RegHost = "http://192.168.0.22:8075"
 	d.MbHost = "amqp://guest:guest@192.168.0.22:5672/"
 	d.Sys = NewSubscriberSys(d.Host)
+	d.Reg = registry.NewRegistrySys(d.RegHost)
+
 	d.SimType = "ukama_data"
+
+	d.reqAddOrgRequest = rapi.AddOrgRequest{
+		OrgName:     strings.ToLower(faker.FirstName() + "-org"),
+		Owner:       "",
+		Certificate: utils.RandomBase64String(2048),
+	}
+
+	d.reqAddNetworkRequest = rapi.AddNetworkRequest{}
 
 	d.reqSimPoolUploadSimReq = api.SimPoolUploadSimReq{
 		SimType: d.SimType,
@@ -89,8 +112,8 @@ func InitializeData() *InitData {
 		IdSerial:              faker.UUIDDigit(),
 		Address:               faker.Sentence(),
 		Gender:                "male",
-		OrgId:                 uuid.NewV4().String(),
-		NetworkId:             uuid.NewV4().String(),
+		OrgId:                 "",
+		NetworkId:             "",
 	}
 
 	d.reqSubscriberDeleteReq = api.SubscriberDeleteReq{
@@ -137,6 +160,12 @@ func InitializeData() *InitData {
 		SimId:     "",
 		PackageId: "",
 	}
+
+	d.reqAddUserRequest = rapi.AddUserRequest{
+		Name:  d.reqSubscriberAddReq.FirstName,
+		Email: d.reqSubscriberAddReq.Email,
+		Phone: d.reqSubscriberAddReq.Phone,
+	}
 	return d
 }
 
@@ -163,7 +192,39 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 
 	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
 		log.Tracef("Initilizing Data for %s.", w.String())
-		w.Data = InitializeData()
+		d := InitializeData()
+
+		/* add user */
+		uresp, err := d.Reg.AddUser(d.reqAddUserRequest)
+		if err != nil {
+			return nil
+		} else {
+			d.UserId = uresp.User.Uuid
+		}
+
+		/* adding  */
+		d.reqAddOrgRequest.Owner = d.UserId
+		resp, err := d.Reg.AddOrg(d.reqAddOrgRequest)
+		if err != nil {
+			return nil
+		} else {
+			d.OrgId = resp.Org.Id
+			d.OrgName = resp.Org.Name
+		}
+
+		/* adding network */
+		nresp, err := d.Reg.AddNetwork(rapi.AddNetworkRequest{
+			OrgName: resp.Org.Name,
+			NetName: resp.Org.Name + "-net",
+		})
+		if err != nil {
+			return nil
+		} else {
+			d.NetworkId = nresp.Network.Id
+			d.NetworkName = nresp.Network.Name
+		}
+
+		w.Data = d
 
 		log.Tracef("Workflow Data : %+v", w.Data)
 		return nil
@@ -299,7 +360,10 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			/* Setup required for test case
 			Initialize any test specific data if required
 			*/
-			//a := tc.GetWorkflowData().(*InitData)
+			a := tc.GetWorkflowData().(*InitData)
+			a.reqSubscriberAddReq.NetworkId = a.NetworkId
+			a.reqSubscriberAddReq.OrgId = a.OrgId
+			tc.SaveWorkflowData(a)
 			// log.Tracef("Setting up watcher for %s", tc.Name)
 			// tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.sim.sim.upload"})
 			return nil
