@@ -1,4 +1,4 @@
-package pkg
+package registry
 
 import (
 	"encoding/json"
