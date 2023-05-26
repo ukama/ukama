@@ -5,10 +5,11 @@ import { Button, Grid, TextField, Typography } from '@mui/material';
 
 interface IPageContainerHeader {
   title: string;
-  search: string;
+  search?: string;
   subtitle?: string;
+  showSearch?: boolean;
   buttonTitle: string;
-  onSearchChange: Function;
+  onSearchChange?: Function;
   handleButtonAction: Function;
 }
 
@@ -18,6 +19,7 @@ const PageContainerHeader = ({
   subtitle,
   buttonTitle,
   onSearchChange,
+  showSearch = true,
   handleButtonAction,
 }: IPageContainerHeader) => {
   return (
@@ -34,23 +36,27 @@ const PageContainerHeader = ({
               <Typography variant="subtitle2">({subtitle})</Typography>
             </Grid>
           )}
-          <Grid item xs={12} md={'auto'} ml={{ xs: 0, md: 1.4 }}>
-            <TextField
-              id="subscriber-search"
-              variant="outlined"
-              size="small"
-              placeholder="Search"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              sx={{ width: { xs: '100%', lg: '250px' } }}
-              InputLabelProps={{
-                shrink: false,
-              }}
-              InputProps={{
-                endAdornment: <Search htmlColor={colors.black54} />,
-              }}
-            />
-          </Grid>
+          {showSearch && (
+            <Grid item xs={12} md={'auto'} ml={{ xs: 0, md: 1.4 }}>
+              <TextField
+                id="subscriber-search"
+                variant="outlined"
+                size="small"
+                placeholder="Search"
+                value={search}
+                onChange={(e) =>
+                  onSearchChange && onSearchChange(e.target.value)
+                }
+                sx={{ width: { xs: '100%', lg: '250px' } }}
+                InputLabelProps={{
+                  shrink: false,
+                }}
+                InputProps={{
+                  endAdornment: <Search htmlColor={colors.black54} />,
+                }}
+              />
+            </Grid>
+          )}
         </Grid>
         <Grid item xs={12} md={'auto'}>
           <Button
