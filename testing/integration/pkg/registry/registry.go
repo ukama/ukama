@@ -10,14 +10,13 @@ import (
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	userpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+	"github.com/ukama/ukama/testing/integration/pkg/utils"
 	jsonpb "google.golang.org/protobuf/encoding/protojson"
-
-	"github.com/ukama/ukama/testing/integration/pkg/util"
 )
 
 type RegistryClient struct {
 	u *url.URL
-	r util.Resty
+	r utils.Resty
 }
 
 func NewRegistryClient(h string) *RegistryClient {
@@ -25,7 +24,7 @@ func NewRegistryClient(h string) *RegistryClient {
 
 	return &RegistryClient{
 		u: u,
-		r: *util.NewResty(),
+		r: *utils.NewResty(),
 	}
 }
 
@@ -37,7 +36,7 @@ func (s *RegistryClient) AddUser(req api.AddUserRequest) (*userpb.AddResponse, e
 
 	rsp := &userpb.AddResponse{}
 
-	resp, err := s.r.Post(b, s.u.String()+"/v1/users")
+	resp, err := s.r.Post(s.u.String()+"/v1/users", b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
@@ -60,7 +59,7 @@ func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, erro
 
 	rsp := &orgpb.AddResponse{}
 
-	resp, err := s.r.Post(b, s.u.String()+"/v1/orgs")
+	resp, err := s.r.Post(s.u.String()+"/v1/orgs", b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
@@ -102,7 +101,7 @@ func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse
 	rsp := &orgpb.MemberResponse{}
 
 	resp, err := s.r.
-		Post(b, s.u.String()+"/v1/orgs/"+req.OrgName+"/members")
+		Post(s.u.String()+"/v1/orgs/"+req.OrgName+"/members", b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
@@ -142,7 +141,7 @@ func (s *RegistryClient) UpdateMember(req api.UpdateMemberRequest) error {
 	}
 
 	_, err = s.r.
-		Patch(b, s.u.String()+"/v1/orgs/"+req.OrgName+"/members/"+req.UserUuid)
+		Patch(s.u.String()+"/v1/orgs/"+req.OrgName+"/members/"+req.UserUuid, b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
@@ -160,7 +159,7 @@ func (s *RegistryClient) AddNetwork(req api.AddNetworkRequest) (*netpb.AddRespon
 
 	rsp := &netpb.AddResponse{}
 
-	resp, err := s.r.Post(b, s.u.String()+"/v1/networks")
+	resp, err := s.r.Post(s.u.String()+"/v1/networks", b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
