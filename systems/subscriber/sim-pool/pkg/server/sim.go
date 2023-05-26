@@ -132,5 +132,6 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 		UpdatedAt:      p.UpdatedAt.String(),
 		IsPhysical:     p.IsPhysical,
 		QrCode:         p.QrCode,
+		IsFailed:       p.IsFailed,
 	}
 }

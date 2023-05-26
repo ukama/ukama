@@ -240,4 +240,10 @@ export class SimPoolStatsDto {
 
     @Field()
     failed: number;
+
+    @Field()
+    esim: number;
+
+    @Field()
+    physical: number;
 }

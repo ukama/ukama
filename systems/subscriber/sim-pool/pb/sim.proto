@@ -23,6 +23,16 @@ service SimService {
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
     ///Batch upload sims from CSV
     rpc Upload(UploadRequest) returns (UploadResponse){}
+     ///Update sim status in sim pool
+    rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse){}
+}
+
+message UpdateStatusRequest{
+    string iccid=1; /// Sim iccid string
+    bool isAllocated = 2 [json_name = "is_allocated"]; // Sim allocated True/False
+    bool isFailed = 3 [json_name = "is_failed"]; // Sim failed True/False
+}
+message UpdateStatusResponse {
 }
 message GetRequest{
     bool IsPhysicalSim=1 [json_name = "is_physical_sim"]; /// True/False
@@ -45,6 +55,8 @@ message GetStatsResponse {
     uint64 available = 2; /// Available sims in sim pool
     uint64 consumed = 3; /// Consumed sims in sim pool
     uint64 failed = 4; /// Failed sims in sim pool
+    uint64 physical = 5; /// Physical sims in sim pool
+    uint64 esim = 6; /// E-sims in sim pool
 }
 message AddRequest{
     repeated AddSim sim = 1; /// Slice of sims to add in sim pool
@@ -70,14 +82,15 @@ message Sim{
     string iccid = 2 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];
     string msisdn = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}]; 
     bool isAllocated = 4 [json_name = "is_allocated"];
-    string simType = 5 [json_name = "sim_type"];
-    string smDpAddress = 6 [json_name = "sm_ap_address"];
-    string activationCode = 7 [json_name = "activation_code"];
-    string createdAt= 8 [json_name = "created_at"];
-    string deletedAt= 9 [json_name = "deleted_at"];
-    string updatedAt= 10 [json_name = "updated_at"];
-    bool isPhysical= 11 [json_name = "is_physical"];
-    string qrCode= 12 [json_name = "qr_code"];
+    bool isFailed = 5 [json_name = "is_failed"];
+    string simType = 6 [json_name = "sim_type"];
+    string smDpAddress = 7 [json_name = "sm_ap_address"];
+    string activationCode = 8 [json_name = "activation_code"];
+    string createdAt= 9 [json_name = "created_at"];
+    string deletedAt= 10 [json_name = "deleted_at"];
+    string updatedAt= 11 [json_name = "updated_at"];
+    bool isPhysical= 12 [json_name = "is_physical"];
+    string qrCode= 13 [json_name = "qr_code"];
 }
 message AddSim{
     string iccid = 1 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];

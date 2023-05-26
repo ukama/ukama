@@ -17,6 +17,12 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *UpdateStatusRequest) Validate() error {
+	return nil
+}
+func (this *UpdateStatusResponse) Validate() error {
+	return nil
+}
 func (this *GetRequest) Validate() error {
 	return nil
 }
