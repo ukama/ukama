@@ -7,7 +7,7 @@ import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/router';
 import * as React from 'react';
 import { useEffect } from 'react';
-import { LoadingWrapper } from '../components';
+import { BackButton, LoadingWrapper } from '../components';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
@@ -17,6 +17,7 @@ interface ILayoutProps {
   isLoading: boolean;
   placeholder: string;
   isDarkMode: boolean;
+  isFullScreen: boolean;
   handlePageChange: Function;
   networks: NetworkDto[] | undefined;
   children: React.ReactNode;
@@ -31,6 +32,7 @@ const Layout = ({
   networkId,
   isDarkMode,
   placeholder,
+  isFullScreen,
   handlePageChange,
   handleNetworkChange,
 }: ILayoutProps) => {
@@ -54,24 +56,28 @@ const Layout = ({
 
   return (
     <Box sx={{ display: 'flex', overflow: 'hidden' }}>
-      <Header
-        isOpen={open}
-        isLoading={isLoading}
-        onNavigate={onNavigate}
-        isDarkMode={isDarkMode}
-      />
-      <HorizontalContainer>
-        <Sidebar
-          page={page}
+      {!isFullScreen && (
+        <Header
           isOpen={open}
-          networkId={networkId}
           isLoading={isLoading}
           onNavigate={onNavigate}
           isDarkMode={isDarkMode}
-          placeholder={placeholder}
-          networks={networks || []}
-          handleNetworkChange={handleNetworkChange}
         />
+      )}
+      <HorizontalContainer>
+        {!isFullScreen && (
+          <Sidebar
+            page={page}
+            isOpen={open}
+            networkId={networkId}
+            isLoading={isLoading}
+            onNavigate={onNavigate}
+            isDarkMode={isDarkMode}
+            placeholder={placeholder}
+            networks={networks || []}
+            handleNetworkChange={handleNetworkChange}
+          />
+        )}
 
         <Box
           sx={{
@@ -86,14 +92,23 @@ const Layout = ({
         >
           <Box
             sx={{
-              p: {
-                xs: '8px 18px 0px 18px !important',
-                md: '16px 32px 0px 32px !important',
-              },
-              m: {
-                xs: `44px 0px 44px 62px !important`,
-                md: `60px 0px 60px 218px !important`,
-              },
+              ...(isFullScreen
+                ? {
+                    m: {
+                      xs: `38px 18px !important`,
+                      md: `52px 84px !important`,
+                    },
+                  }
+                : {
+                    p: {
+                      xs: '8px 18px 0px 18px !important',
+                      md: '16px 32px 0px 32px !important',
+                    },
+                    m: {
+                      xs: `44px 0px 44px 62px !important`,
+                      md: `60px 0px 60px 218px !important`,
+                    },
+                  }),
               backgroundColor: (theme) =>
                 theme.palette.mode === 'light'
                   ? colors.black10
@@ -109,7 +124,14 @@ const Layout = ({
             >
               <Stack direction={'column'}>
                 <Box>
-                  <Typography variant="h5">{page}</Typography>
+                  <Stack
+                    direction={'row'}
+                    alignItems={'center'}
+                    spacing={{ xs: 4, md: 10.5 }}
+                  >
+                    {isFullScreen && <BackButton title="BACK TO CONSOLE" />}
+                    <Typography variant="h5">{page}</Typography>
+                  </Stack>
                   <Divider sx={{ my: 1 }} />
                 </Box>
 

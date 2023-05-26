@@ -41,26 +41,26 @@ const MainApp = ({
   const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
-      if (data.whoami) {
-        if (!_user?.id)
-          _setUser({
-            id: data.whoami.id,
-            name: data.whoami.name,
-            email: data.whoami.email,
-            role: data.whoami.role,
-            isFirstVisit: data.whoami.isFirstVisit,
-          });
-      }
+      // if (data.whoami) {
+      //   if (!_user?.id)
+      //     _setUser({
+      //       id: data.whoami.id,
+      //       name: data.whoami.name,
+      //       email: data.whoami.email,
+      //       role: data.whoami.role,
+      //       isFirstVisit: data.whoami.isFirstVisit,
+      //     });
+      // }
     },
     onError: (error) => {
-      setSnackbarMessage({
-        id: 'whoami-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-      resetData();
-      window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
+      // setSnackbarMessage({
+      //   id: 'whoami-msg',
+      //   message: error.message,
+      //   type: 'error' as AlertColor,
+      //   show: true,
+      // });
+      // resetData();
+      // window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
     },
   });
   const [
@@ -69,29 +69,29 @@ const MainApp = ({
   ] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
-      if (data.getNetworks.networks.length === 1) {
-        setCommonData({
-          ..._commonData,
-          networkId: data.getNetworks.networks[0].id,
-          networkName: data.getNetworks.networks[0].name,
-        });
-      }
+      // if (data.getNetworks.networks.length === 1) {
+      //   setCommonData({
+      //     ..._commonData,
+      //     networkId: data.getNetworks.networks[0].id,
+      //     networkName: data.getNetworks.networks[0].name,
+      //   });
+      // }
     },
     onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
+      // setSnackbarMessage({
+      //   id: 'networks-msg',
+      //   message: error.message,
+      //   type: 'error' as AlertColor,
+      //   show: true,
+      // });
     },
   });
 
-  useEffect(() => {
-    setSkeltonLoading(true);
-    getWhoami();
-    getNetworks();
-  }, []);
+  // useEffect(() => {
+  //   setSkeltonLoading(true);
+  //   getWhoami();
+  //   getNetworks();
+  // }, []);
 
   useEffect(() => {
     if (
@@ -157,8 +157,9 @@ const MainApp = ({
         <CssBaseline />
         <Layout
           page={page}
+          isFullScreen={true}
           isDarkMode={_isDarkMod}
-          isLoading={skeltonLoading}
+          isLoading={false}
           placeholder={'Select Network'}
           networkId={_commonData?.networkId}
           handlePageChange={handlePageChange}

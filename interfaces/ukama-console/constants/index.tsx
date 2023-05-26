@@ -1,11 +1,17 @@
 import { ColumnsWithOptions, MenuItemType } from '@/types';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import AppsIcon from '@mui/icons-material/Apps';
 import BillingIcon from '@mui/icons-material/CreditCard';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import HomeIcon from '@mui/icons-material/Home';
-import UsersIcon from '@mui/icons-material/PeopleAlt';
+import {
+  default as PeopleAltIcon,
+  default as UsersIcon,
+} from '@mui/icons-material/PeopleAlt';
+import PermDataSettingIcon from '@mui/icons-material/PermDataSetting';
 import RouterIcon from '@mui/icons-material/Router';
+import SimCardIcon from '@mui/icons-material/SimCard';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { DataTableWithOptionColumns } from './tableColumns';
 
@@ -107,7 +113,37 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   { id: 3, Icon: null, title: 'Pause service', route: 'pause-service' },
   { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
 ];
-
+export const MANAGE_MENU_LIST = [
+  {
+    id: 'manage-members',
+    name: 'Manage members',
+    path: '/manage/members',
+    icon: PeopleAltIcon,
+  },
+  {
+    id: 'manage-sim',
+    name: 'Manage SIM pool',
+    path: '/manage/sim',
+    icon: SimCardIcon,
+  },
+  {
+    id: 'manage-node',
+    name: 'Manage node pool',
+    path: '/manage/node',
+    icon: AccountTreeIcon,
+  },
+  {
+    id: 'manage-data-plan',
+    name: 'Manage data plans',
+    path: '/manage/data-plans',
+    icon: PermDataSettingIcon,
+  },
+];
+export const MANAGE_TABLE_COLUMN: ColumnsWithOptions[] = [
+  { id: 'name', label: 'Name', minWidth: 160 },
+  { id: 'role', label: 'Role', minWidth: 180 },
+  { id: 'email', label: 'Email', minWidth: 140 },
+];
 const BASIC_MENU_ACTIONS: MenuItemType[] = [
   { id: 1, Icon: EditIcon, title: 'Edit', route: 'edit' },
   {

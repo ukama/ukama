@@ -1,121 +1,123 @@
-import Alerts from "./Alerts";
-import AddUser from "./AddUser";
-import UserCard from "./UserCard";
-import TabPanel from "./TabPanel";
-import NodeCard from "./NodesCard";
-import NodeGroup from "./NodeGroup";
-import StatsCard from "./StatsCard";
-import EmptyView from "./EmptyView";
-import NodeStatus from "./NodeStatus";
-import StatusCard from "./StatusCard";
-import TimeFilter from "./TimeFilter";
-import NodeSlider from "./NodesSlider";
-import SplitButton from "./SplitButton";
-import TableHeader from "./TableHeader";
-import CurrentBill from "./CurrentBill";
-import GraphLoading from "./GraphLoading";
-import NodeDropDown from "./NodeDropDown";
-import UserSettings from "./UserSettings";
-import NodeStatItem from "./NodeStatItem";
-import NodeRadioTab from "./NodeRadioTab";
-import BillingAlerts from "./BillingAlerts";
-import NetworkSetup from "./NetworkSetup";
-import AlertSettings from "./AlertSettings";
-import NodeContainer from "./NodeContainer";
-import SimCardDesign from "./SimCardDesign";
-import NetworkStatus from "./NetworkStatus";
-import DarkModToggle from "./DarkModToggle";
-import ApexLineChart from "./ApexLineChart";
-import NodeNetworkTab from "./NodeNetworkTab";
-import LoadingWrapper from "./LoadingWrapper";
-import OptionsPopover from "./OptionsPopover";
-import OnBoardingFlow from "./OnBoardingFlow";
-import ConsoleSettings from "./ConsoleSettings";
-import NodeOverviewTab from "./NodeOverviewTab";
-import NodeSoftwareTab from "./NodeSoftwareTab";
-import NodeDetailsCard from "./NodeDetailsCard";
-import SimpleDataTable from "./SimpleDataTable";
-import PagePlaceholder from "./PagePlaceholder";
-import NetworkSettings from "./NetworkSettings";
-import ContainerHeader from "./ContainerHeader";
-import NodeResourcesTab from "./NodeResourcesTab";
-import BillingDataTable from "./BillingDataTable";
-import NodeSchematicTab from "./NodeSchematicTab";
-import GraphTitleWrapper from "./GraphTitleWrapper";
-import CustomRadioButton from "./CustomRadioButton";
-import NodeStatsContainer from "./NodeStatsContainer";
-import ApexStackAreaChart from "./ApexStackAreaChart";
-import DataTableWithOptions from "./DataTableWithOptions";
-import FormControlCheckboxes from "./FormControlCheckboxes";
-import PaymentCard from "./PaymentCard";
+import AddUser from './AddUser';
+import AlertSettings from './AlertSettings';
+import Alerts from './Alerts';
+import ApexLineChart from './ApexLineChart';
+import ApexStackAreaChart from './ApexStackAreaChart';
 import {
-    NodeDialog,
-    BasicDialog,
-    BillingDialog,
-    DeactivateUser,
-    UserDetailsDialog,
-    SoftwareUpdateModal,
-    NodeAppDetailsDialog,
-    NodeSoftwareInfosDialog,
-} from "./AppDialogs";
+  BasicDialog,
+  BillingDialog,
+  DeactivateUser,
+  NodeAppDetailsDialog,
+  NodeDialog,
+  NodeSoftwareInfosDialog,
+  SoftwareUpdateModal,
+  UserDetailsDialog,
+} from './AppDialogs';
+import BackButton from './BackButton';
+import BillingAlerts from './BillingAlerts';
+import BillingDataTable from './BillingDataTable';
+import ConsoleSettings from './ConsoleSettings';
+import ContainerHeader from './ContainerHeader';
+import CurrentBill from './CurrentBill';
+import CustomRadioButton from './CustomRadioButton';
+import DarkModToggle from './DarkModToggle';
+import DataTableWithOptions from './DataTableWithOptions';
+import EmptyView from './EmptyView';
+import FormControlCheckboxes from './FormControlCheckboxes';
+import GraphLoading from './GraphLoading';
+import GraphTitleWrapper from './GraphTitleWrapper';
+import LoadingWrapper from './LoadingWrapper';
+import NetworkSettings from './NetworkSettings';
+import NetworkSetup from './NetworkSetup';
+import NetworkStatus from './NetworkStatus';
+import NodeContainer from './NodeContainer';
+import NodeDetailsCard from './NodeDetailsCard';
+import NodeDropDown from './NodeDropDown';
+import NodeGroup from './NodeGroup';
+import NodeNetworkTab from './NodeNetworkTab';
+import NodeOverviewTab from './NodeOverviewTab';
+import NodeRadioTab from './NodeRadioTab';
+import NodeResourcesTab from './NodeResourcesTab';
+import NodeSchematicTab from './NodeSchematicTab';
+import NodeSoftwareTab from './NodeSoftwareTab';
+import NodeStatItem from './NodeStatItem';
+import NodeStatsContainer from './NodeStatsContainer';
+import NodeStatus from './NodeStatus';
+import NodeCard from './NodesCard';
+import NodeSlider from './NodesSlider';
+import OnBoardingFlow from './OnBoardingFlow';
+import OptionsPopover from './OptionsPopover';
+import PagePlaceholder from './PagePlaceholder';
+import PaymentCard from './PaymentCard';
+import SimCardDesign from './SimCardDesign';
+import SimpleDataTable from './SimpleDataTable';
+import SplitButton from './SplitButton';
+import StatsCard from './StatsCard';
+import StatusCard from './StatusCard';
+import TabPanel from './TabPanel';
+import TableHeader from './TableHeader';
+import TimeFilter from './TimeFilter';
+import UserCard from './UserCard';
+import UserSettings from './UserSettings';
 
 export {
-    Alerts,
-    AddUser,
-    NodeCard,
-    UserCard,
-    TabPanel,
-    PaymentCard,
-    NodeGroup,
-    NodeSlider,
-    EmptyView,
-    StatsCard,
-    NodeDialog,
-    TimeFilter,
-    NetworkSetup,
-    NodeStatus,
-    StatusCard,
-    SplitButton,
-    CurrentBill,
-    TableHeader,
-    BasicDialog,
-    NodeDropDown,
-    UserSettings,
-    NodeStatItem,
-    NodeRadioTab,
-    BillingDialog,
-    DarkModToggle,
-    ApexLineChart,
-    AlertSettings,
-    SimCardDesign,
-    GraphLoading,
-    NetworkStatus,
-    NodeContainer,
-    BillingAlerts,
-    OptionsPopover,
-    DeactivateUser,
-    NodeNetworkTab,
-    LoadingWrapper,
-    ConsoleSettings,
-    NodeOverviewTab,
-    NetworkSettings,
-    NodeDetailsCard,
-    SimpleDataTable,
-    PagePlaceholder,
-    ContainerHeader,
-    NodeSoftwareTab,
-    NodeResourcesTab,
-    BillingDataTable,
-    CustomRadioButton,
-    UserDetailsDialog,
-    NodeSchematicTab,
-    GraphTitleWrapper,
-    NodeStatsContainer,
-    ApexStackAreaChart,
-    OnBoardingFlow,
-    SoftwareUpdateModal,
-    DataTableWithOptions,
-    NodeAppDetailsDialog,
-    FormControlCheckboxes,
-    NodeSoftwareInfosDialog,
+  Alerts,
+  AddUser,
+  NodeCard,
+  UserCard,
+  TabPanel,
+  BackButton,
+  PaymentCard,
+  NodeGroup,
+  NodeSlider,
+  EmptyView,
+  StatsCard,
+  NodeDialog,
+  TimeFilter,
+  NetworkSetup,
+  NodeStatus,
+  StatusCard,
+  SplitButton,
+  CurrentBill,
+  TableHeader,
+  BasicDialog,
+  NodeDropDown,
+  UserSettings,
+  NodeStatItem,
+  NodeRadioTab,
+  BillingDialog,
+  DarkModToggle,
+  ApexLineChart,
+  AlertSettings,
+  SimCardDesign,
+  GraphLoading,
+  NetworkStatus,
+  NodeContainer,
+  BillingAlerts,
+  OptionsPopover,
+  DeactivateUser,
+  NodeNetworkTab,
+  LoadingWrapper,
+  ConsoleSettings,
+  NodeOverviewTab,
+  NetworkSettings,
+  NodeDetailsCard,
+  SimpleDataTable,
+  PagePlaceholder,
+  ContainerHeader,
+  NodeSoftwareTab,
+  NodeResourcesTab,
+  BillingDataTable,
+  CustomRadioButton,
+  UserDetailsDialog,
+  NodeSchematicTab,
+  GraphTitleWrapper,
+  NodeStatsContainer,
+  ApexStackAreaChart,
+  OnBoardingFlow,
+  SoftwareUpdateModal,
+  DataTableWithOptions,
+  NodeAppDetailsDialog,
+  FormControlCheckboxes,
+  NodeSoftwareInfosDialog,
 };

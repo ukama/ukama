@@ -6,15 +6,13 @@ import {
 } from '@/generated';
 import {
   ContainerMax,
-  HorizontalContainerJustify,
   PageContainer,
   VerticalContainer,
 } from '@/styles/global';
-import { colors } from '@/styles/theme';
 import { TCommonData, TSnackMessage } from '@/types';
 import { DataTableWithOptions } from '@/ui/components';
-import { Search } from '@mui/icons-material';
-import { AlertColor, Button, Grid, TextField, Typography } from '@mui/material';
+import PageContainerHeader from '@/ui/components/PageContainerHeader';
+import { AlertColor } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
@@ -88,50 +86,15 @@ const Page = () => {
 
   return (
     <PageContainer>
-      <HorizontalContainerJustify>
-        <Grid container justifyContent={'space-between'} spacing={1}>
-          <Grid container item xs={12} md="auto" alignItems={'center'}>
-            <Grid item xs={'auto'}>
-              <Typography variant="h6" mr={1}>
-                My subscribers
-              </Typography>
-            </Grid>
-            <Grid item xs={'auto'}>
-              <Typography
-                variant="subtitle2"
-                mr={1.4}
-              >{`(${subscriber.subscribers.length})`}</Typography>
-            </Grid>
-            <Grid item xs={12} md={'auto'}>
-              <TextField
-                id="subscriber-search"
-                variant="outlined"
-                size="small"
-                placeholder="Search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                sx={{ width: { xs: '100%', lg: '250px' } }}
-                InputLabelProps={{
-                  shrink: false,
-                }}
-                InputProps={{
-                  endAdornment: <Search htmlColor={colors.black54} />,
-                }}
-              />
-            </Grid>
-          </Grid>
-          <Grid item xs={12} md={'auto'}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="medium"
-              sx={{ width: { xs: '100%', md: '250px' } }}
-            >
-              Add Subscriber
-            </Button>
-          </Grid>
-        </Grid>
-      </HorizontalContainerJustify>
+      <PageContainerHeader
+        title={'My subscribers'}
+        subtitle={`${subscriber.subscribers.length}`}
+        buttonTitle={'Add Subscriber'}
+        handleButtonAction={() => console.log('Add subscriber')}
+        onSearchChange={(e: string) => setSearch(e)}
+        search={search}
+      />
+
       <VerticalContainer>
         <ContainerMax mt={4.5}>
           <DataTableWithOptions
