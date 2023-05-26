@@ -54,29 +54,30 @@ def store_parse_population_data(unparsed_data_files):
     # Load the GeoTIFF image and extract the box data
     # Load the GeoTIFF image
     for image_path in unparsed_data_files:
-        ds = gdal.Open(image_path)
+        try:
+            ds = gdal.Open(image_path)
+            print (image_path)
+            # Get the spatial extent of the image in geographic coordinates
+            west, pixel_width, _, north, _, pixel_height = ds.GetGeoTransform()
+            height, width = ds.RasterYSize, ds.RasterXSize
 
-        # Get the spatial extent of the image in geographic coordinates
-        west, pixel_width, _, north, _, pixel_height = ds.GetGeoTransform()
-        height, width = ds.RasterYSize, ds.RasterXSize
-
-        data = np.empty((height, width, 1), dtype=np.uint8)
-        band_data = ds.GetRasterBand(1).ReadAsArray()
-        custom_value = 0  # Specify the desired value to replace NaN
-        band_data[np.isnan(band_data)] = custom_value
-        
-        for row in range(height):
-            for col in range(width):
-                # Calculate the longitude and latitude of the center of the pixel
-                longitude = west + col * pixel_width
-                latitude = north + row * pixel_height
-                population = band_data[row, col]
-                if population != None and 0 < population:
-                    box_data = PopulationDataSimple(longitude=longitude, latitude=latitude, value=population)
-                    session.add(box_data)
-        session.commit()
-        session.close()
-        update_file_to_read(image_path)
+            band_data = ds.GetRasterBand(1).ReadAsArray()
+            custom_value = 0  # Specify the desired value to replace NaN
+            band_data[np.isnan(band_data)] = custom_value
+            for row in range(height):
+                for col in range(width):
+                    # Calculate the longitude and latitude of the center of the pixel
+                    longitude = west + col * pixel_width
+                    latitude = north + row * pixel_height
+                    population = band_data[row, col]
+                    if population != None and 0 < population:
+                        box_data = PopulationDataSimple(longitude=longitude, latitude=latitude, value=population)
+                        session.add(box_data)
+            session.commit()
+            session.close()
+            update_file_to_read(image_path)
+        except Exception as ex:
+            print(ex)  
         
 
     return {'message': 'Box data stored in the database'}

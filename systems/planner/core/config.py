@@ -13,6 +13,8 @@ class Config(BaseSettings):
     HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/home/ubuntu/output/"
     TEMP_FOLDER: str = "/tmp/planner/output/"
+    SQL_USER_PASS: str = "MyNewPass@123"
+    SQL_USER: str = "root"
 
 
 class DevelopmentConfig(Config): # Use this for docker 
@@ -22,6 +24,9 @@ class DevelopmentConfig(Config): # Use this for docker
     HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/var/www/app/output/"
     TEMP_FOLDER: str = "/tmp/planner/output/"
+    SQL_USER_PASS: str = "MyNewPass@123"
+    SQL_USER: str = "root"
+
 
 
 class LocalConfig(Config): # use this for running locally
@@ -29,8 +34,10 @@ class LocalConfig(Config): # use this for running locally
     SOLAR_DATA_DIR: str = "E:/Projects/Freelance/UKAMA/Ukama-fork/systems/planner/data/solarData"
     SDF_FILES_PATH: str = "/data/sdfData"
     HGT_FILES_PATH: str = "/data/hgtData"
-    OUTPUT_PATH: str = "/home/ubuntu/output/"
+    OUTPUT_PATH: str = "E:/Projects/Freelance/UKAMA/"
     TEMP_FOLDER: str = "./tmp/planner/output/"
+    SQL_USER_PASS: str = "MyNewPass"
+    SQL_USER: str = "root"
 
 
 class ProductionConfig(Config): # use this for production. 

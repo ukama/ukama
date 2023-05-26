@@ -8,90 +8,90 @@ from typing import List
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-from app.coverage.schemas.coverage import Site, CoverageResponseSchema, PopulationData
-from app.coverage.enums.coverage import CoverageEnum
-from core import config
+import json
+from coverage import CoverageResponseSchema
+from population_data_schema import PopulationData
+from coverage_enum import CoverageEnum
 
 load_dotenv()
 
+# {
+#       "latitude": -1.287864,
+#       "longitude": 36.822379,
+#       "transmitter_height": 25
+# }
+# {
+#     "north": -1.017864,
+#     "east": 37.092379,
+#     "west": 36.552379,
+#     "south": -1.557864,
+#     "url": "/home/ubuntu/output/output_2023-05-25_23-21-45/29dc5edf-45ad-4a72-8950-f294fda43523.png"
+# }
+
+
+# {
+#       "latitude": -1.292499,
+#       "longitude": 36.849288,
+#       "transmitter_height": 25
+# }
+# {
+#     "north": -1.022499,
+#     "east": 37.119288,
+#     "west": 36.579288,
+#     "south": -1.562499,
+#     "url": "/home/ubuntu/output/output_2023-05-25_23-22-33/5c9eb785-012e-4081-b6ee-d3d7bcf6a695.png"
+# }
+
 class SitesCoverage:
     def __init__(self):
-        self.RF_SERVER_PATH = config.get_config().RF_SERVER_PATH
-        self.SDF_FILES_PATH = os.getenv("SDF_DIR", config.get_config().SDF_FILES_PATH)
-        self.OUTPUT_PATH = config.get_config().OUTPUT_PATH
-        self.TEMP_FOLDER = config.get_config().TEMP_FOLDER
-        mysql_user_pass = os.getenv("SQL_USER_PASS", config.get_config().SQL_USER_PASS)
-        mysql_user = os.getenv("SQL_USER", config.get_config().SQL_USER_PASS)
+        self.OUTPUT_PATH = "E:/Projects/Freelance/UKAMA/"
+        self.TEMP_FOLDER = "./tmp/planner/output/"
+        mysql_user_pass = "MyNewPass"
+        mysql_user = "root"
         SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{mysql_user}:{mysql_user_pass}@localhost/planner_tool" # Change mySQL pass and db name which is planner tool
         engine = create_engine(SQLALCHEMY_DATABASE_URL)
         Session = sessionmaker(bind=engine)
         self.SESSION = Session()
 
-    def calculate_coverage(self, mode, sites: List[Site]) -> CoverageResponseSchema:
+    def calculate_coverage(self) -> CoverageResponseSchema:
         try:
             output_folder_path = self.generate_output_folder()
             sites_coverage_list = []
-            for site in sites:
-                site = dict(site)
-                params = ["-sdf", self.SDF_FILES_PATH]
-                if site['latitude']:
-                    params.extend(["-lat", str(site['latitude'])])
-                if site['longitude']:
-                    params.extend(["-lon", str(site['longitude'])])
-                if site['transmitter_height']:
-                    params.extend(["-txh", str(site['transmitter_height'])])
-                params.extend(["-f", "900", "-rt", "-110"])
-                if mode == CoverageEnum.PATH_LOSS.value:
-                    params.extend(["-erp", "0"])
-                    output_func = CoverageEnum.PATH_LOSS.value
-                elif mode == CoverageEnum.FIELD_STRENGTH.value:
-                    params.extend(["-erp", "20"])
-                    output_func = CoverageEnum.FIELD_STRENGTH.value
-                else:
-                    params.extend(["-erp", "20", "-dbm"])
-                    output_func = CoverageEnum.RECEIVE_POWER.value
-                params.extend(["-m", "-R", "30", "-res", "1200", "-pm", "1"])
+                
+            output_file_path1 = "E:/Projects/Freelance/UKAMA/TestingWithData/46e6b4cd-41f3-4392-bc94-fe59be3a259c"
+            output_file_path2 = "E:/Projects/Freelance/UKAMA/TestingWithData/629c71ef-e3c0-4196-9b47-9a3077d129f7"
 
-                output_file_name = str(uuid.uuid4())
-                output_file_path = f"{output_folder_path}{output_file_name}"
 
-                params.extend(["-o", output_file_path])
-
-                rf_find_cov_command = f"{self.RF_SERVER_PATH}/src/signalserver"
-                print(f"Running {rf_find_cov_command} {' '.join(params)}")
-                result = subprocess.check_output(
-                    [rf_find_cov_command] + params, stderr=subprocess.STDOUT, text=True
+            sites_coverage_list.append(
+                CoverageResponseSchema(
+                    north=35.592822,
+                    east=-2.622917,
+                    south=35.052456,
+                    west=-3.284583,
+                    url=f"{output_file_path1}.png",
+                    population_data= {}
                 )
+            )
 
-                output = result.split("|")
-
-                print("Converting to PNG...")
-                rf_convert_command = f"convert {output_file_path}.ppm -transparent white -channel Alpha PNG32:{output_file_path}.png"
-                print(f"Running {rf_convert_command}")
-                subprocess.check_call(rf_convert_command, shell=True)
-                print(output)
-                if len(output[1:-1]) == 4:
-                    sites_coverage_list.append(
-                        CoverageResponseSchema(
-                            north=output[1],
-                            east=output[2],
-                            south=output[3],
-                            west=output[4],
-                            url=f"{output_file_path}.png",
-                        )
-                    )
+            sites_coverage_list.append(
+                CoverageResponseSchema(
+                    north=35.586153,
+                    east=-2.620139,
+                    south=35.045791,
+                    west=-3.281805,
+                    url=f"{output_file_path2}.png",
+                    population_data= {}
+                )
+            )
         except subprocess.CalledProcessError as e:
             raise e
         except Exception as ex:
             raise ex
         else:
             return self.merge_sites_output(
-                sites_coverage_list, output_file_path, output_folder_path, output_func
+                sites_coverage_list, output_file_path1, output_folder_path, CoverageEnum.RECEIVE_POWER.value
             )
-        finally:
-            self.remove_temp_folder()
-
+        
     def merge_sites_output(
         self, sites_coverage_list, output_file_path, output_folder_path, outputFunc
     ):
@@ -146,7 +146,7 @@ class SitesCoverage:
         return responseImages
 
     def merge_geo_tiff_files(self, inputs, merged_tif_url, dcf_file_path, outputFunc):
-        population_image_pixel_width, population_image_pixel_height = 0.0002777777777777777775, 0.0002777777777777777775 # this is default as given by the data downloaded for population
+        population_image_pixel_width, population_image_pixel_height = 0.0002777777777777777775, -0.0002777777777777777775 # this is default as given by the data downloaded for population
 
         dcf_file_url = dcf_file_path + ".dcf"
         color_map = self.load_dcf_file(dcf_file_url)
@@ -208,7 +208,6 @@ class SitesCoverage:
                 if key in combined:
                     output_data[row, col, :3] = combined[key][0][:3]
                     output_data[row, col, 3] = combined[key][0][3]
-        
         driver = gdal.GetDriverByName("GTiff")
         output_ds = driver.Create(merged_tif_url, ncols, nrows, 4, gdal.GDT_Byte)
         srs = osr.SpatialReference()
@@ -222,7 +221,8 @@ class SitesCoverage:
         output_ds.FlushCache()
 
         # Creating population coverage geotiffs
-        pop_data = self.get_population_data(y_max, y_min, x_max, x_min)
+        pop_data = self.get_population_data(x_min, x_max, y_min, y_max)
+        
         pop_data_nrows = int(abs((y_max - y_min) / population_image_pixel_height))
         pop_data_ncols = int(abs((x_max - x_min) / population_image_pixel_width))
         population_output_data = {}
@@ -234,13 +234,16 @@ class SitesCoverage:
         # Creating separate geotiff files for population prediction
         for row in range(pop_data_nrows):
             for col in range(pop_data_ncols):
-                lon = round(x_min + col * population_image_pixel_width, 6)
-                lat = round(y_max + row * population_image_pixel_height, 6)
                 
+                lon1 = round(x_min + col * population_image_pixel_width, 6)
+                lat1 = round(y_max + row * population_image_pixel_height, 6)
+                lon = round(lon1, 3)
+                lat = round(lat1, 3)
                 key = (0, lon, lat), (1, lon, lat), (2, lon, lat), (3, lon, lat)
                 if key in combined:
-                    value = self.filter_coordinates(pop_data, lon, lat)
+                    value = self.filter_coordinates(pop_data, lon1, lat1)
                     if value:
+                        import pdb; pdb.set_trace()
                         population_output_data[combined[key][1]][row, col, 0] = value
                         population_output_value[combined[key][1]] += value
 
@@ -255,9 +258,10 @@ class SitesCoverage:
             output_ds.SetGeoTransform((x_min, population_image_pixel_width, 0, y_max, 0, population_image_pixel_height))
 
             output_band = output_ds.GetRasterBand(1)
-            output_band.WriteArray(population_output_data[input_file["image_name"]][:, :, 1])
+            output_band.WriteArray(population_output_data[input_file["image_name"]][:, :])
             output_ds.FlushCache()
-            print("site "+ siteNumber + " population data file url: ", input_file["image_url"])
+            siteNumber = siteNumber + 1 
+            print("site "+ str(siteNumber) + " population data file url: ", input_file["image_url"])
             population_data_dic[input_file["image_name"]] = { "url": input_file["image_url"], "population_covered": population_output_value[input_file["image_name"]]}
 
         print("East: ", x_max)
@@ -265,7 +269,7 @@ class SitesCoverage:
         print("South: ", y_min)
         print("North: ", y_max)
         print("Merged file url: ", merged_tif_url)
-        print("population output: ", population_data_dic)
+        print("population output: ", json.dumps(population_data_dic, indent = 4))
 
         # Clean up
         output_ds = None
@@ -310,31 +314,42 @@ class SitesCoverage:
 
         folder_name = f"output_{date_time_str}"
         output_folder_path = self.OUTPUT_PATH + folder_name + "/"
-        subprocess.check_output("mkdir -p " + output_folder_path, shell=True)
-        subprocess.check_output("mkdir -p " + self.TEMP_FOLDER, shell=True)
+        subprocess.check_output("mkdir -p " + output_folder_path)
+        subprocess.check_output("mkdir -p " + self.TEMP_FOLDER)
         return output_folder_path
     
     def remove_temp_folder(self):
         print("removing temporary content in: "+ self.TEMP_FOLDER)
-        subprocess.check_output("rm -rf " + self.TEMP_FOLDER, shell=True)
+        subprocess.check_output("rm -rf " + self.TEMP_FOLDER)
     
     def filter_coordinates(self, pop_data, longitude, latitude):
         filtered_coordinates = [
-            pop_coord for pop_coord in pop_data
-            if pop_coord.get('longitude') == longitude and pop_coord.get('latitude') == latitude
+            pop_coord for pop_coord in pop_data if round(pop_coord.longitude, 3) == longitude and round(pop_coord.latitude, 3) == latitude
         ]
         if len(filtered_coordinates) >= 1:
             return filtered_coordinates[0].get('value')
         
         return None
 
-    def get_population_data(self, max_longitude, min_longitude, max_latitude, min_latitude):
+    def get_population_data(self, west, east, south, north):
         data = self.SESSION.query(PopulationData).filter(
-            PopulationData.longitude >= min_longitude,
-            PopulationData.longitude <= max_longitude,
-            PopulationData.latitude >= min_latitude,
-            PopulationData.latitude <= max_latitude
+            PopulationData.longitude >= west,
+            PopulationData.longitude <= east,
+            PopulationData.latitude >= south,
+            PopulationData.latitude <= north
+        ).all()
+        
+        return data
+    
+    def get_population_data_exact(self, longitude, latitude):
+        
+        data = self.SESSION.query(PopulationData).filter(
+            PopulationData.longitude == longitude,
+            PopulationData.latitude == latitude,
         ).all()
         
         return data
 # endregion
+
+sitescov = SitesCoverage()
+print(json.dumps(sitescov.calculate_coverage(), indent = 4))

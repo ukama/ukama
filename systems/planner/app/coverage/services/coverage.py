@@ -33,10 +33,3 @@ class CoverageResponseSchema(BaseModel):
     class Config:
         orm_mode = True
 
-class PopulationData(Base):
-    __tablename__ = 'population_data'
-
-    id = Column(Integer, primary_key=True, index=True)
-    longitude = Column(Float)
-    latitude = Column(Float)
-    value = Column(Float)
