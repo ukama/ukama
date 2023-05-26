@@ -61,7 +61,7 @@ func init() {
 	log.SetOutput(os.Stderr)
 }
 
-func InitializeData() *InitData {
+func InitializeData(org *string, owner *string) *InitData {
 	d := &InitData{}
 	d.Host = "http://192.168.0.23:8074"
 	d.MbHost = "amqp://guest:guest@192.168.0.23:5672/"
@@ -74,8 +74,14 @@ func InitializeData() *InitData {
 		SimType:     d.SimType,
 	}
 
-	d.OwnerId = uuid.NewV4().String()
-	d.OrgId = uuid.NewV4().String()
+	if owner == nil {
+		d.OwnerId = uuid.NewV4().String()
+	}
+
+	if org == nil {
+		d.OrgId = uuid.NewV4().String()
+	}
+
 	d.BaseRateId = make([]string, 8)
 	d.Countries = []string{"The Lunar Maria", "Montes Appenninus", "Tycho crater"}
 	d.Providers = make(map[string][]string)
@@ -647,7 +653,7 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 
 	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
 		log.Tracef("Initilizing Data for %s.", w.String())
-		w.Data = InitializeData()
+		w.Data = InitializeData(nil, nil)
 
 		log.Tracef("Workflow Data : %+v", w.Data)
 		return nil
