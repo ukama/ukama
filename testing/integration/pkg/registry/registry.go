@@ -21,7 +21,6 @@ type RegistryClient struct {
 
 func NewRegistryClient(h string) *RegistryClient {
 	u, _ := url.Parse(h)
-
 	return &RegistryClient{
 		u: u,
 		r: *utils.NewResty(),
@@ -29,9 +28,11 @@ func NewRegistryClient(h string) *RegistryClient {
 }
 
 func (s *RegistryClient) AddUser(req api.AddUserRequest) (*userpb.AddResponse, error) {
+	log.Debugf("Adding user: %v", req)
+
 	b, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("AddUser: request marshal error. error: %w", err)
+		return nil, fmt.Errorf("request marshal error. error: %w", err)
 	}
 
 	rsp := &userpb.AddResponse{}
@@ -52,9 +53,10 @@ func (s *RegistryClient) AddUser(req api.AddUserRequest) (*userpb.AddResponse, e
 }
 
 func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, error) {
+	log.Debugf("Adding org: %v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("AddOrg: request marshal error. error: %w", err)
+		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
 	}
 
 	rsp := &orgpb.AddResponse{}
@@ -68,13 +70,15 @@ func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, erro
 
 	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
-		return nil, fmt.Errorf("AddOrg: response unmarshal error. error: %w", err)
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
 func (s *RegistryClient) GetOrg(req api.GetOrgRequest) (*orgpb.GetResponse, error) {
+	log.Debugf("Getting org: %v", req)
+
 	rsp := &orgpb.GetResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName)
@@ -86,16 +90,18 @@ func (s *RegistryClient) GetOrg(req api.GetOrgRequest) (*orgpb.GetResponse, erro
 
 	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
-		return nil, fmt.Errorf("GetOrg: response unmarshal error. error: %w", err)
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
 func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse, error) {
+	log.Debugf("Adding member: %v", req)
+
 	b, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("AddMember: request marshal error. error: %w", err)
+		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
 	}
 
 	rsp := &orgpb.MemberResponse{}
@@ -110,13 +116,15 @@ func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse
 
 	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
-		return nil, fmt.Errorf("AddMember: response unmarshal error. error: %w", err)
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
 func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*orgpb.MemberResponse, error) {
+	log.Debugf("Adding member: %v", req)
+
 	rsp := &orgpb.MemberResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName + "/members/" + req.UserUuid)
@@ -128,16 +136,18 @@ func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*orgpb.MemberRespo
 
 	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
-		return nil, fmt.Errorf("GetMember: response unmarshal error. error: %w", err)
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
 func (s *RegistryClient) UpdateMember(req api.UpdateMemberRequest) error {
+	log.Debugf("Updateing member: %v", req)
+
 	b, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("UpdateMember: request marshal error. error: %w", err)
+		return fmt.Errorf("request marshal error. error: %s", err.Error())
 	}
 
 	_, err = s.r.
@@ -152,9 +162,11 @@ func (s *RegistryClient) UpdateMember(req api.UpdateMemberRequest) error {
 }
 
 func (s *RegistryClient) AddNetwork(req api.AddNetworkRequest) (*netpb.AddResponse, error) {
+	log.Debugf("Adding network: %v", req)
+
 	b, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("AddNetwork: request marshal error. error: %w", err)
+		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
 	}
 
 	rsp := &netpb.AddResponse{}
@@ -168,13 +180,15 @@ func (s *RegistryClient) AddNetwork(req api.AddNetworkRequest) (*netpb.AddRespon
 
 	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
-		return nil, fmt.Errorf("AddNetwork: response unmarshal error. error: %w", err)
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
 }
 
 func (s *RegistryClient) GetNetwork(req api.GetNetworkRequest) (*netpb.GetResponse, error) {
+	log.Debugf("Getting network: %v", req)
+
 	rsp := &netpb.GetResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/networks/" + req.NetworkId)
@@ -186,7 +200,7 @@ func (s *RegistryClient) GetNetwork(req api.GetNetworkRequest) (*netpb.GetRespon
 
 	err = jsonpb.Unmarshal(resp.Body(), rsp)
 	if err != nil {
-		return nil, fmt.Errorf("GetNetwork: response unmarshal error. error: %w", err)
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil

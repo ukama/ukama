@@ -63,6 +63,9 @@ func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 		err := t.SetUpFxn(ctx, t)
 		if assert.NoError(test, err) {
 			t.State = StateTypeUnderTest
+		} else {
+			t.State = StateTypeFail
+			return err
 		}
 	}
 
@@ -70,11 +73,15 @@ func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 		err := t.Fxn(ctx, t)
 		if assert.NoError(test, err) {
 			t.State = StateTypeTested
+		} else {
+			t.State = StateTypeFail
+			return err
 		}
 
 	} else {
 		log.Errorf("Invalid test %s", t.Name)
 		t.State = StateTypeInvalid
+		return fmt.Errorf("no valid test function set")
 	}
 
 	if t.StateFxn != nil {
@@ -85,10 +92,12 @@ func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 				t.State = StateTypePass
 			} else {
 				t.State = StateTypeFail
+				return err
 			}
 
 		} else {
 			t.State = StateTypeFail
+			return err
 		}
 	}
 
@@ -129,6 +138,7 @@ func (w *Workflow) Info() string {
 }
 
 func (w *Workflow) RegisterTestCase(t *TestCase) {
+	t.Workflow = w
 	w.testSeq = append(w.testSeq, t)
 	w.Count++
 }
@@ -162,6 +172,9 @@ func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 		err := w.SetUpFxn(ctx, w)
 		if assert.NoError(test, err) {
 			w.State = StateTypeUnderTest
+		} else {
+			w.State = StateTypeFail
+			return err
 		}
 	}
 
@@ -194,6 +207,11 @@ func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 		err := tc.Run(test, ctx)
 		if assert.NoError(test, err) {
 			w.State = StateTypeFail
+			/* This will be changed exit function ahandler */
+		} else {
+			w.State = StateTypeFail
+			log.Errorf("Test Case %s failed. Error: %s", tc.Name, err.Error())
+			return err
 		}
 
 		w.stats(tc.State)

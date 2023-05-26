@@ -17,6 +17,7 @@ import (
 	api "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
 	rpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	spb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	mpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"github.com/ukama/ukama/testing/integration/pkg/registry"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
@@ -350,11 +351,72 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 		},
 	})
 
-	/* subscriber */
+	/* Add subscriber */
 	w.RegisterTestCase(&test.TestCase{
 		Name:        "Add Subscriber",
 		Description: "Add subscriber to registry",
 		Data:        &rpb.AddSubscriberResponse{},
+		Workflow:    w,
+		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*InitData)
+			a.reqSubscriberAddReq.NetworkId = a.NetworkId
+			a.reqSubscriberAddReq.OrgId = a.OrgId
+			tc.SaveWorkflowData(a)
+			// log.Tracef("Setting up watcher for %s", tc.Name)
+			// tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.sim.sim.upload"})
+			return nil
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*InitData)
+			if ok {
+				tc.Data, err = a.Sys.SubscriberRegistryAddSusbscriber(a.reqSubscriberAddReq)
+			} else {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			resp := tc.GetData().(*rpb.AddSubscriberResponse)
+			if assert.NotNil(t, resp) {
+				log.Tracef("Resp data is %v", resp)
+				d := tc.GetWorkflowData().(*InitData)
+				assert.Equal(t, d.reqSubscriberAddReq.Email, resp.Subscriber.Email)
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+			resp := tc.GetData().(*rpb.AddSubscriberResponse)
+			a := tc.GetWorkflowData().(*InitData)
+			a.SubscriberId = resp.Subscriber.SubscriberId
+			tc.SaveWorkflowData(a)
+
+			//tc.Watcher.Stop()
+			return nil
+		},
+	})
+
+	/* Allocate Sim */
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Allocate sim",
+		Description: "Allocatin a sim to subscriber",
+		Data:        &mpb.AllocateSimResponse{},
 		Workflow:    w,
 		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
 			/* Setup required for test case

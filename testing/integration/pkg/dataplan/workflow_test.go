@@ -63,8 +63,8 @@ func init() {
 
 func InitializeData() *InitData {
 	d := &InitData{}
-	d.Host = "http://192.168.0.22:8074"
-	d.MbHost = "amqp://guest:guest@192.168.0.22:5672/"
+	d.Host = "http://192.168.0.23:8074"
+	d.MbHost = "amqp://guest:guest@192.168.0.23:5672/"
 	d.Sys = NewDataPlanSys(d.Host)
 	d.SimType = "ukama_data"
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{
@@ -360,8 +360,8 @@ var tc_dp_get_baserate_by_period = &test.TestCase{
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
 			if len(resp.Rates) > 0 &&
-				data.reqGetBaseRatesByCountryRequest.Country == resp.Rates[0].Country &&
-				data.reqGetBaseRatesByCountryRequest.Provider == resp.Rates[0].Provider {
+				data.reqGetBaseRatesForPeriodRequest.Country == resp.Rates[0].Country &&
+				data.reqGetBaseRatesForPeriodRequest.Provider == resp.Rates[0].Provider {
 				check = true
 			}
 		}
@@ -532,7 +532,7 @@ var tc_dp_get_rate = &test.TestCase{
 
 var tc_dp_add_package = &test.TestCase{
 	Name:        "Create a package",
-	Description: "Cretae package",
+	Description: "Create package",
 	Data:        &ppb.AddPackageResponse{},
 	//Workflow:    w,
 	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
@@ -567,7 +567,7 @@ var tc_dp_add_package = &test.TestCase{
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
 			if data.reqAddPackageRequest.OrgId == resp.Package.OrgId &&
-				resp.Package.Uuid == "" &&
+				resp.Package.Uuid != "" &&
 				true == tc.Watcher.Expections() {
 				check = true
 			}
@@ -678,7 +678,7 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 	w.RegisterTestCase(tc_dp_add_package)
 
 	/* Get Packages */
-	w.RegisterTestCase(tc_dp_add_package)
+	w.RegisterTestCase(tc_dp_get_package_for_org)
 
 	/* Run */
 	err := w.Run(t, context.Background())
