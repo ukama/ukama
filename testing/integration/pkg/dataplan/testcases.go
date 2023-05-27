@@ -68,10 +68,14 @@ func InitializeData(org *string, owner *string) *InitData {
 
 	if owner == nil {
 		d.OwnerId = uuid.NewV4().String()
+	} else {
+		d.OwnerId = *owner
 	}
 
 	if org == nil {
 		d.OrgId = uuid.NewV4().String()
+	} else {
+		d.OrgId = *org
 	}
 
 	d.BaseRateId = make([]string, 8)

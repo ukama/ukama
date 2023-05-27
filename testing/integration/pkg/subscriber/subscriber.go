@@ -119,7 +119,7 @@ func (s *SubscriberSys) SubscriberRegistryAddSusbscriber(req api.SubscriberAddRe
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -131,15 +131,10 @@ func (s *SubscriberSys) SubscriberRegistryDeleteSusbscriber(req api.SubscriberDe
 
 	rsp := &rPb.DeleteSubscriberResponse{}
 
-	resp, err := s.r.Delete(s.u.String() + "/v1/subscriber/" + req.SubscriberId)
+	_, err := s.r.Delete(s.u.String() + "/v1/subscriber/" + req.SubscriberId)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
-	}
-
-	err = json.Unmarshal(resp.Body(), rsp)
-	if err != nil {
-		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
@@ -153,15 +148,10 @@ func (s *SubscriberSys) SubscriberRegistryUpdateSusbscriber(req api.SubscriberUp
 	}
 	rsp := &rPb.UpdateSubscriberResponse{}
 
-	resp, err := s.r.Patch(s.u.String()+"/v1/subscriber", b)
+	_, err = s.r.Patch(s.u.String()+"/v1/subscriber", b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
-	}
-
-	err = json.Unmarshal(resp.Body(), rsp)
-	if err != nil {
-		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
@@ -178,7 +168,7 @@ func (s *SubscriberSys) SubscriberManagerGetSim(req api.SimReq) (*sPb.GetSimResp
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -197,7 +187,7 @@ func (s *SubscriberSys) SubscriberManagerGetSubscriber(req api.GetSimsBySubReq) 
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -216,7 +206,7 @@ func (s *SubscriberSys) SubscriberManagerGetPackageForSim(req api.SimReq) (*sPb.
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -238,7 +228,7 @@ func (s *SubscriberSys) SubscriberManagerAddPackage(req api.AddPkgToSimReq) erro
 		return err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -247,7 +237,7 @@ func (s *SubscriberSys) SubscriberManagerAddPackage(req api.AddPkgToSimReq) erro
 }
 
 func (s *SubscriberSys) SubscriberManagerAllocateSim(req api.AllocateSimReq) (*sPb.AllocateSimResponse, error) {
-
+	log.Tracef("Allocate sim req %+v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
@@ -260,7 +250,7 @@ func (s *SubscriberSys) SubscriberManagerAllocateSim(req api.AllocateSimReq) (*s
 		return nil, err
 	}
 
-	err = json.Unmarshal(resp.Body(), rsp)
+	err = pjson.Unmarshal(resp.Body(), rsp)
 	if err != nil {
 		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
@@ -277,15 +267,10 @@ func (s *SubscriberSys) SubscriberManagerUpdateSim(req api.ActivateDeactivateSim
 
 	rsp := &sPb.ToggleSimStatusResponse{}
 
-	resp, err := s.r.Patch(s.u.String()+"/v1/sim/"+req.SimId, b)
+	_, err = s.r.Patch(s.u.String()+"/v1/sim/"+req.SimId, b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
-	}
-
-	err = json.Unmarshal(resp.Body(), rsp)
-	if err != nil {
-		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
@@ -295,15 +280,10 @@ func (s *SubscriberSys) SubscriberManagerAcitvatePackage(req api.SetActivePackag
 
 	rsp := &sPb.SetActivePackageResponse{}
 
-	resp, err := s.r.Patch(s.u.String()+"/v1/sim/"+req.SimId+"/package/"+req.PackageId, nil)
+	_, err := s.r.Patch(s.u.String()+"/v1/sim/"+req.SimId+"/package/"+req.PackageId, nil)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
-	}
-
-	err = json.Unmarshal(resp.Body(), rsp)
-	if err != nil {
-		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil
@@ -313,15 +293,10 @@ func (s *SubscriberSys) SubscriberManagerDeleteSim(req api.SimReq) (*sPb.DeleteS
 
 	rsp := &sPb.DeleteSimResponse{}
 
-	resp, err := s.r.Delete(s.u.String() + "/v1/sim/" + req.SimId)
+	_, err := s.r.Delete(s.u.String() + "/v1/sim/" + req.SimId)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return nil, err
-	}
-
-	err = json.Unmarshal(resp.Body(), rsp)
-	if err != nil {
-		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return rsp, nil

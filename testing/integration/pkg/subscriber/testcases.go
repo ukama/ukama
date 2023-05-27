@@ -66,7 +66,7 @@ type InitData struct {
 func InitializeData() *InitData {
 	d := &InitData{}
 	d.ICCID = make([]string, MAX_POOL)
-	d.SimToken = make([]string, MAX_POOL)
+	//d.SimToken = make([]string, MAX_POOL)
 	d.Host = "http://192.168.0.23:8078"
 	d.RegHost = "http://192.168.0.23:8075"
 	d.MbHost = "amqp://guest:guest@192.168.0.23:5672/"
@@ -164,6 +164,7 @@ func InitializeData() *InitData {
 		Email: d.reqSubscriberAddReq.Email,
 		Phone: d.reqSubscriberAddReq.Phone,
 	}
+
 	return d
 }
 
@@ -227,10 +228,11 @@ var TC_simpool_upload = &test.TestCase{
 						break
 					} else {
 						tok, err := smutil.GenerateTokenFromIccid(i, data.EncKey)
-						if err != nil {
+						if err == nil {
 							data.SimToken = append(data.SimToken, tok)
 						}
 					}
+					tc.SaveWorkflowData(data)
 				}
 			}
 
@@ -412,11 +414,14 @@ var TC_manager_allocate_sim = &test.TestCase{
 		/* Check for possible failures during test case */
 		check := false
 
-		resp := tc.GetData().(*rpb.AddSubscriberResponse)
+		resp := tc.GetData().(*mpb.AllocateSimResponse)
 		if resp != nil {
 			log.Tracef("Resp data is %v", resp)
 			d := tc.GetWorkflowData().(*InitData)
-			if d.reqSubscriberAddReq.Email == resp.Subscriber.Email {
+			if d.reqAllocateSimReq.SubscriberId == resp.Sim.SubscriberId &&
+				d.reqAllocateSimReq.PackageId == resp.Sim.Package.Id &&
+				d.reqAllocateSimReq.SimType == resp.Sim.Type &&
+				d.reqAllocateSimReq.NetworkId == resp.Sim.NetworkId {
 				check = true
 			}
 		}
