@@ -40,6 +40,7 @@ type InitData struct {
 	UserId       string
 	PackageId    string
 	EncKey       string
+	SimId        string
 
 	/* API requests */
 	reqSimPoolUploadSimReq       api.SimPoolUploadSimReq
@@ -392,8 +393,8 @@ var TC_manager_allocate_sim = &test.TestCase{
 		a.reqAllocateSimReq.SimToken = a.SimToken[utils.RandomInt(len(a.SimToken)-1)]
 
 		tc.SaveWorkflowData(a)
-		// log.Tracef("Setting up watcher for %s", tc.Name)
-		// tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.sim.sim.upload"})
+		log.Tracef("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.sim.allocate"})
 		return nil
 	},
 
@@ -419,9 +420,10 @@ var TC_manager_allocate_sim = &test.TestCase{
 			log.Tracef("Resp data is %v", resp)
 			d := tc.GetWorkflowData().(*InitData)
 			if d.reqAllocateSimReq.SubscriberId == resp.Sim.SubscriberId &&
-				d.reqAllocateSimReq.PackageId == resp.Sim.Package.Id &&
+				resp.Sim.Package != nil &&
 				d.reqAllocateSimReq.SimType == resp.Sim.Type &&
-				d.reqAllocateSimReq.NetworkId == resp.Sim.NetworkId {
+				d.reqAllocateSimReq.NetworkId == resp.Sim.NetworkId &&
+				tc.Watcher.Expections() {
 				check = true
 			}
 		}
@@ -433,12 +435,12 @@ var TC_manager_allocate_sim = &test.TestCase{
 		/* Here we save any data required to be saved from the test case
 		Cleanup any test specific data
 		*/
-		resp := tc.GetData().(*rpb.AddSubscriberResponse)
+		resp := tc.GetData().(*mpb.AllocateSimResponse)
 		a := tc.GetWorkflowData().(*InitData)
-		a.SubscriberId = resp.Subscriber.SubscriberId
+		a.SimId = resp.Sim.Id
 		tc.SaveWorkflowData(a)
 
-		//tc.Watcher.Stop()
+		tc.Watcher.Stop()
 		return nil
 	},
 }
