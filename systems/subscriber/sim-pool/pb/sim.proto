@@ -23,8 +23,7 @@ service SimService {
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
     ///Batch upload sims from CSV
     rpc Upload(UploadRequest) returns (UploadResponse){}
-     ///Update sim status in sim pool
-    rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse){}
+    
 }
 
 message UpdateStatusRequest{

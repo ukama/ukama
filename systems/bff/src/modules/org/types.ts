@@ -1,4 +1,5 @@
 import { Field, InputType, ObjectType } from "type-graphql";
+import { UserResDto } from "../user/types";
 
 @ObjectType()
 export class MemberAPIObj {
@@ -47,8 +48,11 @@ export class MemberObj {
     @Field()
     isDeactivated: boolean;
 
-    @Field()
+    @Field({ nullable: true })
     memberSince: string;
+
+    @Field(() => UserResDto)
+    user?: UserResDto;
 }
 
 @ObjectType()

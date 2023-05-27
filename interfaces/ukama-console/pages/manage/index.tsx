@@ -5,7 +5,7 @@ import {
   MANAGE_SIM_POOL_COLUMN,
   MANAGE_TABLE_COLUMN,
 } from '@/constants';
-import { useGetOrgMemberQuery } from '@/generated';
+import { OrgMembersResDto, useGetOrgMemberQuery } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
 import { SimpleDataTable } from '@/ui/components';
@@ -131,6 +131,7 @@ const MemberContainer = ({ data, search, setSearch }: IMemberContainer) => (
       py: 3,
       px: 4,
       width: '100%',
+      overflow: 'hidden',
       borderRadius: '10px',
       height: 'calc(100vh - 200px)',
     }}
@@ -309,14 +310,21 @@ const Manage = () => {
 
   const onMenuItemClick = (id: string) => setMenu(id);
 
+  const structureData = (data: OrgMembersResDto) =>
+    data.members?.map((member) => ({
+      name: member.user.name,
+      email: member.user.email,
+      role: 'member',
+    }));
+
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
       {menu === 'manage-members' && (
         <MemberContainer
-          data={data.members}
           search={memberSearch}
           setSearch={setMemberSearch}
+          data={structureData(data.members)}
         />
       )}
       {menu === 'manage-sim' && <SimPoolContainer data={data.simPool} />}

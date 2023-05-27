@@ -33,8 +33,6 @@ type SimServiceClient interface {
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	// /Batch upload sims from CSV
 	Upload(ctx context.Context, in *UploadRequest, opts ...grpc.CallOption) (*UploadResponse, error)
-	// /Update sim status in sim pool
-	UpdateStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*UpdateStatusResponse, error)
 }
 
 type simServiceClient struct {
@@ -99,15 +97,6 @@ func (c *simServiceClient) Upload(ctx context.Context, in *UploadRequest, opts .
 	return out, nil
 }
 
-func (c *simServiceClient) UpdateStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*UpdateStatusResponse, error) {
-	out := new(UpdateStatusResponse)
-	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim.v1.SimService/UpdateStatus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // SimServiceServer is the server API for SimService service.
 // All implementations must embed UnimplementedSimServiceServer
 // for forward compatibility
@@ -123,8 +112,6 @@ type SimServiceServer interface {
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// /Batch upload sims from CSV
 	Upload(context.Context, *UploadRequest) (*UploadResponse, error)
-	// /Update sim status in sim pool
-	UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error)
 	mustEmbedUnimplementedSimServiceServer()
 }
 
@@ -149,9 +136,6 @@ func (UnimplementedSimServiceServer) Delete(context.Context, *DeleteRequest) (*D
 }
 func (UnimplementedSimServiceServer) Upload(context.Context, *UploadRequest) (*UploadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Upload not implemented")
-}
-func (UnimplementedSimServiceServer) UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateStatus not implemented")
 }
 func (UnimplementedSimServiceServer) mustEmbedUnimplementedSimServiceServer() {}
 
@@ -274,24 +258,6 @@ func _SimService_Upload_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SimService_UpdateStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimServiceServer).UpdateStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.subscriber.sim.v1.SimService/UpdateStatus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimServiceServer).UpdateStatus(ctx, req.(*UpdateStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // SimService_ServiceDesc is the grpc.ServiceDesc for SimService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -322,10 +288,6 @@ var SimService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Upload",
 			Handler:    _SimService_Upload_Handler,
-		},
-		{
-			MethodName: "UpdateStatus",
-			Handler:    _SimService_UpdateStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

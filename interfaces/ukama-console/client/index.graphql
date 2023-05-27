@@ -591,6 +591,14 @@ fragment Member on MemberObj {
   orgId
   isDeactivated
   memberSince
+  user {
+    name
+    email
+    uuid
+    phone
+    isDeactivated
+    registeredSince
+  }
 }
 query getOrgMember {
   getOrgMembers {
