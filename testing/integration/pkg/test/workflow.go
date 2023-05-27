@@ -205,14 +205,12 @@ func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 
 	for _, tc := range w.testSeq {
 		err := tc.Run(test, ctx)
-		if assert.NoError(test, err) {
-			w.State = StateTypeFail
-			/* This will be changed exit function ahandler */
-		} else {
+		if err != nil {
 			w.State = StateTypeFail
 			log.Errorf("Test Case %s failed. Error: %s", tc.Name, err.Error())
 			return err
 		}
+
 		log.Debugf("Test Status: %s", tc.String())
 		w.stats(tc.State)
 	}

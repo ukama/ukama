@@ -500,8 +500,8 @@ var TC_dp_get_rate = &test.TestCase{
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
 			if len(resp.Rates) > 0 &&
-				data.reqGetBaseRatesByCountryRequest.Country == resp.Rates[0].Country &&
-				data.reqGetBaseRatesByCountryRequest.Provider == resp.Rates[0].Provider {
+				data.reqGetRateRequest.Country == resp.Rates[0].Country &&
+				data.reqGetRateRequest.Provider == resp.Rates[0].Provider {
 				check = true
 			}
 		}

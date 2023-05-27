@@ -79,6 +79,9 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			// Add Mark ups
 			dp.RegisterTestCase(dataplan.TC_dp_add_markup)
 
+			/* Get rate request */
+			dp.RegisterTestCase(dataplan.TC_dp_get_rate)
+
 			/* Add a package */
 			dp.RegisterTestCase(dataplan.TC_dp_add_package)
 
@@ -86,7 +89,7 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			dp.RegisterTestCase(dataplan.TC_dp_get_package_for_org)
 
 			/* Run */
-			err := w.Run(t, context.Background())
+			err := dp.Run(t, context.Background())
 			assert.NoError(t, err)
 
 			return err
@@ -94,7 +97,7 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 		}(d.OrgId, d.UserId)
 
 		log.Tracef("Workflow Data : %+v", w.Data)
-		return nil
+		return err
 	}
 
 	w.RegisterTestCase(TC_simpool_upload)
