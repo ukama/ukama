@@ -439,6 +439,7 @@ export type MemberObj = {
   isDeactivated: Scalars['Boolean'];
   memberSince?: Maybe<Scalars['String']>;
   orgId: Scalars['String'];
+  user: UserResDto;
   userId: Scalars['String'];
   uuid: Scalars['String'];
 };
@@ -1724,12 +1725,12 @@ export type GetSimpoolStatsQueryVariables = Exact<{
 
 export type GetSimpoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, physical: number, esim: number } };
 
-export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, isDeactivated: boolean, memberSince?: string | null };
+export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } };
 
 export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, isDeactivated: boolean, memberSince?: string | null }> } };
+export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
 
 export const SubscriberSimFragmentDoc = gql`
     fragment SubscriberSim on SubscriberDto {
@@ -1838,6 +1839,14 @@ export const MemberFragmentDoc = gql`
   orgId
   isDeactivated
   memberSince
+  user {
+    name
+    email
+    uuid
+    phone
+    isDeactivated
+    registeredSince
+  }
 }
     `;
 export const WhoamiDocument = gql`

@@ -119,29 +119,17 @@ func (_m *SimRepo) GetSimsByType(simType db.SimType) ([]db.Sim, error) {
 }
 
 // UpdateStatus provides a mock function with given fields: iccid, isAllocated, IsFailed
-func (_m *SimRepo) UpdateStatus(iccid string, isAllocated bool, IsFailed bool) (*db.Sim, error) {
+func (_m *SimRepo) UpdateStatus(iccid string, isAllocated bool, IsFailed bool) error {
 	ret := _m.Called(iccid, isAllocated, IsFailed)
 
-	var r0 *db.Sim
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, bool, bool) (*db.Sim, error)); ok {
-		return rf(iccid, isAllocated, IsFailed)
-	}
-	if rf, ok := ret.Get(0).(func(string, bool, bool) *db.Sim); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, bool, bool) error); ok {
 		r0 = rf(iccid, isAllocated, IsFailed)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Sim)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, bool, bool) error); ok {
-		r1 = rf(iccid, isAllocated, IsFailed)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 type mockConstructorTestingTNewSimRepo interface {

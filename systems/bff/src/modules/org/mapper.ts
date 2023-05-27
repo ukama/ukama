@@ -56,6 +56,7 @@ class OrgMapper implements IOrgMapper {
                 orgId: member.org_id,
                 isDeactivated: member.is_deactivated,
                 memberSince: member.member_since,
+                user: undefined,
             });
         });
         return {
