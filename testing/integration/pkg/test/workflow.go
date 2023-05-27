@@ -213,9 +213,8 @@ func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 			log.Errorf("Test Case %s failed. Error: %s", tc.Name, err.Error())
 			return err
 		}
-
-		w.stats(tc.State)
 		log.Debugf("Test Status: %s", tc.String())
+		w.stats(tc.State)
 	}
 
 	log.Tracef("Workflow data: %+v", w.Data)
