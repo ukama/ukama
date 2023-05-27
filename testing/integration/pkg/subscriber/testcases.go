@@ -14,6 +14,7 @@ import (
 	api "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
 	rpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	mpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	smutil "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 	spb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/testing/integration/pkg/registry"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
@@ -29,6 +30,7 @@ type InitData struct {
 	RegHost      string
 	SimType      string `default:"ukama_data"`
 	ICCID        []string
+	SimToken     []string
 	MbHost       string
 	SubscriberId string
 	OrgId        string
@@ -36,6 +38,8 @@ type InitData struct {
 	NetworkId    string
 	NetworkName  string
 	UserId       string
+	PackageId    string
+	EncKey       string
 
 	/* API requests */
 	reqSimPoolUploadSimReq       api.SimPoolUploadSimReq
@@ -62,12 +66,13 @@ type InitData struct {
 func InitializeData() *InitData {
 	d := &InitData{}
 	d.ICCID = make([]string, MAX_POOL)
+	d.SimToken = make([]string, MAX_POOL)
 	d.Host = "http://192.168.0.23:8078"
 	d.RegHost = "http://192.168.0.23:8075"
 	d.MbHost = "amqp://guest:guest@192.168.0.23:5672/"
 	d.Sys = NewSubscriberSys(d.Host)
 	d.Reg = registry.NewRegistrySys(d.RegHost)
-
+	d.EncKey = "the-key-has-to-be-32-bytes-long!"
 	d.SimType = "ukama_data"
 
 	d.reqAddOrgRequest = rapi.AddOrgRequest{
@@ -214,12 +219,17 @@ var TC_simpool_upload = &test.TestCase{
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
 			if len(data.ICCID) == len(resp.Iccid) &&
-				true == tc.Watcher.Expections() {
+				tc.Watcher.Expections() {
 				check = true
 				for idx, i := range data.ICCID {
 					if i != data.ICCID[idx] {
 						check = false
 						break
+					} else {
+						tok, err := smutil.GenerateTokenFromIccid(i, data.EncKey)
+						if err != nil {
+							data.SimToken = append(data.SimToken, tok)
+						}
 					}
 				}
 			}
@@ -366,15 +376,19 @@ var TC_registry_add_subscriber = &test.TestCase{
 
 var TC_manager_allocate_sim = &test.TestCase{
 	Name:        "Allocate sim",
-	Description: "Allocatin a sim to subscriber",
+	Description: "Allocating a sim to subscriber",
 	Data:        &mpb.AllocateSimResponse{},
 	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
 		a := tc.GetWorkflowData().(*InitData)
-		a.reqSubscriberAddReq.NetworkId = a.NetworkId
-		a.reqSubscriberAddReq.OrgId = a.OrgId
+		a.reqAllocateSimReq.NetworkId = a.NetworkId
+		a.reqAllocateSimReq.PackageId = a.PackageId
+		a.reqAllocateSimReq.SimType = a.SimType
+		a.reqAllocateSimReq.SubscriberId = a.SubscriberId
+		a.reqAllocateSimReq.SimToken = a.SimToken[utils.RandomInt(len(a.SimToken)-1)]
+
 		tc.SaveWorkflowData(a)
 		// log.Tracef("Setting up watcher for %s", tc.Name)
 		// tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.sim.sim.upload"})
@@ -386,7 +400,7 @@ var TC_manager_allocate_sim = &test.TestCase{
 		var err error
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
-			tc.Data, err = a.Sys.SubscriberRegistryAddSusbscriber(a.reqSubscriberAddReq)
+			tc.Data, err = a.Sys.SubscriberManagerAllocateSim(a.reqAllocateSimReq)
 		} else {
 			log.Errorf("Invalid data type for Workflow data.")
 			return fmt.Errorf("invalid data type for Workflow data")

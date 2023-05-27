@@ -59,17 +59,15 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			d.NetworkName = nresp.Network.Name
 		}
 
-		w.Data = d
-
 		/* Initialize the data-plan system */
 		err = func(org string, owner string) error {
 			dp := test.NewWorkflow("dataplan_config_for_subscriber", "Adding data pan for subscriber")
 
-			dp.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
-				log.Tracef("Initilizing Data for %s.", w.String())
-				w.Data = dataplan.InitializeData(nil, nil)
+			dp.SetUpFxn = func(ctx context.Context, dp *test.Workflow) error {
+				log.Tracef("Initilizing Data for %s.", dp.String())
+				dp.Data = dataplan.InitializeData(nil, nil)
 
-				log.Tracef("Workflow Data : %+v", w.Data)
+				log.Tracef("Workflow Data : %+v", dp.Data)
 				return nil
 			}
 
@@ -88,6 +86,13 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			/* Get Packages */
 			dp.RegisterTestCase(dataplan.TC_dp_get_package_for_org)
 
+			dp.ExitFxn = func(ctx context.Context, wf *test.Workflow) error {
+				data := dp.GetData().(*dataplan.InitData)
+				d.PackageId = data.PackageId
+
+				return nil
+			}
+
 			/* Run */
 			err := dp.Run(t, context.Background())
 			assert.NoError(t, err)
@@ -96,6 +101,7 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 
 		}(d.OrgId, d.UserId)
 
+		w.Data = d
 		log.Tracef("Workflow Data : %+v", w.Data)
 		return err
 	}
