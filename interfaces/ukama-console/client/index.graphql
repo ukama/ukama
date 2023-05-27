@@ -583,3 +583,22 @@ query getSimpoolStats($type: String!) {
   }
 }
 ### SimPool End ###
+
+### Org Start ###
+fragment Member on MemberObj {
+  uuid
+  userId
+  orgId
+  isDeactivated
+  memberSince
+}
+query getOrgMember {
+  getOrgMembers {
+    org
+    members {
+      ...Member
+    }
+  }
+}
+
+### Org End ###

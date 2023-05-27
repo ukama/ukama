@@ -437,7 +437,7 @@ export type MemberApiObj = {
 export type MemberObj = {
   __typename?: 'MemberObj';
   isDeactivated: Scalars['Boolean'];
-  memberSince: Scalars['String'];
+  memberSince?: Maybe<Scalars['String']>;
   orgId: Scalars['String'];
   userId: Scalars['String'];
   uuid: Scalars['String'];
@@ -1724,6 +1724,13 @@ export type GetSimpoolStatsQueryVariables = Exact<{
 
 export type GetSimpoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, physical: number, esim: number } };
 
+export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, isDeactivated: boolean, memberSince?: string | null };
+
+export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, isDeactivated: boolean, memberSince?: string | null }> } };
+
 export const SubscriberSimFragmentDoc = gql`
     fragment SubscriberSim on SubscriberDto {
   sim {
@@ -1824,6 +1831,15 @@ export const PackageFragmentDoc = gql`
 }
     ${PackageRateFragmentDoc}
 ${PackageMarkupFragmentDoc}`;
+export const MemberFragmentDoc = gql`
+    fragment Member on MemberObj {
+  uuid
+  userId
+  orgId
+  isDeactivated
+  memberSince
+}
+    `;
 export const WhoamiDocument = gql`
     query Whoami {
   whoami {
@@ -2366,3 +2382,40 @@ export function useGetSimpoolStatsLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
 export type GetSimpoolStatsQueryHookResult = ReturnType<typeof useGetSimpoolStatsQuery>;
 export type GetSimpoolStatsLazyQueryHookResult = ReturnType<typeof useGetSimpoolStatsLazyQuery>;
 export type GetSimpoolStatsQueryResult = Apollo.QueryResult<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>;
+export const GetOrgMemberDocument = gql`
+    query getOrgMember {
+  getOrgMembers {
+    org
+    members {
+      ...Member
+    }
+  }
+}
+    ${MemberFragmentDoc}`;
+
+/**
+ * __useGetOrgMemberQuery__
+ *
+ * To run a query within a React component, call `useGetOrgMemberQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOrgMemberQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetOrgMemberQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetOrgMemberQuery(baseOptions?: Apollo.QueryHookOptions<GetOrgMemberQuery, GetOrgMemberQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(GetOrgMemberDocument, options);
+      }
+export function useGetOrgMemberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrgMemberQuery, GetOrgMemberQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(GetOrgMemberDocument, options);
+        }
+export type GetOrgMemberQueryHookResult = ReturnType<typeof useGetOrgMemberQuery>;
+export type GetOrgMemberLazyQueryHookResult = ReturnType<typeof useGetOrgMemberLazyQuery>;
+export type GetOrgMemberQueryResult = Apollo.QueryResult<GetOrgMemberQuery, GetOrgMemberQueryVariables>;
