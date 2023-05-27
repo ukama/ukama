@@ -1,14 +1,18 @@
+import { snackbarMessage } from '@/app-recoil';
 import {
   MANAGE_MENU_LIST,
   MANAGE_NODE_POOL_COLUMN,
   MANAGE_SIM_POOL_COLUMN,
   MANAGE_TABLE_COLUMN,
 } from '@/constants';
+import { useGetOrgMemberQuery } from '@/generated';
 import { colors } from '@/styles/theme';
+import { TSnackMessage } from '@/types';
 import { SimpleDataTable } from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
 import PeopleAlt from '@mui/icons-material/PeopleAlt';
 import {
+  AlertColor,
   Grid,
   ListItemIcon,
   ListItemText,
@@ -19,21 +23,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-
-const MEMBERS_DATA = [
-  {
-    id: 'testuuid',
-    name: 'Salman',
-    role: 'admin',
-    email: 'salman@ukama.com',
-  },
-  {
-    id: 'testuuid1',
-    name: 'Brackly',
-    role: 'admin',
-    email: 'brackley@ukama.com',
-  },
-];
+import { useSetRecoilState } from 'recoil';
 
 const SIMPOOL_DATA = [
   {
@@ -265,22 +255,44 @@ const Manage = () => {
   const [menu, setMenu] = useState<string>('manage-members');
   const [memberSearch, setMemberSearch] = useState<string>('');
   const [nodeSearch, setNodeSearch] = useState<string>('');
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [data, setData] = useState<any>({
-    members: MEMBERS_DATA,
+    members: [],
     simPool: SIMPOOL_DATA,
     node: NODE_POOL_DATA,
     dataPlan: DATA_PLAN_DATA,
   });
 
+  const {
+    data: members,
+    error: membersError,
+    loading: membersLoading,
+  } = useGetOrgMemberQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({ ...prev, members: data?.getOrgMembers ?? [] }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'org-members',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
   useEffect(() => {
     if (memberSearch.length > 3) {
-      const members = MEMBERS_DATA.filter((member) => {
+      const _members = members?.getOrgMembers.members.filter((member) => {
         const s = memberSearch.toLowerCase();
-        if (member.name.toLowerCase().includes(s)) return member;
+        if (member.uuid.includes(s)) return member;
       });
-      setData((prev: any) => ({ ...prev, members: members ?? [] }));
+      setData((prev: any) => ({ ...prev, members: _members ?? [] }));
     } else if (memberSearch.length === 0) {
-      setData((prev: any) => ({ ...prev, members: MEMBERS_DATA }));
+      setData((prev: any) => ({
+        ...prev,
+        members: members?.getOrgMembers.members ?? [],
+      }));
     }
   }, [memberSearch]);
 

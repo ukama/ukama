@@ -41,24 +41,24 @@ const MainApp = ({
   const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
-      // if (data.whoami) {
-      //   if (!_user?.id)
-      //     _setUser({
-      //       id: data.whoami.id,
-      //       name: data.whoami.name,
-      //       email: data.whoami.email,
-      //       role: data.whoami.role,
-      //       isFirstVisit: data.whoami.isFirstVisit,
-      //     });
-      // }
+      if (data.whoami) {
+        if (!_user?.id)
+          _setUser({
+            id: data.whoami.id,
+            name: data.whoami.name,
+            email: data.whoami.email,
+            role: data.whoami.role,
+            isFirstVisit: data.whoami.isFirstVisit,
+          });
+      }
     },
     onError: (error) => {
-      // setSnackbarMessage({
-      //   id: 'whoami-msg',
-      //   message: error.message,
-      //   type: 'error' as AlertColor,
-      //   show: true,
-      // });
+      setSnackbarMessage({
+        id: 'whoami-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
       // resetData();
       // window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
     },
@@ -69,29 +69,29 @@ const MainApp = ({
   ] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
-      // if (data.getNetworks.networks.length === 1) {
-      //   setCommonData({
-      //     ..._commonData,
-      //     networkId: data.getNetworks.networks[0].id,
-      //     networkName: data.getNetworks.networks[0].name,
-      //   });
-      // }
+      if (data.getNetworks.networks.length === 1) {
+        setCommonData({
+          ..._commonData,
+          networkId: data.getNetworks.networks[0].id,
+          networkName: data.getNetworks.networks[0].name,
+        });
+      }
     },
     onError: (error) => {
-      // setSnackbarMessage({
-      //   id: 'networks-msg',
-      //   message: error.message,
-      //   type: 'error' as AlertColor,
-      //   show: true,
-      // });
+      setSnackbarMessage({
+        id: 'networks-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
     },
   });
 
-  // useEffect(() => {
-  //   setSkeltonLoading(true);
-  //   getWhoami();
-  //   getNetworks();
-  // }, []);
+  useEffect(() => {
+    setSkeltonLoading(true);
+    getWhoami();
+    getNetworks();
+  }, []);
 
   useEffect(() => {
     if (
@@ -104,33 +104,33 @@ const MainApp = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, networksData]);
 
-  useEffect(() => {
-    // const { id, name, email } = _user;
-    // const pathname =
-    //   typeof window !== 'undefined' && window.location.pathname
-    //     ? window.location.pathname
-    //     : '';
-    // setPage(getTitleFromPath(pathname));
-    // if (id && name && email) {
-    //   if (
-    //     !doesHttpOnlyCookieExist('id') &&
-    //     doesHttpOnlyCookieExist('ukama_session')
-    //   ) {
-    //     resetData();
-    //     resetPageName();
-    //     window.location.replace(
-    //       `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout`,
-    //     );
-    //   } else if (
-    //     doesHttpOnlyCookieExist('id') &&
-    //     !doesHttpOnlyCookieExist('ukama_session')
-    //   )
-    //     handleGoToLogin();
-    // } else {
-    //   if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
-    //   handleGoToLogin();
-    // }
-  }, []);
+  // useEffect(() => {
+  //   const { id, name, email } = _user;
+  //   const pathname =
+  //     typeof window !== 'undefined' && window.location.pathname
+  //       ? window.location.pathname
+  //       : '';
+  //   setPage(getTitleFromPath(pathname));
+  //   if (id && name && email) {
+  //     if (
+  //       !doesHttpOnlyCookieExist('id') &&
+  //       doesHttpOnlyCookieExist('ukama_session')
+  //     ) {
+  //       resetData();
+  //       resetPageName();
+  //       window.location.replace(
+  //         `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout`,
+  //       );
+  //     } else if (
+  //       doesHttpOnlyCookieExist('id') &&
+  //       !doesHttpOnlyCookieExist('ukama_session')
+  //     )
+  //       handleGoToLogin();
+  //   } else {
+  //     if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
+  //     handleGoToLogin();
+  //   }
+  // }, []);
 
   const handleGoToLogin = () => {
     setPage('Home');
@@ -157,9 +157,9 @@ const MainApp = ({
         <CssBaseline />
         <Layout
           page={page}
-          isFullScreen={true}
+          isFullScreen={false}
           isDarkMode={_isDarkMod}
-          isLoading={false}
+          isLoading={skeltonLoading}
           placeholder={'Select Network'}
           networkId={_commonData?.networkId}
           handlePageChange={handlePageChange}
