@@ -74,9 +74,10 @@ static int read_line(char *buffer, int size, FILE *fp) {
  * split_strings --
  *
  */
-static void split_strings(char *input, char **str1, char **str2) {
+static void split_strings(char *input, char **str1, char **str2,
+                          char *delimiter) {
 
-    char *delimiter=";", *token=NULL;
+    char *token=NULL;
 
     token = strtok(input, delimiter);
 
@@ -96,11 +97,11 @@ static void split_strings(char *input, char **str1, char **str2) {
  *
  */
 static int read_hostname_and_nodeid(char *fileName, char **hostname,
-                                    char **nodeID) {
+                                    char **subnetMask, char **nodeID) {
 
     int ret=TRUE;
 	FILE *fp=NULL;
-	char *buffer=NULL;
+	char *buffer=NULL, *CIDR=NULL;
 
 	buffer = (char *)malloc(MAX_BUFFER);
 	if (!buffer) {
@@ -121,11 +122,13 @@ static int read_hostname_and_nodeid(char *fileName, char **hostname,
 				  strerror(errno));
         ret = FALSE;
 	} else {
-        split_strings(buffer, hostname, nodeID);
+        split_strings(buffer, &CIDR, nodeID, ";");
+        split_strings(CIDR, hostname, subnetMask, "/");
     }
 
 	fclose(fp);
     free(buffer);
+    free(CIDR);
 
 	return ret;
 }
@@ -189,7 +192,7 @@ static int parse_config_entries(int secure, Config *config,
 								toml_table_t *configData) {
 
 	int ret=TRUE;
-	char *hostname=NULL, *nodeID=NULL;
+	char *hostname=NULL, *nodeID=NULL, *subnetMask=NULL;
 	toml_datum_t localAccept, cert, key;
 	toml_datum_t remoteIPFile;
 
@@ -206,18 +209,18 @@ static int parse_config_entries(int secure, Config *config,
         goto done;
 	} else {
 		/* Read the content of the IP file. */
-		if (read_hostname_and_nodeid(remoteIPFile.u.s, &hostname, &nodeID)
-            == FALSE) {
+		if (read_hostname_and_nodeid(remoteIPFile.u.s, &hostname,
+                                     &subnetMask, &nodeID) == FALSE) {
 			goto done;
 		}
 	}
 
 	config->remoteConnect = (char *)calloc(1, MAX_BUFFER);
 	if (config->secure) {
-		sprintf(config->remoteConnect, "wss://%s/%s", hostname,
+		sprintf(config->remoteConnect, "wss://%s:%s/%s", hostname, DEF_PORT,
                 PREFIX_WEBSOCKET);
 	} else {
-		sprintf(config->remoteConnect, "ws://%s/%s", hostname,
+		sprintf(config->remoteConnect, "ws://%s:%s/%s", hostname, DEF_PORT,
 				PREFIX_WEBSOCKET);
 	}
 
@@ -255,6 +258,7 @@ static int parse_config_entries(int secure, Config *config,
 	if (localAccept.ok)   free(localAccept.u.s);
 	if (remoteIPFile.ok)  free(remoteIPFile.u.s);
     if (hostname)         free(hostname);
+    if (subnetMask)       free(subnetMask);
     if (nodeID)           free(nodeID);
 
 	return ret;

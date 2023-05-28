@@ -17,6 +17,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <ulfius.h>
+#include <unistd.h>
 
 #include "mesh.h"
 #include "config.h"
@@ -200,13 +201,9 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	/* Wait here for ever. XXX */
-
 	log_debug("Mesh.d running ...");
 
-	getchar(); /* For now. */
-
-	log_debug("UnMesh.d and Goodbye ... ");
+    pause();
 
 	ulfius_websocket_client_connection_close(&websocket_client_handler);
 	ulfius_stop_framework(&clientInst);

@@ -34,6 +34,7 @@
 
 #define DEF_SERVER_CERT "certs/test.cert"
 #define DEF_SERVER_KEY  "cert/server.key"
+#define DEF_PORT        "9275"
 
 #define TRUE 1
 #define FALSE 0

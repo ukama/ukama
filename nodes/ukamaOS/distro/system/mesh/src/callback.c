@@ -43,8 +43,7 @@ extern void  websocket_onclose(const URequest *request, WSManager *manager,
 /*
  *
  */
-static int is_valid_request(URequest *request) {
-
+static int is_valid_request(const URequest *request) {
 	return TRUE;
 }
 
