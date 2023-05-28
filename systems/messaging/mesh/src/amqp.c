@@ -160,7 +160,7 @@ static char *convert_object_to_str(MsgObject object) {
 	switch(object) {
 
 	case LINK:
-		str = OBJECT_LINK_STR;
+		str = OBJECT_NODE_STR;
 		break;
 
 	case CERT:
@@ -185,27 +185,15 @@ static char *convert_state_to_str(ObjectState state) {
 	switch(state) {
 
 	case CONNECT:
-		str = STATE_CONNECT_STR;
-		break;
+    case ACTIVE:
+        str = STATE_ONLINE_STR;
+        break;
 
 	case FAIL:
-		str = STATE_FAIL_STR;
-		break;
-
-	case ACTIVE:
-		str = STATE_ACTIVE_STR;
-		break;
-
 	case LOST:
-		str = STATE_LOST_STR;
-		break;
-
 	case END:
-		str = STATE_END_STR;
-		break;
-
 	case CLOSE:
-		str = STATE_CLOSE_STR;
+		str = STATE_OFFLINE_STR;
 		break;
 
 	case VALID:
@@ -545,7 +533,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	}
 
 	/* Step-4: send the message to AMQP broker */
-	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
+	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(""),
 							 amqp_cstring_bytes(key), 0, 0, &prop,
 							 amqp_cstring_bytes(buff));
 	if (ret < 0) {
@@ -554,7 +542,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 				  amqp_error_string2(ret));
 	} else {
 		ret = TRUE;
-		log_debug("AMQP message successfully sent to exchange");
+		log_debug("AMQP message successfully sent to default exchange");
 	}
 
 	free(buff);
