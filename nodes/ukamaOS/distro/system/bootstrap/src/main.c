@@ -96,7 +96,8 @@ int main (int argc, char **argv) {
 	char *configFile=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	char *nodeID=NULL;
-	int opt, opdidx, ret=TRUE;
+	int opt, opdidx;
+    char buffer[MAX_BUFFER] = {0};
 
 	/* Prase command line args. */
 	while (TRUE) {
@@ -190,9 +191,9 @@ int main (int argc, char **argv) {
 	}
 
 	/* Step-5: update mesh.d configuration with the recevied server info. */
-	ret &= write_to_file(meshConfig->remoteIPFile, serverInfo->IP);
-	ret &= write_to_file(meshConfig->certFile,     serverInfo->cert);
-	if (ret == FALSE) {
+    sprintf(buffer, "%s;%s", serverInfo->IP, nodeID);
+	if (write_to_file(meshConfig->remoteIPFile, buffer) <= 0 ||
+        write_to_file(meshConfig->certFile, serverInfo->cert) <= 0) {
 		log_error("Error updating mesh.d configs. File: %s",
 				  config->meshConfig);
 		goto done;
