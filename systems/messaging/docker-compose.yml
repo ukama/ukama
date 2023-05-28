@@ -5,22 +5,24 @@ services:
       dockerfile: ./Dockerfile
       context: ./mesh
     restart: always
+    ports:
+      - "9275:9275"
     networks:
       - ukama-net
 
-  initclient:
+  initclient-messaging:
     build:
       dockerfile: ./Dockerfile
       context: ../services/initClient
     environment:
       - ENV_SYSTEM_ORG=ukama001
       - ENV_SYSTEM_NAME=messaging
-      - ENV_SYSTEM_ADDR=192.168.0.0
+      - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
       - ENV_SYSTEM_PORT=8889
       - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=localhost
+      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
       - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=localhost
+      - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
       - ENV_INIT_CLIENT_PORT=9091
       - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
     restart: always
