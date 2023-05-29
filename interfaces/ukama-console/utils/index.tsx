@@ -363,6 +363,32 @@ const getTowerNodeFromNodes = (nodes: NodeDto[]): string => {
   return '';
 };
 
+const getDataUsageSymbol = (dataUnit: string): string => {
+  switch (dataUnit) {
+    case 'GigaBytes':
+      return 'GB';
+    case 'MegaBytes':
+      return 'MB';
+    case 'KiloBytes':
+      return 'KB';
+    default:
+      return 'MB';
+  }
+};
+
+const getDataPlanUsage = (
+  duration: string,
+  currency: string,
+  amount: string,
+  dataVolume: string,
+  dataUnit: string,
+): string => {
+  const symbol = currency === 'Dollar' ? '$' : '$';
+  return `${symbol}${amount} / ${dataVolume} ${getDataUsageSymbol(
+    dataUnit,
+  )} / ${duration}`;
+};
+
 export {
   hexToRGB,
   formatBytes,
@@ -372,6 +398,7 @@ export {
   getColorByType,
   getStatusByType,
   formatBytesToMB,
+  getDataPlanUsage,
   getMetricPayload,
   secToHoursNMints,
   getTitleFromPath,
