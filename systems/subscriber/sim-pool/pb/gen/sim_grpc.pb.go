@@ -25,14 +25,16 @@ type SimServiceClient interface {
 	// / Get sim from pool
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByIccid(ctx context.Context, in *GetByIccidRequest, opts ...grpc.CallOption) (*GetByIccidResponse, error)
-	// /Get sim pool statistaics
+	// / Get sim pool statistaics
 	GetStats(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error)
-	// /Add sims to pool
+	// / Add sims to pool
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
-	// /Delete sims from pool
+	// / Delete sims from pool
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
-	// /Batch upload sims from CSV
+	// / Batch upload sims from CSV
 	Upload(ctx context.Context, in *UploadRequest, opts ...grpc.CallOption) (*UploadResponse, error)
+	// / Get sims from pool
+	GetSims(ctx context.Context, in *GetSimsRequest, opts ...grpc.CallOption) (*GetSimsResponse, error)
 }
 
 type simServiceClient struct {
@@ -97,6 +99,15 @@ func (c *simServiceClient) Upload(ctx context.Context, in *UploadRequest, opts .
 	return out, nil
 }
 
+func (c *simServiceClient) GetSims(ctx context.Context, in *GetSimsRequest, opts ...grpc.CallOption) (*GetSimsResponse, error) {
+	out := new(GetSimsResponse)
+	err := c.cc.Invoke(ctx, "/ukama.subscriber.sim.v1.SimService/GetSims", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SimServiceServer is the server API for SimService service.
 // All implementations must embed UnimplementedSimServiceServer
 // for forward compatibility
@@ -104,14 +115,16 @@ type SimServiceServer interface {
 	// / Get sim from pool
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByIccid(context.Context, *GetByIccidRequest) (*GetByIccidResponse, error)
-	// /Get sim pool statistaics
+	// / Get sim pool statistaics
 	GetStats(context.Context, *GetStatsRequest) (*GetStatsResponse, error)
-	// /Add sims to pool
+	// / Add sims to pool
 	Add(context.Context, *AddRequest) (*AddResponse, error)
-	// /Delete sims from pool
+	// / Delete sims from pool
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
-	// /Batch upload sims from CSV
+	// / Batch upload sims from CSV
 	Upload(context.Context, *UploadRequest) (*UploadResponse, error)
+	// / Get sims from pool
+	GetSims(context.Context, *GetSimsRequest) (*GetSimsResponse, error)
 	mustEmbedUnimplementedSimServiceServer()
 }
 
@@ -136,6 +149,9 @@ func (UnimplementedSimServiceServer) Delete(context.Context, *DeleteRequest) (*D
 }
 func (UnimplementedSimServiceServer) Upload(context.Context, *UploadRequest) (*UploadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Upload not implemented")
+}
+func (UnimplementedSimServiceServer) GetSims(context.Context, *GetSimsRequest) (*GetSimsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSims not implemented")
 }
 func (UnimplementedSimServiceServer) mustEmbedUnimplementedSimServiceServer() {}
 
@@ -258,6 +274,24 @@ func _SimService_Upload_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimService_GetSims_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSimsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimServiceServer).GetSims(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.subscriber.sim.v1.SimService/GetSims",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimServiceServer).GetSims(ctx, req.(*GetSimsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SimService_ServiceDesc is the grpc.ServiceDesc for SimService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -288,6 +322,10 @@ var SimService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Upload",
 			Handler:    _SimService_Upload_Handler,
+		},
+		{
+			MethodName: "GetSims",
+			Handler:    _SimService_GetSims_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

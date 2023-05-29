@@ -233,6 +233,16 @@ const theme = (isDarkmode: boolean) =>
             },
           },
         },
+        MuiChip: {
+          styleOverrides: {
+            root: {
+              px: 1,
+              fontSize: '0.875rem',
+              color: colors.primaryMain,
+              borderColor: colors.primaryMain,
+            },
+          },
+        },
       },
     }),
   );

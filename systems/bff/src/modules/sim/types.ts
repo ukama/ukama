@@ -110,6 +110,38 @@ export class SetActivePackageForSimInputDto {
 @ObjectType()
 export class SimAPIDto {
     @Field()
+    activation_code: string;
+
+    @Field()
+    created_at: string;
+
+    @Field()
+    iccid: string;
+
+    @Field()
+    id: string;
+
+    @Field()
+    is_allocated: string;
+
+    @Field()
+    is_physical: string;
+
+    @Field()
+    msisdn: string;
+
+    @Field()
+    qr_code: string;
+
+    @Field()
+    sim_type: string;
+
+    @Field()
+    sm_ap_address: string;
+}
+@ObjectType()
+export class SimDto {
+    @Field()
     activationCode: string;
 
     @Field()
@@ -137,7 +169,7 @@ export class SimAPIDto {
     simType: string;
 
     @Field()
-    smDpAddress: string;
+    smapAddress: string;
 }
 
 @ObjectType()
@@ -149,6 +181,17 @@ export class SimAPIResDto {
 export class GetSimAPIResDto {
     @Field(() => SimDetailsDto)
     sim: SimDetailsDto;
+}
+
+@ObjectType()
+export class SimsAPIResDto {
+    @Field(() => [SimAPIDto])
+    sims: SimAPIDto[];
+}
+@ObjectType()
+export class SimsResDto {
+    @Field(() => [SimDto])
+    sim: SimDto[];
 }
 @ObjectType()
 export class SimPackageDto {
@@ -173,7 +216,7 @@ export class SimDetailsDto {
     @Field()
     id: string;
 
-    @Field()
+    @Field({ nullable: true })
     subscriberId: string;
 
     @Field()
@@ -218,8 +261,6 @@ export class SimDetailsDto {
     @Field()
     allocatedAt: string;
 }
-@ObjectType()
-export class SimResDto extends SimAPIDto {}
 
 @ObjectType()
 export class SimDataUsage {

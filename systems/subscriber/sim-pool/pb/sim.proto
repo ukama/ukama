@@ -15,17 +15,23 @@ service SimService {
     /// Get sim from pool
     rpc Get (GetRequest) returns (GetResponse) {}
     rpc GetByIccid (GetByIccidRequest) returns (GetByIccidResponse) {}
-    ///Get sim pool statistaics
+    /// Get sim pool statistaics
     rpc GetStats (GetStatsRequest) returns (GetStatsResponse) {}
-    ///Add sims to pool
+    /// Add sims to pool
     rpc Add(AddRequest) returns (AddResponse){}
-    ///Delete sims from pool
+    /// Delete sims from pool
     rpc Delete(DeleteRequest) returns (DeleteResponse){}
-    ///Batch upload sims from CSV
+    /// Batch upload sims from CSV
     rpc Upload(UploadRequest) returns (UploadResponse){}
-    
+    /// Get sims from pool
+    rpc GetSims(GetSimsRequest) returns (GetSimsResponse){}
 }
-
+message GetSimsRequest{
+    string simType = 1 [json_name = "sim_type"]; /// SimType string enum
+}
+message GetSimsResponse {
+    repeated Sim sims = 1; /// Sims slice
+}
 message UpdateStatusRequest{
     string iccid=1; /// Sim iccid string
     bool isAllocated = 2 [json_name = "is_allocated"]; // Sim allocated True/False

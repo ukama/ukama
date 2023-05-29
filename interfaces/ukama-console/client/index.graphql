@@ -485,7 +485,31 @@ query getSubscriberMetricsByNetwork($networkId: String!) {
 }
 ### Subscriber End ###
 
-### Network End ###
+### SimPool Start ###
+fragment SimPool on SimDto {
+  activationCode
+  createdAt
+  iccid
+  id
+  isAllocated
+  isPhysical
+  msisdn
+  qrCode
+  simType
+  smapAddress
+}
+
+query getSims($type: String!) {
+  getSims(type: $type) {
+    sim {
+      ...SimPool
+    }
+  }
+}
+
+### SimPool End ###
+
+### Network Start ###
 fragment Network on NetworkDto {
   id
   name

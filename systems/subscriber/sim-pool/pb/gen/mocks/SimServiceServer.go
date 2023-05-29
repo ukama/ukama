@@ -118,6 +118,32 @@ func (_m *SimServiceServer) GetByIccid(_a0 context.Context, _a1 *gen.GetByIccidR
 	return r0, r1
 }
 
+// GetSims provides a mock function with given fields: _a0, _a1
+func (_m *SimServiceServer) GetSims(_a0 context.Context, _a1 *gen.GetSimsRequest) (*gen.GetSimsResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetSimsResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimsRequest) (*gen.GetSimsResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimsRequest) *gen.GetSimsResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetSimsResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimsRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetStats provides a mock function with given fields: _a0, _a1
 func (_m *SimServiceServer) GetStats(_a0 context.Context, _a1 *gen.GetStatsRequest) (*gen.GetStatsResponse, error) {
 	ret := _m.Called(_a0, _a1)
