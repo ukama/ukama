@@ -70,13 +70,6 @@ export class UpdateUserInputDto {
     phone: string;
 }
 
-@InputType()
-export class UpdateUserInputDto {
-    @Field({ nullable: true })
-    @IsPhoneNumber()
-    phone: string;
-}
-
 @ObjectType()
 export class ConnectedUserDto {
     @Field()
