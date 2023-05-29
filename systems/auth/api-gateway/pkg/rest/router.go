@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
