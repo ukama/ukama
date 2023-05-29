@@ -593,6 +593,14 @@ query getPackage($packageId: String!) {
   }
 }
 
+query getPackages {
+  getPackages {
+    packages {
+      ...Package
+    }
+  }
+}
+
 ### Package End ###
 
 ### SimPool Start ###

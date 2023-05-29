@@ -5,11 +5,17 @@ import {
   MANAGE_SIM_POOL_COLUMN,
   MANAGE_TABLE_COLUMN,
 } from '@/constants';
-import { OrgMembersResDto, useGetOrgMemberQuery } from '@/generated';
+import {
+  OrgMembersResDto,
+  useGetOrgMemberQuery,
+  useGetPackagesLazyQuery,
+  useGetSimsLazyQuery,
+} from '@/generated';
 import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
 import { SimpleDataTable } from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
+import { getDataPlanUsage } from '@/utils';
 import PeopleAlt from '@mui/icons-material/PeopleAlt';
 import {
   AlertColor,
@@ -154,6 +160,7 @@ const SimPoolContainer = ({ data }: ISimPoolContainer) => (
       py: 3,
       px: 4,
       width: '100%',
+      overflow: 'hidden',
       borderRadius: '10px',
       height: 'calc(100vh - 200px)',
     }}
@@ -211,43 +218,61 @@ const DataPlanContainer = ({ data }: ISimPoolContainer) => (
     />
     <br />
     <Grid container rowSpacing={2} columnSpacing={2}>
-      {data.map(({ name, usage, users }: any) => (
-        <Grid item xs={12} sm={6} md={4} key={name}>
-          <Paper
-            variant="outlined"
-            sx={{
-              px: 3,
-              py: 2,
-              display: 'flex',
-              boxShadow: 'none',
-              borderRadius: '4px',
-              textAlign: 'center',
-              justifyContent: 'center',
-              borderTop: `4px solid ${colors.primaryMain}`,
-            }}
-          >
-            <Stack spacing={1}>
-              <Typography variant="h5" sx={{ fontWeight: 400 }}>
-                {name}
-              </Typography>
-              <Typography variant="body2" fontWeight={400}>
-                {usage}
-              </Typography>
-              <Stack
-                spacing={0.6}
-                direction={'row'}
-                alignItems={'flex-end'}
-                justifyContent={'center'}
-              >
-                <PeopleAlt htmlColor={colors.black54} />
-                <Typography variant="body2" fontWeight={400}>
-                  {users}
+      {data.map(
+        ({
+          name,
+          duration,
+          users,
+          currency,
+          dataVolume,
+          dataUnit,
+          amount,
+        }: any) => (
+          <Grid item xs={12} sm={6} md={4} key={name}>
+            <Paper
+              variant="outlined"
+              sx={{
+                px: 3,
+                py: 2,
+                display: 'flex',
+                boxShadow: 'none',
+                borderRadius: '4px',
+                textAlign: 'center',
+                justifyContent: 'center',
+                borderTop: `4px solid ${colors.primaryMain}`,
+              }}
+            >
+              <Stack spacing={1}>
+                <Typography variant="h5" sx={{ fontWeight: 400 }}>
+                  {name}
                 </Typography>
+                <Typography variant="body2" fontWeight={400}>
+                  {getDataPlanUsage(
+                    duration,
+                    currency,
+                    amount,
+                    dataVolume,
+                    dataUnit,
+                  )}
+                </Typography>
+                {false && (
+                  <Stack
+                    spacing={0.6}
+                    direction={'row'}
+                    alignItems={'flex-end'}
+                    justifyContent={'center'}
+                  >
+                    <PeopleAlt htmlColor={colors.black54} />
+                    <Typography variant="body2" fontWeight={400}>
+                      {users}
+                    </Typography>
+                  </Stack>
+                )}
               </Stack>
-            </Stack>
-          </Paper>
-        </Grid>
-      ))}
+            </Paper>
+          </Grid>
+        ),
+      )}
     </Grid>
   </Paper>
 );
@@ -259,7 +284,7 @@ const Manage = () => {
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [data, setData] = useState<any>({
     members: [],
-    simPool: SIMPOOL_DATA,
+    simPool: [],
     node: NODE_POOL_DATA,
     dataPlan: DATA_PLAN_DATA,
   });
@@ -282,6 +307,45 @@ const Manage = () => {
       });
     },
   });
+
+  const [getSims, { error: simsError, loading: simsLoading }] =
+    useGetSimsLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setData((prev: any) => ({
+          ...prev,
+          simPool: data?.getSims.sim ?? [],
+        }));
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'sim-pool',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
+  const [getPackages, { error: packagesError, loading: packagesLoading }] =
+    useGetPackagesLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setData((prev: any) => ({
+          ...prev,
+          dataPlan: data?.getPackages.packages ?? [],
+        }));
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'packages',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
   useEffect(() => {
     if (memberSearch.length > 3) {
       const _members = members?.getOrgMembers.members.filter((member) => {
@@ -308,7 +372,16 @@ const Manage = () => {
     }
   }, [nodeSearch]);
 
-  const onMenuItemClick = (id: string) => setMenu(id);
+  const onMenuItemClick = (id: string) => {
+    if (id === 'manage-sim')
+      getSims({
+        variables: {
+          type: 'unknown',
+        },
+      });
+    else if (id === 'manage-data-plan') getPackages();
+    setMenu(id);
+  };
 
   const structureData = (data: OrgMembersResDto) =>
     data.members?.map((member) => ({
