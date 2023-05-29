@@ -5,15 +5,17 @@ export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
-  DateTime: any;
+  ID: { input: string | number; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
+  DateTime: { input: any; output: any; }
 };
 
 export enum Alert_Type {
@@ -31,78 +33,78 @@ export enum Api_Method_Type {
 }
 
 export type AddNetworkInputDto = {
-  network_name: Scalars['String'];
-  org: Scalars['String'];
+  network_name: Scalars['String']['input'];
+  org: Scalars['String']['input'];
 };
 
 export type AddNodeDto = {
-  name: Scalars['String'];
-  nodeId: Scalars['String'];
-  state: Scalars['String'];
+  name: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
+  state: Scalars['String']['input'];
 };
 
 export type AddNodeResponse = {
   __typename?: 'AddNodeResponse';
-  attached: Array<Scalars['String']>;
-  name: Scalars['String'];
-  nodeId: Scalars['String'];
-  state: Scalars['String'];
-  type: Scalars['String'];
+  attached: Array<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  state: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type AddOrgInputDto = {
-  certificate: Scalars['String'];
-  name: Scalars['String'];
-  owner_uuid: Scalars['String'];
+  certificate: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  owner_uuid: Scalars['String']['input'];
 };
 
 export type AddPackageInputDto = {
-  active: Scalars['Boolean'];
-  data_volume: Scalars['Int'];
-  duration: Scalars['Int'];
-  name: Scalars['String'];
-  org_id: Scalars['String'];
-  org_rates_id: Scalars['Int'];
-  sim_type: Scalars['String'];
-  sms_volume: Scalars['Int'];
-  voice_volume: Scalars['Int'];
+  active: Scalars['Boolean']['input'];
+  data_volume: Scalars['Int']['input'];
+  duration: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  org_id: Scalars['String']['input'];
+  org_rates_id: Scalars['Int']['input'];
+  sim_type: Scalars['String']['input'];
+  sms_volume: Scalars['Int']['input'];
+  voice_volume: Scalars['Int']['input'];
 };
 
 export type AddPackageSimResDto = {
   __typename?: 'AddPackageSimResDto';
-  packageId?: Maybe<Scalars['String']>;
+  packageId?: Maybe<Scalars['String']['output']>;
 };
 
 export type AddPackageToSimInputDto = {
-  packageId: Scalars['String'];
-  simId: Scalars['String'];
-  startDate: Scalars['String'];
+  packageId: Scalars['String']['input'];
+  simId: Scalars['String']['input'];
+  startDate: Scalars['String']['input'];
 };
 
 export type AddSiteInputDto = {
-  site: Scalars['String'];
+  site: Scalars['String']['input'];
 };
 
 export type AddUserServiceRes = {
   __typename?: 'AddUserServiceRes';
-  iccid: Scalars['String'];
+  iccid: Scalars['String']['output'];
   user: OrgUserDto;
 };
 
 export type AlertDto = {
   __typename?: 'AlertDto';
-  alertDate?: Maybe<Scalars['DateTime']>;
-  description?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  title?: Maybe<Scalars['String']>;
+  alertDate?: Maybe<Scalars['DateTime']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
   type: Alert_Type;
 };
 
 export type AlertResponse = {
   __typename?: 'AlertResponse';
   data: Array<AlertDto>;
-  length: Scalars['Float'];
-  status: Scalars['String'];
+  length: Scalars['Float']['output'];
+  status: Scalars['String']['output'];
 };
 
 export type AlertsResponse = {
@@ -112,84 +114,84 @@ export type AlertsResponse = {
 };
 
 export type AllocateSimInputDto = {
-  iccid: Scalars['String'];
-  networkId: Scalars['String'];
-  packageId: Scalars['String'];
-  simType: Scalars['String'];
-  subscriberId: Scalars['String'];
+  iccid: Scalars['String']['input'];
+  networkId: Scalars['String']['input'];
+  packageId: Scalars['String']['input'];
+  simType: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
 };
 
 export type ApiMethodDataDto = {
   __typename?: 'ApiMethodDataDto';
-  body?: Maybe<Scalars['String']>;
-  headers?: Maybe<Scalars['String']>;
-  params?: Maybe<Scalars['String']>;
-  path: Scalars['String'];
+  body?: Maybe<Scalars['String']['output']>;
+  headers?: Maybe<Scalars['String']['output']>;
+  params?: Maybe<Scalars['String']['output']>;
+  path: Scalars['String']['output'];
   type: Api_Method_Type;
 };
 
 export type AttachedNodes = {
   __typename?: 'AttachedNodes';
-  nodeId: Scalars['String'];
+  nodeId: Scalars['String']['output'];
 };
 
 export type AuthType = {
   __typename?: 'AuthType';
-  Authorization: Scalars['String'];
-  Cookie: Scalars['String'];
+  Authorization: Scalars['String']['output'];
+  Cookie: Scalars['String']['output'];
 };
 
 export type BillHistoryDto = {
   __typename?: 'BillHistoryDto';
-  date: Scalars['String'];
-  description: Scalars['String'];
-  id: Scalars['String'];
-  subtotal: Scalars['Float'];
-  totalUsage: Scalars['Float'];
+  date: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  subtotal: Scalars['Float']['output'];
+  totalUsage: Scalars['Float']['output'];
 };
 
 export type BillHistoryResponse = {
   __typename?: 'BillHistoryResponse';
   data: Array<BillHistoryDto>;
-  status: Scalars['String'];
+  status: Scalars['String']['output'];
 };
 
 export type BillResponse = {
   __typename?: 'BillResponse';
   bill: Array<CurrentBillDto>;
-  billMonth: Scalars['String'];
-  dueDate: Scalars['String'];
-  total: Scalars['Float'];
+  billMonth: Scalars['String']['output'];
+  dueDate: Scalars['String']['output'];
+  total: Scalars['Float']['output'];
 };
 
 export type BoolResponse = {
   __typename?: 'BoolResponse';
-  success: Scalars['Boolean'];
+  success: Scalars['Boolean']['output'];
 };
 
 export type ConnectedUserDto = {
   __typename?: 'ConnectedUserDto';
-  totalUser: Scalars['String'];
+  totalUser: Scalars['String']['output'];
 };
 
 export type CreateCustomerDto = {
-  email: Scalars['String'];
-  name: Scalars['String'];
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type CurrentBillDto = {
   __typename?: 'CurrentBillDto';
-  dataUsed: Scalars['Float'];
-  id: Scalars['String'];
-  name: Scalars['String'];
-  rate: Scalars['Float'];
-  subtotal: Scalars['Float'];
+  dataUsed: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  rate: Scalars['Float']['output'];
+  subtotal: Scalars['Float']['output'];
 };
 
 export type CurrentBillResponse = {
   __typename?: 'CurrentBillResponse';
   data: Array<CurrentBillDto>;
-  status: Scalars['String'];
+  status: Scalars['String']['output'];
 };
 
 export enum Data_Bill_Filter {
@@ -210,50 +212,50 @@ export enum Data_Bill_Filter {
 
 export type DataBillDto = {
   __typename?: 'DataBillDto';
-  billDue: Scalars['Float'];
-  dataBill: Scalars['Float'];
-  id: Scalars['String'];
+  billDue: Scalars['Float']['output'];
+  dataBill: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
 };
 
 export type DataBillResponse = {
   __typename?: 'DataBillResponse';
   data: DataBillDto;
-  status: Scalars['String'];
+  status: Scalars['String']['output'];
 };
 
 export type DataUsageDto = {
   __typename?: 'DataUsageDto';
-  dataConsumed: Scalars['Float'];
-  dataPackage: Scalars['String'];
-  id: Scalars['String'];
+  dataConsumed: Scalars['Float']['output'];
+  dataPackage: Scalars['String']['output'];
+  id: Scalars['String']['output'];
 };
 
 export type DataUsageInputDto = {
-  ids: Array<Scalars['String']>;
+  ids: Array<Scalars['String']['input']>;
 };
 
 export type DataUsageNetworkResponse = {
   __typename?: 'DataUsageNetworkResponse';
-  usage: Scalars['Float'];
+  usage: Scalars['Float']['output'];
 };
 
 export type DataUsageResponse = {
   __typename?: 'DataUsageResponse';
   data: DataUsageDto;
-  status: Scalars['String'];
+  status: Scalars['String']['output'];
 };
 
 export type DeactivateResponse = {
   __typename?: 'DeactivateResponse';
-  email: Scalars['String'];
-  isDeactivated: Scalars['Boolean'];
-  name: Scalars['String'];
-  uuid: Scalars['String'];
+  email: Scalars['String']['output'];
+  isDeactivated: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
 };
 
 export type DefaultMarkupApiResDto = {
   __typename?: 'DefaultMarkupAPIResDto';
-  markup: Scalars['Float'];
+  markup: Scalars['Float']['output'];
 };
 
 export type DefaultMarkupHistoryApiResDto = {
@@ -263,9 +265,9 @@ export type DefaultMarkupHistoryApiResDto = {
 
 export type DefaultMarkupHistoryDto = {
   __typename?: 'DefaultMarkupHistoryDto';
-  Markup: Scalars['Float'];
-  createdAt: Scalars['String'];
-  deletedAt: Scalars['String'];
+  Markup: Scalars['Float']['output'];
+  createdAt: Scalars['String']['output'];
+  deletedAt: Scalars['String']['output'];
 };
 
 export type DefaultMarkupHistoryResDto = {
@@ -274,50 +276,50 @@ export type DefaultMarkupHistoryResDto = {
 };
 
 export type DefaultMarkupInputDto = {
-  markup: Scalars['Float'];
+  markup: Scalars['Float']['input'];
 };
 
 export type DefaultMarkupResDto = {
   __typename?: 'DefaultMarkupResDto';
-  markup: Scalars['Float'];
+  markup: Scalars['Float']['output'];
 };
 
 export type DeleteNodeRes = {
   __typename?: 'DeleteNodeRes';
-  nodeId: Scalars['String'];
+  nodeId: Scalars['String']['output'];
 };
 
 export type DeleteSimInputDto = {
-  simId: Scalars['String'];
+  simId: Scalars['String']['input'];
 };
 
 export type DeleteSimResDto = {
   __typename?: 'DeleteSimResDto';
-  simId?: Maybe<Scalars['String']>;
+  simId?: Maybe<Scalars['String']['output']>;
 };
 
 export type ESimQrCodeRes = {
   __typename?: 'ESimQRCodeRes';
-  qrCode: Scalars['String'];
+  qrCode: Scalars['String']['output'];
 };
 
 export type ErrorType = {
   __typename?: 'ErrorType';
-  code: Scalars['Float'];
-  description?: Maybe<Scalars['String']>;
-  message: Scalars['String'];
+  code: Scalars['Float']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
 };
 
 export type EsimDto = {
   __typename?: 'EsimDto';
-  active: Scalars['Boolean'];
-  esim: Scalars['String'];
+  active: Scalars['Boolean']['output'];
+  esim: Scalars['String']['output'];
 };
 
 export type EsimResponse = {
   __typename?: 'EsimResponse';
   data: Array<EsimDto>;
-  status: Scalars['String'];
+  status: Scalars['String']['output'];
 };
 
 export enum Get_User_Status_Type {
@@ -337,35 +339,35 @@ export enum Graphs_Tab {
 
 export type GetAccountDetailsDto = {
   __typename?: 'GetAccountDetailsDto';
-  email: Scalars['String'];
-  isFirstVisit: Scalars['Boolean'];
+  email: Scalars['String']['output'];
+  isFirstVisit: Scalars['Boolean']['output'];
 };
 
 export type GetESimQrCodeInput = {
-  simId: Scalars['String'];
-  userId: Scalars['String'];
+  simId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
 };
 
 export type GetMetricsRes = {
   __typename?: 'GetMetricsRes';
   metrics: Array<MetricRes>;
-  next: Scalars['Boolean'];
-  to: Scalars['Float'];
+  next: Scalars['Boolean']['output'];
+  to: Scalars['Float']['output'];
 };
 
 export type GetNodeStatusInput = {
-  nodeId: Scalars['String'];
+  nodeId: Scalars['String']['input'];
   nodeType: Node_Type;
 };
 
 export type GetNodeStatusRes = {
   __typename?: 'GetNodeStatusRes';
   status: Org_Node_State;
-  uptime: Scalars['Float'];
+  uptime: Scalars['Float']['output'];
 };
 
 export type GetPackagesForSimInputDto = {
-  simId: Scalars['String'];
+  simId: Scalars['String']['input'];
 };
 
 export type GetPackagesForSimResDto = {
@@ -379,102 +381,104 @@ export type GetSimApiResDto = {
 };
 
 export type GetSimByNetworkInputDto = {
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 };
 
 export type GetSimBySubscriberIdInputDto = {
-  subscriberId: Scalars['String'];
+  subscriberId: Scalars['String']['input'];
 };
 
 export type GetSimInputDto = {
-  simId: Scalars['String'];
+  simId: Scalars['String']['input'];
 };
 
 export type GetUserDto = {
   __typename?: 'GetUserDto';
-  email: Scalars['String'];
-  id: Scalars['String'];
-  name: Scalars['String'];
-  phone: Scalars['String'];
+  email: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
 };
 
 export type GetUserResponseDto = {
   __typename?: 'GetUserResponseDto';
   data: Array<GetUserDto>;
-  length: Scalars['Float'];
-  status: Scalars['String'];
+  length: Scalars['Float']['output'];
+  status: Scalars['String']['output'];
 };
 
 export type GetUsersDto = {
   __typename?: 'GetUsersDto';
-  dataPlan?: Maybe<Scalars['String']>;
-  dataUsage?: Maybe<Scalars['String']>;
-  email: Scalars['String'];
-  id: Scalars['String'];
-  name: Scalars['String'];
+  dataPlan?: Maybe<Scalars['String']['output']>;
+  dataUsage?: Maybe<Scalars['String']['output']>;
+  email: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type IdResponse = {
   __typename?: 'IdResponse';
-  uuid: Scalars['String'];
+  uuid: Scalars['String']['output'];
 };
 
 export type LinkNodes = {
   __typename?: 'LinkNodes';
-  attachedNodeIds: Array<Scalars['String']>;
-  nodeId: Scalars['String'];
+  attachedNodeIds: Array<Scalars['String']['output']>;
+  nodeId: Scalars['String']['output'];
 };
 
 export type MemberApiObj = {
   __typename?: 'MemberAPIObj';
-  is_deactivated: Scalars['Boolean'];
-  member_since: Scalars['String'];
-  org_id: Scalars['String'];
-  user_id: Scalars['String'];
-  uuid: Scalars['String'];
+  is_deactivated: Scalars['Boolean']['output'];
+  member_since: Scalars['String']['output'];
+  org_id: Scalars['String']['output'];
+  role: Scalars['String']['output'];
+  user_id: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
 };
 
 export type MemberObj = {
   __typename?: 'MemberObj';
-  isDeactivated: Scalars['Boolean'];
-  memberSince?: Maybe<Scalars['String']>;
-  orgId: Scalars['String'];
+  isDeactivated: Scalars['Boolean']['output'];
+  memberSince?: Maybe<Scalars['String']['output']>;
+  orgId: Scalars['String']['output'];
+  role: Scalars['String']['output'];
   user: UserResDto;
-  userId: Scalars['String'];
-  uuid: Scalars['String'];
+  userId: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
 };
 
 export type Meta = {
   __typename?: 'Meta';
-  count: Scalars['Float'];
-  page: Scalars['Float'];
-  pages: Scalars['Float'];
-  size: Scalars['Float'];
+  count: Scalars['Float']['output'];
+  page: Scalars['Float']['output'];
+  pages: Scalars['Float']['output'];
+  size: Scalars['Float']['output'];
 };
 
 export type MetricDto = {
   __typename?: 'MetricDto';
-  x: Scalars['Float'];
-  y: Scalars['Float'];
+  x: Scalars['Float']['output'];
+  y: Scalars['Float']['output'];
 };
 
 export type MetricInfo = {
   __typename?: 'MetricInfo';
-  org: Scalars['String'];
+  org: Scalars['String']['output'];
 };
 
 export type MetricLatestValueRes = {
   __typename?: 'MetricLatestValueRes';
-  time: Scalars['String'];
-  value: Scalars['String'];
+  time: Scalars['String']['output'];
+  value: Scalars['String']['output'];
 };
 
 export type MetricRes = {
   __typename?: 'MetricRes';
   data: Array<MetricDto>;
-  name: Scalars['String'];
-  next: Scalars['Boolean'];
-  type: Scalars['String'];
+  name: Scalars['String']['output'];
+  next: Scalars['Boolean']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type MetricServiceValueRes = {
@@ -485,27 +489,27 @@ export type MetricServiceValueRes = {
 
 export type MetricValues = {
   __typename?: 'MetricValues';
-  x: Scalars['Float'];
-  y: Scalars['String'];
+  x: Scalars['Float']['output'];
+  y: Scalars['String']['output'];
 };
 
 export type MetricsByTabInputDto = {
-  from: Scalars['Float'];
-  nodeId: Scalars['String'];
+  from: Scalars['Float']['input'];
+  nodeId: Scalars['String']['input'];
   nodeType: Node_Type;
-  regPolling: Scalars['Boolean'];
-  step: Scalars['Float'];
+  regPolling: Scalars['Boolean']['input'];
+  step: Scalars['Float']['input'];
   tab: Graphs_Tab;
-  to: Scalars['Float'];
+  to: Scalars['Float']['input'];
 };
 
 export type MetricsInputDto = {
-  from: Scalars['Float'];
-  nodeId: Scalars['String'];
-  orgId: Scalars['String'];
-  regPolling: Scalars['Boolean'];
-  step: Scalars['Float'];
-  to: Scalars['Float'];
+  from: Scalars['Float']['input'];
+  nodeId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  regPolling: Scalars['Boolean']['input'];
+  step: Scalars['Float']['input'];
+  to: Scalars['Float']['input'];
 };
 
 export type Mutation = {
@@ -517,8 +521,8 @@ export type Mutation = {
   addPackage: PackageDto;
   addSubscriber: SubscriberDto;
   addUser: UserResDto;
-  allocateSim: SimResDto;
-  attachPaymentWithCustomer: Scalars['Boolean'];
+  allocateSim: SimDto;
+  attachPaymentWithCustomer: Scalars['Boolean']['output'];
   createCustomer: StripeCustomer;
   deactivateUser: UserResDto;
   defaultMarkup: BoolResponse;
@@ -541,7 +545,7 @@ export type Mutation = {
 
 
 export type MutationAddMemberArgs = {
-  userId: Scalars['String'];
+  userId: Scalars['String']['input'];
 };
 
 
@@ -581,7 +585,7 @@ export type MutationAllocateSimArgs = {
 
 
 export type MutationAttachPaymentWithCustomerArgs = {
-  paymentId: Scalars['String'];
+  paymentId: Scalars['String']['input'];
 };
 
 
@@ -591,7 +595,7 @@ export type MutationCreateCustomerArgs = {
 
 
 export type MutationDeactivateUserArgs = {
-  uuid: Scalars['String'];
+  uuid: Scalars['String']['input'];
 };
 
 
@@ -601,22 +605,22 @@ export type MutationDefaultMarkupArgs = {
 
 
 export type MutationDeleteNodeArgs = {
-  id: Scalars['String'];
+  id: Scalars['String']['input'];
 };
 
 
 export type MutationDeletePackageArgs = {
-  packageId: Scalars['String'];
+  packageId: Scalars['String']['input'];
 };
 
 
 export type MutationDeleteSubscriberArgs = {
-  subscriberId: Scalars['String'];
+  subscriberId: Scalars['String']['input'];
 };
 
 
 export type MutationDeleteUserArgs = {
-  userId: Scalars['String'];
+  userId: Scalars['String']['input'];
 };
 
 
@@ -637,7 +641,7 @@ export type MutationUpdateFirstVisitArgs = {
 
 export type MutationUpdateMemberArgs = {
   data: UpdateMemberInputDto;
-  memberId: Scalars['String'];
+  memberId: Scalars['String']['input'];
 };
 
 
@@ -648,19 +652,19 @@ export type MutationUpdateNodeArgs = {
 
 export type MutationUpdatePackageArgs = {
   data: UpdatePackageInputDto;
-  packageId: Scalars['String'];
+  packageId: Scalars['String']['input'];
 };
 
 
 export type MutationUpdateSubscriberArgs = {
   data: UpdateSubscriberInputDto;
-  subscriberId: Scalars['String'];
+  subscriberId: Scalars['String']['input'];
 };
 
 
 export type MutationUpdateUserArgs = {
   data: UpdateUserInputDto;
-  userId: Scalars['String'];
+  userId: Scalars['String']['input'];
 };
 
 
@@ -687,11 +691,11 @@ export enum Node_Type {
 
 export type NetworkApiDto = {
   __typename?: 'NetworkAPIDto';
-  created_at: Scalars['String'];
-  id: Scalars['String'];
-  is_deactivated: Scalars['String'];
-  name: Scalars['String'];
-  org_id: Scalars['String'];
+  created_at: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  is_deactivated: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  org_id: Scalars['String']['output'];
 };
 
 export type NetworkApiResDto = {
@@ -701,89 +705,89 @@ export type NetworkApiResDto = {
 
 export type NetworkDto = {
   __typename?: 'NetworkDto';
-  createdAt: Scalars['String'];
-  id: Scalars['String'];
-  isDeactivated: Scalars['String'];
-  name: Scalars['String'];
-  orgId: Scalars['String'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isDeactivated: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
 };
 
 export type NetworkStatusDto = {
   __typename?: 'NetworkStatusDto';
-  liveNode: Scalars['Float'];
+  liveNode: Scalars['Float']['output'];
   status: Network_Status;
-  totalNodes: Scalars['Float'];
+  totalNodes: Scalars['Float']['output'];
 };
 
 export type NetworkStatusResponse = {
   __typename?: 'NetworkStatusResponse';
   data: NetworkStatusDto;
-  status: Scalars['String'];
+  status: Scalars['String']['output'];
 };
 
 export type NetworksApiResDto = {
   __typename?: 'NetworksAPIResDto';
   networks: Array<NetworkApiDto>;
-  org_id: Scalars['String'];
+  org_id: Scalars['String']['output'];
 };
 
 export type NetworksResDto = {
   __typename?: 'NetworksResDto';
   networks: Array<NetworkDto>;
-  orgId: Scalars['String'];
+  orgId: Scalars['String']['output'];
 };
 
 export type NodeAppResponse = {
   __typename?: 'NodeAppResponse';
-  cpu: Scalars['String'];
-  id: Scalars['String'];
-  memory: Scalars['String'];
-  title: Scalars['String'];
-  version: Scalars['String'];
+  cpu: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  memory: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  version: Scalars['String']['output'];
 };
 
 export type NodeAppsVersionLogsResponse = {
   __typename?: 'NodeAppsVersionLogsResponse';
-  date: Scalars['Float'];
-  notes: Scalars['String'];
-  version: Scalars['String'];
+  date: Scalars['Float']['output'];
+  notes: Scalars['String']['output'];
+  version: Scalars['String']['output'];
 };
 
 export type NodeDto = {
   __typename?: 'NodeDto';
-  description: Scalars['String'];
-  id: Scalars['String'];
-  isUpdateAvailable: Scalars['Boolean'];
-  name: Scalars['String'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isUpdateAvailable: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
   status: Org_Node_State;
-  totalUser: Scalars['Float'];
-  type: Scalars['String'];
-  updateDescription: Scalars['String'];
-  updateShortNote: Scalars['String'];
-  updateVersion: Scalars['String'];
+  totalUser: Scalars['Float']['output'];
+  type: Scalars['String']['output'];
+  updateDescription: Scalars['String']['output'];
+  updateShortNote: Scalars['String']['output'];
+  updateVersion: Scalars['String']['output'];
 };
 
 export type NodeObj = {
   attached?: InputMaybe<Array<NodeObj>>;
-  name: Scalars['String'];
-  nodeId: Scalars['String'];
-  state: Scalars['String'];
+  name: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
+  state: Scalars['String']['input'];
 };
 
 export type NodeResponse = {
   __typename?: 'NodeResponse';
   attached: Array<OrgNodeDto>;
-  name: Scalars['String'];
-  nodeId: Scalars['String'];
+  name: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
   state: Org_Node_State;
   type: Node_Type;
 };
 
 export type NodeStatsResponse = {
   __typename?: 'NodeStatsResponse';
-  claimCount: Scalars['Float'];
-  totalCount: Scalars['Float'];
-  upCount: Scalars['Float'];
+  claimCount: Scalars['Float']['output'];
+  totalCount: Scalars['Float']['output'];
+  upCount: Scalars['Float']['output'];
 };
 
 export enum Org_Node_State {
@@ -795,12 +799,12 @@ export enum Org_Node_State {
 
 export type OrgApiDto = {
   __typename?: 'OrgAPIDto';
-  certificate: Scalars['Boolean'];
-  created_at: Scalars['String'];
-  id: Scalars['String'];
-  is_deactivated: Scalars['Boolean'];
-  name: Scalars['String'];
-  owner: Scalars['String'];
+  certificate: Scalars['Boolean']['output'];
+  created_at: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  is_deactivated: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  owner: Scalars['String']['output'];
 };
 
 export type OrgApiResDto = {
@@ -810,12 +814,12 @@ export type OrgApiResDto = {
 
 export type OrgDto = {
   __typename?: 'OrgDto';
-  certificate: Scalars['Boolean'];
-  createdAt: Scalars['String'];
-  id: Scalars['String'];
-  isDeactivated: Scalars['Boolean'];
-  name: Scalars['String'];
-  owner: Scalars['String'];
+  certificate: Scalars['Boolean']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isDeactivated: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  owner: Scalars['String']['output'];
 };
 
 export type OrgMemberApiResDto = {
@@ -826,25 +830,25 @@ export type OrgMemberApiResDto = {
 export type OrgMembersApiResDto = {
   __typename?: 'OrgMembersAPIResDto';
   members: Array<MemberApiObj>;
-  org: Scalars['String'];
+  org: Scalars['String']['output'];
 };
 
 export type OrgMembersResDto = {
   __typename?: 'OrgMembersResDto';
   members: Array<MemberObj>;
-  org: Scalars['String'];
+  org: Scalars['String']['output'];
 };
 
 export type OrgMetricValueDto = {
   __typename?: 'OrgMetricValueDto';
-  x: Scalars['Float'];
-  y: Scalars['String'];
+  x: Scalars['Float']['output'];
+  y: Scalars['String']['output'];
 };
 
 export type OrgNodeDto = {
   __typename?: 'OrgNodeDto';
-  name: Scalars['String'];
-  nodeId: Scalars['String'];
+  name: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
   state: Org_Node_State;
   type: Node_Type;
 };
@@ -852,15 +856,15 @@ export type OrgNodeDto = {
 export type OrgNodeResponse = {
   __typename?: 'OrgNodeResponse';
   nodes: Array<OrgNodeDto>;
-  orgName: Scalars['String'];
+  orgName: Scalars['String']['output'];
 };
 
 export type OrgNodeResponseDto = {
   __typename?: 'OrgNodeResponseDto';
-  activeNodes: Scalars['Float'];
+  activeNodes: Scalars['Float']['output'];
   nodes: Array<NodeDto>;
-  orgId: Scalars['String'];
-  totalNodes: Scalars['Float'];
+  orgId: Scalars['String']['output'];
+  totalNodes: Scalars['Float']['output'];
 };
 
 export type OrgResDto = {
@@ -870,10 +874,10 @@ export type OrgResDto = {
 
 export type OrgUserDto = {
   __typename?: 'OrgUserDto';
-  email: Scalars['String'];
-  isDeactivated: Scalars['Boolean'];
-  name: Scalars['String'];
-  uuid: Scalars['String'];
+  email: Scalars['String']['output'];
+  isDeactivated: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
 };
 
 export type OrgUserResponse = {
@@ -885,60 +889,60 @@ export type OrgUserResponse = {
 export type OrgUserSimDto = {
   __typename?: 'OrgUserSimDto';
   carrier: UserServicesDto;
-  iccid: Scalars['String'];
-  isPhysical: Scalars['Boolean'];
+  iccid: Scalars['String']['output'];
+  isPhysical: Scalars['Boolean']['output'];
   ukama: UserServicesDto;
 };
 
 export type OrgUsersResponse = {
   __typename?: 'OrgUsersResponse';
-  org: Scalars['String'];
+  org: Scalars['String']['output'];
   users: Array<OrgUserDto>;
 };
 
 export type OrgsApiResDto = {
   __typename?: 'OrgsAPIResDto';
   orgs: Array<OrgApiDto>;
-  owner: Scalars['String'];
+  owner: Scalars['String']['output'];
 };
 
 export type OrgsResDto = {
   __typename?: 'OrgsResDto';
   orgs: Array<OrgDto>;
-  owner: Scalars['String'];
+  owner: Scalars['String']['output'];
 };
 
 export type PackageApiDto = {
   __typename?: 'PackageAPIDto';
-  active: Scalars['Boolean'];
-  amount: Scalars['Float'];
-  apn: Scalars['String'];
-  country: Scalars['String'];
-  created_at: Scalars['String'];
-  currency: Scalars['String'];
-  data_unit: Scalars['String'];
-  data_volume: Scalars['String'];
-  deleted_at: Scalars['String'];
-  dlbr: Scalars['String'];
-  duration: Scalars['String'];
-  flatrate: Scalars['Boolean'];
-  from: Scalars['String'];
+  active: Scalars['Boolean']['output'];
+  amount: Scalars['Float']['output'];
+  apn: Scalars['String']['output'];
+  country: Scalars['String']['output'];
+  created_at: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  data_unit: Scalars['String']['output'];
+  data_volume: Scalars['String']['output'];
+  deleted_at: Scalars['String']['output'];
+  dlbr: Scalars['String']['output'];
+  duration: Scalars['String']['output'];
+  flatrate: Scalars['Boolean']['output'];
+  from: Scalars['String']['output'];
   markup: PackageMarkupApiDto;
-  message_unit: Scalars['String'];
-  name: Scalars['String'];
-  org_id: Scalars['String'];
-  owner_id: Scalars['String'];
-  provider: Scalars['String'];
+  message_unit: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  org_id: Scalars['String']['output'];
+  owner_id: Scalars['String']['output'];
+  provider: Scalars['String']['output'];
   rate: PackageRateApiDto;
-  sim_type: Scalars['String'];
-  sms_volume: Scalars['String'];
-  to: Scalars['String'];
-  type: Scalars['String'];
-  ulbr: Scalars['String'];
-  updated_at: Scalars['String'];
-  uuid: Scalars['String'];
-  voice_unit: Scalars['String'];
-  voice_volume: Scalars['String'];
+  sim_type: Scalars['String']['output'];
+  sms_volume: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  ulbr: Scalars['String']['output'];
+  updated_at: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
+  voice_unit: Scalars['String']['output'];
+  voice_volume: Scalars['String']['output'];
 };
 
 export type PackageApiResDto = {
@@ -948,63 +952,63 @@ export type PackageApiResDto = {
 
 export type PackageDto = {
   __typename?: 'PackageDto';
-  active: Scalars['Boolean'];
-  amount: Scalars['Float'];
-  apn: Scalars['String'];
-  country: Scalars['String'];
-  createdAt: Scalars['String'];
-  currency: Scalars['String'];
-  dataUnit: Scalars['String'];
-  dataVolume: Scalars['String'];
-  deletedAt: Scalars['String'];
-  dlbr: Scalars['String'];
-  duration: Scalars['String'];
-  flatrate: Scalars['Boolean'];
-  from: Scalars['String'];
+  active: Scalars['Boolean']['output'];
+  amount: Scalars['Float']['output'];
+  apn: Scalars['String']['output'];
+  country: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  dataUnit: Scalars['String']['output'];
+  dataVolume: Scalars['String']['output'];
+  deletedAt: Scalars['String']['output'];
+  dlbr: Scalars['String']['output'];
+  duration: Scalars['String']['output'];
+  flatrate: Scalars['Boolean']['output'];
+  from: Scalars['String']['output'];
   markup: PackageMarkupApiDto;
-  messageUnit: Scalars['String'];
-  name: Scalars['String'];
-  orgId: Scalars['String'];
-  ownerId: Scalars['String'];
-  provider: Scalars['String'];
+  messageUnit: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  ownerId: Scalars['String']['output'];
+  provider: Scalars['String']['output'];
   rate: PackageRateApiDto;
-  simType: Scalars['String'];
-  smsVolume: Scalars['String'];
-  to: Scalars['String'];
-  type: Scalars['String'];
-  ulbr: Scalars['String'];
-  updatedAt: Scalars['String'];
-  uuid: Scalars['String'];
-  voiceUnit: Scalars['String'];
-  voiceVolume: Scalars['String'];
+  simType: Scalars['String']['output'];
+  smsVolume: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  ulbr: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
+  voiceUnit: Scalars['String']['output'];
+  voiceVolume: Scalars['String']['output'];
 };
 
 export type PackageMarkupApiDto = {
   __typename?: 'PackageMarkupAPIDto';
-  baserate: Scalars['String'];
-  markup: Scalars['Float'];
+  baserate: Scalars['String']['output'];
+  markup: Scalars['Float']['output'];
 };
 
 export type PackageMarkupDto = {
   __typename?: 'PackageMarkupDto';
-  baserate: Scalars['String'];
-  markup: Scalars['Float'];
+  baserate: Scalars['String']['output'];
+  markup: Scalars['Float']['output'];
 };
 
 export type PackageRateApiDto = {
   __typename?: 'PackageRateAPIDto';
-  amount: Scalars['Float'];
-  data: Scalars['Float'];
-  sms_mo: Scalars['String'];
-  sms_mt: Scalars['Float'];
+  amount: Scalars['Float']['output'];
+  data: Scalars['Float']['output'];
+  sms_mo: Scalars['String']['output'];
+  sms_mt: Scalars['Float']['output'];
 };
 
 export type PackageRateDto = {
   __typename?: 'PackageRateDto';
-  amount: Scalars['Float'];
-  data: Scalars['Float'];
-  smsMo: Scalars['String'];
-  smsMt: Scalars['Float'];
+  amount: Scalars['Float']['output'];
+  data: Scalars['Float']['output'];
+  smsMo: Scalars['String']['output'];
+  smsMt: Scalars['Float']['output'];
 };
 
 export type PackagesApiResDto = {
@@ -1018,8 +1022,8 @@ export type PackagesResDto = {
 };
 
 export type PaginationDto = {
-  pageNo: Scalars['Float'];
-  pageSize: Scalars['Float'];
+  pageNo: Scalars['Float']['input'];
+  pageSize: Scalars['Float']['input'];
 };
 
 export type PaginationResponse = {
@@ -1058,8 +1062,9 @@ export type Query = {
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
   getPackages: PackagesResDto;
-  getSim: SimDetailsDto;
+  getSim: SimDto;
   getSimPoolStats: SimPoolStatsDto;
+  getSims: SimsResDto;
   getSite: SiteDto;
   getSites: SitesResDto;
   getStripeCustomer: StripeCustomer;
@@ -1075,7 +1080,7 @@ export type Query = {
 
 export type QueryAddSiteArgs = {
   data: AddSiteInputDto;
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 };
 
 
@@ -1095,7 +1100,7 @@ export type QueryGetDataBillArgs = {
 
 
 export type QueryGetDataUsageArgs = {
-  simId: Scalars['String'];
+  simId: Scalars['String']['input'];
 };
 
 
@@ -1110,23 +1115,23 @@ export type QueryGetMetricsByTabArgs = {
 
 
 export type QueryGetNetworkArgs = {
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 };
 
 
 export type QueryGetNetworkDataUsageArgs = {
   filter: Time_Filter;
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 };
 
 
 export type QueryGetNetworkNodesStatArgs = {
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 };
 
 
 export type QueryGetNodeArgs = {
-  nodeId: Scalars['String'];
+  nodeId: Scalars['String']['input'];
 };
 
 
@@ -1136,12 +1141,12 @@ export type QueryGetNodeStatusArgs = {
 
 
 export type QueryGetOrgArgs = {
-  orgName: Scalars['String'];
+  orgName: Scalars['String']['input'];
 };
 
 
 export type QueryGetPackageArgs = {
-  packageId: Scalars['String'];
+  packageId: Scalars['String']['input'];
 };
 
 
@@ -1151,38 +1156,43 @@ export type QueryGetSimArgs = {
 
 
 export type QueryGetSimPoolStatsArgs = {
-  type: Scalars['String'];
+  type: Scalars['String']['input'];
+};
+
+
+export type QueryGetSimsArgs = {
+  type: Scalars['String']['input'];
 };
 
 
 export type QueryGetSiteArgs = {
-  networkId: Scalars['String'];
-  siteId: Scalars['String'];
+  networkId: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
 };
 
 
 export type QueryGetSitesArgs = {
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 };
 
 
 export type QueryGetSubscriberArgs = {
-  subscriberId: Scalars['String'];
+  subscriberId: Scalars['String']['input'];
 };
 
 
 export type QueryGetSubscriberMetricsByNetworkArgs = {
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 };
 
 
 export type QueryGetSubscribersByNetworkArgs = {
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 };
 
 
 export type QueryGetUserArgs = {
-  userId: Scalars['String'];
+  userId: Scalars['String']['input'];
 };
 
 
@@ -1191,37 +1201,37 @@ export type QueryGetUsersDataUsageArgs = {
 };
 
 export type RemovePackageFormSimInputDto = {
-  packageId: Scalars['String'];
-  simId: Scalars['String'];
+  packageId: Scalars['String']['input'];
+  simId: Scalars['String']['input'];
 };
 
 export type RemovePackageFromSimResDto = {
   __typename?: 'RemovePackageFromSimResDto';
-  packageId?: Maybe<Scalars['String']>;
+  packageId?: Maybe<Scalars['String']['output']>;
 };
 
 export type SetActivePackageForSimInputDto = {
-  packageId: Scalars['String'];
-  simId: Scalars['String'];
+  packageId: Scalars['String']['input'];
+  simId: Scalars['String']['input'];
 };
 
 export type SetActivePackageForSimResDto = {
   __typename?: 'SetActivePackageForSimResDto';
-  packageId?: Maybe<Scalars['String']>;
+  packageId?: Maybe<Scalars['String']['output']>;
 };
 
 export type SimApiDto = {
   __typename?: 'SimAPIDto';
-  activationCode: Scalars['String'];
-  createdAt: Scalars['String'];
-  iccid: Scalars['String'];
-  id: Scalars['String'];
-  isAllocated: Scalars['String'];
-  isPhysical: Scalars['String'];
-  msisdn: Scalars['String'];
-  qrCode: Scalars['String'];
-  simType: Scalars['String'];
-  smDpAddress: Scalars['String'];
+  activation_code: Scalars['String']['output'];
+  created_at: Scalars['String']['output'];
+  iccid: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  is_allocated: Scalars['String']['output'];
+  is_physical: Scalars['String']['output'];
+  msisdn: Scalars['String']['output'];
+  qr_code: Scalars['String']['output'];
+  sim_type: Scalars['String']['output'];
+  sm_ap_address: Scalars['String']['output'];
 };
 
 export type SimApiResDto = {
@@ -1231,94 +1241,84 @@ export type SimApiResDto = {
 
 export type SimDataUsage = {
   __typename?: 'SimDataUsage';
-  usage: Scalars['String'];
+  usage: Scalars['String']['output'];
 };
 
 export type SimDetailsDto = {
   __typename?: 'SimDetailsDto';
   Package: SimPackageDto;
-  activationsCount: Scalars['Float'];
-  allocatedAt: Scalars['String'];
-  deactivationsCount: Scalars['Float'];
-  firstActivatedOn: Scalars['String'];
-  iccid: Scalars['String'];
-  id: Scalars['String'];
-  imsi: Scalars['String'];
-  isPhysical: Scalars['Boolean'];
-  lastActivatedOn: Scalars['String'];
-  msisdn: Scalars['String'];
-  networkId: Scalars['String'];
-  orgId: Scalars['String'];
-  status: Scalars['String'];
-  subscriberId: Scalars['String'];
-  type: Scalars['String'];
+  activationsCount: Scalars['Float']['output'];
+  allocatedAt: Scalars['String']['output'];
+  deactivationsCount: Scalars['Float']['output'];
+  firstActivatedOn: Scalars['String']['output'];
+  iccid: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  imsi: Scalars['String']['output'];
+  isPhysical: Scalars['Boolean']['output'];
+  lastActivatedOn: Scalars['String']['output'];
+  msisdn: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  subscriberId?: Maybe<Scalars['String']['output']>;
+  type: Scalars['String']['output'];
 };
 
 export type SimDto = {
   __typename?: 'SimDto';
-  activationsCount: Scalars['String'];
-  allocatedAt: Scalars['String'];
-  deactivationsCount: Scalars['String'];
-  firstActivatedOn?: Maybe<Scalars['String']>;
-  iccid: Scalars['String'];
-  id: Scalars['String'];
-  imsi: Scalars['String'];
-  isPhysical?: Maybe<Scalars['Boolean']>;
-  lastActivatedOn?: Maybe<Scalars['String']>;
-  msisdn: Scalars['String'];
-  networkId: Scalars['String'];
-  orgId: Scalars['String'];
-  package?: Maybe<Scalars['String']>;
-  status: Scalars['String'];
-  subscriberId: Scalars['String'];
-  type: Scalars['String'];
+  activationCode: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  iccid: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isAllocated: Scalars['String']['output'];
+  isPhysical: Scalars['String']['output'];
+  msisdn: Scalars['String']['output'];
+  qrCode: Scalars['String']['output'];
+  simType: Scalars['String']['output'];
+  smapAddress: Scalars['String']['output'];
 };
 
 export type SimPackageDto = {
   __typename?: 'SimPackageDto';
-  createdAt: Scalars['String'];
-  description: Scalars['String'];
-  id: Scalars['String'];
-  name: Scalars['String'];
-  updatedAt: Scalars['String'];
+  createdAt: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
 };
 
 export type SimPoolStatsDto = {
   __typename?: 'SimPoolStatsDto';
-  available: Scalars['Float'];
-  consumed: Scalars['Float'];
-  esim: Scalars['Float'];
-  failed: Scalars['Float'];
-  physical: Scalars['Float'];
-  total: Scalars['Float'];
-};
-
-export type SimResDto = {
-  __typename?: 'SimResDto';
-  activationCode: Scalars['String'];
-  createdAt: Scalars['String'];
-  iccid: Scalars['String'];
-  id: Scalars['String'];
-  isAllocated: Scalars['String'];
-  isPhysical: Scalars['String'];
-  msisdn: Scalars['String'];
-  qrCode: Scalars['String'];
-  simType: Scalars['String'];
-  smDpAddress: Scalars['String'];
+  available: Scalars['Float']['output'];
+  consumed: Scalars['Float']['output'];
+  esim: Scalars['Float']['output'];
+  failed: Scalars['Float']['output'];
+  physical: Scalars['Float']['output'];
+  total: Scalars['Float']['output'];
 };
 
 export type SimStatusResDto = {
   __typename?: 'SimStatusResDto';
-  simId?: Maybe<Scalars['String']>;
+  simId?: Maybe<Scalars['String']['output']>;
+};
+
+export type SimsApiResDto = {
+  __typename?: 'SimsAPIResDto';
+  sims: Array<SimApiDto>;
+};
+
+export type SimsResDto = {
+  __typename?: 'SimsResDto';
+  sim: Array<SimDto>;
 };
 
 export type SiteApiDto = {
   __typename?: 'SiteAPIDto';
-  created_at: Scalars['String'];
-  id: Scalars['String'];
-  is_deactivated: Scalars['String'];
-  name: Scalars['String'];
-  network_id: Scalars['String'];
+  created_at: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  is_deactivated: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  network_id: Scalars['String']['output'];
 };
 
 export type SiteApiResDto = {
@@ -1328,81 +1328,81 @@ export type SiteApiResDto = {
 
 export type SiteDto = {
   __typename?: 'SiteDto';
-  createdAt: Scalars['String'];
-  id: Scalars['String'];
-  isDeactivated: Scalars['String'];
-  name: Scalars['String'];
-  networkId: Scalars['String'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isDeactivated: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
 };
 
 export type SitesApiResDto = {
   __typename?: 'SitesAPIResDto';
-  network_id: Scalars['String'];
+  network_id: Scalars['String']['output'];
   sites: Array<SiteApiDto>;
 };
 
 export type SitesResDto = {
   __typename?: 'SitesResDto';
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['output'];
   sites: Array<SiteDto>;
 };
 
 export type StripeCustomer = {
   __typename?: 'StripeCustomer';
-  email: Scalars['String'];
-  id: Scalars['String'];
-  name: Scalars['String'];
+  email: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type StripePaymentMethods = {
   __typename?: 'StripePaymentMethods';
-  brand: Scalars['String'];
-  country?: Maybe<Scalars['String']>;
-  created: Scalars['Float'];
-  cvc_check?: Maybe<Scalars['String']>;
-  exp_month: Scalars['Float'];
-  exp_year: Scalars['Float'];
-  funding: Scalars['String'];
-  id: Scalars['String'];
-  last4: Scalars['String'];
-  type: Scalars['String'];
+  brand: Scalars['String']['output'];
+  country?: Maybe<Scalars['String']['output']>;
+  created: Scalars['Float']['output'];
+  cvc_check?: Maybe<Scalars['String']['output']>;
+  exp_month: Scalars['Float']['output'];
+  exp_year: Scalars['Float']['output'];
+  funding: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  last4: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type SubSimApiDto = {
   __typename?: 'SubSimAPIDto';
-  activations_count: Scalars['String'];
-  allocated_at: Scalars['String'];
-  deactivations_count: Scalars['String'];
-  first_activated_on?: Maybe<Scalars['String']>;
-  iccid: Scalars['String'];
-  id: Scalars['String'];
-  imsi: Scalars['String'];
-  is_physical?: Maybe<Scalars['Boolean']>;
-  last_activated_on?: Maybe<Scalars['String']>;
-  msisdn: Scalars['String'];
-  network_id: Scalars['String'];
-  org_id: Scalars['String'];
-  package?: Maybe<Scalars['String']>;
-  status: Scalars['String'];
-  subscriber_id: Scalars['String'];
-  type: Scalars['String'];
+  activations_count: Scalars['String']['output'];
+  allocated_at: Scalars['String']['output'];
+  deactivations_count: Scalars['String']['output'];
+  first_activated_on?: Maybe<Scalars['String']['output']>;
+  iccid: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  imsi: Scalars['String']['output'];
+  is_physical?: Maybe<Scalars['Boolean']['output']>;
+  last_activated_on?: Maybe<Scalars['String']['output']>;
+  msisdn: Scalars['String']['output'];
+  network_id: Scalars['String']['output'];
+  org_id: Scalars['String']['output'];
+  package?: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subscriber_id: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type SubscriberApiDto = {
   __typename?: 'SubscriberAPIDto';
-  address: Scalars['String'];
-  date_of_birth: Scalars['String'];
-  email: Scalars['String'];
-  first_name: Scalars['String'];
-  gender: Scalars['String'];
-  id_serial: Scalars['String'];
-  last_name: Scalars['String'];
-  network_id: Scalars['String'];
-  org_id: Scalars['String'];
-  phone_number: Scalars['String'];
-  proof_of_identification: Scalars['String'];
+  address: Scalars['String']['output'];
+  date_of_birth: Scalars['String']['output'];
+  email: Scalars['String']['output'];
+  first_name: Scalars['String']['output'];
+  gender: Scalars['String']['output'];
+  id_serial: Scalars['String']['output'];
+  last_name: Scalars['String']['output'];
+  network_id: Scalars['String']['output'];
+  org_id: Scalars['String']['output'];
+  phone_number: Scalars['String']['output'];
+  proof_of_identification: Scalars['String']['output'];
   sim: Array<SubSimApiDto>;
-  subscriber_id: Scalars['String'];
+  subscriber_id: Scalars['String']['output'];
 };
 
 export type SubscriberApiResDto = {
@@ -1412,41 +1412,61 @@ export type SubscriberApiResDto = {
 
 export type SubscriberDto = {
   __typename?: 'SubscriberDto';
-  address: Scalars['String'];
-  dob: Scalars['String'];
-  email: Scalars['String'];
-  firstName: Scalars['String'];
-  gender: Scalars['String'];
-  idSerial: Scalars['String'];
-  lastName: Scalars['String'];
-  networkId: Scalars['String'];
-  orgId: Scalars['String'];
-  phone: Scalars['String'];
-  proofOfIdentification: Scalars['String'];
-  sim: Array<SimDto>;
-  uuid: Scalars['String'];
+  address: Scalars['String']['output'];
+  dob: Scalars['String']['output'];
+  email: Scalars['String']['output'];
+  firstName: Scalars['String']['output'];
+  gender: Scalars['String']['output'];
+  idSerial: Scalars['String']['output'];
+  lastName: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  proofOfIdentification: Scalars['String']['output'];
+  sim: Array<SubscriberSimDto>;
+  uuid: Scalars['String']['output'];
 };
 
 export type SubscriberInputDto = {
-  address: Scalars['String'];
-  dob: Scalars['String'];
-  email: Scalars['String'];
-  first_name: Scalars['String'];
-  gender: Scalars['String'];
-  id_serial: Scalars['String'];
-  last_name: Scalars['String'];
-  network_id: Scalars['String'];
-  org_id: Scalars['String'];
-  phone: Scalars['String'];
-  proof_of_identification: Scalars['String'];
+  address: Scalars['String']['input'];
+  dob: Scalars['String']['input'];
+  email: Scalars['String']['input'];
+  first_name: Scalars['String']['input'];
+  gender: Scalars['String']['input'];
+  id_serial: Scalars['String']['input'];
+  last_name: Scalars['String']['input'];
+  network_id: Scalars['String']['input'];
+  org_id: Scalars['String']['input'];
+  phone: Scalars['String']['input'];
+  proof_of_identification: Scalars['String']['input'];
 };
 
 export type SubscriberMetricsByNetworkDto = {
   __typename?: 'SubscriberMetricsByNetworkDto';
-  active: Scalars['Float'];
-  inactive: Scalars['Float'];
-  terminated: Scalars['Float'];
-  total: Scalars['Float'];
+  active: Scalars['Float']['output'];
+  inactive: Scalars['Float']['output'];
+  terminated: Scalars['Float']['output'];
+  total: Scalars['Float']['output'];
+};
+
+export type SubscriberSimDto = {
+  __typename?: 'SubscriberSimDto';
+  activationsCount: Scalars['String']['output'];
+  allocatedAt: Scalars['String']['output'];
+  deactivationsCount: Scalars['String']['output'];
+  firstActivatedOn?: Maybe<Scalars['String']['output']>;
+  iccid: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  imsi: Scalars['String']['output'];
+  isPhysical?: Maybe<Scalars['Boolean']['output']>;
+  lastActivatedOn?: Maybe<Scalars['String']['output']>;
+  msisdn: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  package?: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subscriberId: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type SubscribersResDto = {
@@ -1468,9 +1488,9 @@ export type Subscription = {
 export type THeaders = {
   __typename?: 'THeaders';
   auth: AuthType;
-  orgId: Scalars['String'];
-  orgName: Scalars['String'];
-  userId: Scalars['String'];
+  orgId: Scalars['String']['output'];
+  orgName: Scalars['String']['output'];
+  userId: Scalars['String']['output'];
 };
 
 export enum Time_Filter {
@@ -1481,67 +1501,67 @@ export enum Time_Filter {
 }
 
 export type ToggleSimStatusInputDto = {
-  simId: Scalars['String'];
-  status: Scalars['String'];
+  simId: Scalars['String']['input'];
+  status: Scalars['String']['input'];
 };
 
 export type UpdateMemberInputDto = {
-  isDeactivated: Scalars['Boolean'];
+  isDeactivated: Scalars['Boolean']['input'];
 };
 
 export type UpdateNodeDto = {
-  name: Scalars['String'];
-  nodeId: Scalars['String'];
+  name: Scalars['String']['input'];
+  nodeId: Scalars['String']['input'];
 };
 
 export type UpdateNodeResponse = {
   __typename?: 'UpdateNodeResponse';
-  attached: Array<Scalars['String']>;
-  name: Scalars['String'];
-  nodeId: Scalars['String'];
-  state: Scalars['String'];
-  type: Scalars['String'];
+  attached: Array<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  state: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type UpdatePackageInputDto = {
-  active?: InputMaybe<Scalars['Boolean']>;
-  data_volume?: InputMaybe<Scalars['Int']>;
-  duration?: InputMaybe<Scalars['Int']>;
-  name?: InputMaybe<Scalars['String']>;
-  org_rates_id?: InputMaybe<Scalars['Int']>;
-  sim_type?: InputMaybe<Scalars['String']>;
-  sms_volume?: InputMaybe<Scalars['Int']>;
-  voice_volume?: InputMaybe<Scalars['Int']>;
+  active?: InputMaybe<Scalars['Boolean']['input']>;
+  data_volume?: InputMaybe<Scalars['Int']['input']>;
+  duration?: InputMaybe<Scalars['Int']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  org_rates_id?: InputMaybe<Scalars['Int']['input']>;
+  sim_type?: InputMaybe<Scalars['String']['input']>;
+  sms_volume?: InputMaybe<Scalars['Int']['input']>;
+  voice_volume?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type UpdateSubscriberInputDto = {
-  address?: InputMaybe<Scalars['String']>;
-  email?: InputMaybe<Scalars['String']>;
-  id_serial?: InputMaybe<Scalars['String']>;
-  phone?: InputMaybe<Scalars['String']>;
-  proof_of_identification?: InputMaybe<Scalars['String']>;
+  address?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  id_serial?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
+  proof_of_identification?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateUserInputDto = {
-  email?: InputMaybe<Scalars['String']>;
-  name?: InputMaybe<Scalars['String']>;
-  phone?: InputMaybe<Scalars['String']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  phone: Scalars['String']['input'];
 };
 
 export type UpdateUserServiceInput = {
-  simId: Scalars['String'];
-  status: Scalars['Boolean'];
-  userId: Scalars['String'];
+  simId: Scalars['String']['input'];
+  status: Scalars['Boolean']['input'];
+  userId: Scalars['String']['input'];
 };
 
 export type UserApiObj = {
   __typename?: 'UserAPIObj';
-  email: Scalars['String'];
-  is_deactivated: Scalars['Boolean'];
-  name: Scalars['String'];
-  phone: Scalars['String'];
-  registered_since: Scalars['String'];
-  uuid: Scalars['String'];
+  email: Scalars['String']['output'];
+  is_deactivated: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  registered_since: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
 };
 
 export type UserApiResDto = {
@@ -1551,33 +1571,33 @@ export type UserApiResDto = {
 
 export type UserDataUsageDto = {
   __typename?: 'UserDataUsageDto';
-  dataAllowanceBytes?: Maybe<Scalars['String']>;
-  dataUsedBytes?: Maybe<Scalars['String']>;
+  dataAllowanceBytes?: Maybe<Scalars['String']['output']>;
+  dataUsedBytes?: Maybe<Scalars['String']['output']>;
 };
 
 export type UserFistVisitInputDto = {
-  firstVisit: Scalars['Boolean'];
+  firstVisit: Scalars['Boolean']['input'];
 };
 
 export type UserFistVisitResDto = {
   __typename?: 'UserFistVisitResDto';
-  firstVisit: Scalars['Boolean'];
+  firstVisit: Scalars['Boolean']['output'];
 };
 
 export type UserInputDto = {
-  email: Scalars['String'];
-  name: Scalars['String'];
-  phone: Scalars['String'];
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  phone: Scalars['String']['input'];
 };
 
 export type UserResDto = {
   __typename?: 'UserResDto';
-  email: Scalars['String'];
-  isDeactivated: Scalars['Boolean'];
-  name: Scalars['String'];
-  phone: Scalars['String'];
-  registeredSince: Scalars['String'];
-  uuid: Scalars['String'];
+  email: Scalars['String']['output'];
+  isDeactivated: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  registeredSince: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
 };
 
 export type UserServicesDto = {
@@ -1589,27 +1609,27 @@ export type UserServicesDto = {
 
 export type UserSimServices = {
   __typename?: 'UserSimServices';
-  data: Scalars['Boolean'];
-  sms: Scalars['Boolean'];
-  voice: Scalars['Boolean'];
+  data: Scalars['Boolean']['output'];
+  sms: Scalars['Boolean']['output'];
+  voice: Scalars['Boolean']['output'];
 };
 
 export type WhoamiApiDto = {
   __typename?: 'WhoamiAPIDto';
-  email: Scalars['String'];
-  first_visit: Scalars['Boolean'];
-  id: Scalars['String'];
-  name: Scalars['String'];
-  role: Scalars['String'];
+  email: Scalars['String']['output'];
+  first_visit: Scalars['Boolean']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  role: Scalars['String']['output'];
 };
 
 export type WhoamiDto = {
   __typename?: 'WhoamiDto';
-  email: Scalars['String'];
-  id: Scalars['String'];
-  isFirstVisit: Scalars['Boolean'];
-  name: Scalars['String'];
-  role: Scalars['String'];
+  email: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isFirstVisit: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  role: Scalars['String']['output'];
 };
 
 export type WhoamiQueryVariables = Exact<{ [key: string]: never; }>;
@@ -1618,47 +1638,47 @@ export type WhoamiQueryVariables = Exact<{ [key: string]: never; }>;
 export type WhoamiQuery = { __typename?: 'Query', whoami: { __typename?: 'WhoamiDto', id: string, name: string, email: string, role: string, isFirstVisit: boolean } };
 
 export type GetSubscriberMetricByNetworkQueryVariables = Exact<{
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 }>;
 
 
 export type GetSubscriberMetricByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
 
 export type GetNetworkNodesStatQueryVariables = Exact<{
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 }>;
 
 
 export type GetNetworkNodesStatQuery = { __typename?: 'Query', getNetworkNodesStat: { __typename?: 'NodeStatsResponse', totalCount: number, upCount: number, claimCount: number } };
 
 export type GetNetworkDataUsageQueryVariables = Exact<{
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
   filter: Time_Filter;
 }>;
 
 
 export type GetNetworkDataUsageQuery = { __typename?: 'Query', getNetworkDataUsage: { __typename?: 'DataUsageNetworkResponse', usage: number } };
 
-export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
+export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
 
-export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
+export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
 
 export type AddSubscriberMutationVariables = Exact<{
   data: SubscriberInputDto;
 }>;
 
 
-export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> } };
+export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> } };
 
 export type GetSubscriberQueryVariables = Exact<{
-  subscriberId: Scalars['String'];
+  subscriberId: Scalars['String']['input'];
 }>;
 
 
-export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> } };
+export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> } };
 
 export type UpdateSubscriberMutationVariables = Exact<{
-  subscriberId: Scalars['String'];
+  subscriberId: Scalars['String']['input'];
   data: UpdateSubscriberInputDto;
 }>;
 
@@ -1666,30 +1686,39 @@ export type UpdateSubscriberMutationVariables = Exact<{
 export type UpdateSubscriberMutation = { __typename?: 'Mutation', updateSubscriber: { __typename?: 'BoolResponse', success: boolean } };
 
 export type DeleteSubscriberMutationVariables = Exact<{
-  subscriberId: Scalars['String'];
+  subscriberId: Scalars['String']['input'];
 }>;
 
 
 export type DeleteSubscriberMutation = { __typename?: 'Mutation', deleteSubscriber: { __typename?: 'BoolResponse', success: boolean } };
 
 export type GetSubscribersByNetworkQueryVariables = Exact<{
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 }>;
 
 
-export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> }> } };
+export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> }> } };
 
 export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 }>;
 
 
 export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
 
+export type SimPoolFragment = { __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string };
+
+export type GetSimsQueryVariables = Exact<{
+  type: Scalars['String']['input'];
+}>;
+
+
+export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sim: Array<{ __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
+
 export type NetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string };
 
 export type GetNetworkQueryVariables = Exact<{
-  networkId: Scalars['String'];
+  networkId: Scalars['String']['input'];
 }>;
 
 
@@ -1712,25 +1741,25 @@ export type GetPackagesQueryVariables = Exact<{ [key: string]: never; }>;
 export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
 
 export type GetPackageQueryVariables = Exact<{
-  packageId: Scalars['String'];
+  packageId: Scalars['String']['input'];
 }>;
 
 
 export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
 export type GetSimpoolStatsQueryVariables = Exact<{
-  type: Scalars['String'];
+  type: Scalars['String']['input'];
 }>;
 
 
 export type GetSimpoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, physical: number, esim: number } };
 
-export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } };
+export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } };
 
 export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
+export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
 
 export const SubscriberSimFragmentDoc = gql`
     fragment SubscriberSim on SubscriberDto {
@@ -1771,6 +1800,20 @@ export const SubscriberFragmentDoc = gql`
   ...SubscriberSim
 }
     ${SubscriberSimFragmentDoc}`;
+export const SimPoolFragmentDoc = gql`
+    fragment SimPool on SimDto {
+  activationCode
+  createdAt
+  iccid
+  id
+  isAllocated
+  isPhysical
+  msisdn
+  qrCode
+  simType
+  smapAddress
+}
+    `;
 export const NetworkFragmentDoc = gql`
     fragment Network on NetworkDto {
   id
@@ -1837,6 +1880,7 @@ export const MemberFragmentDoc = gql`
   uuid
   userId
   orgId
+  role
   isDeactivated
   memberSince
   user {
@@ -2208,6 +2252,43 @@ export function useGetSubscriberMetricsByNetworkLazyQuery(baseOptions?: Apollo.L
 export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkQuery>;
 export type GetSubscriberMetricsByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkLazyQuery>;
 export type GetSubscriberMetricsByNetworkQueryResult = Apollo.QueryResult<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>;
+export const GetSimsDocument = gql`
+    query getSims($type: String!) {
+  getSims(type: $type) {
+    sim {
+      ...SimPool
+    }
+  }
+}
+    ${SimPoolFragmentDoc}`;
+
+/**
+ * __useGetSimsQuery__
+ *
+ * To run a query within a React component, call `useGetSimsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useGetSimsQuery(baseOptions: Apollo.QueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
+      }
+export function useGetSimsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
+        }
+export type GetSimsQueryHookResult = ReturnType<typeof useGetSimsQuery>;
+export type GetSimsLazyQueryHookResult = ReturnType<typeof useGetSimsLazyQuery>;
+export type GetSimsQueryResult = Apollo.QueryResult<GetSimsQuery, GetSimsQueryVariables>;
 export const GetNetworkDocument = gql`
     query getNetwork($networkId: String!) {
   getNetwork(networkId: $networkId) {

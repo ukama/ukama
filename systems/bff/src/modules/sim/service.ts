@@ -25,9 +25,10 @@ import {
     SetActivePackageForSimResDto,
     SimDataUsage,
     SimDetailsDto,
+    SimDto,
     SimPoolStatsDto,
-    SimResDto,
     SimStatusResDto,
+    SimsResDto,
     ToggleSimStatusInputDto,
 } from "./types";
 
@@ -36,7 +37,7 @@ export class SimService implements ISimService {
     allocateSim = async (
         req: AllocateSimInputDto,
         headers: THeaders
-    ): Promise<SimResDto> => {
+    ): Promise<SimDto> => {
         const token = generateTokenFromIccid(
             req.iccid,
             process.env.ENCRYPTION_KEY || ""
@@ -72,9 +73,9 @@ export class SimService implements ISimService {
     getSim = async (
         req: GetSimInputDto,
         headers: THeaders
-    ): Promise<SimDetailsDto> => {
+    ): Promise<SimDto> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.PUT,
+            type: API_METHOD_TYPE.GET,
             path: `${SERVER.SUBSCRIBER_REGISTRY_API_URL}`,
             body: {
                 simId: req.simId,
@@ -82,7 +83,16 @@ export class SimService implements ISimService {
             headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
-        return SimMapper.dtoToSimDetailsDto(res);
+        return SimMapper.dtoToSimResDto(res);
+    };
+    getSims = async (type: string, headers: THeaders): Promise<SimsResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.SUBSCRIBER_SIMPOOL_API_URL}/sims/${type}`,
+            headers: getHeaders(headers),
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return SimMapper.dtoToSimsDto(res);
     };
     getDataUsage = async (
         simId: string,

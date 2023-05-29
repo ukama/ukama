@@ -1,15 +1,15 @@
 import { ISubscriberMapper } from "./interface";
 import {
-    SimDto,
     SubscriberAPIResDto,
     SubscriberDto,
+    SubscriberSimDto,
     SubscribersAPIResDto,
     SubscribersResDto,
 } from "./types";
 
 class SubscriberMapper implements ISubscriberMapper {
     dtoToSubscriberResDto = (res: SubscriberAPIResDto): SubscriberDto => {
-        const sims: SimDto[] = [];
+        const sims: SubscriberSimDto[] = [];
         if (res.subscriber.sim.length > 0) {
             for (const sim of res.subscriber.sim) {
                 sims.push({

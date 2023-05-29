@@ -146,7 +146,7 @@ export class SubscriberInputDto {
 }
 
 @ObjectType()
-export class SimDto {
+export class SubscriberSimDto {
     @Field()
     id: string;
 
@@ -233,8 +233,8 @@ export class SubscriberDto {
     @Field()
     proofOfIdentification: string;
 
-    @Field(() => [SimDto])
-    sim: SimDto[];
+    @Field(() => [SubscriberSimDto])
+    sim: SubscriberSimDto[];
 }
 
 @ObjectType()

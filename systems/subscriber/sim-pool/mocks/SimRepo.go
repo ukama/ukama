@@ -92,6 +92,32 @@ func (_m *SimRepo) GetByIccid(iccid string) (*db.Sim, error) {
 	return r0, r1
 }
 
+// GetSims provides a mock function with given fields: simType
+func (_m *SimRepo) GetSims(simType db.SimType) ([]db.Sim, error) {
+	ret := _m.Called(simType)
+
+	var r0 []db.Sim
+	var r1 error
+	if rf, ok := ret.Get(0).(func(db.SimType) ([]db.Sim, error)); ok {
+		return rf(simType)
+	}
+	if rf, ok := ret.Get(0).(func(db.SimType) []db.Sim); ok {
+		r0 = rf(simType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Sim)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(db.SimType) error); ok {
+		r1 = rf(simType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSimsByType provides a mock function with given fields: simType
 func (_m *SimRepo) GetSimsByType(simType db.SimType) ([]db.Sim, error) {
 	ret := _m.Called(simType)

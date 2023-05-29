@@ -50,6 +50,7 @@ type Clients struct {
 type simPool interface {
 	Get(iccid string) (*simPoolPb.GetByIccidResponse, error)
 	GetStats(simType string) (*simPoolPb.GetStatsResponse, error)
+	GetSims(simType string) (*simPoolPb.GetSimsResponse, error)
 	AddSimsToSimPool(req *simPoolPb.AddRequest) (*simPoolPb.AddResponse, error)
 	UploadSimsToSimPool(req *simPoolPb.UploadRequest) (*simPoolPb.UploadResponse, error)
 	DeleteSimFromSimPool(id []uint64) (*simPoolPb.DeleteResponse, error)
@@ -143,6 +144,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		pool := auth.Group("/simpool", "SIM Pool", "SIM store for Org")
 		pool.GET("/sim/:iccid", formatDoc("Get SIM by Iccid", ""), tonic.Handler(r.getSimByIccid, http.StatusOK))
+		pool.GET("/sims/:sim_type", formatDoc("Get SIMs by type", ""), tonic.Handler(r.getSims, http.StatusOK))
 		pool.GET("/stats/:sim_type", formatDoc("Get SIM Pool stats", ""), tonic.Handler(r.getSimPoolStats, http.StatusOK))
 		pool.PUT("", formatDoc("Add new SIM to SIM pool", ""), tonic.Handler(r.addSimsToSimPool, http.StatusCreated))
 		pool.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
@@ -183,7 +185,16 @@ func (r *Router) getSimByIccid(c *gin.Context, req *SimByIccidReq) (*simPoolPb.G
 	return resp, nil
 }
 
-func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolStatByTypeReq) (*simPoolPb.GetStatsResponse, error) {
+func (r *Router) getSims(c *gin.Context, req *SimPoolTypeReq) (*simPoolPb.GetSimsResponse, error) {
+	resp, err := r.clients.sp.GetSims(req.SimType)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolTypeReq) (*simPoolPb.GetStatsResponse, error) {
 	resp, err := r.clients.sp.GetStats(req.SimType)
 	if err != nil {
 		return nil, err
