@@ -1,6 +1,7 @@
 import { isDarkmode } from '@/app-recoil';
 import { ColumnsWithOptions } from '@/types';
 import {
+  Chip,
   Table,
   TableBody,
   TableCell,
@@ -58,7 +59,11 @@ const SimpleDataTable = ({
                   }}
                 >
                   <Typography variant={'body2'} sx={{ padding: '8px' }}>
-                    {row[column.id]}
+                    {column.id === 'role' ? (
+                      <Chip label={row[column.id]} variant="outlined" />
+                    ) : (
+                      row[column.id]
+                    )}
                   </Typography>
                 </TableCell>
               ))}

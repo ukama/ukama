@@ -1,32 +1,32 @@
-import {
-    MetricDto,
-    AddNodeDto,
-    NodeResponse,
-    AddNodeResponse,
-    OrgNodeResponse,
-    GetNodeStatusRes,
-    UpdateNodeResponse,
-    UpdateNodeDto,
-    OrgMetricValueDto,
-    OrgNodeResponseDto,
-    GetNodeStatusInput,
-} from "./types";
+import { MetricLatestValueRes, THeaders } from "../../common/types";
 import { DeleteNodeRes } from "../user/types";
-import { MetricLatestValueRes, ParsedCookie } from "../../common/types";
+import {
+    AddNodeDto,
+    AddNodeResponse,
+    GetNodeStatusInput,
+    GetNodeStatusRes,
+    MetricDto,
+    NodeResponse,
+    OrgMetricValueDto,
+    OrgNodeResponse,
+    OrgNodeResponseDto,
+    UpdateNodeDto,
+    UpdateNodeResponse,
+} from "./types";
 
 export interface INodeService {
     getNodeStatus(
         data: GetNodeStatusInput,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<GetNodeStatusRes>;
-    getNode(nodeId: string, cookie: ParsedCookie): Promise<NodeResponse>;
-    getNodesByOrg(cookie: ParsedCookie): Promise<OrgNodeResponseDto>;
-    addNode(req: AddNodeDto, cookie: ParsedCookie): Promise<AddNodeResponse>;
+    getNode(nodeId: string, headers: THeaders): Promise<NodeResponse>;
+    getNodesByOrg(cookie: THeaders): Promise<OrgNodeResponseDto>;
+    addNode(req: AddNodeDto, headers: THeaders): Promise<AddNodeResponse>;
     updateNode(
         req: UpdateNodeDto,
-        cookie: ParsedCookie
+        headers: THeaders
     ): Promise<UpdateNodeResponse>;
-    deleteNode(id: string, cookie: ParsedCookie): Promise<DeleteNodeRes>;
+    deleteNode(id: string, headers: THeaders): Promise<DeleteNodeRes>;
 }
 
 export interface INodeMapper {

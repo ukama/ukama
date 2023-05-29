@@ -187,10 +187,10 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string
 	resp, r, err := am.client.FrontendApi.ToSession(context.Background()).Execute()
 
 	if err != nil {
-		if resp.StatusCode == http.StatusBadRequest {
+		if r.StatusCode == http.StatusBadRequest {
 			u := UIErrorResp{}
 			buf := &bytes.Buffer{}
-			_, e := buf.ReadFrom(resp.Body)
+			_, e := buf.ReadFrom(r.Body)
 			if e != nil {
 				return nil, e
 			}

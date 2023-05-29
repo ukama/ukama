@@ -87,8 +87,8 @@ func TestLogin(t *testing.T) {
 	}
 	token = lg.Token
 
-// 	assert.Equal(t, 200, w.Code)
-// }
+	assert.Equal(t, 200, w.Code)
+}
 
 func TestWhoami(t *testing.T) {
 	cma := &mauth.AuthManager{}

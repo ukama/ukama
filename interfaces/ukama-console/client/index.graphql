@@ -589,6 +589,7 @@ fragment Member on MemberObj {
   uuid
   userId
   orgId
+  role
   isDeactivated
   memberSince
   user {

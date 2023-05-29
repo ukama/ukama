@@ -17,6 +17,9 @@ export class MemberAPIObj {
 
     @Field()
     is_deactivated: boolean;
+
+    @Field()
+    role: string;
 }
 
 @ObjectType()
@@ -47,6 +50,9 @@ export class MemberObj {
 
     @Field()
     isDeactivated: boolean;
+
+    @Field()
+    role: string;
 
     @Field({ nullable: true })
     memberSince: string;
