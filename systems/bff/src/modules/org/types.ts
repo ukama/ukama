@@ -1,4 +1,5 @@
 import { Field, InputType, ObjectType } from "type-graphql";
+import { MEMBER_ROLES } from "../../constants";
 import { UserResDto } from "../user/types";
 
 @ObjectType()
@@ -52,7 +53,7 @@ export class MemberObj {
     isDeactivated: boolean;
 
     @Field()
-    role: string;
+    role: MEMBER_ROLES;
 
     @Field({ nullable: true })
     memberSince: string;

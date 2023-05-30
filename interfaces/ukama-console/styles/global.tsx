@@ -50,6 +50,7 @@ const VerticalContainer = styled(Box)({
   height: '100%',
   display: 'flex',
   alignItems: 'center',
+  overflow: 'scroll',
   flexDirection: 'column',
 });
 
@@ -121,7 +122,8 @@ const PageContainer = styled(Paper)((props) => ({
   marginTop: '18px',
   borderRadius: '4px',
   padding: '24px 32px',
-  height: 'calc(100vh - 164px)',
+  overflow: 'scroll',
+  height: 'calc(100vh - 210px)',
   [props.theme.breakpoints.down('sm')]: {
     marginTop: '12px',
     padding: '12px 18px',

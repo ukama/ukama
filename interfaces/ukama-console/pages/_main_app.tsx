@@ -15,10 +15,11 @@ import { CacheProvider } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
-import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil';
 
-const Layout = dynamic(() => import('@/ui/layout'));
+const Layout = dynamic(() => import('@/ui/layout'), { ssr: false });
 const SNACKBAR_TIMEOUT = 5000;
 
 const clientSideEmotionCache = createEmotionCache();
@@ -28,6 +29,8 @@ const MainApp = ({
   pageProps,
   emotionCache = clientSideEmotionCache,
 }: MyAppProps) => {
+  const route = useRouter();
+  const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [_user, _setUser] = useRecoilState<TUser>(user);
   const [page, setPage] = useRecoilState(pageName);
   const _isDarkMod = useRecoilValue<boolean>(isDarkmode);
@@ -65,7 +68,7 @@ const MainApp = ({
   });
   const [
     getNetworks,
-    { data: networksData, error: networdsError, loading: networksLoading },
+    { data: networksData, error: networksError, loading: networksLoading },
   ] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-first',
     onCompleted: (data) => {
@@ -132,6 +135,12 @@ const MainApp = ({
   //   }
   // }, []);
 
+  useEffect(() => {
+    if (route.pathname) {
+      setIsFullScreen(route.pathname === '/manage');
+    }
+  }, [route.pathname]);
+
   const handleGoToLogin = () => {
     setPage('Home');
     typeof window !== 'undefined' &&
@@ -157,9 +166,9 @@ const MainApp = ({
         <CssBaseline />
         <Layout
           page={page}
-          isFullScreen={false}
+          isFullScreen={isFullScreen}
           isDarkMode={_isDarkMod}
-          isLoading={false}
+          isLoading={skeltonLoading}
           placeholder={'Select Network'}
           networkId={_commonData?.networkId}
           handlePageChange={handlePageChange}

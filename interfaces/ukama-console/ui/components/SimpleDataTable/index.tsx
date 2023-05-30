@@ -6,18 +6,21 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableHead,
   TableRow,
   Typography,
 } from '@mui/material';
 import { useRecoilValue } from 'recoil';
 
 interface SimpleDataTableInterface {
+  dataKey?: string;
   dataset: any;
   height?: string;
   columns: ColumnsWithOptions[];
 }
 
 const SimpleDataTable = ({
+  dataKey = 'id',
   columns,
   dataset,
   height,
@@ -31,25 +34,28 @@ const SimpleDataTable = ({
       }}
     >
       <Table stickyHeader>
-        <TableRow>
-          {columns?.map((column) => (
-            <TableCell
-              key={column.id}
-              align={column.align}
-              style={{
-                padding: '0px 16px 12px 16px',
-                fontSize: '0.875rem',
-                minWidth: column.minWidth,
-              }}
-            >
-              <b>{column.label}</b>
-            </TableCell>
-          ))}
-        </TableRow>
+        <TableHead>
+          <TableRow>
+            {columns?.map((column) => (
+              <TableCell
+                key={`row-${column.id}`}
+                align={column.align}
+                style={{
+                  fontWeight: 600,
+                  padding: '0px 16px 12px 16px',
+                  fontSize: '0.875rem',
+                  minWidth: column.minWidth,
+                }}
+              >
+                {column.label}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
 
         <TableBody>
           {dataset?.map((row: any) => (
-            <TableRow key={row.id} sx={{}}>
+            <TableRow key={row[dataKey]} sx={{}}>
               {columns?.map((column: ColumnsWithOptions, index: number) => (
                 <TableCell
                   key={`$cell-${index}-${column.id}`}
@@ -58,13 +64,13 @@ const SimpleDataTable = ({
                     fontSize: '0.875rem',
                   }}
                 >
-                  <Typography variant={'body2'} sx={{ padding: '8px' }}>
-                    {column.id === 'role' ? (
-                      <Chip label={row[column.id]} variant="outlined" />
-                    ) : (
-                      row[column.id]
-                    )}
-                  </Typography>
+                  {column.id === 'role' ? (
+                    <Chip label={row[column.id]} variant="outlined" />
+                  ) : (
+                    <Typography variant={'body2'} sx={{ padding: '8px' }}>
+                      {row[column.id]}
+                    </Typography>
+                  )}
                 </TableCell>
               ))}
             </TableRow>

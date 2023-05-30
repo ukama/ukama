@@ -1,4 +1,4 @@
-import { networkName, user } from '@/app-recoil';
+import { user } from '@/app-recoil';
 import { NETWORK_NAME_SCHEMA_VALIDATOR } from '@/helpers/formValidators';
 import { globalUseStyles } from '@/styles/global';
 import {
@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { Formik } from 'formik';
 import React, { useEffect, useState } from 'react';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import * as Yup from 'yup';
 const eSimFormSchema = Yup.object(NETWORK_NAME_SCHEMA_VALIDATOR);
 
@@ -25,11 +25,11 @@ interface INetworkTypes {
 const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
   const [networkType, setNetworkType] = useState('personal');
   const gclasses = globalUseStyles();
-  const setNetworkNames = useSetRecoilState(networkName);
-  const getNetworkName = useRecoilValue(networkName);
+  // const setNetworkNames = useSetRecoilState();
+  // const getNetworkName = useRecoilValue();
   const getUser: any = useRecoilValue(user);
   useEffect(() => {
-    setNetworkNames('');
+    // setNetworkNames('');
   }, []);
   const handleSimTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNetworkType(event.target.value);
@@ -37,7 +37,7 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
   const handleNetworksetup = (value: any) => {
     networkData(value);
     nextStep();
-    setNetworkNames(value.name);
+    // setNetworkNames(value.name);
   };
   const backToSignUp = () => {
     typeof window !== 'undefined' &&
@@ -49,7 +49,7 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
   return (
     <Box sx={{ pb: 2 }}>
       <Formik
-        initialValues={{ name: getNetworkName ? getNetworkName : '' }}
+        initialValues={{ name:  '' }}
         validationSchema={eSimFormSchema}
         onSubmit={async (values) =>
           handleNetworksetup({ ...values, networkType })
@@ -122,7 +122,7 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
                       input: gclasses.inputFieldStyle,
                     },
                   }}
-                  helperText={touched.name && errors.name}
+                  // helperText={(touched.name && errors.name) || <></>}
                   error={touched.name && Boolean(errors.name)}
                 />
               </Grid>

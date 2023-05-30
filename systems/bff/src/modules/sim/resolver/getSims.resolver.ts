@@ -5,6 +5,7 @@ import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { SimService } from "../service";
 import { SimsResDto } from "../types";
+import { SIM_TYPES } from "../../../constants";
 
 @Service()
 @Resolver()
@@ -14,7 +15,7 @@ export class GetSimsResolver {
     @Query(() => SimsResDto)
     @UseMiddleware(Authentication)
     async getSims(
-        @Arg("type") type: string,
+        @Arg("type") type: SIM_TYPES,
         @Ctx() ctx: Context
     ): Promise<SimsResDto> {
         return await this.simService.getSims(type, parseHeaders(ctx));

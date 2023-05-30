@@ -150,7 +150,11 @@ const MemberContainer = ({ data, search, setSearch }: IMemberContainer) => (
       handleButtonAction={() => console.log('Invite member')}
     />
     <br />
-    <SimpleDataTable dataset={data} columns={MANAGE_TABLE_COLUMN} />
+    <SimpleDataTable
+      dataKey="uuid"
+      dataset={data}
+      columns={MANAGE_TABLE_COLUMN}
+    />
   </Paper>
 );
 
@@ -388,6 +392,7 @@ const Manage = () => {
       name: member.user.name,
       email: member.user.email,
       role: 'member',
+      uuid: member.uuid,
     }));
 
   return (

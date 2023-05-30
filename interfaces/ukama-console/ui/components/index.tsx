@@ -11,7 +11,7 @@ import {
   NodeDialog,
   NodeSoftwareInfosDialog,
   SoftwareUpdateModal,
-  UserDetailsDialog,
+  // UserDetailsDialog,
 } from './AppDialogs';
 import BackButton from './BackButton';
 import BillingAlerts from './BillingAlerts';
@@ -109,7 +109,7 @@ export {
   NodeResourcesTab,
   BillingDataTable,
   CustomRadioButton,
-  UserDetailsDialog,
+  // UserDetailsDialog,
   NodeSchematicTab,
   GraphTitleWrapper,
   NodeStatsContainer,
