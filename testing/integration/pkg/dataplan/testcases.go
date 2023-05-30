@@ -20,7 +20,7 @@ import (
 type InitData struct {
 	Sys          *DataPlanSys
 	Host         string
-	SimType      string `default:"ukama_data"`
+	SimType      string `default:"test"`
 	MbHost       string
 	SubscriberId string
 	BaseRateId   []string
@@ -58,7 +58,7 @@ func InitializeData(org *string, owner *string) *InitData {
 	d.Host = "http://192.168.0.23:8074"
 	d.MbHost = "amqp://guest:guest@192.168.0.23:5672/"
 	d.Sys = NewDataPlanSys(d.Host)
-	d.SimType = "ukama_data"
+	d.SimType = "test"
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{
 		EffectiveAt: utils.GenerateFutureDate(5 * time.Second),
 		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv",

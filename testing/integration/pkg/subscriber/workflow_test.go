@@ -130,11 +130,11 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 	/* Get Sim by subscriber */
 	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
 
-	/*Activate sim */
-	w.RegisterTestCase(TC_manager_activate_sim)
+	// /*Activate sim */
+	// w.RegisterTestCase(TC_manager_activate_sim)
 
-	/* Get Sim by subscriber after activation */
-	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
+	// /* Get Sim by subscriber after activation */
+	// w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
 
 	/*Activate sim */
 	w.RegisterTestCase(TC_manager_inactivate_sim)

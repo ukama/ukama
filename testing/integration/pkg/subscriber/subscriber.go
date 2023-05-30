@@ -260,6 +260,7 @@ func (s *SubscriberSys) SubscriberManagerAllocateSim(req api.AllocateSimReq) (*s
 
 func (s *SubscriberSys) SubscriberManagerUpdateSim(req api.ActivateDeactivateSimReq) (*sPb.ToggleSimStatusResponse, error) {
 
+	log.Tracef("SimStatus update request %+v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
