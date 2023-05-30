@@ -1,4 +1,4 @@
-import { MetricLatestValueRes, ParsedCookie } from "../../common/types";
+import { MetricLatestValueRes } from "../../common/types";
 import {
     NetworkAPIResDto,
     NetworkDto,
@@ -10,10 +10,8 @@ import {
     SitesAPIResDto,
     SitesResDto,
 } from "./types";
-
-export interface INetworkService {
-    getNetworkStatus(cookie: ParsedCookie): Promise<NetworkStatusDto>;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface INetworkService {}
 
 export interface INetworkMapper {
     dtoToDto(
