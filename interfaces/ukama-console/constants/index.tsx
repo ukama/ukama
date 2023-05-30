@@ -97,7 +97,7 @@ const TIME_FILTER = [
 
 export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'network', label: 'Network', minWidth: 180 },
+  { id: 'email', label: 'Email', minWidth: 180 },
   { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },

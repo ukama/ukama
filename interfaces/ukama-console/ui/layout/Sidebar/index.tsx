@@ -1,6 +1,6 @@
 import { NetworkDto } from '@/generated';
 import { NavList } from '@/router/config';
-import { colors } from '@/styles/theme';
+import colors from '@/styles/theme/colors';
 import { LoadingWrapper } from '@/ui/components';
 import {
   Box,
@@ -88,35 +88,33 @@ const Sidebar = ({
           </Box>
           <Divider sx={{ m: 0 }} />
           <List component="nav">
-            {NavList.map(({ name, path, icon: Icon }) => {
-              return (
-                <ListItemButton
-                  key={name}
-                  onClick={() => onNavigate(name, path)}
-                  sx={{
-                    backgroundColor:
-                      page === name
-                        ? isDarkMode
-                          ? colors.primaryMain02
-                          : colors.solitude
-                        : 'transparent',
-                    '.MuiListItemText-root .MuiTypography-root': {
-                      fontWeight: page === name ? 600 : 400,
-                    },
-                    ':hover': {
-                      backgroundColor: isDarkMode
-                        ? colors.darkGreen05
-                        : colors.solitude,
-                    },
-                  }}
-                >
-                  <ListItemIcon>
-                    <Icon />
-                  </ListItemIcon>
-                  <ListItemText primary={name} />
-                </ListItemButton>
-              );
-            })}
+            {NavList.map(({ name, path, icon: Icon }) => (
+              <ListItemButton
+                key={name}
+                onClick={() => onNavigate(name, path)}
+                sx={{
+                  backgroundColor:
+                    page === name
+                      ? isDarkMode
+                        ? colors.primaryMain02
+                        : colors.solitude
+                      : 'transparent',
+                  '.MuiListItemText-root .MuiTypography-root': {
+                    fontWeight: page === name ? 600 : 400,
+                  },
+                  ':hover': {
+                    backgroundColor: isDarkMode
+                      ? colors.darkGreen05
+                      : colors.solitude,
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <Icon />
+                </ListItemIcon>
+                <ListItemText primary={name} />
+              </ListItemButton>
+            ))}
           </List>
         </Stack>
       </LoadingWrapper>

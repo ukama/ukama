@@ -26,8 +26,9 @@ const BackButton = ({ title }: IBackButton) => {
             },
           },
         }}
+        onClick={() => router.back()}
       >
-        <IconButton size="small" sx={{ p: 0 }} onClick={() => router.back()}>
+        <IconButton size="small" sx={{ p: 0 }}>
           <ArrowBack />
         </IconButton>
         <Typography variant={'body2'} fontWeight={500}>

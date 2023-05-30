@@ -10,10 +10,10 @@ import {
   VerticalContainer,
 } from '@/styles/global';
 import { TCommonData, TSnackMessage } from '@/types';
-import { DataTableWithOptions } from '@/ui/components';
+import { DataTableWithOptions, LoadingWrapper } from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
 import { AlertColor } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const Page = () => {
@@ -26,14 +26,11 @@ const Page = () => {
 
   const { loading, data } = useGetSubscribersByNetworkQuery({
     variables: { networkId: _commonData.networkId },
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-first',
     onCompleted: (data) => {
       if (data.getSubscribersByNetwork.subscribers.length > 0) {
-        setSubscriber((prev) => ({
-          subscribers: [
-            ...prev.subscribers,
-            ...data.getSubscribersByNetwork.subscribers,
-          ],
+        setSubscriber(() => ({
+          subscribers: [...data.getSubscribersByNetwork.subscribers],
         }));
       }
     },
@@ -59,11 +56,11 @@ const Page = () => {
             return subscriber;
         },
       );
-      setSubscriber({ subscribers: subscribers ?? [] });
+      setSubscriber(() => ({ subscribers: subscribers ?? [] }));
     } else if (search.length === 0) {
-      setSubscriber({
+      setSubscriber(() => ({
         subscribers: data?.getSubscribersByNetwork.subscribers ?? [],
-      });
+      }));
     }
   }, [search]);
 
@@ -71,42 +68,49 @@ const Page = () => {
     console.log(id, type);
   };
 
-  const structureData = (data: SubscribersResDto) =>
-    data.subscribers.map((subscriber) => ({
-      id: subscriber.uuid,
-      network:
-        _commonData.networkId === subscriber.networkId
-          ? _commonData.networkName
-          : subscriber.networkId,
-      name: `${subscriber.firstName} ${subscriber.lastName}`,
-      dataUsage: '',
-      dataPlan: '',
-      actions: '',
-    }));
+  const structureData = useCallback(
+    (data: SubscribersResDto) =>
+      data.subscribers.map((subscriber) => ({
+        id: subscriber.uuid,
+        email: subscriber.email,
+        name: `${subscriber.firstName} ${subscriber.lastName}`,
+        dataUsage: '',
+        dataPlan: '',
+        actions: '',
+      })),
+    [],
+  );
 
   return (
-    <PageContainer>
-      <PageContainerHeader
-        title={'My subscribers'}
-        subtitle={`${subscriber.subscribers.length}`}
-        buttonTitle={'Add Subscriber'}
-        handleButtonAction={() => console.log('Add subscriber')}
-        onSearchChange={(e: string) => setSearch(e)}
-        search={search}
-      />
+    <LoadingWrapper
+      isLoading={true}
+      radius="small"
+      height={'calc(100vh - 210px)'}
+      width={'100vw'}
+    >
+      <PageContainer>
+        <PageContainerHeader
+          title={'My subscribers'}
+          subtitle={`${subscriber.subscribers.length}`}
+          buttonTitle={'Add Subscriber'}
+          handleButtonAction={() => console.log('Add subscriber')}
+          onSearchChange={(e: string) => setSearch(e)}
+          search={search}
+        />
 
-      <VerticalContainer>
-        <ContainerMax mt={4.5}>
-          <DataTableWithOptions
-            columns={SUBSCRIBER_TABLE_COLUMNS}
-            dataset={structureData(subscriber)}
-            menuOptions={SUBSCRIBER_TABLE_MENU}
-            onMenuItemClick={onTableMenuItem}
-            emptyViewLabel={'No subscribers yet!'}
-          />
-        </ContainerMax>
-      </VerticalContainer>
-    </PageContainer>
+        <VerticalContainer>
+          <ContainerMax mt={4.5}>
+            <DataTableWithOptions
+              columns={SUBSCRIBER_TABLE_COLUMNS}
+              dataset={structureData(subscriber)}
+              menuOptions={SUBSCRIBER_TABLE_MENU}
+              onMenuItemClick={onTableMenuItem}
+              emptyViewLabel={'No subscribers yet!'}
+            />
+          </ContainerMax>
+        </VerticalContainer>
+      </PageContainer>
+    </LoadingWrapper>
   );
 };
 

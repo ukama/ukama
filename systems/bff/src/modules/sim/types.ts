@@ -1,4 +1,5 @@
 import { Field, InputType, ObjectType } from "type-graphql";
+import { SIM_TYPES } from "../../constants";
 
 @InputType()
 export class AllocateSimInputDto {
@@ -12,7 +13,7 @@ export class AllocateSimInputDto {
     iccid: string;
 
     @Field()
-    simType: string;
+    simType: SIM_TYPES;
 
     @Field()
     subscriberId: string;
@@ -166,7 +167,7 @@ export class SimDto {
     qrCode: string;
 
     @Field()
-    simType: string;
+    simType: SIM_TYPES;
 
     @Field()
     smapAddress: string;

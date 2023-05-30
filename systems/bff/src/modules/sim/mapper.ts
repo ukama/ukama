@@ -1,3 +1,4 @@
+import { SIM_TYPES } from "../../constants";
 import { ISimMapper } from "./interface";
 import {
     SimAPIResDto,
@@ -18,7 +19,7 @@ class SimMapper implements ISimMapper {
             isPhysical: res.sim.is_physical,
             msisdn: res.sim.msisdn,
             qrCode: res.sim.qr_code,
-            simType: res.sim.sim_type,
+            simType: res.sim.sim_type as SIM_TYPES,
             smapAddress: res.sim.sm_ap_address,
         };
     };

@@ -1,3 +1,4 @@
+import { MEMBER_ROLES } from "../../constants";
 import { IOrgMapper } from "./interface";
 import {
     MemberObj,
@@ -16,7 +17,7 @@ class OrgMapper implements IOrgMapper {
             uuid: res.member.uuid,
             userId: res.member.user_id,
             orgId: res.member.org_id,
-            role: res.member.role,
+            role: res.member.role as MEMBER_ROLES,
             isDeactivated: res.member.is_deactivated,
             memberSince: res.member.member_since,
         };
@@ -57,7 +58,7 @@ class OrgMapper implements IOrgMapper {
                 orgId: member.org_id,
                 isDeactivated: member.is_deactivated,
                 memberSince: member.member_since,
-                role: member.role,
+                role: member.role as MEMBER_ROLES,
                 user: undefined,
             });
         });

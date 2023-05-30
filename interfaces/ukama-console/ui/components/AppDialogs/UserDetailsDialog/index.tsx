@@ -1,7 +1,6 @@
 import { GetUserDto } from '@/generated';
 import { CenterContainer } from '@/styles/global';
 import colors from '@/styles/theme/colors';
-import { formatBytes, formatBytesToMB } from '@/utils';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
@@ -60,17 +59,7 @@ const UserDetailsDialog = ({
   handleUserRoamingAction,
   serviceStatusIndicator,
 }: BasicDialogProps) => {
-  const {
-    id,
-    name,
-    email,
-    iccid,
-    status,
-    roaming,
-    dataPlan,
-    dataUsage,
-    eSimNumber,
-  } = user;
+  const { id, name, email } = user;
   const getTitle = (userName: string) => {
     const title = type === 'add' ? 'Add User' : `${userName}`;
     return title;
@@ -123,13 +112,13 @@ const UserDetailsDialog = ({
               </Grid>
               <Grid item container spacing={1.5}>
                 <Grid item xs={12}>
-                  <Typography variant="body1">
+                  {/* <Typography variant="body1">
                     {`${formatBytes(
                       parseInt(dataUsage),
                     )}  data used, 1 network, ${formatBytesToMB(
                       parseInt(dataPlan),
                     )} roaming`}
-                  </Typography>
+                  </Typography> */}
                 </Grid>
                 <Grid item xs={12}>
                   <EditableTextField
@@ -176,7 +165,7 @@ const UserDetailsDialog = ({
                         width={'150px'}
                         height={'30px'}
                       >
-                        <Button
+                        {/* <Button
                           color={statusButtonColor}
                           variant="outlined"
                           size="small"
@@ -187,7 +176,7 @@ const UserDetailsDialog = ({
                           }}
                         >
                           {statusAction}
-                        </Button>
+                        </Button> */}
                       </LoadingWrapper>
                     </Grid>
                   </Grid>
@@ -242,7 +231,7 @@ const UserDetailsDialog = ({
                             position: 'relative',
                             left: 30,
                           }}
-                          checked={roaming}
+                          checked={false}
                           disabled={!serviceStatusIndicator}
                           onClick={(e: any) => {
                             setUserForm({
@@ -271,7 +260,7 @@ const UserDetailsDialog = ({
                     </Typography>
                   </Grid>
                   <Grid item xs={12} mt={1}>
-                    <Typography variant="body2">{eSimNumber}</Typography>
+                    <Typography variant="body2">{}</Typography>
                   </Grid>
                 </Grid>
                 <Grid item container xs={12}>
@@ -281,7 +270,7 @@ const UserDetailsDialog = ({
                     </Typography>
                   </Grid>
                   <Grid item xs={12} mt={1}>
-                    <Typography variant="body2">{iccid}</Typography>
+                    <Typography variant="body2">{}</Typography>
                   </Grid>
                 </Grid>
               </Grid>

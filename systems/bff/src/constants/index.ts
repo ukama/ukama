@@ -15,10 +15,16 @@ export const HEADER = {
     },
 };
 export enum MEMBER_ROLES {
-    OWNER = "owner",
-    ADMIN = "admin",
-    VENDOR = "vendor",
-    MEMBER = "member",
+    OWNER = "OWNER",
+    ADMIN = "ADMIN",
+    VENDOR = "VENDOR",
+    MEMBER = "MEMBER",
+}
+export enum SIM_TYPES {
+    UNKNOWN = "unknown",
+    TEST = "test",
+    OPERATOR_DATA = "operator_data",
+    UKAMA_DATA = "ukama_data",
 }
 export enum CONNECTED_USER_TYPE {
     RESIDENTS = "RESIDENTS",

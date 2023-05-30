@@ -97,6 +97,9 @@ const theme = (isDarkmode: boolean) =>
               '&:hover svg path': {
                 fill: colors.primaryMain,
               },
+              '&:hover svg circle': {
+                fill: colors.primaryMain,
+              },
             },
           },
         },
