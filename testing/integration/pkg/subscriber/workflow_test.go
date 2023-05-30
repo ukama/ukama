@@ -115,8 +115,32 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 	/* Add subscriber */
 	w.RegisterTestCase(TC_registry_add_subscriber)
 
+	/* Get susbscriber */
+	w.RegisterTestCase(TC_registry_get_subscriber)
+
 	/* Allocate Sim */
 	w.RegisterTestCase(TC_manager_allocate_sim)
+
+	/* Get package for sim */
+	w.RegisterTestCase(TC_manager_get_package_for_sim)
+
+	/* Activate Sim */
+	w.RegisterTestCase(TC_manager_activate_sim)
+
+	/* Get Sim by subscriber */
+	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
+
+	/*Activate sim */
+	w.RegisterTestCase(TC_manager_activate_sim)
+
+	/* Get Sim by subscriber after activation */
+	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
+
+	/*Activate sim */
+	w.RegisterTestCase(TC_manager_inactivate_sim)
+
+	/* Get Sim by subscriber after inactivation */
+	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
 
 	/* Run */
 	err := w.Run(t, context.Background())

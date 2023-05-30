@@ -10,6 +10,12 @@ import (
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
 
+/* Required Updates in framework:
+For now most of th data is stored in the workflow data section. Any test case if requires the data has o access the workflow data.
+In future we would like to pass the data to test case and let it handle the data.
+This would help help us to call these function independently out of the workflows.
+*/
+
 type Workflow struct {
 	Name        string
 	Description string
@@ -98,6 +104,12 @@ func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 		} else {
 			t.State = StateTypeFail
 			return err
+		}
+	}else {
+		/* For cases where response is just a http ststus code. In that case we don't
+		have anything in response to check fi test fxn passes state fxn need not to do anything*/ 
+		if t.State == StateTypeTested {
+			t.State = StateTypePass
 		}
 	}
 

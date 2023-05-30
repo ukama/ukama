@@ -41,6 +41,8 @@ type InitData struct {
 	PackageId    string
 	EncKey       string
 	SimId        string
+	SimStatus    string
+	AllocatedSim *spb.Sim
 
 	/* API requests */
 	reqSimPoolUploadSimReq       api.SimPoolUploadSimReq
@@ -421,6 +423,262 @@ var TC_manager_allocate_sim = &test.TestCase{
 			d := tc.GetWorkflowData().(*InitData)
 			if d.reqAllocateSimReq.SubscriberId == resp.Sim.SubscriberId &&
 				resp.Sim.Package != nil &&
+				d.reqAllocateSimReq.PackageId == resp.Sim.Package.PackageId &&
+				d.reqAllocateSimReq.SimType == resp.Sim.Type &&
+				d.reqAllocateSimReq.NetworkId == resp.Sim.NetworkId &&
+				tc.Watcher.Expections() {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+
+	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Here we save any data required to be saved from the test case
+		Cleanup any test specific data
+		*/
+		resp := tc.GetData().(*mpb.AllocateSimResponse)
+		a := tc.GetWorkflowData().(*InitData)
+		a.SimId = resp.Sim.Id
+		tc.SaveWorkflowData(a)
+
+		tc.Watcher.Stop()
+		return nil
+	},
+}
+
+var TC_registry_get_subscriber = &test.TestCase{
+	Name:        "Get Subscriber ",
+	Description: "Get subscriber",
+	Data:        &rpb.GetSubscriberResponse{},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberRegistryGetSusbscriber(a.reqSubscriberGetReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*rpb.GetSubscriberResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqSubscriberGetReq.SubscriberId == resp.Subscriber.SubscriberId {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var TC_manager_get_sim_by_subscriber = &test.TestCase{
+	Name:        "Get Sim ",
+	Description: "Get Sim by subscriber",
+	Data:        &mpb.GetSimsBySubscriberResponse{},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerGetSubscriberSims(a.reqGetSimsBySubReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*mpb.GetSimsBySubscriberResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqGetSimsBySubReq.SubscriberId == resp.SubscriberId &&
+				len(resp.Sims) > 0 &&
+				data.SimId == resp.Sims[0].Id &&
+				data.SimStatus == resp.Sims[0].Status {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var TC_manager_get_package_for_sim = &test.TestCase{
+	Name:        "Get package for a sim ",
+	Description: "Get package for a sim",
+	Data:        &mpb.GetPackagesBySimResponse{},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerGetPackageForSim(a.reqSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*mpb.GetPackagesBySimResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqSimReq.SimId == resp.SimId &&
+				len(resp.Packages) > 0 && func(ps []*mpb.Package, id string) bool {
+				for _, p := range ps {
+					if id == p.PackageId {
+						return true
+					}
+				}
+				return false
+			}(resp.Packages, data.PackageId) {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var TC_manager_activate_sim = &test.TestCase{
+	Name:        "Activate sim",
+	Description: "Activate a sim of subscriber",
+	Data:        &mpb.ToggleSimStatusResponse{},
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.SimStatus = "activate"
+		a.reqActivateDeactivateSimReq.SimId = a.SimId
+		a.reqActivateDeactivateSimReq.Status = a.SimStatus
+
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerUpdateSim(a.reqActivateDeactivateSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+
+		return true, nil
+	},
+}
+
+var TC_manager_inactivate_sim = &test.TestCase{
+	Name:        "Inactivate sim",
+	Description: "Inactivate a sim of subscriber",
+	Data:        &mpb.ToggleSimStatusResponse{},
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.SimStatus = "inactivate"
+		a.reqActivateDeactivateSimReq.SimId = a.SimId
+		a.reqActivateDeactivateSimReq.Status = a.SimStatus
+
+		tc.SaveWorkflowData(a)
+
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerUpdateSim(a.reqActivateDeactivateSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		return true, nil
+	},
+}
+
+var TC_manager_add_new_package_to_sim = &test.TestCase{
+	Name:        "Add package",
+	Description: "Add new package to sim",
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqAddPkgToSimReq.SimId = a.SimId
+		a.reqAllocateSimReq.PackageId = a.PackageId
+		a.reqAllocateSimReq.SimType = a.SimType
+		a.reqAllocateSimReq.SubscriberId = a.SubscriberId
+		a.reqAllocateSimReq.SimToken = a.SimToken[utils.RandomInt(len(a.SimToken)-1)]
+
+		tc.SaveWorkflowData(a)
+		log.Tracef("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.sim.allocate"})
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerAllocateSim(a.reqAllocateSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*mpb.AllocateSimResponse)
+		if resp != nil {
+			log.Tracef("Resp data is %v", resp)
+			d := tc.GetWorkflowData().(*InitData)
+			if d.reqAllocateSimReq.SubscriberId == resp.Sim.SubscriberId &&
+				resp.Sim.Package != nil &&
+				d.reqAllocateSimReq.PackageId == resp.Sim.Package.PackageId &&
 				d.reqAllocateSimReq.SimType == resp.Sim.Type &&
 				d.reqAllocateSimReq.NetworkId == resp.Sim.NetworkId &&
 				tc.Watcher.Expections() {

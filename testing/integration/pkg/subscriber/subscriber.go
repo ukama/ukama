@@ -176,7 +176,7 @@ func (s *SubscriberSys) SubscriberManagerGetSim(req api.SimReq) (*sPb.GetSimResp
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerGetSubscriber(req api.GetSimsBySubReq) (*sPb.GetSimsBySubscriberResponse, error) {
+func (s *SubscriberSys) SubscriberManagerGetSubscriberSims(req api.GetSimsBySubReq) (*sPb.GetSimsBySubscriberResponse, error) {
 
 	rsp := &sPb.GetSimsBySubscriberResponse{}
 
