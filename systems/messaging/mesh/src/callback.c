@@ -44,11 +44,14 @@ extern void  websocket_onclose(const URequest *request, WSManager *manager,
  * Ulfius main callback function, send AMQP msg and calls the websocket
  * manager and closes.
  */
-int callback_websocket (const URequest *request, UResponse *response,
-						void *data) {
+int callback_websocket(const URequest *request, UResponse *response,
+                       void *data) {
 	int ret;
 	char *nodeID=NULL;
-	Config *config = (Config *)data;
+	Config *config=NULL;
+    WebsocketData *websocketData=NULL;
+
+    config = (Config *)data;
 
 	nodeID = u_map_get(request->map_header, "User-Agent");
 	if (nodeID == NULL) {
@@ -56,20 +59,20 @@ int callback_websocket (const URequest *request, UResponse *response,
 		return U_CALLBACK_ERROR;
 	}
 
-	if (config->deviceInfo) {
-		if (strcmp(config->deviceInfo->nodeID, nodeID) != 0) {
-			/* Only accept one device at a time until the socket is closed. */
-			log_error("Only accept one device at a time. Ignoring");
-			return U_CALLBACK_ERROR;
-		}
-	} else {
-		config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
-		if (config->deviceInfo == NULL) {
+    websocketData = (WebsocketData *)calloc(1, sizeof(WebsocketData));
+    if (websocketData == NULL) {
+        log_error("Error allocating memory: %d", sizeof(DeviceInfo));
+        return U_CALLBACK_ERROR;
+    } else {
+        websocketData->deviceInfo = (DeviceInfo *)calloc(1, sizeof(DeviceInfo));
+        if (websocketData->deviceInfo == NULL) {
 			log_error("Error allocating memory: %d", sizeof(DeviceInfo));
 			return U_CALLBACK_ERROR;
-		}
-        config->deviceInfo->nodeID = strdup(nodeID);
-	}
+		} else {
+            websocketData->deviceInfo->nodeID = strdup(nodeID);
+        }
+        websocketData->data = data;
+    }
 
 	/* Publish device (nodeID) 'connect' event to AMQP exchange */
 	if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CONNECT,
@@ -82,11 +85,11 @@ int callback_websocket (const URequest *request, UResponse *response,
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
 											 &websocket_manager,
-											 data,
+											 websocketData,
 											 &websocket_incoming_message,
-											 data,
+											 websocketData,
 											 &websocket_onclose,
-											 data)) == U_OK) {
+											 websocketData)) == U_OK) {
 		ulfius_add_websocket_deflate_extension(response);
 		return U_CALLBACK_CONTINUE;
 	}

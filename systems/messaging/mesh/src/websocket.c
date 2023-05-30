@@ -10,6 +10,8 @@
 #include <jansson.h>
 #include <ulfius.h>
 #include <string.h>
+#include <time.h>
+#include <errno.h>
 
 #include "mesh.h"
 #include "log.h"
@@ -17,6 +19,7 @@
 #include "jserdes.h"
 #include "data.h"
 #include "map.h"
+#include "config.h"
 
 extern WorkList *Transmit;
 extern MapTable *IDTable;
@@ -39,6 +42,51 @@ static void clear_response(MResponse **resp) {
 }
 
 /*
+ * clear_websocket_data -- free up memory from websocket
+ *
+ */
+static void clear_websocket_data(WebsocketData **ptr) {
+
+    if (*ptr==NULL) return;
+
+    free((*ptr)->deviceInfo->nodeID);
+    free((*ptr)->deviceInfo);
+    free(*ptr);
+}
+/*
+ * websocket_status --
+ *
+ */
+static int websocket_valid(WSManager *manager, void *data) {
+
+    WebsocketData *websocketData = NULL;
+    Config *config=NULL;
+
+    websocketData = (WebsocketData *)data;
+    config = (Config *)websocketData->data;
+
+    if (manager == NULL || data == NULL) return FALSE;
+
+    if (ulfius_websocket_status(manager) ==
+        U_WEBSOCKET_STATUS_CLOSE) { /* connection close */
+        log_debug("Websocket connection is closed");
+
+        /* publish event on AMQP */
+        if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CLOSE,
+						   websocketData->deviceInfo->nodeID) == FALSE) {
+            log_error("Error publishing device connect msg on AMQP exchange");
+        } else {
+            log_debug("Send AMQP offline msg for NodeID: %s",
+                      websocketData->deviceInfo->nodeID);
+        }
+
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/*
  * websocket related callback functions.
  */
 void websocket_manager(const URequest *request, WSManager *manager,
@@ -47,6 +95,8 @@ void websocket_manager(const URequest *request, WSManager *manager,
 	WorkList *list;
 	WorkItem *work;
 	WorkList **transmit = &Transmit;
+    struct timespec ts;
+    int ret;
 
 	if (*transmit == NULL)
 		return;
@@ -57,13 +107,28 @@ void websocket_manager(const URequest *request, WSManager *manager,
 
 		pthread_mutex_lock(&(list->mutex));
 
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += MESH_LOCK_TIMEOUT;
+
 		if (list->exit) { /* Likely we are closing the socket. */
 			break;
 		}
 
 		if (list->first == NULL) { /* Empty. Wait. */
 			log_debug("Waiting for work to be available ...");
-			pthread_cond_wait(&(list->hasWork), &(list->mutex));
+			ret = pthread_cond_timedwait(&(list->hasWork), &(list->mutex), &ts);
+            if (ret == ETIMEDOUT) {
+                /* Check if this connection is still valid, otherwise
+                 * report and close
+                 */
+                pthread_mutex_unlock(&(list->mutex));
+
+                if (!websocket_valid(manager, data)) {
+                    return; /* Close the websocket */
+                } else {
+                    continue;
+                }
+            }
 		}
 
 		/* We have some packet to transmit. */
@@ -114,9 +179,13 @@ void websocket_incoming_message(const URequest *request,
 								void *data) {
 	MRequest *rcvdData=NULL;
 	MResponse *rcvdResp=NULL;
+    Config *config=NULL;
+    WebsocketData *websocketData=NULL;
 	json_t *json;
 	int ret;
-	Config *config = (Config *)data;
+
+    websocketData = (WebsocketData *)data;
+    config = (Config *)websocketData->data;
 
 	log_debug("Packet recevied. Data: %s", message->data);
 
@@ -161,7 +230,11 @@ void websocket_incoming_message(const URequest *request,
 void  websocket_onclose(const URequest *request, WSManager *manager,
 						void *data) {
 
-	Config *config = (Config *)data;
+    WebsocketData *websocketData=NULL;
+    Config *config=NULL;
+
+    websocketData = (WebsocketData *)data;
+    config = (Config *)websocketData->data;
 
 	if (config == NULL)
 		return;
@@ -176,6 +249,8 @@ void  websocket_onclose(const URequest *request, WSManager *manager,
 					  config->deviceInfo->nodeID);
 		}
 	}
+
+    clear_websocket_data(&websocketData);
 
 	return;
 }
