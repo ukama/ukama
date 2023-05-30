@@ -645,7 +645,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimID string) (*p
 			"invalid format of sim uuid. Error %s", err.Error())
 	}
 
-	sim, err := s.simRepo.Get(simID)
+	sim, err := s.simRepo.GetById(simID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
@@ -711,7 +711,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimID string) (
 			"invalid format of sim uuid. Error %s", err.Error())
 	}
 
-	sim, err := s.simRepo.Get(simID)
+	sim, err := s.simRepo.GetById(simID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
