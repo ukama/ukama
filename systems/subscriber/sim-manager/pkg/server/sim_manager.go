@@ -808,7 +808,8 @@ func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {
 
 func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	res := &pb.Package{
-		Id: pkg.Id.String(),
+		Id:        pkg.Id.String(),
+		PackageId: pkg.PackageId.String(),
 	}
 
 	if !pkg.EndDate.IsZero() {
