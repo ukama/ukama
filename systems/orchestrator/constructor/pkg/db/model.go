@@ -9,6 +9,7 @@ type Deployments struct {
 	gorm.Model
 	Name    string    `gorm:"index:deployment_name_idx,not null"`
 	OrgID   uuid.UUID `gorm:"index:org_system_idx,not null;index:org_idx"`
+	OrgName string    `gorm:"index:system_name_idx,not null"` /* Get this from registry. No need to store here just to verify if the irg is valid */
 	SysName string    `gorm:"uniqueIndex:system_name_idx,not null"` /* org specifc name for a system. has to be unique throughout the orgs */
 	Env     string
 	Status  uint8

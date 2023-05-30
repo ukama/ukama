@@ -9,7 +9,7 @@ import (
 )
 
 type DeploymentsRepo interface {
-	AddOrUpdate(org uuid.UUID, name string) error
+	Create(org uuid.UUID, name string) error
 	Get(org uuid.UUID, name string) (*Deployments, error)
 	Delete(org uuid.UUID, name string) error
 }
@@ -24,14 +24,14 @@ func NewDeploymentsRepo(db sql.Db) *deploymentsRepo {
 	}
 }
 
-func (d *deploymentsRepo) AddOrUpdate(Deployment *Deployments) error {
+func (d *deploymentsRepo) Create(Deployment *Deployments) error {
 	r := d.Db.GetGormDb().Create(Deployment)
 	return r.Error
 }
 
 func (d *deploymentsRepo) Get(org uuid.UUID, name string) (*Deployments, error) {
 	var Deployment Deployments
-	result := d.Db.GetGormDb().Preload(clause.Associations).Where("name = ?", name).Where("org = ?", org).First(&Deployment)
+	result := d.Db.GetGormDb().Where("name = ?", name).Where("org = ?", org).First(&Deployment)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -40,7 +40,7 @@ func (d *deploymentsRepo) Get(org uuid.UUID, name string) (*Deployments, error) 
 
 func (d *deploymentsRepo) Delete(org uuid.UUID, name string) error {
 	var Deployment Deployments
-	result := d.Db.GetGormDb().Unscoped().Preload(clause.Associations).Where("name = ?", name).Where("org = ?", org).Delete(&Deployment)
+	result := d.Db.GetGormDb().Where("name = ?", name).Where("org = ?", org).Delete(&Deployment)
 	if result.Error != nil {
 		return result.Error
 	}
