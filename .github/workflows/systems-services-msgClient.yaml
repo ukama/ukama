@@ -5,7 +5,7 @@ name: build-systems-services-msgClient
 on:  
   push:   
     paths:
-        - "services/msgClient/**"
+        - "systems/services/msgClient/**"
         - ".github/workflows/systems-services-msgClient.yaml"
  
   workflow_dispatch:

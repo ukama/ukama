@@ -1,19 +1,19 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-msgClient
+name: build-systems-billing-api-gateway
 on:  
   push:   
     paths:
-        - "systems/init/msgClient/**"
-        - ".github/workflows/systems-init-msgClient.yaml"
+        - "systems/billing/api-gateway/**"
+        - ".github/workflows/systems-billing-api-gateway.yaml"
  
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: systems/init/msgClient
+      working-directory: systems/billing/api-gateway
 
     name: build and test
     runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: init/msgclient
+        registry-name: billing/api-gateway
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -32,9 +32,10 @@ jobs:
     
   sonar-scan:
     name: sonar-scan
+    needs: build
     runs-on: ubuntu-latest
     env: 
-      working-directory: systems/init/msgClient
+      working-directory: systems/billing/api-gateway
     steps:
       - uses: actions/checkout@v3
       - name: scan
@@ -43,13 +44,13 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_init_svc_msgClient
+          project-key: ukama_systems_billing_api-gateway
 
   lint:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: systems/init/msgClient
+      working-directory: systems/billing/api-gateway
     steps:
       - uses: actions/checkout@v3
       - name: lint
@@ -65,7 +66,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: systems/init/msgClient
+        working-directory: systems/billing/api-gateway
       steps:
         - uses: actions/checkout@v3
         
@@ -76,8 +77,8 @@ jobs:
         - name: update gitops
           uses: denispalnitsky/gitops-release@v9
           with:
-            filename: "releases/init-helmfile.yaml"
-            key: "msgClientImageTag"
+            filename: "releases/billing-helmfile.yaml"
+            key: "apigatewayImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"

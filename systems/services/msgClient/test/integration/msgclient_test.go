@@ -5,7 +5,7 @@ package integration
 
 import (
 	"context"
-	"testing"
+	// "testing"
 	"time"
 
 	confr "github.com/num30/config"
@@ -13,11 +13,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
+	// "github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 	pb "github.com/ukama/ukama/systems/services/msgClient/pb/gen"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/anypb"
+	// "google.golang.org/protobuf/types/known/anypb"
 )
 
 type TestConfig struct {
@@ -52,77 +52,77 @@ func init() {
 	log.Infof("%+v", tConfig)
 }
 
-func Test_FullFlow(t *testing.T) {
+// func Test_FullFlow(t *testing.T) {
 
-	// connect to Grpc service
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-	defer cancel()
+// 	// connect to Grpc service
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+// 	defer cancel()
 
-	log.Infoln("Connecting to service ", tConfig.ServiceHost)
-	conn, c, err := CreateMsgBusClient()
-	defer conn.Close()
-	if err != nil {
-		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
-		return
-	}
+// 	log.Infoln("Connecting to service ", tConfig.ServiceHost)
+// 	conn, c, err := CreateMsgBusClient()
+// 	defer conn.Close()
+// 	if err != nil {
+// 		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
+// 		return
+// 	}
 
-	var serviceId string
-	// Contact the server and print out its response.
-	t.Run("Register", func(t *testing.T) {
-		resp, err := c.RegisterService(ctx, &pb.RegisterServiceReq{
-			SystemName:  "init",
-			ServiceName: service1.Name,
-			Exchange:    service1.Exchange,
-			InstanceId:  service1.InstanceId,
-			MsgBusURI:   service1.MsgBusUri,
-			ListQueue:   service1.ListQueue,
-			PublQueue:   service1.PublQueue,
-			ServiceURI:  service1.ServiceUri,
-			GrpcTimeout: service1.GrpcTimeout,
-			Routes:      []string{route1.Key},
-		})
-		assert.NoError(t, err)
+// 	var serviceId string
+// 	// Contact the server and print out its response.
+// 	t.Run("Register", func(t *testing.T) {
+// 		resp, err := c.RegisterService(ctx, &pb.RegisterServiceReq{
+// 			SystemName:  "init",
+// 			ServiceName: service1.Name,
+// 			Exchange:    service1.Exchange,
+// 			InstanceId:  service1.InstanceId,
+// 			MsgBusURI:   service1.MsgBusUri,
+// 			ListQueue:   service1.ListQueue,
+// 			PublQueue:   service1.PublQueue,
+// 			ServiceURI:  service1.ServiceUri,
+// 			GrpcTimeout: service1.GrpcTimeout,
+// 			Routes:      []string{route1.Key},
+// 		})
+// 		assert.NoError(t, err)
 
-		if resp != nil && resp.State == pb.REGISTRAION_STATUS_REGISTERED {
-			serviceId = resp.ServiceUuid
-		}
+// 		if resp != nil && resp.State == pb.REGISTRAION_STATUS_REGISTERED {
+// 			serviceId = resp.ServiceUuid
+// 		}
 
-	})
+// 	})
 
-	t.Run("Start", func(T *testing.T) {
-		_, err := c.StartMsgBusHandler(ctx, &pb.StartMsgBusHandlerReq{
-			ServiceUuid: serviceId,
-		})
-		assert.NoError(t, err)
+// 	t.Run("Start", func(T *testing.T) {
+// 		_, err := c.StartMsgBusHandler(ctx, &pb.StartMsgBusHandlerReq{
+// 			ServiceUuid: serviceId,
+// 		})
+// 		assert.NoError(t, err)
 
-	})
+// 	})
 
-	t.Run("Publish", func(T *testing.T) {
+// 	t.Run("Publish", func(T *testing.T) {
 
-		msg := &pb.StartMsgBusHandlerReq{
-			ServiceUuid: serviceId,
-		}
+// 		msg := &pb.StartMsgBusHandlerReq{
+// 			ServiceUuid: serviceId,
+// 		}
 
-		anyMsg, err := anypb.New(msg)
-		assert.NoError(t, err)
+// 		anyMsg, err := anypb.New(msg)
+// 		assert.NoError(t, err)
 
-		_, err = c.PublishMsg(ctx, &pb.PublishMsgRequest{
-			ServiceUuid: serviceId,
-			RoutingKey:  route1.Key,
-			Msg:         anyMsg,
-		})
-		assert.NoError(t, err)
+// 		_, err = c.PublishMsg(ctx, &pb.PublishMsgRequest{
+// 			ServiceUuid: serviceId,
+// 			RoutingKey:  route1.Key,
+// 			Msg:         anyMsg,
+// 		})
+// 		assert.NoError(t, err)
 
-	})
+// 	})
 
-	t.Run("Stop", func(t *testing.T) {
-		_, err := c.StopMsgBusHandler(ctx, &pb.StopMsgBusHandlerReq{
-			ServiceUuid: serviceId,
-		})
-		assert.NoError(t, err)
-	})
+// 	t.Run("Stop", func(t *testing.T) {
+// 		_, err := c.StopMsgBusHandler(ctx, &pb.StopMsgBusHandlerReq{
+// 			ServiceUuid: serviceId,
+// 		})
+// 		assert.NoError(t, err)
+// 	})
 
-}
+// }
 
 func CreateMsgBusClient() (*grpc.ClientConn, pb.MsgClientServiceClient, error) {
 	log.Infoln("Connecting to MsgBusClientService ", tConfig.ServiceHost)

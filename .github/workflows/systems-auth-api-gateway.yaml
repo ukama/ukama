@@ -34,7 +34,7 @@ jobs:
     name: sonar-scan
     needs: build
     runs-on: ubuntu-latest
-    env:
+    env: 
       working-directory: systems/auth/api-gateway
     steps:
       - uses: actions/checkout@v3
@@ -58,6 +58,7 @@ jobs:
         with:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          
 
   release:
       name: release
@@ -77,7 +78,7 @@ jobs:
           uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/auth-helmfile.yaml"
-            key: "authapigatewayImageTag"
+            key: "apigatewayImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
