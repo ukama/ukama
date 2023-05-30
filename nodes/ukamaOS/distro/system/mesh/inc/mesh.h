@@ -63,6 +63,13 @@ typedef struct _u_map UMap;
 
 typedef struct {
 
+    struct _websocket_client_handler *handler;
+    struct _u_instance *webInst;
+    void    *config;
+} State;
+
+typedef struct {
+
 	char *nodeID;
     uuid_t uuid;
 } DeviceInfo;
