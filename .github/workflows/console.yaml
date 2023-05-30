@@ -12,7 +12,7 @@ jobs:
     name: build and test
     runs-on: ubuntu-latest
     env:
-       working-directory: interfaces/console
+       working-directory: interfaces/ukama-console
     steps:
       - uses: actions/checkout@v2
         # init vars required for tag generation
@@ -89,7 +89,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env:
-      working-directory: interfaces/console
+      working-directory: interfaces/ukama-console
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
@@ -114,7 +114,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
-      working-directory: interfaces/console
+      working-directory: interfaces/ukama-console
     steps:
       # init vars required for tag generation
       - uses: actions/checkout@v3
