@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/billing/invoice/internal"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg"
 
-	"github.com/ukama/ukama/systems/billing/invoice/internal/db"
-	"github.com/ukama/ukama/systems/billing/invoice/internal/pdf"
-	"github.com/ukama/ukama/systems/billing/invoice/internal/util"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/pdf"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/util"
 	"github.com/ukama/ukama/systems/common/grpc"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -40,7 +40,7 @@ func NewInvoiceServer(invoiceRepo db.InvoiceRepo, msgBus mb.MsgBusServiceClient)
 	return &InvoiceServer{
 		invoiceRepo:    invoiceRepo,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 

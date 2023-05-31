@@ -6,9 +6,9 @@ import (
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/billing/invoice/cmd/version"
-	"github.com/ukama/ukama/systems/billing/invoice/internal"
-	"github.com/ukama/ukama/systems/billing/invoice/internal/db"
-	"github.com/ukama/ukama/systems/billing/invoice/internal/server"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/server"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -16,21 +16,21 @@ import (
 	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
-	fs "github.com/ukama/ukama/systems/billing/invoice/internal/pdf/server"
 	generated "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
+	fs "github.com/ukama/ukama/systems/billing/invoice/pkg/pdf/server"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 )
 
-var serviceConfig = internal.NewConfig(internal.ServiceName)
+var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
-	ccmd.ProcessVersionArgument(internal.ServiceName, os.Args, version.Version)
+	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	/* Log level */
 	log.SetLevel(log.TraceLevel)
-	log.Infof("Starting %s service", internal.ServiceName)
+	log.Infof("Starting %s service", pkg.ServiceName)
 
 	initConfig()
 
@@ -40,12 +40,12 @@ func main() {
 
 	runGrpcServer(invoiceDB)
 
-	log.Infof("Exiting service %s", internal.ServiceName)
+	log.Infof("Exiting service %s", pkg.ServiceName)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
+	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
 	} else if serviceConfig.DebugMode {
@@ -57,9 +57,9 @@ func initConfig() {
 	}
 
 	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v",
-		internal.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
+		pkg.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
 
-	internal.IsDebugMode = serviceConfig.DebugMode
+	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
 func initDb() sql.Db {
@@ -83,8 +83,8 @@ func runGrpcServer(gormDB sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
-		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount,
