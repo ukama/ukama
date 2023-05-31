@@ -663,3 +663,47 @@ var TC_manager_inactivate_sim = &test.TestCase{
 		return true, nil
 	},
 }
+
+var TC_manager_get_sim = &test.TestCase{
+	Name:        "Get Sim ",
+	Description: "Get Sim by SimId",
+	Data:        &mpb.GetSimResponse{},
+
+	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqSimReq.SimId = a.SimId
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerGetSim(a.reqSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*mpb.GetSimResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqSimReq.SimId == resp.Sim.Id {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
