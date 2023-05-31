@@ -13,7 +13,7 @@ import {
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TSnackMessage } from '@/types';
-import { SimpleDataTable } from '@/ui/components';
+import { LoadingWrapper, SimpleDataTable } from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
 import { getDataPlanUsage } from '@/utils';
 import PeopleAlt from '@mui/icons-material/PeopleAlt';
@@ -31,21 +31,6 @@ import {
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
 
-const SIMPOOL_DATA = [
-  {
-    id: '123',
-    iccid: '8910300000003540855',
-    type: 'Physical sim',
-    qrcode: '1231412414',
-  },
-  {
-    id: '123',
-    iccid: '8910300000003540833',
-    type: 'E sim',
-    qrcode: '123120412414',
-  },
-];
-
 const NODE_POOL_DATA = [
   {
     type: 'Tower Node',
@@ -56,19 +41,6 @@ const NODE_POOL_DATA = [
     type: 'Amplifier Node',
     dateClaimed: '123120412414',
     id: '8910-3000-0000-3540-833',
-  },
-];
-
-const DATA_PLAN_DATA = [
-  {
-    name: 'Monthly Data Plan',
-    usage: '$0 / 2 GB / Month',
-    users: '4',
-  },
-  {
-    name: 'Weekly Data Plan',
-    usage: '$0 / 1 GB / Weekly',
-    users: '8',
   },
 ];
 
@@ -224,6 +196,7 @@ const DataPlanContainer = ({ data }: ISimPoolContainer) => (
     <Grid container rowSpacing={2} columnSpacing={2}>
       {data.map(
         ({
+          uuid,
           name,
           duration,
           users,
@@ -232,7 +205,7 @@ const DataPlanContainer = ({ data }: ISimPoolContainer) => (
           dataUnit,
           amount,
         }: any) => (
-          <Grid item xs={12} sm={6} md={4} key={name}>
+          <Grid item xs={12} sm={6} md={4} key={uuid}>
             <Paper
               variant="outlined"
               sx={{
@@ -290,14 +263,10 @@ const Manage = () => {
     members: [],
     simPool: [],
     node: NODE_POOL_DATA,
-    dataPlan: DATA_PLAN_DATA,
+    dataPlan: [],
   });
 
-  const {
-    data: members,
-    error: membersError,
-    loading: membersLoading,
-  } = useGetOrgMemberQuery({
+  const { data: members, loading: membersLoading } = useGetOrgMemberQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       setData((prev: any) => ({ ...prev, members: data?.getOrgMembers ?? [] }));
@@ -312,43 +281,41 @@ const Manage = () => {
     },
   });
 
-  const [getSims, { error: simsError, loading: simsLoading }] =
-    useGetSimsLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        setData((prev: any) => ({
-          ...prev,
-          simPool: data?.getSims.sim ?? [],
-        }));
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'sim-pool',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+  const [getSims, { loading: simsLoading }] = useGetSimsLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        simPool: data?.getSims.sim ?? [],
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sim-pool',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
-  const [getPackages, { error: packagesError, loading: packagesLoading }] =
-    useGetPackagesLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        setData((prev: any) => ({
-          ...prev,
-          dataPlan: data?.getPackages.packages ?? [],
-        }));
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'packages',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+  const [getPackages, { loading: packagesLoading }] = useGetPackagesLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        dataPlan: data?.getPackages.packages ?? [],
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'packages',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   useEffect(() => {
     if (memberSearch.length > 3) {
@@ -395,27 +362,38 @@ const Manage = () => {
       uuid: member.uuid,
     }));
 
+  const isLoading = packagesLoading || simsLoading || membersLoading;
+
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
-      {menu === 'manage-members' && (
-        <MemberContainer
-          search={memberSearch}
-          setSearch={setMemberSearch}
-          data={structureData(data.members)}
-        />
-      )}
-      {menu === 'manage-sim' && <SimPoolContainer data={data.simPool} />}
-      {menu === 'manage-node' && (
-        <NodePoolContainer
-          data={data.node}
-          search={nodeSearch}
-          setSearch={setNodeSearch}
-        />
-      )}
-      {menu === 'manage-data-plan' && (
-        <DataPlanContainer data={data.dataPlan} />
-      )}
+      <LoadingWrapper
+        width="100%"
+        radius="small"
+        isLoading={isLoading}
+        cstyle={{ backgroundColor: isLoading ? colors.white : 'transparent' }}
+      >
+        <>
+          {menu === 'manage-members' && (
+            <MemberContainer
+              search={memberSearch}
+              setSearch={setMemberSearch}
+              data={structureData(data.members)}
+            />
+          )}
+          {menu === 'manage-sim' && <SimPoolContainer data={data.simPool} />}
+          {menu === 'manage-node' && (
+            <NodePoolContainer
+              data={data.node}
+              search={nodeSearch}
+              setSearch={setNodeSearch}
+            />
+          )}
+          {menu === 'manage-data-plan' && (
+            <DataPlanContainer data={data.dataPlan} />
+          )}
+        </>
+      </LoadingWrapper>
     </Stack>
   );
 };

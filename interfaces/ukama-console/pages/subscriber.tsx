@@ -9,6 +9,7 @@ import {
   PageContainer,
   VerticalContainer,
 } from '@/styles/global';
+import { colors } from '@/styles/theme';
 import { TCommonData, TSnackMessage } from '@/types';
 import { DataTableWithOptions, LoadingWrapper } from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
@@ -83,10 +84,13 @@ const Page = () => {
 
   return (
     <LoadingWrapper
-      isLoading={true}
       radius="small"
-      height={'calc(100vh - 210px)'}
-      width={'100vw'}
+      width={'100%'}
+      isLoading={loading}
+      // height={'calc(100vh - 210px)'}
+      cstyle={{
+        backgroundColor: loading ? colors.white : 'transparent',
+      }}
     >
       <PageContainer>
         <PageContainerHeader

@@ -1,7 +1,31 @@
+import { PageContainer } from '@/styles/global';
+import { colors } from '@/styles/theme';
+import { LoadingWrapper } from '@/ui/components';
+import ConstructionSharpIcon from '@mui/icons-material/ConstructionSharp';
+import { Stack, Typography } from '@mui/material';
+
 export default function Page() {
   return (
-    <div>
-      <h1>Sites page under progress</h1>
-    </div>
+    <LoadingWrapper
+      radius="small"
+      width={'100%'}
+      isLoading={false}
+      // height={'calc(100vh - 210px)'}
+      cstyle={{
+        backgroundColor: false ? colors.white : 'transparent',
+      }}
+    >
+      <PageContainer>
+        <Stack
+          height={'100%'}
+          direction={'column'}
+          alignItems={'center'}
+          justifyContent={'center'}
+        >
+          <ConstructionSharpIcon />
+          <Typography variant="subtitle2">Under developement.</Typography>
+        </Stack>
+      </PageContainer>
+    </LoadingWrapper>
   );
 }
