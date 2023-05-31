@@ -36,10 +36,10 @@ services:
 
 networks:
   dev-net:
-      ipam:
-        driver: default
-        config:
-            - subnet: 10.1.0.0/24
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.1.0.0/24
             
 volumes:
   postgress-data:
