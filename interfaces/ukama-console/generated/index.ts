@@ -546,6 +546,7 @@ export type Mutation = {
   updateUser: UserResDto;
   updateUserRoaming: OrgUserSimDto;
   updateUserStatus: OrgUserSimDto;
+  uploadSims: UploadSimsResDto;
 };
 
 
@@ -680,6 +681,11 @@ export type MutationUpdateUserRoamingArgs = {
 
 export type MutationUpdateUserStatusArgs = {
   data: UpdateUserServiceInput;
+};
+
+
+export type MutationUploadSimsArgs = {
+  data: UploadSimsInputDto;
 };
 
 export enum Network_Status {
@@ -1559,6 +1565,16 @@ export type UpdateUserServiceInput = {
   userId: Scalars['String']['input'];
 };
 
+export type UploadSimsInputDto = {
+  data: Scalars['String']['input'];
+  simType: Scalars['String']['input'];
+};
+
+export type UploadSimsResDto = {
+  __typename?: 'UploadSimsResDto';
+  iccid: Array<Scalars['String']['output']>;
+};
+
 export type UserApiObj = {
   __typename?: 'UserAPIObj';
   email: Scalars['String']['output'];
@@ -1758,6 +1774,13 @@ export type GetSimpoolStatsQueryVariables = Exact<{
 
 
 export type GetSimpoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, physical: number, esim: number } };
+
+export type UploadSimsMutationVariables = Exact<{
+  data: UploadSimsInputDto;
+}>;
+
+
+export type UploadSimsMutation = { __typename?: 'Mutation', uploadSims: { __typename?: 'UploadSimsResDto', iccid: Array<string> } };
 
 export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string };
 
@@ -2488,6 +2511,39 @@ export function useGetSimpoolStatsLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
 export type GetSimpoolStatsQueryHookResult = ReturnType<typeof useGetSimpoolStatsQuery>;
 export type GetSimpoolStatsLazyQueryHookResult = ReturnType<typeof useGetSimpoolStatsLazyQuery>;
 export type GetSimpoolStatsQueryResult = Apollo.QueryResult<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>;
+export const UploadSimsDocument = gql`
+    mutation uploadSims($data: UploadSimsInputDto!) {
+  uploadSims(data: $data) {
+    iccid
+  }
+}
+    `;
+export type UploadSimsMutationFn = Apollo.MutationFunction<UploadSimsMutation, UploadSimsMutationVariables>;
+
+/**
+ * __useUploadSimsMutation__
+ *
+ * To run a mutation, you first call `useUploadSimsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUploadSimsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [uploadSimsMutation, { data, loading, error }] = useUploadSimsMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUploadSimsMutation(baseOptions?: Apollo.MutationHookOptions<UploadSimsMutation, UploadSimsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UploadSimsMutation, UploadSimsMutationVariables>(UploadSimsDocument, options);
+      }
+export type UploadSimsMutationHookResult = ReturnType<typeof useUploadSimsMutation>;
+export type UploadSimsMutationResult = Apollo.MutationResult<UploadSimsMutation>;
+export type UploadSimsMutationOptions = Apollo.BaseMutationOptions<UploadSimsMutation, UploadSimsMutationVariables>;
 export const GetOrgMemberDocument = gql`
     query getOrgMember {
   getOrgMembers {

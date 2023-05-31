@@ -1,6 +1,7 @@
 import BasicDialog from './BasicDialog';
 import BillingDialog from './BillingDialog';
 import DeactivateUser from './DeactivateUser';
+import FileDropBoxDialog from './FileDropBoxDialog';
 import InviteMemberDialog from './InviteMemberDialog';
 import NodeDialog from './NodeDialog';
 // import UserDetailsDialog from "./UserDetailsDialog";
@@ -12,6 +13,7 @@ export {
   BasicDialog,
   BillingDialog,
   DeactivateUser,
+  FileDropBoxDialog,
   InviteMemberDialog,
   // UserDetailsDialog,
   // UserDetailsDialog,
