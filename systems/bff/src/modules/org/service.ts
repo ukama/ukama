@@ -8,6 +8,7 @@ import { getHeaders } from "../../utils";
 import { IOrgService } from "./interface";
 import OrgMapper from "./mapper";
 import {
+    AddMemberInputDto,
     AddOrgInputDto,
     MemberObj,
     OrgDto,
@@ -91,13 +92,13 @@ export class OrgService implements IOrgService {
         return OrgMapper.dtoToOrgResDto(res);
     };
     addMember = async (
-        userId: string,
+        data: AddMemberInputDto,
         headers: THeaders
     ): Promise<MemberObj> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members`,
-            body: { user_uuid: userId },
+            body: { user_uuid: headers.userId, role: data.role },
             headers: getHeaders(headers),
         });
 

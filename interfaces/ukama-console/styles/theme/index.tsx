@@ -57,6 +57,16 @@ const theme = (isDarkmode: boolean) =>
         step: 8,
       },
       components: {
+        MuiInputBase: {
+          styleOverrides: {
+            root: {
+              '.MuiOutlinedInput-input': {
+                fontSize: '16px',
+                padding: '11px !important',
+              },
+            },
+          },
+        },
         MuiSkeleton: {
           styleOverrides: {
             root: {
@@ -129,7 +139,7 @@ const theme = (isDarkmode: boolean) =>
         MuiSelect: {
           styleOverrides: {
             select: {
-              fontSize: '0.875rem',
+              fontSize: '16px',
               ':focus': {
                 backgroundColor: 'transparent',
               },

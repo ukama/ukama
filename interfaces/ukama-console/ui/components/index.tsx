@@ -7,11 +7,11 @@ import {
   BasicDialog,
   BillingDialog,
   DeactivateUser,
+  InviteMemberDialog,
   NodeAppDetailsDialog,
   NodeDialog,
   NodeSoftwareInfosDialog,
   SoftwareUpdateModal,
-  // UserDetailsDialog,
 } from './AppDialogs';
 import BackButton from './BackButton';
 import BillingAlerts from './BillingAlerts';
@@ -112,6 +112,7 @@ export {
   // UserDetailsDialog,
   NodeSchematicTab,
   GraphTitleWrapper,
+  InviteMemberDialog,
   NodeStatsContainer,
   ApexStackAreaChart,
   OnBoardingFlow,

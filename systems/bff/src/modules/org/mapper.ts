@@ -20,6 +20,7 @@ class OrgMapper implements IOrgMapper {
             role: res.member.role as MEMBER_ROLES,
             isDeactivated: res.member.is_deactivated,
             memberSince: res.member.member_since,
+            user: undefined,
         };
     }
     dtoToOrgResDto(res: OrgAPIResDto): OrgDto {

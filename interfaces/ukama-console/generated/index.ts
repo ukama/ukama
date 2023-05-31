@@ -32,6 +32,11 @@ export enum Api_Method_Type {
   Put = 'PUT'
 }
 
+export type AddMemberInputDto = {
+  email: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+};
+
 export type AddNetworkInputDto = {
   network_name: Scalars['String']['input'];
   org: Scalars['String']['input'];
@@ -545,7 +550,7 @@ export type Mutation = {
 
 
 export type MutationAddMemberArgs = {
-  userId: Scalars['String']['input'];
+  data: AddMemberInputDto;
 };
 
 
@@ -1754,12 +1759,21 @@ export type GetSimpoolStatsQueryVariables = Exact<{
 
 export type GetSimpoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, physical: number, esim: number } };
 
-export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } };
+export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string };
+
+export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null };
 
 export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
+
+export type AddMemberMutationVariables = Exact<{
+  data: AddMemberInputDto;
+}>;
+
+
+export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null } };
 
 export const SubscriberSimFragmentDoc = gql`
     fragment SubscriberSim on SubscriberDto {
@@ -1875,6 +1889,16 @@ export const PackageFragmentDoc = gql`
 }
     ${PackageRateFragmentDoc}
 ${PackageMarkupFragmentDoc}`;
+export const OrgUserFragmentDoc = gql`
+    fragment OrgUser on UserResDto {
+  name
+  email
+  uuid
+  phone
+  isDeactivated
+  registeredSince
+}
+    `;
 export const MemberFragmentDoc = gql`
     fragment Member on MemberObj {
   uuid
@@ -1883,14 +1907,6 @@ export const MemberFragmentDoc = gql`
   role
   isDeactivated
   memberSince
-  user {
-    name
-    email
-    uuid
-    phone
-    isDeactivated
-    registeredSince
-  }
 }
     `;
 export const WhoamiDocument = gql`
@@ -2478,10 +2494,14 @@ export const GetOrgMemberDocument = gql`
     org
     members {
       ...Member
+      user {
+        ...OrgUser
+      }
     }
   }
 }
-    ${MemberFragmentDoc}`;
+    ${MemberFragmentDoc}
+${OrgUserFragmentDoc}`;
 
 /**
  * __useGetOrgMemberQuery__
@@ -2509,3 +2529,36 @@ export function useGetOrgMemberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
 export type GetOrgMemberQueryHookResult = ReturnType<typeof useGetOrgMemberQuery>;
 export type GetOrgMemberLazyQueryHookResult = ReturnType<typeof useGetOrgMemberLazyQuery>;
 export type GetOrgMemberQueryResult = Apollo.QueryResult<GetOrgMemberQuery, GetOrgMemberQueryVariables>;
+export const AddMemberDocument = gql`
+    mutation addMember($data: AddMemberInputDto!) {
+  addMember(data: $data) {
+    ...Member
+  }
+}
+    ${MemberFragmentDoc}`;
+export type AddMemberMutationFn = Apollo.MutationFunction<AddMemberMutation, AddMemberMutationVariables>;
+
+/**
+ * __useAddMemberMutation__
+ *
+ * To run a mutation, you first call `useAddMemberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddMemberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addMemberMutation, { data, loading, error }] = useAddMemberMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddMemberMutation(baseOptions?: Apollo.MutationHookOptions<AddMemberMutation, AddMemberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddMemberMutation, AddMemberMutationVariables>(AddMemberDocument, options);
+      }
+export type AddMemberMutationHookResult = ReturnType<typeof useAddMemberMutation>;
+export type AddMemberMutationResult = Apollo.MutationResult<AddMemberMutation>;
+export type AddMemberMutationOptions = Apollo.BaseMutationOptions<AddMemberMutation, AddMemberMutationVariables>;
