@@ -87,7 +87,6 @@ const Page = () => {
       radius="small"
       width={'100%'}
       isLoading={loading}
-      // height={'calc(100vh - 210px)'}
       cstyle={{
         backgroundColor: loading ? colors.white : 'transparent',
       }}

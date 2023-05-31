@@ -3,7 +3,7 @@ import { Service } from "typedi";
 import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
-import { MemberObj } from "../types";
+import { AddMemberInputDto, MemberObj } from "../types";
 import { OrgService } from "./../service";
 
 @Service()
@@ -14,9 +14,9 @@ export class AddMemberResolver {
     @Mutation(() => MemberObj)
     @UseMiddleware(Authentication)
     async addMember(
-        @Arg("userId") userId: string,
+        @Arg("data") data: AddMemberInputDto,
         @Ctx() ctx: Context
     ): Promise<MemberObj> {
-        return this.OrgService.addMember(userId, parseHeaders(ctx));
+        return this.OrgService.addMember(data, parseHeaders(ctx));
     }
 }

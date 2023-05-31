@@ -7,13 +7,18 @@ import {
 } from '@/constants';
 import {
   OrgMembersResDto,
+  useAddMemberMutation,
   useGetOrgMemberQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
 } from '@/generated';
 import { colors } from '@/styles/theme';
-import { TSnackMessage } from '@/types';
-import { LoadingWrapper, SimpleDataTable } from '@/ui/components';
+import { TObject, TSnackMessage } from '@/types';
+import {
+  InviteMemberDialog,
+  LoadingWrapper,
+  SimpleDataTable,
+} from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
 import { getDataPlanUsage } from '@/utils';
 import PeopleAlt from '@mui/icons-material/PeopleAlt';
@@ -48,6 +53,7 @@ interface IMemberContainer {
   data: any;
   search: string;
   setSearch: (value: string) => void;
+  handleButtonAction: () => void;
 }
 interface ISimPoolContainer {
   data: any;
@@ -103,14 +109,19 @@ const ManageMenu = ({ selectedId, onMenuItemClick }: IManageMenu) => (
   </Paper>
 );
 
-const MemberContainer = ({ data, search, setSearch }: IMemberContainer) => (
+const MemberContainer = ({
+  data,
+  search,
+  setSearch,
+  handleButtonAction,
+}: IMemberContainer) => (
   <Paper
     sx={{
       py: 3,
       px: 4,
       width: '100%',
       overflow: 'hidden',
-      borderRadius: '10px',
+      borderRadius: '5px',
       height: 'calc(100vh - 200px)',
     }}
   >
@@ -119,7 +130,7 @@ const MemberContainer = ({ data, search, setSearch }: IMemberContainer) => (
       title={'My members'}
       buttonTitle={'Invite member'}
       onSearchChange={(e: string) => setSearch(e)}
-      handleButtonAction={() => console.log('Invite member')}
+      handleButtonAction={handleButtonAction}
     />
     <br />
     <SimpleDataTable
@@ -137,7 +148,7 @@ const SimPoolContainer = ({ data }: ISimPoolContainer) => (
       px: 4,
       width: '100%',
       overflow: 'hidden',
-      borderRadius: '10px',
+      borderRadius: '5px',
       height: 'calc(100vh - 200px)',
     }}
   >
@@ -159,7 +170,7 @@ const NodePoolContainer = ({ data, search, setSearch }: INodePoolContainer) => (
       py: 3,
       px: 4,
       width: '100%',
-      borderRadius: '10px',
+      borderRadius: '5px',
       height: 'calc(100vh - 200px)',
     }}
   >
@@ -182,7 +193,7 @@ const DataPlanContainer = ({ data }: ISimPoolContainer) => (
       py: 3,
       px: 4,
       width: '100%',
-      borderRadius: '10px',
+      borderRadius: '5px',
       height: 'calc(100vh - 200px)',
     }}
   >
@@ -255,6 +266,7 @@ const DataPlanContainer = ({ data }: ISimPoolContainer) => (
 );
 
 const Manage = () => {
+  const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
   const [menu, setMenu] = useState<string>('manage-members');
   const [memberSearch, setMemberSearch] = useState<string>('');
   const [nodeSearch, setNodeSearch] = useState<string>('');
@@ -262,11 +274,15 @@ const Manage = () => {
   const [data, setData] = useState<any>({
     members: [],
     simPool: [],
-    node: NODE_POOL_DATA,
     dataPlan: [],
+    node: NODE_POOL_DATA,
   });
 
-  const { data: members, loading: membersLoading } = useGetOrgMemberQuery({
+  const {
+    data: members,
+    loading: membersLoading,
+    refetch: refetchMembers,
+  } = useGetOrgMemberQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       setData((prev: any) => ({ ...prev, members: data?.getOrgMembers ?? [] }));
@@ -310,6 +326,27 @@ const Manage = () => {
     onError: (error) => {
       setSnackbarMessage({
         id: 'packages',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
+    onCompleted: () => {
+      refetchMembers();
+      setSnackbarMessage({
+        id: 'add-member',
+        message: 'Invitation sent successfully',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+      setIsInviteMember(false);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'add-member-error',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -362,7 +399,19 @@ const Manage = () => {
       uuid: member.uuid,
     }));
 
-  const isLoading = packagesLoading || simsLoading || membersLoading;
+  const handleAddMemberAction = (member: TObject) => {
+    addMember({
+      variables: {
+        data: {
+          email: member.email as string,
+          role: member.role as string,
+        },
+      },
+    });
+  };
+
+  const isLoading =
+    packagesLoading || simsLoading || membersLoading || addMemberLoading;
 
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
@@ -379,6 +428,7 @@ const Manage = () => {
               search={memberSearch}
               setSearch={setMemberSearch}
               data={structureData(data.members)}
+              handleButtonAction={() => setIsInviteMember(true)}
             />
           )}
           {menu === 'manage-sim' && <SimPoolContainer data={data.simPool} />}
@@ -394,6 +444,16 @@ const Manage = () => {
           )}
         </>
       </LoadingWrapper>
+      {isInviteMember && (
+        <InviteMemberDialog
+          title={'Invite member'}
+          isOpen={isInviteMember}
+          labelNegativeBtn={'Cancel'}
+          labelSuccessBtn={'Invite member'}
+          handleSuccessAction={handleAddMemberAction}
+          handleCloseAction={() => setIsInviteMember(false)}
+        />
+      )}
     </Stack>
   );
 };

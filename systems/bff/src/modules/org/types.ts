@@ -156,6 +156,15 @@ export class AddOrgInputDto {
 }
 
 @InputType()
+export class AddMemberInputDto {
+    @Field()
+    email: string;
+
+    @Field()
+    role: MEMBER_ROLES;
+}
+
+@InputType()
 export class UpdateMemberInputDto {
     @Field()
     isDeactivated: boolean;

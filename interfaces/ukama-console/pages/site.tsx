@@ -10,7 +10,6 @@ export default function Page() {
       radius="small"
       width={'100%'}
       isLoading={false}
-      // height={'calc(100vh - 210px)'}
       cstyle={{
         backgroundColor: false ? colors.white : 'transparent',
       }}

@@ -120,7 +120,7 @@ const SimpleCardWithBorder = styled(Box)((props) => ({
 
 const PageContainer = styled(Paper)((props) => ({
   marginTop: '18px',
-  borderRadius: '4px',
+  borderRadius: '5px',
   padding: '24px 32px',
   overflow: 'scroll',
   height: 'calc(100vh - 210px)',

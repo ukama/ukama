@@ -617,6 +617,14 @@ query getSimpoolStats($type: String!) {
 ### SimPool End ###
 
 ### Org Start ###
+fragment OrgUser on UserResDto {
+  name
+  email
+  uuid
+  phone
+  isDeactivated
+  registeredSince
+}
 fragment Member on MemberObj {
   uuid
   userId
@@ -624,21 +632,21 @@ fragment Member on MemberObj {
   role
   isDeactivated
   memberSince
-  user {
-    name
-    email
-    uuid
-    phone
-    isDeactivated
-    registeredSince
-  }
 }
 query getOrgMember {
   getOrgMembers {
     org
     members {
       ...Member
+      user {
+        ...OrgUser
+      }
     }
+  }
+}
+mutation addMember($data: AddMemberInputDto!) {
+  addMember(data: $data) {
+    ...Member
   }
 }
 

@@ -30,6 +30,11 @@ const TABLE_EXPORT_OPTIONS = [
   { id: 2, label: 'WORD', value: 'WORD' },
   { id: 3, label: 'PDF', value: 'PDF' },
 ];
+export const MEMBER_ROLES = [
+  { id: 1, label: 'Administrator', value: 'ADMIN' },
+  { id: 2, label: 'Vendor', value: 'VENDOR' },
+  { id: 3, label: 'Member', value: 'MEMBER' },
+];
 const NODE_TYPE = [
   {
     id: 1,
