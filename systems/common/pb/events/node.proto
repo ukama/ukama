@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+
+message NodeOnlineEvent{
+    string nodeId = 1;
+}
+
+message NodeOfflineEvent{
+    string nodeId = 1;
+}

@@ -11,7 +11,6 @@
 #define MESH_MAP_H
 
 #include <pthread.h>
-#include <uuid/uuid.h>
 
 #include "mesh.h"
 
@@ -23,7 +22,7 @@ typedef struct map_item_t {
 
 	unsigned short    port;    /* Client port number */
 	char              *ip;     /* Client IP in sting format */
-	uuid_t            uuid;    /* Mapped UUID */
+    char              *nodeID; /* Mapped NodeID */
 	pthread_mutex_t   mutex;   /* Client thread waiting on response. 
 								* This mutex is released by websocket */
 	pthread_cond_t    hasResp; /* Conditional wait for response */
@@ -49,6 +48,6 @@ typedef struct {
 void init_map_table(MapTable **table);
 void destroy_map_item(MapItem *map);
 MapItem *add_map_to_table(MapTable **table, char *ip, unsigned short port);
-MapItem *lookup_item(MapTable *table, uuid_t uuid);
+MapItem *lookup_item(MapTable *table, char *nodeID);
 
 #endif /* MESH_MAP_H */

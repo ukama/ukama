@@ -9,7 +9,6 @@
 
 #include <pthread.h>
 #include <string.h>
-#include <uuid/uuid.h>
 
 #include "map.h"
 
@@ -48,9 +47,8 @@ static MapItem *create_map_item(char *ip, unsigned short port) {
 	pthread_mutex_init(&map->mutex, NULL);
 	pthread_cond_init(&map->hasResp, NULL);
 
-	/* Assign a new UUID. */
-	uuid_generate(map->uuid);
-
+	/* Assign a new NodeID. */
+    map->nodeID = strdup("uk-xx1234-tnode-m0-xxxx");
 	map->next = NULL;
 
 	return map;
@@ -90,7 +88,7 @@ static MapItem *is_existing_item(MapTable *table, char *ip,
 
 	for (items = table->first; items; items=items->next) {
 		if (strcmp(items->ip, ip)==0 && port == items->port && /* Match found */
-			uuid_is_null(items->uuid)==0) { /* have valid UUID. */
+            items->nodeID != NULL) { /* have valid NodeID. */
 			return items;
 		}
 	}
@@ -99,13 +97,12 @@ static MapItem *is_existing_item(MapTable *table, char *ip,
 }
 
 /*
- * add_map_to_table -- Add new ip:port into mapping table against UUID.
+ * add_map_to_table -- Add new ip:port into mapping table against NodeID.
  *
  */
 MapItem *add_map_to_table(MapTable **table, char *ip, unsigned short port) {
 
 	MapItem *map=NULL;
-	char idStr[36+1] = {0};
 
 	if (ip == NULL && *table == NULL && !port)
 		return NULL;
@@ -139,22 +136,21 @@ MapItem *add_map_to_table(MapTable **table, char *ip, unsigned short port) {
 	/* Unlock */
 	pthread_mutex_unlock(&((*table)->mutex));
 
-	uuid_unparse(map->uuid, &idStr[0]);
-	log_debug("Added new mapping entry in the table. IP: %s port: %d UUID: %s",
-			  ip, port, idStr);
+	log_debug("Added new mapping entry in the table. IP: %s port: %d",
+			  ip, port);
 
 	return map;
 }
 
 /*
- * lookup_item -- find the matching item by uuid
+ * lookup_item -- find the matching item by nodeID
  *
  */
-MapItem *lookup_item(MapTable *table, uuid_t uuid) {
+MapItem *lookup_item(MapTable *table, char *nodeID) {
 
 	MapItem *items;
 
-	if (table == NULL && uuid_is_null(uuid)) {
+	if (table == NULL && nodeID == NULL) {
 		return NULL;
 	}
 
@@ -164,7 +160,7 @@ MapItem *lookup_item(MapTable *table, uuid_t uuid) {
 	}
 
 	for (items = table->first; items; items=items->next) {
-		if (uuid_compare(uuid, items->uuid)==0) {
+        if (strcmp(nodeID, items->nodeID)==0) {
 			return items;
 		}
 	}
@@ -176,7 +172,7 @@ MapItem *lookup_item(MapTable *table, uuid_t uuid) {
  * remove_item -- remove the matching item from the table and free()
  *
  */
-void remove_item(MapTable **table, uuid_t uuid) {
+void remove_item(MapTable **table, char *nodeID) {
 
 
 }

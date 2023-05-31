@@ -73,3 +73,50 @@ type AddSiteRequest struct {
 	NetworkId string `example:"{{NetworkUUID}}" path:"net_id" validate:"required"`
 	SiteName  string `example:"s1-site" json:"site" validate:"required"`
 }
+
+type AttachNodesRequest struct {
+	ParentNode string `json:"parent_node" validate:"required"`
+	AmpNodeL   string `json:"anodel" validate:"required"`
+	AmpNodeR   string `json:"anoder" validate:"required"`
+}
+
+type DetachNodeRequest struct {
+	Node string `json:"node" validate:"required"`
+}
+
+type UpdateNodeStateRequest struct {
+	Node  string `json:"node" path:"node_id" validate:"required"`
+	State string `json:"state" path:"state" validate:"required"`
+}
+
+type UpdateNodeRequest struct {
+	Node string `json:"node" path:"node_id" validate:"required"`
+	Name string `json:"name" validate:"required"`
+}
+
+type GetNodeRequest struct {
+	Node string `json:"node" path:"node_id" validate:"required"`
+}
+
+type GetAllNodesRequest struct {
+}
+type GetFreeNodesRequest struct {
+}
+
+type AddNodeRequest struct {
+	Node  string `json:"node" path:"node_id" validate:"required"`
+	State string `json:"state" validate:"required"`
+}
+
+type DeleteNodeRequest struct {
+	Node string `json:"node" path:"node_id" validate:"required"`
+}
+
+type AddNodeToNetworkRequest struct {
+	Node    string `json:"node" path:"node_id" validate:"required"`
+	Network string `json:"network" path:"network_id" validate:"required"`
+}
+
+type ReleaseNodeFromNetwork struct {
+	Node string `json:"node" path:"node_id" validate:"required"`
+}

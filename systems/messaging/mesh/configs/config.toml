@@ -3,7 +3,7 @@
 [server-config]
 	remote-accept = "9275"
 	local-accept  = "4444"
-	amqp-host     = "localhost"
+	amqp-host     = "192.168.0.100"
 	amqp-port     = "5672"
 	amqp-exchange = "amq.direct"
 	cert          = "/a/b/c/cert.crt"

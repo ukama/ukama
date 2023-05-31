@@ -18,6 +18,7 @@
 #include <getopt.h>
 #include <ulfius.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "mesh.h"
 #include "config.h"
@@ -272,11 +273,9 @@ int main (int argc, char *argv[]) {
 
 	/* Wait here for ever. XXX */
 
-	log_debug("Mesh.d running ...");
+	log_debug("Mesh running ...");
 
-	getchar(); /* For now. */
-
-	log_debug("UnMesh.d and Goodbye ... ");
+    pause();
 
 	ulfius_stop_framework(&serverInst);
 	ulfius_stop_framework(&clientInst);
@@ -290,5 +289,5 @@ int main (int argc, char *argv[]) {
 	clear_config(config);
 	free(config);
 
-	return 1;
+	return 0;
 }

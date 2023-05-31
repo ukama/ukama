@@ -117,13 +117,12 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 int serialize_device_info(json_t **json, DeviceInfo *device) {
 
 	json_t *jDevice=NULL;
-	char idStr[36+1];
 
 	if (device == NULL) {
 		return FALSE;
 	}
 
-	if (uuid_is_null(device->uuid)) {
+	if (device->nodeID == NULL) {
 		return FALSE;
 	}
 
@@ -142,8 +141,7 @@ int serialize_device_info(json_t **json, DeviceInfo *device) {
 		return FALSE;
 	}
 
-	uuid_unparse(device->uuid, &idStr[0]);
-	json_object_set_new(jDevice, JSON_ID, json_string(idStr));
+	json_object_set_new(jDevice, JSON_ID, json_string(device->nodeID));
 
 	return TRUE;
 }

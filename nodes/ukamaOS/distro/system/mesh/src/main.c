@@ -17,6 +17,8 @@
 #include <string.h>
 #include <getopt.h>
 #include <ulfius.h>
+#include <unistd.h>
+#include <signal.h>
 
 #include "mesh.h"
 #include "config.h"
@@ -25,8 +27,11 @@
 
 #define VERSION "0.0.1"
 
+/* Global */
+State *state=NULL;
+
 /* Defined in network.c */
-extern int start_web_services(Config *config, UInst *clientInst);
+extern int start_web_services(Config *config, UInst *webInst);
 extern int start_websocket_client(Config *config,
 								  struct _websocket_client_handler *handler);
 
@@ -38,9 +43,7 @@ MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
 /*
  * usage -- Usage options for the Mesh.d
  *
- *
  */
-
 void usage() {
 
 	printf("Usage: mesh.d [options] \n");
@@ -77,6 +80,72 @@ WorkList **get_receive(void) {
 	return &Receive;
 }
 
+/*
+ * close_websocket -- close websocket connection with server with timeout
+ *
+ */
+void close_websocket(struct _websocket_client_handler *handler) {
+
+    int ret;
+
+    ret = ulfius_websocket_client_connection_close(handler);
+
+    switch(ret) {
+    case U_WEBSOCKET_STATUS_CLOSE:
+        log_debug("Websocket connection with server is closed");
+        break;
+
+    case U_WEBSOCKET_STATUS_OPEN:
+    case U_WEBSOCKET_STATUS_ERROR:
+        log_error("Unable to close websocket connection with server");
+        break;
+    }
+}
+
+/*
+ * signal_term_handler -- SIGTERM handling routine. Gracefully exit the process
+ *
+ */
+void signal_term_handler(int signal) {
+
+    log_debug("Received signal: %d (%s)\n", signal, strsignal(signal));
+
+    if (state == NULL) exit(1);
+
+    close_websocket(state->handler);
+
+    if (state->webInst) {
+        ulfius_stop_framework(state->webInst);
+        ulfius_clean_instance(state->webInst);
+    }
+
+    if (state->config) {
+        clear_config(state->config);
+        free(state->config);
+    }
+
+    free(state);
+    exit(1);
+}
+
+/*
+ *  catch_sigterm -- setup SIGTERM catch
+ *
+ */
+void catch_sigterm(void) {
+
+    static struct sigaction saction;
+
+    memset(&saction, 0, sizeof(saction));
+
+    saction.sa_sigaction = signal_term_handler;
+    sigemptyset(&saction.sa_mask);
+    saction.sa_flags     = 0;
+
+    sigaction(SIGINT, &saction, NULL);
+    sigaction(SIGTERM, &saction, NULL);
+}
+
 int main (int argc, char *argv[]) {
 
 	int secure=FALSE, proxy=FALSE;
@@ -84,9 +153,18 @@ int main (int argc, char *argv[]) {
 	char *debug=DEF_LOG_LEVEL;
 	Config *config=NULL;
 
-	struct _u_instance serverInst;
-	struct _u_instance clientInst;
-	struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
+	struct _u_instance webInst;
+	struct _websocket_client_handler websocketHandler = {NULL, NULL};
+
+    state = (State *)calloc(1, sizeof(State));
+    if (state == NULL) {
+        printf("Unable to allocate memory of size: %ld\n", sizeof(State));
+        return 1;
+    }
+    state->webInst = &webInst;
+    state->handler = &websocketHandler;
+
+    catch_sigterm();
 
 	/* Prase command line args. */
 	while (TRUE) {
@@ -165,7 +243,7 @@ int main (int argc, char *argv[]) {
 				configFile);
 		exit(1);
 	}
-
+    state->config = config;
 	print_config(config);
 
 	/* Setup transmit and receiving queues for the websocket */
@@ -190,27 +268,23 @@ int main (int argc, char *argv[]) {
 	init_map_table(&IDTable);
 
 	/* start webservice for local client. */
-	if (start_web_services(config, &clientInst) != TRUE) {
+	if (start_web_services(config, &webInst) != TRUE) {
 		log_error("Webservice failed to setup for clients. Exiting.");
 		exit(1);
 	}
 
-	if (start_websocket_client(config, &websocket_client_handler) != TRUE) {
+	if (start_websocket_client(config, &websocketHandler) != TRUE) {
 		log_error("Websocket failed to setup for client. Exiting...");
 		exit(1);
 	}
 
-	/* Wait here for ever. XXX */
-
 	log_debug("Mesh.d running ...");
 
-	getchar(); /* For now. */
+    pause();
 
-	log_debug("UnMesh.d and Goodbye ... ");
-
-	ulfius_websocket_client_connection_close(&websocket_client_handler);
-	ulfius_stop_framework(&clientInst);
-	ulfius_clean_instance(&clientInst);
+	ulfius_websocket_client_connection_close(&websocketHandler);
+	ulfius_stop_framework(&webInst);
+	ulfius_clean_instance(&webInst);
 
 	clear_config(config);
 	free(config);

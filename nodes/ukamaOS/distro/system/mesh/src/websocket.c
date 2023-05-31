@@ -20,6 +20,7 @@
 
 extern WorkList *Transmit;
 extern MapTable *IDTable;
+extern State    *state;
 
 /*
  * clear_response -- free up memory from MResponse.
@@ -178,10 +179,8 @@ void websocket_incoming_message(const URequest *request,
 void  websocket_onclose(const URequest *request, WSManager *manager,
 						void *data) {
 
+    int ret;
 	Config *config = (Config *)data;
-
-	if (config == NULL)
-		return;
 
 	return;
 }

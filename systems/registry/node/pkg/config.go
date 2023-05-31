@@ -1,16 +1,22 @@
 package pkg
 
 import (
+	"time"
+
 	uconf "github.com/ukama/ukama/systems/common/config"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 )
 
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database `default:"{}"`
-	Grpc             *uconf.Grpc     `default:"{}"`
-	Metrics          *uconf.Metrics  `default:"{}"`
-	PushGateway      string          `default:"http://localhost:9091"`
+	DB               *uconf.Database  `default:"{}"`
+	Grpc             *uconf.Grpc      `default:"{}"`
+	Metrics          *uconf.Metrics   `default:"{}"`
+	PushGateway      string           `default:"http://localhost:9091"`
+	Timeout          time.Duration    `default:"3s"`
+	Queue            *uconf.Queue     `default:"{}"`
+	MsgClient        *uconf.MsgClient `default:"{}"`
+	Service          *uconf.Service
 }
 
 const (
@@ -36,4 +42,20 @@ var NodeMetric = []metric.MetricConfig{
 		Type:  GaugeType,
 		Value: 0,
 	},
+}
+
+func NewConfig(name string) *Config {
+	return &Config{
+		DB: &uconf.Database{
+			DbName: name,
+		},
+		Service: uconf.LoadServiceHostConfig(name),
+		MsgClient: &uconf.MsgClient{
+			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.node.node.online",
+				"event.cloud.node.node.offline",
+			},
+		},
+	}
 }

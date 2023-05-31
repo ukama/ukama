@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
@@ -42,6 +43,7 @@ type RouterConfig struct {
 type Clients struct {
 	Registry registry
 	User     *client.Users
+	Node     *client.Node
 }
 
 type registry interface {
@@ -166,7 +168,69 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		networks.GET("/:net_id/sites", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
 		networks.POST("/:net_id/sites", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
 		networks.GET("/:net_id/sites/:site", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
+
+		// update network
+
+		// Node routes
+		const node = "/nodes"
+		nodes := auth.Group(node, "Nodes", "Operations on Nodes")
+		nodes.GET("", formatDoc("Get Nodes", "Get all Nodes of an organization"), tonic.Handler(r.getAllNodesHandler, http.StatusOK))
+		nodes.GET("/free", formatDoc("Get Node", "Get all Free Nodes of an organization"), tonic.Handler(r.getFreeNodesHandler, http.StatusOK))
+		nodes.POST("/:node_id", formatDoc("Add Node", "Add a new Node to an organization"), tonic.Handler(r.postAddNodeHandler, http.StatusCreated))
+		nodes.GET("/:node_id", formatDoc("Get Node", "Get a specific node"), tonic.Handler(r.getNodeHandler, http.StatusOK))
+		nodes.POST("/attach", formatDoc("Attach Node", "Group nodes"), tonic.Handler(r.postAttachNodesHandler, http.StatusCreated))
+		nodes.POST("/detach", formatDoc("Move node out of group", "Release node form group"), tonic.Handler(r.postDetachNodeHandler, http.StatusCreated))
+		nodes.POST("/:node_id/update", formatDoc("Update node", "Update node name or state"), tonic.Handler(r.postUpdateNodeHandler, http.StatusCreated))
+		nodes.POST("/:node_id/state/:state", formatDoc("Update node state", "Update node state"), tonic.Handler(r.postUpdateNodeStateHandler, http.StatusCreated))
+		nodes.POST("/:node_id/networks/:network_id/assign", formatDoc("Add node to network", "Add node to network"), tonic.Handler(r.postNodeNetworkHandler, http.StatusCreated))
+		nodes.POST("/:node_id/networks/release", formatDoc("Release node from network", "Release node from network"), tonic.Handler(r.postReleaseNodeNetworkHandler, http.StatusCreated))
+		nodes.DELETE("/:node_id", formatDoc("Delete node from org", "Remove node from org"), tonic.Handler(r.postDeleteNodeHandler, http.StatusOK))
 	}
+}
+
+// Node handlers
+func (r *Router) getAllNodesHandler(c *gin.Context, req *GetAllNodesRequest) (*nodepb.GetAllNodesResponse, error) {
+	return r.clients.Node.GetAllNodes()
+}
+
+func (r *Router) getFreeNodesHandler(c *gin.Context, req *GetFreeNodesRequest) (*nodepb.GetFreeNodesResponse, error) {
+	return r.clients.Node.GetFreeNodes()
+}
+
+func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.GetNodeResponse, error) {
+	return r.clients.Node.GetNode(req.Node)
+}
+
+func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
+	return r.clients.Node.AddNode(req.Node, req.State)
+}
+
+func (r *Router) postAttachNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {
+	return r.clients.Node.AttachNodes(req.ParentNode, req.AmpNodeL, req.AmpNodeR)
+}
+
+func (r *Router) postDetachNodeHandler(c *gin.Context, req *DetachNodeRequest) (*nodepb.DetachNodeResponse, error) {
+	return r.clients.Node.DetachNode(req.Node)
+}
+
+func (r *Router) postUpdateNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*nodepb.UpdateNodeResponse, error) {
+	return r.clients.Node.UpdateNode(req.Node, req.Name)
+}
+
+func (r *Router) postUpdateNodeStateHandler(c *gin.Context, req *UpdateNodeStateRequest) (*nodepb.UpdateNodeStateResponse, error) {
+	return r.clients.Node.UpdateNodeState(req.Node, req.State)
+}
+
+func (r *Router) postNodeNetworkHandler(c *gin.Context, req *AddNodeToNetworkRequest) (*nodepb.AddNodeToNetworkResponse, error) {
+	return r.clients.Node.AddNodeToNetwork(req.Node, req.Network)
+}
+
+func (r *Router) postReleaseNodeNetworkHandler(c *gin.Context, req *ReleaseNodeFromNetwork) (*nodepb.ReleaseNodeFromNetworkResponse, error) {
+	return r.clients.Node.ReleaseNodeFromNetwork(req.Node)
+}
+
+func (r *Router) postDeleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*nodepb.DeleteNodeResponse, error) {
+	return r.clients.Node.DeleteNode(req.Node)
 }
 
 // Org handlers

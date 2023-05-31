@@ -136,6 +136,8 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 
 	if (strstr(target, TARGET_ALPINE) != NULL) {
 		sprintf(buffer, CF_RUN_APK, UPDATE_PKGS);
+	} if (strstr(target, TARGET_FEDORA) != NULL) {
+		sprintf(buffer, CF_RUN_YUM, UPDATE_PKGS);
 	} else {
 		sprintf(buffer, CF_RUN_APT, UPDATE_PKGS);
 	}
@@ -188,7 +190,8 @@ static int create_container_file(char *target, Configs *config, Node *node) {
  * create_vnode_image --
  *
  */
-int create_vnode_image(char *target, Configs *config, Node *node) {
+int create_vnode_image(char *target, Configs *config, Node *node,
+					   char *runTarget) {
 
 	char runMe[MAX_BUFFER]={0};
 	char *buffer=NULL;
@@ -249,7 +252,7 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 	if (system(runMe) != 0) goto failure;
 
 	/* Step:4 push image to the registry */
-	sprintf(runMe, "%s push %s", SCRIPT, nodeInfo->uuid);
+	sprintf(runMe, "%s push %s %s", SCRIPT, nodeInfo->uuid, runTarget);
 	if (system(runMe) != 0) goto failure;
 
 	if (buffer) free(buffer);

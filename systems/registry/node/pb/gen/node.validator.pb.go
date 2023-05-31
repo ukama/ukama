@@ -15,6 +15,18 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *AddNodeToNetworkRequest) Validate() error {
+	return nil
+}
+func (this *AddNodeToNetworkResponse) Validate() error {
+	return nil
+}
+func (this *ReleaseNodeFromNetworkRequest) Validate() error {
+	return nil
+}
+func (this *ReleaseNodeFromNetworkResponse) Validate() error {
+	return nil
+}
 func (this *AttachNodesRequest) Validate() error {
 	return nil
 }
@@ -55,6 +67,32 @@ func (this *GetNodeResponse) Validate() error {
 	}
 	return nil
 }
+func (this *GetAllNodesRequest) Validate() error {
+	return nil
+}
+func (this *GetAllNodesResponse) Validate() error {
+	for _, item := range this.Node {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *GetFreeNodesRequest) Validate() error {
+	return nil
+}
+func (this *GetFreeNodesResponse) Validate() error {
+	for _, item := range this.Node {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *Node) Validate() error {
 	for _, item := range this.Attached {
 		if item != nil {
@@ -81,9 +119,9 @@ func (this *AddNodeResponse) Validate() error {
 	}
 	return nil
 }
-func (this *DeleteRequest) Validate() error {
+func (this *DeleteNodeRequest) Validate() error {
 	return nil
 }
-func (this *DeleteResponse) Validate() error {
+func (this *DeleteNodeResponse) Validate() error {
 	return nil
 }

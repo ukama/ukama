@@ -127,37 +127,6 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 }
 
 /*
- * add_device_info_to_request -- Add device related information to the
- *                               request
- *
- */
-static int add_device_info_to_request(struct _u_request *request,
-				      Config *config) {
-  json_t *json=NULL;
-  char *jStr=NULL;
-
-  if (serialize_device_info(&json, config->deviceInfo) == FALSE) {
-    log_error("Failed to serialize device info for request");
-    return FALSE;
-  }
-
-  /* Add the json into request body. */
-  jStr = json_dumps(json, 0);
-  if (jStr == NULL) {
-    json_decref(json);
-    return FALSE;
-  }
-
-  request->binary_body_length = strlen(jStr);
-  request->binary_body = strdup(jStr);
-
-  free(jStr);
-  json_decref(json);
-
-  return TRUE;
-}
-
-/*
  * start_websocket_client -- Connect with remote server using websockets.
  *
  */
@@ -178,17 +147,11 @@ int start_websocket_client(Config *config,
     goto done;
   }
 
-  /* Add device info (eg UUID) to the initial request. */
-  if (add_device_info_to_request(&request, config) == FALSE) {
-    goto done;
-  }
-
   /* Setup websocket request. */
   if (ulfius_set_websocket_request(&request, config->remoteConnect,
 				   "protocol", "permessage-deflate") == U_OK) {
-    uuid_unparse(config->deviceInfo->uuid, &idStr[0]);
     /* Setup request parameters */
-    u_map_put(request.map_header, "User-Agent", &idStr[0]);
+    u_map_put(request.map_header, "User-Agent", config->deviceInfo->nodeID);
     ulfius_add_websocket_client_deflate_extension(handler);
     request.check_server_certificate = FALSE;
 

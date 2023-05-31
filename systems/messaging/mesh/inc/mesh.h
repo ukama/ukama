@@ -63,6 +63,8 @@
 #define MESH_MAP_TYPE_POST_STR "map_post"
 #define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
 
+#define MESH_LOCK_TIMEOUT 10 /* seconds */
+
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
 typedef struct _u_response UResponse;
@@ -72,7 +74,7 @@ typedef struct _u_map UMap;
 
 typedef struct {
 
-	uuid_t uuid;
+	char *nodeID;
 } DeviceInfo;
 
 typedef struct {
@@ -99,5 +101,11 @@ typedef struct {
 	void        *data;
 	ServiceInfo *serviceInfo;
 } MResponse;
+
+typedef struct {
+
+    DeviceInfo *deviceInfo;
+    void       *data;
+} WebsocketData;
 
 #endif /* MESH_H */

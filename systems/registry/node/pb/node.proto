@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/registry/node/pb/gen";
 
-package ukama.node.v1;
+package ukama.registry.node.v1;
 
 
 service NodeService {
@@ -11,14 +11,35 @@ service NodeService {
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeStateResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+    rpc GetAllNodes(GetAllNodesRequest) returns (GetAllNodesResponse);
+    rpc GetFreeNodes(GetFreeNodesRequest) returns (GetFreeNodesResponse);
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
-    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
+    rpc AddNodeToNetwork(AddNodeToNetworkRequest)returns (AddNodeToNetworkResponse);
+    rpc ReleaseNodeFromNetwork(ReleaseNodeFromNetworkRequest)returns (ReleaseNodeFromNetworkResponse);
 }
 
 
+message AddNodeToNetworkRequest {
+    string node = 1;
+    string network = 2;
+}
+
+message AddNodeToNetworkResponse {
+
+}
+
+message ReleaseNodeFromNetworkRequest {
+    string node = 1;
+}
+
+message ReleaseNodeFromNetworkResponse {
+
+}
+
 message AttachNodesRequest {
-    string parentNodeId = 1;
-    repeated string  attachedNodeIds = 2;
+    string parentNode = 1;
+    repeated string  attachedNodes = 2;
 }
 
 message AttachNodesResponse {
@@ -26,7 +47,7 @@ message AttachNodesResponse {
 }
 
 message DetachNodeRequest{
-    string detachedNodeId = 2;
+    string node = 2;
 }
 
 message DetachNodeResponse {
@@ -34,18 +55,18 @@ message DetachNodeResponse {
 }
 
 message  UpdateNodeStateRequest{
-    string nodeId = 1;
-    NodeState state = 2;
+    string node = 1;
+    string state = 2;
 }
 
 message UpdateNodeStateResponse{
-    string nodeId = 1;
-    NodeState state = 2;
+    string node = 1;
+    string state = 2;
 }
 
 
 message  UpdateNodeRequest{
-    string nodeId = 1;
+    string node = 1;
     string name = 2;
 }
 
@@ -54,20 +75,36 @@ message UpdateNodeResponse {
 }
 
 message GetNodeRequest{
-    string nodeId = 1;
+    string node = 1;
 }
 
 message GetNodeResponse{
     Node node = 1;
 }
 
+message GetAllNodesRequest{
+}
+
+message GetAllNodesResponse{
+   repeated Node node = 1;
+}
+
+message GetFreeNodesRequest{
+}
+
+message GetFreeNodesResponse{
+   repeated Node node = 1;
+}
+
 
 message Node {
-    string nodeId = 1;
-    NodeState state = 4;
-    NodeType type = 5;
-    string name = 6;
-    repeated Node attached = 7;
+    string node = 1;
+    string state = 2;
+    string name = 3;
+    string type = 4;
+    repeated Node attached = 5;
+    bool allocated = 6;
+    string network = 7;
 }
 
 message AddNodeRequest{
@@ -79,23 +116,12 @@ message AddNodeResponse{
 }
 
 
-message DeleteRequest{
-    string nodeId = 1;
+message DeleteNodeRequest{
+    string node = 1;
 }
 
-message DeleteResponse{
-    string nodeId = 1;
+message DeleteNodeResponse{
+    string node = 1;
 }
 
-enum NodeState {
-    UNDEFINED = 0;
-    PENDING = 1;
-    ONBOARDED = 2;
-}
 
-enum NodeType{
-    NODE_TYPE_UNDEFINED = 0;
-    HOME = 1;
-    TOWER = 2;
-    AMPLIFIER = 3;
-}

@@ -64,7 +64,7 @@ sourcetgz: $(TARGET_EXEC)
 
 container:  sourcetgz
 	@echo Building container
-	buildah bud -f . -t testing/virtualnode:${VERSION}
+	podman build -t testing/virtualnode:${VERSION} .
 
 all: $(TARGET_EXEC)
 

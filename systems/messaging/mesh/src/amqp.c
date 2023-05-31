@@ -10,7 +10,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <uuid/uuid.h>
 
 #include "rabbitmq-c/amqp.h"
 
@@ -37,7 +36,7 @@ static char *convert_object_to_str(MsgObject object);
 static char *convert_state_to_str(ObjectState state);
 static int is_valid_event(MeshEvent event);
 static char *create_routing_key(MeshEvent event);
-static void *serialize_link_msg(uuid_t uuid);
+static void *serialize_link_msg(char *nodeID);
 static int object_type(MeshEvent event);
 
 /* Mapping between Mesh.d internal state and AMQP routing key. 
@@ -161,7 +160,7 @@ static char *convert_object_to_str(MsgObject object) {
 	switch(object) {
 
 	case LINK:
-		str = OBJECT_LINK_STR;
+		str = OBJECT_NODE_STR;
 		break;
 
 	case CERT:
@@ -186,27 +185,15 @@ static char *convert_state_to_str(ObjectState state) {
 	switch(state) {
 
 	case CONNECT:
-		str = STATE_CONNECT_STR;
-		break;
+    case ACTIVE:
+        str = STATE_ONLINE_STR;
+        break;
 
 	case FAIL:
-		str = STATE_FAIL_STR;
-		break;
-
-	case ACTIVE:
-		str = STATE_ACTIVE_STR;
-		break;
-
 	case LOST:
-		str = STATE_LOST_STR;
-		break;
-
 	case END:
-		str = STATE_END_STR;
-		break;
-
 	case CLOSE:
-		str = STATE_CLOSE_STR;
+		str = STATE_OFFLINE_STR;
 		break;
 
 	case VALID:
@@ -424,24 +411,21 @@ static char *create_routing_key(MeshEvent event) {
 }
 
 /*
+
  * serialize_link_msg -- Serialize the protobuf msg for the Link object
  *
  */
-static void *serialize_link_msg(uuid_t uuid) {
+static void *serialize_link_msg(char *nodeID) {
 
-	char idStr[36+1];
 	Link linkMsg = LINK__INIT;
 	void *buff=NULL;
 	size_t len, idLen=36+1;
 
-	if (uuid_is_null(uuid)) {
+	if (nodeID == NULL) {
 		return NULL;
 	}
 
-	uuid_unparse(uuid, &idStr[0]);
-
-	linkMsg.uuid = (char *)malloc(idLen);
-	strncpy(linkMsg.uuid, &idStr[0], idLen);
+    linkMsg.uuid = strdup(nodeID);
 
 	len = link__get_packed_size(&linkMsg);
 
@@ -499,7 +483,7 @@ static int object_type(MeshEvent event) {
  *
  */
 int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
-					   uuid_t uuid) {
+					   char *nodeID) {
 
 	/* THREAD? XXX - Think about me*/
 	char *key=NULL;
@@ -512,9 +496,9 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 		return FALSE;
 	}
 
-	if (uuid_is_null(uuid)) {
-		return FALSE;
-	}
+    if (nodeID == NULL) {
+        return FALSE;
+    }
 
 	/* Step-1: build the routing key for the event. 
 	 * <type>.<source>.<container>.<object>.<state>
@@ -535,7 +519,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	/* Step-3: protobuf msg. */
 	if (object_type(event) == OBJECT_LINK) {
 
-		buff = serialize_link_msg(uuid);
+		buff = serialize_link_msg(nodeID);
 		if (buff==NULL) {
 			log_error("Error serializing Link packet for AMQP. Event: %d",
 					  event);
@@ -549,7 +533,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	}
 
 	/* Step-4: send the message to AMQP broker */
-	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
+	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(""),
 							 amqp_cstring_bytes(key), 0, 0, &prop,
 							 amqp_cstring_bytes(buff));
 	if (ret < 0) {
@@ -558,7 +542,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 				  amqp_error_string2(ret));
 	} else {
 		ret = TRUE;
-		log_debug("AMQP message successfully sent to exchange");
+		log_debug("AMQP message successfully sent to default exchange");
 	}
 
 	free(buff);
