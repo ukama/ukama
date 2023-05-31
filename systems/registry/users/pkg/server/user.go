@@ -48,15 +48,22 @@ func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msg
 func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding user %v", req)
 
-	user := &db.User{
-		Email: req.User.Email,
-		Name:  req.User.Name,
-		Phone: req.User.Phone,
-		Uuid:  uuid.NewV4(),
+	authId, err := uuid.FromString(req.User.AuthId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	err := u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
-		log.Infof("Adding user %s as member of default org", user.Uuid)
+	user := &db.User{
+		Email:  req.User.Email,
+		Name:   req.User.Name,
+		Phone:  req.User.Phone,
+		AuthId: authId,
+	}
+
+	err = u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
+		log.Infof("Adding user %s as member of default org", user.Id)
+
+		user.Id = uuid.NewV4()
 
 		svc, err := u.orgService.GetClient()
 		if err != nil {
@@ -64,7 +71,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		}
 
 		_, err = svc.RegisterUser(ctx, &orgpb.RegisterUserRequest{
-			UserUuid: user.Uuid.String(),
+			UserUuid: user.Id.String(),
 		})
 		if err != nil {
 			return err
@@ -102,7 +109,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	uuid, err := uuid.FromString(req.UserUuid)
+	uuid, err := uuid.FromString(req.UserId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -115,14 +122,28 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 	return &pb.GetResponse{User: dbUserToPbUser(user)}, nil
 }
 
+func (u *UserService) GetByAuthId(ctx context.Context, req *pb.GetByAuthIdRequest) (*pb.GetResponse, error) {
+	authId, err := uuid.FromString(req.AuthId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	user, err := u.userRepo.GetByAuthId(authId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	return &pb.GetResponse{User: dbUserToPbUser(user)}, nil
+}
+
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
-	uuid, err := uuid.FromString(req.UserUuid)
+	uuid, err := uuid.FromString(req.UserId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
 	user := &db.User{
-		Uuid:  uuid,
+		Id:    uuid,
 		Name:  req.User.Name,
 		Email: req.User.Email,
 		Phone: req.User.Phone,
@@ -138,7 +159,7 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 }
 
 func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest) (*pb.DeactivateResponse, error) {
-	userUUID, err := uuid.FromString(req.UserUuid)
+	userUUID, err := uuid.FromString(req.UserId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -154,7 +175,7 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 
 	// set user's status to suspended
 	user := &db.User{
-		Uuid:        userUUID,
+		Id:          userUUID,
 		Deactivated: true,
 	}
 
@@ -166,7 +187,7 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 			return err
 		}
 
-		_, err = svc.UpdateUser(ctx, &orgpb.UpdateUserRequest{UserUuid: user.Uuid.String(),
+		_, err = svc.UpdateUser(ctx, &orgpb.UpdateUserRequest{UserUuid: user.Id.String(),
 			Attributes: &orgpb.UserAttributes{IsDeactivated: user.Deactivated},
 		})
 		if err != nil {
@@ -191,7 +212,7 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	userUUID, err := uuid.FromString(req.UserUuid)
+	userUUID, err := uuid.FromString(req.UserId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -248,11 +269,12 @@ func (u *UserService) PushMetrics() {
 
 func dbUserToPbUser(user *db.User) *pb.User {
 	return &pb.User{
-		Uuid:          user.Uuid.String(),
+		Id:            user.Id.String(),
 		Name:          user.Name,
 		Phone:         user.Phone,
 		Email:         user.Email,
 		IsDeactivated: user.Deactivated,
+		AuthId:        user.AuthId.String(),
 		CreatedAt:     timestamppb.New(user.CreatedAt),
 	}
 }

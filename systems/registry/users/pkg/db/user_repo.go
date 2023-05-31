@@ -9,9 +9,10 @@ import (
 
 type UserRepo interface {
 	Add(user *User, nestedFunc func(*User, *gorm.DB) error) error
-	Get(uuid uuid.UUID) (*User, error)
+	Get(id uuid.UUID) (*User, error)
+	GetByAuthId(id uuid.UUID) (*User, error)
 	Update(user *User, nestedFunc func(*User, *gorm.DB) error) error
-	Delete(uuid uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
+	Delete(id uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 	GetUserCount() (int64, int64, error)
 }
 
@@ -19,7 +20,7 @@ type userRepo struct {
 	Db sql.Db
 }
 
-func NewUserRepo(db sql.Db) *userRepo {
+func NewUserRepo(db sql.Db) UserRepo {
 	return &userRepo{
 		Db: db,
 	}
@@ -45,10 +46,21 @@ func (u *userRepo) Add(user *User, nestedFunc func(user *User, tx *gorm.DB) erro
 	return err
 }
 
-func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
+func (u *userRepo) Get(id uuid.UUID) (*User, error) {
 	var user User
 
-	result := u.Db.GetGormDb().Where("uuid = ?", uuid).First(&user)
+	result := u.Db.GetGormDb().First(&user, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &user, nil
+}
+
+func (u *userRepo) GetByAuthId(id uuid.UUID) (*User, error) {
+	var user User
+
+	result := u.Db.GetGormDb().Where("auth_id= ?", id).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -59,7 +71,7 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 // Update user modified non-empty fields provided by user struct
 func (u *userRepo) Update(user *User, nestedFunc func(*User, *gorm.DB) error) error {
 	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Clauses(clause.Returning{}).Where("uuid = ?", user.Uuid).Updates(user)
+		result := tx.Clauses(clause.Returning{}).Where("id = ?", user.Id).Updates(user)
 
 		if result.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
@@ -82,15 +94,15 @@ func (u *userRepo) Update(user *User, nestedFunc func(*User, *gorm.DB) error) er
 	return err
 }
 
-func (u *userRepo) Delete(userUUID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+func (u *userRepo) Delete(id uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
 	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Where(&User{Uuid: userUUID}).Delete(&User{})
+		result := tx.Where(&User{Id: id}).Delete(&User{})
 		if result.Error != nil {
 			return result.Error
 		}
 
 		if nestedFunc != nil {
-			nestErr := nestedFunc(userUUID, tx)
+			nestErr := nestedFunc(id, tx)
 			if nestErr != nil {
 				return nestErr
 			}

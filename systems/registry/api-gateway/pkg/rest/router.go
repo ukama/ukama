@@ -141,12 +141,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const user = "/users"
 		users := auth.Group(user, "Users", "Operations on Users")
 		users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
-		users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+		users.GET("/:user_id", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+		users.GET("/auth/:auth_id", formatDoc("Get User By AuthId", "Get a specific user by authId"), tonic.Handler(r.getUserByAuthIdHandler, http.StatusOK))
 		// user orgs-member
 		// update user
 		// Deactivate user
 		// Delete user
-		// users.DELETE("/:user_uuid", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
+		// users.DELETE("/:user_id", formatDoc("Remove User", "Remove a user from the registry"), tonic.Handler(r.removeUserHandler, http.StatusOK))
 
 		// Network routes
 		// Networks
@@ -212,7 +213,11 @@ func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) erro
 // Users handlers
 
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.Get(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
+	return r.clients.User.Get(c.Param("user_id"), c.GetString(USER_ID_KEY))
+}
+
+func (r *Router) getUserByAuthIdHandler(c *gin.Context, req *GetUserByAuthIdRequest) (*userspb.GetResponse, error) {
+	return r.clients.User.GetByAuthId(c.Param("auth_id"), c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {

@@ -19,7 +19,7 @@ type AddOrgRequest struct {
 type MemberRequest struct {
 	OrgName  string `example:"milky-way" path:"org" validate:"required"`
 	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
-	Role string `example:"member" json:"role" validate:"required"`
+	Role     string `example:"member" json:"role" validate:"required"`
 }
 
 type GetMemberRequest struct {
@@ -28,20 +28,24 @@ type GetMemberRequest struct {
 }
 
 type GetMemberRoleRequest struct {
-	OrgId  string `example:"{{OrgId}}" path:"org" validate:"required"`
+	OrgId    string `example:"{{OrgId}}" path:"org" validate:"required"`
 	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 }
 type UpdateMemberRequest struct {
 	OrgName       string `example:"milky-way" path:"org" validate:"required"`
 	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 	IsDeactivated bool   `example:"false" json:"isDeactivated,omitempty"`
-	Role string `example:"member" json:"role,omitempty"`
+	Role          string `example:"member" json:"role,omitempty"`
 }
 
 // Users group
 
 type GetUserRequest struct {
-	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
+	UserId string `example:"{{UserID}}" path:"user_id" validate:"required"`
+}
+
+type GetUserByAuthIdRequest struct {
+	AuthId string `example:"{{AuthId}}" path:"auth_id" validate:"required"`
 }
 
 type AddUserRequest struct {
