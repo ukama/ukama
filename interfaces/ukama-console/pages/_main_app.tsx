@@ -138,6 +138,28 @@ const MainApp = ({
   useEffect(() => {
     if (route.pathname) {
       setIsFullScreen(route.pathname === '/manage');
+      switch (route.pathname) {
+        case '/home':
+          setPage('Home');
+          break;
+        case '/node':
+          setPage('Nodes');
+          break;
+        case '/site':
+          setPage('Sites');
+          break;
+        case '/subscriber':
+          setPage('Subscriber');
+          break;
+        case '/site_planning':
+          setPage('Site Planning');
+          break;
+        case '/setting':
+          setPage('Settings');
+          break;
+        default:
+          setPage('Home');
+      }
     }
   }, [route.pathname]);
 
