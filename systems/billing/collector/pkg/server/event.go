@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	client "github.com/ukama/ukama/systems/billing/collector/internal/clients"
+	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
