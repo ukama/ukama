@@ -86,7 +86,7 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, internal.SystemName, version.Version, r.config.debugMode)
+	r.f = rest.NewFizzRouter(r.config.serverConf, internal.SystemName, version.Version, r.config.debugMode, "")
 	v1 := r.f.Group("/v1", "API gateway", "Billing system version v1")
 
 	// Invoice routes
