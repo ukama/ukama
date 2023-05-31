@@ -66,7 +66,7 @@ func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 	log.Debugf("Starting setup for %s", t.Name)
 
 	if t.SetUpFxn != nil {
-		err := t.SetUpFxn(ctx, t)
+		err := t.SetUpFxn(test, ctx, t)
 		if assert.NoError(test, err) {
 			t.State = StateTypeUnderTest
 		} else {
@@ -105,9 +105,9 @@ func (t *TestCase) Run(test *testing.T, ctx context.Context) error {
 			t.State = StateTypeFail
 			return err
 		}
-	}else {
+	} else {
 		/* For cases where response is just a http ststus code. In that case we don't
-		have anything in response to check fi test fxn passes state fxn need not to do anything*/ 
+		have anything in response to check fi test fxn passes state fxn need not to do anything*/
 		if t.State == StateTypeTested {
 			t.State = StateTypePass
 		}
@@ -176,12 +176,37 @@ func (w *Workflow) Status() {
 	w.ListTestCase()
 }
 
+func (w *Workflow) GetTestCase(name string) *TestCase {
+	for _, tc := range w.testSeq {
+		if tc.Name == name {
+			return tc
+		}
+
+	}
+	return nil
+}
+
+func (w *Workflow) ExecuteTestCase(test *testing.T, ctx context.Context, t *TestCase) error {
+
+	err := t.Run(test, ctx)
+	if err != nil {
+		w.State = StateTypeFail
+		log.Errorf("Test Case %s failed. Error: %s", t.Name, err.Error())
+		return err
+	} else {
+		log.Debugf("Test Status: %s", t.String())
+		w.stats(t.State)
+	}
+
+	return nil
+}
+
 func (w *Workflow) Run(test *testing.T, ctx context.Context) error {
 
 	if w.SetUpFxn != nil {
 		log.Tracef("Starting setup for workflow %s", w.Name)
 
-		err := w.SetUpFxn(ctx, w)
+		err := w.SetUpFxn(test, ctx, w)
 		if assert.NoError(test, err) {
 			w.State = StateTypeUnderTest
 		} else {

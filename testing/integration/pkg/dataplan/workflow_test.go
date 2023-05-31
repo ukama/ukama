@@ -20,7 +20,7 @@ func TestWorkflow_DataPlanSystem(t *testing.T) {
 	/* Sim pool */
 	w := test.NewWorkflow("dataplan_workflow_1", "Adding rates and packages")
 
-	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
+	w.SetUpFxn = func(t *testing.T, ctx context.Context, w *test.Workflow) error {
 		log.Tracef("Initilizing Data for %s.", w.String())
 		w.Data = InitializeData(nil, nil)
 

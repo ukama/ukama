@@ -100,7 +100,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 
 	w := test.NewWorkflow("init_workflow_1", "Adding a system and getting its credentials")
 
-	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
+	w.SetUpFxn = func(t *testing.T, ctx context.Context, w *test.Workflow) error {
 		log.Debugf("Initilizing Data for %s.", w.String())
 		w.Data = InitializeData()
 
@@ -114,7 +114,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 		Description: "Add organization to lookup table",
 		Data:        &pb.AddOrgResponse{},
 		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			/* Setup required for test case
 			Initialize any test specific data if required
 			*/
@@ -173,7 +173,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 		Description: "Add System to lookup table",
 		Data:        &pb.AddSystemResponse{},
 		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			/* Setup required for test case
 			Initialize any test specific data if required
 			*/
@@ -226,7 +226,7 @@ func TestWorkflow_InitSystem(t *testing.T) {
 		Description: "Add node to a lookup table",
 		Data:        &pb.AddSystemResponse{},
 		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			/* Setup required for test case
 			Initialize any test specific data if required
 			*/

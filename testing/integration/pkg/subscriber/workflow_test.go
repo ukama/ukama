@@ -23,48 +23,56 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 	/* Sim pool */
 	w := test.NewWorkflow("susbcriber_workflow_1", "Adding sims to sim pool")
 
-	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
+	w.SetUpFxn = func(t *testing.T, ctx context.Context, w *test.Workflow) error {
 
 		log.Tracef("Initilizing Data for %s.", w.String())
 		d := InitializeData()
 
-		/* Initialize registry *
-		/* add user */
-		uresp, err := d.Reg.AddUser(d.reqAddUserRequest)
-		if err != nil {
-			return nil
-		} else {
-			d.UserId = uresp.User.Uuid
-		}
+		/* Initialize registry */
+		err := func() error {
+			/* add user */
+			uresp, err := d.Reg.AddUser(d.reqAddUserRequest)
+			if err != nil {
+				return err
+			} else {
+				d.UserId = uresp.User.Uuid
+			}
 
-		/* adding  */
-		d.reqAddOrgRequest.Owner = d.UserId
-		resp, err := d.Reg.AddOrg(d.reqAddOrgRequest)
-		if err != nil {
-			return nil
-		} else {
-			d.OrgId = resp.Org.Id
-			d.OrgName = resp.Org.Name
-		}
+			/* adding  */
+			d.reqAddOrgRequest.Owner = d.UserId
+			resp, err := d.Reg.AddOrg(d.reqAddOrgRequest)
+			if err != nil {
+				return err
+			} else {
+				d.OrgId = resp.Org.Id
+				d.OrgName = resp.Org.Name
+			}
 
-		/* adding network */
-		nresp, err := d.Reg.AddNetwork(rapi.AddNetworkRequest{
-			OrgName: resp.Org.Name,
-			NetName: resp.Org.Name + "-net",
-		})
-		if err != nil {
+			/* adding network */
+			nresp, err := d.Reg.AddNetwork(rapi.AddNetworkRequest{
+				OrgName: resp.Org.Name,
+				NetName: resp.Org.Name + "-net",
+			})
+			if err != nil {
+				return err
+			} else {
+				d.NetworkId = nresp.Network.Id
+				d.NetworkName = nresp.Network.Name
+			}
+
 			return nil
-		} else {
-			d.NetworkId = nresp.Network.Id
-			d.NetworkName = nresp.Network.Name
+		}()
+		if err != nil {
+			log.Errorf("Initializing registry system dependencies failed. Error %v", err)
+			return err
 		}
 
 		/* Initialize the data-plan system */
 		err = func(org string, owner string) error {
 			dp := test.NewWorkflow("dataplan_config_for_subscriber", "Adding data pan for subscriber")
 
-			dp.SetUpFxn = func(ctx context.Context, dp *test.Workflow) error {
-				log.Tracef("Initilizing Data for %s.", dp.String())
+			dp.SetUpFxn = func(t *testing.T, ctx context.Context, dp *test.Workflow) error {
+				log.Tracef("Initializing Data for %s.", dp.String())
 				dp.Data = dataplan.InitializeData(&org, &owner)
 
 				log.Tracef("Workflow Data : %+v", dp.Data)
@@ -74,7 +82,7 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			/* Add baserate */
 			dp.RegisterTestCase(dataplan.TC_dp_add_baserate)
 
-			// Add Mark ups
+			/* Add Mark ups */
 			dp.RegisterTestCase(dataplan.TC_dp_add_markup)
 
 			/* Get rate request */
@@ -89,20 +97,23 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 			dp.ExitFxn = func(ctx context.Context, wf *test.Workflow) error {
 				data := dp.GetData().(*dataplan.InitData)
 				d.PackageId = data.PackageId
-
 				return nil
 			}
 
 			/* Run */
 			err := dp.Run(t, context.Background())
-			assert.NoError(t, err)
+			if err != nil {
+				log.Errorf("Initializing data plan dependencies failed. Error %v", err)
+				return err
+			}
 
+			d.wfDataPlan = dp
 			return err
 
 		}(d.OrgId, d.UserId)
 
 		w.Data = d
-		log.Tracef("Workflow Data : %+v", w.Data)
+		log.Tracef("Workflow Data for DataPlan : %+v", w.Data)
 		return err
 	}
 
@@ -133,17 +144,17 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 	/* Get Sim by subscriber */
 	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
 
-	// /*Activate sim */
-	// w.RegisterTestCase(TC_manager_activate_sim)
-
-	// /* Get Sim by subscriber after activation */
-	// w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
-
 	/*Activate sim */
 	w.RegisterTestCase(TC_manager_inactivate_sim)
 
 	/* Get Sim by subscriber after inactivation */
 	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
+
+	/* Add one more package to sim */
+	w.RegisterTestCase(TC_manager_add_extra_package_to_sim)
+
+	/* Get package for sim */
+	w.RegisterTestCase(TC_manager_get_multiple_package_for_sim)
 
 	/* Run */
 	err := w.Run(t, context.Background())

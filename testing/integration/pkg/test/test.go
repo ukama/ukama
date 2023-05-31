@@ -3,16 +3,17 @@ package test
 import (
 	"context"
 	"strconv"
+	"testing"
 )
 
 type WorkflowExitHandlerFxn func(ctx context.Context, w *Workflow) error
-type WorkflowSetupHandlerFxn func(ctx context.Context, w *Workflow) error
+type WorkflowSetupHandlerFxn func(t *testing.T, ctx context.Context, w *Workflow) error
 type WorkflowStateCheckHandlerFxn func(ctx context.Context, w *Workflow) (bool, error)
 
-type ExitHandlerFxn func(ctx context.Context, t *TestCase) error
-type SetupHandlerFxn func(ctx context.Context, t *TestCase) error
-type StateHanderFxn func(ctx context.Context, t *TestCase) (bool, error)
-type TestFxn func(ctx context.Context, t *TestCase) error
+type ExitHandlerFxn func(ctx context.Context, tc *TestCase) error
+type SetupHandlerFxn func(t *testing.T, ctx context.Context, tc *TestCase) error
+type StateHanderFxn func(ctx context.Context, tc *TestCase) (bool, error)
+type TestFxn func(ctx context.Context, tc *TestCase) error
 
 type StateType uint8
 

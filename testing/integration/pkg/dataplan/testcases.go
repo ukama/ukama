@@ -3,6 +3,7 @@ package dataplan
 import (
 	"context"
 	"fmt"
+	"testing"
 	"time"
 
 	"github.com/bxcodec/faker/v4"
@@ -44,10 +45,10 @@ type InitData struct {
 	reqGetMarkupRequest               api.GetMarkupRequest
 	reqGetMarkupHistoryRequest        api.GetMarkupHistoryRequest
 	reqGetRateRequest                 api.GetRateRequest
-	reqAddPackageRequest              api.AddPackageRequest
 	reqGetPackageByOrgRequest         api.GetPackageByOrgRequest
 	reqPackagesRequest                api.PackagesRequest
 	reqUpdatePackageRequest           api.UpdatePackageRequest
+	ReqAddPackageRequest              api.AddPackageRequest
 
 	/* API Responses */
 
@@ -129,7 +130,7 @@ func InitializeData(org *string, owner *string) *InitData {
 		To:       utils.GenerateFutureDate(30 * 24 * time.Hour),
 	}
 
-	d.reqAddPackageRequest = api.AddPackageRequest{
+	d.ReqAddPackageRequest = api.AddPackageRequest{
 		OwnerId:    d.OwnerId,
 		OrgId:      d.OrgId,
 		Name:       faker.FirstName() + "-monthly-pack",
@@ -168,7 +169,7 @@ var TC_dp_add_baserate = &test.TestCase{
 	Data:        &bpb.UploadBaseRatesResponse{},
 	//Workflow:    w,
 
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -228,7 +229,7 @@ var TC_dp_get_baserate_by_id = &test.TestCase{
 	Description: "Get Base rate by Id",
 	Data:        &bpb.GetBaseRatesByIdResponse{},
 	//Workflow:    w,
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -272,7 +273,7 @@ var TC_dp_get_baserate_by_country = &test.TestCase{
 	Name:        "Get Base rates for country",
 	Description: "Get base rates for country",
 	Data:        &bpb.GetBaseRatesResponse{},
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -323,7 +324,7 @@ var TC_dp_get_baserate_by_period = &test.TestCase{
 	Description: "Get base rate for a period",
 	Data:        &bpb.GetBaseRatesResponse{},
 	//Workflow:    w,
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -377,7 +378,7 @@ var TC_dp_add_markup = &test.TestCase{
 	Description: "Add markup rate fpr owner",
 	Data:        &rpb.UpdateMarkupResponse{},
 	//Workflow:    w,
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -464,7 +465,7 @@ var TC_dp_get_rate = &test.TestCase{
 	Description: "Get rate for a Owner's org",
 	Data:        &rpb.GetRateResponse{},
 	//Workflow:    w,
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -523,7 +524,7 @@ var TC_dp_get_rate = &test.TestCase{
 
 			a := tc.GetWorkflowData().(*InitData)
 			if len(resp.Rates) > 0 {
-				a.reqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
+				a.ReqAddPackageRequest.BaserateId = resp.Rates[0].Uuid
 			}
 
 			tc.SaveWorkflowData(a)
@@ -537,7 +538,7 @@ var TC_dp_add_package = &test.TestCase{
 	Description: "Create package",
 	Data:        &ppb.AddPackageResponse{},
 	//Workflow:    w,
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -553,7 +554,7 @@ var TC_dp_add_package = &test.TestCase{
 		a, ok := tc.GetWorkflowData().(*InitData)
 		if ok {
 
-			tc.Data, err = a.Sys.DataPlanPackageAdd(a.reqAddPackageRequest)
+			tc.Data, err = a.Sys.DataPlanPackageAdd(a.ReqAddPackageRequest)
 		} else {
 			log.Errorf("Invalid data type for Workflow data.")
 			return fmt.Errorf("invalid data type for Workflow data")
@@ -568,7 +569,7 @@ var TC_dp_add_package = &test.TestCase{
 		resp := tc.GetData().(*ppb.AddPackageResponse)
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
-			if data.reqAddPackageRequest.OrgId == resp.Package.OrgId &&
+			if data.ReqAddPackageRequest.OrgId == resp.Package.OrgId &&
 				resp.Package.Uuid != "" &&
 				true == tc.Watcher.Expections() {
 				check = true
@@ -600,7 +601,7 @@ var TC_dp_get_package_for_org = &test.TestCase{
 	Description: "Get packages for the organization",
 	Data:        &ppb.GetByOrgPackageResponse{},
 	//Workflow:    w,
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/

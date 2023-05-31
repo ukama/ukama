@@ -5,10 +5,13 @@ import (
 	b64 "encoding/base64"
 	"fmt"
 	"strings"
+	"testing"
+	"time"
 
 	"github.com/bxcodec/faker/v4"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	rapi "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	api "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
@@ -16,6 +19,7 @@ import (
 	mpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	smutil "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 	spb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/testing/integration/pkg/dataplan"
 	"github.com/ukama/ukama/testing/integration/pkg/registry"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
@@ -39,6 +43,7 @@ type InitData struct {
 	NetworkName  string
 	UserId       string
 	PackageId    string
+	AddPackageId string
 	EncKey       string
 	SimId        string
 	SimStatus    string
@@ -64,6 +69,9 @@ type InitData struct {
 
 	/* API responses */
 
+	/* Dependencies on other system */
+	//wfReg      *test.Workflow
+	wfDataPlan *test.Workflow
 }
 
 func InitializeData() *InitData {
@@ -141,7 +149,6 @@ func InitializeData() *InitData {
 	d.reqAddPkgToSimReq = api.AddPkgToSimReq{
 		SimId:     "",
 		PackageId: "",
-		//StartDate: "",
 	}
 
 	d.reqAllocateSimReq = api.AllocateSimReq{
@@ -191,7 +198,7 @@ var TC_simpool_upload = &test.TestCase{
 	Name:        "Add Sims to sim-pool",
 	Description: "Add sims to sim-pool from the base64 encoded file",
 	Data:        &spb.UploadResponse{},
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -323,7 +330,7 @@ var TC_registry_add_subscriber = &test.TestCase{
 	Name:        "Add Subscriber",
 	Description: "Add subscriber to registry",
 	Data:        &rpb.AddSubscriberResponse{},
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -383,7 +390,7 @@ var TC_manager_allocate_sim = &test.TestCase{
 	Name:        "Allocate sim",
 	Description: "Allocating a sim to subscriber",
 	Data:        &mpb.AllocateSimResponse{},
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -453,7 +460,7 @@ var TC_registry_get_subscriber = &test.TestCase{
 	Description: "Get subscriber",
 	Data:        &rpb.GetSubscriberResponse{},
 
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -497,7 +504,7 @@ var TC_manager_get_sim_by_subscriber = &test.TestCase{
 	Description: "Get Sim by subscriber",
 	Data:        &mpb.GetSimsBySubscriberResponse{},
 
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -543,7 +550,7 @@ var TC_manager_get_package_for_sim = &test.TestCase{
 	Name:        "Get package for a sim ",
 	Description: "Get package for a sim",
 	Data:        &mpb.GetPackagesBySimResponse{},
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -594,7 +601,7 @@ var TC_manager_activate_sim = &test.TestCase{
 	Name:        "Activate sim",
 	Description: "Activate a sim of subscriber",
 	Data:        &mpb.ToggleSimStatusResponse{},
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -631,7 +638,7 @@ var TC_manager_inactivate_sim = &test.TestCase{
 	Name:        "Inactivate sim",
 	Description: "Inactivate a sim of subscriber",
 	Data:        &mpb.ToggleSimStatusResponse{},
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -669,7 +676,7 @@ var TC_manager_get_sim = &test.TestCase{
 	Description: "Get Sim by SimId",
 	Data:        &mpb.GetSimResponse{},
 
-	SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
 		Initialize any test specific data if required
 		*/
@@ -700,6 +707,123 @@ var TC_manager_get_sim = &test.TestCase{
 		if resp != nil {
 			data := tc.GetWorkflowData().(*InitData)
 			if data.reqSimReq.SimId == resp.Sim.Id {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var TC_manager_add_extra_package_to_sim = &test.TestCase{
+	Name:        "Add an extra package to sim",
+	Description: "Allocating multiple packages to a sim of subscriber",
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+
+		/* Add a new package */
+		err := func(t *testing.T) error {
+			dTC := a.wfDataPlan.GetTestCase(dataplan.TC_dp_add_package.Name)
+			if dTC == nil {
+				return fmt.Errorf("%s", "invalid test case name")
+			}
+
+			d := dTC.GetWorkflowData().(*dataplan.InitData)
+			d.ReqAddPackageRequest.Name = "Additonal-package"
+
+			/* Add a package to Data plan first */
+			err := a.wfDataPlan.ExecuteTestCase(t, ctx, dTC)
+			if err != nil {
+				log.Errorf("Adding addtional test package failed: %v", err)
+				return err
+			}
+
+			a.AddPackageId = d.PackageId
+			tc.SaveWorkflowData(a)
+			return nil
+		}(t)
+		if err != nil {
+			log.Errorf("Failed to add new pacakge.")
+			return err
+		}
+
+		a.reqAddPkgToSimReq.PackageId = a.AddPackageId
+		a.reqAddPkgToSimReq.SimId = a.SimId
+		a.reqAddPkgToSimReq.StartDate = timestamppb.New(time.Now().Add(24 * time.Hour))
+
+		tc.SaveWorkflowData(a)
+
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			err = a.Sys.SubscriberManagerAddPackage(a.reqAddPkgToSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+}
+
+var TC_manager_get_multiple_package_for_sim = &test.TestCase{
+	Name:        "Get multiple package for a sim ",
+	Description: "Get mulliple package for a sim",
+	Data:        &mpb.GetPackagesBySimResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqSimReq.SimId = a.SimId
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerGetPackageForSim(a.reqSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*mpb.GetPackagesBySimResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqSimReq.SimId == resp.SimId &&
+				len(resp.Packages) > 0 && func(ps []*mpb.Package, id string) bool {
+				for _, p := range ps {
+					if id == p.PackageId {
+						return true
+					}
+				}
+				return false
+			}(resp.Packages, data.PackageId) &&
+				func(ps []*mpb.Package, id string) bool {
+					for _, p := range ps {
+						if id == p.PackageId {
+							return true
+						}
+					}
+					return false
+				}(resp.Packages, data.AddPackageId) {
 				check = true
 			}
 		}

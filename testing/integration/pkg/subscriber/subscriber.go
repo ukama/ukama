@@ -195,7 +195,6 @@ func (s *SubscriberSys) SubscriberManagerGetSubscriberSims(req api.GetSimsBySubR
 	return rsp, nil
 }
 
-
 func (s *SubscriberSys) SubscriberManagerGetPackageForSim(req api.SimReq) (*sPb.GetPackagesBySimResponse, error) {
 
 	rsp := &sPb.GetPackagesBySimResponse{}
@@ -216,22 +215,16 @@ func (s *SubscriberSys) SubscriberManagerGetPackageForSim(req api.SimReq) (*sPb.
 }
 
 func (s *SubscriberSys) SubscriberManagerAddPackage(req api.AddPkgToSimReq) error {
-
+	log.Tracef("Request to add pacakage: %+v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
 		return fmt.Errorf("request marshal error. error: %s", err.Error())
 	}
-	rsp := &sPb.AllocateSimResponse{}
 
-	resp, err := s.r.Post(s.u.String()+"/v1/package", b)
+	_, err = s.r.Post(s.u.String()+"/v1/sim/package", b)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return err
-	}
-
-	err = pjson.Unmarshal(resp.Body(), rsp)
-	if err != nil {
-		return fmt.Errorf("response unmarshal error. error: %s", err.Error())
 	}
 
 	return nil
