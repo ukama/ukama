@@ -135,6 +135,7 @@ message Package {
     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     google.protobuf.Timestamp startDate = 3 [json_name = "start_date"];
     google.protobuf.Timestamp endDate = 4 [json_name = "end_date"];
+    bool isActive = 5  [json_name = "is_active"];
 }
 
 
