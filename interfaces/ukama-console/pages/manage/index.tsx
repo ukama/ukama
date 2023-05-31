@@ -11,10 +11,12 @@ import {
   useGetOrgMemberQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
+  useUploadSimsMutation,
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TObject, TSnackMessage } from '@/types';
 import {
+  FileDropBoxDialog,
   InviteMemberDialog,
   LoadingWrapper,
   SimpleDataTable,
@@ -56,6 +58,11 @@ interface IMemberContainer {
   handleButtonAction: () => void;
 }
 interface ISimPoolContainer {
+  data: any;
+  handleActionButon: Function;
+}
+
+interface IDataPlanContainer {
   data: any;
 }
 
@@ -141,7 +148,7 @@ const MemberContainer = ({
   </Paper>
 );
 
-const SimPoolContainer = ({ data }: ISimPoolContainer) => (
+const SimPoolContainer = ({ data, handleActionButon }: ISimPoolContainer) => (
   <Paper
     sx={{
       py: 3,
@@ -157,7 +164,7 @@ const SimPoolContainer = ({ data }: ISimPoolContainer) => (
       showSearch={false}
       title={'My SIM pool'}
       buttonTitle={'IMPORT SIMS'}
-      handleButtonAction={() => console.log('IMPORT SIMS')}
+      handleButtonAction={() => handleActionButon()}
     />
     <br />
     <SimpleDataTable dataset={data} columns={MANAGE_SIM_POOL_COLUMN} />
@@ -187,7 +194,7 @@ const NodePoolContainer = ({ data, search, setSearch }: INodePoolContainer) => (
   </Paper>
 );
 
-const DataPlanContainer = ({ data }: ISimPoolContainer) => (
+const DataPlanContainer = ({ data }: IDataPlanContainer) => (
   <Paper
     sx={{
       py: 3,
@@ -267,7 +274,8 @@ const DataPlanContainer = ({ data }: ISimPoolContainer) => (
 
 const Manage = () => {
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
-  const [menu, setMenu] = useState<string>('manage-members');
+  const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
+  const [menu, setMenu] = useState<string>('manage-sim');
   const [memberSearch, setMemberSearch] = useState<string>('');
   const [nodeSearch, setNodeSearch] = useState<string>('');
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
@@ -297,23 +305,24 @@ const Manage = () => {
     },
   });
 
-  const [getSims, { loading: simsLoading }] = useGetSimsLazyQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      setData((prev: any) => ({
-        ...prev,
-        simPool: data?.getSims.sim ?? [],
-      }));
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'sim-pool',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  const [getSims, { loading: simsLoading, refetch: refetchSims }] =
+    useGetSimsLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setData((prev: any) => ({
+          ...prev,
+          simPool: data?.getSims.sim ?? [],
+        }));
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'sim-pool',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   const [getPackages, { loading: packagesLoading }] = useGetPackagesLazyQuery({
     fetchPolicy: 'cache-and-network',
@@ -353,6 +362,29 @@ const Manage = () => {
       });
     },
   });
+
+  const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
+    {
+      onCompleted: () => {
+        refetchSims();
+        setSnackbarMessage({
+          id: 'sim-pool-uploaded',
+          message: 'Sims uploaded successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        setIsInviteMember(false);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'sim-pool-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    },
+  );
 
   useEffect(() => {
     if (memberSearch.length > 3) {
@@ -410,8 +442,23 @@ const Manage = () => {
     });
   };
 
+  const handleUploadSimsAction = (member: TObject) => {
+    addMember({
+      variables: {
+        data: {
+          email: member.email as string,
+          role: member.role as string,
+        },
+      },
+    });
+  };
+
   const isLoading =
-    packagesLoading || simsLoading || membersLoading || addMemberLoading;
+    packagesLoading ||
+    simsLoading ||
+    membersLoading ||
+    addMemberLoading ||
+    uploadSimsLoading;
 
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
@@ -431,7 +478,12 @@ const Manage = () => {
               handleButtonAction={() => setIsInviteMember(true)}
             />
           )}
-          {menu === 'manage-sim' && <SimPoolContainer data={data.simPool} />}
+          {menu === 'manage-sim' && (
+            <SimPoolContainer
+              data={data.simPool}
+              handleActionButon={() => setIsUploadSims(true)}
+            />
+          )}
           {menu === 'manage-node' && (
             <NodePoolContainer
               data={data.node}
@@ -452,6 +504,16 @@ const Manage = () => {
           labelSuccessBtn={'Invite member'}
           handleSuccessAction={handleAddMemberAction}
           handleCloseAction={() => setIsInviteMember(false)}
+        />
+      )}
+      {isUploadSims && (
+        <FileDropBoxDialog
+          title={'Upload Sims in Sim Pool'}
+          isOpen={isUploadSims}
+          labelNegativeBtn={'Cancel'}
+          labelSuccessBtn={'Upload'}
+          handleSuccessAction={handleUploadSimsAction}
+          handleCloseAction={() => setIsUploadSims(false)}
         />
       )}
     </Stack>

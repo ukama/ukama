@@ -614,6 +614,12 @@ query getSimpoolStats($type: String!) {
     esim
   }
 }
+mutation uploadSims($data: UploadSimsInputDto!) {
+  uploadSims(data: $data) {
+    iccid
+  }
+}
+
 ### SimPool End ###
 
 ### Org Start ###
