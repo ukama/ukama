@@ -135,6 +135,12 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 	/* Get package for sim */
 	w.RegisterTestCase(TC_manager_get_package_for_sim)
 
+	/* Activate Package for sim */
+	w.RegisterTestCase(TC_manager_set_active_package_for_sim)
+
+	/* Check active package for sim */
+	w.RegisterTestCase(TC_manager_check_active_package_for_sim)
+
 	/* Get sim: Have to call this so that test agent add a sim record*/
 	w.RegisterTestCase(TC_manager_get_sim)
 
@@ -144,17 +150,29 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 	/* Get Sim by subscriber */
 	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
 
-	/*Activate sim */
-	w.RegisterTestCase(TC_manager_inactivate_sim)
-
-	/* Get Sim by subscriber after inactivation */
-	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
-
 	/* Add one more package to sim */
 	w.RegisterTestCase(TC_manager_add_extra_package_to_sim)
 
 	/* Get package for sim */
 	w.RegisterTestCase(TC_manager_get_multiple_package_for_sim)
+
+	/* Change Activate Package for sim to Additonal package */
+	w.RegisterTestCase(TC_manager_set_active_package_for_sim)
+
+	/* Check active package for sim */
+	w.RegisterTestCase(TC_manager_check_active_package_for_sim)
+
+	/* Delete package for sim */
+	w.RegisterTestCase(TC_manager_set_delete_package_for_sim)
+
+	/* Get Packages after removal fo the a package*/
+	w.RegisterTestCase(TC_manager_get_package_after_removal_for_sim)
+
+	/* Inactivate sim */
+	w.RegisterTestCase(TC_manager_inactivate_sim)
+
+	/* Get Sim by subscriber after inactivation */
+	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
 
 	/* Run */
 	err := w.Run(t, context.Background())

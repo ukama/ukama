@@ -271,8 +271,9 @@ func (s *SubscriberSys) SubscriberManagerUpdateSim(req api.ActivateDeactivateSim
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerAcitvatePackage(req api.SetActivePackageForSimReq) (*sPb.SetActivePackageResponse, error) {
+func (s *SubscriberSys) SubscriberManagerActivatePackage(req api.SetActivePackageForSimReq) (*sPb.SetActivePackageResponse, error) {
 
+	log.Tracef("Package activation request: %v", req)
 	rsp := &sPb.SetActivePackageResponse{}
 
 	_, err := s.r.Patch(s.u.String()+"/v1/sim/"+req.SimId+"/package/"+req.PackageId, nil)
@@ -284,7 +285,19 @@ func (s *SubscriberSys) SubscriberManagerAcitvatePackage(req api.SetActivePackag
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerDeleteSim(req api.SimReq) (*sPb.DeleteSimResponse, error) {
+func (s *SubscriberSys) SubscriberManagerDeletePackage(req api.RemovePkgFromSimReq) error {
+
+	log.Tracef("Package deletion request: %v", req)
+	_, err := s.r.Patch(s.u.String()+"/v1/sim/"+req.SimId+"/package/"+req.PackageId, nil)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (s *SubscriberSys) SubscriberManagerDeleteSim(req api.RemovePkgFromSimReq) (*sPb.DeleteSimResponse, error) {
 
 	rsp := &sPb.DeleteSimResponse{}
 

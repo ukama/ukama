@@ -28,26 +28,27 @@ import (
 const MAX_POOL = 5
 
 type InitData struct {
-	Sys          *SubscriberSys
-	Reg          *registry.RegistrySys
-	Host         string
-	RegHost      string
-	SimType      string `default:"test"`
-	ICCID        []string
-	SimToken     []string
-	MbHost       string
-	SubscriberId string
-	OrgId        string
-	OrgName      string
-	NetworkId    string
-	NetworkName  string
-	UserId       string
-	PackageId    string
-	AddPackageId string
-	EncKey       string
-	SimId        string
-	SimStatus    string
-	AllocatedSim *spb.Sim
+	Sys             *SubscriberSys
+	Reg             *registry.RegistrySys
+	Host            string
+	RegHost         string
+	SimType         string `default:"test"`
+	ICCID           []string
+	SimToken        []string
+	MbHost          string
+	SubscriberId    string
+	OrgId           string
+	OrgName         string
+	NetworkId       string
+	NetworkName     string
+	UserId          string
+	PackageId       string
+	AddPackageId    string
+	ActivePackageId string
+	EncKey          string
+	SimId           string
+	SimStatus       string
+	AllocatedSim    *spb.Sim
 
 	/* API requests */
 	reqSimPoolUploadSimReq       api.SimPoolUploadSimReq
@@ -60,6 +61,7 @@ type InitData struct {
 	reqGetSimsBySubReq           api.GetSimsBySubReq
 	reqSimReq                    api.SimReq
 	reqAddPkgToSimReq            api.AddPkgToSimReq
+	reqRemovePkgFromSimReq       api.RemovePkgFromSimReq
 	reqAllocateSimReq            api.AllocateSimReq
 	reqActivateDeactivateSimReq  api.ActivateDeactivateSimReq
 	reqSetActivePackageForSimReq api.SetActivePackageForSimReq
@@ -448,6 +450,7 @@ var TC_manager_allocate_sim = &test.TestCase{
 		resp := tc.GetData().(*mpb.AllocateSimResponse)
 		a := tc.GetWorkflowData().(*InitData)
 		a.SimId = resp.Sim.Id
+		a.ActivePackageId = resp.Sim.Package.PackageId
 		tc.SaveWorkflowData(a)
 
 		tc.Watcher.Stop()
@@ -589,6 +592,48 @@ var TC_manager_get_package_for_sim = &test.TestCase{
 				}
 				return false
 			}(resp.Packages, data.PackageId) {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var TC_manager_check_active_package_for_sim = &test.TestCase{
+	Name:        "Check active package for a sim ",
+	Description: "Check active package for a sim",
+	Data:        &mpb.GetPackagesBySimResponse{},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerGetPackageForSim(a.reqSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*mpb.GetPackagesBySimResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqSimReq.SimId == resp.SimId &&
+				len(resp.Packages) > 0 && func(ps []*mpb.Package, id string) bool {
+				for _, p := range ps {
+					if id == p.PackageId && p.IsActive {
+						return true
+					}
+				}
+				return false
+			}(resp.Packages, data.ActivePackageId) {
 				check = true
 			}
 		}
@@ -753,6 +798,7 @@ var TC_manager_add_extra_package_to_sim = &test.TestCase{
 		a.reqAddPkgToSimReq.PackageId = a.AddPackageId
 		a.reqAddPkgToSimReq.SimId = a.SimId
 		a.reqAddPkgToSimReq.StartDate = timestamppb.New(time.Now().Add(24 * time.Hour))
+		a.ActivePackageId = a.AddPackageId
 
 		tc.SaveWorkflowData(a)
 
@@ -775,7 +821,7 @@ var TC_manager_add_extra_package_to_sim = &test.TestCase{
 
 var TC_manager_get_multiple_package_for_sim = &test.TestCase{
 	Name:        "Get multiple package for a sim ",
-	Description: "Get mulliple package for a sim",
+	Description: "Get multiple package for a sim",
 	Data:        &mpb.GetPackagesBySimResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
@@ -815,6 +861,147 @@ var TC_manager_get_multiple_package_for_sim = &test.TestCase{
 					}
 				}
 				return false
+			}(resp.Packages, data.PackageId) &&
+				func(ps []*mpb.Package, id string) bool {
+					for _, p := range ps {
+						if id == p.PackageId {
+							return true
+						}
+					}
+					return false
+				}(resp.Packages, data.AddPackageId) {
+				check = true
+			}
+		}
+
+		return check, nil
+	},
+}
+
+var TC_manager_set_active_package_for_sim = &test.TestCase{
+	Name:        "Set active package for a sim ",
+	Description: "Set active package for a sim",
+	Data:        &mpb.SetActivePackageResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqSetActivePackageForSimReq.SimId = a.SimId
+		a.reqSetActivePackageForSimReq.PackageId = a.ActivePackageId
+		tc.SaveWorkflowData(a)
+		log.Tracef("Setting up watcher for %s", tc.Name)
+		tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.sim.activepackage"})
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerActivatePackage(a.reqSetActivePackageForSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		if tc.Watcher.Expections() {
+			check = true
+			a := tc.GetWorkflowData().(*InitData)
+			a.ActivePackageId = a.reqSetActivePackageForSimReq.PackageId
+			tc.SaveWorkflowData(a)
+		}
+
+		return check, nil
+	},
+
+	ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Here we save any data required to be saved from the test case
+		Cleanup any test specific data
+		*/
+		tc.Watcher.Stop()
+		return nil
+	},
+}
+
+var TC_manager_set_delete_package_for_sim = &test.TestCase{
+	Name:        "Delete package for a sim ",
+	Description: "Delete package for a sim",
+
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqRemovePkgFromSimReq.SimId = a.SimId
+		a.reqRemovePkgFromSimReq.PackageId = a.PackageId
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			err = a.Sys.SubscriberManagerDeletePackage(a.reqRemovePkgFromSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+}
+
+var TC_manager_get_package_after_removal_for_sim = &test.TestCase{
+	Name:        "Get availaible packages for a sim ",
+	Description: "Get availaible packages after roemoval of a pacakge for a sim",
+	Data:        &mpb.GetPackagesBySimResponse{},
+	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+		/* Setup required for test case
+		Initialize any test specific data if required
+		*/
+		a := tc.GetWorkflowData().(*InitData)
+		a.reqSimReq.SimId = a.SimId
+		tc.SaveWorkflowData(a)
+		return nil
+	},
+
+	Fxn: func(ctx context.Context, tc *test.TestCase) error {
+		/* Test Case */
+		var err error
+		a, ok := tc.GetWorkflowData().(*InitData)
+		if ok {
+			tc.Data, err = a.Sys.SubscriberManagerGetPackageForSim(a.reqSimReq)
+		} else {
+			log.Errorf("Invalid data type for Workflow data.")
+			return fmt.Errorf("invalid data type for Workflow data")
+		}
+		return err
+	},
+
+	StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+		/* Check for possible failures during test case */
+		check := false
+
+		resp := tc.GetData().(*mpb.GetPackagesBySimResponse)
+		if resp != nil {
+			data := tc.GetWorkflowData().(*InitData)
+			if data.reqSimReq.SimId == resp.SimId &&
+				len(resp.Packages) > 0 && func(ps []*mpb.Package, id string) bool {
+				for _, p := range ps {
+					if id == p.PackageId {
+						return false
+					}
+				}
+				return true
 			}(resp.Packages, data.PackageId) &&
 				func(ps []*mpb.Package, id string) bool {
 					for _, p := range ps {
