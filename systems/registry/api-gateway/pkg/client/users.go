@@ -91,6 +91,13 @@ func (r *Users) DeactivateUser(userId string, requesterId string) error {
 	return err
 }
 
+func (r *Users) Whoami(userId string, requesterId string) (*pbusers.WhoamiResponse, error) {
+	ctx, cancel := r.getContext(requesterId)
+	defer cancel()
+
+	return r.client.Whoami(ctx, &pbusers.GetRequest{UserId: userId})
+}
+
 func (r *Users) getContext(requester string) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	md := metadata.Pairs("x-requester", requester)
