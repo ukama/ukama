@@ -114,11 +114,19 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 
 	errStatus := &rest.ErrorResponse{}
+	resp := &resty.Response{}
+	var err error
 
-	resp, err := r.C.R().
-		SetError(errStatus).
-		SetBody(b).
-		Patch(url)
+	if b != nil {
+		resp, err = r.C.R().
+			SetError(errStatus).
+			SetBody(b).
+			Patch(url)
+	} else {
+		resp, err = r.C.R().
+			SetError(errStatus).
+			Patch(url)
+	}
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())

@@ -273,7 +273,7 @@ func (s *SubscriberSys) SubscriberManagerUpdateSim(req api.ActivateDeactivateSim
 
 func (s *SubscriberSys) SubscriberManagerActivatePackage(req api.SetActivePackageForSimReq) (*sPb.SetActivePackageResponse, error) {
 
-	log.Tracef("Package activation request: %v", req)
+	log.Tracef("Package activation request: %+v", req)
 	rsp := &sPb.SetActivePackageResponse{}
 
 	_, err := s.r.Patch(s.u.String()+"/v1/sim/"+req.SimId+"/package/"+req.PackageId, nil)

@@ -135,12 +135,6 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 	/* Get package for sim */
 	w.RegisterTestCase(TC_manager_get_package_for_sim)
 
-	/* Activate Package for sim */
-	w.RegisterTestCase(TC_manager_set_active_package_for_sim)
-
-	/* Check active package for sim */
-	w.RegisterTestCase(TC_manager_check_active_package_for_sim)
-
 	/* Get sim: Have to call this so that test agent add a sim record*/
 	w.RegisterTestCase(TC_manager_get_sim)
 
@@ -149,6 +143,12 @@ func TestWorkflow_SubscriberSystem(t *testing.T) {
 
 	/* Get Sim by subscriber */
 	w.RegisterTestCase(TC_manager_get_sim_by_subscriber)
+
+	/* Activate Package for sim */
+	w.RegisterTestCase(TC_manager_set_active_package_for_sim)
+
+	/* Check active package for sim */
+	w.RegisterTestCase(TC_manager_check_active_package_for_sim)
 
 	/* Add one more package to sim */
 	w.RegisterTestCase(TC_manager_add_extra_package_to_sim)
