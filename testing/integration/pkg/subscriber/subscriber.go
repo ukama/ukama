@@ -288,7 +288,7 @@ func (s *SubscriberSys) SubscriberManagerActivatePackage(req api.SetActivePackag
 func (s *SubscriberSys) SubscriberManagerDeletePackage(req api.RemovePkgFromSimReq) error {
 
 	log.Tracef("Package deletion request: %v", req)
-	_, err := s.r.Patch(s.u.String()+"/v1/sim/"+req.SimId+"/package/"+req.PackageId, nil)
+	_, err := s.r.Delete(s.u.String() + "/v1/sim/" + req.SimId + "/package/" + req.PackageId)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 		return err

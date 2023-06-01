@@ -962,7 +962,7 @@ var TC_manager_set_delete_package_for_sim = &test.TestCase{
 
 var TC_manager_get_package_after_removal_for_sim = &test.TestCase{
 	Name:        "Get availaible packages for a sim ",
-	Description: "Get availaible packages after roemoval of a pacakge for a sim",
+	Description: "Get availaible packages after removal of a pacakge for a sim",
 	Data:        &mpb.GetPackagesBySimResponse{},
 	SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 		/* Setup required for test case
