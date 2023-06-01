@@ -34,14 +34,18 @@ replace github.com/ukama/ukama/systems/registry/network => ../../systems/registr
 
 replace github.com/ukama/ukama/systems/registry/node => ../../systems/registry/node
 
+replace github.com/ukama/ukama/systems/billing/invoice => ../../systems/billing/invoice
+
 require (
 	github.com/bxcodec/faker/v4 v4.0.0-beta.3
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
+	github.com/num30/config v0.0.7
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.2
 	github.com/stretchr/testify v1.8.3
+	github.com/ukama/ukama/systems/billing/invoice v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/common v0.0.0-20230208235400-d17899b75cbb
 	github.com/ukama/ukama/systems/data-plan/api-gateway v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-20221114075906-a5be6bf1d178
@@ -59,6 +63,7 @@ require (
 	github.com/ukama/ukama/systems/subscriber/sim-pool v0.0.0-00010101000000-000000000000
 	github.com/wagslane/go-rabbitmq v0.12.3
 	google.golang.org/protobuf v1.30.0
+	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/apimachinery v0.27.2
 )
 
@@ -67,6 +72,7 @@ require (
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
+	github.com/creasty/defaults v1.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gin-contrib/cors v1.4.0 // indirect
@@ -133,9 +139,8 @@ require (
 	google.golang.org/genproto v0.0.0-20230202175211-008b39050e57 // indirect
 	google.golang.org/grpc v1.53.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.4.6 // indirect
-	gorm.io/gorm v1.24.3 // indirect
+	gorm.io/gorm v1.24.6 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 )

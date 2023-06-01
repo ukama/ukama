@@ -23,6 +23,16 @@ func NewResty() *Resty {
 	}
 }
 
+func NewRestyWithBearer(key string) *Resty {
+	c := resty.New()
+
+	c.SetDebug(true).SetHeader("Authorization", "Bearer "+key)
+
+	return &Resty{
+		C: c,
+	}
+}
+
 func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 
 	resp := &resty.Response{}

@@ -15,6 +15,7 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
+	Key              string
 }
 
 func NewConfig(name string) *Config {
