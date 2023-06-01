@@ -32,17 +32,17 @@ type PackagesRequest struct {
 }
 
 type GetBaseRatesByCountryRequest struct {
-	Country  string `path:"country" validate:"required"`
-	Provider string `json:"network"`
-	SimType  string `json:"sim_type" binding:"required" validate:"required"`
+	Country  string `query:"country" validate:"required"`
+	Provider string `query:"provider"`
+	SimType  string `query:"sim_type" binding:"required" validate:"required"`
 }
 
 type GetBaseRatesForPeriodRequest struct {
-	Country  string `path:"country" validate:"required"`
-	Provider string `json:"network" binding:"required" validate:"required"`
-	To       string `json:"to" binding:"required" validate:"required"`
-	From     string `json:"from" binding:"required" validate:"required"`
-	SimType  string `json:"sim_type" binding:"required" validate:"required"`
+	Country  string `query:"country" validate:"required"`
+	Provider string `query:"provider" binding:"required" validate:"required"`
+	To       string `query:"to" binding:"required" validate:"required"`
+	From     string `query:"from" binding:"required" validate:"required"`
+	SimType  string `query:"sim_type" binding:"required" validate:"required"`
 }
 
 type GetBaseRateRequest struct {
@@ -60,12 +60,12 @@ type UploadBaseRatesRequest struct {
 }
 
 type GetRateRequest struct {
-	OwnerId     string `example:"{{UserUUID}}" path:"user_id" validate:"required"`
-	Country     string `json:"country" binding:"required" validate:"required"`
-	Provider    string `json:"provider" binding:"required" validate:"required"`
-	To          string `json:"to" binding:"required" validate:"required"`
-	From        string `json:"from" binding:"required" validate:"required"`
-	SimType     string `json:"sim_type" binding:"required" validate:"required"`
+	OwnerId  string `example:"{{UserUUID}}" path:"user_id" validate:"required"`
+	Country  string `query:"country" binding:"required" validate:"required"`
+	Provider string `query:"provider" binding:"required" validate:"required"`
+	To       string `query:"to" binding:"required" validate:"required"`
+	From     string `query:"from" binding:"required" validate:"required"`
+	SimType  string `query:"sim_type" binding:"required" validate:"required"`
 }
 
 type DeleteMarkupRequest struct {
