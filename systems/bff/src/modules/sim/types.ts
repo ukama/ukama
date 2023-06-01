@@ -289,3 +289,18 @@ export class SimPoolStatsDto {
     @Field()
     physical: number;
 }
+
+@ObjectType()
+export class UploadSimsResDto {
+    @Field(() => [String])
+    iccid: string[];
+}
+
+@InputType()
+export class UploadSimsInputDto {
+    @Field()
+    data: string;
+
+    @Field()
+    simType: SIM_TYPES;
+}

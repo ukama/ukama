@@ -389,9 +389,22 @@ const getDataPlanUsage = (
   )} / ${duration}`;
 };
 
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      resolve(base64String.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 export {
   hexToRGB,
   formatBytes,
+  fileToBase64,
   isMetricData,
   isEmailValid,
   getRandomData,

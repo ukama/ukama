@@ -35,6 +35,12 @@ export const MEMBER_ROLES = [
   { id: 2, label: 'Vendor', value: 'VENDOR' },
   { id: 3, label: 'Member', value: 'MEMBER' },
 ];
+export const SIM_TYPES = [
+  { id: 1, label: 'Unknown', value: 'unknown' },
+  { id: 2, label: 'Test', value: 'test' },
+  { id: 3, label: 'Operator Data', value: 'operator_data' },
+  { id: 4, label: 'Ukama Data', value: 'ukama_data' },
+];
 const NODE_TYPE = [
   {
     id: 1,
@@ -1566,7 +1572,7 @@ const MASK_PLACEHOLDERS = {
   TOWER: 'uk- ______ -tnode- __ - ____',
 };
 
-const SIM_TYPES = [
+const SIM_VARIANT = [
   { id: 2, title: 'eSIM', type: 'eSIM' },
   { id: 1, title: 'Physical SIM', type: 'Physical SIM' },
 ];
@@ -1575,7 +1581,7 @@ export { NodeAppLogs, NodeApps, SimCardData } from './stubData';
 export {
   RF_NODES,
   TimeZones,
-  SIM_TYPES,
+  SIM_VARIANT,
   COPY_RIGHTS,
   APP_VERSION,
   TIME_FILTER,
