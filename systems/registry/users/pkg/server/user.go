@@ -246,6 +246,37 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	return &pb.DeleteResponse{}, nil
 }
 
+func (u *UserService) Whoami(ctx context.Context, req *pb.GetRequest) (*pb.WhoamiResponse, error) {
+	uuid, err := uuid.FromString(req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	user, err := u.userRepo.Get(uuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	svc, err := u.orgService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	userOrgs, err := svc.GetByUser(ctx, &orgpb.GetByOwnerRequest{
+		UserUuid: user.Id.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	res := &pb.WhoamiResponse{
+		User:     dbUserToPbUser(user),
+		OwnerOf:  orgOwnOgrsToUserOwnOrgs(userOrgs.OwnerOf),
+		MemberOf: orgMmbOgrsToUserMnbOrgs(userOrgs.MemberOf),
+	}
+
+	return res, nil
+}
+
 func (u *UserService) pushUserCountMetrics() {
 	userCount, inActiveUser, err := u.userRepo.GetUserCount()
 	if err != nil {
@@ -277,4 +308,41 @@ func dbUserToPbUser(user *db.User) *pb.User {
 		AuthId:        user.AuthId.String(),
 		CreatedAt:     timestamppb.New(user.CreatedAt),
 	}
+}
+
+func orgOwnOgrsToUserOwnOrgs(orgs []*orgpb.Organization) []*pb.Organization {
+	res := []*pb.Organization{}
+
+	for _, o := range orgs {
+		org := &pb.Organization{
+			Id:            o.Id,
+			Name:          o.Name,
+			Owner:         o.Owner,
+			Certificate:   o.Certificate,
+			IsDeactivated: o.IsDeactivated,
+			CreatedAt:     o.CreatedAt,
+		}
+
+		res = append(res, org)
+	}
+
+	return res
+}
+
+func orgMmbOgrsToUserMnbOrgs(orgs []*orgpb.OrgUser) []*pb.OrgUser {
+	res := []*pb.OrgUser{}
+
+	for _, o := range orgs {
+		org := &pb.OrgUser{
+			OrgId:         o.OrgId,
+			Uuid:          o.Uuid,
+			Role:          pb.RoleType(o.Role),
+			IsDeactivated: o.IsDeactivated,
+			CreatedAt:     o.CreatedAt,
+		}
+
+		res = append(res, org)
+	}
+
+	return res
 }
