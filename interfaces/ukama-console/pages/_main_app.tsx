@@ -11,6 +11,7 @@ import { useGetNetworksLazyQuery, useWhoamiLazyQuery } from '@/generated';
 import { theme } from '@/styles/theme';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
 import createEmotionCache from '@/ui/wrappers/createEmotionCache';
+import { getTitleFromPath } from '@/utils';
 import { CacheProvider } from '@emotion/react';
 import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
@@ -138,28 +139,7 @@ const MainApp = ({
   useEffect(() => {
     if (route.pathname) {
       setIsFullScreen(route.pathname === '/manage');
-      switch (route.pathname) {
-        case '/home':
-          setPage('Home');
-          break;
-        case '/node':
-          setPage('Nodes');
-          break;
-        case '/site':
-          setPage('Sites');
-          break;
-        case '/subscriber':
-          setPage('Subscriber');
-          break;
-        case '/site_planning':
-          setPage('Site Planning');
-          break;
-        case '/setting':
-          setPage('Settings');
-          break;
-        default:
-          setPage('Home');
-      }
+      setPage(getTitleFromPath(route.pathname));
     }
   }, [route.pathname]);
 
