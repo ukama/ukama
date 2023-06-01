@@ -56,8 +56,8 @@ type InitData struct {
 
 func InitializeData(org *string, owner *string) *InitData {
 	d := &InitData{}
-	d.Host = "http://192.168.0.23:8074"
-	d.MbHost = "amqp://guest:guest@192.168.0.23:5672/"
+	d.Host = "http://192.168.0.14:8074"
+	d.MbHost = "amqp://guest:guest@192.168.0.14:5672/"
 	d.Sys = NewDataPlanSys(d.Host)
 	d.SimType = "test"
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{

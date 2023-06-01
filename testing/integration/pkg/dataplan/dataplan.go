@@ -75,14 +75,13 @@ func (s *DataPlanSys) DataPlanBaseRateGet(req api.GetBaseRateRequest) (*bPb.GetB
 
 func (s *DataPlanSys) DataPlanBaseRateGetByCountry(req api.GetBaseRatesByCountryRequest) (*bPb.GetBaseRatesResponse, error) {
 
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	rsp := &bPb.GetBaseRatesResponse{}
+	q := fmt.Sprintf("country=%s&sim_type=%s", req.Country, req.SimType)
+	if len(req.Provider) > 0 {
+		q = fmt.Sprintf("%s&provider=%s", q, req.Provider)
 	}
 
-	rsp := &bPb.GetBaseRatesResponse{}
-
-	resp, err := s.r.Post(s.u.String()+BASE_RATE+"/country/"+req.Country, b)
+	resp, err := s.r.GetWithQuery(s.u.String()+BASE_RATE, q)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -100,14 +99,11 @@ func (s *DataPlanSys) DataPlanBaseRateGetByCountry(req api.GetBaseRatesByCountry
 func (s *DataPlanSys) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeriodRequest) (*bPb.GetBaseRatesResponse, error) {
 
 	log.Debugf("DataPlanSys GetBaseRate by period %v", req)
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	}
 
 	rsp := &bPb.GetBaseRatesResponse{}
 
-	resp, err := s.r.Post(fmt.Sprintf("%s/country/%s/period", s.u.String()+BASE_RATE, req.Country), b)
+	q := fmt.Sprintf("country=%s&sim_type=%s&provider=%s&from=%s&to=%s", req.Country, req.SimType, req.Provider, req.From, req.To)
+	resp, err := s.r.GetWithQuery(s.u.String()+BASE_RATE+"/period", q)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -124,14 +120,10 @@ func (s *DataPlanSys) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeriodR
 
 func (s *DataPlanSys) DataPlanBaseRateGetForPackage(req api.GetBaseRatesForPeriodRequest) (*bPb.GetBaseRatesResponse, error) {
 
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	}
-
 	rsp := &bPb.GetBaseRatesResponse{}
 
-	resp, err := s.r.Post(s.u.String()+BASE_RATE+"/country/package", b)
+	q := fmt.Sprintf("country=%s&sim_type=%s&provider=%s&from=%s&to=%s", req.Country, req.SimType, req.Provider, req.From, req.To)
+	resp, err := s.r.GetWithQuery(s.u.String()+"/package", q)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -262,14 +254,13 @@ func (s *DataPlanSys) DataPlanGetMarkupHistory(req api.GetMarkupHistoryRequest) 
 
 func (s *DataPlanSys) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateResponse, error) {
 
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	}
+	log.Tracef("GetRate request: %+v", req)
 
 	rsp := &rPb.GetRateResponse{}
 
-	resp, err := s.r.Post(s.u.String()+"/v1/rates/users/"+req.OwnerId+"/rate", b)
+	url := fmt.Sprintf("%s/v1/rates/users/%s/rate", s.u.String(), req.OwnerId)
+	q := fmt.Sprintf("country=%s&sim_type=%s&provider=%s&from=%s&to=%s", req.Country, req.SimType, req.Provider, req.From, req.To)
+	resp, err := s.r.GetWithQuery(url, q)
 
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
@@ -310,11 +301,7 @@ func (s *DataPlanSys) DataPlanPackageAdd(req api.AddPackageRequest) (*pPb.AddPac
 
 func (s *DataPlanSys) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*pPb.GetByOrgPackageResponse, error) {
 
-	// b, err := json.Marshal(req)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	// }
-
+	log.Tracef("GetPackgesForOrg %+v", req)
 	rsp := &pPb.GetByOrgPackageResponse{}
 
 	resp, err := s.r.Get(s.u.String() + PACKAGE + "/orgs/" + req.OrgId)
@@ -334,11 +321,6 @@ func (s *DataPlanSys) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*
 
 func (s *DataPlanSys) DataPlanPackageGetById(req api.PackagesRequest) (*pPb.GetPackageResponse, error) {
 
-	// b, err := json.Marshal(req)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	// }
-
 	rsp := &pPb.GetPackageResponse{}
 
 	resp, err := s.r.Get(s.u.String() + PACKAGE + "/" + req.Uuid)
@@ -357,11 +339,6 @@ func (s *DataPlanSys) DataPlanPackageGetById(req api.PackagesRequest) (*pPb.GetP
 }
 
 func (s *DataPlanSys) DataPlanPackageDetails(req api.PackagesRequest) (*pPb.GetPackageResponse, error) {
-
-	// b, err := json.Marshal(req)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	// }
 
 	rsp := &pPb.GetPackageResponse{}
 
@@ -404,11 +381,6 @@ func (s *DataPlanSys) DataPlanPackageUpdate(req api.UpdatePackageRequest) (*pPb.
 }
 
 func (s *DataPlanSys) DataPlanPackageDelete(req api.PackagesRequest) (*pPb.DeletePackageResponse, error) {
-
-	// b, err := json.Marshal(req)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
-	// }
 
 	rsp := &pPb.DeletePackageResponse{}
 

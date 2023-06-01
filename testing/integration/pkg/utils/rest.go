@@ -111,6 +111,28 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 	return resp, nil
 }
 
+func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
+
+	errStatus := &rest.ErrorResponse{}
+
+	resp, err := r.C.R().
+		SetError(errStatus).
+		SetQueryString(q).
+		Get(url)
+
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+		return nil, err
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		log.Errorf("Failed to perform GET on %s operation HTTP resp code %d and Error message is %s", url, resp.StatusCode(), errStatus.Error)
+		return nil, fmt.Errorf("rest api failure. error : %s", errStatus.Error)
+	}
+
+	return resp, nil
+}
+
 func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 
 	errStatus := &rest.ErrorResponse{}
