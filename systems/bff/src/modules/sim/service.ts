@@ -30,10 +30,28 @@ import {
     SimStatusResDto,
     SimsResDto,
     ToggleSimStatusInputDto,
+    UploadSimsInputDto,
+    UploadSimsResDto,
 } from "./types";
 
 @Service()
 export class SimService implements ISimService {
+    uploadSims = async (
+        req: UploadSimsInputDto,
+        headers: THeaders
+    ): Promise<UploadSimsResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.SUBSCRIBER_SIMPOOL_API_URL}/upload`,
+            body: {
+                data: req.data,
+                sim_type: req.simType,
+            },
+            headers: getHeaders(headers),
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return res;
+    };
     allocateSim = async (
         req: AllocateSimInputDto,
         headers: THeaders

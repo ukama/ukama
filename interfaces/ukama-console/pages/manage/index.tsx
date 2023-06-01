@@ -16,6 +16,7 @@ import {
 import { colors } from '@/styles/theme';
 import { TObject, TSnackMessage } from '@/types';
 import {
+  EmptyView,
   FileDropBoxDialog,
   InviteMemberDialog,
   LoadingWrapper,
@@ -23,7 +24,13 @@ import {
 } from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
 import { getDataPlanUsage } from '@/utils';
-import PeopleAlt from '@mui/icons-material/PeopleAlt';
+import {
+  default as PeopleAlt,
+  default as PeopleAltIcon,
+} from '@mui/icons-material/PeopleAlt';
+import RouterIcon from '@mui/icons-material/Router';
+import SimCardIcon from '@mui/icons-material/SimCard';
+import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import {
   AlertColor,
   Grid,
@@ -140,11 +147,15 @@ const MemberContainer = ({
       handleButtonAction={handleButtonAction}
     />
     <br />
-    <SimpleDataTable
-      dataKey="uuid"
-      dataset={data}
-      columns={MANAGE_TABLE_COLUMN}
-    />
+    {data.length === 0 ? (
+      <EmptyView icon={PeopleAltIcon} title="No members yet!" />
+    ) : (
+      <SimpleDataTable
+        dataKey="uuid"
+        dataset={data}
+        columns={MANAGE_TABLE_COLUMN}
+      />
+    )}
   </Paper>
 );
 
@@ -160,14 +171,18 @@ const SimPoolContainer = ({ data, handleActionButon }: ISimPoolContainer) => (
     }}
   >
     <PageContainerHeader
-      subtitle={'2'}
+      subtitle={data.length || '0'}
       showSearch={false}
       title={'My SIM pool'}
       buttonTitle={'IMPORT SIMS'}
-      handleButtonAction={() => handleActionButon()}
+      handleButtonAction={handleActionButon}
     />
     <br />
-    <SimpleDataTable dataset={data} columns={MANAGE_SIM_POOL_COLUMN} />
+    {data.length === 0 ? (
+      <EmptyView icon={SimCardIcon} title="No sims in sim pool!" />
+    ) : (
+      <SimpleDataTable dataset={data} columns={MANAGE_SIM_POOL_COLUMN} />
+    )}
   </Paper>
 );
 
@@ -182,15 +197,19 @@ const NodePoolContainer = ({ data, search, setSearch }: INodePoolContainer) => (
     }}
   >
     <PageContainerHeader
-      subtitle={'2'}
+      subtitle={data.length || '0'}
       search={search}
       title={'My node pool'}
       buttonTitle={'CLAIM NODE'}
       onSearchChange={(e: string) => setSearch(e)}
-      handleButtonAction={() => console.log('CLAIM NODE')}
+      handleButtonAction={() => {}}
     />
     <br />
-    <SimpleDataTable dataset={data} columns={MANAGE_NODE_POOL_COLUMN} />
+    {data.length === 0 ? (
+      <EmptyView icon={RouterIcon} title="No node in nodes pool!" />
+    ) : (
+      <SimpleDataTable dataset={data} columns={MANAGE_NODE_POOL_COLUMN} />
+    )}
   </Paper>
 );
 
@@ -211,71 +230,75 @@ const DataPlanContainer = ({ data }: IDataPlanContainer) => (
       handleButtonAction={() => console.log('IMPORT SIMS')}
     />
     <br />
-    <Grid container rowSpacing={2} columnSpacing={2}>
-      {data.map(
-        ({
-          uuid,
-          name,
-          duration,
-          users,
-          currency,
-          dataVolume,
-          dataUnit,
-          amount,
-        }: any) => (
-          <Grid item xs={12} sm={6} md={4} key={uuid}>
-            <Paper
-              variant="outlined"
-              sx={{
-                px: 3,
-                py: 2,
-                display: 'flex',
-                boxShadow: 'none',
-                borderRadius: '4px',
-                textAlign: 'center',
-                justifyContent: 'center',
-                borderTop: `4px solid ${colors.primaryMain}`,
-              }}
-            >
-              <Stack spacing={1}>
-                <Typography variant="h5" sx={{ fontWeight: 400 }}>
-                  {name}
-                </Typography>
-                <Typography variant="body2" fontWeight={400}>
-                  {getDataPlanUsage(
-                    duration,
-                    currency,
-                    amount,
-                    dataVolume,
-                    dataUnit,
+    {data.length === 0 ? (
+      <EmptyView icon={UpdateIcon} title="No data plan created yet!" />
+    ) : (
+      <Grid container rowSpacing={2} columnSpacing={2}>
+        {data.map(
+          ({
+            uuid,
+            name,
+            duration,
+            users,
+            currency,
+            dataVolume,
+            dataUnit,
+            amount,
+          }: any) => (
+            <Grid item xs={12} sm={6} md={4} key={uuid}>
+              <Paper
+                variant="outlined"
+                sx={{
+                  px: 3,
+                  py: 2,
+                  display: 'flex',
+                  boxShadow: 'none',
+                  borderRadius: '4px',
+                  textAlign: 'center',
+                  justifyContent: 'center',
+                  borderTop: `4px solid ${colors.primaryMain}`,
+                }}
+              >
+                <Stack spacing={1}>
+                  <Typography variant="h5" sx={{ fontWeight: 400 }}>
+                    {name}
+                  </Typography>
+                  <Typography variant="body2" fontWeight={400}>
+                    {getDataPlanUsage(
+                      duration,
+                      currency,
+                      amount,
+                      dataVolume,
+                      dataUnit,
+                    )}
+                  </Typography>
+                  {false && (
+                    <Stack
+                      spacing={0.6}
+                      direction={'row'}
+                      alignItems={'flex-end'}
+                      justifyContent={'center'}
+                    >
+                      <PeopleAlt htmlColor={colors.black54} />
+                      <Typography variant="body2" fontWeight={400}>
+                        {users}
+                      </Typography>
+                    </Stack>
                   )}
-                </Typography>
-                {false && (
-                  <Stack
-                    spacing={0.6}
-                    direction={'row'}
-                    alignItems={'flex-end'}
-                    justifyContent={'center'}
-                  >
-                    <PeopleAlt htmlColor={colors.black54} />
-                    <Typography variant="body2" fontWeight={400}>
-                      {users}
-                    </Typography>
-                  </Stack>
-                )}
-              </Stack>
-            </Paper>
-          </Grid>
-        ),
-      )}
-    </Grid>
+                </Stack>
+              </Paper>
+            </Grid>
+          ),
+        )}
+      </Grid>
+    )}
   </Paper>
 );
 
 const Manage = () => {
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
-  const [menu, setMenu] = useState<string>('manage-sim');
+  const [menu, setMenu] = useState<string>('manage-members');
   const [memberSearch, setMemberSearch] = useState<string>('');
   const [nodeSearch, setNodeSearch] = useState<string>('');
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
@@ -442,15 +465,28 @@ const Manage = () => {
     });
   };
 
-  const handleUploadSimsAction = (member: TObject) => {
-    addMember({
-      variables: {
-        data: {
-          email: member.email as string,
-          role: member.role as string,
+  const handleUploadSimsAction = (
+    action: string,
+    value: string,
+    type: string,
+  ) => {
+    if (action === 'error') {
+      setSnackbarMessage({
+        id: 'sim-pool-parsing-error',
+        message: value,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    } else if (action === 'success') {
+      uploadSimPool({
+        variables: {
+          data: {
+            data: value,
+            simType: type,
+          },
         },
-      },
-    });
+      });
+    }
   };
 
   const isLoading =
