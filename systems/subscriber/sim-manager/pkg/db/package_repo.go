@@ -114,7 +114,7 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 
 func (p *packageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
 	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Delete(&Package{}, packageID)
+		result := tx.Where("package_id=?", packageID).Delete(&Package{})
 		if result.Error != nil {
 			return result.Error
 		}
