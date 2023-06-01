@@ -583,7 +583,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			}
 
 			// then deactivate it
-			result := tx.Model(currentActivePackage).Update("active", false)
+			result := tx.Model(currentActivePackage).Update("is_active", false)
 			if result.RowsAffected == 0 {
 				return gorm.ErrRecordNotFound
 			}
