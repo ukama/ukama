@@ -601,6 +601,12 @@ query getPackages {
   }
 }
 
+mutation addPackage($data: AddPackageInputDto!) {
+  addPackage(data: $data) {
+    ...Package
+  }
+}
+
 ### Package End ###
 
 ### SimPool Start ###

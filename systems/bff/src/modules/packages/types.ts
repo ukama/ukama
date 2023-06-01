@@ -248,29 +248,17 @@ export class AddPackageInputDto {
     @Field()
     name: string;
 
-    @Field()
-    active: boolean;
-
     @Field(() => Int)
     duration: number;
 
-    @Field(() => Int)
-    data_volume: number;
-
     @Field()
-    org_id: string;
+    dataUnit: string;
 
     @Field(() => Int)
-    org_rates_id: number;
-
-    @Field()
-    sim_type: string;
+    amount: number;
 
     @Field(() => Int)
-    sms_volume: number;
-
-    @Field(() => Int)
-    voice_volume: number;
+    dataVolume: number;
 }
 
 @InputType()

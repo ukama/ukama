@@ -45,6 +45,14 @@ import {
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
 
+const structureData = (data: OrgMembersResDto) =>
+  data.members?.map((member) => ({
+    name: member.user.name,
+    email: member.user.email,
+    role: 'member',
+    uuid: member.uuid,
+  }));
+
 const NODE_POOL_DATA = [
   {
     type: 'Tower Node',
@@ -147,14 +155,14 @@ const MemberContainer = ({
       handleButtonAction={handleButtonAction}
     />
     <br />
-    {data.length === 0 ? (
-      <EmptyView icon={PeopleAltIcon} title="No members yet!" />
-    ) : (
+    {data && data.length > 0 ? (
       <SimpleDataTable
         dataKey="uuid"
-        dataset={data}
+        dataset={structureData(data)}
         columns={MANAGE_TABLE_COLUMN}
       />
+    ) : (
+      <EmptyView icon={PeopleAltIcon} title="No members yet!" />
     )}
   </Paper>
 );
@@ -410,10 +418,10 @@ const Manage = () => {
   );
 
   useEffect(() => {
-    if (memberSearch.length > 3) {
+    if (memberSearch.length > 2) {
       const _members = members?.getOrgMembers.members.filter((member) => {
         const s = memberSearch.toLowerCase();
-        if (member.uuid.includes(s)) return member;
+        if (member.user.name.toLowerCase().includes(s)) return member;
       });
       setData((prev: any) => ({ ...prev, members: _members ?? [] }));
     } else if (memberSearch.length === 0) {
@@ -429,7 +437,7 @@ const Manage = () => {
       const nodes = NODE_POOL_DATA.filter((node) => {
         if (node.id.includes(nodeSearch)) return node;
       });
-      setData((prev: any) => ({ ...prev, node: nodes ?? [] }));
+      setData((prev: any) => ({ ...prev, node: nodes || [] }));
     } else if (nodeSearch.length === 0) {
       setData((prev: any) => ({ ...prev, node: NODE_POOL_DATA }));
     }
@@ -445,14 +453,6 @@ const Manage = () => {
     else if (id === 'manage-data-plan') getPackages();
     setMenu(id);
   };
-
-  const structureData = (data: OrgMembersResDto) =>
-    data.members?.map((member) => ({
-      name: member.user.name,
-      email: member.user.email,
-      role: 'member',
-      uuid: member.uuid,
-    }));
 
   const handleAddMemberAction = (member: TObject) => {
     addMember({
@@ -495,7 +495,7 @@ const Manage = () => {
     membersLoading ||
     addMemberLoading ||
     uploadSimsLoading;
-
+  console.log(data);
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
@@ -510,7 +510,7 @@ const Manage = () => {
             <MemberContainer
               search={memberSearch}
               setSearch={setMemberSearch}
-              data={structureData(data.members)}
+              data={data.members}
               handleButtonAction={() => setIsInviteMember(true)}
             />
           )}

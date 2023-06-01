@@ -45,7 +45,24 @@ export class PackageService implements IPackageService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: SERVER.DATA_PLAN_PACKAGES_API_URL,
-            body: req,
+            body: {
+                active: true,
+                amount: 0,
+                data_unit: req.dataUnit,
+                data_volume: req.dataVolume,
+                flat_rate: true,
+                from: "2023-04-01T00:00:00Z",
+                markup: 0,
+                name: req.name,
+                org_id: headers.orgId,
+                owner_id: headers.userId,
+                sim_type: "ukama_data",
+                sms_volume: 0,
+                to: "",
+                type: "prepaid",
+                voice_unit: "seconds",
+                voice_volume: 0,
+            },
             headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
