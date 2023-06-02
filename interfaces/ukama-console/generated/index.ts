@@ -64,15 +64,11 @@ export type AddOrgInputDto = {
 };
 
 export type AddPackageInputDto = {
-  active: Scalars['Boolean']['input'];
-  data_volume: Scalars['Int']['input'];
+  amount: Scalars['Int']['input'];
+  dataUnit: Scalars['String']['input'];
+  dataVolume: Scalars['Int']['input'];
   duration: Scalars['Int']['input'];
   name: Scalars['String']['input'];
-  org_id: Scalars['String']['input'];
-  org_rates_id: Scalars['Int']['input'];
-  sim_type: Scalars['String']['input'];
-  sms_volume: Scalars['Int']['input'];
-  voice_volume: Scalars['Int']['input'];
 };
 
 export type AddPackageSimResDto = {
@@ -1768,6 +1764,13 @@ export type GetPackageQueryVariables = Exact<{
 
 export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
+export type AddPackageMutationVariables = Exact<{
+  data: AddPackageInputDto;
+}>;
+
+
+export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+
 export type GetSimpoolStatsQueryVariables = Exact<{
   type: Scalars['String']['input'];
 }>;
@@ -2471,6 +2474,39 @@ export function useGetPackageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type GetPackageQueryHookResult = ReturnType<typeof useGetPackageQuery>;
 export type GetPackageLazyQueryHookResult = ReturnType<typeof useGetPackageLazyQuery>;
 export type GetPackageQueryResult = Apollo.QueryResult<GetPackageQuery, GetPackageQueryVariables>;
+export const AddPackageDocument = gql`
+    mutation addPackage($data: AddPackageInputDto!) {
+  addPackage(data: $data) {
+    ...Package
+  }
+}
+    ${PackageFragmentDoc}`;
+export type AddPackageMutationFn = Apollo.MutationFunction<AddPackageMutation, AddPackageMutationVariables>;
+
+/**
+ * __useAddPackageMutation__
+ *
+ * To run a mutation, you first call `useAddPackageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddPackageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addPackageMutation, { data, loading, error }] = useAddPackageMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddPackageMutation(baseOptions?: Apollo.MutationHookOptions<AddPackageMutation, AddPackageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddPackageMutation, AddPackageMutationVariables>(AddPackageDocument, options);
+      }
+export type AddPackageMutationHookResult = ReturnType<typeof useAddPackageMutation>;
+export type AddPackageMutationResult = Apollo.MutationResult<AddPackageMutation>;
+export type AddPackageMutationOptions = Apollo.BaseMutationOptions<AddPackageMutation, AddPackageMutationVariables>;
 export const GetSimpoolStatsDocument = gql`
     query getSimpoolStats($type: String!) {
   getSimPoolStats(type: $type) {

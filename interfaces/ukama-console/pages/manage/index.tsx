@@ -1,13 +1,8 @@
 import { snackbarMessage } from '@/app-recoil';
+import { MANAGE_MENU_LIST } from '@/constants';
 import {
-  MANAGE_MENU_LIST,
-  MANAGE_NODE_POOL_COLUMN,
-  MANAGE_SIM_POOL_COLUMN,
-  MANAGE_TABLE_COLUMN,
-} from '@/constants';
-import {
-  OrgMembersResDto,
   useAddMemberMutation,
+  useAddPackageMutation,
   useGetOrgMemberQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
@@ -16,42 +11,26 @@ import {
 import { colors } from '@/styles/theme';
 import { TObject, TSnackMessage } from '@/types';
 import {
-  EmptyView,
+  AddDataPlanDialog,
   FileDropBoxDialog,
   InviteMemberDialog,
   LoadingWrapper,
-  SimpleDataTable,
 } from '@/ui/components';
-import PageContainerHeader from '@/ui/components/PageContainerHeader';
-import { getDataPlanUsage } from '@/utils';
-import {
-  default as PeopleAlt,
-  default as PeopleAltIcon,
-} from '@mui/icons-material/PeopleAlt';
-import RouterIcon from '@mui/icons-material/Router';
-import SimCardIcon from '@mui/icons-material/SimCard';
-import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import {
   AlertColor,
-  Grid,
   ListItemIcon,
   ListItemText,
   MenuItem,
   MenuList,
   Paper,
   Stack,
-  Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
-
-const structureData = (data: OrgMembersResDto) =>
-  data.members?.map((member) => ({
-    name: member.user.name,
-    email: member.user.email,
-    role: 'member',
-    uuid: member.uuid,
-  }));
+import DataPlan from './dataplan';
+import Member from './member';
+import NodePool from './nodepool';
+import SimPool from './simpool';
 
 const NODE_POOL_DATA = [
   {
@@ -65,27 +44,6 @@ const NODE_POOL_DATA = [
     id: '8910-3000-0000-3540-833',
   },
 ];
-
-interface IMemberContainer {
-  data: any;
-  search: string;
-  setSearch: (value: string) => void;
-  handleButtonAction: () => void;
-}
-interface ISimPoolContainer {
-  data: any;
-  handleActionButon: Function;
-}
-
-interface IDataPlanContainer {
-  data: any;
-}
-
-interface INodePoolContainer {
-  data: any;
-  search: string;
-  setSearch: (value: string) => void;
-}
 
 interface IManageMenu {
   selectedId: string;
@@ -131,181 +89,10 @@ const ManageMenu = ({ selectedId, onMenuItemClick }: IManageMenu) => (
   </Paper>
 );
 
-const MemberContainer = ({
-  data,
-  search,
-  setSearch,
-  handleButtonAction,
-}: IMemberContainer) => (
-  <Paper
-    sx={{
-      py: 3,
-      px: 4,
-      width: '100%',
-      overflow: 'hidden',
-      borderRadius: '5px',
-      height: 'calc(100vh - 200px)',
-    }}
-  >
-    <PageContainerHeader
-      search={search}
-      title={'My members'}
-      buttonTitle={'Invite member'}
-      onSearchChange={(e: string) => setSearch(e)}
-      handleButtonAction={handleButtonAction}
-    />
-    <br />
-    {data && data.length > 0 ? (
-      <SimpleDataTable
-        dataKey="uuid"
-        dataset={structureData(data)}
-        columns={MANAGE_TABLE_COLUMN}
-      />
-    ) : (
-      <EmptyView icon={PeopleAltIcon} title="No members yet!" />
-    )}
-  </Paper>
-);
-
-const SimPoolContainer = ({ data, handleActionButon }: ISimPoolContainer) => (
-  <Paper
-    sx={{
-      py: 3,
-      px: 4,
-      width: '100%',
-      overflow: 'hidden',
-      borderRadius: '5px',
-      height: 'calc(100vh - 200px)',
-    }}
-  >
-    <PageContainerHeader
-      subtitle={data.length || '0'}
-      showSearch={false}
-      title={'My SIM pool'}
-      buttonTitle={'IMPORT SIMS'}
-      handleButtonAction={handleActionButon}
-    />
-    <br />
-    {data.length === 0 ? (
-      <EmptyView icon={SimCardIcon} title="No sims in sim pool!" />
-    ) : (
-      <SimpleDataTable dataset={data} columns={MANAGE_SIM_POOL_COLUMN} />
-    )}
-  </Paper>
-);
-
-const NodePoolContainer = ({ data, search, setSearch }: INodePoolContainer) => (
-  <Paper
-    sx={{
-      py: 3,
-      px: 4,
-      width: '100%',
-      borderRadius: '5px',
-      height: 'calc(100vh - 200px)',
-    }}
-  >
-    <PageContainerHeader
-      subtitle={data.length || '0'}
-      search={search}
-      title={'My node pool'}
-      buttonTitle={'CLAIM NODE'}
-      onSearchChange={(e: string) => setSearch(e)}
-      handleButtonAction={() => {}}
-    />
-    <br />
-    {data.length === 0 ? (
-      <EmptyView icon={RouterIcon} title="No node in nodes pool!" />
-    ) : (
-      <SimpleDataTable dataset={data} columns={MANAGE_NODE_POOL_COLUMN} />
-    )}
-  </Paper>
-);
-
-const DataPlanContainer = ({ data }: IDataPlanContainer) => (
-  <Paper
-    sx={{
-      py: 3,
-      px: 4,
-      width: '100%',
-      borderRadius: '5px',
-      height: 'calc(100vh - 200px)',
-    }}
-  >
-    <PageContainerHeader
-      showSearch={false}
-      title={'Data plans'}
-      buttonTitle={'CREATE DATA PLAN'}
-      handleButtonAction={() => console.log('IMPORT SIMS')}
-    />
-    <br />
-    {data.length === 0 ? (
-      <EmptyView icon={UpdateIcon} title="No data plan created yet!" />
-    ) : (
-      <Grid container rowSpacing={2} columnSpacing={2}>
-        {data.map(
-          ({
-            uuid,
-            name,
-            duration,
-            users,
-            currency,
-            dataVolume,
-            dataUnit,
-            amount,
-          }: any) => (
-            <Grid item xs={12} sm={6} md={4} key={uuid}>
-              <Paper
-                variant="outlined"
-                sx={{
-                  px: 3,
-                  py: 2,
-                  display: 'flex',
-                  boxShadow: 'none',
-                  borderRadius: '4px',
-                  textAlign: 'center',
-                  justifyContent: 'center',
-                  borderTop: `4px solid ${colors.primaryMain}`,
-                }}
-              >
-                <Stack spacing={1}>
-                  <Typography variant="h5" sx={{ fontWeight: 400 }}>
-                    {name}
-                  </Typography>
-                  <Typography variant="body2" fontWeight={400}>
-                    {getDataPlanUsage(
-                      duration,
-                      currency,
-                      amount,
-                      dataVolume,
-                      dataUnit,
-                    )}
-                  </Typography>
-                  {false && (
-                    <Stack
-                      spacing={0.6}
-                      direction={'row'}
-                      alignItems={'flex-end'}
-                      justifyContent={'center'}
-                    >
-                      <PeopleAlt htmlColor={colors.black54} />
-                      <Typography variant="body2" fontWeight={400}>
-                        {users}
-                      </Typography>
-                    </Stack>
-                  )}
-                </Stack>
-              </Paper>
-            </Grid>
-          ),
-        )}
-      </Grid>
-    )}
-  </Paper>
-);
-
 const Manage = () => {
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
+  const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
   const [menu, setMenu] = useState<string>('manage-members');
   const [memberSearch, setMemberSearch] = useState<string>('');
   const [nodeSearch, setNodeSearch] = useState<string>('');
@@ -404,7 +191,7 @@ const Manage = () => {
           type: 'success' as AlertColor,
           show: true,
         });
-        setIsInviteMember(false);
+        setIsUploadSims(false);
       },
       onError: (error) => {
         setSnackbarMessage({
@@ -416,6 +203,27 @@ const Manage = () => {
       },
     },
   );
+
+  const [addDataPlan, { loading: dataPlanLoading }] = useAddPackageMutation({
+    onCompleted: (data) => {
+      refetchSims();
+      setSnackbarMessage({
+        id: 'add-data-plan',
+        message: 'Data plan added successfully',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+      setIsDataPlan(false);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'data-plan-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   useEffect(() => {
     if (memberSearch.length > 2) {
@@ -489,13 +297,15 @@ const Manage = () => {
     }
   };
 
+  const handleDataPlanAction = () => {};
+
   const isLoading =
     packagesLoading ||
     simsLoading ||
     membersLoading ||
     addMemberLoading ||
     uploadSimsLoading;
-  console.log(data);
+
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
@@ -507,7 +317,7 @@ const Manage = () => {
       >
         <>
           {menu === 'manage-members' && (
-            <MemberContainer
+            <Member
               search={memberSearch}
               setSearch={setMemberSearch}
               data={data.members}
@@ -515,20 +325,23 @@ const Manage = () => {
             />
           )}
           {menu === 'manage-sim' && (
-            <SimPoolContainer
+            <SimPool
               data={data.simPool}
               handleActionButon={() => setIsUploadSims(true)}
             />
           )}
           {menu === 'manage-node' && (
-            <NodePoolContainer
+            <NodePool
               data={data.node}
               search={nodeSearch}
               setSearch={setNodeSearch}
             />
           )}
           {menu === 'manage-data-plan' && (
-            <DataPlanContainer data={data.dataPlan} />
+            <DataPlan
+              data={data.dataPlan}
+              handleActionButon={() => setIsDataPlan(true)}
+            />
           )}
         </>
       </LoadingWrapper>
@@ -550,6 +363,16 @@ const Manage = () => {
           labelSuccessBtn={'Upload'}
           handleSuccessAction={handleUploadSimsAction}
           handleCloseAction={() => setIsUploadSims(false)}
+        />
+      )}
+      {isDataPlan && (
+        <AddDataPlanDialog
+          isOpen={isDataPlan}
+          title={'Create data plan'}
+          labelNegativeBtn={'Cancel'}
+          labelSuccessBtn={'Save Data Plan'}
+          handleSuccessAction={handleDataPlanAction}
+          handleCloseAction={() => setIsDataPlan(false)}
         />
       )}
     </Stack>
