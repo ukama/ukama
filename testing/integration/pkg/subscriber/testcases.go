@@ -19,6 +19,7 @@ import (
 	mpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	smutil "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 	spb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
+	"github.com/ukama/ukama/testing/integration/pkg"
 	"github.com/ukama/ukama/testing/integration/pkg/dataplan"
 	"github.com/ukama/ukama/testing/integration/pkg/registry"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
@@ -26,6 +27,8 @@ import (
 )
 
 const MAX_POOL = 5
+
+var config *pkg.Config
 
 type InitData struct {
 	Sys             *SubscriberSys
@@ -77,12 +80,16 @@ type InitData struct {
 }
 
 func InitializeData() *InitData {
+	config = pkg.NewConfig()
+
 	d := &InitData{}
+
 	d.ICCID = make([]string, MAX_POOL)
 	//d.SimToken = make([]string, MAX_POOL)
-	d.Host = "http://192.168.0.23:8078"
-	d.RegHost = "http://192.168.0.23:8075"
-	d.MbHost = "amqp://guest:guest@192.168.0.23:5672/"
+	d.Host = config.System.Subscriber
+	d.RegHost = config.System.Registry
+	d.MbHost = config.System.MessageBus
+
 	d.Sys = NewSubscriberSys(d.Host)
 	d.Reg = registry.NewRegistrySys(d.RegHost)
 	d.EncKey = "the-key-has-to-be-32-bytes-long!"

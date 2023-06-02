@@ -87,7 +87,7 @@ func (l *listener) StartListener() {
 	}
 
 	l.cons = consumer
-	log.Tracef("Creating listener for Queue: %s. lsitner: %+v",
+	log.Tracef("Creating listener for Queue: %s. listner: %+v",
 		l.uri[strings.LastIndex(l.uri, "@"):], l)
 
 	defer l.conn.Close()

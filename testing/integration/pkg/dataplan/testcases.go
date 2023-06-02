@@ -14,9 +14,12 @@ import (
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 	ppb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 	rpb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
+	"github.com/ukama/ukama/testing/integration/pkg"
 	"github.com/ukama/ukama/testing/integration/pkg/test"
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 )
+
+var config *pkg.Config
 
 type InitData struct {
 	Sys          *DataPlanSys
@@ -55,9 +58,12 @@ type InitData struct {
 }
 
 func InitializeData(org *string, owner *string) *InitData {
+
+	config = pkg.NewConfig()
+
 	d := &InitData{}
-	d.Host = "http://192.168.0.14:8074"
-	d.MbHost = "amqp://guest:guest@192.168.0.14:5672/"
+	d.Host = config.System.Dataplan
+	d.MbHost = config.System.MessageBus
 	d.Sys = NewDataPlanSys(d.Host)
 	d.SimType = "test"
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{

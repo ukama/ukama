@@ -1,29 +1,26 @@
 package pkg
 
 import (
-	"time"
-
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database  `default:"{}"`
-	Grpc             *uconf.Grpc      `default:"{}"`
-	Queue            *uconf.Queue     `default:"{}"`
-	Metrics          *uconf.Metrics   `default:"{}"`
-	Timeout          time.Duration    `default:"3s"`
-	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
-	Key              string
+	System           SystemConfig
+	LogLevel         int `default:"4`
 }
 
-func NewConfig(name string) *Config {
-	return &Config{
-		Service: uconf.LoadServiceHostConfig(name),
-		MsgClient: &uconf.MsgClient{
-			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"*"},
-		},
-	}
+type SystemConfig struct {
+	Dataplan   string `default:"http://localhost:8074"`
+	Init       string `default:"http://localhost:8071"`
+	Registry   string `default:"http://localhost:8075"`
+	Metrics    string `default:"http://localhost:8072"`
+	Subscriber string `default:"http://localhost:8078"`
+	Billing    string `default:"http://localhost:8079"`
+	MessageBus string `default:"amqp://guest:guest@localhost:5672/"`
+}
+
+func NewConfig() *Config {
+	return &Config{}
 }
