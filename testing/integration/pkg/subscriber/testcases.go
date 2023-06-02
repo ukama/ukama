@@ -31,8 +31,8 @@ const MAX_POOL = 5
 var config *pkg.Config
 
 type InitData struct {
-	Sys             *SubscriberSys
-	Reg             *registry.RegistrySys
+	Sys             *SubscriberClient
+	Reg             *registry.RegistryClient
 	Host            string
 	RegHost         string
 	SimType         string `default:"test"`
@@ -90,8 +90,8 @@ func InitializeData() *InitData {
 	d.RegHost = config.System.Registry
 	d.MbHost = config.System.MessageBus
 
-	d.Sys = NewSubscriberSys(d.Host)
-	d.Reg = registry.NewRegistrySys(d.RegHost)
+	d.Sys = NewSubscriberClient(d.Host)
+	d.Reg = registry.NewRegistryClient(d.RegHost)
 	d.EncKey = "the-key-has-to-be-32-bytes-long!"
 	d.SimType = "test"
 

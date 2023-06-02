@@ -22,7 +22,7 @@ import (
 var config *pkg.Config
 
 type InitData struct {
-	Sys          *DataPlanSys
+	Sys          *DataplanClient
 	Host         string
 	SimType      string `default:"test"`
 	MbHost       string
@@ -64,7 +64,7 @@ func InitializeData(org *string, owner *string) *InitData {
 	d := &InitData{}
 	d.Host = config.System.Dataplan
 	d.MbHost = config.System.MessageBus
-	d.Sys = NewDataPlanSys(d.Host)
+	d.Sys = NewDataplanClient(d.Host)
 	d.SimType = "test"
 	d.reqUploadBaseRatesRequest = api.UploadBaseRatesRequest{
 		EffectiveAt: utils.GenerateFutureDate(5 * time.Second),

@@ -14,21 +14,21 @@ import (
 	pjson "google.golang.org/protobuf/encoding/protojson"
 )
 
-type SubscriberSys struct {
+type SubscriberClient struct {
 	u *url.URL
 	r utils.Resty
 }
 
-func NewSubscriberSys(h string) *SubscriberSys {
+func NewSubscriberClient(h string) *SubscriberClient {
 	u, _ := url.Parse(h)
-	return &SubscriberSys{
+	return &SubscriberClient{
 		u: u,
 		r: *utils.NewResty(),
 	}
 
 }
 
-func (s *SubscriberSys) SubscriberSimpoolUploadSims(req api.SimPoolUploadSimReq) (*pPb.UploadResponse, error) {
+func (s *SubscriberClient) SubscriberSimpoolUploadSims(req api.SimPoolUploadSimReq) (*pPb.UploadResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -50,7 +50,7 @@ func (s *SubscriberSys) SubscriberSimpoolUploadSims(req api.SimPoolUploadSimReq)
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberSimpoolGetSimStats(req api.SimPoolStatByTypeReq) (*pPb.GetStatsResponse, error) {
+func (s *SubscriberClient) SubscriberSimpoolGetSimStats(req api.SimPoolStatByTypeReq) (*pPb.GetStatsResponse, error) {
 
 	rsp := &pPb.GetStatsResponse{}
 
@@ -68,7 +68,7 @@ func (s *SubscriberSys) SubscriberSimpoolGetSimStats(req api.SimPoolStatByTypeRe
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberSimpoolGetSimByICCID(req api.SimByIccidReq) (*pPb.GetByIccidResponse, error) {
+func (s *SubscriberClient) SubscriberSimpoolGetSimByICCID(req api.SimByIccidReq) (*pPb.GetByIccidResponse, error) {
 
 	rsp := &pPb.GetByIccidResponse{}
 
@@ -86,7 +86,7 @@ func (s *SubscriberSys) SubscriberSimpoolGetSimByICCID(req api.SimByIccidReq) (*
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberRegistryGetSusbscriber(req api.SubscriberGetReq) (*rPb.GetSubscriberResponse, error) {
+func (s *SubscriberClient) SubscriberRegistryGetSusbscriber(req api.SubscriberGetReq) (*rPb.GetSubscriberResponse, error) {
 
 	rsp := &rPb.GetSubscriberResponse{}
 
@@ -105,7 +105,7 @@ func (s *SubscriberSys) SubscriberRegistryGetSusbscriber(req api.SubscriberGetRe
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberRegistryAddSusbscriber(req api.SubscriberAddReq) (*rPb.AddSubscriberResponse, error) {
+func (s *SubscriberClient) SubscriberRegistryAddSusbscriber(req api.SubscriberAddReq) (*rPb.AddSubscriberResponse, error) {
 	log.Debugf("Adding Subscriber to subscriber registry: %+v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -127,7 +127,7 @@ func (s *SubscriberSys) SubscriberRegistryAddSusbscriber(req api.SubscriberAddRe
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberRegistryDeleteSusbscriber(req api.SubscriberDeleteReq) (*rPb.DeleteSubscriberResponse, error) {
+func (s *SubscriberClient) SubscriberRegistryDeleteSusbscriber(req api.SubscriberDeleteReq) (*rPb.DeleteSubscriberResponse, error) {
 
 	rsp := &rPb.DeleteSubscriberResponse{}
 
@@ -140,7 +140,7 @@ func (s *SubscriberSys) SubscriberRegistryDeleteSusbscriber(req api.SubscriberDe
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberRegistryUpdateSusbscriber(req api.SubscriberUpdateReq) (*rPb.UpdateSubscriberResponse, error) {
+func (s *SubscriberClient) SubscriberRegistryUpdateSusbscriber(req api.SubscriberUpdateReq) (*rPb.UpdateSubscriberResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -157,7 +157,7 @@ func (s *SubscriberSys) SubscriberRegistryUpdateSusbscriber(req api.SubscriberUp
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerGetSim(req api.SimReq) (*sPb.GetSimResponse, error) {
+func (s *SubscriberClient) SubscriberManagerGetSim(req api.SimReq) (*sPb.GetSimResponse, error) {
 
 	rsp := &sPb.GetSimResponse{}
 
@@ -176,7 +176,7 @@ func (s *SubscriberSys) SubscriberManagerGetSim(req api.SimReq) (*sPb.GetSimResp
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerGetSubscriberSims(req api.GetSimsBySubReq) (*sPb.GetSimsBySubscriberResponse, error) {
+func (s *SubscriberClient) SubscriberManagerGetSubscriberSims(req api.GetSimsBySubReq) (*sPb.GetSimsBySubscriberResponse, error) {
 
 	rsp := &sPb.GetSimsBySubscriberResponse{}
 
@@ -195,7 +195,7 @@ func (s *SubscriberSys) SubscriberManagerGetSubscriberSims(req api.GetSimsBySubR
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerGetPackageForSim(req api.SimReq) (*sPb.GetPackagesBySimResponse, error) {
+func (s *SubscriberClient) SubscriberManagerGetPackageForSim(req api.SimReq) (*sPb.GetPackagesBySimResponse, error) {
 
 	rsp := &sPb.GetPackagesBySimResponse{}
 
@@ -214,7 +214,7 @@ func (s *SubscriberSys) SubscriberManagerGetPackageForSim(req api.SimReq) (*sPb.
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerAddPackage(req api.AddPkgToSimReq) error {
+func (s *SubscriberClient) SubscriberManagerAddPackage(req api.AddPkgToSimReq) error {
 	log.Tracef("Request to add pacakage: %+v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -230,7 +230,7 @@ func (s *SubscriberSys) SubscriberManagerAddPackage(req api.AddPkgToSimReq) erro
 	return nil
 }
 
-func (s *SubscriberSys) SubscriberManagerAllocateSim(req api.AllocateSimReq) (*sPb.AllocateSimResponse, error) {
+func (s *SubscriberClient) SubscriberManagerAllocateSim(req api.AllocateSimReq) (*sPb.AllocateSimResponse, error) {
 	log.Tracef("Allocate sim req %+v", req)
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -252,7 +252,7 @@ func (s *SubscriberSys) SubscriberManagerAllocateSim(req api.AllocateSimReq) (*s
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerUpdateSim(req api.ActivateDeactivateSimReq) (*sPb.ToggleSimStatusResponse, error) {
+func (s *SubscriberClient) SubscriberManagerUpdateSim(req api.ActivateDeactivateSimReq) (*sPb.ToggleSimStatusResponse, error) {
 
 	log.Tracef("SimStatus update request %+v", req)
 	b, err := json.Marshal(req)
@@ -271,7 +271,7 @@ func (s *SubscriberSys) SubscriberManagerUpdateSim(req api.ActivateDeactivateSim
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerActivatePackage(req api.SetActivePackageForSimReq) (*sPb.SetActivePackageResponse, error) {
+func (s *SubscriberClient) SubscriberManagerActivatePackage(req api.SetActivePackageForSimReq) (*sPb.SetActivePackageResponse, error) {
 
 	log.Tracef("Package activation request: %+v", req)
 	rsp := &sPb.SetActivePackageResponse{}
@@ -285,7 +285,7 @@ func (s *SubscriberSys) SubscriberManagerActivatePackage(req api.SetActivePackag
 	return rsp, nil
 }
 
-func (s *SubscriberSys) SubscriberManagerDeletePackage(req api.RemovePkgFromSimReq) error {
+func (s *SubscriberClient) SubscriberManagerDeletePackage(req api.RemovePkgFromSimReq) error {
 
 	log.Tracef("Package deletion request: %v", req)
 	_, err := s.r.Delete(s.u.String() + "/v1/sim/" + req.SimId + "/package/" + req.PackageId)
@@ -297,7 +297,7 @@ func (s *SubscriberSys) SubscriberManagerDeletePackage(req api.RemovePkgFromSimR
 	return nil
 }
 
-func (s *SubscriberSys) SubscriberManagerDeleteSim(req api.RemovePkgFromSimReq) (*sPb.DeleteSimResponse, error) {
+func (s *SubscriberClient) SubscriberManagerDeleteSim(req api.RemovePkgFromSimReq) (*sPb.DeleteSimResponse, error) {
 
 	rsp := &sPb.DeleteSimResponse{}
 

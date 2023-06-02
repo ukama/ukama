@@ -9,7 +9,9 @@ import (
 	api "github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-	userpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+	upb "github.com/ukama/ukama/systems/registry/users/pb/gen"
+	jsonpb "google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/ukama/ukama/testing/integration/pkg/utils"
 	jsonpb "google.golang.org/protobuf/encoding/protojson"
 )
@@ -25,31 +27,6 @@ func NewRegistryClient(h string) *RegistryClient {
 		u: u,
 		r: *utils.NewResty(),
 	}
-}
-
-func (s *RegistryClient) AddUser(req api.AddUserRequest) (*userpb.AddResponse, error) {
-	log.Debugf("Adding user: %v", req)
-
-	b, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %w", err)
-	}
-
-	rsp := &userpb.AddResponse{}
-
-	resp, err := s.r.Post(s.u.String()+"/v1/users", b)
-	if err != nil {
-		log.Errorf("Failed to send api request. error %s", err.Error())
-
-		return nil, fmt.Errorf("AddUser failure: %w", err)
-	}
-
-	err = jsonpb.Unmarshal(resp.Body(), rsp)
-	if err != nil {
-		return nil, fmt.Errorf("AddUser: response unmarshal error. error: %w", err)
-	}
-
-	return rsp, nil
 }
 
 func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, error) {
@@ -77,8 +54,6 @@ func (s *RegistryClient) AddOrg(req api.AddOrgRequest) (*orgpb.AddResponse, erro
 }
 
 func (s *RegistryClient) GetOrg(req api.GetOrgRequest) (*orgpb.GetResponse, error) {
-	log.Debugf("Getting org: %v", req)
-
 	rsp := &orgpb.GetResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName)
@@ -97,8 +72,6 @@ func (s *RegistryClient) GetOrg(req api.GetOrgRequest) (*orgpb.GetResponse, erro
 }
 
 func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse, error) {
-	log.Debugf("Adding member: %v", req)
-
 	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
@@ -123,8 +96,6 @@ func (s *RegistryClient) AddMember(req api.MemberRequest) (*orgpb.MemberResponse
 }
 
 func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*orgpb.MemberResponse, error) {
-	log.Debugf("Adding member: %v", req)
-
 	rsp := &orgpb.MemberResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/orgs/" + req.OrgName + "/members/" + req.UserUuid)
@@ -143,8 +114,6 @@ func (s *RegistryClient) GetMember(req api.GetMemberRequest) (*orgpb.MemberRespo
 }
 
 func (s *RegistryClient) UpdateMember(req api.UpdateMemberRequest) error {
-	log.Debugf("Updateing member: %v", req)
-
 	b, err := json.Marshal(req)
 	if err != nil {
 		return fmt.Errorf("request marshal error. error: %s", err.Error())
@@ -187,15 +156,34 @@ func (s *RegistryClient) AddNetwork(req api.AddNetworkRequest) (*netpb.AddRespon
 }
 
 func (s *RegistryClient) GetNetwork(req api.GetNetworkRequest) (*netpb.GetResponse, error) {
-	log.Debugf("Getting network: %v", req)
-
 	rsp := &netpb.GetResponse{}
 
 	resp, err := s.r.Get(s.u.String() + "/v1/networks/" + req.NetworkId)
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
+		return nil, err
+	}
 
-		return nil, fmt.Errorf("GetNetwork failure: %w", err)
+	err = jsonpb.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("response unmarshal error. error: %s", err.Error())
+	}
+
+	return rsp, nil
+}
+
+func (s *RegistryClient) AddUser(req api.AddUserRequest) (*upb.AddResponse, error) {
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("request marshal error. error: %s", err.Error())
+	}
+	rsp := &upb.AddResponse{}
+
+	resp, err := s.r.
+		Post(s.u.String()+"/v1/users", b)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+		return nil, err
 	}
 
 	err = jsonpb.Unmarshal(resp.Body(), rsp)

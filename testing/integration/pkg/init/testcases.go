@@ -29,7 +29,7 @@ type InitData struct {
 	SysPort                  int32
 	NodeId                   ukama.NodeID
 	NodeIP, NodeCerts        string
-	Init                     *InitSys
+	Init                     *InitClient
 	Host                     string
 	ROrgIp                   string
 	MbHost                   string
@@ -65,7 +65,7 @@ func InitializeData() *InitData {
 	d.NodeCerts = utils.RandomBase64String(2048)
 	d.NodeId = ukama.NewVirtualHomeNodeId()
 	d.Host = config.System.Init
-	d.Init = NewInitSys(d.Host)
+	d.Init = NewInitClient(d.Host)
 	d.MbHost = config.System.MessageBus
 
 	d.reqAddOrg = api.AddOrgRequest{

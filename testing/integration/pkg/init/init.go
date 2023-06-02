@@ -11,20 +11,20 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
-type InitSys struct {
+type InitClient struct {
 	u *url.URL
 	r utils.Resty
 }
 
-func NewInitSys(h string) *InitSys {
+func NewInitClient(h string) *InitClient {
 	u, _ := url.Parse(h)
-	return &InitSys{
+	return &InitClient{
 		u: u,
 		r: *utils.NewResty(),
 	}
 
 }
-func (s *InitSys) InitAddOrg(req api.AddOrgRequest) (*lpb.AddOrgResponse, error) {
+func (s *InitClient) InitAddOrg(req api.AddOrgRequest) (*lpb.AddOrgResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -46,7 +46,7 @@ func (s *InitSys) InitAddOrg(req api.AddOrgRequest) (*lpb.AddOrgResponse, error)
 	return rsp, nil
 }
 
-func (s *InitSys) InitGetOrg(req api.GetOrgRequest) (*lpb.GetOrgResponse, error) {
+func (s *InitClient) InitGetOrg(req api.GetOrgRequest) (*lpb.GetOrgResponse, error) {
 
 	rsp := &lpb.GetOrgResponse{}
 
@@ -64,7 +64,7 @@ func (s *InitSys) InitGetOrg(req api.GetOrgRequest) (*lpb.GetOrgResponse, error)
 	return rsp, nil
 }
 
-func (s *InitSys) InitAddSystem(req api.AddSystemRequest) (*lpb.AddSystemResponse, error) {
+func (s *InitClient) InitAddSystem(req api.AddSystemRequest) (*lpb.AddSystemResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -86,7 +86,7 @@ func (s *InitSys) InitAddSystem(req api.AddSystemRequest) (*lpb.AddSystemRespons
 	return rsp, nil
 }
 
-func (s *InitSys) InitGetSystem(req api.GetSystemRequest) (*lpb.GetSystemResponse, error) {
+func (s *InitClient) InitGetSystem(req api.GetSystemRequest) (*lpb.GetSystemResponse, error) {
 
 	rsp := &lpb.GetSystemResponse{}
 
@@ -105,7 +105,7 @@ func (s *InitSys) InitGetSystem(req api.GetSystemRequest) (*lpb.GetSystemRespons
 	return rsp, nil
 }
 
-func (s *InitSys) InitAddNode(req api.AddNodeRequest) (*lpb.AddNodeResponse, error) {
+func (s *InitClient) InitAddNode(req api.AddNodeRequest) (*lpb.AddNodeResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -127,7 +127,7 @@ func (s *InitSys) InitAddNode(req api.AddNodeRequest) (*lpb.AddNodeResponse, err
 	return rsp, nil
 }
 
-func (s *InitSys) InitGetNode(req api.GetNodeRequest) (*lpb.GetNodeResponse, error) {
+func (s *InitClient) InitGetNode(req api.GetNodeRequest) (*lpb.GetNodeResponse, error) {
 
 	rsp := &lpb.GetNodeResponse{}
 

@@ -18,21 +18,21 @@ const BASE_RATE = "/v1/baserates"
 const RATE = "/v1/markup"
 const PACKAGE = "/v1/packages"
 
-type DataPlanSys struct {
+type DataplanClient struct {
 	u *url.URL
 	r utils.Resty
 }
 
-func NewDataPlanSys(h string) *DataPlanSys {
+func NewDataplanClient(h string) *DataplanClient {
 	u, _ := url.Parse(h)
-	return &DataPlanSys{
+	return &DataplanClient{
 		u: u,
 		r: *utils.NewResty(),
 	}
 
 }
 
-func (s *DataPlanSys) DataPlanBaseRateUpload(req api.UploadBaseRatesRequest) (*bPb.UploadBaseRatesResponse, error) {
+func (s *DataplanClient) DataPlanBaseRateUpload(req api.UploadBaseRatesRequest) (*bPb.UploadBaseRatesResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *DataPlanSys) DataPlanBaseRateUpload(req api.UploadBaseRatesRequest) (*b
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanBaseRateGet(req api.GetBaseRateRequest) (*bPb.GetBaseRatesByIdResponse, error) {
+func (s *DataplanClient) DataPlanBaseRateGet(req api.GetBaseRateRequest) (*bPb.GetBaseRatesByIdResponse, error) {
 
 	rsp := &bPb.GetBaseRatesByIdResponse{}
 
@@ -73,7 +73,7 @@ func (s *DataPlanSys) DataPlanBaseRateGet(req api.GetBaseRateRequest) (*bPb.GetB
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanBaseRateGetByCountry(req api.GetBaseRatesByCountryRequest) (*bPb.GetBaseRatesResponse, error) {
+func (s *DataplanClient) DataPlanBaseRateGetByCountry(req api.GetBaseRatesByCountryRequest) (*bPb.GetBaseRatesResponse, error) {
 
 	rsp := &bPb.GetBaseRatesResponse{}
 	q := fmt.Sprintf("country=%s&sim_type=%s", req.Country, req.SimType)
@@ -96,9 +96,9 @@ func (s *DataPlanSys) DataPlanBaseRateGetByCountry(req api.GetBaseRatesByCountry
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeriodRequest) (*bPb.GetBaseRatesResponse, error) {
+func (s *DataplanClient) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeriodRequest) (*bPb.GetBaseRatesResponse, error) {
 
-	log.Debugf("DataPlanSys GetBaseRate by period %v", req)
+	log.Debugf("DataplanClient GetBaseRate by period %v", req)
 
 	rsp := &bPb.GetBaseRatesResponse{}
 
@@ -118,7 +118,7 @@ func (s *DataPlanSys) DataPlanBaseRateGetByPeriod(req api.GetBaseRatesForPeriodR
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanBaseRateGetForPackage(req api.GetBaseRatesForPeriodRequest) (*bPb.GetBaseRatesResponse, error) {
+func (s *DataplanClient) DataPlanBaseRateGetForPackage(req api.GetBaseRatesForPeriodRequest) (*bPb.GetBaseRatesResponse, error) {
 
 	rsp := &bPb.GetBaseRatesResponse{}
 
@@ -138,7 +138,7 @@ func (s *DataPlanSys) DataPlanBaseRateGetForPackage(req api.GetBaseRatesForPerio
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanUpdateDefaultMarkup(req api.SetDefaultMarkupRequest) (*rPb.UpdateDefaultMarkupResponse, error) {
+func (s *DataplanClient) DataPlanUpdateDefaultMarkup(req api.SetDefaultMarkupRequest) (*rPb.UpdateDefaultMarkupResponse, error) {
 
 	rsp := &rPb.UpdateDefaultMarkupResponse{}
 
@@ -157,7 +157,7 @@ func (s *DataPlanSys) DataPlanUpdateDefaultMarkup(req api.SetDefaultMarkupReques
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanGetDefaultMarkup(req api.GetDefaultMarkupRequest) (*rPb.GetDefaultMarkupResponse, error) {
+func (s *DataplanClient) DataPlanGetDefaultMarkup(req api.GetDefaultMarkupRequest) (*rPb.GetDefaultMarkupResponse, error) {
 
 	rsp := &rPb.GetDefaultMarkupResponse{}
 
@@ -176,7 +176,7 @@ func (s *DataPlanSys) DataPlanGetDefaultMarkup(req api.GetDefaultMarkupRequest) 
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanGetDefaultMarkupHistory(req api.GetDefaultMarkupHistoryRequest) (*rPb.GetDefaultMarkupHistoryResponse, error) {
+func (s *DataplanClient) DataPlanGetDefaultMarkupHistory(req api.GetDefaultMarkupHistoryRequest) (*rPb.GetDefaultMarkupHistoryResponse, error) {
 
 	rsp := &rPb.GetDefaultMarkupHistoryResponse{}
 
@@ -195,7 +195,7 @@ func (s *DataPlanSys) DataPlanGetDefaultMarkupHistory(req api.GetDefaultMarkupHi
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanUpdateMarkup(req api.SetMarkupRequest) (*rPb.UpdateMarkupResponse, error) {
+func (s *DataplanClient) DataPlanUpdateMarkup(req api.SetMarkupRequest) (*rPb.UpdateMarkupResponse, error) {
 
 	rsp := &rPb.UpdateMarkupResponse{}
 
@@ -214,7 +214,7 @@ func (s *DataPlanSys) DataPlanUpdateMarkup(req api.SetMarkupRequest) (*rPb.Updat
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanGetUserMarkup(req api.GetMarkupRequest) (*rPb.GetMarkupResponse, error) {
+func (s *DataplanClient) DataPlanGetUserMarkup(req api.GetMarkupRequest) (*rPb.GetMarkupResponse, error) {
 
 	rsp := &rPb.GetMarkupResponse{}
 
@@ -233,7 +233,7 @@ func (s *DataPlanSys) DataPlanGetUserMarkup(req api.GetMarkupRequest) (*rPb.GetM
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanGetMarkupHistory(req api.GetMarkupHistoryRequest) (*rPb.GetMarkupHistoryResponse, error) {
+func (s *DataplanClient) DataPlanGetMarkupHistory(req api.GetMarkupHistoryRequest) (*rPb.GetMarkupHistoryResponse, error) {
 
 	rsp := &rPb.GetMarkupHistoryResponse{}
 
@@ -252,7 +252,7 @@ func (s *DataPlanSys) DataPlanGetMarkupHistory(req api.GetMarkupHistoryRequest) 
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateResponse, error) {
+func (s *DataplanClient) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateResponse, error) {
 
 	log.Tracef("GetRate request: %+v", req)
 
@@ -275,8 +275,8 @@ func (s *DataPlanSys) DataPlanGetRate(req api.GetRateRequest) (*rPb.GetRateRespo
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanPackageAdd(req api.AddPackageRequest) (*pPb.AddPackageResponse, error) {
-	log.Debugf("DataPlanSys AddPackageRequest by  %+v", req)
+func (s *DataplanClient) DataPlanPackageAdd(req api.AddPackageRequest) (*pPb.AddPackageResponse, error) {
+	log.Debugf("DataplanClient AddPackageRequest by  %+v", req)
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -299,7 +299,7 @@ func (s *DataPlanSys) DataPlanPackageAdd(req api.AddPackageRequest) (*pPb.AddPac
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*pPb.GetByOrgPackageResponse, error) {
+func (s *DataplanClient) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*pPb.GetByOrgPackageResponse, error) {
 
 	log.Tracef("GetPackgesForOrg %+v", req)
 	rsp := &pPb.GetByOrgPackageResponse{}
@@ -319,7 +319,7 @@ func (s *DataPlanSys) DataPlanPackageGetByOrg(req api.GetPackageByOrgRequest) (*
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanPackageGetById(req api.PackagesRequest) (*pPb.GetPackageResponse, error) {
+func (s *DataplanClient) DataPlanPackageGetById(req api.PackagesRequest) (*pPb.GetPackageResponse, error) {
 
 	rsp := &pPb.GetPackageResponse{}
 
@@ -338,7 +338,7 @@ func (s *DataPlanSys) DataPlanPackageGetById(req api.PackagesRequest) (*pPb.GetP
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanPackageDetails(req api.PackagesRequest) (*pPb.GetPackageResponse, error) {
+func (s *DataplanClient) DataPlanPackageDetails(req api.PackagesRequest) (*pPb.GetPackageResponse, error) {
 
 	rsp := &pPb.GetPackageResponse{}
 
@@ -357,7 +357,7 @@ func (s *DataPlanSys) DataPlanPackageDetails(req api.PackagesRequest) (*pPb.GetP
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanPackageUpdate(req api.UpdatePackageRequest) (*pPb.UpdatePackageResponse, error) {
+func (s *DataplanClient) DataPlanPackageUpdate(req api.UpdatePackageRequest) (*pPb.UpdatePackageResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -380,7 +380,7 @@ func (s *DataPlanSys) DataPlanPackageUpdate(req api.UpdatePackageRequest) (*pPb.
 	return rsp, nil
 }
 
-func (s *DataPlanSys) DataPlanPackageDelete(req api.PackagesRequest) (*pPb.DeletePackageResponse, error) {
+func (s *DataplanClient) DataPlanPackageDelete(req api.PackagesRequest) (*pPb.DeletePackageResponse, error) {
 
 	rsp := &pPb.DeletePackageResponse{}
 
