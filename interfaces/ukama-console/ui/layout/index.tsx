@@ -123,17 +123,19 @@ const Layout = ({
               cstyle={{ background: isLoading ? colors.white : 'inherit' }}
             >
               <Stack direction={'column'}>
-                <Box>
-                  <Stack
-                    direction={'row'}
-                    alignItems={'center'}
-                    spacing={{ xs: 4, md: 10.5 }}
-                  >
-                    {isFullScreen && <BackButton title="BACK TO CONSOLE" />}
-                    <Typography variant="h5">{page}</Typography>
-                  </Stack>
-                  <Divider sx={{ my: 1 }} />
-                </Box>
+                {page !== '404' && (
+                  <Box>
+                    <Stack
+                      direction={'row'}
+                      alignItems={'center'}
+                      spacing={{ xs: 4, md: 10.5 }}
+                    >
+                      {isFullScreen && <BackButton title="BACK TO CONSOLE" />}
+                      <Typography variant="h5">{page}</Typography>
+                    </Stack>
+                    <Divider sx={{ my: 1 }} />
+                  </Box>
+                )}
 
                 {children}
               </Stack>

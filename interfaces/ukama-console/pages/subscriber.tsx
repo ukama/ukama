@@ -17,7 +17,7 @@ import { AlertColor } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
-const Page = () => {
+const Page = async () => {
   const [search, setSearch] = useState<string>('');
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);

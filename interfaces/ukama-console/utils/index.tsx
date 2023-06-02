@@ -20,7 +20,7 @@ const getTitleFromPath = (path: string) => {
     case '/manage':
       return 'Manage';
     default:
-      return 'Home';
+      return '404';
   }
 };
 
