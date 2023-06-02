@@ -46,8 +46,9 @@ export class PackageService implements IPackageService {
             type: API_METHOD_TYPE.POST,
             path: SERVER.DATA_PLAN_PACKAGES_API_URL,
             body: {
+                duration: req.duration,
                 active: true,
-                amount: 0,
+                amount: req.amount,
                 data_unit: req.dataUnit,
                 data_volume: req.dataVolume,
                 flat_rate: true,

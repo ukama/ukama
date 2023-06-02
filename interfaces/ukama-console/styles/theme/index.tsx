@@ -74,6 +74,16 @@ const theme = (isDarkmode: boolean) =>
             },
           },
         },
+        MuiFormLabel: {
+          styleOverrides: {
+            root: {
+              fontSize: '14px !important',
+            },
+            filled: {
+              width: '100px',
+            },
+          },
+        },
         MuiFormControl: {
           styleOverrides: {
             root: {
@@ -139,7 +149,8 @@ const theme = (isDarkmode: boolean) =>
         MuiSelect: {
           styleOverrides: {
             select: {
-              fontSize: '16px',
+              height: '20px',
+              fontSize: '16px !important',
               ':focus': {
                 backgroundColor: 'transparent',
               },

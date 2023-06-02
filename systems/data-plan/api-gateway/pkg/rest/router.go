@@ -337,6 +337,7 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Type:        req.Type,
 		Flatrate:    req.Flatrate,
 		Amount:      req.Amount,
+		Duration:    req.Duration,
 	}
 
 	return r.clients.p.AddPackage(pack)
