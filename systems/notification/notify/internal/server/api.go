@@ -2,7 +2,7 @@ package server
 
 import (
 	uuid "github.com/satori/go.uuid"
-	"github.com/ukama/ukama/services/cloud/notify/internal/db"
+	"github.com/ukama/ukama/systems/notification/notify/internal/db"
 	"gorm.io/datatypes"
 )
 

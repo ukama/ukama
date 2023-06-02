@@ -8,13 +8,13 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/ukama/ukama/services/cloud/notify/internal"
-	spec "github.com/ukama/ukama/services/cloud/notify/specs/notify/spec"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/notification/notify/internal"
+	spec "github.com/ukama/ukama/systems/notification/notify/specs/notify/spec"
+	"github.com/ukama/ukama/systems/common/msgbus"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/protobuf/proto"
 )
 

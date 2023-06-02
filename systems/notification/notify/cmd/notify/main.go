@@ -4,18 +4,18 @@ import (
 	"context"
 	"os"
 
-	"github.com/ukama/ukama/services/cloud/notify/internal"
-	"github.com/ukama/ukama/services/cloud/notify/internal/db"
-	"github.com/ukama/ukama/services/cloud/notify/internal/server"
-	"github.com/ukama/ukama/services/common/metrics"
-	sig "github.com/ukama/ukama/services/common/signal"
-	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/systems/notification/notify/internal"
+	"github.com/ukama/ukama/systems/notification/notify/internal/db"
+	"github.com/ukama/ukama/systems/notification/notify/internal/server"
+	"github.com/ukama/ukama/systems/common/metrics"
+	sig "github.com/ukama/ukama/systems/common/signal"
+	"github.com/ukama/ukama/systems/common/sql"
 
-	"github.com/ukama/ukama/services/cloud/notify/cmd/version"
-	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/systems/notification/notify/cmd/version"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/systems/common/config"
 )
 
 func main() {

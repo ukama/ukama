@@ -3,10 +3,10 @@ package notify
 import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/cloud/notify/internal"
-	"github.com/ukama/ukama/services/cloud/notify/internal/db"
-	"github.com/ukama/ukama/services/cloud/notify/specs/notify/spec"
-	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/systems/notification/notify/internal"
+	"github.com/ukama/ukama/systems/notification/notify/internal/db"
+	"github.com/ukama/ukama/systems/notification/notify/specs/notify/spec"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"google.golang.org/protobuf/proto"
 )
 

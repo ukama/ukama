@@ -2,7 +2,7 @@ syntax="proto3";
 
 option go_package = "specs/notify/spec";
 
-package ukama.services.cloud.notify.v1;
+package ukama.systems.notification.notify.v1;
 
 // Virtual Node Status update event 
 message NotificationMsg  {

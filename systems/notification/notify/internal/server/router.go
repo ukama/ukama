@@ -8,12 +8,12 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/cloud/notify/cmd/version"
-	"github.com/ukama/ukama/services/cloud/notify/internal"
-	"github.com/ukama/ukama/services/cloud/notify/internal/db"
-	"github.com/ukama/ukama/services/cloud/notify/internal/notify"
-	"github.com/ukama/ukama/services/common/rest"
-	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/systems/notification/notify/cmd/version"
+	"github.com/ukama/ukama/systems/notification/notify/internal"
+	"github.com/ukama/ukama/systems/notification/notify/internal/db"
+	"github.com/ukama/ukama/systems/notification/notify/internal/notify"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	"github.com/wI2L/fizz"
 )
@@ -35,7 +35,7 @@ func (r *Router) Run() {
 
 func NewRouter(config *internal.Config, repo db.NotificationRepo) *Router {
 
-	f := rest.NewFizzRouter(&config.Server, internal.ServiceName, version.Version, internal.IsDebugMode)
+	f := rest.NewFizzRouter(&config.Server, internal.ServiceName, version.Version, internal.IsDebugMode, "")
 
 	r := &Router{fizz: f,
 		port: config.Server.Port,
