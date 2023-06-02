@@ -41,6 +41,7 @@ const AddDataPlanDialog = ({
     price: '',
     duration: '',
   });
+
   return (
     <Dialog
       fullWidth
@@ -147,8 +148,16 @@ const AddDataPlanDialog = ({
             </Grid>
             <Grid item xs={4}>
               <FormControl fullWidth>
-                <InputLabel id={'data-plan-unit-price-label'} shrink>
-                  Price per
+                <InputLabel
+                  id={'data-plan-unit-price-label'}
+                  shrink
+                  sx={{
+                    '& legend': {
+                      letterSpacing: 0.6,
+                    },
+                  }}
+                >
+                  PRICE PER
                 </InputLabel>
                 <Select
                   notched
@@ -188,7 +197,10 @@ const AddDataPlanDialog = ({
             </Button>
           )}
           {labelSuccessBtn && (
-            <Button variant="contained" onClick={handleSuccessAction}>
+            <Button
+              variant="contained"
+              onClick={() => handleSuccessAction(dataplan)}
+            >
               {labelSuccessBtn}
             </Button>
           )}

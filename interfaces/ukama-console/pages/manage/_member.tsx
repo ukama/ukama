@@ -1,5 +1,4 @@
 import { MANAGE_TABLE_COLUMN } from '@/constants';
-import { OrgMembersResDto } from '@/generated';
 import { EmptyView, SimpleDataTable } from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -12,15 +11,12 @@ interface IMember {
   handleButtonAction: () => void;
 }
 
-const structureData = (data: OrgMembersResDto) =>
-  data.members?.map((member) => ({
-    name: member.user.name,
-    email: member.user.email,
-    role: 'member',
-    uuid: member.uuid,
-  }));
-
-const Member = ({ data, search, setSearch, handleButtonAction }: IMember) => {
+const Member = ({
+  data,
+  search,
+  setSearch,
+  handleButtonAction,
+}: IMember) => {
   return (
     <Paper
       sx={{
@@ -43,7 +39,7 @@ const Member = ({ data, search, setSearch, handleButtonAction }: IMember) => {
       {data && data.length > 0 ? (
         <SimpleDataTable
           dataKey="uuid"
-          dataset={structureData(data)}
+          dataset={data}
           columns={MANAGE_TABLE_COLUMN}
         />
       ) : (

@@ -61,7 +61,7 @@ const theme = (isDarkmode: boolean) =>
           styleOverrides: {
             root: {
               '.MuiOutlinedInput-input': {
-                fontSize: '16px',
+                fontSize: '14px',
                 padding: '11px !important',
               },
             },
@@ -78,9 +78,6 @@ const theme = (isDarkmode: boolean) =>
           styleOverrides: {
             root: {
               fontSize: '14px !important',
-            },
-            filled: {
-              width: '100px',
             },
           },
         },

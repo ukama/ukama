@@ -1,6 +1,7 @@
 import { snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
 import {
+  MemberObj,
   useAddMemberMutation,
   useAddPackageMutation,
   useGetOrgMemberQuery,
@@ -25,12 +26,14 @@ import {
   Paper,
   Stack,
 } from '@mui/material';
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
-import DataPlan from './dataplan';
-import Member from './member';
-import NodePool from './nodepool';
-import SimPool from './simpool';
+
+const SimPool = dynamic(() => import('./_simpool'));
+const NodePool = dynamic(() => import('./_nodepool'));
+const Member = dynamic(() => import('./_member'));
+const DataPlan = dynamic(() => import('./_dataplan'));
 
 const NODE_POOL_DATA = [
   {
@@ -44,6 +47,16 @@ const NODE_POOL_DATA = [
     id: '8910-3000-0000-3540-833',
   },
 ];
+
+const structureData = (data: any) =>
+  data && data.length > 0
+    ? data.map((member: MemberObj) => ({
+        name: member.user.name,
+        email: member.user.email,
+        role: 'member',
+        uuid: member.uuid,
+      }))
+    : [];
 
 interface IManageMenu {
   selectedId: string;
@@ -89,7 +102,7 @@ const ManageMenu = ({ selectedId, onMenuItemClick }: IManageMenu) => (
   </Paper>
 );
 
-const Manage = () => {
+const Manage = async () => {
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
@@ -111,7 +124,10 @@ const Manage = () => {
   } = useGetOrgMemberQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      setData((prev: any) => ({ ...prev, members: data?.getOrgMembers ?? [] }));
+      setData((prev: any) => ({
+        ...prev,
+        members: structureData(members?.getOrgMembers.members),
+      }));
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -205,7 +221,7 @@ const Manage = () => {
   );
 
   const [addDataPlan, { loading: dataPlanLoading }] = useAddPackageMutation({
-    onCompleted: (data) => {
+    onCompleted: () => {
       refetchSims();
       setSnackbarMessage({
         id: 'add-data-plan',
@@ -231,11 +247,17 @@ const Manage = () => {
         const s = memberSearch.toLowerCase();
         if (member.user.name.toLowerCase().includes(s)) return member;
       });
-      setData((prev: any) => ({ ...prev, members: _members ?? [] }));
-    } else if (memberSearch.length === 0) {
       setData((prev: any) => ({
         ...prev,
-        members: members?.getOrgMembers.members ?? [],
+        members: structureData(_members),
+      }));
+    } else if (
+      memberSearch.length === 0 &&
+      data.members.length !== members?.getOrgMembers.members.length
+    ) {
+      setData((prev: any) => ({
+        ...prev,
+        members: structureData(members?.getOrgMembers.members),
       }));
     }
   }, [memberSearch]);
@@ -297,14 +319,27 @@ const Manage = () => {
     }
   };
 
-  const handleDataPlanAction = () => {};
+  const handleDataPlanAction = (dataPlan: any) => {
+    addDataPlan({
+      variables: {
+        data: {
+          name: dataPlan.name,
+          amount: dataPlan.amount,
+          dataUnit: dataPlan.dataUnit,
+          dataVolume: dataPlan.dataVolume,
+          duration: dataPlan.duration,
+        },
+      },
+    });
+  };
 
   const isLoading =
     packagesLoading ||
     simsLoading ||
     membersLoading ||
     addMemberLoading ||
-    uploadSimsLoading;
+    uploadSimsLoading ||
+    dataPlanLoading;
 
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>

@@ -20,7 +20,7 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil';
 
-const Layout = dynamic(() => import('@/ui/layout'), { ssr: false });
+const Layout = dynamic(() => import('@/ui/layout'));
 const SNACKBAR_TIMEOUT = 5000;
 
 const clientSideEmotionCache = createEmotionCache();
@@ -138,8 +138,12 @@ const MainApp = ({
 
   useEffect(() => {
     if (route.pathname) {
-      setIsFullScreen(route.pathname === '/manage');
+      setIsFullScreen(
+        route.pathname === '/manage' ||
+          getTitleFromPath(route.pathname) === '404',
+      );
       setPage(getTitleFromPath(route.pathname));
+      if (getTitleFromPath(route.pathname) === '404') route.replace('/404');
     }
   }, [route.pathname]);
 
