@@ -1,17 +1,22 @@
 import colors from '@/styles/theme/colors';
-import { EmptyView } from '@/ui/components';
+import { EmptyView, OptionsPopover } from '@/ui/components';
 import PageContainerHeader from '@/ui/components/PageContainerHeader';
 import { getDataPlanUsage } from '@/utils';
 import { PeopleAlt } from '@mui/icons-material';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
-import { Grid, Paper, Stack, Typography } from '@mui/material';
+import { Card, Grid, Paper, Stack, Typography } from '@mui/material';
 
 interface IDataPlan {
   data: any;
   handleActionButon: Function;
+  handleOptionMenuItemAction: Function;
 }
 
-const DataPlan = ({ data, handleActionButon }: IDataPlan) => {
+const DataPlan = ({
+  data,
+  handleActionButon,
+  handleOptionMenuItemAction,
+}: IDataPlan) => {
   return (
     <Paper
       sx={{
@@ -45,7 +50,7 @@ const DataPlan = ({ data, handleActionButon }: IDataPlan) => {
               amount,
             }: any) => (
               <Grid item xs={12} sm={6} md={4} key={uuid}>
-                <Paper
+                <Card
                   variant="outlined"
                   sx={{
                     px: 3,
@@ -58,10 +63,31 @@ const DataPlan = ({ data, handleActionButon }: IDataPlan) => {
                     borderTop: `4px solid ${colors.primaryMain}`,
                   }}
                 >
-                  <Stack spacing={1}>
-                    <Typography variant="h5" sx={{ fontWeight: 400 }}>
-                      {name}
-                    </Typography>
+                  <Stack spacing={1} width={'100%'}>
+                    <Grid
+                      xs={12}
+                      container
+                      direction={'row'}
+                      textAlign={'center'}
+                    >
+                      <Grid item xs={11} pl={3}>
+                        <Typography variant="h5" sx={{ fontWeight: 400 }}>
+                          {name}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={1}>
+                        <OptionsPopover
+                          cid={'data-table-action-popover'}
+                          menuOptions={[
+                            { id: 0, title: 'Edit', route: 'edit' },
+                            { id: 1, title: 'Delete', route: 'delete' },
+                          ]}
+                          handleItemClick={(type: string) =>
+                            handleOptionMenuItemAction(uuid, type)
+                          }
+                        />
+                      </Grid>
+                    </Grid>
                     <Typography variant="body2" fontWeight={400}>
                       {getDataPlanUsage(
                         duration,
@@ -85,7 +111,7 @@ const DataPlan = ({ data, handleActionButon }: IDataPlan) => {
                       </Stack>
                     )}
                   </Stack>
-                </Paper>
+                </Card>
               </Grid>
             ),
           )}

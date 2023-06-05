@@ -34,7 +34,16 @@ const OptionItem = ({
         <Icon fontSize="small" />
       </ListItemIcon>
     )}
-    <ListItemText sx={{ mr: 1 }}>{title}</ListItemText>
+    <ListItemText
+      sx={{
+        mr: 1,
+        '.MuiTypography-root': {
+          color: title.toLowerCase() === 'delete' ? colors.redMatt : 'inherit',
+        },
+      }}
+    >
+      {title}
+    </ListItemText>
     {type === 'update' && (
       <div
         style={{

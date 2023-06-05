@@ -65,7 +65,7 @@ type packageS interface {
 	GetPackage(id string) (*pb.GetPackageResponse, error)
 	GetPackageDetails(id string) (*pb.GetPackageResponse, error)
 	GetPackageByOrg(orgId string) (*pb.GetByOrgPackageResponse, error)
-	DeletePackage(id string) (*pb.DeletePackageResponse, error)
+	DeletePackage(id string, orgId string) (*pb.DeletePackageResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -290,7 +290,7 @@ func (r *Router) getPackageDetailsHandler(c *gin.Context, req *PackagesRequest) 
 }
 
 func (r *Router) deletePackageHandler(c *gin.Context, req *PackagesRequest) (*pb.DeletePackageResponse, error) {
-	resp, err := r.clients.p.DeletePackage(req.Uuid)
+	resp, err := r.clients.p.DeletePackage(req.Uuid, c.Request.Header.Get("Org-id"))
 	if err != nil {
 		logrus.Error(err)
 		c.JSON(http.StatusNotFound, gin.H{"error": err})

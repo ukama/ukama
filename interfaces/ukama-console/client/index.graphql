@@ -607,6 +607,12 @@ mutation addPackage($data: AddPackageInputDto!) {
   }
 }
 
+mutation deletePacakge($packageId: String!) {
+  deletePackage(packageId: $packageId) {
+    uuid
+  }
+}
+
 ### Package End ###
 
 ### SimPool Start ###

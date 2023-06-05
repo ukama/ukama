@@ -30,7 +30,7 @@ const commonData = atom({
   default: {
     networkId: '',
     networkName: '',
-    orgId: 'bf184df7-0ce6-4100-a9c6-497c181b87cf',
+    orgId: 'aac1ed88-2546-4f9c-a808-fb9c4d0ef24b',
     userId: 'a9a3dc45-fe06-43d6-b148-7508c9674627',
     orgName: 'ukama',
   },

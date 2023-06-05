@@ -1771,6 +1771,13 @@ export type AddPackageMutationVariables = Exact<{
 
 export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
+export type DeletePacakgeMutationVariables = Exact<{
+  packageId: Scalars['String']['input'];
+}>;
+
+
+export type DeletePacakgeMutation = { __typename?: 'Mutation', deletePackage: { __typename?: 'IdResponse', uuid: string } };
+
 export type GetSimpoolStatsQueryVariables = Exact<{
   type: Scalars['String']['input'];
 }>;
@@ -2507,6 +2514,39 @@ export function useAddPackageMutation(baseOptions?: Apollo.MutationHookOptions<A
 export type AddPackageMutationHookResult = ReturnType<typeof useAddPackageMutation>;
 export type AddPackageMutationResult = Apollo.MutationResult<AddPackageMutation>;
 export type AddPackageMutationOptions = Apollo.BaseMutationOptions<AddPackageMutation, AddPackageMutationVariables>;
+export const DeletePacakgeDocument = gql`
+    mutation deletePacakge($packageId: String!) {
+  deletePackage(packageId: $packageId) {
+    uuid
+  }
+}
+    `;
+export type DeletePacakgeMutationFn = Apollo.MutationFunction<DeletePacakgeMutation, DeletePacakgeMutationVariables>;
+
+/**
+ * __useDeletePacakgeMutation__
+ *
+ * To run a mutation, you first call `useDeletePacakgeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeletePacakgeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deletePacakgeMutation, { data, loading, error }] = useDeletePacakgeMutation({
+ *   variables: {
+ *      packageId: // value for 'packageId'
+ *   },
+ * });
+ */
+export function useDeletePacakgeMutation(baseOptions?: Apollo.MutationHookOptions<DeletePacakgeMutation, DeletePacakgeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeletePacakgeMutation, DeletePacakgeMutationVariables>(DeletePacakgeDocument, options);
+      }
+export type DeletePacakgeMutationHookResult = ReturnType<typeof useDeletePacakgeMutation>;
+export type DeletePacakgeMutationResult = Apollo.MutationResult<DeletePacakgeMutation>;
+export type DeletePacakgeMutationOptions = Apollo.BaseMutationOptions<DeletePacakgeMutation, DeletePacakgeMutationVariables>;
 export const GetSimpoolStatsDocument = gql`
     query getSimpoolStats($type: String!) {
   getSimPoolStats(type: $type) {

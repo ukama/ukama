@@ -24,10 +24,10 @@ export const catchAsyncIOMethod = async (
 export const parseHeaders = (ctx: Context): THeaders => {
     const headers: THeaders = {
         auth: {
-            Cookie: "ukama_session=MTY4NDkwNzgyN3xCR0lyREZ2WWNPekNTVXhOd0g0OXh2QWZFelhUcVJPNEw4SGRVdnNWYTNaYXE1Z2tNWEVGUlRNRGhtaXFuSUxodk5WWDBrOG1IdTQ2OURGOTMzR3U3ejNORTBJZ2J3Tk5OSWdRTGMwcGR5Nm5lUHc5N3VLcVFXdGxZbUpneHhtTzE0V3FmU3JQTzJfdGFsU1pOMnFDTTU1ZGozSkNFcmdYTy0tVzNXZFlkWGdkeWh2T2dhbUZIVnNTamtCdzNtUGJ4VmVBOUN3YzZtNlk2bnZJdUVvS2N4eU03Q0NzX1Z2azJFcjhVUmJuZ2hvdk5NSk5HTDBEbS00djlJdVFBSHZDdFJoQmhoXzNCLW90emlOU1hpNXNiQT09fJLjUeEPUYkcsU22rg3TOGP_gcNMacpKQ-zlAvb3U-PC",
+            Cookie: "ukama_session=MTY4NTk1NDYxOXxkRWpsRnZtbVFBZ1lHV0Jnc1ppeDFJYnhuMWtsbTJGeERRNVZFRWJrakxsdk5MN2ptYjA3UEdEWXkzSklzZHlRVmxEdTBjcElMQmswUFNIMzNHTTNYYkJCZV81R2tSRG5UTUFxem9qQzRzUXpwdkNaQUJTSmlpSkRrbGFRMGNKSHIxd3VrXzdFTlFkWEhITXpueFFaekctdW5paDRXZDJ0aGtuLWpobU1LTmFSQlRvbEk3WE5YWFRSc1k0OV9JaUd2TFBCVkFySHZSVDlrR2lRWkJFQThPUURtdjlCYnBYeU9XQkNHLTFrcEdwWEZQamdfWGFpcEd1MnM5dGxFdk1xT1FPd0ZsWXFJNW1taVptYW44Q3JUQT09fGG25BGdPznBtGqyNf65yGWgB_tfIyOHMHhbnP_ITXEo",
             Authorization: "",
         },
-        orgId: "bf184df7-0ce6-4100-a9c6-497c181b87cf",
+        orgId: "aac1ed88-2546-4f9c-a808-fb9c4d0ef24b",
         userId: "851e0abc-7e91-4206-8c85-498e16f91e67",
         orgName: "ukama",
     };
