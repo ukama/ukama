@@ -305,6 +305,7 @@ func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 		Uuid:   req.Uuid,
 		Name:   req.Name,
 		Active: req.Active,
+		OrgId:  c.Request.Header.Get("Org-id"),
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -313,7 +314,6 @@ func (r *Router) UpdatePackageHandler(c *gin.Context, req *UpdatePackageRequest)
 	}
 
 	return resp, nil
-
 }
 
 func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.AddPackageResponse, error) {

@@ -1,6 +1,6 @@
-import AddDataPlanDialog from './AddDataPlanDialog';
 import BasicDialog from './BasicDialog';
 import BillingDialog from './BillingDialog';
+import DataPlanDialog from './DataPlanDialog';
 import DeactivateUser from './DeactivateUser';
 import FileDropBoxDialog from './FileDropBoxDialog';
 import InviteMemberDialog from './InviteMemberDialog';
@@ -14,7 +14,7 @@ export {
   BasicDialog,
   BillingDialog,
   DeactivateUser,
-  AddDataPlanDialog,
+  DataPlanDialog,
   FileDropBoxDialog,
   InviteMemberDialog,
   // UserDetailsDialog,

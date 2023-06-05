@@ -289,6 +289,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 	_package := &db.Package{
 		Name:   req.GetName(),
 		Active: req.Active,
+		
 	}
 
 	packageID, err := uuid.FromString(req.GetUuid())
@@ -344,7 +345,6 @@ func dbPackageToPbPackages(p *db.Package) *pb.Package {
 		UpdatedAt:   p.UpdatedAt.Format(time.RFC3339),
 		DeletedAt:   d,
 		Rate: &pb.PackageRates{
-
 			Data:   p.PackageRate.Data,
 			SmsMo:  p.PackageRate.SmsMo,
 			SmsMt:  p.PackageRate.SmsMt,

@@ -1,20 +1,21 @@
 import { snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
 import {
-  AddPackageInputDto,
   MemberObj,
+  PackageDto,
   useAddMemberMutation,
   useAddPackageMutation,
   useDeletePacakgeMutation,
   useGetOrgMemberQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
+  useUpdatePacakgeMutation,
   useUploadSimsMutation,
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TObject, TSnackMessage } from '@/types';
 import {
-  AddDataPlanDialog,
+  DataPlanDialog,
   FileDropBoxDialog,
   InviteMemberDialog,
   LoadingWrapper,
@@ -117,6 +118,14 @@ const Manage = () => {
     simPool: [],
     dataPlan: [],
     node: NODE_POOL_DATA,
+  });
+  const [dataplan, setDataplan] = useState({
+    id: '',
+    name: '',
+    dataVolume: 0,
+    dataUnit: '',
+    amount: 0,
+    duration: 0,
   });
 
   const {
@@ -265,6 +274,27 @@ const Manage = () => {
       },
     });
 
+  const [updatePackage, { loading: updatePkgLoading }] =
+    useUpdatePacakgeMutation({
+      onCompleted: () => {
+        getDataPlans();
+        setSnackbarMessage({
+          id: 'update-data-plan',
+          message: 'Data plan updated successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'data-plan-update-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
   useEffect(() => {
     if (memberSearch.length > 2) {
       const _members = members?.getOrgMembers.members.filter((member) => {
@@ -343,18 +373,30 @@ const Manage = () => {
     }
   };
 
-  const handleDataPlanAction = (dataPlan: AddPackageInputDto) => {
-    addDataPlan({
-      variables: {
-        data: {
-          name: dataPlan.name,
-          amount: dataPlan.amount,
-          dataUnit: dataPlan.dataUnit,
-          dataVolume: dataPlan.dataVolume,
-          duration: dataPlan.duration,
+  const handleDataPlanAction = (action: string) => {
+    if (action === 'add') {
+      addDataPlan({
+        variables: {
+          data: {
+            name: dataplan.name,
+            amount: dataplan.amount,
+            dataUnit: dataplan.dataUnit,
+            dataVolume: dataplan.dataVolume,
+            duration: dataplan.duration,
+          },
         },
-      },
-    });
+      });
+    } else if (action === 'update') {
+      updatePackage({
+        variables: {
+          packageId: dataplan.id,
+          data: {
+            name: dataplan.name,
+            active: true,
+          },
+        },
+      });
+    }
   };
 
   const handleOptionMenuItemAction = (id: string, action: string) => {
@@ -365,6 +407,17 @@ const Manage = () => {
         },
       });
     } else if (action === 'edit') {
+      const d: PackageDto = data.dataPlan.find(
+        (pkg: PackageDto) => pkg.uuid === id,
+      );
+      setDataplan({
+        id: id,
+        amount: d.rate.amount,
+        dataUnit: d.dataUnit,
+        dataVolume: parseInt(parseInt(d.dataVolume).toFixed(2)),
+        duration: parseInt(d.duration),
+        name: d.name,
+      });
       setIsDataPlan(true);
     }
   };
@@ -375,7 +428,9 @@ const Manage = () => {
     membersLoading ||
     addMemberLoading ||
     uploadSimsLoading ||
-    dataPlanLoading;
+    dataPlanLoading ||
+    deletePkgLoading ||
+    updatePkgLoading;
 
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
@@ -438,11 +493,14 @@ const Manage = () => {
         />
       )}
       {isDataPlan && (
-        <AddDataPlanDialog
+        <DataPlanDialog
+          data={dataplan}
+          action={dataplan.id ? 'update' : 'add'}
           isOpen={isDataPlan}
+          setData={setDataplan}
           title={'Create data plan'}
           labelNegativeBtn={'Cancel'}
-          labelSuccessBtn={'Save Data Plan'}
+          labelSuccessBtn={dataplan.id ? 'Update Data Plan' : 'Save Data Plan'}
           handleSuccessAction={handleDataPlanAction}
           handleCloseAction={() => setIsDataPlan(false)}
         />

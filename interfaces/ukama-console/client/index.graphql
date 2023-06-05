@@ -613,6 +613,12 @@ mutation deletePacakge($packageId: String!) {
   }
 }
 
+mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
+  updatePackage(packageId: $packageId, data: $data) {
+    ...Package
+  }
+}
+
 ### Package End ###
 
 ### SimPool Start ###

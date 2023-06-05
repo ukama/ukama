@@ -64,7 +64,7 @@ export type AddOrgInputDto = {
 };
 
 export type AddPackageInputDto = {
-  amount: Scalars['Int']['input'];
+  amount: Scalars['Float']['input'];
   dataUnit: Scalars['String']['input'];
   dataVolume: Scalars['Int']['input'];
   duration: Scalars['Int']['input'];
@@ -1531,14 +1531,8 @@ export type UpdateNodeResponse = {
 };
 
 export type UpdatePackageInputDto = {
-  active?: InputMaybe<Scalars['Boolean']['input']>;
-  data_volume?: InputMaybe<Scalars['Int']['input']>;
-  duration?: InputMaybe<Scalars['Int']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  org_rates_id?: InputMaybe<Scalars['Int']['input']>;
-  sim_type?: InputMaybe<Scalars['String']['input']>;
-  sms_volume?: InputMaybe<Scalars['Int']['input']>;
-  voice_volume?: InputMaybe<Scalars['Int']['input']>;
+  active: Scalars['Boolean']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type UpdateSubscriberInputDto = {
@@ -1777,6 +1771,14 @@ export type DeletePacakgeMutationVariables = Exact<{
 
 
 export type DeletePacakgeMutation = { __typename?: 'Mutation', deletePackage: { __typename?: 'IdResponse', uuid: string } };
+
+export type UpdatePacakgeMutationVariables = Exact<{
+  packageId: Scalars['String']['input'];
+  data: UpdatePackageInputDto;
+}>;
+
+
+export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
 export type GetSimpoolStatsQueryVariables = Exact<{
   type: Scalars['String']['input'];
@@ -2547,6 +2549,40 @@ export function useDeletePacakgeMutation(baseOptions?: Apollo.MutationHookOption
 export type DeletePacakgeMutationHookResult = ReturnType<typeof useDeletePacakgeMutation>;
 export type DeletePacakgeMutationResult = Apollo.MutationResult<DeletePacakgeMutation>;
 export type DeletePacakgeMutationOptions = Apollo.BaseMutationOptions<DeletePacakgeMutation, DeletePacakgeMutationVariables>;
+export const UpdatePacakgeDocument = gql`
+    mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
+  updatePackage(packageId: $packageId, data: $data) {
+    ...Package
+  }
+}
+    ${PackageFragmentDoc}`;
+export type UpdatePacakgeMutationFn = Apollo.MutationFunction<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
+
+/**
+ * __useUpdatePacakgeMutation__
+ *
+ * To run a mutation, you first call `useUpdatePacakgeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdatePacakgeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updatePacakgeMutation, { data, loading, error }] = useUpdatePacakgeMutation({
+ *   variables: {
+ *      packageId: // value for 'packageId'
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdatePacakgeMutation(baseOptions?: Apollo.MutationHookOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>(UpdatePacakgeDocument, options);
+      }
+export type UpdatePacakgeMutationHookResult = ReturnType<typeof useUpdatePacakgeMutation>;
+export type UpdatePacakgeMutationResult = Apollo.MutationResult<UpdatePacakgeMutation>;
+export type UpdatePacakgeMutationOptions = Apollo.BaseMutationOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
 export const GetSimpoolStatsDocument = gql`
     query getSimpoolStats($type: String!) {
   getSimPoolStats(type: $type) {
