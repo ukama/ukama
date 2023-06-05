@@ -74,14 +74,23 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		DOB:                   dob,
 		IdSerial:              req.GetIdSerial(),
 	}
+
 	err = s.subscriberRepo.Add(subscriber)
 	if err != nil {
 		logrus.Error("error while adding subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
+	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
+
+	route := s.subscriberRoutingKey.SetAction("create").SetObject("subscriber").MustBuild()
+	err = s.msgbus.PublishRequest(route, subscriberPb)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
+	}
+
 	return &pb.AddSubscriberResponse{
-		Subscriber: dbSubscriberToPbSubscriber(subscriber, nil),
+		Subscriber: subscriberPb,
 	}, nil
 
 }
