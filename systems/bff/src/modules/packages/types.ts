@@ -1,4 +1,4 @@
-import { Field, InputType, Int, ObjectType } from "type-graphql";
+import { Field, Float, InputType, Int, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class PackageRateAPIDto {
@@ -254,7 +254,7 @@ export class AddPackageInputDto {
     @Field()
     dataUnit: string;
 
-    @Field(() => Int)
+    @Field(() => Float)
     amount: number;
 
     @Field(() => Int)
@@ -263,27 +263,9 @@ export class AddPackageInputDto {
 
 @InputType()
 export class UpdatePackageInputDto {
-    @Field({ nullable: true })
+    @Field()
     name: string;
 
-    @Field({ nullable: true })
+    @Field()
     active: boolean;
-
-    @Field(() => Int, { nullable: true })
-    duration: number;
-
-    @Field(() => Int, { nullable: true })
-    data_volume: number;
-
-    @Field(() => Int, { nullable: true })
-    org_rates_id: number;
-
-    @Field({ nullable: true })
-    sim_type: string;
-
-    @Field(() => Int, { nullable: true })
-    sms_volume: number;
-
-    @Field(() => Int, { nullable: true })
-    voice_volume: number;
 }

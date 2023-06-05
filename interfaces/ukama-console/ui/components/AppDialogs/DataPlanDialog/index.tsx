@@ -1,4 +1,5 @@
 import { DATA_DURATION, DATA_UNIT } from '@/constants';
+import { AddPackageInputDto } from '@/generated';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
@@ -15,77 +16,73 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { useState } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
-type AddDataPlanDialogProps = {
+interface IDataPlanDialog {
+  data: AddPackageInputDto;
+  setData: Dispatch<SetStateAction<any>>;
   title: string;
+  action: string;
   isOpen: boolean;
   handleCloseAction: any;
   labelSuccessBtn?: string;
   handleSuccessAction: any;
   labelNegativeBtn?: string;
-};
+}
 
-const AddDataPlanDialog = ({
+const DataPlanDialog = ({
   title,
   isOpen,
+  action,
+  data: dataplan,
+  setData: setDataplan,
   labelSuccessBtn,
   labelNegativeBtn,
   handleCloseAction,
   handleSuccessAction,
-}: AddDataPlanDialogProps) => {
-  const [dataplan, setDataplan] = useState({
-    name: '',
-    dataVolume: 0,
-    dataUnit: '',
-    amount: 0,
-    duration: 0,
-  });
+}: IDataPlanDialog) => (
+  <Dialog
+    fullWidth
+    open={isOpen}
+    maxWidth="sm"
+    onClose={handleCloseAction}
+    aria-labelledby="alert-dialog-title"
+    aria-describedby="alert-dialog-description"
+  >
+    <Stack direction="row" alignItems="center" justifyContent="space-between">
+      <DialogTitle>{title}</DialogTitle>
+      <IconButton
+        onClick={handleCloseAction}
+        sx={{ position: 'relative', right: 8 }}
+      >
+        <CloseIcon />
+      </IconButton>
+    </Stack>
 
-  return (
-    <Dialog
-      fullWidth
-      open={isOpen}
-      maxWidth="sm"
-      onClose={handleCloseAction}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-    >
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <DialogTitle>{title}</DialogTitle>
-        <IconButton
-          onClick={handleCloseAction}
-          sx={{ position: 'relative', right: 8 }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </Stack>
-
-      <DialogContent>
-        <Grid
-          container
-          rowSpacing={2}
-          gridAutoRows={2}
-          columnSpacing={2}
-          gridAutoColumns={1}
-          alignItems={'center'}
-          justifyContent={'center'}
-        >
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              required
-              label="DATA PLAN NAME"
-              value={dataplan.name}
-              id={'data-plan-name'}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              onChange={(e) =>
-                setDataplan({ ...dataplan, name: e.target.value })
-              }
-            />
-          </Grid>
+    <DialogContent>
+      <Grid
+        container
+        rowSpacing={2}
+        gridAutoRows={2}
+        columnSpacing={2}
+        gridAutoColumns={1}
+        alignItems={'center'}
+        justifyContent={'center'}
+      >
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            required
+            label="DATA PLAN NAME"
+            value={dataplan.name}
+            id={'data-plan-name'}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            onChange={(e) => setDataplan({ ...dataplan, name: e.target.value })}
+          />
+        </Grid>
+        {action !== 'update' && (
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
             <Grid item xs={6}>
               <TextField
@@ -126,6 +123,8 @@ const AddDataPlanDialog = ({
               />
             </Grid>
           </Grid>
+        )}
+        {action !== 'update' && (
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
             <Grid item xs={4}>
               <FormControl fullWidth>
@@ -154,6 +153,7 @@ const AddDataPlanDialog = ({
                 </Select>
               </FormControl>
             </Grid>
+
             <Grid item xs={8}>
               <FormControl fullWidth>
                 <InputLabel
@@ -190,32 +190,28 @@ const AddDataPlanDialog = ({
               </FormControl>
             </Grid>
           </Grid>
-        </Grid>
-      </DialogContent>
+        )}
+      </Grid>
+    </DialogContent>
 
-      <DialogActions>
-        <Stack direction={'row'} alignItems="center" spacing={2}>
-          {labelNegativeBtn && (
-            <Button
-              variant="text"
-              color={'primary'}
-              onClick={handleCloseAction}
-            >
-              {labelNegativeBtn}
-            </Button>
-          )}
-          {labelSuccessBtn && (
-            <Button
-              variant="contained"
-              onClick={() => handleSuccessAction(dataplan)}
-            >
-              {labelSuccessBtn}
-            </Button>
-          )}
-        </Stack>
-      </DialogActions>
-    </Dialog>
-  );
-};
+    <DialogActions>
+      <Stack direction={'row'} alignItems="center" spacing={2}>
+        {labelNegativeBtn && (
+          <Button variant="text" color={'primary'} onClick={handleCloseAction}>
+            {labelNegativeBtn}
+          </Button>
+        )}
+        {labelSuccessBtn && (
+          <Button
+            variant="contained"
+            onClick={() => handleSuccessAction(action)}
+          >
+            {labelSuccessBtn}
+          </Button>
+        )}
+      </Stack>
+    </DialogActions>
+  </Dialog>
+);
 
-export default AddDataPlanDialog;
+export default DataPlanDialog;

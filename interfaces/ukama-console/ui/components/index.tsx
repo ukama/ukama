@@ -4,9 +4,9 @@ import Alerts from './Alerts';
 import ApexLineChart from './ApexLineChart';
 import ApexStackAreaChart from './ApexStackAreaChart';
 import {
-  AddDataPlanDialog,
   BasicDialog,
   BillingDialog,
+  DataPlanDialog,
   DeactivateUser,
   FileDropBoxDialog,
   InviteMemberDialog,
@@ -98,6 +98,7 @@ export {
   BillingAlerts,
   OptionsPopover,
   DeactivateUser,
+  DataPlanDialog,
   NodeNetworkTab,
   LoadingWrapper,
   ConsoleSettings,
@@ -110,7 +111,6 @@ export {
   NodeSoftwareTab,
   NodeResourcesTab,
   BillingDataTable,
-  AddDataPlanDialog,
   FileDropBoxDialog,
   CustomRadioButton,
   // UserDetailsDialog,

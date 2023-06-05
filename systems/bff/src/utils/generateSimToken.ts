@@ -19,7 +19,7 @@ const encrypt = (t: string, key: string) => {
     const cipher = crypto.createCipheriv(
         "aes-256-gcm",
         Buffer.from(key),
-        Buffer.alloc(16)
+        Buffer.alloc(32)
     );
 
     const encrypted = Buffer.concat([cipher.update(t, "utf8"), cipher.final()]);

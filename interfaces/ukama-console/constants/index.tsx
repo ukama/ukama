@@ -36,8 +36,10 @@ export const MEMBER_ROLES = [
   { id: 3, label: 'Member', value: 'MEMBER' },
 ];
 export const DATA_UNIT = [
-  { id: 1, label: 'MB', value: 'mb' },
-  { id: 2, label: 'GB', value: 'gb' },
+  { id: 1, label: 'BYTE', value: 'Bytes' },
+  { id: 2, label: 'KB', value: 'KiloBytes' },
+  { id: 3, label: 'MB', value: 'MegaBytes' },
+  { id: 4, label: 'GB', value: 'KiloBGigaBytesytes' },
 ];
 export const DATA_DURATION = [
   { id: 1, label: 'Day', value: '1' },
