@@ -6,6 +6,7 @@ import (
 )
 
 type BillingClient interface {
+	GetBillableMetricId(context.Context, string) (string, error)
 	CreatePlan(context.Context, Plan) (string, error)
 	CreateCustomer(context.Context, Customer) (string, error)
 	UpdateCustomer(context.Context, Customer) (string, error)
@@ -36,7 +37,7 @@ type Plan struct {
 
 	BillableMetricID     string
 	ChargeModel          string
-	ChargeAmountCents    int
+	ChargeAmountCents    string
 	ChargeAmountCurrency string
 	FreeUnits            int
 	PackageSize          int

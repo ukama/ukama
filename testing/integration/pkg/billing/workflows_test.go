@@ -78,7 +78,6 @@ func InitializeData() *BillingData {
 
 	d.OwnerId = uuid.NewV4().String()
 	d.OrgId = uuid.NewV4().String()
-	// d.SimType = "ukama_data"
 	d.SimType = "test"
 
 	d.Host = "http://localhost:3000"
@@ -90,10 +89,8 @@ func InitializeData() *BillingData {
 	d.DataPlanClient = dplan.NewDataplanClient(d.DplanHost)
 	d.BaseRateId = make([]string, 8)
 	d.Country = "The lunar maria"
-	// d.Country = "Tycho crater"
 
 	d.Provider = "ABC Tel"
-	// d.Provider = "OWS Tel"
 
 	d.reqUploadBaseRatesRequest = dapi.UploadBaseRatesRequest{
 		EffectiveAt: utils.GenerateFutureDate(5 * time.Second),
@@ -149,7 +146,7 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			log.Tracef("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.package.create"})
 
-			// Add base rates, ignore error for dupes if rates are already present
+			// Add base rates
 			abResp, err := a.DataPlanClient.DataPlanBaseRateUpload(a.reqUploadBaseRatesRequest)
 			if assert.NoError(t, err) {
 				assert.NotNil(t, abResp)
@@ -160,7 +157,6 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 				RateId: a.BaseRateId[0],
 			}
 
-			// gbResp, err := a.DataPlanClient.DataPlanBaseRateGet(a.reqGetBaseRateRequest)
 			gbResp, err := a.DataPlanClient.DataPlanBaseRateGetByCountry(a.reqGetBaseRatesByCountryRequest)
 			if assert.NoError(t, err) {
 

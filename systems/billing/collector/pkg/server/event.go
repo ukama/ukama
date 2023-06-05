@@ -3,10 +3,13 @@ package server
 import (
 	"context"
 	"fmt"
+	"math"
+	"strconv"
 	"time"
 
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/ukama"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/protobuf/proto"
@@ -19,11 +22,12 @@ import (
 // provider
 
 const (
-	handlerTimeoutFactor   = 3
-	defaultCurrency        = "USD"
-	defaultBillingInterval = "monthly"
-	testBillingInterval    = "weekly"
-	testBillableMetricId   = ""
+	handlerTimeoutFactor      = 3
+	defaultChargeModel        = "package"
+	defaultCurrency           = "USD"
+	defaultBillingInterval    = "monthly"
+	testBillingInterval       = "weekly"
+	defaultBillableMetricCode = "data_usage"
 )
 
 type BillingCollectorEventServer struct {
@@ -133,7 +137,7 @@ func handleSimUsageEvent(key string, simUsage *epb.SimUsage, b *BillingCollector
 
 		CustomerId:     simUsage.SubscriberId,
 		SubscriptionId: simUsage.SimId,
-		Code:           "data_usage",
+		Code:           defaultBillableMetricCode,
 		SentAt:         time.Now(),
 
 		AdditionalProperties: map[string]string{
@@ -153,18 +157,49 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
+	// Get BillableMetricID
+	bmId, err := b.client.GetBillableMetricId(ctx, defaultBillableMetricCode)
+	if err != nil {
+		return err
+	}
+
+	// TODO: upstream billing provider fails on a DB constraint when pay in advance
+	// is set to false (postpaid). Somwhow, false bool value from go is sent as null
+	// to upstream DB. Need to investigate this between upstream go client and DB.
+	// TODO updates: It seems like 0, false values are not sent by go client.
+
 	// payAdvance := false
 	// if ukama.ParsePackageType(pkg.Type) == ukama.PackageTypePrepaid {
 	// payAdvance = true
 	// }
 
+	// Get the cost of the package per bytke
+	dataUnit := ukama.ParseDataUnitType(pkg.DataUnit)
+	if dataUnit == ukama.DataUnitTypeUnknown {
+		return fmt.Errorf("invalid data unit type")
+	}
+
+	billableDataSize := math.Pow(1024, float64(dataUnit-1))
+	amountCents := strconv.Itoa(int(pkg.DataUnitCost * 100))
+
 	newPlan := client.Plan{
-		Name:           "Plan " + pkg.Uuid,
-		Code:           pkg.Uuid,
-		Interval:       testBillingInterval,
-		PayInAdvance:   true,
-		AmountCents:    1500,
+		Name:     "Plan " + pkg.Uuid,
+		Code:     pkg.Uuid,
+		Interval: testBillingInterval,
+
+		// 0 values are not sent by the upstream billing provider client. see above Todos
+		AmountCents: 1,
+
 		AmountCurrency: defaultCurrency,
+
+		// fails on false (postpaid). See abouve Todos
+		PayInAdvance: true,
+
+		BillableMetricID:     bmId,
+		ChargeModel:          defaultChargeModel,
+		ChargeAmountCents:    amountCents,
+		ChargeAmountCurrency: defaultCurrency,
+		PackageSize:          int(billableDataSize),
 	}
 
 	log.Infof("Sending plan create event %v to billing", newPlan)
