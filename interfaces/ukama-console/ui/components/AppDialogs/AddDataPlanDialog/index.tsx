@@ -1,4 +1,4 @@
-import { MEMBER_ROLES } from '@/constants';
+import { DATA_DURATION, DATA_UNIT } from '@/constants';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
@@ -36,10 +36,10 @@ const AddDataPlanDialog = ({
 }: AddDataPlanDialogProps) => {
   const [dataplan, setDataplan] = useState({
     name: '',
-    dataLimit: '',
+    dataVolume: 0,
     dataUnit: '',
-    price: '',
-    duration: '',
+    amount: 0,
+    duration: 0,
   });
 
   return (
@@ -87,21 +87,46 @@ const AddDataPlanDialog = ({
             />
           </Grid>
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
-            <Grid item xs={8}>
+            <Grid item xs={6}>
               <TextField
                 fullWidth
                 required
+                type="number"
                 label="DATA LIMIT"
-                value={dataplan.name}
+                value={dataplan.dataVolume}
                 id={'data-plan-limit'}
                 InputLabelProps={{
                   shrink: true,
                 }}
                 onChange={(e) =>
-                  setDataplan({ ...dataplan, dataLimit: e.target.value })
+                  setDataplan({
+                    ...dataplan,
+                    dataVolume: parseInt(e.target.value as string),
+                  })
                 }
               />
             </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                required
+                type="number"
+                label="PACKAGE PRICE"
+                value={dataplan.amount}
+                id={'data-plan-price'}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                onChange={(e) =>
+                  setDataplan({
+                    ...dataplan,
+                    amount: parseInt(e.target.value as string),
+                  })
+                }
+              />
+            </Grid>
+          </Grid>
+          <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
             <Grid item xs={4}>
               <FormControl fullWidth>
                 <InputLabel id={'data-plan-unit-label'} shrink>
@@ -121,7 +146,7 @@ const AddDataPlanDialog = ({
                     })
                   }
                 >
-                  {MEMBER_ROLES.map(({ id, label, value }) => (
+                  {DATA_UNIT.map(({ id, label, value }) => (
                     <MenuItem key={id} value={value}>
                       {label}
                     </MenuItem>
@@ -129,24 +154,7 @@ const AddDataPlanDialog = ({
                 </Select>
               </FormControl>
             </Grid>
-          </Grid>
-          <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
             <Grid item xs={8}>
-              <TextField
-                fullWidth
-                required
-                label="PRICE PER MONTH"
-                value={dataplan.price}
-                id={'data-plan-price'}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                onChange={(e) =>
-                  setDataplan({ ...dataplan, price: e.target.value })
-                }
-              />
-            </Grid>
-            <Grid item xs={4}>
               <FormControl fullWidth>
                 <InputLabel
                   id={'data-plan-unit-price-label'}
@@ -169,11 +177,11 @@ const AddDataPlanDialog = ({
                   onChange={(e) =>
                     setDataplan({
                       ...dataplan,
-                      duration: e.target.value as string,
+                      duration: parseInt(e.target.value as string),
                     })
                   }
                 >
-                  {MEMBER_ROLES.map(({ id, label, value }) => (
+                  {DATA_DURATION.map(({ id, label, value }) => (
                     <MenuItem key={id} value={value}>
                       {label}
                     </MenuItem>

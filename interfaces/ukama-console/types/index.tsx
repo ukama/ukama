@@ -3,7 +3,7 @@ import { EmotionCache } from '@emotion/react';
 import { AppProps } from 'next/app';
 
 export type MenuItemType = {
-  Icon: any;
+  Icon?: any;
   id: number;
   title: string;
   route: string;

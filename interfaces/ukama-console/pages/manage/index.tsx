@@ -1,9 +1,11 @@
 import { snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
 import {
+  AddPackageInputDto,
   MemberObj,
   useAddMemberMutation,
   useAddPackageMutation,
+  useDeletePacakgeMutation,
   useGetOrgMemberQuery,
   useGetPackagesLazyQuery,
   useGetSimsLazyQuery,
@@ -102,7 +104,7 @@ const ManageMenu = ({ selectedId, onMenuItemClick }: IManageMenu) => (
   </Paper>
 );
 
-const Manage = async () => {
+const Manage = () => {
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
@@ -158,23 +160,24 @@ const Manage = async () => {
       },
     });
 
-  const [getPackages, { loading: packagesLoading }] = useGetPackagesLazyQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      setData((prev: any) => ({
-        ...prev,
-        dataPlan: data?.getPackages.packages ?? [],
-      }));
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'packages',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  const [getPackages, { loading: packagesLoading, refetch: getDataPlans }] =
+    useGetPackagesLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setData((prev: any) => ({
+          ...prev,
+          dataPlan: data?.getPackages.packages ?? [],
+        }));
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'packages',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
     onCompleted: () => {
@@ -240,6 +243,27 @@ const Manage = async () => {
       });
     },
   });
+
+  const [deletePackage, { loading: deletePkgLoading }] =
+    useDeletePacakgeMutation({
+      onCompleted: () => {
+        getDataPlans();
+        setSnackbarMessage({
+          id: 'delete-data-plan',
+          message: 'Data plan deleted successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'data-plan-delete-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   useEffect(() => {
     if (memberSearch.length > 2) {
@@ -319,7 +343,7 @@ const Manage = async () => {
     }
   };
 
-  const handleDataPlanAction = (dataPlan: any) => {
+  const handleDataPlanAction = (dataPlan: AddPackageInputDto) => {
     addDataPlan({
       variables: {
         data: {
@@ -331,6 +355,18 @@ const Manage = async () => {
         },
       },
     });
+  };
+
+  const handleOptionMenuItemAction = (id: string, action: string) => {
+    if (action === 'delete') {
+      deletePackage({
+        variables: {
+          packageId: id,
+        },
+      });
+    } else if (action === 'edit') {
+      setIsDataPlan(true);
+    }
   };
 
   const isLoading =
@@ -376,6 +412,7 @@ const Manage = async () => {
             <DataPlan
               data={data.dataPlan}
               handleActionButon={() => setIsDataPlan(true)}
+              handleOptionMenuItemAction={handleOptionMenuItemAction}
             />
           )}
         </>

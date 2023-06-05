@@ -35,6 +35,14 @@ export const MEMBER_ROLES = [
   { id: 2, label: 'Vendor', value: 'VENDOR' },
   { id: 3, label: 'Member', value: 'MEMBER' },
 ];
+export const DATA_UNIT = [
+  { id: 1, label: 'MB', value: 'mb' },
+  { id: 2, label: 'GB', value: 'gb' },
+];
+export const DATA_DURATION = [
+  { id: 1, label: 'Day', value: '1' },
+  { id: 2, label: 'Month', value: '30' },
+];
 export const SIM_TYPES = [
   { id: 1, label: 'Unknown', value: 'unknown' },
   { id: 2, label: 'Test', value: 'test' },
