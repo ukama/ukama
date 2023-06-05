@@ -19,7 +19,11 @@ import (
 // provider
 
 const (
-	handlerTimeoutFactor = 3
+	handlerTimeoutFactor   = 3
+	defaultCurrency        = "USD"
+	defaultBillingInterval = "monthly"
+	testBillingInterval    = "weekly"
+	testBillableMetricId   = ""
 )
 
 type BillingCollectorEventServer struct {
@@ -46,6 +50,18 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 		err = handleSimUsageEvent(e.RoutingKey, msg, b)
+		if err != nil {
+			return nil, err
+		}
+
+	// Create plan
+	case "event.cloud.package.package.create":
+		msg, err := unmarshalPackage(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleDataPlanPackageCreateEvent(e.RoutingKey, msg, b)
 		if err != nil {
 			return nil, err
 		}
@@ -129,6 +145,38 @@ func handleSimUsageEvent(key string, simUsage *epb.SimUsage, b *BillingCollector
 	log.Infof("Sending data usage event %v to billing server", event)
 
 	return b.client.AddUsageEvent(ctx, event)
+}
+
+func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b *BillingCollectorEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, pkg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	// payAdvance := false
+	// if ukama.ParsePackageType(pkg.Type) == ukama.PackageTypePrepaid {
+	// payAdvance = true
+	// }
+
+	newPlan := client.Plan{
+		Name:           "Plan " + pkg.Uuid,
+		Code:           pkg.Uuid,
+		Interval:       testBillingInterval,
+		PayInAdvance:   true,
+		AmountCents:    1500,
+		AmountCurrency: defaultCurrency,
+	}
+
+	log.Infof("Sending plan create event %v to billing", newPlan)
+
+	plan, err := b.client.CreatePlan(ctx, newPlan)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Successfuly created plan %v", plan)
+
+	return nil
 }
 
 func handleRegistrySubscriberCreateEvent(key string, subscriber *subpb.Subscriber,
@@ -244,6 +292,19 @@ func unmarshalSim(msg *anypb.Any) (*simpb.Sim, error) {
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("failed to Unmarshal sim manager's sim message with : %+v. Error %s.", msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func unmarshalPackage(msg *anypb.Any) (*epb.CreatePackageEvent, error) {
+	p := &epb.CreatePackageEvent{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}

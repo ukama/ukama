@@ -39,6 +39,25 @@ func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 	return nil
 }
 
+func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan) (string, error) {
+	newPlan := &lago.PlanInput{
+		Name:           pl.Name,
+		Code:           pl.Code,
+		Interval:       lago.PlanInterval(pl.Interval),
+		PayInAdvance:   pl.PayInAdvance,
+		AmountCents:    pl.AmountCents,
+		AmountCurrency: lago.Currency(pl.AmountCurrency),
+	}
+
+	plan, err := l.c.Plan().Create(ctx, newPlan)
+	if err != nil {
+		return "", fmt.Errorf("error while sending plan creation event: %s. code: %d. %w",
+			err.Msg, err.HTTPStatusCode, err.Err)
+	}
+
+	return plan.LagoID.String(), nil
+}
+
 func (l *lagoClient) CreateCustomer(ctx context.Context, cust Customer) (string, error) {
 	newCust := &lago.CustomerInput{
 		ExternalID:   cust.Id,

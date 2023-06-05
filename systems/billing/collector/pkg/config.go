@@ -34,6 +34,7 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.cdr.sim.usage",
+				"event.cloud.package.package.create",
 				"event.cloud.registry.subscriber.create",
 				"event.cloud.registry.subscriber.update",
 				"event.cloud.registry.subscriber.delete",

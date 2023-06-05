@@ -6,6 +6,7 @@ import (
 )
 
 type BillingClient interface {
+	CreatePlan(context.Context, Plan) (string, error)
 	CreateCustomer(context.Context, Customer) (string, error)
 	UpdateCustomer(context.Context, Customer) (string, error)
 	DeleteCustomer(context.Context, string) (string, error)
@@ -21,6 +22,24 @@ type Event struct {
 	Code                 string
 	SentAt               time.Time
 	AdditionalProperties map[string]string
+}
+
+type Plan struct {
+	Name              string
+	Code              string
+	Interval          string
+	PayInAdvance      bool
+	AmountCents       int
+	AmountCurrency    string
+	BillChargeMonthly bool
+	TrialPeriod       float32
+
+	BillableMetricID     string
+	ChargeModel          string
+	ChargeAmountCents    int
+	ChargeAmountCurrency string
+	FreeUnits            int
+	PackageSize          int
 }
 
 type Customer struct {

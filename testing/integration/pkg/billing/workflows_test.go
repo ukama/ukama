@@ -38,7 +38,7 @@ type BillingData struct {
 	Host          string
 	MbHost        string
 
-	DataPlanClient *dplan.DataPlanSys
+	DataPlanClient *dplan.DataplanClient
 	DplanHost      string
 	PackageId      string
 	BaseRateId     []string
@@ -49,10 +49,12 @@ type BillingData struct {
 	reqUploadBaseRatesRequest       dapi.UploadBaseRatesRequest
 	reqGetBaseRatesByCountryRequest dapi.GetBaseRatesByCountryRequest
 	reqGetBaseRateRequest           dapi.GetBaseRateRequest
+	reqSetDefaultMarkupRequest      dapi.SetDefaultMarkupRequest
+	reqSetMarkupRequest             dapi.SetMarkupRequest
 	reqAddPackageRequest            dapi.AddPackageRequest
 }
 
-var serviceConfig = pkg.NewConfig(pkg.ServiceName)
+var serviceConfig = pkg.NewConfig()
 
 func init() {
 	log.SetLevel(log.InfoLevel)
@@ -76,7 +78,8 @@ func InitializeData() *BillingData {
 
 	d.OwnerId = uuid.NewV4().String()
 	d.OrgId = uuid.NewV4().String()
-	d.SimType = "ukama_data"
+	// d.SimType = "ukama_data"
+	d.SimType = "test"
 
 	d.Host = "http://localhost:3000"
 	d.MbHost = "amqp://guest:guest@localhost:5672/"
@@ -84,10 +87,13 @@ func InitializeData() *BillingData {
 	d.BillingClient = billing.NewBillingClient(d.Host, serviceConfig.Key)
 
 	d.DplanHost = "http://localhost:8080"
-	d.DataPlanClient = dplan.NewDataPlanSys(d.DplanHost)
+	d.DataPlanClient = dplan.NewDataplanClient(d.DplanHost)
 	d.BaseRateId = make([]string, 8)
-	d.Country = "The Lunar Maria"
+	d.Country = "The lunar maria"
+	// d.Country = "Tycho crater"
+
 	d.Provider = "ABC Tel"
+	// d.Provider = "OWS Tel"
 
 	d.reqUploadBaseRatesRequest = dapi.UploadBaseRatesRequest{
 		EffectiveAt: utils.GenerateFutureDate(5 * time.Second),
@@ -102,13 +108,22 @@ func InitializeData() *BillingData {
 		SimType:  d.SimType,
 	}
 
+	d.reqSetDefaultMarkupRequest = dapi.SetDefaultMarkupRequest{
+		Markup: float64(utils.RandomInt(50)),
+	}
+
+	d.reqSetMarkupRequest = dapi.SetMarkupRequest{
+		OwnerId: d.OwnerId,
+		Markup:  float64(utils.RandomInt(50)),
+	}
+
 	return d
 }
 
 func TestWorkflow_BillingSystem(t *testing.T) {
 	w := test.NewWorkflow("Billing Workflows", "Various use cases regarding the billing system")
 
-	w.SetUpFxn = func(ctx context.Context, w *test.Workflow) error {
+	w.SetUpFxn = func(t *testing.T, ctx context.Context, w *test.Workflow) error {
 		log.Debugf("Initilizing Data for %s.", w.String())
 		var err error
 
@@ -126,7 +141,7 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 		Description: "Add a billing plan for a new data package",
 		Data:        &bilutil.Plan{},
 		Workflow:    w,
-		SetUpFxn: func(ctx context.Context, tc *test.TestCase) error {
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
 			/* Setup required for test case
 			Initialize any test specific data if required
 			*/
@@ -134,11 +149,11 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			log.Tracef("Setting up watcher for %s", tc.Name)
 			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.package.package.create"})
 
-			// Add base rates, ignore error for dup if rates are already present
-			_, err := a.DataPlanClient.DataPlanBaseRateUpload(a.reqUploadBaseRatesRequest)
-			// if assert.NotNil(t, err) {
-			// assert.NotNil(t, bResp)
-			// }
+			// Add base rates, ignore error for dupes if rates are already present
+			abResp, err := a.DataPlanClient.DataPlanBaseRateUpload(a.reqUploadBaseRatesRequest)
+			if assert.NoError(t, err) {
+				assert.NotNil(t, abResp)
+			}
 
 			// Get one base rate
 			a.reqGetBaseRateRequest = dapi.GetBaseRateRequest{
@@ -148,13 +163,25 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			// gbResp, err := a.DataPlanClient.DataPlanBaseRateGet(a.reqGetBaseRateRequest)
 			gbResp, err := a.DataPlanClient.DataPlanBaseRateGetByCountry(a.reqGetBaseRatesByCountryRequest)
 			if assert.NoError(t, err) {
+
 				assert.NotNil(t, gbResp)
 
-				if assert.Equal(t, 0, len(gbResp.Rates)) {
+				if !assert.Equal(t, 1, len(gbResp.Rates)) {
 					return fmt.Errorf("%w: setup failure while getting base rates", err)
 				}
 			}
 
+			// Set markup
+			a.reqSetDefaultMarkupRequest = dapi.SetDefaultMarkupRequest{
+				Markup: float64(utils.RandomInt(50)),
+			}
+
+			mResp, err := a.DataPlanClient.DataPlanUpdateMarkup(a.reqSetMarkupRequest)
+			if assert.NoError(t, err) {
+				assert.NotNil(t, mResp)
+			}
+
+			// Add a new package
 			a.reqAddPackageRequest = dapi.AddPackageRequest{
 				OwnerId:    a.OwnerId,
 				OrgId:      a.OrgId,
@@ -172,7 +199,6 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 				Apn:        "ukama.tel",
 			}
 
-			// Add a new package
 			pResp, err := a.DataPlanClient.DataPlanPackageAdd(a.reqAddPackageRequest)
 			if assert.NoError(t, err) {
 				assert.NotNil(t, pResp)
