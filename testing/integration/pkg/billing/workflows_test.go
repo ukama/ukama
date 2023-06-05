@@ -24,6 +24,7 @@ import (
 	sapi "github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/rest"
 
 	bilutil "github.com/ukama/ukama/systems/billing/invoice/pkg/util"
+	smutil "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
 	billing "github.com/ukama/ukama/testing/integration/pkg/billing"
 	dplan "github.com/ukama/ukama/testing/integration/pkg/dataplan"
@@ -50,10 +51,14 @@ type BillingData struct {
 
 	SubscriberClient *subs.SubscriberClient
 	SubsHost         string
+	EncKey           string
 	SubscriberId     string
 	SubscriberName   string
 	SubscriberEmail  string
 	SubscriberPhone  string
+	ICCID            []string
+	SimToken         []string
+	SimId            string
 
 	RegistryClient *reg.RegistryClient
 	RegHost        string
@@ -77,6 +82,8 @@ type BillingData struct {
 	reqSetMarkupRequest             dapi.SetMarkupRequest
 	reqAddPackageRequest            dapi.AddPackageRequest
 	reqSubscriberAddReq             sapi.SubscriberAddReq
+	reqSimPoolUploadSimReq          sapi.SimPoolUploadSimReq
+	reqAllocateSimReq               sapi.AllocateSimReq
 }
 
 var serviceConfig = pkg.NewConfig()
@@ -117,6 +124,7 @@ func InitializeData() *BillingData {
 
 	d.SubsHost = "http://localhost:8081"
 	d.SubscriberClient = subs.NewSubscriberClient(d.SubsHost)
+	d.EncKey = "the-key-has-to-be-32-bytes-long!"
 	d.SubscriberName = faker.FirstName()
 	d.SubscriberEmail = strings.ToLower(faker.FirstName() + "_" + faker.LastName() + "@example.com")
 	d.SubscriberPhone = faker.Phonenumber()
@@ -180,6 +188,20 @@ func InitializeData() *BillingData {
 		Gender:                "male",
 		OrgId:                 "",
 		NetworkId:             "",
+	}
+
+	d.ICCID = make([]string, subs.MAX_POOL)
+	d.reqSimPoolUploadSimReq = sapi.SimPoolUploadSimReq{
+		SimType: d.SimType,
+		Data:    string(subs.CreateSimPool(subs.MAX_POOL, &d.ICCID)),
+	}
+
+	d.reqAllocateSimReq = sapi.AllocateSimReq{
+		SubscriberId: "",
+		SimToken:     "",
+		PackageId:    "",
+		NetworkId:    "",
+		SimType:      "",
 	}
 
 	return d
@@ -259,6 +281,33 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 		mResp, err := d.DataPlanClient.DataPlanUpdateMarkup(d.reqSetMarkupRequest)
 		if assert.NoError(t, err) {
 			assert.NotNil(t, mResp)
+		}
+
+		// Upload sims to sim pool
+		uResp, err := d.SubscriberClient.SubscriberSimpoolUploadSims(d.reqSimPoolUploadSimReq)
+		if assert.NoError(t, err) {
+			assert.NotNil(t, uResp)
+			assert.Equal(t, d.ICCID, uResp.Iccid)
+		}
+
+		// for i, iccid := range data.ICCID {
+		// if iccid != d.ICCID[i] {
+		// check = false
+		// break
+		// } else {
+		// tok, err := smutil.GenerateTokenFromIccid(iccid, d.EncKey)
+		// if err == nil {
+		// d.SimToken = append(data.SimToken, tok)
+		// }
+		// }
+		// }
+
+		for i, iccid := range d.ICCID {
+			assert.Equal(t, d.ICCID[i], iccid)
+			token, err := smutil.GenerateTokenFromIccid(iccid, d.EncKey)
+			if assert.NoError(t, err) {
+				d.SimToken = append(d.SimToken, token)
+			}
 		}
 
 		log.Debugf("Workflow Data : %+v", w.Data)
@@ -398,6 +447,7 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			a, ok := tc.GetWorkflowData().(*BillingData)
 			if !ok {
 				log.Errorf("Invalid data type for Workflow data.")
+
 				return fmt.Errorf("invalid data type for Workflow data")
 			}
 
@@ -429,6 +479,92 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 				assert.Equal(t, a.SubscriberName, tr.Name)
 				assert.Equal(t, a.SubscriberEmail, tr.Email)
 				assert.Equal(t, a.SubscriberPhone, tr.Phone)
+				check = true
+			}
+
+			return check, nil
+		},
+
+		ExitFxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Here we save any data required to be saved from the test case
+			Cleanup any test specific data
+			*/
+			tc.Watcher.Stop()
+
+			assert.Equal(t, int(tc.State), int(test.StateTypePass))
+			return nil
+		},
+	})
+
+	w.RegisterTestCase(&test.TestCase{
+		Name:        "Create new subscription",
+		Description: "Create a new subscription from new sim allocation",
+		Data:        &bilutil.Subscription{},
+		Workflow:    w,
+		SetUpFxn: func(t *testing.T, ctx context.Context, tc *test.TestCase) error {
+			/* Setup required for test case
+			Initialize any test specific data if required
+			*/
+			a := tc.GetWorkflowData().(*BillingData)
+			log.Tracef("Setting up watcher for %s", tc.Name)
+			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.sim.allocate"})
+
+			// Allocate new sim to subscriber
+			a.reqAllocateSimReq.NetworkId = a.NetworkId
+			a.reqAllocateSimReq.PackageId = a.PackageId
+			a.reqAllocateSimReq.SimType = a.SimType
+			a.reqAllocateSimReq.SubscriberId = a.SubscriberId
+			a.reqAllocateSimReq.SimToken = a.SimToken[utils.RandomInt(len(a.SimToken)-1)]
+
+			allResp, err := a.SubscriberClient.SubscriberManagerAllocateSim(a.reqAllocateSimReq)
+			if assert.NoError(t, err) {
+				assert.NotNil(t, allResp)
+				assert.Equal(t, a.reqAllocateSimReq.PackageId, allResp.Sim.Package.PackageId)
+				assert.Equal(t, a.reqAllocateSimReq.SimType, allResp.Sim.Type)
+				assert.Equal(t, a.reqAllocateSimReq.NetworkId, allResp.Sim.NetworkId)
+			}
+
+			a.SimId = allResp.Sim.Id
+
+			return err
+		},
+
+		Fxn: func(ctx context.Context, tc *test.TestCase) error {
+			/* Test Case */
+			var err error
+			a, ok := tc.GetWorkflowData().(*BillingData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+				return fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			tc.Data, err = a.BillingClient.GetSubscriptionsByCustomerId(a.SubscriberId)
+
+			return err
+		},
+
+		StateFxn: func(ctx context.Context, tc *test.TestCase) (bool, error) {
+			/* Check for possible failures during test case */
+			check := false
+
+			a, ok := tc.GetWorkflowData().(*BillingData)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			tr, ok := tc.GetData().(*bilutil.Subscription)
+			if !ok {
+				log.Errorf("Invalid data type for Workflow data.")
+
+				return check, fmt.Errorf("invalid data type for Workflow data")
+			}
+
+			if assert.NotNil(t, tr) {
+				assert.Equal(t, a.SimId, tr.ExternalID)
+				assert.Equal(t, a.PackageId, tr.PlanCode)
+				assert.Equal(t, a.SubscriberId, tr.ExternalCustomerID)
 				check = true
 			}
 

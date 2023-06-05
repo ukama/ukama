@@ -13,11 +13,9 @@ import (
 	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
-	simpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
 func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
@@ -242,23 +240,25 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 	})
 }
 
-func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent(t *testing.T) {
-	t.Run("SetActivePackageEventSent", func(t *testing.T) {
+func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testing.T) {
+	t.Run("AllocateSimEventSent", func(t *testing.T) {
 		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.simmanager.package.activate"
+		routingKey := "event.cloud.simmanager.sim.allocate"
 
-		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).Return("9fd07299-2826-4f8b-aea9-69da56440bec", nil).Once()
+		// billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).Return("9fd07299-2826-4f8b-aea9-69da56440bec", nil).Once()
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		pkg := &simpb.Package{
-			// PlanId:    "9fd07299-2826-4f8b-aea9-69da56440bec",
-			StartDate: timestamppb.New(time.Now()),
-		}
+		planId := "f1ad4204-ab9e-4574-b6bb-bffcc104f8f9"
 
-		sim := simpb.Sim{
+		// pkg := &simpb.Package{
+		// PackageId: "9fd07299-2826-4f8b-aea9-69da56440bec",
+		// StartDate: timestamppb.New(time.Now()),
+		// }
+
+		sim := epb.SimAllocation{
 			Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
-			Package:      pkg,
+			DataPlanId:   planId,
 		}
 
 		anyE, err := anypb.New(&sim)
@@ -276,14 +276,14 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 		assert.NoError(t, err)
 	})
 
-	t.Run("SetActivePackageEventNotSent", func(t *testing.T) {
+	t.Run("AllocateSimEventNotSent", func(t *testing.T) {
 		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.simmanager.package.activate"
+		routingKey := "event.cloud.simmanager.sim.allocate"
 
-		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).
-			Return("", errors.New("failed to send terminate subscription event")).Once()
+		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
+			Return("", errors.New("failed to send create subscription event")).Once()
 
-		sim := simpb.Sim{}
+		sim := epb.SimAllocation{}
 
 		anyE, err := anypb.New(&sim)
 		assert.NoError(t, err)
@@ -300,3 +300,62 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 		assert.Error(t, err)
 	})
 }
+
+// func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent(t *testing.T) {
+// t.Run("SetActivePackageEventSent", func(t *testing.T) {
+// billingClient := &mocks.BillingClient{}
+// routingKey := "event.cloud.simmanager.package.activate"
+
+// billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).Return("9fd07299-2826-4f8b-aea9-69da56440bec", nil).Once()
+// billingClient.On("CreateSubscription", mock.Anything, mock.Anything).Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
+
+// pkg := &simpb.Package{
+// // PlanId:    "9fd07299-2826-4f8b-aea9-69da56440bec",
+// StartDate: timestamppb.New(time.Now()),
+// }
+
+// sim := simpb.Sim{
+// Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
+// SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
+// Package:      pkg,
+// }
+
+// anyE, err := anypb.New(&sim)
+// assert.NoError(t, err)
+
+// msg := &epb.Event{
+// RoutingKey: routingKey,
+// Msg:        anyE,
+// }
+
+// s := server.NewBillingCollectorEventServer(billingClient)
+
+// _, err = s.EventNotification(context.TODO(), msg)
+
+// assert.NoError(t, err)
+// })
+
+// t.Run("SetActivePackageEventNotSent", func(t *testing.T) {
+// billingClient := &mocks.BillingClient{}
+// routingKey := "event.cloud.simmanager.package.activate"
+
+// billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).
+// Return("", errors.New("failed to send terminate subscription event")).Once()
+
+// sim := simpb.Sim{}
+
+// anyE, err := anypb.New(&sim)
+// assert.NoError(t, err)
+
+// msg := &epb.Event{
+// RoutingKey: routingKey,
+// Msg:        anyE,
+// }
+
+// s := server.NewBillingCollectorEventServer(billingClient)
+
+// _, err = s.EventNotification(context.TODO(), msg)
+
+// assert.Error(t, err)
+// })
+// }

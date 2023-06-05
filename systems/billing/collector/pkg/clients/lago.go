@@ -31,12 +31,12 @@ func (l *lagoClient) GetBillableMetricId(ctx context.Context, code string) (stri
 
 func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 	eventInput := &lago.EventInput{
-		TransactionID:      ev.TransactionId,
-		ExternalCustomerID: ev.CustomerId,
-		// ExternalSubscriptionID: ev.SubscriptionId,
-		Code:       ev.Code,
-		Timestamp:  ev.SentAt.Unix(),
-		Properties: ev.AdditionalProperties,
+		TransactionID:          ev.TransactionId,
+		ExternalCustomerID:     ev.CustomerId,
+		ExternalSubscriptionID: ev.SubscriptionId,
+		Code:                   ev.Code,
+		Timestamp:              ev.SentAt.Unix(),
+		Properties:             ev.AdditionalProperties,
 	}
 
 	err := l.c.Event().Create(ctx, eventInput)

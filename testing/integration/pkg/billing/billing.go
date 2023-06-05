@@ -64,3 +64,23 @@ func (s *BillingClient) GetPlan(planCode string) (*bilutil.Plan, error) {
 
 	return rsp.Plan, nil
 }
+
+func (s *BillingClient) GetSubscriptionsByCustomerId(custId string) (*bilutil.Subscription, error) {
+	var rsp = &struct {
+		Subscriptions []*bilutil.Subscription
+	}{}
+
+	resp, err := s.r.Get(s.u.String() + "/api/v1/subscriptions?external_customer_id=" + custId)
+	if err != nil {
+		log.Errorf("Failed to send api request. error %s", err.Error())
+
+		return nil, fmt.Errorf("GetSubscription failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), rsp)
+	if err != nil {
+		return nil, fmt.Errorf("GetSubscription: response unmarshal error. error: %w", err)
+	}
+
+	return rsp.Subscriptions[0], nil
+}
