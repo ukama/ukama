@@ -10,9 +10,9 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/billing/invoice/internal/db"
-	"github.com/ukama/ukama/systems/billing/invoice/internal/server"
 	"github.com/ukama/ukama/systems/billing/invoice/mocks"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/db"
+	"github.com/ukama/ukama/systems/billing/invoice/pkg/server"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"

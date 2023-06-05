@@ -11,10 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/billing/api-gateway/internal/client"
+	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/common/rest"
 
-	internal "github.com/ukama/ukama/systems/billing/api-gateway/internal"
+	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 	imocks "github.com/ukama/ukama/systems/billing/invoice/pb/gen/mocks"
 )
@@ -51,7 +51,7 @@ var routerConfig = &RouterConfig{
 	serverConf: &rest.HttpConfig{
 		Cors: defaultCors,
 	},
-	httpEndpoints: &internal.HttpEndpoints{
+	httpEndpoints: &pkg.HttpEndpoints{
 		NodeMetrics: "localhost:8080",
 	},
 }
@@ -61,7 +61,7 @@ var testClientSet *Clients
 func init() {
 	gin.SetMode(gin.TestMode)
 
-	testClientSet = NewClientsSet(&internal.GrpcEndpoints{
+	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
 		Timeout: 1 * time.Second,
 		Invoice: "invoice:9090",
 	})

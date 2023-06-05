@@ -8,7 +8,7 @@ import (
 
 	extsql "database/sql"
 
-	invoicedb "github.com/ukama/ukama/systems/billing/invoice/internal/db"
+	invoicedb "github.com/ukama/ukama/systems/billing/invoice/pkg/db"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/DATA-DOG/go-sqlmock"

@@ -1,4 +1,4 @@
-package internal
+package pkg
 
 import (
 	"time"
@@ -15,10 +15,10 @@ type Config struct {
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	Service           *config.Service
-	PdfHost           string `default:""`
-	PdfPort           int    `default:"3000"`
-	PdfPrefix         string `default:"/pdf/"`
-	PdfFolder         string `default:"/srv/static"`
+	System            string `default:"billing"`
+	LagoHost          string `default:"localhost"`
+	LagoPort          uint   `default:"3000"`
+	LagoAPIKey        string
 }
 
 func NewConfig(name string) *Config {
@@ -30,7 +30,15 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 
 		MsgClient: &config.MsgClient{
+			Host:    "msg-client-billing:9095",
 			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.cdr.sim.usage",
+				"event.cloud.registry.subscriber.create",
+				"event.cloud.registry.subscriber.update",
+				"event.cloud.registry.subscriber.delete",
+				"event.cloud.simmanager.package.activate",
+			},
 		},
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/billing/api-gateway/internal/client"
+	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
 )
 
 // fake pdf file

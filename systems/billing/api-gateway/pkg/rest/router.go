@@ -13,8 +13,8 @@ import (
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
-	internal "github.com/ukama/ukama/systems/billing/api-gateway/internal"
-	"github.com/ukama/ukama/systems/billing/api-gateway/internal/client"
+	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/client"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +29,7 @@ type Router struct {
 
 type RouterConfig struct {
 	metricsConfig config.Metrics
-	httpEndpoints *internal.HttpEndpoints
+	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
 }
@@ -46,7 +46,7 @@ type billing interface {
 	GetInvoicePDF(invoiceId string) ([]byte, error)
 }
 
-func NewClientsSet(endpoints *internal.GrpcEndpoints) *Clients {
+func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Billing = client.NewBilling(endpoints.Invoice, endpoints.Files, endpoints.Timeout)
 	return c
@@ -67,7 +67,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 	return r
 }
 
-func NewRouterConfig(svcConf *internal.Config) *RouterConfig {
+func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.HttpServices,
@@ -86,7 +86,7 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, internal.SystemName, version.Version, r.config.debugMode)
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
 	v1 := r.f.Group("/v1", "API gateway", "Billing system version v1")
 
 	// Invoice routes

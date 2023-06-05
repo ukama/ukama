@@ -1,6 +1,6 @@
-package internal
+package pkg
 
-const ServiceName = "invoice"
+const ServiceName = "collector"
 const SystemName = "billing"
 
 var InstanceId = "debug"

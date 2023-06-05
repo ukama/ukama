@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/billing/collector/internal/server"
 	"github.com/ukama/ukama/systems/billing/collector/mocks"
+	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
