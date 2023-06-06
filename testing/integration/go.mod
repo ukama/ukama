@@ -38,6 +38,7 @@ replace github.com/ukama/ukama/systems/billing/invoice => ../../systems/billing/
 
 require (
 	github.com/bxcodec/faker/v4 v4.0.0-beta.3
+	github.com/go-faker/faker/v4 v4.1.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/num30/config v0.0.7

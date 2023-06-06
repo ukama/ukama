@@ -449,12 +449,12 @@ func initBillableMetric(clt client.BillingClient, bmCode string) (string, error)
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	log.Infof("Sending billiable metric get request %v to billing server", bmCode)
+	log.Infof("Sending get request for billable metric %q to billing server", bmCode)
 
 	bmId, err := clt.GetBillableMetricId(ctx, bmCode)
 	if err != nil {
-		log.Warnf("Error while getting default billable metric: %v", bmCode)
-		log.Infof("Creating default billable metric: %v", bmCode)
+		log.Warnf("Error while getting default billable metric: %v", err)
+		log.Infof("Creating default billable metric: %s", bmCode)
 
 		bmId, err = createBillableMetric(clt)
 		if err != nil {
@@ -477,7 +477,7 @@ func createBillableMetric(clt client.BillingClient) (string, error) {
 		FieldName:   "bytes_used",
 	}
 
-	log.Infof("Sending billiable metric create request %v to billing server", bMetric)
+	log.Infof("Sending create request for billable metric %q to billing server", bMetric)
 
 	bm, err := clt.CreateBillableMetric(ctx, bMetric)
 	if err != nil {

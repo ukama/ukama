@@ -1,4 +1,4 @@
-package pkg_test
+package billing_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bxcodec/faker/v4"
+	"github.com/go-faker/faker/v4"
 	"github.com/num30/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/testing/integration/pkg"

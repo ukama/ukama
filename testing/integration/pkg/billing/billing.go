@@ -1,4 +1,4 @@
-package pkg
+package billing
 
 import (
 	"encoding/json"
