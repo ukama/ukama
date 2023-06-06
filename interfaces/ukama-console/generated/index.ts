@@ -1717,15 +1717,6 @@ export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
 
 export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
 
-export type SimPoolFragment = { __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string };
-
-export type GetSimsQueryVariables = Exact<{
-  type: Scalars['String']['input'];
-}>;
-
-
-export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sim: Array<{ __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
-
 export type NetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string };
 
 export type GetNetworkQueryVariables = Exact<{
@@ -1779,6 +1770,15 @@ export type UpdatePacakgeMutationVariables = Exact<{
 
 
 export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+
+export type SimPoolFragment = { __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string };
+
+export type GetSimsQueryVariables = Exact<{
+  type: Scalars['String']['input'];
+}>;
+
+
+export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sim: Array<{ __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
 
 export type GetSimpoolStatsQueryVariables = Exact<{
   type: Scalars['String']['input'];
@@ -1849,20 +1849,6 @@ export const SubscriberFragmentDoc = gql`
   ...SubscriberSim
 }
     ${SubscriberSimFragmentDoc}`;
-export const SimPoolFragmentDoc = gql`
-    fragment SimPool on SimDto {
-  activationCode
-  createdAt
-  iccid
-  id
-  isAllocated
-  isPhysical
-  msisdn
-  qrCode
-  simType
-  smapAddress
-}
-    `;
 export const NetworkFragmentDoc = gql`
     fragment Network on NetworkDto {
   id
@@ -1924,6 +1910,20 @@ export const PackageFragmentDoc = gql`
 }
     ${PackageRateFragmentDoc}
 ${PackageMarkupFragmentDoc}`;
+export const SimPoolFragmentDoc = gql`
+    fragment SimPool on SimDto {
+  activationCode
+  createdAt
+  iccid
+  id
+  isAllocated
+  isPhysical
+  msisdn
+  qrCode
+  simType
+  smapAddress
+}
+    `;
 export const OrgUserFragmentDoc = gql`
     fragment OrgUser on UserResDto {
   name
@@ -2303,43 +2303,6 @@ export function useGetSubscriberMetricsByNetworkLazyQuery(baseOptions?: Apollo.L
 export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkQuery>;
 export type GetSubscriberMetricsByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkLazyQuery>;
 export type GetSubscriberMetricsByNetworkQueryResult = Apollo.QueryResult<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>;
-export const GetSimsDocument = gql`
-    query getSims($type: String!) {
-  getSims(type: $type) {
-    sim {
-      ...SimPool
-    }
-  }
-}
-    ${SimPoolFragmentDoc}`;
-
-/**
- * __useGetSimsQuery__
- *
- * To run a query within a React component, call `useGetSimsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetSimsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetSimsQuery({
- *   variables: {
- *      type: // value for 'type'
- *   },
- * });
- */
-export function useGetSimsQuery(baseOptions: Apollo.QueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
-      }
-export function useGetSimsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
-        }
-export type GetSimsQueryHookResult = ReturnType<typeof useGetSimsQuery>;
-export type GetSimsLazyQueryHookResult = ReturnType<typeof useGetSimsLazyQuery>;
-export type GetSimsQueryResult = Apollo.QueryResult<GetSimsQuery, GetSimsQueryVariables>;
 export const GetNetworkDocument = gql`
     query getNetwork($networkId: String!) {
   getNetwork(networkId: $networkId) {
@@ -2583,6 +2546,43 @@ export function useUpdatePacakgeMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdatePacakgeMutationHookResult = ReturnType<typeof useUpdatePacakgeMutation>;
 export type UpdatePacakgeMutationResult = Apollo.MutationResult<UpdatePacakgeMutation>;
 export type UpdatePacakgeMutationOptions = Apollo.BaseMutationOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
+export const GetSimsDocument = gql`
+    query getSims($type: String!) {
+  getSims(type: $type) {
+    sim {
+      ...SimPool
+    }
+  }
+}
+    ${SimPoolFragmentDoc}`;
+
+/**
+ * __useGetSimsQuery__
+ *
+ * To run a query within a React component, call `useGetSimsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useGetSimsQuery(baseOptions: Apollo.QueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
+      }
+export function useGetSimsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
+        }
+export type GetSimsQueryHookResult = ReturnType<typeof useGetSimsQuery>;
+export type GetSimsLazyQueryHookResult = ReturnType<typeof useGetSimsLazyQuery>;
+export type GetSimsQueryResult = Apollo.QueryResult<GetSimsQuery, GetSimsQueryVariables>;
 export const GetSimpoolStatsDocument = gql`
     query getSimpoolStats($type: String!) {
   getSimPoolStats(type: $type) {

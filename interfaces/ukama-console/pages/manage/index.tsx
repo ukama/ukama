@@ -14,12 +14,10 @@ import {
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TObject, TSnackMessage } from '@/types';
-import {
-  DataPlanDialog,
-  FileDropBoxDialog,
-  InviteMemberDialog,
-  LoadingWrapper,
-} from '@/ui/components';
+import DataPlanDialog from '@/ui/molecules/DataPlanDialog';
+import FileDropBoxDialog from '@/ui/molecules/FileDropBoxDialog';
+import InviteMemberDialog from '@/ui/molecules/InviteMemberDialog';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
   AlertColor,
   ListItemIcon,
@@ -431,7 +429,6 @@ const Manage = () => {
     dataPlanLoading ||
     deletePkgLoading ||
     updatePkgLoading;
-
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />

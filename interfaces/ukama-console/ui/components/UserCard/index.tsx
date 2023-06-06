@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import LoadingWrapper from '../LoadingWrapper';
+import LoadingWrapper from '../../molecules/LoadingWrapper';
 
 type UserCardProps = {
   loading: boolean;

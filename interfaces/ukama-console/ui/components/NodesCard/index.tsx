@@ -4,7 +4,7 @@ import UsersIcon from '@mui/icons-material/PeopleAlt';
 import { Card, Divider, Grid, Typography, styled } from '@mui/material';
 import React from 'react';
 import { LoadingWrapper } from '..';
-import OptionsPopover from '../OptionsPopover';
+import OptionsPopover from '../../molecules/OptionsPopover';
 
 const CpuIcon = React.lazy(() =>
   import('@/public/svg').then((module) => ({
