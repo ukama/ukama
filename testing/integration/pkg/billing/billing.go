@@ -74,12 +74,12 @@ func (s *BillingClient) GetSubscriptionsByCustomerId(custId string) (*bilutil.Su
 	if err != nil {
 		log.Errorf("Failed to send api request. error %s", err.Error())
 
-		return nil, fmt.Errorf("GetSubscription failure: %w", err)
+		return nil, fmt.Errorf("GetSubscriptions failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), rsp)
 	if err != nil {
-		return nil, fmt.Errorf("GetSubscription: response unmarshal error. error: %w", err)
+		return nil, fmt.Errorf("GetSubscriptions: response unmarshal error. error: %w", err)
 	}
 
 	return rsp.Subscriptions[0], nil

@@ -39,7 +39,7 @@ func NewConfig(name string) *Config {
 				"event.cloud.registry.subscriber.update",
 				"event.cloud.registry.subscriber.delete",
 				"event.cloud.simmanager.sim.allocate",
-				"event.cloud.simmanager.package.activate",
+				"event.cloud.simmanager.sim.activepackage",
 			},
 		},
 	}

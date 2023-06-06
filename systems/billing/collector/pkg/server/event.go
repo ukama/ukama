@@ -119,7 +119,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 		}
 
 	// update subscrition to customer
-	case "event.cloud.simmanager.package.activate":
+	case "event.cloud.simmanager.sim.activepackage":
 		msg, err := unmarshalSim(e.Msg)
 		if err != nil {
 			return nil, err
@@ -296,43 +296,6 @@ func handleRegistrySubscriberDeleteEvent(key string, subscriber *subpb.Subscribe
 	return nil
 }
 
-func handleSimManagerSetActivePackageForSimEvent(key string, sim *simpb.Sim,
-	b *BillingCollectorEventServer) error {
-	log.Infof("Keys %s and Proto is: %+v", key, sim)
-
-	// ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
-	// defer cancel()
-
-	// subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
-	// if err != nil {
-	// return err
-	// }
-
-	// log.Infof("Successfuly terminated previous subscription %v", subscriptionId)
-
-	// subscriptionAt := sim.Package.StartDate.AsTime()
-
-	// // Because the Plan object does not expose an external_plan_id, we need to use
-	// // our backend plan_id as billing provider's plan_code
-	// subscriptionInput := client.Subscription{
-	// Id:         sim.Id,
-	// CustomerId: sim.SubscriberId,
-	// // PlanCode:       sim.Package.PlanId,
-	// SubscriptionAt: &subscriptionAt,
-	// }
-
-	// log.Infof("Sending sim package activation event %v to billing server", subscriptionInput)
-
-	// subscriptionId, err = b.client.CreateSubscription(ctx, subscriptionInput)
-	// if err != nil {
-	// return err
-	// }
-
-	// log.Infof("Successfuly created new subscription %v", subscriptionId)
-
-	return nil
-}
-
 func handleSimManagerAllocateSimEvent(key string, sim *epb.SimAllocation,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
@@ -340,7 +303,6 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.SimAllocation,
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	// subscriptionAt := sim.Package.StartDate.AsTime()
 	// subscriptionAt := time.Now()
 
 	// Because the Plan object does not expose an external_plan_id, we need to use
@@ -355,6 +317,41 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.SimAllocation,
 	log.Infof("Sending subscripton creation event %v to billing server", subscriptionInput)
 
 	subscriptionId, err := b.client.CreateSubscription(ctx, subscriptionInput)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Successfuly created new subscription %v", subscriptionId)
+
+	return nil
+}
+
+func handleSimManagerSetActivePackageForSimEvent(key string, sim *simpb.Sim,
+	b *BillingCollectorEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, sim)
+
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Successfuly terminated previous subscription %v", subscriptionId)
+
+	subscriptionAt := sim.Package.StartDate.AsTime()
+
+	subscriptionInput := client.Subscription{
+		Id:             sim.Id,
+		CustomerId:     sim.SubscriberId,
+		PlanCode:       sim.Package.PackageId,
+		SubscriptionAt: &subscriptionAt,
+	}
+
+	log.Infof("Sending sim package activation event %v to billing server", subscriptionInput)
+
+	subscriptionId, err = b.client.CreateSubscription(ctx, subscriptionInput)
 	if err != nil {
 		return err
 	}
