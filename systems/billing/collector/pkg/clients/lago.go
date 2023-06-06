@@ -29,6 +29,24 @@ func (l *lagoClient) GetBillableMetricId(ctx context.Context, code string) (stri
 	return bm.LagoID.String(), nil
 }
 
+func (l *lagoClient) CreateBillableMetric(ctx context.Context, bMetric BillableMetric) (string, error) {
+	bmInput := &lago.BillableMetricInput{
+		Name:            bMetric.Name,
+		Code:            bMetric.Code,
+		Description:     bMetric.Description,
+		AggregationType: lago.SumAggregation,
+		FieldName:       bMetric.FieldName,
+	}
+
+	bm, pErr := l.c.BillableMetric().Create(ctx, bmInput)
+	if pErr != nil {
+		return "", fmt.Errorf("error while creating billable metrict: %s. code: %d. %w",
+			pErr.Msg, pErr.HTTPStatusCode, pErr.Err)
+	}
+
+	return bm.LagoID.String(), nil
+}
+
 func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 	eventInput := &lago.EventInput{
 		TransactionID:          ev.TransactionId,

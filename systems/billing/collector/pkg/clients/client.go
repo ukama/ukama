@@ -7,6 +7,7 @@ import (
 
 type BillingClient interface {
 	GetBillableMetricId(context.Context, string) (string, error)
+	CreateBillableMetric(context.Context, BillableMetric) (string, error)
 	CreatePlan(context.Context, Plan) (string, error)
 	CreateCustomer(context.Context, Customer) (string, error)
 	UpdateCustomer(context.Context, Customer) (string, error)
@@ -14,6 +15,13 @@ type BillingClient interface {
 	CreateSubscription(context.Context, Subscription) (string, error)
 	TerminateSubscription(context.Context, string) (string, error)
 	AddUsageEvent(context.Context, Event) error
+}
+
+type BillableMetric struct {
+	Name        string
+	Code        string
+	Description string
+	FieldName   string
 }
 
 type Event struct {

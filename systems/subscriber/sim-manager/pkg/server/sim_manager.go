@@ -504,7 +504,6 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
@@ -603,17 +602,27 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 				return result.Error
 			}
 		}
-		route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
-		err = s.msgbus.PublishRequest(route, req)
-		if err != nil {
-			logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-		}
+
 		return nil
 	})
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal,
 			"failed to set package as active. Error %s", err.Error())
+	}
+
+	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
+	setActivePackage := &epb.SimActivePackage{
+		Id:               sim.Id.String(),
+		SubscriberId:     sim.SubscriberId.String(),
+		PackageId:        pkg.Id.String(),
+		PlanId:           pkg.PackageId.String(),
+		PackageStartDate: timestamppb.New(pkg.StartDate),
+	}
+
+	err = s.msgbus.PublishRequest(route, setActivePackage)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", setActivePackage, route, err.Error())
 	}
 
 	return &pb.SetActivePackageResponse{}, nil

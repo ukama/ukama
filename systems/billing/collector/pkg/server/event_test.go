@@ -20,11 +20,18 @@ import (
 	simpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
-func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
-	t.Run("SimUsageEventSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.cdr.sim.usage"
+const bmId = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
 
+func TestBillingCollectorEventServer_HandleSimUsageEvent(t *testing.T) {
+	billingClient := &mocks.BillingClient{}
+	routingKey := "event.cloud.cdr.sim.usage"
+
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("SimUsageEventSent", func(t *testing.T) {
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).Return(nil).Once()
 
 		simUsage := epb.SimUsage{
@@ -47,17 +54,12 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("SimUsageEventNotSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.cdr.sim.usage"
-
 		billingClient.On("AddUsageEvent", mock.Anything, mock.Anything).
 			Return(errors.New("failed to send sim usage")).Once()
 
@@ -71,8 +73,6 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -80,9 +80,15 @@ func TestBillingCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 }
 
 func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *testing.T) {
+	billingClient := &mocks.BillingClient{}
+	routingKey := "event.cloud.registry.subscriber.create"
+
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
 	t.Run("CreateCustomerEventSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.registry.subscriber.create"
 
 		billingClient.On("CreateCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
@@ -103,17 +109,12 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("CreateCustomerEventNotSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.registry.subscriber.create"
-
 		billingClient.On("CreateCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create customer event")).Once()
 
@@ -127,8 +128,6 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -136,10 +135,15 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *test
 }
 
 func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *testing.T) {
-	t.Run("UpdateCustomerEventSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.registry.subscriber.update"
+	billingClient := &mocks.BillingClient{}
+	routingKey := "event.cloud.registry.subscriber.update"
 
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("UpdateCustomerEventSent", func(t *testing.T) {
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
@@ -158,17 +162,12 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("UpdateCustomerEventNotSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.registry.subscriber.update"
-
 		billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send update customer event")).Once()
 
@@ -182,8 +181,6 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -191,10 +188,15 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *test
 }
 
 func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *testing.T) {
-	t.Run("DeleteCustomerEventSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.registry.subscriber.delete"
+	billingClient := &mocks.BillingClient{}
+	routingKey := "event.cloud.registry.subscriber.delete"
 
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("DeleteCustomerEventSent", func(t *testing.T) {
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
@@ -210,17 +212,12 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("DeleteCustomerEventNotSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.registry.subscriber.delete"
-
 		billingClient.On("DeleteCustomer", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send delete customer event")).Once()
 
@@ -234,8 +231,6 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -243,10 +238,15 @@ func TestBillingCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *test
 }
 
 func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testing.T) {
-	t.Run("AllocateSimEventSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.simmanager.sim.allocate"
+	billingClient := &mocks.BillingClient{}
+	routingKey := "event.cloud.simmanager.sim.allocate"
 
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("AllocateSimEventSent", func(t *testing.T) {
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
 		planId := "f1ad4204-ab9e-4574-b6bb-bffcc104f8f9"
@@ -265,17 +265,12 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("AllocateSimEventNotSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.simmanager.sim.allocate"
-
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create subscription event")).Once()
 
@@ -289,8 +284,6 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -298,22 +291,23 @@ func TestBillingCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testi
 }
 
 func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent(t *testing.T) {
-	t.Run("SetActivePackageEventSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.simmanager.sim.activepackage"
+	billingClient := &mocks.BillingClient{}
+	routingKey := "event.cloud.simmanager.sim.activepackage"
 
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	s := server.NewBillingCollectorEventServer(billingClient)
+
+	t.Run("SetActivePackageEventSent", func(t *testing.T) {
 		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).Return("9fd07299-2826-4f8b-aea9-69da56440bec", nil).Once()
 		billingClient.On("CreateSubscription", mock.Anything, mock.Anything).Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
-		pkg := &simpb.Package{
-			// PlanId:    "9fd07299-2826-4f8b-aea9-69da56440bec",
-			StartDate: timestamppb.New(time.Now()),
-		}
-
-		sim := simpb.Sim{
-			Id:           "b20c61f1-1c5a-4559-bfff-cd00f746697d",
-			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
-			Package:      pkg,
+		sim := epb.SimActivePackage{
+			Id:               "b20c61f1-1c5a-4559-bfff-cd00f746697d",
+			SubscriberId:     "c214f255-0ed6-4aa1-93e7-e333658c7318",
+			PackageId:        "3c353228-34ce-42ac-8ce4-0d4abb90bd8e",
+			PackageStartDate: timestamppb.New(time.Now()),
 		}
 
 		anyE, err := anypb.New(&sim)
@@ -324,17 +318,12 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 			Msg:        anyE,
 		}
 
-		s := server.NewBillingCollectorEventServer(billingClient)
-
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("SetActivePackageEventNotSent", func(t *testing.T) {
-		billingClient := &mocks.BillingClient{}
-		routingKey := "event.cloud.simmanager.sim.activepackage"
-
 		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send terminate subscription event")).Once()
 
@@ -347,8 +336,6 @@ func TestBillingCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent
 			RoutingKey: routingKey,
 			Msg:        anyE,
 		}
-
-		s := server.NewBillingCollectorEventServer(billingClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 

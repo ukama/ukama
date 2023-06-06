@@ -235,12 +235,21 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
 		IdSerial:              req.GetIdSerial(),
+		SubscriberId:          subscriberId,
 	}
 
 	err = s.subscriberRepo.Update(subscriberId, *subscriber)
 	if err != nil {
 		logrus.Errorf("error while updating subscriber" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
+
+	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
+
+	route := s.subscriberRoutingKey.SetAction("update").SetObject("subscriber").MustBuild()
+	err = s.msgbus.PublishRequest(route, subscriberPb)
+	if err != nil {
+		logrus.Errorf("Failed to publish message %+v with key %+v. Errors %s", subscriberPb, route, err.Error())
 	}
 
 	return &pb.UpdateSubscriberResponse{}, nil

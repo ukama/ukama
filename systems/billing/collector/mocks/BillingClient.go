@@ -29,6 +29,30 @@ func (_m *BillingClient) AddUsageEvent(_a0 context.Context, _a1 client.Event) er
 	return r0
 }
 
+// CreateBillableMetric provides a mock function with given fields: _a0, _a1
+func (_m *BillingClient) CreateBillableMetric(_a0 context.Context, _a1 client.BillableMetric) (string, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, client.BillableMetric) (string, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, client.BillableMetric) string); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, client.BillableMetric) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CreateCustomer provides a mock function with given fields: _a0, _a1
 func (_m *BillingClient) CreateCustomer(_a0 context.Context, _a1 client.Customer) (string, error) {
 	ret := _m.Called(_a0, _a1)

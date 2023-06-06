@@ -592,8 +592,9 @@ func TestWorkflow_BillingSystem(t *testing.T) {
 			*/
 			a := tc.GetWorkflowData().(*BillingData)
 			log.Tracef("Setting up watcher for %s", tc.Name)
-			tc.Watcher = utils.SetupWatcher(a.MbHost, []string{"event.cloud.simmanager.package.activate",
-				"event.cloud.simmanager.sim.activepackage"})
+			tc.Watcher = utils.SetupWatcher(a.MbHost,
+				[]string{"event.cloud.simmanager.package.activate",
+					"event.cloud.simmanager.sim.activepackage"})
 
 			// Get the sim
 			a.reqGetSim.SimId = a.SimId

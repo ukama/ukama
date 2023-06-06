@@ -11,7 +11,6 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	subpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
-	simpb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
@@ -27,17 +26,35 @@ const (
 	defaultCurrency           = "USD"
 	defaultBillingInterval    = "monthly"
 	testBillingInterval       = "weekly"
-	defaultBillableMetricCode = "data_usage"
+	DefaultBillableMetricCode = "data_usage"
 )
 
+type BillableMetric struct {
+	Id   string
+	Code string
+}
+
 type BillingCollectorEventServer struct {
-	client client.BillingClient
+	client  client.BillingClient
+	bMetric BillableMetric
 	epb.UnimplementedEventNotificationServiceServer
 }
 
 func NewBillingCollectorEventServer(client client.BillingClient) *BillingCollectorEventServer {
+	bm, err := initBillableMetric(client, DefaultBillableMetricCode)
+
+	if err != nil {
+		log.Fatalf("Failed to initialize billable metric: %v", err)
+	}
+
+	bMetric := BillableMetric{
+		Id:   bm,
+		Code: DefaultBillableMetricCode,
+	}
+
 	return &BillingCollectorEventServer{
-		client: client,
+		client:  client,
+		bMetric: bMetric,
 	}
 }
 
@@ -120,7 +137,7 @@ func (b *BillingCollectorEventServer) EventNotification(ctx context.Context, e *
 
 	// update subscrition to customer
 	case "event.cloud.simmanager.sim.activepackage":
-		msg, err := unmarshalSim(e.Msg)
+		msg, err := unmarshalSimAcivePackage(e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +166,7 @@ func handleSimUsageEvent(key string, simUsage *epb.SimUsage, b *BillingCollector
 
 		CustomerId:     simUsage.SubscriberId,
 		SubscriptionId: simUsage.SimId,
-		Code:           defaultBillableMetricCode,
+		Code:           b.bMetric.Code,
 		SentAt:         time.Now(),
 
 		AdditionalProperties: map[string]string{
@@ -168,12 +185,6 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
-
-	// Get BillableMetricID
-	bmId, err := b.client.GetBillableMetricId(ctx, defaultBillableMetricCode)
-	if err != nil {
-		return err
-	}
 
 	// TODO: upstream billing provider fails on a DB constraint when pay in advance
 	// is set to false (postpaid). Somwhow, false bool value from go is sent as null
@@ -207,7 +218,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 		// fails on false (postpaid). See abouve Todos
 		PayInAdvance: true,
 
-		BillableMetricID:     bmId,
+		BillableMetricID:     b.bMetric.Id,
 		ChargeModel:          defaultChargeModel,
 		ChargeAmountCents:    amountCents,
 		ChargeAmountCurrency: defaultCurrency,
@@ -221,7 +232,8 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 		return err
 	}
 
-	log.Infof("Successfuly created plan %v", plan)
+	log.Infof("New billing plan: %q", plan)
+	log.Infof("Successfuly created plan from package  %q", pkg.Uuid)
 
 	return nil
 }
@@ -248,7 +260,8 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *subpb.Subscribe
 		return err
 	}
 
-	log.Infof("Successfuly registered customer. Id: %s", customerBillingId)
+	log.Infof("New billing customer: %q", customerBillingId)
+	log.Infof("Successfuly registered subscriber %q as billing customer", subscriber.SubscriberId)
 
 	return nil
 }
@@ -261,6 +274,7 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *subpb.Subscribe
 	defer cancel()
 
 	customer := client.Customer{
+		Id:      subscriber.SubscriberId,
 		Name:    subscriber.FirstName,
 		Email:   subscriber.Email,
 		Address: subscriber.Address,
@@ -274,7 +288,8 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *subpb.Subscribe
 		return err
 	}
 
-	log.Infof("Successfuly updated customer %v", customerBillingId)
+	log.Infof("Updated billing customer: %q", customerBillingId)
+	log.Infof("Successfuly updated subscriber %q", subscriber.SubscriberId)
 
 	return nil
 }
@@ -321,12 +336,13 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.SimAllocation,
 		return err
 	}
 
-	log.Infof("Successfuly created new subscription %v", subscriptionId)
+	log.Infof("New subscription created on billing server:  %q", subscriptionId)
+	log.Infof("Successfuly created new subscription from sim: %q", sim.Id)
 
 	return nil
 }
 
-func handleSimManagerSetActivePackageForSimEvent(key string, sim *simpb.Sim,
+func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.SimActivePackage,
 	b *BillingCollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
@@ -338,15 +354,15 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *simpb.Sim,
 		return err
 	}
 
-	log.Infof("Successfuly terminated previous subscription %v", subscriptionId)
+	log.Infof("Successfuly terminated previous subscription: %q", subscriptionId)
 
-	subscriptionAt := sim.Package.StartDate.AsTime()
+	// subscriptionAt := sim.PackageStartDate.AsTime()
 
 	subscriptionInput := client.Subscription{
-		Id:             sim.Id,
-		CustomerId:     sim.SubscriberId,
-		PlanCode:       sim.Package.PackageId,
-		SubscriptionAt: &subscriptionAt,
+		Id:         sim.Id,
+		CustomerId: sim.SubscriberId,
+		PlanCode:   sim.PlanId,
+		// SubscriptionAt: &subscriptionAt,
 	}
 
 	log.Infof("Sending sim package activation event %v to billing server", subscriptionInput)
@@ -356,17 +372,18 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *simpb.Sim,
 		return err
 	}
 
-	log.Infof("Successfuly created new subscription %v", subscriptionId)
+	log.Infof("New subscription created on billing server:  %q", subscriptionId)
+	log.Infof("Successfuly created new subscription from sim: %q", sim.Id)
 
 	return nil
 }
 
-func unmarshalSim(msg *anypb.Any) (*simpb.Sim, error) {
-	p := &simpb.Sim{}
+func unmarshalSimAcivePackage(msg *anypb.Any) (*epb.SimActivePackage, error) {
+	p := &epb.SimActivePackage{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("failed to Unmarshal sim manager's sim message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("failed to Unmarshal sim active package message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}
@@ -379,7 +396,7 @@ func unmarshalPackage(msg *anypb.Any) (*epb.CreatePackageEvent, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("failed to Unmarshal package  message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}
@@ -426,4 +443,48 @@ func unmarshalSimAllocation(msg *anypb.Any) (*epb.SimAllocation, error) {
 	}
 
 	return p, nil
+}
+
+func initBillableMetric(clt client.BillingClient, bmCode string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	log.Infof("Sending billiable metric get request %v to billing server", bmCode)
+
+	bmId, err := clt.GetBillableMetricId(ctx, bmCode)
+	if err != nil {
+		log.Warnf("Error while getting default billable metric: %v", bmCode)
+		log.Infof("Creating default billable metric: %v", bmCode)
+
+		bmId, err = createBillableMetric(clt)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	log.Infof("Successfuly returning billable metric. Id: %s", bmId)
+	return bmId, nil
+}
+
+func createBillableMetric(clt client.BillingClient) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	bMetric := client.BillableMetric{
+		Name:        "Data Usage",
+		Code:        DefaultBillableMetricCode,
+		Description: "Data Usage Billable Metric",
+		FieldName:   "bytes_used",
+	}
+
+	log.Infof("Sending billiable metric create request %v to billing server", bMetric)
+
+	bm, err := clt.CreateBillableMetric(ctx, bMetric)
+	if err != nil {
+		return "", err
+	}
+
+	log.Infof("Successfuly created billable metric. Id: %s", bm)
+
+	return bm, nil
 }
