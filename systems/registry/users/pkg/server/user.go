@@ -231,11 +231,12 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 		// Perform any linked transation
 		return nil
 	})
-
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
+
 	route := u.baseRoutingKey.SetAction("delete").SetObject("user").MustBuild()
+
 	err = u.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())

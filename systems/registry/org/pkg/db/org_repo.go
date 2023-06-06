@@ -132,7 +132,9 @@ func (r *orgRepo) AddMember(member *OrgUser) error {
 func (r *orgRepo) GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*OrgUser, error) {
 	var member OrgUser
 
-	result := r.Db.GetGormDb().Where("org_id = ? And uuid = ?", orgID, userUUID).First(&member)
+	result := r.Db.GetGormDb().
+		Where("org_id = ? And uuid = ?", orgID, userUUID).First(&member)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -152,7 +154,9 @@ func (r *orgRepo) GetMembers(orgID uuid.UUID) ([]OrgUser, error) {
 }
 
 func (r *orgRepo) UpdateMember(orgID uuid.UUID, member *OrgUser) error {
-	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", member.OrgId, member.Uuid).Updates(member)
+	d := r.Db.GetGormDb().Clauses(clause.Returning{}).
+		Where("org_id = ? And uuid = ?", member.OrgId, member.Uuid).Updates(member)
+
 	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
@@ -163,8 +167,11 @@ func (r *orgRepo) UpdateMember(orgID uuid.UUID, member *OrgUser) error {
 func (r *orgRepo) RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error {
 	var member OrgUser
 
-	// d := r.Db.GetGormDb().Clauses(clause.Returning{}).Where("org_id = ? And uuid = ?", orgID, userUUID).Delete(&member)
-	d := r.Db.GetGormDb().Where("org_id = ? And uuid = ?", orgID, userUUID).Delete(&member)
+	// d := r.Db.GetGormDb().Clauses(clause.Returning{}).
+	// Where("org_id = ? And uuid = ?", orgID, userUUID).Delete(&member)
+	d := r.Db.GetGormDb().
+		Where("org_id = ? And uuid = ?", orgID, userUUID).Delete(&member)
+
 	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
@@ -176,12 +183,16 @@ func (r *orgRepo) GetOrgCount() (int64, int64, error) {
 	var activeOrgCount int64
 	var deactiveOrgCount int64
 
-	result := r.Db.GetGormDb().Model(&Org{}).Where("deactivated = ?", false).Count(&activeOrgCount)
+	result := r.Db.GetGormDb().Model(&Org{}).
+		Where("deactivated = ?", false).Count(&activeOrgCount)
+
 	if result.Error != nil {
 		return 0, 0, result.Error
 	}
 
-	result = r.Db.GetGormDb().Model(&Org{}).Where("deactivated = ?", true).Count(&deactiveOrgCount)
+	result = r.Db.GetGormDb().Model(&Org{}).
+		Where("deactivated = ?", true).Count(&deactiveOrgCount)
+
 	if result.Error != nil {
 		return 0, 0, result.Error
 	}
@@ -193,12 +204,18 @@ func (r *orgRepo) GetMemberCount(orgID uuid.UUID) (int64, int64, error) {
 	var activeMemberCount int64
 	var deactiveMemberCount int64
 
-	result := r.Db.GetGormDb().Model(&OrgUser{}).Where("org_id = ? AND deactivated = ?", orgID, false).Count(&activeMemberCount)
+	result := r.Db.GetGormDb().Model(&OrgUser{}).
+		Where("org_id = ? AND deactivated = ?", orgID, false).
+		Count(&activeMemberCount)
+
 	if result.Error != nil {
 		return 0, 0, result.Error
 	}
 
-	result = r.Db.GetGormDb().Model(&OrgUser{}).Where("org_id = ? AND deactivated = ?", orgID, true).Count(&deactiveMemberCount)
+	result = r.Db.GetGormDb().Model(&OrgUser{}).
+		Where("org_id = ? AND deactivated = ?", orgID, true).
+		Count(&deactiveMemberCount)
+
 	if result.Error != nil {
 		return 0, 0, result.Error
 	}

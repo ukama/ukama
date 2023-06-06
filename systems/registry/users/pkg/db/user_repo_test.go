@@ -51,21 +51,35 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 }
 
 func TestUserRepo_Add(t *testing.T) {
+	// Arrange
+	var db *extsql.DB
+
+	user := userdb.User{
+		Id:     uuid.NewV4(),
+		Name:   "John Doe",
+		Email:  "johndoe@example.com",
+		Phone:  "00100000000",
+		AuthId: uuid.NewV4(),
+	}
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := userdb.NewUserRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
 	t.Run("AddUser", func(t *testing.T) {
-		// Arrange
-		var db *extsql.DB
-
-		user := userdb.User{
-			Id:     uuid.NewV4(),
-			Name:   "John Doe",
-			Email:  "johndoe@example.com",
-			Phone:  "00100000000",
-			AuthId: uuid.NewV4(),
-		}
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
@@ -74,22 +88,6 @@ func TestUserRepo_Add(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := userdb.NewUserRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
 
 		// Act
 		err = r.Add(&user, nil)
@@ -103,6 +101,25 @@ func TestUserRepo_Add(t *testing.T) {
 }
 
 func TestUserRepo_Get(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := userdb.NewUserRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
 	t.Run("UserFound", func(t *testing.T) {
 		// Arrange
 		const name = "John Doe"
@@ -111,11 +128,6 @@ func TestUserRepo_Get(t *testing.T) {
 		var userId = uuid.NewV4()
 		var authId = uuid.NewV4()
 
-		var db *extsql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
 		rows := sqlmock.NewRows([]string{"id", "name", "email", "phone", "auth_id"}).
 			AddRow(userId, name, email, phone, authId)
 
@@ -123,66 +135,29 @@ func TestUserRepo_Get(t *testing.T) {
 			WithArgs(userId).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := userdb.NewUserRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
 		// Act
 		usr, err := r.Get(userId)
 
 		// Assert
 		assert.NoError(t, err)
+		assert.NotNil(t, usr)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
-		assert.NotNil(t, usr)
 
-		assert.NotNil(t, name, usr.Name)
-		assert.NotNil(t, email, usr.Email)
-		assert.NotNil(t, phone, usr.Phone)
-		assert.NotNil(t, authId, usr.AuthId)
+		assert.Equal(t, name, usr.Name)
+		assert.Equal(t, email, usr.Email)
+		assert.Equal(t, phone, usr.Phone)
+		assert.Equal(t, authId, usr.AuthId)
 	})
 
 	t.Run("userNotFound", func(t *testing.T) {
 		// Arrange
 		var userId = uuid.NewV4()
 
-		var db *extsql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
 		mock.ExpectQuery(`^SELECT.*users.*`).
 			WithArgs(userId).
 			WillReturnError(sql.ErrNoRows)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := userdb.NewUserRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
 
 		// Act
 		usr, err := r.Get(userId)
@@ -197,6 +172,25 @@ func TestUserRepo_Get(t *testing.T) {
 }
 
 func TestUserRepo_GetByAuthId(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := userdb.NewUserRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
 	t.Run("UserFound", func(t *testing.T) {
 		// Arrange
 		const name = "John Doe"
@@ -205,33 +199,12 @@ func TestUserRepo_GetByAuthId(t *testing.T) {
 		var userId = uuid.NewV4()
 		var authId = uuid.NewV4()
 
-		var db *extsql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
 		rows := sqlmock.NewRows([]string{"id", "name", "email", "phone", "auth_id"}).
 			AddRow(userId, name, email, phone, authId)
 
 		mock.ExpectQuery(`^SELECT.*users.*`).
 			WithArgs(authId).
 			WillReturnRows(rows)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := userdb.NewUserRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
 
 		// Act
 		usr, err := r.GetByAuthId(authId)
@@ -253,30 +226,9 @@ func TestUserRepo_GetByAuthId(t *testing.T) {
 		// Arrange
 		var authId = uuid.NewV4()
 
-		var db *extsql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
 		mock.ExpectQuery(`^SELECT.*users.*`).
 			WithArgs(authId).
 			WillReturnError(sql.ErrNoRows)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := userdb.NewUserRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
 
 		// Act
 		usr, err := r.GetByAuthId(authId)
@@ -396,16 +348,27 @@ func TestUserRepo_GetByAuthId(t *testing.T) {
 // }
 
 func TestUserRepo_Delete(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := userdb.NewUserRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
 	t.Run("UserFound", func(t *testing.T) {
-		var db *extsql.DB
-
-		// const name = "John Doe"
-		// const email = "johndoe@example.com"
-		// const phone = "00100000000"
 		var userId = uuid.NewV4()
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
 
 		mock.ExpectBegin()
 
@@ -414,22 +377,6 @@ func TestUserRepo_Delete(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := userdb.NewUserRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
 
 		// Act
 		err = r.Delete(userId, nil)
@@ -442,34 +389,13 @@ func TestUserRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("UserNotFound", func(t *testing.T) {
-		var db *extsql.DB
-
 		var userId = uuid.NewV4()
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET`)).
 			WithArgs(sqlmock.AnyArg(), userId).
 			WillReturnError(sql.ErrNoRows)
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := userdb.NewUserRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
 
 		// Act
 		err = r.Delete(userId, nil)
@@ -479,5 +405,53 @@ func TestUserRepo_Delete(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+	})
+}
+
+func TestUserRepo_GetUserCount(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := userdb.NewUserRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	t.Run("UserFound", func(t *testing.T) {
+		// Arrange
+
+		rowsCount1 := sqlmock.NewRows([]string{"count"}).
+			AddRow(2)
+
+		rowsCount2 := sqlmock.NewRows([]string{"count"}).
+			AddRow(1)
+
+		mock.ExpectQuery(`^SELECT count(\\*).*users.*`).
+			WillReturnRows(rowsCount1)
+
+		mock.ExpectQuery(`^SELECT count(\\*).*users.*WHERE.*`).
+			WillReturnRows(rowsCount2)
+
+		// Act
+		activeUsr, inactiveUsr, err := r.GetUserCount()
+		assert.NoError(t, err)
+
+		// Assert
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+		assert.Equal(t, int64(2), activeUsr)
+		assert.Equal(t, int64(1), inactiveUsr)
 	})
 }

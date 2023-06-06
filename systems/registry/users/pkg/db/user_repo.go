@@ -71,7 +71,8 @@ func (u *userRepo) GetByAuthId(id uuid.UUID) (*User, error) {
 // Update user modified non-empty fields provided by user struct
 func (u *userRepo) Update(user *User, nestedFunc func(*User, *gorm.DB) error) error {
 	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Clauses(clause.Returning{}).Where("id = ?", user.Id).Updates(user)
+		result := tx.Clauses(clause.Returning{}).
+			Where("id = ?", user.Id).Updates(user)
 
 		if result.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
@@ -123,7 +124,9 @@ func (u *userRepo) GetUserCount() (int64, int64, error) {
 		return 0, 0, result.Error
 	}
 
-	result = u.Db.GetGormDb().Model(&User{}).Where("deactivated = ?", true).Count(&deactiveUserCount)
+	result = u.Db.GetGormDb().Model(&User{}).
+		Where("deactivated = ?", true).Count(&deactiveUserCount)
+
 	if result.Error != nil {
 		return 0, 0, result.Error
 	}
