@@ -1,0 +1,65 @@
+directive @contact(name: String!) on SCHEMA
+
+extend schema
+    @contact(name: "Ukama Planning Tool Subgraph")
+    @link(
+        url: "https://specs.apollo.dev/federation/v2.3"
+        import: [
+            "@key"
+            "@extends"
+            "@shareable"
+            "@inaccessible"
+            "@override"
+            "@external"
+            "@provides"
+            "@requires"
+            "@tag"
+            "@composeDirective"
+            "@interfaceObject"
+        ]
+    )
+
+type Query {
+    getDraft(id: ID!): Draft
+}
+
+type Mutation {
+    addDraft(draft: AddDraft!): Draft
+    updateDraft(draft: AddDraft!): Draft
+    updateDraftEvent(id: ID!, events: [Event]): Draft
+}
+
+type Location {
+    lat: String!
+    lng: String
+    address: String
+}
+
+type Site {
+    name: String
+    height: Int
+    apOption: String
+    solarUptime: Int
+    isSetlite: Boolean
+    location: Location
+}
+
+type Event @key(fields: "id") {
+    id: ID!
+    operation: String
+    value: String
+}
+
+type Draft @key(fields: "id") {
+    id: ID!
+    name: String!
+    lastSaved: Int!
+    site: Site!
+    events: [Event]
+}
+
+input AddDraft {
+    name: String!
+    lastSaved: Int!
+    site: Site!
+}
