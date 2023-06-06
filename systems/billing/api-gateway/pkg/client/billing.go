@@ -91,13 +91,12 @@ func (b *Billing) GetInvoice(invoiceId string, AsPDF bool) (*pb.GetResponse, err
 	return res, nil
 }
 
-func (r *Billing) GetInvoices(subscriberId string, AsPDF bool) (*pb.GetBySubscriberResponse, error) {
+func (r *Billing) GetInvoices(subscriberId string) (*pb.GetBySubscriberResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	res, err := r.invoiceClient.GetBySubscriber(ctx,
-		&pb.GetBySubscriberRequest{SubscriberId: subscriberId,
-			AsPdf: AsPDF})
+		&pb.GetBySubscriberRequest{SubscriberId: subscriberId})
 
 	if err != nil {
 		return nil, err

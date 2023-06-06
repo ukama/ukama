@@ -41,7 +41,7 @@ type Clients struct {
 type billing interface {
 	AddInvoice(subscriberId string, rawInvoice string) (*pb.AddResponse, error)
 	GetInvoice(invoiceId string, asPDF bool) (*pb.GetResponse, error)
-	GetInvoices(subscriber string, asPDF bool) (*pb.GetBySubscriberResponse, error)
+	GetInvoices(subscriber string) (*pb.GetBySubscriberResponse, error)
 	RemoveInvoice(invoiceId string) error
 	GetInvoicePDF(invoiceId string) ([]byte, error)
 }
@@ -122,14 +122,7 @@ func (r *Router) getInvoicesHandler(c *gin.Context, req *GetInvoicesRequest) (*p
 			Message: "subscriber is a mandatory query parameter"}
 	}
 
-	asPDF := false
-
-	pdf, ok := c.GetQuery("type")
-	if ok && pdf == "pdf" {
-		asPDF = true
-	}
-
-	return r.clients.Billing.GetInvoices(subscriberId, asPDF)
+	return r.clients.Billing.GetInvoices(subscriberId)
 }
 
 func (r *Router) postInvoiceHandler(c *gin.Context, req *AddInvoiceRequest) (*pb.AddResponse, error) {

@@ -129,10 +129,6 @@ func (i *InvoiceServer) GetBySubscriber(ctx context.Context, req *pb.GetBySubscr
 		return nil, grpc.SqlErrorToGrpc(err, "invoices")
 	}
 
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "invoices")
-	}
-
 	resp := &pb.GetBySubscriberResponse{
 		SubscriberId: req.SubscriberId,
 		Invoices:     dbInvoicesToPbInvoices(invoices),
