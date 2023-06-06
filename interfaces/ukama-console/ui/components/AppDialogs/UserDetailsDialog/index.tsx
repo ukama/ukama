@@ -17,8 +17,8 @@ import {
   Typography,
 } from '@mui/material';
 import { ReactEventHandler } from 'react';
+import LoadingWrapper from '../../../molecules/LoadingWrapper';
 import EditableTextField from '../../EditableTextField';
-import LoadingWrapper from '../../LoadingWrapper';
 
 type BasicDialogProps = {
   type: string;

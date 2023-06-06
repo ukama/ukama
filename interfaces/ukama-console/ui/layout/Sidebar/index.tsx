@@ -1,7 +1,7 @@
 import { NetworkDto } from '@/generated';
 import { NavList } from '@/router/config';
 import colors from '@/styles/theme/colors';
-import { LoadingWrapper } from '@/ui/components';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
   Box,
   Divider,
@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 
-const BasicDropdown = dynamic(() => import('@/ui/components/BasicDropdown'), {
+const BasicDropdown = dynamic(() => import('@/ui/molecules/BasicDropdown'), {
   ssr: false,
 });
 

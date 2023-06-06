@@ -10,7 +10,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { makeStyles } from '@mui/styles';
-import LoadingWrapper from '../LoadingWrapper';
+import LoadingWrapper from '../../molecules/LoadingWrapper';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   selectStyle: {

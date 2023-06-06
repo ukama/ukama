@@ -1,6 +1,7 @@
 import colors from '@/styles/theme/colors';
-import { EmptyView, OptionsPopover } from '@/ui/components';
-import PageContainerHeader from '@/ui/components/PageContainerHeader';
+import EmptyView from '@/ui/molecules/EmptyView';
+import OptionsPopover from '@/ui/molecules/OptionsPopover';
+import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import { getDataPlanUsage } from '@/utils';
 import { PeopleAlt } from '@mui/icons-material';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
@@ -79,8 +80,13 @@ const DataPlan = ({
                         <OptionsPopover
                           cid={'data-table-action-popover'}
                           menuOptions={[
-                            { id: 0, title: 'Edit', route: 'edit' },
-                            { id: 1, title: 'Delete', route: 'delete' },
+                            { id: 0, title: 'Edit', route: 'edit', Icon: null },
+                            {
+                              id: 1,
+                              title: 'Delete',
+                              route: 'delete',
+                              Icon: null,
+                            },
                           ]}
                           handleItemClick={(type: string) =>
                             handleOptionMenuItemAction(uuid, type)

@@ -1,6 +1,6 @@
 import { HorizontalContainerJustify } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { LoadingWrapper } from '@/ui/components';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccountsSharp';
 import NotificationsIcon from '@mui/icons-material/Notifications';

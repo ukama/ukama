@@ -1,6 +1,7 @@
 import { MANAGE_TABLE_COLUMN } from '@/constants';
-import { EmptyView, SimpleDataTable } from '@/ui/components';
-import PageContainerHeader from '@/ui/components/PageContainerHeader';
+import EmptyView from '@/ui/molecules/EmptyView';
+import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
+import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { Paper } from '@mui/material';
 
@@ -11,12 +12,7 @@ interface IMember {
   handleButtonAction: () => void;
 }
 
-const Member = ({
-  data,
-  search,
-  setSearch,
-  handleButtonAction,
-}: IMember) => {
+const Member = ({ data, search, setSearch, handleButtonAction }: IMember) => {
   return (
     <Paper
       sx={{

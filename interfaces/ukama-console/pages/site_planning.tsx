@@ -1,6 +1,6 @@
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { LoadingWrapper } from '@/ui/components';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import ConstructionSharpIcon from '@mui/icons-material/ConstructionSharp';
 import { Stack, Typography } from '@mui/material';
 

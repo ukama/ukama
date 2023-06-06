@@ -11,7 +11,8 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { EmptyView, OptionsPopover } from '..';
+import EmptyView from '../EmptyView';
+import OptionsPopover from '../OptionsPopover';
 
 interface DataTableWithOptionsInterface {
   dataset: any;

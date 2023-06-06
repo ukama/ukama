@@ -1,6 +1,7 @@
 import { MANAGE_SIM_POOL_COLUMN } from '@/constants';
-import { EmptyView, SimpleDataTable } from '@/ui/components';
-import PageContainerHeader from '@/ui/components/PageContainerHeader';
+import EmptyView from '@/ui/molecules/EmptyView';
+import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
+import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import SimCardIcon from '@mui/icons-material/SimCard';
 import { Paper } from '@mui/material';
 
