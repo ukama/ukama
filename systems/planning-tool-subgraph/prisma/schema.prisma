@@ -3,8 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AP_OPTIONS {
+  ONE_TO_ONE
+  ONE_TO_TWO
 }
 
 model Location {
@@ -16,13 +21,13 @@ model Location {
 }
 
 model Site {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   name        String
   height      Int
-  apOption    String
+  apOption    AP_OPTIONS @default(ONE_TO_ONE)
   solarUptime Int
   isSetlite   Boolean
-  location    Location @relation(fields: [locationId], references: [id])
+  location    Location   @relation(fields: [locationId], references: [id])
   Draft       Draft[]
   locationId  Int
 }
@@ -39,27 +44,7 @@ model Draft {
   id        Int     @id @default(autoincrement())
   lastSaved Int
   name      String
-  site      Site    @relation(fields: [siteId], references: [id])
   events    Event[]
   siteId    Int
-}
-
-model AddDraft {
-  id          Int     @id @default(autoincrement())
-  name        String
-  lastSaved   Int
-  siteName    String
-  height      Int
-  apOption    String
-  solarUptime Int
-  isSetlite   Boolean
-  lat         String
-  lng         String
-  address     String
-}
-
-model UpdateEvent {
-  id        Int    @id @default(autoincrement())
-  operation String
-  value     String
+  site      Site    @relation(fields: [siteId], references: [id])
 }
