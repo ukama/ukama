@@ -8,13 +8,13 @@ import { DateTimeResolver } from "graphql-scalars";
 import gql from "graphql-tag";
 import * as tq from "type-graphql";
 import { Context, context } from "./common/context";
-import { APOptions } from "./common/enums";
+// import { APOptions } from "./common/enums";
 import resolvers from "./modules";
 
 const app = async () => {
-  tq.registerEnumType(APOptions, {
-    name: "APOptions",
-  });
+  // tq.registerEnumType(APOptions, {
+  //   name: "APOptions",
+  // });
   const ts = await tq.buildSchema({
     resolvers: resolvers,
     scalarsMap: [{ type: GraphQLScalarType, scalar: DateTimeResolver }],
