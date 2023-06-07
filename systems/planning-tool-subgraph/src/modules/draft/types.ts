@@ -1,6 +1,5 @@
 import "reflect-metadata";
 import { Field, ID, InputType, ObjectType } from "type-graphql";
-import { APOptions } from "../../common/enums";
 
 @ObjectType()
 class Location {
@@ -20,8 +19,8 @@ class Site {
   @Field()
   height: number;
 
-  @Field(type => APOptions)
-  apOption: APOptions;
+  @Field()
+  apOption: string;
 
   @Field()
   solarUptime: number;
@@ -77,8 +76,8 @@ export class AddDraftInput {
   @Field()
   height: number;
 
-  @Field(type => APOptions)
-  apOption: APOptions;
+  @Field()
+  apOption: string;
 
   @Field()
   solarUptime: number;

@@ -1,6 +1,3 @@
--- CreateEnum
-CREATE TYPE "AP_OPTIONS" AS ENUM ('ONE_TO_ONE', 'ONE_TO_TWO');
-
 -- CreateTable
 CREATE TABLE "Location" (
     "id" SERIAL NOT NULL,
@@ -16,7 +13,7 @@ CREATE TABLE "Site" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "height" INTEGER NOT NULL,
-    "apOption" "AP_OPTIONS" NOT NULL DEFAULT 'ONE_TO_ONE',
+    "apOption" TEXT NOT NULL,
     "solarUptime" INTEGER NOT NULL,
     "isSetlite" BOOLEAN NOT NULL,
     "locationId" INTEGER NOT NULL,

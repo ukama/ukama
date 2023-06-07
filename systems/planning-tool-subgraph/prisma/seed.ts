@@ -11,7 +11,7 @@ const draftData: Prisma.DraftCreateInput[] = [
         name: "Site 1",
         height: 100,
         apOption: "ONE_TO_ONE",
-        solarUptime: 100,
+        solarUptime: 2,
         isSetlite: false,
         location: {
           create: {
@@ -21,6 +21,14 @@ const draftData: Prisma.DraftCreateInput[] = [
           },
         },
       },
+    },
+    events: {
+      create: [
+        {
+          operation: "name",
+          value: "Site 2",
+        },
+      ],
     },
   },
 ];
