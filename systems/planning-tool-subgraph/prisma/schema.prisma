@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Location {
+  id      Int    @id @default(autoincrement())
+  lat     String
+  lng     String
+  address String
+  Site    Site[]
+}
+
+model Site {
+  id          Int      @id @default(autoincrement())
+  name        String
+  height      Int
+  apOption    String
+  solarUptime Int
+  isSetlite   Boolean
+  location    Location @relation(fields: [locationId], references: [id])
+  Draft       Draft[]
+  locationId  Int
+}
+
+model Event {
+  id        Int    @id @default(autoincrement())
+  operation String
+  value     String
+  Draft     Draft? @relation(fields: [draftId], references: [id])
+  draftId   Int?
+}
+
+model Draft {
+  id        Int     @id @default(autoincrement())
+  lastSaved Int
+  name      String
+  site      Site    @relation(fields: [siteId], references: [id])
+  events    Event[]
+  siteId    Int
+}
+
+model AddDraft {
+  id          Int     @id @default(autoincrement())
+  name        String
+  lastSaved   Int
+  siteName    String
+  height      Int
+  apOption    String
+  solarUptime Int
+  isSetlite   Boolean
+  lat         String
+  lng         String
+  address     String
+}
+
+model UpdateEvent {
+  id        Int    @id @default(autoincrement())
+  operation String
+  value     String
+}

@@ -1,51 +1,38 @@
-import { ApolloServer, ContextFunction } from '@apollo/server'
-import {
-    StandaloneServerContextFunctionArgument,
-    startStandaloneServer,
-} from '@apollo/server/standalone'
-import { buildSubgraphSchema } from '@apollo/subgraph'
-import { readFileSync } from 'fs'
-import { GraphQLError } from 'graphql'
+import 'reflect-metadata'
+
+import { ApolloServer } from '@apollo/server'
+import { startStandaloneServer } from '@apollo/server/standalone'
+import { buildSubgraphSchema, printSubgraphSchema } from '@apollo/subgraph'
+import { GraphQLScalarType } from 'graphql'
+import { DateTimeResolver } from 'graphql-scalars'
 import gql from 'graphql-tag'
-import resolvers from './resolvers'
-import { DataSourceContext } from './types/DataSourceContext'
+import * as tq from 'type-graphql'
+import { Context, context } from './common/context'
+import { APOptions } from './common/enums'
+import resolvers from './modules'
 
-const port = process.env.PORT ?? '4001'
-const routerSecret = process.env.ROUTER_SECRET
+const app = async () => {
+  tq.registerEnumType(APOptions, {
+    name: 'APOptions',
+  })
+  const ts = await tq.buildSchema({
+    resolvers: resolvers,
+    scalarsMap: [{ type: GraphQLScalarType, scalar: DateTimeResolver }],
+    validate: { forbidUnknownValues: false },
+  })
 
-const context: ContextFunction<
-    [StandaloneServerContextFunctionArgument],
-    DataSourceContext
-> = async ({ req }) => {
-    if (routerSecret && req.headers['router-authorization'] !== routerSecret) {
-        throw new GraphQLError('Missing router authentication', {
-            extensions: {
-                code: 'UNAUTHENTICATED',
-                http: { status: 401 },
-            },
-        })
-    }
+  const federatedSchema = buildSubgraphSchema({
+    typeDefs: gql(printSubgraphSchema(ts)),
+    resolvers: tq.createResolversMap(ts) as any,
+  })
 
-    return {
-        auth: req.headers.authorization,
-    }
+  const server = new ApolloServer<Context>({ schema: federatedSchema })
+
+  const { url } = await startStandaloneServer(server, {
+    context: async () => context,
+  })
+
+  console.log(`🚀 Ukama Planning Tool Subgraph ready at: ${url}`)
 }
 
-async function main() {
-    let typeDefs = gql(
-        readFileSync('schema.graphql', {
-            encoding: 'utf-8',
-        })
-    )
-    const server = new ApolloServer({
-        schema: buildSubgraphSchema({ typeDefs, resolvers }),
-    })
-    const { url } = await startStandaloneServer(server, {
-        context,
-        listen: { port: Number.parseInt(port) },
-    })
-
-    console.log(`Ukama Planning Tool Subgraph 🚀 ready at ${url}`)
-}
-
-main()
+app()
