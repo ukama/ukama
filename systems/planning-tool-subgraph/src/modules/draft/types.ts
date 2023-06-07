@@ -1,106 +1,106 @@
-import 'reflect-metadata'
-import { Field, ID, InputType, ObjectType } from 'type-graphql'
-import { APOptions } from '../../common/enums'
+import "reflect-metadata";
+import { Field, ID, InputType, ObjectType } from "type-graphql";
+import { APOptions } from "../../common/enums";
 
 @ObjectType()
 class Location {
   @Field()
-  lat: string
+  lat: string;
   @Field()
-  lng: string
+  lng: string;
   @Field()
-  address: string
+  address: string;
 }
 
 @ObjectType()
 class Site {
   @Field()
-  name: string
+  name: string;
 
   @Field()
-  height: number
+  height: number;
 
-  @Field((type) => APOptions)
-  apOption: APOptions
-
-  @Field()
-  solarUptime: number
+  @Field(type => APOptions)
+  apOption: APOptions;
 
   @Field()
-  isSetlite: boolean
+  solarUptime: number;
+
+  @Field()
+  isSetlite: boolean;
 
   @Field(() => Location, { nullable: false })
-  location: Location
+  location: Location;
 }
 
 @ObjectType()
 class Event {
   @Field(() => ID)
-  id: string
+  id: string;
 
   @Field()
-  operation: string
+  operation: string;
 
   @Field()
-  value: string
+  value: string;
 }
 
 @ObjectType()
 export class Draft {
   @Field(() => ID)
-  id: string
+  id: string;
 
   @Field()
-  name: string
+  name: string;
 
   @Field()
-  lastSaved: number
+  lastSaved: number;
 
   @Field(() => Site, { nullable: false })
-  site: Site
+  site: Site;
 
   @Field(() => [Event], { nullable: false })
-  events: Event[]
+  events: Event[];
 }
 
 @InputType()
 export class AddDraftInput {
   @Field()
-  name: string
+  name: string;
 
   @Field()
-  lastSaved: number
+  lastSaved: number;
 
   @Field()
-  siteName: string
+  siteName: string;
 
   @Field()
-  height: number
+  height: number;
 
-  @Field((type) => APOptions)
-  apOption: APOptions
-
-  @Field()
-  solarUptime: number
+  @Field(type => APOptions)
+  apOption: APOptions;
 
   @Field()
-  isSetlite: boolean
+  solarUptime: number;
 
   @Field()
-  lat: string
+  isSetlite: boolean;
 
   @Field()
-  lng: string
+  lat: string;
 
   @Field()
-  address: string
+  lng: string;
+
+  @Field()
+  address: string;
 }
 
 @InputType()
 export class UpdateEvent {
   @Field()
-  operation: string
+  operation: string;
 
   @Field()
-  value: string
+  value: string;
 }
