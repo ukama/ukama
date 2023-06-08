@@ -82,8 +82,8 @@ func (_m *NnsClient) Get(ctx context.Context, in *gen.GetNodeIPRequest, opts ...
 	return r0, r1
 }
 
-// GetNodeIpMapList provides a mock function with given fields: ctx, in, opts
-func (_m *NnsClient) GetNodeIpMapList(ctx context.Context, in *gen.NodeIPMapListRequest, opts ...grpc.CallOption) (*gen.NodeIPMapListResponse, error) {
+// GetNodeIPMapList provides a mock function with given fields: ctx, in, opts
+func (_m *NnsClient) GetNodeIPMapList(ctx context.Context, in *gen.NodeIPMapListRequest, opts ...grpc.CallOption) (*gen.NodeIPMapListResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]

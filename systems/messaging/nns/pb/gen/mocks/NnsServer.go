@@ -66,8 +66,8 @@ func (_m *NnsServer) Get(_a0 context.Context, _a1 *gen.GetNodeIPRequest) (*gen.G
 	return r0, r1
 }
 
-// GetNodeIpMapList provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) GetNodeIpMapList(_a0 context.Context, _a1 *gen.NodeIPMapListRequest) (*gen.NodeIPMapListResponse, error) {
+// GetNodeIPMapList provides a mock function with given fields: _a0, _a1
+func (_m *NnsServer) GetNodeIPMapList(_a0 context.Context, _a1 *gen.NodeIPMapListRequest) (*gen.NodeIPMapListResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 *gen.NodeIPMapListResponse

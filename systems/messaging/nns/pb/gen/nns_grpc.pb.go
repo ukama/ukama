@@ -27,7 +27,7 @@ type NnsClient interface {
 	List(ctx context.Context, in *ListNodeIPRequest, opts ...grpc.CallOption) (*ListNodeIPResponse, error)
 	Delete(ctx context.Context, in *DeleteNodeIPRequest, opts ...grpc.CallOption) (*DeleteNodeIPResponse, error)
 	GetNodeOrgMapList(ctx context.Context, in *NodeOrgMapListRequest, opts ...grpc.CallOption) (*NodeOrgMapListResponse, error)
-	GetNodeIpMapList(ctx context.Context, in *NodeIPMapListRequest, opts ...grpc.CallOption) (*NodeIPMapListResponse, error)
+	GetNodeIPMapList(ctx context.Context, in *NodeIPMapListRequest, opts ...grpc.CallOption) (*NodeIPMapListResponse, error)
 }
 
 type nnsClient struct {
@@ -83,9 +83,9 @@ func (c *nnsClient) GetNodeOrgMapList(ctx context.Context, in *NodeOrgMapListReq
 	return out, nil
 }
 
-func (c *nnsClient) GetNodeIpMapList(ctx context.Context, in *NodeIPMapListRequest, opts ...grpc.CallOption) (*NodeIPMapListResponse, error) {
+func (c *nnsClient) GetNodeIPMapList(ctx context.Context, in *NodeIPMapListRequest, opts ...grpc.CallOption) (*NodeIPMapListResponse, error) {
 	out := new(NodeIPMapListResponse)
-	err := c.cc.Invoke(ctx, "/ukama.messaging.nns.v1.Nns/GetNodeIpMapList", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.messaging.nns.v1.Nns/GetNodeIPMapList", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ type NnsServer interface {
 	List(context.Context, *ListNodeIPRequest) (*ListNodeIPResponse, error)
 	Delete(context.Context, *DeleteNodeIPRequest) (*DeleteNodeIPResponse, error)
 	GetNodeOrgMapList(context.Context, *NodeOrgMapListRequest) (*NodeOrgMapListResponse, error)
-	GetNodeIpMapList(context.Context, *NodeIPMapListRequest) (*NodeIPMapListResponse, error)
+	GetNodeIPMapList(context.Context, *NodeIPMapListRequest) (*NodeIPMapListResponse, error)
 	mustEmbedUnimplementedNnsServer()
 }
 
@@ -124,8 +124,8 @@ func (UnimplementedNnsServer) Delete(context.Context, *DeleteNodeIPRequest) (*De
 func (UnimplementedNnsServer) GetNodeOrgMapList(context.Context, *NodeOrgMapListRequest) (*NodeOrgMapListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodeOrgMapList not implemented")
 }
-func (UnimplementedNnsServer) GetNodeIpMapList(context.Context, *NodeIPMapListRequest) (*NodeIPMapListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNodeIpMapList not implemented")
+func (UnimplementedNnsServer) GetNodeIPMapList(context.Context, *NodeIPMapListRequest) (*NodeIPMapListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodeIPMapList not implemented")
 }
 func (UnimplementedNnsServer) mustEmbedUnimplementedNnsServer() {}
 
@@ -230,20 +230,20 @@ func _Nns_GetNodeOrgMapList_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Nns_GetNodeIpMapList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Nns_GetNodeIPMapList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(NodeIPMapListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NnsServer).GetNodeIpMapList(ctx, in)
+		return srv.(NnsServer).GetNodeIPMapList(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.messaging.nns.v1.Nns/GetNodeIpMapList",
+		FullMethod: "/ukama.messaging.nns.v1.Nns/GetNodeIPMapList",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).GetNodeIpMapList(ctx, req.(*NodeIPMapListRequest))
+		return srv.(NnsServer).GetNodeIPMapList(ctx, req.(*NodeIPMapListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -276,8 +276,8 @@ var Nns_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Nns_GetNodeOrgMapList_Handler,
 		},
 		{
-			MethodName: "GetNodeIpMapList",
-			Handler:    _Nns_GetNodeIpMapList_Handler,
+			MethodName: "GetNodeIPMapList",
+			Handler:    _Nns_GetNodeIPMapList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

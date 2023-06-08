@@ -19,7 +19,7 @@ service Nns { // The Node Name Service (like DNS)
     }
     rpc Delete(DeleteNodeIPRequest) returns (DeleteNodeIPResponse);
     rpc GetNodeOrgMapList(NodeOrgMapListRequest) returns (NodeOrgMapListResponse);
-    rpc GetNodeIpMapList(NodeIPMapListRequest) returns (NodeIPMapListResponse);
+    rpc GetNodeIPMapList(NodeIPMapListRequest) returns (NodeIPMapListResponse);
 }   
 
 
