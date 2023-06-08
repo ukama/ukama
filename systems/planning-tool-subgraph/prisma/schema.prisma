@@ -28,18 +28,24 @@ model Site {
 }
 
 model Event {
-  id        Int    @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   operation String
   value     String
-  Draft     Draft? @relation(fields: [draftId], references: [id])
+  Draft     Draft?   @relation(fields: [draftId], references: [id])
   draftId   Int?
+  createdAt DateTime @default(now())
 }
 
 model Draft {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   lastSaved Int
+  userId    String
   name      String
   events    Event[]
   siteId    Int
-  site      Site    @relation(fields: [siteId], references: [id])
+  site      Site     @relation(fields: [siteId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId], type: Hash)
 }

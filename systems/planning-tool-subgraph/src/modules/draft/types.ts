@@ -42,6 +42,9 @@ class Event {
 
   @Field()
   value: string;
+
+  @Field()
+  createdAt: string;
 }
 
 @ObjectType()
@@ -51,6 +54,9 @@ export class Draft {
 
   @Field()
   name: string;
+
+  @Field()
+  userId: string;
 
   @Field()
   lastSaved: number;
@@ -66,6 +72,9 @@ export class Draft {
 export class AddDraftInput {
   @Field()
   name: string;
+
+  @Field()
+  userId: string;
 
   @Field()
   lastSaved: number;
@@ -96,7 +105,7 @@ export class AddDraftInput {
 }
 
 @InputType()
-export class UpdateEvent {
+export class UpdateEventInput {
   @Field()
   operation: string;
 

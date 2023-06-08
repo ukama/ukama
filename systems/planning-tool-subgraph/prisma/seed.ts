@@ -6,6 +6,9 @@ const draftData: Prisma.DraftCreateInput[] = [
   {
     name: "Draft 1",
     lastSaved: 1686142941,
+    userId: "16fe5842-05dd-11ee-8254-5eeae0fe08fe",
+    createdAt: "2023-03-01T00:00:00.000Z",
+    updatedAt: "2023-03-02T00:00:00.000Z",
     site: {
       create: {
         name: "Site 1",
@@ -27,6 +30,7 @@ const draftData: Prisma.DraftCreateInput[] = [
         {
           operation: "name",
           value: "Site 2",
+          createdAt: "2023-03-02T00:00:00.000Z",
         },
       ],
     },
