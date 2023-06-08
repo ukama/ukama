@@ -27,6 +27,7 @@ CREATE TABLE "Event" (
     "operation" TEXT NOT NULL,
     "value" TEXT NOT NULL,
     "draftId" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Event_pkey" PRIMARY KEY ("id")
 );
@@ -35,11 +36,17 @@ CREATE TABLE "Event" (
 CREATE TABLE "Draft" (
     "id" SERIAL NOT NULL,
     "lastSaved" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "siteId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Draft_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE INDEX "Draft_userId_idx" ON "Draft" USING HASH ("userId");
 
 -- AddForeignKey
 ALTER TABLE "Site" ADD CONSTRAINT "Site_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "Location"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
