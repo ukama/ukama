@@ -105,6 +105,41 @@ export class AddDraftInput {
 }
 
 @InputType()
+export class UpdateDraftInput {
+  @Field()
+  name: string;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  lastSaved: number;
+
+  @Field()
+  siteName: string;
+
+  @Field()
+  height: number;
+
+  @Field()
+  apOption: string;
+
+  @Field()
+  solarUptime: number;
+
+  @Field()
+  isSetlite: boolean;
+
+  @Field()
+  lat: string;
+
+  @Field()
+  lng: string;
+
+  @Field()
+  address: string;
+}
+@InputType()
 export class UpdateEventInput {
   @Field()
   operation: string;
