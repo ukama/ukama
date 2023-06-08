@@ -22,10 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NnsClient interface {
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
-	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
-	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Get(ctx context.Context, in *GetNodeIPRequest, opts ...grpc.CallOption) (*GetNodeIPResponse, error)
+	Set(ctx context.Context, in *SetNodeIPRequest, opts ...grpc.CallOption) (*SetNodeIPResponse, error)
+	List(ctx context.Context, in *ListNodeIPRequest, opts ...grpc.CallOption) (*ListNodeIPResponse, error)
+	Delete(ctx context.Context, in *DeleteNodeIPRequest, opts ...grpc.CallOption) (*DeleteNodeIPResponse, error)
+	GetNodeOrgMapList(ctx context.Context, in *NodeOrgMapListRequest, opts ...grpc.CallOption) (*NodeOrgMapListResponse, error)
 }
 
 type nnsClient struct {
@@ -36,8 +37,8 @@ func NewNnsClient(cc grpc.ClientConnInterface) NnsClient {
 	return &nnsClient{cc}
 }
 
-func (c *nnsClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
-	out := new(GetResponse)
+func (c *nnsClient) Get(ctx context.Context, in *GetNodeIPRequest, opts ...grpc.CallOption) (*GetNodeIPResponse, error) {
+	out := new(GetNodeIPResponse)
 	err := c.cc.Invoke(ctx, "/ukama.messaging.nns.v1.Nns/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -45,8 +46,8 @@ func (c *nnsClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOp
 	return out, nil
 }
 
-func (c *nnsClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error) {
-	out := new(SetResponse)
+func (c *nnsClient) Set(ctx context.Context, in *SetNodeIPRequest, opts ...grpc.CallOption) (*SetNodeIPResponse, error) {
+	out := new(SetNodeIPResponse)
 	err := c.cc.Invoke(ctx, "/ukama.messaging.nns.v1.Nns/Set", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -54,8 +55,8 @@ func (c *nnsClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOp
 	return out, nil
 }
 
-func (c *nnsClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
-	out := new(ListResponse)
+func (c *nnsClient) List(ctx context.Context, in *ListNodeIPRequest, opts ...grpc.CallOption) (*ListNodeIPResponse, error) {
+	out := new(ListNodeIPResponse)
 	err := c.cc.Invoke(ctx, "/ukama.messaging.nns.v1.Nns/List", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -63,9 +64,18 @@ func (c *nnsClient) List(ctx context.Context, in *ListRequest, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *nnsClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
-	out := new(DeleteResponse)
+func (c *nnsClient) Delete(ctx context.Context, in *DeleteNodeIPRequest, opts ...grpc.CallOption) (*DeleteNodeIPResponse, error) {
+	out := new(DeleteNodeIPResponse)
 	err := c.cc.Invoke(ctx, "/ukama.messaging.nns.v1.Nns/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nnsClient) GetNodeOrgMapList(ctx context.Context, in *NodeOrgMapListRequest, opts ...grpc.CallOption) (*NodeOrgMapListResponse, error) {
+	out := new(NodeOrgMapListResponse)
+	err := c.cc.Invoke(ctx, "/ukama.messaging.nns.v1.Nns/GetNodeOrgMapList", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,10 +86,11 @@ func (c *nnsClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.
 // All implementations must embed UnimplementedNnsServer
 // for forward compatibility
 type NnsServer interface {
-	Get(context.Context, *GetRequest) (*GetResponse, error)
-	Set(context.Context, *SetRequest) (*SetResponse, error)
-	List(context.Context, *ListRequest) (*ListResponse, error)
-	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Get(context.Context, *GetNodeIPRequest) (*GetNodeIPResponse, error)
+	Set(context.Context, *SetNodeIPRequest) (*SetNodeIPResponse, error)
+	List(context.Context, *ListNodeIPRequest) (*ListNodeIPResponse, error)
+	Delete(context.Context, *DeleteNodeIPRequest) (*DeleteNodeIPResponse, error)
+	GetNodeOrgMapList(context.Context, *NodeOrgMapListRequest) (*NodeOrgMapListResponse, error)
 	mustEmbedUnimplementedNnsServer()
 }
 
@@ -87,17 +98,20 @@ type NnsServer interface {
 type UnimplementedNnsServer struct {
 }
 
-func (UnimplementedNnsServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+func (UnimplementedNnsServer) Get(context.Context, *GetNodeIPRequest) (*GetNodeIPResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedNnsServer) Set(context.Context, *SetRequest) (*SetResponse, error) {
+func (UnimplementedNnsServer) Set(context.Context, *SetNodeIPRequest) (*SetNodeIPResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
 }
-func (UnimplementedNnsServer) List(context.Context, *ListRequest) (*ListResponse, error) {
+func (UnimplementedNnsServer) List(context.Context, *ListNodeIPRequest) (*ListNodeIPResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
-func (UnimplementedNnsServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+func (UnimplementedNnsServer) Delete(context.Context, *DeleteNodeIPRequest) (*DeleteNodeIPResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedNnsServer) GetNodeOrgMapList(context.Context, *NodeOrgMapListRequest) (*NodeOrgMapListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodeOrgMapList not implemented")
 }
 func (UnimplementedNnsServer) mustEmbedUnimplementedNnsServer() {}
 
@@ -113,7 +127,7 @@ func RegisterNnsServer(s grpc.ServiceRegistrar, srv NnsServer) {
 }
 
 func _Nns_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
+	in := new(GetNodeIPRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -125,13 +139,13 @@ func _Nns_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}
 		FullMethod: "/ukama.messaging.nns.v1.Nns/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).Get(ctx, req.(*GetRequest))
+		return srv.(NnsServer).Get(ctx, req.(*GetNodeIPRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Nns_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetRequest)
+	in := new(SetNodeIPRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -143,13 +157,13 @@ func _Nns_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}
 		FullMethod: "/ukama.messaging.nns.v1.Nns/Set",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).Set(ctx, req.(*SetRequest))
+		return srv.(NnsServer).Set(ctx, req.(*SetNodeIPRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Nns_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRequest)
+	in := new(ListNodeIPRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -161,13 +175,13 @@ func _Nns_List_Handler(srv interface{}, ctx context.Context, dec func(interface{
 		FullMethod: "/ukama.messaging.nns.v1.Nns/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).List(ctx, req.(*ListRequest))
+		return srv.(NnsServer).List(ctx, req.(*ListNodeIPRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Nns_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRequest)
+	in := new(DeleteNodeIPRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -179,7 +193,25 @@ func _Nns_Delete_Handler(srv interface{}, ctx context.Context, dec func(interfac
 		FullMethod: "/ukama.messaging.nns.v1.Nns/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).Delete(ctx, req.(*DeleteRequest))
+		return srv.(NnsServer).Delete(ctx, req.(*DeleteNodeIPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Nns_GetNodeOrgMapList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NodeOrgMapListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NnsServer).GetNodeOrgMapList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.messaging.nns.v1.Nns/GetNodeOrgMapList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NnsServer).GetNodeOrgMapList(ctx, req.(*NodeOrgMapListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -206,6 +238,10 @@ var Nns_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _Nns_Delete_Handler,
+		},
+		{
+			MethodName: "GetNodeOrgMapList",
+			Handler:    _Nns_GetNodeOrgMapList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

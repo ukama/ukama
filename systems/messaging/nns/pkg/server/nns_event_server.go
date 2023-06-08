@@ -85,7 +85,7 @@ func (l *NnsEventServer) handleEventNodeOnline(key string, msg *epb.NodeOnlineEv
 		Org:     "ukama",
 	}
 
-	_, err = l.Nns.Set(context.Background(), &pb.SetRequest{
+	_, err = l.Nns.Set(context.Background(), &pb.SetNodeIPRequest{
 		NodeId:   msg.GetNodeId(),
 		NodeIp:   msg.GetMeshIp(),
 		MeshIp:   msg.GetMeshIp(),

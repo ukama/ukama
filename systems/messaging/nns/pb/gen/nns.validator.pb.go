@@ -18,27 +18,27 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetRequest) Validate() error {
+func (this *GetNodeIPRequest) Validate() error {
 	return nil
 }
-func (this *GetResponse) Validate() error {
+func (this *GetNodeIPResponse) Validate() error {
 	return nil
 }
 
-var _regex_SetRequest_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-var _regex_SetRequest_MeshIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+var _regex_SetNodeIPRequest_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+var _regex_SetNodeIPRequest_MeshIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
 
-func (this *SetRequest) Validate() error {
+func (this *SetNodeIPRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
-	if !_regex_SetRequest_NodeIp.MatchString(this.NodeIp) {
+	if !_regex_SetNodeIPRequest_NodeIp.MatchString(this.NodeIp) {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must be a string conforming to regex "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`, this.NodeIp))
 	}
 	if this.NodeIp == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeIp))
 	}
-	if !_regex_SetRequest_MeshIp.MatchString(this.MeshIp) {
+	if !_regex_SetNodeIPRequest_MeshIp.MatchString(this.MeshIp) {
 		return github_com_mwitkow_go_proto_validators.FieldError("MeshIp", fmt.Errorf(`value '%v' must be a string conforming to regex "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`, this.MeshIp))
 	}
 	if this.MeshIp == "" {
@@ -46,21 +46,49 @@ func (this *SetRequest) Validate() error {
 	}
 	return nil
 }
-func (this *SetResponse) Validate() error {
+func (this *SetNodeIPResponse) Validate() error {
 	return nil
 }
-func (this *ListResponse) Validate() error {
+func (this *ListNodeIPResponse) Validate() error {
 	return nil
 }
-func (this *ListRequest) Validate() error {
+func (this *ListNodeIPRequest) Validate() error {
 	return nil
 }
-func (this *DeleteRequest) Validate() error {
+func (this *DeleteNodeIPRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
 	return nil
 }
-func (this *DeleteResponse) Validate() error {
+func (this *DeleteNodeIPResponse) Validate() error {
+	return nil
+}
+func (this *NodeOrgMapListRequest) Validate() error {
+	return nil
+}
+
+var _regex_NodeOrgMap_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+
+func (this *NodeOrgMap) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if !_regex_NodeOrgMap_NodeIp.MatchString(this.NodeIp) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must be a string conforming to regex "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`, this.NodeIp))
+	}
+	if this.NodeIp == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeIp))
+	}
+	return nil
+}
+func (this *NodeOrgMapListResponse) Validate() error {
+	for _, item := range this.Map {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Map", err)
+			}
+		}
+	}
 	return nil
 }

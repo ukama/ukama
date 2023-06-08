@@ -22,18 +22,18 @@ func NewNnsServer(nnsClient *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) *NnsServer
 	}
 }
 
-func (n *NnsServer) Get(c context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+func (n *NnsServer) Get(c context.Context, req *pb.GetNodeIPRequest) (*pb.GetNodeIPResponse, error) {
 	logrus.Infof("Getting ip for node %s", req.NodeId)
 	ip, err := n.nns.Get(c, req.GetNodeId())
 	if err != nil {
 		return nil, err
 	}
-	return &pb.GetResponse{
+	return &pb.GetNodeIPResponse{
 		Ip: ip,
 	}, nil
 }
 
-func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
+func (n *NnsServer) Set(c context.Context, req *pb.SetNodeIPRequest) (*pb.SetNodeIPResponse, error) {
 	logrus.Infof("Seting Ip for: %s", req.GetNodeId())
 
 	err := n.nns.Set(c, req.GetNodeId(), req.GetMeshIp())
@@ -46,10 +46,10 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 		return nil, fmt.Errorf("failed to set org and network for node id %s. Error: %v", req.NodeId, err)
 	}
 
-	return &pb.SetResponse{}, nil
+	return &pb.SetNodeIPResponse{}, nil
 }
 
-func (n *NnsServer) List(ctx context.Context, in *pb.ListRequest) (*pb.ListResponse, error) {
+func (n *NnsServer) List(ctx context.Context, in *pb.ListNodeIPRequest) (*pb.ListNodeIPResponse, error) {
 	logrus.Infof("Listing all nodes")
 	nodes, err := n.nns.List(ctx)
 	if err != nil {
@@ -66,17 +66,40 @@ func (n *NnsServer) List(ctx context.Context, in *pb.ListRequest) (*pb.ListRespo
 		res = append(res, k)
 	}
 
-	return &pb.ListResponse{
+	return &pb.ListNodeIPResponse{
 		Ips: res,
 	}, err
 }
 
-func (n *NnsServer) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+func (n *NnsServer) Delete(ctx context.Context, in *pb.DeleteNodeIPRequest) (*pb.DeleteNodeIPResponse, error) {
 	logrus.Infof("Deleting Ip for: %s", in.GetNodeId())
 	err := n.nns.Delete(ctx, in.NodeId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete record from db. Error: %v", err)
 	}
 
-	return &pb.DeleteResponse{}, nil
+	return &pb.DeleteNodeIPResponse{}, nil
+}
+
+func (n *NnsServer) GetNodeOrgMapList(ctx context.Context, in *pb.NodeOrgMapListRequest) (*pb.NodeOrgMapListResponse, error) {
+	logrus.Infof("GetNodeOrgMap List")
+	resp := &pb.NodeOrgMapListResponse{}
+	maps, err := n.nodeOrgMapping.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete record from db. Error: %v", err)
+	}
+
+	for k, v := range maps {
+		nom := &pb.NodeOrgMap{
+			NodeId:   k,
+			NodeIp:   v.NodeIp,
+			NodePort: v.NodePort,
+			MeshPort: v.MeshPort,
+			Org:      v.Org,
+			Network:  v.Network,
+		}
+		resp.Map = append(resp.Map, nom)
+	}
+	logrus.Infof("GetNodeOrgMap: %v", resp.Map)
+	return resp, nil
 }

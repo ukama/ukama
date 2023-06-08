@@ -32,7 +32,7 @@ var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
 func request_Nns_List_0(ctx context.Context, marshaler runtime.Marshaler, client NnsClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRequest
+	var protoReq ListNodeIPRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -49,7 +49,7 @@ func request_Nns_List_0(ctx context.Context, marshaler runtime.Marshaler, client
 }
 
 func local_request_Nns_List_0(ctx context.Context, marshaler runtime.Marshaler, server NnsServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq ListRequest
+	var protoReq ListNodeIPRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)

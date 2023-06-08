@@ -71,29 +71,29 @@ func Test_FullFlow(t *testing.T) {
 	const nodePort int32 = 2000
 
 	t.Run("SetIp", func(tt *testing.T) {
-		r, err := c.Set(ctx, &pb.SetRequest{NodeId: nodeId, MeshIp: meshIp, MeshPort: meshPort, NodeIp: nodeIp, NodePort: nodePort})
+		r, err := c.Set(ctx, &pb.SetNodeIPRequest{NodeId: nodeId, MeshIp: meshIp, MeshPort: meshPort, NodeIp: nodeIp, NodePort: nodePort})
 		handleResponse(tt, err, r)
 	})
 
 	t.Run("ResolveIp", func(tt *testing.T) {
-		r, err := c.Get(ctx, &pb.GetRequest{NodeId: nodeId})
+		r, err := c.Get(ctx, &pb.GetNodeIPRequest{NodeId: nodeId})
 		handleResponse(tt, err, r)
 		assert.Equal(tt, meshIp, r.Ip)
 	})
 
 	t.Run("ResolveMissingIp", func(tt *testing.T) {
-		_, err := c.Get(ctx, &pb.GetRequest{NodeId: ukama.NewVirtualHomeNodeId().String()})
+		_, err := c.Get(ctx, &pb.GetNodeIPRequest{NodeId: ukama.NewVirtualHomeNodeId().String()})
 		s, ok := status.FromError(err)
 		assert.True(tt, ok)
 		assert.Equal(tt, codes.NotFound, s.Code())
 	})
 
 	t.Run("GetIpList", func(tt *testing.T) {
-		_, err := c.Set(ctx, &pb.SetRequest{NodeId: ukama.NewVirtualHomeNodeId().String(), MeshIp: meshIp, MeshPort: meshPort, NodeIp: nodeIp, NodePort: nodePort})
+		_, err := c.Set(ctx, &pb.SetNodeIPRequest{NodeId: ukama.NewVirtualHomeNodeId().String(), MeshIp: meshIp, MeshPort: meshPort, NodeIp: nodeIp, NodePort: nodePort})
 		assert.NoError(t, err)
-		_, err = c.Set(ctx, &pb.SetRequest{NodeId: ukama.NewVirtualHomeNodeId().String(), MeshIp: "1.1.1.2", MeshPort: meshPort, NodeIp: nodeIp, NodePort: nodePort})
+		_, err = c.Set(ctx, &pb.SetNodeIPRequest{NodeId: ukama.NewVirtualHomeNodeId().String(), MeshIp: "1.1.1.2", MeshPort: meshPort, NodeIp: nodeIp, NodePort: nodePort})
 		assert.NoError(t, err)
-		r, err := c.List(ctx, &pb.ListRequest{})
+		r, err := c.List(ctx, &pb.ListNodeIPRequest{})
 		assert.NoError(t, err)
 		// just make sure it's unique list
 		assert.Greater(tt, len(r.Ips), 1)
@@ -107,9 +107,9 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("Delete", func(tt *testing.T) {
-		_, err := c.Delete(ctx, &pb.DeleteRequest{NodeId: nodeId})
+		_, err := c.Delete(ctx, &pb.DeleteNodeIPRequest{NodeId: nodeId})
 		if assert.NoError(t, err) {
-			_, err := c.Get(ctx, &pb.GetRequest{NodeId: nodeId})
+			_, err := c.Get(ctx, &pb.GetNodeIPRequest{NodeId: nodeId})
 			e, ok := status.FromError(err)
 			assert.True(tt, ok)
 			assert.Equal(tt, codes.NotFound.String(), e.Code().String())

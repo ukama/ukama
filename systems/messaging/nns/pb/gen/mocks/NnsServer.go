@@ -15,23 +15,23 @@ type NnsServer struct {
 }
 
 // Delete provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) Delete(_a0 context.Context, _a1 *gen.DeleteRequest) (*gen.DeleteResponse, error) {
+func (_m *NnsServer) Delete(_a0 context.Context, _a1 *gen.DeleteNodeIPRequest) (*gen.DeleteNodeIPResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.DeleteResponse
+	var r0 *gen.DeleteNodeIPResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest) (*gen.DeleteResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeIPRequest) (*gen.DeleteNodeIPResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest) *gen.DeleteResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeIPRequest) *gen.DeleteNodeIPResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeleteResponse)
+			r0 = ret.Get(0).(*gen.DeleteNodeIPResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteNodeIPRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -41,23 +41,49 @@ func (_m *NnsServer) Delete(_a0 context.Context, _a1 *gen.DeleteRequest) (*gen.D
 }
 
 // Get provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.GetResponse, error) {
+func (_m *NnsServer) Get(_a0 context.Context, _a1 *gen.GetNodeIPRequest) (*gen.GetNodeIPResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetResponse
+	var r0 *gen.GetNodeIPResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) (*gen.GetResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeIPRequest) (*gen.GetNodeIPResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) *gen.GetResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeIPRequest) *gen.GetNodeIPResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetResponse)
+			r0 = ret.Get(0).(*gen.GetNodeIPResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeIPRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetNodeOrgMapList provides a mock function with given fields: _a0, _a1
+func (_m *NnsServer) GetNodeOrgMapList(_a0 context.Context, _a1 *gen.NodeOrgMapListRequest) (*gen.NodeOrgMapListResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.NodeOrgMapListResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeOrgMapListRequest) (*gen.NodeOrgMapListResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeOrgMapListRequest) *gen.NodeOrgMapListResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.NodeOrgMapListResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeOrgMapListRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -67,23 +93,23 @@ func (_m *NnsServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.GetResp
 }
 
 // List provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListResponse, error) {
+func (_m *NnsServer) List(_a0 context.Context, _a1 *gen.ListNodeIPRequest) (*gen.ListNodeIPResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.ListResponse
+	var r0 *gen.ListNodeIPResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) (*gen.ListResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListNodeIPRequest) (*gen.ListNodeIPResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) *gen.ListResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListNodeIPRequest) *gen.ListNodeIPResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListResponse)
+			r0 = ret.Get(0).(*gen.ListNodeIPResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListNodeIPRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -93,23 +119,23 @@ func (_m *NnsServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListR
 }
 
 // Set provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) Set(_a0 context.Context, _a1 *gen.SetRequest) (*gen.SetResponse, error) {
+func (_m *NnsServer) Set(_a0 context.Context, _a1 *gen.SetNodeIPRequest) (*gen.SetNodeIPResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.SetResponse
+	var r0 *gen.SetNodeIPResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetRequest) (*gen.SetResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetNodeIPRequest) (*gen.SetNodeIPResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetRequest) *gen.SetResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetNodeIPRequest) *gen.SetNodeIPResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.SetResponse)
+			r0 = ret.Get(0).(*gen.SetNodeIPResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetNodeIPRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
