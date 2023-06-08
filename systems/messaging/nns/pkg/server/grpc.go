@@ -103,3 +103,21 @@ func (n *NnsServer) GetNodeOrgMapList(ctx context.Context, in *pb.NodeOrgMapList
 	logrus.Infof("GetNodeOrgMap: %v", resp.Map)
 	return resp, nil
 }
+
+func (n *NnsServer) GetNodeIPMapList(ctx context.Context, in *pb.NodeIPMapListRequest) (*pb.NodeIPMapListResponse, error) {
+	logrus.Debugf("Node Ip map list request")
+	resp := &pb.NodeIPMapListResponse{}
+	m, err := n.nns.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete record from db. Error: %v", err)
+	}
+
+	for n, i := range m {
+		e := &pb.NodeIPMap{
+			NodeId: n,
+			NodeIp: i,
+		}
+		resp.Map = append(resp.Map, e)
+	}
+	return resp, nil
+}

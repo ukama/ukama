@@ -19,6 +19,7 @@ service Nns { // The Node Name Service (like DNS)
     }
     rpc Delete(DeleteNodeIPRequest) returns (DeleteNodeIPResponse);
     rpc GetNodeOrgMapList(NodeOrgMapListRequest) returns (NodeOrgMapListResponse);
+    rpc GetNodeIpMapList(NodeIPMapListRequest) returns (NodeIPMapListResponse);
 }   
 
 
@@ -75,4 +76,16 @@ message NodeOrgMap {
 }
 message NodeOrgMapListResponse{
   repeated NodeOrgMap map = 1 ;
+}
+
+message NodeIPMapListRequest{
+
+}
+
+message NodeIPMap {
+    string nodeId = 1  [(validator.field) = { string_not_empty: true}];
+    string nodeIp = 2  [(validator.field) = { string_not_empty: true,  regex: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"}];
+}
+message NodeIPMapListResponse{
+  repeated NodeIPMap map =1 ;   
 }

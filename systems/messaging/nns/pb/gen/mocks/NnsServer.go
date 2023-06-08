@@ -66,6 +66,32 @@ func (_m *NnsServer) Get(_a0 context.Context, _a1 *gen.GetNodeIPRequest) (*gen.G
 	return r0, r1
 }
 
+// GetNodeIpMapList provides a mock function with given fields: _a0, _a1
+func (_m *NnsServer) GetNodeIpMapList(_a0 context.Context, _a1 *gen.NodeIPMapListRequest) (*gen.NodeIPMapListResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.NodeIPMapListResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeIPMapListRequest) (*gen.NodeIPMapListResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeIPMapListRequest) *gen.NodeIPMapListResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.NodeIPMapListResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeIPMapListRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNodeOrgMapList provides a mock function with given fields: _a0, _a1
 func (_m *NnsServer) GetNodeOrgMapList(_a0 context.Context, _a1 *gen.NodeOrgMapListRequest) (*gen.NodeOrgMapListResponse, error) {
 	ret := _m.Called(_a0, _a1)
