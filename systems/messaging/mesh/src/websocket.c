@@ -232,5 +232,7 @@ void websocket_onclose(const URequest *request, WSManager *manager,
 		}
 	}
 
+    remove_map_item_from_table(IDsTable, (char *)data);
+
 	return;
 }

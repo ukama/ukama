@@ -99,6 +99,8 @@ void signal_term_handler(void) {
 		free(processState->config);
 	}
 
+    free(processState);
+
 	exit(1);
 }
 

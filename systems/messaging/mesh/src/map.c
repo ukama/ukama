@@ -62,10 +62,10 @@ static MapItem *create_map_item(char *nodeID) {
 }
 
 /*
- * destroy_work_item --
+ * free_map_item --
  *
  */
-void destroy_map_item(MapItem *map) {
+void free_map_item(MapItem *map) {
 
 	if (!map) {
 		return;
@@ -179,7 +179,40 @@ MapItem *lookup_item(MapTable *table, char *nodeID) {
  * remove_item -- remove the matching item from the table and free()
  *
  */
-void remove_item(MapTable **table, char *nodeID) {
+void remove_map_item_from_table(MapTable *table, char *nodeID) {
 
+    MapItem *current, *previous;
 
+    pthread_mutex_lock(&table->mutex);
+
+    current  = table->first;
+    previous = NULL;
+
+    while (current != NULL) {
+        if (strcmp(current->nodeInfo->nodeID, nodeID) == 0) {
+            if (previous != NULL) {
+                previous->next = current->next;
+                if (current == table->last) {
+                    table->last = previous;
+                }
+            } else {
+                table->first = current->next;
+                if (current == table->last) {
+                    table->last = NULL;
+                }
+            }
+
+            pthread_mutex_unlock(&table->mutex);
+            pthread_mutex_destroy(&current->mutex);
+            pthread_cond_destroy(&current->hasResp);
+            free_map_item(current);
+
+            return;
+        }
+
+        previous = current;
+        current = current->next;
+    }
+
+    pthread_mutex_unlock(&table->mutex);
 }
