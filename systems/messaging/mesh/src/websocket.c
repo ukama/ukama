@@ -20,9 +20,9 @@
 #include "data.h"
 #include "map.h"
 #include "config.h"
+#include "u_amqp.h"
 
-extern WorkList *Transmit;
-extern MapTable *IDTable;
+extern MapTable *IDsTable;
 
 /*
  * clear_response -- free up memory from MResponse.
@@ -42,42 +42,21 @@ static void clear_response(MResponse **resp) {
 }
 
 /*
- * clear_websocket_data -- free up memory from websocket
- *
- */
-static void clear_websocket_data(WebsocketData **ptr) {
-
-    if (*ptr==NULL) return;
-
-    free((*ptr)->deviceInfo->nodeID);
-    free((*ptr)->deviceInfo);
-    free(*ptr);
-}
-/*
  * websocket_status --
  *
  */
-static int websocket_valid(WSManager *manager, void *data) {
+static int is_websocket_valid(WSManager *manager, char *nodeID) {
 
-    WebsocketData *websocketData = NULL;
-    Config *config=NULL;
+    if (manager == NULL || nodeID == NULL) return FALSE;
 
-    websocketData = (WebsocketData *)data;
-    config = (Config *)websocketData->data;
-
-    if (manager == NULL || data == NULL) return FALSE;
-
-    if (ulfius_websocket_status(manager) ==
-        U_WEBSOCKET_STATUS_CLOSE) { /* connection close */
-        log_debug("Websocket connection is closed");
+    if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
+        log_debug("Websocket connection is closed with node: %s", nodeID);
 
         /* publish event on AMQP */
-        if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CLOSE,
-						   websocketData->deviceInfo->nodeID) == FALSE) {
+        if (publish_event(CONN_CLOSE, nodeID) == FALSE) {
             log_error("Error publishing device connect msg on AMQP exchange");
         } else {
-            log_debug("Send AMQP offline msg for NodeID: %s",
-                      websocketData->deviceInfo->nodeID);
+            log_debug("Send AMQP offline msg for NodeID: %s", nodeID);
         }
 
         return FALSE;
@@ -92,16 +71,32 @@ static int websocket_valid(WSManager *manager, void *data) {
 void websocket_manager(const URequest *request, WSManager *manager,
 					   void *data) {
 
+    MapItem *map=NULL;
 	WorkList *list;
 	WorkItem *work;
-	WorkList **transmit = &Transmit;
     struct timespec ts;
     int ret;
 
-	if (*transmit == NULL)
-		return;
+    map = is_existing_item(IDsTable, (char *)data);
+    if (map == NULL) {
+        log_error("Websocket error NodeID: %s not found in table",
+                  (char *)data);
+        return;
+    }
 
-	list = *transmit;
+    /* Setup transmit and receiving queues for the websocket */
+    map->transmit = (WorkList *)calloc(1, sizeof(WorkList));
+    map->receive  = (WorkList *)calloc(1, sizeof(WorkList));
+
+    if (map->transmit == NULL || map->receive == NULL) {
+        log_error("Memory allocation failure: %d", sizeof(WorkList));
+        return;
+    }
+
+    /* Initializa the transmit and receive list for the websocket. */
+    init_work_list(&map->transmit);
+    init_work_list(&map->receive);
+    list = map->transmit;
 
 	while (TRUE) {
 
@@ -123,7 +118,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
                  */
                 pthread_mutex_unlock(&(list->mutex));
 
-                if (!websocket_valid(manager, data)) {
+                if (!is_websocket_valid(manager, map->nodeInfo->nodeID)) {
                     return; /* Close the websocket */
                 } else {
                     continue;
@@ -149,7 +144,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 		}
 
 		/* 2. Send data over the wire. */
-		/* Currently, Packet is JSON string. Send it over. */
+		/* Currently, packet is JSON string. Send it over. */
 		if (ulfius_websocket_wait_close(manager, 2000) ==
 			U_WEBSOCKET_STATUS_OPEN) {
 			if (ulfius_websocket_send_json_message(manager, work->data)
@@ -179,21 +174,10 @@ void websocket_incoming_message(const URequest *request,
 								void *data) {
 	MRequest *rcvdData=NULL;
 	MResponse *rcvdResp=NULL;
-    Config *config=NULL;
-    WebsocketData *websocketData=NULL;
-	json_t *json;
+	json_t *json=NULL;
 	int ret;
 
-    websocketData = (WebsocketData *)data;
-    config = (Config *)websocketData->data;
-
 	log_debug("Packet recevied. Data: %s", message->data);
-
-	/* If we recevied a packet and our proxy is disable log and reject*/
-	if (config->proxy == FALSE) {
-		log_error("Recevie packet while reverse-proxy is disabled ignored");
-		goto done;
-	}
 
 	/* Ignore the rest, for now. */
 	if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
@@ -210,7 +194,7 @@ void websocket_incoming_message(const URequest *request,
 		ret = deserialize_forward_request(&rcvdData, json);
 		if (ret==FALSE) goto done;
 
-		handle_recevied_data(rcvdData, config);
+		handle_recevied_data(rcvdData);
 
 		/* Free up the memory from deser. */
 		clear_request(&rcvdData);
@@ -226,31 +210,27 @@ void websocket_incoming_message(const URequest *request,
  * websocket_onclose -- is called when the websocket is closed.
  *
  */
+void websocket_onclose(const URequest *request, WSManager *manager,
+                       void *data) {
 
-void  websocket_onclose(const URequest *request, WSManager *manager,
-						void *data) {
+    MapItem *map=NULL;
 
-    WebsocketData *websocketData=NULL;
-    Config *config=NULL;
+    map = is_existing_item(IDsTable, (char *)data);
+    if (map == NULL) {
+        log_error("Websocket error NodeID: %s not found in table",
+                  (char *)data);
+        return;
+    }
 
-    websocketData = (WebsocketData *)data;
-    config = (Config *)websocketData->data;
-
-	if (config == NULL)
-		return;
-
-	if (config->deviceInfo) {
-		if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CLOSE,
-                               config->deviceInfo->nodeID) == FALSE) {
+	if (map->nodeInfo) {
+		if (publish_event(CONN_CLOSE, map->nodeInfo->nodeID) == FALSE) {
 			log_error("Error publish device close msg on AMQP exchange: %s",
-					  config->deviceInfo->nodeID);
+					  map->nodeInfo->nodeID);
 		} else {
 			log_debug("AMQP device close msg successfull for NodeID: %s",
-					  config->deviceInfo->nodeID);
+					  map->nodeInfo->nodeID);
 		}
 	}
-
-    clear_websocket_data(&websocketData);
 
 	return;
 }

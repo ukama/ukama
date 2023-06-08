@@ -29,8 +29,7 @@
 #include "map.h"
 #include "u_amqp.h"
 
-extern WorkList *Transmit;
-extern MapTable *IDTable;
+extern MapTable *IDsTable;
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -49,7 +48,7 @@ int callback_websocket(const URequest *request, UResponse *response,
 	int ret;
 	char *nodeID=NULL;
 	Config *config=NULL;
-    WebsocketData *websocketData=NULL;
+    MapItem *map=NULL;
 
     config = (Config *)data;
 
@@ -59,24 +58,15 @@ int callback_websocket(const URequest *request, UResponse *response,
 		return U_CALLBACK_ERROR;
 	}
 
-    websocketData = (WebsocketData *)calloc(1, sizeof(WebsocketData));
-    if (websocketData == NULL) {
-        log_error("Error allocating memory: %d", sizeof(DeviceInfo));
-        return U_CALLBACK_ERROR;
-    } else {
-        websocketData->deviceInfo = (DeviceInfo *)calloc(1, sizeof(DeviceInfo));
-        if (websocketData->deviceInfo == NULL) {
-			log_error("Error allocating memory: %d", sizeof(DeviceInfo));
-			return U_CALLBACK_ERROR;
-		} else {
-            websocketData->deviceInfo->nodeID = strdup(nodeID);
-        }
-        websocketData->data = data;
-    }
+    map = add_map_to_table(&IDsTable, nodeID);
+	if (map == NULL) {
+        return U_CALLBACK_CONTINUE; // XXX
+	}
+
+    map->configData = data;
 
 	/* Publish device (nodeID) 'connect' event to AMQP exchange */
-	if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CONNECT,
-						   nodeID) == FALSE) {
+	if (publish_event(CONN_CONNECT, nodeID) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
 		return U_CALLBACK_ERROR;
 	} else {
@@ -85,11 +75,11 @@ int callback_websocket(const URequest *request, UResponse *response,
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
 											 &websocket_manager,
-											 websocketData,
+											 map->nodeInfo->nodeID,
 											 &websocket_incoming_message,
-											 websocketData,
+											 map->nodeInfo->nodeID,
 											 &websocket_onclose,
-											 websocketData)) == U_OK) {
+											 map->nodeInfo->nodeID)) == U_OK) {
 		ulfius_add_websocket_deflate_extension(response);
 		return U_CALLBACK_CONTINUE;
 	}
@@ -148,6 +138,7 @@ int callback_ping(const URequest *request, UResponse *response,
 int callback_webservice(const URequest *request, UResponse *response,
 						void *data) {
 
+#if 0
 	json_t *jReq=NULL;
 	Config *config;
 	int ret, statusCode=200;
@@ -175,7 +166,7 @@ int callback_webservice(const URequest *request, UResponse *response,
 	inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
 	port = sin->sin_port;
 
-	map = add_map_to_table(&IDTable, &ip[0], port);
+	map = add_map_to_table(&IDsTable, &ip[0], port);
 	if (map == NULL) {
 		statusCode = 500;
 		goto done;
@@ -223,6 +214,6 @@ int callback_webservice(const URequest *request, UResponse *response,
 
 	if (map->size)
 		free(map->data);
-
+#endif
 	return U_CALLBACK_CONTINUE;
 }

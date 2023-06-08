@@ -58,7 +58,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 void clear_request(MRequest **data) {
 
 	free((*data)->reqType);
-	free((*data)->deviceInfo);
+	free((*data)->nodeInfo);
 	free((*data)->serviceInfo);
 
 	ulfius_clean_request_full((*data)->requestInfo);
@@ -149,8 +149,7 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
  * handle_recevied_data --
  *
  */
-
-void handle_recevied_data(MRequest *data, Config *config) {
+void handle_recevied_data(MRequest *data) {
 
 	int ret=FALSE, retCode=0;
 	URequest *request;
@@ -158,7 +157,7 @@ void handle_recevied_data(MRequest *data, Config *config) {
 	char *host=NULL, *port=NULL;
 	json_t *jResp=NULL;
 
-	if (data == NULL && config == NULL)
+	if (data == NULL)
 		return;
 
 	/* Handling only forward requests. */
@@ -167,8 +166,7 @@ void handle_recevied_data(MRequest *data, Config *config) {
 
 	request = data->requestInfo;
 
-	if (!get_systemInfo_from_initClient(config, request->url_path,
-										&host, &port)) {
+	if (!get_systemInfo_from_initClient(request->url_path, &host, &port)) {
 		/* No match. Ignore. */
 		log_error("No matching server found for path: %s", request->url_path);
 	} else {
@@ -191,7 +189,7 @@ void handle_recevied_data(MRequest *data, Config *config) {
 		if (jResp) {
 			jStr = json_dumps(jResp, 0);
 			log_debug("Sending response back: %s", jStr);
-			add_work_to_queue(&Transmit, (Packet)jResp, NULL, 0, NULL, 0);
+            //			add_work_to_queue(&Transmit, (Packet)jResp, NULL, 0, NULL, 0); XXXX
 			free(jStr);
 		} else {
 			log_error("Invalid response type (expected JSON)");

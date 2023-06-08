@@ -164,7 +164,7 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
  * serialize_device_info --
  *
  */
-int serialize_device_info(json_t **json, DeviceInfo *device) {
+int serialize_device_info(json_t **json, NodeInfo *device) {
 
 	json_t *jDevice=NULL;
 
@@ -254,10 +254,10 @@ int serialize_response(json_t **json, int size, void *data, char *nodeID) {
  * serialize_forward_request --
  *
  */
-
 int serialize_forward_request(URequest *request, json_t **json,
 							  Config *config, uuid_t uuid) {
 
+#if 0
 	int ret=FALSE;
 	json_t *jReq=NULL, *jDevice=NULL, *jService=NULL;
 	json_t *jRequest=NULL, *jRaw=NULL;
@@ -337,7 +337,7 @@ int serialize_forward_request(URequest *request, json_t **json,
 		json_object_set_new(jRaw, JSON_DATA,
 							json_string((char *)request->binary_body));
 	}
-
+#endif
 	return TRUE;
 }
 
@@ -345,14 +345,14 @@ int serialize_forward_request(URequest *request, json_t **json,
  * deserialize_device_info --
  *
  */
-int deserialize_device_info(DeviceInfo **device, json_t *json) {
+int deserialize_device_info(NodeInfo **device, json_t *json) {
 
 	json_t *obj;
 
 	if (json == NULL && device == NULL)
 		return FALSE;
 
-	*device = (DeviceInfo *)calloc(1, sizeof(DeviceInfo));
+	*device = (NodeInfo *)calloc(1, sizeof(NodeInfo));
 	if (*device == NULL)
 		return FALSE;
 
@@ -583,7 +583,7 @@ int deserialize_forward_request(MRequest **request, json_t *json) {
 
 	json_t *jFwd, *obj;
 	char *jStr;
-
+#if 0
 	if (json == NULL) {
 		return FALSE;
 	}
@@ -627,6 +627,7 @@ int deserialize_forward_request(MRequest **request, json_t *json) {
 	jStr = json_dumps(json, 0);
 	log_error("Error decoding JSON: %s", jStr);
 	free(jStr);
+#endif
 	return FALSE;
 }
 

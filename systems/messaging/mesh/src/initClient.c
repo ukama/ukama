@@ -170,31 +170,33 @@ static long send_request_to_initClient(char *url, struct Response *response) {
  * get_systemInfo_from_initClient --
  *
  */
-int get_systemInfo_from_initClient(Config *config, char *systemName,
-								   char **host, char **port) {
+int get_systemInfo_from_initClient(char *systemName, char **systemHost,
+                                   char **systemPort) {
 
 	int ret=FALSE;
-	char *url=NULL;
+	char *url=NULL, *initClientHost=NULL, *initClientPort=NULL;
 	struct Response response;
 
 	if (systemName == NULL) return FALSE;
 
-	*host = NULL;
-	*port = NULL;
+	*systemHost = NULL;
+	*systemPort = NULL;
+    initClientHost = getenv(ENV_INIT_CLIENT_HOST);
+    initClientPort = getenv(ENV_INIT_CLIENT_PORT);
 
-	url = create_url(config->initClientHost, config->initClientPort,
-					 systemName);
+	url = create_url(initClientHost, initClientPort, systemName);
 
 	if (send_request_to_initClient(url, &response) == 200) {
-		if (process_response_from_initClient(response.buffer, host, port)) {
+		if (process_response_from_initClient(response.buffer,
+                                             systemHost, systemPort)) {
 			log_debug("Recevied info from initClient: host %s port %s",
-					  *host, *port);
+					  *systemHost, *systemPort);
 		} else {
-			log_error("Unable to receive proper NodeID from noded");
+			log_error("Unable to receive info from init");
 			goto done;
 		}
 	} else {
-		log_error("Unable to send request to noded");
+		log_error("Unable to send request to init");
 		goto done;
 	}
 
@@ -220,6 +222,6 @@ void free_system_info(SystemInfo *systemInfo) {
 	if (systemInfo->ip)          free(systemInfo->ip);
 	if (systemInfo->port)        free(systemInfo->port);
 	if (systemInfo->health)      free(systemInfo->health);
-	
+
 	free(systemInfo);
 }

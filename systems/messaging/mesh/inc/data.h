@@ -14,6 +14,6 @@
 #include "config.h"
 
 void clear_request(MRequest **data);
-void handle_recevied_data(MRequest *data, Config *config);
+void handle_recevied_data(MRequest *data);
 
 #endif /* MESH_DATA_H */
