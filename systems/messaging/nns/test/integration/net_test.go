@@ -9,12 +9,12 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 	"math/rand"
 	"net"
 	"testing"
@@ -43,6 +43,7 @@ func init() {
 			Uri: "amqp://guest:guest@localhost:5672/",
 		},
 		NodeBaseDomain: "node.mesh",
+		DnsHost:        "localhost:5053",
 	}
 
 	config.LoadConfig("integration", testConf)
@@ -74,13 +75,13 @@ func Test_FullFlow(t *testing.T) {
 		handleResponse(tt, err, r)
 	})
 
-	t.Run("ResolevIp", func(tt *testing.T) {
+	t.Run("ResolveIp", func(tt *testing.T) {
 		r, err := c.Get(ctx, &pb.GetRequest{NodeId: nodeId})
 		handleResponse(tt, err, r)
 		assert.Equal(tt, meshIp, r.Ip)
 	})
 
-	t.Run("ResolevMissingIp", func(tt *testing.T) {
+	t.Run("ResolveMissingIp", func(tt *testing.T) {
 		_, err := c.Get(ctx, &pb.GetRequest{NodeId: ukama.NewVirtualHomeNodeId().String()})
 		s, ok := status.FromError(err)
 		assert.True(tt, ok)
@@ -148,10 +149,10 @@ func TestListener(t *testing.T) {
 		ips, err = resolveWithCustomeDns(nodeHost)
 	}
 
-	assert.NoError(t, err)
-
-	assert.Equal(t, 1, len(ips))
-	assert.Equal(t, ip, ips[0].String())
+	if assert.NoError(t, err) {
+		assert.Equal(t, 1, len(ips))
+		assert.Equal(t, ip, ips[0].String())
+	}
 }
 
 func resolveWithCustomeDns(host string) ([]net.IP, error) {
@@ -179,10 +180,21 @@ func sendMessageToQueue(t *testing.T, nodeId string, ip string, port int32, nIp 
 		assert.FailNow(t, err.Error())
 	}
 
-	message, err := proto.Marshal(&epb.NodeOnlineEvent{NodeId: nodeId, MeshIp: ip, MeshPort: port, NodeIp: nIp, NodePort: nPort})
+	msg := &epb.NodeOnlineEvent{NodeId: nodeId, MeshIp: ip, MeshPort: port, NodeIp: nIp, NodePort: nPort}
+
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		return err
+	}
+
+	payload, err := proto.Marshal(anyMsg)
+	if err != nil {
+		return err
+	}
+
+	err = rabbit.Publish(payload, "", "amq.topic", "event.cloud.mesh.node.online", "topic")
 	assert.NoError(t, err)
-	err = rabbit.Publish(message, "", "amq.Topic", "event.cloud.mesh.node.online", "topic")
-	assert.NoError(t, err)
+
 	return err
 }
 

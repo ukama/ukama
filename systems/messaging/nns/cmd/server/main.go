@@ -21,10 +21,9 @@ import (
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
-	"gopkg.in/yaml.v3"
 )
 
-var serviceConfig *pkg.Config
+var serviceConfig = pkg.NewConfig(pkg.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -50,10 +49,12 @@ func initConfig() {
 	if err != nil {
 		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
-		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
-			log.Infof("Config:\n%s", string(b))
-		}
+		log.SetLevel(log.TraceLevel)
+		log.Infof("Config is %+v DnsConfig %+v", serviceConfig, serviceConfig.Dns)
+		// b, err := yaml.Marshal(serviceConfig)
+		// if err != nil {
+		// 	log.Infof("Config:\n%s", string(b))
+		// }
 	}
 
 	log.Debugf("\nService: %s Service: %+v MsgClient Config %+v", pkg.ServiceName, serviceConfig.Service, serviceConfig.MsgClient)
@@ -86,11 +87,9 @@ func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewNnsServer(nns, nodeOrgMapping)
+		eSrv := server.NewNnsEventServer(registryClient, srv)
 		pb.RegisterNnsServer(s, srv)
-
 		dnspb.RegisterDnsServiceServer(s, server.NewDnsServer(nns, serviceConfig.Dns))
-
-		eSrv := server.NewNnsEventServer(registryClient, serviceConfig.EtcdHost, serviceConfig.Timeout)
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
 

@@ -1,5 +1,5 @@
 FROM alpine:3.13.5
 
-COPY bin/net /usr/bin/net
+COPY bin/nns /usr/bin/nns
 
-CMD ["/usr/bin/net"]
+CMD ["/usr/bin/nns"]

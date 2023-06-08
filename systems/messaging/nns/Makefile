@@ -4,7 +4,7 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/nmessaging/nns/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/net cmd/server/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/messaging/nns/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/nns cmd/server/main.go
 
 test:
 	go test -v ./...
@@ -25,16 +25,16 @@ gen:
 	# generate http
 	protoc -I ./pb -I ../../common/pb/dep --grpc-gateway_out $(GOPATH)/src \
                      --grpc-gateway_opt logtostderr=true \
-                     net.proto
+                     nns.proto
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
-         			  net.proto
+         			  nns.proto
 #	# generate Open API
 #	protoc I ./pb -I ../../common/pb/dep --openapiv2_out ./pb/gen \
 #		--openapiv2_opt logtostderr=true \
 #		net.proto
 
 	mockery --all --recursive --dir ./pkg
-	mockery -dir ./pb  -all -recursive -output ./pb/gen/mocks
+	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm pb/gen/*.go

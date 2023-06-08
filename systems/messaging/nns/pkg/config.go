@@ -20,7 +20,7 @@ type Config struct {
 	Timeout           time.Duration    `default:"3s"`
 	MsgClient         *uconf.MsgClient `default:"{}"`
 	Service           *uconf.Service
-	Registry          string
+	Registry          string `default:"http://registry:8080"`
 }
 
 type DnsConfig struct {
@@ -38,8 +38,8 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.lookup.organization.create"},
+			ListenerRoutes: []string{"event.cloud.mesh.node.online"},
 		},
-		Registry: "gateway.registry:8080",
+		Registry: "http://192.168.0.23:8075",
 	}
 }

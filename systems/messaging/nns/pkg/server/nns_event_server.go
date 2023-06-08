@@ -2,43 +2,26 @@ package server
 
 import (
 	"context"
-	"time"
 
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg/client"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type NnsEventServer struct {
-	GrpcTimeout time.Duration
-	NnsConn     *grpc.ClientConn
-	NnsClient   pb.NnsClient
-	Registry    client.NodeRegistryClient
+	Nns      *NnsServer
+	Registry client.NodeRegistryClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNnsEventServer(c client.NodeRegistryClient, nns string, t time.Duration) *NnsEventServer {
-	ctx, cancel := context.WithTimeout(context.Background(), t)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, nns, grpc.WithBlock(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		logrus.Fatalf("Could not connect: %v", err)
-	}
-	client := pb.NewNnsClient(conn)
+func NewNnsEventServer(c client.NodeRegistryClient, s *NnsServer) *NnsEventServer {
 
 	return &NnsEventServer{
-		GrpcTimeout: t,
-		Registry:    c,
-		NnsConn:     conn,
-		NnsClient:   client,
+		Registry: c,
+		Nns:      s,
 	}
 }
 
@@ -91,11 +74,18 @@ func (l *NnsEventServer) handleEventNodeOnline(key string, msg *epb.NodeOnlineEv
 	if err != nil {
 		log.Errorf("Failed to get org and network. Error: %+v", err)
 		log.Warningf("Node id %s won't have org and network info", msg.GetNodeId())
+
+		//TODO: For now adding some default stuff
+
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(l.GrpcTimeout))
-	defer cancel()
-	_, err = l.NnsClient.Set(ctx, &pb.SetRequest{
+	nodeInfo = &client.NodeInfo{
+		Id:      msg.GetNodeId(),
+		Network: "network",
+		Org:     "ukama",
+	}
+
+	_, err = l.Nns.Set(context.Background(), &pb.SetRequest{
 		NodeId:   msg.GetNodeId(),
 		NodeIp:   msg.GetMeshIp(),
 		MeshIp:   msg.GetMeshIp(),
@@ -103,7 +93,7 @@ func (l *NnsEventServer) handleEventNodeOnline(key string, msg *epb.NodeOnlineEv
 		MeshPort: msg.GetMeshPort(),
 		Org:      nodeInfo.Org,
 		Network:  nodeInfo.Network,
-	}, grpc_retry.WithMax(3))
+	})
 
 	if err != nil {
 		log.Errorf("Failed to set node IP. Error: %+v", err)

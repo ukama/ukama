@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: net.proto
+// source: nns.proto
 
 package gen
 
@@ -209,5 +209,5 @@ var Nns_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "net.proto",
+	Metadata: "nns.proto",
 }
