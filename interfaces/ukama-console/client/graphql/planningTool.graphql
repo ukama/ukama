@@ -1,0 +1,57 @@
+fragment location on Location {
+  lat
+  lng
+  address
+}
+fragment site on Site {
+  name
+  height
+  apOption
+  isSetlite
+  solarUptime
+  location {
+    ...location
+  }
+}
+fragment event on Event {
+  id
+  value
+  operation
+  createdAt
+}
+fragment draft on Draft {
+  id
+  name
+  lastSaved
+  userId
+  site {
+    ...site
+  }
+  events {
+    ...event
+  }
+}
+
+mutation AddDraft($data: AddDraftInput!) {
+  addDraft(data: $data) {
+    ...draft
+  }
+}
+
+mutation UpdateEvent($draftId: Float!, $data: UpdateEventInput!) {
+  updateEvent(draftId: $draftId, data: $data) {
+    ...draft
+  }
+}
+
+query GetDrafts($userId: String!) {
+  getDrafts(userId: $userId) {
+    ...draft
+  }
+}
+
+query GetDraft($draftId: Float!) {
+  getDraft(id: $draftId) {
+    ...draft
+  }
+}

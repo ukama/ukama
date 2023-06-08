@@ -10,6 +10,7 @@
     "lint-staged": "lint-staged",
     "prettier": "prettier --write --ignore-unknown .",
     "codegen": "graphql-codegen --config codegen.yml",
+    "planning-codegen": "graphql-codegen --config planning-codegen.yml",
     "prettier:check": "prettier --check --ignore-unknown ."
   },
   "git": {
