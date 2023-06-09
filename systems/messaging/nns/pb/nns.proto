@@ -73,6 +73,7 @@ message NodeOrgMap {
     int32 meshPort = 4;
     string org = 5;
     string network = 6;
+    string domainname = 7;
 }
 message NodeOrgMapListResponse{
   repeated NodeOrgMap map = 1 ;

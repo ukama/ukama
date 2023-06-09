@@ -11,14 +11,16 @@ import (
 
 type NnsServer struct {
 	pb.UnimplementedNnsServer
+	config         *pkg.DnsConfig
 	nns            *pkg.Nns
 	nodeOrgMapping *pkg.NodeOrgMap
 }
 
-func NewNnsServer(nnsClient *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) *NnsServer {
+func NewNnsServer(nnsClient *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap, config *pkg.DnsConfig) *NnsServer {
 	return &NnsServer{
 		nns:            nnsClient,
 		nodeOrgMapping: nodeOrgMapping,
+		config:         config,
 	}
 }
 
@@ -91,12 +93,13 @@ func (n *NnsServer) GetNodeOrgMapList(ctx context.Context, in *pb.NodeOrgMapList
 
 	for k, v := range maps {
 		nom := &pb.NodeOrgMap{
-			NodeId:   k,
-			NodeIp:   v.NodeIp,
-			NodePort: v.NodePort,
-			MeshPort: v.MeshPort,
-			Org:      v.Org,
-			Network:  v.Network,
+			NodeId:     k,
+			NodeIp:     v.NodeIp,
+			NodePort:   v.NodePort,
+			MeshPort:   v.MeshPort,
+			Org:        v.Org,
+			Network:    v.Network,
+			Domainname: n.config.NodeDomain,
 		}
 		resp.Map = append(resp.Map, nom)
 	}
