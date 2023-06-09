@@ -4,13 +4,11 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/rest"
 )
 
 type Config struct {
 	uconf.BaseConfig  `mapstructure:",squash"`
 	EtcdHost          string
-	Http              rest.HttpConfig
 	DialTimeoutSecond time.Duration
 	NodeMetricsPort   int
 	Dns               *DnsConfig

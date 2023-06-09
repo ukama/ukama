@@ -34,10 +34,7 @@ func main() {
 	nodeOrgMapping := pkg.NewNodeToOrgMap(serviceConfig)
 
 	metrics.StartMetricsServer(serviceConfig.Metrics)
-	go func() {
-		srv := server.NewHttpServer(serviceConfig.Http, serviceConfig.Grpc, serviceConfig.NodeMetricsPort, nnsClient, nodeOrgMapping)
-		srv.RunHttpServer()
-	}()
+
 	runGrpcServer(nnsClient, nodeOrgMapping)
 }
 
