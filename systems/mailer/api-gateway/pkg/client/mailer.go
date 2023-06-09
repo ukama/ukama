@@ -24,26 +24,27 @@ type MailerClient struct {
 	port     int
 	username string
 	password string
+	from	 string
 }
 
-func NewMailerClient(host string, port int, timeout time.Duration, username string, password string) *MailerClient {
+func NewMailerClient(host string, port int, timeout time.Duration, username string, password string,from string) *MailerClient {
 	return &MailerClient{
 		client:   &http.Client{Timeout: timeout},
 		host:     host,
 		port:     port,
 		username: username,
 		password: password,
+		from:	 from,
 	}
 }
 
-func (c *MailerClient) SendEmail(to string, message string) (res.SendEmailRes, error) {
+func (c *MailerClient) SendEmail(to string, message string, subject string) (res.SendEmailRes, error) {
 	var smtpConfig SmtpConfig
-	smtpConfig.From = c.username
 	smtpConfig.Host = c.host
 	smtpConfig.Port = c.port
 	smtpConfig.Password = c.password
 	smtpConfig.Username = c.username
-
+	smtpConfig.From = c.from
 	validate := validator.New()
 	if err := validate.Struct(smtpConfig); err != nil {
 		return res.SendEmailRes{}, err
@@ -52,7 +53,7 @@ func (c *MailerClient) SendEmail(to string, message string) (res.SendEmailRes, e
 	m := gomail.NewMessage()
 	m.SetHeader("From", smtpConfig.From)
 	m.SetHeader("To", to)
-	m.SetHeader("Subject", "Hello")
+	m.SetHeader("Subject", subject)
 	m.SetBody("text/plain", message)
 
 	d := gomail.NewDialer(smtpConfig.Host, smtpConfig.Port, smtpConfig.Username, smtpConfig.Password)

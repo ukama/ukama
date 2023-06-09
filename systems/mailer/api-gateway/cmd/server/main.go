@@ -19,7 +19,7 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 	logrus.Infof("Starting %s", pkg.ServiceName)
-	am := client.NewMailerClient(svcConf.Mailer.Host,svcConf.Mailer.Port, 3*time.Second, svcConf.Mailer.Username, svcConf.Mailer.Password)
+	am := client.NewMailerClient(svcConf.Mailer.Host,svcConf.Mailer.Port, 3*time.Second, svcConf.Mailer.Username, svcConf.Mailer.Password,svcConf.Mailer.From)
 	cs := rest.NewClientsSet(am)
 	r := rest.NewRouter(cs, rest.NewRouterConfig(svcConf))
 	r.Run()
