@@ -117,7 +117,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nns.GET("/list", formatDoc("Get all Ip's", ""), tonic.Handler(r.getAllNodeIPHandler, http.StatusOK))
 		nns.GET("/map", formatDoc("Node to Org map", ""), tonic.Handler(r.getNodeOrgMapHandler, http.StatusOK))
 
-		prom := auth.Group("/promethues", "Prometheus target", "Target discovery endpoint")
+		prom := auth.Group("/prometheus", "Prometheus target", "Target discovery endpoint")
 		prom.GET("", formatDoc("Get target to scrape", ""), tonic.Handler(r.prometheusHandler, http.StatusOK))
 	}
 }
@@ -176,7 +176,7 @@ type targets struct {
 
 func marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListResponse, nodeMetricsPort int) ([]byte, error) {
 	resp := make([]targets, 0, len(l.Map))
-
+	var dname string
 	for _, v := range l.Map {
 		labels := map[string]string{
 			"nodeid": v.NodeId,
@@ -190,12 +190,13 @@ func marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListRe
 			}
 			return nil, false
 		}(nodeToOrg, v.NodeId); ok {
+			dname = m.GetDomainname()
 			labels["org"] = m.Org
 			labels["network"] = m.Network
 		}
 
 		resp = append(resp, targets{
-			Targets: []string{fmt.Sprintf("%s:%d", v, nodeMetricsPort)},
+			Targets: []string{v.NodeId + "." + dname},
 			Labels:  labels,
 		})
 	}
