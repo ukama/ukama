@@ -11,13 +11,7 @@ type Config struct {
 	Server            rest.HttpConfig
 	Service           *config.Service
 	R                 *rest.RestClient
-	From              string `default:"hello@dev.ukama.com" validation:"required"`
-	Host              string `default:"localhost" validation:"required"`
-	Port              int    `default:"25" validation:"required"`
-	Password          string
-	Username          string
-}
-type SmtpConfig struct {
+	Mailer            *config.Auth
 }
 
 func NewConfig(name string) *Config {
@@ -34,5 +28,6 @@ func NewConfig(name string) *Config {
 			Cors: defaultCors,
 		},
 		Service: config.LoadServiceHostConfig(name),
+		Mailer:  config.LoadAuthHostConfig(name),
 	}
 }

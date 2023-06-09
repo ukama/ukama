@@ -7,17 +7,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/auth/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/auth/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/mailer/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/mailer/api-gateway/pkg"
 
-	oc "github.com/ory/client-go"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )
-
-var SESSION_KEY = "ukama_session"
 
 type Router struct {
 	f      *fizz.Fizz
@@ -28,13 +25,12 @@ type Router struct {
 type RouterConfig struct {
 	debugMode  bool
 	serverConf *rest.HttpConfig
-	auth       *config.Auth
+	mailer     *config.Mailer
 	s          *config.Service
-	k          string
 }
 
 type MailerManager interface {
-	sendEmail(to string, templateName string, values map[string]any) (*oc.SuccessfulNativeLogin, error)
+	sendEmail(to string, message string) (SendEmailRes, error)
 }
 
 type Clients struct {
@@ -60,13 +56,12 @@ func NewRouter(c *Clients, config *RouterConfig) *Router {
 	return r
 }
 
-func NewRouterConfig(svcConf *pkg.Config, k string) *RouterConfig {
+func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		serverConf: &svcConf.Server,
 		debugMode:  svcConf.DebugMode,
 		s:          svcConf.Service,
 
-		k: k,
 	}
 }
 
@@ -79,7 +74,8 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "http://localhost:8080")
+
 	v1 := r.f.Group("/v1", "Mailer API GW", "Mailer system version v1")
 	v1.POST("/sendEmail", formatDoc("send email", ""), tonic.Handler(r.sendEmail, http.StatusOK))
 }
@@ -93,12 +89,12 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (p *Router) sendEmail(c *gin.Context, req *SendEmailReq) (*SendEmailRes, error) {
-	res, err := p.client.au.sendEmail(req.To, req.TemplateName, req.Values)
+	res, err := p.client.au.sendEmail(req.To, req.Message)
 	if err != nil {
 		return nil, err
 	}
 
 	return &SendEmailRes{
-		Success: res.Success,
+		Message: res.Message,
 	}, nil
 }

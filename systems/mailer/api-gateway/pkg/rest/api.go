@@ -1,11 +1,10 @@
 package rest
 
 type SendEmailReq struct {
-	To           string         `json:"to"`
-	TemplateName string         `json:"templateName"`
-	Values       map[string]any `json:"values"`
+	To      string `json:"to"`
+	Message string `json:"message"`
 }
 
 type SendEmailRes struct {
-	Success bool `json:"success"`
+	Message string `json:"message"`
 }

@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/systems/auth/api-gateway
+module github.com/ukama/ukama/systems/mailer/api-gateway
 
 go 1.18
 
