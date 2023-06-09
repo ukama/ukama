@@ -132,7 +132,15 @@ type Auth struct {
 	AuthAppUrl     string `default:"http://localhost:4455"`
 	AuthAPIGW      string `default:"http://localhost:8080"`
 	BypassAuthMode bool   `default:"false"`
-	KetoUrl string `default:"http://localhost:4466"`
+	KetoUrl        string `default:"http://localhost:4466"`
+}
+
+type Mailer struct {
+	To       string `default:""`
+	Host     string `default:"localhost"`
+	Port     int    `default:" 587"`
+	Username string `default:""`
+	Password string `default:""`
 }
 
 // LoadConfig loads configuration into `config` object
@@ -230,6 +238,56 @@ func LoadServiceHostConfig(name string) *Service {
 
 	return s
 }
+func LoadMailerHostConfig(name string) *Mailer {
+	s := &Mailer{}
+	mailerHost := "_MAILER_HOST"
+	mailerPort := "_MAILER_PORT"
+	mailerTo := "_MAILER_TO"
+	mailerUsername := "_MAILER_USERNAME"
+	mailerPassword := "_MAILER_PASSWORD"
+
+	val, present := os.LookupEnv(strings.ToUpper(name + mailerHost))
+	if present {
+		s.Host = val
+	} else {
+		logrus.Errorf("%s mailer host env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + mailerPort))
+	if present {
+		port, err := strconv.Atoi(val)
+		if err != nil {
+			logrus.Errorf("Failed to convert %s mailer port to int: %s", name, err)
+		} else {
+			s.Port = port
+		}
+	} else {
+		logrus.Errorf("%s mailer port env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + mailerTo))
+	if present {
+		s.To = val
+	} else {
+		logrus.Errorf("%s mailer to env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + mailerUsername))
+	if present {
+		s.Username = val
+	} else {
+		logrus.Errorf("%s mailer username env not found", name)
+	}
+
+	val, present = os.LookupEnv(strings.ToUpper(name + mailerPassword))
+	if present {
+		s.Password = val
+	} else {
+		logrus.Errorf("%s mailer password env not found", name)
+	}
+	return s
+
+}
 
 func LoadAuthHostConfig(name string) *Auth {
 	s := &Auth{}
@@ -241,7 +299,7 @@ func LoadAuthHostConfig(name string) *Auth {
 
 	val, present := os.LookupEnv(strings.ToUpper(name + ketoUrl))
 	if present {
-		s.KetoUrl= val
+		s.KetoUrl = val
 	} else {
 		logrus.Errorf("%s ketoClient url env not found", name)
 	}
