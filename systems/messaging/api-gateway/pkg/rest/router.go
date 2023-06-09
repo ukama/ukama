@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -55,7 +56,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 
 	r := &Router{
 		clients: clients,
@@ -66,7 +67,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -88,20 +89,37 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
+func (r *Router) init(f func(*gin.Context, string) error) {
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	v1 := r.f.Group("/v1", "Messaging system ", "Messaging system version v1")
+	auth := r.f.Group("/v1", "Messaging system API Gateway", "Messaging system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			logrus.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
+		nns := auth.Group("/nns", "Nns", "Looking for node Ip address")
+		nns.GET("/node/:node", formatDoc("Get node Ip", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
+		nns.PUT("/node/:node", formatDoc("Add node Ip", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
+		nns.DELETE("/node/:node", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteNodeIPHandler, http.StatusOK))
+		nns.GET("/list", formatDoc("Get all Ip's", ""), tonic.Handler(r.getAllNodeIPHandler, http.StatusOK))
+		nns.GET("/map", formatDoc("Node to Org map", ""), tonic.Handler(r.getNodeOrgMapHandler, http.StatusOK))
 
-	nns := v1.Group("/nns", "Nns", "Looking for node Ip address")
-	nns.GET("/node/:node", formatDoc("Get node Ip", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
-	nns.PUT("/node/:node", formatDoc("Add node Ip", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
-	nns.DELETE("/node/:node", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteNodeIPHandler, http.StatusOK))
-	nns.GET("/list", formatDoc("Get all Ip's", ""), tonic.Handler(r.getAllNodeIPHandler, http.StatusOK))
-	nns.GET("/map", formatDoc("Node to Org map", ""), tonic.Handler(r.getNodeOrgMapHandler, http.StatusOK))
-
-	prom := v1.Group("/promethues", "Prometheus target", "Target discovery endpoint")
-	prom.GET("", formatDoc("Get target to scrape", ""), tonic.Handler(r.prometheusHandler, http.StatusOK))
+		prom := auth.Group("/promethues", "Prometheus target", "Target discovery endpoint")
+		prom.GET("", formatDoc("Get target to scrape", ""), tonic.Handler(r.prometheusHandler, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -166,7 +184,7 @@ func marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListRe
 
 		if m, ok := func(m *pb.NodeOrgMapListResponse, id string) (*pb.NodeOrgMap, bool) {
 			for _, k := range m.Map {
-				if k.NodeId == id {
+				if strings.EqualFold(k.NodeId, id) {
 					return k, true
 				}
 			}
