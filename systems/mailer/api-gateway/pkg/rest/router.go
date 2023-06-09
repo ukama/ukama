@@ -30,16 +30,16 @@ type RouterConfig struct {
 }
 
 type MailerManager interface {
-	sendEmail(to string, message string) (SendEmailRes, error)
+	SendEmail(to string, message string) (SendEmailRes, error)
 }
 
 type Clients struct {
-	au MailerManager
+	ma MailerManager
 }
 
 func NewClientsSet(a MailerManager) *Clients {
 	c := &Clients{}
-	c.au = a
+	c.ma = a
 	return c
 }
 
@@ -89,7 +89,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (p *Router) sendEmail(c *gin.Context, req *SendEmailReq) (*SendEmailRes, error) {
-	res, err := p.client.au.sendEmail(req.To, req.Message)
+	res, err := p.client.ma.SendEmail(req.To, req.Message)
 	if err != nil {
 		return nil, err
 	}

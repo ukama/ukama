@@ -1,55 +1,66 @@
 package client
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/go-playground/validator"
 	res "github.com/ukama/ukama/systems/mailer/api-gateway/pkg/rest"
+
+	"gopkg.in/gomail.v2"
 )
 
+type SmtpConfig struct {
+	From     string `default:"hello@dev.ukama.com" validate:"required"`
+	Host     string `default:"localhost" validate:"required"`
+	Port     int    `default:"25" validate:"required"`
+	Password string
+	Username string
+}
+
 type MailerClient struct {
-	client  *http.Client
-	host    string
-	port    int
+	client   *http.Client
+	host     string
+	port     int
 	username string
 	password string
-	
 }
 
-func NewMailerClient(host string,port int ,timeout time.Duration,username string ,password string) *MailerClient {
+func NewMailerClient(host string, port int, timeout time.Duration, username string, password string) *MailerClient {
 	return &MailerClient{
-		client: &http.Client{
-			Timeout: 10 * time.Second, // Set a timeout for HTTP requests
-		},
-		host: host,
-		port: port,
+		client:   &http.Client{Timeout: timeout},
+		host:     host,
+		port:     port,
 		username: username,
 		password: password,
-
 	}
-
 }
 
-func (c *MailerClient) sendEmail(to string, message string) (res.SendEmailRes, error) {
-	url := c.baseURL + "/v1/sendEmail"
+func (c *MailerClient) SendEmail(to string, message string) (res.SendEmailRes, error) {
+	var smtpConfig SmtpConfig
+	smtpConfig.From = c.username
+	smtpConfig.Host = c.host
+	smtpConfig.Port = c.port
+	smtpConfig.Password = c.password
+	smtpConfig.Username = c.username
 
-	// Send POST request to the mailer API GW
-	resp, err := c.client.Post(url, "application/json", nil)
-	if err != nil {
-		return res.SendEmailRes{}, fmt.Errorf("failed to send request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK {
-		return res.SendEmailRes{}, fmt.Errorf("unexpected response status: %s", resp.Status)
+	validate := validator.New()
+	if err := validate.Struct(smtpConfig); err != nil {
+		return res.SendEmailRes{}, err
 	}
 
-	// Handle the response body if needed
-	// ...
+	m := gomail.NewMessage()
+	m.SetHeader("From", smtpConfig.From)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", "Hello")
+	m.SetBody("text/plain", message)
 
-	// Return the response
+	d := gomail.NewDialer(smtpConfig.Host, smtpConfig.Port, smtpConfig.Username, smtpConfig.Password)
+
+	if err := d.DialAndSend(m); err != nil {
+		return res.SendEmailRes{}, err
+	}
+
 	return res.SendEmailRes{
 		Message: "Email sent successfully",
 	}, nil

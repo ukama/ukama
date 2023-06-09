@@ -11,7 +11,7 @@ type Config struct {
 	Server            rest.HttpConfig
 	Service           *config.Service
 	R                 *rest.RestClient
-	Mailer            *config.Auth
+	Mailer            *config.Mailer
 }
 
 func NewConfig(name string) *Config {
@@ -28,6 +28,6 @@ func NewConfig(name string) *Config {
 			Cors: defaultCors,
 		},
 		Service: config.LoadServiceHostConfig(name),
-		Mailer:  config.LoadAuthHostConfig(name),
+		Mailer:  config.LoadMailerHostConfig(name),
 	}
 }
