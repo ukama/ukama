@@ -41,6 +41,22 @@ services:
   #   networks:
   #     - ukama-net
   
+  gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./api-gateway
+    ports:
+      - "8079:8080"
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
+      - NODEMETRICSPORT=10251
+      - SERVICES_NNS=nnsd:9090
+    depends_on:
+      - nnsd
+    networks:
+      - ukama-net
+
   etcd:
     image: 'bitnami/etcd:latest'
     networks:
@@ -56,10 +72,6 @@ services:
     build:    
       dockerfile: ./Dockerfile
       context: ./nns
-    ports:
-      - "8080:8080"
-      - "9090:9090"
-    
     environment:
       - DEBUGMODE=true
       - DNS_NODEDOMAIN=node.mesh
@@ -68,7 +80,7 @@ services:
       - MSGCLIENT_HOST=msgclient-messaging:9095
       - NNS_SERVICE_HOST=nnsd
       - NNS_SERVICE_PORT=9090
-      - REGISTRY=http://192.168.0.23:8080
+      - REGISTRY=http://${LOCAL_HOST_IP}:8075
     restart: always
     networks:
       ukama-net:
