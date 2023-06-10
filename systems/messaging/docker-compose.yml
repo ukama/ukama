@@ -117,7 +117,7 @@ services:
       - '5053:53'
       - '5053:53/udp'
     volumes:
-      - './DEBUG/Corefile:/etc/coredns/Corefile'
+      - './coredns/Corefile:/etc/coredns/Corefile'
 
   bastion:
     image: nicolaka/netshoot:latest
