@@ -22,6 +22,17 @@ class CoverageRequestSchema(BaseModel):
     class Config:
         orm_mode = True
 
+class PopulationDataResponse(BaseModel):
+    url: str
+    population_covered: float
+    total_boxes_covered: int
+    class Config:
+        orm_mode = True
+
+class InterferenceDataResponse(BaseModel):
+    url: str
+    class Config:
+        orm_mode = True
 
 class CoverageResponseSchema(BaseModel):
     north: float
@@ -29,14 +40,7 @@ class CoverageResponseSchema(BaseModel):
     west: float
     south: float
     url: str
-    population_data: dict
+    population_data: dict[str, PopulationDataResponse]
+    interference_data: dict[str, InterferenceDataResponse]
     class Config:
         orm_mode = True
-
-class PopulationData(Base):
-    __tablename__ = 'population_data'
-
-    id = Column(Integer, primary_key=True, index=True)
-    longitude = Column(Float)
-    latitude = Column(Float)
-    value = Column(Float)

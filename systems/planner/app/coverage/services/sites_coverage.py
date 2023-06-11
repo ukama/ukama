@@ -8,8 +8,9 @@ from typing import List
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-from app.coverage.schemas.coverage import Site, CoverageResponseSchema, PopulationData
+import json
+from app.coverage.schemas.coverage import Site, CoverageResponseSchema, PopulationDataResponse, InterferenceDataResponse
+from app.coverage.schemas.population_data_schema import PopulationData
 from app.coverage.enums.coverage import CoverageEnum
 from core import config
 
@@ -22,7 +23,7 @@ class SitesCoverage:
         self.OUTPUT_PATH = config.get_config().OUTPUT_PATH
         self.TEMP_FOLDER = config.get_config().TEMP_FOLDER
         mysql_user_pass = os.getenv("SQL_USER_PASS", config.get_config().SQL_USER_PASS)
-        mysql_user = os.getenv("SQL_USER", config.get_config().SQL_USER_PASS)
+        mysql_user = os.getenv("SQL_USER", config.get_config().SQL_USER)
         SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{mysql_user}:{mysql_user_pass}@localhost/planner_tool" # Change mySQL pass and db name which is planner tool
         engine = create_engine(SQLALCHEMY_DATABASE_URL)
         Session = sessionmaker(bind=engine)
@@ -53,7 +54,7 @@ class SitesCoverage:
                     output_func = CoverageEnum.RECEIVE_POWER.value
                 params.extend(["-m", "-R", "30", "-res", "1200", "-pm", "1"])
 
-                output_file_name = str(uuid.uuid4())
+                output_file_name = str("lat"+str(site['latitude']).replace(".", "_") + "lon" + str(site['longitude']).replace(".", "_"))
                 output_file_path = f"{output_folder_path}{output_file_name}"
 
                 params.extend(["-o", output_file_path])
@@ -108,10 +109,8 @@ class SitesCoverage:
         - output: The output from the `merge_geo_tiff_files` function, which will be CoverageResponseSchema.
         """
         responseArray = self.create_geo_tiff_files(sites_coverage_list)
-        output_file_name = str(uuid.uuid4()) + "_merged.tif"
-        merged_file_url = output_folder_path + output_file_name
         output = self.merge_geo_tiff_files(
-            responseArray, merged_file_url, output_file_path, outputFunc
+            responseArray, output_folder_path, output_file_path, outputFunc
         )
         return output
 
@@ -129,7 +128,7 @@ class SitesCoverage:
             output_file_name = self.get_image_name(
                 input_file_path
             )  # name without extension
-            output_file_url = self.OUTPUT_PATH + output_file_name + ".tif"
+            output_file_url = self.TEMP_FOLDER + output_file_name + ".tif"
             west, south, east, north = input.west, input.south, input.east, input.north
             translate_options = gdal.TranslateOptions(
                 format="GTiff",
@@ -145,7 +144,9 @@ class SitesCoverage:
             )
         return responseImages
 
-    def merge_geo_tiff_files(self, inputs, merged_tif_url, dcf_file_path, outputFunc):
+    def merge_geo_tiff_files(self, inputs, output_folder_path, dcf_file_path, outputFunc):
+        pred_output_file_name = str(uuid.uuid4()) + "_merged.tif"
+        pred_merged_file_url = output_folder_path + pred_output_file_name
         population_image_pixel_width, population_image_pixel_height = 0.0002777777777777777775, 0.0002777777777777777775 # this is default as given by the data downloaded for population
 
         dcf_file_url = dcf_file_path + ".dcf"
@@ -153,9 +154,11 @@ class SitesCoverage:
 
         # Create a dictionary to store the combined values
         combined = {}
+        interference_map = {}
+        output_data_interference = {}
+
         # Rounding of longitude and latitude to match with other images, otherwise no coordinate of any pixel were matching
         roundofCoord = 3
-
         y_min, y_max, x_min, x_max = float("inf"), float("-inf"), float("inf"), float("-inf")
         for input_file in inputs:
             # Open the image using GDAL
@@ -164,7 +167,7 @@ class SitesCoverage:
             # Get the spatial extent of the image in geographic coordinates
             west, pixel_width, _, north, _, pixel_height = ds.GetGeoTransform()
             height, width = ds.RasterYSize, ds.RasterXSize
-
+            
             # Calculate the longitude and latitude of each pixel
             data = np.empty((height, width, 4), dtype=np.uint8)
             for i in range(4):
@@ -173,7 +176,7 @@ class SitesCoverage:
             for row in range(height):
                 for col in range(width):
                     # Calculate the longitude and latitude of the center of the pixel
-                    longitude = west + col * pixel_width
+                    longitude = west + col * pixel_width    
                     latitude = north + row * pixel_height
                     y_min, y_max = min(y_min, latitude), max(y_max, latitude)
                     x_min, x_max = min(x_min, longitude), max(x_max, longitude)
@@ -188,11 +191,10 @@ class SitesCoverage:
                             else:
                                 if color_map[rgb] > color_map[tuple(combined[key][0][:3])]:
                                     combined[key] = [ tuple(list(rgb) + [data[row, col, 3]]), image_name]
-                                
+                                if outputFunc == CoverageEnum.RECEIVE_POWER.value and color_map[rgb] == color_map[tuple(combined[key][0][:3])] and image_name != combined[key][1]:
+                                    interference_map[key] = image_name + "_and_" + combined[key][1]
                         else:
                             combined[key] = [tuple(list(rgb) + [data[row, col, 3]]), image_name]
-                            
-
             ds = None
 
         nrows = int(abs((y_max - y_min) / pixel_height))
@@ -208,82 +210,134 @@ class SitesCoverage:
                 if key in combined:
                     output_data[row, col, :3] = combined[key][0][:3]
                     output_data[row, col, 3] = combined[key][0][3]
-        
-        driver = gdal.GetDriverByName("GTiff")
-        output_ds = driver.Create(merged_tif_url, ncols, nrows, 4, gdal.GDT_Byte)
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326)
-        output_ds.SetProjection(srs.ExportToWkt())
-        output_ds.SetGeoTransform((x_min, pixel_width, 0, y_max, 0, pixel_height))
+                    if key in interference_map:
+                        if interference_map[key] not in output_data_interference:
+                            output_data_interference[interference_map[key]] = np.full((nrows, ncols, 1), np.nan, dtype=np.float32)
+                        output_data_interference[interference_map[key]][row, col, 0] = 5
 
-        for i in range(4):
-            output_band = output_ds.GetRasterBand(i + 1)
-            output_band.WriteArray(output_data[:, :, i])
-        output_ds.FlushCache()
+        self.create_geo_tiff_file(pred_merged_file_url, 
+                            ncols, 
+                            nrows,
+                            4,
+                            gdal.GDT_Byte, 
+                            pixel_width, 
+                            pixel_height, 
+                            x_min, 
+                            y_max, 
+                            output_data)
+
+        # Creating interference geotiffs
+        interference_files_urls = {}
+        for interference_data_key in output_data_interference:
+            output_url = output_folder_path + interference_data_key + ".tif"
+            self.create_geo_tiff_file(output_url, 
+                                      ncols, 
+                                      nrows,
+                                      1,
+                                      gdal.GDT_Float32, 
+                                      pixel_width, 
+                                      pixel_height, 
+                                      x_min, 
+                                      y_max, 
+                                      output_data_interference[interference_data_key])
+            interference_files_urls[interference_data_key] = InterferenceDataResponse(url=output_url)
+
 
         # Creating population coverage geotiffs
-        pop_data = self.get_population_data(y_max, y_min, x_max, x_min)
+        pop_data = self.get_population_data(x_min, x_max, y_min, y_max)
+        
         pop_data_nrows = int(abs((y_max - y_min) / population_image_pixel_height))
         pop_data_ncols = int(abs((x_max - x_min) / population_image_pixel_width))
         population_output_data = {}
         population_output_value = {}
+        population_output_total_boxes = {}
         for input_file in inputs:
-            population_output_data[input_file["image_name"]] = np.zeros((pop_data_nrows, pop_data_ncols, 1), dtype=np.uint8)
-            population_output_value[input_file["image_name"]] = 0
+            image_name = input_file["image_name"]
+            population_output_data[image_name] = np.full((pop_data_nrows, pop_data_ncols, 1), np.nan, dtype=np.float32)
+            population_output_value[image_name] = 0
+            population_output_total_boxes[image_name] = 0
 
         # Creating separate geotiff files for population prediction
-        for row in range(pop_data_nrows):
-            for col in range(pop_data_ncols):
-                lon = round(x_min + col * population_image_pixel_width, 6)
-                lat = round(y_max + row * population_image_pixel_height, 6)
-                
-                key = (0, lon, lat), (1, lon, lat), (2, lon, lat), (3, lon, lat)
-                if key in combined:
-                    value = self.filter_coordinates(pop_data, lon, lat)
-                    if value:
-                        population_output_data[combined[key][1]][row, col, 0] = value
-                        population_output_value[combined[key][1]] += value
+        for point in pop_data:
+            longitude = point.longitude
+            latitude = point.latitude
+            population = point.value
+
+            # Convert longitude and latitude to pixel coordinates
+            x = int((longitude - x_min) / population_image_pixel_width)
+            y = int((latitude - y_min) / population_image_pixel_height)
+            roundedLon = round(longitude, roundofCoord)
+            roundedLat = round(latitude, roundofCoord)
+            key = (0, roundedLon, roundedLat), (1, roundedLon, roundedLat), (2, roundedLon, roundedLat), (3, roundedLon, roundedLat)
+            # Write the population value to the raster
+            if key in combined:
+                population_output_data[combined[key][1]][pop_data_nrows - y - 1, x, 0] = population
+                population_output_value[combined[key][1]] += population
+                population_output_total_boxes[combined[key][1]] += 1
 
         siteNumber = 1
         population_data_dic = {}
         for input_file in inputs:
-            driver = gdal.GetDriverByName("GTiff")
-            output_ds = driver.Create(input_file["image_url"], pop_data_ncols, pop_data_nrows, 1, gdal.GDT_Byte)
-            srs = osr.SpatialReference()
-            srs.ImportFromEPSG(4326)
-            output_ds.SetProjection(srs.ExportToWkt())
-            output_ds.SetGeoTransform((x_min, population_image_pixel_width, 0, y_max, 0, population_image_pixel_height))
-
-            output_band = output_ds.GetRasterBand(1)
-            output_band.WriteArray(population_output_data[input_file["image_name"]][:, :, 1])
-            output_ds.FlushCache()
-            print("site "+ siteNumber + " population data file url: ", input_file["image_url"])
-            population_data_dic[input_file["image_name"]] = { "url": input_file["image_url"], "population_covered": population_output_value[input_file["image_name"]]}
+            image_name = input_file["image_name"]
+            population_image_out_url = output_folder_path + image_name + ".tif"
+            self.create_geo_tiff_file(population_image_out_url, 
+                                      pop_data_ncols, 
+                                      pop_data_nrows,
+                                      1,
+                                      gdal.GDT_Float32, 
+                                      population_image_pixel_width, 
+                                      -population_image_pixel_height, 
+                                      x_min, 
+                                      y_max, 
+                                      population_output_data[image_name])
+            
+            print("site "+ str(siteNumber) + " population data file url: ", population_image_out_url)
+            siteNumber = siteNumber + 1 
+            population_data_dic[image_name] = PopulationDataResponse(url=population_image_out_url, population_covered=population_output_value[image_name], total_boxes_covered=population_output_total_boxes[image_name])
 
         print("East: ", x_max)
         print("West: ", x_min)
         print("South: ", y_min)
         print("North: ", y_max)
-        print("Merged file url: ", merged_tif_url)
-        print("population output: ", population_data_dic)
+        print("Merged file url: ", pred_merged_file_url)
+        print("population output: ", json.dumps(population_data_dic, indent = 4))
+        print("interference output: ", json.dumps(interference_files_urls, indent = 4))
 
         # Clean up
-        output_ds = None
         combined = None
+        population_output_data = None
+        population_output_value = None
+        population_output_total_boxes = None
+        pop_data = None
         ds = None
         return {
             "east": x_max,
             "west": x_min,
             "south": y_min,
             "north": y_max,
-            "url": merged_tif_url,
-            "population_data": population_data_dic
+            "url": pred_merged_file_url,
+            "population_data": population_data_dic,
+            "interference_data": interference_files_urls
         }
 
     # endregion
 
     # region Helper methods
+    def create_geo_tiff_file(self, output_url, cols, rows, bands, type, pixel_width, pixel_height, x_min, y_max, data):
+        driver = gdal.GetDriverByName("GTiff")
+        output_ds = driver.Create(output_url, cols, rows, bands, type)
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        output_ds.SetProjection(srs.ExportToWkt())
+        output_ds.SetGeoTransform((x_min, pixel_width, 0, y_max, 0, pixel_height))
 
+        for i in range(bands):
+            output_band = output_ds.GetRasterBand(i + 1)
+            output_band.WriteArray(data[:, :, i])
+        output_ds.FlushCache()
+        output_ds = None
+        output_band = None
+        
     def load_dcf_file(self, url):
         # Load DCF file
         with open(url, "r") as f:
@@ -328,13 +382,14 @@ class SitesCoverage:
         
         return None
 
-    def get_population_data(self, max_longitude, min_longitude, max_latitude, min_latitude):
+    def get_population_data(self, west, east, south, north):
         data = self.SESSION.query(PopulationData).filter(
-            PopulationData.longitude >= min_longitude,
-            PopulationData.longitude <= max_longitude,
-            PopulationData.latitude >= min_latitude,
-            PopulationData.latitude <= max_latitude
+            PopulationData.longitude >= west,
+            PopulationData.longitude <= east,
+            PopulationData.latitude >= south,
+            PopulationData.latitude <= north
         ).all()
         
         return data
+        
 # endregion
