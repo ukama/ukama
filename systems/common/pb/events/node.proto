@@ -5,6 +5,10 @@ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 message NodeOnlineEvent{
     string nodeId = 1;
+    string nodeIp = 2;
+    int32 nodePort = 3;
+    string meshIp = 4;
+    int32 meshPort = 5; 
 }
 
 message NodeOfflineEvent{
