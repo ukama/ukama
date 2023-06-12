@@ -1,5 +1,5 @@
-# Network service
-Network service is a service that stores node-id to IP mapping. 
+# Node Name Server service
+NNS service is a service that stores node-id to IP mapping. 
 It exposes several interfaces to query and update the mapping: 
 1. [GRPC interface](/pb/net.proto)
 2. [Prometheus HTTP](https://prometheus.io/docs/prometheus/2.31/configuration/configuration/#http_sd_config) targets config that can be used by 
@@ -10,7 +10,7 @@ that could be integrated with CoreDNS to resolve node-id on DNS level. Useful fo
 
 ## CoreDNS Integration
 
-Network service acts as a [CoreDNS grpc plugin](https://coredns.io/plugins/grpc/) that resolves A  DNS requests only.
+NNS service acts as a [CoreDNS grpc plugin](https://coredns.io/plugins/grpc/) that resolves A  DNS requests only.
 Refer to CoreDNS documentation for more details. 
 
 Here is an example of CoreDNS config map that resolves all subdomains of `.node.mesh` via network service:
@@ -58,7 +58,7 @@ metadata:
 3. Add DNS record to etcd:
 ` docker exec -it etcd etcdctl put uk-sa2203-hnode-a1-0a16 172.10.0.1`
 4. Login to bastion: `docker exec -it bastion bash`
-5. Check the resolution of node's hostname `dig -p 53 @coredns uk-sa2203-hnode-a1-0a16.node.mesh`
+5. Check the resolution of node's hostname `dig -p 53  @coredns uk-sa2203-hnode-a1-0a16.node.mesh`
 ```
 ...
 ;; ANSWER SECTION:
