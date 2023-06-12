@@ -10,15 +10,15 @@ import (
 )
 
 type Node struct {
-	Id      string        `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
-	Name    string        `gorm:"type:string"`
-	State   NodeState     `gorm:"type:uint;not null"`
-	Type    string        `gorm:"type:string;not null"`
-	Org     uuid.UUID     `gorm:"type:uuid;not null"`
-	Network uuid.NullUUID `gorm:"type:uuid;"`
+	Id    string    `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
+	Name  string    `gorm:"type:string"`
+	State NodeState `gorm:"type:uint;not null"`
+	Type  string    `gorm:"type:string;not null"`
+	Org   uuid.UUID `gorm:"type:uuid;not null"`
+	// Network uuid.NullUUID `gorm:"type:uuid;"`
 
 	// TODO: add unique key on attached nodes to make sure that node could be attached only once
-	Allocation bool `gorm:"type:bool;default:false"`
+	// Allocation bool `gorm:"type:bool;default:false"`
 
 	Attached  []*Node `gorm:"many2many:attached_nodes"`
 	CreatedAt time.Time
@@ -46,7 +46,7 @@ func (e *NodeState) Scan(value interface{}) error {
 }
 
 func (e NodeState) Value() (driver.Value, error) {
-	return uint8(e), nil
+	return int64(e), nil
 }
 
 func (e NodeState) String() string {
