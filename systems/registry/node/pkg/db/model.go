@@ -3,21 +3,27 @@ package db
 import (
 	"database/sql/driver"
 	"strings"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
 
 type Node struct {
-	gorm.Model
-	NodeID  string        `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23"`
+	Id      string        `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
 	Name    string        `gorm:"type:string"`
 	State   NodeState     `gorm:"type:uint;not null"`
 	Type    string        `gorm:"type:string;not null"`
+	Org     uuid.UUID     `gorm:"type:uuid;not null"`
 	Network uuid.NullUUID `gorm:"type:uuid;"`
+
 	// TODO: add unique key on attached nodes to make sure that node could be attached only once
-	Allocation bool    `gorm:"type:bool;default:false"`
-	Attached   []*Node `gorm:"many2many:attached_nodes"`
+	Allocation bool `gorm:"type:bool;default:false"`
+
+	Attached  []*Node `gorm:"many2many:attached_nodes"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type NodeState uint8
@@ -77,4 +83,11 @@ func ParseNodeState(s string) NodeState {
 	default:
 		return Undefined
 	}
+}
+
+type Site struct {
+	NodeId    string    `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23;not null"`
+	SiteId    uuid.UUID `gorm:"type:uuid"`
+	NetworkId uuid.UUID `gorm:"type:uuid;"`
+	CreatedAt time.Time
 }

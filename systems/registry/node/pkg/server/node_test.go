@@ -18,7 +18,7 @@ var testNode = ukama.NewVirtualNodeId("HomeNode")
 func TestRegistryServer_GetNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 
-	nodeRepo.On("Get", testNode).Return(&db.Node{NodeID: testNode.String(),
+	nodeRepo.On("Get", testNode).Return(&db.Node{Id: testNode.String(),
 		State: db.Onboarded, Type: ukama.NODE_ID_TYPE_HOMENODE,
 	}, nil).Once()
 
@@ -58,7 +58,7 @@ func TestRegistryServer_AddNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 
 	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
-		return n.State == db.Onboarded && n.NodeID == nodeId
+		return n.State == db.Onboarded && n.Id == nodeId
 	})).Return(nil).Once()
 	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
 

@@ -80,7 +80,7 @@ func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineE
 
 	if node == nil {
 		/* Add new node */
-		node.NodeID = nodeID.StringLowercase()
+		node.Id = nodeID.StringLowercase()
 		node.Allocation = false
 		node.Type = nodeID.GetNodeType()
 

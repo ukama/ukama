@@ -251,10 +251,10 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	}
 
 	node := &db.Node{
-		NodeID: req.Node.Node,
-		State:  db.ParseNodeState(req.Node.State),
-		Type:   nID.GetNodeType(),
-		Name:   req.Node.Name,
+		Id:    req.Node.Node,
+		State: db.ParseNodeState(req.Node.State),
+		Type:  nID.GetNodeType(),
+		Name:  req.Node.Name,
 	}
 
 	if node.State == db.Undefined {
@@ -281,7 +281,7 @@ func AddNodeToOrg(repo db.NodeRepo, node *db.Node) error {
 	err := repo.Add(node)
 
 	if err != nil {
-		duplErr := processNodeDuplErrors(err, node.NodeID)
+		duplErr := processNodeDuplErrors(err, node.Id)
 		if duplErr != nil {
 			return duplErr
 		}
@@ -366,7 +366,7 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	}
 
 	n := &pb.Node{
-		Node:      dbn.NodeID,
+		Node:      dbn.Id,
 		State:     dbn.State.String(),
 		Type:      dbn.Type,
 		Name:      dbn.Name,

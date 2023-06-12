@@ -41,7 +41,7 @@ func NewNodeRepo(db sql.Db) NodeRepo {
 }
 
 func (r *nodeRepo) Add(node *Node, nestedFunc ...func() error) error {
-	node.NodeID = strings.ToLower(node.NodeID)
+	node.Id = strings.ToLower(node.Id)
 
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
 		return tx.Create(node)
@@ -151,7 +151,7 @@ func (r *nodeRepo) AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) er
 		},
 	}
 
-	result := r.Db.GetGormDb().Where("node_id=?", node.NodeID).Updates(nd)
+	result := r.Db.GetGormDb().Where("node_id=?", node.Id).Updates(nd)
 	if result.Error != nil {
 		return fmt.Errorf("failed to update network id for %s for node: error %s", nodeId, result.Error)
 	}
@@ -171,7 +171,7 @@ func (r *nodeRepo) RemoveNodeFromNetwork(nodeId ukama.NodeID) error {
 	}
 
 	res := r.Db.GetGormDb().Exec("select * from attached_nodes where attached_id=(select id from nodes where node_id=?) OR node_id=(select id from nodes where node_id=?)",
-		node.NodeID, node.NodeID)
+		node.Id, node.Id)
 
 	if res.Error != nil {
 		return status.Errorf(codes.Internal, "failed to get node grouping result. error %s", res.Error.Error())
@@ -186,7 +186,7 @@ func (r *nodeRepo) RemoveNodeFromNetwork(nodeId ukama.NodeID) error {
 		Allocation: false,
 	}
 
-	result := r.Db.GetGormDb().Where("node_id=?", node.NodeID).Select("network", "allocation").Updates(nd)
+	result := r.Db.GetGormDb().Where("node_id=?", node.Id).Select("network", "allocation").Updates(nd)
 	if result.Error != nil {
 		return fmt.Errorf("failed to remove  node from network id for %s. error %s", nodeId, result.Error)
 	}
