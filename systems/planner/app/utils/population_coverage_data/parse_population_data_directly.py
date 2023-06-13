@@ -77,7 +77,7 @@ def store_parse_population_data(unparsed_data_files):
             session.close()
             update_file_to_read(image_path)
         except Exception as ex:
-            print(ex)  
+            continue  
         
 
     return {'message': 'Box data stored in the database'}

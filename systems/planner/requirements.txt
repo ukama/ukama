@@ -10,3 +10,6 @@ networkx
 pytest-asyncio
 callee
 requests
+pymysql
+mysql-connector-python
+Flask-SQLAlchemy

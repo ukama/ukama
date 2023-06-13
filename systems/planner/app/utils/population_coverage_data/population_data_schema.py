@@ -11,17 +11,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+
 class PopulationData(Base):
-    __tablename__ = 'population_data'
-
-    id = Column(Integer, primary_key=True, index=True)
-    max_lon = Column(Float)
-    min_lon = Column(Float)
-    max_lat = Column(Float)
-    min_lat = Column(Float)
-    population = Column(Float)
-
-class PopulationDataSimple(Base):
     __tablename__ = 'population_data_simple'
 
     id = Column(Integer, primary_key=True, index=True)
