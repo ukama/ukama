@@ -22,7 +22,7 @@ type NodeRepo interface {
 	GetAll() ([]Node, error)
 	Delete(ukama.NodeID, func(ukama.NodeID, *gorm.DB) error) error
 	Update(*Node, func(*Node, *gorm.DB) error) error
-	AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error
+	AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error
 	DetachNode(detachNodeId ukama.NodeID) error
 	GetNodeCount() (int64, int64, int64, error)
 }
@@ -140,7 +140,31 @@ func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) er
 }
 
 // TODO: update
-func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error {
+func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error {
+	batchGet := func(nodeIDs []string) ([]Site, error) {
+		var nodes []Site
+
+		result := n.Db.GetGormDb().Where("id IN ?", nodeIDs).Find(&nodes)
+
+		if result.Error != nil {
+			return nil, result.Error
+		}
+
+		return nodes, nil
+	}
+
+	attachedNodeSites, err := batchGet(attachedNodeId)
+	if err != nil {
+		return err
+	}
+
+	res, err := batchGet([]string{nodeId.StringLowercase()})
+	if err != nil {
+		return err
+	}
+
+	parentNodeSite := res[0]
+
 	parentNode, err := n.Get(nodeId)
 	if err != nil {
 		return err
@@ -159,20 +183,23 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 	}
 
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		for _, nd := range attachedNodeId {
-			an, err := n.Get(nd)
-
+		for _, aNds := range attachedNodeSites {
+			aNd, err := ukama.ValidateNodeId(aNds.NodeId)
 			if err != nil {
 				return err
 			}
 
+			an, err := n.Get(aNd)
+			if err != nil {
+				return err
+			}
 			if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
 				return status.Errorf(codes.InvalidArgument, "cannot attach non amplifier node")
 			}
 
-			// if !parentNode.Network.Valid || parentNode.Network != an.Network {
-			// return status.Errorf(codes.InvalidArgument, "cannot attach nodes from different network")
-			// }
+			if parentNodeSite.SiteId != aNds.SiteId {
+				return status.Errorf(codes.InvalidArgument, "cannot attach nodes from different sites")
+			}
 
 			parentNode.Attached = append(parentNode.Attached, an)
 		}

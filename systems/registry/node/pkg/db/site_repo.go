@@ -11,9 +11,8 @@ import (
 
 type SiteRepo interface {
 	GetNodes(uuid.UUID) ([]Node, error)
-	AddNodes([]*Site, func([]*Site, *gorm.DB) error) error
+	AddNode(*Site, func(*Site, *gorm.DB) error) error
 	RemoveNodes([]string) error
-	// AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) error
 	// RemoveNodeFromNetwork(nodeId ukama.NodeID) error
 	GetFreeNodes() ([]Node, error)
 	GetFreeNodesForOrg(uuid.UUID) ([]Node, error)
@@ -47,15 +46,15 @@ func (s *siteRepo) GetNodes(siteID uuid.UUID) ([]Node, error) {
 	return nodes, nil
 }
 
-func (s *siteRepo) AddNodes(attachedNodes []*Site, nestedFunc func(attachedNodes []*Site, tx *gorm.DB) error) error {
+func (s *siteRepo) AddNode(node *Site, nestedFunc func(node *Site, tx *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Create(attachedNodes)
+		result := tx.Create(node)
 		if result.Error != nil {
 			return result.Error
 		}
 
 		if nestedFunc != nil {
-			nestErr := nestedFunc(attachedNodes, tx)
+			nestErr := nestedFunc(node, tx)
 			if nestErr != nil {
 				return nestErr
 			}
@@ -90,32 +89,38 @@ func (s *siteRepo) RemoveNodes(detachedNodes []string) error {
 	return err
 }
 
-// func (r *nodeRepo) AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) error {
-// node, err := r.Get(nodeId)
-// if err != nil {
-// return err
-// }
+func (s *siteRepo) GetFreeNodes() ([]Node, error) {
+	var nodes []Node
 
-// if node.Allocation {
-// return status.Errorf(codes.InvalidArgument, "node is already assigned to network")
-// }
+	result := s.Db.GetGormDb().Raw("SELECT * from nodes WHERE id NOT IN ? AND deleted_at IS NULL",
+		s.Db.GetGormDb().Raw("SELECT node_id from sites WHERE deleted_at IS NULL")).Scan(&nodes)
 
-// nd := Node{
-// Allocation: true,
-// Network: uuid.NullUUID{
-// UUID:  networkID,
-// Valid: true,
-// },
-// }
+	if result.Error != nil {
+		return nil, result.Error
+	}
 
-// result := r.Db.GetGormDb().Where("node_id=?", node.Id).Updates(nd)
-// if result.Error != nil {
-// return fmt.Errorf("failed to update network id for %s for node: error %s", nodeId, result.Error)
-// }
+	return nodes, nil
+}
 
-// return nil
+func (s *siteRepo) GetFreeNodesForOrg(orgId uuid.UUID) ([]Node, error) {
+	var nodes []Node
 
-// }
+	result := s.Db.GetGormDb().Raw("SELECT * from nodes WHERE id NOT IN ? AND org_Id= ? AND  deleted_at IS NULL",
+		s.Db.GetGormDb().Raw("SELECT node_id from sites WHERE deleted_at IS NULL"), orgId).Scan(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return nodes, nil
+}
+
+func (s *siteRepo) IsAllocated(nodeId ukama.NodeID) bool {
+	var nd Site
+
+	result := s.Db.GetGormDb().Where(&Site{NodeId: nodeId.StringLowercase()}).First(&nd)
+	return result.Error == nil
+}
 
 // func (r *nodeRepo) RemoveNodeFromNetwork(nodeId ukama.NodeID) error {
 // node, err := r.Get(nodeId)
@@ -150,36 +155,3 @@ func (s *siteRepo) RemoveNodes(detachedNodes []string) error {
 
 // return nil
 // }
-
-func (s *siteRepo) GetFreeNodes() ([]Node, error) {
-	var nodes []Node
-
-	result := s.Db.GetGormDb().Raw("SELECT * from nodes WHERE id NOT IN ? AND deleted_at IS NULL",
-		s.Db.GetGormDb().Raw("SELECT node_id from sites WHERE deleted_at IS NULL")).Scan(&nodes)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return nodes, nil
-}
-
-func (s *siteRepo) GetFreeNodesForOrg(orgId uuid.UUID) ([]Node, error) {
-	var nodes []Node
-
-	result := s.Db.GetGormDb().Raw("SELECT * from nodes WHERE id NOT IN ? AND org_Id= ? AND  deleted_at IS NULL",
-		s.Db.GetGormDb().Raw("SELECT node_id from sites WHERE deleted_at IS NULL"), orgId).Scan(&nodes)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return nodes, nil
-}
-
-func (s *siteRepo) IsAllocated(nodeId ukama.NodeID) bool {
-	var nd Site
-
-	result := s.Db.GetGormDb().Where(&Site{NodeId: nodeId.StringLowercase()}).First(&nd)
-	return result.Error == nil
-}

@@ -47,12 +47,13 @@ func TestNodeServer_Add(t *testing.T) {
 
 	nodeRepo := &mocks.NodeRepo{}
 	orgService := &mocks.OrgClientProvider{}
+	networkService := &mocks.NetworkClientProvider{}
 
 	const nodeName = "node-A"
 	const nodeType = "hnode"
 	var orgId = uuid.NewV4()
 
-	s := server.NewNodeServer(nodeRepo, nil, "", orgService)
+	s := server.NewNodeServer(nodeRepo, nil, "", orgService, networkService)
 
 	node := &db.Node{
 		Id:    nodeId,
@@ -66,7 +67,7 @@ func TestNodeServer_Add(t *testing.T) {
 
 	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
 
-	t.Run("NodeTypeValid", func(t *testing.T) {
+	t.Run("NodeStateValid", func(t *testing.T) {
 		// Arrange
 		orgClient := orgService.On("GetClient").
 			Return(&omocks.OrgServiceClient{}, nil).
@@ -100,7 +101,7 @@ func TestNodeServer_Add(t *testing.T) {
 
 	t.Run("NodeStateInvalid", func(t *testing.T) {
 		// Arrange
-		const nodeState = "unknown"
+		const nState = "unknown"
 
 		orgClient := orgService.On("GetClient").
 			Return(&omocks.OrgServiceClient{}, nil).
@@ -117,9 +118,10 @@ func TestNodeServer_Add(t *testing.T) {
 
 		// Act
 		res, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
-			Name:  nodeName,
-			OrgId: orgId.String(),
-			State: nodeState,
+			NodeId: nodeId,
+			Name:   nodeName,
+			OrgId:  orgId.String(),
+			State:  nState,
 		})
 
 		// Assert
@@ -146,6 +148,7 @@ func TestNodeServer_Add(t *testing.T) {
 
 		// Act
 		res, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
+			// NodeId: nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
 			State: nodeState,
@@ -170,6 +173,7 @@ func TestNodeServer_Add(t *testing.T) {
 
 		// Act
 		res, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
+			// NodeId: nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
 			State: nodeState,
@@ -189,6 +193,7 @@ func TestNodeServer_Add(t *testing.T) {
 
 		// Act
 		res, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
+			// NodeId: nodeId,
 			Name:  nodeName,
 			OrgId: orgId.String(),
 			State: nodeState,
@@ -216,7 +221,7 @@ func TestNodeServer_Get(t *testing.T) {
 				State: db.Online,
 			}, nil).Once()
 
-		s := server.NewNodeServer(nodeRepo, nil, "", nil)
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -235,7 +240,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewNodeServer(nodeRepo, nil, "", nil)
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -250,7 +255,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo := &mocks.NodeRepo{}
 
-		s := server.NewNodeServer(nodeRepo, nil, "", nil)
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.String()})
@@ -263,7 +268,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 func TestNodeServer_Delete(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
-	s := server.NewNodeServer(nodeRepo, nil, "", nil)
+	s := server.NewNodeServer(nodeRepo, nil, "", nil, nil)
 
 	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
 

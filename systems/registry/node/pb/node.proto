@@ -117,8 +117,9 @@ message DetachNodeResponse {
 }
 
 message AddNodeToNetworkRequest {
-    string node = 1;
-    string network = 2;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string networkId = 2;
+    string siteId = 3;
 }
 
 message AddNodeToNetworkResponse {

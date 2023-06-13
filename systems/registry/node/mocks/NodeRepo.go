@@ -33,11 +33,11 @@ func (_m *NodeRepo) Add(_a0 *db.Node, _a1 func(*db.Node, *gorm.DB) error) error 
 }
 
 // AttachNodes provides a mock function with given fields: nodeId, attachedNodeId
-func (_m *NodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error {
+func (_m *NodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error {
 	ret := _m.Called(nodeId, attachedNodeId)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, []ukama.NodeID) error); ok {
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, []string) error); ok {
 		r0 = rf(nodeId, attachedNodeId)
 	} else {
 		r0 = ret.Error(0)

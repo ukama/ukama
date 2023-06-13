@@ -18,6 +18,7 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	OrgHost          string `default:"org:9090"`
+	NetworkHost      string `default:"network:9090"`
 }
 
 const (
