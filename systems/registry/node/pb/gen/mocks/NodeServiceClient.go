@@ -347,7 +347,7 @@ func (_m *NodeServiceClient) UpdateNode(ctx context.Context, in *gen.UpdateNodeR
 }
 
 // UpdateNodeState provides a mock function with given fields: ctx, in, opts
-func (_m *NodeServiceClient) UpdateNodeState(ctx context.Context, in *gen.UpdateNodeStateRequest, opts ...grpc.CallOption) (*gen.UpdateNodeStateResponse, error) {
+func (_m *NodeServiceClient) UpdateNodeState(ctx context.Context, in *gen.UpdateNodeStateRequest, opts ...grpc.CallOption) (*gen.UpdateNodeResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -357,16 +357,16 @@ func (_m *NodeServiceClient) UpdateNodeState(ctx context.Context, in *gen.Update
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.UpdateNodeStateResponse
+	var r0 *gen.UpdateNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest, ...grpc.CallOption) (*gen.UpdateNodeStateResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest, ...grpc.CallOption) (*gen.UpdateNodeResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest, ...grpc.CallOption) *gen.UpdateNodeStateResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest, ...grpc.CallOption) *gen.UpdateNodeResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateNodeStateResponse)
+			r0 = ret.Get(0).(*gen.UpdateNodeResponse)
 		}
 	}
 

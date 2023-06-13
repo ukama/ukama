@@ -14,7 +14,7 @@ package ukama.registry.node.v1;
 service NodeService {
     rpc AttachNodes(AttachNodesRequest) returns (AttachNodesResponse);
     rpc DetachNode(DetachNodeRequest) returns (DetachNodeResponse);
-    rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeStateResponse);
+    rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
     rpc GetAllNodes(GetAllNodesRequest) returns (GetAllNodesResponse);
@@ -27,9 +27,10 @@ service NodeService {
 
 
 message AddNodeRequest{
-    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
-	string name = 2;
-	string type = 3;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+	string name = 3;
+	string state = 4;
 }
 
 message AddNodeResponse{
@@ -38,7 +39,7 @@ message AddNodeResponse{
 
 
 message GetNodeRequest{
-    string node = 1;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 }
 
 message GetNodeResponse{
@@ -84,12 +85,7 @@ message UpdateNodeResponse {
 
 
 message  UpdateNodeStateRequest{
-    string node = 1;
-    string state = 2;
-}
-
-message UpdateNodeStateResponse{
-    string node = 1;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
     string state = 2;
 }
 

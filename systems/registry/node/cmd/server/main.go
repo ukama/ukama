@@ -5,6 +5,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 
 	"github.com/num30/config"
@@ -85,7 +86,8 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNodeServer(db.NewNodeRepo(gormdb), serviceConfig.PushGateway)
+		srv := server.NewNodeServer(db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb),
+			serviceConfig.PushGateway, providers.NewOrgClientProvider(serviceConfig.OrgHost))
 
 		nSrv := server.NewNodeEventServer(db.NewNodeRepo(gormdb))
 		generated.RegisterNodeServiceServer(s, srv)

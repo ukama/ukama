@@ -14,7 +14,7 @@ type Node struct {
 	Name  string    `gorm:"type:string"`
 	State NodeState `gorm:"type:uint;not null"`
 	Type  string    `gorm:"type:string;not null"`
-	Org   uuid.UUID `gorm:"type:uuid;not null"`
+	OrgId uuid.UUID `gorm:"type:uuid;not null"`
 	// Network uuid.NullUUID `gorm:"type:uuid;"`
 
 	// TODO: add unique key on attached nodes to make sure that node could be attached only once

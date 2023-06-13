@@ -38,7 +38,7 @@ const (
 type NodeServiceClient interface {
 	AttachNodes(ctx context.Context, in *AttachNodesRequest, opts ...grpc.CallOption) (*AttachNodesResponse, error)
 	DetachNode(ctx context.Context, in *DetachNodeRequest, opts ...grpc.CallOption) (*DetachNodeResponse, error)
-	UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeStateResponse, error)
+	UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
 	UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
 	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
 	GetAllNodes(ctx context.Context, in *GetAllNodesRequest, opts ...grpc.CallOption) (*GetAllNodesResponse, error)
@@ -75,8 +75,8 @@ func (c *nodeServiceClient) DetachNode(ctx context.Context, in *DetachNodeReques
 	return out, nil
 }
 
-func (c *nodeServiceClient) UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeStateResponse, error) {
-	out := new(UpdateNodeStateResponse)
+func (c *nodeServiceClient) UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error) {
+	out := new(UpdateNodeResponse)
 	err := c.cc.Invoke(ctx, NodeService_UpdateNodeState_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func (c *nodeServiceClient) ReleaseNodeFromNetwork(ctx context.Context, in *Rele
 type NodeServiceServer interface {
 	AttachNodes(context.Context, *AttachNodesRequest) (*AttachNodesResponse, error)
 	DetachNode(context.Context, *DetachNodeRequest) (*DetachNodeResponse, error)
-	UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeStateResponse, error)
+	UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeResponse, error)
 	UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error)
 	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
 	GetAllNodes(context.Context, *GetAllNodesRequest) (*GetAllNodesResponse, error)
@@ -184,7 +184,7 @@ func (UnimplementedNodeServiceServer) AttachNodes(context.Context, *AttachNodesR
 func (UnimplementedNodeServiceServer) DetachNode(context.Context, *DetachNodeRequest) (*DetachNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DetachNode not implemented")
 }
-func (UnimplementedNodeServiceServer) UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeStateResponse, error) {
+func (UnimplementedNodeServiceServer) UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNodeState not implemented")
 }
 func (UnimplementedNodeServiceServer) UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error) {

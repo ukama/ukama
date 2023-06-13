@@ -17,6 +17,7 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
+	OrgHost          string `default:"org:9090"`
 }
 
 const (

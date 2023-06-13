@@ -18,8 +18,8 @@ const MaxAttachedNodes = 2
 type NodeRepo interface {
 	Add(*Node, func(*Node, *gorm.DB) error) error
 	Get(ukama.NodeID) (*Node, error)
-	GetForOrg(uuid.UUID) (*[]Node, error)
-	GetAll() (*[]Node, error)
+	GetForOrg(uuid.UUID) ([]Node, error)
+	GetAll() ([]Node, error)
 	Delete(ukama.NodeID, func(ukama.NodeID, *gorm.DB) error) error
 	Update(*Node, func(*Node, *gorm.DB) error) error
 	AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error
@@ -69,7 +69,7 @@ func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	return &node, nil
 }
 
-func (n *nodeRepo) GetForOrg(orgId uuid.UUID) (*[]Node, error) {
+func (n *nodeRepo) GetForOrg(orgId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
 	result := n.Db.GetGormDb().Preload(clause.Associations).Where("org_id = ?", orgId.String()).Find(&nodes)
@@ -78,10 +78,10 @@ func (n *nodeRepo) GetForOrg(orgId uuid.UUID) (*[]Node, error) {
 		return nil, result.Error
 	}
 
-	return &nodes, nil
+	return nodes, nil
 }
 
-func (n *nodeRepo) GetAll() (*[]Node, error) {
+func (n *nodeRepo) GetAll() ([]Node, error) {
 	var nodes []Node
 
 	result := n.Db.GetGormDb().Preload(clause.Associations).Find(&nodes)
@@ -90,7 +90,7 @@ func (n *nodeRepo) GetAll() (*[]Node, error) {
 		return nil, result.Error
 	}
 
-	return &nodes, nil
+	return nodes, nil
 }
 
 func (n *nodeRepo) Delete(nodeID ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {

@@ -275,19 +275,19 @@ func (_m *NodeServiceServer) UpdateNode(_a0 context.Context, _a1 *gen.UpdateNode
 }
 
 // UpdateNodeState provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) UpdateNodeState(_a0 context.Context, _a1 *gen.UpdateNodeStateRequest) (*gen.UpdateNodeStateResponse, error) {
+func (_m *NodeServiceServer) UpdateNodeState(_a0 context.Context, _a1 *gen.UpdateNodeStateRequest) (*gen.UpdateNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.UpdateNodeStateResponse
+	var r0 *gen.UpdateNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest) (*gen.UpdateNodeStateResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest) (*gen.UpdateNodeResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest) *gen.UpdateNodeStateResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest) *gen.UpdateNodeResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateNodeStateResponse)
+			r0 = ret.Get(0).(*gen.UpdateNodeResponse)
 		}
 	}
 

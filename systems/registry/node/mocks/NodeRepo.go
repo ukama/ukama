@@ -101,19 +101,19 @@ func (_m *NodeRepo) Get(_a0 ukama.NodeID) (*db.Node, error) {
 }
 
 // GetAll provides a mock function with given fields:
-func (_m *NodeRepo) GetAll() (*[]db.Node, error) {
+func (_m *NodeRepo) GetAll() ([]db.Node, error) {
 	ret := _m.Called()
 
-	var r0 *[]db.Node
+	var r0 []db.Node
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*[]db.Node, error)); ok {
+	if rf, ok := ret.Get(0).(func() ([]db.Node, error)); ok {
 		return rf()
 	}
-	if rf, ok := ret.Get(0).(func() *[]db.Node); ok {
+	if rf, ok := ret.Get(0).(func() []db.Node); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*[]db.Node)
+			r0 = ret.Get(0).([]db.Node)
 		}
 	}
 
@@ -127,19 +127,19 @@ func (_m *NodeRepo) GetAll() (*[]db.Node, error) {
 }
 
 // GetForOrg provides a mock function with given fields: _a0
-func (_m *NodeRepo) GetForOrg(_a0 uuid.UUID) (*[]db.Node, error) {
+func (_m *NodeRepo) GetForOrg(_a0 uuid.UUID) ([]db.Node, error) {
 	ret := _m.Called(_a0)
 
-	var r0 *[]db.Node
+	var r0 []db.Node
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) (*[]db.Node, error)); ok {
+	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Node, error)); ok {
 		return rf(_a0)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) *[]db.Node); ok {
+	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Node); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*[]db.Node)
+			r0 = ret.Get(0).([]db.Node)
 		}
 	}
 

@@ -181,9 +181,5 @@ func (s *siteRepo) IsAllocated(nodeId ukama.NodeID) bool {
 	var nd Site
 
 	result := s.Db.GetGormDb().Where(&Site{NodeId: nodeId.StringLowercase()}).First(&nd)
-	if result.Error != nil {
-		return false
-	}
-
-	return true
+	return result.Error == nil
 }

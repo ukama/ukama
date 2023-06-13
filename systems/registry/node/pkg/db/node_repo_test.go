@@ -55,9 +55,9 @@ func TestNodeRepo_Add(t *testing.T) {
 	var db *extsql.DB
 
 	node := nodedb.Node{
-		Id:   nodeID.String(),
-		Name: "node-1",
-		Org:  uuid.NewV4(),
+		Id:    nodeID.String(),
+		Name:  "node-1",
+		OrgId: uuid.NewV4(),
 	}
 
 	db, mock, err := sqlmock.New() // mock sql.DB
@@ -82,7 +82,7 @@ func TestNodeRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(node.Name, sqlmock.AnyArg(), sqlmock.AnyArg(), node.Org,
+			WithArgs(node.Name, sqlmock.AnyArg(), sqlmock.AnyArg(), node.OrgId,
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), node.Id).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
