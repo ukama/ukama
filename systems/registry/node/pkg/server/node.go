@@ -359,6 +359,20 @@ func (n *NodeServer) AddNodeToNetwork(ctx context.Context, req *pb.AddNodeToNetw
 	return &pb.AddNodeToNetworkResponse{}, nil
 }
 
+func (n *NodeServer) RemoveNodeFromNetwork(ctx context.Context, req *pb.ReleaseNodeFromNetworkRequest) (*pb.ReleaseNodeFromNetworkResponse, error) {
+	nodeID, err := ukama.ValidateNodeId(req.GetNode())
+	if err != nil {
+		return nil, invalidNodeIDError(req.GetNode(), err)
+	}
+
+	err = n.siteRepo.RemoveNode(nodeID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	return &pb.ReleaseNodeFromNetworkResponse{}, nil
+}
+
 func invalidNodeIDError(nodeID string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeID, err.Error())
 }
@@ -433,20 +447,6 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 
 	return n
 }
-
-// func (n *NodeServer) RemoveNodeFromNetwork(ctx context.Context, req *pb.ReleaseNodeFromNetworkRequest) (*pb.ReleaseNodeFromNetworkResponse, error) {
-// nodeID, err := ukama.ValidateNodeId(req.GetNode())
-// if err != nil {
-// return nil, invalidNodeIDError(req.GetNode(), err)
-// }
-
-// err = n.nodeRepo.RemoveNodeFromNetwork(nodeID)
-// if err != nil {
-// return nil, grpc.SqlErrorToGrpc(err, "node")
-// }
-
-// return &pb.ReleaseNodeFromNetworkResponse{}, nil
-// }
 
 // func AddNodeToOrg(repo db.NodeRepo, node *db.Node) error {
 

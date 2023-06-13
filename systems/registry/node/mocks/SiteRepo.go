@@ -124,12 +124,12 @@ func (_m *SiteRepo) IsAllocated(_a0 ukama.NodeID) bool {
 	return r0
 }
 
-// RemoveNodes provides a mock function with given fields: _a0
-func (_m *SiteRepo) RemoveNodes(_a0 []string) error {
+// RemoveNode provides a mock function with given fields: _a0
+func (_m *SiteRepo) RemoveNode(_a0 ukama.NodeID) error {
 	ret := _m.Called(_a0)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func([]string) error); ok {
+	if rf, ok := ret.Get(0).(func(ukama.NodeID) error); ok {
 		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)
