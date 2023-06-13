@@ -1,5 +1,14 @@
 import { hexToRGB } from '@/utils';
-import { Box, Link, Paper, Skeleton, styled } from '@mui/material';
+import {
+  Box,
+  Link,
+  Paper,
+  Skeleton,
+  Tooltip,
+  TooltipProps,
+  styled,
+  tooltipClasses,
+} from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { colors } from './theme';
 
@@ -129,8 +138,21 @@ const PageContainer = styled(Paper)((props) => ({
     padding: '12px 18px',
   },
 }));
+
+const DarkTooltip = styled(({ className, ...props }: TooltipProps) => (
+  <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+  [`& .${tooltipClasses.tooltip}`]: {
+    backgroundColor: colors.secondaryDark,
+    color: 'rgba(255, 255, 255, 0.87)',
+    boxShadow: theme.shadows[1],
+    fontSize: '16px',
+    fontWeight: 600,
+  },
+}));
 export {
   LinkStyle,
+  DarkTooltip,
   RoundedCard,
   ContainerMax,
   PageContainer,

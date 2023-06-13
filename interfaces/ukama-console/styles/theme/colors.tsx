@@ -28,6 +28,8 @@ const colors = {
   white70: '#F7F7F7',
   white60: '#E6E9F0',
   white38: '#EFEFEF',
+  whiteLilac: '#EBEBEC',
+
   lightPurpleGradient: 'rgba(160, 164, 255, 0.25)',
   darkPurple: '#6974F8',
   darkGrayGradient: 'rgba(57,75,89,.5)',
