@@ -70,19 +70,18 @@ func (l *NnsEventServer) handleEventNodeOnline(key string, msg *epb.NodeOnlineEv
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	log.Infof("Getting org and network for %s", msg.GetNodeId())
-	//Need to Fix this
-	//nodeInfo, err := l.Registry.GetNode(msg.GetNodeId())
-	_, err := l.Registry.GetNode(msg.GetNodeId())
+	
+	nodeInfo := &client.NodeInfo{}
+	var err error
+	nodeInfo, err = l.Registry.GetNode(msg.GetNodeId())
 	if err != nil {
 		log.Errorf("Failed to get org and network. Error: %+v", err)
 		log.Warningf("Node id %s won't have org and network info", msg.GetNodeId())
-	}
-
-	//This is temporary until above is fixed.
-	nodeInfo := &client.NodeInfo{
-		Id:      msg.GetNodeId(),
-		Network: "network",
-		Org:     "ukama",
+		nodeInfo = &client.NodeInfo{
+			Id:      msg.GetNodeId(),
+			Network: "",
+			Org:     "",
+		}
 	}
 
 	_, err = l.Nns.Set(context.Background(), &pb.SetNodeIPRequest{

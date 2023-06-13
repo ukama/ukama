@@ -47,6 +47,7 @@ func (c *nodeRegistryClient) GetNode(id string) (*NodeInfo, error) {
 
 	rnode := &nodepb.GetNodeResponse{}
 
+	//TODO: Update request api
 	resp, err := c.R.C.R().
 		SetError(errStatus).
 		Get(c.R.URL.String() + NodeRegistry + id)
@@ -67,12 +68,11 @@ func (c *nodeRegistryClient) GetNode(id string) (*NodeInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize data package info. Error message is %s", err.Error())
 
-		return nil, fmt.Errorf("data package info deserailization failure: %w", err)
+		return nil, fmt.Errorf("data package info deserailization failure: %+v", err)
 	} else {
 		nodeInfo.Id = rnode.Node.Node
 		nodeInfo.Network = rnode.Node.Network
-		//TODO: Update org based on response
-		nodeInfo.Org = "ukama"
+		nodeInfo.Org = ""
 	}
 
 	log.Infof("Node Info: %+v", nodeInfo)
