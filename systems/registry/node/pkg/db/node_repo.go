@@ -93,6 +93,7 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 	return nodes, nil
 }
 
+// TODO: check for still allocated nodes
 func (n *nodeRepo) Delete(nodeID ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Delete(&Node{Id: nodeID.StringLowercase()})
@@ -139,7 +140,6 @@ func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) er
 	return err
 }
 
-// TODO: update
 func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error {
 	batchGet := func(nodeIDs []string) ([]Site, error) {
 		var nodes []Site
