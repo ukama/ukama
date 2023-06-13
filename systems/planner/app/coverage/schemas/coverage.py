@@ -1,10 +1,6 @@
 from typing import List
 from pydantic import BaseModel, Field
-from sqlalchemy import Column, Float, Integer
-from sqlalchemy.ext.declarative import declarative_base
 
-
-Base = declarative_base()
 
 class Site(BaseModel):
     latitude: float
