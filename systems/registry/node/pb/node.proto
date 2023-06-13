@@ -2,6 +2,12 @@ syntax = "proto3";
 
 option go_package = "github.com/ukama/ukama/systems/registry/node/pb/gen";
 
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
 package ukama.registry.node.v1;
 
 
@@ -20,6 +26,100 @@ service NodeService {
 }
 
 
+message AddNodeRequest{
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+	string name = 2;
+	string type = 3;
+}
+
+message AddNodeResponse{
+    Node node = 1;
+}
+
+
+message GetNodeRequest{
+    string node = 1;
+}
+
+message GetNodeResponse{
+    Node node = 1;
+}
+
+
+message GetBySiteRequest{
+    string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
+}
+
+message GetBySiteResponse{
+    string siteId = 1 [json_name = "site_id"];
+    repeated Node nodes = 2;
+}
+
+
+message GetFreeNodesRequest{
+}
+
+message GetFreeNodesResponse{
+   repeated Node node = 1;
+}
+
+
+message GetAllNodesRequest{
+}
+
+message GetAllNodesResponse{
+   repeated Node node = 1;
+}
+
+
+message  UpdateNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string name = 2;
+	string state = 4;
+}
+
+message UpdateNodeResponse {
+    Node node = 1;
+}
+
+
+message  UpdateNodeStateRequest{
+    string node = 1;
+    string state = 2;
+}
+
+message UpdateNodeStateResponse{
+    string node = 1;
+    string state = 2;
+}
+
+
+message DeleteNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message DeleteNodeResponse{
+}
+
+
+message AttachNodesRequest {
+    string parentNode = 1;
+    repeated string  attachedNodes = 2;
+}
+
+message AttachNodesResponse {
+
+}
+
+
+message DetachNodeRequest{
+    string node = 2;
+}
+
+message DetachNodeResponse {
+
+}
+
 message AddNodeToNetworkRequest {
     string node = 1;
     string network = 2;
@@ -37,91 +137,12 @@ message ReleaseNodeFromNetworkResponse {
 
 }
 
-message AttachNodesRequest {
-    string parentNode = 1;
-    repeated string  attachedNodes = 2;
-}
-
-message AttachNodesResponse {
-
-}
-
-message DetachNodeRequest{
-    string node = 2;
-}
-
-message DetachNodeResponse {
-
-}
-
-message  UpdateNodeStateRequest{
-    string node = 1;
-    string state = 2;
-}
-
-message UpdateNodeStateResponse{
-    string node = 1;
-    string state = 2;
-}
-
-
-message  UpdateNodeRequest{
-    string node = 1;
-    string name = 2;
-}
-
-message UpdateNodeResponse {
-    Node node = 1;
-}
-
-message GetNodeRequest{
-    string node = 1;
-}
-
-message GetNodeResponse{
-    Node node = 1;
-}
-
-message GetAllNodesRequest{
-}
-
-message GetAllNodesResponse{
-   repeated Node node = 1;
-}
-
-message GetFreeNodesRequest{
-}
-
-message GetFreeNodesResponse{
-   repeated Node node = 1;
-}
-
-
 message Node {
-    string node = 1;
-    string state = 2;
-    string name = 3;
+    string id = 1 [(validator.field) = {string_not_empty: true}];
+    string name = 2;
+    string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string type = 4;
-    repeated Node attached = 5;
-    bool allocated = 6;
-    string network = 7;
+    string state = 5;
+    repeated Node attached = 6;
+    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
 }
-
-message AddNodeRequest{
-    Node node = 1;
-}
-
-message AddNodeResponse{
-    Node node = 1;
-}
-
-
-message DeleteNodeRequest{
-    string node = 1;
-}
-
-message DeleteNodeResponse{
-    string node = 1;
-}
-
-
