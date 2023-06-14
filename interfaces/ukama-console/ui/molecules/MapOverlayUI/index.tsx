@@ -9,6 +9,7 @@ import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DotIcon from '@mui/icons-material/FiberManualRecord';
+import { Dispatch, SetStateAction } from 'react';
 
 const SITES_MOCK = [
   {
@@ -29,6 +30,7 @@ const SITES_MOCK = [
 ];
 
 const LeftIconButtonStyle = {
+  zIndex: 400,
   borderRadius: '4px',
   backgroundColor: colors.primaryDark,
   boxShadow:
@@ -43,6 +45,7 @@ const LeftIconButtonStyle = {
   },
 };
 const RightIconButtonStyle = {
+  zIndex: 400,
   borderRadius: '4px',
   backgroundColor: colors.whiteLilac,
   boxShadow:
@@ -60,31 +63,42 @@ const RightIconButtonStyle = {
   },
 };
 
-const LeftOverlayUI = () => (
+interface ILeftOverlayUI {
+  search: string;
+  handleAddSite: Function;
+  handleAddLink: Function;
+  setSearch: Dispatch<SetStateAction<string>>;
+}
+
+const LeftOverlayUI = ({
+  search,
+  setSearch,
+  handleAddLink,
+  handleAddSite,
+}: ILeftOverlayUI) => (
   <Box
     sx={{
       top: 24,
       left: 24,
       width: '100%',
-      zIndex: 1000,
       display: 'flex',
       position: 'absolute',
     }}
   >
     <Stack spacing={1.5} width={'400px'} alignItems={'flex-start'}>
       <SearchBar
-        value=""
+        value={search}
         key={'searchbox'}
-        handleOnChange={() => {}}
+        handleOnChange={(v: string) => setSearch(v)}
         placeholderText="Search for a location, address, or coordinates"
       />
       <DarkTooltip title="Place site" placement="right-end">
-        <IconButton sx={LeftIconButtonStyle}>
+        <IconButton sx={LeftIconButtonStyle} onClick={() => handleAddSite()}>
           <AddLocationIcon htmlColor="white" />
         </IconButton>
       </DarkTooltip>
       <DarkTooltip title="Add Link" placement="right-end">
-        <IconButton sx={LeftIconButtonStyle}>
+        <IconButton sx={LeftIconButtonStyle} onClick={() => handleAddLink()}>
           <RouteOutlinedIcon htmlColor="white" />
         </IconButton>
       </DarkTooltip>
@@ -92,27 +106,39 @@ const LeftOverlayUI = () => (
   </Box>
 );
 
-const RightOverlayUI = ({ id, handleClick }: any) => (
+interface IRightOverlayUI {
+  id: string | undefined;
+  handleClick: Function;
+  handleTogglePower: Function;
+}
+
+const RightOverlayUI = ({
+  id,
+  handleClick,
+  handleTogglePower,
+}: IRightOverlayUI) => (
   <Box
     sx={{
       top: 24,
       right: 24,
-      zIndex: 1000,
       display: 'flex',
       position: 'absolute',
     }}
   >
     <Stack direction={'row'} spacing={1} alignItems={'flex-end'}>
       <Tooltip title="Turn Site On/Off">
-        <IconButton sx={RightIconButtonStyle}>
+        <IconButton
+          sx={RightIconButtonStyle}
+          onClick={() => handleTogglePower()}
+        >
           <PowerIcon htmlColor={colors.vulcan} />
         </IconButton>
       </Tooltip>
       <Tooltip title="Site Info">
         <IconButton
           aria-describedby={id}
-          onClick={handleClick}
           sx={RightIconButtonStyle}
+          onClick={(e) => handleClick(e)}
         >
           <LocationOnOutlinedIcon htmlColor={colors.vulcan} />
         </IconButton>
