@@ -5,6 +5,8 @@ import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import Map from '@/ui/molecules/Map';
 import SearchBar from '@/ui/molecules/SearchBar';
 import AddLocationIcon from '@mui/icons-material/AddLocation';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import DotIcon from '@mui/icons-material/FiberManualRecord';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import PowerIcon from '@mui/icons-material/PowerSettingsNewOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
@@ -17,6 +19,25 @@ import {
   Typography,
 } from '@mui/material';
 import { useState } from 'react';
+
+const SITES_MOCK = [
+  {
+    id: 1,
+    name: 'Site Name 1',
+    status: 'up',
+  },
+  {
+    id: 2,
+    name: 'Site Name 2',
+    status: 'down',
+  },
+  {
+    id: 3,
+    name: 'Site Name 3',
+    status: 'unknown',
+  },
+];
+
 const DEFAULT_CENTER = [38.907132, -77.036546];
 
 const LeftIconButtonStyle = {
@@ -52,20 +73,33 @@ const RightIconButtonStyle = {
 };
 
 const SiteSummary = () => (
-  <Stack>
-    <Stack flexDirection={'row'} alignItems={'center'} spacing={1}>
+  <Stack spacing={1.2}>
+    <Stack direction={'row'} alignItems={'center'} spacing={0.5}>
       <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 600 }}>
         Site summary
       </Typography>
-      <Typography variant="caption">{`(${5})`}</Typography>
+      <Typography variant="caption">{`(${SITES_MOCK.length})`}</Typography>
     </Stack>
-    <Typography variant="h4" sx={{ fontWeight: 600, marginBottom: '8px' }}>
-      Site 1
-    </Typography>
+    {SITES_MOCK.map(({ id, name, status }) => (
+      <Stack key={id} direction="row" spacing={1} alignItems={'center'}>
+        {status === 'unknown' ? (
+          <DotIcon color={'disabled'} sx={{ fontSize: '18px' }} />
+        ) : (
+          <CheckCircleOutlineIcon
+            color={status === 'up' ? 'success' : 'error'}
+            sx={{ fontSize: '18px' }}
+          />
+        )}
+        <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 500 }}>
+          {name}
+        </Typography>
+      </Stack>
+    ))}
   </Stack>
 );
 
-export default function Page() {
+const Page = () => {
+  const [marker, setMarker] = useState(DEFAULT_CENTER);
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
 
@@ -79,6 +113,10 @@ export default function Page() {
 
   const open = Boolean(anchorSiteInfo);
   const id = open ? 'site-info-popover' : undefined;
+
+  const handleMarkerDrag = (e: any) => {
+    setMarker(e.latlng);
+  };
 
   return (
     <>
@@ -117,7 +155,7 @@ export default function Page() {
             center={DEFAULT_CENTER}
             className={styles.homeMap}
           >
-            {({ TileLayer, Marker, Popup, Pane }: any) => (
+            {({ TileLayer, Marker, Popup }: any) => (
               <>
                 <Box
                   sx={{
@@ -180,7 +218,7 @@ export default function Page() {
                 </Box>
 
                 <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png" />
-                <Marker position={DEFAULT_CENTER}>
+                <Marker draggable position={marker} ondrag={handleMarkerDrag}>
                   <Popup>Site Info</Popup>
                 </Marker>
               </>
@@ -190,4 +228,6 @@ export default function Page() {
       </LoadingWrapper>
     </>
   );
-}
+};
+
+export default Page;

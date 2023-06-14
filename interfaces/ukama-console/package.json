@@ -45,7 +45,7 @@
     "react-dropzone": "^14.2.3",
     "react-i18next": "^12.3.1",
     "react-imask": "^6.6.1",
-    "react-leaflet": "^4.2.1",
+    "react-leaflet": "4.2.1",
     "react-material-ui-carousel": "^3.4.2",
     "recoil": "^0.7.7",
     "recoil-persist": "^4.2.0",
