@@ -35,6 +35,15 @@ export const MEMBER_ROLES = [
   { id: 2, label: 'Vendor', value: 'VENDOR' },
   { id: 3, label: 'Member', value: 'MEMBER' },
 ];
+export const SITE_PLANNING_AP_OPTIONS = [
+  { id: 1, label: 'Tower Node + 1 Amplifier Unit', value: 'ONE_TO_ONE' },
+  { id: 2, label: 'Tower Node + 2 Amplifier Units', value: 'ONE_TO_TWO' },
+];
+export const SOLAR_UPTIME_OPTIONS = [
+  { id: 1, label: '95%', value: 95 },
+  { id: 2, label: '98%', value: 98 },
+  { id: 3, label: '99%', value: 99 },
+];
 export const DATA_UNIT = [
   { id: 1, label: 'BYTE', value: 'Bytes' },
   { id: 2, label: 'KB', value: 'KiloBytes' },
