@@ -93,16 +93,16 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 	return nodes, nil
 }
 
-// TODO: check for still allocated nodes
-func (n *nodeRepo) Delete(nodeID ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
+// TODO: check for still allocated and attached nodes
+func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Delete(&Node{Id: nodeID.StringLowercase()})
+		result := tx.Delete(&Node{Id: nodeId.StringLowercase()})
 		if result.Error != nil {
 			return result.Error
 		}
 
 		if nestedFunc != nil {
-			nestErr := nestedFunc(nodeID, tx)
+			nestErr := nestedFunc(nodeId, tx)
 			if nestErr != nil {
 				return nestErr
 			}
@@ -141,10 +141,10 @@ func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) er
 }
 
 func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error {
-	batchGet := func(nodeIDs []string) ([]Site, error) {
+	batchGet := func(nodeIds []string) ([]Site, error) {
 		var nodes []Site
 
-		result := n.Db.GetGormDb().Where("id IN ?", nodeIDs).Find(&nodes)
+		result := n.Db.GetGormDb().Where("id IN ?", nodeIds).Find(&nodes)
 
 		if result.Error != nil {
 			return nil, result.Error
@@ -217,12 +217,11 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) err
 
 func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-
 		result := tx.Exec("delete from attached_nodes where attached_id=(select id from nodes where node_id=?) OR node_id=(select id from nodes where node_id=?)",
 			detachNodeId, detachNodeId)
 
 		if result.Error != nil {
-			return fmt.Errorf("failed to update network id for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
+			return fmt.Errorf("failed to remove from group for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
 		}
 
 		return nil

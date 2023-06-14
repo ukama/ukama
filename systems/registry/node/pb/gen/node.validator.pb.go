@@ -133,12 +133,18 @@ func (this *DeleteNodeResponse) Validate() error {
 	return nil
 }
 func (this *AttachNodesRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *AttachNodesResponse) Validate() error {
 	return nil
 }
 func (this *DetachNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *DetachNodeResponse) Validate() error {
@@ -154,6 +160,9 @@ func (this *AddNodeToNetworkResponse) Validate() error {
 	return nil
 }
 func (this *ReleaseNodeFromNetworkRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *ReleaseNodeFromNetworkResponse) Validate() error {

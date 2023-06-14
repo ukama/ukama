@@ -76,7 +76,6 @@ message GetAllNodesResponse{
 message  UpdateNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
     string name = 2;
-	string state = 4;
 }
 
 message UpdateNodeResponse {
@@ -99,7 +98,7 @@ message DeleteNodeResponse{
 
 
 message AttachNodesRequest {
-    string parentNode = 1;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
     repeated string  attachedNodes = 2;
 }
 
@@ -109,7 +108,7 @@ message AttachNodesResponse {
 
 
 message DetachNodeRequest{
-    string node = 2;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 }
 
 message DetachNodeResponse {
@@ -127,7 +126,7 @@ message AddNodeToNetworkResponse {
 }
 
 message ReleaseNodeFromNetworkRequest {
-    string node = 1;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 }
 
 message ReleaseNodeFromNetworkResponse {

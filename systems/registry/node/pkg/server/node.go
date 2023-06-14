@@ -119,12 +119,12 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
 	log.Infof("Get node  %v", req.GetNodeId())
 
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	node, err := n.nodeRepo.Get(nodeID)
+	node, err := n.nodeRepo.Get(nodeId)
 
 	if err != nil {
 		log.Error("error getting the node" + err.Error())
@@ -178,13 +178,13 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 
 	dbState := db.ParseNodeState(req.State)
 
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	nodeUpdates := &db.Node{
-		Id:    nodeID.StringLowercase(),
+		Id:    nodeId.StringLowercase(),
 		State: dbState,
 	}
 
@@ -201,7 +201,7 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 			State: req.State,
 		},
 	}
-	und, err := n.nodeRepo.Get(nodeID)
+	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
 		log.Error("error getting the node, ", err.Error())
 
@@ -217,13 +217,13 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
 	log.Infof("Updating node  %v", req.GetNodeId())
 
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	nodeUpdates := &db.Node{
-		Id:   nodeID.StringLowercase(),
+		Id:   nodeId.StringLowercase(),
 		Name: req.Name,
 	}
 
@@ -244,7 +244,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 		},
 	}
 
-	und, err := n.nodeRepo.Get(nodeID)
+	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
 		log.Error("error getting the node, ", err.Error())
 
@@ -275,16 +275,16 @@ func (n *NodeServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) 
 }
 
 func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest) (*pb.AttachNodesResponse, error) {
-	log.Infof("Attaching nodes %v to parent node %s", req.GetAttachedNodes(), req.GetParentNode())
+	log.Infof("Attaching nodes %v to parent node %s", req.GetAttachedNodes(), req.GetNodeId())
 
-	nodeID, err := ukama.ValidateNodeId(req.GetParentNode())
+	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetParentNode(), err)
+		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
 
 	nds := req.GetAttachedNodes()
 
-	err = n.nodeRepo.AttachNodes(nodeID, nds)
+	err = n.nodeRepo.AttachNodes(nodeId, nds)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -295,14 +295,14 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 }
 
 func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) (*pb.DetachNodeResponse, error) {
-	log.Infof("detaching node  %v", req.GetNode())
+	log.Infof("detaching node  %v", req.GetNodeId())
 
-	nodeID, err := ukama.ValidateNodeId(req.Node)
+	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, invalidNodeIDError(req.Node, err)
+		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
 
-	err = n.nodeRepo.DetachNode(nodeID)
+	err = n.nodeRepo.DetachNode(nodeId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -313,7 +313,7 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 }
 
 func (n *NodeServer) AddNodeToNetwork(ctx context.Context, req *pb.AddNodeToNetworkRequest) (*pb.AddNodeToNetworkResponse, error) {
-	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
@@ -324,6 +324,7 @@ func (n *NodeServer) AddNodeToNetwork(ctx context.Context, req *pb.AddNodeToNetw
 			"invalid network id %s. Error %s", req.GetNetworkId(), err.Error())
 	}
 
+	// TODO: update RPC handlers for missing site_id (default site for network)
 	site, err := uuid.FromString(req.GetSiteId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -346,7 +347,7 @@ func (n *NodeServer) AddNodeToNetwork(ctx context.Context, req *pb.AddNodeToNetw
 	}
 
 	node := &db.Site{
-		NodeId:    nodeID.StringLowercase(),
+		NodeId:    nodeId.StringLowercase(),
 		SiteId:    site,
 		NetworkId: net,
 	}
@@ -360,12 +361,12 @@ func (n *NodeServer) AddNodeToNetwork(ctx context.Context, req *pb.AddNodeToNetw
 }
 
 func (n *NodeServer) RemoveNodeFromNetwork(ctx context.Context, req *pb.ReleaseNodeFromNetworkRequest) (*pb.ReleaseNodeFromNetworkResponse, error) {
-	nodeID, err := ukama.ValidateNodeId(req.GetNode())
+	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetNode(), err)
+		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
 
-	err = n.siteRepo.RemoveNode(nodeID)
+	err = n.siteRepo.RemoveNode(nodeId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -373,15 +374,15 @@ func (n *NodeServer) RemoveNodeFromNetwork(ctx context.Context, req *pb.ReleaseN
 	return &pb.ReleaseNodeFromNetworkResponse{}, nil
 }
 
-func invalidNodeIDError(nodeID string, err error) error {
-	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeID, err.Error())
+func invalidNodeIDError(nodeId string, err error) error {
+	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
 }
 
-func processNodeDuplErrors(err error, nodeID string) error {
+func processNodeDuplErrors(err error, nodeId string) error {
 	var pge *pgconn.PgError
 
 	if errors.As(err, &pge) && pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
-		return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeID)
+		return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
 	}
 
 	return grpc.SqlErrorToGrpc(err, "node")
