@@ -24,13 +24,13 @@ interface ISitePopup {
 
 const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
   return (
-    <Paper elevation={0} sx={{ boxShadow: 'none' }}>
+    <Paper elevation={0} sx={{ boxShadow: 'none', cursor: 'default' }}>
       <Stack spacing={1.2}>
         <Typography variant="h6">Place site</Typography>
         <TextField
           required
-          value={data.name}
           label="NAME"
+          value={data.name}
           variant="standard"
           sx={{
             '& .MuiInput-input': {
@@ -81,9 +81,9 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
             AP SELECTION
           </FormLabel>
           <RadioGroup
+            value={data.ap}
             name="ap-selection-group"
             aria-labelledby="ap-selection"
-            defaultValue={SITE_PLANNING_AP_OPTIONS[0].value}
             onChange={(e) => setData({ ...data, ap: e.target.value })}
           >
             {SITE_PLANNING_AP_OPTIONS.map(({ id, label, value }) => (
@@ -107,9 +107,9 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
           </FormLabel>
           <RadioGroup
             row
+            value={data.solarUptime}
             name="solar-uptime-selection-group"
             aria-labelledby="solar-uptime-selection"
-            defaultValue={SOLAR_UPTIME_OPTIONS[0].value}
             onChange={(e) => setData({ ...data, solarUptime: e.target.value })}
           >
             {SOLAR_UPTIME_OPTIONS.map(({ id, label, value }) => (
@@ -135,13 +135,17 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
             control={
               <Switch
                 defaultChecked
+                value={data.isBackhaul}
                 onChange={(e) =>
                   setData({ ...data, isBackhaul: e.target.checked })
                 }
               />
             }
             label="Add satellite"
-            sx={{ '.MuiTypography-root': { fontSize: '16px' } }}
+            sx={{
+              width: 'fit-content',
+              '.MuiTypography-root': { fontSize: '16px' },
+            }}
           />
         </FormControl>
         <Stack direction="row" justifyContent={'flex-end'}>

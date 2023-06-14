@@ -50,7 +50,9 @@ const Map = ({ zoom, center, children, className, onMapClick }: IMap) => {
     <MapContainer
       zoom={zoom}
       center={center}
+      touchZoom={false}
       zoomControl={false}
+      scrollWheelZoom={false}
       className={mapClassName}
     >
       {children(ReactLeaflet, Leaflet)}

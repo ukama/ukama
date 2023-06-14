@@ -53,7 +53,9 @@ const Page = () => {
   };
 
   const handleSiteAction = (action: string) => {
-    console.log(action, site);
+    if (action === 'add') {
+    } else if (action === 'update') {
+    }
   };
 
   return (
