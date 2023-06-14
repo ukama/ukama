@@ -57,6 +57,16 @@ const theme = (isDarkmode: boolean) =>
         step: 8,
       },
       components: {
+        MuiRadio: {
+          styleOverrides: {
+            root: {
+              '& .MuiSvgIcon-root': {
+                height: 18,
+                width: 18,
+              },
+            },
+          },
+        },
         MuiInputBase: {
           styleOverrides: {
             root: {
