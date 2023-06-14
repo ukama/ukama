@@ -1,5 +1,4 @@
 import Leaflet from 'leaflet';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
@@ -10,13 +9,22 @@ import styles from './Map.module.css';
 const { MapContainer } = ReactLeaflet;
 
 interface IMap {
-  className?: string;
   center?: any;
   children: any;
   zoom?: number;
+  className?: string;
 }
 
-const Map = ({ children, className, zoom, center }: IMap) => {
+const ICON = {
+  iconSize: [25, 41],
+  iconAnchor: [10, 41],
+  popupAnchor: [2, -40],
+  iconUrl: markerIcon.src,
+  iconRetinaUrl: markerIcon.src,
+  shadowUrl: markerShadow.src,
+};
+
+const Map = ({ zoom, center, children, className }: IMap) => {
   let mapClassName = styles.map;
 
   if (className) {
@@ -25,12 +33,7 @@ const Map = ({ children, className, zoom, center }: IMap) => {
 
   useEffect(() => {
     (async function init() {
-      // delete Leaflet.Icon.Default.prototype._getIconUrl;
-      Leaflet.Icon.Default.mergeOptions({
-        iconUrl: markerIcon.src,
-        iconRetinaUrl: markerIcon2x.src,
-        shadowUrl: markerShadow.src,
-      });
+      Leaflet.Icon.Default.mergeOptions(ICON);
       Leaflet.Control.Zoom.prototype.options.position = 'bottomright';
     })();
   }, []);

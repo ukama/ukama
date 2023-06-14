@@ -8,12 +8,12 @@ const DEFAULT_WIDTH = 600;
 const DEFAULT_HEIGHT = 600;
 
 interface IMap {
-  width?: number;
-  height?: number;
-  className?: string;
-  center?: number[];
   children: any;
   zoom?: number;
+  width?: number;
+  height?: number;
+  center?: number[];
+  className?: string;
 }
 
 const Map = ({
@@ -26,7 +26,7 @@ const Map = ({
 }: IMap) => {
   return (
     <div style={{ aspectRatio: width / height }}>
-      <DynamicMap className={className} zoom={zoom} center={center}>
+      <DynamicMap zoom={zoom} center={center} className={className}>
         {children}
       </DynamicMap>
     </div>
