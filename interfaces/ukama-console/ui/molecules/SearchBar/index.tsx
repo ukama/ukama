@@ -26,6 +26,7 @@ const SearchBar = ({
     placeholder={placeholderText}
     onChange={(e: any) => handleOnChange(e.target.value)}
     sx={{
+      zIndex: 400,
       height: '42px',
       borderRadius: '4px',
       fontSize: '14px !important',

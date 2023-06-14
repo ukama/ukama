@@ -3,6 +3,7 @@ import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import { TSite } from '@/types';
 import SitePopup from '@/ui/SitePopup';
+import DraftDropdown from '@/ui/molecules/DraftDropdown';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import Map from '@/ui/molecules/Map';
 import {
@@ -18,16 +19,20 @@ const DEFAULT_CENTER = [38.907132, -77.036546];
 const Page = () => {
   const [site, setSite] = useState<TSite>({
     name: '',
+    height: 0,
+    solarUptime: 95,
+    ap: 'ONE_TO_ONE',
+    isBackhaul: true,
     location: {
       lat: 0,
       lng: 0,
       address: '',
     },
-    height: 0,
-    ap: 'ONE_TO_ONE',
-    solarUptime: 95,
-    isBackhaul: true,
   });
+  const [search, setSearch] = useState('');
+  const [addSite, setAddSite] = useState(false);
+  const [addLink, setAddLink] = useState(false);
+  const [togglePower, setTogglePower] = useState(false);
   const [marker, setMarker] = useState([0, 0]);
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
@@ -47,9 +52,14 @@ const Page = () => {
     setMarker(e.latlng);
   };
 
-  const handleMarkerAdd = (e: any) => {
-    if (marker.length === 0 || (marker[0] === 0 && marker[1] === 0))
+  const handleMarkerAdd = (e: number[]) => {
+    if (
+      addSite &&
+      (marker.length === 0 || (marker[0] === 0 && marker[1] === 0))
+    ) {
+      setAddSite(false);
       setMarker(e);
+    }
   };
 
   const handleSiteAction = (action: string) => {
@@ -57,6 +67,10 @@ const Page = () => {
     } else if (action === 'update') {
     }
   };
+
+  const handleAddSite = () => setAddSite(true);
+  const handleAddLink = () => setAddLink(true);
+  const handleOnOff = () => setTogglePower(!togglePower);
 
   return (
     <>
@@ -87,8 +101,10 @@ const Page = () => {
           backgroundColor: false ? colors.white : 'transparent',
         }}
       >
-        <PageContainer sx={{ padding: 0 }}>
+        <DraftDropdown />
+        <PageContainer sx={{ padding: 0, mt: '12px' }}>
           <Map
+            id={'site-planning-map'}
             zoom={12}
             width={800}
             height={418}
@@ -98,11 +114,20 @@ const Page = () => {
           >
             {({ TileLayer, Marker, Popup }: any) => (
               <>
-                <LeftOverlayUI />
-                <RightOverlayUI id={id} handleClick={handleClick} />
+                <LeftOverlayUI
+                  search={search}
+                  setSearch={setSearch}
+                  handleAddSite={handleAddSite}
+                  handleAddLink={handleAddLink}
+                />
+                <RightOverlayUI
+                  id={id}
+                  handleClick={handleClick}
+                  handleTogglePower={handleOnOff}
+                />
                 <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png" />
                 <Marker draggable position={marker} ondrag={handleMarkerDrag}>
-                  <Popup style={{ zIndex: 1001 }}>
+                  <Popup>
                     <SitePopup
                       data={site}
                       setData={setSite}
