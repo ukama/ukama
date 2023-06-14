@@ -55,7 +55,7 @@ func (n *Node) AttachNodes(node, l, r string) (*pb.AttachNodesResponse, error) {
 	defer cancel()
 
 	res, err := n.client.AttachNodes(ctx, &pb.AttachNodesRequest{
-		ParentNode:    node,
+		NodeId:        node,
 		AttachedNodes: []string{l, r},
 	})
 	if err != nil {
@@ -65,12 +65,12 @@ func (n *Node) AttachNodes(node, l, r string) (*pb.AttachNodesResponse, error) {
 	return res, nil
 }
 
-func (n *Node) DetachNode(node string) (*pb.DetachNodeResponse, error) {
+func (n *Node) DetachNode(nodeId string) (*pb.DetachNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.DetachNode(ctx, &pb.DetachNodeRequest{
-		Node: node,
+		NodeId: nodeId,
 	})
 	if err != nil {
 		return nil, err
@@ -79,13 +79,13 @@ func (n *Node) DetachNode(node string) (*pb.DetachNodeResponse, error) {
 	return res, nil
 }
 
-func (n *Node) UpdateNodeState(node string, state string) (*pb.UpdateNodeStateResponse, error) {
+func (n *Node) UpdateNodeState(nodeId string, state string) (*pb.UpdateNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{
-		Node:  node,
-		State: state,
+		NodeId: nodeId,
+		State:  state,
 	})
 	if err != nil {
 		return nil, err
@@ -94,13 +94,13 @@ func (n *Node) UpdateNodeState(node string, state string) (*pb.UpdateNodeStateRe
 	return res, nil
 }
 
-func (n *Node) UpdateNode(node string, name string) (*pb.UpdateNodeResponse, error) {
+func (n *Node) UpdateNode(nodeId string, name string) (*pb.UpdateNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.UpdateNode(ctx, &pb.UpdateNodeRequest{
-		Node: node,
-		Name: name,
+		NodeId: nodeId,
+		Name:   name,
 	})
 	if err != nil {
 		return nil, err
@@ -109,12 +109,12 @@ func (n *Node) UpdateNode(node string, name string) (*pb.UpdateNodeResponse, err
 	return res, nil
 }
 
-func (n *Node) GetNode(node string) (*pb.GetNodeResponse, error) {
+func (n *Node) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.GetNode(ctx, &pb.GetNodeRequest{
-		Node: node,
+		NodeId: nodeId,
 	})
 	if err != nil {
 		return nil, err
@@ -147,15 +147,15 @@ func (n *Node) GetFreeNodes() (*pb.GetFreeNodesResponse, error) {
 	return res, nil
 }
 
-func (n *Node) AddNode(node, state string) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(nodeId, name, orgId, state string) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.AddNode(ctx, &pb.AddNodeRequest{
-		Node: &pb.Node{
-			Node:  node,
-			State: state,
-		},
+		NodeId: nodeId,
+		Name:   name,
+		OrgId:  orgId,
+		State:  state,
 	})
 	if err != nil {
 		return nil, err
@@ -164,12 +164,12 @@ func (n *Node) AddNode(node, state string) (*pb.AddNodeResponse, error) {
 	return res, nil
 }
 
-func (n *Node) DeleteNode(node string) (*pb.DeleteNodeResponse, error) {
+func (n *Node) DeleteNode(nodeId string) (*pb.DeleteNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.DeleteNode(ctx, &pb.DeleteNodeRequest{
-		Node: node,
+		NodeId: nodeId,
 	})
 	if err != nil {
 		return nil, err
@@ -178,13 +178,14 @@ func (n *Node) DeleteNode(node string) (*pb.DeleteNodeResponse, error) {
 	return res, nil
 }
 
-func (n *Node) AddNodeToNetwork(node, network string) (*pb.AddNodeToNetworkResponse, error) {
+func (n *Node) AddNodeToNetwork(nodeId, networkId, siteId string) (*pb.AddNodeToNetworkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.AddNodeToNetwork(ctx, &pb.AddNodeToNetworkRequest{
-		Network: network,
-		Node:    node,
+		NodeId:    nodeId,
+		NetworkId: networkId,
+		SiteId:    siteId,
 	})
 	if err != nil {
 		return nil, err
@@ -193,12 +194,12 @@ func (n *Node) AddNodeToNetwork(node, network string) (*pb.AddNodeToNetworkRespo
 	return res, nil
 }
 
-func (n *Node) ReleaseNodeFromNetwork(node string) (*pb.ReleaseNodeFromNetworkResponse, error) {
+func (n *Node) ReleaseNodeFromNetwork(nodeId string) (*pb.ReleaseNodeFromNetworkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.ReleaseNodeFromNetwork(ctx, &pb.ReleaseNodeFromNetworkRequest{
-		Node: node,
+		NodeId: nodeId,
 	})
 	if err != nil {
 		return nil, err
