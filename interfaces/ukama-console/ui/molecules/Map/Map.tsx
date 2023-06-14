@@ -14,6 +14,7 @@ interface IMap {
   height?: number;
   center?: number[];
   className?: string;
+  onMapClick: Function;
 }
 
 const Map = ({
@@ -21,12 +22,18 @@ const Map = ({
   center,
   children,
   className,
+  onMapClick,
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
 }: IMap) => {
   return (
     <div style={{ aspectRatio: width / height }}>
-      <DynamicMap zoom={zoom} center={center} className={className}>
+      <DynamicMap
+        zoom={zoom}
+        center={center}
+        className={className}
+        onMapClick={onMapClick}
+      >
         {children}
       </DynamicMap>
     </div>
