@@ -1,6 +1,6 @@
 from osgeo import gdal, osr
 from sqlalchemy import create_engine
-from population_data_schema import PopulationDataSimple, FilesStatus
+from population_data_schema import PopulationData, FilesStatus
 from sqlalchemy.orm import sessionmaker
 import numpy as np
 
@@ -71,13 +71,14 @@ def store_parse_population_data(unparsed_data_files):
                     latitude = north + row * pixel_height
                     population = band_data[row, col]
                     if population != None and 0 < population:
-                        box_data = PopulationDataSimple(longitude=longitude, latitude=latitude, value=population)
+                        box_data = PopulationData(longitude=longitude, latitude=latitude, value=population)
                         session.add(box_data)
             session.commit()
-            session.close()
             update_file_to_read(image_path)
         except Exception as ex:
-            continue  
+            continue 
+        finally:
+            session.close()
         
 
     return {'message': 'Box data stored in the database'}

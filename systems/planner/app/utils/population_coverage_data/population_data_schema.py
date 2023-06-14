@@ -13,7 +13,7 @@ Base = declarative_base()
 
 
 class PopulationData(Base):
-    __tablename__ = 'population_data_simple'
+    __tablename__ = 'population_data'
 
     id = Column(Integer, primary_key=True, index=True)
     longitude = Column(Float)
