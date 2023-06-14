@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -34,8 +35,10 @@ type NnsWriter interface {
 
 func NewNns(config *Config) *Nns {
 	client, err := clientv3.New(clientv3.Config{
-		DialTimeout: config.DialTimeoutSecond,
-		Endpoints:   []string{config.EtcdHost},
+		DialTimeout:          config.DialTimeoutSecond,
+		Endpoints:            []string{config.EtcdHost},
+		DialKeepAliveTime:    config.DialTimeoutSecond * time.Second,
+		DialKeepAliveTimeout: config.DialTimeoutSecond * time.Second,
 	})
 	if err != nil {
 		logrus.Fatalf("Cannot connect to etcd: %v", err)
