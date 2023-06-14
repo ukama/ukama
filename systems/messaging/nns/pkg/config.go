@@ -28,7 +28,7 @@ type DnsConfig struct {
 func NewConfig(name string) *Config {
 	return &Config{
 		EtcdHost:          "localhost:2379",
-		DialTimeoutSecond: 3 * time.Second,
+		DialTimeoutSecond: 5 * time.Second,
 		NodeMetricsPort:   10250,
 		Dns: &DnsConfig{
 			NodeDomain: "node.mesh",
