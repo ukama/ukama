@@ -43,7 +43,7 @@ func init() {
 			Uri: "amqp://guest:guest@localhost:5672/",
 		},
 		NodeBaseDomain: "node.mesh",
-		DnsHost:        "localhost:5053",
+		//DnsHost:        "localhost:5053",
 	}
 
 	config.LoadConfig("integration", testConf)
