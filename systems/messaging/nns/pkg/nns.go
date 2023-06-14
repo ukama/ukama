@@ -102,7 +102,7 @@ func (n *Nns) Set(c context.Context, nodeId string, ip string) (err error) {
 	}
 	nodeIdKey := formatNodeIdKey(nodeId)
 	logrus.Debugf("Adding node %s with ip %s to db", nodeIdKey, i.String())
-	_, err = n.etcd.Put(context.Background(), nodeIdKey, i.String())
+	_, err = n.etcd.Put(c, nodeIdKey, i.String())
 	if err != nil {
 		return fmt.Errorf("failed to add record to db. Error: %v", err)
 	}
