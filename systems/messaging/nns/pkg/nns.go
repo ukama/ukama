@@ -3,14 +3,15 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"net"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg/metrics"
-	"go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net"
-	"strings"
 )
 
 const nodeIdKeyPrefix = "nodeId:"
@@ -97,6 +98,7 @@ func (n *Nns) Set(c context.Context, nodeId string, ip string) (err error) {
 		return fmt.Errorf("not valid ip")
 	}
 	nodeIdKey := formatNodeIdKey(nodeId)
+	logrus.Debugf("Adding node %s with ip %s to db", nodeIdKey, i.String())
 	_, err = n.etcd.Put(c, nodeIdKey, i.String())
 	if err != nil {
 		return fmt.Errorf("failed to add record to db. Error: %v", err)
