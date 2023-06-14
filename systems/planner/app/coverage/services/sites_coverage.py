@@ -176,7 +176,7 @@ class SitesCoverage:
             for row in range(height):
                 for col in range(width):
                     # Calculate the longitude and latitude of the center of the pixel
-                    longitude = west + col * pixel_width    
+                    longitude = west + col * pixel_width
                     latitude = north + row * pixel_height
                     y_min, y_max = min(y_min, latitude), max(y_max, latitude)
                     x_min, x_max = min(x_min, longitude), max(x_max, longitude)
@@ -300,8 +300,6 @@ class SitesCoverage:
         print("South: ", y_min)
         print("North: ", y_max)
         print("Merged file url: ", pred_merged_file_url)
-        print("population output: ", json.dumps(population_data_dic, indent = 4))
-        print("interference output: ", json.dumps(interference_files_urls, indent = 4))
 
         # Clean up
         combined = None

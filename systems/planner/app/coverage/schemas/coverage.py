@@ -36,7 +36,7 @@ class CoverageResponseSchema(BaseModel):
     west: float
     south: float
     url: str
-    population_data: dict[str, PopulationDataResponse]
-    interference_data: dict[str, InterferenceDataResponse]
+    population_data: dict[str, PopulationDataResponse] | None
+    interference_data: dict[str, InterferenceDataResponse] | None
     class Config:
         orm_mode = True
