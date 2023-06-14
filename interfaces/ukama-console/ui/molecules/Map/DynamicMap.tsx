@@ -13,18 +13,26 @@ interface IMap {
   children: any;
   zoom?: number;
   className?: string;
+  onMapClick: Function;
 }
 
 const ICON = {
-  iconSize: [25, 41],
-  iconAnchor: [10, 41],
-  popupAnchor: [2, -40],
   iconUrl: markerIcon.src,
   iconRetinaUrl: markerIcon.src,
   shadowUrl: markerShadow.src,
 };
 
-const Map = ({ zoom, center, children, className }: IMap) => {
+function MyComponent({ saveMarkers }: any) {
+  ReactLeaflet.useMapEvents({
+    click: (e) => {
+      const { lat, lng } = e.latlng;
+      saveMarkers([lat, lng]);
+    },
+  });
+  return null;
+}
+
+const Map = ({ zoom, center, children, className, onMapClick }: IMap) => {
   let mapClassName = styles.map;
 
   if (className) {
@@ -47,6 +55,7 @@ const Map = ({ zoom, center, children, className }: IMap) => {
     >
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
+      <MyComponent saveMarkers={onMapClick} />
     </MapContainer>
   );
 };
