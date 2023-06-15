@@ -18,6 +18,7 @@ interface IMap {
   center?: any;
   zoom?: number;
   children: any;
+  cursor: any;
   className?: string;
   onMapClick: Function;
 }
@@ -37,11 +38,21 @@ function CustomMarker({ saveMarkers }: ICustomMarker) {
   return null;
 }
 
-const Map = ({ id, zoom, center, children, className, onMapClick }: IMap) => {
+const Map = ({
+  id,
+  zoom,
+  center,
+  cursor,
+  children,
+  className,
+  onMapClick,
+}: IMap) => {
   let mapClassName = styles.map;
 
   if (className) {
-    mapClassName = `${mapClassName} ${className}`;
+    mapClassName = `${mapClassName} ${className} ${
+      cursor ? styles.cursor : ''
+    }`;
   }
 
   useEffect(() => {

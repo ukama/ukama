@@ -14,6 +14,7 @@ interface IMap {
   width?: number;
   height?: number;
   center?: number[];
+  isAddSite: boolean;
   className?: string;
   onMapClick: Function;
 }
@@ -23,17 +24,24 @@ const Map = ({
   zoom,
   center,
   children,
+  isAddSite,
   className,
   onMapClick,
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
 }: IMap) => {
   return (
-    <div style={{ aspectRatio: width / height }}>
+    <div
+      style={{
+        aspectRatio: width / height,
+        cursor: isAddSite ? 'pointer !important' : 'grab !important',
+      }}
+    >
       <DynamicMap
         id={id}
         zoom={zoom}
         center={center}
+        cursor={isAddSite}
         className={className}
         onMapClick={onMapClick}
       >

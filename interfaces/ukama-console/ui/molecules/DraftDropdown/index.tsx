@@ -21,19 +21,34 @@ import {
   useStyles,
 } from './styles';
 
-const DraftDropdown = () => {
+interface IDraftDropdown {
+  drafts: any;
+  currentDraft: string;
+  handleAddDraft: Function;
+  handleDraftUpdated: Function;
+  handleDraftSelected: Function;
+}
+
+const DraftDropdown = ({
+  drafts,
+  currentDraft,
+  handleAddDraft,
+  handleDraftUpdated,
+  handleDraftSelected,
+}: IDraftDropdown) => {
   const [newName, setNewName] = useState('');
   const [editName, setEditName] = useState(false);
   const classes = useStyles();
   const handleNameUpdate = (n: string) => {
     setNewName('');
+    handleDraftUpdated(n);
   };
   return (
     <Select
-      value={'Draft 1'}
       disableUnderline
       variant="standard"
-      onChange={() => {}}
+      value={currentDraft}
+      onChange={(e) => handleDraftSelected(e.target.value)}
       SelectDisplayProps={SelectDisplayProps}
       MenuProps={{
         disablePortal: true,
@@ -53,8 +68,12 @@ const DraftDropdown = () => {
       }}
       className={classes.selectStyle}
       renderValue={(selected) => selected}
+      onClose={() => {
+        setEditName(false);
+        setNewName('');
+      }}
     >
-      {[{ id: 1, name: 'Draft 1' }].map(({ id, name }) => (
+      {drafts.map(({ id, name }: any) => (
         <MenuItem
           key={id}
           value={name}
@@ -108,6 +127,7 @@ const DraftDropdown = () => {
       <MenuItem
         onClick={(e) => {
           e.stopPropagation();
+          handleAddDraft();
         }}
       >
         <AddIcon color="action" sx={ICON_STYLE} />
