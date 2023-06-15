@@ -15,6 +15,7 @@ import { Popover } from '@mui/material';
 import { useState } from 'react';
 
 const DEFAULT_CENTER = [38.907132, -77.036546];
+const DRAFTS = [{ id: 1, name: 'Draft 1' }];
 
 const Page = () => {
   const [site, setSite] = useState<TSite>({
@@ -29,6 +30,7 @@ const Page = () => {
       address: '',
     },
   });
+  const [currentDraft, setCurrentDraft] = useState(DRAFTS[0].name);
   const [search, setSearch] = useState('');
   const [addSite, setAddSite] = useState(false);
   const [addLink, setAddLink] = useState(false);
@@ -71,6 +73,15 @@ const Page = () => {
   const handleAddSite = () => setAddSite(true);
   const handleAddLink = () => setAddLink(true);
   const handleOnOff = () => setTogglePower(!togglePower);
+  const handleAddDraft = () => {
+    // Clear map and add new draft
+  };
+  const handleDraftSelected = (draft: string) => {
+    setCurrentDraft(draft);
+  };
+  const handleDraftUpdated = () => {
+    // Update draft name
+  };
 
   return (
     <>
@@ -101,13 +112,20 @@ const Page = () => {
           backgroundColor: false ? colors.white : 'transparent',
         }}
       >
-        <DraftDropdown />
+        <DraftDropdown
+          drafts={DRAFTS}
+          currentDraft={currentDraft}
+          handleAddDraft={handleAddDraft}
+          handleDraftUpdated={handleDraftUpdated}
+          handleDraftSelected={handleDraftSelected}
+        />
         <PageContainer sx={{ padding: 0, mt: '12px' }}>
           <Map
             id={'site-planning-map'}
             zoom={12}
             width={800}
             height={418}
+            isAddSite={addSite}
             center={DEFAULT_CENTER}
             className={styles.homeMap}
             onMapClick={handleMarkerAdd}

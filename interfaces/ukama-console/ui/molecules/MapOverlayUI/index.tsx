@@ -93,12 +93,24 @@ const LeftOverlayUI = ({
         placeholderText="Search for a location, address, or coordinates"
       />
       <DarkTooltip title="Place site" placement="right-end">
-        <IconButton sx={LeftIconButtonStyle} onClick={() => handleAddSite()}>
+        <IconButton
+          sx={LeftIconButtonStyle}
+          onClick={(e) => {
+            e.bubbles = false;
+            handleAddSite();
+          }}
+        >
           <AddLocationIcon htmlColor="white" />
         </IconButton>
       </DarkTooltip>
       <DarkTooltip title="Add Link" placement="right-end">
-        <IconButton sx={LeftIconButtonStyle} onClick={() => handleAddLink()}>
+        <IconButton
+          sx={LeftIconButtonStyle}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddLink();
+          }}
+        >
           <RouteOutlinedIcon htmlColor="white" />
         </IconButton>
       </DarkTooltip>
@@ -129,7 +141,10 @@ const RightOverlayUI = ({
       <Tooltip title="Turn Site On/Off">
         <IconButton
           sx={RightIconButtonStyle}
-          onClick={() => handleTogglePower()}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleTogglePower();
+          }}
         >
           <PowerIcon htmlColor={colors.vulcan} />
         </IconButton>
@@ -138,7 +153,10 @@ const RightOverlayUI = ({
         <IconButton
           aria-describedby={id}
           sx={RightIconButtonStyle}
-          onClick={(e) => handleClick(e)}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick(e);
+          }}
         >
           <LocationOnOutlinedIcon htmlColor={colors.vulcan} />
         </IconButton>
