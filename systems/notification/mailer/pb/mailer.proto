@@ -24,6 +24,5 @@ message SendEmailRequest{
 // Defines the response for sending emails
 message SendEmailResponse{
     string message = 1;
-    google.protobuf.Timestamp timestamp = 2;
 }
 

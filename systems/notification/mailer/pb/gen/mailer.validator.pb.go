@@ -9,7 +9,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "github.com/mwitkow/go-proto-validators"
-	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,10 +20,5 @@ func (this *SendEmailRequest) Validate() error {
 	return nil
 }
 func (this *SendEmailResponse) Validate() error {
-	if this.Timestamp != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Timestamp); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Timestamp", err)
-		}
-	}
 	return nil
 }
