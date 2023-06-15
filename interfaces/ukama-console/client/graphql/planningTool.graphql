@@ -38,12 +38,6 @@ mutation AddDraft($data: AddDraftInput!) {
   }
 }
 
-mutation UpdateEvent($draftId: Float!, $data: UpdateEventInput!) {
-  updateEvent(draftId: $draftId, data: $data) {
-    ...draft
-  }
-}
-
 query GetDrafts($userId: String!) {
   getDrafts(userId: $userId) {
     ...draft
@@ -52,6 +46,24 @@ query GetDrafts($userId: String!) {
 
 query GetDraft($draftId: Float!) {
   getDraft(id: $draftId) {
+    ...draft
+  }
+}
+
+mutation UpdateEvent($draftId: Float!, $data: UpdateEventInput!) {
+  updateEvent(draftId: $draftId, data: $data) {
+    ...draft
+  }
+}
+
+mutation UpdateDraftName($updateDraftNameId: Float!, $name: String!) {
+  updateDraftName(id: $updateDraftNameId, name: $name) {
+    ...draft
+  }
+}
+
+mutation UpdateSite($updateSiteId: Float!, $data: UpdateSiteInput!) {
+  updateSite(id: $updateSiteId, data: $data) {
     ...draft
   }
 }
