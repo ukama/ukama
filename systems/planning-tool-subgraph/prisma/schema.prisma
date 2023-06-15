@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model Location {
@@ -23,8 +24,8 @@ model Site {
   solarUptime Int
   isSetlite   Boolean
   location    Location @relation(fields: [locationId], references: [id])
-  Draft       Draft[]
   locationId  Int
+  Draft       Draft[]
 }
 
 model Event {
@@ -42,10 +43,10 @@ model Draft {
   userId    String
   name      String
   events    Event[]
-  siteId    Int
   site      Site     @relation(fields: [siteId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  siteId    Int
 
   @@index([userId], type: Hash)
 }
