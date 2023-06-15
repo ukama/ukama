@@ -14,8 +14,10 @@ pb.UnimplementedMaillingServiceServer
 mailer     *config.Mailer
 }
 
-func NewMaillingServer(maillingRepoRepo db.MaillingRepo) *MaillingServer {
-	return &MaillingServer{maillingRepoRepo: maillingRepoRepo,
+func NewMaillingServer(maillingRepoRepo db.MaillingRepo,mail *config.Mailer) *MaillingServer {
+	return &MaillingServer{
+		maillingRepoRepo: maillingRepoRepo,
+		mailer: mail,
 }
 }
 
