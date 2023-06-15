@@ -1,0 +1,29 @@
+syntax = "proto3";
+option go_package = "pb/gen";
+
+import "google/protobuf/timestamp.proto";
+package ukama.notification.mailer.v1;
+import "validator.proto";
+
+/*
+Mailer sub-system is responsible of:
+    - Sending Emails
+*/
+// Defines the service for mailer  operations
+service MaillingService {
+rpc SendEmail (SendEmailRequest) returns (SendEmailResponse) {}
+}
+
+// Defines the request and response for sending emails
+message SendEmailRequest{
+    string to = 1;
+    string subject = 2;
+    string body = 3;
+}
+
+// Defines the response for sending emails
+message SendEmailResponse{
+    string message = 1;
+    google.protobuf.Timestamp timestamp = 2;
+}
+
