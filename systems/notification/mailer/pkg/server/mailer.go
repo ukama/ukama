@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/ukama/ukama/systems/common/config"
 	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 )
@@ -10,6 +11,7 @@ import (
 type MaillingServer struct {
 	maillingRepoRepo       db.MaillingRepo
 pb.UnimplementedMaillingServiceServer
+mailer     *config.Mailer
 }
 
 func NewMaillingServer(maillingRepoRepo db.MaillingRepo) *MaillingServer {
