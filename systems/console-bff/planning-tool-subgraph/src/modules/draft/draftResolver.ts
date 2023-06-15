@@ -11,7 +11,7 @@ import {
 @Resolver(Draft)
 export class DraftResolver {
   @Query(() => Draft)
-  async getDraft(@Arg("id") id: number, @Ctx() ctx: Context) {
+  async getDraft(@Arg("id") id: string, @Ctx() ctx: Context) {
     const dr = await ctx.prisma.draft.findUnique({
       where: { id: id },
       include: { site: { include: { location: true } }, events: true },
@@ -29,7 +29,7 @@ export class DraftResolver {
   @Mutation(() => Draft)
   async updateEvent(
     @Arg("data") data: UpdateEventInput,
-    @Arg("draftId") draftId: number,
+    @Arg("draftId") draftId: string,
     @Ctx() ctx: Context
   ) {
     const dr = await ctx.prisma.draft.update({
@@ -51,7 +51,7 @@ export class DraftResolver {
   @Mutation(() => Draft)
   async updateSite(
     @Arg("data") data: UpdateSiteInput,
-    @Arg("id") id: number,
+    @Arg("id") id: string,
     @Ctx() ctx: Context
   ) {
     const dr = await ctx.prisma.draft.update({
@@ -84,7 +84,7 @@ export class DraftResolver {
   @Mutation(() => Draft)
   async updateDraftName(
     @Arg("name") name: string,
-    @Arg("id") id: number,
+    @Arg("id") id: string,
     @Ctx() ctx: Context
   ) {
     const dr = await ctx.prisma.draft.update({
