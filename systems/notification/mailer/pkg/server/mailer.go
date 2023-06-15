@@ -6,10 +6,13 @@ import (
 	"html/template"
 	"net/smtp"
 	"strconv"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 )
@@ -35,13 +38,15 @@ func NewMaillingServer(maillingRepoRepo db.MaillingRepo, mail *config.Mailer) *M
 }
 
 func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
+	currentTime := time.Now()
+	sentAt := &currentTime
+
 	from := s.mailer.From
 	to := req.GetTo()
 	subject := req.GetSubject()
 	bodyTemplate := req.GetBody()
 	values := req.Values
 
-	// Create a new email data struct
 	emailData := &EmailData{
 		To:      to,
 		Subject: subject,
@@ -49,7 +54,6 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 		Values:  make(map[string]interface{}),
 	}
 
-	// Add values to the email data
 	for key, value := range values {
 		emailData.Values[key] = value
 	}
@@ -80,10 +84,32 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 	err = smtp.SendMail(s.mailer.Host+":"+port, auth, from, []string{to}, []byte(msg))
 	if err != nil {
 		log.Errorf("Failed to send email: %v", err.Error())
+		err = s.maillingRepoRepo.SendEmail(&db.Mailing{
+			MailId:  uuid.NewV4(),
+			Email:   to,
+			Subject: subject,
+			Body:    bodyBuffer.String(),
+			SentAt:  sentAt,
+			Status:  "failed",
+		})
 		return nil, err
 	}
-
 	log.Infof("Email sent successfully to %s", to)
+	
+
+	err = s.maillingRepoRepo.SendEmail(&db.Mailing{
+		MailId:  uuid.NewV4(),
+		Email:   to,
+		Subject: subject,
+		Body:    bodyBuffer.String(),
+		SentAt:  sentAt,
+		Status:  "sent",
+	})
+	if err != nil {
+		log.Error("error while adding subscriber" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	}
+
 
 	response := &pb.SendEmailResponse{
 		Message: "Email sent successfully",
