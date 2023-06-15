@@ -52,12 +52,17 @@ const Page = () => {
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
 
-  const { data: getDraftsData, loading: getDraftsLoading } = useGetDraftsQuery({
+  const {
+    data: getDraftsData,
+    loading: getDraftsLoading,
+    refetch: refetchDrafts,
+  } = useGetDraftsQuery({
     variables: {
       userId: _commonData.userId,
     },
     onCompleted: (data) => {
       /* Save drafts in state */
+      console.log(data);
       setCurrentDraft({
         id: data.getDrafts[0].id,
         name: data.getDrafts[0].name,
@@ -71,6 +76,7 @@ const Page = () => {
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
     onCompleted: (data) => {
       /* Show success message */
+      refetchDrafts();
     },
     onError: (error) => {
       /* Show error message */
@@ -195,8 +201,9 @@ const Page = () => {
         }}
       >
         <DraftDropdown
-          drafts={DRAFTS}
+          drafts={getDraftsData?.getDrafts || []}
           currentDraft={currentDraft}
+          isLoading={getDraftsLoading}
           handleAddDraft={handleAddDraft}
           handleDraftUpdated={handleDraftUpdated}
           handleDraftSelected={handleDraftSelected}

@@ -17,7 +17,7 @@ model Location {
 }
 
 model Site {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(cuid())
   name        String
   height      Int
   apOption    String
@@ -29,16 +29,16 @@ model Site {
 }
 
 model Event {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   operation String
   value     String
   Draft     Draft?   @relation(fields: [draftId], references: [id])
-  draftId   Int?
+  draftId   String?
   createdAt DateTime @default(now())
 }
 
 model Draft {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   lastSaved Int
   userId    String
   name      String
@@ -46,7 +46,7 @@ model Draft {
   site      Site     @relation(fields: [siteId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  siteId    Int
+  siteId    String
 
   @@index([userId], type: Hash)
 }

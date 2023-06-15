@@ -22,10 +22,14 @@ const app = async () => {
     resolvers: tq.createResolversMap(ts) as any,
   });
 
-  const server = new ApolloServer<Context>({ schema: federatedSchema });
+  const server = new ApolloServer<Context>({
+    schema: federatedSchema,
+    csrfPrevention: false,
+  });
 
   const { url } = await startStandaloneServer(server, {
     context: async () => context,
+    listen: { port: 4041 },
   });
 
   console.log(`🚀 Ukama Planning Tool Subgraph ready at: ${url}`);
