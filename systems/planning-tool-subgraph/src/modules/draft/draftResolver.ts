@@ -98,7 +98,7 @@ export class DraftResolver {
   }
 
   @Mutation(() => Draft)
-  async addDraftt(@Arg("data") data: AddDraftInput, @Ctx() ctx: Context) {
+  async addDraft(@Arg("data") data: AddDraftInput, @Ctx() ctx: Context) {
     const dr = await ctx.prisma.draft.create({
       data: {
         name: data.name,
