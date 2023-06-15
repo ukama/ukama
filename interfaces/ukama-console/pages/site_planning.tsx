@@ -1,7 +1,15 @@
+import { commonData } from '@/app-recoil';
+import {
+  useAddDraftMutation,
+  useGetDraftsQuery,
+  useUpdateDraftNameMutation,
+  useUpdateEventMutation,
+  useUpdateSiteMutation,
+} from '@/generated/planning-tool';
 import styles from '@/styles/Site_Planning.module.css';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { TSite } from '@/types';
+import { TCommonData, TSite } from '@/types';
 import SitePopup from '@/ui/SitePopup';
 import DraftDropdown from '@/ui/molecules/DraftDropdown';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
@@ -13,6 +21,7 @@ import {
 } from '@/ui/molecules/MapOverlayUI';
 import { Popover } from '@mui/material';
 import { useState } from 'react';
+import { useRecoilValue } from 'recoil';
 
 const DEFAULT_CENTER = [38.907132, -77.036546];
 const DRAFTS = [{ id: 1, name: 'Draft 1' }];
@@ -30,7 +39,11 @@ const Page = () => {
       address: '',
     },
   });
-  const [currentDraft, setCurrentDraft] = useState(DRAFTS[0].name);
+  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const [currentDraft, setCurrentDraft] = useState({
+    id: '',
+    name: '',
+  });
   const [search, setSearch] = useState('');
   const [addSite, setAddSite] = useState(false);
   const [addLink, setAddLink] = useState(false);
@@ -38,6 +51,58 @@ const Page = () => {
   const [marker, setMarker] = useState([0, 0]);
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
+
+  const { data: getDraftsData, loading: getDraftsLoading } = useGetDraftsQuery({
+    variables: {
+      userId: _commonData.userId,
+    },
+    onCompleted: (data) => {
+      /* Save drafts in state */
+      setCurrentDraft({
+        id: data.getDrafts[0].id,
+        name: data.getDrafts[0].name,
+      });
+    },
+    onError: (error) => {
+      /* Show error message */
+    },
+  });
+
+  const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
+    onCompleted: (data) => {
+      /* Show success message */
+    },
+    onError: (error) => {
+      /* Show error message */
+    },
+  });
+  const [updateDraftCall, { loading: updateDraftLoading }] =
+    useUpdateDraftNameMutation({
+      onCompleted: (data) => {
+        /* Show success message */
+      },
+      onError: (error) => {
+        /* Show error message */
+      },
+    });
+  const [updateSiteCall, { loading: updateSiteLoading }] =
+    useUpdateSiteMutation({
+      onCompleted: (data) => {
+        /* Show success message */
+      },
+      onError: (error) => {
+        /* Show error message */
+      },
+    });
+  const [updateEventCall, { loading: updateEventLoading }] =
+    useUpdateEventMutation({
+      onCompleted: (data) => {
+        /* Show success message */
+      },
+      onError: (error) => {
+        /* Show error message */
+      },
+    });
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorSiteInfo(event.currentTarget);
@@ -74,13 +139,30 @@ const Page = () => {
   const handleAddLink = () => setAddLink(true);
   const handleOnOff = () => setTogglePower(!togglePower);
   const handleAddDraft = () => {
-    // Clear map and add new draft
+    addDraftCall({
+      variables: {
+        data: {
+          name: 'New Draft',
+          userId: _commonData.userId,
+          lastSaved: new Date().getTime() / 1000,
+        },
+      },
+    });
   };
-  const handleDraftSelected = (draft: string) => {
-    setCurrentDraft(draft);
+  const handleDraftSelected = (draftId: string) => {
+    setCurrentDraft({
+      id: draftId,
+      name:
+        getDraftsData?.getDrafts.find(({ id }) => id === draftId)?.name || '',
+    });
   };
-  const handleDraftUpdated = () => {
-    // Update draft name
+  const handleDraftUpdated = (id: string, draft: string) => {
+    updateDraftCall({
+      variables: {
+        name: draft,
+        updateDraftNameId: id,
+      },
+    });
   };
 
   return (
