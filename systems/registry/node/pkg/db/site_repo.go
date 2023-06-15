@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SiteRepo interface {
@@ -32,7 +33,7 @@ func (s *siteRepo) GetNodes(siteID uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
 	result := s.Db.GetGormDb().Joins("JOIN sites on sites.node_id=nodes.id").
-		Where("sites.site_id=?", siteID.String()).Find(&nodes)
+		Preload(clause.Associations).Where("sites.site_id=?", siteID.String()).Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error

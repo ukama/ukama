@@ -137,6 +137,27 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 	return resp, nil
 }
 
+func (n *NodeServer) GetBySite(ctx context.Context, req *pb.GetBySiteRequest) (*pb.GetBySiteResponse, error) {
+	log.Infof("Getting all node  on  site %v", req.GetSiteId())
+
+	site, err := uuid.FromString(req.GetSiteId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
+	}
+
+	nodes, err := n.siteRepo.GetNodes(site)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "nodes")
+	}
+
+	resp := &pb.GetBySiteResponse{
+		SiteId: req.GetSiteId(),
+		Nodes:  dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
 func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetFreeNodesRequest) (*pb.GetFreeNodesResponse, error) {
 	log.Infof("Get free nodes")
 
