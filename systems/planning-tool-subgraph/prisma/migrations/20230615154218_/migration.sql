@@ -46,6 +46,9 @@ CREATE TABLE "Draft" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Draft_siteId_key" ON "Draft"("siteId");
+
+-- CreateIndex
 CREATE INDEX "Draft_userId_idx" ON "Draft" USING HASH ("userId");
 
 -- AddForeignKey

@@ -69,49 +69,7 @@ export class Draft {
 }
 
 @InputType()
-export class AddDraftInput {
-  @Field()
-  name: string;
-
-  @Field()
-  userId: string;
-
-  @Field()
-  lastSaved: number;
-
-  @Field()
-  siteName: string;
-
-  @Field()
-  height: number;
-
-  @Field()
-  apOption: string;
-
-  @Field()
-  solarUptime: number;
-
-  @Field()
-  isSetlite: boolean;
-
-  @Field()
-  lat: string;
-
-  @Field()
-  lng: string;
-
-  @Field()
-  address: string;
-}
-
-@InputType()
-export class UpdateDraftInput {
-  @Field()
-  name: string;
-
-  @Field()
-  userId: string;
-
+export class UpdateSiteInput {
   @Field()
   lastSaved: number;
 
@@ -146,4 +104,15 @@ export class UpdateEventInput {
 
   @Field()
   value: string;
+}
+@InputType()
+export class AddDraftInput {
+  @Field()
+  name: string;
+
+  @Field()
+  lastSaved: number;
+
+  @Field()
+  userId: string;
 }

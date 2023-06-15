@@ -4,8 +4,8 @@ import { Context } from "../../common/context";
 import {
   AddDraftInput,
   Draft,
-  UpdateDraftInput,
   UpdateEventInput,
+  UpdateSiteInput,
 } from "./types";
 
 @Resolver(Draft)
@@ -47,12 +47,16 @@ export class DraftResolver {
     });
     return dr;
   }
+
   @Mutation(() => Draft)
-  async addDraft(@Arg("data") data: AddDraftInput, @Ctx() ctx: Context) {
-    const dr = await ctx.prisma.draft.create({
+  async updateSite(
+    @Arg("data") data: UpdateSiteInput,
+    @Arg("id") id: number,
+    @Ctx() ctx: Context
+  ) {
+    const dr = await ctx.prisma.draft.update({
+      where: { id: id },
       data: {
-        name: data.name,
-        userId: data.userId,
         lastSaved: data.lastSaved,
         updatedAt: new Date().toISOString(),
         site: {
@@ -76,31 +80,43 @@ export class DraftResolver {
     });
     return dr;
   }
+
   @Mutation(() => Draft)
-  async updateDraft(
-    @Arg("data") data: UpdateDraftInput,
+  async updateDraftName(
+    @Arg("name") name: string,
     @Arg("id") id: number,
     @Ctx() ctx: Context
   ) {
     const dr = await ctx.prisma.draft.update({
       where: { id: id },
       data: {
+        name: name,
+      },
+      include: { site: { include: { location: true } }, events: true },
+    });
+    return dr;
+  }
+
+  @Mutation(() => Draft)
+  async addDraftt(@Arg("data") data: AddDraftInput, @Ctx() ctx: Context) {
+    const dr = await ctx.prisma.draft.create({
+      data: {
         name: data.name,
         userId: data.userId,
         lastSaved: data.lastSaved,
-        updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         site: {
           create: {
-            name: data.siteName,
-            height: data.height,
-            apOption: data.apOption,
-            solarUptime: data.solarUptime,
-            isSetlite: data.isSetlite,
+            name: "",
+            height: 0,
+            apOption: "",
+            solarUptime: 0,
+            isSetlite: false,
             location: {
               create: {
-                lat: data.lat,
-                lng: data.lng,
-                address: data.address,
+                lat: "",
+                lng: "",
+                address: "",
               },
             },
           },
