@@ -54,14 +54,12 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 		emailData.Values[key] = value
 	}
 
-	// Parse the email template
 	tmpl, err := template.New("email").Parse(emailData.Body)
 	if err != nil {
 		log.Errorf("Failed to parse email template: %v", err)
 		return nil, err
 	}
 
-	// Render the template into a buffer
 	var bodyBuffer bytes.Buffer
 	err = tmpl.Execute(&bodyBuffer, emailData.Values)
 	if err != nil {
@@ -69,14 +67,14 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 		return nil, err
 	}
 
-	// Compose the email message
 	msg := "From: " + from + "\r\n" +
 		"To: " + to + "\r\n" +
 		"Subject: " + subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/html; charset=utf-8\r\n" + 
 		"\r\n" +
 		bodyBuffer.String()
 
-	// Send the email using the configured mailer
 	auth := smtp.PlainAuth("", s.mailer.Username, s.mailer.Password, s.mailer.Host)
 	port := strconv.Itoa(s.mailer.Port)
 	err = smtp.SendMail(s.mailer.Host+":"+port, auth, from, []string{to}, []byte(msg))
