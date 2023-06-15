@@ -23,7 +23,7 @@ import {
 
 interface IDraftDropdown {
   drafts: any;
-  currentDraft: string;
+  currentDraft: { id: string; name: string };
   handleAddDraft: Function;
   handleDraftUpdated: Function;
   handleDraftSelected: Function;
@@ -41,13 +41,13 @@ const DraftDropdown = ({
   const classes = useStyles();
   const handleNameUpdate = (n: string) => {
     setNewName('');
-    handleDraftUpdated(n);
+    handleDraftUpdated(currentDraft.id, n);
   };
   return (
     <Select
       disableUnderline
       variant="standard"
-      value={currentDraft}
+      value={currentDraft.name}
       onChange={(e) => handleDraftSelected(e.target.value)}
       SelectDisplayProps={SelectDisplayProps}
       MenuProps={{
@@ -76,7 +76,7 @@ const DraftDropdown = ({
       {drafts.map(({ id, name }: any) => (
         <MenuItem
           key={id}
-          value={name}
+          value={id}
           sx={{
             m: 0,
             p: '6px 16px',

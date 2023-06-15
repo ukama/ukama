@@ -65,20 +65,20 @@ export type MutationAddDraftArgs = {
 
 
 export type MutationUpdateDraftNameArgs = {
-  id: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
 
 
 export type MutationUpdateEventArgs = {
   data: UpdateEventInput;
-  draftId: Scalars['Float']['input'];
+  draftId: Scalars['String']['input'];
 };
 
 
 export type MutationUpdateSiteArgs = {
   data: UpdateSiteInput;
-  id: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
 };
 
 export type Query = {
@@ -90,7 +90,7 @@ export type Query = {
 
 
 export type QueryGetDraftArgs = {
-  id: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
 };
 
 
@@ -153,14 +153,14 @@ export type GetDraftsQueryVariables = Exact<{
 export type GetDraftsQuery = { __typename?: 'Query', getDrafts: Array<{ __typename?: 'Draft', id: string, name: string, lastSaved: number, userId: string, site: { __typename?: 'Site', name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> }> };
 
 export type GetDraftQueryVariables = Exact<{
-  draftId: Scalars['Float']['input'];
+  draftId: Scalars['String']['input'];
 }>;
 
 
 export type GetDraftQuery = { __typename?: 'Query', getDraft: { __typename?: 'Draft', id: string, name: string, lastSaved: number, userId: string, site: { __typename?: 'Site', name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateEventMutationVariables = Exact<{
-  draftId: Scalars['Float']['input'];
+  draftId: Scalars['String']['input'];
   data: UpdateEventInput;
 }>;
 
@@ -168,7 +168,7 @@ export type UpdateEventMutationVariables = Exact<{
 export type UpdateEventMutation = { __typename?: 'Mutation', updateEvent: { __typename?: 'Draft', id: string, name: string, lastSaved: number, userId: string, site: { __typename?: 'Site', name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateDraftNameMutationVariables = Exact<{
-  updateDraftNameId: Scalars['Float']['input'];
+  updateDraftNameId: Scalars['String']['input'];
   name: Scalars['String']['input'];
 }>;
 
@@ -176,7 +176,7 @@ export type UpdateDraftNameMutationVariables = Exact<{
 export type UpdateDraftNameMutation = { __typename?: 'Mutation', updateDraftName: { __typename?: 'Draft', id: string, name: string, lastSaved: number, userId: string, site: { __typename?: 'Site', name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateSiteMutationVariables = Exact<{
-  updateSiteId: Scalars['Float']['input'];
+  updateSiteId: Scalars['String']['input'];
   data: UpdateSiteInput;
 }>;
 
@@ -294,7 +294,7 @@ export type GetDraftsQueryHookResult = ReturnType<typeof useGetDraftsQuery>;
 export type GetDraftsLazyQueryHookResult = ReturnType<typeof useGetDraftsLazyQuery>;
 export type GetDraftsQueryResult = Apollo.QueryResult<GetDraftsQuery, GetDraftsQueryVariables>;
 export const GetDraftDocument = gql`
-    query GetDraft($draftId: Float!) {
+    query GetDraft($draftId: String!) {
   getDraft(id: $draftId) {
     ...draft
   }
@@ -329,7 +329,7 @@ export type GetDraftQueryHookResult = ReturnType<typeof useGetDraftQuery>;
 export type GetDraftLazyQueryHookResult = ReturnType<typeof useGetDraftLazyQuery>;
 export type GetDraftQueryResult = Apollo.QueryResult<GetDraftQuery, GetDraftQueryVariables>;
 export const UpdateEventDocument = gql`
-    mutation UpdateEvent($draftId: Float!, $data: UpdateEventInput!) {
+    mutation UpdateEvent($draftId: String!, $data: UpdateEventInput!) {
   updateEvent(draftId: $draftId, data: $data) {
     ...draft
   }
@@ -363,7 +363,7 @@ export type UpdateEventMutationHookResult = ReturnType<typeof useUpdateEventMuta
 export type UpdateEventMutationResult = Apollo.MutationResult<UpdateEventMutation>;
 export type UpdateEventMutationOptions = Apollo.BaseMutationOptions<UpdateEventMutation, UpdateEventMutationVariables>;
 export const UpdateDraftNameDocument = gql`
-    mutation UpdateDraftName($updateDraftNameId: Float!, $name: String!) {
+    mutation UpdateDraftName($updateDraftNameId: String!, $name: String!) {
   updateDraftName(id: $updateDraftNameId, name: $name) {
     ...draft
   }
@@ -397,7 +397,7 @@ export type UpdateDraftNameMutationHookResult = ReturnType<typeof useUpdateDraft
 export type UpdateDraftNameMutationResult = Apollo.MutationResult<UpdateDraftNameMutation>;
 export type UpdateDraftNameMutationOptions = Apollo.BaseMutationOptions<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>;
 export const UpdateSiteDocument = gql`
-    mutation UpdateSite($updateSiteId: Float!, $data: UpdateSiteInput!) {
+    mutation UpdateSite($updateSiteId: String!, $data: UpdateSiteInput!) {
   updateSite(id: $updateSiteId, data: $data) {
     ...draft
   }
