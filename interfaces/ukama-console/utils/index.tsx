@@ -343,6 +343,16 @@ const secToHoursNMints = (seconds: number, separator: string) => {
   );
 };
 
+const formatSecondsToDuration = (totalSeconds: number) => {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds - hours * 3600 - minutes * 60;
+
+  return [`${hours}h`, `${minutes}m`, `${seconds}s`]
+    .filter((item) => item[0] !== '0')
+    .join(' ');
+};
+
 const isEmailValid = (email: string): boolean =>
   /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,20}$/.test(email);
 
@@ -406,27 +416,28 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 export {
-  hexToRGB,
-  formatBytes,
+  doesHttpOnlyCookieExist,
   fileToBase64,
-  isMetricData,
-  isEmailValid,
-  getRandomData,
-  getColorByType,
-  getStatusByType,
+  formatBytes,
   formatBytesToMB,
+  formatSecondsToDuration,
+  getColorByType,
   getDataPlanUsage,
-  getMetricPayload,
-  secToHoursNMints,
-  getTitleFromPath,
-  secondsToDuration,
-  getMetricsInitObj,
-  uniqueObjectsArray,
-  isContainNodeUpdate,
-  getMetricObjectByKey,
   getDefaultMetricList,
   getGraphFilterByType,
+  getMetricObjectByKey,
+  getMetricPayload,
+  getMetricsInitObj,
+  getRandomData,
+  getStatusByType,
+  getTitleFromPath,
   getTowerNodeFromNodes,
+  hexToRGB,
+  isContainNodeUpdate,
+  isEmailValid,
+  isMetricData,
   parseObjectInNameValue,
-  doesHttpOnlyCookieExist,
+  secToHoursNMints,
+  secondsToDuration,
+  uniqueObjectsArray,
 };

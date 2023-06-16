@@ -73,3 +73,9 @@ mutation UpdateSiteLocation($draftId: String!, $data: SiteLocationInput!) {
     ...draft
   }
 }
+
+mutation DeleteDraft($draftId: String!) {
+  deleteDraft(id: $draftId) {
+    id
+  }
+}

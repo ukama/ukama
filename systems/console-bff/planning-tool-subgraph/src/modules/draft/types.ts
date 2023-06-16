@@ -127,3 +127,9 @@ export class SiteLocationInput {
   @Field()
   address: string;
 }
+
+@ObjectType()
+export class DeleteDraftRes {
+  @Field()
+  id: string;
+}

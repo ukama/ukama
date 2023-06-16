@@ -43,7 +43,7 @@ model Draft {
   userId    String
   name      String
   events    Event[]
-  site      Site     @relation(fields: [siteId], references: [id])
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   siteId    String

@@ -23,6 +23,11 @@ export type AddDraftInput = {
   userId: Scalars['String']['input'];
 };
 
+export type DeleteDraftRes = {
+  __typename?: 'DeleteDraftRes';
+  id: Scalars['String']['output'];
+};
+
 export type Draft = {
   __typename?: 'Draft';
   events: Array<Event>;
@@ -51,6 +56,7 @@ export type Location = {
 export type Mutation = {
   __typename?: 'Mutation';
   addDraft: Draft;
+  deleteDraft: DeleteDraftRes;
   updateDraftName: Draft;
   updateEvent: Draft;
   updateSite: Draft;
@@ -60,6 +66,11 @@ export type Mutation = {
 
 export type MutationAddDraftArgs = {
   data: AddDraftInput;
+};
+
+
+export type MutationDeleteDraftArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -195,6 +206,13 @@ export type UpdateSiteLocationMutationVariables = Exact<{
 
 
 export type UpdateSiteLocationMutation = { __typename?: 'Mutation', updateSiteLocation: { __typename?: 'Draft', id: string, name: string, lastSaved: number, userId: string, site: { __typename?: 'Site', name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+
+export type DeleteDraftMutationVariables = Exact<{
+  draftId: Scalars['String']['input'];
+}>;
+
+
+export type DeleteDraftMutation = { __typename?: 'Mutation', deleteDraft: { __typename?: 'DeleteDraftRes', id: string } };
 
 export const LocationFragmentDoc = gql`
     fragment location on Location {
@@ -477,3 +495,36 @@ export function useUpdateSiteLocationMutation(baseOptions?: Apollo.MutationHookO
 export type UpdateSiteLocationMutationHookResult = ReturnType<typeof useUpdateSiteLocationMutation>;
 export type UpdateSiteLocationMutationResult = Apollo.MutationResult<UpdateSiteLocationMutation>;
 export type UpdateSiteLocationMutationOptions = Apollo.BaseMutationOptions<UpdateSiteLocationMutation, UpdateSiteLocationMutationVariables>;
+export const DeleteDraftDocument = gql`
+    mutation DeleteDraft($draftId: String!) {
+  deleteDraft(id: $draftId) {
+    id
+  }
+}
+    `;
+export type DeleteDraftMutationFn = Apollo.MutationFunction<DeleteDraftMutation, DeleteDraftMutationVariables>;
+
+/**
+ * __useDeleteDraftMutation__
+ *
+ * To run a mutation, you first call `useDeleteDraftMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteDraftMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteDraftMutation, { data, loading, error }] = useDeleteDraftMutation({
+ *   variables: {
+ *      draftId: // value for 'draftId'
+ *   },
+ * });
+ */
+export function useDeleteDraftMutation(baseOptions?: Apollo.MutationHookOptions<DeleteDraftMutation, DeleteDraftMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteDraftMutation, DeleteDraftMutationVariables>(DeleteDraftDocument, options);
+      }
+export type DeleteDraftMutationHookResult = ReturnType<typeof useDeleteDraftMutation>;
+export type DeleteDraftMutationResult = Apollo.MutationResult<DeleteDraftMutation>;
+export type DeleteDraftMutationOptions = Apollo.BaseMutationOptions<DeleteDraftMutation, DeleteDraftMutationVariables>;

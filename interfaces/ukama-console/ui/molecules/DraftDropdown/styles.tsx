@@ -33,7 +33,6 @@ const PaperProps = {
 
 const ICON_STYLE = {
   fontSize: '18px',
-  mr: 0.8,
 };
 
 export { ICON_STYLE, PaperProps, SelectDisplayProps, useStyles };

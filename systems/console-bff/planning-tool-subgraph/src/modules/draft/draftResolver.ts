@@ -3,6 +3,7 @@ import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { Context } from "../../common/context";
 import {
   AddDraftInput,
+  DeleteDraftRes,
   Draft,
   SiteLocationInput,
   UpdateEventInput,
@@ -151,5 +152,12 @@ export class DraftResolver {
       include: { site: { include: { location: true } }, events: true },
     });
     return dr;
+  }
+  @Mutation(() => DeleteDraftRes)
+  async deleteDraft(@Arg("id") id: string, @Ctx() ctx: Context) {
+    await ctx.prisma.draft.delete({
+      where: { id: id },
+    });
+    return { id: id };
   }
 }

@@ -1,5 +1,5 @@
 import { SITE_PLANNING_AP_OPTIONS, SOLAR_UPTIME_OPTIONS } from '@/constants';
-import { TSite } from '@/types';
+import { Site } from '@/generated/planning-tool';
 import {
   Button,
   FormControl,
@@ -17,7 +17,7 @@ import {
 import { Dispatch, SetStateAction } from 'react';
 
 interface ISitePopup {
-  data: TSite;
+  data: Site;
   handleAction: () => void;
   setData: Dispatch<SetStateAction<any>>;
 }
@@ -42,7 +42,11 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
         />
         <TextField
           required
-          value={''}
+          value={
+            data.location.address
+              ? data.location.address
+              : `(${data.location.lat}, ${data.location.lng})`
+          }
           label="LOCATION"
           variant="standard"
           InputLabelProps={{ shrink: true }}
@@ -81,7 +85,7 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
             AP SELECTION
           </FormLabel>
           <RadioGroup
-            value={data.ap}
+            value={data.apOption}
             name="ap-selection-group"
             aria-labelledby="ap-selection"
             onChange={(e) => setData({ ...data, ap: e.target.value })}
@@ -135,7 +139,7 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
             control={
               <Switch
                 defaultChecked
-                value={data.isBackhaul}
+                value={data.isSetlite}
                 onChange={(e) =>
                   setData({ ...data, isBackhaul: e.target.checked })
                 }
@@ -152,9 +156,12 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
           <Button
             variant="contained"
             sx={{ width: 'fit-content', fontSize: '14px' }}
-            onClick={() => handleAction()}
+            onClick={(e) => {
+              handleAction();
+              e.preventDefault();
+            }}
           >
-            {data.id ? 'UPDATE SITE' : 'PLACE SITE'}
+            {data.name ? 'UPDATE SITE' : 'PLACE SITE'}
           </Button>
         </Stack>
       </Stack>
