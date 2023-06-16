@@ -1,53 +1,56 @@
-require('dotenv').config()
-const express = require('express')
-const { ApolloServer } = require('apollo-server-express')
-const {
- ApolloGateway,
- RemoteGraphQLDataSource,
- IntrospectAndCompose,
-} = require('@apollo/gateway')
+const { ApolloServer } = require('@apollo/server')
+const { expressMiddleware } = require('@apollo/server/express4')
 const { ApolloServerPluginInlineTrace } = require('apollo-server-core')
+const { ApolloGateway, IntrospectAndCompose } = require('@apollo/gateway')
+const {
+ ApolloServerPluginDrainHttpServer,
+} = require('@apollo/server/plugin/drainHttpServer')
 
-class CustomDataSource extends RemoteGraphQLDataSource {
- willSendRequest({ request, context }) {
-  request.http.headers.set('Authorization', context.authToken)
- }
-}
+const cors = require('cors')
+const http = require('http')
+const { logger } = require('./logger')
+const { json } = require('body-parser')
+const { configureExpress } = require('./configureExpress')
 
+const app = configureExpress(logger)
+
+const subgraphUrls = ['http://localhost:4041']
+const httpServer = http.createServer(app)
 const gateway = new ApolloGateway({
- supergraphSdl: new IntrospectAndCompose({
-  subgraphs: [{ name: 'subgraph', url: process.env.SUBGRAPH_PLANNING_TOOL }],
-  introspectionHeaders: {
-   Authorization: 'Bearer abc123',
-  },
- }),
- buildService({ url }) {
-  return new CustomDataSource({ url })
- },
+ //  supergraphSdl: new IntrospectAndCompose({
+ //   subgraphs: [{ name: 'subgraph', url: 'http://localhost:4041' }],
+ // }),
+ serviceList: subgraphUrls.map((url) => ({ name: 'subgraph', url })),
 })
 
-const app = express()
-
-async function startApolloServer() {
+const startServer = async () => {
  const server = new ApolloServer({
   gateway,
-  plugins: [ApolloServerPluginInlineTrace()],
-  context: ({ req }) => {
-   const authToken = req.headers.authorization || ''
-
-   return { authToken }
-  },
+  plugins: [
+   ApolloServerPluginInlineTrace(),
+   ApolloServerPluginDrainHttpServer({ httpServer }),
+  ],
  })
+
  await server.start()
 
- server.applyMiddleware({ app })
+ app.use(
+  '/graphql',
 
- return server
+  cors({
+   origin: [
+    'https://localhost:4455',
+    'http://localhost:3000',
+    'https://studio.apollographql.com',
+   ],
+   credentials: true,
+  }),
+
+  json(),
+  expressMiddleware(server)
+ )
+ await new Promise((resolve) => httpServer.listen({ port: 4001 }, resolve))
+ logger.info(`🚀 Server ready at http://localhost:4001/graphql`)
 }
 
-startApolloServer().then((server) => {
- const port = 4001
- app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}${server.graphqlPath}`)
- })
-})
+startServer()
