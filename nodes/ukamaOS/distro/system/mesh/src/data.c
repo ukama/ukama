@@ -17,6 +17,7 @@
 #include "mesh.h"
 #include "work.h"
 #include "data.h"
+#include "jserdes.h"
 
 typedef struct _response {
 	char *buffer;
@@ -68,9 +69,9 @@ void clear_request(MRequest **data) {
  * send_data_to_server -- Forward recevied data to the local server.
  *
  */
-
-static long send_data_to_server(URequest *data, char *ip, char *port,
-								int *retCode, char **retStr) {
+static long send_data_to_local_service(URequest *data, char *hostname,
+                                       char *port, int *retCode,
+                                       char **retStr) {
   
 	int i;
 	long code=0;
@@ -84,7 +85,7 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 	*retCode = 0;
 
 	/* Sanity check */
-	if (data == NULL && ip == NULL && port == NULL) {
+	if (data == NULL && hostname == NULL && port == NULL) {
 		return code;
 	}
      
@@ -100,11 +101,15 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 		for (i=0; i < map->nb_values; i++) {
 			headers = curl_slist_append(headers, map->keys[i]);
 			headers = curl_slist_append(headers,": ");
-			headers = curl_slist_append(headers, map->values[i]);
+            if (strcmp(map->keys[i], "Host") == 0) {
+                headers = curl_slist_append(headers, hostname);
+            } else {
+                headers = curl_slist_append(headers, map->values[i]);
+            }
 		}
 	}
 
-	sprintf(url, "http://%s:%s/%s", ip, port, data->http_url);
+	sprintf(url, "http://%s:%d/%s", hostname, atoi(port)+1, data->http_url);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, data->http_verb);
@@ -113,11 +118,10 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 	if (data->binary_body_length > 0 && data->binary_body) {
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data->binary_body);
 	}
-  
+
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "mesh/0.1");
+    //	curl_easy_setopt(curl, CURLOPT_USERAGENT, "mesh/0.1");
 
 	res = curl_easy_perform(curl);
 
@@ -145,67 +149,55 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 }
 
 /*
- * handle_recevied_data --
+ * process_incoming_websocket_message --
  *
  */
+int process_incoming_websocket_message(Message *message, Config *config) {
 
-void handle_recevied_data(MRequest *data, Config *config) {
+    /*
+     * 1. replace the "nodeID" with hostname (e.g., localhost)
+     * 2. create thread,  make connection, send msg, recv response.
+     * 3. put the response back on the websocket outgoing queue.
+     */
 
-	int ret=FALSE, retCode=0;
-	Proxy *proxy;
-	URequest *request;
-	char *response=NULL, *jStr=NULL;
-	json_t *jResp=NULL;
+	int retCode=0, ret;
+	char *responseLocal=NULL, *responseRemote=NULL;
+    json_t *jResp=NULL;
+    URequest *request=NULL;
 
-	if (data == NULL && config == NULL)
-		return;
+    if (strcmp(message->reqType, MESH_SERVICE_REQUEST) != 0) {
+        log_error("Invalid request type. ignoring.");
+        return FALSE;
+    }
 
-	if (config->reverseProxy == NULL)
-		return;
+    if (deserialize_request_info(&request, message->data) == FALSE) {
+        log_error("Unable to deser the request on websocket");
+        return FALSE;
+    }
 
-	/* Handling only forward requests. */
-	if (strcasecmp(data->reqType, MESH_TYPE_FWD_REQ)!=0)
-		return;
+    ret = send_data_to_local_service(request,
+                                     config->localHostname,
+                                     message->nodeInfo->port,
+                                     &retCode, &responseLocal);
 
-	request = data->requestInfo;
+    if (ret == 200) {
+        log_debug("Command success. CURL return code: %d. Return code: %d",
+                  ret, retCode);
+    } else {
+        log_debug("Command failed. CURL return code: %d. Return code: %d",
+                  ret, retCode);
+    }
 
-	/* Find matching server for the indicated path. */
-	if (strcmp(request->url_path, config->reverseProxy->httpPath)==0) {
+    /* Convert the response into proper format and return. */
+    serialize_local_service_response(&responseRemote, message,
+                                     strlen(responseLocal),
+                                     responseLocal);
 
-		proxy = config->reverseProxy;
-		log_debug("Matching server found for path: %s Server ip: %s port: %s",
-				  proxy->httpPath, proxy->ip, proxy->port);
-
-		ret = send_data_to_server(request, proxy->ip, proxy->port, &retCode,
-								  &response);
-		if (ret == 200) {
-			log_debug("Command success. CURL return code: %d. Return code: %d",
-					  ret, retCode);
-		} else {
-			log_debug("Command failed. CURL return code: %d. Return code: %d",
-					  ret, retCode);
-		}
-
-		/* Convert the response into proper format and return. */
-		serialize_response(&jResp, strlen(response), response,
-						   data->serviceInfo->uuid);
-
-		if (jResp) {
-			jStr = json_dumps(jResp, 0);
-			log_debug("Sending response back: %s", jStr);
-			add_work_to_queue(&Transmit, (Packet)jResp, NULL, 0, NULL, 0);
-			free(jStr);
-		} else {
-			log_error("Invalid response type (expected JSON)");
-			goto done;
-		}
-	} else {
-		/* No match. Ignore. */
-		log_error("No matching server found for path: %s", request->url_path);
-		goto done;
-	}
-
- done:
-	if (response) free(response);
-	return;
+    if (responseRemote) {
+        log_debug("Sending response back: %s", responseRemote);
+        add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
+    } else {
+        log_error("Invalid response from local service: %s", responseLocal);
+        return FALSE;
+    }
 }

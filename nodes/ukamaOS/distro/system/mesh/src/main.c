@@ -49,8 +49,6 @@ void usage() {
 	printf("Usage: mesh.d [options] \n");
 	printf("Options:\n");
 	printf("--h, --help                         Help menu.\n");
-	printf("--p, --proxy                        Enable reservse-proxy\n");
-	printf("--s, --secure                       Enable SSL/TLS \n");
 	printf("--c, --config                       Config file name\n");
 	printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process.\n");
 	printf("--V, --version                      Version.\n");
@@ -148,7 +146,6 @@ void catch_sigterm(void) {
 
 int main (int argc, char *argv[]) {
 
-	int secure=FALSE, proxy=FALSE;
 	char *configFile=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	Config *config=NULL;
@@ -173,8 +170,6 @@ int main (int argc, char *argv[]) {
 		int opdidx = 0;
 
 		static struct option long_options[] = {
-			{ "proxy",     no_argument,       0, 'p'},
-			{ "secure",    no_argument,       0, 's'},
 			{ "config",    required_argument, 0, 'c'},
 			{ "level",     required_argument, 0, 'l'},
 			{ "help",      no_argument,       0, 'h'},
@@ -202,14 +197,6 @@ int main (int argc, char *argv[]) {
 			set_log_level(debug);
 			break;
 
-		case 'p':
-			proxy=TRUE;
-			break;
-
-		case 's':
-			secure=TRUE;
-			break;
-
 		case 'V':
 			fprintf(stdout, "Mesh.d - Version: %s\n", VERSION);
 			exit(0);
@@ -232,13 +219,8 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	if (proxy)
-		config->proxy = TRUE;
-	else
-		config->proxy = FALSE;
-
 	/* Step-1: read config file. */
-	if (process_config_file(secure, proxy, configFile, config) != TRUE) {
+	if (process_config_file(config, configFile) != TRUE) {
 		fprintf(stderr, "Error parsing config file: %s. Exiting ... \n",
 				configFile);
 		exit(1);
