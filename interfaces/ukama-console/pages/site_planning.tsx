@@ -1,7 +1,9 @@
 import { commonData, snackbarMessage } from '@/app-recoil';
 import {
   Draft,
+  Site,
   useAddDraftMutation,
+  useDeleteDraftMutation,
   useGetDraftsQuery,
   useUpdateDraftNameMutation,
   useUpdateEventMutation,
@@ -10,7 +12,7 @@ import {
 import styles from '@/styles/Site_Planning.module.css';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { TCommonData, TSite, TSnackMessage } from '@/types';
+import { TCommonData, TSnackMessage } from '@/types';
 import SitePopup from '@/ui/SitePopup';
 import DraftDropdown from '@/ui/molecules/DraftDropdown';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
@@ -20,26 +22,26 @@ import {
   RightOverlayUI,
   SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
-import { AlertColor, Popover, Stack } from '@mui/material';
-import { useState } from 'react';
+import { formatSecondsToDuration } from '@/utils';
+import { AlertColor, Popover, Stack, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const DEFAULT_CENTER = [38.907132, -77.036546];
-
+const SITE_INIT = {
+  name: '',
+  height: 0,
+  solarUptime: 95,
+  apOption: 'ONE_TO_ONE',
+  isSetlite: true,
+  location: {
+    lat: '',
+    lng: '',
+    address: '',
+  },
+};
 const Page = () => {
-  const [site, setSite] = useState<TSite>({
-    id: '',
-    name: '',
-    height: 0,
-    solarUptime: 95,
-    ap: 'ONE_TO_ONE',
-    isBackhaul: true,
-    location: {
-      lat: '',
-      lng: '',
-      address: '',
-    },
-  });
+  const [site, setSite] = useState<Site>(SITE_INIT);
   const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>();
   const [search, setSearch] = useState('');
   const [addSite, setAddSite] = useState(false);
@@ -67,11 +69,14 @@ const Page = () => {
     loading: getDraftsLoading,
     refetch: refetchDrafts,
   } = useGetDraftsQuery({
+    fetchPolicy: 'network-only',
     variables: {
       userId: _commonData.userId,
     },
     onCompleted: (data) => {
-      if (data.getDrafts.length > 0) setSelectedDraft(data.getDrafts[0]);
+      setSelectedDraft(
+        data.getDrafts.length > 0 ? data.getDrafts[0] : undefined,
+      );
     },
     onError: (error) => {
       showAlert('get-drafts-error', error.message, 'error', true);
@@ -79,7 +84,13 @@ const Page = () => {
   });
 
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
-    onCompleted: () => {
+    onCompleted: (data) => {
+      setSelectedDraft({
+        ...data.addDraft,
+      });
+      setSite({
+        ...data.addDraft.site,
+      });
       refetchDrafts();
       showAlert(
         'update-drafts-success',
@@ -125,6 +136,24 @@ const Page = () => {
       },
     });
 
+  const [deleteDraftCall, { loading: deleteDraftLoading }] =
+    useDeleteDraftMutation({
+      onCompleted: () => {
+        setSelectedDraft(undefined);
+        setSite(SITE_INIT);
+        refetchDrafts();
+        showAlert(
+          'delte-drafts-success',
+          'Draft  deleted successfully.',
+          'success',
+          true,
+        );
+      },
+      onError: (error) => {
+        showAlert('delete-drafts-error', error.message, 'error', true);
+      },
+    });
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorSiteInfo(event.currentTarget);
   };
@@ -136,21 +165,28 @@ const Page = () => {
   const open = Boolean(anchorSiteInfo);
   const id = open ? 'site-info-popover' : undefined;
 
-  const handleMarkerDrag = (e: any) => {
-    setMarker(e.latlng);
-    if (selectedDraft)
+  useEffect(() => {
+    if (selectedDraft?.id) {
+      const loc = {
+        lat: marker[0].toFixed(10).toString(),
+        lng: marker[1].toFixed(10).toString(),
+        address: selectedDraft.site.location.address,
+      };
       setSelectedDraft({
         ...selectedDraft,
         site: {
           ...selectedDraft.site,
-          location: {
-            lat: e.latlng.lat,
-            lng: e.latlng.lng,
-            address: site.location.address,
-          },
+          location: loc,
         },
       });
-  };
+      setSite({
+        ...site,
+        location: loc,
+      });
+    }
+  }, [marker]);
+
+  const handleMarkerDrag = (e: any) => setMarker([e.lat, e.lng]);
 
   const handleMarkerAdd = (e: number[]) => {
     if (
@@ -167,14 +203,14 @@ const Page = () => {
       updateSiteCall({
         variables: {
           data: {
-            apOption: site.ap,
             siteName: site.name,
-            height: site.height,
             lat: site.location.lat,
             lng: site.location.lng,
-            isSetlite: site.isBackhaul,
+            apOption: site.apOption,
+            isSetlite: site.isSetlite,
             solarUptime: site.solarUptime,
             address: site.location.address,
+            height: parseFloat(site.height.toString()),
             lastSaved: Math.floor(new Date().getTime() / 1000),
           },
           draftId: selectedDraft?.id,
@@ -198,6 +234,9 @@ const Page = () => {
   };
   const handleDraftSelected = (draftId: string) => {
     setSelectedDraft(getDraftsData?.getDrafts.find(({ id }) => id === draftId));
+    setSite({
+      ...site,
+    });
     setMarker([0, 0]);
   };
   const handleDraftUpdated = (id: string, draft: string) => {
@@ -208,6 +247,12 @@ const Page = () => {
       },
     });
   };
+  const handleDeleteDraft = (id: string) =>
+    deleteDraftCall({
+      variables: {
+        draftId: id,
+      },
+    });
 
   return (
     <>
@@ -230,17 +275,28 @@ const Page = () => {
       >
         <SiteSummary />
       </Popover>
-      <Stack direction="row" justifyContent={'space-between'}>
+      <Stack
+        direction="row"
+        alignItems={'center'}
+        justifyContent={'space-between'}
+      >
         <DraftDropdown
           draft={selectedDraft}
           isLoading={getDraftsLoading}
           handleAddDraft={handleAddDraft}
+          handleDeleteDraft={handleDeleteDraft}
           drafts={getDraftsData?.getDrafts || []}
           handleDraftUpdated={handleDraftUpdated}
           handleDraftSelected={handleDraftSelected}
         />
-        {/* <Typography variant='caption' sx={{ color: colors.grey }}>
-          {getDraftsData?.getDrafts[]} */}
+        {selectedDraft && selectedDraft?.lastSaved > 0 && (
+          <Typography variant="caption" sx={{ color: colors.black54 }}>
+            {`Saved ${formatSecondsToDuration(
+              Math.floor(new Date().getTime() / 1000) -
+                selectedDraft?.lastSaved,
+            )} ago.`}
+          </Typography>
+        )}
       </Stack>
       <LoadingWrapper
         radius="small"
@@ -277,7 +333,16 @@ const Page = () => {
                   isCurrentDraft={selectedDraft?.id !== ''}
                 />
                 <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png" />
-                <Marker draggable position={marker} ondrag={handleMarkerDrag}>
+                <Marker
+                  autoPan
+                  draggable
+                  position={marker}
+                  ondrag={handleMarkerDrag}
+                  eventHandlers={{
+                    moveend: (event: any) =>
+                      handleMarkerDrag(event.target.getLatLng()),
+                  }}
+                >
                   <Popup>
                     <SitePopup
                       data={site}

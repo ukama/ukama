@@ -136,17 +136,3 @@ export type TCommonData = {
 export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
-
-export type TSite = {
-  id: string;
-  name: string;
-  location: {
-    lat: string;
-    lng: string;
-    address: string;
-  };
-  height: number;
-  ap: string;
-  solarUptime: number;
-  isBackhaul: boolean;
-};

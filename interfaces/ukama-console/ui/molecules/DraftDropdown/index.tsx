@@ -3,6 +3,7 @@ import { colors } from '@/styles/theme';
 import { hexToRGB } from '@/utils';
 import { Edit } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import DoneIcon from '@mui/icons-material/Done';
 import DotIcon from '@mui/icons-material/FiberManualRecord';
 import {
@@ -28,6 +29,7 @@ interface IDraftDropdown {
   drafts: Draft[];
   isLoading: boolean;
   handleAddDraft: Function;
+  handleDeleteDraft: Function;
   handleDraftUpdated: Function;
   handleDraftSelected: Function;
 }
@@ -37,22 +39,24 @@ const DraftDropdown = ({
   drafts = [],
   isLoading,
   handleAddDraft,
+  handleDeleteDraft,
   handleDraftUpdated,
   handleDraftSelected,
 }: IDraftDropdown) => {
+  const { id = '', name = '' } = draft || {};
   const [newName, setNewName] = useState('');
   const [editName, setEditName] = useState(false);
-  const classes = useStyles({ isEmpty: !draft?.id });
+  const classes = useStyles({ isEmpty: !id });
   const handleNameUpdate = (n: string) => {
     setNewName('');
-    handleDraftUpdated(draft?.id, n);
+    handleDraftUpdated(id, n);
   };
   return (
     <LoadingWrapper isLoading={isLoading} width={'200px'} height={'32px'}>
       <Select
         disableUnderline
         variant="standard"
-        value={draft?.name}
+        value={name}
         onChange={(e) => handleDraftSelected(e.target.value)}
         SelectDisplayProps={SelectDisplayProps}
         MenuProps={{
@@ -113,20 +117,29 @@ const DraftDropdown = ({
                 />
               )}
             </Stack>
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditName(!editName);
-                if (editName) handleNameUpdate(newName);
-                else setNewName(name);
-              }}
-            >
-              {editName ? (
-                <DoneIcon color="success" sx={ICON_STYLE} />
-              ) : (
-                <Edit color="action" sx={ICON_STYLE} />
-              )}
-            </IconButton>
+            <Stack direction={'row'}>
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditName(!editName);
+                  if (editName) handleNameUpdate(newName);
+                  else setNewName(name);
+                }}
+              >
+                {editName ? (
+                  <DoneIcon color="success" sx={ICON_STYLE} />
+                ) : (
+                  <Edit color="action" sx={ICON_STYLE} />
+                )}
+              </IconButton>
+              <IconButton
+                onClick={() => {
+                  handleDeleteDraft(id);
+                }}
+              >
+                <DeleteOutlineIcon color="error" sx={ICON_STYLE} />
+              </IconButton>
+            </Stack>
           </MenuItem>
         ))}
         {drafts.length > 0 && <Divider />}
