@@ -54,6 +54,7 @@ export type Mutation = {
   updateDraftName: Draft;
   updateEvent: Draft;
   updateSite: Draft;
+  updateSiteLocation: Draft;
 };
 
 
@@ -77,6 +78,12 @@ export type MutationUpdateEventArgs = {
 export type MutationUpdateSiteArgs = {
   data: UpdateSiteInput;
   id: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateSiteLocationArgs = {
+  data: SiteLocationInput;
+  draftId: Scalars['String']['input'];
 };
 
 export type Query = {
@@ -103,6 +110,12 @@ export type Site = {
   location: Location;
   name: Scalars['String']['output'];
   solarUptime: Scalars['Float']['output'];
+};
+
+export type SiteLocationInput = {
+  address: Scalars['String']['input'];
+  lat: Scalars['String']['input'];
+  lng: Scalars['String']['input'];
 };
 
 export type UpdateEventInput = {
@@ -168,12 +181,20 @@ export type UpdateDraftNameMutationVariables = Exact<{
 export type UpdateDraftNameMutation = { __typename?: 'Mutation', updateDraftName: { __typename?: 'Draft', id: string, name: string, lastSaved: number, userId: string, site: { __typename?: 'Site', name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateSiteMutationVariables = Exact<{
-  updateSiteId: Scalars['String']['input'];
+  draftId: Scalars['String']['input'];
   data: UpdateSiteInput;
 }>;
 
 
 export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'Draft', id: string, name: string, lastSaved: number, userId: string, site: { __typename?: 'Site', name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+
+export type UpdateSiteLocationMutationVariables = Exact<{
+  draftId: Scalars['String']['input'];
+  data: SiteLocationInput;
+}>;
+
+
+export type UpdateSiteLocationMutation = { __typename?: 'Mutation', updateSiteLocation: { __typename?: 'Draft', id: string, name: string, lastSaved: number, userId: string, site: { __typename?: 'Site', name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export const LocationFragmentDoc = gql`
     fragment location on Location {
@@ -389,8 +410,8 @@ export type UpdateDraftNameMutationHookResult = ReturnType<typeof useUpdateDraft
 export type UpdateDraftNameMutationResult = Apollo.MutationResult<UpdateDraftNameMutation>;
 export type UpdateDraftNameMutationOptions = Apollo.BaseMutationOptions<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>;
 export const UpdateSiteDocument = gql`
-    mutation UpdateSite($updateSiteId: String!, $data: UpdateSiteInput!) {
-  updateSite(id: $updateSiteId, data: $data) {
+    mutation UpdateSite($draftId: String!, $data: UpdateSiteInput!) {
+  updateSite(id: $draftId, data: $data) {
     ...draft
   }
 }
@@ -410,7 +431,7 @@ export type UpdateSiteMutationFn = Apollo.MutationFunction<UpdateSiteMutation, U
  * @example
  * const [updateSiteMutation, { data, loading, error }] = useUpdateSiteMutation({
  *   variables: {
- *      updateSiteId: // value for 'updateSiteId'
+ *      draftId: // value for 'draftId'
  *      data: // value for 'data'
  *   },
  * });
@@ -422,3 +443,37 @@ export function useUpdateSiteMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateSiteMutationHookResult = ReturnType<typeof useUpdateSiteMutation>;
 export type UpdateSiteMutationResult = Apollo.MutationResult<UpdateSiteMutation>;
 export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<UpdateSiteMutation, UpdateSiteMutationVariables>;
+export const UpdateSiteLocationDocument = gql`
+    mutation UpdateSiteLocation($draftId: String!, $data: SiteLocationInput!) {
+  updateSiteLocation(draftId: $draftId, data: $data) {
+    ...draft
+  }
+}
+    ${DraftFragmentDoc}`;
+export type UpdateSiteLocationMutationFn = Apollo.MutationFunction<UpdateSiteLocationMutation, UpdateSiteLocationMutationVariables>;
+
+/**
+ * __useUpdateSiteLocationMutation__
+ *
+ * To run a mutation, you first call `useUpdateSiteLocationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSiteLocationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSiteLocationMutation, { data, loading, error }] = useUpdateSiteLocationMutation({
+ *   variables: {
+ *      draftId: // value for 'draftId'
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateSiteLocationMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSiteLocationMutation, UpdateSiteLocationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSiteLocationMutation, UpdateSiteLocationMutationVariables>(UpdateSiteLocationDocument, options);
+      }
+export type UpdateSiteLocationMutationHookResult = ReturnType<typeof useUpdateSiteLocationMutation>;
+export type UpdateSiteLocationMutationResult = Apollo.MutationResult<UpdateSiteLocationMutation>;
+export type UpdateSiteLocationMutationOptions = Apollo.BaseMutationOptions<UpdateSiteLocationMutation, UpdateSiteLocationMutationVariables>;

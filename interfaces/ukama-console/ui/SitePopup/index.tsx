@@ -18,8 +18,8 @@ import { Dispatch, SetStateAction } from 'react';
 
 interface ISitePopup {
   data: TSite;
+  handleAction: () => void;
   setData: Dispatch<SetStateAction<any>>;
-  handleAction: (action: string) => void;
 }
 
 const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
@@ -152,9 +152,9 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
           <Button
             variant="contained"
             sx={{ width: 'fit-content', fontSize: '14px' }}
-            onClick={() => handleAction('add')}
+            onClick={() => handleAction()}
           >
-            PLACE SITE
+            {data.id ? 'UPDATE SITE' : 'PLACE SITE'}
           </Button>
         </Stack>
       </Stack>
