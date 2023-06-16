@@ -24,12 +24,13 @@
 #define JSON_TYPE_REQUEST    "type_request"
 #define JSON_TYPE_RESPONSE   "type_response"
 
-#define JSON_DEVICE_INFO   "device_info"
+#define JSON_NODE_INFO     "node_info"
 #define JSON_SERVICE_INFO  "service_info"
 #define JSON_REQUEST_INFO  "request_info"
 #define JSON_RESPONSE_INFO "response_info"
 
-#define JSON_ID       "uuid"
+#define JSON_NODE_ID  "node_id"
+#define JSON_NAME     "name"
 #define JSON_PROTOCOL "protocol"
 #define JSON_METHOD   "method"
 #define JSON_URL      "url"
@@ -42,6 +43,8 @@
 #define JSON_LENGTH   "length"
 #define JSON_DATA     "data"
 #define JSON_SEQ      "seq"
+#define JSON_PORT     "port"
+#define JSON_MESSAGE  "message"
 
 /* for system info*/
 #define JSON_SYSTEM_NAME "systemName"
@@ -57,11 +60,12 @@
 
 /* Function headers. */
 int serialize_response(json_t **json, int size, void *data, char *nodeID);
-int serialize_forward_request(URequest *request, json_t **json,
-			      Config *config, uuid_t uuid);
+int serialize_websocket_message(char **str, URequest *request, char *nodeID,
+                                char *nodePort, char *agent);
 int serialize_device_info(json_t **json, NodeInfo *device);
 int deserialize_forward_request(MRequest **req, json_t *json);
 int deserialize_response(MResponse **response, json_t *json);
 int deserialize_system_info(SystemInfo **systemInfo, json_t *json);
+int deserialize_websocket_message(Message **message, char *data);
 
 #endif /* MESH_JSERDES_H */

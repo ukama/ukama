@@ -52,7 +52,6 @@ void init_map_table(MapTable **table);
 void free_map_item(MapItem *map);
 void remove_map_item_from_table(MapTable *table, char *nodeID);
 MapItem *add_map_to_table(MapTable **table, char *nodeID);
-MapItem *lookup_item(MapTable *table, char *nodeID);
 MapItem *is_existing_item(MapTable *table, char *nodeID);
 
 #endif /* MESH_MAP_H */

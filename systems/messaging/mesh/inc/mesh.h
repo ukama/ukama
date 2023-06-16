@@ -26,8 +26,10 @@
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
 
-#define MESH_TYPE_FWD_REQ "forward_request"
-#define MESH_TYPE_FWD_RESP "forward_response"
+#define MESH_SERVICE_REQUEST  "service_request"
+#define MESH_SERVICE_RESPONSE "service_response"
+#define MESH_NODE_REQUEST     "node_request"
+#define MESH_NODE_RESPONSE    "node_resonse"
 
 /* For MAP */
 #define MESH_MAP_TYPE_URL  1
@@ -72,6 +74,7 @@ typedef struct {
 
     int  connectionStatus; /* websocket connection status */
 	char *nodeID;          /* recevied from the node */
+    char *port;
 } NodeInfo;
 
 typedef struct {
@@ -98,5 +101,21 @@ typedef struct {
 	void        *data;
 	ServiceInfo *serviceInfo;
 } MResponse;
+
+typedef struct {
+
+    int  dataSize;
+    char *data;
+} ResponseInfo;
+
+typedef struct {
+
+    char        *reqType;
+    int         seqNo;
+    NodeInfo    *nodeInfo;
+    ServiceInfo *serviceInfo;
+    int         dataSize;
+    char        *data;   /* RequestInfo or actual response */
+} Message;
 
 #endif /* MESH_H */

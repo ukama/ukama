@@ -30,7 +30,7 @@ void init_work_list(WorkList **list) {
  * create_work_item --
  *
  */
-static WorkItem *create_work_item(Packet data, thread_func_t pre, void *preArgs,
+static WorkItem *create_work_item(char *data, thread_func_t pre, void *preArgs,
 								  thread_func_t post, void *postArgs) {
 
 	WorkItem *work;
@@ -50,7 +50,7 @@ static WorkItem *create_work_item(Packet data, thread_func_t pre, void *preArgs,
 	work->preArgs  = preArgs;
 	work->postArgs = postArgs;
 
-	work->data = data;
+	work->data = strdup(data);
 	work->next = NULL;
 
 	return work;
@@ -66,7 +66,7 @@ void destroy_work_item(WorkItem *work) {
 		return;
 	}
 
-	json_decref(work->data);
+	free(work->data);
 	free(work);
 }
 
@@ -75,7 +75,7 @@ void destroy_work_item(WorkItem *work) {
  *                      for websocket.
  *
  */
-int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
+int add_work_to_queue(WorkList **list, char *data, thread_func_t pre,
 					  void *preArgs, thread_func_t post, void *postArgs) {
 
 	WorkItem *work=NULL;
@@ -106,16 +106,7 @@ int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
 
 	/* Unlock */
 	pthread_mutex_unlock(&((*list)->mutex));
-
-	str = json_dumps((json_t *)data, 0);
-	if (str) {
-		log_debug("Work added on the tansmit queue. Len: %d Data: %s",
-				  strlen(str), str);
-		free(str);
-	} else {
-		/* non-JSON data. */
-		log_debug("Work added on the transmit queue.");
-	}
+    log_debug("Work added on the queue. Len: %d Data: %s", strlen(data), data);
 
 	return TRUE;
 }

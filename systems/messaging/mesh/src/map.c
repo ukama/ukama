@@ -150,32 +150,6 @@ MapItem *add_map_to_table(MapTable **table, char *nodeID) {
 }
 
 /*
- * lookup_item -- find the matching item by nodeID
- *
- */
-MapItem *lookup_item(MapTable *table, char *nodeID) {
-
-	MapItem *item;
-
-	if (table == NULL && nodeID == NULL) {
-		return NULL;
-	}
-
-	/* Is empty. */
-	if (table->first == NULL) {
-		return NULL;
-	}
-
-	for (item=table->first; item; item=item->next) {
-        if (strcmp(item->nodeInfo->nodeID, nodeID) == 0) {
-			return item;
-		}
-	}
-
-	return NULL;
-}
-
-/*
  * remove_item -- remove the matching item from the table and free()
  *
  */

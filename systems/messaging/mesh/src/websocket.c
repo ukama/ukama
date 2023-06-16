@@ -42,7 +42,7 @@ static void clear_response(MResponse **resp) {
 }
 
 /*
- * websocket_status --
+ * is_websocket_valid --
  *
  */
 static int is_websocket_valid(WSManager *manager, char *nodeID) {
@@ -76,6 +76,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 	WorkItem *work;
     struct timespec ts;
     int ret;
+    json_t *jData;
 
     map = is_existing_item(IDsTable, (char *)data);
     if (map == NULL) {
@@ -147,8 +148,8 @@ void websocket_manager(const URequest *request, WSManager *manager,
 		/* Currently, packet is JSON string. Send it over. */
 		if (ulfius_websocket_wait_close(manager, 2000) ==
 			U_WEBSOCKET_STATUS_OPEN) {
-			if (ulfius_websocket_send_json_message(manager, work->data)
-				!= U_OK) {
+            jData = json_loads(work->data, JSON_DECODE_ANY, NULL);
+			if (ulfius_websocket_send_json_message(manager, jData) != U_OK) {
 				log_error("Error sending JSON message.");
 			}
 		}
@@ -172,37 +173,33 @@ void websocket_manager(const URequest *request, WSManager *manager,
 void websocket_incoming_message(const URequest *request,
 								WSManager *manager, WSMessage *message,
 								void *data) {
+    Message *rcvdMessage=NULL;
 	MRequest *rcvdData=NULL;
-	MResponse *rcvdResp=NULL;
-	json_t *json=NULL;
 	int ret;
+    MapItem *map=NULL;
+
+    map = is_existing_item(IDsTable, (char *)data);
+    if (map == NULL) {
+        log_error("Websocket error NodeID: %s not found in table",
+                  (char *)data);
+        return;
+    }
 
 	log_debug("Packet recevied. Data: %s", message->data);
 
 	/* Ignore the rest, for now. */
 	if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
-		/* Convert to JSON and deserialize it. */
-		json = json_loads(message->data, JSON_DECODE_ANY, NULL);
 
-		if (json==NULL) {
-			log_error("Error loading recevied data to JSON format. Str: %s",
-					  message->data);
-			goto done;
-		}
-
-		/* Convert JSON into request. */
-		ret = deserialize_forward_request(&rcvdData, json);
+		ret = deserialize_websocket_message(&rcvdMessage, message->data);
 		if (ret==FALSE) goto done;
 
-		handle_recevied_data(rcvdData);
+        add_work_to_queue(&map->receive, rcvdMessage->data, NULL, 0, NULL, 0);
 
 		/* Free up the memory from deser. */
-		clear_request(&rcvdData);
+		// clear_request(&rcvdData);
 	}
 
  done:
-	if (json) json_decref(json);
-	clear_response(&rcvdResp);
 	return;
 }
 

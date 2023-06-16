@@ -14,8 +14,7 @@
 
 #include "mesh.h"
 
-typedef json_t* Packet;
-typedef void (*thread_func_t)(Packet, void *arg);
+typedef void (*thread_func_t)(char *, void *arg);
 
 /*
  * Link list of object websocket is waiting to handle.
@@ -26,7 +25,7 @@ typedef struct work_item_t {
 	thread_func_t postFunc;   /* Packet post-processing function, can be NULL */
 	void          *preArgs;   /* Args for pre-function. */
 	void          *postArgs;  /* Args for post-funciion. */
-	Packet        data;       /* Data packet to process. */
+	char          *data;       /* Data packet to process. */
 	struct work_item_t *next; /* Link to next item in the queue. */
 }WorkItem;
 
@@ -45,7 +44,7 @@ typedef struct {
 }WorkList;
 
 /* Functions. */
-int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
+int add_work_to_queue(WorkList **list, char *data, thread_func_t pre,
 					  void *preArgs, thread_func_t post, void *postArgs);
 WorkItem *get_work_to_transmit(WorkList *list);
 void init_work_list(WorkList **list);

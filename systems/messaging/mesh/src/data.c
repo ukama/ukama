@@ -161,8 +161,8 @@ void handle_recevied_data(MRequest *data) {
 		return;
 
 	/* Handling only forward requests. */
-	if (strcasecmp(data->reqType, MESH_TYPE_FWD_REQ)!=0)
-		return;
+    //	if (strcasecmp(data->reqType, MESH_TYPE_FWD_REQ)!=0)
+	//	return;
 
 	request = data->requestInfo;
 
@@ -189,7 +189,7 @@ void handle_recevied_data(MRequest *data) {
 		if (jResp) {
 			jStr = json_dumps(jResp, 0);
 			log_debug("Sending response back: %s", jStr);
-            //			add_work_to_queue(&Transmit, (Packet)jResp, NULL, 0, NULL, 0); XXXX
+            //add_work_to_queue(&Transmit, (Packet)jResp, NULL, 0, NULL, 0); XXXX
 			free(jStr);
 		} else {
 			log_error("Invalid response type (expected JSON)");
