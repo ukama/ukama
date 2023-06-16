@@ -19,6 +19,7 @@ type Config struct {
 	MsgClient         *uconf.MsgClient `default:"{}"`
 	Service           *uconf.Service
 	Registry          string `default:"http://registry:8080"`
+	Org               string `default:""`
 }
 
 type DnsConfig struct {

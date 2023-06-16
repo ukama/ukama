@@ -43,7 +43,7 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetNodeIPRequest) (*pb.SetNod
 		return nil, fmt.Errorf("failed to add node-ip record to db. Error: %v", err)
 	}
 
-	err = n.nodeOrgMapping.Add(c, req.GetNodeId(), req.Org, req.Network, req.NodeIp, req.NodePort, req.MeshPort)
+	err = n.nodeOrgMapping.Add(c, req.GetNodeId(), req.Org, req.Network, req.Site, req.NodeIp, req.NodePort, req.MeshPort)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set org and network for node id %s. Error: %v", req.NodeId, err)
 	}
@@ -99,6 +99,7 @@ func (n *NnsServer) GetNodeOrgMapList(ctx context.Context, in *pb.NodeOrgMapList
 			MeshPort:   v.MeshPort,
 			Org:        v.Org,
 			Network:    v.Network,
+			Site:       v.Site,
 			Domainname: n.config.NodeDomain,
 		}
 		resp.Map = append(resp.Map, nom)

@@ -40,6 +40,7 @@ message SetNodeIPRequest{
     int32 meshPort = 5;
     string org = 6;
     string network = 7;
+    string site = 8;
 }
 
 message SetNodeIPResponse{
@@ -73,7 +74,8 @@ message NodeOrgMap {
     int32 meshPort = 4;
     string org = 5;
     string network = 6;
-    string domainname = 7;
+    string site = 7;
+    string domainname = 8;
 }
 message NodeOrgMapListResponse{
   repeated NodeOrgMap map = 1 ;

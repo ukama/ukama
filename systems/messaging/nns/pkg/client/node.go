@@ -23,6 +23,7 @@ type NodeInfo struct {
 	Id      string
 	Network string
 	Org     string
+	Site    string
 }
 
 func NewRegistryClient(url string, debug bool) (*nodeRegistryClient, error) {
@@ -73,6 +74,7 @@ func (c *nodeRegistryClient) GetNode(id string) (*NodeInfo, error) {
 		nodeInfo.Id = rnode.Node.Node
 		nodeInfo.Network = rnode.Node.Network
 		nodeInfo.Org = ""
+		nodeInfo.Site = ""
 	}
 
 	log.Infof("Node Info: %+v", nodeInfo)

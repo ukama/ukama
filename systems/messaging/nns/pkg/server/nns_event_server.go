@@ -70,7 +70,7 @@ func (l *NnsEventServer) handleEventNodeOnline(key string, msg *epb.NodeOnlineEv
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	log.Infof("Getting org and network for %s", msg.GetNodeId())
-	
+
 	nodeInfo := &client.NodeInfo{}
 	var err error
 	nodeInfo, err = l.Registry.GetNode(msg.GetNodeId())
@@ -81,6 +81,7 @@ func (l *NnsEventServer) handleEventNodeOnline(key string, msg *epb.NodeOnlineEv
 			Id:      msg.GetNodeId(),
 			Network: "",
 			Org:     "",
+			Site:    "",
 		}
 	}
 
@@ -92,6 +93,7 @@ func (l *NnsEventServer) handleEventNodeOnline(key string, msg *epb.NodeOnlineEv
 		MeshPort: msg.GetMeshPort(),
 		Org:      nodeInfo.Org,
 		Network:  nodeInfo.Network,
+		Site:     nodeInfo.Site,
 	})
 
 	if err != nil {
