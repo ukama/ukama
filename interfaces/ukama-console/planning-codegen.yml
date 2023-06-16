@@ -1,5 +1,5 @@
 overwrite: true
-schema: http://localhost:4041
+schema: http://localhost:4001/graphql
 documents: "./client/graphql/planningTool.graphql"
 generates:
     ./generated/planning-tool/index.ts:
