@@ -3,10 +3,10 @@ import { Theme } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 
 const useStyles = makeStyles<Theme>(() => ({
-  selectStyle: () => ({
-    marginTop: '8px',
+  selectStyle: (props: any) => ({
+    marginY: '8px',
     width: 'fit-content',
-    color: colors.primaryMain,
+    color: props.isEmpty ? colors.black54 : colors.primaryMain,
     '.MuiSelect-icon': {
       paddingLeft: '16px',
     },
@@ -36,4 +36,4 @@ const ICON_STYLE = {
   mr: 0.8,
 };
 
-export { useStyles, SelectDisplayProps, PaperProps, ICON_STYLE };
+export { ICON_STYLE, PaperProps, SelectDisplayProps, useStyles };

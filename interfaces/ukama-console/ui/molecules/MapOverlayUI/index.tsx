@@ -67,6 +67,7 @@ interface ILeftOverlayUI {
   search: string;
   handleAddSite: Function;
   handleAddLink: Function;
+  isCurrentDraft: boolean;
   setSearch: Dispatch<SetStateAction<string>>;
 }
 
@@ -75,6 +76,7 @@ const LeftOverlayUI = ({
   setSearch,
   handleAddLink,
   handleAddSite,
+  isCurrentDraft,
 }: ILeftOverlayUI) => (
   <Box
     sx={{
@@ -92,28 +94,32 @@ const LeftOverlayUI = ({
         handleOnChange={(v: string) => setSearch(v)}
         placeholderText="Search for a location, address, or coordinates"
       />
-      <DarkTooltip title="Place site" placement="right-end">
-        <IconButton
-          sx={LeftIconButtonStyle}
-          onClick={(e) => {
-            e.bubbles = false;
-            handleAddSite();
-          }}
-        >
-          <AddLocationIcon htmlColor="white" />
-        </IconButton>
-      </DarkTooltip>
-      <DarkTooltip title="Add Link" placement="right-end">
-        <IconButton
-          sx={LeftIconButtonStyle}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddLink();
-          }}
-        >
-          <RouteOutlinedIcon htmlColor="white" />
-        </IconButton>
-      </DarkTooltip>
+      {isCurrentDraft && (
+        <DarkTooltip title="Place site" placement="right-end">
+          <IconButton
+            sx={LeftIconButtonStyle}
+            onClick={(e) => {
+              e.bubbles = false;
+              handleAddSite();
+            }}
+          >
+            <AddLocationIcon htmlColor="white" />
+          </IconButton>
+        </DarkTooltip>
+      )}
+      {isCurrentDraft && (
+        <DarkTooltip title="Add Link" placement="right-end">
+          <IconButton
+            sx={LeftIconButtonStyle}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddLink();
+            }}
+          >
+            <RouteOutlinedIcon htmlColor="white" />
+          </IconButton>
+        </DarkTooltip>
+      )}
     </Stack>
   </Box>
 );
@@ -121,20 +127,22 @@ const LeftOverlayUI = ({
 interface IRightOverlayUI {
   id: string | undefined;
   handleClick: Function;
+  isCurrentDraft: boolean;
   handleTogglePower: Function;
 }
 
 const RightOverlayUI = ({
   id,
   handleClick,
+  isCurrentDraft,
   handleTogglePower,
 }: IRightOverlayUI) => (
   <Box
     sx={{
       top: 24,
       right: 24,
-      display: 'flex',
       position: 'absolute',
+      display: isCurrentDraft ? 'flex' : 'none',
     }}
   >
     <Stack direction={'row'} spacing={1} alignItems={'flex-end'}>
