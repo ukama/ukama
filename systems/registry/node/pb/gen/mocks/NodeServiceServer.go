@@ -40,24 +40,24 @@ func (_m *NodeServiceServer) AddNode(_a0 context.Context, _a1 *gen.AddNodeReques
 	return r0, r1
 }
 
-// AddNodeToNetwork provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) AddNodeToNetwork(_a0 context.Context, _a1 *gen.AddNodeToNetworkRequest) (*gen.AddNodeToNetworkResponse, error) {
+// AddNodeToSite provides a mock function with given fields: _a0, _a1
+func (_m *NodeServiceServer) AddNodeToSite(_a0 context.Context, _a1 *gen.AddNodeToSiteRequest) (*gen.AddNodeToSiteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.AddNodeToNetworkResponse
+	var r0 *gen.AddNodeToSiteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeToNetworkRequest) (*gen.AddNodeToNetworkResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeToSiteRequest) (*gen.AddNodeToSiteResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeToNetworkRequest) *gen.AddNodeToNetworkResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNodeToSiteRequest) *gen.AddNodeToSiteResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddNodeToNetworkResponse)
+			r0 = ret.Get(0).(*gen.AddNodeToSiteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddNodeToNetworkRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddNodeToSiteRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -145,23 +145,23 @@ func (_m *NodeServiceServer) DetachNode(_a0 context.Context, _a1 *gen.DetachNode
 }
 
 // GetAllNodes provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) GetAllNodes(_a0 context.Context, _a1 *gen.GetAllNodesRequest) (*gen.GetAllNodesResponse, error) {
+func (_m *NodeServiceServer) GetAllNodes(_a0 context.Context, _a1 *gen.GetNodesRequest) (*gen.GetNodesResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetAllNodesResponse
+	var r0 *gen.GetNodesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAllNodesRequest) (*gen.GetAllNodesResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesRequest) (*gen.GetNodesResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetAllNodesRequest) *gen.GetAllNodesResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesRequest) *gen.GetNodesResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetAllNodesResponse)
+			r0 = ret.Get(0).(*gen.GetNodesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetAllNodesRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodesRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -171,23 +171,23 @@ func (_m *NodeServiceServer) GetAllNodes(_a0 context.Context, _a1 *gen.GetAllNod
 }
 
 // GetFreeNodes provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) GetFreeNodes(_a0 context.Context, _a1 *gen.GetFreeNodesRequest) (*gen.GetFreeNodesResponse, error) {
+func (_m *NodeServiceServer) GetFreeNodes(_a0 context.Context, _a1 *gen.GetNodesRequest) (*gen.GetNodesResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetFreeNodesResponse
+	var r0 *gen.GetNodesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetFreeNodesRequest) (*gen.GetFreeNodesResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesRequest) (*gen.GetNodesResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetFreeNodesRequest) *gen.GetFreeNodesResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesRequest) *gen.GetNodesResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetFreeNodesResponse)
+			r0 = ret.Get(0).(*gen.GetNodesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetFreeNodesRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodesRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -222,24 +222,24 @@ func (_m *NodeServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeReques
 	return r0, r1
 }
 
-// ReleaseNodeFromNetwork provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) ReleaseNodeFromNetwork(_a0 context.Context, _a1 *gen.ReleaseNodeFromNetworkRequest) (*gen.ReleaseNodeFromNetworkResponse, error) {
+// ReleaseNodeFromSite provides a mock function with given fields: _a0, _a1
+func (_m *NodeServiceServer) ReleaseNodeFromSite(_a0 context.Context, _a1 *gen.ReleaseNodeFromSiteRequest) (*gen.ReleaseNodeFromSiteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.ReleaseNodeFromNetworkResponse
+	var r0 *gen.ReleaseNodeFromSiteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReleaseNodeFromNetworkRequest) (*gen.ReleaseNodeFromNetworkResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReleaseNodeFromSiteRequest) (*gen.ReleaseNodeFromSiteResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReleaseNodeFromNetworkRequest) *gen.ReleaseNodeFromNetworkResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReleaseNodeFromSiteRequest) *gen.ReleaseNodeFromSiteResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ReleaseNodeFromNetworkResponse)
+			r0 = ret.Get(0).(*gen.ReleaseNodeFromSiteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ReleaseNodeFromNetworkRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ReleaseNodeFromSiteRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

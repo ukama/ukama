@@ -17,12 +17,12 @@ service NodeService {
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
-    rpc GetAllNodes(GetAllNodesRequest) returns (GetAllNodesResponse);
-    rpc GetFreeNodes(GetFreeNodesRequest) returns (GetFreeNodesResponse);
+    rpc GetAllNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc GetFreeNodes(GetNodesRequest) returns (GetNodesResponse);
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
-    rpc AddNodeToNetwork(AddNodeToNetworkRequest)returns (AddNodeToNetworkResponse);
-    rpc ReleaseNodeFromNetwork(ReleaseNodeFromNetworkRequest)returns (ReleaseNodeFromNetworkResponse);
+    rpc AddNodeToSite(AddNodeToSiteRequest)returns (AddNodeToSiteResponse);
+    rpc ReleaseNodeFromSite(ReleaseNodeFromSiteRequest)returns (ReleaseNodeFromSiteResponse);
 }
 
 
@@ -57,20 +57,13 @@ message GetBySiteResponse{
 }
 
 
-message GetFreeNodesRequest{
+message GetNodesRequest{
 }
 
-message GetFreeNodesResponse{
+message GetNodesResponse{
    repeated Node node = 1;
 }
 
-
-message GetAllNodesRequest{
-}
-
-message GetAllNodesResponse{
-   repeated Node node = 1;
-}
 
 
 message  UpdateNodeRequest{
@@ -115,21 +108,21 @@ message DetachNodeResponse {
 
 }
 
-message AddNodeToNetworkRequest {
+message AddNodeToSiteRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
     string networkId = 2;
     string siteId = 3;
 }
 
-message AddNodeToNetworkResponse {
+message AddNodeToSiteResponse {
 
 }
 
-message ReleaseNodeFromNetworkRequest {
+message ReleaseNodeFromSiteRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 }
 
-message ReleaseNodeFromNetworkResponse {
+message ReleaseNodeFromSiteResponse {
 
 }
 

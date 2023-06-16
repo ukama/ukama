@@ -77,23 +77,10 @@ func (this *GetBySiteResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetFreeNodesRequest) Validate() error {
+func (this *GetNodesRequest) Validate() error {
 	return nil
 }
-func (this *GetFreeNodesResponse) Validate() error {
-	for _, item := range this.Node {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
-			}
-		}
-	}
-	return nil
-}
-func (this *GetAllNodesRequest) Validate() error {
-	return nil
-}
-func (this *GetAllNodesResponse) Validate() error {
+func (this *GetNodesResponse) Validate() error {
 	for _, item := range this.Node {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -150,22 +137,22 @@ func (this *DetachNodeRequest) Validate() error {
 func (this *DetachNodeResponse) Validate() error {
 	return nil
 }
-func (this *AddNodeToNetworkRequest) Validate() error {
+func (this *AddNodeToSiteRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
 	return nil
 }
-func (this *AddNodeToNetworkResponse) Validate() error {
+func (this *AddNodeToSiteResponse) Validate() error {
 	return nil
 }
-func (this *ReleaseNodeFromNetworkRequest) Validate() error {
+func (this *ReleaseNodeFromSiteRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
 	return nil
 }
-func (this *ReleaseNodeFromNetworkResponse) Validate() error {
+func (this *ReleaseNodeFromSiteResponse) Validate() error {
 	return nil
 }
 
