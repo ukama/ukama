@@ -14,7 +14,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *NodeAssigned) Validate() error {
+func (this *NodeAssignedEvent) Validate() error {
 	return nil
 }
 func (this *NodeReleaseEvent) Validate() error {
