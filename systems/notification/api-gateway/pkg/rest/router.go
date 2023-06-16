@@ -97,8 +97,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		mailer := auth.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
-		mailer.POST("/sendEmail", formatDoc("Get subscriber by id", ""), tonic.Handler(r.sendEmail, http.StatusOK))
+		//handle email notification
+		mailer := auth.Group("/mailer", "Mailer", "Mailer")
+		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmail, http.StatusOK))
 
 	}
 }
