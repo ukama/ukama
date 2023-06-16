@@ -138,10 +138,11 @@ export interface MyAppProps extends AppProps {
 }
 
 export type TSite = {
+  id: string;
   name: string;
   location: {
-    lat: number;
-    lng: number;
+    lat: string;
+    lng: string;
     address: string;
   };
   height: number;

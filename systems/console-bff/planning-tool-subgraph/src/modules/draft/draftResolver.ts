@@ -4,6 +4,7 @@ import { Context } from "../../common/context";
 import {
   AddDraftInput,
   Draft,
+  SiteLocationInput,
   UpdateEventInput,
   UpdateSiteInput,
 } from "./types";
@@ -117,6 +118,31 @@ export class DraftResolver {
                 lat: "",
                 lng: "",
                 address: "",
+              },
+            },
+          },
+        },
+      },
+      include: { site: { include: { location: true } }, events: true },
+    });
+    return dr;
+  }
+  @Mutation(() => Draft)
+  async updateSiteLocation(
+    @Arg("draftId") draftId: string,
+    @Arg("data") data: SiteLocationInput,
+    @Ctx() ctx: Context
+  ) {
+    const dr = await ctx.prisma.draft.update({
+      where: { id: draftId },
+      data: {
+        site: {
+          update: {
+            location: {
+              update: {
+                lat: data.lat,
+                lng: data.lng,
+                address: data.address,
               },
             },
           },

@@ -116,3 +116,14 @@ export class AddDraftInput {
   @Field()
   userId: string;
 }
+@InputType()
+export class SiteLocationInput {
+  @Field()
+  lat: string;
+
+  @Field()
+  lng: string;
+
+  @Field()
+  address: string;
+}

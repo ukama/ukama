@@ -1,3 +1,4 @@
+import { Draft } from '@/generated/planning-tool';
 import { colors } from '@/styles/theme';
 import { hexToRGB } from '@/utils';
 import { Edit } from '@mui/icons-material';
@@ -23,35 +24,35 @@ import {
 } from './styles';
 
 interface IDraftDropdown {
-  drafts: any;
+  draft: Draft | undefined;
+  drafts: Draft[];
   isLoading: boolean;
   handleAddDraft: Function;
   handleDraftUpdated: Function;
   handleDraftSelected: Function;
-  currentDraft: { id: string; name: string };
 }
 
 const DraftDropdown = ({
+  draft,
   drafts = [],
   isLoading,
-  currentDraft,
   handleAddDraft,
   handleDraftUpdated,
   handleDraftSelected,
 }: IDraftDropdown) => {
   const [newName, setNewName] = useState('');
   const [editName, setEditName] = useState(false);
-  const classes = useStyles({ isEmpty: !currentDraft.id });
+  const classes = useStyles({ isEmpty: !draft?.id });
   const handleNameUpdate = (n: string) => {
     setNewName('');
-    handleDraftUpdated(currentDraft.id, n);
+    handleDraftUpdated(draft?.id, n);
   };
   return (
     <LoadingWrapper isLoading={isLoading} width={'200px'} height={'32px'}>
       <Select
         disableUnderline
         variant="standard"
-        value={currentDraft.name}
+        value={draft?.name}
         onChange={(e) => handleDraftSelected(e.target.value)}
         SelectDisplayProps={SelectDisplayProps}
         MenuProps={{
@@ -72,7 +73,6 @@ const DraftDropdown = ({
         }}
         displayEmpty
         className={classes.selectStyle}
-        // renderValue={(selected) => selected}
         renderValue={(selected) => (selected ? selected : 'Add/Select a draft')}
         onClose={() => {
           setEditName(false);

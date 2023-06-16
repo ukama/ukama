@@ -62,8 +62,14 @@ mutation UpdateDraftName($updateDraftNameId: String!, $name: String!) {
   }
 }
 
-mutation UpdateSite($updateSiteId: String!, $data: UpdateSiteInput!) {
-  updateSite(id: $updateSiteId, data: $data) {
+mutation UpdateSite($draftId: String!, $data: UpdateSiteInput!) {
+  updateSite(id: $draftId, data: $data) {
+    ...draft
+  }
+}
+
+mutation UpdateSiteLocation($draftId: String!, $data: SiteLocationInput!) {
+  updateSiteLocation(draftId: $draftId, data: $data) {
     ...draft
   }
 }
