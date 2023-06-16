@@ -19,15 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	NodeService_AttachNodes_FullMethodName         = "/ukama.registry.node.v1.NodeService/AttachNodes"
-	NodeService_DetachNode_FullMethodName          = "/ukama.registry.node.v1.NodeService/DetachNode"
+	NodeService_AddNode_FullMethodName             = "/ukama.registry.node.v1.NodeService/AddNode"
+	NodeService_GetNode_FullMethodName             = "/ukama.registry.node.v1.NodeService/GetNode"
+	NodeService_GetNodesForSite_FullMethodName     = "/ukama.registry.node.v1.NodeService/GetNodesForSite"
+	NodeService_GetNodesForOrg_FullMethodName      = "/ukama.registry.node.v1.NodeService/GetNodesForOrg"
+	NodeService_GetAllNodes_FullMethodName         = "/ukama.registry.node.v1.NodeService/GetAllNodes"
+	NodeService_GetFreeNodesForOrg_FullMethodName  = "/ukama.registry.node.v1.NodeService/GetFreeNodesForOrg"
+	NodeService_GetFreeNodes_FullMethodName        = "/ukama.registry.node.v1.NodeService/GetFreeNodes"
 	NodeService_UpdateNodeState_FullMethodName     = "/ukama.registry.node.v1.NodeService/UpdateNodeState"
 	NodeService_UpdateNode_FullMethodName          = "/ukama.registry.node.v1.NodeService/UpdateNode"
-	NodeService_GetNode_FullMethodName             = "/ukama.registry.node.v1.NodeService/GetNode"
-	NodeService_GetAllNodes_FullMethodName         = "/ukama.registry.node.v1.NodeService/GetAllNodes"
-	NodeService_GetFreeNodes_FullMethodName        = "/ukama.registry.node.v1.NodeService/GetFreeNodes"
-	NodeService_AddNode_FullMethodName             = "/ukama.registry.node.v1.NodeService/AddNode"
 	NodeService_DeleteNode_FullMethodName          = "/ukama.registry.node.v1.NodeService/DeleteNode"
+	NodeService_AttachNodes_FullMethodName         = "/ukama.registry.node.v1.NodeService/AttachNodes"
+	NodeService_DetachNode_FullMethodName          = "/ukama.registry.node.v1.NodeService/DetachNode"
 	NodeService_AddNodeToSite_FullMethodName       = "/ukama.registry.node.v1.NodeService/AddNodeToSite"
 	NodeService_ReleaseNodeFromSite_FullMethodName = "/ukama.registry.node.v1.NodeService/ReleaseNodeFromSite"
 )
@@ -36,15 +39,18 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NodeServiceClient interface {
-	AttachNodes(ctx context.Context, in *AttachNodesRequest, opts ...grpc.CallOption) (*AttachNodesResponse, error)
-	DetachNode(ctx context.Context, in *DetachNodeRequest, opts ...grpc.CallOption) (*DetachNodeResponse, error)
+	AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
+	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
+	GetNodesForSite(ctx context.Context, in *GetBySiteRequest, opts ...grpc.CallOption) (*GetBySiteResponse, error)
+	GetNodesForOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
+	GetAllNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
+	GetFreeNodesForOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
+	GetFreeNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
 	UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
 	UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
-	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
-	GetAllNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
-	GetFreeNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
-	AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
 	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
+	AttachNodes(ctx context.Context, in *AttachNodesRequest, opts ...grpc.CallOption) (*AttachNodesResponse, error)
+	DetachNode(ctx context.Context, in *DetachNodeRequest, opts ...grpc.CallOption) (*DetachNodeResponse, error)
 	AddNodeToSite(ctx context.Context, in *AddNodeToSiteRequest, opts ...grpc.CallOption) (*AddNodeToSiteResponse, error)
 	ReleaseNodeFromSite(ctx context.Context, in *ReleaseNodeFromSiteRequest, opts ...grpc.CallOption) (*ReleaseNodeFromSiteResponse, error)
 }
@@ -57,18 +63,63 @@ func NewNodeServiceClient(cc grpc.ClientConnInterface) NodeServiceClient {
 	return &nodeServiceClient{cc}
 }
 
-func (c *nodeServiceClient) AttachNodes(ctx context.Context, in *AttachNodesRequest, opts ...grpc.CallOption) (*AttachNodesResponse, error) {
-	out := new(AttachNodesResponse)
-	err := c.cc.Invoke(ctx, NodeService_AttachNodes_FullMethodName, in, out, opts...)
+func (c *nodeServiceClient) AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error) {
+	out := new(AddNodeResponse)
+	err := c.cc.Invoke(ctx, NodeService_AddNode_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *nodeServiceClient) DetachNode(ctx context.Context, in *DetachNodeRequest, opts ...grpc.CallOption) (*DetachNodeResponse, error) {
-	out := new(DetachNodeResponse)
-	err := c.cc.Invoke(ctx, NodeService_DetachNode_FullMethodName, in, out, opts...)
+func (c *nodeServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
+	out := new(GetNodeResponse)
+	err := c.cc.Invoke(ctx, NodeService_GetNode_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) GetNodesForSite(ctx context.Context, in *GetBySiteRequest, opts ...grpc.CallOption) (*GetBySiteResponse, error) {
+	out := new(GetBySiteResponse)
+	err := c.cc.Invoke(ctx, NodeService_GetNodesForSite_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) GetNodesForOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error) {
+	out := new(GetByOrgResponse)
+	err := c.cc.Invoke(ctx, NodeService_GetNodesForOrg_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) GetAllNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
+	out := new(GetNodesResponse)
+	err := c.cc.Invoke(ctx, NodeService_GetAllNodes_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) GetFreeNodesForOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error) {
+	out := new(GetByOrgResponse)
+	err := c.cc.Invoke(ctx, NodeService_GetFreeNodesForOrg_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) GetFreeNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
+	out := new(GetNodesResponse)
+	err := c.cc.Invoke(ctx, NodeService_GetFreeNodes_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -93,45 +144,27 @@ func (c *nodeServiceClient) UpdateNode(ctx context.Context, in *UpdateNodeReques
 	return out, nil
 }
 
-func (c *nodeServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
-	out := new(GetNodeResponse)
-	err := c.cc.Invoke(ctx, NodeService_GetNode_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nodeServiceClient) GetAllNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
-	out := new(GetNodesResponse)
-	err := c.cc.Invoke(ctx, NodeService_GetAllNodes_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nodeServiceClient) GetFreeNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
-	out := new(GetNodesResponse)
-	err := c.cc.Invoke(ctx, NodeService_GetFreeNodes_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nodeServiceClient) AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error) {
-	out := new(AddNodeResponse)
-	err := c.cc.Invoke(ctx, NodeService_AddNode_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *nodeServiceClient) DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error) {
 	out := new(DeleteNodeResponse)
 	err := c.cc.Invoke(ctx, NodeService_DeleteNode_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) AttachNodes(ctx context.Context, in *AttachNodesRequest, opts ...grpc.CallOption) (*AttachNodesResponse, error) {
+	out := new(AttachNodesResponse)
+	err := c.cc.Invoke(ctx, NodeService_AttachNodes_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) DetachNode(ctx context.Context, in *DetachNodeRequest, opts ...grpc.CallOption) (*DetachNodeResponse, error) {
+	out := new(DetachNodeResponse)
+	err := c.cc.Invoke(ctx, NodeService_DetachNode_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -160,15 +193,18 @@ func (c *nodeServiceClient) ReleaseNodeFromSite(ctx context.Context, in *Release
 // All implementations must embed UnimplementedNodeServiceServer
 // for forward compatibility
 type NodeServiceServer interface {
-	AttachNodes(context.Context, *AttachNodesRequest) (*AttachNodesResponse, error)
-	DetachNode(context.Context, *DetachNodeRequest) (*DetachNodeResponse, error)
+	AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
+	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
+	GetNodesForSite(context.Context, *GetBySiteRequest) (*GetBySiteResponse, error)
+	GetNodesForOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
+	GetAllNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
+	GetFreeNodesForOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
+	GetFreeNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
 	UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeResponse, error)
 	UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error)
-	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
-	GetAllNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
-	GetFreeNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
-	AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
 	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
+	AttachNodes(context.Context, *AttachNodesRequest) (*AttachNodesResponse, error)
+	DetachNode(context.Context, *DetachNodeRequest) (*DetachNodeResponse, error)
 	AddNodeToSite(context.Context, *AddNodeToSiteRequest) (*AddNodeToSiteResponse, error)
 	ReleaseNodeFromSite(context.Context, *ReleaseNodeFromSiteRequest) (*ReleaseNodeFromSiteResponse, error)
 	mustEmbedUnimplementedNodeServiceServer()
@@ -178,11 +214,26 @@ type NodeServiceServer interface {
 type UnimplementedNodeServiceServer struct {
 }
 
-func (UnimplementedNodeServiceServer) AttachNodes(context.Context, *AttachNodesRequest) (*AttachNodesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AttachNodes not implemented")
+func (UnimplementedNodeServiceServer) AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddNode not implemented")
 }
-func (UnimplementedNodeServiceServer) DetachNode(context.Context, *DetachNodeRequest) (*DetachNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DetachNode not implemented")
+func (UnimplementedNodeServiceServer) GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNode not implemented")
+}
+func (UnimplementedNodeServiceServer) GetNodesForSite(context.Context, *GetBySiteRequest) (*GetBySiteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodesForSite not implemented")
+}
+func (UnimplementedNodeServiceServer) GetNodesForOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodesForOrg not implemented")
+}
+func (UnimplementedNodeServiceServer) GetAllNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllNodes not implemented")
+}
+func (UnimplementedNodeServiceServer) GetFreeNodesForOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFreeNodesForOrg not implemented")
+}
+func (UnimplementedNodeServiceServer) GetFreeNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFreeNodes not implemented")
 }
 func (UnimplementedNodeServiceServer) UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNodeState not implemented")
@@ -190,20 +241,14 @@ func (UnimplementedNodeServiceServer) UpdateNodeState(context.Context, *UpdateNo
 func (UnimplementedNodeServiceServer) UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNode not implemented")
 }
-func (UnimplementedNodeServiceServer) GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNode not implemented")
-}
-func (UnimplementedNodeServiceServer) GetAllNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAllNodes not implemented")
-}
-func (UnimplementedNodeServiceServer) GetFreeNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFreeNodes not implemented")
-}
-func (UnimplementedNodeServiceServer) AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddNode not implemented")
-}
 func (UnimplementedNodeServiceServer) DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteNode not implemented")
+}
+func (UnimplementedNodeServiceServer) AttachNodes(context.Context, *AttachNodesRequest) (*AttachNodesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AttachNodes not implemented")
+}
+func (UnimplementedNodeServiceServer) DetachNode(context.Context, *DetachNodeRequest) (*DetachNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DetachNode not implemented")
 }
 func (UnimplementedNodeServiceServer) AddNodeToSite(context.Context, *AddNodeToSiteRequest) (*AddNodeToSiteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddNodeToSite not implemented")
@@ -224,38 +269,128 @@ func RegisterNodeServiceServer(s grpc.ServiceRegistrar, srv NodeServiceServer) {
 	s.RegisterService(&NodeService_ServiceDesc, srv)
 }
 
-func _NodeService_AttachNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AttachNodesRequest)
+func _NodeService_AddNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddNodeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServiceServer).AttachNodes(ctx, in)
+		return srv.(NodeServiceServer).AddNode(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: NodeService_AttachNodes_FullMethodName,
+		FullMethod: NodeService_AddNode_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).AttachNodes(ctx, req.(*AttachNodesRequest))
+		return srv.(NodeServiceServer).AddNode(ctx, req.(*AddNodeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NodeService_DetachNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DetachNodeRequest)
+func _NodeService_GetNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NodeServiceServer).DetachNode(ctx, in)
+		return srv.(NodeServiceServer).GetNode(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: NodeService_DetachNode_FullMethodName,
+		FullMethod: NodeService_GetNode_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).DetachNode(ctx, req.(*DetachNodeRequest))
+		return srv.(NodeServiceServer).GetNode(ctx, req.(*GetNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_GetNodesForSite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBySiteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).GetNodesForSite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_GetNodesForSite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).GetNodesForSite(ctx, req.(*GetBySiteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_GetNodesForOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByOrgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).GetNodesForOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_GetNodesForOrg_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).GetNodesForOrg(ctx, req.(*GetByOrgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_GetAllNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).GetAllNodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_GetAllNodes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).GetAllNodes(ctx, req.(*GetNodesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_GetFreeNodesForOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByOrgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).GetFreeNodesForOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_GetFreeNodesForOrg_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).GetFreeNodesForOrg(ctx, req.(*GetByOrgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_GetFreeNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).GetFreeNodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_GetFreeNodes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).GetFreeNodes(ctx, req.(*GetNodesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -296,78 +431,6 @@ func _NodeService_UpdateNode_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NodeService_GetNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNodeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NodeServiceServer).GetNode(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NodeService_GetNode_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).GetNode(ctx, req.(*GetNodeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NodeService_GetAllNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNodesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NodeServiceServer).GetAllNodes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NodeService_GetAllNodes_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).GetAllNodes(ctx, req.(*GetNodesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NodeService_GetFreeNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNodesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NodeServiceServer).GetFreeNodes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NodeService_GetFreeNodes_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).GetFreeNodes(ctx, req.(*GetNodesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NodeService_AddNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddNodeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NodeServiceServer).AddNode(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NodeService_AddNode_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).AddNode(ctx, req.(*AddNodeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _NodeService_DeleteNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteNodeRequest)
 	if err := dec(in); err != nil {
@@ -382,6 +445,42 @@ func _NodeService_DeleteNode_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NodeServiceServer).DeleteNode(ctx, req.(*DeleteNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_AttachNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AttachNodesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).AttachNodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_AttachNodes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).AttachNodes(ctx, req.(*AttachNodesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_DetachNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DetachNodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).DetachNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_DetachNode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).DetachNode(ctx, req.(*DetachNodeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -430,12 +529,32 @@ var NodeService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*NodeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AttachNodes",
-			Handler:    _NodeService_AttachNodes_Handler,
+			MethodName: "AddNode",
+			Handler:    _NodeService_AddNode_Handler,
 		},
 		{
-			MethodName: "DetachNode",
-			Handler:    _NodeService_DetachNode_Handler,
+			MethodName: "GetNode",
+			Handler:    _NodeService_GetNode_Handler,
+		},
+		{
+			MethodName: "GetNodesForSite",
+			Handler:    _NodeService_GetNodesForSite_Handler,
+		},
+		{
+			MethodName: "GetNodesForOrg",
+			Handler:    _NodeService_GetNodesForOrg_Handler,
+		},
+		{
+			MethodName: "GetAllNodes",
+			Handler:    _NodeService_GetAllNodes_Handler,
+		},
+		{
+			MethodName: "GetFreeNodesForOrg",
+			Handler:    _NodeService_GetFreeNodesForOrg_Handler,
+		},
+		{
+			MethodName: "GetFreeNodes",
+			Handler:    _NodeService_GetFreeNodes_Handler,
 		},
 		{
 			MethodName: "UpdateNodeState",
@@ -446,24 +565,16 @@ var NodeService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NodeService_UpdateNode_Handler,
 		},
 		{
-			MethodName: "GetNode",
-			Handler:    _NodeService_GetNode_Handler,
-		},
-		{
-			MethodName: "GetAllNodes",
-			Handler:    _NodeService_GetAllNodes_Handler,
-		},
-		{
-			MethodName: "GetFreeNodes",
-			Handler:    _NodeService_GetFreeNodes_Handler,
-		},
-		{
-			MethodName: "AddNode",
-			Handler:    _NodeService_AddNode_Handler,
-		},
-		{
 			MethodName: "DeleteNode",
 			Handler:    _NodeService_DeleteNode_Handler,
+		},
+		{
+			MethodName: "AttachNodes",
+			Handler:    _NodeService_AttachNodes_Handler,
+		},
+		{
+			MethodName: "DetachNode",
+			Handler:    _NodeService_DetachNode_Handler,
 		},
 		{
 			MethodName: "AddNodeToSite",

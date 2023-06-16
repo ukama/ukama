@@ -29,23 +29,6 @@ func NewSiteRepo(db sql.Db) SiteRepo {
 	}
 }
 
-func (s *siteRepo) GetNodes(siteID uuid.UUID) ([]Node, error) {
-	var nodes []Node
-
-	result := s.Db.GetGormDb().Joins("JOIN sites on sites.node_id=nodes.id").
-		Preload(clause.Associations).Where("sites.site_id=?", siteID.String()).Find(&nodes)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	return nodes, nil
-}
-
 func (s *siteRepo) AddNode(node *Site, nestedFunc func(node *Site, tx *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Create(node)
@@ -64,6 +47,51 @@ func (s *siteRepo) AddNode(node *Site, nestedFunc func(node *Site, tx *gorm.DB) 
 	})
 
 	return err
+}
+
+func (s *siteRepo) GetNodes(siteID uuid.UUID) ([]Node, error) {
+	var nodes []Node
+
+	result := s.Db.GetGormDb().Joins("JOIN sites on sites.node_id=nodes.id").
+		Preload(clause.Associations).Where("sites.site_id=?", siteID.String()).Find(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return nodes, nil
+}
+
+// TODO: test those raw queries
+func (s *siteRepo) GetFreeNodes() ([]Node, error) {
+	var nodes []Node
+
+	result := s.Db.GetGormDb().Raw("SELECT * from nodes WHERE id NOT IN ? AND deleted_at IS NULL",
+		s.Db.GetGormDb().Raw("SELECT node_id from sites WHERE deleted_at IS NULL")).Scan(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return nodes, nil
+}
+
+// TODO: test those raw queries
+func (s *siteRepo) GetFreeNodesForOrg(orgId uuid.UUID) ([]Node, error) {
+	var nodes []Node
+
+	result := s.Db.GetGormDb().Raw("SELECT * from nodes WHERE id NOT IN ? AND org_Id= ? AND  deleted_at IS NULL",
+		s.Db.GetGormDb().Raw("SELECT node_id from sites WHERE deleted_at IS NULL"), orgId).Scan(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return nodes, nil
 }
 
 func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) error {
@@ -93,32 +121,6 @@ func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) error {
 	})
 
 	return err
-}
-
-func (s *siteRepo) GetFreeNodes() ([]Node, error) {
-	var nodes []Node
-
-	result := s.Db.GetGormDb().Raw("SELECT * from nodes WHERE id NOT IN ? AND deleted_at IS NULL",
-		s.Db.GetGormDb().Raw("SELECT node_id from sites WHERE deleted_at IS NULL")).Scan(&nodes)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return nodes, nil
-}
-
-func (s *siteRepo) GetFreeNodesForOrg(orgId uuid.UUID) ([]Node, error) {
-	var nodes []Node
-
-	result := s.Db.GetGormDb().Raw("SELECT * from nodes WHERE id NOT IN ? AND org_Id= ? AND  deleted_at IS NULL",
-		s.Db.GetGormDb().Raw("SELECT node_id from sites WHERE deleted_at IS NULL"), orgId).Scan(&nodes)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return nodes, nil
 }
 
 func (s *siteRepo) IsAllocated(nodeId ukama.NodeID) bool {

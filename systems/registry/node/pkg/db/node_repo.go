@@ -14,7 +14,6 @@ import (
 
 const MaxAttachedNodes = 2
 
-// NodeID must be lowercase
 type NodeRepo interface {
 	Add(*Node, func(*Node, *gorm.DB) error) error
 	Get(ukama.NodeID) (*Node, error)

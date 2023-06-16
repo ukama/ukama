@@ -247,6 +247,39 @@ func (_m *NodeServiceClient) GetFreeNodes(ctx context.Context, in *gen.GetNodesR
 	return r0, r1
 }
 
+// GetFreeNodesForOrg provides a mock function with given fields: ctx, in, opts
+func (_m *NodeServiceClient) GetFreeNodesForOrg(ctx context.Context, in *gen.GetByOrgRequest, opts ...grpc.CallOption) (*gen.GetByOrgResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetByOrgResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) (*gen.GetByOrgResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) *gen.GetByOrgResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByOrgResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNode provides a mock function with given fields: ctx, in, opts
 func (_m *NodeServiceClient) GetNode(ctx context.Context, in *gen.GetNodeRequest, opts ...grpc.CallOption) (*gen.GetNodeResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -272,6 +305,72 @@ func (_m *NodeServiceClient) GetNode(ctx context.Context, in *gen.GetNodeRequest
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetNodesForOrg provides a mock function with given fields: ctx, in, opts
+func (_m *NodeServiceClient) GetNodesForOrg(ctx context.Context, in *gen.GetByOrgRequest, opts ...grpc.CallOption) (*gen.GetByOrgResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetByOrgResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) (*gen.GetByOrgResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) *gen.GetByOrgResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetByOrgResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetByOrgRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetNodesForSite provides a mock function with given fields: ctx, in, opts
+func (_m *NodeServiceClient) GetNodesForSite(ctx context.Context, in *gen.GetBySiteRequest, opts ...grpc.CallOption) (*gen.GetBySiteResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetBySiteResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBySiteRequest, ...grpc.CallOption) (*gen.GetBySiteResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetBySiteRequest, ...grpc.CallOption) *gen.GetBySiteResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetBySiteResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetBySiteRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

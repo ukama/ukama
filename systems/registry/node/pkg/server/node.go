@@ -137,8 +137,8 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 	return resp, nil
 }
 
-func (n *NodeServer) GetBySite(ctx context.Context, req *pb.GetBySiteRequest) (*pb.GetBySiteResponse, error) {
-	log.Infof("Getting all node  on  site %v", req.GetSiteId())
+func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteRequest) (*pb.GetBySiteResponse, error) {
+	log.Infof("Getting all nodes on site %v", req.GetSiteId())
 
 	site, err := uuid.FromString(req.GetSiteId())
 	if err != nil {
@@ -147,6 +147,8 @@ func (n *NodeServer) GetBySite(ctx context.Context, req *pb.GetBySiteRequest) (*
 
 	nodes, err := n.siteRepo.GetNodes(site)
 	if err != nil {
+		log.Error("error getting all nodes for site" + err.Error())
+
 		return nil, grpc.SqlErrorToGrpc(err, "nodes")
 	}
 
@@ -158,13 +160,36 @@ func (n *NodeServer) GetBySite(ctx context.Context, req *pb.GetBySiteRequest) (*
 	return resp, nil
 }
 
-func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
-	log.Infof("Get free nodes")
+func (n *NodeServer) GetNodesForOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
+	log.Infof("Getting all nodes for org %v", req.GetOrgId())
 
-	nodes, err := n.siteRepo.GetFreeNodes()
+	org, err := uuid.FromString(req.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of org uuid. Error %s", err.Error())
+	}
+
+	nodes, err := n.nodeRepo.GetForOrg(org)
+	if err != nil {
+		log.Error("error getting all nodes for org" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "nodes")
+	}
+
+	resp := &pb.GetByOrgResponse{
+		OrgId: req.GetOrgId(),
+		Nodes: dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
+func (n *NodeServer) GetAllNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
+	log.Infof("Getting all nodes.")
+
+	nodes, err := n.nodeRepo.GetAll()
 
 	if err != nil {
-		log.Error("error getting the free node" + err.Error())
+		log.Error("error getting all nodes" + err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -176,13 +201,36 @@ func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetNodesRequest) 
 	return resp, nil
 }
 
-func (n *NodeServer) GetAllNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
-	log.Infof("Get all nodes.")
+func (n *NodeServer) GetFreeNodesForOrg(ctx context.Context, req *pb.GetByOrgRequest) (*pb.GetByOrgResponse, error) {
+	log.Infof("Getting free nodes for org %v", req.GetOrgId())
 
-	nodes, err := n.nodeRepo.GetAll()
+	org, err := uuid.FromString(req.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of org uuid. Error %s", err.Error())
+	}
+
+	nodes, err := n.siteRepo.GetFreeNodesForOrg(org)
+	if err != nil {
+		log.Error("error getting free nodes for org" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "nodes")
+	}
+
+	resp := &pb.GetByOrgResponse{
+		OrgId: req.GetOrgId(),
+		Nodes: dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
+func (n *NodeServer) GetFreeNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
+	log.Infof("Getting all free nodes")
+
+	nodes, err := n.siteRepo.GetFreeNodes()
 
 	if err != nil {
-		log.Error("error getting all node" + err.Error())
+		log.Error("error getting all free nodes" + err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}

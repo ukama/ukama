@@ -12,15 +12,18 @@ package ukama.registry.node.v1;
 
 
 service NodeService {
-    rpc AttachNodes(AttachNodesRequest) returns (AttachNodesResponse);
-    rpc DetachNode(DetachNodeRequest) returns (DetachNodeResponse);
+    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+    rpc GetNodesForSite(GetBySiteRequest) returns (GetBySiteResponse);
+    rpc GetNodesForOrg(GetByOrgRequest) returns (GetByOrgResponse);
+    rpc GetAllNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc GetFreeNodesForOrg(GetByOrgRequest) returns (GetByOrgResponse);
+    rpc GetFreeNodes(GetNodesRequest) returns (GetNodesResponse);
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
-    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
-    rpc GetAllNodes(GetNodesRequest) returns (GetNodesResponse);
-    rpc GetFreeNodes(GetNodesRequest) returns (GetNodesResponse);
-    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
+    rpc AttachNodes(AttachNodesRequest) returns (AttachNodesResponse);
+    rpc DetachNode(DetachNodeRequest) returns (DetachNodeResponse);
     rpc AddNodeToSite(AddNodeToSiteRequest)returns (AddNodeToSiteResponse);
     rpc ReleaseNodeFromSite(ReleaseNodeFromSiteRequest)returns (ReleaseNodeFromSiteResponse);
 }
@@ -57,6 +60,17 @@ message GetBySiteResponse{
 }
 
 
+message GetByOrgRequest{
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+}
+
+
+message GetByOrgResponse{
+    string orgId = 1 [json_name = "org_id"];
+    repeated Node nodes = 2;
+}
+
+
 message GetNodesRequest{
 }
 
@@ -65,6 +79,10 @@ message GetNodesResponse{
 }
 
 
+message  UpdateNodeStateRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string state = 2;
+}
 
 message  UpdateNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
@@ -73,12 +91,6 @@ message  UpdateNodeRequest{
 
 message UpdateNodeResponse {
     Node node = 1;
-}
-
-
-message  UpdateNodeStateRequest{
-    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-    string state = 2;
 }
 
 
@@ -96,7 +108,6 @@ message AttachNodesRequest {
 }
 
 message AttachNodesResponse {
-
 }
 
 
@@ -105,8 +116,8 @@ message DetachNodeRequest{
 }
 
 message DetachNodeResponse {
-
 }
+
 
 message AddNodeToSiteRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
@@ -115,16 +126,16 @@ message AddNodeToSiteRequest {
 }
 
 message AddNodeToSiteResponse {
-
 }
+
 
 message ReleaseNodeFromSiteRequest {
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 }
 
 message ReleaseNodeFromSiteResponse {
-
 }
+
 
 message Node {
     string id = 1 [(validator.field) = {string_not_empty: true}];
