@@ -1,4 +1,4 @@
-import { commonData } from '@/app-recoil';
+import { commonData, snackbarMessage } from '@/app-recoil';
 import {
   useAddDraftMutation,
   useGetDraftsQuery,
@@ -9,7 +9,7 @@ import {
 import styles from '@/styles/Site_Planning.module.css';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
-import { TCommonData, TSite } from '@/types';
+import { TCommonData, TSite, TSnackMessage } from '@/types';
 import SitePopup from '@/ui/SitePopup';
 import DraftDropdown from '@/ui/molecules/DraftDropdown';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
@@ -19,12 +19,11 @@ import {
   RightOverlayUI,
   SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
-import { Popover } from '@mui/material';
+import { AlertColor, Popover } from '@mui/material';
 import { useState } from 'react';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const DEFAULT_CENTER = [38.907132, -77.036546];
-const DRAFTS = [{ id: 1, name: 'Draft 1' }];
 
 const Page = () => {
   const [site, setSite] = useState<TSite>({
@@ -39,7 +38,6 @@ const Page = () => {
       address: '',
     },
   });
-  const _commonData = useRecoilValue<TCommonData>(commonData);
   const [currentDraft, setCurrentDraft] = useState({
     id: '',
     name: '',
@@ -48,10 +46,23 @@ const Page = () => {
   const [addSite, setAddSite] = useState(false);
   const [addLink, setAddLink] = useState(false);
   const [togglePower, setTogglePower] = useState(false);
+  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [marker, setMarker] = useState([0, 0]);
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
-
+  const showAlert = (
+    id: string,
+    message: string,
+    type: AlertColor,
+    show: boolean,
+  ) =>
+    setSnackbarMessage({
+      id,
+      message,
+      type,
+      show,
+    });
   const {
     data: getDraftsData,
     loading: getDraftsLoading,
@@ -61,34 +72,42 @@ const Page = () => {
       userId: _commonData.userId,
     },
     onCompleted: (data) => {
-      /* Save drafts in state */
-      console.log(data);
       setCurrentDraft({
         id: data.getDrafts[0].id,
         name: data.getDrafts[0].name,
       });
     },
     onError: (error) => {
-      /* Show error message */
+      showAlert('get-drafts-error', error.message, 'error', true);
     },
   });
 
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
-    onCompleted: (data) => {
-      /* Show success message */
+    onCompleted: () => {
       refetchDrafts();
+      showAlert(
+        'update-drafts-success',
+        'Draft added successfully.',
+        'success',
+        true,
+      );
     },
     onError: (error) => {
-      /* Show error message */
+      showAlert('add-drafts-error', error.message, 'error', true);
     },
   });
   const [updateDraftCall, { loading: updateDraftLoading }] =
     useUpdateDraftNameMutation({
       onCompleted: (data) => {
-        /* Show success message */
+        showAlert(
+          'update-drafts-success',
+          'Draft updated successfully',
+          'success',
+          true,
+        );
       },
       onError: (error) => {
-        /* Show error message */
+        showAlert('update-drafts-error', error.message, 'error', true);
       },
     });
   const [updateSiteCall, { loading: updateSiteLoading }] =
@@ -97,7 +116,7 @@ const Page = () => {
         /* Show success message */
       },
       onError: (error) => {
-        /* Show error message */
+        showAlert('update-site-error', error.message, 'error', true);
       },
     });
   const [updateEventCall, { loading: updateEventLoading }] =
@@ -106,7 +125,7 @@ const Page = () => {
         /* Show success message */
       },
       onError: (error) => {
-        /* Show error message */
+        showAlert('update-event-error', error.message, 'error', true);
       },
     });
 
@@ -150,7 +169,7 @@ const Page = () => {
         data: {
           name: 'New Draft',
           userId: _commonData.userId,
-          lastSaved: new Date().getTime() / 1000,
+          lastSaved: Math.floor(new Date().getTime() / 1000),
         },
       },
     });
@@ -226,11 +245,13 @@ const Page = () => {
                   setSearch={setSearch}
                   handleAddSite={handleAddSite}
                   handleAddLink={handleAddLink}
+                  isCurrentDraft={currentDraft.id !== ''}
                 />
                 <RightOverlayUI
                   id={id}
                   handleClick={handleClick}
                   handleTogglePower={handleOnOff}
+                  isCurrentDraft={currentDraft.id !== ''}
                 />
                 <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png" />
                 <Marker draggable position={marker} ondrag={handleMarkerDrag}>

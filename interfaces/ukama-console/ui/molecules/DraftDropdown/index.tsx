@@ -32,7 +32,7 @@ interface IDraftDropdown {
 }
 
 const DraftDropdown = ({
-  drafts,
+  drafts = [],
   isLoading,
   currentDraft,
   handleAddDraft,
@@ -41,7 +41,7 @@ const DraftDropdown = ({
 }: IDraftDropdown) => {
   const [newName, setNewName] = useState('');
   const [editName, setEditName] = useState(false);
-  const classes = useStyles();
+  const classes = useStyles({ isEmpty: !currentDraft.id });
   const handleNameUpdate = (n: string) => {
     setNewName('');
     handleDraftUpdated(currentDraft.id, n);
@@ -70,8 +70,10 @@ const DraftDropdown = ({
             },
           },
         }}
+        displayEmpty
         className={classes.selectStyle}
-        renderValue={(selected) => selected}
+        // renderValue={(selected) => selected}
+        renderValue={(selected) => (selected ? selected : 'Add/Select a draft')}
         onClose={() => {
           setEditName(false);
           setNewName('');
@@ -127,7 +129,7 @@ const DraftDropdown = ({
             </IconButton>
           </MenuItem>
         ))}
-        <Divider />
+        {drafts.length > 0 && <Divider />}
         <MenuItem
           onClick={(e) => {
             e.stopPropagation();
@@ -135,7 +137,7 @@ const DraftDropdown = ({
           }}
         >
           <AddIcon color="action" sx={ICON_STYLE} />
-          <Typography variant="body1">Add new draft</Typography>
+          <Typography variant="body2">Add new draft</Typography>
         </MenuItem>
       </Select>
     </LoadingWrapper>
