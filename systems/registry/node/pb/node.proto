@@ -16,9 +16,7 @@ service NodeService {
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
     rpc GetNodesForSite(GetBySiteRequest) returns (GetBySiteResponse);
     rpc GetNodesForOrg(GetByOrgRequest) returns (GetByOrgResponse);
-    rpc GetAllNodes(GetNodesRequest) returns (GetNodesResponse);
-    rpc GetFreeNodesForOrg(GetByOrgRequest) returns (GetByOrgResponse);
-    rpc GetFreeNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
@@ -62,6 +60,7 @@ message GetBySiteResponse{
 
 message GetByOrgRequest{
     string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    bool free = 2;
 }
 
 
@@ -72,6 +71,7 @@ message GetByOrgResponse{
 
 
 message GetNodesRequest{
+    bool free = 1;
 }
 
 message GetNodesResponse{
