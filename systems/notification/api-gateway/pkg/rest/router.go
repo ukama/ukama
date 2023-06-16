@@ -111,17 +111,20 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) sendEmail(c *gin.Context, req *SendEmailReq) error {
+func (r *Router) sendEmail(c *gin.Context, req *SendEmailReq) (message emailPkg.SendEmailResponse, err error) {
 	payload := emailPkg.SendEmailRequest{
 		To:      req.To,
 		Subject: req.Subject,
 		Body:    req.Body,
 		Values:  req.Values,
 	}
-	_, err := r.clients.m.SendEmail(&payload)
+	res, err := r.clients.m.SendEmail(&payload)
 
 	if err != nil {
-		return err
+		return emailPkg.SendEmailResponse{}, err
 	}
-	return nil
+
+	return emailPkg.SendEmailResponse{
+		Message: res.Message,
+	}, nil
 }
