@@ -136,12 +136,11 @@ type Auth struct {
 }
 
 type Mailer struct {
-	To       string `default:""`
 	Host     string `default:"localhost"`
 	Port     int    `default:"587"`
 	Username string `default:""`
 	Password string `default:""`
-	From     string `default:"hello@dev.ukama.com" validate:"required"`
+	From     string `default:"hello@dev.ukama.com"`
 }
 
 // LoadConfig loads configuration into `config` object
@@ -243,7 +242,6 @@ func LoadMailerHostConfig(name string) *Mailer {
 	s := &Mailer{}
 	mailerHost := "_MAILER_HOST"
 	mailerPort := "_MAILER_PORT"
-	mailerTo := "_MAILER_TO"
 	mailerUsername := "_MAILER_USERNAME"
 	mailerPassword := "_MAILER_PASSWORD"
 	mailerFrom := "_MAILER_FROM"
@@ -274,13 +272,6 @@ val, present := os.LookupEnv(strings.ToUpper(name + mailerFrom))
 		}
 	} else {
 		logrus.Errorf("%s mailer port env not found", name)
-	}
-
-	val, present = os.LookupEnv(strings.ToUpper(name + mailerTo))
-	if present {
-		s.To = val
-	} else {
-		logrus.Errorf("%s mailer to env not found", name)
 	}
 
 	val, present = os.LookupEnv(strings.ToUpper(name + mailerUsername))

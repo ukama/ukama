@@ -34,7 +34,6 @@ func main() {
 }
 
 func initConfig() {
-
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -67,7 +66,6 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	
 	srv := server.NewMaillingServer(db.NewMaillingRepo(gormdb),serviceConfig.Mailer)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {

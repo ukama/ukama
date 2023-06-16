@@ -3,9 +3,11 @@ package server
 import (
 	"bytes"
 	"context"
+	"errors"
 	"html/template"
 	"net/smtp"
 	"strconv"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -18,7 +20,7 @@ import (
 )
 
 type EmailData struct {
-	To      string
+	To      []string 
 	Subject string
 	Body    string
 	Values  map[string]interface{}
@@ -38,6 +40,9 @@ func NewMaillingServer(maillingRepoRepo db.MaillingRepo, mail *config.Mailer) *M
 }
 
 func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
+	if req.To == nil || req.Subject == "" || req.Body == "" || req.Values == nil {
+		return nil, errors.New("missing required fields in SendEmailRequest")
+	}
 	currentTime := time.Now()
 	sentAt := &currentTime
 
@@ -45,10 +50,8 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 	to := req.GetTo()
 	subject := req.GetSubject()
 	bodyTemplate := req.GetBody()
-	values := req.Values
-
+	values := req.GetValues()
 	emailData := &EmailData{
-		To:      to,
 		Subject: subject,
 		Body:    bodyTemplate,
 		Values:  make(map[string]interface{}),
@@ -71,22 +74,28 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 		return nil, err
 	}
 
+	var recipientList []string
+	if len(to) > 0 {
+		recipientList = make([]string, len(to))
+		copy(recipientList, to)
+	}
+  
 	msg := "From: " + from + "\r\n" +
-		"To: " + to + "\r\n" +
+		"To: " + strings.Join(recipientList, ",") + "\r\n" +
 		"Subject: " + subject + "\r\n" +
 		"MIME-Version: 1.0\r\n" +
-		"Content-Type: text/html; charset=utf-8\r\n" + 
+		"Content-Type: text/html; charset=utf-8\r\n" +
 		"\r\n" +
 		bodyBuffer.String()
 
 	auth := smtp.PlainAuth("", s.mailer.Username, s.mailer.Password, s.mailer.Host)
 	port := strconv.Itoa(s.mailer.Port)
-	err = smtp.SendMail(s.mailer.Host+":"+port, auth, from, []string{to}, []byte(msg))
+	err = smtp.SendMail(s.mailer.Host+":"+port, auth, from, recipientList, []byte(msg))
 	if err != nil {
 		log.Errorf("Failed to send email: %v", err.Error())
 		err = s.maillingRepoRepo.SendEmail(&db.Mailing{
 			MailId:  uuid.NewV4(),
-			Email:   to,
+			Email:   recipientList[0], // Use the first email if only one is provided
 			Subject: subject,
 			Body:    bodyBuffer.String(),
 			SentAt:  sentAt,
@@ -94,22 +103,23 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 		})
 		return nil, err
 	}
-	log.Infof("Email sent successfully to %s", to)
-	
 
-	err = s.maillingRepoRepo.SendEmail(&db.Mailing{
-		MailId:  uuid.NewV4(),
-		Email:   to,
-		Subject: subject,
-		Body:    bodyBuffer.String(),
-		SentAt:  sentAt,
-		Status:  "sent",
-	})
-	if err != nil {
-		log.Error("error while adding subscriber" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+	log.Infof("Email sent successfully to %v", recipientList)
+
+	for _, recipient := range recipientList {
+		err = s.maillingRepoRepo.SendEmail(&db.Mailing{
+			MailId:  uuid.NewV4(),
+			Email:   recipient,
+			Subject: subject,
+			Body:    bodyBuffer.String(),
+			SentAt:  sentAt,
+			Status:  "sent",
+		})
+		if err != nil {
+			log.Error("Error while sending email" + err.Error())
+			return nil, grpc.SqlErrorToGrpc(err, "Failed to send email")
+		}
 	}
-
 
 	response := &pb.SendEmailResponse{
 		Message: "Email sent successfully",

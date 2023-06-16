@@ -16,7 +16,7 @@ rpc SendEmail (SendEmailRequest) returns (SendEmailResponse) {}
 
 // Defines the request and response for sending emails
 message SendEmailRequest{
-    string to = 1;
+    repeated string to = 1;
     string subject = 2;
     string body = 3;
     map<string, string> values = 4;
