@@ -1,68 +1,62 @@
 package client
 
 import (
-	"net/http"
+	"context"
 	"time"
 
-	"github.com/go-playground/validator"
-	res "github.com/ukama/ukama/systems/mailer/api-gateway/pkg/rest"
-
-	"gopkg.in/gomail.v2"
+	"github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
-type SmtpConfig struct {
-	From     string `default:"hello@dev.ukama.com" validate:"required"`
-	Host     string `default:"localhost" validate:"required"`
-	Port     int    `default:"25" validate:"required"`
-	Password string
-	Username string
+type Mailer struct {
+	conn    *grpc.ClientConn
+	timeout time.Duration
+	client  pb.MaillingServiceClient
+	host    string
 }
 
-type MailerClient struct {
-	client   *http.Client
-	host     string
-	port     int
-	username string
-	password string
-	from	 string
-}
+func NewMailer(host string, timeout time.Duration) *Mailer {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-func NewMailerClient(host string, port int, timeout time.Duration, username string, password string,from string) *MailerClient {
-	return &MailerClient{
-		client:   &http.Client{Timeout: timeout},
-		host:     host,
-		port:     port,
-		username: username,
-		password: password,
-		from:	 from,
+	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		logrus.Fatalf("did not connect: %v", err)
+	}
+	client := pb.NewMaillingServiceClient(conn)
+
+	return &Mailer{
+		conn:    conn,
+		client:  client,
+		timeout: timeout,
+		host:    host,
 	}
 }
 
-func (c *MailerClient) SendEmail(to string, message string, subject string) (res.SendEmailRes, error) {
-	var smtpConfig SmtpConfig
-	smtpConfig.Host = c.host
-	smtpConfig.Port = c.port
-	smtpConfig.Password = c.password
-	smtpConfig.Username = c.username
-	smtpConfig.From = c.from
-	validate := validator.New()
-	if err := validate.Struct(smtpConfig); err != nil {
-		return res.SendEmailRes{}, err
+func NewMailerFromClient(MailerClient pb.MaillingServiceClient) *Mailer {
+	return &Mailer{
+		host:    "localhost",
+		timeout: 1 * time.Second,
+		conn:    nil,
+		client:  MailerClient,
+	}
+}
+
+func (m *Mailer) Close() {
+	m.conn.Close()
+}
+
+func (m *Mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+
+	res, err := m.client.SendEmail(ctx, req)
+	if err != nil {
+		return nil, err
 	}
 
-	m := gomail.NewMessage()
-	m.SetHeader("From", smtpConfig.From)
-	m.SetHeader("To", to)
-	m.SetHeader("Subject", subject)
-	m.SetBody("text/plain", message)
-
-	d := gomail.NewDialer(smtpConfig.Host, smtpConfig.Port, smtpConfig.Username, smtpConfig.Password)
-
-	if err := d.DialAndSend(m); err != nil {
-		return res.SendEmailRes{}, err
-	}
-
-	return res.SendEmailRes{
-		Message: "Email sent successfully",
-	}, nil
+	return res, nil
 }

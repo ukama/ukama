@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -9,12 +11,16 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Service           *config.Service
-	R                 *rest.RestClient
-	Mailer            *config.Mailer
+	Services          GrpcEndpoints `mapstructure:"services"`
+	Auth              *config.Auth  `mapstructure:"auth"`
 }
 
-func NewConfig(name string) *Config {
+type GrpcEndpoints struct {
+	Timeout time.Duration
+	Mailer  string
+}
+
+func NewConfig() *Config {
 	defaultCors := cors.DefaultConfig()
 	defaultCors.AllowWildcard = true
 	defaultCors.AllowOrigins = []string{"http://localhost", "https://localhost"}
@@ -23,11 +29,16 @@ func NewConfig(name string) *Config {
 		BaseConfig: config.BaseConfig{
 			DebugMode: false,
 		},
+
+		Services: GrpcEndpoints{
+			Timeout: 3 * time.Second,
+			Mailer:  "mailer:9090",
+		},
+
 		Server: rest.HttpConfig{
-			Port: 8085,
+			Port: 8080,
 			Cors: defaultCors,
 		},
-		Service: config.LoadServiceHostConfig(name),
-		Mailer:  config.LoadMailerHostConfig(name),
+		Auth: config.LoadAuthHostConfig("auth"),
 	}
 }

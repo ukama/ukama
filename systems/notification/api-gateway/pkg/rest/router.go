@@ -7,52 +7,58 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/mailer/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/mailer/api-gateway/pkg"
+	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
-	"github.com/wI2L/fizz"
+	"github.com/ukama/ukama/systems/notification/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/notification/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
+	emailPkg "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/wI2L/fizz/openapi"
 )
 
+var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
+
 type Router struct {
-	f      *fizz.Fizz
-	config *RouterConfig
-	client *Clients
+	f       *fizz.Fizz
+	clients *Clients
+	config  *RouterConfig
 }
 
 type RouterConfig struct {
 	debugMode  bool
 	serverConf *rest.HttpConfig
-	mailer     *config.Mailer
-	s          *config.Service
-}
-
-type MailerManager interface {
-	SendEmail(to string, message string,subject string) (SendEmailRes, error)
+	auth       *config.Auth
 }
 
 type Clients struct {
-	ma MailerManager
+	m mailer
 }
 
-func NewClientsSet(a MailerManager) *Clients {
+type mailer interface {
+	SendEmail(*emailPkg.SendEmailRequest) (*emailPkg.SendEmailResponse, error)
+}
+
+func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.ma = a
+	c.m = client.NewMailer(endpoints.Mailer, endpoints.Timeout)
+
 	return c
 }
 
-func NewRouter(c *Clients, config *RouterConfig) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
+
 	r := &Router{
-		config: config,
-		client: c,
+		clients: clients,
+		config:  config,
 	}
+
 	if !config.debugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -60,8 +66,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		serverConf: &svcConf.Server,
 		debugMode:  svcConf.DebugMode,
-		s:          svcConf.Service,
-
+		auth:       svcConf.Auth,
 	}
 }
 
@@ -69,32 +74,53 @@ func (rt *Router) Run() {
 	logrus.Info("Listening on port ", rt.config.serverConf.Port)
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
-		logrus.Error(err)
+		panic(err)
 	}
 }
+func (r *Router) init(f func(*gin.Context, string) error) {
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	auth := r.f.Group("/v1", "Subscriber API GW ", "Subs system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			logrus.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthServerUrl)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
+		mailer := auth.Group("/subscriber", "Subscriber", "Orgs Subscriber database")
+		mailer.POST("/sendEmail", formatDoc("Get subscriber by id", ""), tonic.Handler(r.sendEmail, http.StatusOK))
 
-func (r *Router) init() {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "http://localhost:8080")
-
-	v1 := r.f.Group("/v1", "Mailer API GW", "Mailer system version v1")
-	v1.POST("/sendEmail", formatDoc("send email", ""), tonic.Handler(r.sendEmail, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
-	opt := []fizz.OperationOption{func(info *openapi.OperationInfo) {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
 		info.Summary = summary
 		info.Description = description
 	}}
-	return opt
 }
 
-func (p *Router) sendEmail(c *gin.Context, req *SendEmailReq) (*SendEmailRes, error) {
-	res, err := p.client.ma.SendEmail(req.To, req.Message,req.Subject)
-	if err != nil {
-		return nil, err
+func (r *Router) sendEmail(c *gin.Context, req *SendEmailReq) error {
+	payload := emailPkg.SendEmailRequest{
+		To:      req.To,
+		Subject: req.Subject,
+		Body:    req.Body,
+		Values:  req.Values,
 	}
+	_, err := r.clients.m.SendEmail(&payload)
 
-	return &SendEmailRes{
-		Message: res.Message,
-	}, nil
+	if err != nil {
+		return err
+	}
+	return nil
 }
