@@ -1,6 +1,6 @@
 package pkg
 
 const ServiceName = "gateway"
-const SystemName = "mailer"
+const SystemName = "notification"
 
 var IsDebugMode bool = false
