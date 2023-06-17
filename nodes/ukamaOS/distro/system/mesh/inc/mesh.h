@@ -66,6 +66,11 @@ typedef struct _websocket_message WSMessage;
 typedef struct _u_map UMap;
 
 typedef struct {
+    void      *config;
+    WSManager *handler;
+} ThreadArgs;
+
+typedef struct {
 
     struct _websocket_client_handler *handler;
     struct _u_instance *webInst;

@@ -19,10 +19,16 @@
 #include "jserdes.h"
 #include "data.h"
 #include "map.h"
+#include "config.h"
 
 extern WorkList *Transmit;
 extern MapTable *IDTable;
 extern State    *state;
+extern int start_websocket_client(Config *config,
+                                  struct _websocket_client_handler *handler);
+
+static 	pthread_mutex_t websocketMutex;
+static	pthread_cond_t  websocketFail;
 
 /*
  * clear_response -- free up memory from MResponse.
@@ -47,14 +53,63 @@ static void clear_response(MResponse **resp) {
  */
 static int is_websocket_valid(WSManager *manager, char *port) {
 
+    int status;
+
     if (manager == NULL) return FALSE;
 
-    if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
+    status = ulfius_websocket_status(manager);
+
+    if (status == U_WEBSOCKET_STATUS_OPEN) {
+        return TRUE;
+    } else {
         log_debug("Websocket connection is closed with cloud at: %s", port);
         return FALSE;
     }
 
-    return TRUE;
+    return FALSE;
+}
+
+/*
+ * monitor_websocket --
+ *
+ */
+void* monitor_websocket(void *args){
+
+    int ret;
+    struct timespec ts;
+    Config *config=NULL;
+    WSManager *handler=NULL;
+    ThreadArgs *threadArgs;
+
+    threadArgs = (ThreadArgs *)args;
+
+    config  = (Config *)threadArgs->config;
+    handler = threadArgs->handler;
+
+    while (TRUE) {
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += MESH_LOCK_TIMEOUT;
+
+        /* Wait or timed out until the socket closes */
+        ret = pthread_cond_timedwait(&websocketFail, &websocketMutex, &ts);
+        if (ret == ETIMEDOUT) {
+            pthread_mutex_unlock(&websocketMutex);
+            if (!is_websocket_valid(handler, config->remoteConnect)) {
+                log_error("Trying to reconnect ...");
+                /* Connect again */
+                while (start_websocket_client(config, handler) == FALSE) {
+                    log_error("Remote websocket connect failure. Retrying: %d",
+                              MESH_LOCK_TIMEOUT);
+                    sleep(MESH_LOCK_TIMEOUT);
+                }
+            } else {
+                continue;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 /*
@@ -77,6 +132,9 @@ void websocket_manager(const URequest *request, WSManager *manager,
 	list   = *transmit;
     config = (Config *)data;
 
+    pthread_mutex_init(&websocketMutex, NULL);
+    pthread_cond_init(&websocketFail, NULL);
+
 	while (TRUE) {
 
 		pthread_mutex_lock(&(list->mutex));
@@ -96,6 +154,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
             if (ret == ETIMEDOUT) {
                 pthread_mutex_unlock(&(list->mutex));
                 if (!is_websocket_valid(manager, config->remoteConnect)) {
+                    pthread_cond_broadcast(&websocketFail);
                     return; /* Close the websocket */
                 } else {
                     continue;

@@ -19,11 +19,13 @@
 #include <ulfius.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include "mesh.h"
 #include "config.h"
 #include "work.h"
 #include "map.h"
+#include "websocket.h"
 
 #define VERSION "0.0.1"
 
@@ -39,6 +41,8 @@ extern int start_websocket_client(Config *config,
 WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
 WorkList *Receive=NULL;
 MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
+static 	pthread_mutex_t websocketMutex;
+static	pthread_cond_t  websocketFail;
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -149,7 +153,9 @@ int main (int argc, char *argv[]) {
 	char *configFile=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	Config *config=NULL;
-
+    ThreadArgs threadArgs;
+    pthread_t thread;
+    
 	struct _u_instance webInst;
 	struct _websocket_client_handler websocketHandler = {NULL, NULL};
 
@@ -241,6 +247,9 @@ int main (int argc, char *argv[]) {
 	init_work_list(&Transmit);
 	init_work_list(&Receive);
 
+    pthread_mutex_init(&websocketMutex, NULL);
+    pthread_cond_init(&websocketFail, NULL);
+
 	/* Setup ip:port to UUID mapping table, if client. */
 	IDTable = (MapTable *)malloc(sizeof(MapTable));
 	if (IDTable == NULL) {
@@ -256,9 +265,18 @@ int main (int argc, char *argv[]) {
 	}
 
 	if (start_websocket_client(config, &websocketHandler) != TRUE) {
-		log_error("Websocket failed to setup for client. Exiting...");
-		exit(1);
+		log_error("Websocket failed to setup for client. Retrying soon ...");
 	}
+
+    /* create websocket monitoring thread */
+    threadArgs.config  = config;
+    threadArgs.handler = &websocketHandler;
+    if (pthread_create(&thread, NULL, monitor_websocket,
+                       (void *)&threadArgs) != 0) {
+        log_error("Unable to create websocket monitoring thread.");
+    }
+
+    pthread_detach(thread);
 
 	log_debug("Mesh.d running ...");
 
