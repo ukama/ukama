@@ -22,6 +22,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	metric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
@@ -30,16 +32,17 @@ import (
 type NodeServer struct {
 	nodeRepo       db.NodeRepo
 	siteRepo       db.SiteRepo
-	baseRoutingKey msgbus.RoutingKeyBuilder
 	nameGenerator  namegenerator.Generator
 	orgService     providers.OrgClientProvider
 	networkService providers.NetworkClientProvider
 	pushGateway    string
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedNodeServiceServer
 }
 
 func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo,
-	pushGateway string,
+	pushGateway string, msgBus mb.MsgBusServiceClient,
 	orgService providers.OrgClientProvider,
 	networkService providers.NetworkClientProvider) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
@@ -49,9 +52,10 @@ func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo,
 		siteRepo:       siteRepo,
 		orgService:     orgService,
 		networkService: networkService,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		nameGenerator:  namegenerator.NewNameGenerator(seed),
 		pushGateway:    pushGateway,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
@@ -109,6 +113,20 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	err = n.nodeRepo.Add(node, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	route := n.baseRoutingKey.SetAction("create").SetObject("node").MustBuild()
+
+	evt := &epb.NodeCreatedEvent{
+		NodeId: node.Id,
+		Name:   node.Name,
+		Org:    node.OrgId.String(),
+		Type:   node.Type,
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
@@ -215,7 +233,18 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 		return resp, nil
 	}
 
-	// publish event and return
+	route := n.baseRoutingKey.SetAction("updatestate").SetObject("node").MustBuild()
+
+	evt := &epb.NodeStateUpdatedEvent{
+		NodeId: nodeUpdates.Id,
+		State:  nodeUpdates.State.String(),
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+	}
+
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
@@ -258,7 +287,17 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 		return resp, nil
 	}
 
-	// publish event and return
+	route := n.baseRoutingKey.SetAction("update").SetObject("node").MustBuild()
+
+	evt := &epb.NodeUpdatedEvent{
+		NodeId: nodeUpdates.Id,
+		Name:   nodeUpdates.Name,
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+	}
 
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
 }
@@ -274,6 +313,17 @@ func (n *NodeServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) 
 	err = n.nodeRepo.Delete(nodeId, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	route := n.baseRoutingKey.SetAction("delete").SetObject("node").MustBuild()
+
+	evt := &epb.NodeDeletedEvent{
+		NodeId: nodeId.StringLowercase(),
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
@@ -364,6 +414,20 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
+	route := n.baseRoutingKey.SetAction("assign").SetObject("node").MustBuild()
+
+	evt := &epb.NodeAssignedEvent{
+		NodeId:  nodeId.StringLowercase(),
+		Type:    nodeId.GetNodeType(),
+		Site:    site.String(),
+		Network: net.String(),
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+	}
+
 	return &pb.AddNodeToSiteResponse{}, nil
 }
 
@@ -374,9 +438,23 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 		return nil, invalidNodeIDError(req.GetNodeId(), err)
 	}
 
-	err = n.siteRepo.RemoveNode(nodeId)
+	nd, err := n.siteRepo.RemoveNode(nodeId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	route := n.baseRoutingKey.SetAction("release").SetObject("node").MustBuild()
+
+	evt := &epb.NodeReleasedEvent{
+		NodeId:  nodeId.StringLowercase(),
+		Type:    nodeId.GetNodeType(),
+		Site:    nd.SiteId.String(),
+		Network: nd.NetworkId.String(),
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 
 	return &pb.ReleaseNodeFromSiteResponse{}, nil

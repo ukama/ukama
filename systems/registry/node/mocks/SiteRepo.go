@@ -111,31 +111,55 @@ func (_m *SiteRepo) GetNodes(_a0 uuid.UUID) ([]db.Node, error) {
 }
 
 // IsAllocated provides a mock function with given fields: _a0
-func (_m *SiteRepo) IsAllocated(_a0 ukama.NodeID) bool {
+func (_m *SiteRepo) IsAllocated(_a0 ukama.NodeID) (bool, *db.Site) {
 	ret := _m.Called(_a0)
 
 	var r0 bool
+	var r1 *db.Site
+	if rf, ok := ret.Get(0).(func(ukama.NodeID) (bool, *db.Site)); ok {
+		return rf(_a0)
+	}
 	if rf, ok := ret.Get(0).(func(ukama.NodeID) bool); ok {
 		r0 = rf(_a0)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(ukama.NodeID) *db.Site); ok {
+		r1 = rf(_a0)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*db.Site)
+		}
+	}
+
+	return r0, r1
 }
 
 // RemoveNode provides a mock function with given fields: _a0
-func (_m *SiteRepo) RemoveNode(_a0 ukama.NodeID) error {
+func (_m *SiteRepo) RemoveNode(_a0 ukama.NodeID) (*db.Site, error) {
 	ret := _m.Called(_a0)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) error); ok {
+	var r0 *db.Site
+	var r1 error
+	if rf, ok := ret.Get(0).(func(ukama.NodeID) (*db.Site, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(ukama.NodeID) *db.Site); ok {
 		r0 = rf(_a0)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Site)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(ukama.NodeID) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 type mockConstructorTestingTNewSiteRepo interface {

@@ -14,6 +14,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 	"gorm.io/gorm"
 
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	opb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	omocks "github.com/ukama/ukama/systems/registry/org/pb/gen/mocks"
@@ -21,30 +22,11 @@ import (
 
 var testNode = ukama.NewVirtualNodeId("HomeNode")
 
-// func TestRegistryServer_UpdateNodeState(t *testing.T) {
-// nodeRepo := &mocks.NodeRepo{}
-
-// nodeRepo.On("Update", testNode, mock.MatchedBy(func(ns *db.NodeState) bool {
-// return *ns == db.Onboarded
-// }), (*string)(nil)).Return(nil).Once()
-// nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
-
-// s := NewNodeServer(nodeRepo, "")
-
-// _, err := s.UpdateNodeState(context.TODO(), &pb.UpdateNodeStateRequest{
-// Node:  testNode.String(),
-// State: "onboarded",
-// })
-
-// // Assert
-// assert.NoError(t, err)
-// nodeRepo.AssertExpectations(t)
-// }
-
 func TestNodeServer_Add(t *testing.T) {
 	nodeId := testNode.String()
 	nodeState := "online"
 
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	nodeRepo := &mocks.NodeRepo{}
 	orgService := &mocks.OrgClientProvider{}
 	networkService := &mocks.NetworkClientProvider{}
@@ -53,7 +35,7 @@ func TestNodeServer_Add(t *testing.T) {
 	const nodeType = "hnode"
 	var orgId = uuid.NewV4()
 
-	s := server.NewNodeServer(nodeRepo, nil, "", orgService, networkService)
+	s := server.NewNodeServer(nodeRepo, nil, "", msgbusClient, orgService, networkService)
 
 	node := &db.Node{
 		Id:    nodeId,
@@ -64,8 +46,8 @@ func TestNodeServer_Add(t *testing.T) {
 	}
 
 	nodeRepo.On("Add", node, mock.Anything).Return(nil).Once()
-
 	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("NodeStateValid", func(t *testing.T) {
 		// Arrange
@@ -221,7 +203,7 @@ func TestNodeServer_Get(t *testing.T) {
 				State: db.Online,
 			}, nil).Once()
 
-		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil)
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -240,7 +222,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil)
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -255,7 +237,7 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo := &mocks.NodeRepo{}
 
-		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil)
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.String()})
@@ -267,9 +249,11 @@ func TestNodeServer_Get(t *testing.T) {
 }
 
 func TestNodeServer_Delete(t *testing.T) {
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	nodeRepo := &mocks.NodeRepo{}
-	s := server.NewNodeServer(nodeRepo, nil, "", nil, nil)
+	s := server.NewNodeServer(nodeRepo, nil, "", msgbusClient, nil, nil)
 
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
 
 	t.Run("NodeFound", func(t *testing.T) {
@@ -311,3 +295,24 @@ func TestNodeServer_Delete(t *testing.T) {
 		nodeRepo.AssertExpectations(t)
 	})
 }
+
+// func TestRegistryServer_UpdateNodeState(t *testing.T) {
+// msgbusClient := &mbmocks.MsgBusServiceClient{}
+// nodeRepo := &mocks.NodeRepo{}
+
+// nodeRepo.On("Update", testNode, mock.MatchedBy(func(ns *db.NodeState) bool {
+// return *ns == db.Onboarded
+// }), (*string)(nil)).Return(nil).Once()
+// nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
+
+// s := server.NewNodeServer(nodeRepo, nil, "", msgbusClient, nil, nil)
+
+// _, err := s.UpdateNodeState(context.TODO(), &pb.UpdateNodeStateRequest{
+// NodeId: testNode.String(),
+// State:  "onboarded",
+// })
+
+// // Assert
+// assert.NoError(t, err)
+// nodeRepo.AssertExpectations(t)
+// }

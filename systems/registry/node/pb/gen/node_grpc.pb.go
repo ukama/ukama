@@ -42,9 +42,6 @@ type NodeServiceClient interface {
 	GetNodesForSite(ctx context.Context, in *GetBySiteRequest, opts ...grpc.CallOption) (*GetBySiteResponse, error)
 	GetNodesForOrg(ctx context.Context, in *GetByOrgRequest, opts ...grpc.CallOption) (*GetByOrgResponse, error)
 	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
-	// rpc GetAllNodes(GetNodesRequest) returns (GetNodesResponse);
-	// rpc GetFreeNodesForOrg(GetByOrgRequest) returns (GetByOrgResponse);
-	// rpc GetFreeNodes(GetNodesRequest) returns (GetNodesResponse);
 	UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
 	UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
 	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
@@ -179,9 +176,6 @@ type NodeServiceServer interface {
 	GetNodesForSite(context.Context, *GetBySiteRequest) (*GetBySiteResponse, error)
 	GetNodesForOrg(context.Context, *GetByOrgRequest) (*GetByOrgResponse, error)
 	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
-	// rpc GetAllNodes(GetNodesRequest) returns (GetNodesResponse);
-	// rpc GetFreeNodesForOrg(GetByOrgRequest) returns (GetByOrgResponse);
-	// rpc GetFreeNodes(GetNodesRequest) returns (GetNodesResponse);
 	UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeResponse, error)
 	UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error)
 	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
