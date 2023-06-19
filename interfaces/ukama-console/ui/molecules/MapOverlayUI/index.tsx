@@ -11,24 +11,6 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DotIcon from '@mui/icons-material/FiberManualRecord';
 import { Dispatch, SetStateAction } from 'react';
 
-const SITES_MOCK = [
-  {
-    id: 1,
-    name: 'Site Name 1',
-    status: 'up',
-  },
-  {
-    id: 2,
-    name: 'Site Name 2',
-    status: 'down',
-  },
-  {
-    id: 3,
-    name: 'Site Name 3',
-    status: 'unknown',
-  },
-];
-
 const LeftIconButtonStyle = {
   zIndex: 400,
   borderRadius: '4px',
@@ -173,15 +155,21 @@ const RightOverlayUI = ({
   </Box>
 );
 
-const SiteSummary = () => (
+interface ISiteSummary {
+  title: string;
+  subtitle: string;
+  siteSummary: any;
+}
+
+const SiteSummary = ({ title, subtitle, siteSummary }: ISiteSummary) => (
   <Stack spacing={1.2}>
     <Stack direction={'row'} alignItems={'center'} spacing={0.5}>
       <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 600 }}>
-        Site summary
+        {title}
       </Typography>
-      <Typography variant="caption">{`(${SITES_MOCK.length})`}</Typography>
+      <Typography variant="caption">{subtitle}</Typography>
     </Stack>
-    {SITES_MOCK.map(({ id, name, status }) => (
+    {siteSummary.map(({ id, name, status }: any) => (
       <Stack key={id} direction="row" spacing={1} alignItems={'center'}>
         {status === 'unknown' ? (
           <DotIcon color={'disabled'} sx={{ fontSize: '18px' }} />
