@@ -4,7 +4,6 @@ fragment location on Location {
   address
 }
 fragment site on Site {
-  id
   name
   height
   apOption
