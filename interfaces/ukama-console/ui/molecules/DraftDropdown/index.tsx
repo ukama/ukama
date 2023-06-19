@@ -45,10 +45,11 @@ const DraftDropdown = ({
 }: IDraftDropdown) => {
   const { id = '', name = '' } = draft || {};
   const [newName, setNewName] = useState('');
-  const [editName, setEditName] = useState(false);
+  const [editNameId, setEditNameId] = useState('-1');
   const classes = useStyles({ isEmpty: !id });
-  const handleNameUpdate = (n: string) => {
+  const handleNameUpdate = (i: string, n: string) => {
     setNewName('');
+    setEditNameId('-1');
     handleDraftUpdated(id, n);
   };
   return (
@@ -79,7 +80,7 @@ const DraftDropdown = ({
         className={classes.selectStyle}
         renderValue={(selected) => (selected ? selected : 'Add/Select a draft')}
         onClose={() => {
-          setEditName(false);
+          setEditNameId('-1');
           setNewName('');
         }}
       >
@@ -102,8 +103,10 @@ const DraftDropdown = ({
             <Stack direction={'row'} alignItems={'center'}>
               <DotIcon color="success" sx={ICON_STYLE} />
 
-              {!editName ? (
-                <Typography variant="body1">{name}</Typography>
+              {editNameId !== id ? (
+                <Typography variant="body1" ml={1}>
+                  {name}
+                </Typography>
               ) : (
                 <TextField
                   autoFocus
@@ -121,12 +124,14 @@ const DraftDropdown = ({
               <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  setEditName(!editName);
-                  if (editName) handleNameUpdate(newName);
-                  else setNewName(name);
+                  if (editNameId !== '-1') handleNameUpdate(id, newName);
+                  else {
+                    setEditNameId(id);
+                    setNewName(name);
+                  }
                 }}
               >
-                {editName ? (
+                {editNameId === id ? (
                   <DoneIcon color="success" sx={ICON_STYLE} />
                 ) : (
                   <Edit color="action" sx={ICON_STYLE} />
@@ -150,7 +155,9 @@ const DraftDropdown = ({
           }}
         >
           <AddIcon color="action" sx={ICON_STYLE} />
-          <Typography variant="body2">Add new draft</Typography>
+          <Typography variant="body2" ml={1}>
+            Add new draft
+          </Typography>
         </MenuItem>
       </Select>
     </LoadingWrapper>

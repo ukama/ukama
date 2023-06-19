@@ -7,13 +7,13 @@ import {
   useGetDraftsQuery,
   useUpdateDraftNameMutation,
   useUpdateEventMutation,
+  useUpdateSiteLocationMutation,
   useUpdateSiteMutation,
 } from '@/generated/planning-tool';
 import styles from '@/styles/Site_Planning.module.css';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import { TCommonData, TSnackMessage } from '@/types';
-import SitePopup from '@/ui/SitePopup';
 import DraftDropdown from '@/ui/molecules/DraftDropdown';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import Map from '@/ui/molecules/Map';
@@ -24,10 +24,13 @@ import {
 } from '@/ui/molecules/MapOverlayUI';
 import { formatSecondsToDuration } from '@/utils';
 import { AlertColor, Popover, Stack, Typography } from '@mui/material';
+import { LatLngLiteral } from 'leaflet';
 import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
-const DEFAULT_CENTER = [38.907132, -77.036546];
+const ZOOM = 4;
+const MATKER_INIT = { lat: 0, lng: 0 };
+const DEFAULT_CENTER = { lat: 37.7780627, lng: -121.9822475 };
 const SITE_INIT = {
   name: '',
   height: 0,
@@ -40,7 +43,9 @@ const SITE_INIT = {
     address: '',
   },
 };
+
 const Page = () => {
+  const [zoom, setZoom] = useState<number>(ZOOM);
   const [site, setSite] = useState<Site>(SITE_INIT);
   const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>();
   const [search, setSearch] = useState('');
@@ -49,7 +54,7 @@ const Page = () => {
   const [togglePower, setTogglePower] = useState(false);
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
-  const [marker, setMarker] = useState([0, 0]);
+  const [marker, setMarker] = useState<LatLngLiteral>(MATKER_INIT);
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
   const showAlert = (
@@ -74,9 +79,25 @@ const Page = () => {
       userId: _commonData.userId,
     },
     onCompleted: (data) => {
-      setSelectedDraft(
-        data.getDrafts.length > 0 ? data.getDrafts[0] : undefined,
-      );
+      if (!selectedDraft && data.getDrafts.length > 0) {
+        setSelectedDraft(
+          data.getDrafts.length > 0 ? data.getDrafts[0] : undefined,
+        );
+        setSite({ ...data.getDrafts[0].site });
+        if (
+          data.getDrafts[0].site.location.lat &&
+          data.getDrafts[0].site.location.lng
+        ) {
+          setMarker({
+            lat: parseFloat(data.getDrafts[0].site.location.lat),
+            lng: parseFloat(data.getDrafts[0].site.location.lng),
+          });
+        }
+      } else if (data.getDrafts.length === 0) {
+        setSelectedDraft(undefined);
+        setSite(SITE_INIT);
+        setMarker(MATKER_INIT);
+      }
     },
     onError: (error) => {
       showAlert('get-drafts-error', error.message, 'error', true);
@@ -93,7 +114,7 @@ const Page = () => {
       });
       refetchDrafts();
       showAlert(
-        'update-drafts-success',
+        'add-drafts-success',
         'Draft added successfully.',
         'success',
         true,
@@ -124,6 +145,17 @@ const Page = () => {
       },
       onError: (error) => {
         showAlert('update-site-error', error.message, 'error', true);
+      },
+    });
+  const [updateSiteLocationCall, { loading: updateSiteLocationLoading }] =
+    useUpdateSiteLocationMutation({
+      onCompleted: (data) => {
+        setSelectedDraft({
+          ...data?.updateSiteLocation,
+        });
+      },
+      onError: (error) => {
+        showAlert('update-site-location-error', error.message, 'error', true);
       },
     });
   const [updateEventCall, { loading: updateEventLoading }] =
@@ -168,8 +200,8 @@ const Page = () => {
   useEffect(() => {
     if (selectedDraft?.id) {
       const loc = {
-        lat: marker[0].toFixed(10).toString(),
-        lng: marker[1].toFixed(10).toString(),
+        lat: marker.lat.toFixed(10).toString(),
+        lng: marker.lng.toFixed(10).toString(),
         address: selectedDraft.site.location.address,
       };
       setSelectedDraft({
@@ -186,13 +218,22 @@ const Page = () => {
     }
   }, [marker]);
 
-  const handleMarkerDrag = (e: any) => setMarker([e.lat, e.lng]);
+  const handleMarkerDrag = (e: LatLngLiteral) => {
+    setMarker({ lat: e.lat, lng: e.lng });
+    updateSiteLocationCall({
+      variables: {
+        draftId: selectedDraft?.id || '',
+        data: {
+          address: '',
+          lat: e.lat.toString(),
+          lng: e.lng.toString(),
+        },
+      },
+    });
+  };
 
-  const handleMarkerAdd = (e: number[]) => {
-    if (
-      addSite &&
-      (marker.length === 0 || (marker[0] === 0 && marker[1] === 0))
-    ) {
+  const handleMarkerAdd = (e: LatLngLiteral) => {
+    if (addSite && marker.lat === 0 && marker.lng === 0) {
       setAddSite(false);
       setMarker(e);
     }
@@ -204,14 +245,14 @@ const Page = () => {
         variables: {
           data: {
             siteName: site.name,
-            lat: site.location.lat,
-            lng: site.location.lng,
             apOption: site.apOption,
             isSetlite: site.isSetlite,
-            solarUptime: site.solarUptime,
             address: site.location.address,
+            lat: site.location.lat.toString(),
+            lng: site.location.lng.toString(),
             height: parseFloat(site.height.toString()),
             lastSaved: Math.floor(new Date().getTime() / 1000),
+            solarUptime: parseFloat(site.solarUptime.toString()),
           },
           draftId: selectedDraft?.id,
         },
@@ -232,13 +273,15 @@ const Page = () => {
       },
     });
   };
+
   const handleDraftSelected = (draftId: string) => {
     setSelectedDraft(getDraftsData?.getDrafts.find(({ id }) => id === draftId));
     setSite({
       ...site,
     });
-    setMarker([0, 0]);
+    setMarker(MATKER_INIT);
   };
+
   const handleDraftUpdated = (id: string, draft: string) => {
     updateDraftCall({
       variables: {
@@ -247,6 +290,7 @@ const Page = () => {
       },
     });
   };
+
   const handleDeleteDraft = (id: string) =>
     deleteDraftCall({
       variables: {
@@ -308,49 +352,44 @@ const Page = () => {
       >
         <PageContainer sx={{ padding: 0, mt: '12px' }}>
           <Map
-            id={'site-planning-map'}
-            zoom={12}
+            data={site}
             width={800}
             height={418}
+            marker={marker}
+            setData={setSite}
+            setZoom={setZoom}
             isAddSite={addSite}
-            center={DEFAULT_CENTER}
+            id={'site-planning-map'}
             className={styles.homeMap}
-            onMapClick={handleMarkerAdd}
+            handleAction={handleSiteAction}
+            handleAddMarker={handleMarkerAdd}
+            handleDragMarker={handleMarkerDrag}
+            zoom={marker.lat === 0 && marker.lng === 0 ? ZOOM : zoom}
+            center={
+              marker.lat === 0 && marker.lng === 0 ? DEFAULT_CENTER : marker
+            }
           >
-            {({ TileLayer, Marker, Popup }: any) => (
+            {({ TileLayer }: any) => (
               <>
                 <LeftOverlayUI
                   search={search}
                   setSearch={setSearch}
                   handleAddSite={handleAddSite}
                   handleAddLink={handleAddLink}
-                  isCurrentDraft={selectedDraft?.id !== ''}
+                  isCurrentDraft={!!selectedDraft}
                 />
                 <RightOverlayUI
                   id={id}
                   handleClick={handleClick}
                   handleTogglePower={handleOnOff}
-                  isCurrentDraft={selectedDraft?.id !== ''}
+                  isCurrentDraft={!!selectedDraft}
                 />
-                <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png" />
-                <Marker
-                  autoPan
-                  draggable
-                  position={marker}
-                  ondrag={handleMarkerDrag}
-                  eventHandlers={{
-                    moveend: (event: any) =>
-                      handleMarkerDrag(event.target.getLatLng()),
-                  }}
-                >
-                  <Popup>
-                    <SitePopup
-                      data={site}
-                      setData={setSite}
-                      handleAction={handleSiteAction}
-                    />
-                  </Popup>
-                </Marker>
+
+                <TileLayer
+                  maxZoom={19}
+                  tileSize={270}
+                  url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
+                />
               </>
             )}
           </Map>

@@ -1,4 +1,7 @@
+import { Site } from '@/generated/planning-tool';
+import { LatLngLiteral } from 'leaflet';
 import dynamic from 'next/dynamic';
+import { Dispatch, SetStateAction } from 'react';
 
 const DynamicMap = dynamic(() => import('./DynamicMap'), {
   ssr: false,
@@ -9,24 +12,36 @@ const DEFAULT_HEIGHT = 600;
 
 interface IMap {
   id: string;
+  data: Site;
   children: any;
-  zoom?: number;
   width?: number;
   height?: number;
-  center?: number[];
   isAddSite: boolean;
   className?: string;
-  onMapClick: Function;
+  center: LatLngLiteral;
+  marker: LatLngLiteral;
+  handleAction: () => void;
+  zoom?: number | undefined;
+  setData: Dispatch<SetStateAction<any>>;
+  setZoom: Dispatch<SetStateAction<number>>;
+  handleDragMarker: (l: LatLngLiteral) => void;
+  handleAddMarker: (l: LatLngLiteral) => void;
 }
 
 const Map = ({
   id,
   zoom,
+  data,
+  marker,
   center,
+  setData,
+  setZoom,
   children,
   isAddSite,
   className,
-  onMapClick,
+  handleAction,
+  handleAddMarker,
+  handleDragMarker,
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
 }: IMap) => {
@@ -40,10 +55,16 @@ const Map = ({
       <DynamicMap
         id={id}
         zoom={zoom}
+        data={data}
+        marker={marker}
         center={center}
+        setData={setData}
+        setZoom={setZoom}
         cursor={isAddSite}
         className={className}
-        onMapClick={onMapClick}
+        handleAction={handleAction}
+        handleAddMarker={handleAddMarker}
+        handleDragMarker={handleDragMarker}
       >
         {children}
       </DynamicMap>
