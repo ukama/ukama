@@ -8,28 +8,19 @@ import {
   user,
 } from '@/app-recoil';
 import { useGetNetworksLazyQuery, useWhoamiLazyQuery } from '@/generated';
-import { theme } from '@/styles/theme';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
-import createEmotionCache from '@/ui/wrappers/createEmotionCache';
 import { getTitleFromPath } from '@/utils';
-import { CacheProvider } from '@emotion/react';
-import { Alert, AlertColor, CssBaseline, Snackbar } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
+import { AlertColor } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useRecoilState, useRecoilValue, useResetRecoilState } from 'recoil';
 
-const Layout = dynamic(() => import('@/ui/layout'));
-const SNACKBAR_TIMEOUT = 5000;
+const Layout = dynamic(() => import('@/ui/layout'), {
+  ssr: false,
+});
 
-const clientSideEmotionCache = createEmotionCache();
-
-const MainApp = ({
-  Component,
-  pageProps,
-  emotionCache = clientSideEmotionCache,
-}: MyAppProps) => {
+const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const route = useRouter();
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [_user, _setUser] = useRecoilState<TUser>(user);
@@ -153,9 +144,6 @@ const MainApp = ({
       window.location.replace(process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL || '');
   };
 
-  const handleSnackbarClose = () =>
-    setSnackbarMessage({ ..._snackbarMessage, show: false });
-
   const handlePageChange = (page: string) => setPage(page);
   const handleNetworkChange = (id: string) =>
     setCommonData({
@@ -167,37 +155,19 @@ const MainApp = ({
     });
 
   return (
-    <CacheProvider value={emotionCache}>
-      <ThemeProvider theme={theme(_isDarkMod)}>
-        <CssBaseline />
-        <Layout
-          page={page}
-          isFullScreen={isFullScreen}
-          isDarkMode={_isDarkMod}
-          isLoading={false}
-          placeholder={'Select Network'}
-          networkId={_commonData?.networkId}
-          handlePageChange={handlePageChange}
-          handleNetworkChange={handleNetworkChange}
-          networks={networksData?.getNetworks.networks}
-        >
-          <Component {...pageProps} />
-        </Layout>
-        <Snackbar
-          open={_snackbarMessage.show}
-          autoHideDuration={SNACKBAR_TIMEOUT}
-          onClose={handleSnackbarClose}
-        >
-          <Alert
-            id={_snackbarMessage.id}
-            severity={_snackbarMessage.type as AlertColor}
-            onClose={handleSnackbarClose}
-          >
-            {_snackbarMessage.message}
-          </Alert>
-        </Snackbar>
-      </ThemeProvider>
-    </CacheProvider>
+    <Layout
+      page={page}
+      isFullScreen={isFullScreen}
+      isDarkMode={_isDarkMod}
+      isLoading={false}
+      placeholder={'Select Network'}
+      networkId={_commonData?.networkId}
+      handlePageChange={handlePageChange}
+      handleNetworkChange={handleNetworkChange}
+      networks={networksData?.getNetworks.networks}
+    >
+      <Component {...pageProps} />
+    </Layout>
   );
 };
 
