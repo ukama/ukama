@@ -5,9 +5,12 @@ import {
   AddDraftInput,
   DeleteDraftRes,
   Draft,
-  SiteLocationInput,
+  LocationInput,
+  Site,
+  SiteInput,
+  Event as TEvent,
+  Location as TLocation,
   UpdateEventInput,
-  UpdateSiteInput,
 } from "./types";
 
 @Resolver(Draft)
@@ -16,7 +19,7 @@ export class DraftResolver {
   async getDraft(@Arg("id") id: string, @Ctx() ctx: Context) {
     const dr = await ctx.prisma.draft.findUnique({
       where: { id: id },
-      include: { site: { include: { location: true } }, events: true },
+      include: { sites: { include: { location: true } }, events: true },
     });
     return dr;
   }
@@ -24,61 +27,74 @@ export class DraftResolver {
   async getDrafts(@Arg("userId") userId: string, @Ctx() ctx: Context) {
     const dr = await ctx.prisma.draft.findMany({
       where: { userId: userId },
-      include: { site: { include: { location: true } }, events: true },
+      include: { sites: { include: { location: true } }, events: true },
     });
     return dr;
   }
-  @Mutation(() => Draft)
+  @Mutation(() => TEvent)
   async updateEvent(
     @Arg("data") data: UpdateEventInput,
-    @Arg("draftId") draftId: string,
+    @Arg("eventId") eventId: string,
     @Ctx() ctx: Context
   ) {
-    const dr = await ctx.prisma.draft.update({
-      where: { id: draftId },
+    const dr = await ctx.prisma.event.update({
+      where: { id: eventId },
       data: {
-        events: {
-          create: {
-            value: data.value,
-            operation: data.operation,
-            createdAt: new Date().toISOString(),
-          },
-        },
+        value: data.value,
+        operation: data.operation,
+        createdAt: new Date().toISOString(),
       },
-      include: { site: { include: { location: true } }, events: true },
     });
     return dr;
   }
 
-  @Mutation(() => Draft)
+  @Mutation(() => Site)
   async updateSite(
-    @Arg("data") data: UpdateSiteInput,
-    @Arg("id") id: string,
+    @Arg("data") data: SiteInput,
+    @Arg("siteId") siteId: string,
     @Ctx() ctx: Context
   ) {
-    const dr = await ctx.prisma.draft.update({
-      where: { id: id },
+    const dr = await ctx.prisma.site.update({
+      where: { id: siteId },
       data: {
-        lastSaved: data.lastSaved,
-        updatedAt: new Date().toISOString(),
-        site: {
+        name: data.siteName,
+        height: data.height,
+        apOption: data.apOption,
+        solarUptime: data.solarUptime,
+        isSetlite: data.isSetlite,
+        location: {
           create: {
-            name: data.siteName,
-            height: data.height,
-            apOption: data.apOption,
-            solarUptime: data.solarUptime,
-            isSetlite: data.isSetlite,
-            location: {
-              create: {
-                lat: data.lat,
-                lng: data.lng,
-                address: data.address,
-              },
-            },
+            lat: data.lat,
+            lng: data.lng,
+            address: data.address,
+            lastSaved: data.lastSaved,
           },
         },
       },
-      include: { site: { include: { location: true } }, events: true },
+      include: { Draft: true, location: true },
+    });
+    return dr;
+  }
+
+  @Mutation(() => Site)
+  async addSite(@Arg("data") data: SiteInput, @Ctx() ctx: Context) {
+    const dr = await ctx.prisma.site.create({
+      data: {
+        name: data.siteName,
+        height: data.height,
+        apOption: data.apOption,
+        solarUptime: data.solarUptime,
+        isSetlite: data.isSetlite,
+        location: {
+          create: {
+            lat: data.lat,
+            lng: data.lng,
+            address: data.address,
+            lastSaved: data.lastSaved,
+          },
+        },
+      },
+      include: { Draft: true, location: true },
     });
     return dr;
   }
@@ -94,7 +110,7 @@ export class DraftResolver {
       data: {
         name: name,
       },
-      include: { site: { include: { location: true } }, events: true },
+      include: { sites: { include: { location: true } }, events: true },
     });
     return dr;
   }
@@ -105,54 +121,30 @@ export class DraftResolver {
       data: {
         name: data.name,
         userId: data.userId,
-        lastSaved: data.lastSaved,
         createdAt: new Date().toISOString(),
-        site: {
-          create: {
-            name: "",
-            height: 0,
-            apOption: "",
-            solarUptime: 0,
-            isSetlite: false,
-            location: {
-              create: {
-                lat: "",
-                lng: "",
-                address: "",
-              },
-            },
-          },
-        },
       },
-      include: { site: { include: { location: true } }, events: true },
+      include: { sites: { include: { location: true } }, events: true },
     });
     return dr;
   }
-  @Mutation(() => Draft)
-  async updateSiteLocation(
-    @Arg("draftId") draftId: string,
-    @Arg("data") data: SiteLocationInput,
+
+  @Mutation(() => TLocation)
+  async updateLocation(
+    @Arg("locationId") locationId: string,
+    @Arg("data") data: LocationInput,
     @Ctx() ctx: Context
   ) {
-    const dr = await ctx.prisma.draft.update({
-      where: { id: draftId },
+    const dr = await ctx.prisma.location.update({
+      where: { id: locationId },
       data: {
-        site: {
-          update: {
-            location: {
-              update: {
-                lat: data.lat,
-                lng: data.lng,
-                address: data.address,
-              },
-            },
-          },
-        },
+        lat: data.lat,
+        lng: data.lng,
+        address: data.address,
       },
-      include: { site: { include: { location: true } }, events: true },
     });
     return dr;
   }
+
   @Mutation(() => DeleteDraftRes)
   async deleteDraft(@Arg("id") id: string, @Ctx() ctx: Context) {
     await ctx.prisma.draft.delete({
