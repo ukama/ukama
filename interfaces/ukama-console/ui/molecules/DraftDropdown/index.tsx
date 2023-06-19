@@ -50,7 +50,7 @@ const DraftDropdown = ({
   const handleNameUpdate = (i: string, n: string) => {
     setNewName('');
     setEditNameId('-1');
-    handleDraftUpdated(id, n);
+    handleDraftUpdated(i, n);
   };
   return (
     <LoadingWrapper isLoading={isLoading} width={'200px'} height={'32px'}>
@@ -58,7 +58,10 @@ const DraftDropdown = ({
         disableUnderline
         variant="standard"
         value={name}
-        onChange={(e) => handleDraftSelected(e.target.value)}
+        onChange={(e) => {
+          e.stopPropagation();
+          handleDraftSelected(e.target.value);
+        }}
         SelectDisplayProps={SelectDisplayProps}
         MenuProps={{
           disablePortal: true,
@@ -84,14 +87,17 @@ const DraftDropdown = ({
           setNewName('');
         }}
       >
-        {drafts.map(({ id, name }: any) => (
+        {drafts.map(({ id: _id, name: _name }: any) => (
           <MenuItem
-            key={id}
-            value={id}
+            key={_id}
+            value={_id}
             sx={{
               m: 0,
               p: '6px 16px',
               justifyContent: 'space-between',
+              backgroundColor: `${
+                id === _id ? hexToRGB(colors.secondaryLight, 0.25) : 'inherit'
+              } !important`,
               ':hover': {
                 backgroundColor: `${hexToRGB(
                   colors.secondaryLight,
@@ -103,16 +109,16 @@ const DraftDropdown = ({
             <Stack direction={'row'} alignItems={'center'}>
               <DotIcon color="success" sx={ICON_STYLE} />
 
-              {editNameId !== id ? (
+              {editNameId !== _id ? (
                 <Typography variant="body1" ml={1}>
-                  {name}
+                  {_name}
                 </Typography>
               ) : (
                 <TextField
                   autoFocus
                   variant="standard"
-                  value={newName}
                   onClick={(e) => e.stopPropagation()}
+                  value={editNameId === _id ? newName : _name}
                   onChange={(event) => {
                     event.stopPropagation();
                     setNewName(event.target.value);
@@ -124,14 +130,15 @@ const DraftDropdown = ({
               <IconButton
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (editNameId !== '-1') handleNameUpdate(id, newName);
+                  if (editNameId !== '-1')
+                    handleNameUpdate(editNameId, newName);
                   else {
-                    setEditNameId(id);
-                    setNewName(name);
+                    setEditNameId(_id);
+                    setNewName(_name);
                   }
                 }}
               >
-                {editNameId === id ? (
+                {editNameId === _id ? (
                   <DoneIcon color="success" sx={ICON_STYLE} />
                 ) : (
                   <Edit color="action" sx={ICON_STYLE} />

@@ -1,9 +1,8 @@
 import { Site } from '@/generated/planning-tool';
 import Leaflet, { LatLngLiteral } from 'leaflet';
-import dynamic from 'next/dynamic';
 import { Dispatch, SetStateAction, useEffect } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
-const SitePopup = dynamic(() => import('@/ui/molecules/SitePopup'));
+import SitePopup from '../SitePopup';
 
 const DEFAULT_CENTER = { lat: 37.7780627, lng: -121.9822475 };
 

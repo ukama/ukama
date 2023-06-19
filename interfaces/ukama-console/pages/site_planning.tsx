@@ -127,6 +127,14 @@ const Page = () => {
   const [updateDraftCall, { loading: updateDraftLoading }] =
     useUpdateDraftNameMutation({
       onCompleted: (data) => {
+        if (data.updateDraftName.id === selectedDraft?.id) {
+          setSelectedDraft({
+            ...selectedDraft,
+            name: data.updateDraftName.name,
+          });
+        } else {
+          refetchDrafts();
+        }
         showAlert(
           'update-drafts-success',
           'Draft updated successfully',
@@ -140,8 +148,13 @@ const Page = () => {
     });
   const [updateSiteCall, { loading: updateSiteLoading }] =
     useUpdateSiteMutation({
-      onCompleted: (data) => {
-        /* Show success message */
+      onCompleted: () => {
+        showAlert(
+          'update-site-success',
+          'Site updated successfully',
+          'success',
+          true,
+        );
       },
       onError: (error) => {
         showAlert('update-site-error', error.message, 'error', true);
@@ -275,11 +288,16 @@ const Page = () => {
   };
 
   const handleDraftSelected = (draftId: string) => {
-    setSelectedDraft(getDraftsData?.getDrafts.find(({ id }) => id === draftId));
+    const newDraft = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
+    setSelectedDraft(newDraft);
     setSite({
-      ...site,
+      ...(newDraft?.site || SITE_INIT),
     });
-    setMarker(MATKER_INIT);
+    const { lat, lng } = newDraft?.site.location || MATKER_INIT;
+    setMarker({
+      lat: parseFloat(lat.toString()),
+      lng: parseFloat(lng.toString()),
+    });
   };
 
   const handleDraftUpdated = (id: string, draft: string) => {
