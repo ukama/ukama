@@ -14,9 +14,6 @@ class Location {
 @ObjectType()
 class Site {
   @Field()
-  id: string;
-
-  @Field()
   name: string;
 
   @Field()
@@ -64,8 +61,8 @@ export class Draft {
   @Field()
   lastSaved: number;
 
-  @Field(() => [Site], { nullable: false })
-  site: Site[];
+  @Field(() => Site, { nullable: false })
+  site: Site;
 
   @Field(() => [Event], { nullable: false })
   events: Event[];

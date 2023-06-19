@@ -134,25 +134,24 @@ export class DraftResolver {
     @Arg("data") data: SiteLocationInput,
     @Ctx() ctx: Context
   ) {
-    // const dr = await ctx.prisma.draft.update({
-    //   where: { id: draftId },
-    //   data: {
-    //     site: {
-    //       update: {
-    //         location: {
-    //           update: {
-    //             lat: data.lat,
-    //             lng: data.lng,
-    //             address: data.address,
-    //           },
-    //         },
-    //       },
-    //     },
-    //   },
-    //   include: { site: { include: { location: true } }, events: true },
-    // });
-    // return dr;
-    return;
+    const dr = await ctx.prisma.draft.update({
+      where: { id: draftId },
+      data: {
+        site: {
+          update: {
+            location: {
+              update: {
+                lat: data.lat,
+                lng: data.lng,
+                address: data.address,
+              },
+            },
+          },
+        },
+      },
+      include: { site: { include: { location: true } }, events: true },
+    });
+    return dr;
   }
   @Mutation(() => DeleteDraftRes)
   async deleteDraft(@Arg("id") id: string, @Ctx() ctx: Context) {
