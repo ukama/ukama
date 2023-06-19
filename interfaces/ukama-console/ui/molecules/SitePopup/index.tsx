@@ -88,7 +88,8 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
             value={data.apOption}
             name="ap-selection-group"
             aria-labelledby="ap-selection"
-            onChange={(e) => setData({ ...data, ap: e.target.value })}
+            defaultValue={SITE_PLANNING_AP_OPTIONS[0].value}
+            onChange={(e) => setData({ ...data, apOption: e.target.value })}
           >
             {SITE_PLANNING_AP_OPTIONS.map(({ id, label, value }) => (
               <FormControlLabel
@@ -114,6 +115,7 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
             value={data.solarUptime}
             name="solar-uptime-selection-group"
             aria-labelledby="solar-uptime-selection"
+            defaultValue={SOLAR_UPTIME_OPTIONS[0].value}
             onChange={(e) => setData({ ...data, solarUptime: e.target.value })}
           >
             {SOLAR_UPTIME_OPTIONS.map(({ id, label, value }) => (

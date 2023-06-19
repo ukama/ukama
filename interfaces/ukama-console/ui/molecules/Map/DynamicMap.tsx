@@ -1,9 +1,11 @@
-import Leaflet from 'leaflet';
+import { Site } from '@/generated/planning-tool';
+import Leaflet, { LatLngLiteral } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
-import { useEffect } from 'react';
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import * as ReactLeaflet from 'react-leaflet';
+import CustomMarker from './CustomMarker';
 import styles from './Map.module.css';
 
 const { MapContainer } = ReactLeaflet;
@@ -14,38 +16,35 @@ const ICON = {
   shadowUrl: markerShadow.src,
 };
 interface IMap {
+  data: Site;
   id: string;
-  center?: any;
-  zoom?: number;
-  children: any;
   cursor: any;
+  children: any;
   className?: string;
-  onMapClick: Function;
-}
-
-interface ICustomMarker {
-  saveMarkers: Function;
-}
-
-function CustomMarker({ saveMarkers }: ICustomMarker) {
-  ReactLeaflet.useMapEvents({
-    click: (e) => {
-      const { lat, lng } = e.latlng;
-      saveMarkers([lat, lng]);
-      Leaflet.tooltip().openTooltip();
-    },
-  });
-  return null;
+  center: LatLngLiteral;
+  marker: LatLngLiteral;
+  handleAction: () => void;
+  zoom?: number | undefined;
+  setData: Dispatch<SetStateAction<any>>;
+  setZoom: Dispatch<SetStateAction<number>>;
+  handleDragMarker: (l: LatLngLiteral) => void;
+  handleAddMarker: (l: LatLngLiteral) => void;
 }
 
 const Map = ({
   id,
   zoom,
-  center,
+  data,
   cursor,
+  marker,
+  center,
+  setData,
+  setZoom,
   children,
   className,
-  onMapClick,
+  handleAction,
+  handleAddMarker,
+  handleDragMarker,
 }: IMap) => {
   let mapClassName = styles.map;
 
@@ -69,12 +68,22 @@ const Map = ({
       center={center}
       touchZoom={false}
       zoomControl={false}
+      doubleClickZoom={true}
       scrollWheelZoom={false}
       className={mapClassName}
     >
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
-      <CustomMarker saveMarkers={onMapClick} />
+      <CustomMarker
+        zoom={zoom}
+        data={data}
+        marker={marker}
+        setData={setData}
+        setZoom={setZoom}
+        handleAction={handleAction}
+        handleAddMarker={handleAddMarker}
+        handleDragMarker={handleDragMarker}
+      />
     </MapContainer>
   );
 };

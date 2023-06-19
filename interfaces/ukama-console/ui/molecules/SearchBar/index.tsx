@@ -35,7 +35,7 @@ const SearchBar = ({
       padding: '4px 8px 4px 12px !important',
       backgroundColor: colors.white,
     }}
-    endAdornment={<SearchIcon fontSize="small" color="primary" />}
+    endAdornment={<SearchIcon fontSize="small" color="disabled" />}
   />
 );
 
