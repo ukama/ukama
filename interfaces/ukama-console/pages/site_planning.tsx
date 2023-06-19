@@ -335,7 +335,27 @@ const Page = () => {
           },
         }}
       >
-        <SiteSummary />
+        <SiteSummary
+          title={'Site summary'}
+          subtitle={''}
+          siteSummary={[
+            {
+              id: 1,
+              name: 'Site Name 1',
+              status: 'up',
+            },
+            {
+              id: 2,
+              name: 'Site Name 2',
+              status: 'down',
+            },
+            {
+              id: 3,
+              name: 'Site Name 3',
+              status: 'unknown',
+            },
+          ]}
+        />
       </Popover>
       <Stack
         direction="row"
