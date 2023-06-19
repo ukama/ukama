@@ -9,44 +9,44 @@ datasource db {
 }
 
 model Location {
-  id      Int    @id @default(autoincrement())
-  lat     String
-  lng     String
-  address String
-  Site    Site[]
+  id        String @unique @default(cuid())
+  lat       String
+  lng       String
+  address   String
+  Site      Site[]
+  lastSaved Int
 }
 
 model Site {
-  id          String   @id @default(cuid())
-  name        String
+  id          String   @unique @default(cuid())
   height      Int
-  apOption    String
   solarUptime Int
+  name        String
+  locationId  String
+  apOption    String
+  draftId     String?
   isSetlite   Boolean
-  location    Location @relation(fields: [locationId], references: [id])
-  locationId  Int
-  Draft       Draft[]
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  Draft       Draft?   @relation(fields: [draftId], references: [id], onDelete: Cascade)
 }
 
 model Event {
-  id        String   @id @default(cuid())
+  id        String   @unique @default(cuid())
   operation String
   value     String
-  Draft     Draft?   @relation(fields: [draftId], references: [id])
+  Draft     Draft?   @relation(fields: [draftId], references: [id], onDelete: Cascade)
   draftId   String?
   createdAt DateTime @default(now())
 }
 
 model Draft {
-  id        String   @id @default(cuid())
-  lastSaved Int
+  id        String   @unique @default(cuid())
   userId    String
   name      String
   events    Event[]
-  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  sites     Site[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  siteId    String
 
   @@index([userId], type: Hash)
 }

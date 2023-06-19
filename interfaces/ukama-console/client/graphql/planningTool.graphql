@@ -2,8 +2,10 @@ fragment location on Location {
   lat
   lng
   address
+  lastSaved
 }
 fragment site on Site {
+  id
   name
   height
   apOption
@@ -22,9 +24,8 @@ fragment event on Event {
 fragment draft on Draft {
   id
   name
-  lastSaved
   userId
-  site {
+  sites {
     ...site
   }
   events {
@@ -34,6 +35,12 @@ fragment draft on Draft {
 
 mutation AddDraft($data: AddDraftInput!) {
   addDraft(data: $data) {
+    ...draft
+  }
+}
+
+mutation UpdateDraftName($draftId: String!, $name: String!) {
+  updateDraftName(id: $draftId, name: $name) {
     ...draft
   }
 }
@@ -50,27 +57,21 @@ query GetDraft($draftId: String!) {
   }
 }
 
-mutation UpdateEvent($draftId: String!, $data: UpdateEventInput!) {
-  updateEvent(draftId: $draftId, data: $data) {
-    ...draft
+mutation addSite($siteId: String!, $data: SiteInput!) {
+  updateSite(siteId: $siteId, data: $data) {
+    ...site
   }
 }
 
-mutation UpdateDraftName($updateDraftNameId: String!, $name: String!) {
-  updateDraftName(id: $updateDraftNameId, name: $name) {
-    ...draft
+mutation UpdateSite($siteId: String!, $data: SiteInput!) {
+  updateSite(siteId: $siteId, data: $data) {
+    ...site
   }
 }
 
-mutation UpdateSite($draftId: String!, $data: UpdateSiteInput!) {
-  updateSite(id: $draftId, data: $data) {
-    ...draft
-  }
-}
-
-mutation UpdateSiteLocation($draftId: String!, $data: SiteLocationInput!) {
-  updateSiteLocation(draftId: $draftId, data: $data) {
-    ...draft
+mutation UpdateLocation($locationId: String!, $data: LocationInput!) {
+  updateLocation(locationId: $locationId, data: $data) {
+    ...location
   }
 }
 

@@ -2,7 +2,9 @@ import "reflect-metadata";
 import { Field, ID, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
-class Location {
+export class Location {
+  @Field()
+  lastSaved: number;
   @Field()
   lat: string;
   @Field()
@@ -12,7 +14,10 @@ class Location {
 }
 
 @ObjectType()
-class Site {
+export class Site {
+  @Field()
+  id: string;
+
   @Field()
   name: string;
 
@@ -33,7 +38,7 @@ class Site {
 }
 
 @ObjectType()
-class Event {
+export class Event {
   @Field(() => ID)
   id: string;
 
@@ -58,18 +63,15 @@ export class Draft {
   @Field()
   userId: string;
 
-  @Field()
-  lastSaved: number;
-
-  @Field(() => Site, { nullable: false })
-  site: Site;
+  @Field(() => [Site], { nullable: false })
+  sites: Site[];
 
   @Field(() => [Event], { nullable: false })
   events: Event[];
 }
 
 @InputType()
-export class UpdateSiteInput {
+export class SiteInput {
   @Field()
   lastSaved: number;
 
@@ -111,13 +113,13 @@ export class AddDraftInput {
   name: string;
 
   @Field()
-  lastSaved: number;
-
-  @Field()
   userId: string;
 }
 @InputType()
-export class SiteLocationInput {
+export class LocationInput {
+  @Field()
+  lastSaved: number;
+
   @Field()
   lat: string;
 
