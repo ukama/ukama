@@ -13,6 +13,22 @@ import (
 
 const orgNetMappingKeyPrefix = "map:"
 
+const (
+	E_NODE_IP_IDX   = 0
+	E_NODE_PORT_IDX = 1
+	E_MESH_PORT_IDX = 2
+	E_MAX_IDX       = 3
+)
+
+/* org.net.site.b64Encoded(nodeIp:Nodeport:meshPort) */
+const (
+	MAP_ORG_IDX  = 0
+	MAP_NW_IDX   = 1
+	MAP_SITE_IDX = 2
+	MAP_ENC_IDX  = 3
+	MAP_MAX_IDX  = 4
+)
+
 type NodeOrgMap struct {
 	etcd *clientv3.Client
 }
@@ -41,7 +57,7 @@ func NewNodeToOrgMap(config *Config) *NodeOrgMap {
 
 func (n *NodeOrgMap) Add(ctx context.Context, nodeId, org, network, site, nodeIp string, nodePort, meshPort int32) error {
 	nodeIdKey := formatMapKey(nodeId)
-	_, err := n.etcd.Put(ctx, nodeIdKey, org+"."+network+"."+site+"."+b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%d", nodeIp, nodePort))))
+	_, err := n.etcd.Put(ctx, nodeIdKey, org+"."+network+"."+site+"."+b64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%d:%d", nodeIp, nodePort, meshPort))))
 	if err != nil {
 		return fmt.Errorf("failed to add record to db. Error: %v", err)
 	}
@@ -94,21 +110,27 @@ func formatMapKey(nodeId string) string {
 }
 
 func parseMapValue(data []byte) (*OrgNet, error) {
-	var p int64
+	var p1, p2 int64
 	c := strings.Split(string(data), ".")
-	if len(c) != 4 {
+	if len(c) != MAP_MAX_IDX {
 		logrus.Errorf("failed to parse org.net.site.ip:port structure for value '%s'", string(data))
 	}
 
-	b64Add, err := b64.StdEncoding.DecodeString(c[3])
+	b64Add, err := b64.StdEncoding.DecodeString(c[MAP_ENC_IDX])
 	add := strings.Split(string(b64Add), ":")
-	if len(add) != 2 {
-		logrus.Errorf("failed to parse ip:port structure for '%s'", add)
+	if len(add) != E_MAX_IDX {
+		logrus.Errorf("failed to parse ip:port:meshport structure for '%s'", add)
 		return nil, err
 	} else {
-		p, err = strconv.ParseInt(add[1], 10, 32)
+		p1, err = strconv.ParseInt(add[E_NODE_PORT_IDX], 10, 32)
 		if err != nil {
-			logrus.Errorf("failed to parse covert port '%s' to int32", add[1])
+			logrus.Errorf("failed to convert port '%s' to int32", add[E_NODE_IP_IDX])
+			return nil, err
+		}
+
+		p2, err = strconv.ParseInt(add[E_MESH_PORT_IDX], 10, 32)
+		if err != nil {
+			logrus.Errorf("failed to parse covert port '%s' to int32", add[E_MESH_PORT_IDX])
 			return nil, err
 		}
 	}
@@ -118,7 +140,8 @@ func parseMapValue(data []byte) (*OrgNet, error) {
 		Network:  c[1],
 		Site:     c[2],
 		NodeIp:   add[0],
-		NodePort: int32(p),
+		NodePort: int32(p1),
+		MeshPort: int32(p2),
 	}, nil
 
 }

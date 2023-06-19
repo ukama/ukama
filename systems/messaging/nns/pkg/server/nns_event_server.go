@@ -161,7 +161,7 @@ func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssign
 		return err
 	}
 
-	err = l.Nns.nodeOrgMapping.Add(context.Background(), msg.GetNodeId(), l.Org, orgNet.Network, orgNet.Site, orgNet.NodeIp, orgNet.NodePort, orgNet.MeshPort)
+	err = l.Nns.nodeOrgMapping.Add(context.Background(), msg.GetNodeId(), l.Org, msg.Network, msg.Site, orgNet.NodeIp, orgNet.NodePort, orgNet.MeshPort)
 	if err != nil {
 		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
 		return err
@@ -170,8 +170,8 @@ func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssign
 	return nil
 }
 
-func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeReleaseEvent, error) {
-	p := &epb.NodeReleaseEvent{}
+func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeReleasedEvent, error) {
+	p := &epb.NodeReleasedEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
@@ -180,7 +180,7 @@ func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeRel
 	return p, nil
 }
 
-func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeReleaseEvent) error {
+func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeReleasedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	orgNet, err := l.Nns.nodeOrgMapping.Get(context.Background(), msg.GetNodeId())
