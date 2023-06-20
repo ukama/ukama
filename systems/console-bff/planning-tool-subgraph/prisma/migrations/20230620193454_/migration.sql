@@ -12,6 +12,7 @@ CREATE TABLE "Site" (
     "height" INTEGER NOT NULL,
     "solarUptime" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
     "locationId" TEXT NOT NULL,
     "apOption" TEXT NOT NULL,
     "draftId" TEXT,

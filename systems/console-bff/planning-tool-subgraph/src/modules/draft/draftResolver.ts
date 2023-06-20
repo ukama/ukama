@@ -99,6 +99,7 @@ export class DraftResolver {
         sites: {
           create: [
             {
+              status: "up",
               name: data.siteName,
               height: data.height,
               apOption: data.apOption,
@@ -153,6 +154,7 @@ export class DraftResolver {
   @Mutation(() => TLocation)
   async updateLocation(
     @Arg("locationId") locationId: string,
+    @Arg("draftId") draftId: string,
     @Arg("data") data: LocationInput,
     @Ctx() ctx: Context
   ) {
@@ -162,6 +164,14 @@ export class DraftResolver {
         lat: data.lat,
         lng: data.lng,
         address: data.address,
+      },
+    });
+    await ctx.prisma.draft.update({
+      where: {
+        id: draftId,
+      },
+      data: {
+        lastSaved: data.lastSaved,
       },
     });
     return dr;

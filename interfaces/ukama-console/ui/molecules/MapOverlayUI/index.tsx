@@ -157,7 +157,7 @@ const RightOverlayUI = ({
 
 interface ISiteSummary {
   title: string;
-  subtitle: string;
+  subtitle: number;
   siteSummary: any;
 }
 
@@ -167,23 +167,29 @@ const SiteSummary = ({ title, subtitle, siteSummary }: ISiteSummary) => (
       <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 600 }}>
         {title}
       </Typography>
-      <Typography variant="caption">{subtitle}</Typography>
+      <Typography variant="caption">{`(${subtitle})`}</Typography>
     </Stack>
-    {siteSummary.map(({ id, name, status }: any) => (
-      <Stack key={id} direction="row" spacing={1} alignItems={'center'}>
-        {status === 'unknown' ? (
-          <DotIcon color={'disabled'} sx={{ fontSize: '18px' }} />
-        ) : (
-          <CheckCircleOutlineIcon
-            color={status === 'up' ? 'success' : 'error'}
-            sx={{ fontSize: '18px' }}
-          />
-        )}
-        <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 500 }}>
-          {name}
-        </Typography>
-      </Stack>
-    ))}
+    {siteSummary.length > 0 ? (
+      siteSummary.map(({ id, name, status }: any) => (
+        <Stack key={id} direction="row" spacing={1} alignItems={'center'}>
+          {status === 'unknown' ? (
+            <DotIcon color={'disabled'} sx={{ fontSize: '18px' }} />
+          ) : (
+            <CheckCircleOutlineIcon
+              color={status === 'up' ? 'success' : 'error'}
+              sx={{ fontSize: '18px' }}
+            />
+          )}
+          <Typography variant="body2" sx={{ fontSize: 14, fontWeight: 500 }}>
+            {name}
+          </Typography>
+        </Stack>
+      ))
+    ) : (
+      <Typography variant="caption" sx={{ fontSize: 14 }}>
+        No site added yet!
+      </Typography>
+    )}
   </Stack>
 );
 

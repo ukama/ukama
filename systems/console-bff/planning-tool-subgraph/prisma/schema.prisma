@@ -21,6 +21,7 @@ model Site {
   height      Int
   solarUptime Int
   name        String
+  status      String
   locationId  String
   apOption    String
   draftId     String?

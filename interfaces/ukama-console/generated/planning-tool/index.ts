@@ -56,6 +56,7 @@ export type Location = {
 
 export type LocationInput = {
   address: Scalars['String']['input'];
+  lastSaved: Scalars['Float']['input'];
   lat: Scalars['String']['input'];
   lng: Scalars['String']['input'];
 };
@@ -102,6 +103,7 @@ export type MutationUpdateEventArgs = {
 
 export type MutationUpdateLocationArgs = {
   data: LocationInput;
+  draftId: Scalars['String']['input'];
   locationId: Scalars['String']['input'];
 };
 
@@ -137,6 +139,7 @@ export type Site = {
   location: Location;
   name: Scalars['String']['output'];
   solarUptime: Scalars['Float']['output'];
+  status: Scalars['String']['output'];
 };
 
 export type SiteInput = {
@@ -156,20 +159,20 @@ export type UpdateEventInput = {
   value: Scalars['String']['input'];
 };
 
-export type LocationFragment = { __typename?: 'Location', lat: string, lng: string, address: string };
+export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
 
-export type SiteFragment = { __typename?: 'Site', id: string, name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } };
+export type SiteFragment = { __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } };
 
 export type EventFragment = { __typename?: 'Event', id: string, value: string, operation: string, createdAt: string };
 
-export type DraftFragment = { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> };
+export type DraftFragment = { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> };
 
 export type AddDraftMutationVariables = Exact<{
   data: AddDraftInput;
 }>;
 
 
-export type AddDraftMutation = { __typename?: 'Mutation', addDraft: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type AddDraftMutation = { __typename?: 'Mutation', addDraft: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateDraftNameMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
@@ -177,21 +180,21 @@ export type UpdateDraftNameMutationVariables = Exact<{
 }>;
 
 
-export type UpdateDraftNameMutation = { __typename?: 'Mutation', updateDraftName: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type UpdateDraftNameMutation = { __typename?: 'Mutation', updateDraftName: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type GetDraftsQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
 
 
-export type GetDraftsQuery = { __typename?: 'Query', getDrafts: Array<{ __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> }> };
+export type GetDraftsQuery = { __typename?: 'Query', getDrafts: Array<{ __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> }> };
 
 export type GetDraftQueryVariables = Exact<{
   draftId: Scalars['String']['input'];
 }>;
 
 
-export type GetDraftQuery = { __typename?: 'Query', getDraft: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type GetDraftQuery = { __typename?: 'Query', getDraft: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type AddSiteMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
@@ -199,7 +202,7 @@ export type AddSiteMutationVariables = Exact<{
 }>;
 
 
-export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateSiteMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
@@ -208,15 +211,16 @@ export type UpdateSiteMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateLocationMutationVariables = Exact<{
+  draftId: Scalars['String']['input'];
   locationId: Scalars['String']['input'];
   data: LocationInput;
 }>;
 
 
-export type UpdateLocationMutation = { __typename?: 'Mutation', updateLocation: { __typename?: 'Location', lat: string, lng: string, address: string } };
+export type UpdateLocationMutation = { __typename?: 'Mutation', updateLocation: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } };
 
 export type DeleteDraftMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
@@ -227,6 +231,7 @@ export type DeleteDraftMutation = { __typename?: 'Mutation', deleteDraft: { __ty
 
 export const LocationFragmentDoc = gql`
     fragment location on Location {
+  id
   lat
   lng
   address
@@ -236,6 +241,7 @@ export const SiteFragmentDoc = gql`
     fragment site on Site {
   id
   name
+  status
   height
   apOption
   isSetlite
@@ -475,8 +481,8 @@ export type UpdateSiteMutationHookResult = ReturnType<typeof useUpdateSiteMutati
 export type UpdateSiteMutationResult = Apollo.MutationResult<UpdateSiteMutation>;
 export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<UpdateSiteMutation, UpdateSiteMutationVariables>;
 export const UpdateLocationDocument = gql`
-    mutation UpdateLocation($locationId: String!, $data: LocationInput!) {
-  updateLocation(locationId: $locationId, data: $data) {
+    mutation UpdateLocation($draftId: String!, $locationId: String!, $data: LocationInput!) {
+  updateLocation(draftId: $draftId, locationId: $locationId, data: $data) {
     ...location
   }
 }
@@ -496,6 +502,7 @@ export type UpdateLocationMutationFn = Apollo.MutationFunction<UpdateLocationMut
  * @example
  * const [updateLocationMutation, { data, loading, error }] = useUpdateLocationMutation({
  *   variables: {
+ *      draftId: // value for 'draftId'
  *      locationId: // value for 'locationId'
  *      data: // value for 'data'
  *   },

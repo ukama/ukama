@@ -22,15 +22,13 @@ import {
   RightOverlayUI,
   SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
-import { formatSecondsToDuration } from '@/utils';
+import { calculateCenterLatLng, formatSecondsToDuration } from '@/utils';
 import { AlertColor, Popover, Stack, Typography } from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
-const ZOOM = 4;
-const MATKER_INIT = { lat: 0, lng: 0 };
-const DEFAULT_CENTER = { lat: 37.7780627, lng: -121.9822475 };
+const ZOOM = 3;
 const SITE_INIT = {
   id: '',
   name: '',
@@ -46,12 +44,18 @@ const SITE_INIT = {
     lastSaved: 0,
   },
 };
+
+const getMarkers = (sites: Site[]) => {
+  return sites.map((site) => ({
+    lat: parseFloat(site.location.lat),
+    lng: parseFloat(site.location.lng),
+  }));
+};
+
 const getLastSavedInt = () => Math.floor(new Date().getTime() / 1000);
 
 const Page = () => {
-  const [markers, setMarkers] = useState<LatLngLiteral[]>([]);
   const [zoom, setZoom] = useState<number>(ZOOM);
-  const [site, setSite] = useState<Site[]>([SITE_INIT]);
   const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>(
     undefined,
   );
@@ -61,7 +65,6 @@ const Page = () => {
   const [togglePower, setTogglePower] = useState(false);
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
-  const [marker, setMarker] = useState<LatLngLiteral>(MATKER_INIT);
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
   const showAlert = (
@@ -97,25 +100,6 @@ const Page = () => {
       } else {
         setSelectedDraft(undefined);
       }
-      // if (!selectedDraft && data.getDrafts.length > 0) {
-      // setSelectedDraft(
-      //   data.getDrafts.length > 0 ? data.getDrafts[0] : undefined,
-      // );
-      // setSite({ ...data.getDrafts[0].site });
-      //   if (
-      //     data.getDrafts[0].site.location.lat &&
-      //     data.getDrafts[0].site.location.lng
-      //   ) {
-      //     setMarker({
-      //       lat: parseFloat(data.getDrafts[0].site.location.lat),
-      //       lng: parseFloat(data.getDrafts[0].site.location.lng),
-      //     });
-      //   }
-      // } else if (data.getDrafts.length === 0) {
-      //   setSelectedDraft(undefined);
-      //   setSite(SITE_INIT);
-      //   setMarker(MATKER_INIT);
-      // }
     },
     onError: (error) => {
       showAlert('get-drafts-error', error.message, 'error', true);
@@ -182,10 +166,8 @@ const Page = () => {
   });
   const [updateLocationCall, { loading: updateLocationLoading }] =
     useUpdateLocationMutation({
-      onCompleted: (data) => {
-        // setSelectedDraft({
-        //   ...data?.updateSiteLocation,
-        // });
+      onCompleted: () => {
+        refetchDrafts();
       },
       onError: (error) => {
         showAlert('update-site-location-error', error.message, 'error', true);
@@ -219,42 +201,11 @@ const Page = () => {
   const open = Boolean(anchorSiteInfo);
   const id = open ? 'site-info-popover' : undefined;
 
-  useEffect(() => {
-    if (selectedDraft?.id) {
-      // const loc = {
-      //   lat: marker.lat.toFixed(10).toString(),
-      //   lng: marker.lng.toFixed(10).toString(),
-      //   address: selectedDraft.site.location.address,
-      // };
-      // setSelectedDraft({
-      //   ...selectedDraft,
-      //   site: {
-      //     ...selectedDraft.site,
-      //     location: loc,
-      //   },
-      // });
-      // setSite({
-      //   ...site,
-      //   location: loc,
-      // });
-    }
-  }, [marker]);
-
   const handleMarkerDrag = (e: LatLngLiteral, id: string) => {
-    setMarker(e);
-    // setSite({
-    //   ...site,
-    //   location: {
-    //     address: '',
-    //     lat: e.lat.toFixed(10).toString(),
-    //     lng: e.lng.toFixed(10).toString(),
-    //     lastSaved: getLastSavedInt(),
-    //   },
-    // });
-
     updateLocationCall({
       variables: {
         locationId: id,
+        draftId: selectedDraft?.id || '',
         data: {
           address: '',
           lastSaved: getLastSavedInt(),
@@ -264,18 +215,6 @@ const Page = () => {
       },
     });
   };
-  // updateLocationCall({
-  //   variables: {
-  //     locationId:
-  //     draftId: selectedDraft?.id || '',
-  //     data: {
-  //       address: '',
-  //       lat: e.lat.toString(),
-  //       lng: e.lng.toString(),
-  //     },
-  //   },
-  // });
-  // };
 
   const handleMarkerAdd = (e: LatLngLiteral) => {
     if (addSite) {
@@ -297,19 +236,6 @@ const Page = () => {
         },
       });
     }
-    // if (addSite && marker.lat === 0 && marker.lng === 0) {
-    //   setAddSite(false);
-    //   setSite({
-    //     ...site,
-    //     location: {
-    //       address: '',
-    //       lat: e.lat.toFixed(10).toString(),
-    //       lng: e.lng.toFixed(10).toString(),
-    //       lastSaved: getLastSavedInt(),
-    //     },
-    //   });
-    //   setMarker(e);
-    // }
   };
 
   const handleSiteAction = (s: Site) => {
@@ -341,6 +267,7 @@ const Page = () => {
         data: {
           name: 'New Draft',
           userId: _commonData.userId,
+          lastSaved: getLastSavedInt(),
         },
       },
     });
@@ -388,24 +315,8 @@ const Page = () => {
       >
         <SiteSummary
           title={'Site summary'}
-          subtitle={''}
-          siteSummary={[
-            {
-              id: 1,
-              name: 'Site Name 1',
-              status: 'up',
-            },
-            {
-              id: 2,
-              name: 'Site Name 2',
-              status: 'down',
-            },
-            {
-              id: 3,
-              name: 'Site Name 3',
-              status: 'unknown',
-            },
-          ]}
+          subtitle={selectedDraft?.sites.length || 0}
+          siteSummary={selectedDraft?.sites || []}
         />
       </Popover>
       <Stack
@@ -443,8 +354,6 @@ const Page = () => {
           <Map
             width={800}
             height={418}
-            marker={marker}
-            setData={setSite}
             setZoom={setZoom}
             isAddSite={addSite}
             id={'site-planning-map'}
@@ -453,10 +362,12 @@ const Page = () => {
             data={selectedDraft?.sites || []}
             handleAddMarker={handleMarkerAdd}
             handleDragMarker={handleMarkerDrag}
-            zoom={marker.lat === 0 && marker.lng === 0 ? ZOOM : zoom}
-            center={
-              marker.lat === 0 && marker.lng === 0 ? DEFAULT_CENTER : marker
+            zoom={
+              selectedDraft && selectedDraft?.sites.length > 0 ? zoom : ZOOM
             }
+            center={calculateCenterLatLng(
+              getMarkers(selectedDraft?.sites || []),
+            )}
           >
             {({ TileLayer }: any) => (
               <>
