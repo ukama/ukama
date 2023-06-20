@@ -150,6 +150,7 @@ export type SiteInput = {
   lastSaved: Scalars['Float']['input'];
   lat: Scalars['String']['input'];
   lng: Scalars['String']['input'];
+  locationId: Scalars['String']['input'];
   siteName: Scalars['String']['input'];
   solarUptime: Scalars['Float']['input'];
 };

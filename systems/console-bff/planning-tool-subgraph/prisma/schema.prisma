@@ -9,7 +9,7 @@ datasource db {
 }
 
 model Location {
-  id      String @unique @default(cuid())
+  id      String @unique
   lat     String
   lng     String
   address String

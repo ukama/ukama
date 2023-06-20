@@ -26,7 +26,7 @@ interface IMap {
   handleAction: (a: Site) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
-  handleAddMarker: (l: LatLngLiteral) => void;
+  handleAddMarker: (l: LatLngLiteral, b: string) => void;
 }
 
 const Map = ({

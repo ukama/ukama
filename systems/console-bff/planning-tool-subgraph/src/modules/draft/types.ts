@@ -82,6 +82,9 @@ export class Draft {
 @InputType()
 export class SiteInput {
   @Field()
+  locationId: string;
+
+  @Field()
   lastSaved: number;
 
   @Field()
