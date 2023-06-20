@@ -108,6 +108,7 @@ const Page = () => {
 
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
     onCompleted: (data) => {
+      setSelectedDraft(data.addDraft);
       refetchDrafts();
       showAlert(
         'add-drafts-success',
@@ -216,13 +217,14 @@ const Page = () => {
     });
   };
 
-  const handleMarkerAdd = (e: LatLngLiteral) => {
+  const handleMarkerAdd = (e: LatLngLiteral, id: string) => {
     if (addSite) {
       setAddSite(false);
       addSiteCall({
         variables: {
           draftId: selectedDraft?.id || '',
           data: {
+            locationId: id,
             siteName: SITE_INIT.name,
             lastSaved: getLastSavedInt(),
             apOption: SITE_INIT.apOption,
@@ -244,6 +246,7 @@ const Page = () => {
         siteId: s.id,
         draftId: selectedDraft?.id || '',
         data: {
+          locationId: s.location.id,
           siteName: s.name,
           apOption: s.apOption,
           isSetlite: s.isSetlite,

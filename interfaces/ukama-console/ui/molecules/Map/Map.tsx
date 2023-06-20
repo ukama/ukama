@@ -22,7 +22,7 @@ interface IMap {
   zoom?: number | undefined;
   handleAction: (a: Site) => void;
   setZoom: Dispatch<SetStateAction<number>>;
-  handleAddMarker: (l: LatLngLiteral) => void;
+  handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }
 

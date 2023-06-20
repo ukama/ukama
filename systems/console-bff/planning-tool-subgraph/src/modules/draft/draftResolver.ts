@@ -70,6 +70,7 @@ export class DraftResolver {
               isSetlite: data.isSetlite,
               location: {
                 create: {
+                  id: data.locationId,
                   lat: data.lat,
                   lng: data.lng,
                   address: data.address,
@@ -103,10 +104,11 @@ export class DraftResolver {
               name: data.siteName,
               height: data.height,
               apOption: data.apOption,
-              solarUptime: data.solarUptime,
               isSetlite: data.isSetlite,
+              solarUptime: data.solarUptime,
               location: {
                 create: {
+                  id: data.locationId,
                   lat: data.lat,
                   lng: data.lng,
                   address: data.address,
@@ -153,14 +155,15 @@ export class DraftResolver {
 
   @Mutation(() => TLocation)
   async updateLocation(
-    @Arg("locationId") locationId: string,
     @Arg("draftId") draftId: string,
     @Arg("data") data: LocationInput,
+    @Arg("locationId") locationId: string,
     @Ctx() ctx: Context
   ) {
     const dr = await ctx.prisma.location.update({
       where: { id: locationId },
       data: {
+        id: locationId,
         lat: data.lat,
         lng: data.lng,
         address: data.address,
