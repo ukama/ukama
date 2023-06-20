@@ -14,15 +14,15 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Dispatch, SetStateAction } from 'react';
+import { useState } from 'react';
 
 interface ISitePopup {
-  data: Site;
-  handleAction: () => void;
-  setData: Dispatch<SetStateAction<any>>;
+  site: Site;
+  handleAction: (a: Site) => void;
 }
 
-const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
+const SitePopup = ({ site, handleAction }: ISitePopup) => {
+  const [data, setData] = useState<Site>(site);
   return (
     <Paper elevation={0} sx={{ boxShadow: 'none', cursor: 'default' }}>
       <Stack spacing={1.2}>
@@ -43,12 +43,15 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
         <TextField
           required
           value={
-            data.location.address
+            data.location
               ? data.location.address
-              : `(${data.location.lat}, ${data.location.lng})`
+                ? data.location.address
+                : `(${data.location?.lat}, ${data.location?.lng})`
+              : '(0,0)'
           }
           label="LOCATION"
           variant="standard"
+          disabled
           InputLabelProps={{ shrink: true }}
           placeholder="Location, address, or coordinates"
           sx={{
@@ -74,7 +77,9 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
               fontSize: '16px',
             },
           }}
-          onChange={(e) => setData({ ...data, height: e.target.value })}
+          onChange={(e) =>
+            setData({ ...data, height: parseFloat(e.target.value) })
+          }
         />
         <FormControl>
           <FormLabel
@@ -116,7 +121,9 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
             name="solar-uptime-selection-group"
             aria-labelledby="solar-uptime-selection"
             defaultValue={SOLAR_UPTIME_OPTIONS[0].value}
-            onChange={(e) => setData({ ...data, solarUptime: e.target.value })}
+            onChange={(e) =>
+              setData({ ...data, solarUptime: parseInt(e.target.value) })
+            }
           >
             {SOLAR_UPTIME_OPTIONS.map(({ id, label, value }) => (
               <FormControlLabel
@@ -143,7 +150,7 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
                 defaultChecked
                 value={data.isSetlite}
                 onChange={(e) =>
-                  setData({ ...data, isBackhaul: e.target.checked })
+                  setData({ ...data, isSetlite: e.target.checked })
                 }
               />
             }
@@ -159,11 +166,11 @@ const SitePopup = ({ data, setData, handleAction }: ISitePopup) => {
             variant="contained"
             sx={{ width: 'fit-content', fontSize: '14px' }}
             onClick={(e) => {
-              handleAction();
+              handleAction(data);
               e.preventDefault();
             }}
           >
-            {data.name ? 'UPDATE SITE' : 'PLACE SITE'}
+            UPDATE SITE
           </Button>
         </Stack>
       </Stack>

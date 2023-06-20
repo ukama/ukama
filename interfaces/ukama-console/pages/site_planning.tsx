@@ -3,11 +3,11 @@ import {
   Draft,
   Site,
   useAddDraftMutation,
+  useAddSiteMutation,
   useDeleteDraftMutation,
   useGetDraftsQuery,
   useUpdateDraftNameMutation,
-  useUpdateEventMutation,
-  useUpdateSiteLocationMutation,
+  useUpdateLocationMutation,
   useUpdateSiteMutation,
 } from '@/generated/planning-tool';
 import styles from '@/styles/Site_Planning.module.css';
@@ -32,22 +32,29 @@ const ZOOM = 4;
 const MATKER_INIT = { lat: 0, lng: 0 };
 const DEFAULT_CENTER = { lat: 37.7780627, lng: -121.9822475 };
 const SITE_INIT = {
+  id: '',
   name: '',
   height: 0,
   solarUptime: 95,
   apOption: 'ONE_TO_ONE',
   isSetlite: true,
   location: {
+    id: '',
     lat: '',
     lng: '',
     address: '',
+    lastSaved: 0,
   },
 };
+const getLastSavedInt = () => Math.floor(new Date().getTime() / 1000);
 
 const Page = () => {
+  const [markers, setMarkers] = useState<LatLngLiteral[]>([]);
   const [zoom, setZoom] = useState<number>(ZOOM);
-  const [site, setSite] = useState<Site>(SITE_INIT);
-  const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>();
+  const [site, setSite] = useState<Site[]>([SITE_INIT]);
+  const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>(
+    undefined,
+  );
   const [search, setSearch] = useState('');
   const [addSite, setAddSite] = useState(false);
   const [addLink, setAddLink] = useState(false);
@@ -79,25 +86,36 @@ const Page = () => {
       userId: _commonData.userId,
     },
     onCompleted: (data) => {
-      if (!selectedDraft && data.getDrafts.length > 0) {
-        setSelectedDraft(
-          data.getDrafts.length > 0 ? data.getDrafts[0] : undefined,
-        );
-        setSite({ ...data.getDrafts[0].site });
-        if (
-          data.getDrafts[0].site.location.lat &&
-          data.getDrafts[0].site.location.lng
-        ) {
-          setMarker({
-            lat: parseFloat(data.getDrafts[0].site.location.lat),
-            lng: parseFloat(data.getDrafts[0].site.location.lng),
-          });
+      if (data.getDrafts.length > 0) {
+        if (!selectedDraft) {
+          setSelectedDraft(data.getDrafts[0]);
+        } else {
+          setSelectedDraft(
+            data.getDrafts.find((d) => d.id === selectedDraft?.id),
+          );
         }
-      } else if (data.getDrafts.length === 0) {
+      } else {
         setSelectedDraft(undefined);
-        setSite(SITE_INIT);
-        setMarker(MATKER_INIT);
       }
+      // if (!selectedDraft && data.getDrafts.length > 0) {
+      // setSelectedDraft(
+      //   data.getDrafts.length > 0 ? data.getDrafts[0] : undefined,
+      // );
+      // setSite({ ...data.getDrafts[0].site });
+      //   if (
+      //     data.getDrafts[0].site.location.lat &&
+      //     data.getDrafts[0].site.location.lng
+      //   ) {
+      //     setMarker({
+      //       lat: parseFloat(data.getDrafts[0].site.location.lat),
+      //       lng: parseFloat(data.getDrafts[0].site.location.lng),
+      //     });
+      //   }
+      // } else if (data.getDrafts.length === 0) {
+      //   setSelectedDraft(undefined);
+      //   setSite(SITE_INIT);
+      //   setMarker(MATKER_INIT);
+      // }
     },
     onError: (error) => {
       showAlert('get-drafts-error', error.message, 'error', true);
@@ -106,12 +124,6 @@ const Page = () => {
 
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
     onCompleted: (data) => {
-      setSelectedDraft({
-        ...data.addDraft,
-      });
-      setSite({
-        ...data.addDraft.site,
-      });
       refetchDrafts();
       showAlert(
         'add-drafts-success',
@@ -126,15 +138,8 @@ const Page = () => {
   });
   const [updateDraftCall, { loading: updateDraftLoading }] =
     useUpdateDraftNameMutation({
-      onCompleted: (data) => {
-        if (data.updateDraftName.id === selectedDraft?.id) {
-          setSelectedDraft({
-            ...selectedDraft,
-            name: data.updateDraftName.name,
-          });
-        } else {
-          refetchDrafts();
-        }
+      onCompleted: () => {
+        refetchDrafts();
         showAlert(
           'update-drafts-success',
           'Draft updated successfully',
@@ -149,6 +154,7 @@ const Page = () => {
   const [updateSiteCall, { loading: updateSiteLoading }] =
     useUpdateSiteMutation({
       onCompleted: () => {
+        refetchDrafts();
         showAlert(
           'update-site-success',
           'Site updated successfully',
@@ -160,32 +166,35 @@ const Page = () => {
         showAlert('update-site-error', error.message, 'error', true);
       },
     });
-  const [updateSiteLocationCall, { loading: updateSiteLocationLoading }] =
-    useUpdateSiteLocationMutation({
+  const [addSiteCall, { loading: addSiteLoading }] = useAddSiteMutation({
+    onCompleted: () => {
+      refetchDrafts();
+      showAlert(
+        'add-site-success',
+        'Site updated successfully',
+        'success',
+        true,
+      );
+    },
+    onError: (error) => {
+      showAlert('add-site-error', error.message, 'error', true);
+    },
+  });
+  const [updateLocationCall, { loading: updateLocationLoading }] =
+    useUpdateLocationMutation({
       onCompleted: (data) => {
-        setSelectedDraft({
-          ...data?.updateSiteLocation,
-        });
+        // setSelectedDraft({
+        //   ...data?.updateSiteLocation,
+        // });
       },
       onError: (error) => {
         showAlert('update-site-location-error', error.message, 'error', true);
-      },
-    });
-  const [updateEventCall, { loading: updateEventLoading }] =
-    useUpdateEventMutation({
-      onCompleted: (data) => {
-        /* Show success message */
-      },
-      onError: (error) => {
-        showAlert('update-event-error', error.message, 'error', true);
       },
     });
 
   const [deleteDraftCall, { loading: deleteDraftLoading }] =
     useDeleteDraftMutation({
       onCompleted: () => {
-        setSelectedDraft(undefined);
-        setSite(SITE_INIT);
         refetchDrafts();
         showAlert(
           'delte-drafts-success',
@@ -212,64 +221,115 @@ const Page = () => {
 
   useEffect(() => {
     if (selectedDraft?.id) {
-      const loc = {
-        lat: marker.lat.toFixed(10).toString(),
-        lng: marker.lng.toFixed(10).toString(),
-        address: selectedDraft.site.location.address,
-      };
-      setSelectedDraft({
-        ...selectedDraft,
-        site: {
-          ...selectedDraft.site,
-          location: loc,
-        },
-      });
-      setSite({
-        ...site,
-        location: loc,
-      });
+      // const loc = {
+      //   lat: marker.lat.toFixed(10).toString(),
+      //   lng: marker.lng.toFixed(10).toString(),
+      //   address: selectedDraft.site.location.address,
+      // };
+      // setSelectedDraft({
+      //   ...selectedDraft,
+      //   site: {
+      //     ...selectedDraft.site,
+      //     location: loc,
+      //   },
+      // });
+      // setSite({
+      //   ...site,
+      //   location: loc,
+      // });
     }
   }, [marker]);
 
-  const handleMarkerDrag = (e: LatLngLiteral) => {
-    setMarker({ lat: e.lat, lng: e.lng });
-    updateSiteLocationCall({
+  const handleMarkerDrag = (e: LatLngLiteral, id: string) => {
+    setMarker(e);
+    // setSite({
+    //   ...site,
+    //   location: {
+    //     address: '',
+    //     lat: e.lat.toFixed(10).toString(),
+    //     lng: e.lng.toFixed(10).toString(),
+    //     lastSaved: getLastSavedInt(),
+    //   },
+    // });
+
+    updateLocationCall({
       variables: {
-        draftId: selectedDraft?.id || '',
+        locationId: id,
         data: {
           address: '',
-          lat: e.lat.toString(),
-          lng: e.lng.toString(),
+          lastSaved: getLastSavedInt(),
+          lat: e.lat.toFixed(9).toString(),
+          lng: e.lng.toFixed(9).toString(),
         },
       },
     });
   };
+  // updateLocationCall({
+  //   variables: {
+  //     locationId:
+  //     draftId: selectedDraft?.id || '',
+  //     data: {
+  //       address: '',
+  //       lat: e.lat.toString(),
+  //       lng: e.lng.toString(),
+  //     },
+  //   },
+  // });
+  // };
 
   const handleMarkerAdd = (e: LatLngLiteral) => {
-    if (addSite && marker.lat === 0 && marker.lng === 0) {
+    if (addSite) {
       setAddSite(false);
-      setMarker(e);
-    }
-  };
-
-  const handleSiteAction = () => {
-    if (selectedDraft?.id)
-      updateSiteCall({
+      addSiteCall({
         variables: {
+          draftId: selectedDraft?.id || '',
           data: {
-            siteName: site.name,
-            apOption: site.apOption,
-            isSetlite: site.isSetlite,
-            address: site.location.address,
-            lat: site.location.lat.toString(),
-            lng: site.location.lng.toString(),
-            height: parseFloat(site.height.toString()),
-            lastSaved: Math.floor(new Date().getTime() / 1000),
-            solarUptime: parseFloat(site.solarUptime.toString()),
+            siteName: SITE_INIT.name,
+            lastSaved: getLastSavedInt(),
+            apOption: SITE_INIT.apOption,
+            isSetlite: SITE_INIT.isSetlite,
+            lat: e.lat.toFixed(9).toString(),
+            lng: e.lng.toFixed(9).toString(),
+            address: SITE_INIT.location.address,
+            height: parseFloat(SITE_INIT.height.toString()),
+            solarUptime: parseFloat(SITE_INIT.solarUptime.toString()),
           },
-          draftId: selectedDraft?.id,
         },
       });
+    }
+    // if (addSite && marker.lat === 0 && marker.lng === 0) {
+    //   setAddSite(false);
+    //   setSite({
+    //     ...site,
+    //     location: {
+    //       address: '',
+    //       lat: e.lat.toFixed(10).toString(),
+    //       lng: e.lng.toFixed(10).toString(),
+    //       lastSaved: getLastSavedInt(),
+    //     },
+    //   });
+    //   setMarker(e);
+    // }
+  };
+
+  const handleSiteAction = (s: Site) => {
+    updateSiteCall({
+      variables: {
+        siteId: s.id,
+        draftId: selectedDraft?.id || '',
+        data: {
+          siteName: s.name,
+          apOption: s.apOption,
+          isSetlite: s.isSetlite,
+          lastSaved: getLastSavedInt(),
+          address: s.location.address,
+          lat: s.location.lat.toString(),
+          lng: s.location.lng.toString(),
+          height: parseFloat(s.height.toString()),
+          solarUptime: parseFloat(s.solarUptime.toString()),
+        },
+      },
+    });
   };
 
   const handleAddSite = () => setAddSite(true);
@@ -281,30 +341,21 @@ const Page = () => {
         data: {
           name: 'New Draft',
           userId: _commonData.userId,
-          lastSaved: Math.floor(new Date().getTime() / 1000),
         },
       },
     });
   };
 
   const handleDraftSelected = (draftId: string) => {
-    const newDraft = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
-    setSelectedDraft(newDraft);
-    setSite({
-      ...(newDraft?.site || SITE_INIT),
-    });
-    const { lat, lng } = newDraft?.site.location || MATKER_INIT;
-    setMarker({
-      lat: parseFloat(lat.toString()),
-      lng: parseFloat(lng.toString()),
-    });
+    const d = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
+    setSelectedDraft(d);
   };
 
   const handleDraftUpdated = (id: string, draft: string) => {
     updateDraftCall({
       variables: {
         name: draft,
-        updateDraftNameId: id,
+        draftId: id,
       },
     });
   };
@@ -371,11 +422,11 @@ const Page = () => {
           handleDraftUpdated={handleDraftUpdated}
           handleDraftSelected={handleDraftSelected}
         />
-        {selectedDraft && selectedDraft?.lastSaved > 0 && (
+        {selectedDraft && selectedDraft?.sites.length > 0 && (
           <Typography variant="caption" sx={{ color: colors.black54 }}>
             {`Saved ${formatSecondsToDuration(
               Math.floor(new Date().getTime() / 1000) -
-                selectedDraft?.lastSaved,
+                selectedDraft?.lastSaved || 0,
             )} ago.`}
           </Typography>
         )}
@@ -390,7 +441,6 @@ const Page = () => {
       >
         <PageContainer sx={{ padding: 0, mt: '12px' }}>
           <Map
-            data={site}
             width={800}
             height={418}
             marker={marker}
@@ -400,6 +450,7 @@ const Page = () => {
             id={'site-planning-map'}
             className={styles.homeMap}
             handleAction={handleSiteAction}
+            data={selectedDraft?.sites || []}
             handleAddMarker={handleMarkerAdd}
             handleDragMarker={handleMarkerDrag}
             zoom={marker.lat === 0 && marker.lng === 0 ? ZOOM : zoom}
@@ -424,7 +475,7 @@ const Page = () => {
                 />
 
                 <TileLayer
-                  maxZoom={19}
+                  maxZoom={16}
                   tileSize={270}
                   url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
                 />

@@ -12,7 +12,7 @@ const DEFAULT_HEIGHT = 600;
 
 interface IMap {
   id: string;
-  data: Site;
+  data: Site[];
   children: any;
   width?: number;
   height?: number;
@@ -20,12 +20,12 @@ interface IMap {
   className?: string;
   center: LatLngLiteral;
   marker: LatLngLiteral;
-  handleAction: () => void;
   zoom?: number | undefined;
+  handleAction: (a: Site) => void;
   setData: Dispatch<SetStateAction<any>>;
   setZoom: Dispatch<SetStateAction<number>>;
-  handleDragMarker: (l: LatLngLiteral) => void;
   handleAddMarker: (l: LatLngLiteral) => void;
+  handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }
 
 const Map = ({

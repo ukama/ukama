@@ -9,12 +9,11 @@ datasource db {
 }
 
 model Location {
-  id        String @unique @default(cuid())
-  lat       String
-  lng       String
-  address   String
-  Site      Site[]
-  lastSaved Int
+  id      String @unique @default(cuid())
+  lat     String
+  lng     String
+  address String
+  Site    Site[]
 }
 
 model Site {
@@ -45,6 +44,7 @@ model Draft {
   name      String
   events    Event[]
   sites     Site[]
+  lastSaved Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -8,6 +8,7 @@ const draftData: Prisma.DraftCreateInput[] = [
     userId: "16fe5842-05dd-11ee-8254-5eeae0fe08fe",
     createdAt: "2023-03-01T00:00:00.000Z",
     updatedAt: "2023-03-02T00:00:00.000Z",
+    lastSaved: 1686142941,
     sites: {
       create: [
         {
@@ -20,7 +21,6 @@ const draftData: Prisma.DraftCreateInput[] = [
             create: {
               lat: "1001.123",
               lng: "12421.213",
-              lastSaved: 1686142941,
               address: "Address 1",
             },
           },
@@ -35,7 +35,6 @@ const draftData: Prisma.DraftCreateInput[] = [
             create: {
               lat: "10012.123",
               lng: "124221.213",
-              lastSaved: 1686133941,
               address: "Address 1",
             },
           },

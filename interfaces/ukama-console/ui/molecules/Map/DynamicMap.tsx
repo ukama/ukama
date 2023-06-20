@@ -16,18 +16,18 @@ const ICON = {
   shadowUrl: markerShadow.src,
 };
 interface IMap {
-  data: Site;
+  data: Site[];
   id: string;
   cursor: any;
   children: any;
   className?: string;
   center: LatLngLiteral;
   marker: LatLngLiteral;
-  handleAction: () => void;
   zoom?: number | undefined;
+  handleAction: (a: Site) => void;
   setData: Dispatch<SetStateAction<any>>;
   setZoom: Dispatch<SetStateAction<number>>;
-  handleDragMarker: (l: LatLngLiteral) => void;
+  handleDragMarker: (l: LatLngLiteral, id: string) => void;
   handleAddMarker: (l: LatLngLiteral) => void;
 }
 
