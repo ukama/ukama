@@ -12,7 +12,7 @@ require (
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/wI2L/fizz v0.22.0
-	google.golang.org/grpc v1.55.0 // indirect
+	google.golang.org/grpc v1.55.0
 )
 
 require (
@@ -23,6 +23,7 @@ require (
 require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 )
 
