@@ -14,6 +14,7 @@ const draftData: Prisma.DraftCreateInput[] = [
         {
           name: "Site 1",
           height: 100,
+          status: "up",
           apOption: "ONE_TO_ONE",
           solarUptime: 95,
           isSetlite: false,
@@ -28,6 +29,7 @@ const draftData: Prisma.DraftCreateInput[] = [
         {
           name: "Site 2",
           height: 90,
+          status: "up",
           apOption: "ONE_TO_TWO",
           solarUptime: 90,
           isSetlite: true,

@@ -25,6 +25,9 @@ export class Site {
   name: string;
 
   @Field()
+  status: string;
+
+  @Field()
   height: number;
 
   @Field()
@@ -126,6 +129,9 @@ export class AddDraftInput {
 }
 @InputType()
 export class LocationInput {
+  @Field()
+  lastSaved: number;
+
   @Field()
   lat: string;
 

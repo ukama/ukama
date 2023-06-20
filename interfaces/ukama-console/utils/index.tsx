@@ -415,7 +415,31 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+function calculateCenterLatLng(coordinates: any) {
+  var totalCoords = coordinates.length;
+  if (totalCoords === 0) return { lat: 37.7780627, lng: -121.9822475 };
+  if (totalCoords === 1)
+    return { lat: coordinates[0].lat, lng: coordinates[0].lng };
+    
+  var sumLat = 0;
+  var sumLng = 0;
+
+  // Calculate the sum of latitudes and longitudes
+  for (var i = 0; i < totalCoords; i++) {
+    sumLat += coordinates[i].lat;
+    sumLng += coordinates[i].lng;
+  }
+
+  // Calculate the average latitudes and longitudes
+  var avgLat = sumLat / totalCoords;
+  var avgLng = sumLng / totalCoords;
+
+  // Return the center latitude and longitude
+  return { lat: avgLat, lng: avgLng };
+}
+
 export {
+  calculateCenterLatLng,
   doesHttpOnlyCookieExist,
   fileToBase64,
   formatBytes,

@@ -1,4 +1,5 @@
 fragment location on Location {
+  id
   lat
   lng
   address
@@ -6,6 +7,7 @@ fragment location on Location {
 fragment site on Site {
   id
   name
+  status
   height
   apOption
   isSetlite
@@ -69,8 +71,12 @@ mutation UpdateSite($draftId: String!, $siteId: String!, $data: SiteInput!) {
   }
 }
 
-mutation UpdateLocation($locationId: String!, $data: LocationInput!) {
-  updateLocation(locationId: $locationId, data: $data) {
+mutation UpdateLocation(
+  $draftId: String!
+  $locationId: String!
+  $data: LocationInput!
+) {
+  updateLocation(draftId: $draftId, locationId: $locationId, data: $data) {
     ...location
   }
 }
