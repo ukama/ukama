@@ -35,6 +35,7 @@ type RouterConfig struct {
 	debugMode           bool
 	serverConf          *rest.HttpConfig
 	metricsConf         *pkg.MetricsConfig
+	auth                *config.Auth
 }
 
 type Clients struct {
@@ -52,7 +53,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints, metricHost string, debug bool) 
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics, authfunc func(*gin.Context, string) error) *Router {
 
 	r := &Router{
 		clients: clients,
@@ -64,7 +65,7 @@ func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -76,6 +77,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		serverConf:          &svcConf.Server,
 		metricsConf:         svcConf.MetricsConfig,
 		debugMode:           svcConf.DebugMode,
+		auth:                svcConf.Auth,
 	}
 }
 
@@ -87,45 +89,64 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
+func (r *Router) init(f func(*gin.Context, string) error) {
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode)
-	metrics := r.f.Group("/v1", "metrics system ", "metrics system version v1")
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	auth := r.f.Group("/v1", "metrics system ", "metrics system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			logrus.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthServerUrl)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
 
-	metrics.GET("/metrics", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
+	auth.Use()
+	{
 
-	metrics.GET("/metrics/:metric", []fizz.OperationOption{
-		func(info *openapi.OperationInfo) {
-			info.Description = "Get metrics. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-		}}, tonic.Handler(r.metricHandler, http.StatusOK))
+		auth.GET("/metrics", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
 
-	metrics.GET("/subscriber/:subscriber/orgs/:org/networks/:network/metrics/:metric", []fizz.OperationOption{
-		func(info *openapi.OperationInfo) {
-			info.Description = "Get metrics for a susbcriber. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-		}}, tonic.Handler(r.subscriberMetricHandler, http.StatusOK))
+		auth.GET("/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.metricHandler, http.StatusOK))
 
-	metrics.GET("/sims/:sim/orgs/:org/networks/:network/subscribers/:subscriber/metrics/:metric", []fizz.OperationOption{
-		func(info *openapi.OperationInfo) {
-			info.Description = "Get metrics for a sim. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-		}}, tonic.Handler(r.simMetricHandler, http.StatusOK))
+		auth.GET("/subscriber/:subscriber/orgs/:org/networks/:network/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics for a susbcriber. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.subscriberMetricHandler, http.StatusOK))
 
-	metrics.GET("/orgs/:org/metrics/:metric", []fizz.OperationOption{
-		func(info *openapi.OperationInfo) {
-			info.Description = "Get metrics for an org. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-		}}, tonic.Handler(r.orgMetricHandler, http.StatusOK))
+		auth.GET("/sims/:sim/orgs/:org/networks/:network/subscribers/:subscriber/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics for a sim. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.simMetricHandler, http.StatusOK))
 
-	metrics.GET("/networks/:network/metrics/:metric", []fizz.OperationOption{
-		func(info *openapi.OperationInfo) {
-			info.Description = "Get metrics for an network. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-		}}, tonic.Handler(r.networkMetricHandler, http.StatusOK))
+		auth.GET("/orgs/:org/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics for an org. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.orgMetricHandler, http.StatusOK))
 
-	metrics.GET("/nodes/:node/metrics/:metric", []fizz.OperationOption{
-		func(info *openapi.OperationInfo) {
-			info.Description = "Get metrics for anode. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-		}}, tonic.Handler(r.nodeMetricHandler, http.StatusOK))
+		auth.GET("/networks/:network/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics for an network. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.networkMetricHandler, http.StatusOK))
 
-	exp := metrics.Group("/exporter", "exporter", "exporter")
-	exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
+		auth.GET("/nodes/:node/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics for anode. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.nodeMetricHandler, http.StatusOK))
+
+		exp := auth.Group("/exporter", "exporter", "exporter")
+		exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

@@ -20,6 +20,7 @@ type Config struct {
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	MetricsServer     config.Metrics `mapstructure:"metrics"`
 	MetricsStore      string         `default:"http://localhost:8080"`
+	Auth              *config.Auth   `mapstructure:"auth"`
 	MetricsConfig     *MetricsConfig
 }
 
@@ -105,5 +106,6 @@ func NewConfig() *Config {
 			Timeout:             time.Second * 5,
 			DefaultRateInterval: "5m",
 		},
+		Auth: config.LoadAuthHostConfig("auth"),
 	}
 }
