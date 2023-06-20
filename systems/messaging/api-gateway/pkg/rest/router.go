@@ -111,9 +111,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth.Use()
 	{
 		nns := auth.Group("/nns", "Nns", "Looking for node Ip address")
-		nns.GET("/node/:node", formatDoc("Get node Ip", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
-		nns.PUT("/node/:node", formatDoc("Add node Ip", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
-		nns.DELETE("/node/:node", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteNodeIPHandler, http.StatusOK))
+		nns.GET("/node/:node_id", formatDoc("Get node Ip", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
+		nns.PUT("/node/:node_id", formatDoc("Add node Ip", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
+		nns.DELETE("/node/:node_id", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteNodeIPHandler, http.StatusOK))
 		nns.GET("/list", formatDoc("Get all Ip's", ""), tonic.Handler(r.getAllNodeIPHandler, http.StatusOK))
 		nns.GET("/map", formatDoc("Node to Org map", ""), tonic.Handler(r.getNodeOrgMapHandler, http.StatusOK))
 
