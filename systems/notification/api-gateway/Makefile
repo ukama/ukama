@@ -9,6 +9,9 @@ build:
 test:
 	go test -v ./...
 
+docs:
+    protoc --doc_out=. --doc_opt=./template.tmpl,README.md pb/*.proto & sh ./generate-dir-tree.sh $(PWD)
+
 # Go lint
 lint:
 	golangci-lint run
