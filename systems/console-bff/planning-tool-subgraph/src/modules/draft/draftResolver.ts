@@ -6,7 +6,6 @@ import {
   DeleteDraftRes,
   Draft,
   LocationInput,
-  Site,
   SiteInput,
   Event as TEvent,
   Location as TLocation,
@@ -48,53 +47,75 @@ export class DraftResolver {
     return dr;
   }
 
-  @Mutation(() => Site)
+  @Mutation(() => Draft)
   async updateSite(
     @Arg("data") data: SiteInput,
     @Arg("siteId") siteId: string,
+    @Arg("draftId") draftId: string,
     @Ctx() ctx: Context
   ) {
-    const dr = await ctx.prisma.site.update({
-      where: { id: siteId },
+    const dr = await ctx.prisma.draft.update({
+      where: { id: draftId },
       data: {
-        name: data.siteName,
-        height: data.height,
-        apOption: data.apOption,
-        solarUptime: data.solarUptime,
-        isSetlite: data.isSetlite,
-        location: {
-          create: {
-            lat: data.lat,
-            lng: data.lng,
-            address: data.address,
-            lastSaved: data.lastSaved,
+        sites: {
+          update: {
+            where: {
+              id: siteId,
+            },
+            data: {
+              name: data.siteName,
+              height: data.height,
+              apOption: data.apOption,
+              solarUptime: data.solarUptime,
+              isSetlite: data.isSetlite,
+              location: {
+                create: {
+                  lat: data.lat,
+                  lng: data.lng,
+                  address: data.address,
+                },
+              },
+            },
           },
         },
       },
-      include: { Draft: true, location: true },
+      include: { sites: { include: { location: true } }, events: true },
     });
     return dr;
   }
 
-  @Mutation(() => Site)
-  async addSite(@Arg("data") data: SiteInput, @Ctx() ctx: Context) {
-    const dr = await ctx.prisma.site.create({
+  @Mutation(() => Draft)
+  async addSite(
+    @Arg("draftId") draftId: string,
+    @Arg("data") data: SiteInput,
+    @Ctx() ctx: Context
+  ) {
+    const dr = await ctx.prisma.draft.update({
+      where: {
+        id: draftId,
+      },
       data: {
-        name: data.siteName,
-        height: data.height,
-        apOption: data.apOption,
-        solarUptime: data.solarUptime,
-        isSetlite: data.isSetlite,
-        location: {
-          create: {
-            lat: data.lat,
-            lng: data.lng,
-            address: data.address,
-            lastSaved: data.lastSaved,
-          },
+        lastSaved: data.lastSaved,
+        sites: {
+          create: [
+            {
+              name: data.siteName,
+              height: data.height,
+              apOption: data.apOption,
+              solarUptime: data.solarUptime,
+              isSetlite: data.isSetlite,
+              location: {
+                create: {
+                  lat: data.lat,
+                  lng: data.lng,
+                  address: data.address,
+                },
+              },
+            },
+          ],
         },
       },
-      include: { Draft: true, location: true },
+      include: { sites: { include: { location: true } }, events: true },
     });
     return dr;
   }
@@ -121,6 +142,7 @@ export class DraftResolver {
       data: {
         name: data.name,
         userId: data.userId,
+        lastSaved: data.lastSaved,
         createdAt: new Date().toISOString(),
       },
       include: { sites: { include: { location: true } }, events: true },

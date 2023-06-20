@@ -4,11 +4,14 @@ import { Field, ID, InputType, ObjectType } from "type-graphql";
 @ObjectType()
 export class Location {
   @Field()
-  lastSaved: number;
+  id: string;
+
   @Field()
   lat: string;
+
   @Field()
   lng: string;
+
   @Field()
   address: string;
 }
@@ -63,6 +66,9 @@ export class Draft {
   @Field()
   userId: string;
 
+  @Field()
+  lastSaved: number;
+
   @Field(() => [Site], { nullable: false })
   sites: Site[];
 
@@ -114,12 +120,12 @@ export class AddDraftInput {
 
   @Field()
   userId: string;
+
+  @Field()
+  lastSaved: number;
 }
 @InputType()
 export class LocationInput {
-  @Field()
-  lastSaved: number;
-
   @Field()
   lat: string;
 

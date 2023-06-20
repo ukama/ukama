@@ -3,8 +3,7 @@ CREATE TABLE "Location" (
     "id" TEXT NOT NULL,
     "lat" TEXT NOT NULL,
     "lng" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
-    "lastSaved" INTEGER NOT NULL
+    "address" TEXT NOT NULL
 );
 
 -- CreateTable
@@ -33,6 +32,7 @@ CREATE TABLE "Draft" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "lastSaved" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL
 );

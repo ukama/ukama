@@ -2,7 +2,6 @@ fragment location on Location {
   lat
   lng
   address
-  lastSaved
 }
 fragment site on Site {
   id
@@ -25,6 +24,7 @@ fragment draft on Draft {
   id
   name
   userId
+  lastSaved
   sites {
     ...site
   }
@@ -57,15 +57,15 @@ query GetDraft($draftId: String!) {
   }
 }
 
-mutation addSite($siteId: String!, $data: SiteInput!) {
-  updateSite(siteId: $siteId, data: $data) {
-    ...site
+mutation addSite($draftId: String!, $data: SiteInput!) {
+  addSite(draftId: $draftId, data: $data) {
+    ...draft
   }
 }
 
-mutation UpdateSite($siteId: String!, $data: SiteInput!) {
-  updateSite(siteId: $siteId, data: $data) {
-    ...site
+mutation UpdateSite($draftId: String!, $siteId: String!, $data: SiteInput!) {
+  updateSite(draftId: $draftId, siteId: $siteId, data: $data) {
+    ...draft
   }
 }
 
