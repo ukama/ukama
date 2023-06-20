@@ -10,6 +10,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,10 +41,10 @@ func init() {
 	testConf = &TestConf{
 		NetHost: "localhost:9090",
 		Queue: config.Queue{
-			Uri: "amqp://guest:guest@localhost:5672/",
+			Uri: "amqp://guest:guest@192.168.0.14:5672/",
 		},
 		NodeBaseDomain: "node.mesh",
-		//DnsHost:        "localhost:5053",
+		DnsHost:        "localhost:5053",
 	}
 
 	config.LoadConfig("integration", testConf)
@@ -121,6 +122,10 @@ func Test_FullFlow(t *testing.T) {
 func TestListener(t *testing.T) {
 	// Arrange
 	nodeId := "UK-000000-HNODE-A0-0001"
+
+	nw := uuid.NewV4().String()
+	site := uuid.NewV4().String()
+
 	ip := fmt.Sprintf("%d.%d.%d.%d",
 		rand.Intn(256),
 		rand.Intn(256),
@@ -135,7 +140,7 @@ func TestListener(t *testing.T) {
 
 	var nPort int32 = 2000
 	// Act
-	err := sendMessageToQueue(t, nodeId, ip, port, nIp, nPort)
+	err := sendOnlineEventToQueue(t, nodeId, ip, port, nIp, nPort)
 	assert.NoError(t, err)
 
 	// Assert
@@ -153,6 +158,13 @@ func TestListener(t *testing.T) {
 		assert.Equal(t, 1, len(ips))
 		assert.Equal(t, ip, ips[0].String())
 	}
+
+	err = sendAssignedEventToQueue(t, nodeId, site, nw)
+	assert.NoError(t, err)
+
+	time.Sleep(2 * time.Second)
+
+	getOrgNetMap(t, nodeId, site, nw)
 }
 
 func resolveWithCustomeDns(host string) ([]net.IP, error) {
@@ -174,7 +186,7 @@ func resolveWithCustomeDns(host string) ([]net.IP, error) {
 	}, nil
 }
 
-func sendMessageToQueue(t *testing.T, nodeId string, ip string, port int32, nIp string, nPort int32) error {
+func sendOnlineEventToQueue(t *testing.T, nodeId string, ip string, port int32, nIp string, nPort int32) error {
 	rabbit, err := msgbus.NewPublisherClient(testConf.Queue.Uri)
 	if err != nil {
 		assert.FailNow(t, err.Error())
@@ -198,6 +210,65 @@ func sendMessageToQueue(t *testing.T, nodeId string, ip string, port int32, nIp 
 	return err
 }
 
+func sendAssignedEventToQueue(t *testing.T, nodeId, site, nw string) error {
+	rabbit, err := msgbus.NewPublisherClient(testConf.Queue.Uri)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	msg := &epb.NodeAssignedEvent{NodeId: nodeId, Network: nw, Site: site}
+
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		return err
+	}
+
+	payload, err := proto.Marshal(anyMsg)
+	if err != nil {
+		return err
+	}
+
+	err = rabbit.Publish(payload, "", "amq.topic", "event.cloud.registry.node.assigned", "topic")
+	assert.NoError(t, err)
+
+	return err
+}
+
+func getOrgNetMap(t *testing.T, id, site, nw string) {
+	// connect to Grpc service
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	logrus.Infoln("Connecting to service ", testConf.NetHost)
+	conn, err := grpc.DialContext(ctx, testConf.NetHost, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		assert.NoError(t, err, "did not connect: %v", err)
+		return
+	}
+	defer conn.Close()
+	c := pb.NewNnsClient(conn)
+
+	t.Run("GetNodeOrgMapList", func(t *testing.T) {
+		r, err := c.GetNodeOrgMapList(ctx, &pb.NodeOrgMapListRequest{})
+		logrus.Infof("NodeOrgMap is %+v", r)
+		assert.NoError(t, err)
+		// just make sure it's unique list
+		assert.Greater(t, len(r.Map), 0)
+		found := false
+		for _, n := range r.Map {
+			if id == n.NodeId {
+				assert.Equal(t, nw, n.Network)
+				assert.Equal(t, site, n.Site)
+				found = true
+			}
+		}
+
+		if !found {
+			assert.Fail(t, "Id not found.")
+		}
+	})
+
+}
 func handleResponse(t *testing.T, err error, r interface{}) {
 	fmt.Printf("Response: %v\n", r)
 	assert.NoError(t, err, "Request failed: %v\n", err)

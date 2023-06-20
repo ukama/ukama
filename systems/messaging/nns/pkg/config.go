@@ -37,7 +37,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.mesh.node.online"},
+			ListenerRoutes: []string{"event.cloud.mesh.node.online", "event.cloud.mesh.node.offline", "event.cloud.registry.node.assigned", "event.cloud.registry.node.release"},
 		},
 		Registry: "http://192.168.0.23:8075",
 	}
