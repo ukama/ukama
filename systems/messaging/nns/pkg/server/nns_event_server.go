@@ -94,7 +94,7 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 
 	log.Infof("Getting org and network for %s", msg.GetNodeId())
 
-	nodeInfo := &client.NodeInfo{}
+	var nodeInfo *client.NodeInfo
 	var err error
 	nodeInfo, err = l.Registry.GetNode(msg.GetNodeId())
 	if err != nil {
@@ -104,6 +104,7 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 			Id:      msg.GetNodeId(),
 			Network: "",
 			Site:    "",
+			Org:     l.Org,
 		}
 	}
 

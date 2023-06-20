@@ -81,6 +81,7 @@ services:
       - NNS_SERVICE_HOST=nnsd
       - NNS_SERVICE_PORT=9090
       - REGISTRY=http://${LOCAL_HOST_IP}:8075
+      - ORG=36960fb9-dc87-4fe6-9275-583b694a89a3
     restart: always
     networks:
       ukama-net:
