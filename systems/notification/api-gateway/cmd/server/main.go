@@ -17,7 +17,7 @@ var svcConf = pkg.NewConfig()
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-	mailerConfig()
+	initializeNotificationConfig()
 
 	clientSet := rest.NewClientsSet(&svcConf.Services)
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
@@ -25,11 +25,11 @@ func main() {
 		logrus.Errorf("Failed to create auth client: %v", err)
 	}
 
-	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
-	r.Run()
+	router := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
+	router.Run()
 }
 
-func mailerConfig() {
+func initializeNotificationConfig() {
 	svcConf = pkg.NewConfig()
 	config.LoadConfig(pkg.ServiceName, svcConf)
 }

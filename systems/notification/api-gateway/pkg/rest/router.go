@@ -33,16 +33,20 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	m mailer
+	m notification
 }
 
-type mailer interface {
+type notification interface {
 	SendEmail(*emailPkg.SendEmailRequest) (*emailPkg.SendEmailResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.m = client.NewMailer(endpoints.Mailer, endpoints.Timeout)
+	var err error
+	c.m, err = client.NewMailer(endpoints.Mailer, endpoints.Timeout)
+	if err != nil {
+		logrus.Fatalf("failed to create mailer client: %v", err)
+	}
 
 	return c
 }
@@ -79,7 +83,7 @@ func (rt *Router) Run() {
 }
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	auth := r.f.Group("/v1", "Subscriber API GW ", "Subs system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "Notification API GW ", "Notification system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			logrus.Info("Bypassing auth")
 			return
@@ -99,7 +103,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		//handle email notification
 		mailer := auth.Group("/mailer", "Mailer", "Mailer")
-		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmail, http.StatusOK))
+		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmailHandler, http.StatusOK))
 
 	}
 }
@@ -111,7 +115,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) sendEmail(c *gin.Context, req *SendEmailReq) (message emailPkg.SendEmailResponse, err error) {
+func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (message emailPkg.SendEmailResponse, err error) {
 	payload := emailPkg.SendEmailRequest{
 		To:      req.To,
 		Subject: req.Subject,

@@ -17,14 +17,16 @@ type Mailer struct {
 	host    string
 }
 
-func NewMailer(host string, timeout time.Duration) *Mailer {
+func NewMailer(host string, timeout time.Duration) (*Mailer, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
+		return nil, err
 	}
+
 	client := pb.NewMaillingServiceClient(conn)
 
 	return &Mailer{
@@ -32,15 +34,15 @@ func NewMailer(host string, timeout time.Duration) *Mailer {
 		client:  client,
 		timeout: timeout,
 		host:    host,
-	}
+	}, nil
 }
 
-func NewMailerFromClient(MailerClient pb.MaillingServiceClient) *Mailer {
+func NewMailerFromClient(mailerClient pb.MaillingServiceClient) *Mailer {
 	return &Mailer{
 		host:    "localhost",
 		timeout: 1 * time.Second,
 		conn:    nil,
-		client:  MailerClient,
+		client:  mailerClient,
 	}
 }
 
@@ -49,7 +51,6 @@ func (m *Mailer) Close() {
 }
 
 func (m *Mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
-
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
