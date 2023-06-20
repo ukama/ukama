@@ -14,6 +14,24 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *NodeCreatedEvent) Validate() error {
+	return nil
+}
+func (this *NodeUpdatedEvent) Validate() error {
+	return nil
+}
+func (this *NodeStateUpdatedEvent) Validate() error {
+	return nil
+}
+func (this *NodeDeletedEvent) Validate() error {
+	return nil
+}
+func (this *NodeAssignedEvent) Validate() error {
+	return nil
+}
+func (this *NodeReleasedEvent) Validate() error {
+	return nil
+}
 func (this *NodeOnlineEvent) Validate() error {
 	return nil
 }
