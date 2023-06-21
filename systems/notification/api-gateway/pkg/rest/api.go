@@ -10,3 +10,8 @@ type SendEmailReq struct {
 type SendEmailRes struct {
 	Message string `json:"message"`
 }
+
+type GetEmailByIdReq struct {
+	MailerId string `json:"mailer_id" validate:"required" path:"mailer_id" binding:"required"`
+}
+

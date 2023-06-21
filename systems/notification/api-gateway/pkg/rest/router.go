@@ -38,6 +38,7 @@ type Clients struct {
 
 type notification interface {
 	SendEmail(*emailPkg.SendEmailRequest) (*emailPkg.SendEmailResponse, error)
+	GetEmailById(*emailPkg.GetEmailByIdRequest) (*emailPkg.GetEmailByIdResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -103,6 +104,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		mailer := auth.Group("/mailer", "Mailer", "Mailer")
 		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmailHandler, http.StatusOK))
+		mailer.GET("/:mailer_Id", formatDoc("Get email by id", ""), tonic.Handler(r.getEmailByIdHandler, http.StatusOK))
 
 	}
 }
@@ -130,4 +132,22 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (message em
 	return emailPkg.SendEmailResponse{
 		Message: res.Message,
 	}, nil
+}
+
+func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (message emailPkg.GetEmailByIdResponse, err error) {
+	payload := emailPkg.GetEmailByIdRequest{
+		MailId: req.MailerId,
+	}
+	res, err := r.clients.m.GetEmailById(&payload)
+	if err != nil {
+		return emailPkg.GetEmailByIdResponse{}, err
+	}
+
+	return emailPkg.GetEmailByIdResponse{
+		MailId: res.MailId,
+		To:      res.To,
+		Subject: res.Subject,
+		Body:    res.Body,		
+	}, nil
+
 }
