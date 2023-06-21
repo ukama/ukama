@@ -21,9 +21,9 @@ interface IMap {
   cursor: any;
   children: any;
   className?: string;
-  center: LatLngLiteral;
   zoom?: number | undefined;
   handleAction: (a: Site) => void;
+  handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
@@ -34,12 +34,12 @@ const Map = ({
   zoom,
   data,
   cursor,
-  center,
   setZoom,
   children,
   className,
   handleAction,
   handleAddMarker,
+  handleDeleteSite,
   handleDragMarker,
 }: IMap) => {
   let mapClassName = styles.map;
@@ -61,7 +61,6 @@ const Map = ({
     <MapContainer
       id={id}
       zoom={zoom}
-      center={center}
       touchZoom={false}
       zoomControl={false}
       doubleClickZoom={true}
@@ -72,9 +71,11 @@ const Map = ({
       <ReactLeaflet.ZoomControl position="bottomright" />
       <CustomMarker
         data={data}
+        zoom={zoom}
         setZoom={setZoom}
         handleAction={handleAction}
         handleAddMarker={handleAddMarker}
+        handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}
       />
     </MapContainer>

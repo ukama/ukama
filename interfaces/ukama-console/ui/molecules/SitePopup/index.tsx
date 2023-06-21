@@ -19,9 +19,10 @@ import { useState } from 'react';
 interface ISitePopup {
   site: Site;
   handleAction: (a: Site) => void;
+  handleDeleteSite: (i: string) => void;
 }
 
-const SitePopup = ({ site, handleAction }: ISitePopup) => {
+const SitePopup = ({ site, handleAction, handleDeleteSite }: ISitePopup) => {
   const [data, setData] = useState<Site>(site);
   return (
     <Paper elevation={0} sx={{ boxShadow: 'none', cursor: 'default' }}>
@@ -161,13 +162,24 @@ const SitePopup = ({ site, handleAction }: ISitePopup) => {
             }}
           />
         </FormControl>
-        <Stack direction="row" justifyContent={'flex-end'}>
+        <Stack direction="row" justifyContent={'space-between'}>
           <Button
             variant="contained"
-            sx={{ width: 'fit-content', fontSize: '14px' }}
+            color="error"
+            sx={{ width: 'fit-content', fontSize: '12px' }}
             onClick={(e) => {
-              handleAction(data);
               e.preventDefault();
+              handleDeleteSite(site.id);
+            }}
+          >
+            Delete SITE
+          </Button>
+          <Button
+            variant="contained"
+            sx={{ width: 'fit-content', fontSize: '12px' }}
+            onClick={(e) => {
+              e.preventDefault();
+              handleAction(data);
             }}
           >
             UPDATE SITE

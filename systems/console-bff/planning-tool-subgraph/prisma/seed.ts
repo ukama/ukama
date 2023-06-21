@@ -20,6 +20,7 @@ const draftData: Prisma.DraftCreateInput[] = [
           isSetlite: false,
           location: {
             create: {
+              id: "a50bb7a3-74a3-497c-bb98-b8fa9960c9a9",
               lat: "1001.123",
               lng: "12421.213",
               address: "Address 1",
@@ -35,6 +36,7 @@ const draftData: Prisma.DraftCreateInput[] = [
           isSetlite: true,
           location: {
             create: {
+              id: "a50bb7a3-74a3-497c-bb98-b8fa8960c9a9",
               lat: "10012.123",
               lng: "124221.213",
               address: "Address 1",

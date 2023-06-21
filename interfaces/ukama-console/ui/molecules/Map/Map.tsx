@@ -18,9 +18,9 @@ interface IMap {
   height?: number;
   isAddSite: boolean;
   className?: string;
-  center: LatLngLiteral;
   zoom?: number | undefined;
   handleAction: (a: Site) => void;
+  handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
@@ -30,13 +30,13 @@ const Map = ({
   id,
   zoom,
   data,
-  center,
   setZoom,
   children,
   isAddSite,
   className,
   handleAction,
   handleAddMarker,
+  handleDeleteSite,
   handleDragMarker,
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
@@ -52,12 +52,12 @@ const Map = ({
         id={id}
         zoom={zoom}
         data={data}
-        center={center}
         setZoom={setZoom}
         cursor={isAddSite}
         className={className}
         handleAction={handleAction}
         handleAddMarker={handleAddMarker}
+        handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}
       >
         {children}

@@ -5,6 +5,7 @@ import {
   useAddDraftMutation,
   useAddSiteMutation,
   useDeleteDraftMutation,
+  useDeleteSiteMutation,
   useGetDraftsQuery,
   useUpdateDraftNameMutation,
   useUpdateLocationMutation,
@@ -22,7 +23,7 @@ import {
   RightOverlayUI,
   SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
-import { calculateCenterLatLng, formatSecondsToDuration } from '@/utils';
+import { formatSecondsToDuration } from '@/utils';
 import { AlertColor, Popover, Stack, Typography } from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
 import { useState } from 'react';
@@ -178,16 +179,33 @@ const Page = () => {
   const [deleteDraftCall, { loading: deleteDraftLoading }] =
     useDeleteDraftMutation({
       onCompleted: () => {
+        setSelectedDraft(undefined);
         refetchDrafts();
         showAlert(
           'delte-drafts-success',
-          'Draft  deleted successfully.',
+          'Draft deleted successfully.',
           'success',
           true,
         );
       },
       onError: (error) => {
         showAlert('delete-drafts-error', error.message, 'error', true);
+      },
+    });
+
+  const [deleteSiteCall, { loading: deleteSiteLoading }] =
+    useDeleteSiteMutation({
+      onCompleted: () => {
+        refetchDrafts();
+        showAlert(
+          'delte-site-success',
+          'Site deleted successfully.',
+          'success',
+          true,
+        );
+      },
+      onError: (error) => {
+        showAlert('delete-site-error', error.message, 'error', true);
       },
     });
 
@@ -260,6 +278,13 @@ const Page = () => {
       },
     });
   };
+
+  const handleDeleteSite = (id: string) =>
+    deleteSiteCall({
+      variables: {
+        siteId: id,
+      },
+    });
 
   const handleAddSite = () => setAddSite(true);
   const handleAddLink = () => setAddLink(true);
@@ -364,15 +389,13 @@ const Page = () => {
             handleAction={handleSiteAction}
             data={selectedDraft?.sites || []}
             handleAddMarker={handleMarkerAdd}
+            handleDeleteSite={handleDeleteSite}
             handleDragMarker={handleMarkerDrag}
             zoom={
               selectedDraft && selectedDraft?.sites.length > 0 ? zoom : ZOOM
             }
-            center={calculateCenterLatLng(
-              getMarkers(selectedDraft?.sites || []),
-            )}
           >
-            {({ TileLayer }: any) => (
+            {() => (
               <>
                 <LeftOverlayUI
                   search={search}
@@ -386,12 +409,6 @@ const Page = () => {
                   handleClick={handleClick}
                   handleTogglePower={handleOnOff}
                   isCurrentDraft={!!selectedDraft}
-                />
-
-                <TileLayer
-                  maxZoom={16}
-                  tileSize={270}
-                  url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
                 />
               </>
             )}
