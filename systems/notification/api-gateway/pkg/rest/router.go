@@ -131,6 +131,7 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (message em
 
 	return emailPkg.SendEmailResponse{
 		Message: res.Message,
+		MailId: res.MailId,
 	}, nil
 }
 

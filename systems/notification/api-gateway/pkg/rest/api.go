@@ -9,6 +9,7 @@ type SendEmailReq struct {
 
 type SendEmailRes struct {
 	Message string `json:"message"`
+	MailerId string `json:"mailer_id"`
 }
 
 type GetEmailByIdReq struct {
