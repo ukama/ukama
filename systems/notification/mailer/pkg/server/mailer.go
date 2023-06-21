@@ -12,15 +12,15 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 )
 
 type EmailData struct {
-	To      []string 
+	To      []string
 	Subject string
 	Body    string
 	Values  map[string]interface{}
@@ -29,10 +29,10 @@ type EmailData struct {
 type MaillingServer struct {
 	maillingRepoRepo db.MaillingRepo
 	pb.UnimplementedMaillingServiceServer
-	mailer *config.Mailer
+	mailer *pkg.Mailer
 }
 
-func NewMaillingServer(maillingRepoRepo db.MaillingRepo, mail *config.Mailer) *MaillingServer {
+func NewMaillingServer(maillingRepoRepo db.MaillingRepo, mail *pkg.Mailer) *MaillingServer {
 	return &MaillingServer{
 		maillingRepoRepo: maillingRepoRepo,
 		mailer:           mail,
@@ -79,7 +79,7 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 		recipientList = make([]string, len(to))
 		copy(recipientList, to)
 	}
-  
+
 	msg := "From: " + from + "\r\n" +
 		"To: " + strings.Join(recipientList, ",") + "\r\n" +
 		"Subject: " + subject + "\r\n" +
