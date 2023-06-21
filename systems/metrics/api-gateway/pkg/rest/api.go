@@ -42,5 +42,9 @@ type GetSimMetricsInput struct {
 	Subscriber string `path:"subscriber" validate:"required"`
 	Sim        string `path:"sim" validate:"required"`
 }
+
+type MetricIntput struct {
+	Metric string `query:"metric" validate:"required"`
+}
 type DummyParameters struct {
 }

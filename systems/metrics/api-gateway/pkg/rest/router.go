@@ -15,6 +15,7 @@ import (
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
+	"github.com/gorilla/websocket"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg"
@@ -46,6 +47,13 @@ type exporter interface {
 	/* Yet to add RPC for exporteer.*/
 	Dummy(req *pb.DummyParameter) (*pb.DummyParameter, error)
 }
+
+var upgrader = websocket.Upgrader{
+	// Solve cross-domain problems
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+} // use default options
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints, metricHost string, debug bool) *Clients {
 	c := &Clients{}
@@ -144,6 +152,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 				info.Description = "Get metrics for anode. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.nodeMetricHandler, http.StatusOK))
 
+		auth.GET("/live/metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics data stream. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.liveMetricHandler, http.StatusOK))
+
 		exp := auth.Group("/exporter", "exporter", "exporter")
 		exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
 	}
@@ -154,6 +167,39 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) liveMetricHandler(c *gin.Context, m *MetricIntput) error {
+
+	log.Infof("Requesting metric %s", m.Metric)
+	//Upgrade get request to webSocket protocol
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		logrus.Infof("upgrade: %s", err.Error())
+		return err
+	}
+	defer ws.Close()
+	for {
+		//read data from ws
+		// mt, message, err := ws.ReadMessage()
+		// if err != nil {
+		// 	logrus.Infof("read: %s", err.Error())
+		// 	break
+		// }
+		// logrus.Infof("recv: %s", message)
+
+		//write ws data
+
+		time.Sleep(1 * time.Second)
+		ts := []byte(time.Now().Format(time.RFC3339))
+		err = ws.WriteMessage(1, ts)
+		if err != nil {
+			logrus.Info("write:", err)
+			break
+		}
+	}
+
+	return nil
 }
 
 func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {

@@ -12,6 +12,7 @@ require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
