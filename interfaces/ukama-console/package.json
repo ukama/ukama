@@ -50,6 +50,7 @@
     "recoil": "^0.7.7",
     "recoil-persist": "^4.2.0",
     "subscriptions-transport-ws": "^0.11.0",
+    "uuid": "^9.0.0",
     "yup": "^1.2.0"
   },
   "devDependencies": {
@@ -63,6 +64,7 @@
     "@types/node": "20.2.5",
     "@types/react": "18.2.7",
     "@types/react-dom": "18.2.4",
+    "@types/uuid": "^9.0.2",
     "autoprefixer": "10.4.14",
     "eslint": "8.41.0",
     "eslint-config-next": "13.4.4",

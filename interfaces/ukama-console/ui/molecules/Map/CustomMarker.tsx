@@ -1,13 +1,16 @@
 import { Site } from '@/generated/planning-tool';
-import { randomUUID } from 'crypto';
+import { calculateCenterLatLng } from '@/utils';
 import Leaflet, { LatLngLiteral } from 'leaflet';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { Marker, Popup, useMapEvents } from 'react-leaflet';
+import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { v4 as uuidv4 } from 'uuid';
 import SitePopup from '../SitePopup';
 
 interface ICustomMarker {
   data: Site[];
+  zoom?: number | undefined;
   handleAction: (a: Site) => void;
+  handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
@@ -19,14 +22,45 @@ interface IMarker {
   lng: number;
 }
 
+const getMarkers = (sites: Site[]) => {
+  return sites.map((site) => ({
+    lat: parseFloat(site.location.lat),
+    lng: parseFloat(site.location.lng),
+  }));
+};
+
 const CustomMarker = ({
   data,
+  zoom,
   setZoom,
   handleAction,
   handleAddMarker,
+  handleDeleteSite,
   handleDragMarker,
 }: ICustomMarker) => {
+  const map = useMap();
   const [markers, setMarkers] = useState<IMarker[]>([]);
+
+  useEffect(() => {
+    map.setMaxBounds([
+      [84.67351256610522, -174.0234375],
+      [-58.995311187950925, 223.2421875],
+    ]);
+    Leaflet.tileLayer(
+      'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
+      {
+        noWrap: true,
+        minZoom: 3,
+        maxZoom: 20,
+        tileSize: 270,
+        maxNativeZoom: 20,
+      },
+    ).addTo(map);
+  }, []);
+
+  useEffect(() => {
+    map.setView(calculateCenterLatLng(getMarkers(data || [])), zoom);
+  }, [markers]);
 
   useEffect(() => {
     const m: any = [];
@@ -38,12 +72,12 @@ const CustomMarker = ({
       });
     });
     setMarkers(m);
-  }, []);
+  }, [data]);
 
   useMapEvents({
     click: (e) => {
       const { lat, lng } = e.latlng;
-      const id = randomUUID();
+      const id = uuidv4();
       handleAddMarker({ lat, lng }, id);
       Leaflet.tooltip().openTooltip();
       setMarkers([
@@ -76,7 +110,7 @@ const CustomMarker = ({
                 lat: m?.lat || 0,
                 lng: m?.lng || 0,
               }}
-              opacity={parseFloat(item.location.lat) === 0 ? 0 : 1}
+              opacity={m?.lat === 0 ? 0 : 1}
               eventHandlers={{
                 moveend: (event: any) => {
                   setMarkers([
@@ -92,7 +126,11 @@ const CustomMarker = ({
               }}
             >
               <Popup>
-                <SitePopup site={item} handleAction={handleAction} />
+                <SitePopup
+                  site={item}
+                  handleAction={handleAction}
+                  handleDeleteSite={handleDeleteSite}
+                />
               </Popup>
             </Marker>
           );

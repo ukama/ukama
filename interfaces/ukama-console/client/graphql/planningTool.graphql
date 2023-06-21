@@ -86,3 +86,9 @@ mutation DeleteDraft($draftId: String!) {
     id
   }
 }
+
+mutation DeleteSite($siteId: String!) {
+  deleteSite(id: $siteId) {
+    id
+  }
+}

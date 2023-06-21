@@ -4,6 +4,7 @@ import { Context } from "../../common/context";
 import {
   AddDraftInput,
   DeleteDraftRes,
+  DeleteSiteRes,
   Draft,
   LocationInput,
   SiteInput,
@@ -69,8 +70,7 @@ export class DraftResolver {
               solarUptime: data.solarUptime,
               isSetlite: data.isSetlite,
               location: {
-                create: {
-                  id: data.locationId,
+                update: {
                   lat: data.lat,
                   lng: data.lng,
                   address: data.address,
@@ -160,7 +160,7 @@ export class DraftResolver {
     @Arg("locationId") locationId: string,
     @Ctx() ctx: Context
   ) {
-    const dr = await ctx.prisma.location.update({
+    const l = await ctx.prisma.location.update({
       where: { id: locationId },
       data: {
         id: locationId,
@@ -177,12 +177,20 @@ export class DraftResolver {
         lastSaved: data.lastSaved,
       },
     });
-    return dr;
+    return l;
   }
 
   @Mutation(() => DeleteDraftRes)
   async deleteDraft(@Arg("id") id: string, @Ctx() ctx: Context) {
     await ctx.prisma.draft.delete({
+      where: { id: id },
+    });
+    return { id: id };
+  }
+
+  @Mutation(() => DeleteSiteRes)
+  async deleteSite(@Arg("id") id: string, @Ctx() ctx: Context) {
+    await ctx.prisma.site.delete({
       where: { id: id },
     });
     return { id: id };

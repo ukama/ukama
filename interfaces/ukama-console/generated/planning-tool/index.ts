@@ -28,6 +28,11 @@ export type DeleteDraftRes = {
   id: Scalars['String']['output'];
 };
 
+export type DeleteSiteRes = {
+  __typename?: 'DeleteSiteRes';
+  id: Scalars['String']['output'];
+};
+
 export type Draft = {
   __typename?: 'Draft';
   events: Array<Event>;
@@ -66,6 +71,7 @@ export type Mutation = {
   addDraft: Draft;
   addSite: Draft;
   deleteDraft: DeleteDraftRes;
+  deleteSite: DeleteSiteRes;
   updateDraftName: Draft;
   updateEvent: Event;
   updateLocation: Location;
@@ -85,6 +91,11 @@ export type MutationAddSiteArgs = {
 
 
 export type MutationDeleteDraftArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteSiteArgs = {
   id: Scalars['String']['input'];
 };
 
@@ -229,6 +240,13 @@ export type DeleteDraftMutationVariables = Exact<{
 
 
 export type DeleteDraftMutation = { __typename?: 'Mutation', deleteDraft: { __typename?: 'DeleteDraftRes', id: string } };
+
+export type DeleteSiteMutationVariables = Exact<{
+  siteId: Scalars['String']['input'];
+}>;
+
+
+export type DeleteSiteMutation = { __typename?: 'Mutation', deleteSite: { __typename?: 'DeleteSiteRes', id: string } };
 
 export const LocationFragmentDoc = gql`
     fragment location on Location {
@@ -549,3 +567,36 @@ export function useDeleteDraftMutation(baseOptions?: Apollo.MutationHookOptions<
 export type DeleteDraftMutationHookResult = ReturnType<typeof useDeleteDraftMutation>;
 export type DeleteDraftMutationResult = Apollo.MutationResult<DeleteDraftMutation>;
 export type DeleteDraftMutationOptions = Apollo.BaseMutationOptions<DeleteDraftMutation, DeleteDraftMutationVariables>;
+export const DeleteSiteDocument = gql`
+    mutation DeleteSite($siteId: String!) {
+  deleteSite(id: $siteId) {
+    id
+  }
+}
+    `;
+export type DeleteSiteMutationFn = Apollo.MutationFunction<DeleteSiteMutation, DeleteSiteMutationVariables>;
+
+/**
+ * __useDeleteSiteMutation__
+ *
+ * To run a mutation, you first call `useDeleteSiteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteSiteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteSiteMutation, { data, loading, error }] = useDeleteSiteMutation({
+ *   variables: {
+ *      siteId: // value for 'siteId'
+ *   },
+ * });
+ */
+export function useDeleteSiteMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSiteMutation, DeleteSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteSiteMutation, DeleteSiteMutationVariables>(DeleteSiteDocument, options);
+      }
+export type DeleteSiteMutationHookResult = ReturnType<typeof useDeleteSiteMutation>;
+export type DeleteSiteMutationResult = Apollo.MutationResult<DeleteSiteMutation>;
+export type DeleteSiteMutationOptions = Apollo.BaseMutationOptions<DeleteSiteMutation, DeleteSiteMutationVariables>;

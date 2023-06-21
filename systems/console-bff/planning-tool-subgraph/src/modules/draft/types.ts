@@ -150,3 +150,9 @@ export class DeleteDraftRes {
   @Field()
   id: string;
 }
+
+@ObjectType()
+export class DeleteSiteRes {
+  @Field()
+  id: string;
+}
