@@ -11,6 +11,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -124,6 +126,32 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 
 	response := &pb.SendEmailResponse{
 		Message: "Email sent successfully",
+	}
+
+	return response, nil
+}
+
+func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
+	if req.MailId == "" {
+		return nil, errors.New("missing required fields in GetEmailByIdRequest")
+	}
+	mailerId, err := uuid.FromString(req.GetMailId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of network uuid. Error %s", err.Error())
+	}
+	mail, err := s.mailerRepoRepo.GetEmailById(mailerId)
+	if err != nil {
+		log.Error("Error while getting email" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "Failed to get email")
+	}
+
+	response := &pb.GetEmailByIdResponse{
+		MailId:  mail.MailId.String(),
+		Subject: mail.Subject,
+		Body:    mail.Body,
+		SentAt:  mail.SentAt.String(),
+		Status:  mail.Status,
 	}
 
 	return response, nil
