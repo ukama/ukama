@@ -15,6 +15,17 @@ export class Location {
   @Field()
   address: string;
 }
+@ObjectType()
+export class Link {
+  @Field()
+  id: string;
+
+  @Field()
+  data: string;
+
+  @Field()
+  linkWith: string;
+}
 
 @ObjectType()
 export class Site {
@@ -41,6 +52,9 @@ export class Site {
 
   @Field(() => Location, { nullable: false })
   location: Location;
+
+  @Field(() => [Link], { nullable: false })
+  links: Link[];
 }
 
 @ObjectType()
@@ -153,6 +167,24 @@ export class DeleteDraftRes {
 
 @ObjectType()
 export class DeleteSiteRes {
+  @Field()
+  id: string;
+}
+
+@InputType()
+export class LinkInput {
+  @Field()
+  lastSaved: number;
+
+  @Field()
+  data: string;
+
+  @Field()
+  linkWith: string;
+}
+
+@ObjectType()
+export class DeleteLinkRes {
   @Field()
   id: string;
 }

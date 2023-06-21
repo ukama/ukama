@@ -86,8 +86,8 @@ const SearchBar = ({
         fullWidth
         value={value}
         disabled={!ready}
-        placeholder={placeholderText}
         onChange={handleInput}
+        placeholder={placeholderText}
         sx={{
           height: '42px',
           borderRadius: '4px',

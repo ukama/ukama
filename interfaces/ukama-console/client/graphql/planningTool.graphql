@@ -4,6 +4,11 @@ fragment location on Location {
   lng
   address
 }
+fragment link on Link {
+  id
+  data
+  linkWith
+}
 fragment site on Site {
   id
   name
@@ -14,6 +19,9 @@ fragment site on Site {
   solarUptime
   location {
     ...location
+  }
+  links {
+    ...link
   }
 }
 fragment event on Event {
@@ -90,5 +98,17 @@ mutation DeleteDraft($draftId: String!) {
 mutation DeleteSite($siteId: String!) {
   deleteSite(id: $siteId) {
     id
+  }
+}
+
+mutation DeleteLink($lastSaved: Float!, $draftId: String!, $linkId: String!) {
+  deleteLink(lastSaved: $lastSaved, draftId: $draftId, linkId: $linkId) {
+    id
+  }
+}
+
+mutation AddLink($data: LinkInput!, $siteId: String!, $draftId: String!) {
+  addLink(data: $data, siteId: $siteId, draftId: $draftId) {
+    ...site
   }
 }
