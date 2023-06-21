@@ -10,7 +10,7 @@ Mailer sub-system is responsible of:
     - Sending Emails
 */
 // Defines the service for mailer  operations
-service MaillingService {
+service MailerService {
 rpc SendEmail (SendEmailRequest) returns (SendEmailResponse) {}
 }
 

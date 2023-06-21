@@ -26,20 +26,20 @@ type EmailData struct {
 	Values  map[string]interface{}
 }
 
-type MaillingServer struct {
-	maillingRepoRepo db.MaillingRepo
-	pb.UnimplementedMaillingServiceServer
+type MailerServer struct {
+	mailerRepoRepo db.MailerRepo
+	pb.UnimplementedMailerServiceServer
 	mailer *pkg.Mailer
 }
 
-func NewMaillingServer(maillingRepoRepo db.MaillingRepo, mail *pkg.Mailer) *MaillingServer {
-	return &MaillingServer{
-		maillingRepoRepo: maillingRepoRepo,
-		mailer:           mail,
+func NewMailerServer(mailerRepoRepo db.MailerRepo, mail *pkg.Mailer) *MailerServer {
+	return &MailerServer{
+		mailerRepoRepo: mailerRepoRepo,
+		mailer:         mail,
 	}
 }
 
-func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
+func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
 	if req.To == nil || req.Subject == "" || req.Body == "" || req.Values == nil {
 		return nil, errors.New("missing required fields in SendEmailRequest")
 	}
@@ -93,7 +93,7 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 	err = smtp.SendMail(s.mailer.Host+":"+port, auth, from, recipientList, []byte(msg))
 	if err != nil {
 		log.Errorf("Failed to send email: %v", err.Error())
-		err = s.maillingRepoRepo.SendEmail(&db.Mailing{
+		err = s.mailerRepoRepo.SendEmail(&db.Mailing{
 			MailId:  uuid.NewV4(),
 			Email:   recipientList[0], // Use the first email if only one is provided
 			Subject: subject,
@@ -107,7 +107,7 @@ func (s *MaillingServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest
 	log.Infof("Email sent successfully to %v", recipientList)
 
 	for _, recipient := range recipientList {
-		err = s.maillingRepoRepo.SendEmail(&db.Mailing{
+		err = s.mailerRepoRepo.SendEmail(&db.Mailing{
 			MailId:  uuid.NewV4(),
 			Email:   recipient,
 			Subject: subject,

@@ -18,86 +18,86 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// MaillingServiceClient is the client API for MaillingService service.
+// MailerServiceClient is the client API for MailerService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type MaillingServiceClient interface {
+type MailerServiceClient interface {
 	SendEmail(ctx context.Context, in *SendEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error)
 }
 
-type maillingServiceClient struct {
+type mailerServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewMaillingServiceClient(cc grpc.ClientConnInterface) MaillingServiceClient {
-	return &maillingServiceClient{cc}
+func NewMailerServiceClient(cc grpc.ClientConnInterface) MailerServiceClient {
+	return &mailerServiceClient{cc}
 }
 
-func (c *maillingServiceClient) SendEmail(ctx context.Context, in *SendEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error) {
+func (c *mailerServiceClient) SendEmail(ctx context.Context, in *SendEmailRequest, opts ...grpc.CallOption) (*SendEmailResponse, error) {
 	out := new(SendEmailResponse)
-	err := c.cc.Invoke(ctx, "/ukama.notification.mailer.v1.MaillingService/SendEmail", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.notification.mailer.v1.MailerService/SendEmail", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// MaillingServiceServer is the server API for MaillingService service.
-// All implementations must embed UnimplementedMaillingServiceServer
+// MailerServiceServer is the server API for MailerService service.
+// All implementations must embed UnimplementedMailerServiceServer
 // for forward compatibility
-type MaillingServiceServer interface {
+type MailerServiceServer interface {
 	SendEmail(context.Context, *SendEmailRequest) (*SendEmailResponse, error)
-	mustEmbedUnimplementedMaillingServiceServer()
+	mustEmbedUnimplementedMailerServiceServer()
 }
 
-// UnimplementedMaillingServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedMaillingServiceServer struct {
+// UnimplementedMailerServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedMailerServiceServer struct {
 }
 
-func (UnimplementedMaillingServiceServer) SendEmail(context.Context, *SendEmailRequest) (*SendEmailResponse, error) {
+func (UnimplementedMailerServiceServer) SendEmail(context.Context, *SendEmailRequest) (*SendEmailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendEmail not implemented")
 }
-func (UnimplementedMaillingServiceServer) mustEmbedUnimplementedMaillingServiceServer() {}
+func (UnimplementedMailerServiceServer) mustEmbedUnimplementedMailerServiceServer() {}
 
-// UnsafeMaillingServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MaillingServiceServer will
+// UnsafeMailerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MailerServiceServer will
 // result in compilation errors.
-type UnsafeMaillingServiceServer interface {
-	mustEmbedUnimplementedMaillingServiceServer()
+type UnsafeMailerServiceServer interface {
+	mustEmbedUnimplementedMailerServiceServer()
 }
 
-func RegisterMaillingServiceServer(s grpc.ServiceRegistrar, srv MaillingServiceServer) {
-	s.RegisterService(&MaillingService_ServiceDesc, srv)
+func RegisterMailerServiceServer(s grpc.ServiceRegistrar, srv MailerServiceServer) {
+	s.RegisterService(&MailerService_ServiceDesc, srv)
 }
 
-func _MaillingService_SendEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MailerService_SendEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SendEmailRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MaillingServiceServer).SendEmail(ctx, in)
+		return srv.(MailerServiceServer).SendEmail(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.notification.mailer.v1.MaillingService/SendEmail",
+		FullMethod: "/ukama.notification.mailer.v1.MailerService/SendEmail",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MaillingServiceServer).SendEmail(ctx, req.(*SendEmailRequest))
+		return srv.(MailerServiceServer).SendEmail(ctx, req.(*SendEmailRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// MaillingService_ServiceDesc is the grpc.ServiceDesc for MaillingService service.
+// MailerService_ServiceDesc is the grpc.ServiceDesc for MailerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var MaillingService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.notification.mailer.v1.MaillingService",
-	HandlerType: (*MaillingServiceServer)(nil),
+var MailerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ukama.notification.mailer.v1.MailerService",
+	HandlerType: (*MailerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SendEmail",
-			Handler:    _MaillingService_SendEmail_Handler,
+			Handler:    _MailerService_SendEmail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

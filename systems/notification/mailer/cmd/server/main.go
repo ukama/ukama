@@ -66,13 +66,11 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	srv := server.NewMaillingServer(db.NewMaillingRepo(gormdb),serviceConfig.Mailer)
+	srv := server.NewMailerServer(db.NewMailerRepo(gormdb), serviceConfig.Mailer)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		pb.RegisterMaillingServiceServer(s, srv)
+		pb.RegisterMailerServiceServer(s, srv)
 	})
 
 	grpcServer.StartServer()
 }
-
-
