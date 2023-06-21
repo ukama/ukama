@@ -19,6 +19,9 @@
 #include "data.h"
 #include "jserdes.h"
 
+extern pthread_cond_t hasData;
+extern char *queue;
+
 typedef struct _response {
 	char *buffer;
 	size_t size;
@@ -149,6 +152,20 @@ static long send_data_to_local_service(URequest *data, char *hostname,
 }
 
 /*
+ * process_incoming_websocket_response --
+ *
+ */
+int process_incoming_websocket_response(Message *message, Config *config) {
+
+    log_debug("Forwarding the response message to the local service: %s",
+              message->data);
+    queue = strdup(message->data);
+	pthread_cond_broadcast(&hasData);
+
+    return TRUE;
+}
+
+/*
  * process_incoming_websocket_message --
  *
  */
@@ -164,11 +181,6 @@ int process_incoming_websocket_message(Message *message, Config *config) {
 	char *responseLocal=NULL, *responseRemote=NULL;
     json_t *jResp=NULL;
     URequest *request=NULL;
-
-    if (strcmp(message->reqType, MESH_SERVICE_REQUEST) != 0) {
-        log_error("Invalid request type. ignoring.");
-        return FALSE;
-    }
 
     if (deserialize_request_info(&request, message->data) == FALSE) {
         log_error("Unable to deser the request on websocket");

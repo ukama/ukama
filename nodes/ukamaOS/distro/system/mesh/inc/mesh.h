@@ -43,7 +43,7 @@
 #define MESH_SERVICE_REQUEST  "service_request"
 #define MESH_SERVICE_RESPONSE "service_response"
 #define MESH_NODE_REQUEST     "node_request"
-#define MESH_NODE_RESPONSE    "node_resonse"
+#define MESH_NODE_RESPONSE    "node_response"
 
 /* For MAP */
 #define MESH_MAP_TYPE_URL  1

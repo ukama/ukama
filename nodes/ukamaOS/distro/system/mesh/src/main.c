@@ -41,8 +41,9 @@ extern int start_websocket_client(Config *config,
 WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
 WorkList *Receive=NULL;
 MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
-static 	pthread_mutex_t websocketMutex;
-static	pthread_cond_t  websocketFail;
+pthread_mutex_t websocketMutex, mutex;
+pthread_cond_t  websocketFail, hasData;
+char *queue=NULL;
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -248,7 +249,9 @@ int main (int argc, char *argv[]) {
 	init_work_list(&Receive);
 
     pthread_mutex_init(&websocketMutex, NULL);
+    pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&websocketFail, NULL);
+    pthread_cond_init(&hasData, NULL);
 
 	/* Setup ip:port to UUID mapping table, if client. */
 	IDTable = (MapTable *)malloc(sizeof(MapTable));

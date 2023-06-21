@@ -31,6 +31,9 @@
 
 extern WorkList *Transmit;
 extern MapTable *IDTable;
+extern pthread_mutex_t mutex;
+extern pthread_cond_t hasData;
+extern char *queue;
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -150,9 +153,8 @@ int callback_webservice(const URequest *request, UResponse *response,
 	int ret, statusCode=200;
 	char *str, *destHost=NULL, *destPort=NULL, *service=NULL;
     char *requestStr=NULL, *url=NULL;
-	MapItem *map=NULL;
 
-    destHost = u_map_get(request->map_header, "Host");
+    url      = u_map_get(request->map_header, "Host");
     service  = u_map_get(request->map_header, "User-Agent");
     split_strings(url, &destHost, &destPort, ":");
     if (destHost == NULL || destPort == NULL) {
@@ -175,31 +177,15 @@ int callback_webservice(const URequest *request, UResponse *response,
     add_work_to_queue(&Transmit, requestStr, NULL, 0, NULL, 0);
 
 	/* Wait for the response back. The cond is set by the websocket thread */
-	pthread_mutex_lock(&(map->mutex));
+	pthread_mutex_lock(&mutex);
 	log_debug("Waiting for response back from the server ...");
-	pthread_cond_wait(&(map->hasResp), &(map->mutex));
-	pthread_mutex_unlock(&(map->mutex));
+	pthread_cond_wait(&hasData, &mutex);
+	pthread_mutex_unlock(&mutex);
 
-	log_debug("Got response back from server. Len: %d Response: %s",
-			  map->size, (char *)map->data);
+    log_debug("Got response back from the system in the cloud.");
 
-	/* Send response back. */
-	if (map->size == 0) {
-		statusCode = 402;
-		goto done;
-	}
-  
  done:
-	/* Send response back to the callee */
-	if (statusCode != 200) {
-		ulfius_set_string_body_response(response, statusCode,
-									  "Something went wrong! What you up to?");
-	} else {
-		ulfius_set_string_body_response(response, statusCode, map->data);
-	}
-
-	if (map->size)
-		free(map->data);
+    ulfius_set_string_body_response(response, 200, queue);
 
 	return U_CALLBACK_CONTINUE;
 }

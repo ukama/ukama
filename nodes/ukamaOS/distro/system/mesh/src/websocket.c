@@ -227,7 +227,13 @@ void websocket_incoming_message(const URequest *request,
 		goto done;
 	}
 
-    process_incoming_websocket_message(rcvdMessage, (Config *)data);
+    if (strcmp(rcvdMessage->reqType, MESH_SERVICE_REQUEST) == 0 ) {
+        process_incoming_websocket_message(rcvdMessage, (Config *)data);
+    } else if (strcmp(rcvdMessage->reqType, MESH_NODE_RESPONSE) == 0) {
+        process_incoming_websocket_response(rcvdMessage, (Config *)data);
+    } else {
+        log_error("Invalid incoming message on the websocket. Ignored");
+    }
 
 done:
 	if (json) json_decref(json);
