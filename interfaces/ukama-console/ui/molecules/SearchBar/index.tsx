@@ -81,7 +81,7 @@ const SearchBar = ({
       );
     });
   return (
-    <div ref={ref} style={{ zIndex: 600 }}>
+    <div ref={ref} style={{ zIndex: 600, width: "inherit" }}>
       <StyledInputBase
         fullWidth
         value={value}
@@ -89,7 +89,6 @@ const SearchBar = ({
         placeholder={placeholderText}
         onChange={handleInput}
         sx={{
-          zIndex: 400,
           height: '42px',
           borderRadius: '4px',
           fontSize: '14px !important',
@@ -101,7 +100,7 @@ const SearchBar = ({
         endAdornment={<SearchIcon fontSize="small" color="disabled" />}
       />
       {status === 'OK' && (
-        <Paper>
+        <Paper sx={{ cursor: 'pointer' }}>
           <List>{renderSuggestions()}</List>
         </Paper>
       )}

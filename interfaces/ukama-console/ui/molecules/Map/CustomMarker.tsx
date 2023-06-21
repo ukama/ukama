@@ -22,13 +22,6 @@ interface IMarker {
   lng: number;
 }
 
-const getMarkers = (sites: Site[]) => {
-  return sites.map((site) => ({
-    lat: parseFloat(site.location.lat),
-    lng: parseFloat(site.location.lng),
-  }));
-};
-
 const CustomMarker = ({
   data,
   zoom,
@@ -59,7 +52,7 @@ const CustomMarker = ({
   }, []);
 
   useEffect(() => {
-    if (center) map.setView(center, 8);
+    if (center) map.setView(center, zoom);
   }, [center]);
 
   useEffect(() => {
