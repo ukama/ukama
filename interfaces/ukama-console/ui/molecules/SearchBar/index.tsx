@@ -81,7 +81,7 @@ const SearchBar = ({
       );
     });
   return (
-    <div ref={ref} style={{ zIndex: 600, width: "inherit" }}>
+    <div ref={ref} style={{ zIndex: 600, width: 'inherit' }}>
       <StyledInputBase
         fullWidth
         value={value}
