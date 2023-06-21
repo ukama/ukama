@@ -4,9 +4,12 @@ import { Context } from "../../common/context";
 import {
   AddDraftInput,
   DeleteDraftRes,
+  DeleteLinkRes,
   DeleteSiteRes,
   Draft,
+  LinkInput,
   LocationInput,
+  Site,
   SiteInput,
   Event as TEvent,
   Location as TLocation,
@@ -19,7 +22,10 @@ export class DraftResolver {
   async getDraft(@Arg("id") id: string, @Ctx() ctx: Context) {
     const dr = await ctx.prisma.draft.findUnique({
       where: { id: id },
-      include: { sites: { include: { location: true } }, events: true },
+      include: {
+        sites: { include: { location: true, links: true } },
+        events: true,
+      },
     });
     return dr;
   }
@@ -27,7 +33,10 @@ export class DraftResolver {
   async getDrafts(@Arg("userId") userId: string, @Ctx() ctx: Context) {
     const dr = await ctx.prisma.draft.findMany({
       where: { userId: userId },
-      include: { sites: { include: { location: true } }, events: true },
+      include: {
+        sites: { include: { location: true, links: true } },
+        events: true,
+      },
     });
     return dr;
   }
@@ -80,7 +89,10 @@ export class DraftResolver {
           },
         },
       },
-      include: { sites: { include: { location: true } }, events: true },
+      include: {
+        sites: { include: { location: true, links: true } },
+        events: true,
+      },
     });
     return dr;
   }
@@ -118,7 +130,10 @@ export class DraftResolver {
           ],
         },
       },
-      include: { sites: { include: { location: true } }, events: true },
+      include: {
+        sites: { include: { location: true, links: true } },
+        events: true,
+      },
     });
     return dr;
   }
@@ -134,7 +149,10 @@ export class DraftResolver {
       data: {
         name: name,
       },
-      include: { sites: { include: { location: true } }, events: true },
+      include: {
+        sites: { include: { location: true, links: true } },
+        events: true,
+      },
     });
     return dr;
   }
@@ -148,7 +166,10 @@ export class DraftResolver {
         lastSaved: data.lastSaved,
         createdAt: new Date().toISOString(),
       },
-      include: { sites: { include: { location: true } }, events: true },
+      include: {
+        sites: { include: { location: true, links: true } },
+        events: true,
+      },
     });
     return dr;
   }
@@ -186,6 +207,57 @@ export class DraftResolver {
       where: { id: id },
     });
     return { id: id };
+  }
+
+  @Mutation(() => Site)
+  async addLink(
+    @Arg("draftId") draftId: string,
+    @Arg("siteId") siteId: string,
+    @Arg("data") data: LinkInput,
+    @Ctx() ctx: Context
+  ) {
+    const l = await ctx.prisma.site.update({
+      where: { id: siteId },
+      data: {
+        links: {
+          create: {
+            data: data.data,
+            linkWith: data.linkWith,
+          },
+        },
+      },
+      include: { location: true, links: true },
+    });
+    await ctx.prisma.draft.update({
+      where: {
+        id: draftId,
+      },
+      data: {
+        lastSaved: data.lastSaved,
+      },
+    });
+    return l;
+  }
+
+  @Mutation(() => DeleteLinkRes)
+  async deleteLink(
+    @Arg("linkId") linkId: string,
+    @Arg("draftId") draftId: string,
+    @Arg("lastSaved") lastSaved: number,
+    @Ctx() ctx: Context
+  ) {
+    await ctx.prisma.link.delete({
+      where: { id: linkId },
+    });
+    await ctx.prisma.draft.update({
+      where: {
+        id: draftId,
+      },
+      data: {
+        lastSaved: lastSaved,
+      },
+    });
+    return { id: linkId };
   }
 
   @Mutation(() => DeleteSiteRes)

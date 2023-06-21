@@ -16,18 +16,27 @@ model Location {
   Site    Site[]
 }
 
+model Link {
+  id       String  @unique @default(cuid())
+  data     String
+  linkWith String
+  Site     Site?   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  siteId   String?
+}
+
 model Site {
   id          String   @unique @default(cuid())
   height      Int
   solarUptime Int
   name        String
   status      String
-  locationId  String
   apOption    String
   draftId     String?
   isSetlite   Boolean
+  links       Link[]
   location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
   Draft       Draft?   @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  locationId  String
 }
 
 model Event {
