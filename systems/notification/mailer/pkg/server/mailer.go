@@ -42,10 +42,11 @@ func NewMailerServer(mailerRepoRepo db.MailerRepo, mail *pkg.Mailer) *MailerServ
 }
 
 func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
-	if req.To == nil || req.Subject == "" || req.Body == "" || req.Values == nil {
+
+	if req.To == nil || req.Subject == "" || req.Body == "" {
 		return nil, errors.New("missing required fields in SendEmailRequest")
 	}
-	mailID := uuid.NewV4()
+	mailId := uuid.NewV4()
 	currentTime := time.Now()
 	sentAt := &currentTime
 
@@ -63,7 +64,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 	for key, value := range values {
 		emailData.Values[key] = value
 	}
-	emailData.Values["EmailID"] = mailID.String()
+	emailData.Values["EmailID"] = mailId.String()
 	tmpl, err := template.New("email").Parse(emailData.Body)
 	if err != nil {
 		log.Errorf("Failed to parse email template: %v", err)
@@ -97,7 +98,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 	if err != nil {
 		log.Errorf("Failed to send email: %v", err.Error())
 		err = s.mailerRepoRepo.SendEmail(&db.Mailing{
-			MailId:  mailID,
+			MailId:  mailId,
 			Email:   recipientList[0], // Use the first email if only one is provided
 			Subject: subject,
 			Body:    bodyBuffer.String(),
@@ -111,7 +112,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 
 	for _, recipient := range recipientList {
 		err = s.mailerRepoRepo.SendEmail(&db.Mailing{
-			MailId:  mailID,
+			MailId:  mailId,
 			Email:   recipient,
 			Subject: subject,
 			Body:    bodyBuffer.String(),
@@ -126,6 +127,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 
 	response := &pb.SendEmailResponse{
 		Message: "Email sent successfully",
+		MailId:mailId.String(),
 	}
 
 	return response, nil
@@ -138,14 +140,14 @@ func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdReq
 	mailerId, err := uuid.FromString(req.GetMailId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of network uuid. Error %s", err.Error())
+			"invalid format of mailer uuid. Error %s", err.Error())
 	}
 	mail, err := s.mailerRepoRepo.GetEmailById(mailerId)
 	if err != nil {
 		log.Error("Error while getting email" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to get email")
 	}
-
+log.Infof("getting email with id %v", mail.MailId.String())
 	response := &pb.GetEmailByIdResponse{
 		MailId:  mail.MailId.String(),
 		Subject: mail.Subject,

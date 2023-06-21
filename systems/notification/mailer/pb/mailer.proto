@@ -44,5 +44,6 @@ message SendEmailRequest{
 // Defines the response for sending emails
 message SendEmailResponse{
     string message = 1;
+    string mailId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "mailer_id"];
 }
 
