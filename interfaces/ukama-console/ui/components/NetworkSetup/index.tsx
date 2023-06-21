@@ -49,7 +49,7 @@ const NetworkSetup = ({ nextStep, networkData }: INetworkTypes) => {
   return (
     <Box sx={{ pb: 2 }}>
       <Formik
-        initialValues={{ name:  '' }}
+        initialValues={{ name: '' }}
         validationSchema={eSimFormSchema}
         onSubmit={async (values) =>
           handleNetworksetup({ ...values, networkType })

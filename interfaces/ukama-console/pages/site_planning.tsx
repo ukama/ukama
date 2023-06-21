@@ -23,10 +23,10 @@ import {
   RightOverlayUI,
   SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
-import { formatSecondsToDuration } from '@/utils';
+import { calculateCenterLatLng, formatSecondsToDuration } from '@/utils';
 import { AlertColor, Popover, Stack, Typography } from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const ZOOM = 3;
@@ -60,7 +60,10 @@ const Page = () => {
   const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>(
     undefined,
   );
-  const [search, setSearch] = useState('');
+  const [center, setCenter] = useState<LatLngLiteral>({
+    lat: 37.7780627,
+    lng: -121.9822475,
+  });
   const [addSite, setAddSite] = useState(false);
   const [addLink, setAddLink] = useState(false);
   const [togglePower, setTogglePower] = useState(false);
@@ -80,6 +83,7 @@ const Page = () => {
       type,
       show,
     });
+
   const {
     data: getDraftsData,
     loading: getDraftsLoading,
@@ -209,6 +213,18 @@ const Page = () => {
       },
     });
 
+  useEffect(() => {
+    if (selectedDraft) {
+      setCenter(
+        calculateCenterLatLng(
+          getMarkers(selectedDraft.sites || []),
+        ) as LatLngLiteral,
+      );
+    } else {
+      setCenter({ lat: 37.7780627, lng: -121.9822475 } as LatLngLiteral);
+    }
+  }, [selectedDraft]);
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorSiteInfo(event.currentTarget);
   };
@@ -285,6 +301,8 @@ const Page = () => {
         siteId: id,
       },
     });
+
+  const handleLocationSelected = (loc: LatLngLiteral) => setCenter(loc);
 
   const handleAddSite = () => setAddSite(true);
   const handleAddLink = () => setAddLink(true);
@@ -382,6 +400,7 @@ const Page = () => {
           <Map
             width={800}
             height={418}
+            center={center}
             setZoom={setZoom}
             isAddSite={addSite}
             id={'site-planning-map'}
@@ -398,11 +417,10 @@ const Page = () => {
             {() => (
               <>
                 <LeftOverlayUI
-                  search={search}
-                  setSearch={setSearch}
                   handleAddSite={handleAddSite}
                   handleAddLink={handleAddLink}
                   isCurrentDraft={!!selectedDraft}
+                  handleLocationSelected={handleLocationSelected}
                 />
                 <RightOverlayUI
                   id={id}

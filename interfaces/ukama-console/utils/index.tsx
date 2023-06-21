@@ -420,7 +420,7 @@ function calculateCenterLatLng(coordinates: any) {
   if (totalCoords === 0) return { lat: 37.7780627, lng: -121.9822475 };
   if (totalCoords === 1)
     return { lat: coordinates[0].lat, lng: coordinates[0].lng };
-    
+
   var sumLat = 0;
   var sumLng = 0;
 

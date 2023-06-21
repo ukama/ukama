@@ -22,6 +22,7 @@ interface IMap {
   children: any;
   className?: string;
   zoom?: number | undefined;
+  center: LatLngLiteral;
   handleAction: (a: Site) => void;
   handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
@@ -33,6 +34,7 @@ const Map = ({
   id,
   zoom,
   data,
+  center,
   cursor,
   setZoom,
   children,
@@ -72,6 +74,7 @@ const Map = ({
       <CustomMarker
         data={data}
         zoom={zoom}
+        center={center}
         setZoom={setZoom}
         handleAction={handleAction}
         handleAddMarker={handleAddMarker}

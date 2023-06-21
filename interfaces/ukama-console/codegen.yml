@@ -1,11 +1,11 @@
 overwrite: true
 schema: http://localhost:4000/graphql
-documents: "./client/graphql/index.graphql"
+documents: './client/graphql/index.graphql'
 generates:
-    ./generated/index.ts:
-        plugins:
-            - 'typescript'
-            - 'typescript-operations'
-            - 'typescript-react-apollo'
-        config:
-            withHooks: true
+  ./generated/index.ts:
+    plugins:
+      - 'typescript'
+      - 'typescript-operations'
+      - 'typescript-react-apollo'
+    config:
+      withHooks: true

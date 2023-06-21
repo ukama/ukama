@@ -21,6 +21,10 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   return (
     <Html lang="en">
       <Head>
+        <script
+          defer
+          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDitiZUSUUf5HU8CLUlSrfuXWgIdHUD7nI&libraries=places&callback=ukama_search_cb"
+        ></script>
         {/* PWA primary color */}
         <meta name="theme-color" content={colors.primaryMain} />
         <link rel="shortcut icon" href="/favicon.ico" />
