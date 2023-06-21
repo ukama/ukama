@@ -13,7 +13,7 @@ import (
 type Mailer struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
-	client  pb.MaillingServiceClient
+	client  pb.MailerServiceClient
 	host    string
 }
 
@@ -27,7 +27,7 @@ func NewMailer(host string, timeout time.Duration) (*Mailer, error) {
 		return nil, err
 	}
 
-	client := pb.NewMaillingServiceClient(conn)
+	client := pb.NewMailerServiceClient(conn)
 
 	return &Mailer{
 		conn:    conn,
@@ -37,14 +37,16 @@ func NewMailer(host string, timeout time.Duration) (*Mailer, error) {
 	}, nil
 }
 
-func NewMailerFromClient(mailerClient pb.MaillingServiceClient) *Mailer {
+func NewMailerFromClient(mailerClient pb.MailerServiceClient ) *Mailer {
 	return &Mailer{
 		host:    "localhost",
-		timeout: 1 * time.Second,
+		timeout: 10 * time.Second,
 		conn:    nil,
 		client:  mailerClient,
 	}
 }
+
+
 
 func (m *Mailer) Close() {
 	m.conn.Close()

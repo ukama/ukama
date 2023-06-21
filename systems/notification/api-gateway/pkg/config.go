@@ -31,12 +31,12 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout: 3 * time.Second,
+			Timeout: 5 * time.Second,
 			Mailer:  "mailer:9090",
 		},
 
 		Server: rest.HttpConfig{
-			Port: 8080,
+			Port: 8085,
 			Cors: defaultCors,
 		},
 		Auth: config.LoadAuthHostConfig("auth"),

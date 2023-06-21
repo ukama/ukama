@@ -48,7 +48,7 @@ func init() {
 
 func TestPingRoute(t *testing.T) {
 	// arrange
-	m := &mmocks.MaillingServiceClient{}
+	m := &mmocks.MailerServiceClient{}
 
 	arc := &providers.AuthRestClient{}
 	w := httptest.NewRecorder()
@@ -69,7 +69,7 @@ func TestRouter_sendEmail(t *testing.T) {
 	req, _ := http.NewRequest("POST", "/v1/mailer/sendEmail",
 		strings.NewReader(`{"to": ["brackley@ukama.com"], "subject": "test", "body": "welcome to ukama"}`))
 
-	m := &mmocks.MaillingServiceClient{}
+	m := &mmocks.MailerServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &mailerpb.SendEmailRequest{
 		To:      []string{"brackley@ukama.com"},

@@ -101,7 +101,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	})
 	auth.Use()
 	{
-		//handle email notification
 		mailer := auth.Group("/mailer", "Mailer", "Mailer")
 		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmailHandler, http.StatusOK))
 
@@ -123,10 +122,10 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (message em
 		Values:  req.Values,
 	}
 	res, err := r.clients.m.SendEmail(&payload)
-
 	if err != nil {
 		return emailPkg.SendEmailResponse{}, err
 	}
+
 
 	return emailPkg.SendEmailResponse{
 		Message: res.Message,
