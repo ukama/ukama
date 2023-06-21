@@ -43,6 +43,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 	if req.To == nil || req.Subject == "" || req.Body == "" || req.Values == nil {
 		return nil, errors.New("missing required fields in SendEmailRequest")
 	}
+	mailID := uuid.NewV4()
 	currentTime := time.Now()
 	sentAt := &currentTime
 
@@ -60,7 +61,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 	for key, value := range values {
 		emailData.Values[key] = value
 	}
-
+	emailData.Values["EmailID"] = mailID.String()
 	tmpl, err := template.New("email").Parse(emailData.Body)
 	if err != nil {
 		log.Errorf("Failed to parse email template: %v", err)
@@ -94,7 +95,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 	if err != nil {
 		log.Errorf("Failed to send email: %v", err.Error())
 		err = s.mailerRepoRepo.SendEmail(&db.Mailing{
-			MailId:  uuid.NewV4(),
+			MailId:  mailID,
 			Email:   recipientList[0], // Use the first email if only one is provided
 			Subject: subject,
 			Body:    bodyBuffer.String(),
@@ -108,7 +109,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 
 	for _, recipient := range recipientList {
 		err = s.mailerRepoRepo.SendEmail(&db.Mailing{
-			MailId:  uuid.NewV4(),
+			MailId:  mailID,
 			Email:   recipient,
 			Subject: subject,
 			Body:    bodyBuffer.String(),
