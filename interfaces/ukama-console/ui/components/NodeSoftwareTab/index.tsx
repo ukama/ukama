@@ -41,7 +41,7 @@ const NodeSoftwareTab = ({
           Change Logs
         </Typography>
         <SimpleDataTable
-          height={"400"}
+          height={'400'}
           dataset={NodeLogs}
           columns={NodeAppsColumns}
         />

@@ -9,7 +9,7 @@ import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DotIcon from '@mui/icons-material/FiberManualRecord';
-import { Dispatch, SetStateAction } from 'react';
+import { LatLngLiteral } from 'leaflet';
 
 const LeftIconButtonStyle = {
   zIndex: 400,
@@ -46,19 +46,17 @@ const RightIconButtonStyle = {
 };
 
 interface ILeftOverlayUI {
-  search: string;
   handleAddSite: Function;
   handleAddLink: Function;
   isCurrentDraft: boolean;
-  setSearch: Dispatch<SetStateAction<string>>;
+  handleLocationSelected: (loc: LatLngLiteral) => void;
 }
 
 const LeftOverlayUI = ({
-  search,
-  setSearch,
   handleAddLink,
   handleAddSite,
   isCurrentDraft,
+  handleLocationSelected,
 }: ILeftOverlayUI) => (
   <Box
     sx={{
@@ -71,9 +69,8 @@ const LeftOverlayUI = ({
   >
     <Stack spacing={1.5} width={'400px'} alignItems={'flex-start'}>
       <SearchBar
-        value={search}
         key={'searchbox'}
-        handleOnChange={(v: string) => setSearch(v)}
+        handleLocationSelected={handleLocationSelected}
         placeholderText="Search for a location, address, or coordinates"
       />
       {isCurrentDraft && (

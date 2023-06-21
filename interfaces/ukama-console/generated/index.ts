@@ -2,26 +2,39 @@ import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+export type Exact<T extends { [key: string]: unknown }> = {
+  [K in keyof T]: T[K];
+};
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]?: Maybe<T[SubKey]>;
+};
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
+  [SubKey in K]: Maybe<T[SubKey]>;
+};
+export type MakeEmpty<
+  T extends { [key: string]: unknown },
+  K extends keyof T,
+> = { [_ in K]?: never };
+export type Incremental<T> =
+  | T
+  | {
+      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
+    };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string | number; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  DateTime: { input: any; output: any; }
+  ID: { input: string | number; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
+  DateTime: { input: any; output: any };
 };
 
 export enum Alert_Type {
   Error = 'ERROR',
   Info = 'INFO',
-  Warning = 'WARNING'
+  Warning = 'WARNING',
 }
 
 export enum Api_Method_Type {
@@ -29,7 +42,7 @@ export enum Api_Method_Type {
   Get = 'GET',
   Patch = 'PATCH',
   Post = 'POST',
-  Put = 'PUT'
+  Put = 'PUT',
 }
 
 export type AddMemberInputDto = {
@@ -208,7 +221,7 @@ export enum Data_Bill_Filter {
   May = 'MAY',
   Novermber = 'NOVERMBER',
   October = 'OCTOBER',
-  September = 'SEPTEMBER'
+  September = 'SEPTEMBER',
 }
 
 export type DataBillDto = {
@@ -326,7 +339,7 @@ export type EsimResponse = {
 export enum Get_User_Status_Type {
   Active = 'ACTIVE',
   Inactive = 'INACTIVE',
-  Unknown = 'UNKNOWN'
+  Unknown = 'UNKNOWN',
 }
 
 export enum Graphs_Tab {
@@ -335,7 +348,7 @@ export enum Graphs_Tab {
   NodeStatus = 'NODE_STATUS',
   Overview = 'OVERVIEW',
   Radio = 'RADIO',
-  Resources = 'RESOURCES'
+  Resources = 'RESOURCES',
 }
 
 export type GetAccountDetailsDto = {
@@ -545,140 +558,113 @@ export type Mutation = {
   uploadSims: UploadSimsResDto;
 };
 
-
 export type MutationAddMemberArgs = {
   data: AddMemberInputDto;
 };
-
 
 export type MutationAddNetworkArgs = {
   data: AddNetworkInputDto;
 };
 
-
 export type MutationAddNodeArgs = {
   data: AddNodeDto;
 };
-
 
 export type MutationAddOrgArgs = {
   data: AddOrgInputDto;
 };
 
-
 export type MutationAddPackageArgs = {
   data: AddPackageInputDto;
 };
-
 
 export type MutationAddSubscriberArgs = {
   data: SubscriberInputDto;
 };
 
-
 export type MutationAddUserArgs = {
   data: UserInputDto;
 };
-
 
 export type MutationAllocateSimArgs = {
   data: AllocateSimInputDto;
 };
 
-
 export type MutationAttachPaymentWithCustomerArgs = {
   paymentId: Scalars['String']['input'];
 };
-
 
 export type MutationCreateCustomerArgs = {
   data: CreateCustomerDto;
 };
 
-
 export type MutationDeactivateUserArgs = {
   uuid: Scalars['String']['input'];
 };
-
 
 export type MutationDefaultMarkupArgs = {
   data: DefaultMarkupInputDto;
 };
 
-
 export type MutationDeleteNodeArgs = {
   id: Scalars['String']['input'];
 };
-
 
 export type MutationDeletePackageArgs = {
   packageId: Scalars['String']['input'];
 };
 
-
 export type MutationDeleteSubscriberArgs = {
   subscriberId: Scalars['String']['input'];
 };
-
 
 export type MutationDeleteUserArgs = {
   userId: Scalars['String']['input'];
 };
 
-
 export type MutationGetSimArgs = {
   data: SetActivePackageForSimInputDto;
 };
-
 
 export type MutationToggleSimStatusArgs = {
   data: ToggleSimStatusInputDto;
 };
 
-
 export type MutationUpdateFirstVisitArgs = {
   data: UserFistVisitInputDto;
 };
-
 
 export type MutationUpdateMemberArgs = {
   data: UpdateMemberInputDto;
   memberId: Scalars['String']['input'];
 };
 
-
 export type MutationUpdateNodeArgs = {
   data: UpdateNodeDto;
 };
-
 
 export type MutationUpdatePackageArgs = {
   data: UpdatePackageInputDto;
   packageId: Scalars['String']['input'];
 };
 
-
 export type MutationUpdateSubscriberArgs = {
   data: UpdateSubscriberInputDto;
   subscriberId: Scalars['String']['input'];
 };
-
 
 export type MutationUpdateUserArgs = {
   data: UpdateUserInputDto;
   userId: Scalars['String']['input'];
 };
 
-
 export type MutationUpdateUserRoamingArgs = {
   data: UpdateUserServiceInput;
 };
 
-
 export type MutationUpdateUserStatusArgs = {
   data: UpdateUserServiceInput;
 };
-
 
 export type MutationUploadSimsArgs = {
   data: UploadSimsInputDto;
@@ -687,13 +673,13 @@ export type MutationUploadSimsArgs = {
 export enum Network_Status {
   Down = 'DOWN',
   Online = 'ONLINE',
-  Undefined = 'UNDEFINED'
+  Undefined = 'UNDEFINED',
 }
 
 export enum Node_Type {
   Amplifier = 'AMPLIFIER',
   Home = 'HOME',
-  Tower = 'TOWER'
+  Tower = 'TOWER',
 }
 
 export type NetworkApiDto = {
@@ -801,7 +787,7 @@ export enum Org_Node_State {
   Error = 'ERROR',
   Onboarded = 'ONBOARDED',
   Pending = 'PENDING',
-  Undefined = 'UNDEFINED'
+  Undefined = 'UNDEFINED',
 }
 
 export type OrgApiDto = {
@@ -1084,124 +1070,100 @@ export type Query = {
   whoami: WhoamiDto;
 };
 
-
 export type QueryAddSiteArgs = {
   data: AddSiteInputDto;
   networkId: Scalars['String']['input'];
 };
 
-
 export type QueryGetAlertsArgs = {
   data: PaginationDto;
 };
-
 
 export type QueryGetConnectedUsersArgs = {
   filter: Time_Filter;
 };
 
-
 export type QueryGetDataBillArgs = {
   filter: Data_Bill_Filter;
 };
-
 
 export type QueryGetDataUsageArgs = {
   simId: Scalars['String']['input'];
 };
 
-
 export type QueryGetEsimQrArgs = {
   data: GetESimQrCodeInput;
 };
-
 
 export type QueryGetMetricsByTabArgs = {
   data: MetricsByTabInputDto;
 };
 
-
 export type QueryGetNetworkArgs = {
   networkId: Scalars['String']['input'];
 };
-
 
 export type QueryGetNetworkDataUsageArgs = {
   filter: Time_Filter;
   networkId: Scalars['String']['input'];
 };
 
-
 export type QueryGetNetworkNodesStatArgs = {
   networkId: Scalars['String']['input'];
 };
-
 
 export type QueryGetNodeArgs = {
   nodeId: Scalars['String']['input'];
 };
 
-
 export type QueryGetNodeStatusArgs = {
   data: GetNodeStatusInput;
 };
-
 
 export type QueryGetOrgArgs = {
   orgName: Scalars['String']['input'];
 };
 
-
 export type QueryGetPackageArgs = {
   packageId: Scalars['String']['input'];
 };
-
 
 export type QueryGetSimArgs = {
   data: GetSimInputDto;
 };
 
-
 export type QueryGetSimPoolStatsArgs = {
   type: Scalars['String']['input'];
 };
 
-
 export type QueryGetSimsArgs = {
   type: Scalars['String']['input'];
 };
-
 
 export type QueryGetSiteArgs = {
   networkId: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
 };
 
-
 export type QueryGetSitesArgs = {
   networkId: Scalars['String']['input'];
 };
-
 
 export type QueryGetSubscriberArgs = {
   subscriberId: Scalars['String']['input'];
 };
 
-
 export type QueryGetSubscriberMetricsByNetworkArgs = {
   networkId: Scalars['String']['input'];
 };
-
 
 export type QueryGetSubscribersByNetworkArgs = {
   networkId: Scalars['String']['input'];
 };
 
-
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
-
 
 export type QueryGetUsersDataUsageArgs = {
   data: DataUsageInputDto;
@@ -1504,7 +1466,7 @@ export enum Time_Filter {
   Month = 'MONTH',
   Today = 'TODAY',
   Total = 'TOTAL',
-  Week = 'WEEK'
+  Week = 'WEEK',
 }
 
 export type ToggleSimStatusInputDto = {
@@ -1643,318 +1605,876 @@ export type WhoamiDto = {
   role: Scalars['String']['output'];
 };
 
-export type WhoamiQueryVariables = Exact<{ [key: string]: never; }>;
+export type WhoamiQueryVariables = Exact<{ [key: string]: never }>;
 
-
-export type WhoamiQuery = { __typename?: 'Query', whoami: { __typename?: 'WhoamiDto', id: string, name: string, email: string, role: string, isFirstVisit: boolean } };
+export type WhoamiQuery = {
+  __typename?: 'Query';
+  whoami: {
+    __typename?: 'WhoamiDto';
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    isFirstVisit: boolean;
+  };
+};
 
 export type GetSubscriberMetricByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
-
-export type GetSubscriberMetricByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
+export type GetSubscriberMetricByNetworkQuery = {
+  __typename?: 'Query';
+  getSubscriberMetricsByNetwork: {
+    __typename?: 'SubscriberMetricsByNetworkDto';
+    total: number;
+    active: number;
+    inactive: number;
+    terminated: number;
+  };
+};
 
 export type GetNetworkNodesStatQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
-
-export type GetNetworkNodesStatQuery = { __typename?: 'Query', getNetworkNodesStat: { __typename?: 'NodeStatsResponse', totalCount: number, upCount: number, claimCount: number } };
+export type GetNetworkNodesStatQuery = {
+  __typename?: 'Query';
+  getNetworkNodesStat: {
+    __typename?: 'NodeStatsResponse';
+    totalCount: number;
+    upCount: number;
+    claimCount: number;
+  };
+};
 
 export type GetNetworkDataUsageQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
   filter: Time_Filter;
 }>;
 
+export type GetNetworkDataUsageQuery = {
+  __typename?: 'Query';
+  getNetworkDataUsage: {
+    __typename?: 'DataUsageNetworkResponse';
+    usage: number;
+  };
+};
 
-export type GetNetworkDataUsageQuery = { __typename?: 'Query', getNetworkDataUsage: { __typename?: 'DataUsageNetworkResponse', usage: number } };
+export type SubscriberSimFragment = {
+  __typename?: 'SubscriberDto';
+  sim: Array<{
+    __typename?: 'SubscriberSimDto';
+    id: string;
+    subscriberId: string;
+    networkId: string;
+    orgId: string;
+    iccid: string;
+    msisdn: string;
+    imsi: string;
+    type: string;
+    status: string;
+    firstActivatedOn?: string | null;
+    lastActivatedOn?: string | null;
+    activationsCount: string;
+    deactivationsCount: string;
+    allocatedAt: string;
+    isPhysical?: boolean | null;
+    package?: string | null;
+  }>;
+};
 
-export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
-
-export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
+export type SubscriberFragment = {
+  __typename?: 'SubscriberDto';
+  uuid: string;
+  address: string;
+  dob: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  idSerial: string;
+  networkId: string;
+  orgId: string;
+  phone: string;
+  proofOfIdentification: string;
+  sim: Array<{
+    __typename?: 'SubscriberSimDto';
+    id: string;
+    subscriberId: string;
+    networkId: string;
+    orgId: string;
+    iccid: string;
+    msisdn: string;
+    imsi: string;
+    type: string;
+    status: string;
+    firstActivatedOn?: string | null;
+    lastActivatedOn?: string | null;
+    activationsCount: string;
+    deactivationsCount: string;
+    allocatedAt: string;
+    isPhysical?: boolean | null;
+    package?: string | null;
+  }>;
+};
 
 export type AddSubscriberMutationVariables = Exact<{
   data: SubscriberInputDto;
 }>;
 
-
-export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> } };
+export type AddSubscriberMutation = {
+  __typename?: 'Mutation';
+  addSubscriber: {
+    __typename?: 'SubscriberDto';
+    uuid: string;
+    address: string;
+    dob: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    gender: string;
+    idSerial: string;
+    networkId: string;
+    orgId: string;
+    phone: string;
+    proofOfIdentification: string;
+    sim: Array<{
+      __typename?: 'SubscriberSimDto';
+      id: string;
+      subscriberId: string;
+      networkId: string;
+      orgId: string;
+      iccid: string;
+      msisdn: string;
+      imsi: string;
+      type: string;
+      status: string;
+      firstActivatedOn?: string | null;
+      lastActivatedOn?: string | null;
+      activationsCount: string;
+      deactivationsCount: string;
+      allocatedAt: string;
+      isPhysical?: boolean | null;
+      package?: string | null;
+    }>;
+  };
+};
 
 export type GetSubscriberQueryVariables = Exact<{
   subscriberId: Scalars['String']['input'];
 }>;
 
-
-export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> } };
+export type GetSubscriberQuery = {
+  __typename?: 'Query';
+  getSubscriber: {
+    __typename?: 'SubscriberDto';
+    uuid: string;
+    address: string;
+    dob: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    gender: string;
+    idSerial: string;
+    networkId: string;
+    orgId: string;
+    phone: string;
+    proofOfIdentification: string;
+    sim: Array<{
+      __typename?: 'SubscriberSimDto';
+      id: string;
+      subscriberId: string;
+      networkId: string;
+      orgId: string;
+      iccid: string;
+      msisdn: string;
+      imsi: string;
+      type: string;
+      status: string;
+      firstActivatedOn?: string | null;
+      lastActivatedOn?: string | null;
+      activationsCount: string;
+      deactivationsCount: string;
+      allocatedAt: string;
+      isPhysical?: boolean | null;
+      package?: string | null;
+    }>;
+  };
+};
 
 export type UpdateSubscriberMutationVariables = Exact<{
   subscriberId: Scalars['String']['input'];
   data: UpdateSubscriberInputDto;
 }>;
 
-
-export type UpdateSubscriberMutation = { __typename?: 'Mutation', updateSubscriber: { __typename?: 'BoolResponse', success: boolean } };
+export type UpdateSubscriberMutation = {
+  __typename?: 'Mutation';
+  updateSubscriber: { __typename?: 'BoolResponse'; success: boolean };
+};
 
 export type DeleteSubscriberMutationVariables = Exact<{
   subscriberId: Scalars['String']['input'];
 }>;
 
-
-export type DeleteSubscriberMutation = { __typename?: 'Mutation', deleteSubscriber: { __typename?: 'BoolResponse', success: boolean } };
+export type DeleteSubscriberMutation = {
+  __typename?: 'Mutation';
+  deleteSubscriber: { __typename?: 'BoolResponse'; success: boolean };
+};
 
 export type GetSubscribersByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
-
-export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> }> } };
+export type GetSubscribersByNetworkQuery = {
+  __typename?: 'Query';
+  getSubscribersByNetwork: {
+    __typename?: 'SubscribersResDto';
+    subscribers: Array<{
+      __typename?: 'SubscriberDto';
+      uuid: string;
+      address: string;
+      dob: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      gender: string;
+      idSerial: string;
+      networkId: string;
+      orgId: string;
+      phone: string;
+      proofOfIdentification: string;
+      sim: Array<{
+        __typename?: 'SubscriberSimDto';
+        id: string;
+        subscriberId: string;
+        networkId: string;
+        orgId: string;
+        iccid: string;
+        msisdn: string;
+        imsi: string;
+        type: string;
+        status: string;
+        firstActivatedOn?: string | null;
+        lastActivatedOn?: string | null;
+        activationsCount: string;
+        deactivationsCount: string;
+        allocatedAt: string;
+        isPhysical?: boolean | null;
+        package?: string | null;
+      }>;
+    }>;
+  };
+};
 
 export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
+export type GetSubscriberMetricsByNetworkQuery = {
+  __typename?: 'Query';
+  getSubscriberMetricsByNetwork: {
+    __typename?: 'SubscriberMetricsByNetworkDto';
+    total: number;
+    active: number;
+    inactive: number;
+    terminated: number;
+  };
+};
 
-export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
-
-export type NetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string };
+export type NetworkFragment = {
+  __typename?: 'NetworkDto';
+  id: string;
+  name: string;
+  orgId: string;
+  isDeactivated: string;
+  createdAt: string;
+};
 
 export type GetNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
+export type GetNetworkQuery = {
+  __typename?: 'Query';
+  getNetwork: {
+    __typename?: 'NetworkDto';
+    id: string;
+    name: string;
+    orgId: string;
+    isDeactivated: string;
+    createdAt: string;
+  };
+};
 
-export type GetNetworkQuery = { __typename?: 'Query', getNetwork: { __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string } };
+export type GetNetworksQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetNetworksQuery = {
+  __typename?: 'Query';
+  getNetworks: {
+    __typename?: 'NetworksResDto';
+    orgId: string;
+    networks: Array<{
+      __typename?: 'NetworkDto';
+      id: string;
+      name: string;
+      orgId: string;
+      isDeactivated: string;
+      createdAt: string;
+    }>;
+  };
+};
 
+export type PackageRateFragment = {
+  __typename?: 'PackageDto';
+  rate: {
+    __typename?: 'PackageRateAPIDto';
+    sms_mo: string;
+    sms_mt: number;
+    data: number;
+    amount: number;
+  };
+};
 
-export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string }> } };
+export type PackageMarkupFragment = {
+  __typename?: 'PackageDto';
+  markup: {
+    __typename?: 'PackageMarkupAPIDto';
+    baserate: string;
+    markup: number;
+  };
+};
 
-export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number } };
+export type PackageFragment = {
+  __typename?: 'PackageDto';
+  uuid: string;
+  name: string;
+  orgId: string;
+  active: boolean;
+  duration: string;
+  simType: string;
+  createdAt: string;
+  deletedAt: string;
+  updatedAt: string;
+  smsVolume: string;
+  dataVolume: string;
+  voiceVolume: string;
+  ulbr: string;
+  dlbr: string;
+  type: string;
+  dataUnit: string;
+  voiceUnit: string;
+  messageUnit: string;
+  flatrate: boolean;
+  currency: string;
+  from: string;
+  to: string;
+  country: string;
+  provider: string;
+  apn: string;
+  ownerId: string;
+  amount: number;
+  rate: {
+    __typename?: 'PackageRateAPIDto';
+    sms_mo: string;
+    sms_mt: number;
+    data: number;
+    amount: number;
+  };
+  markup: {
+    __typename?: 'PackageMarkupAPIDto';
+    baserate: string;
+    markup: number;
+  };
+};
 
-export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
+export type GetPackagesQueryVariables = Exact<{ [key: string]: never }>;
 
-export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
-
-export type GetPackagesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
+export type GetPackagesQuery = {
+  __typename?: 'Query';
+  getPackages: {
+    __typename?: 'PackagesResDto';
+    packages: Array<{
+      __typename?: 'PackageDto';
+      uuid: string;
+      name: string;
+      orgId: string;
+      active: boolean;
+      duration: string;
+      simType: string;
+      createdAt: string;
+      deletedAt: string;
+      updatedAt: string;
+      smsVolume: string;
+      dataVolume: string;
+      voiceVolume: string;
+      ulbr: string;
+      dlbr: string;
+      type: string;
+      dataUnit: string;
+      voiceUnit: string;
+      messageUnit: string;
+      flatrate: boolean;
+      currency: string;
+      from: string;
+      to: string;
+      country: string;
+      provider: string;
+      apn: string;
+      ownerId: string;
+      amount: number;
+      rate: {
+        __typename?: 'PackageRateAPIDto';
+        sms_mo: string;
+        sms_mt: number;
+        data: number;
+        amount: number;
+      };
+      markup: {
+        __typename?: 'PackageMarkupAPIDto';
+        baserate: string;
+        markup: number;
+      };
+    }>;
+  };
+};
 
 export type GetPackageQueryVariables = Exact<{
   packageId: Scalars['String']['input'];
 }>;
 
-
-export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type GetPackageQuery = {
+  __typename?: 'Query';
+  getPackage: {
+    __typename?: 'PackageDto';
+    uuid: string;
+    name: string;
+    orgId: string;
+    active: boolean;
+    duration: string;
+    simType: string;
+    createdAt: string;
+    deletedAt: string;
+    updatedAt: string;
+    smsVolume: string;
+    dataVolume: string;
+    voiceVolume: string;
+    ulbr: string;
+    dlbr: string;
+    type: string;
+    dataUnit: string;
+    voiceUnit: string;
+    messageUnit: string;
+    flatrate: boolean;
+    currency: string;
+    from: string;
+    to: string;
+    country: string;
+    provider: string;
+    apn: string;
+    ownerId: string;
+    amount: number;
+    rate: {
+      __typename?: 'PackageRateAPIDto';
+      sms_mo: string;
+      sms_mt: number;
+      data: number;
+      amount: number;
+    };
+    markup: {
+      __typename?: 'PackageMarkupAPIDto';
+      baserate: string;
+      markup: number;
+    };
+  };
+};
 
 export type AddPackageMutationVariables = Exact<{
   data: AddPackageInputDto;
 }>;
 
-
-export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+export type AddPackageMutation = {
+  __typename?: 'Mutation';
+  addPackage: {
+    __typename?: 'PackageDto';
+    uuid: string;
+    name: string;
+    orgId: string;
+    active: boolean;
+    duration: string;
+    simType: string;
+    createdAt: string;
+    deletedAt: string;
+    updatedAt: string;
+    smsVolume: string;
+    dataVolume: string;
+    voiceVolume: string;
+    ulbr: string;
+    dlbr: string;
+    type: string;
+    dataUnit: string;
+    voiceUnit: string;
+    messageUnit: string;
+    flatrate: boolean;
+    currency: string;
+    from: string;
+    to: string;
+    country: string;
+    provider: string;
+    apn: string;
+    ownerId: string;
+    amount: number;
+    rate: {
+      __typename?: 'PackageRateAPIDto';
+      sms_mo: string;
+      sms_mt: number;
+      data: number;
+      amount: number;
+    };
+    markup: {
+      __typename?: 'PackageMarkupAPIDto';
+      baserate: string;
+      markup: number;
+    };
+  };
+};
 
 export type DeletePacakgeMutationVariables = Exact<{
   packageId: Scalars['String']['input'];
 }>;
 
-
-export type DeletePacakgeMutation = { __typename?: 'Mutation', deletePackage: { __typename?: 'IdResponse', uuid: string } };
+export type DeletePacakgeMutation = {
+  __typename?: 'Mutation';
+  deletePackage: { __typename?: 'IdResponse'; uuid: string };
+};
 
 export type UpdatePacakgeMutationVariables = Exact<{
   packageId: Scalars['String']['input'];
   data: UpdatePackageInputDto;
 }>;
 
+export type UpdatePacakgeMutation = {
+  __typename?: 'Mutation';
+  updatePackage: {
+    __typename?: 'PackageDto';
+    uuid: string;
+    name: string;
+    orgId: string;
+    active: boolean;
+    duration: string;
+    simType: string;
+    createdAt: string;
+    deletedAt: string;
+    updatedAt: string;
+    smsVolume: string;
+    dataVolume: string;
+    voiceVolume: string;
+    ulbr: string;
+    dlbr: string;
+    type: string;
+    dataUnit: string;
+    voiceUnit: string;
+    messageUnit: string;
+    flatrate: boolean;
+    currency: string;
+    from: string;
+    to: string;
+    country: string;
+    provider: string;
+    apn: string;
+    ownerId: string;
+    amount: number;
+    rate: {
+      __typename?: 'PackageRateAPIDto';
+      sms_mo: string;
+      sms_mt: number;
+      data: number;
+      amount: number;
+    };
+    markup: {
+      __typename?: 'PackageMarkupAPIDto';
+      baserate: string;
+      markup: number;
+    };
+  };
+};
 
-export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
-
-export type SimPoolFragment = { __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string };
+export type SimPoolFragment = {
+  __typename?: 'SimDto';
+  activationCode: string;
+  createdAt: string;
+  iccid: string;
+  id: string;
+  isAllocated: string;
+  isPhysical: string;
+  msisdn: string;
+  qrCode: string;
+  simType: string;
+  smapAddress: string;
+};
 
 export type GetSimsQueryVariables = Exact<{
   type: Scalars['String']['input'];
 }>;
 
-
-export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sim: Array<{ __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
+export type GetSimsQuery = {
+  __typename?: 'Query';
+  getSims: {
+    __typename?: 'SimsResDto';
+    sim: Array<{
+      __typename?: 'SimDto';
+      activationCode: string;
+      createdAt: string;
+      iccid: string;
+      id: string;
+      isAllocated: string;
+      isPhysical: string;
+      msisdn: string;
+      qrCode: string;
+      simType: string;
+      smapAddress: string;
+    }>;
+  };
+};
 
 export type GetSimpoolStatsQueryVariables = Exact<{
   type: Scalars['String']['input'];
 }>;
 
-
-export type GetSimpoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, physical: number, esim: number } };
+export type GetSimpoolStatsQuery = {
+  __typename?: 'Query';
+  getSimPoolStats: {
+    __typename?: 'SimPoolStatsDto';
+    total: number;
+    available: number;
+    consumed: number;
+    failed: number;
+    physical: number;
+    esim: number;
+  };
+};
 
 export type UploadSimsMutationVariables = Exact<{
   data: UploadSimsInputDto;
 }>;
 
+export type UploadSimsMutation = {
+  __typename?: 'Mutation';
+  uploadSims: { __typename?: 'UploadSimsResDto'; iccid: Array<string> };
+};
 
-export type UploadSimsMutation = { __typename?: 'Mutation', uploadSims: { __typename?: 'UploadSimsResDto', iccid: Array<string> } };
+export type OrgUserFragment = {
+  __typename?: 'UserResDto';
+  name: string;
+  email: string;
+  uuid: string;
+  phone: string;
+  isDeactivated: boolean;
+  registeredSince: string;
+};
 
-export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string };
+export type MemberFragment = {
+  __typename?: 'MemberObj';
+  uuid: string;
+  userId: string;
+  orgId: string;
+  role: string;
+  isDeactivated: boolean;
+  memberSince?: string | null;
+};
 
-export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null };
+export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
+export type GetOrgMemberQuery = {
+  __typename?: 'Query';
+  getOrgMembers: {
+    __typename?: 'OrgMembersResDto';
+    org: string;
+    members: Array<{
+      __typename?: 'MemberObj';
+      uuid: string;
+      userId: string;
+      orgId: string;
+      role: string;
+      isDeactivated: boolean;
+      memberSince?: string | null;
+      user: {
+        __typename?: 'UserResDto';
+        name: string;
+        email: string;
+        uuid: string;
+        phone: string;
+        isDeactivated: boolean;
+        registeredSince: string;
+      };
+    }>;
+  };
+};
 
 export type AddMemberMutationVariables = Exact<{
   data: AddMemberInputDto;
 }>;
 
-
-export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null } };
+export type AddMemberMutation = {
+  __typename?: 'Mutation';
+  addMember: {
+    __typename?: 'MemberObj';
+    uuid: string;
+    userId: string;
+    orgId: string;
+    role: string;
+    isDeactivated: boolean;
+    memberSince?: string | null;
+  };
+};
 
 export const SubscriberSimFragmentDoc = gql`
-    fragment SubscriberSim on SubscriberDto {
-  sim {
-    id
-    subscriberId
+  fragment SubscriberSim on SubscriberDto {
+    sim {
+      id
+      subscriberId
+      networkId
+      orgId
+      iccid
+      msisdn
+      imsi
+      type
+      status
+      firstActivatedOn
+      lastActivatedOn
+      activationsCount
+      deactivationsCount
+      allocatedAt
+      isPhysical
+      package
+    }
+  }
+`;
+export const SubscriberFragmentDoc = gql`
+  fragment Subscriber on SubscriberDto {
+    uuid
+    address
+    dob
+    email
+    firstName
+    lastName
+    gender
+    idSerial
     networkId
     orgId
-    iccid
-    msisdn
-    imsi
-    type
-    status
-    firstActivatedOn
-    lastActivatedOn
-    activationsCount
-    deactivationsCount
-    allocatedAt
-    isPhysical
-    package
+    phone
+    proofOfIdentification
+    ...SubscriberSim
   }
-}
-    `;
-export const SubscriberFragmentDoc = gql`
-    fragment Subscriber on SubscriberDto {
-  uuid
-  address
-  dob
-  email
-  firstName
-  lastName
-  gender
-  idSerial
-  networkId
-  orgId
-  phone
-  proofOfIdentification
-  ...SubscriberSim
-}
-    ${SubscriberSimFragmentDoc}`;
+  ${SubscriberSimFragmentDoc}
+`;
 export const NetworkFragmentDoc = gql`
-    fragment Network on NetworkDto {
-  id
-  name
-  orgId
-  isDeactivated
-  createdAt
-}
-    `;
-export const PackageRateFragmentDoc = gql`
-    fragment PackageRate on PackageDto {
-  rate {
-    sms_mo
-    sms_mt
-    data
-    amount
-  }
-}
-    `;
-export const PackageMarkupFragmentDoc = gql`
-    fragment PackageMarkup on PackageDto {
-  markup {
-    baserate
-    markup
-  }
-}
-    `;
-export const PackageFragmentDoc = gql`
-    fragment Package on PackageDto {
-  uuid
-  name
-  orgId
-  active
-  duration
-  simType
-  createdAt
-  deletedAt
-  updatedAt
-  smsVolume
-  dataVolume
-  voiceVolume
-  ulbr
-  dlbr
-  type
-  dataUnit
-  voiceUnit
-  messageUnit
-  flatrate
-  currency
-  from
-  to
-  country
-  provider
-  apn
-  ownerId
-  amount
-  ...PackageRate
-  ...PackageMarkup
-}
-    ${PackageRateFragmentDoc}
-${PackageMarkupFragmentDoc}`;
-export const SimPoolFragmentDoc = gql`
-    fragment SimPool on SimDto {
-  activationCode
-  createdAt
-  iccid
-  id
-  isAllocated
-  isPhysical
-  msisdn
-  qrCode
-  simType
-  smapAddress
-}
-    `;
-export const OrgUserFragmentDoc = gql`
-    fragment OrgUser on UserResDto {
-  name
-  email
-  uuid
-  phone
-  isDeactivated
-  registeredSince
-}
-    `;
-export const MemberFragmentDoc = gql`
-    fragment Member on MemberObj {
-  uuid
-  userId
-  orgId
-  role
-  isDeactivated
-  memberSince
-}
-    `;
-export const WhoamiDocument = gql`
-    query Whoami {
-  whoami {
+  fragment Network on NetworkDto {
     id
     name
-    email
-    role
-    isFirstVisit
+    orgId
+    isDeactivated
+    createdAt
   }
-}
-    `;
+`;
+export const PackageRateFragmentDoc = gql`
+  fragment PackageRate on PackageDto {
+    rate {
+      sms_mo
+      sms_mt
+      data
+      amount
+    }
+  }
+`;
+export const PackageMarkupFragmentDoc = gql`
+  fragment PackageMarkup on PackageDto {
+    markup {
+      baserate
+      markup
+    }
+  }
+`;
+export const PackageFragmentDoc = gql`
+  fragment Package on PackageDto {
+    uuid
+    name
+    orgId
+    active
+    duration
+    simType
+    createdAt
+    deletedAt
+    updatedAt
+    smsVolume
+    dataVolume
+    voiceVolume
+    ulbr
+    dlbr
+    type
+    dataUnit
+    voiceUnit
+    messageUnit
+    flatrate
+    currency
+    from
+    to
+    country
+    provider
+    apn
+    ownerId
+    amount
+    ...PackageRate
+    ...PackageMarkup
+  }
+  ${PackageRateFragmentDoc}
+  ${PackageMarkupFragmentDoc}
+`;
+export const SimPoolFragmentDoc = gql`
+  fragment SimPool on SimDto {
+    activationCode
+    createdAt
+    iccid
+    id
+    isAllocated
+    isPhysical
+    msisdn
+    qrCode
+    simType
+    smapAddress
+  }
+`;
+export const OrgUserFragmentDoc = gql`
+  fragment OrgUser on UserResDto {
+    name
+    email
+    uuid
+    phone
+    isDeactivated
+    registeredSince
+  }
+`;
+export const MemberFragmentDoc = gql`
+  fragment Member on MemberObj {
+    uuid
+    userId
+    orgId
+    role
+    isDeactivated
+    memberSince
+  }
+`;
+export const WhoamiDocument = gql`
+  query Whoami {
+    whoami {
+      id
+      name
+      email
+      role
+      isFirstVisit
+    }
+  }
+`;
 
 /**
  * __useWhoamiQuery__
@@ -1971,27 +2491,40 @@ export const WhoamiDocument = gql`
  *   },
  * });
  */
-export function useWhoamiQuery(baseOptions?: Apollo.QueryHookOptions<WhoamiQuery, WhoamiQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<WhoamiQuery, WhoamiQueryVariables>(WhoamiDocument, options);
-      }
-export function useWhoamiLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<WhoamiQuery, WhoamiQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<WhoamiQuery, WhoamiQueryVariables>(WhoamiDocument, options);
-        }
+export function useWhoamiQuery(
+  baseOptions?: Apollo.QueryHookOptions<WhoamiQuery, WhoamiQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<WhoamiQuery, WhoamiQueryVariables>(
+    WhoamiDocument,
+    options,
+  );
+}
+export function useWhoamiLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<WhoamiQuery, WhoamiQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<WhoamiQuery, WhoamiQueryVariables>(
+    WhoamiDocument,
+    options,
+  );
+}
 export type WhoamiQueryHookResult = ReturnType<typeof useWhoamiQuery>;
 export type WhoamiLazyQueryHookResult = ReturnType<typeof useWhoamiLazyQuery>;
-export type WhoamiQueryResult = Apollo.QueryResult<WhoamiQuery, WhoamiQueryVariables>;
+export type WhoamiQueryResult = Apollo.QueryResult<
+  WhoamiQuery,
+  WhoamiQueryVariables
+>;
 export const GetSubscriberMetricByNetworkDocument = gql`
-    query GetSubscriberMetricByNetwork($networkId: String!) {
-  getSubscriberMetricsByNetwork(networkId: $networkId) {
-    total
-    active
-    inactive
-    terminated
+  query GetSubscriberMetricByNetwork($networkId: String!) {
+    getSubscriberMetricsByNetwork(networkId: $networkId) {
+      total
+      active
+      inactive
+      terminated
+    }
   }
-}
-    `;
+`;
 
 /**
  * __useGetSubscriberMetricByNetworkQuery__
@@ -2009,26 +2542,49 @@ export const GetSubscriberMetricByNetworkDocument = gql`
  *   },
  * });
  */
-export function useGetSubscriberMetricByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetSubscriberMetricByNetworkQuery, GetSubscriberMetricByNetworkQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSubscriberMetricByNetworkQuery, GetSubscriberMetricByNetworkQueryVariables>(GetSubscriberMetricByNetworkDocument, options);
-      }
-export function useGetSubscriberMetricByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSubscriberMetricByNetworkQuery, GetSubscriberMetricByNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSubscriberMetricByNetworkQuery, GetSubscriberMetricByNetworkQueryVariables>(GetSubscriberMetricByNetworkDocument, options);
-        }
-export type GetSubscriberMetricByNetworkQueryHookResult = ReturnType<typeof useGetSubscriberMetricByNetworkQuery>;
-export type GetSubscriberMetricByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscriberMetricByNetworkLazyQuery>;
-export type GetSubscriberMetricByNetworkQueryResult = Apollo.QueryResult<GetSubscriberMetricByNetworkQuery, GetSubscriberMetricByNetworkQueryVariables>;
-export const GetNetworkNodesStatDocument = gql`
-    query GetNetworkNodesStat($networkId: String!) {
-  getNetworkNodesStat(networkId: $networkId) {
-    totalCount
-    upCount
-    claimCount
-  }
+export function useGetSubscriberMetricByNetworkQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetSubscriberMetricByNetworkQuery,
+    GetSubscriberMetricByNetworkQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<
+    GetSubscriberMetricByNetworkQuery,
+    GetSubscriberMetricByNetworkQueryVariables
+  >(GetSubscriberMetricByNetworkDocument, options);
 }
-    `;
+export function useGetSubscriberMetricByNetworkLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetSubscriberMetricByNetworkQuery,
+    GetSubscriberMetricByNetworkQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    GetSubscriberMetricByNetworkQuery,
+    GetSubscriberMetricByNetworkQueryVariables
+  >(GetSubscriberMetricByNetworkDocument, options);
+}
+export type GetSubscriberMetricByNetworkQueryHookResult = ReturnType<
+  typeof useGetSubscriberMetricByNetworkQuery
+>;
+export type GetSubscriberMetricByNetworkLazyQueryHookResult = ReturnType<
+  typeof useGetSubscriberMetricByNetworkLazyQuery
+>;
+export type GetSubscriberMetricByNetworkQueryResult = Apollo.QueryResult<
+  GetSubscriberMetricByNetworkQuery,
+  GetSubscriberMetricByNetworkQueryVariables
+>;
+export const GetNetworkNodesStatDocument = gql`
+  query GetNetworkNodesStat($networkId: String!) {
+    getNetworkNodesStat(networkId: $networkId) {
+      totalCount
+      upCount
+      claimCount
+    }
+  }
+`;
 
 /**
  * __useGetNetworkNodesStatQuery__
@@ -2046,24 +2602,47 @@ export const GetNetworkNodesStatDocument = gql`
  *   },
  * });
  */
-export function useGetNetworkNodesStatQuery(baseOptions: Apollo.QueryHookOptions<GetNetworkNodesStatQuery, GetNetworkNodesStatQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNetworkNodesStatQuery, GetNetworkNodesStatQueryVariables>(GetNetworkNodesStatDocument, options);
-      }
-export function useGetNetworkNodesStatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNetworkNodesStatQuery, GetNetworkNodesStatQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNetworkNodesStatQuery, GetNetworkNodesStatQueryVariables>(GetNetworkNodesStatDocument, options);
-        }
-export type GetNetworkNodesStatQueryHookResult = ReturnType<typeof useGetNetworkNodesStatQuery>;
-export type GetNetworkNodesStatLazyQueryHookResult = ReturnType<typeof useGetNetworkNodesStatLazyQuery>;
-export type GetNetworkNodesStatQueryResult = Apollo.QueryResult<GetNetworkNodesStatQuery, GetNetworkNodesStatQueryVariables>;
-export const GetNetworkDataUsageDocument = gql`
-    query GetNetworkDataUsage($networkId: String!, $filter: TIME_FILTER!) {
-  getNetworkDataUsage(networkId: $networkId, filter: $filter) {
-    usage
-  }
+export function useGetNetworkNodesStatQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetNetworkNodesStatQuery,
+    GetNetworkNodesStatQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<
+    GetNetworkNodesStatQuery,
+    GetNetworkNodesStatQueryVariables
+  >(GetNetworkNodesStatDocument, options);
 }
-    `;
+export function useGetNetworkNodesStatLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetNetworkNodesStatQuery,
+    GetNetworkNodesStatQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    GetNetworkNodesStatQuery,
+    GetNetworkNodesStatQueryVariables
+  >(GetNetworkNodesStatDocument, options);
+}
+export type GetNetworkNodesStatQueryHookResult = ReturnType<
+  typeof useGetNetworkNodesStatQuery
+>;
+export type GetNetworkNodesStatLazyQueryHookResult = ReturnType<
+  typeof useGetNetworkNodesStatLazyQuery
+>;
+export type GetNetworkNodesStatQueryResult = Apollo.QueryResult<
+  GetNetworkNodesStatQuery,
+  GetNetworkNodesStatQueryVariables
+>;
+export const GetNetworkDataUsageDocument = gql`
+  query GetNetworkDataUsage($networkId: String!, $filter: TIME_FILTER!) {
+    getNetworkDataUsage(networkId: $networkId, filter: $filter) {
+      usage
+    }
+  }
+`;
 
 /**
  * __useGetNetworkDataUsageQuery__
@@ -2082,25 +2661,52 @@ export const GetNetworkDataUsageDocument = gql`
  *   },
  * });
  */
-export function useGetNetworkDataUsageQuery(baseOptions: Apollo.QueryHookOptions<GetNetworkDataUsageQuery, GetNetworkDataUsageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNetworkDataUsageQuery, GetNetworkDataUsageQueryVariables>(GetNetworkDataUsageDocument, options);
-      }
-export function useGetNetworkDataUsageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNetworkDataUsageQuery, GetNetworkDataUsageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNetworkDataUsageQuery, GetNetworkDataUsageQueryVariables>(GetNetworkDataUsageDocument, options);
-        }
-export type GetNetworkDataUsageQueryHookResult = ReturnType<typeof useGetNetworkDataUsageQuery>;
-export type GetNetworkDataUsageLazyQueryHookResult = ReturnType<typeof useGetNetworkDataUsageLazyQuery>;
-export type GetNetworkDataUsageQueryResult = Apollo.QueryResult<GetNetworkDataUsageQuery, GetNetworkDataUsageQueryVariables>;
-export const AddSubscriberDocument = gql`
-    mutation addSubscriber($data: SubscriberInputDto!) {
-  addSubscriber(data: $data) {
-    ...Subscriber
-  }
+export function useGetNetworkDataUsageQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetNetworkDataUsageQuery,
+    GetNetworkDataUsageQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<
+    GetNetworkDataUsageQuery,
+    GetNetworkDataUsageQueryVariables
+  >(GetNetworkDataUsageDocument, options);
 }
-    ${SubscriberFragmentDoc}`;
-export type AddSubscriberMutationFn = Apollo.MutationFunction<AddSubscriberMutation, AddSubscriberMutationVariables>;
+export function useGetNetworkDataUsageLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetNetworkDataUsageQuery,
+    GetNetworkDataUsageQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    GetNetworkDataUsageQuery,
+    GetNetworkDataUsageQueryVariables
+  >(GetNetworkDataUsageDocument, options);
+}
+export type GetNetworkDataUsageQueryHookResult = ReturnType<
+  typeof useGetNetworkDataUsageQuery
+>;
+export type GetNetworkDataUsageLazyQueryHookResult = ReturnType<
+  typeof useGetNetworkDataUsageLazyQuery
+>;
+export type GetNetworkDataUsageQueryResult = Apollo.QueryResult<
+  GetNetworkDataUsageQuery,
+  GetNetworkDataUsageQueryVariables
+>;
+export const AddSubscriberDocument = gql`
+  mutation addSubscriber($data: SubscriberInputDto!) {
+    addSubscriber(data: $data) {
+      ...Subscriber
+    }
+  }
+  ${SubscriberFragmentDoc}
+`;
+export type AddSubscriberMutationFn = Apollo.MutationFunction<
+  AddSubscriberMutation,
+  AddSubscriberMutationVariables
+>;
 
 /**
  * __useAddSubscriberMutation__
@@ -2119,20 +2725,35 @@ export type AddSubscriberMutationFn = Apollo.MutationFunction<AddSubscriberMutat
  *   },
  * });
  */
-export function useAddSubscriberMutation(baseOptions?: Apollo.MutationHookOptions<AddSubscriberMutation, AddSubscriberMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddSubscriberMutation, AddSubscriberMutationVariables>(AddSubscriberDocument, options);
-      }
-export type AddSubscriberMutationHookResult = ReturnType<typeof useAddSubscriberMutation>;
-export type AddSubscriberMutationResult = Apollo.MutationResult<AddSubscriberMutation>;
-export type AddSubscriberMutationOptions = Apollo.BaseMutationOptions<AddSubscriberMutation, AddSubscriberMutationVariables>;
-export const GetSubscriberDocument = gql`
-    query getSubscriber($subscriberId: String!) {
-  getSubscriber(subscriberId: $subscriberId) {
-    ...Subscriber
-  }
+export function useAddSubscriberMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    AddSubscriberMutation,
+    AddSubscriberMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<
+    AddSubscriberMutation,
+    AddSubscriberMutationVariables
+  >(AddSubscriberDocument, options);
 }
-    ${SubscriberFragmentDoc}`;
+export type AddSubscriberMutationHookResult = ReturnType<
+  typeof useAddSubscriberMutation
+>;
+export type AddSubscriberMutationResult =
+  Apollo.MutationResult<AddSubscriberMutation>;
+export type AddSubscriberMutationOptions = Apollo.BaseMutationOptions<
+  AddSubscriberMutation,
+  AddSubscriberMutationVariables
+>;
+export const GetSubscriberDocument = gql`
+  query getSubscriber($subscriberId: String!) {
+    getSubscriber(subscriberId: $subscriberId) {
+      ...Subscriber
+    }
+  }
+  ${SubscriberFragmentDoc}
+`;
 
 /**
  * __useGetSubscriberQuery__
@@ -2150,25 +2771,54 @@ export const GetSubscriberDocument = gql`
  *   },
  * });
  */
-export function useGetSubscriberQuery(baseOptions: Apollo.QueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(GetSubscriberDocument, options);
-      }
-export function useGetSubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(GetSubscriberDocument, options);
-        }
-export type GetSubscriberQueryHookResult = ReturnType<typeof useGetSubscriberQuery>;
-export type GetSubscriberLazyQueryHookResult = ReturnType<typeof useGetSubscriberLazyQuery>;
-export type GetSubscriberQueryResult = Apollo.QueryResult<GetSubscriberQuery, GetSubscriberQueryVariables>;
-export const UpdateSubscriberDocument = gql`
-    mutation updateSubscriber($subscriberId: String!, $data: UpdateSubscriberInputDto!) {
-  updateSubscriber(subscriberId: $subscriberId, data: $data) {
-    success
-  }
+export function useGetSubscriberQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetSubscriberQuery,
+    GetSubscriberQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(
+    GetSubscriberDocument,
+    options,
+  );
 }
-    `;
-export type UpdateSubscriberMutationFn = Apollo.MutationFunction<UpdateSubscriberMutation, UpdateSubscriberMutationVariables>;
+export function useGetSubscriberLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetSubscriberQuery,
+    GetSubscriberQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(
+    GetSubscriberDocument,
+    options,
+  );
+}
+export type GetSubscriberQueryHookResult = ReturnType<
+  typeof useGetSubscriberQuery
+>;
+export type GetSubscriberLazyQueryHookResult = ReturnType<
+  typeof useGetSubscriberLazyQuery
+>;
+export type GetSubscriberQueryResult = Apollo.QueryResult<
+  GetSubscriberQuery,
+  GetSubscriberQueryVariables
+>;
+export const UpdateSubscriberDocument = gql`
+  mutation updateSubscriber(
+    $subscriberId: String!
+    $data: UpdateSubscriberInputDto!
+  ) {
+    updateSubscriber(subscriberId: $subscriberId, data: $data) {
+      success
+    }
+  }
+`;
+export type UpdateSubscriberMutationFn = Apollo.MutationFunction<
+  UpdateSubscriberMutation,
+  UpdateSubscriberMutationVariables
+>;
 
 /**
  * __useUpdateSubscriberMutation__
@@ -2188,21 +2838,38 @@ export type UpdateSubscriberMutationFn = Apollo.MutationFunction<UpdateSubscribe
  *   },
  * });
  */
-export function useUpdateSubscriberMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSubscriberMutation, UpdateSubscriberMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateSubscriberMutation, UpdateSubscriberMutationVariables>(UpdateSubscriberDocument, options);
-      }
-export type UpdateSubscriberMutationHookResult = ReturnType<typeof useUpdateSubscriberMutation>;
-export type UpdateSubscriberMutationResult = Apollo.MutationResult<UpdateSubscriberMutation>;
-export type UpdateSubscriberMutationOptions = Apollo.BaseMutationOptions<UpdateSubscriberMutation, UpdateSubscriberMutationVariables>;
-export const DeleteSubscriberDocument = gql`
-    mutation deleteSubscriber($subscriberId: String!) {
-  deleteSubscriber(subscriberId: $subscriberId) {
-    success
-  }
+export function useUpdateSubscriberMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    UpdateSubscriberMutation,
+    UpdateSubscriberMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<
+    UpdateSubscriberMutation,
+    UpdateSubscriberMutationVariables
+  >(UpdateSubscriberDocument, options);
 }
-    `;
-export type DeleteSubscriberMutationFn = Apollo.MutationFunction<DeleteSubscriberMutation, DeleteSubscriberMutationVariables>;
+export type UpdateSubscriberMutationHookResult = ReturnType<
+  typeof useUpdateSubscriberMutation
+>;
+export type UpdateSubscriberMutationResult =
+  Apollo.MutationResult<UpdateSubscriberMutation>;
+export type UpdateSubscriberMutationOptions = Apollo.BaseMutationOptions<
+  UpdateSubscriberMutation,
+  UpdateSubscriberMutationVariables
+>;
+export const DeleteSubscriberDocument = gql`
+  mutation deleteSubscriber($subscriberId: String!) {
+    deleteSubscriber(subscriberId: $subscriberId) {
+      success
+    }
+  }
+`;
+export type DeleteSubscriberMutationFn = Apollo.MutationFunction<
+  DeleteSubscriberMutation,
+  DeleteSubscriberMutationVariables
+>;
 
 /**
  * __useDeleteSubscriberMutation__
@@ -2221,22 +2888,37 @@ export type DeleteSubscriberMutationFn = Apollo.MutationFunction<DeleteSubscribe
  *   },
  * });
  */
-export function useDeleteSubscriberMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSubscriberMutation, DeleteSubscriberMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteSubscriberMutation, DeleteSubscriberMutationVariables>(DeleteSubscriberDocument, options);
-      }
-export type DeleteSubscriberMutationHookResult = ReturnType<typeof useDeleteSubscriberMutation>;
-export type DeleteSubscriberMutationResult = Apollo.MutationResult<DeleteSubscriberMutation>;
-export type DeleteSubscriberMutationOptions = Apollo.BaseMutationOptions<DeleteSubscriberMutation, DeleteSubscriberMutationVariables>;
+export function useDeleteSubscriberMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    DeleteSubscriberMutation,
+    DeleteSubscriberMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<
+    DeleteSubscriberMutation,
+    DeleteSubscriberMutationVariables
+  >(DeleteSubscriberDocument, options);
+}
+export type DeleteSubscriberMutationHookResult = ReturnType<
+  typeof useDeleteSubscriberMutation
+>;
+export type DeleteSubscriberMutationResult =
+  Apollo.MutationResult<DeleteSubscriberMutation>;
+export type DeleteSubscriberMutationOptions = Apollo.BaseMutationOptions<
+  DeleteSubscriberMutation,
+  DeleteSubscriberMutationVariables
+>;
 export const GetSubscribersByNetworkDocument = gql`
-    query getSubscribersByNetwork($networkId: String!) {
-  getSubscribersByNetwork(networkId: $networkId) {
-    subscribers {
-      ...Subscriber
+  query getSubscribersByNetwork($networkId: String!) {
+    getSubscribersByNetwork(networkId: $networkId) {
+      subscribers {
+        ...Subscriber
+      }
     }
   }
-}
-    ${SubscriberFragmentDoc}`;
+  ${SubscriberFragmentDoc}
+`;
 
 /**
  * __useGetSubscribersByNetworkQuery__
@@ -2254,27 +2936,50 @@ export const GetSubscribersByNetworkDocument = gql`
  *   },
  * });
  */
-export function useGetSubscribersByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>(GetSubscribersByNetworkDocument, options);
-      }
-export function useGetSubscribersByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>(GetSubscribersByNetworkDocument, options);
-        }
-export type GetSubscribersByNetworkQueryHookResult = ReturnType<typeof useGetSubscribersByNetworkQuery>;
-export type GetSubscribersByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscribersByNetworkLazyQuery>;
-export type GetSubscribersByNetworkQueryResult = Apollo.QueryResult<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>;
-export const GetSubscriberMetricsByNetworkDocument = gql`
-    query getSubscriberMetricsByNetwork($networkId: String!) {
-  getSubscriberMetricsByNetwork(networkId: $networkId) {
-    total
-    active
-    inactive
-    terminated
-  }
+export function useGetSubscribersByNetworkQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetSubscribersByNetworkQuery,
+    GetSubscribersByNetworkQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<
+    GetSubscribersByNetworkQuery,
+    GetSubscribersByNetworkQueryVariables
+  >(GetSubscribersByNetworkDocument, options);
 }
-    `;
+export function useGetSubscribersByNetworkLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetSubscribersByNetworkQuery,
+    GetSubscribersByNetworkQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    GetSubscribersByNetworkQuery,
+    GetSubscribersByNetworkQueryVariables
+  >(GetSubscribersByNetworkDocument, options);
+}
+export type GetSubscribersByNetworkQueryHookResult = ReturnType<
+  typeof useGetSubscribersByNetworkQuery
+>;
+export type GetSubscribersByNetworkLazyQueryHookResult = ReturnType<
+  typeof useGetSubscribersByNetworkLazyQuery
+>;
+export type GetSubscribersByNetworkQueryResult = Apollo.QueryResult<
+  GetSubscribersByNetworkQuery,
+  GetSubscribersByNetworkQueryVariables
+>;
+export const GetSubscriberMetricsByNetworkDocument = gql`
+  query getSubscriberMetricsByNetwork($networkId: String!) {
+    getSubscriberMetricsByNetwork(networkId: $networkId) {
+      total
+      active
+      inactive
+      terminated
+    }
+  }
+`;
 
 /**
  * __useGetSubscriberMetricsByNetworkQuery__
@@ -2292,24 +2997,48 @@ export const GetSubscriberMetricsByNetworkDocument = gql`
  *   },
  * });
  */
-export function useGetSubscriberMetricsByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>(GetSubscriberMetricsByNetworkDocument, options);
-      }
-export function useGetSubscriberMetricsByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>(GetSubscriberMetricsByNetworkDocument, options);
-        }
-export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkQuery>;
-export type GetSubscriberMetricsByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkLazyQuery>;
-export type GetSubscriberMetricsByNetworkQueryResult = Apollo.QueryResult<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>;
-export const GetNetworkDocument = gql`
-    query getNetwork($networkId: String!) {
-  getNetwork(networkId: $networkId) {
-    ...Network
-  }
+export function useGetSubscriberMetricsByNetworkQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetSubscriberMetricsByNetworkQuery,
+    GetSubscriberMetricsByNetworkQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<
+    GetSubscriberMetricsByNetworkQuery,
+    GetSubscriberMetricsByNetworkQueryVariables
+  >(GetSubscriberMetricsByNetworkDocument, options);
 }
-    ${NetworkFragmentDoc}`;
+export function useGetSubscriberMetricsByNetworkLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetSubscriberMetricsByNetworkQuery,
+    GetSubscriberMetricsByNetworkQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    GetSubscriberMetricsByNetworkQuery,
+    GetSubscriberMetricsByNetworkQueryVariables
+  >(GetSubscriberMetricsByNetworkDocument, options);
+}
+export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<
+  typeof useGetSubscriberMetricsByNetworkQuery
+>;
+export type GetSubscriberMetricsByNetworkLazyQueryHookResult = ReturnType<
+  typeof useGetSubscriberMetricsByNetworkLazyQuery
+>;
+export type GetSubscriberMetricsByNetworkQueryResult = Apollo.QueryResult<
+  GetSubscriberMetricsByNetworkQuery,
+  GetSubscriberMetricsByNetworkQueryVariables
+>;
+export const GetNetworkDocument = gql`
+  query getNetwork($networkId: String!) {
+    getNetwork(networkId: $networkId) {
+      ...Network
+    }
+  }
+  ${NetworkFragmentDoc}
+`;
 
 /**
  * __useGetNetworkQuery__
@@ -2327,27 +3056,49 @@ export const GetNetworkDocument = gql`
  *   },
  * });
  */
-export function useGetNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
-      }
-export function useGetNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
-        }
+export function useGetNetworkQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetNetworkQuery,
+    GetNetworkQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetNetworkQuery, GetNetworkQueryVariables>(
+    GetNetworkDocument,
+    options,
+  );
+}
+export function useGetNetworkLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetNetworkQuery,
+    GetNetworkQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetNetworkQuery, GetNetworkQueryVariables>(
+    GetNetworkDocument,
+    options,
+  );
+}
 export type GetNetworkQueryHookResult = ReturnType<typeof useGetNetworkQuery>;
-export type GetNetworkLazyQueryHookResult = ReturnType<typeof useGetNetworkLazyQuery>;
-export type GetNetworkQueryResult = Apollo.QueryResult<GetNetworkQuery, GetNetworkQueryVariables>;
+export type GetNetworkLazyQueryHookResult = ReturnType<
+  typeof useGetNetworkLazyQuery
+>;
+export type GetNetworkQueryResult = Apollo.QueryResult<
+  GetNetworkQuery,
+  GetNetworkQueryVariables
+>;
 export const GetNetworksDocument = gql`
-    query getNetworks {
-  getNetworks {
-    orgId
-    networks {
-      ...Network
+  query getNetworks {
+    getNetworks {
+      orgId
+      networks {
+        ...Network
+      }
     }
   }
-}
-    ${NetworkFragmentDoc}`;
+  ${NetworkFragmentDoc}
+`;
 
 /**
  * __useGetNetworksQuery__
@@ -2364,26 +3115,48 @@ export const GetNetworksDocument = gql`
  *   },
  * });
  */
-export function useGetNetworksQuery(baseOptions?: Apollo.QueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNetworksQuery, GetNetworksQueryVariables>(GetNetworksDocument, options);
-      }
-export function useGetNetworksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNetworksQuery, GetNetworksQueryVariables>(GetNetworksDocument, options);
-        }
+export function useGetNetworksQuery(
+  baseOptions?: Apollo.QueryHookOptions<
+    GetNetworksQuery,
+    GetNetworksQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetNetworksQuery, GetNetworksQueryVariables>(
+    GetNetworksDocument,
+    options,
+  );
+}
+export function useGetNetworksLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetNetworksQuery,
+    GetNetworksQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetNetworksQuery, GetNetworksQueryVariables>(
+    GetNetworksDocument,
+    options,
+  );
+}
 export type GetNetworksQueryHookResult = ReturnType<typeof useGetNetworksQuery>;
-export type GetNetworksLazyQueryHookResult = ReturnType<typeof useGetNetworksLazyQuery>;
-export type GetNetworksQueryResult = Apollo.QueryResult<GetNetworksQuery, GetNetworksQueryVariables>;
+export type GetNetworksLazyQueryHookResult = ReturnType<
+  typeof useGetNetworksLazyQuery
+>;
+export type GetNetworksQueryResult = Apollo.QueryResult<
+  GetNetworksQuery,
+  GetNetworksQueryVariables
+>;
 export const GetPackagesDocument = gql`
-    query getPackages {
-  getPackages {
-    packages {
-      ...Package
+  query getPackages {
+    getPackages {
+      packages {
+        ...Package
+      }
     }
   }
-}
-    ${PackageFragmentDoc}`;
+  ${PackageFragmentDoc}
+`;
 
 /**
  * __useGetPackagesQuery__
@@ -2400,24 +3173,46 @@ export const GetPackagesDocument = gql`
  *   },
  * });
  */
-export function useGetPackagesQuery(baseOptions?: Apollo.QueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
-      }
-export function useGetPackagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
-        }
-export type GetPackagesQueryHookResult = ReturnType<typeof useGetPackagesQuery>;
-export type GetPackagesLazyQueryHookResult = ReturnType<typeof useGetPackagesLazyQuery>;
-export type GetPackagesQueryResult = Apollo.QueryResult<GetPackagesQuery, GetPackagesQueryVariables>;
-export const GetPackageDocument = gql`
-    query getPackage($packageId: String!) {
-  getPackage(packageId: $packageId) {
-    ...Package
-  }
+export function useGetPackagesQuery(
+  baseOptions?: Apollo.QueryHookOptions<
+    GetPackagesQuery,
+    GetPackagesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetPackagesQuery, GetPackagesQueryVariables>(
+    GetPackagesDocument,
+    options,
+  );
 }
-    ${PackageFragmentDoc}`;
+export function useGetPackagesLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetPackagesQuery,
+    GetPackagesQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetPackagesQuery, GetPackagesQueryVariables>(
+    GetPackagesDocument,
+    options,
+  );
+}
+export type GetPackagesQueryHookResult = ReturnType<typeof useGetPackagesQuery>;
+export type GetPackagesLazyQueryHookResult = ReturnType<
+  typeof useGetPackagesLazyQuery
+>;
+export type GetPackagesQueryResult = Apollo.QueryResult<
+  GetPackagesQuery,
+  GetPackagesQueryVariables
+>;
+export const GetPackageDocument = gql`
+  query getPackage($packageId: String!) {
+    getPackage(packageId: $packageId) {
+      ...Package
+    }
+  }
+  ${PackageFragmentDoc}
+`;
 
 /**
  * __useGetPackageQuery__
@@ -2435,25 +3230,50 @@ export const GetPackageDocument = gql`
  *   },
  * });
  */
-export function useGetPackageQuery(baseOptions: Apollo.QueryHookOptions<GetPackageQuery, GetPackageQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetPackageQuery, GetPackageQueryVariables>(GetPackageDocument, options);
-      }
-export function useGetPackageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPackageQuery, GetPackageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetPackageQuery, GetPackageQueryVariables>(GetPackageDocument, options);
-        }
-export type GetPackageQueryHookResult = ReturnType<typeof useGetPackageQuery>;
-export type GetPackageLazyQueryHookResult = ReturnType<typeof useGetPackageLazyQuery>;
-export type GetPackageQueryResult = Apollo.QueryResult<GetPackageQuery, GetPackageQueryVariables>;
-export const AddPackageDocument = gql`
-    mutation addPackage($data: AddPackageInputDto!) {
-  addPackage(data: $data) {
-    ...Package
-  }
+export function useGetPackageQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetPackageQuery,
+    GetPackageQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetPackageQuery, GetPackageQueryVariables>(
+    GetPackageDocument,
+    options,
+  );
 }
-    ${PackageFragmentDoc}`;
-export type AddPackageMutationFn = Apollo.MutationFunction<AddPackageMutation, AddPackageMutationVariables>;
+export function useGetPackageLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetPackageQuery,
+    GetPackageQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetPackageQuery, GetPackageQueryVariables>(
+    GetPackageDocument,
+    options,
+  );
+}
+export type GetPackageQueryHookResult = ReturnType<typeof useGetPackageQuery>;
+export type GetPackageLazyQueryHookResult = ReturnType<
+  typeof useGetPackageLazyQuery
+>;
+export type GetPackageQueryResult = Apollo.QueryResult<
+  GetPackageQuery,
+  GetPackageQueryVariables
+>;
+export const AddPackageDocument = gql`
+  mutation addPackage($data: AddPackageInputDto!) {
+    addPackage(data: $data) {
+      ...Package
+    }
+  }
+  ${PackageFragmentDoc}
+`;
+export type AddPackageMutationFn = Apollo.MutationFunction<
+  AddPackageMutation,
+  AddPackageMutationVariables
+>;
 
 /**
  * __useAddPackageMutation__
@@ -2472,21 +3292,38 @@ export type AddPackageMutationFn = Apollo.MutationFunction<AddPackageMutation, A
  *   },
  * });
  */
-export function useAddPackageMutation(baseOptions?: Apollo.MutationHookOptions<AddPackageMutation, AddPackageMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddPackageMutation, AddPackageMutationVariables>(AddPackageDocument, options);
-      }
-export type AddPackageMutationHookResult = ReturnType<typeof useAddPackageMutation>;
-export type AddPackageMutationResult = Apollo.MutationResult<AddPackageMutation>;
-export type AddPackageMutationOptions = Apollo.BaseMutationOptions<AddPackageMutation, AddPackageMutationVariables>;
-export const DeletePacakgeDocument = gql`
-    mutation deletePacakge($packageId: String!) {
-  deletePackage(packageId: $packageId) {
-    uuid
-  }
+export function useAddPackageMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    AddPackageMutation,
+    AddPackageMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<AddPackageMutation, AddPackageMutationVariables>(
+    AddPackageDocument,
+    options,
+  );
 }
-    `;
-export type DeletePacakgeMutationFn = Apollo.MutationFunction<DeletePacakgeMutation, DeletePacakgeMutationVariables>;
+export type AddPackageMutationHookResult = ReturnType<
+  typeof useAddPackageMutation
+>;
+export type AddPackageMutationResult =
+  Apollo.MutationResult<AddPackageMutation>;
+export type AddPackageMutationOptions = Apollo.BaseMutationOptions<
+  AddPackageMutation,
+  AddPackageMutationVariables
+>;
+export const DeletePacakgeDocument = gql`
+  mutation deletePacakge($packageId: String!) {
+    deletePackage(packageId: $packageId) {
+      uuid
+    }
+  }
+`;
+export type DeletePacakgeMutationFn = Apollo.MutationFunction<
+  DeletePacakgeMutation,
+  DeletePacakgeMutationVariables
+>;
 
 /**
  * __useDeletePacakgeMutation__
@@ -2505,21 +3342,39 @@ export type DeletePacakgeMutationFn = Apollo.MutationFunction<DeletePacakgeMutat
  *   },
  * });
  */
-export function useDeletePacakgeMutation(baseOptions?: Apollo.MutationHookOptions<DeletePacakgeMutation, DeletePacakgeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeletePacakgeMutation, DeletePacakgeMutationVariables>(DeletePacakgeDocument, options);
-      }
-export type DeletePacakgeMutationHookResult = ReturnType<typeof useDeletePacakgeMutation>;
-export type DeletePacakgeMutationResult = Apollo.MutationResult<DeletePacakgeMutation>;
-export type DeletePacakgeMutationOptions = Apollo.BaseMutationOptions<DeletePacakgeMutation, DeletePacakgeMutationVariables>;
-export const UpdatePacakgeDocument = gql`
-    mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
-  updatePackage(packageId: $packageId, data: $data) {
-    ...Package
-  }
+export function useDeletePacakgeMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    DeletePacakgeMutation,
+    DeletePacakgeMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<
+    DeletePacakgeMutation,
+    DeletePacakgeMutationVariables
+  >(DeletePacakgeDocument, options);
 }
-    ${PackageFragmentDoc}`;
-export type UpdatePacakgeMutationFn = Apollo.MutationFunction<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
+export type DeletePacakgeMutationHookResult = ReturnType<
+  typeof useDeletePacakgeMutation
+>;
+export type DeletePacakgeMutationResult =
+  Apollo.MutationResult<DeletePacakgeMutation>;
+export type DeletePacakgeMutationOptions = Apollo.BaseMutationOptions<
+  DeletePacakgeMutation,
+  DeletePacakgeMutationVariables
+>;
+export const UpdatePacakgeDocument = gql`
+  mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
+    updatePackage(packageId: $packageId, data: $data) {
+      ...Package
+    }
+  }
+  ${PackageFragmentDoc}
+`;
+export type UpdatePacakgeMutationFn = Apollo.MutationFunction<
+  UpdatePacakgeMutation,
+  UpdatePacakgeMutationVariables
+>;
 
 /**
  * __useUpdatePacakgeMutation__
@@ -2539,22 +3394,37 @@ export type UpdatePacakgeMutationFn = Apollo.MutationFunction<UpdatePacakgeMutat
  *   },
  * });
  */
-export function useUpdatePacakgeMutation(baseOptions?: Apollo.MutationHookOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>(UpdatePacakgeDocument, options);
-      }
-export type UpdatePacakgeMutationHookResult = ReturnType<typeof useUpdatePacakgeMutation>;
-export type UpdatePacakgeMutationResult = Apollo.MutationResult<UpdatePacakgeMutation>;
-export type UpdatePacakgeMutationOptions = Apollo.BaseMutationOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
+export function useUpdatePacakgeMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    UpdatePacakgeMutation,
+    UpdatePacakgeMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<
+    UpdatePacakgeMutation,
+    UpdatePacakgeMutationVariables
+  >(UpdatePacakgeDocument, options);
+}
+export type UpdatePacakgeMutationHookResult = ReturnType<
+  typeof useUpdatePacakgeMutation
+>;
+export type UpdatePacakgeMutationResult =
+  Apollo.MutationResult<UpdatePacakgeMutation>;
+export type UpdatePacakgeMutationOptions = Apollo.BaseMutationOptions<
+  UpdatePacakgeMutation,
+  UpdatePacakgeMutationVariables
+>;
 export const GetSimsDocument = gql`
-    query getSims($type: String!) {
-  getSims(type: $type) {
-    sim {
-      ...SimPool
+  query getSims($type: String!) {
+    getSims(type: $type) {
+      sim {
+        ...SimPool
+      }
     }
   }
-}
-    ${SimPoolFragmentDoc}`;
+  ${SimPoolFragmentDoc}
+`;
 
 /**
  * __useGetSimsQuery__
@@ -2572,29 +3442,45 @@ export const GetSimsDocument = gql`
  *   },
  * });
  */
-export function useGetSimsQuery(baseOptions: Apollo.QueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
-      }
-export function useGetSimsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
-        }
+export function useGetSimsQuery(
+  baseOptions: Apollo.QueryHookOptions<GetSimsQuery, GetSimsQueryVariables>,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetSimsQuery, GetSimsQueryVariables>(
+    GetSimsDocument,
+    options,
+  );
+}
+export function useGetSimsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetSimsQuery,
+    GetSimsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetSimsQuery, GetSimsQueryVariables>(
+    GetSimsDocument,
+    options,
+  );
+}
 export type GetSimsQueryHookResult = ReturnType<typeof useGetSimsQuery>;
 export type GetSimsLazyQueryHookResult = ReturnType<typeof useGetSimsLazyQuery>;
-export type GetSimsQueryResult = Apollo.QueryResult<GetSimsQuery, GetSimsQueryVariables>;
+export type GetSimsQueryResult = Apollo.QueryResult<
+  GetSimsQuery,
+  GetSimsQueryVariables
+>;
 export const GetSimpoolStatsDocument = gql`
-    query getSimpoolStats($type: String!) {
-  getSimPoolStats(type: $type) {
-    total
-    available
-    consumed
-    failed
-    physical
-    esim
+  query getSimpoolStats($type: String!) {
+    getSimPoolStats(type: $type) {
+      total
+      available
+      consumed
+      failed
+      physical
+      esim
+    }
   }
-}
-    `;
+`;
 
 /**
  * __useGetSimpoolStatsQuery__
@@ -2612,25 +3498,51 @@ export const GetSimpoolStatsDocument = gql`
  *   },
  * });
  */
-export function useGetSimpoolStatsQuery(baseOptions: Apollo.QueryHookOptions<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>(GetSimpoolStatsDocument, options);
-      }
-export function useGetSimpoolStatsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>(GetSimpoolStatsDocument, options);
-        }
-export type GetSimpoolStatsQueryHookResult = ReturnType<typeof useGetSimpoolStatsQuery>;
-export type GetSimpoolStatsLazyQueryHookResult = ReturnType<typeof useGetSimpoolStatsLazyQuery>;
-export type GetSimpoolStatsQueryResult = Apollo.QueryResult<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>;
-export const UploadSimsDocument = gql`
-    mutation uploadSims($data: UploadSimsInputDto!) {
-  uploadSims(data: $data) {
-    iccid
-  }
+export function useGetSimpoolStatsQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    GetSimpoolStatsQuery,
+    GetSimpoolStatsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>(
+    GetSimpoolStatsDocument,
+    options,
+  );
 }
-    `;
-export type UploadSimsMutationFn = Apollo.MutationFunction<UploadSimsMutation, UploadSimsMutationVariables>;
+export function useGetSimpoolStatsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetSimpoolStatsQuery,
+    GetSimpoolStatsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    GetSimpoolStatsQuery,
+    GetSimpoolStatsQueryVariables
+  >(GetSimpoolStatsDocument, options);
+}
+export type GetSimpoolStatsQueryHookResult = ReturnType<
+  typeof useGetSimpoolStatsQuery
+>;
+export type GetSimpoolStatsLazyQueryHookResult = ReturnType<
+  typeof useGetSimpoolStatsLazyQuery
+>;
+export type GetSimpoolStatsQueryResult = Apollo.QueryResult<
+  GetSimpoolStatsQuery,
+  GetSimpoolStatsQueryVariables
+>;
+export const UploadSimsDocument = gql`
+  mutation uploadSims($data: UploadSimsInputDto!) {
+    uploadSims(data: $data) {
+      iccid
+    }
+  }
+`;
+export type UploadSimsMutationFn = Apollo.MutationFunction<
+  UploadSimsMutation,
+  UploadSimsMutationVariables
+>;
 
 /**
  * __useUploadSimsMutation__
@@ -2649,27 +3561,42 @@ export type UploadSimsMutationFn = Apollo.MutationFunction<UploadSimsMutation, U
  *   },
  * });
  */
-export function useUploadSimsMutation(baseOptions?: Apollo.MutationHookOptions<UploadSimsMutation, UploadSimsMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UploadSimsMutation, UploadSimsMutationVariables>(UploadSimsDocument, options);
-      }
-export type UploadSimsMutationHookResult = ReturnType<typeof useUploadSimsMutation>;
-export type UploadSimsMutationResult = Apollo.MutationResult<UploadSimsMutation>;
-export type UploadSimsMutationOptions = Apollo.BaseMutationOptions<UploadSimsMutation, UploadSimsMutationVariables>;
+export function useUploadSimsMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    UploadSimsMutation,
+    UploadSimsMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<UploadSimsMutation, UploadSimsMutationVariables>(
+    UploadSimsDocument,
+    options,
+  );
+}
+export type UploadSimsMutationHookResult = ReturnType<
+  typeof useUploadSimsMutation
+>;
+export type UploadSimsMutationResult =
+  Apollo.MutationResult<UploadSimsMutation>;
+export type UploadSimsMutationOptions = Apollo.BaseMutationOptions<
+  UploadSimsMutation,
+  UploadSimsMutationVariables
+>;
 export const GetOrgMemberDocument = gql`
-    query getOrgMember {
-  getOrgMembers {
-    org
-    members {
-      ...Member
-      user {
-        ...OrgUser
+  query getOrgMember {
+    getOrgMembers {
+      org
+      members {
+        ...Member
+        user {
+          ...OrgUser
+        }
       }
     }
   }
-}
-    ${MemberFragmentDoc}
-${OrgUserFragmentDoc}`;
+  ${MemberFragmentDoc}
+  ${OrgUserFragmentDoc}
+`;
 
 /**
  * __useGetOrgMemberQuery__
@@ -2686,25 +3613,52 @@ ${OrgUserFragmentDoc}`;
  *   },
  * });
  */
-export function useGetOrgMemberQuery(baseOptions?: Apollo.QueryHookOptions<GetOrgMemberQuery, GetOrgMemberQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(GetOrgMemberDocument, options);
-      }
-export function useGetOrgMemberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrgMemberQuery, GetOrgMemberQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(GetOrgMemberDocument, options);
-        }
-export type GetOrgMemberQueryHookResult = ReturnType<typeof useGetOrgMemberQuery>;
-export type GetOrgMemberLazyQueryHookResult = ReturnType<typeof useGetOrgMemberLazyQuery>;
-export type GetOrgMemberQueryResult = Apollo.QueryResult<GetOrgMemberQuery, GetOrgMemberQueryVariables>;
-export const AddMemberDocument = gql`
-    mutation addMember($data: AddMemberInputDto!) {
-  addMember(data: $data) {
-    ...Member
-  }
+export function useGetOrgMemberQuery(
+  baseOptions?: Apollo.QueryHookOptions<
+    GetOrgMemberQuery,
+    GetOrgMemberQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(
+    GetOrgMemberDocument,
+    options,
+  );
 }
-    ${MemberFragmentDoc}`;
-export type AddMemberMutationFn = Apollo.MutationFunction<AddMemberMutation, AddMemberMutationVariables>;
+export function useGetOrgMemberLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    GetOrgMemberQuery,
+    GetOrgMemberQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(
+    GetOrgMemberDocument,
+    options,
+  );
+}
+export type GetOrgMemberQueryHookResult = ReturnType<
+  typeof useGetOrgMemberQuery
+>;
+export type GetOrgMemberLazyQueryHookResult = ReturnType<
+  typeof useGetOrgMemberLazyQuery
+>;
+export type GetOrgMemberQueryResult = Apollo.QueryResult<
+  GetOrgMemberQuery,
+  GetOrgMemberQueryVariables
+>;
+export const AddMemberDocument = gql`
+  mutation addMember($data: AddMemberInputDto!) {
+    addMember(data: $data) {
+      ...Member
+    }
+  }
+  ${MemberFragmentDoc}
+`;
+export type AddMemberMutationFn = Apollo.MutationFunction<
+  AddMemberMutation,
+  AddMemberMutationVariables
+>;
 
 /**
  * __useAddMemberMutation__
@@ -2723,10 +3677,23 @@ export type AddMemberMutationFn = Apollo.MutationFunction<AddMemberMutation, Add
  *   },
  * });
  */
-export function useAddMemberMutation(baseOptions?: Apollo.MutationHookOptions<AddMemberMutation, AddMemberMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddMemberMutation, AddMemberMutationVariables>(AddMemberDocument, options);
-      }
-export type AddMemberMutationHookResult = ReturnType<typeof useAddMemberMutation>;
+export function useAddMemberMutation(
+  baseOptions?: Apollo.MutationHookOptions<
+    AddMemberMutation,
+    AddMemberMutationVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useMutation<AddMemberMutation, AddMemberMutationVariables>(
+    AddMemberDocument,
+    options,
+  );
+}
+export type AddMemberMutationHookResult = ReturnType<
+  typeof useAddMemberMutation
+>;
 export type AddMemberMutationResult = Apollo.MutationResult<AddMemberMutation>;
-export type AddMemberMutationOptions = Apollo.BaseMutationOptions<AddMemberMutation, AddMemberMutationVariables>;
+export type AddMemberMutationOptions = Apollo.BaseMutationOptions<
+  AddMemberMutation,
+  AddMemberMutationVariables
+>;

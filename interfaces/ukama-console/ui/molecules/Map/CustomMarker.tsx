@@ -1,5 +1,4 @@
 import { Site } from '@/generated/planning-tool';
-import { calculateCenterLatLng } from '@/utils';
 import Leaflet, { LatLngLiteral } from 'leaflet';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
@@ -9,6 +8,7 @@ import SitePopup from '../SitePopup';
 interface ICustomMarker {
   data: Site[];
   zoom?: number | undefined;
+  center: LatLngLiteral | null;
   handleAction: (a: Site) => void;
   handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
@@ -32,6 +32,7 @@ const getMarkers = (sites: Site[]) => {
 const CustomMarker = ({
   data,
   zoom,
+  center,
   setZoom,
   handleAction,
   handleAddMarker,
@@ -52,15 +53,14 @@ const CustomMarker = ({
         noWrap: true,
         minZoom: 3,
         maxZoom: 20,
-        tileSize: 270,
         maxNativeZoom: 20,
       },
     ).addTo(map);
   }, []);
 
   useEffect(() => {
-    map.setView(calculateCenterLatLng(getMarkers(data || [])), zoom);
-  }, [markers]);
+    if (center) map.setView(center, 8);
+  }, [center]);
 
   useEffect(() => {
     const m: any = [];
