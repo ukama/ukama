@@ -52,6 +52,25 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 }
 
 /*
+ * extract_system_path --
+ */
+static int extract_system_path(char *str, char **name, char **path) {
+
+    char *ptr=NULL;
+    int len=0;
+
+    if (!get_substring_after_index(&ptr, str, 2, '/')) return FALSE;
+
+    len = strlen(str) - strlen(ptr) - 2; /* -2 to skip the /s */
+    *name = (char *)calloc(1, len+1);
+    strncpy(*name, str+1, len);
+
+    *path = strdup(ptr);
+
+    return TRUE;
+}
+
+/*
  * clear_request -- free up memory from MRequest.
  *
  */
@@ -67,10 +86,10 @@ void clear_request(MRequest **data) {
 }
 
 /*
- * send_data_to_server -- Forward recevied data to the local server.
+ * send_data_to_system -- Forward recevied data to the system
  *
  */
-static long send_data_to_server(URequest *data, char *ip, char *port,
+static long send_data_to_system(URequest *data, char *ip, char *port,
 								int *retCode, char **retStr) {
   
 	int i;
@@ -81,19 +100,17 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 	char url[MAX_BUFFER] = {0};
 	UMap *map;
 	Response response = {NULL, 0};
-  
+
 	*retCode = 0;
 
 	/* Sanity check */
 	if (data == NULL && ip == NULL && port == NULL) {
-		return code;
+		return FALSE;
 	}
-     
+
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
-	if (curl == NULL) {
-		return code;
-	}
+	if (curl == NULL) return FALSE;
 
 	/* Add to the header if exists. */
 	if (data->map_header) {
@@ -114,11 +131,10 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 	if (data->binary_body_length > 0 && data->binary_body) {
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data->binary_body);
 	}
-  
+
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "mesh/0.1");
+	curl_easy_setopt(curl, CURLOPT_USERAGENT, "mesh");
 
 	res = curl_easy_perform(curl);
 
@@ -126,9 +142,10 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 		log_error("Error sending request to server at %s Error: %s",
 				  url, curl_easy_strerror(res));
 		*retStr = strdup("Target service is not available. Try again.");
+        *retCode = 0;
 	} else {
 		/* get status code. */
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &retCode);
 		if (response.size) {
 			log_debug("Response recevied from server: %s", response.buffer);
 			*retStr = strdup(response.buffer);
@@ -142,64 +159,67 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
 	curl_easy_cleanup(curl);
 	curl_global_cleanup();
 
-	return code;
+	return TRUE;
 }
 
 /*
- * handle_recevied_data --
+ * process_incoming_websocket_message --
  *
  */
-void handle_recevied_data(MRequest *data) {
+int process_incoming_websocket_message(Message *message, char **responseRemote){
 
+    /*
+     * 1. Find system info from init
+     * 2. create thread, make connection with system, send/recv
+     * 3. Put the response back on the websocket via outgoing queue
+     */
 	int ret=FALSE, retCode=0;
 	URequest *request;
-	char *response=NULL, *jStr=NULL;
-	char *host=NULL, *port=NULL;
+	char *responseLocal=NULL, *jStr=NULL;
+    char *systemName=NULL, *systemEP=NULL;
+	char *systemHost=NULL, *systemPort=NULL;
 	json_t *jResp=NULL;
 
-	if (data == NULL)
-		return;
+    if (strcmp(message->reqType, MESH_NODE_REQUEST) != 0) {
+        log_error("Invalid request type. ignoring.");
+        return FALSE;
+    }
 
-	/* Handling only forward requests. */
-    //	if (strcasecmp(data->reqType, MESH_TYPE_FWD_REQ)!=0)
-	//	return;
+    if (deserialize_request_info(&request, message->data) == FALSE) {
+        log_error("Unable to deser the request on websocket");
+        return FALSE;
+    }
 
-	request = data->requestInfo;
+    if (!extract_system_path(request->url_path, &systemName, &systemEP)) {
+        log_error("Unable to extract system name and path: %s",
+                  request->url_path);
+        return FALSE;
+    }
 
-	if (!get_systemInfo_from_initClient(request->url_path, &host, &port)) {
+	if (!get_systemInfo_from_initClient(systemName, &systemHost, &systemPort)) {
 		/* No match. Ignore. */
-		log_error("No matching server found for path: %s", request->url_path);
-	} else {
-		log_debug("Matching server found for path: %s Server ip: %s port: %s",
-				  request->url_path, host, port);
-
-		ret = send_data_to_server(request, host, port, &retCode, &response);
-		if (ret == 200) {
-			log_debug("Command success. CURL return code: %d. Return code: %d",
-					  ret, retCode);
-		} else {
-			log_debug("Command failed. CURL return code: %d. Return code: %d",
-					  ret, retCode);
-		}
-
-		/* Convert the response into proper format and return. */
-		serialize_response(&jResp, strlen(response), response,
-						   data->serviceInfo->uuid);
-
-		if (jResp) {
-			jStr = json_dumps(jResp, 0);
-			log_debug("Sending response back: %s", jStr);
-            //add_work_to_queue(&Transmit, (Packet)jResp, NULL, 0, NULL, 0); XXXX
-			free(jStr);
-		} else {
-			log_error("Invalid response type (expected JSON)");
-		}
-
-		if (host) free(host);
-		if (port) free(port);
+		log_error("No matching server found for system: %s", systemName);
+        return FALSE;
 	}
 
- done:
-	if (response) free(response);
-	return;
+    log_debug("Matching server found for system: %s host: %s port: %s",
+              systemName, systemHost, systemPort);
+
+    ret = send_data_to_system(request,
+                              systemHost, systemPort,
+                              &retCode, &responseLocal);
+    log_debug("Return code from system %s:%s: code: %d Response: %s",
+              systemHost, systemPort, retCode, responseLocal);
+
+    serialize_system_response(responseRemote, message,
+                              strlen(responseLocal), responseLocal);
+
+    if (responseRemote) {
+        log_debug("Sending response back: %s", *responseRemote);
+    } else {
+        log_error("Invalid response type (expected JSON)");
+        return FALSE;
+    }
+
+    return TRUE;
 }

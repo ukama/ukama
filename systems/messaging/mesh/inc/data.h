@@ -14,6 +14,6 @@
 #include "config.h"
 
 void clear_request(MRequest **data);
-void handle_recevied_data(MRequest *data);
+int process_incoming_websocket_message(Message *message, char **responseRemote);
 
 #endif /* MESH_DATA_H */

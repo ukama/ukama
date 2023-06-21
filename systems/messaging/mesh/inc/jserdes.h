@@ -59,7 +59,8 @@
 #define JSON_LEN   "len"
 
 /* Function headers. */
-int serialize_response(json_t **json, int size, void *data, char *nodeID);
+int serialize_system_response(char **response, Message *message, int len,
+                              char *data);
 int serialize_websocket_message(char **str, URequest *request, char *nodeID,
                                 char *nodePort, char *agent);
 int serialize_device_info(json_t **json, NodeInfo *device);
@@ -67,5 +68,6 @@ int deserialize_forward_request(MRequest **req, json_t *json);
 int deserialize_response(MResponse **response, json_t *json);
 int deserialize_system_info(SystemInfo **systemInfo, json_t *json);
 int deserialize_websocket_message(Message **message, char *data);
+int deserialize_request_info(URequest **request, char *str);
 
 #endif /* MESH_JSERDES_H */

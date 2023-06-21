@@ -174,6 +174,7 @@ void websocket_incoming_message(const URequest *request,
 								WSManager *manager, WSMessage *message,
 								void *data) {
     Message *rcvdMessage=NULL;
+    char *responseRemote=NULL;
 	MRequest *rcvdData=NULL;
 	int ret;
     MapItem *map=NULL;
@@ -193,10 +194,10 @@ void websocket_incoming_message(const URequest *request,
 		ret = deserialize_websocket_message(&rcvdMessage, message->data);
 		if (ret==FALSE) goto done;
 
-        add_work_to_queue(&map->receive, rcvdMessage->data, NULL, 0, NULL, 0);
-
-		/* Free up the memory from deser. */
-		// clear_request(&rcvdData);
+        /* process the incoming and response back on the queue */
+        if (process_incoming_websocket_message(rcvdMessage, &responseRemote)) {
+            add_work_to_queue(&map->transmit, responseRemote, NULL, 0, NULL, 0);
+        }
 	}
 
  done:

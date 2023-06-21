@@ -69,7 +69,7 @@ int callback_websocket(const URequest *request, UResponse *response,
 	/* Publish device (nodeID) 'connect' event to AMQP exchange */
 	if (publish_event(CONN_CONNECT, nodeID) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
-		return U_CALLBACK_ERROR;
+        //		return U_CALLBACK_ERROR; xxx
 	} else {
 		log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 	}
@@ -130,27 +130,6 @@ int callback_ping(const URequest *request, UResponse *response,
 
 	ulfius_set_string_body_response(response, 200, "ok");
 	return U_CALLBACK_CONTINUE;
-}
-
-/*
- * split_strings --
- *
- */
-static void split_strings(char *input, char **str1, char **str2,
-                          char *delimiter) {
-
-    char *token=NULL;
-
-    token = strtok(input, delimiter);
-
-    if (token != NULL && str1) {
-        *str1 = strdup(token);
-
-        token = strtok(NULL, delimiter);
-        if (token != NULL && str2) {
-            *str2 = strdup(token);
-        }
-    }
 }
 
 /*
