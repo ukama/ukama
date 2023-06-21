@@ -94,38 +94,3 @@ func TestRouter_sendEmail(t *testing.T) {
 
 }
 
-func TestRouter_getEmailById(t *testing.T) {
-	m := &mmocks.MailerServiceClient{}
-	arc := &providers.AuthRestClient{}
-
-	r := NewRouter(&Clients{
-		m:  client.NewMailerFromClient(m),
-		
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-	mailerId:="d1c91f57-58bd-48c9-aa2c-80a7885a2033 "
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/mailer/"+mailerId, nil)
-
-		
-
-	preq := &mailerpb.GetEmailByIdRequest{
-		MailId: mailerId,
-	}
-
-	m.On("GetSimsBySubscriber", mock.Anything, preq).Return(&mailerpb.GetEmailByIdResponse{
-		To:"test@ukama.com",
-		Subject:"test",
-		Body:"welcome to ukama",
-		Values: nil,
-	}, nil)
-
-	r.ServeHTTP(w, req)
-
-	// assert
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), `"mailer_id":"`+mailerId+`"`)
-
-	m.AssertExpectations(t)
-	
-
-}

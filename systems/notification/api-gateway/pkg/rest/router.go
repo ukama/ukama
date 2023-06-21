@@ -104,7 +104,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		mailer := auth.Group("/mailer", "Mailer", "Mailer")
 		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmailHandler, http.StatusOK))
-		mailer.GET("/:mailer_Id", formatDoc("Get email by id", ""), tonic.Handler(r.getEmailByIdHandler, http.StatusOK))
+		mailer.GET("/:mailer_id", formatDoc("Get email by id", ""), tonic.Handler(r.getEmailByIdHandler, http.StatusOK))
 
 	}
 }
