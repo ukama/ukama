@@ -302,7 +302,10 @@ const Page = () => {
       },
     });
 
-  const handleLocationSelected = (loc: LatLngLiteral) => setCenter(loc);
+  const handleLocationSelected = (loc: LatLngLiteral) => {
+    setZoom(6);
+    setCenter(loc);
+  };
 
   const handleAddSite = () => setAddSite(true);
   const handleAddLink = () => setAddLink(true);
@@ -410,9 +413,7 @@ const Page = () => {
             handleAddMarker={handleMarkerAdd}
             handleDeleteSite={handleDeleteSite}
             handleDragMarker={handleMarkerDrag}
-            zoom={
-              selectedDraft && selectedDraft?.sites.length > 0 ? zoom : ZOOM
-            }
+            zoom={zoom}
           >
             {() => (
               <>
