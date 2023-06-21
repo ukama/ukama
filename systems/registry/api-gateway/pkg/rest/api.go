@@ -79,48 +79,57 @@ type AddSiteRequest struct {
 }
 
 type AttachNodesRequest struct {
-	ParentNode string `json:"parent_node" validate:"required"`
+	ParentNode string `json:"node_id" path:"node_id" validate:"required"`
 	AmpNodeL   string `json:"anodel" validate:"required"`
 	AmpNodeR   string `json:"anoder" validate:"required"`
 }
 
 type DetachNodeRequest struct {
-	Node string `json:"node" validate:"required"`
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
 type UpdateNodeStateRequest struct {
-	Node  string `json:"node" path:"node_id" validate:"required"`
-	State string `json:"state" path:"state" validate:"required"`
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+	State  string `json:"state" path:"state" validate:"required"`
 }
 
 type UpdateNodeRequest struct {
-	Node string `json:"node" path:"node_id" validate:"required"`
-	Name string `json:"name" validate:"required"`
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+	Name   string `json:"name" validate:"required"`
 }
 
 type GetNodeRequest struct {
-	Node string `json:"node" path:"node_id" validate:"required"`
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
-type GetAllNodesRequest struct {
+type GetNodesRequest struct {
+	Free bool `form:"free" json:"free" query:"free" binding:"required"`
 }
-type GetFreeNodesRequest struct {
+
+type GetOrgNodesRequest struct {
+	OrgId string `example:"{{OrgId}}" path:"org" validate:"required"`
+	Free  bool   `form:"free" json:"free" query:"free" binding:"required"`
 }
 
 type AddNodeRequest struct {
-	Node  string `json:"node" path:"node_id" validate:"required"`
-	State string `json:"state" validate:"required"`
+	NodeId string `json:"node_id" validate:"required"`
+	Name   string `json:"name"`
+	OrgId  string `json:"org_id" validate:"required"`
+	State  string `json:"state" validate:"required"`
 }
 
 type DeleteNodeRequest struct {
-	Node string `json:"node" path:"node_id" validate:"required"`
+	NodeId string `json:"node" path:"node_id" validate:"required"`
 }
 
-type AddNodeToNetworkRequest struct {
-	Node    string `json:"node" path:"node_id" validate:"required"`
-	Network string `json:"network" path:"network_id" validate:"required"`
+type AddNodeToSiteRequest struct {
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
+
+	// TODO: update RPC handlers for missing site_id (default site for network)
+	SiteId    string `json:"site_id"`
+	NetworkId string `json:"net_id" validate:"required"`
 }
 
-type ReleaseNodeFromNetwork struct {
-	Node string `json:"node" path:"node_id" validate:"required"`
+type ReleaseNodeFromSiteRequest struct {
+	NodeId string `json:"node" path:"node_id" validate:"required"`
 }
