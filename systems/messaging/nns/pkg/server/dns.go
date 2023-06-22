@@ -8,7 +8,7 @@ import (
 
 	"github.com/coredns/coredns/pb"
 	"github.com/miekg/dns"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -70,15 +70,15 @@ func (d *DnsServer) resolveIp(ctx context.Context, name string) (net.IP, error) 
 	nodeId := strings.ToLower(name)
 
 	if !strings.HasSuffix(nodeId, baseDomain) {
-		logrus.Errorf("no subdomain")
+		log.Errorf("no subdomain")
 		return nil, status.Error(codes.NotFound, "no subdomain")
 	}
 
 	nodeId = strings.TrimSuffix(nodeId, baseDomain)
 	nodeId = strings.TrimSuffix(nodeId, ".")
-	logrus.Debugln("Resolving: ", name)
+	log.Debugln("Resolving: ", name)
 	if len(nodeId) == 0 {
-		logrus.Errorf("nodeId is empty")
+		log.Errorf("nodeId is empty")
 		return nil, status.Error(codes.NotFound, "nodeId is empty")
 	}
 
@@ -86,16 +86,16 @@ func (d *DnsServer) resolveIp(ctx context.Context, name string) (net.IP, error) 
 	if err != nil {
 		code := status.Code(err)
 		if code == codes.NotFound || code == codes.InvalidArgument {
-			logrus.Info("NodeID not found. Error:", err.Error())
+			log.Info("NodeID not found. Error:", err.Error())
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
-		logrus.Errorf("failed to get node: %v", err)
+		log.Errorf("failed to get node: %v", err)
 		return nil, err
 	}
 	ip := net.ParseIP(ndIpResp)
 	if ip == nil {
-		logrus.Errorf("failed to parse ip from DB: %v", err)
+		log.Errorf("failed to parse ip from DB: %v", err)
 		return nil, err
 	}
 	return ip, nil

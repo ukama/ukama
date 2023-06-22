@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg/metrics"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -41,7 +41,7 @@ func NewNns(config *Config) *Nns {
 		DialKeepAliveTimeout: config.DialTimeoutSecond * time.Second,
 	})
 	if err != nil {
-		logrus.Fatalf("Cannot connect to etcd: %v", err)
+		log.Fatalf("Cannot connect to etcd: %v", err)
 	}
 
 	return &Nns{
@@ -73,7 +73,7 @@ func (n *Nns) Get(c context.Context, nodeId string) (ip string, err error) {
 }
 
 func (n *Nns) getFromEtcd(c context.Context, nodeId string) (string, error) {
-	logrus.Infof("Getting ip from etcd for nodeId: %s", nodeId)
+	log.Infof("Getting ip from etcd for nodeId: %s", nodeId)
 	val, err := n.etcd.Get(c, nodeId)
 	if err != nil {
 		return "", fmt.Errorf("failed to get record from db. Error: %v", err)
@@ -101,7 +101,7 @@ func (n *Nns) Set(c context.Context, nodeId string, ip string) (err error) {
 		return fmt.Errorf("not valid ip")
 	}
 	nodeIdKey := formatNodeIdKey(nodeId)
-	logrus.Debugf("Adding node %s with ip %s to db", nodeIdKey, i.String())
+	log.Debugf("Adding node %s with ip %s to db", nodeIdKey, i.String())
 	_, err = n.etcd.Put(c, nodeIdKey, i.String())
 	if err != nil {
 		return fmt.Errorf("failed to add record to db. Error: %v", err)

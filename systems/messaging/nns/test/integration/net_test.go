@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
@@ -48,8 +48,8 @@ func init() {
 	}
 
 	config.LoadConfig("integration", testConf)
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("%+v", testConf)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("%+v", testConf)
 }
 
 func Test_FullFlow(t *testing.T) {
@@ -57,7 +57,7 @@ func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	logrus.Infoln("Connecting to service ", testConf.NetHost)
+	log.Infoln("Connecting to service ", testConf.NetHost)
 	conn, err := grpc.DialContext(ctx, testConf.NetHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
@@ -239,7 +239,7 @@ func getOrgNetMap(t *testing.T, id, site, nw string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	logrus.Infoln("Connecting to service ", testConf.NetHost)
+	log.Infoln("Connecting to service ", testConf.NetHost)
 	conn, err := grpc.DialContext(ctx, testConf.NetHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
@@ -250,7 +250,7 @@ func getOrgNetMap(t *testing.T, id, site, nw string) {
 
 	t.Run("GetNodeOrgMapList", func(t *testing.T) {
 		r, err := c.GetNodeOrgMapList(ctx, &pb.NodeOrgMapListRequest{})
-		logrus.Infof("NodeOrgMap is %+v", r)
+		log.Infof("NodeOrgMap is %+v", r)
 		assert.NoError(t, err)
 		// just make sure it's unique list
 		assert.Greater(t, len(r.Map), 0)

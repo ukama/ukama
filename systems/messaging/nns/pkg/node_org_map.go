@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -47,7 +47,7 @@ func NewNodeToOrgMap(config *Config) *NodeOrgMap {
 		Endpoints:   []string{config.EtcdHost},
 	})
 	if err != nil {
-		logrus.Fatalf("Cannot connect to etcd: %v", err)
+		log.Fatalf("Cannot connect to etcd: %v", err)
 	}
 
 	return &NodeOrgMap{
@@ -113,24 +113,24 @@ func parseMapValue(data []byte) (*OrgNet, error) {
 	var p1, p2 int64
 	c := strings.Split(string(data), ".")
 	if len(c) != MAP_MAX_IDX {
-		logrus.Errorf("failed to parse org.net.site.ip:port structure for value '%s'", string(data))
+		log.Errorf("failed to parse org.net.site.ip:port structure for value '%s'", string(data))
 	}
 
 	b64Add, err := b64.StdEncoding.DecodeString(c[MAP_ENC_IDX])
 	add := strings.Split(string(b64Add), ":")
 	if len(add) != E_MAX_IDX {
-		logrus.Errorf("failed to parse ip:port:meshport structure for '%s'", add)
+		log.Errorf("failed to parse ip:port:meshport structure for '%s'", add)
 		return nil, err
 	} else {
 		p1, err = strconv.ParseInt(add[E_NODE_PORT_IDX], 10, 32)
 		if err != nil {
-			logrus.Errorf("failed to convert port '%s' to int32", add[E_NODE_IP_IDX])
+			log.Errorf("failed to convert port '%s' to int32", add[E_NODE_IP_IDX])
 			return nil, err
 		}
 
 		p2, err = strconv.ParseInt(add[E_MESH_PORT_IDX], 10, 32)
 		if err != nil {
-			logrus.Errorf("failed to parse covert port '%s' to int32", add[E_MESH_PORT_IDX])
+			log.Errorf("failed to parse covert port '%s' to int32", add[E_MESH_PORT_IDX])
 			return nil, err
 		}
 	}
