@@ -60,7 +60,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	"inactive_members":   Metric{false, "number_of_inactive_org_members", ""},
 	"networks":           Metric{false, "number_of_networks", ""},
 	"sites":              Metric{false, "number_of_sites", ""},
-	
+
 	//Health metrics
 	"temperature_trx": Metric{false, "trx_sensors_tempsensor1_temperature", ""},
 	"temperature_com": Metric{false, "com_sensors_tempsensor1_temperature_microprocessor", ""},
@@ -133,10 +133,6 @@ var defaultPrometheusMetric = map[string]Metric{
 
 	//Power Level
 	"power_level": Metric{false, "trx_sensors_powermanagement_power", ""},
-}
-
-type Kratos struct {
-	_url string
 }
 
 type GrpcEndpoints struct {
