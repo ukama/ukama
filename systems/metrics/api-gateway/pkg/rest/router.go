@@ -185,17 +185,6 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
 	}
 	defer ws.Close()
 	for {
-		//read data from ws
-		// mt, message, err := ws.ReadMessage()
-		// if err != nil {
-		// 	logrus.Infof("read: %s", err.Error())
-		// 	break
-		// }
-		// logrus.Infof("recv: %s", message)
-
-		//write ws data
-
-		time.Sleep(time.Duration(m.Interval) * time.Second)
 
 		w, err := ws.NextWriter(1)
 		if err != nil {
@@ -207,6 +196,8 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
 			logrus.Info("write:", err)
 			break
 		}
+
+		time.Sleep(time.Duration(m.Interval) * time.Second)
 	}
 
 	return err

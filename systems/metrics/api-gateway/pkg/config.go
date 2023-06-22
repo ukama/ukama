@@ -60,6 +60,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	"inactive_members":   Metric{false, "number_of_inactive_org_members", ""},
 	"networks":           Metric{false, "number_of_networks", ""},
 	"sites":              Metric{false, "number_of_sites", ""},
+	
 	//Health metrics
 	"temperature_trx": Metric{false, "trx_sensors_tempsensor1_temperature", ""},
 	"temperature_com": Metric{false, "com_sensors_tempsensor1_temperature_microprocessor", ""},
@@ -132,10 +133,6 @@ var defaultPrometheusMetric = map[string]Metric{
 
 	//Power Level
 	"power_level": Metric{false, "trx_sensors_powermanagement_power", ""},
-	//rawQueries:
-	//uptime: { query: "min(trx_generic_system_uptime_seconds{ {{ `{{.Filter}}` }} })  < min(ctl_generic_system_uptime_seconds{ {{ `{{.Filter}}` }} })" }
-	//live-status: { query: "(count(last_over_time(trx_generic_system_uptime_seconds{ {{ `{{.Filter}}` }} }[1m]))/sum(last_over_time(node_count{node_type!='amplifier', {{ `{{.Filter}}` }} }[1m])))*100" }
-	//"live-nodes: { query: "count(last_over_time(trx_generic_system_uptime_seconds{ {{ `{{.Filter}}` }} }[1m]))" }
 }
 
 type Kratos struct {
