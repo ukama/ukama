@@ -30,6 +30,16 @@ type GetSubscriberMetricsInput struct {
 	Subscriber string `path:"subscriber" validate:"required"`
 }
 
+type GetMetricsRangeInput struct {
+	FilterBase
+	Org        string `query:"org"`
+	Network    string `query:"network"`
+	Subscriber string `query:"subscriber" `
+	Sim        string `query:"sim"`
+	User       string `query:"user"`
+	Site       string `query:"site"`
+	NodeID     string `query:"node"`
+}
 type GetMetricsInput struct {
 	Metric string `path:"metric" validate:"required"`
 }
@@ -42,5 +52,18 @@ type GetSimMetricsInput struct {
 	Subscriber string `path:"subscriber" validate:"required"`
 	Sim        string `path:"sim" validate:"required"`
 }
+
+type GetWsMetricIntput struct {
+	Metric     string `query:"metric" validate:"required"`
+	Interval   int    `query:"interval" validate:"required"` //Node/Network/Organization/Site/Sub/User
+	Org        string `query:"org"`
+	Network    string `query:"network"`
+	Subscriber string `query:"subscriber" `
+	Sim        string `query:"sim"`
+	User       string `query:"user"`
+	Site       string `query:"site"`
+	NodeID     string `query:"node"`
+}
+
 type DummyParameters struct {
 }
