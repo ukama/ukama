@@ -6,14 +6,36 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/providers"
+	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/metrics/exporter/pb/gen/mocks"
 )
+
+var defaultCors = cors.Config{
+	AllowAllOrigins: true,
+}
+
+var routerConfig = &RouterConfig{
+	serverConf: &rest.HttpConfig{
+		Cors: defaultCors,
+	},
+	httpEndpoints: &pkg.HttpEndpoints{
+		NodeMetrics: "localhost:8080",
+	},
+	auth: &config.Auth{
+		AuthAppUrl:    "http://localhost:4455",
+		AuthServerUrl: "http://localhost:4434",
+		AuthAPIGW:     "http://localhost:8080",
+	},
+}
 
 func init() {
 	gin.SetMode(gin.TestMode)
@@ -39,7 +61,8 @@ func Test_RouterPing(t *testing.T) {
 	cl := &Clients{}
 	cl.e = client.NewExporterFromClient(&mocks.ExporterServiceClient{})
 
-	r := NewRouter(cl, rc, m).f.Engine()
+	arc := &providers.AuthRestClient{}
+	r := NewRouter(cl, rc, m, arc.MockAuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -70,7 +93,8 @@ func Test_GetMetrics(t *testing.T) {
 	cl := &Clients{}
 	cl.e = client.NewExporterFromClient(&mocks.ExporterServiceClient{})
 
-	r := NewRouter(cl, rc, m).f.Engine()
+	arc := &providers.AuthRestClient{}
+	r := NewRouter(cl, rc, m, arc.MockAuthenticateUser).f.Engine()
 
 	t.Run("NodeMetrics", func(t *testing.T) {
 		w := httptest.NewRecorder()
