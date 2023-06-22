@@ -60,10 +60,86 @@ var defaultPrometheusMetric = map[string]Metric{
 	"inactive_members":   Metric{false, "number_of_inactive_org_members", ""},
 	"networks":           Metric{false, "number_of_networks", ""},
 	"sites":              Metric{false, "number_of_sites", ""},
+	//Health metrics
+	"temperature_trx": Metric{false, "trx_sensors_tempsensor1_temperature", ""},
+	"temperature_com": Metric{false, "com_sensors_tempsensor1_temperature_microprocessor", ""},
+
+	"temperature_ctl": Metric{false, "ctl_sensors_tempsensor_microprocessor", ""},
+	"temperature_rfe": Metric{false, "rfe_sensors_tempsensor_pa", ""},
+
+	"temperature_S1_trx_hn": Metric{false, "trx_sensors_tempsensor1_temperature", ""},
+	"temperature_S2_trx_hn": Metric{false, "trx_sensors_tempsensor2_temperature", ""},
+	"temperature_S1_rfe_hn": Metric{false, "rfe_sensors_tempsensor1_pa1", ""},
+	"temperature_S2_rfe_hn": Metric{false, "rfe_sensors_tempsensor2_pa2", ""},
+
+	//Uptime Metrics
+	"uptime_trx": Metric{false, "trx_generic_system_uptime_seconds ", ""},
+	"uptime_com": Metric{false, "com_generic_system_uptime_seconds ", ""},
+	"uptime_ctl": Metric{false, "ctl_generic_system_uptime_seconds ", ""},
+
+	//Subscribers Metrics
+	"subscribers_active":   Metric{false, "trx_lte_core_active_ue", ""},
+	"subscribers_attached": Metric{false, "trx_lte_core_subscribers", ""},
+
+	//Radio Metrics
+	//Power Metrics (TX, RX, PA)
+	"tx_power": Metric{false, "rfe_sensor_adc_tx_power", ""},
+	"rx_power": Metric{false, "rfe_sensor_adc_rx_power", ""},
+	"pa_power": Metric{false, "rfe_sensor_adc_pa_power", ""},
+
+	//Resources Metrics
+	//Memory Metrics (TRX, COM, CTL)
+	"memory_trx_total": Metric{false, "trx_memory_ddr_total", ""},
+	"memory_trx_used":  Metric{false, "trx_memory_ddr_used", ""},
+	"memory_trx_free":  Metric{false, "trx_memory_ddr_free", ""},
+
+	"memory_com_total": Metric{false, "com_memory_ddr_total", ""},
+	"memory_com_used":  Metric{false, "com_memory_ddr_used", ""},
+	"memory_com_free":  Metric{false, "com_memory_ddr_free", ""},
+
+	"memory_ctl_total": Metric{false, "ctl_memory_ddr_total", ""},
+	"memory_ctl_used":  Metric{false, "ctl_memory_ddr_used", ""},
+	"memory_ctl_free":  Metric{false, "ctl_memory_ddr_free", ""},
+
+	//CPU Metrics (TRX, COM, CTL)
+	"cpu_trx_usage":    Metric{false, "trx_soc_cpu_usage", ""},
+	"cpu_trx_c0_usage": Metric{false, "trx_soc_cpu_core0_usage", ""},
+	"cpu_trx_c1_usage": Metric{false, "trx_soc_cpu_core1_usage", ""},
+	"cpu_trx_c2_usage": Metric{false, "trx_soc_cpu_core2_usage", ""},
+	"cpu_trx_c3_usage": Metric{false, "trx_soc_cpu_core3_usage", ""},
+
+	"cpu_com_usage":    Metric{false, "com_soc_cpu_usage", ""},
+	"cpu_com_c0_usage": Metric{false, "com_soc_cpu_core0_usage", ""},
+	"cpu_com_c1_usage": Metric{false, "com_soc_cpu_core1_usage", ""},
+	"cpu_com_c2_usage": Metric{false, "com_soc_cpu_core2_usage", ""},
+	"cpu_com_c3_usage": Metric{false, "com_soc_cpu_core3_usage", ""},
+
+	"cpu_ctl_total": Metric{false, "ctl_soc_cpu_usage", ""},
+	"cpu_ctl_used":  Metric{false, "ctl_soc_cpu_core0_usage", ""},
+
+	//DISK Metrics (TRX, COM, CTL)
+	"disk_trx_total": Metric{false, "trx_storage_emmc_total", ""},
+	"disk_trx_used":  Metric{false, "trx_storage_emmc_used", ""},
+	"disk_trx_free":  Metric{false, "trx_storage_emmc_free", ""},
+
+	"disk_com_total": Metric{false, "com_storage_emmc_total", ""},
+	"disk_com_used":  Metric{false, "com_storage_emmc_used", ""},
+	"disk_com_free":  Metric{false, "com_storage_emmc_free", ""},
+
+	"disk_ctl_total": Metric{false, "ctl_storage_emmc_total", ""},
+	"disk_ctl_used":  Metric{false, "ctl_storage_emmc_used", ""},
+	"disk_ctl_free":  Metric{false, "ctl_storage_emmc_free", ""},
+
+	//Power Level
+	"power_level": Metric{false, "trx_sensors_powermanagement_power", ""},
+	//rawQueries:
+	//uptime: { query: "min(trx_generic_system_uptime_seconds{ {{ `{{.Filter}}` }} })  < min(ctl_generic_system_uptime_seconds{ {{ `{{.Filter}}` }} })" }
+	//live-status: { query: "(count(last_over_time(trx_generic_system_uptime_seconds{ {{ `{{.Filter}}` }} }[1m]))/sum(last_over_time(node_count{node_type!='amplifier', {{ `{{.Filter}}` }} }[1m])))*100" }
+	//"live-nodes: { query: "count(last_over_time(trx_generic_system_uptime_seconds{ {{ `{{.Filter}}` }} }[1m]))" }
 }
 
 type Kratos struct {
-	Url string
+	_url string
 }
 
 type GrpcEndpoints struct {

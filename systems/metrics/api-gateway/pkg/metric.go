@@ -34,6 +34,7 @@ type Filter struct {
 	network    string
 	subscriber string
 	sim        string
+	site       string
 }
 
 func NewFilter() *Filter {
@@ -50,6 +51,11 @@ func (f *Filter) WithOrg(org string) *Filter {
 	return f
 }
 
+func (f *Filter) WithSite(site string) *Filter {
+	f.site = site
+	return f
+}
+
 func (f *Filter) WithSubscriber(org string, network string, subscriber string) *Filter {
 	f.org = org
 	f.network = network
@@ -62,6 +68,16 @@ func (f *Filter) WithSim(org string, network string, subscriber string, sim stri
 	f.network = network
 	f.subscriber = subscriber
 	f.sim = sim
+	return f
+}
+
+func (f *Filter) WithAny(org string, network string, subscriber string, sim string, site string, nodeId string) *Filter {
+	f.org = org
+	f.network = network
+	f.subscriber = subscriber
+	f.sim = sim
+	f.site = site
+	f.nodeId = nodeId
 	return f
 }
 
@@ -92,6 +108,9 @@ func (f *Filter) GetFilter() string {
 	if f.sim != "" {
 		filter = append(filter, fmt.Sprintf("sim='%s'", f.sim))
 	}
+	if f.site != "" {
+		filter = append(filter, fmt.Sprintf("site='%s'", f.site))
+	}
 	return strings.Join(filter, ",")
 }
 
@@ -105,7 +124,7 @@ func NewMetrics(config *MetricsConfig) (m *Metrics, err error) {
 
 // GetMetrics returns metrics for specified interval and metric type.
 // metricType should be a value from  MetricTypes array (case-sensitive)
-func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, in *Interval, w io.Writer) (httpStatus int, err error) {
+func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *Interval, w io.Writer) (httpStatus int, err error) {
 
 	_, ok := m.conf.Metrics[metricType]
 	if !ok {
@@ -121,6 +140,26 @@ func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, in *Interva
 	data.Set("start", strconv.FormatInt(in.Start, 10))
 	data.Set("end", strconv.FormatInt(in.End, 10))
 	data.Set("step", strconv.FormatUint(uint64(in.Step), 10))
+	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, "avg"))
+
+	logrus.Infof("GetMetric query: %s", data.Encode())
+
+	return m.processPromRequest(ctx, u, data, w)
+}
+
+func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
+
+	_, ok := m.conf.Metrics[metricType]
+	if !ok {
+		return http.StatusNotFound, errors.New("metric type not found")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
+	defer cancel()
+
+	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
+
+	data := url.Values{}
 	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, "avg"))
 
 	logrus.Infof("GetMetric query: %s", data.Encode())
@@ -162,7 +201,7 @@ func (m *Metrics) processPromRequest(ctx context.Context, url string, data url.V
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to execute request")
 	}
-
+	logrus.Infof("Response Body %+v", res.Body)
 	_, err = io.Copy(w, res.Body)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to copy response")

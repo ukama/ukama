@@ -157,6 +157,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 				info.Description = "Get metrics data stream. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.liveMetricHandler, http.StatusOK))
 
+		auth.GET("/range/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics range for a time period. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.metricRangeHandler, http.StatusOK))
+
 		exp := auth.Group("/exporter", "exporter", "exporter")
 		exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
 	}
@@ -169,7 +174,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) liveMetricHandler(c *gin.Context, m *MetricIntput) error {
+func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
 
 	log.Infof("Requesting metric %s", m.Metric)
 	//Upgrade get request to webSocket protocol
@@ -190,16 +195,21 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *MetricIntput) error {
 
 		//write ws data
 
-		time.Sleep(1 * time.Second)
-		ts := []byte(time.Now().Format(time.RFC3339))
-		err = ws.WriteMessage(1, ts)
+		time.Sleep(time.Duration(m.Interval) * time.Second)
+
+		w, err := ws.NextWriter(1)
+		if err != nil {
+			logrus.Errorf("Error getting writer: %s", err.Error())
+			break
+		}
+		err = r.wsMetericHandler(w, m)
 		if err != nil {
 			logrus.Info("write:", err)
 			break
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
@@ -207,14 +217,18 @@ func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
 	return httpErrorOrNil(httpCode, err)
 }
 
+func (r *Router) metricRangeHandler(c *gin.Context, in *GetMetricsRangeInput) error {
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithAny(in.Org, in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID))
+}
+
 func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
-	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSubscriber(in.Org, in.Network, in.Subscriber))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSubscriber(in.Org, in.Network, in.Subscriber))
 }
 
 func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error {
 	logrus.Infof("Request Sim metrics: %+v", in)
 
-	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSim(in.Org, in.Network, in.Subscriber, in.Sim))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSim(in.Org, in.Network, in.Subscriber, in.Sim))
 }
 
 func (r *Router) networkMetricHandler(c *gin.Context, in *GetNetworkMetricsInput) error {
@@ -246,10 +260,14 @@ func httpErrorOrNil(httpCode int, err error) error {
 }
 
 func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
-	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithNodeId(in.NodeID))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithNodeId(in.NodeID))
 }
 
-func (r *Router) requestMetricInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {
+func (r *Router) wsMetericHandler(w io.Writer, in *GetWsMetricIntput) error {
+	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Org, in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID))
+}
+
+func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {
 
 	ok := r.m.MetricsExist(filterBase.Metric)
 	if !ok {
@@ -264,11 +282,26 @@ func (r *Router) requestMetricInternal(writer io.Writer, filterBase FilterBase, 
 	}
 
 	logrus.Infof("Metrics request with filters: %+v", filter)
-	httpCode, err := r.m.GetMetric(strings.ToLower(filterBase.Metric), filter, &pkg.Interval{
+	httpCode, err := r.m.GetMetricRange(strings.ToLower(filterBase.Metric), filter, &pkg.Interval{
 		Start: filterBase.From,
 		End:   to,
 		Step:  filterBase.Step,
 	}, writer)
+
+	return httpErrorOrNil(httpCode, err)
+}
+
+func (r *Router) requestMetricInternal(writer io.Writer, metric string, filter *pkg.Filter) error {
+
+	ok := r.m.MetricsExist(metric)
+	if !ok {
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Metric not found"}
+	}
+
+	logrus.Infof("Metrics request with filters: %+v", filter)
+	httpCode, err := r.m.GetMetric(strings.ToLower(metric), filter, writer)
 
 	return httpErrorOrNil(httpCode, err)
 }
