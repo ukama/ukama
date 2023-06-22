@@ -1,0 +1,12 @@
+node.mesh:53 {
+    errors         # show errors
+    log            # enable query logs
+    health
+    grpc . 10.1.0.100:9090
+}
+
+.:53 {
+    forward . 8.8.8.8 8.8.4.4
+    log
+    errors
+}

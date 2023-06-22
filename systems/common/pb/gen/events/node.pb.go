@@ -20,7 +20,192 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type NodeOnlineEvent struct {
+// added a new node
+type NodeCreatedEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	Name   string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Type   string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	Org    string `protobuf:"bytes,4,opt,name=org,proto3" json:"org,omitempty"`
+}
+
+func (x *NodeCreatedEvent) Reset() {
+	*x = NodeCreatedEvent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_node_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NodeCreatedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeCreatedEvent) ProtoMessage() {}
+
+func (x *NodeCreatedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_node_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeCreatedEvent.ProtoReflect.Descriptor instead.
+func (*NodeCreatedEvent) Descriptor() ([]byte, []int) {
+	return file_events_node_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *NodeCreatedEvent) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *NodeCreatedEvent) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *NodeCreatedEvent) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *NodeCreatedEvent) GetOrg() string {
+	if x != nil {
+		return x.Org
+	}
+	return ""
+}
+
+// updated a node
+type NodeUpdatedEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	Name   string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *NodeUpdatedEvent) Reset() {
+	*x = NodeUpdatedEvent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_node_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NodeUpdatedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeUpdatedEvent) ProtoMessage() {}
+
+func (x *NodeUpdatedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_node_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeUpdatedEvent.ProtoReflect.Descriptor instead.
+func (*NodeUpdatedEvent) Descriptor() ([]byte, []int) {
+	return file_events_node_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *NodeUpdatedEvent) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *NodeUpdatedEvent) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+// updated a node state
+type NodeStateUpdatedEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	State  string `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
+}
+
+func (x *NodeStateUpdatedEvent) Reset() {
+	*x = NodeStateUpdatedEvent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_node_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NodeStateUpdatedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeStateUpdatedEvent) ProtoMessage() {}
+
+func (x *NodeStateUpdatedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_node_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeStateUpdatedEvent.ProtoReflect.Descriptor instead.
+func (*NodeStateUpdatedEvent) Descriptor() ([]byte, []int) {
+	return file_events_node_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *NodeStateUpdatedEvent) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *NodeStateUpdatedEvent) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+// removed a node
+type NodeDeletedEvent struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -28,10 +213,205 @@ type NodeOnlineEvent struct {
 	NodeId string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 }
 
+func (x *NodeDeletedEvent) Reset() {
+	*x = NodeDeletedEvent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_node_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NodeDeletedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeDeletedEvent) ProtoMessage() {}
+
+func (x *NodeDeletedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_node_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeDeletedEvent.ProtoReflect.Descriptor instead.
+func (*NodeDeletedEvent) Descriptor() ([]byte, []int) {
+	return file_events_node_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *NodeDeletedEvent) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+// Assigned to a site
+type NodeAssignedEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NodeId  string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	Type    string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	Network string `protobuf:"bytes,4,opt,name=network,proto3" json:"network,omitempty"`
+	Site    string `protobuf:"bytes,5,opt,name=site,proto3" json:"site,omitempty"`
+}
+
+func (x *NodeAssignedEvent) Reset() {
+	*x = NodeAssignedEvent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_node_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NodeAssignedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeAssignedEvent) ProtoMessage() {}
+
+func (x *NodeAssignedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_node_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeAssignedEvent.ProtoReflect.Descriptor instead.
+func (*NodeAssignedEvent) Descriptor() ([]byte, []int) {
+	return file_events_node_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *NodeAssignedEvent) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *NodeAssignedEvent) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *NodeAssignedEvent) GetNetwork() string {
+	if x != nil {
+		return x.Network
+	}
+	return ""
+}
+
+func (x *NodeAssignedEvent) GetSite() string {
+	if x != nil {
+		return x.Site
+	}
+	return ""
+}
+
+//Release from site
+type NodeReleasedEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NodeId  string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	Type    string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	Network string `protobuf:"bytes,4,opt,name=network,proto3" json:"network,omitempty"`
+	Site    string `protobuf:"bytes,5,opt,name=site,proto3" json:"site,omitempty"`
+}
+
+func (x *NodeReleasedEvent) Reset() {
+	*x = NodeReleasedEvent{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_node_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *NodeReleasedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeReleasedEvent) ProtoMessage() {}
+
+func (x *NodeReleasedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_node_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeReleasedEvent.ProtoReflect.Descriptor instead.
+func (*NodeReleasedEvent) Descriptor() ([]byte, []int) {
+	return file_events_node_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *NodeReleasedEvent) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *NodeReleasedEvent) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *NodeReleasedEvent) GetNetwork() string {
+	if x != nil {
+		return x.Network
+	}
+	return ""
+}
+
+func (x *NodeReleasedEvent) GetSite() string {
+	if x != nil {
+		return x.Site
+	}
+	return ""
+}
+
+type NodeOnlineEvent struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NodeId   string `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	NodeIp   string `protobuf:"bytes,2,opt,name=nodeIp,proto3" json:"nodeIp,omitempty"`
+	NodePort int32  `protobuf:"varint,3,opt,name=nodePort,proto3" json:"nodePort,omitempty"`
+	MeshIp   string `protobuf:"bytes,4,opt,name=meshIp,proto3" json:"meshIp,omitempty"`
+	MeshPort int32  `protobuf:"varint,5,opt,name=meshPort,proto3" json:"meshPort,omitempty"`
+}
+
 func (x *NodeOnlineEvent) Reset() {
 	*x = NodeOnlineEvent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_events_node_proto_msgTypes[0]
+		mi := &file_events_node_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -44,7 +424,7 @@ func (x *NodeOnlineEvent) String() string {
 func (*NodeOnlineEvent) ProtoMessage() {}
 
 func (x *NodeOnlineEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_events_node_proto_msgTypes[0]
+	mi := &file_events_node_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +437,7 @@ func (x *NodeOnlineEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeOnlineEvent.ProtoReflect.Descriptor instead.
 func (*NodeOnlineEvent) Descriptor() ([]byte, []int) {
-	return file_events_node_proto_rawDescGZIP(), []int{0}
+	return file_events_node_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *NodeOnlineEvent) GetNodeId() string {
@@ -65,6 +445,34 @@ func (x *NodeOnlineEvent) GetNodeId() string {
 		return x.NodeId
 	}
 	return ""
+}
+
+func (x *NodeOnlineEvent) GetNodeIp() string {
+	if x != nil {
+		return x.NodeIp
+	}
+	return ""
+}
+
+func (x *NodeOnlineEvent) GetNodePort() int32 {
+	if x != nil {
+		return x.NodePort
+	}
+	return 0
+}
+
+func (x *NodeOnlineEvent) GetMeshIp() string {
+	if x != nil {
+		return x.MeshIp
+	}
+	return ""
+}
+
+func (x *NodeOnlineEvent) GetMeshPort() int32 {
+	if x != nil {
+		return x.MeshPort
+	}
+	return 0
 }
 
 type NodeOfflineEvent struct {
@@ -78,7 +486,7 @@ type NodeOfflineEvent struct {
 func (x *NodeOfflineEvent) Reset() {
 	*x = NodeOfflineEvent{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_events_node_proto_msgTypes[1]
+		mi := &file_events_node_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -91,7 +499,7 @@ func (x *NodeOfflineEvent) String() string {
 func (*NodeOfflineEvent) ProtoMessage() {}
 
 func (x *NodeOfflineEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_events_node_proto_msgTypes[1]
+	mi := &file_events_node_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -104,7 +512,7 @@ func (x *NodeOfflineEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeOfflineEvent.ProtoReflect.Descriptor instead.
 func (*NodeOfflineEvent) Descriptor() ([]byte, []int) {
-	return file_events_node_proto_rawDescGZIP(), []int{1}
+	return file_events_node_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *NodeOfflineEvent) GetNodeId() string {
@@ -118,9 +526,47 @@ var File_events_node_proto protoreflect.FileDescriptor
 
 var file_events_node_proto_rawDesc = []byte{
 	0x0a, 0x11, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x6e, 0x6f, 0x64, 0x65, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x22, 0x29, 0x0a, 0x0f, 0x4e, 0x6f, 0x64, 0x65, 0x4f, 0x6e, 0x6c, 0x69, 0x6e,
-	0x65, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x22, 0x2a,
+	0x6f, 0x74, 0x6f, 0x22, 0x64, 0x0a, 0x10, 0x4e, 0x6f, 0x64, 0x65, 0x43, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x64, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12,
+	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x6f, 0x72, 0x67, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6f, 0x72, 0x67, 0x22, 0x3e, 0x0a, 0x10, 0x4e, 0x6f, 0x64,
+	0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a,
+	0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e,
+	0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x45, 0x0a, 0x15, 0x4e, 0x6f, 0x64,
+	0x65, 0x53, 0x74, 0x61, 0x74, 0x65, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x64, 0x45, 0x76, 0x65,
+	0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74,
+	0x61, 0x74, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65,
+	0x22, 0x2a, 0x0a, 0x10, 0x4e, 0x6f, 0x64, 0x65, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x45,
+	0x76, 0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x22, 0x6d, 0x0a, 0x11,
+	0x4e, 0x6f, 0x64, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x45, 0x76, 0x65, 0x6e,
+	0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70,
+	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x18, 0x0a,
+	0x07, 0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07,
+	0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x74, 0x65, 0x18,
+	0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x73, 0x69, 0x74, 0x65, 0x22, 0x6d, 0x0a, 0x11, 0x4e,
+	0x6f, 0x64, 0x65, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x64, 0x45, 0x76, 0x65, 0x6e, 0x74,
+	0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x18, 0x0a, 0x07,
+	0x6e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6e,
+	0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x69, 0x74, 0x65, 0x18, 0x05,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x73, 0x69, 0x74, 0x65, 0x22, 0x91, 0x01, 0x0a, 0x0f, 0x4e,
+	0x6f, 0x64, 0x65, 0x4f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x16,
+	0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
+	0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x70,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x70, 0x12, 0x1a,
+	0x0a, 0x08, 0x6e, 0x6f, 0x64, 0x65, 0x50, 0x6f, 0x72, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05,
+	0x52, 0x08, 0x6e, 0x6f, 0x64, 0x65, 0x50, 0x6f, 0x72, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6d, 0x65,
+	0x73, 0x68, 0x49, 0x70, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x6d, 0x65, 0x73, 0x68,
+	0x49, 0x70, 0x12, 0x1a, 0x0a, 0x08, 0x6d, 0x65, 0x73, 0x68, 0x50, 0x6f, 0x72, 0x74, 0x18, 0x05,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x6d, 0x65, 0x73, 0x68, 0x50, 0x6f, 0x72, 0x74, 0x22, 0x2a,
 	0x0a, 0x10, 0x4e, 0x6f, 0x64, 0x65, 0x4f, 0x66, 0x66, 0x6c, 0x69, 0x6e, 0x65, 0x45, 0x76, 0x65,
 	0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x06, 0x6e, 0x6f, 0x64, 0x65, 0x49, 0x64, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69,
@@ -142,10 +588,16 @@ func file_events_node_proto_rawDescGZIP() []byte {
 	return file_events_node_proto_rawDescData
 }
 
-var file_events_node_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_events_node_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_events_node_proto_goTypes = []interface{}{
-	(*NodeOnlineEvent)(nil),  // 0: NodeOnlineEvent
-	(*NodeOfflineEvent)(nil), // 1: NodeOfflineEvent
+	(*NodeCreatedEvent)(nil),      // 0: NodeCreatedEvent
+	(*NodeUpdatedEvent)(nil),      // 1: NodeUpdatedEvent
+	(*NodeStateUpdatedEvent)(nil), // 2: NodeStateUpdatedEvent
+	(*NodeDeletedEvent)(nil),      // 3: NodeDeletedEvent
+	(*NodeAssignedEvent)(nil),     // 4: NodeAssignedEvent
+	(*NodeReleasedEvent)(nil),     // 5: NodeReleasedEvent
+	(*NodeOnlineEvent)(nil),       // 6: NodeOnlineEvent
+	(*NodeOfflineEvent)(nil),      // 7: NodeOfflineEvent
 }
 var file_events_node_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -162,7 +614,7 @@ func file_events_node_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_events_node_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NodeOnlineEvent); i {
+			switch v := v.(*NodeCreatedEvent); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -174,6 +626,78 @@ func file_events_node_proto_init() {
 			}
 		}
 		file_events_node_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NodeUpdatedEvent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_node_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NodeStateUpdatedEvent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_node_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NodeDeletedEvent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_node_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NodeAssignedEvent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_node_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NodeReleasedEvent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_node_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*NodeOnlineEvent); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_node_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*NodeOfflineEvent); i {
 			case 0:
 				return &v.state
@@ -192,7 +716,7 @@ func file_events_node_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_events_node_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

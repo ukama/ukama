@@ -3,8 +3,54 @@ syntax = "proto3";
 option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 
+/* added a new node */
+message NodeCreatedEvent{
+    string nodeId = 1;
+    string name = 2;
+    string type = 3;
+    string org = 4;
+}
+
+/* updated a node */
+message NodeUpdatedEvent{
+    string nodeId = 1;
+    string name = 2;
+}
+
+/* updated a node state*/
+message NodeStateUpdatedEvent{
+    string nodeId = 1;
+    string state = 2;
+}
+
+/* removed a node */
+message NodeDeletedEvent{
+    string nodeId = 1;
+}
+
+
+/* Assigned to a site */
+message NodeAssignedEvent{
+    string nodeId = 1;
+    string type = 3;
+    string network = 4;
+    string site = 5;
+}
+
+/*Release from site */
+message NodeReleasedEvent{
+    string nodeId = 1;
+    string type = 3;
+    string network = 4;
+    string site = 5;
+}
+
 message NodeOnlineEvent{
     string nodeId = 1;
+    string nodeIp = 2;
+    int32 nodePort = 3;
+    string meshIp = 4;
+    int32 meshPort = 5; 
 }
 
 message NodeOfflineEvent{
