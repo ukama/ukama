@@ -1,16 +1,10 @@
 # Config file for mesh.d
 
-[client-config]
-	remote-ip-file = "/conf/ip_file"
-	local-accept   = "4440"
-	cert           = "/conf/cert.crt"
-	key            = "/conf/pem.key"
-	
-# this will be an array to support multiple entries (in future).
-[reverse-proxy]
-	http-path    = "/registry/"
-	connect-ip   = "127.0.0.1"
-	connect-port = "7777"
-	enable       = "true"
+[local-config]
+    remote-ip-file = "./configs/ip_file_2"
+    local-accept   = "4440"
+    local-hostname = "localhost"
+    cert           = "./conf/cert.crt"
+    key            = "./conf/pem.key"
 
 #nothing here.

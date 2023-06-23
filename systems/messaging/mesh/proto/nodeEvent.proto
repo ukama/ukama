@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021-present, Ukama Inc.
+ * Copyright (c) 2023-present, Ukama Inc.
  * All rights reserved.
  *
  * This source code is licensed under the XXX-style license found in the
@@ -9,6 +9,11 @@
 
 syntax = "proto2";
 
-message Link {
-  required string uuid = 1; // UUID of the device.
+message NodeEvent {
+
+    required string nodeId  = 1;
+    required string nodeIp  = 2;
+    required int32 nodePort = 3;
+    required string meshIp  = 4;
+    required int32 meshPort = 5; 
 }

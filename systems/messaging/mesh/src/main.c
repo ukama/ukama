@@ -30,38 +30,36 @@
 
 typedef struct {
 
-	struct _u_instance *serverInst;
-	struct _u_instance *clientInst;
+	struct _u_instance *websocketInst;
+	struct _u_instance *servicesInst;
 	Config             *config;
 } ProcessState;
 
 /* Defined in network.c */
-extern int start_web_services(Config *config, UInst *clientInst);
-extern int start_websocket_server(Config *config, UInst *serverInst);
+extern int start_web_services(Config *config, UInst *servicesInst);
+extern int start_websocket_server(Config *config, UInst *websocketInst);
 
 /* Global variables. */
-WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
-WorkList *Receive=NULL;
-MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
-WAMQPConn *AMQPConn=NULL; /* Connection to AMQP exchange */
+MapTable *IDsTable=NULL;
 ProcessState *processState=NULL;
 
-/*
- * usage -- Usage options for the Mesh.d
- *
- *
- */
+/* usage -- Usage options for the Mesh */
+void usage(void) {
 
-void usage() {
-
-	printf("Usage: mesh.d [options] \n");
+	printf("Usage: mesh [options] \n");
 	printf("Options:\n");
-	printf("--h, --help                         Help menu.\n");
-	printf("--p, --proxy                        Enable reservse-proxy\n");
-	printf("--s, --secure                       Enable SSL/TLS \n");
-	printf("--c, --config                       Config file name\n");
-	printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process.\n");
-	printf("--V, --version                      Version.\n");
+	printf("--h, --help    Help menu.\n");
+	printf("--V, --version Version.\n");
+    printf("Environment variable needed are: \n");
+    printf("\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s \n",
+           ENV_WEBSOCKET_PORT,
+           ENV_SERVICES_PORT,
+           ENV_AMQP_HOST,
+           ENV_AMQP_PORT,
+           ENV_INIT_CLIENT_HOST,
+           ENV_INIT_CLIENT_PORT,
+           ENV_MESH_CERT_FILE,
+           ENV_MESH_KEY_FILE);
 }
 
 /* Set the verbosity level for logs. */
@@ -80,35 +78,28 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-WorkList **get_transmit(void) {
-	return &Transmit;
-}
-
-WorkList **get_receive(void) {
-	return &Receive;
-}
-
 /* SIGTERM handling routine. Gracefully exit the process
  */
 void signal_term_handler(void) {
 
 	if (processState == NULL) exit(1);
 
-	if (processState->serverInst) {
-		ulfius_stop_framework(processState->serverInst);
-		ulfius_clean_instance(processState->serverInst);
+	if (processState->websocketInst) {
+		ulfius_stop_framework(processState->websocketInst);
+		ulfius_clean_instance(processState->websocketInst);
 	}
 
-	if (processState->clientInst) {
-		ulfius_stop_framework(processState->clientInst);
-		ulfius_clean_instance(processState->clientInst);
+	if (processState->servicesInst) {
+		ulfius_stop_framework(processState->servicesInst);
+		ulfius_clean_instance(processState->servicesInst);
 	}
 
 	if (processState->config) {
-		close_amqp_connection(processState->config->conn);
 		clear_config(processState->config);
 		free(processState->config);
 	}
+
+    free(processState);
 
 	exit(1);
 }
@@ -130,79 +121,52 @@ void catch_sigterm(void) {
 
 int main (int argc, char *argv[]) {
 
-	int secure=FALSE, proxy=FALSE;
-	char *configFile=NULL;
-	char *debug=DEF_LOG_LEVEL;
+	int exitStatus=0;
+	char *debug=DEFAULT_LOG_LEVEL;
 	Config *config=NULL;
-	struct _u_instance serverInst;
-	struct _u_instance clientInst;
+	struct _u_instance websocketInst;
+	struct _u_instance servicesInst;
 
 	processState = (ProcessState *)calloc(1, sizeof(ProcessState));
 	if (processState == NULL) return 1;
-	processState->serverInst = &serverInst;
-	processState->clientInst = &clientInst;
+	processState->websocketInst = &websocketInst;
+	processState->servicesInst  = &servicesInst;
 
 	catch_sigterm();
 
-	/* Parse command line args. */
-	while (TRUE) {
+    /* Parse command line args. */
+    while (TRUE) {
 
-		int opt = 0;
-		int opdidx = 0;
+        int opt = 0;
+        int opdidx = 0;
 
-		static struct option long_options[] = {
-			{ "proxy",     no_argument,       0, 'p'},
-			{ "secure",    no_argument,       0, 's'},
-			{ "config",    required_argument, 0, 'c'},
-			{ "level",     required_argument, 0, 'l'},
-			{ "help",      no_argument,       0, 'h'},
-			{ "version",   no_argument,       0, 'V'},
-			{ 0,           0,                 0,  0}
-		};
+        static struct option long_options[] = {
+            { "help",      no_argument,       0, 'h'},
+            { "version",   no_argument,       0, 'V'},
+            { 0,           0,                 0,  0}
+        };
 
-		opt = getopt_long(argc, argv, "l:c:m:sphV:", long_options, &opdidx);
-		if (opt == -1) {
-			break;
-		}
+        opt = getopt_long(argc, argv, "hV:", long_options, &opdidx);
+        if (opt == -1) {
+            break;
+        }
 
-		switch (opt) {
-		case 'h':
-			usage();
-			exit(0);
-			break;
+        switch (opt) {
+        case 'h':
+            usage();
+            goto exit_program;
+            break;
 
-		case 'c':
-			configFile = optarg;
-			break;
+        case 'l':
+            debug = optarg;
+            set_log_level(debug);
+            break;
 
-		case 'l':
-			debug = optarg;
-			set_log_level(debug);
-			break;
-
-		case 'p':
-			proxy=TRUE;
-			break;
-
-		case 's':
-			secure=TRUE;
-			break;
-
-		case 'V':
-			fprintf(stdout, "Mesh.d - Version: %s\n", VERSION);
-			exit(0);
-
-		default:
-			usage();
-			exit(0);
-		}
-	} /* while */
-
-	if (argc == 1 || configFile == NULL) {
-		fprintf(stderr, "Missing required parameters\n");
-		usage();
-		exit(1);
-	}
+        default:
+            usage();
+            goto exit_program;
+        }
+    } /* while */
 
 	config = (Config *)calloc(1, sizeof(Config));
 	if (!config) {
@@ -210,84 +174,45 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	processState->config = config;
-
-	if (proxy)
-		config->proxy = TRUE;
-	else
-		config->proxy = FALSE;
-
 	/* Step-1: read config file. */
-	if (process_config_file(secure, proxy, configFile, config) != TRUE) {
-		fprintf(stderr, "Error parsing config file: %s. Exiting ... \n",
-				configFile);
-		exit(1);
-	}
-
+    if (!read_config_from_env(&config)) {
+        goto exit_program;
+    }
 	print_config(config);
 
-	/* Setup transmit and receiving queues for the websocket */
-	Transmit = (WorkList *)malloc(sizeof(WorkList));
-	Receive  = (WorkList *)malloc(sizeof(WorkList));
-
-	if (Transmit == NULL && Receive == NULL) {
-		log_error("Memory allocation failure: %d", sizeof(WorkList));
-		exit(1);
-	}
-
-	/* Initializa the transmit and receive list for the websocket. */
-	init_work_list(&Transmit);
-	init_work_list(&Receive);
-
-	/* Setup ip:port to UUID mapping table, if client. */
-	IDTable = (MapTable *)malloc(sizeof(MapTable));
-	if (IDTable == NULL) {
+	IDsTable = (MapTable *)malloc(sizeof(MapTable));
+	if (IDsTable == NULL) {
 		log_error("Memory allocation failure: %d", sizeof(MapTable));
-		exit(1);
+        exitStatus=1;
+        goto exit_program;
 	}
-	init_map_table(&IDTable);
+	init_map_table(&IDsTable);
 
-	/* Initiate connection with AMQP server */
-	AMQPConn = init_amqp_connection(config->amqpHost, config->amqpPort);
-	if (AMQPConn == NULL) {
-		log_error("Failed to connect with AMQP at %s:%s", config->amqpHost,
-				  config->amqpPort);
-		exit(1);
-	} else {
-		log_debug("AMQP connection established. %s:%s", config->amqpHost,
-				  config->amqpPort);
-		config->conn = AMQPConn;
-	}
-
-	/* Step-2a: start webservice for local client. */
-	if (start_web_services(config, &clientInst) != TRUE) {
-		log_error("Webservice failed to setup for clients. Exiting.");
-		exit(1);
-	}
-
-	/* Step-2b: setup all endpoints, cb and run websocket. Wait. */
-	if (start_websocket_server(config, &serverInst) != TRUE) {
+	/* Step-2a: setup all endpoints, cb and run websocket. Wait. */
+	if (start_websocket_server(config, &websocketInst) != TRUE) {
 		log_error("Websocket failed to setup for server. Exiting...");
 		exit(1);
 	}
 
-	/* Wait here for ever. XXX */
+    /* Step-2b: start webservice for the services */
+	if (start_web_services(config, &servicesInst) != TRUE) {
+		log_error("Webservice failed to setup for clients. Exiting.");
+		exit(1);
+	}
 
 	log_debug("Mesh running ...");
 
     pause();
 
-	ulfius_stop_framework(&serverInst);
-	ulfius_stop_framework(&clientInst);
+	ulfius_stop_framework(&websocketInst);
+	ulfius_stop_framework(&servicesInst);
 
-	ulfius_clean_instance(&serverInst);
-	ulfius_clean_instance(&clientInst);
-
-	/* Closes connection to AMQP broker and free up allocation */
-	close_amqp_connection(AMQPConn);
+	ulfius_clean_instance(&websocketInst);
+	ulfius_clean_instance(&servicesInst);
 
 	clear_config(config);
 	free(config);
 
-	return 0;
+exit_program:
+	return exitStatus;
 }
