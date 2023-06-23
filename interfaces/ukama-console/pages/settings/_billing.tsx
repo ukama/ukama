@@ -36,6 +36,7 @@ export default function Billing() {
       width={'100%'}
       isLoading={false}
       cstyle={{
+        overflow: 'auto',
         backgroundColor: false ? colors.white : 'transparent',
       }}
     >
