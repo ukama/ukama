@@ -17,11 +17,11 @@ model Location {
 }
 
 model Link {
-  id       String  @unique @default(cuid())
-  data     String
-  linkWith String
-  Site     Site?   @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  siteId   String?
+  id      String  @unique @default(cuid())
+  siteA   String
+  siteB   String
+  Draft   Draft?  @relation(fields: [draftId], references: [id])
+  draftId String?
 }
 
 model Site {
@@ -33,7 +33,6 @@ model Site {
   apOption    String
   draftId     String?
   isSetlite   Boolean
-  links       Link[]
   location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
   Draft       Draft?   @relation(fields: [draftId], references: [id], onDelete: Cascade)
   locationId  String
@@ -54,6 +53,7 @@ model Draft {
   name      String
   events    Event[]
   sites     Site[]
+  links     Link[]
   lastSaved Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

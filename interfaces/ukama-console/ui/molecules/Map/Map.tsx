@@ -1,4 +1,4 @@
-import { Site } from '@/generated/planning-tool';
+import { Link, Site } from '@/generated/planning-tool';
 import { LatLngLiteral } from 'leaflet';
 import dynamic from 'next/dynamic';
 import { Dispatch, SetStateAction } from 'react';
@@ -16,6 +16,7 @@ interface IMap {
   children: any;
   width?: number;
   height?: number;
+  links?: Link[];
   isAddSite: boolean;
   className?: string;
   zoom?: number | undefined;
@@ -31,6 +32,7 @@ const Map = ({
   id,
   zoom,
   data,
+  links,
   center,
   setZoom,
   children,
@@ -54,6 +56,7 @@ const Map = ({
         id={id}
         zoom={zoom}
         data={data}
+        links={links}
         center={center}
         setZoom={setZoom}
         cursor={isAddSite}

@@ -21,10 +21,10 @@ export class Link {
   id: string;
 
   @Field()
-  data: string;
+  siteA: string;
 
   @Field()
-  linkWith: string;
+  siteB: string;
 }
 
 @ObjectType()
@@ -52,9 +52,6 @@ export class Site {
 
   @Field(() => Location, { nullable: false })
   location: Location;
-
-  @Field(() => [Link], { nullable: false })
-  links: Link[];
 }
 
 @ObjectType()
@@ -85,6 +82,9 @@ export class Draft {
 
   @Field()
   lastSaved: number;
+
+  @Field(() => [Link], { nullable: false })
+  links: Link[];
 
   @Field(() => [Site], { nullable: false })
   sites: Site[];
@@ -177,10 +177,10 @@ export class LinkInput {
   lastSaved: number;
 
   @Field()
-  data: string;
+  siteA: string;
 
   @Field()
-  linkWith: string;
+  siteB: string;
 }
 
 @ObjectType()
