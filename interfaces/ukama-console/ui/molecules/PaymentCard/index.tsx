@@ -1,4 +1,5 @@
 import { isDarkmode } from '@/app-recoil';
+import { RoundedCard } from '@/styles/global';
 import colors from '@/styles/theme/colors';
 import {
   Box,
@@ -54,7 +55,7 @@ const PaymentCard = ({
       : false;
 
   return (
-    <Box>
+    <RoundedCard radius="4px">
       <Typography variant="h6" sx={{ pb: 3 }}>
         {title}
       </Typography>
@@ -145,7 +146,7 @@ const PaymentCard = ({
       >
         *Automatically charged to card EOD on the last day of the billing cycle
       </Typography>
-    </Box>
+    </RoundedCard>
   );
 };
 

@@ -76,7 +76,7 @@ const ManageMenu = ({
 );
 
 export default function Page() {
-  const [menu, setMenu] = useState('personal-settings');
+  const [menu, setMenu] = useState('billing');
   const [isLoading, setIsLoading] = useState(false);
   const onMenuItemClick = (id: string) => setMenu(id);
 

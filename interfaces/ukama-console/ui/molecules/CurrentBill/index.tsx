@@ -1,40 +1,30 @@
 import { RoundedCard } from '@/styles/global';
-import colors from '@/styles/theme/colors';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { Divider, Stack, Typography } from '@mui/material';
 import { format } from 'date-fns';
 import LoadingWrapper from '../LoadingWrapper';
 type CurrentBillProps = {
   amount: string;
-  billMonth: string;
-  dueDate: string;
+  plan: string;
   loading: boolean;
 };
 
-const CurrentBill = ({
-  amount,
-  billMonth,
-  dueDate,
-  loading,
-}: CurrentBillProps) => {
+const CurrentBill = ({ amount, plan, loading }: CurrentBillProps) => {
   return (
-    <RoundedCard radius={'4px'}>
-      <LoadingWrapper height={200} isLoading={loading}>
-        <Stack direction="row" spacing={1} alignItems="center">
+    <LoadingWrapper height={194} isLoading={loading}>
+      <RoundedCard radius={'4px'}>
+        <Stack direction="column" spacing={1} alignItems="flex-start">
           <Typography variant="h6">
             {`${format(new Date(), 'MMMM')} bill`}
           </Typography>
-          <PictureAsPdfIcon sx={{ color: colors.primaryMain }} />
+
+          <Typography variant="caption">{plan}</Typography>
+          <Divider sx={{ width: '100%' }} />
+          <Typography variant="h3" sx={{ m: '18px 0px' }}>
+            {amount}
+          </Typography>
         </Stack>
-
-        <Typography variant="body2">{`${dueDate} - ${billMonth}`}</Typography>
-
-        <Divider />
-        <Typography variant="h3" sx={{ m: '18px 0px' }}>
-          {amount}
-        </Typography>
-      </LoadingWrapper>
-    </RoundedCard>
+      </RoundedCard>
+    </LoadingWrapper>
   );
 };
 export default CurrentBill;

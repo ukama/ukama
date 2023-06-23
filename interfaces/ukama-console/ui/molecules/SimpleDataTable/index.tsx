@@ -2,6 +2,7 @@ import { isDarkmode } from '@/app-recoil';
 import { ColumnsWithOptions } from '@/types';
 import {
   Chip,
+  Link,
   Table,
   TableBody,
   TableCell,
@@ -66,6 +67,14 @@ const SimpleDataTable = ({
                 >
                   {column.id === 'role' ? (
                     <Chip label={row[column.id]} variant="outlined" />
+                  ) : column.id === 'pdf' ? (
+                    <Link
+                      target="_blank"
+                      underline="hover"
+                      href={row[column.id]}
+                    >
+                      View as PDF
+                    </Link>
                   ) : (
                     <Typography variant={'body2'} sx={{ padding: '8px' }}>
                       {row[column.id]}
