@@ -192,10 +192,11 @@ int callback_webservice(const URequest *request, UResponse *response,
 	pthread_cond_wait(&map->hasResp, &map->mutex);
 	pthread_mutex_unlock(&map->mutex);
 
-    log_debug("Response from System len: %d Data: %s", map->size, map->data);
+    log_debug("Response from System Code: %d len: %d Data: %s",
+              map->code, map->size, map->data);
 
  done:
-    ulfius_set_string_body_response(response, 200, (char *)map->data);
+    ulfius_set_string_body_response(response, map->code, (char *)map->data);
 
 	return U_CALLBACK_CONTINUE;
 }

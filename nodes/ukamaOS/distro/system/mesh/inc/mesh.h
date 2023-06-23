@@ -121,6 +121,7 @@ typedef struct {
     NodeInfo    *nodeInfo;
     ServiceInfo *serviceInfo;
     int         dataSize;
+    int         code;
     char        *data;   /* RequestInfo or actual response */
 } Message;
 

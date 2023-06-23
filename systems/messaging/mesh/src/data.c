@@ -19,6 +19,7 @@
 #include "data.h"
 #include "jserdes.h"
 #include "initClient.h"
+#include "httpStatus.h"
 
 typedef struct _response {
 	char *buffer;
@@ -182,44 +183,43 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
 
     if (strcmp(message->reqType, MESH_NODE_REQUEST) != 0) {
         log_error("Invalid request type. ignoring.");
-        return FALSE;
+        retCode = HttpStatus_BadRequest;
+        responseLocal = HttpStatusStr(retCode);
     }
 
     if (deserialize_request_info(&request, message->data) == FALSE) {
         log_error("Unable to deser the request on websocket");
-        return FALSE;
+        retCode = HttpStatus_BadRequest;
     }
 
     if (!extract_system_path(request->url_path, &systemName, &systemEP)) {
         log_error("Unable to extract system name and path: %s",
                   request->url_path);
-        return FALSE;
+        retCode = HttpStatus_BadRequest;
+        responseLocal = HttpStatusStr(retCode);
     }
 
 	if (!get_systemInfo_from_initClient(systemName, &systemHost, &systemPort)) {
 		/* No match. Ignore. */
 		log_error("No matching server found for system: %s", systemName);
-        return FALSE;
-	}
+        retCode = HttpStatus_InternalServerError;
+        responseLocal = HttpStatusStr(retCode);
+	} else {
     
-    log_debug("Matching server found for system: %s host: %s port: %s",
-              systemName, systemHost, systemPort);
+        log_debug("Matching server found for system: %s host: %s port: %s",
+                  systemName, systemHost, systemPort);
 
-    ret = send_data_to_system(request,
-                              systemHost, systemPort,
-                              &retCode, &responseLocal);
-    log_debug("Return code from system %s:%s: code: %d Response: %s",
-              systemHost, systemPort, retCode, responseLocal);
-
-    serialize_system_response(responseRemote, message,
-                              strlen(responseLocal), responseLocal);
-
-    if (responseRemote) {
-        log_debug("Sending response back: %s", *responseRemote);
-    } else {
-        log_error("Invalid response type (expected JSON)");
-        return FALSE;
+        ret = send_data_to_system(request,
+                                  systemHost, systemPort,
+                                  &retCode, &responseLocal);
+        log_debug("Return code from system %s:%s: code: %d Response: %s",
+                  systemHost, systemPort, retCode, responseLocal);
     }
 
-    return TRUE;
+    serialize_system_response(responseRemote, message, retCode,
+                              strlen(responseLocal), responseLocal);
+
+    log_debug("Sending response back: %s", *responseRemote);
+
+    return retCode;
 }

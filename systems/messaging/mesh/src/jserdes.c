@@ -159,8 +159,8 @@ int serialize_device_info(json_t **json, NodeInfo *device) {
  * serialize_system_response --
  *
  */
-int serialize_system_response(char **response, Message *message, int len,
-                              char *data) {
+int serialize_system_response(char **response, Message *message,
+                              int retCode, int len, char *data) {
 
     json_t *json, *obj;
 
@@ -195,6 +195,7 @@ int serialize_system_response(char **response, Message *message, int len,
 	/* Add response info. */
 	json_object_set_new(json, JSON_MESSAGE, json_object());
 	obj = json_object_get(json, JSON_MESSAGE);
+    json_object_set_new(obj, JSON_CODE, json_integer(retCode));
 	json_object_set_new(obj, JSON_LENGTH, json_integer(len));
 	json_object_set_new(obj, JSON_DATA, json_string(data));
 
@@ -338,7 +339,7 @@ int deserialize_websocket_message(Message **message, char *data) {
 
     json_t *json;
     json_t *jType, *jSeq, *jNodeInfo, *jServiceInfo, *jData, *jPort;
-    json_t *jMessage, *jName, *jNodeID, *jLength, *jSrcPort;
+    json_t *jMessage, *jName, *jNodeID, *jLength, *jSrcPort, *jCode;
 
     json = json_loads(data, JSON_DECODE_ANY, NULL);
 	if (json == NULL) {
@@ -362,8 +363,9 @@ int deserialize_websocket_message(Message **message, char *data) {
     jSrcPort = json_object_get(jServiceInfo, JSON_PORT);
     jLength  = json_object_get(jMessage,     JSON_LENGTH);
     jData    = json_object_get(jMessage,     JSON_DATA);
+    jCode    = json_object_get(jMessage,     JSON_CODE);
     if (jNodeID == NULL || jPort == NULL || jName == NULL || jLength ==NULL ||
-        jData == NULL || jSrcPort == NULL) {
+        jData == NULL || jSrcPort == NULL || jCode == NULL) {
         log_error("Error decoding JSON. Missing fields. %s", data);
         return FALSE;
     }
@@ -389,6 +391,7 @@ int deserialize_websocket_message(Message **message, char *data) {
     (*message)->nodeInfo->port    = strdup(json_string_value(jPort));
     (*message)->serviceInfo->name = strdup(json_string_value(jName));
     (*message)->serviceInfo->port = strdup(json_string_value(jSrcPort));
+    (*message)->code              = json_integer_value(jCode);
     (*message)->dataSize          = json_integer_value(jLength);
     (*message)->data              = strdup(json_string_value(jData));
 

@@ -109,8 +109,8 @@ int serialize_device_info(json_t **json, NodeInfo *device) {
  * serialize_local_service_response --
  *
  */
-int serialize_local_service_response(char **response, Message *message, int len,
-                                     char *data) {
+int serialize_local_service_response(char **response, Message *message,
+                                     int code, int len, char *data) {
 
     json_t *json, *obj;
     
@@ -142,6 +142,7 @@ int serialize_local_service_response(char **response, Message *message, int len,
 	/* Add response info. */
 	json_object_set_new(json, JSON_MESSAGE, json_object());
 	obj = json_object_get(json, JSON_MESSAGE);
+    json_object_set_new(obj, JSON_CODE, json_integer(code));
 	json_object_set_new(obj, JSON_LENGTH, json_integer(len));
 	json_object_set_new(obj, JSON_DATA, json_string(data));
 
@@ -235,6 +236,7 @@ int serialize_websocket_message(char **str, URequest *request, char *nodeID,
 	json_object_set_new(json, JSON_MESSAGE, json_object());
 	jRequest = json_object_get(json, JSON_MESSAGE);
 	json_object_set_new(jRequest, JSON_LENGTH, json_integer(strlen(data)));
+    json_object_set_new(jRequest, JSON_CODE, json_integer(0));
 	json_object_set_new(jRequest, JSON_DATA, json_string(data));
 
     *str = json_dumps(json, 0);
@@ -445,7 +447,7 @@ int deserialize_request_info(URequest **request, char *str) {
 int deserialize_websocket_message(Message **message, json_t *json) {
 
     json_t *jType, *jSeq, *jNodeInfo, *jServiceInfo, *jMessage;
-    json_t *jLength, *jData;
+    json_t *jLength, *jData, *jCode;
 	char *jStr=NULL;
 
 	/* Sanity check */
@@ -468,7 +470,8 @@ int deserialize_websocket_message(Message **message, json_t *json) {
     }
 
     jLength = json_object_get(jMessage, JSON_LENGTH);
-    jData    = json_object_get(jMessage, JSON_DATA);
+    jData   = json_object_get(jMessage, JSON_DATA);
+    jCode   = json_object_get(jMessage, JSON_CODE);
 
     if (jLength == NULL || jData == NULL) {
         jStr = json_dumps(json, 0);
@@ -485,6 +488,7 @@ int deserialize_websocket_message(Message **message, json_t *json) {
 
     (*message)->reqType  = strdup(json_string_value(jType));
     (*message)->seqNo    = json_integer_value(jSeq);
+    (*message)->code     = json_integer_value(jCode);
     (*message)->dataSize = json_integer_value(jLength);
     (*message)->data     = strdup(json_string_value(jData));
     

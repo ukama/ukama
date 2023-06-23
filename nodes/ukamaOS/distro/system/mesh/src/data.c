@@ -158,8 +158,8 @@ void process_incoming_websocket_response(Message *message, void *data) {
 
     MapItem *item=NULL;
 
-    log_debug("Forwarding the response message to the local service: %s",
-              message->data);
+    log_debug("Response to local service Code: %d Data: %s",
+              message->code, message->data);
 
     item = is_existing_item(ClientTable,message->serviceInfo->name,
                             message->serviceInfo->port);
@@ -171,6 +171,7 @@ void process_incoming_websocket_response(Message *message, void *data) {
 
     item->size = message->dataSize;
     item->data = strdup(message->data);
+    item->code = message->code;
 
     pthread_cond_broadcast(&item->hasResp);
 }
@@ -212,14 +213,12 @@ int process_incoming_websocket_message(Message *message, Config *config) {
 
     /* Convert the response into proper format and return. */
     serialize_local_service_response(&responseRemote, message,
+                                     retCode,
                                      strlen(responseLocal),
                                      responseLocal);
 
-    if (responseRemote) {
-        log_debug("Sending response back: %s", responseRemote);
-        add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
-    } else {
-        log_error("Invalid response from local service: %s", responseLocal);
-        return FALSE;
-    }
+    log_debug("Sending response back: %s", responseRemote);
+    add_work_to_queue(&Transmit, responseRemote, NULL, 0, NULL, 0);
+
+    return TRUE;
 }

@@ -16,6 +16,6 @@
 void clear_request(MRequest **data);
 void handle_recevied_data(MRequest *data, Config *config);
 int process_incoming_websocket_message(Message *message, Config *config);
-int process_incoming_websocket_response(Message *message, Config *config);
+void process_incoming_websocket_response(Message *message, void *data);
 
 #endif /* MESH_DATA_H */

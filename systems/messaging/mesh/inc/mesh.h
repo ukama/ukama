@@ -115,6 +115,7 @@ typedef struct {
     int         seqNo;
     NodeInfo    *nodeInfo;
     ServiceInfo *serviceInfo;
+    int         code;
     int         dataSize;
     char        *data;   /* RequestInfo or actual response */
 } Message;

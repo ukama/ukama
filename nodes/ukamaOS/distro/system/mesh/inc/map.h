@@ -25,6 +25,7 @@ typedef struct map_item_t {
     pthread_mutex_t   mutex;   /* Client thread waiting on response */
 	pthread_cond_t    hasResp; /* Conditional wait for response */
 
+    int               code;
 	int               size;    /* size of data packet. */
 	void              *data;   /* response data recevied. */
 

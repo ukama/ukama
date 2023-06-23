@@ -43,14 +43,15 @@
 #define JSON_SEQ      "seq"
 #define JSON_PORT     "port"
 #define JSON_MESSAGE  "message"
+#define JSON_CODE     "code"
 
 #define JSON_KEY   "key"
 #define JSON_VALUE "value"
 #define JSON_LEN   "len"
 
 /* Function headers. */
-int serialize_local_service_response(char **response, Message *message, int len,
-                                     char *data);
+int serialize_local_service_response(char **response, Message *message,
+                                     int code, int len, char *data);
 int serialize_websocket_message(char **str, URequest *request, char *nodeID,
                                 char *nodePort, char *agent, char *sourcePort);
 int deserialize_forward_request(MRequest **req, json_t *json);
