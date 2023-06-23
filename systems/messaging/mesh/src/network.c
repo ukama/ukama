@@ -126,7 +126,7 @@ static int start_framework(Config *config, UInst *instance, int flag) {
  * start_websocket_server -- start websocket server on the server port.
  *
  */
-int start_websocket(Config *config, UInst *websocketInst) {
+int start_websocket_server(Config *config, UInst *websocketInst) {
 
 	/* Initialize the admin and client webservices framework. */
 	if (init_framework(websocketInst, atoi(config->websocketPort)) != TRUE) {

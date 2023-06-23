@@ -117,6 +117,6 @@ typedef struct _routing_key {
 	ObjectState state;  /* State of the object. */
 } AMQPRoutingKey;
 
-int publish_event(MeshEvent event, void *data);
-
+int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
+                  char *meshIP, int meshPort);
 #endif /* MESH_AMQP_H */

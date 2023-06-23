@@ -50,8 +50,13 @@ int callback_websocket(const URequest *request, UResponse *response,
 	char *nodeID=NULL;
 	Config *config=NULL;
     MapItem *map=NULL;
+    char ip[INET_ADDRSTRLEN]={0};
+    struct sockaddr_in *sin=NULL;
 
     config = (Config *)data;
+
+    sin = (struct sockaddr_in *)request->client_address;
+    inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
 
 	nodeID = u_map_get(request->map_header, "User-Agent");
 	if (nodeID == NULL) {
@@ -59,7 +64,10 @@ int callback_websocket(const URequest *request, UResponse *response,
 		return U_CALLBACK_ERROR;
 	}
 
-    map = add_map_to_table(&IDsTable, nodeID);
+    map = add_map_to_table(&IDsTable,
+                           nodeID,
+                           &ip[0], sin->sin_port,
+                           &ip[0], sin->sin_port);
 	if (map == NULL) {
         return U_CALLBACK_CONTINUE; // XXX
 	}
@@ -67,7 +75,10 @@ int callback_websocket(const URequest *request, UResponse *response,
     map->configData = data;
 
 	/* Publish device (nodeID) 'connect' event to AMQP exchange */
-	if (publish_event(CONN_CONNECT, nodeID) == FALSE) {
+	if (publish_event(CONN_CONNECT,
+                      nodeID,
+                      &ip[0], sin->sin_port,
+                      &ip[0], sin->sin_port) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
         //		return U_CALLBACK_ERROR; xxx
 	} else {

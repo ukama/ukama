@@ -75,6 +75,10 @@ typedef struct {
     int  connectionStatus; /* websocket connection status */
 	char *nodeID;          /* recevied from the node */
     char *port;
+    char *nodeIP;
+    char *meshIP;
+    int  meshPort;
+    int  nodePort;
 } NodeInfo;
 
 typedef struct {

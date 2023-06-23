@@ -45,18 +45,24 @@ static void clear_response(MResponse **resp) {
  * is_websocket_valid --
  *
  */
-static int is_websocket_valid(WSManager *manager, char *nodeID) {
+static int is_websocket_valid(WSManager *manager, MapItem *map) {
 
-    if (manager == NULL || nodeID == NULL) return FALSE;
+    if (manager == NULL || map == NULL) return FALSE;
 
     if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_CLOSE) {
-        log_debug("Websocket connection is closed with node: %s", nodeID);
+        log_debug("Websocket is closed with node: %s", map->nodeInfo->nodeID);
 
         /* publish event on AMQP */
-        if (publish_event(CONN_CLOSE, nodeID) == FALSE) {
+        if (publish_event(CONN_CLOSE,
+                          map->nodeInfo->nodeID,
+                          map->nodeInfo->nodeIP,
+                          map->nodeInfo->nodePort,
+                          map->nodeInfo->meshIP,
+                          map->nodeInfo->meshPort) == FALSE) {
             log_error("Error publishing device connect msg on AMQP exchange");
         } else {
-            log_debug("Send AMQP offline msg for NodeID: %s", nodeID);
+            log_debug("Send AMQP offline msg for NodeID: %s",
+                      map->nodeInfo->nodeID);
         }
 
         return FALSE;
@@ -119,7 +125,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
                  */
                 pthread_mutex_unlock(&(list->mutex));
 
-                if (!is_websocket_valid(manager, map->nodeInfo->nodeID)) {
+                if (!is_websocket_valid(manager, map)) {
                     return; /* Close the websocket */
                 } else {
                     continue;
@@ -221,7 +227,12 @@ void websocket_onclose(const URequest *request, WSManager *manager,
     }
 
 	if (map->nodeInfo) {
-		if (publish_event(CONN_CLOSE, map->nodeInfo->nodeID) == FALSE) {
+        if (publish_event(CONN_CLOSE,
+                          map->nodeInfo->nodeID,
+                          map->nodeInfo->nodeIP,
+                          map->nodeInfo->nodePort,
+                          map->nodeInfo->meshIP,
+                          map->nodeInfo->meshPort) == FALSE) {
 			log_error("Error publish device close msg on AMQP exchange: %s",
 					  map->nodeInfo->nodeID);
 		} else {
@@ -230,7 +241,7 @@ void websocket_onclose(const URequest *request, WSManager *manager,
 		}
 	}
 
-    remove_map_item_from_table(IDsTable, (char *)data);
+    remove_map_item_from_table(IDsTable, map->nodeInfo->nodeID);
 
 	return;
 }

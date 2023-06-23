@@ -79,7 +79,6 @@ int add_work_to_queue(WorkList **list, char *data, thread_func_t pre,
 					  void *preArgs, thread_func_t post, void *postArgs) {
 
 	WorkItem *work=NULL;
-	char *str;
 
 	if (data == NULL && *list == NULL) return FALSE;
 

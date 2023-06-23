@@ -15,7 +15,7 @@
 
 #include "mesh.h"
 #include "u_amqp.h"
-#include "link.pb-c.h"
+#include "nodeEvent.pb-c.h"
 
 /* 
  * AMQP Routing key:
@@ -36,8 +36,9 @@ static char *convert_object_to_str(MsgObject object);
 static char *convert_state_to_str(ObjectState state);
 static int is_valid_event(MeshEvent event);
 static char *create_routing_key(MeshEvent event);
-static void *serialize_link_msg(char *nodeID);
 static int object_type(MeshEvent event);
+static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
+                                  char *meshIP, int meshPort);
 
 /* Mapping between Mesh.d internal state and AMQP routing key. 
  *
@@ -400,22 +401,25 @@ static char *create_routing_key(MeshEvent event) {
 }
 
 /*
- * serialize_link_msg -- Serialize the protobuf msg for the Link object
+ * serialize_node_event -- Serialize the protobuf msg for the Link object
  *
  */
-static void *serialize_link_msg(char *nodeID) {
+static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
+                                char *meshIP, int meshPort) {
 
-	Link linkMsg = LINK__INIT;
+	NodeEvent nodeEvent = NODE_EVENT__INIT;
 	void *buff=NULL;
 	size_t len;
 
-	if (nodeID == NULL) {
-		return NULL;
-	}
+	if (nodeID == NULL || nodeIP == NULL || meshIP == NULL) return NULL;
 
-    linkMsg.uuid = strdup(nodeID);
+    nodeEvent.nodeid   = strdup(nodeID);
+    nodeEvent.nodeip   = nodeIP;
+    nodeEvent.nodeport = nodePort;
+    nodeEvent.meship   = strdup(meshIP);
+    nodeEvent.meshport = meshPort;
 
-	len = link__get_packed_size(&linkMsg);
+	len = node_event__get_packed_size(&nodeEvent);
 
 	buff = malloc(len);
 	if (buff==NULL) {
@@ -423,9 +427,11 @@ static void *serialize_link_msg(char *nodeID) {
 		return NULL;
 	}
 
-	link__pack(&linkMsg, buff);
+	node_event__pack(&nodeEvent, buff);
 
-	free(linkMsg.uuid);
+	free(nodeEvent.nodeid);
+    free(nodeEvent.nodeip);
+    free(nodeEvent.meship);
 
 	return buff;
 }
@@ -471,7 +477,8 @@ static int object_type(MeshEvent event) {
  *
  */
 static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
-                              char *nodeID) {
+                              char *nodeID, char *nodeIP, int nodePort,
+                              char *meshIP, int meshPort) {
 
 	/* THREAD? XXX - Think about me*/
 	char *key=NULL;
@@ -507,7 +514,7 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	/* Step-3: protobuf msg. */
 	if (object_type(event) == OBJECT_LINK) {
 
-		buff = serialize_link_msg(nodeID);
+		buff = serialize_node_event(nodeID, nodeIP, nodePort, meshIP, meshPort);
 		if (buff==NULL) {
 			log_error("Error serializing Link packet for AMQP. Event: %d",
 					  event);
@@ -541,7 +548,8 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 /*
  * publish_event --
  */
-int publish_event(MeshEvent event, void *data) {
+int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
+                  char *meshIP, int meshPort) {
 
     WAMQPConn *conn=NULL;
     char *amqpHost=NULL, *amqpPort=NULL;
@@ -557,7 +565,9 @@ int publish_event(MeshEvent event, void *data) {
 
     if (object_type(event) == OBJECT_LINK) {
         publish_amqp_event(conn, DEFAULT_MESH_AMQP_EXCHANGE, event,
-                           (char *)data);
+                           nodeID,
+                           nodeIP, nodePort,
+                           meshIP, meshPort);
     } else {
         log_error("Invalid event type. No publish");
     }

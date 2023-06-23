@@ -28,7 +28,8 @@ void init_map_table(MapTable **table) {
  * create_map_item --
  *
  */
-static MapItem *create_map_item(char *nodeID) {
+static MapItem *create_map_item(char *nodeID, char *nodeIP, int nodePort,
+                                char *meshIP, int meshPort) {
 
 	MapItem *map=NULL;
 
@@ -49,7 +50,11 @@ static MapItem *create_map_item(char *nodeID) {
         return NULL;
     }
 
-    map->nodeInfo->nodeID = strdup(nodeID);
+    map->nodeInfo->nodeID   = strdup(nodeID);
+    map->nodeInfo->nodeIP   = strdup(nodeIP);
+    map->nodeInfo->nodePort = nodePort;
+    map->nodeInfo->meshIP   = strdup(meshIP);
+    map->nodeInfo->meshPort = meshPort;
     map->transmit = NULL;
     map->receive  = NULL;
 
@@ -73,6 +78,8 @@ void free_map_item(MapItem *map) {
 
     if (map->nodeInfo) {
         free(map->nodeInfo->nodeID);
+        free(map->nodeInfo->nodeIP);
+        free(map->nodeInfo->meshIP);
         free(map->nodeInfo);
     }
 	free(map);
@@ -108,7 +115,8 @@ MapItem *is_existing_item(MapTable *table, char *nodeID) {
  * add_map_to_table --
  *
  */
-MapItem *add_map_to_table(MapTable **table, char *nodeID) {
+MapItem *add_map_to_table(MapTable **table, char *nodeID, char *nodeIP,
+                          int nodePort, char *meshIP, int meshPort) {
 
 	MapItem *map=NULL;
 
@@ -121,7 +129,7 @@ MapItem *add_map_to_table(MapTable **table, char *nodeID) {
 		return map;
 	}
 
-	map = create_map_item(nodeID);
+	map = create_map_item(nodeID, nodeIP, nodePort, meshIP, meshPort);
 	if (map == NULL) {
 		return NULL;
 	}

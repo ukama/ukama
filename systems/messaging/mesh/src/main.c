@@ -189,7 +189,7 @@ int main (int argc, char *argv[]) {
 	init_map_table(&IDsTable);
 
 	/* Step-2a: setup all endpoints, cb and run websocket. Wait. */
-	if (start_websocket(config, &websocketInst) != TRUE) {
+	if (start_websocket_server(config, &websocketInst) != TRUE) {
 		log_error("Websocket failed to setup for server. Exiting...");
 		exit(1);
 	}
