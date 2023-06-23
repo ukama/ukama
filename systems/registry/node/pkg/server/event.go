@@ -7,6 +7,8 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -25,7 +27,7 @@ func NewNodeEventServer(s *NodeServer) *NodeEventServer {
 func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case "event.cloud.node.node.online":
+	case "event.cloud.mesh.node.online":
 		msg, err := n.unmarshalNodeOnlineEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -35,7 +37,7 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
-	case "event.cloud.node.node.offline":
+	case "event.cloud.mesh.node.offline":
 		msg, err := n.unmarshalNodeOfflineEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -69,14 +71,17 @@ func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineE
 
 	node, err := n.s.GetNode(context.Background(), &pb.GetNodeRequest{NodeId: msg.GetNodeId()})
 	if err != nil {
-		log.Error("error getting the node" + err.Error())
-		return err
+		log.Warnf("Error code %v for getting node %s", status.Code(err), msg.GetNodeId())
+		if status.Code(err) != codes.NotFound {
+			log.Error("error getting the node" + err.Error())
+			return err
+		}
 	}
 
 	/* Add node if you can't find a node */
 	if node == nil {
 		req := &pb.AddNodeRequest{
-			NodeId: node.Node.Id,
+			NodeId: msg.GetNodeId(),
 			OrgId:  n.s.org.String(),
 		}
 
@@ -116,6 +121,7 @@ func (n *NodeEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflin
 		log.Error("error getting the node" + err.Error())
 		return err
 	}
+
 	if node != nil {
 		/* Update node status */
 		_, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{

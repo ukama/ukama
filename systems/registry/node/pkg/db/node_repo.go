@@ -59,7 +59,7 @@ func (n *nodeRepo) Add(node *Node, nestedFunc func(node *Node, tx *gorm.DB) erro
 func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	var node Node
 
-	result := n.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id=?", id.StringLowercase())
+	result := n.Db.GetGormDb().Preload(clause.Associations).First(&node, "id=?", id.StringLowercase())
 
 	if result.Error != nil {
 		return nil, result.Error
