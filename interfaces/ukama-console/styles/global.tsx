@@ -12,6 +12,10 @@ import {
 import { makeStyles } from '@mui/styles';
 import { colors } from './theme';
 
+interface IRoundedCard {
+  radius?: string;
+}
+
 const globalUseStyles = makeStyles(() => ({
   inputFieldStyle: {
     height: '24px',
@@ -98,14 +102,16 @@ const ContainerJustifySpaceBtw = styled(Box)({
   textAlign: 'center',
 });
 
-const RoundedCard = styled(Paper)((props) => ({
+const RoundedCard = styled(Paper, {
+  shouldForwardProp: (prop) => prop !== 'radius',
+})<IRoundedCard>(({ theme, radius = '10px' }) => ({
   width: '100%',
   padding: '18px 28px',
   height: '100%',
-  borderRadius: '10px',
+  borderRadius: radius,
   display: 'inline-block',
   boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.05)',
-  [props.theme.breakpoints.down('sm')]: {
+  [theme.breakpoints.down('sm')]: {
     padding: '18px',
   },
 }));
@@ -151,18 +157,18 @@ const DarkTooltip = styled(({ className, ...props }: TooltipProps) => (
   },
 }));
 export {
-  LinkStyle,
-  DarkTooltip,
-  RoundedCard,
-  ContainerMax,
-  PageContainer,
-  globalUseStyles,
   CenterContainer,
+  ContainerJustifySpaceBtw,
+  ContainerMax,
+  DarkTooltip,
+  HorizontalContainer,
+  HorizontalContainerJustify,
+  LinkStyle,
   MessageContainer,
-  VerticalContainer,
+  PageContainer,
+  RoundedCard,
   SimpleCardWithBorder,
   SkeletonRoundedCard,
-  HorizontalContainer,
-  ContainerJustifySpaceBtw,
-  HorizontalContainerJustify,
+  VerticalContainer,
+  globalUseStyles,
 };

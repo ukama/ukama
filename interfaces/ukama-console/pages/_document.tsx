@@ -23,9 +23,8 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
       <Head>
         <script
           defer
-          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDitiZUSUUf5HU8CLUlSrfuXWgIdHUD7nI&libraries=places&callback=ukama_search_cb"
+          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDitiZUSUUf5HU8CLUlSrfuXWgIdHUD7nI&libraries=places"
         ></script>
-        {/* PWA primary color */}
         <meta name="theme-color" content={colors.primaryMain} />
         <link rel="shortcut icon" href="/favicon.ico" />
         <meta name="emotion-insertion-point" content="" />

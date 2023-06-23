@@ -7,10 +7,10 @@ import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/router';
 import * as React from 'react';
 import { useEffect } from 'react';
+import BackButton from '../molecules/BackButton';
+import LoadingWrapper from '../molecules/LoadingWrapper';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import LoadingWrapper from '../molecules/LoadingWrapper';
-import BackButton from '../molecules/BackButton';
 
 interface ILayoutProps {
   page: string;
@@ -51,6 +51,7 @@ const Layout = ({
   }, [matches]);
 
   const onNavigate = (name: string, path: string) => {
+    console.log(name, path);
     handlePageChange(name);
     router.push(path);
   };
