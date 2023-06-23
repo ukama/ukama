@@ -7,31 +7,25 @@ import LoadingWrapper from '../LoadingWrapper';
 import SimpleDataTable from '../SimpleDataTable';
 import TableHeader from '../TableHeader';
 
-const BillHistoryTab = () => {
+interface IBillHistoryTab {
+  loading: boolean;
+  data: any;
+}
+
+const BillHistoryTab = ({ loading, data }: IBillHistoryTab) => {
   return (
     <LoadingWrapper
       height={'100%'}
-      isLoading={false}
+      isLoading={loading}
       cstyle={{
         overflow: 'auto',
-        backgroundColor: false ? colors.white : 'transparent',
+        backgroundColor: loading ? colors.white : 'transparent',
       }}
     >
       <RoundedCard radius="4px">
         <TableHeader title={'Billing history'} showSecondaryButton={false} />
-        {true ? (
-          <SimpleDataTable
-            columns={HistoryBillingColumns}
-            dataset={[
-              {
-                id: '1',
-                date: 'July 11 2022',
-                usage: '3 GB',
-                total: '$ 100',
-                pdf: 'www.google.com',
-              },
-            ]}
-          />
+        {data.length > 0 ? (
+          <SimpleDataTable columns={HistoryBillingColumns} dataset={data} />
         ) : (
           <Box
             display="flex"
