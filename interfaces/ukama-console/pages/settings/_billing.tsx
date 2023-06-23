@@ -7,6 +7,25 @@ import TabPanel from '@/ui/molecules/TabPanel';
 import { Box, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { useState } from 'react';
 
+const HistoryData = [
+  {
+    id: '1',
+    date: 'July 11 2022',
+    usage: '3 GB',
+    total: '$ 100',
+    pdf: 'www.google.com',
+  },
+];
+
+const CurrentBillData = [
+  {
+    id: '1',
+    name: 'Tryphena Nelson',
+    rate: '3 GB',
+    subtotal: '200',
+  },
+];
+
 export default function Billing() {
   const [tab, setTab] = useState(0);
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) =>
@@ -41,10 +60,16 @@ export default function Billing() {
           }}
         >
           <TabPanel id={'sites-summary-tab'} value={tab} index={0}>
-            <CurrentBillTab />
+            <CurrentBillTab
+              loading={false}
+              totalAmount="$20.00"
+              currentBill="$ 20.00"
+              data={CurrentBillData}
+              planName="Console cloud plan - [community/empowerment]"
+            />
           </TabPanel>
           <TabPanel id={'sites-power-tab'} value={tab} index={1}>
-            <BillHistoryTab />
+            <BillHistoryTab loading={false} data={HistoryData} />
           </TabPanel>
         </Box>
       </Stack>

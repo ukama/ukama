@@ -7,15 +7,25 @@ import PaymentCard from '../PaymentCard';
 import SimpleDataTable from '../SimpleDataTable';
 import TableHeader from '../TableHeader';
 
-const CurrentBillTab = () => {
+interface ICurrentBillTab {
+  loading: boolean;
+  data: any;
+  totalAmount: string;
+  currentBill: string;
+  planName: string;
+}
+
+const CurrentBillTab = ({
+  loading,
+  data,
+  totalAmount,
+  currentBill,
+  planName,
+}: ICurrentBillTab) => {
   return (
     <Grid container item spacing={2}>
       <Grid xs={12} md={5} item>
-        <CurrentBill
-          loading={false}
-          amount={`$ 20.00`}
-          plan={'Console cloud plan - [community/empowerment]'}
-        />
+        <CurrentBill loading={loading} amount={currentBill} plan={planName} />
       </Grid>
       <Grid xs={12} md={7} item>
         <PaymentCard
@@ -32,19 +42,9 @@ const CurrentBillTab = () => {
             title={'Billing breakdown'}
             showSecondaryButton={false}
           />
-          {true ? (
+          {data.length > 0 ? (
             <Stack alignItems={'flex-end'}>
-              <SimpleDataTable
-                columns={CurrentBillColumns}
-                dataset={[
-                  {
-                    id: '1',
-                    name: 'Tryphena Nelson',
-                    rate: '3 GB',
-                    subtotal: '200',
-                  },
-                ]}
-              />
+              <SimpleDataTable columns={CurrentBillColumns} dataset={data} />
               <Stack
                 mt={2}
                 width={'270px'}
@@ -55,7 +55,7 @@ const CurrentBillTab = () => {
                   Total
                 </Typography>
                 <Typography variant="h6" textAlign={'end'}>
-                  $20.00
+                  {totalAmount}
                 </Typography>
               </Stack>
             </Stack>
