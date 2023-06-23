@@ -91,6 +91,7 @@ typedef struct {
 typedef struct {
 
     char *name;
+    char *port;
 } ServiceInfo;
 
 typedef struct {

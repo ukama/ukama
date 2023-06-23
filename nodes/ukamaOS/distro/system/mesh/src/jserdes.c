@@ -204,7 +204,7 @@ static void serialize_message_data(URequest *request, char **data) {
  *
  */
 int serialize_websocket_message(char **str, URequest *request, char *nodeID,
-                                char *port, char *agent) {
+                                char *port, char *agent, char *sourcePort) {
 
     json_t *json=NULL, *jDevice=NULL, *jService=NULL;
 	json_t *jRequest=NULL;
@@ -228,6 +228,7 @@ int serialize_websocket_message(char **str, URequest *request, char *nodeID,
 	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
 	jService = json_object_get(json, JSON_SERVICE_INFO);
 	json_object_set_new(jService, JSON_NAME, json_string(agent));
+    json_object_set_new(jService, JSON_PORT, json_string(sourcePort));
 
 	/* Serialize and add request info */
     serialize_message_data(request, &data);
@@ -277,23 +278,20 @@ int deserialize_node_info(NodeInfo **node, json_t *json) {
  */
 static int deserialize_service_info(ServiceInfo **service, json_t *json) {
 
-	json_t *obj;
+	json_t *name, *port;
   
-	if (json == NULL && service == NULL)
-		return FALSE;
+	if (json == NULL && service == NULL) return FALSE;
+
+    name = json_object_get(json, JSON_NAME);
+    port = json_object_get(json, JSON_PORT);
+
+    if (name == NULL || port == NULL) return FALSE;
 
 	*service = (ServiceInfo *)calloc(1, sizeof(ServiceInfo));
-	if (*service == NULL)
-		return FALSE;
+	if (*service == NULL) return FALSE;
 
-	obj = json_object_get(json, JSON_NAME);
-
-	if (obj==NULL) {
-		free(*service);
-		return FALSE;
-	}
-
-    (*service)->name = strdup(json_string_value(obj));
+    (*service)->name = strdup(json_string_value(name));
+    (*service)->port = strdup(json_string_value(port));
 
 	return TRUE;
 }
@@ -492,7 +490,7 @@ int deserialize_websocket_message(Message **message, json_t *json) {
     
     deserialize_node_info(&(*message)->nodeInfo, jNodeInfo);
 	deserialize_service_info(&(*message)->serviceInfo, jServiceInfo);
-    
+
     /* deserialize the data */
     if (strcmp((*message)->reqType, MESH_SERVICE_REQUEST) == 0) {
         deserialize_request_info((URequest **)&(*message)->data, jData);

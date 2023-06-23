@@ -15,12 +15,10 @@
 #include <string.h>
 
 #include "mesh.h"
+#include "map.h"
 #include "work.h"
 #include "data.h"
 #include "jserdes.h"
-
-extern pthread_cond_t hasData;
-extern char *queue;
 
 typedef struct _response {
 	char *buffer;
@@ -28,6 +26,7 @@ typedef struct _response {
 } Response;
 
 extern WorkList *Transmit; /* global */
+extern MapTable *ClientTable;
 
 /*
  * response_callback --
@@ -155,14 +154,25 @@ static long send_data_to_local_service(URequest *data, char *hostname,
  * process_incoming_websocket_response --
  *
  */
-int process_incoming_websocket_response(Message *message, Config *config) {
+void process_incoming_websocket_response(Message *message, void *data) {
+
+    MapItem *item=NULL;
 
     log_debug("Forwarding the response message to the local service: %s",
               message->data);
-    queue = strdup(message->data);
-	pthread_cond_broadcast(&hasData);
 
-    return TRUE;
+    item = is_existing_item(ClientTable,message->serviceInfo->name,
+                            message->serviceInfo->port);
+    if (item == NULL) {
+        log_error("Matching client not found. Port: %s. Ignoring",
+                  message->serviceInfo->port);
+        return;
+    }
+
+    item->size = message->dataSize;
+    item->data = strdup(message->data);
+
+    pthread_cond_broadcast(&item->hasResp);
 }
 
 /*

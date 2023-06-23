@@ -22,7 +22,7 @@
 #include "config.h"
 
 extern WorkList *Transmit;
-extern MapTable *IDTable;
+extern MapTable *ClientTable;
 extern State    *state;
 extern int start_websocket_client(Config *config,
                                   struct _websocket_client_handler *handler);
@@ -230,7 +230,7 @@ void websocket_incoming_message(const URequest *request,
     if (strcmp(rcvdMessage->reqType, MESH_SERVICE_REQUEST) == 0 ) {
         process_incoming_websocket_message(rcvdMessage, (Config *)data);
     } else if (strcmp(rcvdMessage->reqType, MESH_NODE_RESPONSE) == 0) {
-        process_incoming_websocket_response(rcvdMessage, (Config *)data);
+        process_incoming_websocket_response(rcvdMessage, data);
     } else {
         log_error("Invalid incoming message on the websocket. Ignored");
     }

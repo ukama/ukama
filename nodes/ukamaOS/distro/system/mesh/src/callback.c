@@ -30,7 +30,7 @@
 #include "httpStatus.h"
 
 extern WorkList *Transmit;
-extern MapTable *IDTable;
+extern MapTable *ClientTable;
 extern pthread_mutex_t mutex;
 extern pthread_cond_t hasData;
 extern char *queue;
@@ -151,8 +151,15 @@ int callback_webservice(const URequest *request, UResponse *response,
 						void *data) {
 
 	int ret, statusCode=200;
-	char *str, *destHost=NULL, *destPort=NULL, *service=NULL;
+	char *destHost=NULL, *destPort=NULL, *service=NULL;
     char *requestStr=NULL, *url=NULL;
+    char ip[INET_ADDRSTRLEN]={0}, sourcePort[MAX_BUFFER]={0};
+    struct sockaddr_in *sin=NULL;
+    MapItem *map=NULL;
+
+    sin = (struct sockaddr_in *)request->client_address;
+    inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
+    sprintf(sourcePort, "%d",sin->sin_port);
 
     url      = u_map_get(request->map_header, "Host");
     service  = u_map_get(request->map_header, "User-Agent");
@@ -164,7 +171,7 @@ int callback_webservice(const URequest *request, UResponse *response,
     }
 
     ret = serialize_websocket_message(&requestStr, request, destHost, destPort,
-                                      service);
+                                      service, sourcePort);
 	if (ret == FALSE && requestStr == NULL) {
 		log_error("Failed to convert request to JSON");
 		statusCode = 400;
@@ -173,19 +180,22 @@ int callback_webservice(const URequest *request, UResponse *response,
 		log_debug("Forward request JSON: %s", requestStr);
 	}
 
+    /* map it */
+    map = add_map_to_table(&ClientTable, service, sourcePort);
+
 	/* Add work for the websocket for transmission. */
     add_work_to_queue(&Transmit, requestStr, NULL, 0, NULL, 0);
 
 	/* Wait for the response back. The cond is set by the websocket thread */
-	pthread_mutex_lock(&mutex);
+	pthread_mutex_lock(&map->mutex);
 	log_debug("Waiting for response back from the server ...");
-	pthread_cond_wait(&hasData, &mutex);
-	pthread_mutex_unlock(&mutex);
+	pthread_cond_wait(&map->hasResp, &map->mutex);
+	pthread_mutex_unlock(&map->mutex);
 
-    log_debug("Got response back from the system in the cloud.");
+    log_debug("Response from System len: %d Data: %s", map->size, map->data);
 
  done:
-    ulfius_set_string_body_response(response, 200, queue);
+    ulfius_set_string_body_response(response, 200, (char *)map->data);
 
 	return U_CALLBACK_CONTINUE;
 }

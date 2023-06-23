@@ -181,13 +181,16 @@ int serialize_system_response(char **response, Message *message, int len,
 	obj = json_object_get(json, JSON_NODE_INFO);
 	json_object_set_new(obj, JSON_NODE_ID,
                         json_string(message->nodeInfo->nodeID));
-    json_object_set_new(obj, JSON_PORT, json_string(message->nodeInfo->port));
+    json_object_set_new(obj, JSON_PORT,
+                        json_string(message->nodeInfo->port));
 
     /* Add service info. */
 	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
 	obj = json_object_get(json, JSON_SERVICE_INFO);
 	json_object_set_new(obj, JSON_NAME,
                         json_string(message->serviceInfo->name));
+    json_object_set_new(obj, JSON_PORT,
+                        json_string(message->serviceInfo->port));
 
 	/* Add response info. */
 	json_object_set_new(json, JSON_MESSAGE, json_object());
@@ -335,7 +338,7 @@ int deserialize_websocket_message(Message **message, char *data) {
 
     json_t *json;
     json_t *jType, *jSeq, *jNodeInfo, *jServiceInfo, *jData, *jPort;
-    json_t *jMessage, *jName, *jNodeID, *jLength;
+    json_t *jMessage, *jName, *jNodeID, *jLength, *jSrcPort;
 
     json = json_loads(data, JSON_DECODE_ANY, NULL);
 	if (json == NULL) {
@@ -353,13 +356,14 @@ int deserialize_websocket_message(Message **message, char *data) {
         return FALSE;
     }
 
-    jNodeID = json_object_get(jNodeInfo,    JSON_NODE_ID);
-    jPort   = json_object_get(jNodeInfo,    JSON_PORT);
-    jName   = json_object_get(jServiceInfo, JSON_NAME);
-    jLength = json_object_get(jMessage,     JSON_LENGTH);
-    jData   = json_object_get(jMessage,     JSON_DATA);
+    jNodeID  = json_object_get(jNodeInfo,    JSON_NODE_ID);
+    jPort    = json_object_get(jNodeInfo,    JSON_PORT);
+    jName    = json_object_get(jServiceInfo, JSON_NAME);
+    jSrcPort = json_object_get(jServiceInfo, JSON_PORT);
+    jLength  = json_object_get(jMessage,     JSON_LENGTH);
+    jData    = json_object_get(jMessage,     JSON_DATA);
     if (jNodeID == NULL || jPort == NULL || jName == NULL || jLength ==NULL ||
-        jData == NULL) {
+        jData == NULL || jSrcPort == NULL) {
         log_error("Error decoding JSON. Missing fields. %s", data);
         return FALSE;
     }
@@ -379,12 +383,14 @@ int deserialize_websocket_message(Message **message, char *data) {
         return FALSE;
     }
 
-    (*message)->reqType          = strdup(json_string_value(jType));
-    (*message)->seqNo            = json_integer_value(jSeq);
-    (*message)->nodeInfo->nodeID = strdup(json_string_value(jNodeID));
-    (*message)->nodeInfo->port   = strdup(json_string_value(jPort));
-    (*message)->dataSize         = json_integer_value(jLength);
-    (*message)->data             = strdup(json_string_value(jData));
+    (*message)->reqType           = strdup(json_string_value(jType));
+    (*message)->seqNo             = json_integer_value(jSeq);
+    (*message)->nodeInfo->nodeID  = strdup(json_string_value(jNodeID));
+    (*message)->nodeInfo->port    = strdup(json_string_value(jPort));
+    (*message)->serviceInfo->name = strdup(json_string_value(jName));
+    (*message)->serviceInfo->port = strdup(json_string_value(jSrcPort));
+    (*message)->dataSize          = json_integer_value(jLength);
+    (*message)->data              = strdup(json_string_value(jData));
 
 	return TRUE;
 }

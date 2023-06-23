@@ -40,10 +40,9 @@ extern int start_websocket_client(Config *config,
 /* Global variables. */
 WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
 WorkList *Receive=NULL;
-MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
+MapTable *ClientTable=NULL;
 pthread_mutex_t websocketMutex, mutex;
 pthread_cond_t  websocketFail, hasData;
-char *queue=NULL;
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -254,12 +253,12 @@ int main (int argc, char *argv[]) {
     pthread_cond_init(&hasData, NULL);
 
 	/* Setup ip:port to UUID mapping table, if client. */
-	IDTable = (MapTable *)malloc(sizeof(MapTable));
-	if (IDTable == NULL) {
+	ClientTable = (MapTable *)malloc(sizeof(MapTable));
+	if (ClientTable == NULL) {
 		log_error("Memory allocation failure: %d", sizeof(MapTable));
 		exit(1);
 	}
-	init_map_table(&IDTable);
+	init_map_table(&ClientTable);
 
 	/* start webservice for local client. */
 	if (start_web_services(config, &webInst) != TRUE) {
