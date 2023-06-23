@@ -21,6 +21,7 @@ import (
 )
 
 var testNode = ukama.NewVirtualNodeId("HomeNode")
+var orgId = uuid.NewV4()
 
 func TestNodeServer_Add(t *testing.T) {
 	nodeId := testNode.String()
@@ -28,21 +29,21 @@ func TestNodeServer_Add(t *testing.T) {
 
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	nodeRepo := &mocks.NodeRepo{}
+	nodeStatusRepo := &mocks.NodeStatusRepo{}
 	orgService := &mocks.OrgClientProvider{}
 	networkService := &mocks.NetworkClientProvider{}
 
 	const nodeName = "node-A"
 	const nodeType = "hnode"
-	var orgId = uuid.NewV4()
 
-	s := server.NewNodeServer(nodeRepo, nil, "", msgbusClient, orgService, networkService)
+	s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", msgbusClient, orgService, networkService, orgId)
 
 	node := &db.Node{
-		Id:    nodeId,
-		Name:  nodeName,
-		OrgId: orgId,
-		Type:  testNode.GetNodeType(),
-		State: db.Online,
+		Id:     nodeId,
+		Name:   nodeName,
+		OrgId:  orgId,
+		Type:   testNode.GetNodeType(),
+		Status: db.NodeStatus{},
 	}
 
 	nodeRepo.On("Add", node, mock.Anything).Return(nil).Once()
@@ -77,7 +78,6 @@ func TestNodeServer_Add(t *testing.T) {
 		assert.NotNil(t, res)
 		assert.Equal(t, nodeName, res.Node.Name)
 		assert.Equal(t, nodeType, res.Node.Type)
-		assert.Equal(t, node.State.String(), res.Node.State)
 		nodeRepo.AssertExpectations(t)
 	})
 
@@ -195,15 +195,15 @@ func TestNodeServer_Get(t *testing.T) {
 		var nodeId = ukama.NewVirtualNodeId(nodeType)
 
 		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
 
 		nodeRepo.On("Get", nodeId).Return(
 			&db.Node{Id: nodeId.StringLowercase(),
-				Name:  nodeName,
-				Type:  ukama.NODE_ID_TYPE_HOMENODE,
-				State: db.Online,
+				Name: nodeName,
+				Type: ukama.NODE_ID_TYPE_HOMENODE,
 			}, nil).Once()
 
-		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
+		s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -219,10 +219,11 @@ func TestNodeServer_Get(t *testing.T) {
 		var nodeId = ukama.NewVirtualAmplifierNodeId()
 
 		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
 
 		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
+		s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -236,8 +237,8 @@ func TestNodeServer_Get(t *testing.T) {
 		var nodeId = uuid.NewV4()
 
 		nodeRepo := &mocks.NodeRepo{}
-
-		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+		s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.String()})
@@ -251,7 +252,9 @@ func TestNodeServer_Get(t *testing.T) {
 func TestNodeServer_Delete(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	nodeRepo := &mocks.NodeRepo{}
-	s := server.NewNodeServer(nodeRepo, nil, "", msgbusClient, nil, nil)
+	nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+	s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", msgbusClient, nil, nil, orgId)
 
 	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()

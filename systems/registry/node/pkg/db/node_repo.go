@@ -95,7 +95,7 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 // TODO: check for still allocated and attached nodes
 func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Delete(&Node{Id: nodeId.StringLowercase()})
+		result := tx.Select("NodeStatus").Delete(&Node{Id: nodeId.StringLowercase()})
 		if result.Error != nil {
 			return result.Error
 		}
@@ -236,11 +236,11 @@ func (r *nodeRepo) GetNodeCount() (nodeCount, activeNodeCount, inactiveNodeCount
 		return 0, 0, 0, err
 	}
 
-	if err := db.Model(&Node{}).Where("state != ?", Offline).Count(&activeNodeCount).Error; err != nil {
+	if err := db.Preload(clause.Associations).Model(&Node{}).Where("NodeStatus.Conn != ?", Online).Count(&activeNodeCount).Error; err != nil {
 		return 0, 0, 0, err
 	}
 
-	if err := db.Model(&Node{}).Where("state = ?", Offline).Count(&inactiveNodeCount).Error; err != nil {
+	if err := db.Preload(clause.Associations).Model(&Node{}).Where("NodeStatus.Conn != ?", Offline).Count(&inactiveNodeCount).Error; err != nil {
 		return 0, 0, 0, err
 	}
 

@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/goombaio/namegenerator"
@@ -26,12 +25,13 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 )
 
 type NodeServer struct {
+	org            uuid.UUID
 	nodeRepo       db.NodeRepo
 	siteRepo       db.SiteRepo
+	nodeStatusRepo db.NodeStatusRepo
 	nameGenerator  namegenerator.Generator
 	orgService     providers.OrgClientProvider
 	networkService providers.NetworkClientProvider
@@ -41,14 +41,16 @@ type NodeServer struct {
 	pb.UnimplementedNodeServiceServer
 }
 
-func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo,
+func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
 	pushGateway string, msgBus mb.MsgBusServiceClient,
 	orgService providers.OrgClientProvider,
-	networkService providers.NetworkClientProvider) *NodeServer {
+	networkService providers.NetworkClientProvider,
+	org uuid.UUID) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
-
 	return &NodeServer{
+		org:            org,
 		nodeRepo:       nodeRepo,
+		nodeStatusRepo: nodeStatusRepo,
 		siteRepo:       siteRepo,
 		orgService:     orgService,
 		networkService: networkService,
@@ -68,35 +70,35 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	strState := strings.ToLower(req.GetState())
-	nodeState := db.ParseNodeState(strState)
-	if req.GetState() != "" && nodeState == db.Undefined {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid node type. Error: node type %q not supported", req.GetState())
-	}
+	// strState := strings.ToLower(req.GetState())
+	// nodeState := db.ParseNodeState(strState)
+	// if req.GetState() != "" && nodeState == db.Undefined {
+	// 	return nil, status.Errorf(codes.InvalidArgument,
+	// 		"invalid node type. Error: node type %q not supported", req.GetState())
+	// }
 
-	orgId, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", err.Error())
-	}
+	// orgId, err := uuid.FromString(req.GetOrgId())
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.InvalidArgument,
+	// 		"invalid format of org uuid. Error %s", err.Error())
+	// }
 
-	svc, err := n.orgService.GetClient()
-	if err != nil {
-		return nil, err
-	}
+	// svc, err := n.orgService.GetClient()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	remoteOrg, err := svc.Get(ctx, &orgpb.GetRequest{Id: orgId.String()})
-	if err != nil {
-		return nil, err
-	}
+	// remoteOrg, err := svc.Get(ctx, &orgpb.GetRequest{Id: orgId.String()})
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// What should we do if the remote org exists but is deactivated?
-	// For now we simply abort.
-	if remoteOrg.Org.IsDeactivated {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"org is deactivated: cannot add node to it")
-	}
+	// // What should we do if the remote org exists but is deactivated?
+	// // For now we simply abort.
+	// if remoteOrg.Org.IsDeactivated {
+	// 	return nil, status.Errorf(codes.FailedPrecondition,
+	// 		"org is deactivated: cannot add node to it")
+	// }
 
 	if len(req.Name) == 0 {
 		req.Name = n.nameGenerator.Generate()
@@ -104,10 +106,14 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 
 	node := &db.Node{
 		Id:    req.NodeId,
-		OrgId: orgId,
-		State: nodeState,
-		Type:  nID.GetNodeType(),
-		Name:  req.Name,
+		OrgId: n.org,
+		Status: db.NodeStatus{
+			NodeId: req.NodeId,
+			Conn:   db.Unknown,
+			State:  db.Undefined,
+		},
+		Type: nID.GetNodeType(),
+		Name: req.Name,
 	}
 
 	err = n.nodeRepo.Add(node, nil)
@@ -198,54 +204,46 @@ func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb
 	return n.getAllNodes(ctx, req)
 }
 
-func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
+func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
 	log.Infof("Updating node state  %v", req.GetNodeId())
 
-	dbState := db.ParseNodeState(req.State)
+	dbNodeState := db.ParseNodeState(req.State)
+	dbConnState := db.ParseConnectivityState(req.Connectivity)
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	nodeUpdates := &db.Node{
-		Id:    nodeId.StringLowercase(),
-		State: dbState,
+	nodeUpdates := &db.NodeStatus{
+		NodeId: nodeId.StringLowercase(),
 	}
 
-	err = n.nodeRepo.Update(nodeUpdates, nil)
+	pbStatus := &pb.NodeStatus{}
+
+	if req.State != "" {
+		nodeUpdates.State = dbNodeState
+		pbStatus.State = dbNodeState.String()
+	}
+
+	if req.Connectivity != "" {
+		nodeUpdates.Conn = dbConnState
+		pbStatus.Connectivity = dbConnState.String()
+	}
+
+	err = n.nodeStatusRepo.Update(nodeUpdates)
 	if err != nil {
 		log.Error("error updating the node state, ", err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	resp := &pb.UpdateNodeResponse{
-		Node: &pb.Node{
-			Id:    req.GetNodeId(),
-			State: req.State,
-		},
-	}
 	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
-		log.Error("error getting the node, ", err.Error())
+		log.Error("error updating the node state, ", err.Error())
 
-		return resp, nil
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
-
-	route := n.baseRoutingKey.SetAction("updatestate").SetObject("node").MustBuild()
-
-	evt := &epb.NodeStateUpdatedEvent{
-		NodeId: nodeUpdates.Id,
-		State:  nodeUpdates.State.String(),
-	}
-
-	err = n.msgbus.PublishRequest(route, evt)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
-	}
-
-	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
 
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
 }
@@ -599,8 +597,11 @@ func dbNodesToPbNodes(nodes []db.Node) []*pb.Node {
 
 func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	n := &pb.Node{
-		Id:        dbn.Id,
-		State:     dbn.State.String(),
+		Id: dbn.Id,
+		Status: &pb.NodeStatus{
+			Connectivity: dbn.Status.Conn.String(),
+			State:        dbn.Status.State.String(),
+		},
 		Type:      dbn.Type,
 		Name:      dbn.Name,
 		OrgId:     dbn.OrgId.String(),

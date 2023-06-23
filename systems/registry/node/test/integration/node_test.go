@@ -87,7 +87,6 @@ func Test_FullFlow(t *testing.T) {
 		addResp, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: node.String(),
 			OrgId:  orgId.String(),
-			State:  db.Undefined.String(),
 			Name:   nodeName,
 		})
 
@@ -106,7 +105,7 @@ func Test_FullFlow(t *testing.T) {
 			NodeId: node.String()})
 
 		handleResponse(tt, err, nodeResp)
-		assert.Equal(tt, db.Onboarded.String(), nodeResp.Node.State)
+		assert.Equal(tt, db.Unknown.String(), nodeResp.Node.Status.Connectivity)
 		assert.Equal(tt, node.GetNodeType(), nodeResp.Node.Type)
 	})
 
@@ -207,7 +206,6 @@ func Test_Listener(t *testing.T) {
 	_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 		NodeId: nodeID,
 		OrgId:  orgId.String(),
-		State:  db.Undefined.String(),
 	})
 
 	e, ok := status.FromError(err)
@@ -238,7 +236,7 @@ func Test_Listener(t *testing.T) {
 	assert.NoError(t, err)
 
 	if err != nil {
-		assert.Equal(t, db.Onboarded.String(), nodeResp.Node.State)
+		assert.Equal(t, db.Offline.String(), nodeResp.Node.Status.Connectivity)
 	}
 }
 

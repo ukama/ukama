@@ -3,23 +3,22 @@ package server
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/ukama"
+	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type NodeEventServer struct {
-	nodeRepo db.NodeRepo
+	s *NodeServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNodeEventServer(nodeRepo db.NodeRepo) *NodeEventServer {
+func NewNodeEventServer(s *NodeServer) *NodeEventServer {
 	return &NodeEventServer{
-		nodeRepo: nodeRepo,
+		s: s,
 	}
 }
 
@@ -63,37 +62,38 @@ func (n *NodeEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnl
 	return p, nil
 }
 
-//TODO: I am not sure I fully understand what's happening here in order for me to update
+// TODO: I am not sure I fully understand what's happening here in order for me to update
 // so, commenting for compiling.
 func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	// nodeId, err := ukama.ValidateNodeId(msg.GetNodeId())
-	// if err != nil {
-	// logrus.Error("error getting the NodeId from request" + err.Error())
-	// return err
-	// }
+	node, err := n.s.GetNode(context.Background(), &pb.GetNodeRequest{NodeId: msg.GetNodeId()})
+	if err != nil {
+		log.Error("error getting the node" + err.Error())
+		return err
+	}
 
-	// node, err := n.nodeRepo.Get(nodeId)
-	// if err != nil {
-	// logrus.Error("error getting the node" + err.Error())
-	// return err
-	// }
+	/* Add node if you can't find a node */
+	if node == nil {
+		req := &pb.AddNodeRequest{
+			NodeId: node.Node.Id,
+			OrgId:  n.s.org.String(),
+		}
 
-	// if node == nil {
-	// [> Add new node <]
-	// node.Id = nodeId.StringLowercase()
-	// // node.Allocation = false
-	// node.Type = nodeId.GetNodeType()
-
-	// err = AddNodeToOrg(n.nodeRepo, node)
-	// if err != nil {
-	// return err
-	// }
-	// } else {
-	// state := db.Online
-	// n.nodeRepo.Update(nodeId, &state, nil)
-	// }
+		_, err = n.s.AddNode(context.Background(), req)
+		if err != nil {
+			return err
+		}
+	} else {
+		/* Update node status */
+		_, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
+			NodeId:       node.Node.Id,
+			Connectivity: db.Online.String(),
+		})
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -111,22 +111,17 @@ func (n *NodeEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.NodeOf
 func (n *NodeEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	nodeId, err := ukama.ValidateNodeId(msg.GetNodeId())
+	node, err := n.s.GetNode(context.Background(), &pb.GetNodeRequest{NodeId: msg.GetNodeId()})
 	if err != nil {
-		logrus.Error("error getting the NodeId from request" + err.Error())
+		log.Error("error getting the node" + err.Error())
 		return err
 	}
-
-	node, err := n.nodeRepo.Get(nodeId)
-	if err != nil {
-		logrus.Error("error getting the node" + err.Error())
-		return err
-	}
-
 	if node != nil {
-		node.State = db.Offline
-
-		err := n.nodeRepo.Update(node, nil)
+		/* Update node status */
+		_, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
+			NodeId:       node.Node.Id,
+			Connectivity: db.Offline.String(),
+		})
 		if err != nil {
 			return err
 		}

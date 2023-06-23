@@ -112,6 +112,9 @@ func (this *GetNodesResponse) Validate() error {
 	}
 	return nil
 }
+func (this *NodeStatus) Validate() error {
+	return nil
+}
 func (this *UpdateNodeStateRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
@@ -189,6 +192,11 @@ func (this *Node) Validate() error {
 	}
 	if this.OrgId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
+	}
+	if this.Status != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Status); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Status", err)
+		}
 	}
 	for _, item := range this.Attached {
 		if item != nil {

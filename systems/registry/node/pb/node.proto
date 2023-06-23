@@ -31,7 +31,7 @@ message AddNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}];
     string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string name = 3;
-    string state = 4;
+    
 }
 
 message AddNodeResponse{
@@ -78,10 +78,15 @@ message GetNodesResponse{
    repeated Node node = 1;
 }
 
+message NodeStatus {
+    string connectivity = 1;
+    string state = 2; 
+}
 
 message  UpdateNodeStateRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-    string state = 2;
+    string connectivity = 2;
+    string state = 3;
 }
 
 message  UpdateNodeRequest{
@@ -142,7 +147,7 @@ message Node {
     string name = 2;
     string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string type = 4;
-    string state = 5;
+    NodeStatus status = 5;
     repeated Node attached = 6;
     google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
 }
