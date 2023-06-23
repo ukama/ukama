@@ -446,6 +446,7 @@ const Page = () => {
             isAddSite={addSite}
             id={'site-planning-map'}
             className={styles.homeMap}
+            links={selectedDraft?.links || []}
             handleAction={handleSiteAction}
             data={selectedDraft?.sites || []}
             handleAddMarker={handleMarkerAdd}

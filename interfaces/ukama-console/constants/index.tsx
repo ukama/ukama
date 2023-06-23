@@ -18,6 +18,19 @@ import { DataTableWithOptionColumns } from './tableColumns';
 const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
+export const GEO_DATA = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: [[0, 1]],
+      },
+    },
+  ],
+};
 const SETTING_MENU = [
   { id: 1, title: 'Account Settings' },
   { id: 2, title: 'Network Settings' },
@@ -1598,39 +1611,39 @@ const SIM_VARIANT = [
 
 export { NodeAppLogs, NodeApps, SimCardData } from './stubData';
 export {
-  RF_NODES,
-  TimeZones,
-  SIM_VARIANT,
-  COPY_RIGHTS,
   APP_VERSION,
-  TIME_FILTER,
+  BASIC_MENU_ACTIONS,
+  BILLING_PLANS,
+  BillingDialogList,
   BillingTabs,
-  NODE_IMAGES,
-  TooltipsText,
-  SETTING_MENU,
+  COPY_RIGHTS,
+  DEACTIVATE_EDIT_ACTION_MENU,
+  DEFAULT_RESPONSE,
   DRAWER_WIDTH,
+  DataTableWithOptionColumns,
+  HealtChartsConfigure,
+  LANGUAGE_OPTIONS,
   MASK_BY_TYPE,
+  MASK_PLACEHOLDERS,
   MONTH_FILTER,
+  NODE_ACTIONS,
+  NODE_IMAGES,
+  NODE_TYPE,
+  NodePageTabs,
+  NodeResourcesTabConfigure,
+  RF_NODES,
+  ROAMING_SELECT,
+  SETTING_MENU,
   SIDEBAR_MENU1,
   SIDEBAR_MENU2,
-  NODE_ACTIONS,
+  SIM_VARIANT,
   STATS_OPTIONS,
   STATS_PERIOD,
-  NodePageTabs,
-  BILLING_PLANS,
-  UserActivation,
-  ROAMING_SELECT,
-  BillingDialogList,
-  MASK_PLACEHOLDERS,
-  DEFAULT_RESPONSE,
-  LANGUAGE_OPTIONS,
-  BASIC_MENU_ACTIONS,
   TABLE_EXPORT_OPTIONS,
-  HealtChartsConfigure,
-  NODE_TYPE,
-  NodeResourcesTabConfigure,
-  DataTableWithOptionColumns,
-  DEACTIVATE_EDIT_ACTION_MENU,
+  TIME_FILTER,
+  TimeZones,
+  TooltipsText,
+  UserActivation,
 };
 
 const NODE_IMAGES = {

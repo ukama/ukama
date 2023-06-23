@@ -2,32 +2,19 @@ import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = {
-  [K in keyof T]: T[K];
-};
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]?: Maybe<T[SubKey]>;
-};
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]: Maybe<T[SubKey]>;
-};
-export type MakeEmpty<
-  T extends { [key: string]: unknown },
-  K extends keyof T,
-> = { [_ in K]?: never };
-export type Incremental<T> =
-  | T
-  | {
-      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
-    };
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string | number; output: string };
-  String: { input: string; output: string };
-  Boolean: { input: boolean; output: boolean };
-  Int: { input: number; output: number };
-  Float: { input: number; output: number };
+  ID: { input: string | number; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
 };
 
 export type AddDraftInput = {
@@ -56,6 +43,7 @@ export type Draft = {
   events: Array<Event>;
   id: Scalars['ID']['output'];
   lastSaved: Scalars['Float']['output'];
+  links: Array<Link>;
   name: Scalars['String']['output'];
   sites: Array<Site>;
   userId: Scalars['String']['output'];
@@ -71,15 +59,15 @@ export type Event = {
 
 export type Link = {
   __typename?: 'Link';
-  data: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  linkWith: Scalars['String']['output'];
+  siteA: Scalars['String']['output'];
+  siteB: Scalars['String']['output'];
 };
 
 export type LinkInput = {
-  data: Scalars['String']['input'];
   lastSaved: Scalars['Float']['input'];
-  linkWith: Scalars['String']['input'];
+  siteA: Scalars['String']['input'];
+  siteB: Scalars['String']['input'];
 };
 
 export type Location = {
@@ -100,7 +88,7 @@ export type LocationInput = {
 export type Mutation = {
   __typename?: 'Mutation';
   addDraft: Draft;
-  addLink: Site;
+  addLink: Draft;
   addSite: Draft;
   deleteDraft: DeleteDraftRes;
   deleteLink: DeleteLinkRes;
@@ -111,24 +99,28 @@ export type Mutation = {
   updateSite: Draft;
 };
 
+
 export type MutationAddDraftArgs = {
   data: AddDraftInput;
 };
 
+
 export type MutationAddLinkArgs = {
   data: LinkInput;
   draftId: Scalars['String']['input'];
-  siteId: Scalars['String']['input'];
 };
+
 
 export type MutationAddSiteArgs = {
   data: SiteInput;
   draftId: Scalars['String']['input'];
 };
 
+
 export type MutationDeleteDraftArgs = {
   id: Scalars['String']['input'];
 };
+
 
 export type MutationDeleteLinkArgs = {
   draftId: Scalars['String']['input'];
@@ -136,25 +128,30 @@ export type MutationDeleteLinkArgs = {
   linkId: Scalars['String']['input'];
 };
 
+
 export type MutationDeleteSiteArgs = {
   id: Scalars['String']['input'];
 };
+
 
 export type MutationUpdateDraftNameArgs = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
 
+
 export type MutationUpdateEventArgs = {
   data: UpdateEventInput;
   eventId: Scalars['String']['input'];
 };
+
 
 export type MutationUpdateLocationArgs = {
   data: LocationInput;
   draftId: Scalars['String']['input'];
   locationId: Scalars['String']['input'];
 };
+
 
 export type MutationUpdateSiteArgs = {
   data: SiteInput;
@@ -168,9 +165,11 @@ export type Query = {
   getDrafts: Array<Draft>;
 };
 
+
 export type QueryGetDraftArgs = {
   id: Scalars['String']['input'];
 };
+
 
 export type QueryGetDraftsArgs = {
   userId: Scalars['String']['input'];
@@ -182,7 +181,6 @@ export type Site = {
   height: Scalars['Float']['output'];
   id: Scalars['String']['output'];
   isSetlite: Scalars['Boolean']['output'];
-  links: Array<Link>;
   location: Location;
   name: Scalars['String']['output'];
   solarUptime: Scalars['Float']['output'];
@@ -207,317 +205,52 @@ export type UpdateEventInput = {
   value: Scalars['String']['input'];
 };
 
-export type LocationFragment = {
-  __typename?: 'Location';
-  id: string;
-  lat: string;
-  lng: string;
-  address: string;
-};
+export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
 
-export type LinkFragment = {
-  __typename?: 'Link';
-  id: string;
-  data: string;
-  linkWith: string;
-};
+export type LinkFragment = { __typename?: 'Link', id: string, siteA: string, siteB: string };
 
-export type SiteFragment = {
-  __typename?: 'Site';
-  id: string;
-  name: string;
-  status: string;
-  height: number;
-  apOption: string;
-  isSetlite: boolean;
-  solarUptime: number;
-  location: {
-    __typename?: 'Location';
-    id: string;
-    lat: string;
-    lng: string;
-    address: string;
-  };
-  links: Array<{
-    __typename?: 'Link';
-    id: string;
-    data: string;
-    linkWith: string;
-  }>;
-};
+export type SiteFragment = { __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } };
 
-export type EventFragment = {
-  __typename?: 'Event';
-  id: string;
-  value: string;
-  operation: string;
-  createdAt: string;
-};
+export type EventFragment = { __typename?: 'Event', id: string, value: string, operation: string, createdAt: string };
 
-export type DraftFragment = {
-  __typename?: 'Draft';
-  id: string;
-  name: string;
-  userId: string;
-  lastSaved: number;
-  sites: Array<{
-    __typename?: 'Site';
-    id: string;
-    name: string;
-    status: string;
-    height: number;
-    apOption: string;
-    isSetlite: boolean;
-    solarUptime: number;
-    location: {
-      __typename?: 'Location';
-      id: string;
-      lat: string;
-      lng: string;
-      address: string;
-    };
-    links: Array<{
-      __typename?: 'Link';
-      id: string;
-      data: string;
-      linkWith: string;
-    }>;
-  }>;
-  events: Array<{
-    __typename?: 'Event';
-    id: string;
-    value: string;
-    operation: string;
-    createdAt: string;
-  }>;
-};
+export type DraftFragment = { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> };
 
 export type AddDraftMutationVariables = Exact<{
   data: AddDraftInput;
 }>;
 
-export type AddDraftMutation = {
-  __typename?: 'Mutation';
-  addDraft: {
-    __typename?: 'Draft';
-    id: string;
-    name: string;
-    userId: string;
-    lastSaved: number;
-    sites: Array<{
-      __typename?: 'Site';
-      id: string;
-      name: string;
-      status: string;
-      height: number;
-      apOption: string;
-      isSetlite: boolean;
-      solarUptime: number;
-      location: {
-        __typename?: 'Location';
-        id: string;
-        lat: string;
-        lng: string;
-        address: string;
-      };
-      links: Array<{
-        __typename?: 'Link';
-        id: string;
-        data: string;
-        linkWith: string;
-      }>;
-    }>;
-    events: Array<{
-      __typename?: 'Event';
-      id: string;
-      value: string;
-      operation: string;
-      createdAt: string;
-    }>;
-  };
-};
+
+export type AddDraftMutation = { __typename?: 'Mutation', addDraft: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateDraftNameMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
   name: Scalars['String']['input'];
 }>;
 
-export type UpdateDraftNameMutation = {
-  __typename?: 'Mutation';
-  updateDraftName: {
-    __typename?: 'Draft';
-    id: string;
-    name: string;
-    userId: string;
-    lastSaved: number;
-    sites: Array<{
-      __typename?: 'Site';
-      id: string;
-      name: string;
-      status: string;
-      height: number;
-      apOption: string;
-      isSetlite: boolean;
-      solarUptime: number;
-      location: {
-        __typename?: 'Location';
-        id: string;
-        lat: string;
-        lng: string;
-        address: string;
-      };
-      links: Array<{
-        __typename?: 'Link';
-        id: string;
-        data: string;
-        linkWith: string;
-      }>;
-    }>;
-    events: Array<{
-      __typename?: 'Event';
-      id: string;
-      value: string;
-      operation: string;
-      createdAt: string;
-    }>;
-  };
-};
+
+export type UpdateDraftNameMutation = { __typename?: 'Mutation', updateDraftName: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type GetDraftsQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
 
-export type GetDraftsQuery = {
-  __typename?: 'Query';
-  getDrafts: Array<{
-    __typename?: 'Draft';
-    id: string;
-    name: string;
-    userId: string;
-    lastSaved: number;
-    sites: Array<{
-      __typename?: 'Site';
-      id: string;
-      name: string;
-      status: string;
-      height: number;
-      apOption: string;
-      isSetlite: boolean;
-      solarUptime: number;
-      location: {
-        __typename?: 'Location';
-        id: string;
-        lat: string;
-        lng: string;
-        address: string;
-      };
-      links: Array<{
-        __typename?: 'Link';
-        id: string;
-        data: string;
-        linkWith: string;
-      }>;
-    }>;
-    events: Array<{
-      __typename?: 'Event';
-      id: string;
-      value: string;
-      operation: string;
-      createdAt: string;
-    }>;
-  }>;
-};
+
+export type GetDraftsQuery = { __typename?: 'Query', getDrafts: Array<{ __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> }> };
 
 export type GetDraftQueryVariables = Exact<{
   draftId: Scalars['String']['input'];
 }>;
 
-export type GetDraftQuery = {
-  __typename?: 'Query';
-  getDraft: {
-    __typename?: 'Draft';
-    id: string;
-    name: string;
-    userId: string;
-    lastSaved: number;
-    sites: Array<{
-      __typename?: 'Site';
-      id: string;
-      name: string;
-      status: string;
-      height: number;
-      apOption: string;
-      isSetlite: boolean;
-      solarUptime: number;
-      location: {
-        __typename?: 'Location';
-        id: string;
-        lat: string;
-        lng: string;
-        address: string;
-      };
-      links: Array<{
-        __typename?: 'Link';
-        id: string;
-        data: string;
-        linkWith: string;
-      }>;
-    }>;
-    events: Array<{
-      __typename?: 'Event';
-      id: string;
-      value: string;
-      operation: string;
-      createdAt: string;
-    }>;
-  };
-};
+
+export type GetDraftQuery = { __typename?: 'Query', getDraft: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type AddSiteMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
   data: SiteInput;
 }>;
 
-export type AddSiteMutation = {
-  __typename?: 'Mutation';
-  addSite: {
-    __typename?: 'Draft';
-    id: string;
-    name: string;
-    userId: string;
-    lastSaved: number;
-    sites: Array<{
-      __typename?: 'Site';
-      id: string;
-      name: string;
-      status: string;
-      height: number;
-      apOption: string;
-      isSetlite: boolean;
-      solarUptime: number;
-      location: {
-        __typename?: 'Location';
-        id: string;
-        lat: string;
-        lng: string;
-        address: string;
-      };
-      links: Array<{
-        __typename?: 'Link';
-        id: string;
-        data: string;
-        linkWith: string;
-      }>;
-    }>;
-    events: Array<{
-      __typename?: 'Event';
-      id: string;
-      value: string;
-      operation: string;
-      createdAt: string;
-    }>;
-  };
-};
+
+export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateSiteMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
@@ -525,46 +258,8 @@ export type UpdateSiteMutationVariables = Exact<{
   data: SiteInput;
 }>;
 
-export type UpdateSiteMutation = {
-  __typename?: 'Mutation';
-  updateSite: {
-    __typename?: 'Draft';
-    id: string;
-    name: string;
-    userId: string;
-    lastSaved: number;
-    sites: Array<{
-      __typename?: 'Site';
-      id: string;
-      name: string;
-      status: string;
-      height: number;
-      apOption: string;
-      isSetlite: boolean;
-      solarUptime: number;
-      location: {
-        __typename?: 'Location';
-        id: string;
-        lat: string;
-        lng: string;
-        address: string;
-      };
-      links: Array<{
-        __typename?: 'Link';
-        id: string;
-        data: string;
-        linkWith: string;
-      }>;
-    }>;
-    events: Array<{
-      __typename?: 'Event';
-      id: string;
-      value: string;
-      operation: string;
-      createdAt: string;
-    }>;
-  };
-};
+
+export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
 
 export type UpdateLocationMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
@@ -572,34 +267,22 @@ export type UpdateLocationMutationVariables = Exact<{
   data: LocationInput;
 }>;
 
-export type UpdateLocationMutation = {
-  __typename?: 'Mutation';
-  updateLocation: {
-    __typename?: 'Location';
-    id: string;
-    lat: string;
-    lng: string;
-    address: string;
-  };
-};
+
+export type UpdateLocationMutation = { __typename?: 'Mutation', updateLocation: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } };
 
 export type DeleteDraftMutationVariables = Exact<{
   draftId: Scalars['String']['input'];
 }>;
 
-export type DeleteDraftMutation = {
-  __typename?: 'Mutation';
-  deleteDraft: { __typename?: 'DeleteDraftRes'; id: string };
-};
+
+export type DeleteDraftMutation = { __typename?: 'Mutation', deleteDraft: { __typename?: 'DeleteDraftRes', id: string } };
 
 export type DeleteSiteMutationVariables = Exact<{
   siteId: Scalars['String']['input'];
 }>;
 
-export type DeleteSiteMutation = {
-  __typename?: 'Mutation';
-  deleteSite: { __typename?: 'DeleteSiteRes'; id: string };
-};
+
+export type DeleteSiteMutation = { __typename?: 'Mutation', deleteSite: { __typename?: 'DeleteSiteRes', id: string } };
 
 export type DeleteLinkMutationVariables = Exact<{
   lastSaved: Scalars['Float']['input'];
@@ -607,114 +290,81 @@ export type DeleteLinkMutationVariables = Exact<{
   linkId: Scalars['String']['input'];
 }>;
 
-export type DeleteLinkMutation = {
-  __typename?: 'Mutation';
-  deleteLink: { __typename?: 'DeleteLinkRes'; id: string };
-};
+
+export type DeleteLinkMutation = { __typename?: 'Mutation', deleteLink: { __typename?: 'DeleteLinkRes', id: string } };
 
 export type AddLinkMutationVariables = Exact<{
   data: LinkInput;
-  siteId: Scalars['String']['input'];
   draftId: Scalars['String']['input'];
 }>;
 
-export type AddLinkMutation = {
-  __typename?: 'Mutation';
-  addLink: {
-    __typename?: 'Site';
-    id: string;
-    name: string;
-    status: string;
-    height: number;
-    apOption: string;
-    isSetlite: boolean;
-    solarUptime: number;
-    location: {
-      __typename?: 'Location';
-      id: string;
-      lat: string;
-      lng: string;
-      address: string;
-    };
-    links: Array<{
-      __typename?: 'Link';
-      id: string;
-      data: string;
-      linkWith: string;
-    }>;
-  };
-};
 
-export const LocationFragmentDoc = gql`
-  fragment location on Location {
-    id
-    lat
-    lng
-    address
-  }
-`;
+export type AddLinkMutation = { __typename?: 'Mutation', addLink: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+
 export const LinkFragmentDoc = gql`
-  fragment link on Link {
-    id
-    data
-    linkWith
-  }
-`;
+    fragment link on Link {
+  id
+  siteA
+  siteB
+}
+    `;
+export const LocationFragmentDoc = gql`
+    fragment location on Location {
+  id
+  lat
+  lng
+  address
+}
+    `;
 export const SiteFragmentDoc = gql`
-  fragment site on Site {
-    id
-    name
-    status
-    height
-    apOption
-    isSetlite
-    solarUptime
-    location {
-      ...location
-    }
-    links {
-      ...link
-    }
+    fragment site on Site {
+  id
+  name
+  status
+  height
+  apOption
+  isSetlite
+  solarUptime
+  location {
+    ...location
   }
-  ${LocationFragmentDoc}
-  ${LinkFragmentDoc}
-`;
+}
+    ${LocationFragmentDoc}`;
 export const EventFragmentDoc = gql`
-  fragment event on Event {
-    id
-    value
-    operation
-    createdAt
-  }
-`;
+    fragment event on Event {
+  id
+  value
+  operation
+  createdAt
+}
+    `;
 export const DraftFragmentDoc = gql`
-  fragment draft on Draft {
-    id
-    name
-    userId
-    lastSaved
-    sites {
-      ...site
-    }
-    events {
-      ...event
-    }
+    fragment draft on Draft {
+  id
+  name
+  userId
+  lastSaved
+  links {
+    ...link
   }
-  ${SiteFragmentDoc}
-  ${EventFragmentDoc}
-`;
+  sites {
+    ...site
+  }
+  events {
+    ...event
+  }
+}
+    ${LinkFragmentDoc}
+${SiteFragmentDoc}
+${EventFragmentDoc}`;
 export const AddDraftDocument = gql`
-  mutation AddDraft($data: AddDraftInput!) {
-    addDraft(data: $data) {
-      ...draft
-    }
+    mutation AddDraft($data: AddDraftInput!) {
+  addDraft(data: $data) {
+    ...draft
   }
-  ${DraftFragmentDoc}
-`;
-export type AddDraftMutationFn = Apollo.MutationFunction<
-  AddDraftMutation,
-  AddDraftMutationVariables
->;
+}
+    ${DraftFragmentDoc}`;
+export type AddDraftMutationFn = Apollo.MutationFunction<AddDraftMutation, AddDraftMutationVariables>;
 
 /**
  * __useAddDraftMutation__
@@ -733,36 +383,21 @@ export type AddDraftMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useAddDraftMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    AddDraftMutation,
-    AddDraftMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<AddDraftMutation, AddDraftMutationVariables>(
-    AddDraftDocument,
-    options,
-  );
-}
+export function useAddDraftMutation(baseOptions?: Apollo.MutationHookOptions<AddDraftMutation, AddDraftMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddDraftMutation, AddDraftMutationVariables>(AddDraftDocument, options);
+      }
 export type AddDraftMutationHookResult = ReturnType<typeof useAddDraftMutation>;
 export type AddDraftMutationResult = Apollo.MutationResult<AddDraftMutation>;
-export type AddDraftMutationOptions = Apollo.BaseMutationOptions<
-  AddDraftMutation,
-  AddDraftMutationVariables
->;
+export type AddDraftMutationOptions = Apollo.BaseMutationOptions<AddDraftMutation, AddDraftMutationVariables>;
 export const UpdateDraftNameDocument = gql`
-  mutation UpdateDraftName($draftId: String!, $name: String!) {
-    updateDraftName(id: $draftId, name: $name) {
-      ...draft
-    }
+    mutation UpdateDraftName($draftId: String!, $name: String!) {
+  updateDraftName(id: $draftId, name: $name) {
+    ...draft
   }
-  ${DraftFragmentDoc}
-`;
-export type UpdateDraftNameMutationFn = Apollo.MutationFunction<
-  UpdateDraftNameMutation,
-  UpdateDraftNameMutationVariables
->;
+}
+    ${DraftFragmentDoc}`;
+export type UpdateDraftNameMutationFn = Apollo.MutationFunction<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>;
 
 /**
  * __useUpdateDraftNameMutation__
@@ -782,35 +417,20 @@ export type UpdateDraftNameMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useUpdateDraftNameMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    UpdateDraftNameMutation,
-    UpdateDraftNameMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<
-    UpdateDraftNameMutation,
-    UpdateDraftNameMutationVariables
-  >(UpdateDraftNameDocument, options);
-}
-export type UpdateDraftNameMutationHookResult = ReturnType<
-  typeof useUpdateDraftNameMutation
->;
-export type UpdateDraftNameMutationResult =
-  Apollo.MutationResult<UpdateDraftNameMutation>;
-export type UpdateDraftNameMutationOptions = Apollo.BaseMutationOptions<
-  UpdateDraftNameMutation,
-  UpdateDraftNameMutationVariables
->;
+export function useUpdateDraftNameMutation(baseOptions?: Apollo.MutationHookOptions<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>(UpdateDraftNameDocument, options);
+      }
+export type UpdateDraftNameMutationHookResult = ReturnType<typeof useUpdateDraftNameMutation>;
+export type UpdateDraftNameMutationResult = Apollo.MutationResult<UpdateDraftNameMutation>;
+export type UpdateDraftNameMutationOptions = Apollo.BaseMutationOptions<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>;
 export const GetDraftsDocument = gql`
-  query GetDrafts($userId: String!) {
-    getDrafts(userId: $userId) {
-      ...draft
-    }
+    query GetDrafts($userId: String!) {
+  getDrafts(userId: $userId) {
+    ...draft
   }
-  ${DraftFragmentDoc}
-`;
+}
+    ${DraftFragmentDoc}`;
 
 /**
  * __useGetDraftsQuery__
@@ -828,43 +448,24 @@ export const GetDraftsDocument = gql`
  *   },
  * });
  */
-export function useGetDraftsQuery(
-  baseOptions: Apollo.QueryHookOptions<GetDraftsQuery, GetDraftsQueryVariables>,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetDraftsQuery, GetDraftsQueryVariables>(
-    GetDraftsDocument,
-    options,
-  );
-}
-export function useGetDraftsLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
-    GetDraftsQuery,
-    GetDraftsQueryVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetDraftsQuery, GetDraftsQueryVariables>(
-    GetDraftsDocument,
-    options,
-  );
-}
+export function useGetDraftsQuery(baseOptions: Apollo.QueryHookOptions<GetDraftsQuery, GetDraftsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDraftsQuery, GetDraftsQueryVariables>(GetDraftsDocument, options);
+      }
+export function useGetDraftsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDraftsQuery, GetDraftsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDraftsQuery, GetDraftsQueryVariables>(GetDraftsDocument, options);
+        }
 export type GetDraftsQueryHookResult = ReturnType<typeof useGetDraftsQuery>;
-export type GetDraftsLazyQueryHookResult = ReturnType<
-  typeof useGetDraftsLazyQuery
->;
-export type GetDraftsQueryResult = Apollo.QueryResult<
-  GetDraftsQuery,
-  GetDraftsQueryVariables
->;
+export type GetDraftsLazyQueryHookResult = ReturnType<typeof useGetDraftsLazyQuery>;
+export type GetDraftsQueryResult = Apollo.QueryResult<GetDraftsQuery, GetDraftsQueryVariables>;
 export const GetDraftDocument = gql`
-  query GetDraft($draftId: String!) {
-    getDraft(id: $draftId) {
-      ...draft
-    }
+    query GetDraft($draftId: String!) {
+  getDraft(id: $draftId) {
+    ...draft
   }
-  ${DraftFragmentDoc}
-`;
+}
+    ${DraftFragmentDoc}`;
 
 /**
  * __useGetDraftQuery__
@@ -882,47 +483,25 @@ export const GetDraftDocument = gql`
  *   },
  * });
  */
-export function useGetDraftQuery(
-  baseOptions: Apollo.QueryHookOptions<GetDraftQuery, GetDraftQueryVariables>,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<GetDraftQuery, GetDraftQueryVariables>(
-    GetDraftDocument,
-    options,
-  );
-}
-export function useGetDraftLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
-    GetDraftQuery,
-    GetDraftQueryVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<GetDraftQuery, GetDraftQueryVariables>(
-    GetDraftDocument,
-    options,
-  );
-}
+export function useGetDraftQuery(baseOptions: Apollo.QueryHookOptions<GetDraftQuery, GetDraftQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDraftQuery, GetDraftQueryVariables>(GetDraftDocument, options);
+      }
+export function useGetDraftLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDraftQuery, GetDraftQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDraftQuery, GetDraftQueryVariables>(GetDraftDocument, options);
+        }
 export type GetDraftQueryHookResult = ReturnType<typeof useGetDraftQuery>;
-export type GetDraftLazyQueryHookResult = ReturnType<
-  typeof useGetDraftLazyQuery
->;
-export type GetDraftQueryResult = Apollo.QueryResult<
-  GetDraftQuery,
-  GetDraftQueryVariables
->;
+export type GetDraftLazyQueryHookResult = ReturnType<typeof useGetDraftLazyQuery>;
+export type GetDraftQueryResult = Apollo.QueryResult<GetDraftQuery, GetDraftQueryVariables>;
 export const AddSiteDocument = gql`
-  mutation addSite($draftId: String!, $data: SiteInput!) {
-    addSite(draftId: $draftId, data: $data) {
-      ...draft
-    }
+    mutation addSite($draftId: String!, $data: SiteInput!) {
+  addSite(draftId: $draftId, data: $data) {
+    ...draft
   }
-  ${DraftFragmentDoc}
-`;
-export type AddSiteMutationFn = Apollo.MutationFunction<
-  AddSiteMutation,
-  AddSiteMutationVariables
->;
+}
+    ${DraftFragmentDoc}`;
+export type AddSiteMutationFn = Apollo.MutationFunction<AddSiteMutation, AddSiteMutationVariables>;
 
 /**
  * __useAddSiteMutation__
@@ -942,36 +521,21 @@ export type AddSiteMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useAddSiteMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    AddSiteMutation,
-    AddSiteMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<AddSiteMutation, AddSiteMutationVariables>(
-    AddSiteDocument,
-    options,
-  );
-}
+export function useAddSiteMutation(baseOptions?: Apollo.MutationHookOptions<AddSiteMutation, AddSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddSiteMutation, AddSiteMutationVariables>(AddSiteDocument, options);
+      }
 export type AddSiteMutationHookResult = ReturnType<typeof useAddSiteMutation>;
 export type AddSiteMutationResult = Apollo.MutationResult<AddSiteMutation>;
-export type AddSiteMutationOptions = Apollo.BaseMutationOptions<
-  AddSiteMutation,
-  AddSiteMutationVariables
->;
+export type AddSiteMutationOptions = Apollo.BaseMutationOptions<AddSiteMutation, AddSiteMutationVariables>;
 export const UpdateSiteDocument = gql`
-  mutation UpdateSite($draftId: String!, $siteId: String!, $data: SiteInput!) {
-    updateSite(draftId: $draftId, siteId: $siteId, data: $data) {
-      ...draft
-    }
+    mutation UpdateSite($draftId: String!, $siteId: String!, $data: SiteInput!) {
+  updateSite(draftId: $draftId, siteId: $siteId, data: $data) {
+    ...draft
   }
-  ${DraftFragmentDoc}
-`;
-export type UpdateSiteMutationFn = Apollo.MutationFunction<
-  UpdateSiteMutation,
-  UpdateSiteMutationVariables
->;
+}
+    ${DraftFragmentDoc}`;
+export type UpdateSiteMutationFn = Apollo.MutationFunction<UpdateSiteMutation, UpdateSiteMutationVariables>;
 
 /**
  * __useUpdateSiteMutation__
@@ -992,43 +556,21 @@ export type UpdateSiteMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useUpdateSiteMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    UpdateSiteMutation,
-    UpdateSiteMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<UpdateSiteMutation, UpdateSiteMutationVariables>(
-    UpdateSiteDocument,
-    options,
-  );
-}
-export type UpdateSiteMutationHookResult = ReturnType<
-  typeof useUpdateSiteMutation
->;
-export type UpdateSiteMutationResult =
-  Apollo.MutationResult<UpdateSiteMutation>;
-export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<
-  UpdateSiteMutation,
-  UpdateSiteMutationVariables
->;
+export function useUpdateSiteMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSiteMutation, UpdateSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSiteMutation, UpdateSiteMutationVariables>(UpdateSiteDocument, options);
+      }
+export type UpdateSiteMutationHookResult = ReturnType<typeof useUpdateSiteMutation>;
+export type UpdateSiteMutationResult = Apollo.MutationResult<UpdateSiteMutation>;
+export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<UpdateSiteMutation, UpdateSiteMutationVariables>;
 export const UpdateLocationDocument = gql`
-  mutation UpdateLocation(
-    $draftId: String!
-    $locationId: String!
-    $data: LocationInput!
-  ) {
-    updateLocation(draftId: $draftId, locationId: $locationId, data: $data) {
-      ...location
-    }
+    mutation UpdateLocation($draftId: String!, $locationId: String!, $data: LocationInput!) {
+  updateLocation(draftId: $draftId, locationId: $locationId, data: $data) {
+    ...location
   }
-  ${LocationFragmentDoc}
-`;
-export type UpdateLocationMutationFn = Apollo.MutationFunction<
-  UpdateLocationMutation,
-  UpdateLocationMutationVariables
->;
+}
+    ${LocationFragmentDoc}`;
+export type UpdateLocationMutationFn = Apollo.MutationFunction<UpdateLocationMutation, UpdateLocationMutationVariables>;
 
 /**
  * __useUpdateLocationMutation__
@@ -1049,38 +591,21 @@ export type UpdateLocationMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useUpdateLocationMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    UpdateLocationMutation,
-    UpdateLocationMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<
-    UpdateLocationMutation,
-    UpdateLocationMutationVariables
-  >(UpdateLocationDocument, options);
-}
-export type UpdateLocationMutationHookResult = ReturnType<
-  typeof useUpdateLocationMutation
->;
-export type UpdateLocationMutationResult =
-  Apollo.MutationResult<UpdateLocationMutation>;
-export type UpdateLocationMutationOptions = Apollo.BaseMutationOptions<
-  UpdateLocationMutation,
-  UpdateLocationMutationVariables
->;
+export function useUpdateLocationMutation(baseOptions?: Apollo.MutationHookOptions<UpdateLocationMutation, UpdateLocationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateLocationMutation, UpdateLocationMutationVariables>(UpdateLocationDocument, options);
+      }
+export type UpdateLocationMutationHookResult = ReturnType<typeof useUpdateLocationMutation>;
+export type UpdateLocationMutationResult = Apollo.MutationResult<UpdateLocationMutation>;
+export type UpdateLocationMutationOptions = Apollo.BaseMutationOptions<UpdateLocationMutation, UpdateLocationMutationVariables>;
 export const DeleteDraftDocument = gql`
-  mutation DeleteDraft($draftId: String!) {
-    deleteDraft(id: $draftId) {
-      id
-    }
+    mutation DeleteDraft($draftId: String!) {
+  deleteDraft(id: $draftId) {
+    id
   }
-`;
-export type DeleteDraftMutationFn = Apollo.MutationFunction<
-  DeleteDraftMutation,
-  DeleteDraftMutationVariables
->;
+}
+    `;
+export type DeleteDraftMutationFn = Apollo.MutationFunction<DeleteDraftMutation, DeleteDraftMutationVariables>;
 
 /**
  * __useDeleteDraftMutation__
@@ -1099,38 +624,21 @@ export type DeleteDraftMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useDeleteDraftMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    DeleteDraftMutation,
-    DeleteDraftMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<DeleteDraftMutation, DeleteDraftMutationVariables>(
-    DeleteDraftDocument,
-    options,
-  );
-}
-export type DeleteDraftMutationHookResult = ReturnType<
-  typeof useDeleteDraftMutation
->;
-export type DeleteDraftMutationResult =
-  Apollo.MutationResult<DeleteDraftMutation>;
-export type DeleteDraftMutationOptions = Apollo.BaseMutationOptions<
-  DeleteDraftMutation,
-  DeleteDraftMutationVariables
->;
+export function useDeleteDraftMutation(baseOptions?: Apollo.MutationHookOptions<DeleteDraftMutation, DeleteDraftMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteDraftMutation, DeleteDraftMutationVariables>(DeleteDraftDocument, options);
+      }
+export type DeleteDraftMutationHookResult = ReturnType<typeof useDeleteDraftMutation>;
+export type DeleteDraftMutationResult = Apollo.MutationResult<DeleteDraftMutation>;
+export type DeleteDraftMutationOptions = Apollo.BaseMutationOptions<DeleteDraftMutation, DeleteDraftMutationVariables>;
 export const DeleteSiteDocument = gql`
-  mutation DeleteSite($siteId: String!) {
-    deleteSite(id: $siteId) {
-      id
-    }
+    mutation DeleteSite($siteId: String!) {
+  deleteSite(id: $siteId) {
+    id
   }
-`;
-export type DeleteSiteMutationFn = Apollo.MutationFunction<
-  DeleteSiteMutation,
-  DeleteSiteMutationVariables
->;
+}
+    `;
+export type DeleteSiteMutationFn = Apollo.MutationFunction<DeleteSiteMutation, DeleteSiteMutationVariables>;
 
 /**
  * __useDeleteSiteMutation__
@@ -1149,38 +657,21 @@ export type DeleteSiteMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useDeleteSiteMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    DeleteSiteMutation,
-    DeleteSiteMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<DeleteSiteMutation, DeleteSiteMutationVariables>(
-    DeleteSiteDocument,
-    options,
-  );
-}
-export type DeleteSiteMutationHookResult = ReturnType<
-  typeof useDeleteSiteMutation
->;
-export type DeleteSiteMutationResult =
-  Apollo.MutationResult<DeleteSiteMutation>;
-export type DeleteSiteMutationOptions = Apollo.BaseMutationOptions<
-  DeleteSiteMutation,
-  DeleteSiteMutationVariables
->;
+export function useDeleteSiteMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSiteMutation, DeleteSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteSiteMutation, DeleteSiteMutationVariables>(DeleteSiteDocument, options);
+      }
+export type DeleteSiteMutationHookResult = ReturnType<typeof useDeleteSiteMutation>;
+export type DeleteSiteMutationResult = Apollo.MutationResult<DeleteSiteMutation>;
+export type DeleteSiteMutationOptions = Apollo.BaseMutationOptions<DeleteSiteMutation, DeleteSiteMutationVariables>;
 export const DeleteLinkDocument = gql`
-  mutation DeleteLink($lastSaved: Float!, $draftId: String!, $linkId: String!) {
-    deleteLink(lastSaved: $lastSaved, draftId: $draftId, linkId: $linkId) {
-      id
-    }
+    mutation DeleteLink($lastSaved: Float!, $draftId: String!, $linkId: String!) {
+  deleteLink(lastSaved: $lastSaved, draftId: $draftId, linkId: $linkId) {
+    id
   }
-`;
-export type DeleteLinkMutationFn = Apollo.MutationFunction<
-  DeleteLinkMutation,
-  DeleteLinkMutationVariables
->;
+}
+    `;
+export type DeleteLinkMutationFn = Apollo.MutationFunction<DeleteLinkMutation, DeleteLinkMutationVariables>;
 
 /**
  * __useDeleteLinkMutation__
@@ -1201,39 +692,21 @@ export type DeleteLinkMutationFn = Apollo.MutationFunction<
  *   },
  * });
  */
-export function useDeleteLinkMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    DeleteLinkMutation,
-    DeleteLinkMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<DeleteLinkMutation, DeleteLinkMutationVariables>(
-    DeleteLinkDocument,
-    options,
-  );
-}
-export type DeleteLinkMutationHookResult = ReturnType<
-  typeof useDeleteLinkMutation
->;
-export type DeleteLinkMutationResult =
-  Apollo.MutationResult<DeleteLinkMutation>;
-export type DeleteLinkMutationOptions = Apollo.BaseMutationOptions<
-  DeleteLinkMutation,
-  DeleteLinkMutationVariables
->;
+export function useDeleteLinkMutation(baseOptions?: Apollo.MutationHookOptions<DeleteLinkMutation, DeleteLinkMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteLinkMutation, DeleteLinkMutationVariables>(DeleteLinkDocument, options);
+      }
+export type DeleteLinkMutationHookResult = ReturnType<typeof useDeleteLinkMutation>;
+export type DeleteLinkMutationResult = Apollo.MutationResult<DeleteLinkMutation>;
+export type DeleteLinkMutationOptions = Apollo.BaseMutationOptions<DeleteLinkMutation, DeleteLinkMutationVariables>;
 export const AddLinkDocument = gql`
-  mutation AddLink($data: LinkInput!, $siteId: String!, $draftId: String!) {
-    addLink(data: $data, siteId: $siteId, draftId: $draftId) {
-      ...site
-    }
+    mutation AddLink($data: LinkInput!, $draftId: String!) {
+  addLink(data: $data, draftId: $draftId) {
+    ...draft
   }
-  ${SiteFragmentDoc}
-`;
-export type AddLinkMutationFn = Apollo.MutationFunction<
-  AddLinkMutation,
-  AddLinkMutationVariables
->;
+}
+    ${DraftFragmentDoc}`;
+export type AddLinkMutationFn = Apollo.MutationFunction<AddLinkMutation, AddLinkMutationVariables>;
 
 /**
  * __useAddLinkMutation__
@@ -1249,26 +722,14 @@ export type AddLinkMutationFn = Apollo.MutationFunction<
  * const [addLinkMutation, { data, loading, error }] = useAddLinkMutation({
  *   variables: {
  *      data: // value for 'data'
- *      siteId: // value for 'siteId'
  *      draftId: // value for 'draftId'
  *   },
  * });
  */
-export function useAddLinkMutation(
-  baseOptions?: Apollo.MutationHookOptions<
-    AddLinkMutation,
-    AddLinkMutationVariables
-  >,
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useMutation<AddLinkMutation, AddLinkMutationVariables>(
-    AddLinkDocument,
-    options,
-  );
-}
+export function useAddLinkMutation(baseOptions?: Apollo.MutationHookOptions<AddLinkMutation, AddLinkMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddLinkMutation, AddLinkMutationVariables>(AddLinkDocument, options);
+      }
 export type AddLinkMutationHookResult = ReturnType<typeof useAddLinkMutation>;
 export type AddLinkMutationResult = Apollo.MutationResult<AddLinkMutation>;
-export type AddLinkMutationOptions = Apollo.BaseMutationOptions<
-  AddLinkMutation,
-  AddLinkMutationVariables
->;
+export type AddLinkMutationOptions = Apollo.BaseMutationOptions<AddLinkMutation, AddLinkMutationVariables>;
