@@ -131,6 +131,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     if (route.pathname) {
       setIsFullScreen(
         route.pathname === '/manage' ||
+          route.pathname === '/settings' ||
           getTitleFromPath(route.pathname) === '404',
       );
       setPage(getTitleFromPath(route.pathname));

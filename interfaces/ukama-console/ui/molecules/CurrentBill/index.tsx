@@ -3,7 +3,7 @@ import colors from '@/styles/theme/colors';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { Divider, Stack, Typography } from '@mui/material';
 import { format } from 'date-fns';
-import { LoadingWrapper } from '..';
+import LoadingWrapper from '../LoadingWrapper';
 type CurrentBillProps = {
   amount: string;
   billMonth: string;
@@ -18,7 +18,7 @@ const CurrentBill = ({
   loading,
 }: CurrentBillProps) => {
   return (
-    <RoundedCard>
+    <RoundedCard radius={'4px'}>
       <LoadingWrapper height={200} isLoading={loading}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="h6">

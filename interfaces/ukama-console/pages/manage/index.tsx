@@ -312,6 +312,7 @@ const Manage = () => {
         members: structureData(members?.getOrgMembers.members),
       }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberSearch]);
 
   useEffect(() => {

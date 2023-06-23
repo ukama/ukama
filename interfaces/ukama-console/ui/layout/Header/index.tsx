@@ -89,7 +89,7 @@ const Header = ({ onNavigate, isLoading, isOpen }: IHeaderProps) => {
                 <ManageAccountsIcon />
               </IconButton>
               <IconButton
-                onClick={() => onNavigate('Setting', '/setting')}
+                onClick={() => onNavigate('Settings', '/settings')}
                 sx={{ ...IconStyle }}
               >
                 <SettingsIcon />
