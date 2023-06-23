@@ -4,11 +4,16 @@ go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
+replace github.com/ukama/ukama/systems/registry/org => ../org
+
+replace github.com/ukama/ukama/systems/registry/network => ../network
+
 replace github.com/ukama/ukama/systems/common/services/msgClient => ../../services/msgClient
 
 replace github.com/ukama/ukama/systems/registry/node => ./
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/golang/protobuf v1.5.2
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/jackc/pgconn v1.13.0
@@ -16,12 +21,16 @@ require (
 	github.com/num30/config v0.0.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
+	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/registry/org v0.0.0-00010101000000-000000000000
 	github.com/vektra/mockery/v2 v2.14.0
 	google.golang.org/grpc v1.51.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
+	gorm.io/driver/postgres v1.4.5
 	gorm.io/gorm v1.24.3
 )
 
@@ -89,5 +98,4 @@ require (
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/postgres v1.3.10 // indirect
 )

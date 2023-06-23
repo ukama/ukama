@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -15,19 +14,16 @@ import (
 
 const MaxAttachedNodes = 2
 
-// NodeID must be lowercase
 type NodeRepo interface {
-	Add(node *Node, nestedFunc ...func() error) error
-	Get(id ukama.NodeID) (*Node, error)
-	GetAll() (*[]Node, error)
-	GetFreeNodes() (*[]Node, error)
-	Delete(id ukama.NodeID, nestedFunc ...func() error) error
-	Update(id ukama.NodeID, state *NodeState, nodeName *string, nestedFunc ...func() error) error
-	AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error
+	Add(*Node, func(*Node, *gorm.DB) error) error
+	Get(ukama.NodeID) (*Node, error)
+	GetForOrg(uuid.UUID) ([]Node, error)
+	GetAll() ([]Node, error)
+	Delete(ukama.NodeID, func(ukama.NodeID, *gorm.DB) error) error
+	Update(*Node, func(*Node, *gorm.DB) error) error
+	AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error
 	DetachNode(detachNodeId ukama.NodeID) error
 	GetNodeCount() (int64, int64, int64, error)
-	AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) error
-	RemoveNodeFromNetwork(nodeId ukama.NodeID) error
 }
 
 type nodeRepo struct {
@@ -40,20 +36,30 @@ func NewNodeRepo(db sql.Db) NodeRepo {
 	}
 }
 
-func (r *nodeRepo) Add(node *Node, nestedFunc ...func() error) error {
-	node.NodeID = strings.ToLower(node.NodeID)
+func (n *nodeRepo) Add(node *Node, nestedFunc func(node *Node, tx *gorm.DB) error) error {
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if nestedFunc != nil {
+			nestErr := nestedFunc(node, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
 
-	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-		return tx.Create(node)
-	}, nestedFunc...)
+		result := tx.Create(node)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
 
 	return err
 }
 
-func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
+func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	var node Node
 
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id=?", id.StringLowercase())
+	result := n.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id=?", id.StringLowercase())
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -62,140 +68,103 @@ func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	return &node, nil
 }
 
-func (r *nodeRepo) GetAll() (*[]Node, error) {
-	var node []Node
+func (n *nodeRepo) GetForOrg(orgId uuid.UUID) ([]Node, error) {
+	var nodes []Node
 
-	result := r.Db.GetGormDb().Preload(clause.Associations).Find(&node)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return &node, nil
-}
-
-func (r *nodeRepo) GetFreeNodes() (*[]Node, error) {
-	var node []Node
-
-	result := r.Db.GetGormDb().Preload(clause.Associations).Where("allocation = ?", false).Find(&node)
+	result := n.Db.GetGormDb().Preload(clause.Associations).Where("org_id = ?", orgId.String()).Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return &node, nil
+	return nodes, nil
 }
 
-func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
-	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-		d := tx.Delete(&Node{}, "node_id = ?", id.StringLowercase())
+func (n *nodeRepo) GetAll() ([]Node, error) {
+	var nodes []Node
 
-		if d.Error != nil {
-			return d
+	result := n.Db.GetGormDb().Preload(clause.Associations).Find(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return nodes, nil
+}
+
+// TODO: check for still allocated and attached nodes
+func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		result := tx.Delete(&Node{Id: nodeId.StringLowercase()})
+		if result.Error != nil {
+			return result.Error
 		}
 
-		if d.RowsAffected == 0 {
-			d.Error = gorm.ErrRecordNotFound
-
-			return d
+		if nestedFunc != nil {
+			nestErr := nestedFunc(nodeId, tx)
+			if nestErr != nil {
+				return nestErr
+			}
 		}
 
-		return d
-	}, nestedFunc...)
+		return nil
+	})
 
 	return err
 }
 
-// Update updated node with `id`. Only fields that are not nil are updated
-func (r *nodeRepo) Update(id ukama.NodeID, state *NodeState, nodeName *string, nestedFunc ...func() error) error {
-	var rowsAffected int64
-	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-		nd := Node{}
+// Update updated node with `id`. Only fields that are not nil are updated, eg name and state.
+func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) error {
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		result := tx.Clauses(clause.Returning{}).Updates(node)
 
-		if state != nil {
-			nd.State = *state
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
 		}
 
-		if nodeName != nil {
-			nd.Name = *nodeName
+		if result.Error != nil {
+			return result.Error
 		}
 
-		result := tx.Where("node_id=?", id.StringLowercase()).Updates(nd)
-		rowsAffected = result.RowsAffected
+		if nestedFunc != nil {
+			nestErr := nestedFunc(node, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
 
-		return result
-	}, nestedFunc...)
-
-	if rowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
+		return nil
+	})
 
 	return err
 }
 
-func (r *nodeRepo) AddNodeToNetwork(nodeId ukama.NodeID, networkID uuid.UUID) error {
-	node, err := r.Get(nodeId)
+func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error {
+	batchGet := func(nodeIds []string) ([]Site, error) {
+		var nodes []Site
+
+		result := n.Db.GetGormDb().Where("id IN ?", nodeIds).Find(&nodes)
+
+		if result.Error != nil {
+			return nil, result.Error
+		}
+
+		return nodes, nil
+	}
+
+	attachedNodeSites, err := batchGet(attachedNodeId)
 	if err != nil {
 		return err
 	}
 
-	if node.Allocation {
-		return status.Errorf(codes.InvalidArgument, "node is already assigned to network")
-	}
-
-	nd := Node{
-		Allocation: true,
-		Network: uuid.NullUUID{
-			UUID:  networkID,
-			Valid: true,
-		},
-	}
-
-	result := r.Db.GetGormDb().Where("node_id=?", node.NodeID).Updates(nd)
-	if result.Error != nil {
-		return fmt.Errorf("failed to update network id for %s for node: error %s", nodeId, result.Error)
-	}
-
-	return nil
-
-}
-
-func (r *nodeRepo) RemoveNodeFromNetwork(nodeId ukama.NodeID) error {
-	node, err := r.Get(nodeId)
+	res, err := batchGet([]string{nodeId.StringLowercase()})
 	if err != nil {
 		return err
 	}
 
-	if !node.Allocation {
-		return status.Errorf(codes.FailedPrecondition, "node is not yet assigned to network")
-	}
+	parentNodeSite := res[0]
 
-	res := r.Db.GetGormDb().Exec("select * from attached_nodes where attached_id=(select id from nodes where node_id=?) OR node_id=(select id from nodes where node_id=?)",
-		node.NodeID, node.NodeID)
-
-	if res.Error != nil {
-		return status.Errorf(codes.Internal, "failed to get node grouping result. error %s", res.Error.Error())
-	}
-
-	if res.RowsAffected > 0 {
-		return status.Errorf(codes.FailedPrecondition, "node is grouped with other nodes.")
-	}
-
-	nd := Node{
-		Network:    uuid.NullUUID{Valid: false},
-		Allocation: false,
-	}
-
-	result := r.Db.GetGormDb().Where("node_id=?", node.NodeID).Select("network", "allocation").Updates(nd)
-	if result.Error != nil {
-		return fmt.Errorf("failed to remove  node from network id for %s. error %s", nodeId, result.Error)
-	}
-
-	return nil
-}
-
-func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error {
-	parentNode, err := r.Get(nodeId)
+	parentNode, err := n.Get(nodeId)
 	if err != nil {
 		return err
 	}
@@ -212,20 +181,23 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 		return status.Errorf(codes.InvalidArgument, "max number of attached nodes is %d", MaxAttachedNodes)
 	}
 
-	err = r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		for _, n := range attachedNodeId {
-			an, err := r.Get(n)
-
+	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		for _, aNds := range attachedNodeSites {
+			aNd, err := ukama.ValidateNodeId(aNds.NodeId)
 			if err != nil {
 				return err
 			}
 
+			an, err := n.Get(aNd)
+			if err != nil {
+				return err
+			}
 			if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
 				return status.Errorf(codes.InvalidArgument, "cannot attach non amplifier node")
 			}
 
-			if !parentNode.Network.Valid || parentNode.Network != an.Network {
-				return status.Errorf(codes.InvalidArgument, "cannot attach nodes from different network")
+			if parentNodeSite.SiteId != aNds.SiteId {
+				return status.Errorf(codes.InvalidArgument, "cannot attach nodes from different sites")
 			}
 
 			parentNode.Attached = append(parentNode.Attached, an)
@@ -240,19 +212,15 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 	})
 
 	return err
-
 }
 
-// DetachNode removes node from parent node
-func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
-
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-
+func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Exec("delete from attached_nodes where attached_id=(select id from nodes where node_id=?) OR node_id=(select id from nodes where node_id=?)",
 			detachNodeId, detachNodeId)
 
 		if result.Error != nil {
-			return fmt.Errorf("failed to update network id for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
+			return fmt.Errorf("failed to remove from group for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
 		}
 
 		return nil
