@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/notification/mailer/pb/gen";
 
 import "google/protobuf/timestamp.proto";
 package ukama.notification.mailer.v1;

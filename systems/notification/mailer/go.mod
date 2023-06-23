@@ -1,6 +1,9 @@
 module github.com/ukama/ukama/systems/notification/mailer
 
 replace github.com/ukama/ukama/systems/common => ../../common
+replace github.com/ukama/ukama/systems/notification/mailer/mocks => ./mocks
+replace github.com/ukama/ukama/systems/notification/mailer => ./
+
 
 go 1.18
 

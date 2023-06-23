@@ -17,6 +17,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
+
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 )
@@ -127,7 +128,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 
 	response := &pb.SendEmailResponse{
 		Message: "Email sent successfully",
-		MailId:mailId.String(),
+		MailId:  mailId.String(),
 	}
 
 	return response, nil
@@ -147,7 +148,7 @@ func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdReq
 		log.Error("Error while getting email" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "Failed to get email")
 	}
-log.Infof("getting email with id %v", mail.MailId.String())
+	log.Infof("getting email with id %v", mail.MailId.String())
 	response := &pb.GetEmailByIdResponse{
 		MailId:  mail.MailId.String(),
 		Subject: mail.Subject,
