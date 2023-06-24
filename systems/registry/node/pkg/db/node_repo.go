@@ -6,6 +6,7 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -23,7 +24,7 @@ type NodeRepo interface {
 	Update(*Node, func(*Node, *gorm.DB) error) error
 	AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error
 	DetachNode(detachNodeId ukama.NodeID) error
-	GetNodeCount() (int64, int64, int64, error)
+	GetNodeCount() (int64, error)
 }
 
 type nodeRepo struct {
@@ -229,20 +230,24 @@ func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	return err
 }
 
-func (r *nodeRepo) GetNodeCount() (nodeCount, activeNodeCount, inactiveNodeCount int64, err error) {
+func (r *nodeRepo) GetNodeCount() (nodeCount int64, err error) {
 	db := r.Db.GetGormDb()
 
 	if err := db.Model(&Node{}).Count(&nodeCount).Error; err != nil {
-		return 0, 0, 0, err
+		return 0, err
 	}
 
-	if err := db.Preload(clause.Associations).Model(&Node{}).Where("NodeStatus.Conn != ?", Online).Count(&activeNodeCount).Error; err != nil {
-		return 0, 0, 0, err
-	}
+	// res := db.Model(&Node{}).Joins("JOIN node_statuses n on n.node_id = node.id AND n.conn = ?", Online).Find(&node)
+	// if res.Error != nil {
+	// 	return 0, 0, 0, res.Error
+	// }
+	// activeNodeCount = res.RowsAffected
 
-	if err := db.Preload(clause.Associations).Model(&Node{}).Where("NodeStatus.Conn != ?", Offline).Count(&inactiveNodeCount).Error; err != nil {
-		return 0, 0, 0, err
-	}
+	// ires := db.Model(&Node{}).Joins("JOIN node_statuses n on n.node_id = node.id AND n.conn = ?", Offline).Find(&node)
+	// if ires.Error != nil {
+	// 	return 0, 0, 0, ires.Error
+	// }
+	// inactiveNodeCount = res.RowsAffected
 
-	return nodeCount, activeNodeCount, inactiveNodeCount, nil
+	return nodeCount, nil
 }

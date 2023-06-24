@@ -245,6 +245,8 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
 }
 
@@ -555,12 +557,21 @@ func (n *NodeServer) getFreeNodes(ctx context.Context, req *pb.GetNodesRequest) 
 }
 
 func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
-	nodesCount, actCount, inactCount, err := n.nodeRepo.GetNodeCount()
+	nodesCount, err := n.nodeRepo.GetNodeCount()
 	if err != nil {
 		log.Errorf("Error while getting node count %s", err.Error())
 
 		return
 	}
+
+	actCount, inactCount, err := n.nodeStatusRepo.GetNodeCount()
+	if err != nil {
+		log.Errorf("Error while getting node count %s", err.Error())
+
+		return
+	}
+
+	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount, actCount, inactCount)
 
 	for _, arg := range args {
 		switch arg {

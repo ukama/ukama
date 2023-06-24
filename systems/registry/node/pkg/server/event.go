@@ -89,15 +89,15 @@ func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineE
 		if err != nil {
 			return err
 		}
-	} else {
-		/* Update node status */
-		_, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
-			NodeId:       node.Node.Id,
-			Connectivity: db.Online.String(),
-		})
-		if err != nil {
-			return err
-		}
+	}
+
+	/* Update node status */
+	_, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
+		NodeId:       msg.GetNodeId(),
+		Connectivity: db.Online.String(),
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -118,7 +118,7 @@ func ParseConnectivityState(s string) Connectivity {
 }
 
 type Site struct {
-	NodeId    string    `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23;not null"`
+	NodeId    string    `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id);size:23;not null"`
 	SiteId    uuid.UUID `gorm:"type:uuid"`
 	NetworkId uuid.UUID `gorm:"type:uuid;"`
 	CreatedAt time.Time
