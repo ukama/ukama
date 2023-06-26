@@ -1,4 +1,4 @@
-import { Site } from '@/generated/planning-tool';
+import { Link, Site } from '@/generated/planning-tool';
 import Leaflet, { LatLngLiteral } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -19,12 +19,15 @@ interface IMap {
   data: Site[];
   id: string;
   cursor: any;
+  links?: Link[];
   children: any;
   className?: string;
+  isAddLink: boolean;
   zoom?: number | undefined;
   center: LatLngLiteral;
   handleAction: (a: Site) => void;
   handleDeleteSite: (a: string) => void;
+  handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
@@ -33,16 +36,19 @@ interface IMap {
 const Map = ({
   id,
   zoom,
-  data,
   center,
   cursor,
   setZoom,
   children,
   className,
+  isAddLink,
+  links = [],
+  data: sites,
   handleAction,
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
+  handleAddLinkToSite,
 }: IMap) => {
   let mapClassName = styles.map;
 
@@ -72,14 +78,17 @@ const Map = ({
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
       <CustomMarker
-        data={data}
+        data={sites}
         zoom={zoom}
+        links={links}
         center={center}
         setZoom={setZoom}
+        isAddLink={isAddLink}
         handleAction={handleAction}
         handleAddMarker={handleAddMarker}
         handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}
+        handleAddLinkToSite={handleAddLinkToSite}
       />
     </MapContainer>
   );

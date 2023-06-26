@@ -1,8 +1,10 @@
 import { commonData, snackbarMessage } from '@/app-recoil';
 import {
   Draft,
+  Link,
   Site,
   useAddDraftMutation,
+  useAddLinkMutation,
   useAddSiteMutation,
   useDeleteDraftMutation,
   useDeleteSiteMutation,
@@ -20,14 +22,51 @@ import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import Map from '@/ui/molecules/Map';
 import {
   LeftOverlayUI,
+  PlanningSummary,
   RightOverlayUI,
-  SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
 import { calculateCenterLatLng, formatSecondsToDuration } from '@/utils';
 import { AlertColor, Popover, Stack, Typography } from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
 import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
+
+const POWER_SUMMARY = {
+  sites: [
+    {
+      id: 'site-id-1',
+      name: 'Site 1',
+      status: 'up',
+      usage: 10,
+      panels: 1,
+      battries: 2,
+    },
+    {
+      id: 'site-id-2',
+      name: 'Site 2',
+      status: 'up',
+      usage: 20,
+      panels: 1,
+      battries: 4,
+    },
+    {
+      id: 'site-id-3',
+      name: 'Site 3',
+      status: 'up',
+      usage: 30,
+      panels: 1,
+      battries: 3,
+    },
+    {
+      id: 'site-id-4',
+      name: 'Site 4',
+      status: 'up',
+      usage: 5,
+      panels: 1,
+      battries: 2,
+    },
+  ],
+};
 
 const ZOOM = 3;
 const SITE_INIT = {
@@ -66,6 +105,11 @@ const Page = () => {
   });
   const [addSite, setAddSite] = useState(false);
   const [addLink, setAddLink] = useState(false);
+  const [linkSites, setLinkSites] = useState<Link>({
+    id: '',
+    siteA: '',
+    siteB: '',
+  });
   const [togglePower, setTogglePower] = useState(false);
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
@@ -172,13 +216,21 @@ const Page = () => {
   });
   const [updateLocationCall, { loading: updateLocationLoading }] =
     useUpdateLocationMutation({
-      onCompleted: () => {
-        refetchDrafts();
-      },
+      onCompleted: () => refetchDrafts(),
       onError: (error) => {
         showAlert('update-site-location-error', error.message, 'error', true);
       },
     });
+
+  const [addLinkCall, { loading: addlinkLoading }] = useAddLinkMutation({
+    onCompleted: () => {
+      refetchDrafts();
+      showAlert('add-link-success', `Link created.`, 'success', true);
+    },
+    onError: (error) => {
+      showAlert('add-link-error', error.message, 'error', true);
+    },
+  });
 
   const [deleteDraftCall, { loading: deleteDraftLoading }] =
     useDeleteDraftMutation({
@@ -224,6 +276,21 @@ const Page = () => {
       setCenter({ lat: 37.7780627, lng: -121.9822475 } as LatLngLiteral);
     }
   }, [selectedDraft]);
+
+  useEffect(() => {
+    if (linkSites.siteA && linkSites.siteB) {
+      addLinkCall({
+        variables: {
+          draftId: selectedDraft?.id || '',
+          data: {
+            lastSaved: getLastSavedInt(),
+            siteA: linkSites.siteA,
+            siteB: linkSites.siteB,
+          },
+        },
+      });
+    }
+  }, [linkSites]);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorSiteInfo(event.currentTarget);
@@ -343,6 +410,16 @@ const Page = () => {
       },
     });
 
+  const handleAddLinkToSite = (siteId: string) => {
+    if (addLink) {
+      if (!linkSites.siteA) {
+        setLinkSites({ ...linkSites, siteA: siteId });
+      } else if (!linkSites.siteB) {
+        setLinkSites({ ...linkSites, siteB: siteId });
+        setAddLink(false);
+      }
+    }
+  };
   return (
     <>
       <Popover
@@ -357,15 +434,16 @@ const Page = () => {
         sx={{ top: 4, left: -40 }}
         PaperProps={{
           sx: {
-            width: '204px',
+            width: '220px',
             padding: '16px 24px',
           },
         }}
       >
-        <SiteSummary
-          title={'Site summary'}
-          subtitle={selectedDraft?.sites.length || 0}
+        <PlanningSummary
+          subtitleOne={`Sites`}
+          subtitleTwo={`Power`}
           siteSummary={selectedDraft?.sites || []}
+          powerSummary={POWER_SUMMARY}
         />
       </Popover>
       <Stack
@@ -402,18 +480,21 @@ const Page = () => {
         <PageContainer sx={{ padding: 0, mt: '12px' }}>
           <Map
             width={800}
+            zoom={zoom}
             height={418}
             center={center}
             setZoom={setZoom}
             isAddSite={addSite}
+            isAddLink={addLink}
             id={'site-planning-map'}
             className={styles.homeMap}
             handleAction={handleSiteAction}
             data={selectedDraft?.sites || []}
             handleAddMarker={handleMarkerAdd}
+            links={selectedDraft?.links || []}
             handleDeleteSite={handleDeleteSite}
             handleDragMarker={handleMarkerDrag}
-            zoom={zoom}
+            handleAddLinkToSite={handleAddLinkToSite}
           >
             {() => (
               <>

@@ -9,7 +9,6 @@ import {
   Draft,
   LinkInput,
   LocationInput,
-  Site,
   SiteInput,
   Event as TEvent,
   Location as TLocation,
@@ -23,7 +22,8 @@ export class DraftResolver {
     const dr = await ctx.prisma.draft.findUnique({
       where: { id: id },
       include: {
-        sites: { include: { location: true, links: true } },
+        links: true,
+        sites: { include: { location: true } },
         events: true,
       },
     });
@@ -34,7 +34,8 @@ export class DraftResolver {
     const dr = await ctx.prisma.draft.findMany({
       where: { userId: userId },
       include: {
-        sites: { include: { location: true, links: true } },
+        links: true,
+        sites: { include: { location: true } },
         events: true,
       },
     });
@@ -90,7 +91,8 @@ export class DraftResolver {
         },
       },
       include: {
-        sites: { include: { location: true, links: true } },
+        links: true,
+        sites: { include: { location: true } },
         events: true,
       },
     });
@@ -131,7 +133,8 @@ export class DraftResolver {
         },
       },
       include: {
-        sites: { include: { location: true, links: true } },
+        links: true,
+        sites: { include: { location: true } },
         events: true,
       },
     });
@@ -150,7 +153,8 @@ export class DraftResolver {
         name: name,
       },
       include: {
-        sites: { include: { location: true, links: true } },
+        links: true,
+        sites: { include: { location: true } },
         events: true,
       },
     });
@@ -167,7 +171,8 @@ export class DraftResolver {
         createdAt: new Date().toISOString(),
       },
       include: {
-        sites: { include: { location: true, links: true } },
+        links: true,
+        sites: { include: { location: true } },
         events: true,
       },
     });
@@ -209,31 +214,27 @@ export class DraftResolver {
     return { id: id };
   }
 
-  @Mutation(() => Site)
+  @Mutation(() => Draft)
   async addLink(
     @Arg("draftId") draftId: string,
-    @Arg("siteId") siteId: string,
     @Arg("data") data: LinkInput,
     @Ctx() ctx: Context
   ) {
-    const l = await ctx.prisma.site.update({
-      where: { id: siteId },
+    const l = await ctx.prisma.draft.update({
+      where: { id: draftId },
       data: {
+        lastSaved: data.lastSaved,
         links: {
           create: {
-            data: data.data,
-            linkWith: data.linkWith,
+            siteA: data.siteA,
+            siteB: data.siteB,
           },
         },
       },
-      include: { location: true, links: true },
-    });
-    await ctx.prisma.draft.update({
-      where: {
-        id: draftId,
-      },
-      data: {
-        lastSaved: data.lastSaved,
+      include: {
+        links: true,
+        sites: { include: { location: true } },
+        events: true,
       },
     });
     return l;
