@@ -18,19 +18,6 @@ import { DataTableWithOptionColumns } from './tableColumns';
 const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
-export const GEO_DATA = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'LineString',
-        coordinates: [[0, 1]],
-      },
-    },
-  ],
-};
 const SETTING_MENU = [
   { id: 1, title: 'Account Settings' },
   { id: 2, title: 'Network Settings' },

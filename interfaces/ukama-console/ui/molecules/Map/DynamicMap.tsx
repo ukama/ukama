@@ -1,7 +1,5 @@
-import { GEO_DATA } from '@/constants';
 import { Link, Site } from '@/generated/planning-tool';
-import { colors } from '@/styles/theme';
-import Leaflet, { LatLngLiteral, LatLngTuple } from 'leaflet';
+import Leaflet, { LatLngLiteral } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import 'leaflet/dist/leaflet.css';
@@ -24,10 +22,12 @@ interface IMap {
   links?: Link[];
   children: any;
   className?: string;
+  isAddLink: boolean;
   zoom?: number | undefined;
   center: LatLngLiteral;
   handleAction: (a: Site) => void;
   handleDeleteSite: (a: string) => void;
+  handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
@@ -36,17 +36,19 @@ interface IMap {
 const Map = ({
   id,
   zoom,
-  data: sites,
-  links = [],
   center,
   cursor,
   setZoom,
   children,
   className,
+  isAddLink,
+  links = [],
+  data: sites,
   handleAction,
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
+  handleAddLinkToSite,
 }: IMap) => {
   let mapClassName = styles.map;
 
@@ -63,41 +65,6 @@ const Map = ({
     })();
   }, []);
 
-  const getLatLng = (
-    sites: Site[],
-    siteA: string,
-    siteB: string,
-  ): LatLngTuple[] => {
-    if (sites && sites.length > 0) {
-      const locs: LatLngTuple[] = [];
-      for (let i = 0; i < sites.length; i++) {
-        if (sites[i].id === siteA || sites[i].id === siteB) {
-          locs.push([
-            parseFloat(sites[i].location.lat),
-            parseFloat(sites[i].location.lng),
-          ]);
-        }
-      }
-      return locs;
-    }
-    return [];
-  };
-
-  const getGeoData = (links: Link[]): any => {
-    for (let i = 0; i < links.length; i++) {
-      const geoData = GEO_DATA;
-      const locTulp: LatLngTuple[] = getLatLng(
-        sites,
-        links[i].siteA,
-        links[i].siteB,
-      );
-      geoData.features[0].geometry.coordinates = locTulp;
-      console.log(JSON.stringify(geoData));
-      return geoData;
-    }
-    return { type: 'FeatureCollection', features: [] };
-  };
-
   return (
     <MapContainer
       id={id}
@@ -110,23 +77,18 @@ const Map = ({
     >
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
-      {links && links.length && (
-        <ReactLeaflet.GeoJSON
-          data={getGeoData(links)}
-          style={{
-            color: colors.primaryMain,
-          }}
-        />
-      )}
       <CustomMarker
         data={sites}
         zoom={zoom}
+        links={links}
         center={center}
         setZoom={setZoom}
+        isAddLink={isAddLink}
         handleAction={handleAction}
         handleAddMarker={handleAddMarker}
         handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}
+        handleAddLinkToSite={handleAddLinkToSite}
       />
     </MapContainer>
   );

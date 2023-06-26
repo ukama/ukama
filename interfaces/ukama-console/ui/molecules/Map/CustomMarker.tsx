@@ -1,5 +1,6 @@
-import { Site } from '@/generated/planning-tool';
-import Leaflet, { LatLngLiteral } from 'leaflet';
+import { Link, Site } from '@/generated/planning-tool';
+import { colors } from '@/styles/theme';
+import Leaflet, { LatLngLiteral, LatLngTuple, Polyline } from 'leaflet';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,11 +8,14 @@ import SitePopup from '../SitePopup';
 
 interface ICustomMarker {
   data: Site[];
+  links: Link[];
+  isAddLink: boolean;
   zoom?: number | undefined;
   center: LatLngLiteral | null;
   handleAction: (a: Site) => void;
   handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
+  handleAddLinkToSite: (id: string) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }
@@ -22,18 +26,47 @@ interface IMarker {
   lng: number;
 }
 
+const getLatLng = (sites: Site[], links: Link[]): LatLngTuple[] => {
+  if (sites && sites.length > 0) {
+    const locs: LatLngTuple[] = [];
+    for (let i = 0; i < links.length; i++) {
+      const siteA = links[i].siteA;
+      const siteB = links[i].siteB;
+      sites.forEach((site) => {
+        if (site.id === siteA || site.id === siteB) {
+          const l: LatLngTuple = [
+            parseFloat(site.location.lat),
+            parseFloat(site.location.lng),
+          ];
+          if (!locs.toString().includes(l.toString()))
+            locs.push([
+              parseFloat(site.location.lat),
+              parseFloat(site.location.lng),
+            ]);
+        }
+      });
+    }
+    return locs.length === 1 ? [] : locs;
+  }
+  return [];
+};
+
 const CustomMarker = ({
   data,
   zoom,
+  links,
   center,
   setZoom,
+  isAddLink,
   handleAction,
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
+  handleAddLinkToSite,
 }: ICustomMarker) => {
   const map = useMap();
   const [markers, setMarkers] = useState<IMarker[]>([]);
+  const [polylines, setPolylines] = useState<Polyline>();
 
   useEffect(() => {
     map.setMaxBounds([
@@ -56,6 +89,13 @@ const CustomMarker = ({
   }, [center]);
 
   useEffect(() => {
+    polylines?.removeFrom(map);
+    var latlngs = getLatLng(data, links);
+    const linesLayer = Leaflet.polyline(latlngs, {
+      color: colors.primaryMain,
+    }).addTo(map);
+    setPolylines(linesLayer);
+
     const m: any = [];
     data.map((item) => {
       m.push({
@@ -115,6 +155,18 @@ const CustomMarker = ({
                     },
                   ]);
                   handleDragMarker(event.target.getLatLng(), item.location.id);
+                },
+                popupopen: (event: any) => {
+                  if (isAddLink) {
+                    event.target.closePopup();
+                    const { lat, lng } = event.target.getLatLng();
+                    const s = data.find(
+                      (d) =>
+                        d.location.lat.includes(`${lat}`) &&
+                        d.location.lng.includes(`${lng}`),
+                    );
+                    s?.id && handleAddLinkToSite(s?.id);
+                  }
                 },
               }}
             >
