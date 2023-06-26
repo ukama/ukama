@@ -17,12 +17,14 @@ interface IMap {
   width?: number;
   height?: number;
   links?: Link[];
+  isAddLink: boolean;
   isAddSite: boolean;
   className?: string;
   zoom?: number | undefined;
   center: LatLngLiteral;
   handleAction: (a: Site) => void;
   handleDeleteSite: (a: string) => void;
+  handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
@@ -37,11 +39,13 @@ const Map = ({
   setZoom,
   children,
   isAddSite,
+  isAddLink,
   className,
   handleAction,
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
+  handleAddLinkToSite,
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
 }: IMap) => {
@@ -60,11 +64,13 @@ const Map = ({
         center={center}
         setZoom={setZoom}
         cursor={isAddSite}
+        isAddLink={isAddLink}
         className={className}
         handleAction={handleAction}
         handleAddMarker={handleAddMarker}
         handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}
+        handleAddLinkToSite={handleAddLinkToSite}
       >
         {children}
       </DynamicMap>

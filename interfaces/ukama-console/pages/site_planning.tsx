@@ -1,8 +1,10 @@
 import { commonData, snackbarMessage } from '@/app-recoil';
 import {
   Draft,
+  Link,
   Site,
   useAddDraftMutation,
+  useAddLinkMutation,
   useAddSiteMutation,
   useDeleteDraftMutation,
   useDeleteSiteMutation,
@@ -103,6 +105,11 @@ const Page = () => {
   });
   const [addSite, setAddSite] = useState(false);
   const [addLink, setAddLink] = useState(false);
+  const [linkSites, setLinkSites] = useState<Link>({
+    id: '',
+    siteA: '',
+    siteB: '',
+  });
   const [togglePower, setTogglePower] = useState(false);
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
@@ -209,13 +216,21 @@ const Page = () => {
   });
   const [updateLocationCall, { loading: updateLocationLoading }] =
     useUpdateLocationMutation({
-      onCompleted: () => {
-        refetchDrafts();
-      },
+      onCompleted: () => refetchDrafts(),
       onError: (error) => {
         showAlert('update-site-location-error', error.message, 'error', true);
       },
     });
+
+  const [addLinkCall, { loading: addlinkLoading }] = useAddLinkMutation({
+    onCompleted: () => {
+      refetchDrafts();
+      showAlert('add-link-success', `Link created.`, 'success', true);
+    },
+    onError: (error) => {
+      showAlert('add-link-error', error.message, 'error', true);
+    },
+  });
 
   const [deleteDraftCall, { loading: deleteDraftLoading }] =
     useDeleteDraftMutation({
@@ -261,6 +276,21 @@ const Page = () => {
       setCenter({ lat: 37.7780627, lng: -121.9822475 } as LatLngLiteral);
     }
   }, [selectedDraft]);
+
+  useEffect(() => {
+    if (linkSites.siteA && linkSites.siteB) {
+      addLinkCall({
+        variables: {
+          draftId: selectedDraft?.id || '',
+          data: {
+            lastSaved: getLastSavedInt(),
+            siteA: linkSites.siteA,
+            siteB: linkSites.siteB,
+          },
+        },
+      });
+    }
+  }, [linkSites]);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorSiteInfo(event.currentTarget);
@@ -380,6 +410,16 @@ const Page = () => {
       },
     });
 
+  const handleAddLinkToSite = (siteId: string) => {
+    if (addLink) {
+      if (!linkSites.siteA) {
+        setLinkSites({ ...linkSites, siteA: siteId });
+      } else if (!linkSites.siteB) {
+        setLinkSites({ ...linkSites, siteB: siteId });
+        setAddLink(false);
+      }
+    }
+  };
   return (
     <>
       <Popover
@@ -440,19 +480,21 @@ const Page = () => {
         <PageContainer sx={{ padding: 0, mt: '12px' }}>
           <Map
             width={800}
+            zoom={zoom}
             height={418}
             center={center}
             setZoom={setZoom}
             isAddSite={addSite}
+            isAddLink={addLink}
             id={'site-planning-map'}
             className={styles.homeMap}
-            links={selectedDraft?.links || []}
             handleAction={handleSiteAction}
             data={selectedDraft?.sites || []}
             handleAddMarker={handleMarkerAdd}
+            links={selectedDraft?.links || []}
             handleDeleteSite={handleDeleteSite}
             handleDragMarker={handleMarkerDrag}
-            zoom={zoom}
+            handleAddLinkToSite={handleAddLinkToSite}
           >
             {() => (
               <>
