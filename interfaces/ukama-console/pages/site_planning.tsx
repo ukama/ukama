@@ -1,7 +1,6 @@
 import { commonData, snackbarMessage } from '@/app-recoil';
 import {
   Draft,
-  Link,
   Site,
   useAddDraftMutation,
   useAddLinkMutation,
@@ -85,6 +84,11 @@ const SITE_INIT = {
   },
 };
 
+const INIT_LINK = {
+  siteA: '',
+  siteB: '',
+};
+
 const getMarkers = (sites: Site[]) => {
   return sites.map((site) => ({
     lat: parseFloat(site.location.lat),
@@ -103,13 +107,11 @@ const Page = () => {
     lat: 37.7780627,
     lng: -121.9822475,
   });
-  const [addSite, setAddSite] = useState(false);
-  const [addLink, setAddLink] = useState(false);
-  const [linkSites, setLinkSites] = useState<Link>({
-    id: '',
-    siteA: '',
-    siteB: '',
+  const [mapInteraction, setMapInteraction] = useState({
+    isAddLink: false,
+    isAddSite: false,
   });
+  const [linkSites, setLinkSites] = useState(INIT_LINK);
   const [togglePower, setTogglePower] = useState(false);
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
@@ -224,8 +226,9 @@ const Page = () => {
 
   const [addLinkCall, { loading: addlinkLoading }] = useAddLinkMutation({
     onCompleted: () => {
+      setLinkSites(INIT_LINK);
       refetchDrafts();
-      showAlert('add-link-success', `Link created.`, 'success', true);
+      showAlert('add-link-success', `Link created`, 'success', true);
     },
     onError: (error) => {
       showAlert('add-link-error', error.message, 'error', true);
@@ -319,8 +322,8 @@ const Page = () => {
   };
 
   const handleMarkerAdd = (e: LatLngLiteral, id: string) => {
-    if (addSite) {
-      setAddSite(false);
+    if (mapInteraction.isAddSite) {
+      setMapInteraction({ ...mapInteraction, isAddSite: false });
       addSiteCall({
         variables: {
           draftId: selectedDraft?.id || '',
@@ -374,8 +377,16 @@ const Page = () => {
     setCenter(loc);
   };
 
-  const handleAddSite = () => setAddSite(true);
-  const handleAddLink = () => setAddLink(true);
+  const handleAddSite = () =>
+    setMapInteraction({
+      isAddLink: false,
+      isAddSite: !mapInteraction.isAddSite,
+    });
+  const handleAddLink = () =>
+    setMapInteraction({
+      isAddLink: !mapInteraction.isAddLink,
+      isAddSite: false,
+    });
   const handleOnOff = () => setTogglePower(!togglePower);
   const handleAddDraft = () => {
     addDraftCall({
@@ -411,15 +422,16 @@ const Page = () => {
     });
 
   const handleAddLinkToSite = (siteId: string) => {
-    if (addLink) {
+    if (mapInteraction.isAddLink) {
       if (!linkSites.siteA) {
         setLinkSites({ ...linkSites, siteA: siteId });
       } else if (!linkSites.siteB) {
         setLinkSites({ ...linkSites, siteB: siteId });
-        setAddLink(false);
+        setMapInteraction({ ...mapInteraction, isAddLink: false });
       }
     }
   };
+  console.log(mapInteraction);
   return (
     <>
       <Popover
@@ -484,9 +496,8 @@ const Page = () => {
             height={418}
             center={center}
             setZoom={setZoom}
-            isAddSite={addSite}
-            isAddLink={addLink}
             id={'site-planning-map'}
+            linkSites={linkSites}
             className={styles.homeMap}
             handleAction={handleSiteAction}
             data={selectedDraft?.sites || []}
@@ -494,6 +505,8 @@ const Page = () => {
             links={selectedDraft?.links || []}
             handleDeleteSite={handleDeleteSite}
             handleDragMarker={handleMarkerDrag}
+            isAddSite={mapInteraction.isAddSite}
+            isAddLink={mapInteraction.isAddLink}
             handleAddLinkToSite={handleAddLinkToSite}
           >
             {() => (
@@ -502,6 +515,8 @@ const Page = () => {
                   handleAddSite={handleAddSite}
                   handleAddLink={handleAddLink}
                   isCurrentDraft={!!selectedDraft}
+                  isAddSite={mapInteraction.isAddSite}
+                  isAddLink={mapInteraction.isAddLink}
                   handleLocationSelected={handleLocationSelected}
                 />
                 <RightOverlayUI

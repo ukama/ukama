@@ -17,11 +17,12 @@ interface IMap {
   width?: number;
   height?: number;
   links?: Link[];
+  linkSites: any;
   isAddLink: boolean;
   isAddSite: boolean;
   className?: string;
-  zoom?: number | undefined;
   center: LatLngLiteral;
+  zoom?: number | undefined;
   handleAction: (a: Site) => void;
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
@@ -38,6 +39,7 @@ const Map = ({
   center,
   setZoom,
   children,
+  linkSites,
   isAddSite,
   isAddLink,
   className,
@@ -65,6 +67,7 @@ const Map = ({
         setZoom={setZoom}
         cursor={isAddSite}
         isAddLink={isAddLink}
+        linkSites={linkSites}
         className={className}
         handleAction={handleAction}
         handleAddMarker={handleAddMarker}

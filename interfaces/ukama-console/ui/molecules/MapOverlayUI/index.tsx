@@ -24,11 +24,10 @@ import TabPanel from '../TabPanel';
 const LeftIconButtonStyle = {
   zIndex: 400,
   borderRadius: '4px',
-  backgroundColor: colors.primaryDark,
   boxShadow:
     '0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px rgba(0, 0, 0, 0.14), 0px 1px 5px rgba(0, 0, 0, 0.12)',
   ':hover': {
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.primaryMain,
     svg: {
       path: {
         fill: colors.white,
@@ -56,6 +55,8 @@ const RightIconButtonStyle = {
 };
 
 interface ILeftOverlayUI {
+  isAddSite: boolean;
+  isAddLink: boolean;
   handleAddSite: Function;
   handleAddLink: Function;
   isCurrentDraft: boolean;
@@ -63,6 +64,8 @@ interface ILeftOverlayUI {
 }
 
 const LeftOverlayUI = ({
+  isAddSite,
+  isAddLink,
   handleAddLink,
   handleAddSite,
   isCurrentDraft,
@@ -86,7 +89,12 @@ const LeftOverlayUI = ({
       {isCurrentDraft && (
         <DarkTooltip title="Place site" placement="right-end">
           <IconButton
-            sx={LeftIconButtonStyle}
+            sx={{
+              ...LeftIconButtonStyle,
+              backgroundColor: isAddSite
+                ? colors.primaryMain
+                : colors.primaryDark,
+            }}
             onClick={(e) => {
               e.bubbles = false;
               handleAddSite();
@@ -99,7 +107,12 @@ const LeftOverlayUI = ({
       {isCurrentDraft && (
         <DarkTooltip title="Add Link" placement="right-end">
           <IconButton
-            sx={LeftIconButtonStyle}
+            sx={{
+              ...LeftIconButtonStyle,
+              backgroundColor: isAddLink
+                ? colors.primaryMain
+                : colors.primaryDark,
+            }}
             onClick={(e) => {
               e.stopPropagation();
               handleAddLink();

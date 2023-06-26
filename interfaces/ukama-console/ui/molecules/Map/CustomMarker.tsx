@@ -5,10 +5,10 @@ import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { v4 as uuidv4 } from 'uuid';
 import SitePopup from '../SitePopup';
-
 interface ICustomMarker {
   data: Site[];
   links: Link[];
+  linkSites: any;
   isAddLink: boolean;
   zoom?: number | undefined;
   center: LatLngLiteral | null;
@@ -38,11 +38,11 @@ const getLatLng = (sites: Site[], links: Link[]): LatLngTuple[] => {
             parseFloat(site.location.lat),
             parseFloat(site.location.lng),
           ];
-          if (!locs.toString().includes(l.toString()))
-            locs.push([
-              parseFloat(site.location.lat),
-              parseFloat(site.location.lng),
-            ]);
+          // if (!locs.toString().includes(l.toString()))
+          locs.push([
+            parseFloat(site.location.lat),
+            parseFloat(site.location.lng),
+          ]);
         }
       });
     }
@@ -58,6 +58,7 @@ const CustomMarker = ({
   center,
   setZoom,
   isAddLink,
+  linkSites,
   handleAction,
   handleAddMarker,
   handleDeleteSite,
@@ -92,7 +93,7 @@ const CustomMarker = ({
     polylines?.removeFrom(map);
     var latlngs = getLatLng(data, links);
     const linesLayer = Leaflet.polyline(latlngs, {
-      color: colors.primaryMain,
+      color: colors.primaryLight,
     }).addTo(map);
     setPolylines(linesLayer);
 
@@ -132,12 +133,23 @@ const CustomMarker = ({
       {data.length > 0 &&
         markers.length > 0 &&
         data.map((item) => {
+          const color =
+            linkSites.siteA === item.id || linkSites.siteB === item.id
+              ? colors.secondaryMain
+              : colors.primaryMain;
           const m = markers.find((m) => m.id === item.location.id);
+          const svgIcon = Leaflet.divIcon({
+            html: `<svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiBox-root css-uqopch" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="LocationOnIcon" fill=${color}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>`,
+            className: '',
+            iconSize: [28, 28],
+            iconAnchor: [14, 26],
+          });
           return (
             <Marker
               autoPan
               draggable
               key={item.id}
+              icon={svgIcon}
               title={item.name}
               position={{
                 lat: m?.lat || 0,
@@ -157,9 +169,11 @@ const CustomMarker = ({
                   handleDragMarker(event.target.getLatLng(), item.location.id);
                 },
                 popupopen: (event: any) => {
+                  console.log('popupopen: ', isAddLink);
                   if (isAddLink) {
                     event.target.closePopup();
                     const { lat, lng } = event.target.getLatLng();
+                    console.log('Cords: ', lat, lng, markers);
                     const s = data.find(
                       (d) =>
                         d.location.lat.includes(`${lat}`) &&
