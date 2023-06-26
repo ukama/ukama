@@ -21,6 +21,7 @@ interface IMap {
   cursor: any;
   links?: Link[];
   children: any;
+  linkSites: any;
   className?: string;
   isAddLink: boolean;
   zoom?: number | undefined;
@@ -40,6 +41,7 @@ const Map = ({
   cursor,
   setZoom,
   children,
+  linkSites,
   className,
   isAddLink,
   links = [],
@@ -83,6 +85,7 @@ const Map = ({
         links={links}
         center={center}
         setZoom={setZoom}
+        linkSites={linkSites}
         isAddLink={isAddLink}
         handleAction={handleAction}
         handleAddMarker={handleAddMarker}
