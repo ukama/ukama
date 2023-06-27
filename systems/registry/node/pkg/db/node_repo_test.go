@@ -316,6 +316,14 @@ func TestNodeRepo_Delete(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("NodeFound", func(t *testing.T) {
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeID).
+			WillReturnError(extsql.ErrNoRows)
+
+		mock.ExpectExec(regexp.QuoteMeta(`select * from attached_nodes where attached_id= $1 OR node_id= $2`)).
+			WithArgs(nodeID, nodeID).
+			WillReturnResult(sqlmock.NewResult(1, 0))
+
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).

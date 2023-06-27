@@ -22,11 +22,11 @@ services:
       - DB_HOST=postgresd-registry
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
-      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
-      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
-      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
-      - DEBUG_DISABLEBOOTSTRAP=true
+      # - BOOTSTRAP_URL=bootstrap.dev.ukama.com
+      # - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
+      # - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
+      # - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
+      # - DEBUG_DISABLEBOOTSTRAP=true
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-registry:9095
       - NETWORK_SERVICE_HOST=network
@@ -53,11 +53,11 @@ services:
       - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
       - ORGNAME=ukama-test-org
-      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
-      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
-      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
-      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
-      - DEBUG_DISABLEBOOTSTRAP=true
+      # - BOOTSTRAP_URL=bootstrap.dev.ukama.com
+      # - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
+      # - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
+      # - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
+      # - DEBUG_DISABLEBOOTSTRAP=true
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-registry:9095
       - ORG_SERVICE_HOST=org
@@ -109,7 +109,7 @@ services:
       - "9072:9090"
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd-regsitry
+      - DB_HOST=postgresd-registry
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - ORG_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
@@ -165,24 +165,24 @@ services:
     networks:
       - ukama-net
  
-  initclient-registry:
-    build:
-      dockerfile: ./Dockerfile
-      context: ../services/initClient
-    environment:
-      - ENV_SYSTEM_ORG=ukama001
-      - ENV_SYSTEM_NAME=registry
-      - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_SYSTEM_PORT=8889
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_CLIENT_PORT=9091
-      - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
-    restart: always
-    networks:
-      - ukama-net
+  # initclient-registry:
+    # build:
+      # dockerfile: ./Dockerfile
+      # context: ../services/initClient
+    # environment:
+      # - ENV_SYSTEM_ORG=ukama001
+      # - ENV_SYSTEM_NAME=registry
+      # - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      # - ENV_SYSTEM_PORT=8889
+      # - ENV_SYSTEM_CERT=This-is-a-certificate
+      # - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      # - ENV_INIT_SYSTEM_PORT=8071
+      # - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+      # - ENV_INIT_CLIENT_PORT=9091
+      # - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+    # restart: always
+    # networks:
+      # - ukama-net
      
 networks:
   ukama-net:

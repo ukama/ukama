@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
@@ -96,6 +97,20 @@ func (n *Node) GetOrgNodes(orgId string, free bool) (*pb.GetByOrgResponse, error
 	return res, nil
 }
 
+func (n *Node) GetSiteNodes(siteId string) (*pb.GetBySiteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	res, err := n.client.GetNodesForSite(ctx, &pb.GetBySiteRequest{
+		SiteId: siteId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (n *Node) GetAllNodes(free bool) (*pb.GetNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
@@ -159,8 +174,8 @@ func (n *Node) AttachNodes(node, l, r string) (*pb.AttachNodesResponse, error) {
 	defer cancel()
 
 	res, err := n.client.AttachNodes(ctx, &pb.AttachNodesRequest{
-		NodeId:        node,
-		AttachedNodes: []string{l, r},
+		NodeId:        strings.ToLower(node),
+		AttachedNodes: []string{strings.ToLower(l), strings.ToLower(r)},
 	})
 	if err != nil {
 		return nil, err
