@@ -39,7 +39,7 @@ const POWER_SUMMARY = {
       status: 'up',
       usage: 10,
       panels: 1,
-      battries: 2,
+      batteries: 2,
     },
     {
       id: 'site-id-2',
@@ -47,7 +47,7 @@ const POWER_SUMMARY = {
       status: 'up',
       usage: 20,
       panels: 1,
-      battries: 4,
+      batteries: 4,
     },
     {
       id: 'site-id-3',
@@ -55,7 +55,7 @@ const POWER_SUMMARY = {
       status: 'up',
       usage: 30,
       panels: 1,
-      battries: 3,
+      batteries: 3,
     },
     {
       id: 'site-id-4',
@@ -63,7 +63,7 @@ const POWER_SUMMARY = {
       status: 'up',
       usage: 5,
       panels: 1,
-      battries: 2,
+      batteries: 2,
     },
   ],
 };
