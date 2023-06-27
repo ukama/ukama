@@ -21,8 +21,9 @@ import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import Map from '@/ui/molecules/Map';
 import {
   LeftOverlayUI,
-  PlanningSummary,
+  PowerSummary,
   RightOverlayUI,
+  SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
 import { calculateCenterLatLng, formatSecondsToDuration } from '@/utils';
 import { AlertColor, Popover, Stack, Typography } from '@mui/material';
@@ -117,6 +118,8 @@ const Page = () => {
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
+  const [anchorPowerInfo, setAnchorPowerInfo] =
+    useState<HTMLButtonElement | null>(null);
   const showAlert = (
     id: string,
     message: string,
@@ -205,12 +208,7 @@ const Page = () => {
   const [addSiteCall, { loading: addSiteLoading }] = useAddSiteMutation({
     onCompleted: () => {
       refetchDrafts();
-      showAlert(
-        'add-site-success',
-        'Site updated successfully',
-        'success',
-        true,
-      );
+      showAlert('add-site-success', 'Site added successfully', 'success', true);
     },
     onError: (error) => {
       showAlert('add-site-error', error.message, 'error', true);
@@ -296,15 +294,20 @@ const Page = () => {
   }, [linkSites]);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorPowerInfo(null);
     setAnchorSiteInfo(event.currentTarget);
   };
 
   const handleClose = () => {
     setAnchorSiteInfo(null);
+    setAnchorPowerInfo(null);
   };
 
-  const open = Boolean(anchorSiteInfo);
-  const id = open ? 'site-info-popover' : undefined;
+  const openSiteInfo = Boolean(anchorSiteInfo);
+  const idSiteInfo = openSiteInfo ? 'site-info-popover' : undefined;
+
+  const openPowerInfo = Boolean(anchorPowerInfo);
+  const idPowerInfo = openPowerInfo ? 'power-info-popover' : undefined;
 
   const handleMarkerDrag = (e: LatLngLiteral, id: string) => {
     updateLocationCall({
@@ -387,7 +390,10 @@ const Page = () => {
       isAddLink: !mapInteraction.isAddLink,
       isAddSite: false,
     });
-  const handleOnOff = () => setTogglePower(!togglePower);
+  const handlePowerInfo = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorSiteInfo(null);
+    setAnchorPowerInfo(event.currentTarget);
+  };
   const handleAddDraft = () => {
     addDraftCall({
       variables: {
@@ -431,12 +437,12 @@ const Page = () => {
       }
     }
   };
-  console.log(mapInteraction);
+
   return (
     <>
       <Popover
-        id={id}
-        open={open}
+        id={idSiteInfo}
+        open={openSiteInfo}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'left',
@@ -451,12 +457,26 @@ const Page = () => {
           },
         }}
       >
-        <PlanningSummary
-          subtitleOne={`Sites`}
-          subtitleTwo={`Power`}
-          siteSummary={selectedDraft?.sites || []}
-          powerSummary={POWER_SUMMARY}
-        />
+        <SiteSummary siteSummary={selectedDraft?.sites || []} />
+      </Popover>
+      <Popover
+        id={idPowerInfo}
+        open={openPowerInfo}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        onClose={handleClose}
+        anchorEl={anchorPowerInfo}
+        sx={{ top: 4, left: -40 }}
+        PaperProps={{
+          sx: {
+            width: '220px',
+            padding: '16px 24px',
+          },
+        }}
+      >
+        <PowerSummary powerSummary={POWER_SUMMARY} />
       </Popover>
       <Stack
         direction="row"
@@ -520,9 +540,10 @@ const Page = () => {
                   handleLocationSelected={handleLocationSelected}
                 />
                 <RightOverlayUI
-                  id={id}
+                  siteInfoId={idSiteInfo}
+                  powerInfoId={idSiteInfo}
                   handleClick={handleClick}
-                  handleTogglePower={handleOnOff}
+                  handlePowerInfo={handlePowerInfo}
                   isCurrentDraft={!!selectedDraft}
                 />
               </>
