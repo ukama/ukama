@@ -5,21 +5,11 @@ import AddLocationIcon from '@mui/icons-material/AddLocation';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import PowerIcon from '@mui/icons-material/PowerSettingsNewOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
-import {
-  Box,
-  IconButton,
-  Stack,
-  Tab,
-  Tabs,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DotIcon from '@mui/icons-material/FiberManualRecord';
 import { LatLngLiteral } from 'leaflet';
-import { useState } from 'react';
-import TabPanel from '../TabPanel';
 
 const LeftIconButtonStyle = {
   zIndex: 400,
@@ -127,17 +117,19 @@ const LeftOverlayUI = ({
 );
 
 interface IRightOverlayUI {
-  id: string | undefined;
   handleClick: Function;
   isCurrentDraft: boolean;
-  handleTogglePower: Function;
+  handlePowerInfo: Function;
+  siteInfoId: string | undefined;
+  powerInfoId: string | undefined;
 }
 
 const RightOverlayUI = ({
-  id,
+  siteInfoId,
+  powerInfoId,
   handleClick,
   isCurrentDraft,
-  handleTogglePower,
+  handlePowerInfo,
 }: IRightOverlayUI) => (
   <Box
     sx={{
@@ -148,12 +140,13 @@ const RightOverlayUI = ({
     }}
   >
     <Stack direction={'row'} spacing={1} alignItems={'flex-end'}>
-      <Tooltip title="Turn Site On/Off">
+      <Tooltip title="Power Info">
         <IconButton
+          aria-describedby={powerInfoId}
           sx={RightIconButtonStyle}
           onClick={(e) => {
             e.stopPropagation();
-            handleTogglePower();
+            handlePowerInfo(e);
           }}
         >
           <PowerIcon htmlColor={colors.vulcan} />
@@ -161,7 +154,7 @@ const RightOverlayUI = ({
       </Tooltip>
       <Tooltip title="Site Info">
         <IconButton
-          aria-describedby={id}
+          aria-describedby={siteInfoId}
           sx={RightIconButtonStyle}
           onClick={(e) => {
             e.stopPropagation();
@@ -174,18 +167,6 @@ const RightOverlayUI = ({
     </Stack>
   </Box>
 );
-
-interface IPlanningSummary {
-  subtitleOne: string;
-  subtitleTwo: string;
-  siteSummary: any;
-  powerSummary: any;
-}
-
-const tabProps = (index: number) => ({
-  id: `sites-summary-tab-${index}`,
-  'aria-controls': `sites-summary-tabpanel-${index}`,
-});
 
 const PowerSummarySections = [
   {
@@ -205,8 +186,11 @@ const PowerSummarySections = [
   },
 ];
 
-const SiteSummary = ({ siteSummary }: any) => (
-  <>
+export const SiteSummary = ({ siteSummary }: any) => (
+  <Stack spacing={1}>
+    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      {`Site Summary (${siteSummary.length})`}
+    </Typography>
     {siteSummary.length > 0 ? (
       siteSummary.map(({ id, name, status }: any) => (
         <Stack key={id} direction="row" spacing={1} alignItems={'center'}>
@@ -228,10 +212,14 @@ const SiteSummary = ({ siteSummary }: any) => (
         No site added yet!
       </Typography>
     )}
-  </>
+  </Stack>
 );
-const PowerSummary = ({ powerSummary }: any) => (
-  <Stack direction={'column'} spacing={1}>
+
+export const PowerSummary = ({ powerSummary }: any) => (
+  <Stack spacing={1}>
+    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      Power Summary
+    </Typography>
     {PowerSummarySections.map(({ id, title, unit }) => {
       const d: any = {
         'power-usage': {
@@ -298,40 +286,4 @@ const PowerSummary = ({ powerSummary }: any) => (
   </Stack>
 );
 
-const PlanningSummary = ({
-  subtitleOne,
-  subtitleTwo,
-  siteSummary,
-  powerSummary,
-}: IPlanningSummary) => {
-  const [value, setValue] = useState(0);
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
-  return (
-    <Stack spacing={1.2}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', marginBottom: 0.8 }}>
-        <Tabs value={value} onChange={handleChange} aria-label="summary tabs">
-          <Tab
-            label={subtitleOne}
-            {...tabProps(0)}
-            sx={{ fontSize: '12px', fontWeight: 400, p: 0 }}
-          />
-          <Tab
-            label={subtitleTwo}
-            {...tabProps(1)}
-            sx={{ fontSize: '12px', fontWeight: 400, p: 0 }}
-          />
-        </Tabs>
-      </Box>
-      <TabPanel id={'sites-summary-tab'} value={value} index={0}>
-        <SiteSummary siteSummary={siteSummary} />
-      </TabPanel>
-      <TabPanel id={'sites-power-tab'} value={value} index={1}>
-        <PowerSummary powerSummary={powerSummary} />
-      </TabPanel>
-    </Stack>
-  );
-};
-
-export { LeftOverlayUI, PlanningSummary, RightOverlayUI };
+export { LeftOverlayUI, RightOverlayUI };
