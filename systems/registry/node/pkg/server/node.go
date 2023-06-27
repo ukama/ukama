@@ -72,20 +72,46 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			"invalid format of node id. Error %s", err.Error())
 	}
 
+	strState := strings.ToLower(req.GetState())
+	nodeState := db.ParseNodeState(strState)
+	if req.GetState() != "" && nodeState == db.Undefined {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid node state. Error: node state %q not supported", req.GetState())
+	}
+
+	orgId, err := uuid.FromString(req.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of org uuid. Error %s", err.Error())
+	}
+
+	svc, err := n.orgService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	remoteOrg, err := svc.Get(ctx, &orgpb.GetRequest{Id: orgId.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	// What should we do if the remote org exists but is deactivated?
+	// For now we simply abort.
+	if remoteOrg.Org.IsDeactivated {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"org is deactivated: cannot add node to it")
+	}
+
 	if len(req.Name) == 0 {
 		req.Name = n.nameGenerator.Generate()
 	}
 
 	node := &db.Node{
 		Id:    nId.StringLowercase(),
-		OrgId: n.org,
-		Status: db.NodeStatus{
-			NodeId: nId.StringLowercase(),
-			Conn:   db.Unknown,
-			State:  db.Undefined,
-		},
-		Type: nId.GetNodeType(),
-		Name: req.Name,
+		OrgId: orgId,
+		State: nodeState,
+		Type:  nId.GetNodeType(),
+		Name:  req.Name,
 	}
 
 	err = n.nodeRepo.Add(node, nil)

@@ -128,19 +128,3 @@ type Site struct {
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
-
-func (n *NodeStatus) BeforeSave(tx *gorm.DB) (err error) {
-	tx.Statement.AddClause(clause.OnConflict{
-		DoNothing: true,
-	})
-
-	return nil
-}
-
-func (s *Site) BeforeSave(tx *gorm.DB) (err error) {
-	tx.Statement.AddClause(clause.OnConflict{
-		DoNothing: true,
-	})
-
-	return nil
-}
