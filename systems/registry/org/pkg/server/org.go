@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg"
+	"github.com/ukama/ukama/systems/registry/org/pkg/client"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,9 +30,10 @@ type OrgService struct {
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	msgbus         mb.MsgBusServiceClient
 	pushgateway    string
+	notification   client.NotificationClient
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient) *OrgService {
 	return &OrgService{
 		orgRepo:        orgRepo,
 		userRepo:       userRepo,
@@ -39,6 +41,7 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		msgbus:         msgBus,
 		pushgateway:    pushgateway,
+		notification:   notification,
 	}
 }
 
@@ -288,6 +291,17 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*
 	err = o.orgRepo.AddMember(member)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
+	}
+	emailReq := client.SendEmailReq{
+		To:      []string{"brackley@ukama.com"},
+		Subject: "Test Email",
+		Body:    "This is a test email.",
+		Values:  nil,
+	}
+
+	err = o.notification.SendEmail(emailReq)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
 
 	route := o.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()

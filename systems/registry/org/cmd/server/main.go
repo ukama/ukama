@@ -17,9 +17,11 @@ import (
 
 	"github.com/ukama/ukama/systems/registry/org/cmd/version"
 
+	"github.com/ukama/ukama/systems/registry/org/pkg/client"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
 
 	"github.com/num30/config"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 
@@ -83,12 +85,15 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
-
+	notificationClient, err := client.NewNotificationClient(svcConf.NotificationHost, pkg.IsDebugMode)
+	if err != nil {
+		logrus.Fatalf("Network Client initilization failed. Error: %v", err.Error())
+	}
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
 		svcConf.OrgName, mbClient,
-		svcConf.Pushgateway)
+		svcConf.Pushgateway, notificationClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)

@@ -28,6 +28,7 @@ type Config struct {
 	OrgName           string            `default:"ukama"`
 	OrgOwnerUUID      string
 	Pushgateway       string `default:"http://localhost:9091"`
+	NotificationHost  string `default:"notification:8085"`
 }
 
 var OrgMetrics = []metric.MetricConfig{
