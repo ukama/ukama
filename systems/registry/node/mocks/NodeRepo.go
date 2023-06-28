@@ -153,14 +153,12 @@ func (_m *NodeRepo) GetForOrg(_a0 uuid.UUID) ([]db.Node, error) {
 }
 
 // GetNodeCount provides a mock function with given fields:
-func (_m *NodeRepo) GetNodeCount() (int64, int64, int64, error) {
+func (_m *NodeRepo) GetNodeCount() (int64, error) {
 	ret := _m.Called()
 
 	var r0 int64
-	var r1 int64
-	var r2 int64
-	var r3 error
-	if rf, ok := ret.Get(0).(func() (int64, int64, int64, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (int64, error)); ok {
 		return rf()
 	}
 	if rf, ok := ret.Get(0).(func() int64); ok {
@@ -169,25 +167,13 @@ func (_m *NodeRepo) GetNodeCount() (int64, int64, int64, error) {
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func() int64); ok {
+	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func() int64); ok {
-		r2 = rf()
-	} else {
-		r2 = ret.Get(2).(int64)
-	}
-
-	if rf, ok := ret.Get(3).(func() error); ok {
-		r3 = rf()
-	} else {
-		r3 = ret.Error(3)
-	}
-
-	return r0, r1, r2, r3
+	return r0, r1
 }
 
 // Update provides a mock function with given fields: _a0, _a1

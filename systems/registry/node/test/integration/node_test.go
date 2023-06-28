@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-
 	"math/rand"
 	"testing"
 	"time"
@@ -117,7 +116,6 @@ func Test_FullFlow(t *testing.T) {
 
 		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: tNodeID.String(),
-			State:  db.Undefined.String(),
 			OrgId:  orgId.String(),
 		})
 
@@ -130,7 +128,6 @@ func Test_FullFlow(t *testing.T) {
 		_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: aNodeID.String(),
 			OrgId:  orgId.String(),
-			State:  db.Undefined.String(),
 		})
 
 		if err != nil {
@@ -267,7 +264,7 @@ func handleResponse(t *testing.T, err error, r interface{}) {
 	}
 }
 
-func TestAddNode(t *testing.T) {
+func Test_NodeOnline_OfflineEvents(t *testing.T) {
 	// Arrange
 	nodeId := ukama.NewVirtualHomeNodeId()
 
@@ -284,12 +281,16 @@ func TestAddNode(t *testing.T) {
 		rand.Intn(256))
 
 	var nPort int32 = 2000
+
 	// Act
 	err := sendOnlineEventToQueue(t, nodeId.String(), ip, port, nIp, nPort)
 	assert.NoError(t, err)
 
 	// Assert
 	time.Sleep(2 * time.Second)
+
+	err = sendOfflineEventToQueue(t, nodeId.String())
+	assert.NoError(t, err)
 
 }
 
@@ -312,6 +313,30 @@ func sendOnlineEventToQueue(t *testing.T, nodeId string, ip string, port int32, 
 	}
 
 	err = rabbit.Publish(payload, "", "amq.topic", "event.cloud.mesh.node.online", "topic")
+	assert.NoError(t, err)
+
+	return err
+}
+
+func sendOfflineEventToQueue(t *testing.T, nodeId string) error {
+	rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	msg := &epb.NodeOfflineEvent{NodeId: nodeId}
+
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		return err
+	}
+
+	payload, err := proto.Marshal(anyMsg)
+	if err != nil {
+		return err
+	}
+
+	err = rabbit.Publish(payload, "", "amq.topic", "event.cloud.mesh.node.offline", "topic")
 	assert.NoError(t, err)
 
 	return err

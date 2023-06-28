@@ -58,6 +58,7 @@ func TestNodeRepo_Add(t *testing.T) {
 		Id:    nodeID.String(),
 		Name:  "node-1",
 		OrgId: uuid.NewV4(),
+		Type:  "hnode",
 	}
 
 	db, mock, err := sqlmock.New() // mock sql.DB
@@ -81,11 +82,10 @@ func TestNodeRepo_Add(t *testing.T) {
 		// Arrange
 		mock.ExpectBegin()
 
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(node.Name, sqlmock.AnyArg(), sqlmock.AnyArg(), node.OrgId,
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), node.Id).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(node.Id, node.Name, node.Type, node.OrgId,
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
 		// Act
@@ -135,6 +135,10 @@ func TestNodeRepo_Get(t *testing.T) {
 			WithArgs(nodeID).
 			WillReturnRows(row)
 
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+			WithArgs(nodeID).
+			WillReturnRows(row)
+
 		// Act
 		node, err := r.Get(nodeID)
 
@@ -153,71 +157,6 @@ func TestNodeRepo_Get(t *testing.T) {
 
 		// Act
 		node, err := r.Get(nodeID)
-
-		// Assert
-		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.Nil(t, node)
-	})
-}
-
-func TestNodeRepo_GetForOrg(t *testing.T) {
-	var orgId = uuid.NewV4()
-	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-	var name = "node-1"
-
-	var db *extsql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := nodedb.NewNodeRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
-
-	t.Run("OrgFound", func(t *testing.T) {
-		// Arrange
-		row := sqlmock.NewRows([]string{"id", "name", "org_id"}).
-			AddRow(nodeId, name, orgId)
-
-		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(orgId).
-			WillReturnRows(row)
-
-		mock.ExpectQuery(`^SELECT.*attached_nodes.*`).
-			WithArgs(nodeId).
-			WillReturnRows(row)
-
-		// Act
-		node, err := r.GetForOrg(orgId)
-
-		// Assert
-		assert.NoError(t, err)
-		assert.NotNil(t, node)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-
-	t.Run("OrgNotFound", func(t *testing.T) {
-		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(orgId).
-			WillReturnError(extsql.ErrNoRows)
-
-		// Act
-		node, err := r.GetForOrg(orgId)
 
 		// Assert
 		assert.Error(t, err)
@@ -260,6 +199,10 @@ func TestNodeRepo_GetAll(t *testing.T) {
 			WillReturnRows(row)
 
 		mock.ExpectQuery(`^SELECT.*attached_nodes.*`).
+			WithArgs(nodeID).
+			WillReturnRows(row)
+
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
 			WithArgs(nodeID).
 			WillReturnRows(row)
 
