@@ -44,6 +44,7 @@ type SimManagerServer struct {
 	pb.UnimplementedSimManagerServiceServer
 	org            string
 	pushMetricHost string
+	notificationClient    providers.NotificationClient
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
@@ -53,6 +54,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	msgBus mb.MsgBusServiceClient,
 	org string,
 	pushMetricHost string,
+	notificationClient providers.NotificationClient,
 ) *SimManagerServer {
 	return &SimManagerServer{
 		simRepo:                   simRepo,
@@ -66,6 +68,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		org:                       org,
 		pushMetricHost:            pushMetricHost,
+		notificationClient:        notificationClient,
 	}
 }
 
@@ -217,6 +220,17 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	err = s.msgbus.PublishRequest(route, resp.Sim)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+	emailReq := providers.SendEmailReq{
+		To:      []string{remoteSubResp.Subscriber.Email},
+		Subject: "Test Email",
+		Body:    "your package {{.PackageId}} has been allocated to your sim {{.SimId}}}}",
+		Values:  map[string]string{"PackageId": packageID.String(), "SimId": sim.Id.String()},
+	}
+
+	err = s.notificationClient.SendEmail(emailReq)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
