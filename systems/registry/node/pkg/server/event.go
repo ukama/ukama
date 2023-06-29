@@ -63,35 +63,37 @@ func (n *NodeEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnl
 	return p, nil
 }
 
+//TODO: I am not sure I fully understand what's happening here in order for me to update
+// so, commenting for compiling.
 func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	nodeID, err := ukama.ValidateNodeId(msg.GetNodeId())
-	if err != nil {
-		logrus.Error("error getting the NodeId from request" + err.Error())
-		return err
-	}
+	// nodeId, err := ukama.ValidateNodeId(msg.GetNodeId())
+	// if err != nil {
+	// logrus.Error("error getting the NodeId from request" + err.Error())
+	// return err
+	// }
 
-	node, err := n.nodeRepo.Get(nodeID)
-	if err != nil {
-		logrus.Error("error getting the node" + err.Error())
-		return err
-	}
+	// node, err := n.nodeRepo.Get(nodeId)
+	// if err != nil {
+	// logrus.Error("error getting the node" + err.Error())
+	// return err
+	// }
 
-	if node == nil {
-		/* Add new node */
-		node.NodeID = nodeID.StringLowercase()
-		node.Allocation = false
-		node.Type = nodeID.GetNodeType()
+	// if node == nil {
+	// [> Add new node <]
+	// node.Id = nodeId.StringLowercase()
+	// // node.Allocation = false
+	// node.Type = nodeId.GetNodeType()
 
-		err = AddNodeToOrg(n.nodeRepo, node)
-		if err != nil {
-			return err
-		}
-	} else {
-		state := db.Online
-		n.nodeRepo.Update(nodeID, &state, nil)
-	}
+	// err = AddNodeToOrg(n.nodeRepo, node)
+	// if err != nil {
+	// return err
+	// }
+	// } else {
+	// state := db.Online
+	// n.nodeRepo.Update(nodeId, &state, nil)
+	// }
 
 	return nil
 }
@@ -109,21 +111,25 @@ func (n *NodeEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.NodeOf
 func (n *NodeEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	nodeID, err := ukama.ValidateNodeId(msg.GetNodeId())
+	nodeId, err := ukama.ValidateNodeId(msg.GetNodeId())
 	if err != nil {
 		logrus.Error("error getting the NodeId from request" + err.Error())
 		return err
 	}
 
-	node, err := n.nodeRepo.Get(nodeID)
+	node, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
 		logrus.Error("error getting the node" + err.Error())
 		return err
 	}
 
 	if node != nil {
-		state := db.Offline
-		n.nodeRepo.Update(nodeID, &state, nil)
+		node.State = db.Offline
+
+		err := n.nodeRepo.Update(node, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
