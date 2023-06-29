@@ -12,19 +12,19 @@ import (
 )
 
 type ConstructorServer struct {
-	oRepo          db.OrgsRepo
-	dRepo          db.DeploymentsRepo
-	sRepo          db.SystemsRepo
+	oRepo          db.OrgRepo
+	dRepo          db.DeploymentRepo
+	cRepo          db.ConfigRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedConstructorServiceServer
 }
 
-func NewConstructorServer(o db.OrgsRepo, d db.DeploymentsRepo, s db.SystemsRepo, msgBus mb.MsgBusServiceClient) *ConstructorServer {
+func NewConstructorServer(o db.OrgRepo, d db.DeploymentRepo, c db.ConfigRepo, msgBus mb.MsgBusServiceClient) *ConstructorServer {
 	return &ConstructorServer{
 		dRepo:          d,
 		oRepo:          o,
-		sRepo:          s,
+		cRepo:          c,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}

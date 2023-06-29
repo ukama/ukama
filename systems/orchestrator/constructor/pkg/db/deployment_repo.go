@@ -6,14 +6,14 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type DeploymentsRepo interface {
-	Add(d *Deployments) error
-	GetByName(name string) (*Deployments, error)
-	GetAll() ([]Deployments, error)
-	GetById(id uuid.UUID) (*Deployments, error)
+type DeploymentRepo interface {
+	Add(d *Deployment) error
+	GetByName(name string) (*Deployment, error)
+	GetAll() ([]Deployment, error)
+	GetById(id uuid.UUID) (*Deployment, error)
 	Delete(id uuid.UUID) error
 	GetCount(name string) (int64, error)
-	GetHistoryByName(name string) (*Deployments, error)
+	GetHistoryByName(name string) (*Deployment, error)
 }
 
 type deploymentRepo struct {
@@ -33,61 +33,61 @@ Add systems without any deployment on startup
 	1) Deleete all teh deployments , remove from association.
 	2) delete system
 */
-func NewDeploymentsRepo(db sql.Db) *deploymentRepo {
+func NewDeploymentRepo(db sql.Db) *deploymentRepo {
 	return &deploymentRepo{
 		Db: db,
 	}
 }
 
-func (r *deploymentRepo) Add(d *Deployments) error {
+func (r *deploymentRepo) Add(d *Deployment) error {
 
 	res := r.Db.GetGormDb().Omit("Orgs").Create(d)
 	return res.Error
 }
 
-// func (r *deploymentRepo) AddDeployment(d *Deployments, dep *Deployments) error {
+// func (r *deploymentRepo) AddDeployment(d *Deployment, dep *Deployment) error {
 
-// 	err := r.Db.GetGormDb().Association("Deployments").Append(dep)
+// 	err := r.Db.GetGormDb().Association("Deployment").Append(dep)
 // 	return err
 // }
 
-func (r *deploymentRepo) GetByName(name string) (*Deployments, error) {
-	sys := &Deployments{}
-	d := r.Db.GetGormDb().Preload(clause.Associations).Where(&Deployments{Name: name}).Last(sys)
+func (r *deploymentRepo) GetByName(name string) (*Deployment, error) {
+	sys := &Deployment{}
+	d := r.Db.GetGormDb().Preload(clause.Associations).Where(&Deployment{Name: name}).Last(sys)
 	return sys, d.Error
 }
 
-func (r *deploymentRepo) GetById(id uuid.UUID) (*Deployments, error) {
-	sys := &Deployments{}
-	d := r.Db.GetGormDb().Preload(clause.Associations).Where(&Deployments{Code: id}).Last(sys)
+func (r *deploymentRepo) GetById(id uuid.UUID) (*Deployment, error) {
+	sys := &Deployment{}
+	d := r.Db.GetGormDb().Preload(clause.Associations).Where(&Deployment{Code: id}).Last(sys)
 	return sys, d.Error
 }
 
-func (r *deploymentRepo) GetAll() ([]Deployments, error) {
-	sys := []Deployments{}
+func (r *deploymentRepo) GetAll() ([]Deployment, error) {
+	sys := []Deployment{}
 	d := r.Db.GetGormDb().Preload(clause.Associations).Find(&sys)
 	return sys, d.Error
 }
 
 func (r *deploymentRepo) Delete(id uuid.UUID) error {
-	d := r.Db.GetGormDb().Delete(&Deployments{Code: id})
+	d := r.Db.GetGormDb().Delete(&Deployment{Code: id})
 	return d.Error
 
 }
 
 func (r *deploymentRepo) GetCount(name string) (int64, error) {
 	var count int64
-	d := r.Db.GetGormDb().Find(&Deployments{}).Count(&count)
+	d := r.Db.GetGormDb().Find(&Deployment{}).Count(&count)
 	if d.Error != nil {
 		return 0, d.Error
 	}
 	return count, nil
-	//c := r.Db.GetGormDb().Association("Deployments").Count()
+	//c := r.Db.GetGormDb().Association("Deployment").Count()
 	//return c
 }
 
-func (r *deploymentRepo) GetHistoryByName(name string) (*Deployments, error) {
-	sys := &Deployments{}
-	d := r.Db.GetGormDb().Unscoped().Preload(clause.Associations).Where(&Deployments{Name: name}).Last(sys)
+func (r *deploymentRepo) GetHistoryByName(name string) (*Deployment, error) {
+	sys := &Deployment{}
+	d := r.Db.GetGormDb().Unscoped().Preload(clause.Associations).Where(&Deployment{Name: name}).Last(sys)
 	return sys, d.Error
 }

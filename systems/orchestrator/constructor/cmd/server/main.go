@@ -3,21 +3,24 @@ package main
 import (
 	"os"
 
-	"github.com/num30/config"
+	"github.com/ukama/ukama/systems/common/uuid"
+
 	"github.com/ukama/ukama/systems/orchestrator/constructor/cmd/version"
 	"github.com/ukama/ukama/systems/orchestrator/constructor/pkg"
+	"github.com/ukama/ukama/systems/orchestrator/constructor/pkg/db"
+	"github.com/ukama/ukama/systems/orchestrator/constructor/pkg/server"
+
+	"github.com/num30/config"
 	"gopkg.in/yaml.v3"
-	"grpc.go4.org"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	mbc "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
 	generated "github.com/ukama/ukama/systems/orchestrator/constructor/pb/gen"
-	"github.com/ukama/ukama/systems/orchestrator/constructor/pkg/db"
+	"google.golang.org/grpc"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -36,7 +39,7 @@ func main() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Orgs{}, &db.Deployments{}, &db.Systems{})
+	err := d.Init(&db.Org{}, &db.Deployment{}, &db.Config{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -64,7 +67,7 @@ func runGrpcServer(d sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mbc.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
@@ -74,8 +77,8 @@ func runGrpcServer(d sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewConstructorServer(db.NewOrgsRepo(d), db.NewDeploymentsRepo(d), db.NewSystemsRepo(d), mbClient)
-		nSrv := server.NewConstructorEventServer(db.NewOrgsRepo(d), db.NewDeploymentsRepo(d), db.NewSystemsRepo(d))
+		srv := server.NewConstructorServer(db.NewOrgRepo(d), db.NewDeploymentRepo(d), db.NewConfigRepo(d), mbClient)
+		nSrv := server.NewConstructorEventServer(srv)
 		generated.RegisterConstructorServiceServer(s, srv)
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
@@ -86,7 +89,7 @@ func runGrpcServer(d sql.Db) {
 
 }
 
-func msgBusListener(m mbc.MsgBusServiceClient) {
+func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}

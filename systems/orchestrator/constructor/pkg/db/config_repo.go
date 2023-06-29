@@ -7,34 +7,34 @@ import (
 	"gorm.io/gorm"
 )
 
-type ConfigsRepo interface {
-	Create(c *Configs) error
-	Get(name string) (*Configs, error)
+type ConfigRepo interface {
+	Create(c *Config) error
+	Get(name string) (*Config, error)
 	Delete(name string) error
-	Update(n *Configs) error
-	GetHistory(name string) (*[]Configs, error)
+	Update(n *Config) error
+	GetHistory(name string) (*[]Config, error)
 }
 
 type configsRepo struct {
 	Db sql.Db
 }
 
-func NewConfigsRepo(db sql.Db) *configsRepo {
+func NewConfigRepo(db sql.Db) *configsRepo {
 	return &configsRepo{
 		Db: db,
 	}
 }
 
-func (d *configsRepo) Create(c *Configs) error {
+func (d *configsRepo) Create(c *Config) error {
 	r := d.Db.GetGormDb().Create(c)
 	return r.Error
 }
 
-func (d *configsRepo) Update(n *Configs) error {
+func (d *configsRepo) Update(n *Config) error {
 
 	err := d.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 
-		var c Configs
+		var c Config
 		r := tx.Where("name = ?", c.Name).First(&c)
 		if r.Error != nil {
 			return fmt.Errorf("failed to update %s config. Error while getting: %v", c.Name, r.Error)
@@ -56,8 +56,8 @@ func (d *configsRepo) Update(n *Configs) error {
 	return err
 }
 
-func (d *configsRepo) Get(name string) (*Configs, error) {
-	var c Configs
+func (d *configsRepo) Get(name string) (*Config, error) {
+	var c Config
 	result := d.Db.GetGormDb().Where("name = ?", name).First(&c)
 	if result.Error != nil {
 		return nil, result.Error
@@ -66,7 +66,7 @@ func (d *configsRepo) Get(name string) (*Configs, error) {
 }
 
 func (d *configsRepo) Delete(name string) error {
-	result := d.Db.GetGormDb().Where("name = ?", name).Delete(&Configs{})
+	result := d.Db.GetGormDb().Where("name = ?", name).Delete(&Config{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -78,8 +78,8 @@ func (d *configsRepo) Delete(name string) error {
 	return fmt.Errorf("config %s missing", name)
 }
 
-func (d *configsRepo) GetHistory(name string) (*[]Configs, error) {
-	var c []Configs
+func (d *configsRepo) GetHistory(name string) (*[]Config, error) {
+	var c []Config
 	result := d.Db.GetGormDb().Unscoped().Where("name = ?", name).Find(&c)
 	if result.Error != nil {
 		return nil, result.Error
