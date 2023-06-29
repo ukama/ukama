@@ -26,6 +26,32 @@ func (_m *OperatorClient) ActivateSim(iccid string) error {
 	return r0
 }
 
+// BindSim provides a mock function with given fields: iccid
+func (_m *OperatorClient) BindSim(iccid string) (*providers.SimInfo, error) {
+	ret := _m.Called(iccid)
+
+	var r0 *providers.SimInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*providers.SimInfo, error)); ok {
+		return rf(iccid)
+	}
+	if rf, ok := ret.Get(0).(func(string) *providers.SimInfo); ok {
+		r0 = rf(iccid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*providers.SimInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(iccid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeactivateSim provides a mock function with given fields: iccid
 func (_m *OperatorClient) DeactivateSim(iccid string) error {
 	ret := _m.Called(iccid)

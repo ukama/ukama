@@ -284,6 +284,8 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		packageClient := &mocks.PackageClient{}
 		simPoolService := &mocks.SimPoolClientProvider{}
 
+		agentFactory := &mocks.AgentFactory{}
+
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.SubscriberRegistryServiceClient{}, nil).
 			Once().
@@ -318,6 +320,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}).
 			Return(&splpb.GetResponse{
 				Sim: &splpb.Sim{
+					Iccid:      testIccid,
 					IsPhysical: false,
 					SimType:    db.SimTypeTest.String(),
 				},
@@ -328,10 +331,19 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			SubscriberId: subscriberID,
 			NetworkId:    networkID,
 			OrgId:        orgID,
+			Iccid:        testIccid,
 			Type:         db.SimTypeTest,
 			Status:       sims.SimStatusInactive,
 			IsPhysical:   simPoolResp.Sim.IsPhysical,
 		}
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("BindSim", mock.Anything,
+			sim.Iccid).Return(nil, nil).Once()
 
 		simRepo.On("Add", sim,
 			mock.Anything).Return(nil).Once()
@@ -346,10 +358,11 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			mock.Anything).Return(nil).Once()
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-		simRepo.On("GetSimMetrics").Return(int64(0),int64(0),int64(0),int64(0),nil).Once()
+		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
 
-		s := NewSimManagerServer(simRepo, packageRepo, nil,
+		s := NewSimManagerServer(simRepo, packageRepo, agentFactory,
 			packageClient, subscriberService, simPoolService, "", msgbusClient, "", "")
+
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
 			SubscriberId: subscriberID.String(),
 			NetworkId:    networkID.String(),
@@ -853,7 +866,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 
 		packageRepo.On("Add", pkg,
 			mock.Anything).Return(nil).Once()
-			msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSimManagerServer(simRepo, packageRepo, nil, packageClient, nil, nil, "", msgbusClient, "", "")
 
@@ -1117,8 +1130,8 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 				Status: sims.SimStatusTerminated,
 			},
 			mock.Anything).Return(nil).Once()
-			msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-			simRepo.On("GetSimMetrics").Return(int64(0),int64(0),int64(0),int64(0),nil).Once()
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
 
 		s := NewSimManagerServer(simRepo, nil, agentFactory, nil, nil, nil, "", msgbusClient, "", "")
 
