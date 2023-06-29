@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -193,3 +194,132 @@ func TestNodeServer_Delete(t *testing.T) {
 		nodeRepo.AssertExpectations(t)
 	})
 }
+
+func TestNodeServer_Get(t *testing.T) {
+	t.Run("NodeFound", func(t *testing.T) {
+		const nodeName = "node-A"
+		const nodeType = ukama.NODE_ID_TYPE_HOMENODE
+		var nodeId = ukama.NewVirtualNodeId(nodeType)
+
+		nodeRepo := &mocks.NodeRepo{}
+
+		nodeRepo.On("Get", nodeId).Return(
+			&db.Node{Id: nodeId.StringLowercase(),
+				Name:  nodeName,
+				Type:  ukama.NODE_ID_TYPE_HOMENODE,
+				State: db.Online,
+			}, nil).Once()
+
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
+
+		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
+			NodeId: nodeId.StringLowercase()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, nodeId.String(), resp.GetNode().GetId())
+		assert.Equal(t, nodeName, resp.GetNode().Name)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		var nodeId = ukama.NewVirtualAmplifierNodeId()
+
+		nodeRepo := &mocks.NodeRepo{}
+
+		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
+
+		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
+			NodeId: nodeId.StringLowercase()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("NodeIdInvalid", func(t *testing.T) {
+		var nodeId = uuid.NewV4()
+
+		nodeRepo := &mocks.NodeRepo{}
+
+		s := server.NewNodeServer(nodeRepo, nil, "", nil, nil, nil)
+
+		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
+			NodeId: nodeId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+}
+
+func TestNodeServer_Delete(t *testing.T) {
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	nodeRepo := &mocks.NodeRepo{}
+	s := server.NewNodeServer(nodeRepo, nil, "", msgbusClient, nil, nil)
+
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
+
+	t.Run("NodeFound", func(t *testing.T) {
+		const nodeType = ukama.NODE_ID_TYPE_HOMENODE
+		var nodeId = ukama.NewVirtualNodeId(nodeType)
+
+		nodeRepo.On("Delete", nodeId, mock.Anything).Return(nil).Once()
+
+		resp, err := s.DeleteNode(context.TODO(), &pb.DeleteNodeRequest{
+			NodeId: nodeId.StringLowercase()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		var nodeId = ukama.NewVirtualAmplifierNodeId()
+
+		nodeRepo.On("Delete", nodeId, mock.Anything).
+			Return(gorm.ErrRecordNotFound).Once()
+
+		resp, err := s.DeleteNode(context.TODO(), &pb.DeleteNodeRequest{
+			NodeId: nodeId.StringLowercase()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("NodeIdInvalid", func(t *testing.T) {
+		var nodeId = uuid.NewV4()
+
+		resp, err := s.DeleteNode(context.TODO(), &pb.DeleteNodeRequest{
+			NodeId: nodeId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+}
+
+// func TestRegistryServer_UpdateNodeState(t *testing.T) {
+// msgbusClient := &mbmocks.MsgBusServiceClient{}
+// nodeRepo := &mocks.NodeRepo{}
+
+// nodeRepo.On("Update", testNode, mock.MatchedBy(func(ns *db.NodeState) bool {
+// return *ns == db.Onboarded
+// }), (*string)(nil)).Return(nil).Once()
+// nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
+
+// s := server.NewNodeServer(nodeRepo, nil, "", msgbusClient, nil, nil)
+
+// _, err := s.UpdateNodeState(context.TODO(), &pb.UpdateNodeStateRequest{
+// NodeId: testNode.String(),
+// State:  "onboarded",
+// })
+
+// // Assert
+// assert.NoError(t, err)
+// nodeRepo.AssertExpectations(t)
+// }

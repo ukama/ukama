@@ -12,6 +12,7 @@
 
 #include <ulfius.h>
 
+void* monitor_websocket(void *args);
 void websocket_manager_cb(const struct _u_request *request,
 						  struct _websocket_manager *manager,
 						  void *user_data);

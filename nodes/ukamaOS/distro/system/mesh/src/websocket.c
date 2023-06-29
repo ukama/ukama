@@ -10,6 +10,8 @@
 #include <jansson.h>
 #include <ulfius.h>
 #include <string.h>
+#include <time.h>
+#include <errno.h>
 
 #include "mesh.h"
 #include "log.h"
@@ -17,10 +19,16 @@
 #include "jserdes.h"
 #include "data.h"
 #include "map.h"
+#include "config.h"
 
 extern WorkList *Transmit;
-extern MapTable *IDTable;
+extern MapTable *ClientTable;
 extern State    *state;
+extern int start_websocket_client(Config *config,
+                                  struct _websocket_client_handler *handler);
+
+static 	pthread_mutex_t websocketMutex;
+static	pthread_cond_t  websocketFail;
 
 /*
  * clear_response -- free up memory from MResponse.
@@ -40,32 +48,118 @@ static void clear_response(MResponse **resp) {
 }
 
 /*
+ * is_websocket_valid --
+ *
+ */
+static int is_websocket_valid(WSManager *manager, char *port) {
+
+    int status;
+
+    if (manager == NULL) return FALSE;
+
+    status = ulfius_websocket_status(manager);
+
+    if (status == U_WEBSOCKET_STATUS_OPEN) {
+        return TRUE;
+    } else {
+        log_debug("Websocket connection is closed with cloud at: %s", port);
+        return FALSE;
+    }
+
+    return FALSE;
+}
+
+/*
+ * monitor_websocket --
+ *
+ */
+void* monitor_websocket(void *args){
+
+    int ret;
+    struct timespec ts;
+    Config *config=NULL;
+    WSManager *handler=NULL;
+    ThreadArgs *threadArgs;
+
+    threadArgs = (ThreadArgs *)args;
+
+    config  = (Config *)threadArgs->config;
+    handler = threadArgs->handler;
+
+    while (TRUE) {
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += MESH_LOCK_TIMEOUT;
+
+        /* Wait or timed out until the socket closes */
+        ret = pthread_cond_timedwait(&websocketFail, &websocketMutex, &ts);
+        if (ret == ETIMEDOUT) {
+            pthread_mutex_unlock(&websocketMutex);
+            if (!is_websocket_valid(handler, config->remoteConnect)) {
+                log_error("Trying to reconnect ...");
+                /* Connect again */
+                while (start_websocket_client(config, handler) == FALSE) {
+                    log_error("Remote websocket connect failure. Retrying: %d",
+                              MESH_LOCK_TIMEOUT);
+                    sleep(MESH_LOCK_TIMEOUT);
+                }
+            } else {
+                continue;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+/*
  * websocket related callback functions.
  */
-
 void websocket_manager(const URequest *request, WSManager *manager,
 					   void *data) {
 
-	WorkList *list;
-	WorkItem *work;
+    int ret;
+	WorkList *list=NULL;
+	WorkItem *work=NULL;
 	WorkList **transmit = &Transmit;
+    json_t *jData=NULL;
+    struct timespec ts;
+    Config *config=NULL;
 
 	if (*transmit == NULL)
 		return;
 
-	list = *transmit;
+	list   = *transmit;
+    config = (Config *)data;
+
+    pthread_mutex_init(&websocketMutex, NULL);
+    pthread_cond_init(&websocketFail, NULL);
 
 	while (TRUE) {
 
 		pthread_mutex_lock(&(list->mutex));
 
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += MESH_LOCK_TIMEOUT;
+
 		if (list->exit) { /* Likely we are closing the socket. */
 			break;
 		}
 
+        if (list->exit) break;
+
 		if (list->first == NULL) { /* Empty. Wait. */
 			log_debug("Waiting for work to be available ...");
-			pthread_cond_wait(&(list->hasWork), &(list->mutex)); /* unlock */
+			ret = pthread_cond_timedwait(&(list->hasWork), &(list->mutex), &ts);
+            if (ret == ETIMEDOUT) {
+                pthread_mutex_unlock(&(list->mutex));
+                if (!is_websocket_valid(manager, config->remoteConnect)) {
+                    pthread_cond_broadcast(&websocketFail);
+                    return; /* Close the websocket */
+                } else {
+                    continue;
+                }
+            }
 		}
 
 		/* We have some packet to transmit. */
@@ -78,8 +172,6 @@ void websocket_manager(const URequest *request, WSManager *manager,
 			continue;
 		}
 
-		/* We have valid work to do. yaay. */
-
 		/* 1. Any pre-processing. */
 		if (work->preFunc) {
 			work->preFunc(work->data, work->preArgs);
@@ -89,8 +181,8 @@ void websocket_manager(const URequest *request, WSManager *manager,
 		/* Currently, Packet is JSON string. Send it over. */
 		if (ulfius_websocket_wait_close(manager, 2000) ==
 			U_WEBSOCKET_STATUS_OPEN) {
-			if (ulfius_websocket_send_json_message(manager, work->data)
-				!= U_OK) {
+            jData = json_loads(work->data, JSON_DECODE_ANY, NULL);
+			if (ulfius_websocket_send_json_message(manager, jData) != U_OK) {
 				log_error("Error sending JSON message.");
 			}
 		}
@@ -115,21 +207,12 @@ void websocket_manager(const URequest *request, WSManager *manager,
 void websocket_incoming_message(const URequest *request,
 								WSManager *manager, WSMessage *message,
 								void *data) {
-	MRequest *rcvdData=NULL;
 	MResponse *rcvdResp=NULL;
-	MapItem *item=NULL;
+    Message *rcvdMessage=NULL;
 	json_t *json;
-	char idStr[36+1];
 	int ret;
 
 	log_debug("Packet recevied. Data: %s", message->data);
-
-	/* Steps are:
-	 * 1. deserialize the response.
-	 * 2. lookup ID table for matching client, if any.
-	 * 3. Copy the data to the matching thread.
-	 * 4. Trigger conditional variable to enable processing.
-	 */
 
 	json = json_loads(message->data, JSON_DECODE_ANY, NULL);
 	if (json==NULL) {
@@ -138,34 +221,21 @@ void websocket_incoming_message(const URequest *request,
 		goto done;
 	}
 
-	ret = deserialize_response(&rcvdResp, json);
+	ret = deserialize_websocket_message(&rcvdMessage, json);
 	if (ret==FALSE) {
 		if (rcvdResp != NULL) free(rcvdResp);
 		goto done;
 	}
 
-	item = lookup_item(IDTable, rcvdResp->serviceInfo->uuid);
-	if (item == NULL) { /* No macthing service found in table. Ignore it */
-		uuid_unparse(rcvdResp->serviceInfo->uuid, &idStr[0]);
-		log_debug("No matching entry found in the table for UUID: %s Ignoring",
-				  &idStr[0]);
-		goto done;
-	}
+    if (strcmp(rcvdMessage->reqType, MESH_SERVICE_REQUEST) == 0 ) {
+        process_incoming_websocket_message(rcvdMessage, (Config *)data);
+    } else if (strcmp(rcvdMessage->reqType, MESH_NODE_RESPONSE) == 0) {
+        process_incoming_websocket_response(rcvdMessage, data);
+    } else {
+        log_error("Invalid incoming message on the websocket. Ignored");
+    }
 
-	/* Copy recevied data into item. */
-	pthread_mutex_lock(&item->mutex);
-
-	item->size = rcvdResp->size;
-	item->data = (void *)calloc(1, item->size);
-	if (item->data == NULL) goto done;
-
-	memcpy(item->data, rcvdResp->data, item->size);
-
-	/* set the conditional variable. */
-	pthread_cond_broadcast(&(item->hasResp));
-	pthread_mutex_unlock(&item->mutex);
-
- done:
+done:
 	if (json) json_decref(json);
 	clear_response(&rcvdResp);
 	return;
@@ -179,7 +249,6 @@ void websocket_incoming_message(const URequest *request,
 void  websocket_onclose(const URequest *request, WSManager *manager,
 						void *data) {
 
-    int ret;
 	Config *config = (Config *)data;
 
 	return;

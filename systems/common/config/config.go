@@ -132,7 +132,7 @@ type Auth struct {
 	AuthAppUrl     string `default:"http://localhost:4455"`
 	AuthAPIGW      string `default:"http://localhost:8080"`
 	BypassAuthMode bool   `default:"false"`
-	KetoUrl string `default:"http://localhost:4466"`
+	KetoUrl        string `default:"http://localhost:4466"`
 }
 
 // LoadConfig loads configuration into `config` object
@@ -241,7 +241,7 @@ func LoadAuthHostConfig(name string) *Auth {
 
 	val, present := os.LookupEnv(strings.ToUpper(name + ketoUrl))
 	if present {
-		s.KetoUrl= val
+		s.KetoUrl = val
 	} else {
 		logrus.Errorf("%s ketoClient url env not found", name)
 	}

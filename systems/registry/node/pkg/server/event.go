@@ -64,7 +64,6 @@ func (n *NodeEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnl
 	return p, nil
 }
 
-// TODO: I am not sure I fully understand what's happening here in order for me to update
 // so, commenting for compiling.
 func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)

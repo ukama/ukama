@@ -15,47 +15,6 @@
 #include "mesh.h"
 #include "jserdes.h"
 
-/* JSON for the forward request from device to service provider.
-
-   fwd_request -> { type: "request",
-   seq_no: "1234",
-   device_info: {
-   uuid: "uuid"
-   },
-   service_info: {
-   uuid: "service_uuid"
-   },
-   request_info: {
-   protocol: "HTTP/1.1",
-   method: "GET",
-   url: "locahost:3456/",
-   path: "/some/path",
-   map: { type:"url",
-   data:[ {key_name: "name1", key_value:"value1"},
-   {key_name: "name2", key_value:"value2"},
-   ],
-   raw: { length:"1234",
-   data: "xdddgfdg"
-   },
-   }
-   }
-*/
-
-/* JSON for the response from the service provider, via mesh.d
-
-   fwd_request -> { type: "response",
-   seq_no: "1234",
-   service_info: {
-   uuid: "service_uuid"
-   },
-   response_info: {
-   raw: { length:"1234",
-   data: "xdddgfdg"
-   },
-   }
-   }
-*/
-
 /*
  * add_map_to_request --
  *
@@ -114,7 +73,7 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
  * serialize_device_info --
  *
  */
-int serialize_device_info(json_t **json, DeviceInfo *device) {
+int serialize_device_info(json_t **json, NodeInfo *device) {
 
 	json_t *jDevice=NULL;
 
@@ -132,8 +91,8 @@ int serialize_device_info(json_t **json, DeviceInfo *device) {
 	}
 
 	/* Add Device info. Currently only is the UUID. */
-	json_object_set_new(*json, JSON_DEVICE_INFO, json_object());
-	jDevice = json_object_get(*json, JSON_DEVICE_INFO);
+	json_object_set_new(*json, JSON_NODE_INFO, json_object());
+	jDevice = json_object_get(*json, JSON_NODE_INFO);
 
 	if (jDevice == NULL) {
 		json_decref(*json);
@@ -141,181 +100,176 @@ int serialize_device_info(json_t **json, DeviceInfo *device) {
 		return FALSE;
 	}
 
-	json_object_set_new(jDevice, JSON_ID, json_string(device->nodeID));
+	json_object_set_new(jDevice, JSON_NODE_ID, json_string(device->nodeID));
 
 	return TRUE;
 }
 
 /*
- * serialize_response --
+ * serialize_local_service_response --
  *
  */
-int serialize_response(json_t **json, int size, void *data, uuid_t uuid) {
+int serialize_local_service_response(char **response, Message *message,
+                                     int code, int len, char *data) {
 
-	json_t *jResp=NULL, *jRespInfo=NULL, *jRaw=NULL;
-	json_t *jService=NULL;
-	char idStr[36+1];
-	char *jStr;
-
-	/* basic sanity check */
-	if (size == 0 && data == NULL && uuid_is_null(uuid))
+    json_t *json, *obj;
+    
+    /* basic sanity check */
+	if (len == 0 || data == NULL || message == NULL)
 		return FALSE;
 
-	*json = json_object();
-	if (*json == NULL) {
+	json = json_object();
+	if (json == NULL) {
 		return FALSE;
 	}
 
-	json_object_set_new(*json, JSON_MESH_FORWARD, json_object());
-	jResp = json_object_get(*json, JSON_MESH_FORWARD);
+	json_object_set_new(json, JSON_TYPE, json_string(MESH_SERVICE_RESPONSE));
+    json_object_set_new(json, JSON_SEQ, json_integer(message->seqNo));
 
-	if (jResp==NULL) {
-		json_decref(*json);
-		*json=NULL;
-		return FALSE;
-	}
+    /* Add node info. */
+	json_object_set_new(json, JSON_NODE_INFO, json_object());
+	obj = json_object_get(json, JSON_NODE_INFO);
+	json_object_set_new(obj, JSON_NODE_ID,
+                        json_string(message->nodeInfo->nodeID));
+    json_object_set_new(obj, JSON_PORT, json_string(message->nodeInfo->port));
 
-	json_object_set_new(jResp, JSON_TYPE, json_string(MESH_TYPE_FWD_RESP));
-	json_object_set_new(jResp, JSON_SEQ, json_integer(123)); /* xxx */
-
-	/* Service Info. */
-	uuid_unparse(uuid, &idStr[0]);
-	json_object_set_new(jResp, JSON_SERVICE_INFO, json_object());
-	jService = json_object_get(jResp, JSON_SERVICE_INFO);
-	json_object_set_new(jService, JSON_ID, json_string(&idStr[0]));
-
+    /* Add service info. */
+	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
+	obj = json_object_get(json, JSON_SERVICE_INFO);
+	json_object_set_new(obj, JSON_NAME,
+                        json_string(message->serviceInfo->name));
+    
 	/* Add response info. */
-	json_object_set_new(jResp, JSON_RESPONSE_INFO, json_object());
-	jRespInfo = json_object_get(jResp, JSON_RESPONSE_INFO);
+	json_object_set_new(json, JSON_MESSAGE, json_object());
+	obj = json_object_get(json, JSON_MESSAGE);
+    json_object_set_new(obj, JSON_CODE, json_integer(code));
+	json_object_set_new(obj, JSON_LENGTH, json_integer(len));
+	json_object_set_new(obj, JSON_DATA, json_string(data));
 
-	/* Add raw data */
-	json_object_set_new(jRespInfo, JSON_RAW_DATA, json_object());
-	jRaw = json_object_get(jRespInfo, JSON_RAW_DATA);
-
-	json_object_set_new(jRaw, JSON_LENGTH, json_integer(size));
-	json_object_set_new(jRaw, JSON_DATA, json_string((char *)data));
-
-	jStr = json_dumps(*json, 0);
-	log_debug("Serialized response: %s", jStr);
-	free(jStr);
+    *response = json_dumps(json, 0);
+    json_decref(json);
 
 	return TRUE;
 }
 
 /*
- * serialize_forward_request --
+ * serialize_message_data --
  *
  */
-int serialize_forward_request(URequest *request, json_t **json,
-							  Config *config, uuid_t uuid) {
+static void serialize_message_data(URequest *request, char **data) {
 
-	int ret=FALSE;
-	json_t *jReq=NULL, *jDevice=NULL, *jService=NULL;
-	json_t *jRequest=NULL, *jRaw=NULL;
-	char idStr[36+1]; /* 36-bytes for UUID + trailing '\0' */
+    json_t *json, *jRaw;
 
-	/* Basic sanity check. */
-	if (request==NULL && config==NULL) {
-		return ret;
-	}
-
-	*json = json_object();
-	if (*json == NULL) {
-		return ret;
-	}
-
-	json_object_set_new(*json, JSON_MESH_FORWARD, json_object());
-	jReq = json_object_get(*json, JSON_MESH_FORWARD);
-
-	if (jReq==NULL) {
-		return ret;
-	}
-
-	json_object_set_new(jReq, JSON_TYPE, json_string(MESH_TYPE_FWD_REQ));
-	json_object_set_new(jReq, JSON_SEQ, json_integer(123));
-
-	/* Add Device info. Currently only is the UUID. */
-	json_object_set_new(jReq, JSON_DEVICE_INFO, json_object());
-	jDevice = json_object_get(jReq, JSON_DEVICE_INFO);
-
-	uuid_unparse(config->deviceInfo->uuid, &idStr[0]);
-	json_object_set_new(jDevice, JSON_ID, json_string(idStr));
-
-	/* Add service info., service is the one whose request is being forward. */
-	uuid_unparse(uuid, &idStr[0]); /* Service UUID. */
-
-	json_object_set_new(jReq, JSON_SERVICE_INFO, json_object());
-	jService = json_object_get(jReq, JSON_SERVICE_INFO);
-
-	json_object_set_new(jService, JSON_ID, json_string(&idStr[0]));
-
-	/* Add request info. */
-	json_object_set_new(jReq, JSON_REQUEST_INFO, json_object());
-	jRequest = json_object_get(jReq, JSON_REQUEST_INFO);
-
-	json_object_set_new(jRequest, JSON_PROTOCOL,
+    json = json_object();
+    if (json == NULL) return;
+    
+	json_object_set_new(json, JSON_PROTOCOL,
 						json_string(request->http_protocol));
-	json_object_set_new(jRequest, JSON_METHOD, json_string(request->http_verb));
-	json_object_set_new(jRequest, JSON_URL, json_string(request->http_url));
-	json_object_set_new(jRequest, JSON_PATH, json_string(request->url_path));
+	json_object_set_new(json, JSON_METHOD, json_string(request->http_verb));
+	json_object_set_new(json, JSON_URL, json_string(request->http_url));
+	json_object_set_new(json, JSON_PATH, json_string(request->url_path));
 
-	/* Add map if they exists. */
+	/* Add maps if they exists. */
 	if (request->map_url) {
-		add_map_to_request(&jRequest, request->map_url, MESH_MAP_TYPE_URL);
+		add_map_to_request(&json, request->map_url, MESH_MAP_TYPE_URL);
 	}
 
 	if (request->map_header) {
-		add_map_to_request(&jRequest, request->map_header, MESH_MAP_TYPE_HDR);
+		add_map_to_request(&json, request->map_header, MESH_MAP_TYPE_HDR);
 	}
 
 	if (request->map_cookie) {
-		add_map_to_request(&jRequest, request->map_cookie,
-						   MESH_MAP_TYPE_COOKIE);
+		add_map_to_request(&json, request->map_cookie, MESH_MAP_TYPE_COOKIE);
 	}
 
 	if (request->map_post_body) {
-		add_map_to_request(&jRequest, request->map_post_body,
-						   MESH_MAP_TYPE_POST);
+		add_map_to_request(&json, request->map_post_body, MESH_MAP_TYPE_POST);
 	}
 
 	/* And finally add raw binary data. Currently we assume raw is char* */
 	if (request->binary_body_length > 0 && request->binary_body != NULL ){
-
-		json_object_set_new(jRequest, JSON_RAW_DATA, json_object());
-		jRaw = json_object_get(jRequest, JSON_RAW_DATA);
-
+		json_object_set_new(json, JSON_RAW_DATA, json_object());
+		jRaw = json_object_get(json, JSON_RAW_DATA);
 		json_object_set_new(jRaw, JSON_LENGTH,
 							json_integer((int)request->binary_body_length));
 		json_object_set_new(jRaw, JSON_DATA,
 							json_string((char *)request->binary_body));
 	}
 
+    *data = json_dumps(json, 0);
+    json_decref(json);
+}
+
+/*
+ * serialize_websocket_message --
+ *
+ */
+int serialize_websocket_message(char **str, URequest *request, char *nodeID,
+                                char *port, char *agent, char *sourcePort) {
+
+    json_t *json=NULL, *jDevice=NULL, *jService=NULL;
+	json_t *jRequest=NULL;
+    char *data=NULL;
+
+	json = json_object();
+	if (json == NULL) {
+		return FALSE;
+	}
+
+	json_object_set_new(json, JSON_TYPE, json_string(MESH_NODE_REQUEST));
+	json_object_set_new(json, JSON_SEQ, json_integer(123456));
+
+	/* Node info */
+	json_object_set_new(json, JSON_NODE_INFO, json_object());
+	jDevice = json_object_get(json, JSON_NODE_INFO);
+	json_object_set_new(jDevice, JSON_NODE_ID, json_string(nodeID));
+    json_object_set_new(jDevice, JSON_PORT, json_string(port));
+
+    /* Service info */
+	json_object_set_new(json, JSON_SERVICE_INFO, json_object());
+	jService = json_object_get(json, JSON_SERVICE_INFO);
+	json_object_set_new(jService, JSON_NAME, json_string(agent));
+    json_object_set_new(jService, JSON_PORT, json_string(sourcePort));
+
+	/* Serialize and add request info */
+    serialize_message_data(request, &data);
+	json_object_set_new(json, JSON_MESSAGE, json_object());
+	jRequest = json_object_get(json, JSON_MESSAGE);
+	json_object_set_new(jRequest, JSON_LENGTH, json_integer(strlen(data)));
+    json_object_set_new(jRequest, JSON_CODE, json_integer(0));
+	json_object_set_new(jRequest, JSON_DATA, json_string(data));
+
+    *str = json_dumps(json, 0);
+
 	return TRUE;
 }
 
 /*
- * deserialize_device_info --
+ * deserialize_node_info --
  *
  */
-int deserialize_device_info(DeviceInfo **device, json_t *json) {
+int deserialize_node_info(NodeInfo **node, json_t *json) {
 
-	json_t *obj;
+	json_t *id, *port;
 
-	if (json == NULL && device == NULL)
+	if (json == NULL && node == NULL)
 		return FALSE;
+    
+    id = json_object_get(json, JSON_NODE_ID);
+    port = json_object_get(json, JSON_PORT);
 
-	*device = (DeviceInfo *)calloc(1, sizeof(DeviceInfo));
-	if (*device == NULL)
+    if (id == NULL || port == NULL) {
+        return FALSE;
+    }
+    
+	*node = (NodeInfo *)calloc(1, sizeof(NodeInfo));
+	if (*node == NULL) {
+        log_error("Error allocating memory of size: %d", sizeof(NodeInfo));
 		return FALSE;
+    }
 
-	obj = json_object_get(json, JSON_ID);
-
-	if (obj==NULL) {
-		free(*device);
-		return FALSE;
-	}
-
-	uuid_parse(json_string_value(obj), (*device)->uuid);
+    (*node)->nodeID = strdup(json_string_value(id));
+    (*node)->port   = strdup(json_string_value(port));
 
 	return TRUE;
 }
@@ -326,23 +280,20 @@ int deserialize_device_info(DeviceInfo **device, json_t *json) {
  */
 static int deserialize_service_info(ServiceInfo **service, json_t *json) {
 
-	json_t *obj;
+	json_t *name, *port;
   
-	if (json == NULL && service == NULL)
-		return FALSE;
+	if (json == NULL && service == NULL) return FALSE;
+
+    name = json_object_get(json, JSON_NAME);
+    port = json_object_get(json, JSON_PORT);
+
+    if (name == NULL || port == NULL) return FALSE;
 
 	*service = (ServiceInfo *)calloc(1, sizeof(ServiceInfo));
-	if (*service == NULL)
-		return FALSE;
+	if (*service == NULL) return FALSE;
 
-	obj = json_object_get(json, JSON_ID);
-
-	if (obj==NULL) {
-		free(*service);
-		return FALSE;
-	}
-
-	uuid_parse(json_string_value(obj), (*service)->uuid);
+    (*service)->name = strdup(json_string_value(name));
+    (*service)->port = strdup(json_string_value(port));
 
 	return TRUE;
 }
@@ -412,20 +363,21 @@ static void deserialize_map(URequest **request, json_t *json) {
  * deserialize_request_info --
  *
  */
-static int deserialize_request_info(URequest **request, json_t *json) {
+int deserialize_request_info(URequest **request, char *str) {
 
-	json_t *obj, *jRaw;
+	json_t *json, *obj, *jRaw;
 	int size, i;
 
-	if (json == NULL && request == NULL)
-		return FALSE;
+	if (str == NULL) return FALSE;
+
+    json = json_loads(str, JSON_DECODE_ANY, NULL);
+    if (json == NULL) return FALSE;
 
 	*request = (URequest *)calloc(1, sizeof(URequest));
-	if (*request == NULL)
+	if (*request == NULL) {
+        log_error("Error allocating memory of size: %d", sizeof(URequest));
 		return FALSE;
-
-	/* Initialize inner struct elements. */
-	//ulfius_init_request(*request);
+    }
 
 	obj = json_object_get(json, JSON_PROTOCOL);
 	if (obj) {
@@ -464,9 +416,7 @@ static int deserialize_request_info(URequest **request, json_t *json) {
 	}
 
 	/* Lastly, de-serialize raw binary data. */
-
 	jRaw = json_object_get(json, JSON_RAW_DATA);
-
 	if (jRaw) {
 
 		obj = json_object_get(jRaw, JSON_LENGTH);
@@ -491,141 +441,64 @@ static int deserialize_request_info(URequest **request, json_t *json) {
 }
 
 /*
- * deserialize_forward_request --
+ * deserialize_websocket_message --
  *
  */
-int deserialize_forward_request(MRequest **request, json_t *json) {
+int deserialize_websocket_message(Message **message, json_t *json) {
 
-	int ret=FALSE;
-	json_t *jFwd, *obj;
-	char *jStr;
-
-	if (json == NULL) {
-		return FALSE;
-	}
-
-	jFwd = json_object_get(json, JSON_MESH_FORWARD);
-	if (jFwd == NULL) {
-		goto fail;
-	}
-
-	*request = (MRequest *)calloc(1, sizeof(MRequest));
-	if (*request == NULL) {
-		return FALSE;
-	}
-
-	obj = json_object_get(jFwd, JSON_TYPE);
-	if (obj == NULL) {
-		goto fail;
-	} else {
-		(*request)->reqType = strdup(json_string_value(obj));
-	}
-
-	obj = json_object_get(jFwd, JSON_SEQ);
-	if (obj == NULL) {
-		goto fail;
-	} else {
-		(*request)->seqNo = json_integer_value(obj);
-	}
-
-	obj = json_object_get(jFwd, JSON_DEVICE_INFO);
-	ret = deserialize_device_info(&(*request)->deviceInfo, obj);
-
-	obj = json_object_get(jFwd, JSON_SERVICE_INFO);
-	ret = deserialize_service_info(&(*request)->serviceInfo, obj);
-
-	obj = json_object_get(jFwd, JSON_REQUEST_INFO);
-	ret = deserialize_request_info(&(*request)->requestInfo, obj);
-
-	return TRUE;
-
- fail:
-	jStr = json_dumps(json, 0);
-	log_error("Error decoding JSON: %s", jStr);
-	free(jStr);
-	return FALSE;
-}
-
-/*
- * deserialize_response --
- *
- */
-int deserialize_response(MResponse **response, json_t *json) {
-
-	json_t *jFwd=NULL, *obj=NULL, *jResp=NULL, *jRaw=NULL;
-	char *jStr;
+    json_t *jType, *jSeq, *jNodeInfo, *jServiceInfo, *jMessage;
+    json_t *jLength, *jData, *jCode;
+	char *jStr=NULL;
 
 	/* Sanity check */
 	if (json == NULL) {
 		return FALSE;
 	}
 
-	jFwd = json_object_get(json, JSON_MESH_FORWARD);
-	if (jFwd == NULL) {
-		goto fail;
-	}
+    jType        = json_object_get(json, JSON_TYPE);
+    jSeq         = json_object_get(json, JSON_SEQ);
+    jNodeInfo    = json_object_get(json, JSON_NODE_INFO);
+    jServiceInfo = json_object_get(json, JSON_SERVICE_INFO);
+    jMessage     = json_object_get(json, JSON_MESSAGE);
 
-	*response = (MResponse *)calloc(1, sizeof(MResponse));
-	if (*response == NULL) {
+    if (jType == NULL || jSeq == NULL || jNodeInfo == NULL ||
+        jServiceInfo == NULL || jMessage == NULL) {
+        jStr = json_dumps(json, 0);
+        log_error("Error decoding JSON: %s", jStr);
+        free(jStr);
+        return FALSE;
+    }
+
+    jLength = json_object_get(jMessage, JSON_LENGTH);
+    jData   = json_object_get(jMessage, JSON_DATA);
+    jCode   = json_object_get(jMessage, JSON_CODE);
+
+    if (jLength == NULL || jData == NULL) {
+        jStr = json_dumps(json, 0);
+        log_error("Error decoding JSON: %s", jStr);
+        free(jStr);
+        return FALSE;
+    }
+
+    *message = (Message *)calloc(1, sizeof(Message));
+	if (*message == NULL) {
+        log_error("Unable to allocate memory of size: %d", sizeof(Message));
 		return FALSE;
 	}
 
-	obj = json_object_get(jFwd, JSON_TYPE);
-	if (obj == NULL) {
-		goto fail;
-	} else {
-		(*response)->reqType = strdup(json_string_value(obj));
-	}
+    (*message)->reqType  = strdup(json_string_value(jType));
+    (*message)->seqNo    = json_integer_value(jSeq);
+    (*message)->code     = json_integer_value(jCode);
+    (*message)->dataSize = json_integer_value(jLength);
+    (*message)->data     = strdup(json_string_value(jData));
+    
+    deserialize_node_info(&(*message)->nodeInfo, jNodeInfo);
+	deserialize_service_info(&(*message)->serviceInfo, jServiceInfo);
 
-	/* validate response type. */
-	if (strcmp((*response)->reqType, MESH_TYPE_FWD_RESP)!=0) {
-		log_error("Invalid response type recevied: %s", (*response)->reqType);
-		goto fail;
-	}
-
-	obj = json_object_get(jFwd, JSON_SEQ);
-	if (obj == NULL) {
-		goto fail;
-	} else {
-		(*response)->seqNo = json_integer_value(obj);
-	}
-
-	obj = json_object_get(jFwd, JSON_SERVICE_INFO);
-	deserialize_service_info(&(*response)->serviceInfo, obj);
-
-	jResp = json_object_get(jFwd, JSON_RESPONSE_INFO);
-	if (jResp == NULL) {
-		goto fail;
-	}
-
-	/* Lastly, de-serialize raw binary data. */
-	jRaw = json_object_get(jResp, JSON_RAW_DATA);
-
-	if (jRaw) {
-		obj = json_object_get(jRaw, JSON_LENGTH);
-		if (obj) {
-			(*response)->size = json_integer_value(obj);
-		}
-
-		/* Get the actual data now */
-		obj = json_object_get(jRaw, JSON_DATA);
-
-		if (obj) {
-			(*response)->data = (void *)calloc(1, (*response)->size);
-			if ((*response)->data == NULL)
-				return FALSE;
-
-			memcpy((*response)->data, (void *)json_string_value(obj),
-				   (*response)->size);
-		}
-	}
+    /* deserialize the data */
+    if (strcmp((*message)->reqType, MESH_SERVICE_REQUEST) == 0) {
+        deserialize_request_info((URequest **)&(*message)->data, jData);
+    }
 
 	return TRUE;
-
- fail:
-	jStr = json_dumps(json, 0);
-	log_error("Error decoding JSON: %s", jStr);
-	free(jStr);
-
-	return FALSE;
 }

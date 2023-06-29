@@ -19,11 +19,13 @@
 #include <ulfius.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include "mesh.h"
 #include "config.h"
 #include "work.h"
 #include "map.h"
+#include "websocket.h"
 
 #define VERSION "0.0.1"
 
@@ -38,7 +40,9 @@ extern int start_websocket_client(Config *config,
 /* Global variables. */
 WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
 WorkList *Receive=NULL;
-MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
+MapTable *ClientTable=NULL;
+pthread_mutex_t websocketMutex, mutex;
+pthread_cond_t  websocketFail, hasData;
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -49,8 +53,6 @@ void usage() {
 	printf("Usage: mesh.d [options] \n");
 	printf("Options:\n");
 	printf("--h, --help                         Help menu.\n");
-	printf("--p, --proxy                        Enable reservse-proxy\n");
-	printf("--s, --secure                       Enable SSL/TLS \n");
 	printf("--c, --config                       Config file name\n");
 	printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process.\n");
 	printf("--V, --version                      Version.\n");
@@ -148,11 +150,12 @@ void catch_sigterm(void) {
 
 int main (int argc, char *argv[]) {
 
-	int secure=FALSE, proxy=FALSE;
 	char *configFile=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	Config *config=NULL;
-
+    ThreadArgs threadArgs;
+    pthread_t thread;
+    
 	struct _u_instance webInst;
 	struct _websocket_client_handler websocketHandler = {NULL, NULL};
 
@@ -173,8 +176,6 @@ int main (int argc, char *argv[]) {
 		int opdidx = 0;
 
 		static struct option long_options[] = {
-			{ "proxy",     no_argument,       0, 'p'},
-			{ "secure",    no_argument,       0, 's'},
 			{ "config",    required_argument, 0, 'c'},
 			{ "level",     required_argument, 0, 'l'},
 			{ "help",      no_argument,       0, 'h'},
@@ -202,14 +203,6 @@ int main (int argc, char *argv[]) {
 			set_log_level(debug);
 			break;
 
-		case 'p':
-			proxy=TRUE;
-			break;
-
-		case 's':
-			secure=TRUE;
-			break;
-
 		case 'V':
 			fprintf(stdout, "Mesh.d - Version: %s\n", VERSION);
 			exit(0);
@@ -232,13 +225,8 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	if (proxy)
-		config->proxy = TRUE;
-	else
-		config->proxy = FALSE;
-
 	/* Step-1: read config file. */
-	if (process_config_file(secure, proxy, configFile, config) != TRUE) {
+	if (process_config_file(config, configFile) != TRUE) {
 		fprintf(stderr, "Error parsing config file: %s. Exiting ... \n",
 				configFile);
 		exit(1);
@@ -259,13 +247,18 @@ int main (int argc, char *argv[]) {
 	init_work_list(&Transmit);
 	init_work_list(&Receive);
 
+    pthread_mutex_init(&websocketMutex, NULL);
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&websocketFail, NULL);
+    pthread_cond_init(&hasData, NULL);
+
 	/* Setup ip:port to UUID mapping table, if client. */
-	IDTable = (MapTable *)malloc(sizeof(MapTable));
-	if (IDTable == NULL) {
+	ClientTable = (MapTable *)malloc(sizeof(MapTable));
+	if (ClientTable == NULL) {
 		log_error("Memory allocation failure: %d", sizeof(MapTable));
 		exit(1);
 	}
-	init_map_table(&IDTable);
+	init_map_table(&ClientTable);
 
 	/* start webservice for local client. */
 	if (start_web_services(config, &webInst) != TRUE) {
@@ -274,9 +267,18 @@ int main (int argc, char *argv[]) {
 	}
 
 	if (start_websocket_client(config, &websocketHandler) != TRUE) {
-		log_error("Websocket failed to setup for client. Exiting...");
-		exit(1);
+		log_error("Websocket failed to setup for client. Retrying soon ...");
 	}
+
+    /* create websocket monitoring thread */
+    threadArgs.config  = config;
+    threadArgs.handler = &websocketHandler;
+    if (pthread_create(&thread, NULL, monitor_websocket,
+                       (void *)&threadArgs) != 0) {
+        log_error("Unable to create websocket monitoring thread.");
+    }
+
+    pthread_detach(thread);
 
 	log_debug("Mesh.d running ...");
 

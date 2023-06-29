@@ -99,28 +99,20 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 
   int ret;
   
-  /* open HTTPS/HTTP connection. */
-  if (config->secure && flag == WEB_SOCKETS) {
-    ret = ulfius_start_secure_framework(instance, config->keyFile,
-					config->certFile);
-  } else {
-    ret = ulfius_start_framework(instance);
-  }
-
-  if (ret != U_OK) {
-    log_error("Error starting the webservice/websocket.");
+  if (ulfius_start_framework(instance) != U_OK) {
+      log_error("Error starting the webservice/websocket.");
     
-    /* clean up. */
-    ulfius_stop_framework(instance); /* don't think need this. XXX */
-    ulfius_clean_instance(instance);
+      /* clean up. */
+      ulfius_stop_framework(instance); /* don't think need this. XXX */
+      ulfius_clean_instance(instance);
     
-    return FALSE;
+      return FALSE;
   }
 
   if (flag == WEB_SOCKETS) {
-    log_debug("Websocket succesfully started.");
+      log_debug("Websocket succesfully started.");
   } else {
-    log_debug("Webservice sucessfully started.");
+      log_debug("Webservice sucessfully started.");
   }
   
   return TRUE;
@@ -137,7 +129,6 @@ int start_websocket_client(Config *config,
   int ret=FALSE;
   struct _u_request request;
   struct _u_response response;
-  char idStr[36+1];
 
   if (ulfius_init_request(&request) != U_OK) {
     goto done;
