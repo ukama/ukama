@@ -96,7 +96,7 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 // TODO: check for still allocated and attached nodes
 func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Select("NodeStatus").Delete(&Node{Id: nodeId.StringLowercase()})
+		result := tx.Select(clause.Associations, "NodeStatus").Delete(&Node{Id: nodeId.StringLowercase()})
 		if result.Error != nil {
 			return result.Error
 		}
