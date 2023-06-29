@@ -31,6 +31,10 @@ func NewTestAgentAdapter(testAgentHost string, timeout time.Duration) (*TestAgen
 		client: pb.NewTestAgentServiceClient(testAgentConn)}, nil
 }
 
+func (t *TestAgentAdapter) BindSim(ctx context.Context, iccid string) (any, error) {
+	return t.client.BindSim(ctx, &pb.BindSimRequest{Iccid: iccid})
+}
+
 func (t *TestAgentAdapter) GetSim(ctx context.Context, iccid string) (any, error) {
 	return t.client.GetSim(ctx, &pb.GetSimRequest{Iccid: iccid})
 }
