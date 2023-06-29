@@ -7,23 +7,33 @@ import (
 
 type Deployments struct {
 	gorm.Model
-	Name    string    `gorm:"index:deployment_name_idx,not null"`
-	OrgID   uuid.UUID `gorm:"index:org_system_idx,not null;index:org_idx"`
-	OrgName string    `gorm:"index:system_name_idx,not null"` /* Get this from registry. No need to store here just to verify if the irg is valid */
-	SysName string    `gorm:"uniqueIndex:system_name_idx,not null"` /* org specifc name for a system. has to be unique throughout the orgs */
-	Env     string
-	Status  uint8
+	Code     uuid.UUID `gorm:"type=uuid;uniqueIndex:deployment_id,not null"`
+	Name     string    `gorm:"index:deployment_name_idx,not null"` /* combination od org_name+system-name */
+	OrgID    uuid.UUID `gorm:"index:org_system_idx,not null;index:org_idx"`
+	Org      Orgs      `gorm:"references:OrgId"`
+	SysName  string    `gorm:"uniqueIndex:system_name_idx,not null"` /* org specifc name for a system. has to be unique throughout the orgs */
+	Env      string
+	Status   uint8
+	Values   []string
+	Details  string
+	ConfigID uint
+	Config   Configs
+}
+
+type Orgs struct {
+	gorm.Model
+	OrgId   uuid.UUID `gorm:"index:org_idx,not null;"`
+	OrgName string    /* Get this from registry. No need to store here just to verify if the irg is valid */
 	Values  []string
-	Details string
+	Config  []Configs
 }
 
 /* System configurations */
-type Systems struct {
+type Configs struct {
 	gorm.Model
-	Name        string `gorm:"index:system_name_idx,not null"`
-	SystemId    uint8  `gorm:"index:system_idx,not null` // registry, billing, subscriber etc
-	Chart       string `gorm:"type:string;not null"`
-	Version     string `gorm:"type:string;not null"`
-	Values      []string
-	Deployments []Deployments
+	Name    string `gorm:"uniqueIndex:config_name_idx,not null"`
+	Chart   string `gorm:"type:string;not null"`
+	Version string `gorm:"type:string;not null"`
+	Values  []string
+	Orgs    []Orgs
 }
