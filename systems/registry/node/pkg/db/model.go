@@ -32,12 +32,12 @@ type Connectivity uint8
 type NodeState uint8
 
 const (
-	Undefined    NodeState = iota
-	Onboarded    NodeState = 1 /* First time when node connctes */
-	Configured   NodeState = 2 /* After initial configuration */
-	Active       NodeState = 3 /* Up and transmitting */
-	Maintainance NodeState = 4 /* Upgardes / Downgrades */
-	Faulty       NodeState = 5 /* Fault reported by node */
+	Undefined   NodeState = iota
+	Onboarded   NodeState = 1 /* First time when node connctes */
+	Configured  NodeState = 2 /* After initial configuration */
+	Active      NodeState = 3 /* Up and transmitting */
+	Maintenance NodeState = 4 /* Upgardes / Downgrades */
+	Faulty      NodeState = 5 /* Fault reported by node */
 )
 
 const (
@@ -58,12 +58,12 @@ func (e NodeState) Value() (driver.Value, error) {
 
 func (e NodeState) String() string {
 	ns := map[NodeState]string{
-		Undefined:    "undefined",
-		Onboarded:    "onboarded",
-		Configured:   "configured",
-		Active:       "active",
-		Maintainance: "maintainance",
-		Faulty:       "faulty",
+		Undefined:   "undefined",
+		Onboarded:   "onboarded",
+		Configured:  "configured",
+		Active:      "active",
+		Maintenance: "maintenance",
+		Faulty:      "faulty",
 	}
 
 	return ns[e]
@@ -74,7 +74,7 @@ func ParseNodeState(s string) NodeState {
 	case "active":
 		return Active
 	case "maintainance":
-		return Maintainance
+		return Maintenance
 	case "faulty":
 		return Faulty
 	case "onboarded":
