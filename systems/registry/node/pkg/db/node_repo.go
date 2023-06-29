@@ -24,7 +24,7 @@ type NodeRepo interface {
 	Update(*Node, func(*Node, *gorm.DB) error) error
 	AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error
 	DetachNode(detachNodeId ukama.NodeID) error
-	GetNodeCount() (int64, error)
+	GetNodeCount() (int64, int64, int64, error)
 }
 
 type nodeRepo struct {
@@ -230,24 +230,22 @@ func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	return err
 }
 
-func (r *nodeRepo) GetNodeCount() (nodeCount int64, err error) {
+func (r *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, err error) {
 	db := r.Db.GetGormDb()
 
 	if err := db.Model(&Node{}).Count(&nodeCount).Error; err != nil {
-		return 0, err
+		return 0, 0, 0, err
 	}
 
-	// res := db.Model(&Node{}).Joins("JOIN node_statuses n on n.node_id = node.id AND n.conn = ?", Online).Find(&node)
-	// if res.Error != nil {
-	// 	return 0, 0, 0, res.Error
-	// }
-	// activeNodeCount = res.RowsAffected
+	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ?", Online).Scan(&onlineCount)
+	if res1.Error != nil {
+		return 0, 0, 0, err
+	}
 
-	// ires := db.Model(&Node{}).Joins("JOIN node_statuses n on n.node_id = node.id AND n.conn = ?", Offline).Find(&node)
-	// if ires.Error != nil {
-	// 	return 0, 0, 0, ires.Error
-	// }
-	// inactiveNodeCount = res.RowsAffected
+	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ?", Offline).Scan(&offlineCount)
+	if res2.Error != nil {
+		return 0, 0, 0, err
+	}
 
-	return nodeCount, nil
+	return nodeCount, onlineCount, offlineCount, nil
 }

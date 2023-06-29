@@ -70,36 +70,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	// strState := strings.ToLower(req.GetState())
-	// nodeState := db.ParseNodeState(strState)
-	// if req.GetState() != "" && nodeState == db.Undefined {
-	// 	return nil, status.Errorf(codes.InvalidArgument,
-	// 		"invalid node type. Error: node type %q not supported", req.GetState())
-	// }
-
-	// orgId, err := uuid.FromString(req.GetOrgId())
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.InvalidArgument,
-	// 		"invalid format of org uuid. Error %s", err.Error())
-	// }
-
-	// svc, err := n.orgService.GetClient()
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// remoteOrg, err := svc.Get(ctx, &orgpb.GetRequest{Id: orgId.String()})
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// // What should we do if the remote org exists but is deactivated?
-	// // For now we simply abort.
-	// if remoteOrg.Org.IsDeactivated {
-	// 	return nil, status.Errorf(codes.FailedPrecondition,
-	// 		"org is deactivated: cannot add node to it")
-	// }
-
 	if len(req.Name) == 0 {
 		req.Name = n.nameGenerator.Generate()
 	}
@@ -557,21 +527,14 @@ func (n *NodeServer) getFreeNodes(ctx context.Context, req *pb.GetNodesRequest) 
 }
 
 func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
-	nodesCount, err := n.nodeRepo.GetNodeCount()
+	nodesCount, onlineCount, offlineCount, err := n.nodeRepo.GetNodeCount()
 	if err != nil {
 		log.Errorf("Error while getting node count %s", err.Error())
 
 		return
 	}
 
-	actCount, inactCount, err := n.nodeStatusRepo.GetNodeCount()
-	if err != nil {
-		log.Errorf("Error while getting node count %s", err.Error())
-
-		return
-	}
-
-	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount, actCount, inactCount)
+	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount, onlineCount, offlineCount)
 
 	for _, arg := range args {
 		switch arg {
@@ -580,10 +543,10 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 				pkg.NumberOfNodes, float64(nodesCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfActiveNodes:
 			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfActiveNodes, float64(actCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+				pkg.NumberOfActiveNodes, float64(onlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfInactiveNodes:
 			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfInactiveNodes, float64(inactCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+				pkg.NumberOfInactiveNodes, float64(offlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		}
 	}
 
