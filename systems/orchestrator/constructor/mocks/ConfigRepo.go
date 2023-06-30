@@ -12,6 +12,20 @@ type ConfigRepo struct {
 	mock.Mock
 }
 
+// AddOrg provides a mock function with given fields: name, orgId
+func (_m *ConfigRepo) AddOrg(name string, orgId string) error {
+	ret := _m.Called(name, orgId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(name, orgId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Create provides a mock function with given fields: c
 func (_m *ConfigRepo) Create(c *db.Config) error {
 	ret := _m.Called(c)
@@ -33,6 +47,20 @@ func (_m *ConfigRepo) Delete(name string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string) error); ok {
 		r0 = rf(name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteOrg provides a mock function with given fields: name, orgId
+func (_m *ConfigRepo) DeleteOrg(name string, orgId string) error {
+	ret := _m.Called(name, orgId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(name, orgId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -116,20 +144,6 @@ func (_m *ConfigRepo) GetHistory(name string) (*[]db.Config, error) {
 	}
 
 	return r0, r1
-}
-
-// Update provides a mock function with given fields: n
-func (_m *ConfigRepo) Update(n *db.Config) error {
-	ret := _m.Called(n)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Config) error); ok {
-		r0 = rf(n)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 type mockConstructorTestingTNewConfigRepo interface {

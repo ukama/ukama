@@ -77,7 +77,7 @@ func runGrpcServer(d sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewConstructorServer(db.NewOrgRepo(d), db.NewDeploymentRepo(d), db.NewConfigRepo(d), mbClient)
+		srv := server.NewConstructorServer(db.NewOrgRepo(d), db.NewDeploymentRepo(d), db.NewConfigRepo(d), mbClient, serviceConfig.DebugMode)
 		nSrv := server.NewConstructorEventServer(srv)
 		generated.RegisterConstructorServiceServer(s, srv)
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)

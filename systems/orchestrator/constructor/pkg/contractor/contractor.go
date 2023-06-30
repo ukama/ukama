@@ -27,7 +27,7 @@ type Worker struct {
 	Config   *hconfig.ApplyImpl
 }
 
-func NewContarctor(val map[string]interface{}, debug bool, source string, env string) (Contractor, error) {
+func NewContractor(val map[string]interface{}, debug bool, source string, env string) (Contractor, error) {
 	w, err := NewWorker(val, debug, source, env)
 	if err != nil {
 		log.Errorf("Failed to get a contractor. Error: %v", err)

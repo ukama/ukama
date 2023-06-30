@@ -23,9 +23,8 @@ message Config {
     string name =1;
     string source =2;
     string chart = 3;
-    string env = 4 ;
-    string version = 5;
-    repeated string keyVal = 6;
+    string version = 4;
+    repeated string keyVal = 5;
 }
 
 message Deployment {
@@ -58,6 +57,7 @@ message AddConfigRequest {
 }
 
 message AddConfigResponse {
+    repeated string OrgId =1 ;
 }
 
 message ConstructOrgRequest {

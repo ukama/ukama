@@ -1,8 +1,10 @@
 package db
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -42,8 +44,35 @@ func NewDeploymentRepo(db sql.Db) *deploymentRepo {
 
 func (r *deploymentRepo) Add(d *Deployment) error {
 
-	res := r.Db.GetGormDb().Omit("Orgs").Create(d)
-	return res.Error
+	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+
+		t := tx.Where("name= ?", d.Name).Delete(&Deployment{})
+		if t.RowsAffected > 0 {
+			log.Debugf("Marking old state with delete_at for %s", d.Name)
+		}
+
+		res := tx.Model(&Deployment{}).Omit("Orgs").Omit("Configs").Create(d)
+		if res.Error != nil {
+			log.Errorf("failed to create new deployment %+v", d)
+			return res.Error
+		}
+
+		err := tx.Model(&Deployment{Code: d.Code}).Omit("Orgs.*").Association("Orgs").Append(d.Org)
+		if err != nil {
+			log.Errorf("failed to update org in deployment %+v", d)
+			return err
+		}
+
+		err = tx.Model(&Deployment{Code: d.Code}).Omit("Configs.*").Association("Configs").Append(d.Config)
+		if err != nil {
+			log.Errorf("failed to update org in deployment %+v", d)
+			return err
+		}
+
+		return nil
+	})
+	//res := r.Db.GetGormDb().Model(&Deployment{}).Omit("Orgs.*").Omit("Configs.*").Association("Orgs", "Configs").Create(d)
+	return err
 }
 
 // func (r *deploymentRepo) AddDeployment(d *Deployment, dep *Deployment) error {

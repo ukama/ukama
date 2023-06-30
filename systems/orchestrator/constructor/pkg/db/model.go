@@ -10,16 +10,16 @@ import (
 
 type Deployment struct {
 	gorm.Model
-	Code     uuid.UUID `gorm:"type=uuid;uniqueIndex:deployment_id,not null"`
-	Name     string    `gorm:"index:deployment_name_idx,not null"` /* combination od org_name+system-name */
-	OrgID    uuid.UUID `gorm:"index:org_idx,not null;"`
-	Org      Org       `gorm:"references:OrgId"`
-	Env      string
-	Status   DeploymentStatus `gorm:"type=uint"`
-	Values   []string
-	Details  string
-	ConfigID uint
-	Config   Config
+	Code      uuid.UUID        `gorm:"type=uuid;uniqueIndex:deployment_id,not null"`
+	Name      string           `gorm:"index:deployment_name_idx,not null"` /* combination od org_name+system-name */
+	OrgID     uuid.UUID        `gorm:"index:org_idx,not null;"`
+	Org       Org              `gorm:"references:OrgId"`
+	Namespace string           `gorm:"uniqueIndex:ns_idx,not null"`
+	Status    DeploymentStatus `gorm:"type=uint"`
+	Values    []string
+	Details   string
+	ConfigID  uint
+	Config    Config
 }
 
 type Org struct {

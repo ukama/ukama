@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
 )
@@ -10,9 +11,10 @@ import (
 type ConfigRepo interface {
 	Create(c *Config) error
 	Get(name string) (*Config, error)
-	GetAll() ([]*Config, error)
+	GetAll() (*[]Config, error)
 	Delete(name string) error
-	Update(n *Config) error
+	AddOrg(name string, org Org) error
+	DeleteOrg(name string, org Org) error
 	GetHistory(name string) (*[]Config, error)
 }
 
@@ -27,28 +29,64 @@ func NewConfigRepo(db sql.Db) *configsRepo {
 }
 
 func (d *configsRepo) Create(c *Config) error {
-	r := d.Db.GetGormDb().Create(c)
-	return r.Error
+	err := d.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		r := tx.Where("name = ?", c.Name).First(&c)
+		if r.Error != nil {
+			return fmt.Errorf("failed to update %s config. Error while getting: %v", c.Name, r.Error)
+		}
+
+		t := tx.Where("name= ?", c.Name).Delete(&Config{})
+		if t.RowsAffected > 0 {
+			log.Debugf("Marking old state with delete_at for %s", c.Name)
+		}
+
+		result := tx.Create(c)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	})
+
+	return err
 }
 
-func (d *configsRepo) Update(n *Config) error {
+/* Added on receiving events */
+func (d *configsRepo) AddOrg(name string, org Org) error {
 
 	err := d.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 
 		var c Config
 		r := tx.Where("name = ?", c.Name).First(&c)
 		if r.Error != nil {
-			return fmt.Errorf("failed to update %s config. Error while getting: %v", c.Name, r.Error)
+			return fmt.Errorf("failed to update %s config. Error while getting config for %s: %v", name, c.Name, r.Error)
 		}
 
-		r = tx.Delete(&c)
-		if r.Error != nil {
-			return fmt.Errorf("failed to update %s config. Error while deleting: %v", c.Name, r.Error)
+		err := tx.Model(&Config{Name: c.Name}).Omit("Orgs.*").Association("Orgs").Append(&org)
+		if err != nil {
+			return fmt.Errorf("failed to add %s org to %s config. Error while getting: %v", org.OrgId, c.Name, err)
 		}
 
-		r = tx.Create(n)
+		return nil
+	})
+
+	return err
+}
+
+/* Deleted on receiving events */
+func (d *configsRepo) DeleteOrg(name string, org Org) error {
+
+	err := d.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+
+		var c Config
+		r := tx.Where("name = ?", c.Name).First(&c)
 		if r.Error != nil {
-			return fmt.Errorf("failed to  %s config. Error while creating: %v", c.Name, r.Error)
+			return fmt.Errorf("failed to update %s config. Error while getting config for %s: %v", name, c.Name, r.Error)
+		}
+
+		err := tx.Model(&Config{Name: c.Name}).Omit("Orgs.*").Association("Orgs").Delete(&org)
+		if err != nil {
+			return fmt.Errorf("failed to delete %s org from  %s config. Error while getting: %v", org.OrgId, c.Name, err)
 		}
 
 		return nil
@@ -66,7 +104,7 @@ func (d *configsRepo) Get(name string) (*Config, error) {
 	return &c, nil
 }
 
-func (d *configsRepo) GetAll(name string) (*[]Config, error) {
+func (d *configsRepo) GetAll() (*[]Config, error) {
 	var c []Config
 	result := d.Db.GetGormDb().Find(&c)
 	if result.Error != nil {
