@@ -327,10 +327,11 @@ func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) error {
 }
 
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
-	return r.clients.User.AddUser(&userspb.UserAttributes{
-		Name:  req.Name,
-		Email: req.Email,
-		Phone: req.Phone,
+	return r.clients.User.AddUser(&userspb.User{
+		Name:   req.Name,
+		Email:  req.Email,
+		Phone:  req.Phone,
+		AuthId: req.AuthId,
 	},
 		c.GetString(USER_ID_KEY))
 }
