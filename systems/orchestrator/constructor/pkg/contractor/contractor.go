@@ -1,4 +1,4 @@
-package applier
+package contractor
 
 import (
 	"context"
@@ -12,7 +12,11 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type Applier struct {
+type Contractor interface {
+	ApplyHelmfile(ctx context.Context) error
+}
+
+type Worker struct {
 	Values   map[string]interface{}
 	Set      []string
 	Debug    bool   `default:"true"`
@@ -23,7 +27,16 @@ type Applier struct {
 	Config   *hconfig.ApplyImpl
 }
 
-func NewApplier(val map[string]interface{}, debug bool, source string, env string) (*Applier, error) {
+func NewContarctor(val map[string]interface{}, debug bool, source string, env string) (Contractor, error) {
+	w, err := NewWorker(val, debug, source, env)
+	if err != nil {
+		log.Errorf("Failed to get a contractor. Error: %v", err)
+		return nil, err
+	}
+	return w, nil
+}
+
+func NewWorker(val map[string]interface{}, debug bool, source string, env string) (*Worker, error) {
 
 	globalConfig := new(hconfig.GlobalOptions)
 
@@ -54,7 +67,7 @@ func NewApplier(val map[string]interface{}, debug bool, source string, env strin
 
 	app := app.New(applyImpl)
 
-	return &Applier{
+	return &Worker{
 		Source: source,
 		Env:    env,
 		App:    app,
@@ -70,7 +83,7 @@ func NewLogger(writer io.Writer, logLevel string) *zap.SugaredLogger {
 	var level zapcore.Level
 	err := level.Set(logLevel)
 	if err != nil {
-		panic(err)
+		log.Errorf("Failed to set log level: %v", err)
 	}
 	core := zapcore.NewCore(
 		zapcore.NewConsoleEncoder(cfg),
@@ -80,9 +93,9 @@ func NewLogger(writer io.Writer, logLevel string) *zap.SugaredLogger {
 	return zap.New(core).Sugar()
 }
 
-func (a *Applier) ApplyHelmfile(ctx context.Context) error {
-	log.Infof("Applying helmfile:\n %+v", a)
-	if err := a.App.Apply(a.Config); err != nil {
+func (w *Worker) ApplyHelmfile(ctx context.Context) error {
+	log.Infof("Applying helmfile:\n %+v", w)
+	if err := w.App.Apply(w.Config); err != nil {
 		log.Errorf("Error Applying helmfile %v", err)
 		return err
 	}

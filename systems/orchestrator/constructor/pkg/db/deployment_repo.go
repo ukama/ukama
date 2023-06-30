@@ -14,6 +14,7 @@ type DeploymentRepo interface {
 	Delete(id uuid.UUID) error
 	GetCount(name string) (int64, error)
 	GetHistoryByName(name string) (*Deployment, error)
+	UpdateStatus(name string, status DeploymentStatus) error
 }
 
 type deploymentRepo struct {
@@ -90,4 +91,9 @@ func (r *deploymentRepo) GetHistoryByName(name string) (*Deployment, error) {
 	sys := &Deployment{}
 	d := r.Db.GetGormDb().Unscoped().Preload(clause.Associations).Where(&Deployment{Name: name}).Last(sys)
 	return sys, d.Error
+}
+
+func (r *deploymentRepo) UpdateStatus(name string, status DeploymentStatus) error {
+	d := r.Db.GetGormDb().Where(&Deployment{Name: name}).Updates(&Deployment{Status: status})
+	return d.Error
 }

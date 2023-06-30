@@ -17,28 +17,97 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-var _regex_BuildOrgRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+func (this *Config) Validate() error {
+	return nil
+}
 
-func (this *BuildOrgRequest) Validate() error {
-	if !_regex_BuildOrgRequest_OrgId.MatchString(this.OrgId) {
+var _regex_Deployment_Code = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Deployment_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *Deployment) Validate() error {
+	if !_regex_Deployment_Code.MatchString(this.Code) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Code", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Code))
+	}
+	if this.Code == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Code", fmt.Errorf(`value '%v' must not be an empty string`, this.Code))
+	}
+	if !_regex_Deployment_OrgId.MatchString(this.OrgId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
 	}
 	if this.OrgId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
 	}
-	if this.OrgName == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+	if this.Config != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Config); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Config", err)
+		}
 	}
 	return nil
 }
-func (this *BuildOrgResponse) Validate() error {
+func (this *Systems) Validate() error {
+	return nil
+}
+func (this *ConfigRequest) Validate() error {
+	return nil
+}
+func (this *ConfigResponse) Validate() error {
+	for _, item := range this.Config {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Config", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *AddConfigRequest) Validate() error {
+	if this.Config != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Config); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Config", err)
+		}
+	}
+	return nil
+}
+func (this *AddConfigResponse) Validate() error {
+	return nil
+}
+func (this *ConstructOrgRequest) Validate() error {
+	for _, item := range this.System {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("System", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *ConstructOrgResponse) Validate() error {
+	return nil
+}
+func (this *DeploymentRequest) Validate() error {
+	return nil
+}
+func (this *DeploymentResponse) Validate() error {
+	return nil
+}
+func (this *GetDeploymentRequests) Validate() error {
+	return nil
+}
+func (this *GetDeploymentResponse) Validate() error {
+	for _, item := range this.Deployments {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Deployments", err)
+			}
+		}
+	}
 	return nil
 }
 
-var _regex_ConstructorConfigRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_RemoveDeploymentRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *ConstructorConfigRequest) Validate() error {
-	if !_regex_ConstructorConfigRequest_OrgId.MatchString(this.OrgId) {
+func (this *RemoveDeploymentRequest) Validate() error {
+	if !_regex_RemoveDeploymentRequest_OrgId.MatchString(this.OrgId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
 	}
 	if this.OrgId == "" {
@@ -46,14 +115,14 @@ func (this *ConstructorConfigRequest) Validate() error {
 	}
 	return nil
 }
-func (this *ConstructorConfigResponse) Validate() error {
+func (this *RemoveDeploymentResponse) Validate() error {
 	return nil
 }
 
-var _regex_UpdateDefaultConstrutorConfigRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_DistructOrgRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *UpdateDefaultConstrutorConfigRequest) Validate() error {
-	if !_regex_UpdateDefaultConstrutorConfigRequest_OrgId.MatchString(this.OrgId) {
+func (this *DistructOrgRequest) Validate() error {
+	if !_regex_DistructOrgRequest_OrgId.MatchString(this.OrgId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
 	}
 	if this.OrgId == "" {
@@ -61,30 +130,17 @@ func (this *UpdateDefaultConstrutorConfigRequest) Validate() error {
 	}
 	return nil
 }
-func (this *UpdateDefaultConstructorConfigResponse) Validate() error {
+func (this *DistructOrgResponse) Validate() error {
 	return nil
 }
-func (this *UpdateImageVersionRequest) Validate() error {
-	if this.OrgName == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+func (this *GetConfigRequest) Validate() error {
+	return nil
+}
+func (this *GetConfigResponse) Validate() error {
+	if this.Config != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Config); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Config", err)
+		}
 	}
-	return nil
-}
-func (this *UpdateImageVersionResponse) Validate() error {
-	return nil
-}
-
-var _regex_RemoveOrgRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *RemoveOrgRequest) Validate() error {
-	if !_regex_RemoveOrgRequest_OrgId.MatchString(this.OrgId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
-	}
-	if this.OrgId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
-	}
-	return nil
-}
-func (this *RemoveOrgResponse) Validate() error {
 	return nil
 }

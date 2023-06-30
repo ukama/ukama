@@ -43,12 +43,12 @@ require (
 	github.com/helmfile/helmfile v0.153.1
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/sirupsen/logrus v1.9.0
+	github.com/stretchr/testify v1.8.2
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	go.uber.org/zap v1.24.0
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 	gorm.io/gorm v1.24.3
-	grpc.go4.org v0.0.0-20170609214715-11d0a25b4919
 )
 
 require (
@@ -226,6 +226,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
@@ -237,6 +238,7 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tatsushid/go-prettytable v0.0.0-20141013043238-ed2d14c29939 // indirect
 	github.com/ukama/ukama/systems/services/msgClient v0.0.0-00010101000000-000000000000 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
