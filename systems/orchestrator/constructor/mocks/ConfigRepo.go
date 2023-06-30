@@ -66,6 +66,32 @@ func (_m *ConfigRepo) Get(name string) (*db.Config, error) {
 	return r0, r1
 }
 
+// GetAll provides a mock function with given fields:
+func (_m *ConfigRepo) GetAll() ([]*db.Config, error) {
+	ret := _m.Called()
+
+	var r0 []*db.Config
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]*db.Config, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() []*db.Config); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*db.Config)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetHistory provides a mock function with given fields: name
 func (_m *ConfigRepo) GetHistory(name string) (*[]db.Config, error) {
 	ret := _m.Called(name)

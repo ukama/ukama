@@ -10,6 +10,7 @@ import (
 type ConfigRepo interface {
 	Create(c *Config) error
 	Get(name string) (*Config, error)
+	GetAll() ([]*Config, error)
 	Delete(name string) error
 	Update(n *Config) error
 	GetHistory(name string) (*[]Config, error)
@@ -59,6 +60,15 @@ func (d *configsRepo) Update(n *Config) error {
 func (d *configsRepo) Get(name string) (*Config, error) {
 	var c Config
 	result := d.Db.GetGormDb().Where("name = ?", name).First(&c)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &c, nil
+}
+
+func (d *configsRepo) GetAll(name string) (*[]Config, error) {
+	var c []Config
+	result := d.Db.GetGormDb().Find(&c)
 	if result.Error != nil {
 		return nil, result.Error
 	}
