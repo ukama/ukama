@@ -7,6 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <stdlib.h>
+
 #include "service.h"
 
 #include "notification.h"
@@ -17,48 +19,34 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-
-int service_at_exit() {
-    int ret = STATUS_OK;
-
-    /* Exit web service */
-    web_service_exit();
-
-    /* Notification Exit */
-    ret = notification_exit();
-    if (ret) {
-        return ret;
-    }
-    return ret;
-}
-
 int service_init(Config *config) {
-    int ret = STATUS_OK;
 
     char nodeId[32] = {0};
-    char nodeType[32] = {0};
-
+    
     /* Read Node Info from noded */
-    ret = web_client_init(nodeId, nodeType, config);
-    if (ret) {
-        return ret;
+    if (getenv(ENV_NOTIFY_DEBUG_MODE)) {
+        strcpy(nodeId, DEF_NODE_ID);
+        usys_log_info("notify.d: Using default Node ID: %s", nodeId);
+    } else {
+        if (web_client_init(nodeId, config) == STATUS_NOK) {
+            return STATUS_NOK;
+        }
     }
 
     /* Notification Init */
-    ret = notification_init(nodeId, nodeType, config);
-    if (ret) {
-        return ret;
+    if (notification_init(nodeId, config) == STATUS_NOK) {
+        return STATUS_NOK;
     }
 
     /* Initialize web server */
-    ret = web_service_init(config->port);
-    if (ret) {
-        return ret;
+    if (web_service_init(config->servicePort) == STATUS_NOK) {
+        return STATUS_NOK;
     }
-    return ret;
+        
+    return STATUS_OK;
 }
 
-void service() {
+void service_start() {
 
     web_service_start();
 }

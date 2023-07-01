@@ -8,7 +8,7 @@
  */
 
 #include "jserdes.h"
-
+#include "notification.h"
 #include "errorcode.h"
 #include "json_types.h"
 #include "node.h"
@@ -21,942 +21,194 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
-/* Parser to read real value from JSON object */
-bool json_deserialize_real_value(const JsonObj *jObj, double *ivalue) {
-    bool ret = USYS_FALSE;
 
-    /* Check if object is number */
-    if (json_is_real(jObj)) {
-        *ivalue = json_real_value(jObj);
-        ret = USYS_TRUE;
-    } else if (json_is_integer(jObj)) {
-        *ivalue = json_integer_value(jObj);
-        ret = USYS_TRUE;
-    }
+void json_log(json_t *json) {
 
-    return ret;
-}
+    char *str = NULL;
 
-/* Parser to read integer value from JSON object */
-bool json_deserialize_integer_value(const JsonObj *jObj, int *ivalue) {
-    bool ret = USYS_FALSE;
-
-    /* Check if object is number */
-    if (json_is_integer(jObj)) {
-        *ivalue = json_integer_value(jObj);
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
-
-/* Parser to read integer value from JSON object */
-bool json_deserialize_integer_object(const JsonObj *obj, const char *key,
-                                int *ivalue) {
-    bool ret = USYS_FALSE;
-
-    /* Integer Json Object */
-    const JsonObj *jIntObj = json_object_get(obj, key);
-
-    /* Check if object is number */
-    if (json_is_number(jIntObj)) {
-        *ivalue = json_integer_value(jIntObj);
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
-
-/* Parser to read integer value from JSON object */
-bool json_deserialize_uint32_object(const JsonObj *obj, const char *key,
-                               uint32_t *ivalue) {
-    bool ret = USYS_FALSE;
-
-    /* Integer Json Object */
-    const JsonObj *jIntObj = json_object_get(obj, key);
-
-    /* Check if object is number */
-    if (json_is_number(jIntObj)) {
-        *ivalue = json_integer_value(jIntObj);
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
-
-/* Parser to read uint16_t value from JSON object */
-bool json_deserialize_uint16_object(const JsonObj *obj, const char *key,
-                               uint16_t *ivalue) {
-    bool ret = USYS_FALSE;
-    int value = 0;
-
-    ret = json_deserialize_integer_object(obj, key, &value);
-    if (ret) {
-        *ivalue = (uint16_t)value;
-    }
-
-    return ret;
-}
-
-/* Parser to read uint8_t value from JSON object */
-bool json_deserialize_uint8_object(const JsonObj *obj, const char *key,
-                              uint8_t *ivalue) {
-    bool ret = USYS_FALSE;
-    int value = 0;
-
-    ret = json_deserialize_integer_object(obj, key, &value);
-    if (ret) {
-        *ivalue = (uint8_t)value;
-    }
-
-    return ret;
-}
-
-/* Parser to read string value from JSON object */
-bool json_deserialize_string_value(JsonObj *obj, char **svalue) {
-    bool ret = USYS_FALSE;
-    int len = 0;
-
-    /* Check if object is string */
-    if (json_is_string(obj)) {
-        len = json_string_length(obj);
-        svalue = usys_zmalloc(sizeof(char) * (len + 1));
-        if (svalue) {
-            const char *str = json_string_value(obj);
-            usys_strcpy(*svalue, str);
-            ret = USYS_TRUE;
-        }
-    }
-
-    return ret;
-}
-
-/* Parser to read string value from JSON object */
-bool json_deserialize_string_object(const JsonObj *obj, const char *key,
-                               char **svalue) {
-    bool ret = USYS_FALSE;
-
-    /* String Json Object */
-    JsonObj *jStrObj = json_object_get(obj, key);
-
-    /* Check if object is string */
-    if (json_is_string(jStrObj)) {
-        int length = json_string_length(jStrObj);
-        *svalue = usys_zmalloc(sizeof(char) * (length + 1));
-        if (*svalue) {
-            const char *str = json_string_value(jStrObj);
-            usys_strcpy(*svalue, str);
-            ret = USYS_TRUE;
-        }
-    }
-
-    return ret;
-}
-
-/* Wrapper on top of parse_read_string */
-bool json_deserialize_string_object_wrapper(const JsonObj *obj, const char *key,
-                                       char *str) {
-    bool ret = USYS_FALSE;
-    char *tstr;
-    if (json_deserialize_string_object(obj, key, &tstr)) {
-        usys_strcpy(str, tstr);
-        usys_free(tstr);
-        tstr = NULL;
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
-
-/* Parser to read boolean value from JSON object */
-bool json_deserialize_boolean_value(const JsonObj *jBoolObj, bool *bvalue) {
-    bool ret = USYS_FALSE;
-
-    /* Check if object is number */
-    if (json_is_boolean(jBoolObj)) {
-        *bvalue = json_boolean_value(jBoolObj);
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
-
-/* Parser to read boolean value from JSON object */
-bool json_deserialize_boolean_object(const JsonObj *obj, const char *key,
-                                bool *bvalue) {
-    bool ret = USYS_FALSE;
-
-    /* Integer Json Object */
-    const JsonObj *jBoolObj = json_object_get(obj, key);
-
-    /* Check if object is number */
-    if (json_is_boolean(jBoolObj)) {
-        *bvalue = json_boolean_value(jBoolObj);
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
-
-/* Parser Error */
-void json_deserialize_error(JsonErrObj *jErr, char *msg) {
-    if (jErr) {
-        usys_log_error("%s. Error: %s ", msg, jErr->text);
-    } else {
-        usys_log_error("%s. No error info available", msg);
+    str = json_dumps(json, 0);
+    if (str) {
+        log_debug("json str: %s", str);
+        free(str);
     }
 }
 
+static bool get_json_entry(json_t *json, char *key, json_type type,
+                           char **strValue, int *intValue,
+                           double *doubleValue) {
 
-json_t *json_encode_value(int type, void *data) {
-    JsonObj *json = NULL;
-    switch (type) {
-    case TYPE_NULL: {
-        json = json_null();
-        break;
-    }
-    case TYPE_CHAR: {
-        char *value = (char *)data;
-        json = json_string(value);
-        break;
-    }
-    case TYPE_BOOL: {
-        bool value = *(bool *)data;
-        json = json_boolean(value);
-        break;
-    }
-    case TYPE_UINT8: {
-        uint8_t value = *(uint8_t *)data;
-        json = json_integer(value);
-        break;
-    }
-    case TYPE_INT8: {
-        int8_t value = *(int8_t *)data;
-        json = json_integer(value);
-        break;
-    }
-    case TYPE_UINT16: {
-        uint16_t value = *(uint16_t *)data;
-        json = json_integer(value);
-        break;
-    }
-    case TYPE_INT16: {
-        int16_t value = *(int16_t *)data;
-        json = json_integer(value);
-        break;
-    }
-    case TYPE_UINT32: {
-        uint32_t value = *(uint32_t *)data;
-        json = json_integer(value);
-        break;
-    }
-    case TYPE_INT32: {
-        int32_t value = *(int32_t *)data;
-        json = json_integer(value);
-        break;
-    }
-    case TYPE_INT: {
-        int value = *(int *)data;
-        json = json_integer(value);
-        break;
-    }
-    case TYPE_FLOAT: {
-        float value = *(float *)data;
-        json = json_real(value);
-        break;
-    }
-    case TYPE_ENUM: {
-        int value = *(int *)data;
-        json = json_integer(value);
-        break;
-    }
-    case TYPE_DOUBLE: {
-        double value = *(double *)data;
-        json = json_real(value);
-        break;
-    }
-    case TYPE_STRING: {
-        char *value = (char *)data;
-        json = json_string(value);
-        break;
-    }
-    default: {
-        json = json_null();
-    }
-    }
+    json_t *jEntry=NULL;
 
-    return json;
-}
+    if (json == NULL || key == NULL) return USYS_FALSE;
 
-void *json_decode_value(json_t *json, int type) {
-    void *data = NULL;
-
-    if (!json) {
-        return data;
+    jEntry = json_object_get(json, key);
+    if (jEntry == NULL) {
+        log_error("Missing %s key in json", key);
+        return USYS_FALSE;
     }
-
-    switch (type) {
-    case TYPE_NULL: {
-        data = NULL;
-        break;
-    }
-    case TYPE_CHAR: {
-        /* Allocating extar one byte beacuse of '/0' */
-        char *value = usys_zmalloc(sizeof(char) + 1);
-        if (!value) {
-            return NULL;
-        }
-
-        if (json_deserialize_string_value(json, &value)) {
-            data = value;
-        } else {
-            usys_free(value);
-            return NULL;
-        }
-        break;
-    }
-    case TYPE_BOOL: {
-        data = usys_zmalloc(sizeof(bool));
-        if (!data) {
-            return NULL;
-        }
-
-        if (!json_deserialize_boolean_value(json, data)) {
-            usys_free(data);
-            data = NULL;
-        }
-
-        break;
-    }
-    case TYPE_UINT8: {
-        int8_t *ndata = usys_zmalloc(sizeof(uint8_t));
-        if (!ndata) {
-            return NULL;
-        }
-
-        int value = 0;
-        if (!json_deserialize_integer_value(json, &value)) {
-            usys_free(ndata);
-            return NULL;
-        } else {
-            *ndata = (uint8_t)value;
-            data = ndata;
-        }
-        break;
-    }
-    case TYPE_INT8: {
-        int8_t *ndata = usys_zmalloc(sizeof(int8_t));
-        if (!ndata) {
-            return NULL;
-        }
-
-        int value = 0;
-        if (!json_deserialize_integer_value(json, &value)) {
-            usys_free(ndata);
-            return NULL;
-        } else {
-            *ndata = (int8_t)value;
-            data = ndata;
-        }
-        break;
-    }
-    case TYPE_UINT16: {
-        uint16_t *ndata = usys_zmalloc(sizeof(uint16_t));
-        if (!ndata) {
-            return NULL;
-        }
-
-        int value = 0;
-        if (!json_deserialize_integer_value(json, &value)) {
-            usys_free(ndata);
-            return NULL;
-        } else {
-            *ndata = (uint16_t)value;
-            data = ndata;
-        }
-        break;
-    }
-    case TYPE_INT16: {
-        int16_t *ndata = usys_zmalloc(sizeof(int16_t));
-        if (!ndata) {
-            return NULL;
-        }
-
-        int value = 0;
-        if (!json_deserialize_integer_value(json, &value)) {
-            usys_free(ndata);
-            return NULL;
-        } else {
-            *ndata = (int16_t)value;
-            data = ndata;
-        }
-        break;
-    }
-    case TYPE_UINT32: {
-        uint32_t *ndata = usys_zmalloc(sizeof(uint32_t));
-        if (!ndata) {
-            return NULL;
-        }
-
-        int value = 0;
-        if (!json_deserialize_integer_value(json, &value)) {
-            usys_free(ndata);
-            return NULL;
-        } else {
-            *ndata = (uint32_t)value;
-            data = ndata;
-        }
-        break;
-    }
-    case TYPE_INT32: {
-        int32_t *ndata = usys_zmalloc(sizeof(int32_t));
-        if (!ndata) {
-            return NULL;
-        }
-
-        int value = 0;
-        if (!json_deserialize_integer_value(json, &value)) {
-            usys_free(ndata);
-            return NULL;
-        } else {
-            *ndata = (int32_t)value;
-            data = ndata;
-        }
-        break;
-    }
-    case TYPE_INT: {
-        data = usys_zmalloc(sizeof(int));
-        if (!data) {
-            return NULL;
-        }
-
-        if (!json_deserialize_integer_value(json, data)) {
-            usys_free(data);
-            data = NULL;
-        }
-
-        break;
-    }
-    case TYPE_FLOAT: {
-        float *ndata = usys_zmalloc(sizeof(float));
-        if (!ndata) {
-            return NULL;
-        }
-
-        double val;
-        if (!json_deserialize_real_value(json, &val)) {
-            usys_free(ndata);
-            return NULL;
-        } else {
-            *ndata = (float)val;
-            data = ndata;
-        }
-        break;
-    }
-    case TYPE_ENUM: {
-        data = usys_zmalloc(sizeof(int));
-        if (!data) {
-            return NULL;
-        }
-
-        if (!json_deserialize_integer_value(json, data)) {
-            usys_free(data);
-            data = NULL;
-        }
-
-        break;
-    }
-    case TYPE_DOUBLE: {
-        data = usys_zmalloc(sizeof(double));
-        if (!data) {
-            return NULL;
-        }
-        if (!json_deserialize_real_value(json, data)) {
-            usys_free(data);
-            data = NULL;
-        }
-
-        break;
-    }
-    case TYPE_STRING: {
-        char *ndata = NULL;
-        if (!json_deserialize_string_value(json, &ndata)) {
-            data = NULL;
-        } else {
-            data = ndata;
-        }
-        break;
-    }
-    default: {
-        json_object_set_new(json, JTAG_VALUE, json_null());
-    }
-    }
-
-    return data;
-}
-
-void deserailize_node_type(int type, char** nodeType) {
 
     switch(type) {
-        case TNODE:
-            *nodeType = usys_strdup("TowerNode");
-            break;
-        case HNODE:
-            *nodeType= usys_strdup("HomeNode");
-            break;
-        case ANODE:
-            *nodeType= usys_strdup("AmplifierNode");
-            break;
-        default:
-            *nodeType = NULL;
-    }
-}
-
-/* Deserialize node Info */
-bool json_deserialize_node_info(JsonObj *json, char* nodeId, char* nodeType) {
-
-    bool ret = USYS_FALSE;
-
-    if (!json){
-        usys_log_error("No data to deserialize in node info");
-        return ret;
-    }
-
-    JsonObj* jNodeInfo = json_object_get(json, JTAG_NODE_INFO);
-    if (jNodeInfo == NULL) {
-        usys_log_error("Missing mandatory %s from JSON", JTAG_NODE_INFO);
+    case (JSON_STRING): 
+        *strValue = strdup(json_string_value(jEntry));
+        break;
+    case (JSON_INTEGER):
+        *intValue = json_integer_value(jEntry);
+        break;
+    case (JSON_REAL):
+        *doubleValue = json_real_value(jEntry);
+        break;
+    default:
+        log_error("Invalid type for json key-value: %d", type);
         return USYS_FALSE;
     }
 
-    ret = json_deserialize_string_object_wrapper(jNodeInfo, JTAG_UUID, nodeId);
-    if (!ret) {
-        usys_log_error("Failed to parse Node ID %s in NodeInfo", JTAG_UUID);
-        return ret;
-    }
-
-    int type = 0;
-    ret = json_deserialize_integer_object(jNodeInfo, JTAG_TYPE, &type);
-    if (!ret) {
-        usys_log_error("Failed to parse Node Type %s in NodeInfo", JTAG_TYPE);
-        return ret;
-    } else {
-        char *nType = NULL;
-        deserailize_node_type(type, &nType);
-        if (nType) {
-            usys_strcpy(nodeType, nType);
-            usys_free(nType);
-        }
-    }
-
-    return ret;
-
+    return USYS_TRUE;
 }
 
-/* Deserialize alert received from noded */
-bool json_deserialize_noded_notif(JsonObj *json, NodedNotifDetails* details ) {
+/*
+ * deserialize_node_info --
+ *
+ * {
+ * "nodeInfo": {
+ *   "UUID": "ukma-7001-tnode-sa03-1100",
+ *   "name": "tNode",
+ *   "type": 2,
+ *   "partNumber": "LTE-BAND-3-0XXXX",
+ *   "skew": "UK_TNODE-LTE-0001",
+ *   "mac": "10:20:30:20:50:60",
+ *   "prodSwVersion": {
+ *     "major": 1,
+ *     "minor": 1
+ *   },
+ *   "swVersion": {
+ *     "major": 0,
+ *     "minor": 0
+ *   },
+ *   "assemblyDate": "30-07-2020",
+ *   "oemName": "SANMINA",
+ *   "moduleCount": 3
+ * }
+ *}
+ *
+ */
+bool json_deserialize_node_id(char **nodeID, json_t *json) {
 
-    bool ret = USYS_FALSE;
+    json_t *jNodeInfo=NULL;
 
-    if (!json){
-        usys_log_error("No data to deserialize alerts");
-        return ret;
-    }
+    if (json == NULL) return USYS_FALSE;
 
-    JsonObj* jNodeInfo = json_object_get(json, JTAG_NOTIFY);
+    jNodeInfo = json_object_get(json, JTAG_NODE_INFO);
     if (jNodeInfo == NULL) {
-        usys_log_error("Missing mandatory %s from JSON", JTAG_NOTIFY);
+        log_error("Missing mandatory %s from JSON", JTAG_NODE_INFO);
         return USYS_FALSE;
     }
+    
+    if (get_json_entry(jNodeInfo, JTAG_UUID, JSON_STRING,
+                       nodeID, NULL, NULL) == USYS_FALSE) {
+        log_error("Error deserializing node info");
+        json_log(json);
+        *nodeID = NULL;
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_SERVICE_NAME,
-                    &details->serviceName);
-    if (!ret) {
-        usys_log_error("Failed to parse mandatory tag %s from Node "
-                        "notification", JTAG_SERVICE_NAME);
-        return ret;
+        return USYS_FALSE;
     }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_SEVERITY,
-                        &details->severity);
-        if (!ret) {
-            usys_log_error("Failed to parse mandatory tag %s from Node "
-                            "notification", JTAG_SEVERITY);
-            return ret;
-        }
-
-    ret = json_deserialize_uint32_object(jNodeInfo, JTAG_EPOCH_TIME,
-                    &details->epochTime);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_EPOCH_TIME);
-    }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_UUID,
-                    &details->moduleID);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_UUID);
-    }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_NAME,
-                    &details->deviceName);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_NAME);
-    }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_DESCRIPTION,
-                    &details->deviceDesc);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_DESCRIPTION);
-    }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_PROPERTY_NAME,
-                    &details->deviceAttr);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_PROPERTY_NAME);
-    }
-
-    ret = json_deserialize_integer_object(jNodeInfo, JTAG_DATA_TYPE,
-                    &details->dataType);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_DATA_TYPE);
-    }
-
-    const JsonObj *jValue = json_object_get(jNodeInfo, JTAG_VALUE);
-    if (!jValue){
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_VALUE);
-        return ret;
-    }
-
-    details->deviceAttrValue = (double*)usys_calloc(1, sizeof(double));
-    if (details->deviceAttrValue) {
-        ret = json_deserialize_real_value(jValue, details->deviceAttrValue);
-        if (!ret) {
-            usys_log_error("Failed to parse %s from Node notification",
-                            JTAG_VALUE);
-        }
-    }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_UNITS,
-                    &details->units);
-    if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification",
-                        JTAG_UNITS);
-    }
-
-    return ret;
-
+    
+    return USYS_TRUE;
 }
 
-int json_serialize_error(JsonObj **json, int code, const char *str) {
-    int ret = JSON_ENCODING_OK;
-
-    *json = json_object();
-    if (!json) {
-        return ERR_JSON_CREATION_ERR;
+/* 
+{
+    "serviceName" : "noded",
+    "time"        : 1234567,
+    "status"      : xxx,
+    "type"        : "alert"
+    "nodeID"      : "ukma-aaa-bbb-cccc",
+    "details": {
+        "module"   : "trx"
+        "property" : "metric-name",
+        "value"    : "xxx",
+        "units"    : "milli-seconds",
+        "description" : "User are too many"
     }
-
-    json_object_set_new(*json, JTAG_ERROR, json_object());
-
-    JsonObj *jError = json_object_get(*json, JTAG_ERROR);
-    if (jError) {
-        json_object_set_new(jError, JTAG_ERROR_CODE, json_integer(code));
-
-        json_object_set_new(jError, JTAG_ERROR_CSTRING, json_string(str));
-
-    } else {
-        return ERR_JSON_CREATION_ERR;
-    }
-
-    return ret;
 }
+*/
 
-int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
-                            uint16_t count) {
-    int ret = JSON_ENCODING_OK;
-
-    *json = json_object();
-    if (!json) {
-        return ERR_JSON_CREATION_ERR;
-    }
-
-    if (!apiList) {
-        return ERR_JSON_NO_VAL_TO_ENCODE;
-    }
-
-    json_object_set_new(*json, JTAG_API_LIST, json_array());
-
-    JsonObj *jApiArr = json_object_get(*json, JTAG_API_LIST);
-    if (jApiArr) {
-        for (int iter = 0; iter < count; iter++) {
-            json_t *jApi = json_object();
-
-            json_object_set_new(jApi, JTAG_METHOD,
-                                json_string(apiList[iter].method));
-
-            json_object_set_new(jApi, JTAG_URL_EP,
-                                json_string(apiList[iter].endPoint));
-
-            /* Add element to array */
-            json_array_append(jApiArr, jApi);
-            json_decref(jApi);
-        }
-
-    } else {
-        return ERR_JSON_CREATION_ERR;
-    }
-
-    return ret;
-}
-
-/* Serialize alert details from the noded
- * This section of tt=he notification is specific to each service */
-int json_serialize_noded_notif_details(JsonObj **json,
-                NodedNotifDetails* details ) {
-    int ret = JSON_ENCODING_OK;
+bool json_serialize_notification(JsonObj **json, Notification* notification,
+                                 char *type, char *nodeID, int statusCode) {
+                                
+    JsonObj *jDetails=NULL;
 
     *json = json_object();
-    if (!json) {
-        return ERR_JSON_CREATION_ERR;
-    }
-
-    if (!details) {
-        return ERR_JSON_NO_VAL_TO_ENCODE;
-    }
-
-    json_object_set_new(*json, JTAG_UUID,
-                    json_string(details->moduleID));
-
-    json_object_set_new(*json, JTAG_NAME,
-                    json_string(details->deviceName));
-
-    json_object_set_new(*json, JTAG_DESCRIPTION,
-                    json_string(details->deviceDesc));
-
-    json_object_set_new(*json, JTAG_PROPERTY_NAME,
-                    json_string(details->deviceAttr));
-
-    json_object_set_new(*json, JTAG_EPOCH_TIME,
-                    json_integer(details->dataType));
-
-    json_object_set_new(*json, JTAG_VALUE,
-                    json_encode_value(TYPE_DOUBLE, details->deviceAttrValue));
-
-    json_object_set_new(*json, JTAG_UNITS, json_string(details->units));
-
-
-    return ret;
-}
-
-/* Serialize alert details from generic message
- * This section of the notification is specific to each service */
-int json_serialize_generic_details(JsonObj **json,
-                ServiceNotifDetails* details ) {
-    int ret = JSON_ENCODING_OK;
-
-    *json = json_object();
-    if (!(*json)) {
-        return ERR_JSON_CREATION_ERR;
-    }
-
-    if (!details) {
-        return ERR_JSON_NO_VAL_TO_ENCODE;
-    }
-
-    json_object_set_new(*json, JTAG_NOTIF_REASON,
-                    json_string(details->reason));
-
-    json_object_set_new(*json, JTAG_NOTIF_DETAILS,
-                    json_string(details->details));
-
-    json_object_set_new(*json, JTAG_PROPERTY_NAME,
-                    json_string(details->attr->name));
-
-    json_object_set_new(*json, JTAG_VALUE,
-                    json_encode_value(TYPE_DOUBLE, details->attr->value));
-
-    json_object_set_new(*json, JTAG_UNITS, json_string(details->attr->units));
-
-
-    return ret;
-}
-
-/* Serialize notification to be forwaded to the remote server */
-int json_serialize_notification(JsonObj **json, JsonObj* details,
-                Notification* notif) {
-    int ret = JSON_ENCODING_OK;
-
-    *json = json_object();
-    if (!json) {
-        return ERR_JSON_CREATION_ERR;
-    }
-
-    if (!details) {
-        return ERR_JSON_NO_VAL_TO_ENCODE;
-    }
+    if (!*json) return USYS_FALSE;
 
     json_object_set_new(*json, JTAG_SERVICE_NAME,
-                    json_string(notif->serviceName));
+                        json_string(notification->serviceName));
 
-    json_object_set_new(*json, JTAG_NOTIFICATION_TYPE,
-                    json_string(notif->notificationType));
+    json_object_set_new(*json, JTAG_TIME,
+                        json_integer(notification->epochTime));
 
-    json_object_set_new(*json, JTAG_NODE_ID,
-                    json_string(notif->nodeId));
+    json_object_set_new(*json, JTAG_STATUS, json_integer(statusCode));
+    json_object_set_new(*json, JTAG_TYPE, json_string(type));
+    json_object_set_new(*json, JTAG_NODE_ID, json_string(nodeID));
 
-    json_object_set_new(*json, JTAG_NODE_TYPE,
-                    json_string(notif->nodeType));
+    /* Add details about the event/alarm */
+    json_object_set_new(*json, JTAG_DETAILS, json_object());
+    jDetails = json_object_get(*json, JTAG_DETAILS);
+    
+    json_object_set_new(jDetails, JTAG_MODULE,
+                        json_string(notification->module));
+    json_object_set_new(jDetails, JTAG_NAME,
+                        json_string(notification->propertyName));
+    json_object_set_new(jDetails, JTAG_VALUE,
+                        json_string(notification->propertyValue));
+    json_object_set_new(jDetails, JTAG_UNITS,
+                        json_string(notification->propertyUnit));
+    json_object_set_new(jDetails, JTAG_DESCRIPTION,
+                        json_string(notification->details));
 
-    json_object_set_new(*json, JTAG_NOTIF_SEVERITY,
-                    json_string(notif->severity));
-
-    json_object_set_new(*json, JTAG_DESCRIPTION,
-                        json_string(notif->description));
-
-    json_object_set_new(*json, JTAG_EPOCH_TIME,
-                    json_integer(notif->epochTime));
-
-    json_object_set_new(*json, JTAG_NOTIF_DETAILS,
-                    details);
-
-    return ret;
+    return USYS_TRUE;
 }
 
-/* Deserialize attributes of the notification received*/
-bool json_deserialize_attr(JsonObj *json, ServiceAttr** svcAttr ) {
+/* Deserialize generic notification received from local services */
+bool json_deserialize_notification(JsonObj *json,
+                                   Notification **notification) {
 
-    bool ret = USYS_FALSE;
+    bool ret=USYS_TRUE;
 
-    ServiceAttr *details = *svcAttr;
-    /* Name */
-    ret = json_deserialize_string_object(json, JTAG_NAME,
-                    &details->name);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from service attribute",
-                        JTAG_NAME);
-    }
-
-    /* Value */
-    const JsonObj *jValue = json_object_get(json, JTAG_VALUE);
-    if (!jValue){
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_VALUE);
-        return ret;
-    }
-
-    double val = 0;
-    ret = json_deserialize_real_value(jValue, &val);
-    if (!ret) {
-        /* No failure */
-        usys_log_error("Failed to parse %s from Node notification",
-                        JTAG_VALUE);
-    } else {
-        details->value = (double*)usys_calloc(1, sizeof(double));
-        if (details->value) {
-            *(details->value) = val;
-        }
-    }
-
-    /* units */
-    ret = json_deserialize_string_object(json, JTAG_UNITS,
-                    &details->units);
-    if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification",
-                        JTAG_UNITS);
-    }
-
-    return ret;
-}
-
-/* Deserialize generic notification received from services */
-bool json_deserialize_generic_notification(JsonObj *json,
-                ServiceNotifDetails* details ) {
-
-    bool ret = USYS_FALSE;
-
-    if (!json){
-        usys_log_error("No data to deserialize alerts");
-        return ret;
-    }
-
-    JsonObj* jNodeInfo = json_object_get(json, JTAG_NOTIFY);
-    if (jNodeInfo == NULL) {
-        usys_log_error("Missing mandatory %s from JSON", JTAG_NOTIFY);
+    if (json == NULL) {
+        usys_log_error("No data to deserialize");
         return USYS_FALSE;
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_SERVICE_NAME,
-                    &details->serviceName);
-    if (!ret) {
-        usys_log_error("Failed to parse mandatory tag %s from Node "
-                        "notification", JTAG_SERVICE_NAME);
-        return ret;
+    *notification = (Notification *)calloc(1, sizeof(Notification));
+    if (*notification == NULL) {
+        usys_log_error("Error allocating memory of size: %d",
+                       sizeof(Notification));
+        return USYS_FALSE;
+    }
+    
+    ret |= get_json_entry(json, JTAG_SERVICE_NAME, JSON_STRING,
+                          &(*notification)->serviceName, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_SEVERITY, JSON_STRING,
+                          &(*notification)->severity, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_TIME, JSON_INTEGER,
+                          NULL, &(*notification)->epochTime, NULL);
+    ret |= get_json_entry(json, JTAG_NAME, JSON_STRING,
+                          &(*notification)->propertyName, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_VALUE, JSON_STRING,
+                          &(*notification)->propertyValue, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_UNITS, JSON_STRING,
+                          &(*notification)->propertyUnit, NULL, NULL);
+    ret |= get_json_entry(json, JTAG_DETAILS, JSON_STRING,
+                          &(*notification)->details, NULL, NULL);
+
+    if (ret == USYS_FALSE) {
+        usys_log_error("Error deserializing the notifiction JSON");
+        json_log(json);
+        free_notification(*notification);
+        return USYS_FALSE;
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_SEVERITY,
-                        &details->severity);
-        if (!ret) {
-            usys_log_error("Failed to parse mandatory tag %s from Node "
-                            "notification", JTAG_SEVERITY);
-            return ret;
-        }
-
-    ret = json_deserialize_uint32_object(jNodeInfo, JTAG_EPOCH_TIME,
-                    &details->epochTime);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_EPOCH_TIME);
-    }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_DESCRIPTION,
-                    &details->description);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_DESCRIPTION);
-    }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_NOTIF_REASON,
-                    &details->reason);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_NOTIF_REASON);
-    }
-
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_NOTIF_DETAILS,
-                    &details->details);
-    if (!ret) {
-        usys_log_warn("Failed to parse %s from Node notification",
-                        JTAG_NOTIF_DETAILS);
-    }
-
-    JsonObj* jAttrInfo = json_object_get(jNodeInfo, JTAG_NOTIF_ATTR);
-    if (jAttrInfo != NULL) {
-        ServiceAttr *svcAttr = usys_calloc(1, sizeof(ServiceAttr));
-        if (!svcAttr) {
-            /* Would still send notification but without attribute values */
-            usys_log_warn("Failed to allocate memory for service attribute"
-                            " parsing", JTAG_NOTIF_ATTR);
-            return ret;
-        }
-
-        /* Deserialize attributes */
-        ret = json_deserialize_attr(jAttrInfo, &svcAttr);
-        if (!ret) {
-            usys_log_warn("Failed to parse %s from Node notification",
-                            JTAG_NOTIF_ATTR);
-        }
-
-        details->attr = svcAttr;
-    }
-
-
-    return ret;
-
+    return USYS_TRUE;
 }
 
 /* Decrement json references */
@@ -966,5 +218,3 @@ void json_free(JsonObj** json) {
         *json = NULL;
     }
 }
-
-
