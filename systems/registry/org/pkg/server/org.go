@@ -45,6 +45,62 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 	}
 }
 
+func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
+	log.Infof("Adding invitation %v", req)
+	
+	 err := o.orgRepo.AddInvitation(
+		&db.Invitation{
+			Link:      req.GetLink(),
+			Email:     req.GetEmail(),
+			ExpiresAt: req.GetExpiresAt().AsTime(),
+			Status:   db.InvitationStatus(req.GetStatus()),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AddInvitationResponse{
+	}, nil
+}
+
+func (o *OrgService) GetInvitation(ctx context.Context, req *pb.GetInvitationRequest) (*pb.GetInvitationResponse, error) {
+	log.Infof("Getting invitation %v", req)
+	invitationId, err := uuid.FromString(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of invitationId. Error %s", err.Error())
+	}
+
+	invitation, err := o.orgRepo.GetInvitation(invitationId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetInvitationResponse{
+		Invitation:dbInvitationToPbInvitation(invitation),
+		},
+	nil
+}
+
+func (o *OrgService) UpdateInvitation(ctx context.Context, req *pb.UpdateInvitationRequest) (*pb.UpdateInvitationResponse, error) {
+	log.Infof("Updating invitation %v", req)
+	invitationId, err := uuid.FromString(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of invitationId. Error %s", err.Error())
+	}
+
+	err = o.orgRepo.UpdateInvitation( invitationId, db.InvitationStatus(req.GetStatus()))
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.UpdateInvitationResponse{
+	}, nil
+}
+  
+
 func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding org %v", req)
 
@@ -562,6 +618,16 @@ func (o *OrgService) PushMetrics() error {
 	return nil
 
 }
+func dbInvitationToPbInvitation( invitation *db.Invitation) *pb.Invitation {
+	return &pb.Invitation{
+		Id:			invitation.Id.String(),
+		Link: 		invitation.Link,
+		Email:		invitation.Email,
+		Status:		pb.InvitationStatus(invitation.Status),
+		ExpiresAt: 	timestamppb.New(invitation.ExpiresAt),
+
+	}
+}
 
 func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
 	switch role {
@@ -576,4 +642,18 @@ func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
 	default:
 		return db.Member
 	}
+}
+
+func pbInvitationStatusToDb(status pb.InvitationStatus) db.InvitationStatus {
+	switch status {
+	case pb.InvitationStatus_PENDING:
+		return db.Pending
+	case pb.InvitationStatus_ACCEPTED:
+		return db.Accepted
+	case pb.InvitationStatus_REJECTED:
+		return db.Rejected
+	default:
+		return db.Pending
+	}
+	
 }

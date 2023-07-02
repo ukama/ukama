@@ -36,8 +36,7 @@ type OrgRepo interface {
 	/* Invitations */
 	AddInvitation(invitation *Invitation) error
 	GetInvitation(id uuid.UUID) (*Invitation, error)
-	GetInvitationsByOrg(orgID uuid.UUID) ([]Invitation, error)
-	UpdateInvitation(invitation *Invitation) error
+	UpdateInvitation(id uuid.UUID, status InvitationStatus) error
 	RemoveInvitation(id uuid.UUID) error
 }
 
@@ -259,8 +258,8 @@ func (r *orgRepo) GetInvitationsByOrg(orgID uuid.UUID) ([]Invitation, error) {
 	return invitations, nil
 }
 
-func (r *orgRepo) UpdateInvitation(invitation *Invitation) error {
-	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Save(invitation)
+func (r *orgRepo) UpdateInvitation(invitationId uuid.UUID, status InvitationStatus) error {
+	d := r.Db.GetGormDb().Model(&Invitation{}).Where("id = ?", invitationId).Update("status", status)
 	if d.RowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}

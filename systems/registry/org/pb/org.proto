@@ -39,19 +39,20 @@ message Invitation{
   string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
   string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
   string link = 3;
-  google.protobuf.Timestamp expires_at = 4 [json_name = "expires_at"];
-  int32 status = 5;
+  string email = 4;
+  google.protobuf.Timestamp expires_at = 5 [json_name = "expires_at"];
+  InvitationStatus status = 6;
 }
 message AddInvitationRequest{
   string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-  string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
   string link = 3;
   google.protobuf.Timestamp expires_at = 4 [json_name = "expires_at"];
-  int32 status = 5;
+  InvitationStatus status = 5;
+  string email = 6;
 }
 
 message AddInvitationResponse{
-  Invitation invitation = 1;
+  
 }
 message GetInvitationRequest{
   string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
@@ -62,11 +63,11 @@ message GetInvitationResponse{
 }
 message UpdateInvitationRequest{
   string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-  int32 status = 2;
+  InvitationStatus status = 2;
 }
 
 message UpdateInvitationResponse{
-  Invitation invitation = 1;
+  
 }
 message RemoveInvitationRequest{
   string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
@@ -195,4 +196,11 @@ enum RoleType {
     ADMIN = 1;
     VENDOR = 2;
     MEMBER = 3;
+}
+
+enum InvitationStatus {
+    PENDING = 0;
+    ACCEPTED = 1;
+    REJECTED = 2;
+    EXPIRED = 3;
 }

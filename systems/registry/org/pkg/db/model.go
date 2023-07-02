@@ -39,8 +39,8 @@ type OrgUser struct {
 
 type Invitation struct {
 	Id        uuid.UUID       `gorm:"primaryKey;type:uuid"`
-	OrgId     uuid.UUID       `gorm:"type:uuid"`
 	Link      string
+	Email     string
 	ExpiresAt time.Time
 	Status    InvitationStatus `gorm:"type:uint;not null;default:0"` // Set the default value to Pending
 	CreatedAt time.Time
@@ -73,6 +73,8 @@ const (
 	Pending InvitationStatus = 0
 	Accepted InvitationStatus = 1
 	Expired InvitationStatus = 2
+	Rejected InvitationStatus = 3
+
 )
 
 func (e *InvitationStatus) Scan(value interface{}) error {

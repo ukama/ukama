@@ -214,32 +214,6 @@ func (_m *OrgRepo) GetInvitation(id uuid.UUID) (*db.Invitation, error) {
 	return r0, r1
 }
 
-// GetInvitationsByOrg provides a mock function with given fields: orgID
-func (_m *OrgRepo) GetInvitationsByOrg(orgID uuid.UUID) ([]db.Invitation, error) {
-	ret := _m.Called(orgID)
-
-	var r0 []db.Invitation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Invitation, error)); ok {
-		return rf(orgID)
-	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Invitation); ok {
-		r0 = rf(orgID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Invitation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(orgID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetMember provides a mock function with given fields: orgID, userUUID
 func (_m *OrgRepo) GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*db.OrgUser, error) {
 	ret := _m.Called(orgID, userUUID)
@@ -382,13 +356,13 @@ func (_m *OrgRepo) RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error {
 	return r0
 }
 
-// UpdateInvitation provides a mock function with given fields: invitation
-func (_m *OrgRepo) UpdateInvitation(invitation *db.Invitation) error {
-	ret := _m.Called(invitation)
+// UpdateInvitation provides a mock function with given fields: id, status
+func (_m *OrgRepo) UpdateInvitation(id uuid.UUID, status db.InvitationStatus) error {
+	ret := _m.Called(id, status)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Invitation) error); ok {
-		r0 = rf(invitation)
+	if rf, ok := ret.Get(0).(func(uuid.UUID, db.InvitationStatus) error); ok {
+		r0 = rf(id, status)
 	} else {
 		r0 = ret.Error(0)
 	}
