@@ -7,25 +7,34 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#ifndef INC_CONFIG_H_
-#define INC_CONFIG_H_
+#ifndef CONFIG_H_
+#define CONFIG_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define MAX_LINE_LENGTH 128
+#define MAX_ENTRIES     128
+
+typedef struct {
+
+    char serviceName[MAX_LINE_LENGTH];
+    char moduleName[MAX_LINE_LENGTH];
+    char propertyName[MAX_LINE_LENGTH];
+    char type[MAX_LINE_LENGTH];
+    char severity[MAX_LINE_LENGTH];
+    int  code;
+} Entry;
 
 /* Service configuration */
 typedef struct {
-  char* name;
-  int port;
-  char* nodedHost;
-  int nodedPort;
-  char* nodedEP;
-  char* remoteServer;
+
+    char  *serviceName;
+    int   servicePort;
+    char  *nodedHost;
+    int   nodedPort;
+    char  *nodedEP;
+    char  *remoteServer;
+    char  *nodeID;
+    int   numEntries;
+    Entry entries[MAX_ENTRIES];
 } Config;
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* INC_CONFIG_H_ */
+#endif /* CONFIG_H_ */

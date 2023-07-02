@@ -14,7 +14,8 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-int wc_send_http_request( URequest* httpReq , UResponse** httpResp) {
+int wc_send_http_request(URequest* httpReq, UResponse** httpResp) {
+
     int ret = STATUS_NOK;
 
     *httpResp = (UResponse *)usys_calloc(1, sizeof(UResponse));
@@ -60,9 +61,8 @@ URequest* wc_create_http_request(char* url,
                        U_OPT_TIMEOUT, 20,
                        U_OPT_NONE);
 
-    if(body) {
-       if( STATUS_OK != ulfius_set_json_body_request(httpReq,
-                         body)) {
+    if (body) {
+       if (STATUS_OK != ulfius_set_json_body_request(httpReq, body)) {
            ulfius_clean_request(httpReq);
            usys_free(httpReq);
            httpReq = NULL;
@@ -72,15 +72,15 @@ URequest* wc_create_http_request(char* url,
     return httpReq;
 }
 
-int wc_send_node_info_request(char* url, char* method,
-                char* nodeID, char* nodeType) {
+int wc_send_node_info_request(char *url, char *method, char **nodeID) {
+
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
     JsonErrObj jErr;
-
     UResponse *httpResp = NULL;
+    URequest *httpReq = NULL;
 
-    URequest* httpReq = wc_create_http_request(url, method, NULL);
+    httpReq = wc_create_http_request(url, method, NULL);
     if (!httpReq) {
         return ret;
     }
@@ -91,19 +91,18 @@ int wc_send_node_info_request(char* url, char* method,
        goto cleanup;
     }
 
-    if (httpResp->status >= 200 && httpResp->status <= 300) {
-
+    if (httpResp->status == 200) {
         json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
-            /* Parse response */
-            ret = json_deserialize_node_info(json, nodeID, nodeType);
+            ret = json_deserialize_node_id(nodeID, json);
             if (!ret) {
                 usys_log_error("Failed to parse NodeInfo response from noded.");
                 return STATUS_NOK;
             }
             ret = STATUS_OK;
         }
-
+    } else {
+        ret = STATUS_NOK;
     }
 
     json_decref(json);
@@ -166,7 +165,7 @@ int wc_forward_notification(char* url, char* method,
     return ret;
 }
 
-int wc_read_node_info(char* nodeID, char* nodeType, Config* config) {
+int wc_read_node_info(Config* config) {
     int ret = STATUS_NOK;
     /* Send HTTP request */
     char url[128]={0};
@@ -174,7 +173,7 @@ int wc_read_node_info(char* nodeID, char* nodeType, Config* config) {
     sprintf(url,"http://%s:%d%s", config->nodedHost, config->nodedPort,
                     config->nodedEP);
 
-    ret = wc_send_node_info_request(url, "GET", nodeID, nodeType);
+    ret = wc_send_node_info_request(url, "GET", &config->nodeID);
     if (ret) {
         usys_log_error("Failed to parse NodeInfo response from noded.");
         return ret;
@@ -183,17 +182,14 @@ int wc_read_node_info(char* nodeID, char* nodeType, Config* config) {
     return ret;
 }
 
-int web_client_init(char* nodeID, char* nodeType, Config* config) {
+int get_nodeid_from_noded(Config *config) {
 
-    int ret = wc_read_node_info(nodeID, nodeType, config);
-    if (ret) {
+    if (wc_read_node_info(config)) {
         usys_log_error("Error reading NodeID from noded.d");
         return STATUS_NOK;
     }
 
-    usys_log_info("NotifyD: Identified unit ID %s and type %s",
-                    nodeID, nodeType);
+    usys_log_info("notify.d: Node ID: %s", config->nodeID);
 
     return STATUS_OK;
-
 }
