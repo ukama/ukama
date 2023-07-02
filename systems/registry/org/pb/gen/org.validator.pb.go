@@ -52,11 +52,6 @@ func (this *AddInvitationRequest) Validate() error {
 	if this.Id == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
 	}
-	if this.ExpiresAt != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ExpiresAt); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("ExpiresAt", err)
-		}
-	}
 	return nil
 }
 func (this *AddInvitationResponse) Validate() error {
