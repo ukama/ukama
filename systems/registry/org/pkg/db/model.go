@@ -36,6 +36,18 @@ type OrgUser struct {
 	Role        RoleType       `gorm:"type:uint;not null;default:3"` // Set the default value to Member
 }
 
+
+type Invitation struct {
+	Id        uuid.UUID       `gorm:"primaryKey;type:uuid"`
+	OrgId     uuid.UUID       `gorm:"type:uuid"`
+	Link      string
+	ExpiresAt time.Time
+	Status    InvitationStatus `gorm:"type:uint;not null;default:0"` // Set the default value to Pending
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
 type RoleType uint8
 
 const (
@@ -52,5 +64,23 @@ func (e *RoleType) Scan(value interface{}) error {
 }
 
 func (e RoleType) Value() (uint8, error) {
+	return uint8(e), nil
+}
+
+type InvitationStatus uint8
+
+const (
+	Pending InvitationStatus = 0
+	Accepted InvitationStatus = 1
+	Expired InvitationStatus = 2
+)
+
+func (e *InvitationStatus) Scan(value interface{}) error {
+	*e = InvitationStatus(uint8(value.(int64)))
+
+	return nil
+}
+
+func (e InvitationStatus) Value() (uint8, error) {
 	return uint8(e), nil
 }

@@ -30,6 +30,20 @@ func (_m *OrgRepo) Add(org *db.Org, nestedFunc func(*db.Org, *gorm.DB) error) er
 	return r0
 }
 
+// AddInvitation provides a mock function with given fields: invitation
+func (_m *OrgRepo) AddInvitation(invitation *db.Invitation) error {
+	ret := _m.Called(invitation)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Invitation) error); ok {
+		r0 = rf(invitation)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddMember provides a mock function with given fields: member
 func (_m *OrgRepo) AddMember(member *db.OrgUser) error {
 	ret := _m.Called(member)
@@ -174,6 +188,58 @@ func (_m *OrgRepo) GetByOwner(_a0 uuid.UUID) ([]db.Org, error) {
 	return r0, r1
 }
 
+// GetInvitation provides a mock function with given fields: id
+func (_m *OrgRepo) GetInvitation(id uuid.UUID) (*db.Invitation, error) {
+	ret := _m.Called(id)
+
+	var r0 *db.Invitation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.Invitation, error)); ok {
+		return rf(id)
+	}
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Invitation); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Invitation)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetInvitationsByOrg provides a mock function with given fields: orgID
+func (_m *OrgRepo) GetInvitationsByOrg(orgID uuid.UUID) ([]db.Invitation, error) {
+	ret := _m.Called(orgID)
+
+	var r0 []db.Invitation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Invitation, error)); ok {
+		return rf(orgID)
+	}
+	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Invitation); ok {
+		r0 = rf(orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Invitation)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMember provides a mock function with given fields: orgID, userUUID
 func (_m *OrgRepo) GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*db.OrgUser, error) {
 	ret := _m.Called(orgID, userUUID)
@@ -288,6 +354,20 @@ func (_m *OrgRepo) GetOrgCount() (int64, int64, error) {
 	return r0, r1, r2
 }
 
+// RemoveInvitation provides a mock function with given fields: id
+func (_m *OrgRepo) RemoveInvitation(id uuid.UUID) error {
+	ret := _m.Called(id)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID) error); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RemoveMember provides a mock function with given fields: orgID, userUUID
 func (_m *OrgRepo) RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error {
 	ret := _m.Called(orgID, userUUID)
@@ -295,6 +375,20 @@ func (_m *OrgRepo) RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID, uuid.UUID) error); ok {
 		r0 = rf(orgID, userUUID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateInvitation provides a mock function with given fields: invitation
+func (_m *OrgRepo) UpdateInvitation(invitation *db.Invitation) error {
+	ret := _m.Called(invitation)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Invitation) error); ok {
+		r0 = rf(invitation)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -31,6 +31,14 @@ type OrgRepo interface {
 	RemoveMember(orgID uuid.UUID, userUUID uuid.UUID) error
 	GetOrgCount() (int64, int64, error)
 	GetMemberCount(orgID uuid.UUID) (int64, int64, error)
+
+
+	/* Invitations */
+	AddInvitation(invitation *Invitation) error
+	GetInvitation(id uuid.UUID) (*Invitation, error)
+	GetInvitationsByOrg(orgID uuid.UUID) ([]Invitation, error)
+	UpdateInvitation(invitation *Invitation) error
+	RemoveInvitation(id uuid.UUID) error
 }
 
 type orgRepo struct {
@@ -221,4 +229,52 @@ func (r *orgRepo) GetMemberCount(orgID uuid.UUID) (int64, int64, error) {
 	}
 
 	return activeMemberCount, deactiveMemberCount, nil
+}
+
+func (r *orgRepo) AddInvitation(invitation *Invitation) error {
+	d := r.Db.GetGormDb().Create(invitation)
+
+	return d.Error
+}
+
+func (r *orgRepo) GetInvitation(id uuid.UUID) (*Invitation, error) {
+	var invitation Invitation
+
+	result := r.Db.GetGormDb().First(&invitation, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &invitation, nil
+}
+
+func (r *orgRepo) GetInvitationsByOrg(orgID uuid.UUID) ([]Invitation, error) {
+	var invitations []Invitation
+
+	result := r.Db.GetGormDb().Where("org_id = ?", orgID).Find(&invitations)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return invitations, nil
+}
+
+func (r *orgRepo) UpdateInvitation(invitation *Invitation) error {
+	d := r.Db.GetGormDb().Clauses(clause.Returning{}).Save(invitation)
+	if d.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return d.Error
+}
+
+func (r *orgRepo) RemoveInvitation(id uuid.UUID) error {
+	var invitation Invitation
+
+	d := r.Db.GetGormDb().Where("id = ?", id).Delete(&invitation)
+	if d.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
+	return d.Error
 }
