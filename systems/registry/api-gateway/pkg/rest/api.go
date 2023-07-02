@@ -134,3 +134,16 @@ type AddNodeToSiteRequest struct {
 type ReleaseNodeFromSiteRequest struct {
 	NodeId string `json:"node" path:"node_id" validate:"required"`
 }
+
+type AddInvitationRequest struct {
+	OrgId string `json:"org_id" validate:"required"`
+	Email string `json:"email" validate:"required"`
+}
+type GetInvitationRequest struct {
+	Id string `json:"id" path:"id" validate:"required"`
+}
+
+type UpdateInvitationRequest struct {
+	Id    string `json:"id" path:"id" validate:"required"`
+	State string `json:"state" validate:"required"`
+}

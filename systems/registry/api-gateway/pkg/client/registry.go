@@ -252,3 +252,42 @@ func (r *Registry) GetSites(netID string) (*netpb.GetSitesByNetworkResponse, err
 
 	return res, nil
 }
+
+func (r *Registry) AddInvitation ( email string) (*orgpb.AddInvitationResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.AddInvitation(ctx, &orgpb.AddInvitationRequest{Email: email,})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *Registry) GetInvitation ( id string) (*orgpb.GetInvitationResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.GetInvitation(ctx, &orgpb.GetInvitationRequest{Id: id,})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *Registry) UpdateInvitation ( id string, status string) (*orgpb.UpdateInvitationResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.UpdateInvitation(ctx, &orgpb.UpdateInvitationRequest{Id: id, Status: orgpb.InvitationStatus(orgpb.InvitationStatus_value[status])})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

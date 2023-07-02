@@ -56,6 +56,11 @@ type registry interface {
 	UpdateMember(orgName string, userUUID string, isDeactivated bool, role string) error
 	RemoveMember(orgName string, userUUID string) error
 
+	//Invitation for members to join an organization
+	AddInvitation(email string) (*orgpb.AddInvitationResponse, error)
+	GetInvitation(invitationId string) (*orgpb.GetInvitationResponse, error)
+	UpdateInvitation(invitationId string, status string) (*orgpb.UpdateInvitationResponse, error)
+
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
@@ -63,6 +68,8 @@ type registry interface {
 	AddSite(netID string, siteName string) (*netpb.AddSiteResponse, error)
 	GetSite(netID string, siteName string) (*netpb.GetSiteResponse, error)
 	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)
+
+
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -140,6 +147,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 		orgs.GET("/:org/nodes", formatDoc("Get Org Nodes", "Get all or free nodes of an organization"), tonic.Handler(r.getOrgNodesHandler, http.StatusOK))
 
+		// org invitations
+		orgs.POST("/:org/invitations", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.addInvitationHandler, http.StatusCreated))
+		orgs.GET("/:org/invitations/:invitation_id", formatDoc("Get Invitation", "Get an invitation of an organization"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
+		orgs.PATCH("/:org/invitations/:invitation_id", formatDoc("Update Invitation", "Update an invitation of an organization"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		// Users routes
 		const user = "/users"
 		users := auth.Group(user, "Users", "Operations on Users")
@@ -332,4 +343,15 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) addInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*orgpb.AddInvitationResponse, error) {
+	return r.clients.Registry.AddInvitation(req.Email)
+}
+
+func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*orgpb.GetInvitationResponse, error) {
+	return r.clients.Registry.GetInvitation(req.Id)
+}
+func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*orgpb.UpdateInvitationResponse, error) {
+	return r.clients.Registry.UpdateInvitation(req.Id,req.State) 
 }
