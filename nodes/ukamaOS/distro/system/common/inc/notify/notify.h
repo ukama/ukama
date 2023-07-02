@@ -31,6 +31,7 @@ typedef struct {
     char     *severity;      /* low, medium, high */
     int      epochTime;
     char     *module;
+    char     *device;
     char     *propertyName;
     char     *propertyValue;
     char     *propertyUnit;
