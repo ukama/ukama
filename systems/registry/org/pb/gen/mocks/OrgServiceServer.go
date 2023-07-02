@@ -40,6 +40,32 @@ func (_m *OrgServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*gen.
 	return r0, r1
 }
 
+// AddInvitation provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) AddInvitation(_a0 context.Context, _a1 *gen.AddInvitationRequest) (*gen.AddInvitationResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.AddInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddInvitationRequest) (*gen.AddInvitationResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddInvitationRequest) *gen.AddInvitationResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddInvitationRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AddMember provides a mock function with given fields: _a0, _a1
 func (_m *OrgServiceServer) AddMember(_a0 context.Context, _a1 *gen.AddMemberRequest) (*gen.MemberResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -170,6 +196,32 @@ func (_m *OrgServiceServer) GetByUser(_a0 context.Context, _a1 *gen.GetByOwnerRe
 	return r0, r1
 }
 
+// GetInvitation provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) GetInvitation(_a0 context.Context, _a1 *gen.GetInvitationRequest) (*gen.GetInvitationResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetInvitationRequest) (*gen.GetInvitationResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetInvitationRequest) *gen.GetInvitationResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetInvitationRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMember provides a mock function with given fields: _a0, _a1
 func (_m *OrgServiceServer) GetMember(_a0 context.Context, _a1 *gen.MemberRequest) (*gen.MemberResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -248,6 +300,32 @@ func (_m *OrgServiceServer) RegisterUser(_a0 context.Context, _a1 *gen.RegisterU
 	return r0, r1
 }
 
+// RemoveInvitation provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) RemoveInvitation(_a0 context.Context, _a1 *gen.RemoveInvitationRequest) (*gen.RemoveInvitationResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.RemoveInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveInvitationRequest) (*gen.RemoveInvitationResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveInvitationRequest) *gen.RemoveInvitationResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemoveInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemoveInvitationRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemoveMember provides a mock function with given fields: _a0, _a1
 func (_m *OrgServiceServer) RemoveMember(_a0 context.Context, _a1 *gen.MemberRequest) (*gen.MemberResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -266,6 +344,32 @@ func (_m *OrgServiceServer) RemoveMember(_a0 context.Context, _a1 *gen.MemberReq
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateInvitation provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) UpdateInvitation(_a0 context.Context, _a1 *gen.UpdateInvitationRequest) (*gen.UpdateInvitationResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UpdateInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateInvitationRequest) (*gen.UpdateInvitationResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateInvitationRequest) *gen.UpdateInvitationResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateInvitationRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

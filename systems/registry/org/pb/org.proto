@@ -16,6 +16,12 @@ service OrgService {
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
     rpc GetByUser(GetByOwnerRequest) returns (GetByUserResponse);
 
+    //invitations
+    rpc AddInvitation(AddInvitationRequest) returns (AddInvitationResponse);
+    rpc GetInvitation(GetInvitationRequest) returns (GetInvitationResponse);
+    rpc UpdateInvitation(UpdateInvitationRequest) returns (UpdateInvitationResponse);
+    rpc RemoveInvitation(RemoveInvitationRequest) returns (RemoveInvitationResponse);
+
 
     /* Users */
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
@@ -27,6 +33,47 @@ service OrgService {
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
     rpc UpdateMember(UpdateMemberRequest) returns (MemberResponse);
     rpc RemoveMember(MemberRequest) returns (MemberResponse);
+}
+
+message Invitation{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+  string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+  string link = 3;
+  google.protobuf.Timestamp expires_at = 4 [json_name = "expires_at"];
+  int32 status = 5;
+}
+message AddInvitationRequest{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+  string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+  string link = 3;
+  google.protobuf.Timestamp expires_at = 4 [json_name = "expires_at"];
+  int32 status = 5;
+}
+
+message AddInvitationResponse{
+  Invitation invitation = 1;
+}
+message GetInvitationRequest{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message GetInvitationResponse{
+  Invitation invitation = 1;
+}
+message UpdateInvitationRequest{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+  int32 status = 2;
+}
+
+message UpdateInvitationResponse{
+  Invitation invitation = 1;
+}
+message RemoveInvitationRequest{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message RemoveInvitationResponse{
+  
 }
 
 message AddRequest{

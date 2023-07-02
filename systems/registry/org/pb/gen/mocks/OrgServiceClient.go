@@ -49,6 +49,39 @@ func (_m *OrgServiceClient) Add(ctx context.Context, in *gen.AddRequest, opts ..
 	return r0, r1
 }
 
+// AddInvitation provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) AddInvitation(ctx context.Context, in *gen.AddInvitationRequest, opts ...grpc.CallOption) (*gen.AddInvitationResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.AddInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddInvitationRequest, ...grpc.CallOption) (*gen.AddInvitationResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddInvitationRequest, ...grpc.CallOption) *gen.AddInvitationResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddInvitationRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AddMember provides a mock function with given fields: ctx, in, opts
 func (_m *OrgServiceClient) AddMember(ctx context.Context, in *gen.AddMemberRequest, opts ...grpc.CallOption) (*gen.MemberResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -214,6 +247,39 @@ func (_m *OrgServiceClient) GetByUser(ctx context.Context, in *gen.GetByOwnerReq
 	return r0, r1
 }
 
+// GetInvitation provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) GetInvitation(ctx context.Context, in *gen.GetInvitationRequest, opts ...grpc.CallOption) (*gen.GetInvitationResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetInvitationRequest, ...grpc.CallOption) (*gen.GetInvitationResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetInvitationRequest, ...grpc.CallOption) *gen.GetInvitationResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetInvitationRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMember provides a mock function with given fields: ctx, in, opts
 func (_m *OrgServiceClient) GetMember(ctx context.Context, in *gen.MemberRequest, opts ...grpc.CallOption) (*gen.MemberResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -313,6 +379,39 @@ func (_m *OrgServiceClient) RegisterUser(ctx context.Context, in *gen.RegisterUs
 	return r0, r1
 }
 
+// RemoveInvitation provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) RemoveInvitation(ctx context.Context, in *gen.RemoveInvitationRequest, opts ...grpc.CallOption) (*gen.RemoveInvitationResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.RemoveInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveInvitationRequest, ...grpc.CallOption) (*gen.RemoveInvitationResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveInvitationRequest, ...grpc.CallOption) *gen.RemoveInvitationResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemoveInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemoveInvitationRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemoveMember provides a mock function with given fields: ctx, in, opts
 func (_m *OrgServiceClient) RemoveMember(ctx context.Context, in *gen.MemberRequest, opts ...grpc.CallOption) (*gen.MemberResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -338,6 +437,39 @@ func (_m *OrgServiceClient) RemoveMember(ctx context.Context, in *gen.MemberRequ
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateInvitation provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) UpdateInvitation(ctx context.Context, in *gen.UpdateInvitationRequest, opts ...grpc.CallOption) (*gen.UpdateInvitationResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.UpdateInvitationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateInvitationRequest, ...grpc.CallOption) (*gen.UpdateInvitationResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateInvitationRequest, ...grpc.CallOption) *gen.UpdateInvitationResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateInvitationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateInvitationRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
