@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -48,17 +49,36 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
 	log.Infof("Adding invitation %v", req)
 	
-	 err := o.orgRepo.AddInvitation(
+	link, err := generateInvitationLink()
+	if err != nil {
+		return nil, err
+	}
+	expiresAt := time.Now().Add(2 * time.Minute)
+	 err = o.orgRepo.AddInvitation(
 		&db.Invitation{
-			Link:      req.GetLink(),
+			Id:        uuid.NewV4(),
+			Link:      link,
 			Email:     req.GetEmail(),
-			ExpiresAt: req.GetExpiresAt().AsTime(),
+			ExpiresAt: expiresAt,
 			Status:   db.InvitationStatus(req.GetStatus()),
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	err = o.notification.SendEmail(client.SendEmailReq{
+		To:      []string{req.GetEmail()},
+		Subject: "[Ukama] [Network Owner name] invited you to use their network",
+		Body:    "Example Body",
+		Values:  map[string]string{"key": "value"},
+	})
+	
+	
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Unable to send email %s", err.Error())
+	}
+
 
 	return &pb.AddInvitationResponse{
 	}, nil
@@ -656,4 +676,10 @@ func pbInvitationStatusToDb(status pb.InvitationStatus) db.InvitationStatus {
 		return db.Pending
 	}
 	
+}
+
+func generateInvitationLink() (string, error) {
+	linkId:= uuid.NewV4()
+	link := "https://auth.dev.ukama.com/registration/" + linkId.String()
+	return link, nil
 }
