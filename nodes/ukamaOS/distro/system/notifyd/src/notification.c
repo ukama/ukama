@@ -89,6 +89,7 @@ void free_notification(Notification *ptr) {
     usys_free(ptr->serviceName);
     usys_free(ptr->severity);
     usys_free(ptr->module);
+    usys_free(ptr->device);
     usys_free(ptr->propertyName);
     usys_free(ptr->propertyValue);
     usys_free(ptr->propertyUnit);

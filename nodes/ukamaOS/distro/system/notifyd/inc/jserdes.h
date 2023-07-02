@@ -17,6 +17,8 @@
 #include "usys_types.h"
 #include "notify/notify.h"
 
+#define EMPTY_STRING  ""
+
 #define JSON_OK                        STATUS_OK
 #define JSON_FAILURE                   STATUS_NOTOK
 #define JSON_ENCODING_OK               JSON_OK

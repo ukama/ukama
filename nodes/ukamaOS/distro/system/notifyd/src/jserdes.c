@@ -11,7 +11,6 @@
 #include "notification.h"
 #include "errorcode.h"
 #include "json_types.h"
-#include "node.h"
 #include "web_service.h"
 #include "notify/notify.h"
 
@@ -20,7 +19,6 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 #include "usys_types.h"
-
 
 void json_log(json_t *json) {
 
@@ -153,9 +151,21 @@ bool json_serialize_notification(JsonObj **json, Notification* notification,
     /* Add details about the event/alarm */
     json_object_set_new(*json, JTAG_DETAILS, json_object());
     jDetails = json_object_get(*json, JTAG_DETAILS);
-    
-    json_object_set_new(jDetails, JTAG_MODULE,
-                        json_string(notification->module));
+
+    if (notification->module) {
+        json_object_set_new(jDetails, JTAG_MODULE,
+                            json_string(notification->module));
+    } else {
+        json_object_set_new(jDetails, JTAG_MODULE, json_string(EMPTY_STRING));
+    }
+
+    if (notification->device) {
+        json_object_set_new(jDetails, JTAG_DEVICE,
+                            json_string(notification->device));
+    } else {
+        json_object_set_new(jDetails, JTAG_DEVICE, json_string(EMPTY_STRING));
+    }
+
     json_object_set_new(jDetails, JTAG_NAME,
                         json_string(notification->propertyName));
     json_object_set_new(jDetails, JTAG_VALUE,
@@ -208,6 +218,11 @@ bool json_deserialize_notification(JsonObj *json,
         return USYS_FALSE;
     }
 
+    /* Module and device are optional */
+    get_json_entry(json, JTAG_MODULE, JSON_STRING,
+                              &(*notification)->module, NULL, NULL);
+    get_json_entry(json, JTAG_DEVICE, JSON_STRING,
+                              &(*notification)->device, NULL, NULL);
     return USYS_TRUE;
 }
 
