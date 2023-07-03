@@ -23,10 +23,11 @@ import {
   LeftOverlayUI,
   PowerSummary,
   RightOverlayUI,
+  SiteLink,
   SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
 import { calculateCenterLatLng, formatSecondsToDuration } from '@/utils';
-import { AlertColor, Popover, Stack, Typography } from '@mui/material';
+import { AlertColor, Paper, Popover, Stack, Typography } from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
 import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -100,6 +101,7 @@ const getMarkers = (sites: Site[]) => {
 const getLastSavedInt = () => Math.floor(new Date().getTime() / 1000);
 
 const Page = () => {
+  const [isLinkSelected, setIsLinkSelected] = useState(true);
   const [zoom, setZoom] = useState<number>(ZOOM);
   const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>(
     undefined,
@@ -502,18 +504,18 @@ const Page = () => {
         )}
       </Stack>
       <LoadingWrapper
-        radius="small"
         width={'100%'}
         isLoading={false}
+        radius={isLinkSelected ? 'none' : 'small'}
         cstyle={{
           backgroundColor: false ? colors.white : 'transparent',
         }}
       >
-        <PageContainer sx={{ padding: 0, mt: '12px' }}>
+        <PageContainer radius={'5px'} sx={{ padding: 0, mt: '12px' }}>
           <Map
             width={800}
             zoom={zoom}
-            height={418}
+            height={isLinkSelected ? 278 : 418}
             center={center}
             setZoom={setZoom}
             id={'site-planning-map'}
@@ -549,6 +551,16 @@ const Page = () => {
               </>
             )}
           </Map>
+          <Paper
+            sx={{
+              px: 3,
+              pt: 1,
+              mt: '-10px',
+              height: isLinkSelected ? 235 : 0,
+            }}
+          >
+            <SiteLink />
+          </Paper>
         </PageContainer>
       </LoadingWrapper>
     </>

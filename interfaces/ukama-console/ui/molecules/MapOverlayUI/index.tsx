@@ -2,14 +2,27 @@ import { DarkTooltip } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import SearchBar from '@/ui/molecules/SearchBar';
 import AddLocationIcon from '@mui/icons-material/AddLocation';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import DotIcon from '@mui/icons-material/FiberManualRecord';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import PowerIcon from '@mui/icons-material/PowerSettingsNewOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
-import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
-
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import DotIcon from '@mui/icons-material/FiberManualRecord';
+import SignalIcon from '@mui/icons-material/SignalCellularAlt';
+import SpeedIcon from '@mui/icons-material/Speed';
+import {
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
+import Image from 'next/image';
 
 const LeftIconButtonStyle = {
   zIndex: 400,
@@ -53,7 +66,7 @@ interface ILeftOverlayUI {
   handleLocationSelected: (loc: LatLngLiteral) => void;
 }
 
-const LeftOverlayUI = ({
+export const LeftOverlayUI = ({
   isAddSite,
   isAddLink,
   handleAddLink,
@@ -124,7 +137,7 @@ interface IRightOverlayUI {
   powerInfoId: string | undefined;
 }
 
-const RightOverlayUI = ({
+export const RightOverlayUI = ({
   siteInfoId,
   powerInfoId,
   handleClick,
@@ -286,4 +299,87 @@ export const PowerSummary = ({ powerSummary }: any) => (
   </Stack>
 );
 
-export { LeftOverlayUI, RightOverlayUI };
+const SiteDetails = ({}: any) => (
+  <Stack spacing={2} py={3}>
+    <Stack direction={'row'} spacing={1} alignItems={'center'}>
+      <LocationOnIcon fontSize="small" />
+      <Typography variant="body2">Site Link</Typography>
+    </Stack>
+    <TextField
+      required
+      value={'0.000, 0.123123'}
+      label="LOCATION"
+      variant="standard"
+      InputLabelProps={{ shrink: true }}
+      placeholder="Location, address, or coordinates"
+      sx={{
+        '& .MuiInput-input': {
+          fontSize: '16px',
+        },
+      }}
+      onChange={() => {}}
+    />
+    <TextField
+      required
+      value={10}
+      type="number"
+      label="HEIGHT"
+      variant="standard"
+      InputLabelProps={{ shrink: true }}
+      InputProps={{
+        endAdornment: <InputAdornment position="end">m</InputAdornment>,
+      }}
+      sx={{
+        width: { xs: '100%', sm: '100px' },
+        '& .MuiInput-input': {
+          fontSize: '16px',
+        },
+      }}
+      onChange={(e) => {}}
+    />
+  </Stack>
+);
+
+export const SiteLink = ({}: any) => (
+  <Grid container height="100%" columnSpacing={3}>
+    <Grid item xs={3.5}>
+      <SiteDetails />
+    </Grid>
+    <Grid item direction={'row'} xs={5}>
+      <Stack height={'100%'} sx={{ border: '0.5px solid grey' }}>
+        <Stack
+          height={'56px'}
+          direction={'row'}
+          alignItems={'center'}
+          justifyContent={'space-around'}
+        >
+          <Stack direction={'row'} spacing={1} alignItems={'center'}>
+            <SignalIcon fontSize="small" color="success" />
+            <Typography variant="body2">Site Link</Typography>
+          </Stack>
+          <Stack direction={'row'} spacing={1} alignItems={'center'}>
+            <SpeedIcon fontSize="small" color="success" />
+            <Typography variant="body2">Site Link</Typography>
+          </Stack>
+          <Button
+            size="small"
+            color="error"
+            variant="outlined"
+            sx={{ height: 'fit-content' }}
+          >
+            Delete Link
+          </Button>
+        </Stack>
+        <Image
+          width={502}
+          height={170}
+          src="/temp_link.png"
+          alt="ukama-sites-link"
+        />
+      </Stack>
+    </Grid>
+    <Grid item xs={3.5}>
+      <SiteDetails />
+    </Grid>
+  </Grid>
+);

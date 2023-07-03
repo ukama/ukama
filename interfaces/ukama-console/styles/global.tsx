@@ -133,13 +133,15 @@ const SimpleCardWithBorder = styled(Box)((props) => ({
   border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.1)}`,
 }));
 
-const PageContainer = styled(Paper)((props) => ({
+const PageContainer = styled(Paper, {
+  shouldForwardProp: (prop) => prop !== 'radius',
+})<IRoundedCard>(({ theme, radius = '5px' }) => ({
   marginTop: '18px',
-  borderRadius: '5px',
+  borderRadius: radius,
   padding: '24px 32px',
   overflow: 'scroll',
   height: 'calc(100vh - 210px)',
-  [props.theme.breakpoints.down('sm')]: {
+  [theme.breakpoints.down('sm')]: {
     marginTop: '12px',
     padding: '12px 18px',
   },
