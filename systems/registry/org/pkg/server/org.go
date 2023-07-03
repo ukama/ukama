@@ -48,19 +48,33 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 
 func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
 	log.Infof("Adding invitation %v", req)
-	
+
+	if req.GetOrgId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required")
+	}
+
+	if req.GetEmail() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Email is required")
+	}
+
+	orgId, err := uuid.FromString(req.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "OrgId is invalid")
+	}
+
 	link, err := generateInvitationLink()
 	if err != nil {
 		return nil, err
 	}
 	expiresAt := time.Now().Add(2 * time.Minute)
-	 err = o.orgRepo.AddInvitation(
+	err = o.orgRepo.AddInvitation(
 		&db.Invitation{
 			Id:        uuid.NewV4(),
+			OrgId:     orgId,
 			Link:      link,
 			Email:     req.GetEmail(),
 			ExpiresAt: expiresAt,
-			Status:   db.InvitationStatus(req.GetStatus()),
+			Status:    db.InvitationStatus(req.GetStatus()),
 		},
 	)
 	if err != nil {
@@ -73,15 +87,12 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		Body:    "Example Body",
 		Values:  map[string]string{"key": "value"},
 	})
-	
-	
+
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "Unable to send email %s", err.Error())
 	}
 
-
-	return &pb.AddInvitationResponse{
-	}, nil
+	return &pb.AddInvitationResponse{}, nil
 }
 
 func (o *OrgService) GetInvitation(ctx context.Context, req *pb.GetInvitationRequest) (*pb.GetInvitationResponse, error) {
@@ -98,9 +109,9 @@ func (o *OrgService) GetInvitation(ctx context.Context, req *pb.GetInvitationReq
 	}
 
 	return &pb.GetInvitationResponse{
-		Invitation:dbInvitationToPbInvitation(invitation),
+			Invitation: dbInvitationToPbInvitation(invitation),
 		},
-	nil
+		nil
 }
 
 func (o *OrgService) UpdateInvitation(ctx context.Context, req *pb.UpdateInvitationRequest) (*pb.UpdateInvitationResponse, error) {
@@ -111,15 +122,13 @@ func (o *OrgService) UpdateInvitation(ctx context.Context, req *pb.UpdateInvitat
 			"invalid format of invitationId. Error %s", err.Error())
 	}
 
-	err = o.orgRepo.UpdateInvitation( invitationId, db.InvitationStatus(req.GetStatus()))
+	err = o.orgRepo.UpdateInvitation(invitationId, db.InvitationStatus(req.GetStatus()))
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.UpdateInvitationResponse{
-	}, nil
+	return &pb.UpdateInvitationResponse{}, nil
 }
-  
 
 func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding org %v", req)
@@ -638,14 +647,13 @@ func (o *OrgService) PushMetrics() error {
 	return nil
 
 }
-func dbInvitationToPbInvitation( invitation *db.Invitation) *pb.Invitation {
+func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 	return &pb.Invitation{
-		Id:			invitation.Id.String(),
-		Link: 		invitation.Link,
-		Email:		invitation.Email,
-		Status:		pb.InvitationStatus(invitation.Status),
-		ExpiresAt: 	timestamppb.New(invitation.ExpiresAt),
-
+		Id:        invitation.Id.String(),
+		Link:      invitation.Link,
+		Email:     invitation.Email,
+		Status:    pb.InvitationStatus(invitation.Status),
+		ExpiresAt: timestamppb.New(invitation.ExpiresAt),
 	}
 }
 
@@ -675,11 +683,11 @@ func pbInvitationStatusToDb(status pb.InvitationStatus) db.InvitationStatus {
 	default:
 		return db.Pending
 	}
-	
+
 }
 
 func generateInvitationLink() (string, error) {
-	linkId:= uuid.NewV4()
+	linkId := uuid.NewV4()
 	link := "https://auth.dev.ukama.com/registration/" + linkId.String()
 	return link, nil
 }

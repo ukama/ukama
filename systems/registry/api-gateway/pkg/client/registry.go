@@ -253,7 +253,7 @@ func (r *Registry) GetSites(netID string) (*netpb.GetSitesByNetworkResponse, err
 	return res, nil
 }
 
-func (r *Registry) AddInvitation ( email string) (*orgpb.AddInvitationResponse, error) {
+func (r *Registry) AddInvitation ( email string , orgId string) (*orgpb.AddInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 

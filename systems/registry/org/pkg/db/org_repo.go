@@ -32,7 +32,6 @@ type OrgRepo interface {
 	GetOrgCount() (int64, int64, error)
 	GetMemberCount(orgID uuid.UUID) (int64, int64, error)
 
-
 	/* Invitations */
 	AddInvitation(invitation *Invitation) error
 	GetInvitation(id uuid.UUID) (*Invitation, error)
@@ -245,17 +244,6 @@ func (r *orgRepo) GetInvitation(id uuid.UUID) (*Invitation, error) {
 	}
 
 	return &invitation, nil
-}
-
-func (r *orgRepo) GetInvitationsByOrg(orgID uuid.UUID) ([]Invitation, error) {
-	var invitations []Invitation
-
-	result := r.Db.GetGormDb().Where("org_id = ?", orgID).Find(&invitations)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return invitations, nil
 }
 
 func (r *orgRepo) UpdateInvitation(invitationId uuid.UUID, status InvitationStatus) error {
