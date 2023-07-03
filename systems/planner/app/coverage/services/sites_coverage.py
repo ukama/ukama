@@ -148,8 +148,11 @@ class SitesCoverage:
         pred_output_file_name = str(uuid.uuid4()) + "_merged.tif"
         pred_merged_file_url = output_folder_path + pred_output_file_name
         population_image_pixel_width, population_image_pixel_height = 0.0002777777777777777775, 0.0002777777777777777775 # this is default as given by the data downloaded for population
-
-        dcf_file_url = dcf_file_path + ".dcf"
+        dcf_file_url = ""
+        if outputFunc == CoverageEnum.FIELD_STRENGTH.value:
+            dcf_file_url = dcf_file_path + ".scf"
+        else:
+            dcf_file_url = dcf_file_path + ".dcf"
         color_map = self.load_dcf_file(dcf_file_url)
 
         # Create a dictionary to store the combined values

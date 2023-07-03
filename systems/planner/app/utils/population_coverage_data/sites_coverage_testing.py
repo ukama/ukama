@@ -384,14 +384,6 @@ class SitesCoverage:
         
         return data
     
-    def get_population_data_exact(self, longitude, latitude):
-        
-        data = self.SESSION.query(PopulationData).filter(
-            PopulationData.longitude == longitude,
-            PopulationData.latitude == latitude,
-        ).all()
-        
-        return data
 # endregion
 
 sitescov = SitesCoverage()

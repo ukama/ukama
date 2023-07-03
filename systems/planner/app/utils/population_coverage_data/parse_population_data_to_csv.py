@@ -86,7 +86,7 @@ def save_to_csv(box_data_list, csv_filename, start_id):
     return start_id
 # Create session
 session = Session()
-start_id = 9172464
+start_id = 97759809
 # Read GeoTIFF files
 geo_tiff_files = read_dir_for_geotiff_files()
 
