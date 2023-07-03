@@ -1,3 +1,4 @@
+import { Site } from '@/generated/planning-tool';
 import { DarkTooltip } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import SearchBar from '@/ui/molecules/SearchBar';
@@ -299,15 +300,18 @@ export const PowerSummary = ({ powerSummary }: any) => (
   </Stack>
 );
 
-const SiteDetails = ({}: any) => (
+interface ISiteDetails {
+  site: Site;
+}
+const SiteDetails = ({ site }: ISiteDetails) => (
   <Stack spacing={2} py={3}>
     <Stack direction={'row'} spacing={1} alignItems={'center'}>
       <LocationOnIcon fontSize="small" />
-      <Typography variant="body2">Site Link</Typography>
+      <Typography variant="body2">{site?.name}</Typography>
     </Stack>
     <TextField
       required
-      value={'0.000, 0.123123'}
+      value={`${site?.location.lat}, ${site?.location.lng}`}
       label="LOCATION"
       variant="standard"
       InputLabelProps={{ shrink: true }}
@@ -321,7 +325,7 @@ const SiteDetails = ({}: any) => (
     />
     <TextField
       required
-      value={10}
+      value={site?.height}
       type="number"
       label="HEIGHT"
       variant="standard"
@@ -340,10 +344,15 @@ const SiteDetails = ({}: any) => (
   </Stack>
 );
 
-export const SiteLink = ({}: any) => (
+interface ISites {
+  sites: Site[];
+  handleDeleteLink: () => void;
+}
+
+export const SiteLink = ({ sites, handleDeleteLink }: ISites) => (
   <Grid container height="100%" columnSpacing={3}>
     <Grid item xs={3.5}>
-      <SiteDetails />
+      <SiteDetails site={sites[0]} />
     </Grid>
     <Grid item direction={'row'} xs={5}>
       <Stack height={'100%'} sx={{ border: '0.5px solid grey' }}>
@@ -366,6 +375,7 @@ export const SiteLink = ({}: any) => (
             color="error"
             variant="outlined"
             sx={{ height: 'fit-content' }}
+            onClick={() => handleDeleteLink()}
           >
             Delete Link
           </Button>
@@ -379,7 +389,7 @@ export const SiteLink = ({}: any) => (
       </Stack>
     </Grid>
     <Grid item xs={3.5}>
-      <SiteDetails />
+      <SiteDetails site={sites[1]} />
     </Grid>
   </Grid>
 );

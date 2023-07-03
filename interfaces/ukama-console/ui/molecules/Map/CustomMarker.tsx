@@ -13,6 +13,7 @@ interface ICustomMarker {
   zoom?: number | undefined;
   center: LatLngLiteral | null;
   handleAction: (a: Site) => void;
+  handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleAddLinkToSite: (id: string) => void;
@@ -26,18 +27,24 @@ interface IMarker {
   lng: number;
 }
 
-const getLatLng = (sites: Site[], links: Link[]): LatLngTuple[] => {
+interface ILink {
+  id: string;
+  latlng: LatLngTuple[];
+}
+
+const getLatLng = (sites: Site[], links: Link[]): ILink[] => {
+  const data: ILink[] = [];
   if (sites && sites.length > 0) {
-    const locs: LatLngTuple[] = [];
     for (let i = 0; i < links.length; i++) {
       const siteA = links[i].siteA;
       const siteB = links[i].siteB;
+      const locs: LatLngTuple[] = [];
       sites.forEach((site) => {
         if (site.id === siteA || site.id === siteB) {
-          const l: LatLngTuple = [
-            parseFloat(site.location.lat),
-            parseFloat(site.location.lng),
-          ];
+          // const l: LatLngTuple = [
+          //   parseFloat(site.location.lat),
+          //   parseFloat(site.location.lng),
+          // ];
           // if (!locs.toString().includes(l.toString()))
           locs.push([
             parseFloat(site.location.lat),
@@ -45,10 +52,11 @@ const getLatLng = (sites: Site[], links: Link[]): LatLngTuple[] => {
           ]);
         }
       });
+      if (locs.length > 1)
+        data.push({ id: `${siteA}-${siteB}-${links[i].id}`, latlng: locs });
     }
-    return locs.length === 1 ? [] : locs;
   }
-  return [];
+  return data.length > 0 ? data : [];
 };
 
 const CustomMarker = ({
@@ -63,11 +71,12 @@ const CustomMarker = ({
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
+  handleLinkClick,
   handleAddLinkToSite,
 }: ICustomMarker) => {
   const map = useMap();
   const [markers, setMarkers] = useState<IMarker[]>([]);
-  const [polylines, setPolylines] = useState<Polyline>();
+  const [polylines, setPolylines] = useState<Polyline[]>();
 
   useEffect(() => {
     map.setMaxBounds([
@@ -90,12 +99,26 @@ const CustomMarker = ({
   }, [center]);
 
   useEffect(() => {
-    polylines?.removeFrom(map);
-    var latlngs = getLatLng(data, links);
-    const linesLayer = Leaflet.polyline(latlngs, {
-      color: colors.primaryLight,
-    }).addTo(map);
-    setPolylines(linesLayer);
+    polylines?.forEach((p) => p.removeFrom(map));
+    const layers: any = [];
+    const latlngs = getLatLng(data, links);
+    latlngs.forEach(({ id, latlng }) => {
+      const p = Leaflet.polyline(latlng, {
+        color: colors.primaryLight,
+        weight: 2,
+        attribution: id,
+      })
+        .setStyle({
+          interactive: true,
+        })
+        .addEventListener('click', (e) => {
+          e.target.setStyle({ color: colors.secondaryMain, weight: 3 });
+          handleLinkClick(e.target.options.attribution);
+        })
+        .addTo(map);
+      layers.push(p);
+    });
+    setPolylines(layers);
 
     const m: any = [];
     data.map((item) => {
@@ -155,6 +178,7 @@ const CustomMarker = ({
                 lat: m?.lat || 0,
                 lng: m?.lng || 0,
               }}
+              attribution={item.id}
               opacity={m?.lat === 0 ? 0 : 1}
               eventHandlers={{
                 moveend: (event: any) => {
@@ -169,11 +193,9 @@ const CustomMarker = ({
                   handleDragMarker(event.target.getLatLng(), item.location.id);
                 },
                 popupopen: (event: any) => {
-                  console.log('popupopen: ', isAddLink);
                   if (isAddLink) {
                     event.target.closePopup();
                     const { lat, lng } = event.target.getLatLng();
-                    console.log('Cords: ', lat, lng, markers);
                     const s = data.find(
                       (d) =>
                         d.location.lat.includes(`${lat}`) &&

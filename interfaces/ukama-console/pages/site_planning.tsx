@@ -6,6 +6,7 @@ import {
   useAddLinkMutation,
   useAddSiteMutation,
   useDeleteDraftMutation,
+  useDeleteLinkMutation,
   useDeleteSiteMutation,
   useGetDraftsQuery,
   useUpdateDraftNameMutation,
@@ -86,6 +87,11 @@ const SITE_INIT = {
   },
 };
 
+const defaultLatLng = {
+  lat: 37.7780627,
+  lng: -121.9822475,
+};
+
 const INIT_LINK = {
   siteA: '',
   siteB: '',
@@ -101,23 +107,22 @@ const getMarkers = (sites: Site[]) => {
 const getLastSavedInt = () => Math.floor(new Date().getTime() / 1000);
 
 const Page = () => {
-  const [isLinkSelected, setIsLinkSelected] = useState(true);
   const [zoom, setZoom] = useState<number>(ZOOM);
+  const [linkSites, setLinkSites] = useState(INIT_LINK);
+  const _commonData = useRecoilValue<TCommonData>(commonData);
+  const [isLinkSelected, setIsLinkSelected] = useState<string | undefined>(
+    undefined,
+  );
+  const [selectedSites, setSelectedSites] = useState<Site[]>([]);
+  const [center, setCenter] = useState<LatLngLiteral>(defaultLatLng);
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [selectedDraft, setSelectedDraft] = useState<Draft | undefined>(
     undefined,
   );
-  const [center, setCenter] = useState<LatLngLiteral>({
-    lat: 37.7780627,
-    lng: -121.9822475,
-  });
   const [mapInteraction, setMapInteraction] = useState({
     isAddLink: false,
     isAddSite: false,
   });
-  const [linkSites, setLinkSites] = useState(INIT_LINK);
-  const [togglePower, setTogglePower] = useState(false);
-  const _commonData = useRecoilValue<TCommonData>(commonData);
-  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [anchorSiteInfo, setAnchorSiteInfo] =
     useState<HTMLButtonElement | null>(null);
   const [anchorPowerInfo, setAnchorPowerInfo] =
@@ -235,6 +240,18 @@ const Page = () => {
     },
   });
 
+  const [deleteLinkCall, { loading: deletelinkLoading }] =
+    useDeleteLinkMutation({
+      onCompleted: () => {
+        setIsLinkSelected(undefined);
+        refetchDrafts();
+        showAlert('delete-link-success', `Link deleted`, 'success', true);
+      },
+      onError: (error) => {
+        showAlert('add-link-error', error.message, 'error', true);
+      },
+    });
+
   const [deleteDraftCall, { loading: deleteDraftLoading }] =
     useDeleteDraftMutation({
       onCompleted: () => {
@@ -276,7 +293,7 @@ const Page = () => {
         ) as LatLngLiteral,
       );
     } else {
-      setCenter({ lat: 37.7780627, lng: -121.9822475 } as LatLngLiteral);
+      setCenter(defaultLatLng as LatLngLiteral);
     }
   }, [selectedDraft]);
 
@@ -440,6 +457,30 @@ const Page = () => {
     }
   };
 
+  const handleLinkClick = (ids: string) => {
+    const i = ids && ids.split('-');
+    if (i.length === 3) {
+      setIsLinkSelected(i[2]);
+      const s: Site[] = [];
+      const one = selectedDraft?.sites.find(({ id }) => id === i[0]);
+      const two = selectedDraft?.sites.find(({ id }) => id === i[1]);
+      one && s.push(one);
+      two && s.push(two);
+      setSelectedSites(s);
+    }
+  };
+
+  const handleDeleteLink = () => {
+    if (isLinkSelected)
+      deleteLinkCall({
+        variables: {
+          linkId: isLinkSelected,
+          lastSaved: getLastSavedInt(),
+          draftId: selectedDraft?.id || '',
+        },
+      });
+  };
+
   return (
     <>
       <Popover
@@ -522,6 +563,7 @@ const Page = () => {
             linkSites={linkSites}
             className={styles.homeMap}
             handleAction={handleSiteAction}
+            handleLinkClick={handleLinkClick}
             data={selectedDraft?.sites || []}
             handleAddMarker={handleMarkerAdd}
             links={selectedDraft?.links || []}
@@ -551,16 +593,21 @@ const Page = () => {
               </>
             )}
           </Map>
-          <Paper
-            sx={{
-              px: 3,
-              pt: 1,
-              mt: '-10px',
-              height: isLinkSelected ? 235 : 0,
-            }}
-          >
-            <SiteLink />
-          </Paper>
+          {isLinkSelected && (
+            <Paper
+              sx={{
+                px: 3,
+                pt: 1,
+                mt: '-10px',
+                height: 235,
+              }}
+            >
+              <SiteLink
+                sites={selectedSites}
+                handleDeleteLink={handleDeleteLink}
+              />
+            </Paper>
+          )}
         </PageContainer>
       </LoadingWrapper>
     </>
