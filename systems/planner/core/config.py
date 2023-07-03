@@ -13,6 +13,7 @@ class Config(BaseSettings):
     HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/home/ubuntu/output/"
     TEMP_FOLDER: str = "/tmp/planner/output/"
+    S3_BUCKET_NAME: str = "ukama-planning-tool"
     SQL_USER_PASS: str = "MyNewPass@123"
     SQL_USER: str = "root"
 
@@ -24,6 +25,7 @@ class DevelopmentConfig(Config): # Use this for docker
     HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "/var/www/app/output/"
     TEMP_FOLDER: str = "/tmp/planner/output/"
+    S3_BUCKET_NAME: str = "ukama-planning-tool"
     SQL_USER_PASS: str = "MyNewPass@123"
     SQL_USER: str = "root"
 
@@ -36,6 +38,7 @@ class LocalConfig(Config): # use this for running locally
     HGT_FILES_PATH: str = "/data/hgtData"
     OUTPUT_PATH: str = "E:/Projects/Freelance/UKAMA/"
     TEMP_FOLDER: str = "./tmp/planner/output/"
+    S3_BUCKET_NAME: str = "ukama-planning-tool"
     SQL_USER_PASS: str = "MyNewPass"
     SQL_USER: str = "root"
 

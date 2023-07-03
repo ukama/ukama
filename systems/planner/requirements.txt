@@ -13,3 +13,4 @@ requests
 pymysql
 mysql-connector-python
 Flask-SQLAlchemy
+boto3

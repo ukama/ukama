@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import json
+import boto3
 from app.coverage.schemas.coverage import Site, CoverageResponseSchema, PopulationDataResponse, InterferenceDataResponse
 from app.coverage.schemas.population_data_schema import PopulationData
 from app.coverage.enums.coverage import CoverageEnum
@@ -22,6 +23,7 @@ class SitesCoverage:
         self.SDF_FILES_PATH = os.getenv("SDF_DIR", config.get_config().SDF_FILES_PATH)
         self.OUTPUT_PATH = config.get_config().OUTPUT_PATH
         self.TEMP_FOLDER = config.get_config().TEMP_FOLDER
+        self.bucket_name = os.getenv("S3_BUCKET_NAME", config.get_config().S3_BUCKET_NAME)
         mysql_user_pass = os.getenv("SQL_USER_PASS", config.get_config().SQL_USER_PASS)
         mysql_user = os.getenv("SQL_USER", config.get_config().SQL_USER)
         SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{mysql_user}:{mysql_user_pass}@localhost/planner_tool" # Change mySQL pass and db name which is planner tool
@@ -218,7 +220,8 @@ class SitesCoverage:
                             output_data_interference[interference_map[key]] = np.full((nrows, ncols, 1), np.nan, dtype=np.float32)
                         output_data_interference[interference_map[key]][row, col, 0] = 5
 
-        self.create_geo_tiff_file(pred_merged_file_url, 
+        pred_output_file_name = self.create_geo_tiff_file(pred_output_file_name,
+                            pred_merged_file_url, 
                             ncols, 
                             nrows,
                             4,
@@ -233,7 +236,8 @@ class SitesCoverage:
         interference_files_urls = {}
         for interference_data_key in output_data_interference:
             output_url = output_folder_path + interference_data_key + ".tif"
-            self.create_geo_tiff_file(output_url, 
+            s3_output_obj_name = self.create_geo_tiff_file(interference_data_key + ".tif",
+                                      output_url, 
                                       ncols, 
                                       nrows,
                                       1,
@@ -243,7 +247,7 @@ class SitesCoverage:
                                       x_min, 
                                       y_max, 
                                       output_data_interference[interference_data_key])
-            interference_files_urls[interference_data_key] = InterferenceDataResponse(url=output_url)
+            interference_files_urls[interference_data_key] = InterferenceDataResponse(url=s3_output_obj_name)
 
 
         # Creating population coverage geotiffs
@@ -283,7 +287,8 @@ class SitesCoverage:
         for input_file in inputs:
             image_name = input_file["image_name"]
             population_image_out_url = output_folder_path + image_name + ".tif"
-            self.create_geo_tiff_file(population_image_out_url, 
+            s3_output_obj_name = self.create_geo_tiff_file(image_name + ".tif",
+                                      population_image_out_url, 
                                       pop_data_ncols, 
                                       pop_data_nrows,
                                       1,
@@ -296,7 +301,7 @@ class SitesCoverage:
             
             print("site "+ str(siteNumber) + " population data file url: ", population_image_out_url)
             siteNumber = siteNumber + 1 
-            population_data_dic[image_name] = PopulationDataResponse(url=population_image_out_url, population_covered=population_output_value[image_name], total_boxes_covered=population_output_total_boxes[image_name])
+            population_data_dic[image_name] = PopulationDataResponse(url=s3_output_obj_name, population_covered=population_output_value[image_name], total_boxes_covered=population_output_total_boxes[image_name])
 
         print("East: ", x_max)
         print("West: ", x_min)
@@ -316,7 +321,7 @@ class SitesCoverage:
             "west": x_min,
             "south": y_min,
             "north": y_max,
-            "url": pred_merged_file_url,
+            "url": pred_output_file_name,
             "population_data": population_data_dic,
             "interference_data": interference_files_urls
         }
@@ -324,7 +329,7 @@ class SitesCoverage:
     # endregion
 
     # region Helper methods
-    def create_geo_tiff_file(self, output_url, cols, rows, bands, type, pixel_width, pixel_height, x_min, y_max, data):
+    def create_geo_tiff_file(self, output_name, output_url, cols, rows, bands, type, pixel_width, pixel_height, x_min, y_max, data):
         driver = gdal.GetDriverByName("GTiff")
         output_ds = driver.Create(output_url, cols, rows, bands, type)
         srs = osr.SpatialReference()
@@ -338,6 +343,8 @@ class SitesCoverage:
         output_ds.FlushCache()
         output_ds = None
         output_band = None
+        self.upload_tiff_to_s3(output_url, output_name)
+        return output_name
         
     def load_dcf_file(self, url):
         # Load DCF file
@@ -392,5 +399,12 @@ class SitesCoverage:
         ).all()
         
         return data
+    
+    def upload_tiff_to_s3(self, file_path, object_name):
+        # Create an S3 client
+        s3 = boto3.client('s3')
+
+        # Upload the file to S3
+        s3.upload_file(file_path, self.bucket_name, object_name)
         
 # endregion
