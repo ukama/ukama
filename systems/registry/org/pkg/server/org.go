@@ -62,11 +62,14 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, status.Errorf(codes.InvalidArgument, "OrgId is invalid")
 	}
 
+
 	link, err := generateInvitationLink()
 	if err != nil {
 		return nil, err
 	}
 	expiresAt := time.Now().Add(2 * time.Minute)
+
+
 	err = o.orgRepo.AddInvitation(
 		&db.Invitation{
 			Id:        uuid.NewV4(),
@@ -81,11 +84,16 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, err
 	}
 
+	res,err:=o.orgRepo.Get(orgId)
+	if err!=nil{
+		return nil,err
+	}
+
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
-		Subject: "[Ukama] [Network Owner name] invited you to use their network",
+		Subject: "[Ukama] "+ res.Owner.String()+" invited you to use their network",
 		Body:    "Example Body",
-		Values:  map[string]string{"key": "value"},
+		// Values:  map[string]string{"key": "value"},
 	})
 
 	if err != nil {
