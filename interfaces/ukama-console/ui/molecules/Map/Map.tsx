@@ -24,6 +24,7 @@ interface IMap {
   center: LatLngLiteral;
   zoom?: number | undefined;
   handleAction: (a: Site) => void;
+  handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
@@ -44,6 +45,7 @@ const Map = ({
   isAddLink,
   className,
   handleAction,
+  handleLinkClick,
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
@@ -70,6 +72,7 @@ const Map = ({
         linkSites={linkSites}
         className={className}
         handleAction={handleAction}
+        handleLinkClick={handleLinkClick}
         handleAddMarker={handleAddMarker}
         handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}

@@ -24,9 +24,10 @@ interface IMap {
   linkSites: any;
   className?: string;
   isAddLink: boolean;
-  zoom?: number | undefined;
   center: LatLngLiteral;
+  zoom?: number | undefined;
   handleAction: (a: Site) => void;
+  handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
@@ -47,6 +48,7 @@ const Map = ({
   links = [],
   data: sites,
   handleAction,
+  handleLinkClick,
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
@@ -76,6 +78,7 @@ const Map = ({
       doubleClickZoom={true}
       scrollWheelZoom={false}
       className={mapClassName}
+      attributionControl={false}
     >
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
@@ -88,6 +91,7 @@ const Map = ({
         linkSites={linkSites}
         isAddLink={isAddLink}
         handleAction={handleAction}
+        handleLinkClick={handleLinkClick}
         handleAddMarker={handleAddMarker}
         handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}
