@@ -73,10 +73,10 @@ const Map = ({
     <MapContainer
       id={id}
       zoom={zoom}
-      touchZoom={false}
+      touchZoom={true}
       zoomControl={false}
       doubleClickZoom={true}
-      scrollWheelZoom={false}
+      scrollWheelZoom={true}
       className={mapClassName}
       attributionControl={false}
     >

@@ -112,3 +112,18 @@ mutation AddLink($data: LinkInput!, $draftId: String!) {
     ...draft
   }
 }
+
+mutation Coverage($data: CoverageInput!) {
+  coverage(data: $data) {
+    north
+    east
+    west
+    south
+    url
+    populationData {
+      populationCovered
+      totalBoxesCovered
+      url
+    }
+  }
+}
