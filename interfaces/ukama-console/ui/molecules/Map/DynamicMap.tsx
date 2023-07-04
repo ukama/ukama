@@ -82,6 +82,7 @@ const Map = ({
     >
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
+      <ReactLeaflet.LayersControl position="bottomleft"  />
       <CustomMarker
         data={sites}
         zoom={zoom}

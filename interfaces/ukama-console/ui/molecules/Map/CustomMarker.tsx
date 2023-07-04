@@ -83,14 +83,28 @@ const CustomMarker = ({
       [84.67351256610522, -174.0234375],
       [-58.995311187950925, 223.2421875],
     ]);
+
     Leaflet.tileLayer(
-      'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',
+      // 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',//grey
+      // 'http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', //Terain
+      // 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', //Satellite
+      'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', //Hybrid
+      // 'https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         noWrap: true,
         minZoom: 3,
         maxZoom: 20,
         maxNativeZoom: 20,
       },
+    ).addTo(map);
+    Leaflet.imageOverlay(
+      'one.png',
+      [
+        [-5.056886378670788, 26.404207],
+        [-4.517721, 26.94504066615385],
+      ],
+      {},
     ).addTo(map);
   }, []);
 
