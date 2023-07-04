@@ -11,12 +11,20 @@ fragment link on Link {
 }
 fragment site on Site {
   id
+  url
+  east
   name
+  west
+  north
+  south
   status
   height
   apOption
   isSetlite
   solarUptime
+  populationUrl
+  populationCovered
+  totalBoxesCovered
   location {
     ...location
   }
@@ -113,17 +121,8 @@ mutation AddLink($data: LinkInput!, $draftId: String!) {
   }
 }
 
-mutation Coverage($data: CoverageInput!) {
-  coverage(data: $data) {
-    north
-    east
-    west
-    south
-    url
-    populationData {
-      populationCovered
-      totalBoxesCovered
-      url
-    }
+mutation Coverage($siteId: String!, $data: CoverageInput!) {
+  coverage(data: $data, siteId: $siteId) {
+    ...site
   }
 }

@@ -24,7 +24,15 @@ CREATE TABLE "Site" (
     "apOption" TEXT NOT NULL,
     "draftId" TEXT,
     "isSetlite" BOOLEAN NOT NULL,
-    "locationId" TEXT NOT NULL
+    "locationId" TEXT NOT NULL,
+    "north" DOUBLE PRECISION NOT NULL,
+    "west" DOUBLE PRECISION NOT NULL,
+    "east" DOUBLE PRECISION NOT NULL,
+    "south" DOUBLE PRECISION NOT NULL,
+    "url" TEXT NOT NULL,
+    "populationUrl" TEXT NOT NULL,
+    "populationCovered" DOUBLE PRECISION NOT NULL,
+    "totalBoxesCovered" DOUBLE PRECISION NOT NULL
 );
 
 -- CreateTable

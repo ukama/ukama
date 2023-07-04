@@ -14,6 +14,7 @@ import {
   Draft,
   LinkInput,
   LocationInput,
+  Site,
   SiteInput,
   Event as TEvent,
   Location as TLocation,
@@ -125,6 +126,14 @@ export class DraftResolver {
               apOption: data.apOption,
               isSetlite: data.isSetlite,
               solarUptime: data.solarUptime,
+              url: "",
+              east: 0,
+              west: 0,
+              north: 0,
+              south: 0,
+              populationUrl: "",
+              populationCovered: 0,
+              totalBoxesCovered: 0,
               location: {
                 create: {
                   id: data.locationId,
@@ -274,8 +283,12 @@ export class DraftResolver {
     return { id: id };
   }
 
-  @Mutation(() => CoverageRes)
-  async coverage(@Arg("data") data: CoverageInput, @Ctx() ctx: Context) {
+  @Mutation(() => Site)
+  async coverage(
+    @Arg("data") data: CoverageInput,
+    @Arg("siteId") siteId: string,
+    @Ctx() ctx: Context
+  ) {
     const config = {
       method: API_METHOD_TYPE.POST,
       url: `${PLANNING_API_URL}/coverage`,
@@ -310,7 +323,23 @@ export class DraftResolver {
         url: res.data.population_data[index].url,
       },
     };
+    const m = await ctx.prisma.site.update({
+      where: { id: siteId },
+      data: {
+        url: c.url,
+        east: c.east,
+        west: c.west,
+        north: c.north,
+        south: c.south,
+        populationUrl: c.populationData.url,
+        populationCovered: c.populationData.populationCovered,
+        totalBoxesCovered: c.populationData.totalBoxesCovered,
+      },
+      include: {
+        location: true,
+      },
+    });
 
-    return c;
+    return m;
   }
 }
