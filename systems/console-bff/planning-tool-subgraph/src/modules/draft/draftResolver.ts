@@ -1,8 +1,13 @@
 import "reflect-metadata";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { catchAsyncIOMethod } from "../../common";
 import { Context } from "../../common/context";
+import { API_METHOD_TYPE } from "../../common/enums";
+import { PLANNING_API_URL } from "../../constants";
 import {
   AddDraftInput,
+  CoverageInput,
+  CoverageRes,
   DeleteDraftRes,
   DeleteLinkRes,
   DeleteSiteRes,
@@ -267,5 +272,45 @@ export class DraftResolver {
       where: { id: id },
     });
     return { id: id };
+  }
+
+  @Mutation(() => CoverageRes)
+  async coverage(@Arg("data") data: CoverageInput, @Ctx() ctx: Context) {
+    const config = {
+      method: API_METHOD_TYPE.POST,
+      url: `${PLANNING_API_URL}/coverage`,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: JSON.stringify({
+        mode: data.mode,
+        sites: [
+          {
+            latitude: data.lat,
+            longitude: data.lng,
+            transmitter_height: data.height,
+          },
+        ],
+      }),
+    };
+
+    const res = await catchAsyncIOMethod(config);
+    const index = `lat${data.lat.toString().replace(".", "_")}lon${data.lng
+      .toString()
+      .replace(".", "_")}`;
+    const c: CoverageRes = {
+      east: res.data.east,
+      west: res.data.west,
+      north: res.data.north,
+      south: res.data.south,
+      url: res.data.url,
+      populationData: {
+        populationCovered: res.data.population_data[index].population_covered,
+        totalBoxesCovered: res.data.population_data[index].total_boxes_covered,
+        url: res.data.population_data[index].url,
+      },
+    };
+
+    return c;
   }
 }

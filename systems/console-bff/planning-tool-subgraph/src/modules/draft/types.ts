@@ -188,3 +188,51 @@ export class DeleteLinkRes {
   @Field()
   id: string;
 }
+
+@InputType()
+export class CoverageInput {
+  @Field()
+  mode: string;
+
+  @Field()
+  lat: number;
+
+  @Field()
+  lng: number;
+
+  @Field()
+  height: number;
+}
+
+@ObjectType()
+export class PopulationData {
+  @Field()
+  url: string;
+
+  @Field()
+  populationCovered: number;
+
+  @Field()
+  totalBoxesCovered: number;
+}
+
+@ObjectType()
+export class CoverageRes {
+  @Field()
+  north: number;
+
+  @Field()
+  east: number;
+
+  @Field()
+  west: number;
+
+  @Field()
+  south: number;
+
+  @Field()
+  url: string;
+
+  @Field(() => PopulationData)
+  populationData: PopulationData;
+}

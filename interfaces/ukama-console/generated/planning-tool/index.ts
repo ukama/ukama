@@ -23,6 +23,23 @@ export type AddDraftInput = {
   userId: Scalars['String']['input'];
 };
 
+export type CoverageInput = {
+  height: Scalars['Float']['input'];
+  lat: Scalars['Float']['input'];
+  lng: Scalars['Float']['input'];
+  mode: Scalars['String']['input'];
+};
+
+export type CoverageRes = {
+  __typename?: 'CoverageRes';
+  east: Scalars['Float']['output'];
+  north: Scalars['Float']['output'];
+  populationData: PopulationData;
+  south: Scalars['Float']['output'];
+  url: Scalars['String']['output'];
+  west: Scalars['Float']['output'];
+};
+
 export type DeleteDraftRes = {
   __typename?: 'DeleteDraftRes';
   id: Scalars['String']['output'];
@@ -90,6 +107,7 @@ export type Mutation = {
   addDraft: Draft;
   addLink: Draft;
   addSite: Draft;
+  coverage: CoverageRes;
   deleteDraft: DeleteDraftRes;
   deleteLink: DeleteLinkRes;
   deleteSite: DeleteSiteRes;
@@ -114,6 +132,11 @@ export type MutationAddLinkArgs = {
 export type MutationAddSiteArgs = {
   data: SiteInput;
   draftId: Scalars['String']['input'];
+};
+
+
+export type MutationCoverageArgs = {
+  data: CoverageInput;
 };
 
 
@@ -157,6 +180,13 @@ export type MutationUpdateSiteArgs = {
   data: SiteInput;
   draftId: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
+};
+
+export type PopulationData = {
+  __typename?: 'PopulationData';
+  populationCovered: Scalars['Float']['output'];
+  totalBoxesCovered: Scalars['Float']['output'];
+  url: Scalars['String']['output'];
 };
 
 export type Query = {
@@ -300,6 +330,13 @@ export type AddLinkMutationVariables = Exact<{
 
 
 export type AddLinkMutation = { __typename?: 'Mutation', addLink: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, name: string, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+
+export type CoverageMutationVariables = Exact<{
+  data: CoverageInput;
+}>;
+
+
+export type CoverageMutation = { __typename?: 'Mutation', coverage: { __typename?: 'CoverageRes', north: number, east: number, west: number, south: number, url: string, populationData: { __typename?: 'PopulationData', populationCovered: number, totalBoxesCovered: number, url: string } } };
 
 export const LinkFragmentDoc = gql`
     fragment link on Link {
@@ -733,3 +770,45 @@ export function useAddLinkMutation(baseOptions?: Apollo.MutationHookOptions<AddL
 export type AddLinkMutationHookResult = ReturnType<typeof useAddLinkMutation>;
 export type AddLinkMutationResult = Apollo.MutationResult<AddLinkMutation>;
 export type AddLinkMutationOptions = Apollo.BaseMutationOptions<AddLinkMutation, AddLinkMutationVariables>;
+export const CoverageDocument = gql`
+    mutation Coverage($data: CoverageInput!) {
+  coverage(data: $data) {
+    north
+    east
+    west
+    south
+    url
+    populationData {
+      populationCovered
+      totalBoxesCovered
+      url
+    }
+  }
+}
+    `;
+export type CoverageMutationFn = Apollo.MutationFunction<CoverageMutation, CoverageMutationVariables>;
+
+/**
+ * __useCoverageMutation__
+ *
+ * To run a mutation, you first call `useCoverageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCoverageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [coverageMutation, { data, loading, error }] = useCoverageMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useCoverageMutation(baseOptions?: Apollo.MutationHookOptions<CoverageMutation, CoverageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CoverageMutation, CoverageMutationVariables>(CoverageDocument, options);
+      }
+export type CoverageMutationHookResult = ReturnType<typeof useCoverageMutation>;
+export type CoverageMutationResult = Apollo.MutationResult<CoverageMutation>;
+export type CoverageMutationOptions = Apollo.BaseMutationOptions<CoverageMutation, CoverageMutationVariables>;

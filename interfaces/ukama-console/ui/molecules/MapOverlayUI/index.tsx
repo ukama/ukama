@@ -3,11 +3,11 @@ import { DarkTooltip } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import SearchBar from '@/ui/molecules/SearchBar';
 import AddLocationIcon from '@mui/icons-material/AddLocation';
+import BatteryOutlinedIcon from '@mui/icons-material/BatteryChargingFullOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DotIcon from '@mui/icons-material/FiberManualRecord';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
-import PowerIcon from '@mui/icons-material/PowerSettingsNewOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 import SignalIcon from '@mui/icons-material/SignalCellularAlt';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -163,7 +163,10 @@ export const RightOverlayUI = ({
             handlePowerInfo(e);
           }}
         >
-          <PowerIcon htmlColor={colors.vulcan} />
+          <BatteryOutlinedIcon
+            htmlColor={colors.vulcan}
+            sx={{ transform: 'rotate(90deg)' }}
+          />
         </IconButton>
       </Tooltip>
       <Tooltip title="Site Info">
@@ -364,11 +367,11 @@ export const SiteLink = ({ sites, handleDeleteLink }: ISites) => (
         >
           <Stack direction={'row'} spacing={1} alignItems={'center'}>
             <SignalIcon fontSize="small" color="success" />
-            <Typography variant="body2">Site Link</Typography>
+            <Typography variant="body2">-45 dBm</Typography>
           </Stack>
           <Stack direction={'row'} spacing={1} alignItems={'center'}>
             <SpeedIcon fontSize="small" color="success" />
-            <Typography variant="body2">Site Link</Typography>
+            <Typography variant="body2">100 Mbps</Typography>
           </Stack>
           <Button
             size="small"
