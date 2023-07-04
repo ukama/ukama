@@ -33,6 +33,9 @@ export class Site {
   id: string;
 
   @Field()
+  draftId: string;
+
+  @Field()
   name: string;
 
   @Field()
@@ -49,6 +52,30 @@ export class Site {
 
   @Field()
   isSetlite: boolean;
+
+  @Field()
+  east: number;
+
+  @Field()
+  west: number;
+
+  @Field()
+  north: number;
+
+  @Field()
+  south: number;
+
+  @Field()
+  url: string;
+
+  @Field()
+  populationUrl: string;
+
+  @Field()
+  populationCovered: number;
+
+  @Field()
+  totalBoxesCovered: number;
 
   @Field(() => Location, { nullable: false })
   location: Location;

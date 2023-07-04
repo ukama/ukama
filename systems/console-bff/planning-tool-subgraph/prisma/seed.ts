@@ -28,6 +28,14 @@ const draftData: Prisma.DraftCreateInput[] = [
           apOption: "ONE_TO_ONE",
           solarUptime: 95,
           isSetlite: false,
+          east: 0,
+          west: 0,
+          north: 0,
+          south: 0,
+          url: "",
+          populationUrl: "",
+          populationCovered: 0,
+          totalBoxesCovered: 0,
           location: {
             create: {
               id: "a50bc7a3-74a3-497c-bb98-b8fa9960c9a9",
@@ -45,6 +53,14 @@ const draftData: Prisma.DraftCreateInput[] = [
           apOption: "ONE_TO_TWO",
           solarUptime: 90,
           isSetlite: true,
+          east: 0,
+          west: 0,
+          north: 0,
+          south: 0,
+          url: "",
+          populationUrl: "",
+          populationCovered: 0,
+          totalBoxesCovered: 0,
           location: {
             create: {
               id: "a50bd7a3-74a3-497c-bb98-b8fa8960c9a9",
