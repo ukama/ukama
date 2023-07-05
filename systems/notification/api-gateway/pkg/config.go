@@ -36,7 +36,7 @@ func NewConfig() *Config {
 		},
 
 		Server: rest.HttpConfig{
-			Port: 8085,
+			Port: 8089,
 			Cors: defaultCors,
 		},
 		Auth: config.LoadAuthHostConfig("auth"),

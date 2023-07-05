@@ -148,9 +148,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		orgs.GET("/:org/nodes", formatDoc("Get Org Nodes", "Get all or free nodes of an organization"), tonic.Handler(r.getOrgNodesHandler, http.StatusOK))
 
 		// org invitations
-		orgs.POST("/:org/invitations", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.addInvitationHandler, http.StatusCreated))
-		orgs.GET("/:org/invitations/:invitation_id", formatDoc("Get Invitation", "Get an invitation of an organization"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
-		orgs.PATCH("/:org/invitations/:invitation_id", formatDoc("Update Invitation", "Update an invitation of an organization"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
+		const invitation = "/invitations"
+		invitations := auth.Group(invitation, "Invitations", "Operations on Invitations")
+		invitations.POST("/:org/invitations", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.addInvitationHandler, http.StatusCreated))
+		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get an invitation of an organization"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
+		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update an invitation of an organization"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		// Users routes
 		const user = "/users"
 		users := auth.Group(user, "Users", "Operations on Users")
@@ -350,8 +352,8 @@ func (r *Router) addInvitationHandler(c *gin.Context, req *AddInvitationRequest)
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*orgpb.GetInvitationResponse, error) {
-	return r.clients.Registry.GetInvitation(req.Id)
+	return r.clients.Registry.GetInvitation(req.InvitationId)
 }
 func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*orgpb.UpdateInvitationResponse, error) {
-	return r.clients.Registry.UpdateInvitation(req.Id,req.State) 
+	return r.clients.Registry.UpdateInvitation(req.InvitationId,req.State) 
 }
