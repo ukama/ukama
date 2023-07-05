@@ -1,5 +1,7 @@
 import { Link, Site } from '@/generated/planning-tool';
 import { colors } from '@/styles/theme';
+import parse_georaster from 'georaster';
+import GeoRasterLayer from 'georaster-layer-for-leaflet';
 import Leaflet, { LatLngLiteral, LatLngTuple, Polyline } from 'leaflet';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
@@ -7,12 +9,14 @@ import { v4 as uuidv4 } from 'uuid';
 import SitePopup from '../SitePopup';
 interface ICustomMarker {
   data: Site[];
+  layer: string;
   links: Link[];
   linkSites: any;
   isAddLink: boolean;
   zoom?: number | undefined;
   center: LatLngLiteral | null;
   handleAction: (a: Site) => void;
+  selectedLink: string | undefined;
   handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
@@ -53,21 +57,41 @@ const getLatLng = (sites: Site[], links: Link[]): ILink[] => {
         }
       });
       if (locs.length > 1)
-        data.push({ id: `${siteA}-${siteB}-${links[i].id}`, latlng: locs });
+        data.push({ id: `${siteA}*${siteB}*${links[i].id}`, latlng: locs });
     }
   }
   return data.length > 0 ? data : [];
 };
 
+const addRasterData = (url: string, map: any) => {
+  fetch(url)
+    .then((response) => {
+      return response.arrayBuffer();
+    })
+    .then((arrayBuffer) => {
+      parse_georaster(arrayBuffer).then((georaster: any) => {
+        var layer = new GeoRasterLayer({
+          georaster: georaster,
+          opacity: 1,
+          resolution: 300,
+        });
+        layer.addTo(map);
+        // map.fitBounds(layer.getBounds());
+      });
+    });
+};
+
 const CustomMarker = ({
   data,
   zoom,
+  layer,
   links,
   center,
   setZoom,
   isAddLink,
   linkSites,
   handleAction,
+  selectedLink,
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
@@ -85,10 +109,13 @@ const CustomMarker = ({
     ]);
 
     Leaflet.tileLayer(
-      // 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png',//grey
+      layer === 'satellite'
+        ? 'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png'
+        : 'https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      // "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"//dark
       // 'http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', //Terain
       // 'http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', //Satellite
-      'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', //Hybrid
+      // 'http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', //Hybrid
       // 'https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -98,15 +125,9 @@ const CustomMarker = ({
         maxNativeZoom: 20,
       },
     ).addTo(map);
-    Leaflet.imageOverlay(
-      'one.png',
-      [
-        [-5.056886378670788, 26.404207],
-        [-4.517721, 26.94504066615385],
-      ],
-      {},
-    ).addTo(map);
-  }, []);
+
+    addRasterData('one.tif', map);
+  }, [layer]);
 
   useEffect(() => {
     if (center) map.setView(center, zoom);
@@ -126,9 +147,9 @@ const CustomMarker = ({
           interactive: true,
         })
         .addEventListener('click', (e) => {
-          e.target.setStyle({ color: colors.secondaryMain, weight: 3 });
           handleLinkClick(e.target.options.attribution);
         })
+        .addEventListener('', (e) => {})
         .addTo(map);
       layers.push(p);
     });
@@ -144,6 +165,20 @@ const CustomMarker = ({
     });
     setMarkers(m);
   }, [data]);
+
+  useEffect(() => {
+    polylines?.forEach((p) =>
+      p.setStyle({ color: colors.primaryLight, weight: 2 }),
+    );
+    if (selectedLink) {
+      const p = polylines?.find(
+        (p) => p.options.attribution?.split('*')[2] === selectedLink,
+      );
+      if (p) {
+        p.setStyle({ color: colors.secondaryMain, weight: 3 });
+      }
+    }
+  }, [selectedLink]);
 
   useMapEvents({
     click: (e) => {
@@ -173,7 +208,7 @@ const CustomMarker = ({
           const color =
             linkSites.siteA === item.id || linkSites.siteB === item.id
               ? colors.secondaryMain
-              : colors.primaryMain;
+              : colors.black38;
           const m = markers.find((m) => m.id === item.location.id);
           const svgIcon = Leaflet.divIcon({
             html: `<svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiBox-root css-uqopch" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="LocationOnIcon" fill=${color}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>`,

@@ -9,16 +9,21 @@ import DotIcon from '@mui/icons-material/FiberManualRecord';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
+import SatelliteIcon from '@mui/icons-material/Satellite';
 import SignalIcon from '@mui/icons-material/SignalCellularAlt';
 import SpeedIcon from '@mui/icons-material/Speed';
+import TerrainIcon from '@mui/icons-material/Terrain';
 import {
   Box,
   Button,
+  Card,
   Grid,
   IconButton,
   InputAdornment,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -353,46 +358,121 @@ interface ISites {
 }
 
 export const SiteLink = ({ sites, handleDeleteLink }: ISites) => (
-  <Grid container height="100%" columnSpacing={3}>
-    <Grid item xs={3.5}>
-      <SiteDetails site={sites[0]} />
-    </Grid>
-    <Grid item direction={'row'} xs={5}>
-      <Stack height={'100%'} sx={{ border: '0.5px solid grey' }}>
-        <Stack
-          height={'56px'}
-          direction={'row'}
-          alignItems={'center'}
-          justifyContent={'space-around'}
-        >
-          <Stack direction={'row'} spacing={1} alignItems={'center'}>
-            <SignalIcon fontSize="small" color="success" />
-            <Typography variant="body2">-45 dBm</Typography>
-          </Stack>
-          <Stack direction={'row'} spacing={1} alignItems={'center'}>
-            <SpeedIcon fontSize="small" color="success" />
-            <Typography variant="body2">100 Mbps</Typography>
-          </Stack>
-          <Button
-            size="small"
-            color="error"
-            variant="outlined"
-            sx={{ height: 'fit-content' }}
-            onClick={() => handleDeleteLink()}
+  <Card sx={{ boxShadow: 'none' }}>
+    <Grid container height="100%" columnSpacing={3}>
+      <Grid item xs={3.5}>
+        <SiteDetails site={sites[0]} />
+      </Grid>
+      <Grid item xs={5}>
+        <Stack height={'100%'} sx={{ border: '0.5px solid grey' }}>
+          <Stack
+            height={'56px'}
+            direction={'row'}
+            alignItems={'center'}
+            justifyContent={'space-around'}
           >
-            Delete Link
-          </Button>
+            <Stack direction={'row'} spacing={1} alignItems={'center'}>
+              <SignalIcon fontSize="small" color="success" />
+              <Typography variant="body2">-45 dBm</Typography>
+            </Stack>
+            <Stack direction={'row'} spacing={1} alignItems={'center'}>
+              <SpeedIcon fontSize="small" color="success" />
+              <Typography variant="body2">100 Mbps</Typography>
+            </Stack>
+            <Button
+              size="small"
+              color="error"
+              variant="outlined"
+              sx={{ height: 'fit-content', fontSize: '12px' }}
+              onClick={() => handleDeleteLink()}
+            >
+              Delete Link
+            </Button>
+          </Stack>
+          <Image
+            width={502}
+            height={170}
+            src="/temp_link.png"
+            alt="ukama-sites-link"
+          />
         </Stack>
-        <Image
-          width={502}
-          height={170}
-          src="/temp_link.png"
-          alt="ukama-sites-link"
-        />
-      </Stack>
+      </Grid>
+      <Grid item xs={3.5}>
+        <SiteDetails site={sites[1]} />
+      </Grid>
     </Grid>
-    <Grid item xs={3.5}>
-      <SiteDetails site={sites[1]} />
-    </Grid>
-  </Grid>
+  </Card>
+);
+
+export const LayerSwitch = ({ handleLayerSwitch, value }: any) => (
+  <Box
+    sx={{
+      left: 24,
+      bottom: 24,
+      zIndex: 400,
+
+      position: 'absolute',
+    }}
+  >
+    <Card variant="elevation" sx={{ p: 0.8, width: 'fit-content' }}>
+      <ToggleButtonGroup
+        value={value}
+        exclusive
+        onChange={handleLayerSwitch}
+        aria-label="text alignment"
+        sx={{ height: '36px' }}
+      >
+        <ToggleButton
+          value="satellite"
+          aria-label="left aligned"
+          sx={{
+            border: 0,
+            borderRadius: '4px',
+            backgroundColor: `${
+              value === 'satellite' ? colors.primaryMain02 : 'transparent'
+            } !important`,
+          }}
+        >
+          <Stack direction={'row'} alignItems={'center'} spacing={0.8}>
+            <SatelliteIcon fontSize="small" />
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: 12,
+                textTransform: 'capitalize',
+                fontWeight: value === 'satellite' ? 600 : 300,
+              }}
+            >
+              Satellite
+            </Typography>
+          </Stack>
+        </ToggleButton>
+        <ToggleButton
+          value="terrain"
+          aria-label="centered"
+          sx={{
+            border: 0,
+            borderRadius: '4px',
+            backgroundColor: `${
+              value === 'terrain' ? colors.primaryMain02 : 'transparent'
+            } !important`,
+          }}
+        >
+          <Stack direction={'row'} alignItems={'center'} spacing={0.8}>
+            <TerrainIcon fontSize="small" />
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: 12,
+                textTransform: 'capitalize',
+                fontWeight: value === 'terrain' ? 600 : 300,
+              }}
+            >
+              Terrain
+            </Typography>
+          </Stack>
+        </ToggleButton>
+      </ToggleButtonGroup>
+    </Card>
+  </Box>
 );

@@ -19,6 +19,7 @@ interface IMap {
   data: Site[];
   id: string;
   cursor: any;
+  layer: string;
   links?: Link[];
   children: any;
   linkSites: any;
@@ -27,6 +28,7 @@ interface IMap {
   center: LatLngLiteral;
   zoom?: number | undefined;
   handleAction: (a: Site) => void;
+  selectedLink: string | undefined;
   handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
@@ -38,6 +40,7 @@ interface IMap {
 const Map = ({
   id,
   zoom,
+  layer,
   center,
   cursor,
   setZoom,
@@ -47,6 +50,7 @@ const Map = ({
   isAddLink,
   links = [],
   data: sites,
+  selectedLink,
   handleAction,
   handleLinkClick,
   handleAddMarker,
@@ -82,15 +86,16 @@ const Map = ({
     >
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
-      <ReactLeaflet.LayersControl position="bottomleft"  />
       <CustomMarker
-        data={sites}
         zoom={zoom}
+        data={sites}
+        layer={layer}
         links={links}
         center={center}
         setZoom={setZoom}
         linkSites={linkSites}
         isAddLink={isAddLink}
+        selectedLink={selectedLink}
         handleAction={handleAction}
         handleLinkClick={handleLinkClick}
         handleAddMarker={handleAddMarker}
