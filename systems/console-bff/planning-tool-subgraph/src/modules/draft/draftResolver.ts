@@ -316,11 +316,11 @@ export class DraftResolver {
       west: res.data.west,
       north: res.data.north,
       south: res.data.south,
-      url: res.data.url,
+      url: `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${res.data.url}`,
       populationData: {
         populationCovered: res.data.population_data[index].population_covered,
         totalBoxesCovered: res.data.population_data[index].total_boxes_covered,
-        url: res.data.population_data[index].url,
+        url: `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${res.data.population_data[index].url}`,
       },
     };
     const m = await ctx.prisma.site.update({
