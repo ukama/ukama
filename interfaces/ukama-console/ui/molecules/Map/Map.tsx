@@ -14,6 +14,7 @@ interface IMap {
   id: string;
   data: Site[];
   children: any;
+  layer: string;
   width?: number;
   height?: number;
   links?: Link[];
@@ -24,6 +25,7 @@ interface IMap {
   center: LatLngLiteral;
   zoom?: number | undefined;
   handleAction: (a: Site) => void;
+  selectedLink: string | undefined;
   handleLinkClick: (a: string) => void;
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
@@ -37,6 +39,7 @@ const Map = ({
   zoom,
   data,
   links,
+  layer,
   center,
   setZoom,
   children,
@@ -44,6 +47,7 @@ const Map = ({
   isAddSite,
   isAddLink,
   className,
+  selectedLink,
   handleAction,
   handleLinkClick,
   handleAddMarker,
@@ -65,12 +69,14 @@ const Map = ({
         zoom={zoom}
         data={data}
         links={links}
+        layer={layer}
         center={center}
         setZoom={setZoom}
         cursor={isAddSite}
         isAddLink={isAddLink}
         linkSites={linkSites}
         className={className}
+        selectedLink={selectedLink}
         handleAction={handleAction}
         handleLinkClick={handleLinkClick}
         handleAddMarker={handleAddMarker}

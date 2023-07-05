@@ -21,6 +21,7 @@ import DraftDropdown from '@/ui/molecules/DraftDropdown';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import Map from '@/ui/molecules/Map';
 import {
+  LayerSwitch,
   LeftOverlayUI,
   PowerSummary,
   RightOverlayUI,
@@ -28,7 +29,15 @@ import {
   SiteSummary,
 } from '@/ui/molecules/MapOverlayUI';
 import { calculateCenterLatLng, formatSecondsToDuration } from '@/utils';
-import { AlertColor, Paper, Popover, Stack, Typography } from '@mui/material';
+import ArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import {
+  AlertColor,
+  Box,
+  IconButton,
+  Popover,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { LatLngLiteral } from 'leaflet';
 import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -107,6 +116,7 @@ const getMarkers = (sites: Site[]) => {
 const getLastSavedInt = () => Math.floor(new Date().getTime() / 1000);
 
 const Page = () => {
+  const [layer, setLayer] = useState<string>('satellite');
   const [zoom, setZoom] = useState<number>(ZOOM);
   const [linkSites, setLinkSites] = useState(INIT_LINK);
   const _commonData = useRecoilValue<TCommonData>(commonData);
@@ -458,7 +468,7 @@ const Page = () => {
   };
 
   const handleLinkClick = (ids: string) => {
-    const i = ids && ids.split('-');
+    const i = ids && ids.split('*');
     if (i.length === 3) {
       setIsLinkSelected(i[2]);
       const s: Site[] = [];
@@ -480,7 +490,17 @@ const Page = () => {
         },
       });
   };
-  console.log(isLinkSelected);
+
+  const handleLayerChange = (
+    _: React.ChangeEvent<HTMLInputElement>,
+    v: string,
+  ) => setLayer(v);
+
+  const handleCloseSiteLink = () => {
+    setIsLinkSelected(undefined);
+    setSelectedSites([]);
+  };
+
   return (
     <>
       <Popover
@@ -556,17 +576,19 @@ const Page = () => {
           <Map
             width={800}
             zoom={zoom}
-            height={isLinkSelected ? 278 : 418}
+            layer={layer}
             center={center}
             setZoom={setZoom}
-            id={'site-planning-map'}
             linkSites={linkSites}
+            id={'site-planning-map'}
             className={styles.homeMap}
+            selectedLink={isLinkSelected}
             handleAction={handleSiteAction}
             handleLinkClick={handleLinkClick}
             data={selectedDraft?.sites || []}
             handleAddMarker={handleMarkerAdd}
             links={selectedDraft?.links || []}
+            height={isLinkSelected ? 278 : 418}
             handleDeleteSite={handleDeleteSite}
             handleDragMarker={handleMarkerDrag}
             isAddSite={mapInteraction.isAddSite}
@@ -590,23 +612,47 @@ const Page = () => {
                   handlePowerInfo={handlePowerInfo}
                   isCurrentDraft={!!selectedDraft}
                 />
+                <LayerSwitch
+                  value={layer}
+                  handleLayerSwitch={handleLayerChange}
+                />
               </>
             )}
           </Map>
           {isLinkSelected && (
-            <Paper
+            <Box
               sx={{
                 px: 3,
                 pt: 1,
                 mt: '-10px',
                 height: 235,
+                position: 'relative',
               }}
             >
+              <IconButton
+                sx={{
+                  top: '-8px',
+                  zIndex: 400,
+                  left: '50%',
+                  right: '50%',
+                  width: '48px',
+                  height: '21px',
+                  borderRadius: '4px',
+                  position: 'absolute',
+                  backgroundColor: 'white',
+                  ':hover': {
+                    backgroundColor: 'white',
+                  },
+                }}
+                onClick={handleCloseSiteLink}
+              >
+                <ArrowDownIcon />
+              </IconButton>
               <SiteLink
                 sites={selectedSites}
                 handleDeleteLink={handleDeleteLink}
               />
-            </Paper>
+            </Box>
           )}
         </PageContainer>
       </LoadingWrapper>
