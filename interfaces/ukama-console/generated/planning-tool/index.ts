@@ -15,8 +15,6 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  _Any: { input: any; output: any; }
-  _FieldSet: { input: any; output: any; }
 };
 
 export type AddDraftInput = {
@@ -177,7 +175,6 @@ export type MutationUpdateSiteArgs = {
 
 export type Query = {
   __typename?: 'Query';
-  _service: _Service;
   getDraft: Draft;
   getDrafts: Array<Draft>;
 };
@@ -229,11 +226,6 @@ export type SiteInput = {
 export type UpdateEventInput = {
   operation: Scalars['String']['input'];
   value: Scalars['String']['input'];
-};
-
-export type _Service = {
-  __typename?: '_Service';
-  sdl?: Maybe<Scalars['String']['output']>;
 };
 
 export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };

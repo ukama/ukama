@@ -5,6 +5,7 @@ import {
   useAddDraftMutation,
   useAddLinkMutation,
   useAddSiteMutation,
+  useCoverageMutation,
   useDeleteDraftMutation,
   useDeleteLinkMutation,
   useDeleteSiteMutation,
@@ -295,6 +296,22 @@ const Page = () => {
       },
     });
 
+  const [getCoverageCall, { loading: coverageLoading }] =
+    useCoverageMutation({
+      onCompleted: () => {
+        refetchDrafts();
+        showAlert(
+          'coverage-success',
+          'Coverage successfully.',
+          'success',
+          true,
+        );
+      },
+      onError: (error) => {
+        showAlert('coverage-error', error.message, 'error', true);
+      },
+    });
+
   useEffect(() => {
     if (selectedDraft) {
       setCenter(
@@ -501,6 +518,20 @@ const Page = () => {
     setSelectedSites([]);
   };
 
+  const handleGenerateAction = (action: string, site: Site) => {
+    getCoverageCall({
+      variables: {
+        data: {
+          height: site.height,
+          lat: parseFloat(site.location.lat),
+          lng: parseFloat(site.location.lng),
+          mode: action,
+        },
+        siteId: site.id,
+      },
+    });
+  };
+
   return (
     <>
       <Popover
@@ -591,9 +622,11 @@ const Page = () => {
             height={isLinkSelected ? 278 : 418}
             handleDeleteSite={handleDeleteSite}
             handleDragMarker={handleMarkerDrag}
+            coverageLoading={coverageLoading}
             isAddSite={mapInteraction.isAddSite}
             isAddLink={mapInteraction.isAddLink}
             handleAddLinkToSite={handleAddLinkToSite}
+            handleGenerateAction={handleGenerateAction}
           >
             {() => (
               <>

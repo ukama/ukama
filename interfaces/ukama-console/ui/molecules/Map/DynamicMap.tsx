@@ -26,6 +26,7 @@ interface IMap {
   className?: string;
   isAddLink: boolean;
   center: LatLngLiteral;
+  coverageLoading: boolean;
   zoom?: number | undefined;
   handleAction: (a: Site) => void;
   selectedLink: string | undefined;
@@ -33,6 +34,7 @@ interface IMap {
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
+  handleGenerateAction: (a: string, b: Site) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
 }
@@ -54,9 +56,11 @@ const Map = ({
   handleAction,
   handleLinkClick,
   handleAddMarker,
+  coverageLoading,
   handleDeleteSite,
   handleDragMarker,
   handleAddLinkToSite,
+  handleGenerateAction,
 }: IMap) => {
   let mapClassName = styles.map;
 
@@ -97,11 +101,13 @@ const Map = ({
         isAddLink={isAddLink}
         selectedLink={selectedLink}
         handleAction={handleAction}
+        coverageLoading={coverageLoading}
         handleLinkClick={handleLinkClick}
         handleAddMarker={handleAddMarker}
         handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}
         handleAddLinkToSite={handleAddLinkToSite}
+        handleGenerateAction={handleGenerateAction}
       />
     </MapContainer>
   );

@@ -23,6 +23,7 @@ interface IMap {
   isAddSite: boolean;
   className?: string;
   center: LatLngLiteral;
+  coverageLoading: boolean;
   zoom?: number | undefined;
   handleAction: (a: Site) => void;
   selectedLink: string | undefined;
@@ -30,6 +31,7 @@ interface IMap {
   handleDeleteSite: (a: string) => void;
   handleAddLinkToSite: (id: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
+  handleGenerateAction: (a: string, b: Site) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }
@@ -49,11 +51,13 @@ const Map = ({
   className,
   selectedLink,
   handleAction,
+  coverageLoading,
   handleLinkClick,
   handleAddMarker,
   handleDeleteSite,
   handleDragMarker,
   handleAddLinkToSite,
+  handleGenerateAction,
   width = DEFAULT_WIDTH,
   height = DEFAULT_HEIGHT,
 }: IMap) => {
@@ -78,11 +82,13 @@ const Map = ({
         className={className}
         selectedLink={selectedLink}
         handleAction={handleAction}
+        coverageLoading={coverageLoading}
         handleLinkClick={handleLinkClick}
         handleAddMarker={handleAddMarker}
         handleDeleteSite={handleDeleteSite}
         handleDragMarker={handleDragMarker}
         handleAddLinkToSite={handleAddLinkToSite}
+        handleGenerateAction={handleGenerateAction}
       >
         {children}
       </DynamicMap>

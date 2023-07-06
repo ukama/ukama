@@ -2,7 +2,7 @@ import { Link, Site } from '@/generated/planning-tool';
 import { colors } from '@/styles/theme';
 import parse_georaster from 'georaster';
 import GeoRasterLayer from 'georaster-layer-for-leaflet';
-import Leaflet, { LatLngLiteral, LatLngTuple, Polyline } from 'leaflet';
+import Leaflet, { LatLngLiteral, LatLngTuple, Layer, Polyline } from 'leaflet';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +13,7 @@ interface ICustomMarker {
   links: Link[];
   linkSites: any;
   isAddLink: boolean;
+  coverageLoading: boolean;
   zoom?: number | undefined;
   center: LatLngLiteral | null;
   handleAction: (a: Site) => void;
@@ -21,6 +22,7 @@ interface ICustomMarker {
   handleDeleteSite: (a: string) => void;
   setZoom: Dispatch<SetStateAction<number>>;
   handleAddLinkToSite: (id: string) => void;
+  handleGenerateAction: (a: string, b: Site) => void;
   handleAddMarker: (l: LatLngLiteral, b: string) => void;
   handleDragMarker: (l: LatLngLiteral, id: string) => void;
 }
@@ -63,23 +65,25 @@ const getLatLng = (sites: Site[], links: Link[]): ILink[] => {
   return data.length > 0 ? data : [];
 };
 
-const addRasterData = (url: string, map: any) => {
-  fetch(url)
-    .then((response) => {
-      return response.arrayBuffer();
-    })
-    .then((arrayBuffer) => {
-      parse_georaster(arrayBuffer).then((georaster: any) => {
-        var layer = new GeoRasterLayer({
-          georaster: georaster,
-          opacity: 1,
-          resolution: 300,
-        });
-        layer.addTo(map);
-        // map.fitBounds(layer.getBounds());
-      });
-    });
+const addRasterData = async (url: string, map: any, id: string) => {
+  const buf = await fetch(url).then((response) => {
+    return response.arrayBuffer();
+  });
+
+  const rast = await parse_georaster(buf);
+
+  var layer = new GeoRasterLayer({
+    georaster: rast,
+    opacity: 1,
+    resolution: 300,
+    attribution: id,
+  }).addTo(map);
+
+  return layer;
 };
+
+const getKey = (lat: string, lng: string) =>
+  `lat${lat.replace('.', '_')}lon${lng.replace('.', '_')}`;
 
 const CustomMarker = ({
   data,
@@ -93,10 +97,12 @@ const CustomMarker = ({
   handleAction,
   selectedLink,
   handleAddMarker,
+  coverageLoading,
   handleDeleteSite,
   handleDragMarker,
   handleLinkClick,
   handleAddLinkToSite,
+  handleGenerateAction,
 }: ICustomMarker) => {
   const map = useMap();
   const [markers, setMarkers] = useState<IMarker[]>([]);
@@ -125,8 +131,6 @@ const CustomMarker = ({
         maxNativeZoom: 20,
       },
     ).addTo(map);
-
-    addRasterData('one.tif', map);
   }, [layer]);
 
   useEffect(() => {
@@ -162,6 +166,20 @@ const CustomMarker = ({
         lat: parseFloat(item.location.lat),
         lng: parseFloat(item.location.lng),
       });
+      map.eachLayer((layer: Layer) => {
+        if (
+          layer.options.attribution ===
+          getKey(item.location.lat, item.location.lng)
+        )
+          map.removeLayer(layer);
+      });
+
+      if (item.url)
+        addRasterData(
+          item.url,
+          map,
+          getKey(item.location.lat, item.location.lng),
+        );
     });
     setMarkers(m);
   }, [data]);
@@ -179,6 +197,10 @@ const CustomMarker = ({
       }
     }
   }, [selectedLink]);
+
+  useEffect(() => {
+    if (coverageLoading) map.closePopup();
+  }, [coverageLoading]);
 
   useMapEvents({
     click: (e) => {
@@ -222,7 +244,7 @@ const CustomMarker = ({
               draggable
               key={item.id}
               icon={svgIcon}
-              title={item.name}
+              title={`Population Covered: ${item.populationCovered}`}
               position={{
                 lat: m?.lat || 0,
                 lng: m?.lng || 0,
@@ -259,7 +281,9 @@ const CustomMarker = ({
                 <SitePopup
                   site={item}
                   handleAction={handleAction}
+                  coverageLoading={coverageLoading}
                   handleDeleteSite={handleDeleteSite}
+                  handleGenerateAction={handleGenerateAction}
                 />
               </Popup>
             </Marker>
