@@ -49,17 +49,12 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
 	log.Infof("Adding invitation %v", req)
 
-	if req.GetOrgId() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "OrgId is required")
+	if req.GetOrg() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Org is required")
 	}
 
 	if req.GetEmail() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "Email is required")
-	}
-
-	orgId, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "OrgId is invalid")
 	}
 
 
@@ -73,7 +68,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	err = o.orgRepo.AddInvitation(
 		&db.Invitation{
 			Id:        uuid.NewV4(),
-			OrgId:     orgId,
+			Org:       req.GetOrg(),
 			Link:      link,
 			Email:     req.GetEmail(),
 			ExpiresAt: expiresAt,
@@ -84,7 +79,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, err
 	}
 
-	res,err:=o.orgRepo.Get(orgId)
+	res,err:=o.orgRepo.GetByName(req.GetOrg())
 	if err!=nil{
 		return nil,err
 	}

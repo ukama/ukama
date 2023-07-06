@@ -38,7 +38,7 @@ type OrgUser struct {
 
 type Invitation struct {
 	Id        uuid.UUID `gorm:"primaryKey;type:uuid"`
-	OrgId     uuid.UUID `gorm:"type:uuid"`
+	Org      string
 	Link      string
 	Email     string
 	ExpiresAt time.Time
