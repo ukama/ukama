@@ -144,6 +144,6 @@ type GetInvitationRequest struct {
 }
 
 type UpdateInvitationRequest struct {
-	InvitationId    string `json:"id" path:"invitation_id" validate:"required"`
+	InvitationId    string `json:"invitation_id" path:"invitation_id" validate:"required"`
 	State string `json:"state" validate:"required"`
 }

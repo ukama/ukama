@@ -150,7 +150,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// org invitations
 		const invitation = "/invitations"
 		invitations := auth.Group(invitation, "Invitations", "Operations on Invitations")
-		invitations.POST("/:org/invitations", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.addInvitationHandler, http.StatusCreated))
+		invitations.POST("/:org", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.addInvitationHandler, http.StatusCreated))
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get an invitation of an organization"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update an invitation of an organization"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		// Users routes
@@ -348,7 +348,8 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) addInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*orgpb.AddInvitationResponse, error) {
-	return r.clients.Registry.AddInvitation(req.Email,req.Org)
+
+	return r.clients.Registry.AddInvitation(req.Email,c.Param("org"))
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*orgpb.GetInvitationResponse, error) {

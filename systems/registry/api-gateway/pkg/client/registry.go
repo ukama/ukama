@@ -253,11 +253,11 @@ func (r *Registry) GetSites(netID string) (*netpb.GetSitesByNetworkResponse, err
 	return res, nil
 }
 
-func (r *Registry) AddInvitation ( email string , org string) (*orgpb.AddInvitationResponse, error) {
+func (r *Registry) AddInvitation( email string , org string) (*orgpb.AddInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.AddInvitation(ctx, &orgpb.AddInvitationRequest{Email: email,})
+	res, err := r.orgClient.AddInvitation(ctx, &orgpb.AddInvitationRequest{Email: email,Org: org})
 
 	if err != nil {
 		return nil, err
@@ -266,7 +266,7 @@ func (r *Registry) AddInvitation ( email string , org string) (*orgpb.AddInvitat
 	return res, nil
 }
 
-func (r *Registry) GetInvitation ( invitationId string) (*orgpb.GetInvitationResponse, error) {
+func (r *Registry) GetInvitation( invitationId string) (*orgpb.GetInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -279,7 +279,7 @@ func (r *Registry) GetInvitation ( invitationId string) (*orgpb.GetInvitationRes
 	return res, nil
 }
 
-func (r *Registry) UpdateInvitation ( invitationId string, status string) (*orgpb.UpdateInvitationResponse, error) {
+func (r *Registry) UpdateInvitation( invitationId string, status string) (*orgpb.UpdateInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
