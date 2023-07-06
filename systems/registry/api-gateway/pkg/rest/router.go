@@ -57,7 +57,7 @@ type registry interface {
 	RemoveMember(orgName string, userUUID string) error
 
 	//Invitation for members to join an organization
-	AddInvitation(email string, orgId string) (*orgpb.AddInvitationResponse, error)
+	AddInvitation(email string, role string ,org string) (*orgpb.AddInvitationResponse, error)
 	GetInvitation(invitationId string) (*orgpb.GetInvitationResponse, error)
 	UpdateInvitation(invitationId string, status string) (*orgpb.UpdateInvitationResponse, error)
 
@@ -349,7 +349,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func (r *Router) addInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*orgpb.AddInvitationResponse, error) {
 
-	return r.clients.Registry.AddInvitation(req.Email,c.Param("org"))
+	return r.clients.Registry.AddInvitation(req.Email,req.Role,c.Param("org"))
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*orgpb.GetInvitationResponse, error) {
