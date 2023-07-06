@@ -60,6 +60,10 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, status.Errorf(codes.InvalidArgument, "Email is required")
 	}
 
+	if req.GetName() ==""{
+
+		return nil,status.Errorf(codes.InvalidArgument,"Name is required")
+	}
 
 	link, err := generateInvitationLink()
 	if err != nil {
@@ -72,6 +76,7 @@ invitationId:=uuid.NewV4()
 		&db.Invitation{
 			Id:        invitationId,
 			Org:       req.GetOrg(),
+			Name: req.GetName(),
 			Link:      link,
 			Email:     req.GetEmail(),
 			Role:       pbRoleTypeToDb(req.GetRole()),
@@ -87,6 +92,12 @@ invitationId:=uuid.NewV4()
 	if err!=nil{
 		return nil,err
 	}
+resp,err:=o.userRepo.Get(res.Owner)
+if err!=nil{
+	return nil,err
+}
+fmt.Println(resp)
+	
 
 	bodyTemplate := `
 <!DOCTYPE html>

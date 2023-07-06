@@ -139,6 +139,7 @@ type AddInvitationRequest struct {
 	Org string `json:"org" path:"org" validate:"required"`
 	Email string `json:"email" validate:"required"`
 	Role string `json:"role" validate:"required"`
+	Name string `json:"name" validate:"required"`
 }
 type GetInvitationRequest struct {
 	InvitationId string `json:"invitation_id" path:"invitation_id" validate:"required"`

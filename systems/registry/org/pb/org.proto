@@ -48,6 +48,7 @@ message AddInvitationRequest{
   string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
   string org = 3 ;
   RoleType Role = 4;
+  string name = 5;
 
 }
 

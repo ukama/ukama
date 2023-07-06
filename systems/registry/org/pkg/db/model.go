@@ -41,6 +41,7 @@ type Invitation struct {
 	Org      string
 	Link      string
 	Email     string
+	Name 	string
 	ExpiresAt time.Time
 	Role 	RoleType `gorm:"type:uint;not null;default:3"` // Set the default value to Member
 	Status    InvitationStatus `gorm:"type:uint;not null;default:0"` // Set the default value to Pending
