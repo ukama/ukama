@@ -49,14 +49,14 @@ void set_log_level(char *slevel) {
 
 void usage() {
 
-    usys_puts("Usage: device.d [options] \n");
-    usys_puts("Options:\n");
-    usys_puts("--h, --help                    Help menu \n");
-    usys_puts("--l, --logs <TRACE|DEBUG|INFO> Log level for the process \n");
-    usys_puts("--p, --port <port>             Local listening port \n");
-    usys_puts("--n, --notify-port <port>      Notify.d port\n");
-    usys_puts("--d, --noded-port <port>       Node.d port\n");
-    usys_puts("--v, --version                 Software version \n");
+    usys_puts("Usage: device.d [options]");
+    usys_puts("Options:");
+    usys_puts("--h, --help                    Help menu");
+    usys_puts("--l, --logs <TRACE|DEBUG|INFO> Log level for the process");
+    usys_puts("--p, --port <port>             Local listening port");
+    usys_puts("--n, --notify-port <port>      Notify.d port");
+    usys_puts("--d, --noded-port <port>       Node.d port");
+    usys_puts("--v, --version                 Software version");
 }
 
 int main(int argc, char **argv) {
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (start_web_service(serviceConfig, &serviceInst) != USYS_TRUE) {
+    if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup for clients. Exiting.");
         exit(1);
     }
