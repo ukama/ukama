@@ -231,7 +231,6 @@ func (r *orgRepo) GetMemberCount(orgID uuid.UUID) (int64, int64, error) {
 
 func (r *orgRepo) AddInvitation(invitation *Invitation) error {
 	d := r.Db.GetGormDb().Create(invitation)
-
 	return d.Error
 }
 

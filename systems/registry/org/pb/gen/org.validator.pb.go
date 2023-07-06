@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -36,17 +36,11 @@ func (this *Invitation) Validate() error {
 	return nil
 }
 
-var _regex_AddInvitationRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_AddInvitationRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 
 func (this *AddInvitationRequest) Validate() error {
-	if !_regex_AddInvitationRequest_Id.MatchString(this.Id) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
-	}
-	if this.Id == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
-	}
-	if this.Org == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must not be an empty string`, this.Org))
+	if !_regex_AddInvitationRequest_Email.MatchString(this.Email) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
 	}
 	return nil
 }

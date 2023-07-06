@@ -44,10 +44,11 @@ message Invitation{
   InvitationStatus status = 6;
 }
 message AddInvitationRequest{
-  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
-  InvitationStatus status = 5;
-  string email = 6;
-  string org = 7  [(validator.field) = {string_not_empty: true}];
+  InvitationStatus status = 1;
+  string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+  string org = 3 ;
+  RoleType Role = 4;
+
 }
 
 message AddInvitationResponse{

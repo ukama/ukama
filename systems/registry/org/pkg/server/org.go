@@ -1,8 +1,11 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"text/template"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -64,13 +67,14 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	}
 	expiresAt := time.Now().Add(2 * time.Minute)
 
-
+invitationId:=uuid.NewV4()
 	err = o.orgRepo.AddInvitation(
 		&db.Invitation{
-			Id:        uuid.NewV4(),
+			Id:        invitationId,
 			Org:       req.GetOrg(),
 			Link:      link,
 			Email:     req.GetEmail(),
+			Role:       pbRoleTypeToDb(req.GetRole()),
 			ExpiresAt: expiresAt,
 			Status:    db.InvitationStatus(req.GetStatus()),
 		},
@@ -84,11 +88,55 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil,err
 	}
 
+	bodyTemplate := `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>
+  [Name of owner] has invited you to join [Organization
+name] as a [role name]
+  </title>
+</head>
+<body>
+  <h1>{{ .Values.OWNER}} has invited you to join {{ .Values.ORG}} as a {{ .Values.ROLE}}</h1>
+  
+  <p>Hi {{ .Values.EMAIL }},</p>
+
+  You have been invited to join {{ .Values.ORG}} as a {{ .Values.ROLE}}. This invitation will expire after 5 min. To accept the invitation and get started with Ukama Console, click the button below.</p>
+  <ul>
+	<li>Link: {{ .Values.LINK }}</li>
+	<li>Email ID: {{ .Values.EmailID }}</li>
+  </ul>
+  <p>Having trouble with the button? Use the following link instead: {{ .Values.LINK}}</p>
+</body>
+</html>
+`
+tmpl, err := template.New("email").Parse(bodyTemplate)
+if err != nil {
+	return nil, err
+}
+
+var bodyBuffer bytes.Buffer
+err = tmpl.Execute(&bodyBuffer, map[string]interface{}{
+	"Values": map[string]interface{}{
+		"EmailID": invitationId.String(),
+		"LINK":link,
+		"OWNER":res.Owner,
+		"ORG":res.Name,
+		"ROLE":req.GetRole(),
+	},
+})
+if err != nil {
+	return nil, err
+}
+
+emailBody := bodyBuffer.String()
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
-		Subject: "[Ukama] "+ res.Owner.String()+" invited you to use their network",
-		Body:    "Example Body",
-		// Values:  map[string]string{"key": "value"},
+		Subject: "[Ukama] Team invite from "+res.Name,
+		Body:    emailBody,
+		Values: map[string]string{"EmailID": invitationId.String()},
 	})
 
 	if err != nil {
@@ -690,7 +738,14 @@ func pbInvitationStatusToDb(status pb.InvitationStatus) db.InvitationStatus {
 }
 
 func generateInvitationLink() (string, error) {
-	linkId := uuid.NewV4()
-	link := "https://auth.dev.ukama.com/registration/" + linkId.String()
-	return link, nil
+	expirationTime := time.Now().Add(3 * 24 * time.Hour) // Set the expiration time to three days from now
+
+	link := "https://auth.dev.ukama.com/auth/registration"
+	linkID := uuid.NewV4().String() 
+
+	expiringLink := fmt.Sprintf("%s?linkId=%s&expires=%d", link, linkID, expirationTime.Unix())
+
+	return expiringLink, nil
 }
+
+

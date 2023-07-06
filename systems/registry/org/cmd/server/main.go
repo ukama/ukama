@@ -64,7 +64,7 @@ func initDb() sql.Db {
 
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.Org{}, &db.User{}, &db.OrgUser{})
+	err := d.Init(&db.Org{}, &db.User{}, &db.OrgUser{}, &db.Invitation{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -87,7 +87,7 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 	notificationClient, err := client.NewNotificationClient(svcConf.NotificationHost, pkg.IsDebugMode)
 	if err != nil {
-		logrus.Fatalf("Network Client initilization failed. Error: %v", err.Error())
+		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
 	}
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
