@@ -27,7 +27,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const defaultTemplate = "templates/test.html.tmpl"
+const defaultTemplate = "templates/invoice.html.tmpl"
 const pdfFolder = "/srv/static/"
 
 type InvoiceServer struct {
@@ -186,18 +186,7 @@ func (i *InvoiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 func generateInvoicePDF(data any, templatePath, outputPath string) error {
 	r := pdf.NewInvoicePDF("")
 
-	templateData := struct {
-		Title    string
-		FileName string
-		Body     string
-	}{
-		Title:    "Markdown Preview Tool",
-		FileName: "templateFile",
-		Body:     "hello world",
-	}
-
-	// err := r.ParseSlimTemplate(templatePath, data)
-	err := r.ParseTemplate(templatePath, templateData)
+	err := r.ParseTemplate(templatePath, data)
 	if err != nil {
 		log.Errorf("failed to parse PDF template: %v", err)
 
