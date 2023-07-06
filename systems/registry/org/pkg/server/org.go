@@ -21,6 +21,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/org/pkg"
 	"github.com/ukama/ukama/systems/registry/org/pkg/client"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
+	userRegpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -32,18 +33,20 @@ type OrgService struct {
 	userRepo       db.UserRepo
 	orgName        string
 	baseRoutingKey msgbus.RoutingKeyBuilder
+	RegistryUserService client.RegistryUsersClientProvider
 	msgbus         mb.MsgBusServiceClient
 	pushgateway    string
 	notification   client.NotificationClient
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient ,RegistryUserService client.RegistryUsersClientProvider) *OrgService {
 	return &OrgService{
 		orgRepo:        orgRepo,
 		userRepo:       userRepo,
 		orgName:        defaultOrgName,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		msgbus:         msgBus,
+		RegistryUserService: RegistryUserService,
 		pushgateway:    pushgateway,
 		notification:   notification,
 	}
@@ -92,13 +95,16 @@ invitationId:=uuid.NewV4()
 	if err!=nil{
 		return nil,err
 	}
-resp,err:=o.userRepo.Get(res.Owner)
-if err!=nil{
-	return nil,err
-}
-fmt.Println(resp)
-	
 
+	userRegistrySvc, err := o.RegistryUserService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+	remoteUserResp, err := userRegistrySvc.Get(ctx,
+		&userRegpb.GetRequest{UserId: res.Owner.String()})
+	if err != nil {
+		return nil, err
+	}
 	bodyTemplate := `
 <!DOCTYPE html>
 <html>
@@ -133,7 +139,7 @@ err = tmpl.Execute(&bodyBuffer, map[string]interface{}{
 	"Values": map[string]interface{}{
 		"EmailID": invitationId.String(),
 		"LINK":link,
-		"OWNER":res.Owner,
+		"OWNER":remoteUserResp.User.Name,
 		"ORG":res.Name,
 		"ROLE":req.GetRole(),
 	},

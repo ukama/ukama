@@ -90,10 +90,13 @@ func runGrpcServer(gormdb sql.Db) {
 		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
 	}
 	log.Debugf("MessageBus Client is %+v", mbClient)
+
+	
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
 		svcConf.OrgName, mbClient,
-		svcConf.Pushgateway, notificationClient)
+		svcConf.Pushgateway, notificationClient,client.NewRegistryUsersClientProvider(svcConf.Users, svcConf.MsgClient.Timeout),
+	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)
