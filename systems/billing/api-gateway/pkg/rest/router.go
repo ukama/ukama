@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,6 +22,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	invoiceCreatedType = "invoice.created"
+	invoiceObject      = "invoice"
+)
+
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -39,7 +45,7 @@ type Clients struct {
 }
 
 type billing interface {
-	AddInvoice(subscriberId string, rawInvoice string) (*pb.AddResponse, error)
+	AddInvoice(rawInvoice string) (*pb.AddResponse, error)
 	GetInvoice(invoiceId string, asPDF bool) (*pb.GetResponse, error)
 	GetInvoices(subscriber string) (*pb.GetBySubscriberResponse, error)
 	RemoveInvoice(invoiceId string) error
@@ -125,8 +131,36 @@ func (r *Router) getInvoicesHandler(c *gin.Context, req *GetInvoicesRequest) (*p
 	return r.clients.Billing.GetInvoices(subscriberId)
 }
 
-func (r *Router) postInvoiceHandler(c *gin.Context, req *AddInvoiceRequest) (*pb.AddResponse, error) {
-	return r.clients.Billing.AddInvoice(req.SubscriberId, req.RawInvoice)
+func (r *Router) postInvoiceHandler(c *gin.Context, req *HandleWebHookRequest) error {
+	log.Infof("Webhook event of type %q for object %q received form billing provider",
+		req.WebhookType, req.ObjectType)
+
+	if req.WebhookType != invoiceCreatedType || req.ObjectType != invoiceObject {
+		log.Infof("Discarding webhook event %q for object %q on reason: No handler set for webhook or object type",
+			req.WebhookType, req.ObjectType)
+
+		c.JSON(http.StatusOK, gin.H{
+			"info": "webhook event discarded",
+		})
+
+		return nil
+	}
+
+	log.Infof("Handling webhook event %q for object %q", req.WebhookType, req.ObjectType)
+
+	rwInvoiceBytes, err := json.Marshal(req.Invoice)
+	if err != nil {
+		log.Errorf("Failed to marshal RawInvoice payload into rawInvoice JSON %v", err)
+
+		return fmt.Errorf("failed to marshal RawInvoice payload into rawInvoice JSON %w", err)
+	}
+
+	resp, err := r.clients.Billing.AddInvoice(string(rwInvoiceBytes))
+	if err == nil {
+		c.JSON(http.StatusCreated, resp)
+	}
+
+	return err
 }
 
 func (r *Router) removeInvoiceHandler(c *gin.Context, req *GetInvoiceRequest) error {
@@ -154,7 +188,7 @@ func (r *Router) GetInvoicePdfHandler(c *gin.Context, req *GetInvoiceRequest) er
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "Download invoice pdf file successfully",
+		"info": "download invoice pdf file successfully",
 	})
 
 	return nil

@@ -12,25 +12,25 @@ type billing struct {
 	mock.Mock
 }
 
-// AddInvoice provides a mock function with given fields: subscriberId, rawInvoice
-func (_m *billing) AddInvoice(subscriberId string, rawInvoice string) (*gen.AddResponse, error) {
-	ret := _m.Called(subscriberId, rawInvoice)
+// AddInvoice provides a mock function with given fields: rawInvoice
+func (_m *billing) AddInvoice(rawInvoice string) (*gen.AddResponse, error) {
+	ret := _m.Called(rawInvoice)
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.AddResponse, error)); ok {
-		return rf(subscriberId, rawInvoice)
+	if rf, ok := ret.Get(0).(func(string) (*gen.AddResponse, error)); ok {
+		return rf(rawInvoice)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.AddResponse); ok {
-		r0 = rf(subscriberId, rawInvoice)
+	if rf, ok := ret.Get(0).(func(string) *gen.AddResponse); ok {
+		r0 = rf(rawInvoice)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(subscriberId, rawInvoice)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(rawInvoice)
 	} else {
 		r1 = ret.Error(1)
 	}

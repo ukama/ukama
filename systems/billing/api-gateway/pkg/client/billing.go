@@ -61,13 +61,12 @@ func (r *Billing) Close() {
 	r.conn.Close()
 }
 
-func (r *Billing) AddInvoice(subscriberId string, rawInvoice string) (*pb.AddResponse, error) {
+func (r *Billing) AddInvoice(rawInvoice string) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	res, err := r.invoiceClient.Add(ctx, &pb.AddRequest{
-		SubscriberId: subscriberId,
-		RawInvoice:   rawInvoice})
+		RawInvoice: rawInvoice})
 
 	if err != nil {
 		return nil, err
