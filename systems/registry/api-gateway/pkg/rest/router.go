@@ -348,7 +348,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) addInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*orgpb.AddInvitationResponse, error) {
-	return r.clients.Registry.AddInvitation(req.Email,req.OrgId)
+	return r.clients.Registry.AddInvitation(req.Email,req.Org)
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*orgpb.GetInvitationResponse, error) {
