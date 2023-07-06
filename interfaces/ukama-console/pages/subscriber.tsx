@@ -66,9 +66,7 @@ const Page = () => {
     }
   }, [search]);
 
-  const onTableMenuItem = (id: string, type: string) => {
-    console.log(id, type);
-  };
+  const onTableMenuItem = (id: string, type: string) => {};
 
   const structureData = useCallback(
     (data: SubscribersResDto) =>

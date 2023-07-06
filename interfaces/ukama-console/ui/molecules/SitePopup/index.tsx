@@ -2,6 +2,7 @@ import { SITE_PLANNING_AP_OPTIONS, SOLAR_UPTIME_OPTIONS } from '@/constants';
 import { Site } from '@/generated/planning-tool';
 import {
   Button,
+  Divider,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -18,11 +19,19 @@ import { useState } from 'react';
 
 interface ISitePopup {
   site: Site;
+  coverageLoading: boolean;
   handleAction: (a: Site) => void;
   handleDeleteSite: (i: string) => void;
+  handleGenerateAction: (a: string, b: Site) => void;
 }
 
-const SitePopup = ({ site, handleAction, handleDeleteSite }: ISitePopup) => {
+const SitePopup = ({
+  site,
+  handleAction,
+  coverageLoading,
+  handleDeleteSite,
+  handleGenerateAction,
+}: ISitePopup) => {
   const [data, setData] = useState<Site>(site);
   return (
     <Paper elevation={0} sx={{ boxShadow: 'none', cursor: 'default' }}>
@@ -162,6 +171,7 @@ const SitePopup = ({ site, handleAction, handleDeleteSite }: ISitePopup) => {
             }}
           />
         </FormControl>
+
         <Stack direction="row" justifyContent={'space-between'}>
           <Button
             variant="contained"
@@ -185,6 +195,66 @@ const SitePopup = ({ site, handleAction, handleDeleteSite }: ISitePopup) => {
             UPDATE SITE
           </Button>
         </Stack>
+        {site?.id && (
+          <Stack direction={'column'} spacing={1}>
+            <Divider sx={{ width: '100%', height: '1px' }} />
+            <Typography variant="caption">Generate Actions</Typography>
+            <Stack
+              direction="row"
+              justifyContent={'space-between'}
+              spacing={0.7}
+            >
+              <Button
+                variant="contained"
+                disabled={coverageLoading}
+                sx={{
+                  p: 1,
+                  fontSize: '10px',
+                  width: 'fit-content',
+                  textTransform: 'capitalize',
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleGenerateAction('field_strength', site);
+                }}
+              >
+                Field Strength
+              </Button>
+              <Button
+                variant="contained"
+                disabled={coverageLoading}
+                sx={{
+                  p: 1,
+                  fontSize: '10px',
+                  width: 'fit-content',
+                  textTransform: 'capitalize',
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleGenerateAction('receive_power', site);
+                }}
+              >
+                Receive Power
+              </Button>
+              <Button
+                variant="contained"
+                disabled={coverageLoading}
+                sx={{
+                  p: 1,
+                  fontSize: '10px',
+                  width: 'fit-content',
+                  textTransform: 'capitalize',
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleGenerateAction('path_loss', site);
+                }}
+              >
+                Path Loss
+              </Button>
+            </Stack>
+          </Stack>
+        )}
       </Stack>
     </Paper>
   );

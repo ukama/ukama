@@ -51,7 +51,6 @@ const Layout = ({
   }, [matches]);
 
   const onNavigate = (name: string, path: string) => {
-    console.log(name, path);
     handlePageChange(name);
     router.push(path);
   };
