@@ -31,9 +31,8 @@
 #define ENV_DEVICED_DEBUG_MODE "DEVICED_DEBUG_MODE"
 
 #define EP_BS                           "/"
-#define WEBSERVICE                      "device"
 #define REST_API_VERSION                "v1"
-#define URL_PREFIX                      EP_BS WEBSERVICE EP_BS REST_API_VERSION
+#define URL_PREFIX                      EP_BS REST_API_VERSION
 #define API_RES_EP(RES)                 EP_BS RES
 
 typedef struct _u_instance  UInst;
