@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/invoice/pb/gen"
@@ -45,7 +46,23 @@ func NewInvoiceServer(invoiceRepo db.InvoiceRepo, msgBus mb.MsgBusServiceClient)
 }
 
 func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	subscriberId, err := uuid.FromString(req.SubscriberId)
+	log.Infof("Unmarshalling raw invoice from webhook: %v", req.RawInvoice)
+	rwInvoceStruct := &util.RawInvoice{}
+
+	err := json.Unmarshal([]byte(req.RawInvoice), rwInvoceStruct)
+	if err != nil {
+		log.Errorf("Failed to unmarshal RawInvoice JSON to RawInvoice struct %v", err)
+
+		return nil, status.Errorf(codes.InvalidArgument,
+			"failed to unmarshal RawInvoice JSON paylod from webhook. Error %s", err)
+	}
+
+	if rwInvoceStruct == nil || rwInvoceStruct.Customer == nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid JSON format of RawInvoice. Error %s", req.RawInvoice)
+	}
+
+	subscriberId, err := uuid.FromString(rwInvoceStruct.Customer.ExternalID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of subscriber uuid. Error %s", err.Error())
@@ -53,13 +70,22 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 
 	invoice := &db.Invoice{
 		SubscriberId: subscriberId,
-		Period:       req.GetPeriod().AsTime(),
-		RawInvoice:   datatypes.JSON([]byte(req.RawInvoice)),
 	}
 
 	log.Infof("Adding invoice for subscriber: %s", subscriberId)
 	err = i.invoiceRepo.Add(invoice, func(*db.Invoice, *gorm.DB) error {
 		invoice.Id = uuid.NewV4()
+		rwInvoceStruct.FileURL = fmt.Sprintf("http://{API_ENDPOINT}/pdf/%s.pdf", invoice.Id.String())
+
+		rwInvoiceBytes, err := json.Marshal(rwInvoceStruct)
+		if err != nil {
+			log.Errorf("Failed to marshal RawInvoice struct to RawInvoice JSON %v", err)
+
+			return fmt.Errorf("failed to marshal RawInvoice struct to RawInvoice JSON: %w", err)
+		}
+
+		invoice.Period = time.Now().UTC()
+		invoice.RawInvoice = datatypes.JSON(rwInvoiceBytes)
 
 		return nil
 	})
@@ -67,6 +93,16 @@ func (i *InvoiceServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invoice")
 	}
+
+	log.Infof("starting PDF generation")
+	go func() {
+		err = generateInvoicePDF(rwInvoceStruct, defaultTemplate, filepath.Join(pdfFolder, invoice.Id.String()+".pdf"))
+		if err != nil {
+			log.Errorf("PDF generation failure: failed to generate invoice PDF: %v", err)
+		}
+
+		log.Infof("finishing PDF generation")
+	}()
 
 	resp := &pb.AddResponse{
 		Invoice: dbInvoiceToPbInvoice(invoice),
@@ -94,23 +130,6 @@ func (i *InvoiceServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRes
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "invoice")
 	}
-
-	log.Infof("starting PDF operation")
-	go func() {
-		rw := &util.RawInvoice{}
-
-		err := json.Unmarshal([]byte(invoice.RawInvoice.String()), rw)
-		if err != nil {
-			log.Errorf("PDF operation failure: failed to Unmarshal RawInvoice JSON to rawInvoice struct %v", err)
-		}
-
-		err = generateInvoicePDF(rw, defaultTemplate, filepath.Join(pdfFolder, invoiceId.String()+".pdf"))
-		if err != nil {
-			log.Errorf("PDF operation failure failed to generate invoice PDF: %v", err)
-		}
-
-		log.Infof("stopping PDF operation")
-	}()
 
 	return &pb.GetResponse{
 		Invoice: dbInvoiceToPbInvoice(invoice),
@@ -218,7 +237,6 @@ func dbInvoiceToPbInvoice(invoice *db.Invoice) *pb.Invoice {
 	//TODO: error handling
 
 	if err == nil {
-		val.FileURL = fmt.Sprintf("http://{API_ENDPOINT}/pdf/%s.pdf", invoice.Id.String())
 		inv.RawInvoice = val
 	}
 
