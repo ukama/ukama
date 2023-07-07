@@ -19,11 +19,9 @@ const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
 const SETTING_MENU = [
-  { id: "personal-settings", name: 'Personal settings' },
+  { id: "personal-settings", name: 'My Account' },
   { id: "billing", name: 'Billing' },
-  { id: "network-settings", name: 'Network Settings' },
-  { id: "alerts", name: 'Alerts' },
-  { id: "console-settings", name: 'Console Settings' },
+  { id: "appearance", name: 'Appearance' },
 ];
 const NODE_ACTIONS = ['Turn node off', 'Restart', 'Turn RF off'];
 const TABLE_EXPORT_OPTIONS = [
