@@ -11,6 +11,7 @@
 #define JSON_TYPES_H_
 
 #define JTAG_NODE_INFO "nodeInfo"
-#define JTAG_UUID      "UUID"
+#define JTAG_NODE_ID   "UUID"
+#define JTAG_TYPE      "type"
 
 #endif /* JSON_TYPES_H_ */

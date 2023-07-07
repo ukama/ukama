@@ -10,6 +10,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include "usys_types.h"
+
 /* Service configuration */
 typedef struct {
 
@@ -18,6 +20,8 @@ typedef struct {
     int   nodedPort;
     int   notifydPort;
     char  *nodeID;
+    char  *nodeType;
+    bool  clientMode;
 } Config;
 
 #endif /* CONFIG_H_ */

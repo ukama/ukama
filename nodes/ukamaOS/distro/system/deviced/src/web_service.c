@@ -10,6 +10,7 @@
 #include "web_service.h"
 #include "web_client.h"
 #include "httpStatus.h"
+#include "config.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
@@ -54,11 +55,23 @@ int web_service_cb_post_reboot(const URequest *request,
                                 UResponse *response,
                                 void *epConfig) {
 
-    int ret = STATUS_NOK;
     char *id=NULL;
-    JsonObj *json=NULL;
+    Config *config=NULL;
+
+    config = (Config *)epConfig;
 
     id = u_map_get(request->map_url, "id");
+    if (id == NULL) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+    } else if (strcmp(id, config->nodeID) != 0) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+    }
+
+    /* Send alarm to notify.d, wait few sec and reboot linux */
+    process_reboot(config);
+
     ulfius_set_empty_body_response(response, HttpStatus_Accepted);
 
     return U_CALLBACK_CONTINUE;

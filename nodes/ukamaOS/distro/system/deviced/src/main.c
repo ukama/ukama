@@ -56,12 +56,13 @@ void usage() {
     usys_puts("--p, --port <port>             Local listening port");
     usys_puts("--n, --notify-port <port>      Notify.d port");
     usys_puts("--d, --noded-port <port>       Node.d port");
+    usys_puts("--c, --client-mode             Run as client");
     usys_puts("--v, --version                 Software version");
 }
 
 int main(int argc, char **argv) {
 
-    int opt, optIdx;
+    int opt, optIdx, clientMode=USYS_FALSE;
     char *debug        = DEF_LOG_LEVEL;
     char *port         = DEF_SERVICE_PORT;
     char *notifyPort   = DEF_NOTIFY_PORT;
@@ -121,6 +122,10 @@ int main(int argc, char **argv) {
             }
             break;
 
+        case 'm':
+            clientMode = USYS_TRUE;
+            break;
+
         default:
             usage();
             usys_exit(0);
@@ -133,6 +138,8 @@ int main(int argc, char **argv) {
     serviceConfig.nodedPort    = usys_atoi(nodedPort);
     serviceConfig.notifydPort  = usys_atoi(notifyPort);
     serviceConfig.nodeID       = NULL;
+    serviceConfig.nodeType     = NULL;
+    serviceConfig.clientMode   = clientMode;
 
     usys_log_debug("Starting %s ...", SERVICE_NAME);
 
@@ -146,7 +153,7 @@ int main(int argc, char **argv) {
                       SERVICE_NAME,
                       DEF_NODE_ID);
     } else {
-        if (get_nodeid_from_noded(&serviceConfig) == STATUS_NOK) {
+        if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
             usys_log_error("%s: unable to connect with node.d", SERVICE_NAME);
             goto done;
         }

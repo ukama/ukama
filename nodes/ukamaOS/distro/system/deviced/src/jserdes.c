@@ -84,7 +84,8 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
  *}
  *
  */
-bool json_deserialize_node_id(char **nodeID, json_t *json) {
+
+bool json_deserialize_node_info(char **data, char *tag, json_t *json) {
 
     json_t *jNodeInfo=NULL;
 
@@ -95,16 +96,15 @@ bool json_deserialize_node_id(char **nodeID, json_t *json) {
         log_error("Missing mandatory %s from JSON", JTAG_NODE_INFO);
         return USYS_FALSE;
     }
-    
-    if (get_json_entry(jNodeInfo, JTAG_UUID, JSON_STRING,
-                       nodeID, NULL, NULL) == USYS_FALSE) {
-        log_error("Error deserializing node info");
-        json_log(json);
-        *nodeID = NULL;
 
+    if (get_json_entry(jNodeInfo, tag, JSON_STRING,
+                       data, NULL, NULL) == USYS_FALSE) {
+        log_error("Error deserializing node info. tag: %s", tag);
+        json_log(json);
+        *data = NULL;
         return USYS_FALSE;
     }
-    
+
     return USYS_TRUE;
 }
 

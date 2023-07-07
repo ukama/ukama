@@ -8,6 +8,7 @@
  */
 
 #include "web_client.h"
+#include "json_types.h"
 #include "deviced.h"
 #include "config.h"
 #include "usys_log.h"
@@ -73,7 +74,8 @@ static URequest* wc_create_http_request(char *url,
 
 static int wc_send_node_info_request(char *url,
                                      char *method,
-                                     char **nodeID) {
+                                     char **nodeID,
+                                     char **nodeType) {
 
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
@@ -95,8 +97,9 @@ static int wc_send_node_info_request(char *url,
     if (httpResp->status == 200) {
         json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
-            ret = json_deserialize_node_id(nodeID, json);
-            if (!ret) {
+            json_deserialize_node_info(nodeID,   JTAG_NODE_ID, json);
+            json_deserialize_node_info(nodeType, JTAG_TYPE,    json);
+            if (nodeID == NULL || nodeType == NULL) {
                 usys_log_error("Failed to parse NodeInfo response from noded.");
                 return STATUS_NOK;
             }
@@ -121,18 +124,21 @@ cleanup:
     return ret;
 }
 
-int get_nodeid_from_noded(Config *config) {
+int get_nodeid_and_type_from_noded(Config *config) {
 
     char url[128]={0};
 
     sprintf(url,"http://%s:%d%s", DEF_NODED_HOST,
             config->nodedPort, DEF_NODED_EP);
 
-    if (wc_send_node_info_request(url, "GET", &config->nodeID) == STATUS_NOK) {
+    if (wc_send_node_info_request(url,
+                                  "GET",
+                                  &config->nodeID,
+                                  &config->nodeType) == STATUS_NOK) {
         usys_log_error("Failed to parse NodeInfo response from noded.");
         return STATUS_NOK;
     }
-    
+
     usys_log_info("%s: Node ID: %s", SERVICE_NAME, config->nodeID);
 
     return STATUS_OK;
