@@ -1,7 +1,4 @@
-import {
-  HorizontalContainer,
-  HorizontalContainerJustify,
-} from '@/styles/global';
+import { HorizontalContainerJustify } from '@/styles/global';
 import { Button, Typography } from '@mui/material';
 
 type TableHeaderProps = {
@@ -18,12 +15,10 @@ const TableHeader = ({
   showSecondaryButton,
 }: TableHeaderProps) => {
   return (
-    <HorizontalContainerJustify sx={{ marginBottom: '18px' }}>
-      <HorizontalContainer>
-        <Typography variant="h6" marginRight="2px">
-          {title}
-        </Typography>
-      </HorizontalContainer>
+    <HorizontalContainerJustify>
+      <Typography variant="body2" fontWeight={600}>
+        {title}
+      </Typography>
       {showSecondaryButton && (
         <Button
           variant="outlined"

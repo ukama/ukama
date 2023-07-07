@@ -34,7 +34,7 @@ const ManageMenu = ({
       py: 2,
       px: 2,
       width: 258,
-      maxHeight: 320,
+      maxHeight: 224,
       overflow: 'auto',
       height: 'inderit',
       borderRadius: '4px',
@@ -96,9 +96,9 @@ export default function Page() {
         <>
           {menu === 'personal-settings' && <PersonalSettings />}
           {menu === 'billing' && <Billing />}
-          {menu === 'network-settings' && <NetworkSettings />}
-          {menu === 'alerts' && <Alerts />}
-          {menu === 'console-settings' && <ConsoleSettings />}
+          {/* {menu === 'network-settings' && <NetworkSettings />}
+          {menu === 'alerts' && <Alerts />} */}
+          {menu === 'appearance' && <ConsoleSettings />}
         </>
       </LoadingWrapper>
     </Stack>

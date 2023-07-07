@@ -3,41 +3,44 @@ import { NoBillYet } from '@/public/svg';
 import { RoundedCard } from '@/styles/global';
 import { Grid, Stack, Typography } from '@mui/material';
 import CurrentBill from '../CurrentBill';
-import PaymentCard from '../PaymentCard';
+import NotificationContainer from '../NotificationContainer';
 import SimpleDataTable from '../SimpleDataTable';
 import TableHeader from '../TableHeader';
 
 interface ICurrentBillTab {
-  loading: boolean;
   data: any;
+  loading: boolean;
+  planName: string;
   totalAmount: string;
   currentBill: string;
-  planName: string;
 }
 
 const CurrentBillTab = ({
-  loading,
   data,
+  loading,
+  planName,
   totalAmount,
   currentBill,
-  planName,
 }: ICurrentBillTab) => {
   return (
     <Grid container item spacing={2}>
-      <Grid xs={12} md={5} item>
-        <CurrentBill loading={loading} amount={currentBill} plan={planName} />
+      <Grid xs={12} md={6} item>
+        <CurrentBill loading={loading} amount={currentBill} />
       </Grid>
-      <Grid xs={12} md={7} item>
-        <PaymentCard
+      <Grid xs={12} md={6} item>
+        {/* Will be part of phase 2
+         <PaymentCard
           selectedPM={''}
           onChangePM={() => {}}
           title={'Payment settings'}
           paymentMethodData={[]}
           onAddPaymentMethod={() => {}}
-        />
+        /> */}
+        <NotificationContainer />
       </Grid>
+
       <Grid xs={12} item>
-        <RoundedCard>
+        <RoundedCard radius="4px">
           <TableHeader
             title={'Billing breakdown'}
             showSecondaryButton={false}
