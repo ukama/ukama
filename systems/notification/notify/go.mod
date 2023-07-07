@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/notification/notify
 
-go 1.17
+go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
@@ -12,6 +12,7 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang/protobuf v1.5.2
 	github.com/loopfz/gadgeto v0.11.2
+	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/sirupsen/logrus v1.9.0
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.8.1
@@ -25,6 +26,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect

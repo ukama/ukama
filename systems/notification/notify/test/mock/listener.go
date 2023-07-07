@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/notification/notify/internal"
-	spec "github.com/ukama/ukama/systems/notification/notify/specs/notify/spec"
+
 	"github.com/ukama/ukama/systems/common/msgbus"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/protobuf/proto"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
 
 var mockMsgClient msgbus.IMsgBus
@@ -67,7 +69,7 @@ func EvtMsgHandlerCB(d amqp.Delivery, done chan<- bool) {
 
 	// Add Device Response
 	case routingKey:
-		nMsg := &spec.NotificationMsg{}
+		nMsg := &pb.NotificationMsg{}
 
 		err := proto.Unmarshal(d.Body, nMsg)
 		if err != nil {

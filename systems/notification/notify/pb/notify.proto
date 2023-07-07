@@ -1,8 +1,10 @@
 syntax="proto3";
 
-option go_package = "specs/notify/spec";
+option go_package = "github.com/ukama/ukama/systems/notification/notify/pb/gen";
 
-package ukama.systems.notification.notify.v1;
+import "validator.proto";
+
+package ukama.notification.notify.v1;
 
 // Virtual Node Status update event 
 message NotificationMsg  {
