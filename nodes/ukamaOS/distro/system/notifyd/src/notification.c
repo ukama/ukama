@@ -143,12 +143,15 @@ int notify_process_incoming_generic_notification(JsonObj *json, char *type,
                        notification->serviceName,
                        notification->propertyName,
                        notification->propertyValue);
+        free_notification(notification);
         return STATUS_NOK;
     }
 
     if (json_serialize_notification(&jNotify, notification, type,
                                     config->nodeID, statusCode) == USYS_FALSE) {
         usys_log_error("Unable to serialize the JSON object");
+        free_notification(notification);
+        json_free(&jNotify);
         return STATUS_NOK;
     }
     json_log(jNotify);
@@ -156,10 +159,13 @@ int notify_process_incoming_generic_notification(JsonObj *json, char *type,
     if (notify_send_notification(jNotify, config) != STATUS_OK) {
         usys_log_error("Failed to forward notification. Service: %s",
                        notification->serviceName);
+        free_notification(notification);
+        json_free(&jNotify);
         return STATUS_NOK;
     }
 
     json_free(&jNotify);
+    free_notification(notification);
 
     return STATUS_OK;
 }
