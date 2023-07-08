@@ -148,10 +148,12 @@ int main(int argc, char **argv) {
 
     /* Read Node Info from noded */
     if (getenv(ENV_DEVICED_DEBUG_MODE)) {
-       serviceConfig.nodeID = strdup(DEF_NODE_ID);
-       usys_log_debug("%s: using default Node ID: %s",
+       serviceConfig.nodeID   = strdup(DEF_NODE_ID);
+       serviceConfig.nodeType = strdup(DEF_NODE_TYPE);
+       usys_log_debug("%s: using default Node ID: %s Type: %s",
                       SERVICE_NAME,
-                      DEF_NODE_ID);
+                      DEF_NODE_ID,
+                      DEF_NODE_TYPE);
     } else {
         if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
             usys_log_error("%s: unable to connect with node.d", SERVICE_NAME);

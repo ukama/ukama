@@ -30,6 +30,7 @@
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
 #define DEF_NOTIFY_EP          "notify/v1/alert/"
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
+#define DEF_NODE_TYPE          "tower"
 #define ENV_DEVICED_DEBUG_MODE "DEVICED_DEBUG_MODE"
 
 #define EP_BS                  "/"
