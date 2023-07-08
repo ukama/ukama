@@ -9,8 +9,10 @@
 
 #include "web_client.h"
 #include "json_types.h"
+#include "http_status.h"
 #include "deviced.h"
 #include "config.h"
+
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
@@ -126,7 +128,7 @@ cleanup:
 
 int get_nodeid_and_type_from_noded(Config *config) {
 
-    char url[128]={0};
+    char url[128] = {0};
 
     sprintf(url,"http://%s:%d%s", DEF_NODED_HOST,
             config->nodedPort, DEF_NODED_EP);
@@ -142,4 +144,47 @@ int get_nodeid_and_type_from_noded(Config *config) {
     usys_log_info("%s: Node ID: %s", SERVICE_NAME, config->nodeID);
 
     return STATUS_OK;
+}
+
+int wc_send_alarm_to_notifyd(Config *config) {
+
+    int ret = USYS_OK;
+    char url[128] = {0};
+    JsonObj *json = NULL;
+    UResponse *httpResp = NULL;
+    URequest *httpReq = NULL;
+
+    sprintf(url,"http://%s:%d%s%s", DEF_NOTIFY_HOST,
+            config->notifydPort, DEF_NOTIFY_EP, config->serviceName);
+
+    if (json_serialize_alert_notification(&json, config) == USYS_FALSE) {
+        usys_log_error("Unable to serialize the notification");
+        return USYS_NOK;
+    }
+
+    httpReq = wc_create_http_request(url, "POST", json);
+    if (!httpReq) {
+        json_decref(json);
+        return USYS_NOK;
+    }
+
+    ret = wc_send_http_request(httpReq, &httpResp);
+    if (ret != STATUS_OK || httpResp->status != HttpStatus_Accepted) {
+        usys_log_error("Failed to send alarm to notiy.d at: %s code: %d",
+                       url, httpResp->status);
+    }
+
+    /* cleaup code */
+    json_decref(json);
+    if (httpReq) {
+        ulfius_clean_request(httpReq);
+        usys_free(httpReq);
+    }
+
+    if (httpResp) {
+        ulfius_clean_response(httpResp);
+        usys_free(httpResp);
+    }
+
+    return ret;
 }

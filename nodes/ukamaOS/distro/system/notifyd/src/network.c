@@ -76,6 +76,9 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("event/:service"), 0,
                                &web_service_cb_post_event, config);
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("alert/:service"), 0,
+                               &web_service_cb_post_event, config);
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("alert/:service"), 0,
                                &web_service_cb_ping, config);

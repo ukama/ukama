@@ -19,5 +19,6 @@ typedef struct _u_request   URequest;
 typedef struct _u_response  UResponse;
 
 int get_nodeid_and_type_from_noded(Config *config);
+int wc_send_alarm_to_notifyd(Config *config);
 
 #endif /* WEB_CLIENT_H_ */

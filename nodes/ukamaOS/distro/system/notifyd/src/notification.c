@@ -39,6 +39,11 @@ NotifyHandler handler[MAX_SERVICE_COUNT] = {
         .alertHandler = &notify_process_incoming_generic_notification,
         .eventHandler = &notify_process_incoming_generic_notification,
     },
+    {
+        .service = "deviced",
+        .alertHandler = &notify_process_incoming_generic_notification,
+        .eventHandler = &notify_process_incoming_generic_notification,
+    },
 };
 
 ServiceHandler find_handler(const char* service, char* type) {

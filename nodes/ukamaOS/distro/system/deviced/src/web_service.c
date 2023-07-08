@@ -9,13 +9,15 @@
 
 #include "web_service.h"
 #include "web_client.h"
-#include "httpStatus.h"
+#include "http_status.h"
 #include "config.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
+
+extern void process_reboot(Config *config);
 
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
@@ -43,7 +45,6 @@ int web_service_cb_post_restart(const URequest *request,
 
     int ret = STATUS_NOK;
     char *id=NULL;
-    JsonObj *json=NULL;
 
     id = u_map_get(request->map_url, "id");
     ulfius_set_empty_body_response(response, HttpStatus_Accepted);

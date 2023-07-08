@@ -8,12 +8,15 @@
  */
 
 #include "web_service.h"
+#include "deviced.h"
+#include "json_types.h"
+#include "config.h"
+
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
 #include "usys_types.h"
-#include "json_types.h"
 
 void json_log(json_t *json) {
 
@@ -41,7 +44,7 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
     }
 
     switch(type) {
-    case (JSON_STRING): 
+    case (JSON_STRING):
         *strValue = strdup(json_string_value(jEntry));
         break;
     case (JSON_INTEGER):
@@ -54,6 +57,24 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
         log_error("Invalid type for json key-value: %d", type);
         return USYS_FALSE;
     }
+
+    return USYS_TRUE;
+}
+
+bool json_serialize_alert_notification(JsonObj **json,
+                                       Config *config) {
+
+    *json = json_object();
+    if (!*json) return USYS_FALSE;
+
+    json_object_set_new(*json, JTAG_SERVICE_NAME,
+                        json_string(config->serviceName));
+    json_object_set_new(*json, JTAG_SEVERITY, json_string(ALARM_HIGH));
+    json_object_set_new(*json, JTAG_TIME,     json_integer(time(NULL)));
+    json_object_set_new(*json, JTAG_NAME,     json_string(ALARM_NODE));
+    json_object_set_new(*json, JTAG_VALUE,    json_string(ALARM_REBOOT));
+    json_object_set_new(*json, JTAG_UNITS,    json_string(EMPTY_STRING));
+    json_object_set_new(*json, JTAG_DETAILS,  json_string(ALARM_REBOOT_DESCRP));
 
     return USYS_TRUE;
 }
@@ -84,7 +105,6 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
  *}
  *
  */
-
 bool json_deserialize_node_info(char **data, char *tag, json_t *json) {
 
     json_t *jNodeInfo=NULL;

@@ -14,4 +14,14 @@
 #define JTAG_NODE_ID   "UUID"
 #define JTAG_TYPE      "type"
 
+#define JTAG_SERVICE_NAME   "serviceName"
+#define JTAG_SEVERITY       "severity"
+#define JTAG_TIME           "time"
+#define JTAG_TYPE           "type"
+#define JTAG_SEVERITY       "severity"
+#define JTAG_DETAILS        "details"
+#define JTAG_UNITS          "units"
+#define JTAG_NAME           "name"
+#define JTAG_VALUE          "value"
+
 #endif /* JSON_TYPES_H_ */
