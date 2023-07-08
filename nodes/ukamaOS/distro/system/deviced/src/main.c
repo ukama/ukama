@@ -51,13 +51,13 @@ void usage() {
 
     usys_puts("Usage: device.d [options]");
     usys_puts("Options:");
-    usys_puts("--h, --help                    Help menu");
-    usys_puts("--l, --logs <TRACE|DEBUG|INFO> Log level for the process");
-    usys_puts("--p, --port <port>             Local listening port");
-    usys_puts("--n, --notify-port <port>      Notify.d port");
-    usys_puts("--d, --noded-port <port>       Node.d port");
-    usys_puts("--c, --client-mode             Run as client");
-    usys_puts("--v, --version                 Software version");
+    usys_puts("-h, --help                    Help menu");
+    usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
+    usys_puts("-p, --port <port>             Local listening port");
+    usys_puts("-n, --notify-port <port>      Notify.d port");
+    usys_puts("-d, --noded-port <port>       Node.d port");
+    usys_puts("-c, --client-mode             Run as client");
+    usys_puts("-v, --version                 Software version");
 }
 
 int main(int argc, char **argv) {
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "h:p:l:v:n:d", longOptions,
+        opt = usys_getopt_long(argc, argv, "vh:p:l:n:d", longOptions,
                                &optIdx);
         if (opt == -1) {
             break;
