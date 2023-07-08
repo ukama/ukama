@@ -32,7 +32,7 @@ static int start_framework(Config *config, UInst *instance) {
 }
 
 static void setup_webservice_endpoints(Config *config, UInst *instance) {
-    
+
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
@@ -40,10 +40,12 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("reboot/:id"), 0,
                                &web_service_cb_post_reboot, config);
-    
-    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("restart/:id"), 0,
-                               &web_service_cb_post_restart, config);
+
+    if (config->clientMode == USYS_FALSE) {
+        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                                   API_RES_EP("restart/:id"), 0,
+                                   &web_service_cb_post_restart, config);
+    }
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
