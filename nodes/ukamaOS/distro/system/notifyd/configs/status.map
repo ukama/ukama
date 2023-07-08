@@ -1,3 +1,5 @@
-#service-name   module-name     propertyName    type    severity    code    
-noded           TRX             temp1Sens       alarm   high        8401
-noded           COM             temp2           event   low         8700
+#service-name   module-name     propertyName    type    severity 	code    
+noded           TRX             temp1Sens       alarm   high        	8401
+noded           COM             temp2           event   low         	8700
+deviced 	none		node		event	high		8100
+	    

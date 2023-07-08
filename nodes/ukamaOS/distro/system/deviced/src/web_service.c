@@ -68,12 +68,13 @@ int web_service_cb_post_reboot(const URequest *request,
     } else if (strcmp(id, config->nodeID) != 0) {
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
+    } else {
+
+        /* Send alarm to notify.d, wait few sec and reboot linux */
+        process_reboot(config);
+
+        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
     }
-
-    /* Send alarm to notify.d, wait few sec and reboot linux */
-    process_reboot(config);
-
-    ulfius_set_empty_body_response(response, HttpStatus_Accepted);
 
     return U_CALLBACK_CONTINUE;
 }

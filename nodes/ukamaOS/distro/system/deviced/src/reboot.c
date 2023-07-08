@@ -23,6 +23,7 @@ void* reboot_node(void *args) {
         /* send alarm to notify.d */
         if (wc_send_alarm_to_notifyd(config) == USYS_NOK) {
             usys_log_error("Unable to send notification to notify.d");
+            usys_log_error("Reboot not processed");
             return;
         }
 
@@ -35,9 +36,11 @@ void* reboot_node(void *args) {
         /* xxx - to implement */
 
         /* reboot */
-        sync();
-        setuid(0);
-        reboot(RB_AUTOBOOT);
+        if (getenv(ENV_DEVICED_DEBUG_MODE) == NULL) {
+            sync();
+            setuid(0);
+            reboot(RB_AUTOBOOT);
+        }
     }
 }
 
@@ -45,7 +48,7 @@ void process_reboot(Config *config) {
 
     pthread_t thread;
     
-    if (config->clientMode) {
+    if (config->clientMode && getenv(ENV_DEVICED_DEBUG_MODE) == NULL) {
         sync();
         setuid(0);
         reboot(RB_AUTOBOOT);

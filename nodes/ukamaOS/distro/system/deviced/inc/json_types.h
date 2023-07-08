@@ -18,6 +18,7 @@
 #define JTAG_SEVERITY       "severity"
 #define JTAG_TIME           "time"
 #define JTAG_TYPE           "type"
+#define JTAG_MODULE         "module"
 #define JTAG_SEVERITY       "severity"
 #define JTAG_DETAILS        "details"
 #define JTAG_UNITS          "units"

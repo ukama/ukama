@@ -136,12 +136,13 @@ int notify_process_incoming_generic_notification(JsonObj *json, char *type,
     statusCode =
         getCode(config->entries, config->numEntries, type, notification);
     if (statusCode == -1) {
-        usys_log_error("Unable to process incoming event/alarm. Ignoring"
-                       "name: %s module: %s property: %s type: %s",
+        usys_log_error("No matching code found for received event/alarm");
+        usys_log_error("Unable to process incoming event/alarm. Ignoring.");
+        usys_log_error("type: %s service: %s name: %s value: %s",
+                       type,
                        notification->serviceName,
-                       notification->module,
                        notification->propertyName,
-                       type);
+                       notification->propertyValue);
         return STATUS_NOK;
     }
 

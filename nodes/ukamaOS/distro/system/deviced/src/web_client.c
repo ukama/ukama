@@ -150,6 +150,7 @@ int wc_send_alarm_to_notifyd(Config *config) {
 
     int ret = USYS_OK;
     char url[128] = {0};
+    char *jsonStr=NULL;
     JsonObj *json = NULL;
     UResponse *httpResp = NULL;
     URequest *httpReq = NULL;
@@ -157,7 +158,7 @@ int wc_send_alarm_to_notifyd(Config *config) {
     sprintf(url,"http://%s:%d%s%s", DEF_NOTIFY_HOST,
             config->notifydPort, DEF_NOTIFY_EP, config->serviceName);
 
-    if (json_serialize_alert_notification(&json, config) == USYS_FALSE) {
+    if (json_serialize_alarm_notification(&json, config) == USYS_FALSE) {
         usys_log_error("Unable to serialize the notification");
         return USYS_NOK;
     }
@@ -168,10 +169,17 @@ int wc_send_alarm_to_notifyd(Config *config) {
         return USYS_NOK;
     }
 
+    jsonStr = json_dumps(json, 0);
+    usys_log_debug("Sending Notification. URL: %s method: POST, json: %s",
+                   url, jsonStr);
+    free(jsonStr);
+
     ret = wc_send_http_request(httpReq, &httpResp);
     if (ret != STATUS_OK || httpResp->status != HttpStatus_Accepted) {
-        usys_log_error("Failed to send alarm to notiy.d at: %s code: %d",
-                       url, httpResp->status);
+        usys_log_error("Failed sending alarm to notiy.d: %s Code: %d Str: %s",
+                       url, httpResp->status,
+                       HttpStatusStr(httpResp->status));
+        ret = USYS_NOK;
     }
 
     /* cleaup code */

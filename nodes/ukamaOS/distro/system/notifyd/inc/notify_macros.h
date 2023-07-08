@@ -31,6 +31,6 @@
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define DEF_MAP_FILE           "status.map"
 
-#define ENV_NOTIFY_DEBUG_MODE  "NOTIFY_DEBUG_MODE"
+#define ENV_NOTIFY_DEBUG_MODE  "NOTIFYD_DEBUG_MODE"
 
 #endif /* INC_NOTIFY_MACROS_H_ */
