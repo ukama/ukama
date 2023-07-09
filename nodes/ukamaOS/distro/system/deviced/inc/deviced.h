@@ -61,4 +61,10 @@ typedef struct _u_response  UResponse;
 typedef json_t              JsonObj;
 typedef json_error_t        JsonErrObj;
 
+typedef struct {
+
+    void* config;
+    int   retCode;
+} ThreadArgs;
+
 #endif /* DEVICED_H_ */

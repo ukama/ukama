@@ -146,7 +146,7 @@ int get_nodeid_and_type_from_noded(Config *config) {
     return STATUS_OK;
 }
 
-int wc_send_alarm_to_notifyd(Config *config) {
+int wc_send_alarm_to_notifyd(Config *config, int *retCode) {
 
     int ret = USYS_OK;
     char url[128] = {0};
@@ -182,6 +182,8 @@ int wc_send_alarm_to_notifyd(Config *config) {
         ret = USYS_NOK;
     }
 
+    *retCode = httpResp->status;
+
     /* cleaup code */
     json_decref(json);
     if (httpReq) {
@@ -197,7 +199,7 @@ int wc_send_alarm_to_notifyd(Config *config) {
     return ret;
 }
 
-int wc_send_reboot_to_client(Config *config) {
+int wc_send_reboot_to_client(Config *config, int *retCode) {
 
     int ret = USYS_OK;
     char url[128] = {0};
@@ -225,6 +227,8 @@ int wc_send_reboot_to_client(Config *config) {
                        HttpStatusStr(httpResp->status));
         ret = USYS_NOK;
     }
+
+    *retCode = httpResp->status;
 
     /* cleaup code */
     if (httpReq) {
