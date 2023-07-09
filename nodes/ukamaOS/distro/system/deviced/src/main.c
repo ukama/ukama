@@ -30,6 +30,7 @@ static UsysOption longOptions[] = {
     { "noded-port",  required_argument, 0, 'd' },
     { "client-host", required_argument, 0, 'H' },
     { "client-port", required_argument, 0, 'P' },
+    { "client-mode", no_argument, 0, 'c' },
     { "help",        no_argument, 0, 'h' },
     { "version",     no_argument, 0, 'v' },
     { 0, 0, 0, 0 }
@@ -82,7 +83,7 @@ int main(int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "vh:p:l:n:d:H", longOptions,
+        opt = usys_getopt_long(argc, argv, "cvh:p:l:n:d:H", longOptions,
                                &optIdx);
         if (opt == -1) {
             break;
@@ -109,7 +110,6 @@ int main(int argc, char **argv) {
 
         case 'l':
             debug = optarg;
-
             set_log_level(debug);
             break;
 
@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
             }
             break;
 
-        case 'm':
+        case 'c':
             clientMode = USYS_TRUE;
             break;
 
@@ -147,6 +147,11 @@ int main(int argc, char **argv) {
         }
     }
 
+    if (clientMode && strcmp(port, DEF_SERVICE_PORT) == 0) {
+        /* default port, when running in clientMode is different */
+        port = DEF_SERVICE_CLIENT_PORT;
+    }
+
     /* Service config update */
     serviceConfig.serviceName  = usys_strdup(SERVICE_NAME);
     serviceConfig.servicePort  = usys_atoi(port);
@@ -158,7 +163,8 @@ int main(int argc, char **argv) {
     serviceConfig.clientHost   = strdup(clientHost);
     serviceConfig.clientPort   = atoi(clientPort);
 
-    usys_log_debug("Starting %s ...", SERVICE_NAME);
+    usys_log_debug("Starting %s ... [client-mode:%d]",
+                   SERVICE_NAME, clientMode);
 
     /* Signal handler */
     signal(SIGINT, handle_sigint);
