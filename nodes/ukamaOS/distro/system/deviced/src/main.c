@@ -28,6 +28,8 @@ static UsysOption longOptions[] = {
     { "logs",        required_argument, 0, 'l' },
     { "notify-port", required_argument, 0, 'n' },
     { "noded-port",  required_argument, 0, 'd' },
+    { "client-host", required_argument, 0, 'H' },
+    { "client-port", required_argument, 0, 'P' },
     { "help",        no_argument, 0, 'h' },
     { "version",     no_argument, 0, 'v' },
     { 0, 0, 0, 0 }
@@ -57,6 +59,8 @@ void usage() {
     usys_puts("-n, --notify-port <port>      Notify.d port");
     usys_puts("-d, --noded-port <port>       Node.d port");
     usys_puts("-c, --client-mode             Run as client");
+    usys_puts("-H, --client-host             Host where client is running");
+    usys_puts("-P, --client-port             Port where client is running");
     usys_puts("-v, --version                 Software version");
 }
 
@@ -67,6 +71,8 @@ int main(int argc, char **argv) {
     char *port         = DEF_SERVICE_PORT;
     char *notifyPort   = DEF_NOTIFY_PORT;
     char *nodedPort    = DEF_NODED_PORT;
+    char *clientHost   = DEF_SERVICE_CLIENT_HOST;
+    char *clientPort   = DEF_SERVICE_CLIENT_PORT;
     UInst serviceInst;
     Config serviceConfig = {0};
 
@@ -76,7 +82,7 @@ int main(int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "vh:p:l:n:d", longOptions,
+        opt = usys_getopt_long(argc, argv, "vh:p:l:n:d:H", longOptions,
                                &optIdx);
         if (opt == -1) {
             break;
@@ -103,6 +109,7 @@ int main(int argc, char **argv) {
 
         case 'l':
             debug = optarg;
+
             set_log_level(debug);
             break;
 
@@ -126,6 +133,14 @@ int main(int argc, char **argv) {
             clientMode = USYS_TRUE;
             break;
 
+        case 'H':
+            clientHost = optarg;
+            break;
+
+        case 'P':
+            clientPort = optarg;
+            break;
+
         default:
             usage();
             usys_exit(0);
@@ -140,24 +155,29 @@ int main(int argc, char **argv) {
     serviceConfig.nodeID       = NULL;
     serviceConfig.nodeType     = NULL;
     serviceConfig.clientMode   = clientMode;
+    serviceConfig.clientHost   = strdup(clientHost);
+    serviceConfig.clientPort   = atoi(clientPort);
 
     usys_log_debug("Starting %s ...", SERVICE_NAME);
 
     /* Signal handler */
     signal(SIGINT, handle_sigint);
 
-    /* Read Node Info from noded */
-    if (getenv(ENV_DEVICED_DEBUG_MODE)) {
-       serviceConfig.nodeID   = strdup(DEF_NODE_ID);
-       serviceConfig.nodeType = strdup(DEF_NODE_TYPE);
-       usys_log_debug("%s: using default Node ID: %s Type: %s",
-                      SERVICE_NAME,
-                      DEF_NODE_ID,
-                      DEF_NODE_TYPE);
-    } else {
-        if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
-            usys_log_error("%s: unable to connect with node.d", SERVICE_NAME);
-            goto done;
+    /* Read Node Info from node.d */
+    if (serviceConfig.clientMode == USYS_FALSE) {
+        if (getenv(ENV_DEVICED_DEBUG_MODE)) {
+            serviceConfig.nodeID   = strdup(DEF_NODE_ID);
+            serviceConfig.nodeType = strdup(DEF_NODE_TYPE);
+            usys_log_debug("%s: using default Node ID: %s Type: %s",
+                           SERVICE_NAME,
+                           DEF_NODE_ID,
+                           DEF_NODE_TYPE);
+        } else {
+            if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
+                usys_log_error(
+                    "%s: unable to connect with node.d", SERVICE_NAME);
+                goto done;
+            }
         }
     }
 

@@ -13,6 +13,7 @@
 
 #include "config.h"
 #include "deviced.h"
+#include "web_client.h"
 
 void* reboot_node(void *args) {
 
@@ -24,16 +25,20 @@ void* reboot_node(void *args) {
         if (wc_send_alarm_to_notifyd(config) == USYS_NOK) {
             usys_log_error("Unable to send notification to notify.d");
             usys_log_error("Reboot not processed");
-            return;
+            pthread_exit(0);
         }
 
         usys_log_debug("Reboot alarm sent to notfy.d %ld", time(NULL));
 
         /* wait for few seconds */
         sleep(WAIT_BEFORE_REBOOT);
-       
+
         /* send command to client-mode device.d to restart */
-        /* xxx - to implement */
+        if (wc_send_reboot_to_client(config) == USYS_NOK) {
+            usys_log_error("Unable to send reboot to client device.d");
+            usys_log_error("Reboot not processed");
+            pthread_exit(0);
+        }
 
         /* reboot */
         if (getenv(ENV_DEVICED_DEBUG_MODE) == NULL) {
@@ -42,18 +47,25 @@ void* reboot_node(void *args) {
             reboot(RB_AUTOBOOT);
         }
     }
+    pthread_exit(0);
 }
 
 void process_reboot(Config *config) {
 
     pthread_t thread;
-    
-    if (config->clientMode && getenv(ENV_DEVICED_DEBUG_MODE) == NULL) {
-        sync();
-        setuid(0);
-        reboot(RB_AUTOBOOT);
+
+    if (config->clientMode) {
+        usys_log_debug("Rebooting in client mode");
+        if (getenv(ENV_DEVICED_DEBUG_MODE) == NULL) {
+            sync();
+            setuid(0);
+            reboot(RB_AUTOBOOT);
+            return;
+        }
+
         return;
     }
 
     pthread_create(&thread, NULL, reboot_node, (void *)config);
+    pthread_join(thread, 0);
 }

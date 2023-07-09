@@ -196,3 +196,46 @@ int wc_send_alarm_to_notifyd(Config *config) {
 
     return ret;
 }
+
+int wc_send_reboot_to_client(Config *config) {
+
+    int ret = USYS_OK;
+    char url[128] = {0};
+    UResponse *httpResp = NULL;
+    URequest *httpReq = NULL;
+
+    sprintf(url,"http://%s:%d%s%s",
+            config->clientHost,
+            config->clientPort,
+            URL_PREFIX,
+            API_RES_EP("reboot/"));
+
+    httpReq = wc_create_http_request(url, "POST", NULL);
+    if (!httpReq) {
+        return USYS_NOK;
+    }
+
+    usys_log_debug("Sending client reboot. URL: %s", url);
+
+    ret = wc_send_http_request(httpReq, &httpResp);
+    if (ret != STATUS_OK || httpResp->status != HttpStatus_Accepted) {
+        usys_log_error("Failed sending reboot to client device.d");
+        usys_log_error("URL: %s Code: %d Str: %s",
+                       url, httpResp->status,
+                       HttpStatusStr(httpResp->status));
+        ret = USYS_NOK;
+    }
+
+    /* cleaup code */
+    if (httpReq) {
+        ulfius_clean_request(httpReq);
+        usys_free(httpReq);
+    }
+
+    if (httpResp) {
+        ulfius_clean_response(httpResp);
+        usys_free(httpResp);
+    }
+
+    return ret;
+}

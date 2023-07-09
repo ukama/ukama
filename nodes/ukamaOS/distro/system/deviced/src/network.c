@@ -37,11 +37,16 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
                                API_RES_EP("ping"), 0,
                                &web_service_cb_ping, config);
 
-    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("reboot/:id"), 0,
-                               &web_service_cb_post_reboot, config);
+    if (config->clientMode == USYS_TRUE) {
+        /* Node ID is not requried in client-mode */
+        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                                   API_RES_EP("reboot/"), 0,
+                                   &web_service_cb_post_reboot, config);
+    } else {
+        ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                                   API_RES_EP("reboot/:id"), 0,
+                                   &web_service_cb_post_reboot, config);
 
-    if (config->clientMode == USYS_FALSE) {
         ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                    API_RES_EP("restart/:id"), 0,
                                    &web_service_cb_post_restart, config);

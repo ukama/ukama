@@ -19,9 +19,11 @@
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
-#define DEF_LOG_LEVEL          "TRACE"
-#define DEF_SERVICE_PORT       "8086"
-#define DEVICED_VERSION        "0.0.0"
+#define DEF_LOG_LEVEL           "TRACE"
+#define DEF_SERVICE_PORT        "8086"
+#define DEF_SERVICE_CLIENT_PORT "8087"
+#define DEF_SERVICE_CLIENT_HOST "localhost"
+#define DEVICED_VERSION         "0.0.1"
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NOTIFY_HOST        "localhost"

@@ -61,20 +61,24 @@ int web_service_cb_post_reboot(const URequest *request,
 
     config = (Config *)epConfig;
 
-    id = u_map_get(request->map_url, "id");
-    if (id == NULL) {
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-    } else if (strcmp(id, config->nodeID) != 0) {
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
-                                        HttpStatusStr(HttpStatus_BadRequest));
-    } else {
-
-        /* Send alarm to notify.d, wait few sec and reboot linux */
-        process_reboot(config);
-
-        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+    if (config->clientMode == USYS_FALSE) {
+        id = u_map_get(request->map_url, "id");
+        if (id == NULL) {
+            ulfius_set_string_body_response
+                (response, HttpStatus_BadRequest,
+                 HttpStatusStr(HttpStatus_BadRequest));
+            return U_CALLBACK_CONTINUE;
+        } else if (strcmp(id, config->nodeID) != 0) {
+            ulfius_set_string_body_response
+                (response, HttpStatus_BadRequest,
+                 HttpStatusStr(HttpStatus_BadRequest));
+            return U_CALLBACK_CONTINUE;
+        }
     }
+
+    /* Send alarm to notify.d, wait few sec and reboot linux */
+    process_reboot(config);
+    ulfius_set_empty_body_response(response, HttpStatus_Accepted);
 
     return U_CALLBACK_CONTINUE;
 }
