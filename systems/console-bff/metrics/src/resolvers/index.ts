@@ -1,21 +1,42 @@
-import WebSocket = require('ws')
 import { Resolvers } from '../../types'
+import {
+ removeKeyFromBucket,
+ retriveFromBucket,
+ storeInBucket,
+} from '../bucket'
+import WebSocket = require('ws')
+
+const getTimestamp = (count: string) =>
+ parseInt((Date.now() / 1000).toString()) + '-' + count
 
 const metricResolvers: Resolvers = {
  Query: {
   getMetrics: async (_, { input }, { pubSub }) => {
    const { type, orgId, userId } = input
-   const ws = new WebSocket('ws://localhost:8080')
+   const ws = new WebSocket(process.env.METRIC_API_GW)
+   ws.on('error', (e) => console.log(e))
 
-   ws.on('error', (e) => console.log('Error: ', e))
-
-   ws.on('open' as any, function open() {
-    ws.send('something')
+   ws.on('open', async function open() {
+    await storeInBucket(`${orgId}/${userId}/${type}`, getTimestamp('0'))
    })
 
-   ws.on('message' as any, function message(data) {
-    console.log('received: %s', data)
-    pubSub.publish(`metric-${input.type}`, `${orgId}/${userId}`, {
+   ws.on('message', async function message(data) {
+    const value = await retriveFromBucket(`${orgId}/${userId}/${type}`)
+    let occurance = value ? parseInt(value.split('-')[1]) : 0
+    occurance += 1
+
+    await storeInBucket(
+     `${orgId}/${userId}/${type}`,
+     getTimestamp(`${occurance}`)
+    )
+
+    if (occurance === 9) {
+     ws.close()
+     ws.terminate()
+     removeKeyFromBucket(`${orgId}/${userId}/${type}`)
+    }
+
+    pubSub.publish(`metric-${input.type}`, `${orgId}/${userId}/${type}`, {
      value: data.toString(),
     })
    })
@@ -29,10 +50,10 @@ const metricResolvers: Resolvers = {
  },
  Subscription: {
   getMetricEvent: {
-   subscribe: (_, { input }, { pubSub }) =>
-    pubSub.subscribe(`metric-${input.type}`, `${input.orgId}/${input.userId}`),
-   resolve: (payload) => {
-    console.log(payload)
+   subscribe: async (_, { input: { orgId, userId, type } }, { pubSub }) =>
+    pubSub.subscribe(`metric-${type}`, `${orgId}/${userId}/${type}`),
+   resolve: async (payload, { input: { orgId, userId, type } }) => {
+    await storeInBucket(`${orgId}/${userId}/${type}`, getTimestamp('0'))
     return payload
    },
   },
