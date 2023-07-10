@@ -1,11 +1,9 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"text/template"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -63,9 +61,8 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, status.Errorf(codes.InvalidArgument, "Email is required")
 	}
 
-	if req.GetName() ==""{
-
-		return nil,status.Errorf(codes.InvalidArgument,"Name is required")
+	if req.GetName() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Name is required")
 	}
 
 	link, err := generateInvitationLink()
@@ -74,15 +71,15 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	}
 	expiresAt := time.Now().Add(2 * time.Minute)
 
-invitationId:=uuid.NewV4()
+	invitationID := uuid.NewV4()
 	err = o.orgRepo.AddInvitation(
 		&db.Invitation{
-			Id:        invitationId,
+			Id:        invitationID,
 			Org:       req.GetOrg(),
-			Name: req.GetName(),
+			Name:      req.GetName(),
 			Link:      link,
 			Email:     req.GetEmail(),
-			Role:       pbRoleTypeToDb(req.GetRole()),
+			Role:      pbRoleTypeToDb(req.GetRole()),
 			ExpiresAt: expiresAt,
 			Status:    db.InvitationStatus(req.GetStatus()),
 		},
@@ -91,9 +88,9 @@ invitationId:=uuid.NewV4()
 		return nil, err
 	}
 
-	res,err:=o.orgRepo.GetByName(req.GetOrg())
-	if err!=nil{
-		return nil,err
+	res, err := o.orgRepo.GetByName(req.GetOrg())
+	if err != nil {
+		return nil, err
 	}
 
 	userRegistrySvc, err := o.RegistryUserService.GetClient()
@@ -105,55 +102,17 @@ invitationId:=uuid.NewV4()
 	if err != nil {
 		return nil, err
 	}
-	bodyTemplate := `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>
-  [Name of owner] has invited you to join [Organization
-name] as a [role name]
-  </title>
-</head>
-<body>
-  <h1>{{ .Values.OWNER}} has invited you to join {{ .Values.ORG}} as a {{ .Values.ROLE}}</h1>
-  
-  <p>Hi {{ .Values.EMAIL }},</p>
 
-  You have been invited to join {{ .Values.ORG}} as a {{ .Values.ROLE}}. This invitation will expire after 5 min. To accept the invitation and get started with Ukama Console, click the button below.</p>
-  <ul>
-	<li>Link: {{ .Values.LINK }}</li>
-	<li>Email ID: {{ .Values.EmailID }}</li>
-  </ul>
-  <p>Having trouble with the button? Use the following link instead: {{ .Values.LINK}}</p>
-</body>
-</html>
-`
-tmpl, err := template.New("email").Parse(bodyTemplate)
-if err != nil {
-	return nil, err
-}
+	emailBody, err := pkg.GenerateEmailBody(invitationID.String(), link, remoteUserResp.User.Name, res.Name, req.GetRole().String(), req.GetName())
+	if err != nil {
+		return nil, err
+	}
 
-var bodyBuffer bytes.Buffer
-err = tmpl.Execute(&bodyBuffer, map[string]interface{}{
-	"Values": map[string]interface{}{
-		"EmailID": invitationId.String(),
-		"LINK":link,
-		"OWNER":remoteUserResp.User.Name,
-		"ORG":res.Name,
-		"ROLE":req.GetRole(),
-	},
-})
-if err != nil {
-	return nil, err
-}
-
-emailBody := bodyBuffer.String()
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
-		Subject: "[Ukama] Team invite from "+res.Name,
+		Subject: "[Ukama] Team invite from " + res.Name,
 		Body:    emailBody,
-		Values: map[string]string{"EmailID": invitationId.String()},
+		Values:  map[string]string{"EmailID": invitationID.String()},
 	})
 
 	if err != nil {
@@ -757,7 +716,7 @@ func pbInvitationStatusToDb(status pb.InvitationStatus) db.InvitationStatus {
 func generateInvitationLink() (string, error) {
 	expirationTime := time.Now().Add(3 * 24 * time.Hour) // Set the expiration time to three days from now
 
-	link := "https://auth.dev.ukama.com/auth/registration"
+	link := "https://auth.dev.ukama.com/auth/login"
 	linkID := uuid.NewV4().String() 
 
 	expiringLink := fmt.Sprintf("%s?linkId=%s&expires=%d", link, linkID, expirationTime.Unix())
