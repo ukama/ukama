@@ -8,65 +8,87 @@ import (
 func GenerateEmailBody(invitationID string, link string, owner string, org string, role string, name string) (string, error) {
 	bodyTemplate := `
 	<!DOCTYPE html>
-	<html>
-	<head>
-	  <meta charset="UTF-8">
-	  <link rel="preconnect" href="https://fonts.googleapis.com">
-	  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	  <link href="https://fonts.googleapis.com/css2?family=Arial&display=swap" rel="stylesheet">
-	  <title>
-		{{ .Values.OWNER}} has invited you to join {{ .Values.ORG}} as a {{ .Values.ROLE}}
-	  </title>
-	  <style>
-	  h1 {
-		font-family: 'Google Font', sans-serif;
-		font-size: 1rem;
-	  }
-  
-	  body {
-		font-family: 'Arial', sans-serif;
-		text-align: center;
-	  }
-  
-	  .button {
-		display: inline-block;
-		padding: 10px 20px;
-		text-decoration: none;
-		background-color: #4285F4;
-		border-radius: 4px;
-		transition: background-color 0.3s ease;
-		with: 200px;
-	  }
-  
-	  .button:hover {
-		background-color: #3367D6;
-	  }
-  
-	  </style>
-	</head>
-	<body>
-	  <h1>{{ .Values.OWNER}} has invited you to join {{ .Values.ORG}} as a {{ .Values.ROLE}}</h1>
-	  
-	  <p>Hi {{ .Values.NAME }},</p>
-	
-	  <p>You have been invited to join {{ .Values.ORG}} as a {{ .Values.ROLE}}. This invitation will expire after 5 minutes. To accept the invitation and get started with Ukama Console, click the button below.</p>
-	  <a href="{{ .Values.LINK }}" class="button" style="color: #ffffff">ACCEPT TEAM INVITATION </a>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Arial&display=swap" rel="stylesheet">
+  <link rel="noopener" target="_blank" href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
+  <title>
+    {{ .Values.OWNER}} has invited you to join {{ .Values.ORG}} as a {{ .Values.ROLE}}
+  </title>
+  <style>
+  @import url(https://fonts.googleapis.com/css?family=Montserrat);
 
-	  <p>Having trouble with the button? Use the following link instead: <a href="{{ .Values.LINK}}">{{ .Values.LINK}}</a></p>
-	  Email ID: {{ .Values.EmailID }} (You can use this email to follow up in case of any issues)
-	  <div>
-	  Thanks,
-	  The Ukama Team
-	  </div><br>
-	  <span style="white-space: pre-line">
-	  <div style="font-size:8px,font-style:normal">© Ukama Inc. 1233 Quarry Lane #115, Pleasanton, CA 94566</div>
-	  <div><img width=325 height=25 style="margin-top:3px" src="https://i.ibb.co/7yHp3jV/Screen-Shot-2022-02-28-at-18-45-11.png" alt="Ukama-verification-Email-footer" border="0"></div>
-	  </span>
-	  </div>
-	</body>
-	</html>
-	`
+  h1 {
+    font-family: 'Google Font', sans-serif;
+    font-size: 1rem;
+  }
+
+  body {
+	font-family: 'Roboto';
+    font-style: normal;
+    text-align: center;
+	width:600px;
+  }
+
+  .button {
+    display: inline-block;
+    padding: 10px 20px;
+    text-decoration: none;
+    background-color: #4285F4;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    with: 200px;
+  }
+
+  .button:hover {
+    background-color: #3367D6;
+  }
+  
+  .social-icons {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .social-icons a {
+    margin: 0 10px;
+  }
+
+  </style>
+</head>
+<body>
+<div style="width:600px">
+
+  <h1>{{ .Values.OWNER}} has invited you to join {{ .Values.ORG}} as a {{ .Values.ROLE}}</h1>
+  
+  <p>Hi {{ .Values.NAME }},</p>
+
+  <p>You have been invited to join {{ .Values.ORG}} as a {{ .Values.ROLE}}. This invitation will expire after <strong> 5 minutes</strong>. To accept the invitation and get started with Ukama Console, click the button below.</p>
+  <a href="{{ .Values.LINK }}" class="button" style="color: #ffffff">ACCEPT TEAM INVITATION</a>
+
+  <p>Having trouble with the button? Use the following link instead: <a href="{{ .Values.LINK}}">{{ .Values.LINK}}</a></p>
+  Email ID: {{ .Values.EmailID }} (You can use this email to follow up in case of any issues)
+  <br>
+  <div style="white-space: pre">
+Thanks,
+The Ukama Team
+</div><br>
+  
+<div style="font-size:8px,font-style:normal">© Ukama Inc. 1233 Quarry Lane #115, Pleasanton, CA 94566</div>
+  <div class="social-icons">
+  <a href="https://www.linkedin.com/company/ukama/"><img src="https://i.ibb.co/mhHHRWc/slack-brands-1.png" alt="slack-brands-1" border="0" style="width:30px;height:30px" /></a>
+  <a href="https://www.linkedin.com/company/ukama/"><img src="https://i.ibb.co/7r724hd/linkedin-brands.png" alt="linkedin-brands" border="0" style="width:30px;height:30px" /></a>
+  <a href="https://twitter.com/ukamanetworks?lang=en"><img src="https://i.ibb.co/6WFyzd1/twitter-brands-1.png" alt="twitter-brands-1" border="0" style="width:30px;height:30px" /></a>
+</div>
+</div>
+
+</body>
+</html>
+`
 
 	tmpl, err := template.New("email").Parse(bodyTemplate)
 	if err != nil {
