@@ -253,7 +253,6 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
 		log.Error("error getting the node, ", err.Error())
-
 		return resp, nil
 	}
 
