@@ -175,7 +175,7 @@ func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb
 }
 
 func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
-	log.Infof("Updating node state  %v", req.GetNodeId())
+	log.Infof("Updating node state  %v", req)
 
 	dbNodeState := db.ParseNodeState(req.State)
 	dbConnState := db.ParseConnectivityState(req.Connectivity)

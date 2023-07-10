@@ -27,7 +27,7 @@ func NewNodeStatusRepo(db sql.Db) NodeStatusRepo {
 
 func (n *nodeStatusRepo) Update(ns *NodeStatus) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		t := tx.Where("node_id= ?", ns.NodeId).Delete(&NodeStatus{})
+		t := tx.Where("node_id = ?", ns.NodeId).Delete(&NodeStatus{})
 		if t.RowsAffected > 0 {
 			log.Debugf("Marking old state.")
 		}

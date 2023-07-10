@@ -23,7 +23,7 @@ type Node struct {
 
 type NodeStatus struct {
 	gorm.Model
-	NodeId string       `gorm:"type:string,uniqueIndex:nodeId_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;not null"`
+	NodeId string       `gorm:"uniqueIndex:nodestatus_idx,expression:lower(node_id),where:deleted_at is null"`
 	Conn   Connectivity `gorm:"type:uint;not null"`
 	State  NodeState    `gorm:"type:uint;not null"`
 }

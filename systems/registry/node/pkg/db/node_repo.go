@@ -237,12 +237,12 @@ func (r *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, e
 		return 0, 0, 0, err
 	}
 
-	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ?", Online).Scan(&onlineCount)
+	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ? AND node_statuses.deleted_at IS NULL", Online).Scan(&onlineCount)
 	if res1.Error != nil {
 		return 0, 0, 0, err
 	}
 
-	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ?", Offline).Scan(&offlineCount)
+	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ? AND node_statuses.deleted_at IS NULL", Offline).Scan(&offlineCount)
 	if res2.Error != nil {
 		return 0, 0, 0, err
 	}
