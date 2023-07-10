@@ -1,0 +1,23 @@
+{
+ "name": "metrics",
+ "scripts": {
+  "dev": "ts-node-dev src/index.ts",
+  "start": "ts-node src/index.ts",
+  "codegen": "graphql-codegen",
+  "generate-stocks-data": "ts-node generateStocks.js"
+ },
+ "devDependencies": {
+  "@graphql-codegen/cli": "4.0.1",
+  "@graphql-codegen/typescript": "4.0.1",
+  "@graphql-codegen/typescript-resolvers": "4.0.1",
+  "@types/ws": "^8.5.5",
+  "ts-node": "10.9.1",
+  "ts-node-dev": "2.0.0",
+  "typescript": "5.1.6"
+ },
+ "dependencies": {
+  "@graphql-yoga/node": "3.9.1",
+  "graphql": "16.7.1",
+  "ws": "^8.13.0"
+ }
+}

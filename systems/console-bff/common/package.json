@@ -1,0 +1,10 @@
+{
+ "name": "console-bff-common",
+ "version": "1.0.0",
+ "description": "",
+ "author": "",
+ "license": "ISC",
+ "dependencies": {
+  "axios": "^1.4.0"
+ }
+}
