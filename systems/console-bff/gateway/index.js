@@ -1,18 +1,15 @@
-const dotenv = require('dotenv')
+import { ApolloGateway } from '@apollo/gateway'
+import { ApolloServer } from '@apollo/server'
+import { expressMiddleware } from '@apollo/server/express4'
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer'
+import { ApolloServerPluginInlineTrace } from 'apollo-server-core'
+import { json } from 'body-parser'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import http from 'http'
+import { logger } from '../common/logger'
+import { configureExpress } from './configureExpress'
 dotenv.config({ path: '.env' })
-const { ApolloServer } = require('@apollo/server')
-const { expressMiddleware } = require('@apollo/server/express4')
-const { ApolloServerPluginInlineTrace } = require('apollo-server-core')
-const { ApolloGateway, IntrospectAndCompose } = require('@apollo/gateway')
-const {
- ApolloServerPluginDrainHttpServer,
-} = require('@apollo/server/plugin/drainHttpServer')
-
-const cors = require('cors')
-const http = require('http')
-const { logger } = require('./logger')
-const { json } = require('body-parser')
-const { configureExpress } = require('./configureExpress')
 
 const app = configureExpress(logger)
 const subgraphUrls = [process.env.SUBGRAPH_PLANNING_TOOL]
