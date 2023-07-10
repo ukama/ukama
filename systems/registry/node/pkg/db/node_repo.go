@@ -6,6 +6,7 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -59,7 +60,7 @@ func (n *nodeRepo) Add(node *Node, nestedFunc func(node *Node, tx *gorm.DB) erro
 func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	var node Node
 
-	result := n.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id=?", id.StringLowercase())
+	result := n.Db.GetGormDb().Preload(clause.Associations).First(&node, "id=?", id.StringLowercase())
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -95,7 +96,7 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 // TODO: check for still allocated and attached nodes
 func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Delete(&Node{Id: nodeId.StringLowercase()})
+		result := tx.Select(clause.Associations, "NodeStatus").Delete(&Node{Id: nodeId.StringLowercase()})
 		if result.Error != nil {
 			return result.Error
 		}
@@ -229,20 +230,22 @@ func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	return err
 }
 
-func (r *nodeRepo) GetNodeCount() (nodeCount, activeNodeCount, inactiveNodeCount int64, err error) {
+func (r *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, err error) {
 	db := r.Db.GetGormDb()
 
 	if err := db.Model(&Node{}).Count(&nodeCount).Error; err != nil {
 		return 0, 0, 0, err
 	}
 
-	if err := db.Model(&Node{}).Where("state != ?", Offline).Count(&activeNodeCount).Error; err != nil {
+	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ? AND node_statuses.deleted_at IS NULL", Online).Scan(&onlineCount)
+	if res1.Error != nil {
 		return 0, 0, 0, err
 	}
 
-	if err := db.Model(&Node{}).Where("state = ?", Offline).Count(&inactiveNodeCount).Error; err != nil {
+	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ? AND node_statuses.deleted_at IS NULL", Offline).Scan(&offlineCount)
+	if res2.Error != nil {
 		return 0, 0, 0, err
 	}
 
-	return nodeCount, activeNodeCount, inactiveNodeCount, nil
+	return nodeCount, onlineCount, offlineCount, nil
 }

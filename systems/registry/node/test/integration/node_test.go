@@ -6,24 +6,26 @@ package integration
 import (
 	"context"
 	"fmt"
-	"testing"
-	"time"
-
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	"github.com/num30/config"
-	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/protobuf/proto"
+	"math/rand"
+	"testing"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	uconf "github.com/ukama/ukama/systems/common/config"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var tConfig *TestConfig
@@ -34,17 +36,13 @@ func init() {
 	orgName = fmt.Sprintf("node-integration-self-test-org-%d", time.Now().Unix())
 
 	// load config
-	tConfig = &TestConfig{}
-
-	err := config.NewConfReader("integration").Read(tConfig)
-	if err != nil {
-		log.Fatal("Error reading config ", err)
-	} else if tConfig.DebugMode {
-		b, err := yaml.Marshal(tConfig)
-		if err != nil {
-			log.Infof("Config:\n%s", string(b))
-		}
+	tConfig = &TestConfig{
+		Queue: config.Queue{
+			Uri: "amqp://guest:guest@192.168.0.14:5672/",
+		},
 	}
+
+	config.LoadConfig("integration", tConfig)
 
 	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	log.Infof("Config: %+v\n", tConfig)
@@ -53,6 +51,7 @@ func init() {
 type TestConfig struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	ServiceHost      string `default:"localhost:9090"`
+	Queue            config.Queue
 }
 
 func Test_FullFlow(t *testing.T) {
@@ -87,7 +86,6 @@ func Test_FullFlow(t *testing.T) {
 		addResp, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: node.String(),
 			OrgId:  orgId.String(),
-			State:  db.Undefined.String(),
 			Name:   nodeName,
 		})
 
@@ -106,7 +104,7 @@ func Test_FullFlow(t *testing.T) {
 			NodeId: node.String()})
 
 		handleResponse(tt, err, nodeResp)
-		assert.Equal(tt, db.Onboarded.String(), nodeResp.Node.State)
+		assert.Equal(tt, db.Unknown.String(), nodeResp.Node.Status.Connectivity)
 		assert.Equal(tt, node.GetNodeType(), nodeResp.Node.Type)
 	})
 
@@ -118,7 +116,6 @@ func Test_FullFlow(t *testing.T) {
 
 		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: tNodeID.String(),
-			State:  db.Undefined.String(),
 			OrgId:  orgId.String(),
 		})
 
@@ -131,7 +128,6 @@ func Test_FullFlow(t *testing.T) {
 		_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			NodeId: aNodeID.String(),
 			OrgId:  orgId.String(),
-			State:  db.Undefined.String(),
 		})
 
 		if err != nil {
@@ -207,7 +203,6 @@ func Test_Listener(t *testing.T) {
 	_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 		NodeId: nodeID,
 		OrgId:  orgId.String(),
-		State:  db.Undefined.String(),
 	})
 
 	e, ok := status.FromError(err)
@@ -238,7 +233,7 @@ func Test_Listener(t *testing.T) {
 	assert.NoError(t, err)
 
 	if err != nil {
-		assert.Equal(t, db.Onboarded.String(), nodeResp.Node.State)
+		assert.Equal(t, db.Offline.String(), nodeResp.Node.Status.Connectivity)
 	}
 }
 
@@ -267,4 +262,82 @@ func handleResponse(t *testing.T, err error, r interface{}) {
 	if err != nil {
 		assert.FailNow(t, "Request failed: %v\n", err)
 	}
+}
+
+func Test_NodeOnline_OfflineEvents(t *testing.T) {
+	// Arrange
+	nodeId := ukama.NewVirtualHomeNodeId()
+
+	ip := fmt.Sprintf("%d.%d.%d.%d",
+		rand.Intn(256),
+		rand.Intn(256),
+		rand.Intn(256),
+		rand.Intn(256))
+	var port int32 = 1000
+	nIp := fmt.Sprintf("%d.%d.%d.%d",
+		rand.Intn(256),
+		rand.Intn(256),
+		rand.Intn(256),
+		rand.Intn(256))
+
+	var nPort int32 = 2000
+
+	// Act
+	err := sendOnlineEventToQueue(t, nodeId.String(), ip, port, nIp, nPort)
+	assert.NoError(t, err)
+
+	// Assert
+	time.Sleep(2 * time.Second)
+
+	err = sendOfflineEventToQueue(t, nodeId.String())
+	assert.NoError(t, err)
+
+}
+
+func sendOnlineEventToQueue(t *testing.T, nodeId string, ip string, port int32, nIp string, nPort int32) error {
+	rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	msg := &epb.NodeOnlineEvent{NodeId: nodeId, MeshIp: ip, MeshPort: port, NodeIp: nIp, NodePort: nPort}
+
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		return err
+	}
+
+	payload, err := proto.Marshal(anyMsg)
+	if err != nil {
+		return err
+	}
+
+	err = rabbit.Publish(payload, "", "amq.topic", "event.cloud.mesh.node.online", "topic")
+	assert.NoError(t, err)
+
+	return err
+}
+
+func sendOfflineEventToQueue(t *testing.T, nodeId string) error {
+	rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	msg := &epb.NodeOfflineEvent{NodeId: nodeId}
+
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		return err
+	}
+
+	payload, err := proto.Marshal(anyMsg)
+	if err != nil {
+		return err
+	}
+
+	err = rabbit.Publish(payload, "", "amq.topic", "event.cloud.mesh.node.offline", "topic")
+	assert.NoError(t, err)
+
+	return err
 }
