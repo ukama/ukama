@@ -33,7 +33,7 @@ type Config struct {
 	OrgHost           string `default:"http://registry-api-gw:8080"`
 	Org               string `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	PushMetricHost    string `default:"http://localhost:9091"`
-	NotificationHost  string `default:"http://notification:8085"`
+	NotificationHost  string `default:"http://192.168.1.81:8089"`
 	NetworkHost       string `default:"http://registry-api-gw:8080"`
 }
 

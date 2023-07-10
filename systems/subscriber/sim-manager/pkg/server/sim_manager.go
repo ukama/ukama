@@ -76,6 +76,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 }
 
 func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
+
 	subscriberID, err := uuid.FromString(req.GetSubscriberId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -229,21 +230,23 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
 
-	emailBody, err := utils.GenerateEmailBody(netInfo.Name, remoteSubResp.Subscriber.FirstName, poolSim.Iccid)
+	emailBody, err := utils.GenerateEmailBody(netInfo.Name, remoteSubResp.Subscriber.FirstName, poolSim.QrCode)
 	if err != nil {
 		return nil, err
 	}
+	if poolSim.QrCode != "" {
+		err = s.notificationClient.SendEmail(providers.SendEmailReq{
+			To:      []string{remoteSubResp.Subscriber.Email},
+			Subject: "[Ukama] " + netInfo.Name + " invited you to use their network",
+			Body:    emailBody,
+			Values:  map[string]string{"SubscriberID": remoteSubResp.Subscriber.SubscriberId},
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.NotFound, "Unable to send email %s", err.Error())
+		}
 
-	err = s.notificationClient.SendEmail(providers.SendEmailReq{
-		To:      []string{remoteSubResp.Subscriber.Email},
-		Subject: "[Ukama] " + netInfo.Name + " invited you to use their network",
-		Body:    emailBody,
-		Values:  map[string]string{"SubscriberID": remoteSubResp.Subscriber.SubscriberId},
-	})
-
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Unable to send email %s", err.Error())
 	}
+
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
 		log.Errorf("failed to get Sims counts: %s", err.Error())
@@ -817,4 +820,18 @@ func dbPackagesToPbPackages(packages []sims.Package) []*pb.Package {
 	}
 
 	return res
+}
+
+func isEsim(isEsim bool) (qrCode string, e error) {
+
+	if isEsim {
+		qrCode = "esim"
+
+		return qrCode, nil
+	} else {
+		qrCode = "sim"
+
+		return "", nil
+	}
+
 }
