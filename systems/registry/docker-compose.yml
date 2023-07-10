@@ -1,22 +1,22 @@
 version: "3.2"
 services:
+
   postgresd-registry:
-      image: postgres:13.3
-      ports:
-        - "5433:5433"
-      environment:
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=Pass2020!
-      networks:
-        - ukama-net
-      volumes:
-        - postgress-data:/var/lib/postgresql
+    image: postgres:13.3
+    ports:
+      - "5405:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
   network:
     build:
       context: ./network
       dockerfile: ./Dockerfile
-    ports:
-      - "9073:9090"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd-registry
@@ -31,51 +31,35 @@ services:
       - MSGCLIENT_HOST=msgclient-registry:9095
       - NETWORK_SERVICE_HOST=network
       - NETWORK_SERVICE_PORT=9090
-      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+      - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
     restart: always
     networks:
       - ukama-net
     depends_on:
       - msgclient-registry
-      - postgresd-registry
 
   org:
-    build:
-      context: ./org
-      dockerfile: ./Dockerfile
-    ports:
-      - "9070:9090"
+    build: ./org
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd-registry
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
       - ORGNAME=ukama-test-org
-      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
-      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
-      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
-      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
-      - DEBUG_DISABLEBOOTSTRAP=true
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-registry:9095
       - ORG_SERVICE_HOST=org
       - ORG_SERVICE_PORT=9090
-      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+      - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
     restart: always
     networks:
       - ukama-net
     depends_on:
       - msgclient-registry
-      - postgresd-registry
 
   users:
-    build:
-      context: ./users
-      dockerfile: ./Dockerfile
-    ports:
-      - "9071:9090"
+    build: ./users
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd-registry
@@ -90,7 +74,7 @@ services:
       - MSGCLIENT_HOST=msgclient-registry:9095
       - USERS_SERVICE_HOST=users
       - USERS_SERVICE_PORT=9090
-      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+      - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
       # - SIMMANAGER_TIMEOUT=3s
@@ -99,34 +83,7 @@ services:
       - ukama-net
     depends_on:
       - msgclient-registry
-      - postgresd-registry
-  
-  node:
-    build:
-      dockerfile: ./Dockerfile
-      context: ./node
-    ports:
-      - "9072:9090"
-    environment:
-      - DEBUGMODE=true
-      - DB_HOST=postgresd-regsitry
-      - DB_PASSWORD=Pass2020!
-      - DB_USER=postgres
-      - ORG_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-registry:9095
-      - NODE_SERVICE_HOST=node
-      - NODE_SERVICE_PORT=9090
-      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
-      # - HSSHOST=hss:9090
-      # - SIMMANAGER_HOST=simmanager:9090
-      # - SIMMANAGER_TIMEOUT=3s
-    restart: always
-    networks:
-      - ukama-net
-    depends_on:
-      - msgclient-registry
-      - postgresd-registry
+
 
   api-gateway:
     build:
@@ -149,9 +106,7 @@ services:
       - postgresd-registry
   
   msgclient-registry:
-    build:
-      dockerfile: ./Dockerfile
-      context: ../services/msgClient
+    build: ../services/msgClient
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd-registry
@@ -160,29 +115,54 @@ services:
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - SYSTEM=registry
     restart: always
-    depends_on:
-      - postgresd-registry
     networks:
       - ukama-net
- 
-  initclient-registry:
+    depends_on:
+      - postgresd-registry
+
+  node:
     build:
       dockerfile: ./Dockerfile
-      context: ../services/initClient
+      context: ./node
     environment:
-      - ENV_SYSTEM_ORG=ukama001
-      - ENV_SYSTEM_NAME=registry
-      - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_SYSTEM_PORT=8889
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_CLIENT_PORT=9091
-      - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-registry
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-registry:9095
+      - NODE_SERVICE_HOST=node
+      - NODE_SERVICE_PORT=9090
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+      # - HSSHOST=hss:9090
+      # - SIMMANAGER_HOST=simmanager:9090
+      # - SIMMANAGER_TIMEOUT=3s
     restart: always
     networks:
       - ukama-net
+    depends_on:
+      - msgclient-registry
+      - postgresd-registry
+
+  # initclient-registry:
+  #   build:
+  #     dockerfile: ./Dockerfile
+  #     context: ../services/initClient
+  #   environment:
+  #     - ENV_SYSTEM_ORG=ukama001
+  #     - ENV_SYSTEM_NAME=registry
+  #     - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_SYSTEM_PORT=8889
+  #     - ENV_SYSTEM_CERT=This-is-a-certificate
+  #     - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_INIT_SYSTEM_PORT=8071
+  #     - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_INIT_CLIENT_PORT=9091
+  #     - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+  #   restart: always
+  #   networks:
+  #     - ukama-net
      
 networks:
   ukama-net:
