@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022-present, Ukama Inc.
+ * Copyright (c) 2023-present, Ukama Inc.
  * All rights reserved.
  *
  * This source code is licensed under the XXX-style license found in the
@@ -10,31 +10,20 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define MAX_LINE_LENGTH 128
-#define MAX_ENTRIES     128
-
-typedef struct {
-
-    char serviceName[MAX_LINE_LENGTH];
-    char moduleName[MAX_LINE_LENGTH];
-    char propertyName[MAX_LINE_LENGTH];
-    char type[MAX_LINE_LENGTH];
-    char severity[MAX_LINE_LENGTH];
-    int  code;
-} Entry;
+#include "usys_types.h"
 
 /* Service configuration */
 typedef struct {
 
     char  *serviceName;
     int   servicePort;
-    char  *nodedHost;
+    int   clientPort;
+    char  *clientHost;
     int   nodedPort;
-    char  *nodedEP;
-    char  *remoteServer;
+    int   notifydPort;
     char  *nodeID;
-    int   numEntries;
-    Entry entries[MAX_ENTRIES];
+    char  *nodeType;
+    bool  clientMode;
 } Config;
 
 #endif /* CONFIG_H_ */

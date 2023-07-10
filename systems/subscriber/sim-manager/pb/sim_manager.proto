@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen";
 
 import "validator.proto";
 import "google/protobuf/timestamp.proto";

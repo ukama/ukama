@@ -693,55 +693,30 @@ int json_serialize_alert_data(JsonObj **json, const char* modUuid,
     return ret;
 }
 
-int json_serialize_notification_data(JsonObj **json,
-                NodedNotifDetails *notif) {
-    int ret = JSON_ENCODING_OK;
+int json_serialize_notification_data(JsonObj **json, Notification *notif) {
 
+    JsonObj *jNotify=NULL;
+    
     *json = json_object();
-    if (!json) {
-        return ERR_NODED_JSON_CRETATION_ERR;
-    }
-
-    if (!notif) {
-        return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
-    }
+    if (*json == NULL || notif == NULL) return USYS_FALSE;
 
     json_object_set_new(*json, JTAG_NOTIFY, json_object());
+    jNotify = json_object_get(*json, JTAG_NOTIFY);
+    if (jNotify == NULL) return USYS_FALSE;
 
-    JsonObj *jNotify = json_object_get(*json, JTAG_NOTIFY);
-    if (jNotify) {
-
-        json_object_set_new(jNotify, JTAG_UUID,
-                        json_string(notif->moduleID));
-
-        json_object_set_new(jNotify, JTAG_SERVICE_NAME,
+    json_object_set_new(jNotify, JTAG_SERVICE_NAME,
                         json_string(notif->serviceName));
-
-        json_object_set_new(jNotify, JTAG_SEVERITY,
-                        json_string(notif->severity));
-
-        json_object_set_new(jNotify, JTAG_EPOCH_TIME,
+    json_object_set_new(jNotify, JTAG_SEVERITY, json_string(notif->severity));
+    json_object_set_new(jNotify, JTAG_EPOCH_TIME,
                         json_integer(notif->epochTime));
+    json_object_set_new(jNotify, JTAG_MODULE, json_string(notif->module));    
+    json_object_set_new(jNotify, JTAG_DEVICE, json_string(notif->device));
+    json_object_set_new(jNotify, JTAG_NAME, json_string(notif->propertyName));
+    json_object_set_new(jNotify, JTAG_VALUE, json_string(notif->propertyValue));
+    json_object_set_new(jNotify, JTAG_UNITS, json_string(notif->propertyUnit));
+    json_object_set_new(jNotify, JTAG_DESCRIPTION, json_string(notif->details));
 
-        json_object_set_new(jNotify, JTAG_NAME,
-                        json_string(notif->deviceName));
-
-        json_object_set_new(jNotify, JTAG_DESCRIPTION,
-                        json_string(notif->deviceDesc));
-
-        json_object_set_new(jNotify, JTAG_PROPERTY_NAME,
-                        json_string(notif->deviceAttr));
-
-        json_object_set_new(jNotify, JTAG_DATA_TYPE,
-                        json_integer(notif->dataType));
-
-        json_object_set_new(jNotify, JTAG_VALUE,
-                        json_encode_value(notif->dataType, notif->deviceAttrValue));
-
-        json_object_set_new(jNotify, JTAG_UNITS, json_string(notif->units));
-
-    }
-    return ret;
+    return USYS_TRUE;
 }
 
 /* Decrement json references */
