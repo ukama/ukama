@@ -23,10 +23,10 @@ type Config struct {
 }
 
 const (
-	NumberOfNodes         = "number_of_nodes"
-	NumberOfActiveNodes   = "active_node_count"
-	NumberOfInactiveNodes = "inactive_node_count"
-	GaugeType             = "gauge"
+	NumberOfNodes        = "number_of_nodes"
+	NumberOfOnlineNodes  = "online_node_count"
+	NumberOfOfflineNodes = "offline_node_count"
+	GaugeType            = "gauge"
 )
 
 var NodeMetric = []metric.MetricConfig{
@@ -36,12 +36,12 @@ var NodeMetric = []metric.MetricConfig{
 		Value: 0,
 	},
 	{
-		Name:  NumberOfActiveNodes,
+		Name:  NumberOfOnlineNodes,
 		Type:  GaugeType,
 		Value: 0,
 	},
 	{
-		Name:  NumberOfInactiveNodes,
+		Name:  NumberOfOfflineNodes,
 		Type:  GaugeType,
 		Value: 0,
 	},

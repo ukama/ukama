@@ -105,7 +105,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 
-	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
 
 	return &pb.AddNodeResponse{Node: dbNodeToPbNode(node)}, nil
 }
@@ -215,7 +215,7 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
 
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
 }
@@ -296,7 +296,7 @@ func (n *NodeServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) 
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 
-	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
 
 	return &pb.DeleteNodeResponse{}, nil
 }
@@ -316,7 +316,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
 
 	return &pb.AttachNodesResponse{}, nil
 }
@@ -334,7 +334,7 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
 
 	return &pb.DetachNodeResponse{}, nil
 }
@@ -541,12 +541,12 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 		case pkg.NumberOfNodes:
 			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric,
 				pkg.NumberOfNodes, float64(nodesCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
-		case pkg.NumberOfActiveNodes:
+		case pkg.NumberOfOnlineNodes:
 			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfActiveNodes, float64(onlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
-		case pkg.NumberOfInactiveNodes:
+				pkg.NumberOfOnlineNodes, float64(onlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+		case pkg.NumberOfOfflineNodes:
 			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfInactiveNodes, float64(offlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+				pkg.NumberOfOfflineNodes, float64(offlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		}
 	}
 
@@ -556,7 +556,7 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 }
 
 func (n *NodeServer) PushMetrics() {
-	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfActiveNodes, pkg.NumberOfInactiveNodes)
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
 }
 
 func dbNodesToPbNodes(nodes []db.Node) []*pb.Node {
