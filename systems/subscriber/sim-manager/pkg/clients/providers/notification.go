@@ -55,21 +55,15 @@ func (nc *notificationClient) SendEmail(emailBody SendEmailReq) error {
 	resp, err := nc.RestClient.Client.R().
 		SetError(errStatus).
 		SetBody(emailBody).
-		Post(nc.RestClient.URL.String() + "/v1/mail/sendEmail")
+		Post(nc.RestClient.URL.String() + "/v1/mailer/sendEmail")
 	if err != nil {
 		logrus.Errorf("Failed to send API request to the notification system. Error: %s", err.Error())
 		return err
 	}
-
-	if !resp.IsSuccess() {
-		logrus.Tracef("Failed to fetch network info. HTTP response code: %d, Error message: %s", resp.StatusCode(), errStatus.Message)
-		return fmt.Errorf("Network Info failure: %s", errStatus.Message)
-	}
-
 	err = json.Unmarshal(resp.Body(), &notificationRes)
 	if err != nil {
-		logrus.Tracef("Failed to deserialize network info. Error message: %s", err.Error())
-		return fmt.Errorf("Network info deserialization failure: %s", err.Error())
+		logrus.Tracef("Failed to deserialize. Error message: %s", err.Error())
+		return fmt.Errorf("Failed to deserialization failure: %s", err.Error())
 	}
 
 	return nil

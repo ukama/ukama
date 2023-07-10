@@ -102,10 +102,16 @@ func runGrpcServer(gormDB sql.Db) {
 		log.Fatalf("Failed to connect to Data Plan API Gateway service for retriving packages %s. Error: %v",
 			serviceConfig.DataPlan, err)
 	}
-	notClient ,err:= providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
+	notClient, err := providers.NewNotificationClient(serviceConfig.NotificationHost, pkg.IsDebugMode)
 	if err != nil {
 		log.Fatalf("Failed to connect to Notification service %s. Error: %v",
 			serviceConfig.NotificationHost, err)
+	}
+
+	netClient, err := providers.NewNetworkClient(serviceConfig.NetworkHost, pkg.IsDebugMode)
+	if err != nil {
+		log.Fatalf("Failed to connect to Network service %s. Error: %v",
+			serviceConfig.NetworkHost, err)
 	}
 
 	simManagerServer := server.NewSimManagerServer(
@@ -120,6 +126,7 @@ func runGrpcServer(gormDB sql.Db) {
 		serviceConfig.Org,
 		serviceConfig.PushMetricHost,
 		notClient,
+		netClient,
 	)
 
 	simManagerEventServer := server.NewSimManagerEventServer(simManagerServer)

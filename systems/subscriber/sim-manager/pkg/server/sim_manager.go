@@ -42,9 +42,10 @@ type SimManagerServer struct {
 	msgbus                    mb.MsgBusServiceClient
 	baseRoutingKey            msgbus.RoutingKeyBuilder
 	pb.UnimplementedSimManagerServiceServer
-	org            string
-	pushMetricHost string
-	notificationClient    providers.NotificationClient
+	org                string
+	pushMetricHost     string
+	notificationClient providers.NotificationClient
+	networkClient      providers.NetworkInfoClient
 }
 
 func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
@@ -55,6 +56,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	org string,
 	pushMetricHost string,
 	notificationClient providers.NotificationClient,
+	networkClient providers.NetworkInfoClient,
 ) *SimManagerServer {
 	return &SimManagerServer{
 		simRepo:                   simRepo,
@@ -69,6 +71,7 @@ func NewSimManagerServer(simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 		org:                       org,
 		pushMetricHost:            pushMetricHost,
 		notificationClient:        notificationClient,
+		networkClient:             networkClient,
 	}
 }
 
@@ -221,16 +224,25 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
-	emailReq := providers.SendEmailReq{
-		To:      []string{remoteSubResp.Subscriber.Email},
-		Subject: "Test Email",
-		Body:    "your package {{.PackageId}} has been allocated to your sim {{.SimId}}}}",
-		Values:  map[string]string{"PackageId": packageID.String(), "SimId": sim.Id.String()},
-	}
-
-	err = s.notificationClient.SendEmail(emailReq)
+	netInfo, err := s.networkClient.GetNetworkInfo(remoteSubResp.Subscriber.NetworkId, remoteSubResp.Subscriber.OrgId)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
+	}
+
+	emailBody, err := utils.GenerateEmailBody(netInfo.Name, remoteSubResp.Subscriber.FirstName, poolSim.Iccid)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.notificationClient.SendEmail(providers.SendEmailReq{
+		To:      []string{remoteSubResp.Subscriber.Email},
+		Subject: "[Ukama] " + netInfo.Name + " invited you to use their network",
+		Body:    emailBody,
+		Values:  map[string]string{"SubscriberID": remoteSubResp.Subscriber.SubscriberId},
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Unable to send email %s", err.Error())
 	}
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
