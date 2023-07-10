@@ -12,7 +12,7 @@ type NodeStatusRepo interface {
 	Get(ukama.NodeID) (*NodeStatus, error)
 	Delete(ukama.NodeID) error
 	GetAll() ([]NodeStatus, error)
-	GetNodeCount() (activeNodeCount, inactiveNodeCount int64, err error)
+	GetNodeCount() (onlineNodeCount, offlineNodeCount int64, err error)
 }
 
 type nodeStatusRepo struct {
@@ -77,16 +77,16 @@ func (n *nodeStatusRepo) GetAll() ([]NodeStatus, error) {
 	return ns, nil
 }
 
-func (n *nodeStatusRepo) GetNodeCount() (activeNodeCount, inactiveNodeCount int64, err error) {
+func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64, err error) {
 	db := n.Db.GetGormDb()
 
-	if err := db.Model(&NodeStatus{}).Where("conn = ?", Online).Count(&activeNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("conn = ?", Online).Count(&onlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 
-	if err := db.Model(&NodeStatus{}).Where("conn = ?", Offline).Count(&inactiveNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("conn = ?", Offline).Count(&offlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 
-	return activeNodeCount, inactiveNodeCount, nil
+	return onlineNodeCount, offlineNodeCount, nil
 }
