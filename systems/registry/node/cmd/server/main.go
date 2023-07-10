@@ -76,9 +76,9 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	orgId, err := uuid.FromString(serviceConfig.Org)
+	orgId, err := uuid.FromString(serviceConfig.OrgId)
 	if err != nil {
-		log.Fatalf("Invalid organization identifier %s. Error %s", serviceConfig.Org, err)
+		log.Fatalf("Invalid organization identifier %s. Error %s", serviceConfig.OrgId, err)
 	}
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
