@@ -69,12 +69,12 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	if err != nil {
 		return nil, err
 	}
-	expiresAt := time.Now().Add(2 * time.Minute)
+	expiresAt := time.Now().Add(3 * 24 * time.Hour) // Set the expiration time to three days from now
 
-	invitationID := uuid.NewV4()
+	invitationId := uuid.NewV4()
 	err = o.orgRepo.AddInvitation(
 		&db.Invitation{
-			Id:        invitationID,
+			Id:        invitationId,
 			Org:       req.GetOrg(),
 			Name:      req.GetName(),
 			Link:      link,
@@ -103,7 +103,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, err
 	}
 
-	emailBody, err := pkg.GenerateEmailBody(invitationID.String(), link, remoteUserResp.User.Name, res.Name, req.GetRole().String(), req.GetName())
+	emailBody, err := pkg.GenerateEmailBody(invitationId.String(), link, remoteUserResp.User.Name, res.Name, req.GetRole().String(), req.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		To:      []string{req.GetEmail()},
 		Subject: "[Ukama] Team invite from " + res.Name,
 		Body:    emailBody,
-		Values:  map[string]string{"EmailID": invitationID.String()},
+		Values:  map[string]string{"EmailID": invitationId.String()},
 	})
 
 	if err != nil {
@@ -149,6 +149,17 @@ func (o *OrgService) UpdateInvitation(ctx context.Context, req *pb.UpdateInvitat
 			"invalid format of invitationId. Error %s", err.Error())
 	}
 
+	invitation, err := o.orgRepo.GetInvitation(invitationId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the invitation has expired
+	if time.Now().After(invitation.ExpiresAt) {
+		return nil, status.Errorf(codes.FailedPrecondition, "Invitation has expired and cannot be updated")
+	}
+
+	// Update the invitation status if it hasn't expired
 	err = o.orgRepo.UpdateInvitation(invitationId, db.InvitationStatus(req.GetStatus()))
 	if err != nil {
 		return nil, err
@@ -156,7 +167,6 @@ func (o *OrgService) UpdateInvitation(ctx context.Context, req *pb.UpdateInvitat
 
 	return &pb.UpdateInvitationResponse{}, nil
 }
-
 func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding org %v", req)
 
@@ -716,7 +726,7 @@ func pbInvitationStatusToDb(status pb.InvitationStatus) db.InvitationStatus {
 func generateInvitationLink() (string, error) {
 	expirationTime := time.Now().Add(3 * 24 * time.Hour) // Set the expiration time to three days from now
 
-	link := "https://auth.dev.ukama.com/auth/login"
+	link := "http://localhost:4455/auth/login"
 	linkID := uuid.NewV4().String() 
 
 	expiringLink := fmt.Sprintf("%s?linkId=%s&expires=%d", link, linkID, expirationTime.Unix())
