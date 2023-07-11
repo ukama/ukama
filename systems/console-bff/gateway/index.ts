@@ -12,6 +12,7 @@ import {
   CONSOLE_APP_URL,
   GATEWAY_PORT,
   METRICS_PORT,
+  PLANNING_SERVICE_PORT,
   PLAYGROUND_URL,
 } from "../common/configs";
 import { logger } from "../common/logger";
@@ -19,16 +20,17 @@ import { configureExpress } from "./configureExpress";
 
 const app = configureExpress(logger);
 const httpServer = createServer(app);
-const gateway = new ApolloGateway({
-  supergraphSdl: new IntrospectAndCompose({
-    subgraphs: [
-      { name: "metrics", url: `http://localhost:${METRICS_PORT}` },
-      // { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
-    ],
-  }),
-});
 
 const startServer = async () => {
+  const gateway = new ApolloGateway({
+    supergraphSdl: new IntrospectAndCompose({
+      subgraphs: [
+        { name: "metrics", url: `http://localhost:${METRICS_PORT}` },
+        { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
+      ],
+    }),
+  });
+  await gateway.load();
   const server = new ApolloServer({
     gateway,
     plugins: [

@@ -7,7 +7,7 @@
     "migrate": "prisma migrate dev",
     "gateway": "ts-node --esm ./gateway/index.ts",
     "prettier": "prettier --write --config .prettierrc './**/**'",
-    "dev": "concurrently  \"yarn gateway\"",
+    "dev": "concurrently \"yarn planning-tool-dev\" \"yarn metrics-dev\"  \"yarn gateway\"",
     "metrics-dev": "ts-node-dev --no-notify --respawn --transpile-only ./metrics/src/index.ts",
     "planning-tool-dev": "ts-node-dev --no-notify --respawn --transpile-only ./planning-tool/src/index.ts"
   },
