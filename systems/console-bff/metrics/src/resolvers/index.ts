@@ -1,48 +1,39 @@
-import WebSocket from "ws";
+import { Worker } from "worker_threads";
 
-import { METRIC_API_GW } from "../../../common/configs";
+import { METRIC_API_GW, STORAGE_KEY } from "../../../common/configs";
+import { logger } from "../../../common/logger";
+import { storeInStorage } from "../../../common/storage";
+import { getTimestampCount } from "../../../common/utils/inde";
 import { Resolvers } from "../../types";
-import {
-  removeKeyFromBucket,
-  retriveFromBucket,
-  storeInBucket,
-} from "../bucket";
 
-const getTimestamp = (count: string) =>
-  parseInt((Date.now() / 1000).toString()) + "-" + count;
+const WS_THREAD = "./threads/MetricsWSThread.ts";
 
 const metricResolvers: Resolvers = {
   Query: {
     getMetrics: async (_, { input }, { pubSub }) => {
       const { type, orgId, userId } = input;
-      const ws = new WebSocket(METRIC_API_GW);
-      ws.on("error", e => console.log(e));
-
-      ws.on("open", async function open() {
-        await storeInBucket(`${orgId}/${userId}/${type}`, getTimestamp("0"));
+      const workerData: any = {
+        type,
+        orgId,
+        userId,
+        url: METRIC_API_GW,
+        key: STORAGE_KEY,
+      };
+      const worker = new Worker(WS_THREAD, {
+        workerData,
       });
-
-      ws.on("message", async function message(data) {
-        const value = await retriveFromBucket(`${orgId}/${userId}/${type}`);
-        let occurance = value ? parseInt(value.split("-")[1]) : 0;
-        occurance += 1;
-
-        await storeInBucket(
-          `${orgId}/${userId}/${type}`,
-          getTimestamp(`${occurance}`)
-        );
-
-        if (occurance === 9) {
-          ws.close();
-          ws.terminate();
-          removeKeyFromBucket(`${orgId}/${userId}/${type}`);
+      worker.on("message", (data: any) => {
+        if (!data.isError) {
+          pubSub.publish(`metric-${input.type}`, `${orgId}/${userId}/${type}`, {
+            value: data.data,
+          });
         }
-
-        pubSub.publish(`metric-${input.type}`, `${orgId}/${userId}/${type}`, {
-          value: data.toString(),
-        });
       });
-
+      worker.on("exit", (code: any) => {
+        logger.info(
+          `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
+        );
+      });
       return [
         {
           value: "1",
@@ -55,9 +46,9 @@ const metricResolvers: Resolvers = {
       subscribe: async (_, { input: { orgId, userId, type } }, { pubSub }) =>
         pubSub.subscribe(`metric-${type}`, `${orgId}/${userId}/${type}`),
       resolve: async (payload, { input }) => {
-        await storeInBucket(
+        await storeInStorage(
           `${input.orgId}/${input.userId}/${input.type}`,
-          getTimestamp("0")
+          getTimestampCount("0")
         );
         return payload;
       },
