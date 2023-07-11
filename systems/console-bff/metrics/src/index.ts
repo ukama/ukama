@@ -4,12 +4,16 @@ import { createPubSub, createSchema, createYoga } from "graphql-yoga";
 import { createServer } from "node:http";
 import * as path from "path";
 
+import { logger } from "../../common/logger";
 import { METRICS_PORT } from "./../../common/configs";
 import resolvers from "./resolvers";
 
-const typeDefs = fs.readFileSync(path.join(process.cwd(), "schema.graphql"), {
-  encoding: "utf-8",
-});
+const typeDefs = fs.readFileSync(
+  path.join(process.cwd(), "metrics/schema.graphql"),
+  {
+    encoding: "utf-8",
+  }
+);
 
 const pubSub = createPubSub({});
 
@@ -27,5 +31,7 @@ const yoga = createYoga({
 const server = createServer(yoga);
 
 server.listen(METRICS_PORT, () => {
-  console.info("Server is running on http://localhost:4000/graphql");
+  logger.info(
+    `🚀 Ukama Metrics service running at http://localhost:${METRICS_PORT}/graphql`
+  );
 });
