@@ -1,7 +1,7 @@
 {
   "include": [
-    "./planning-tool",
-    "/gateway"
+    "planning-tool",
+    "gateway"
   ],
   "compilerOptions": {
     /* Basic Options */
