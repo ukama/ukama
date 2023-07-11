@@ -1,81 +1,102 @@
 package main
 
 import (
-	"context"
 	"os"
 
+	"github.com/num30/config"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/notification/notify/cmd/version"
 	"github.com/ukama/ukama/systems/notification/notify/internal"
 	"github.com/ukama/ukama/systems/notification/notify/internal/db"
 	"github.com/ukama/ukama/systems/notification/notify/internal/server"
-	"github.com/ukama/ukama/systems/common/metrics"
-	sig "github.com/ukama/ukama/systems/common/signal"
-	"github.com/ukama/ukama/systems/common/sql"
+	"google.golang.org/grpc"
+	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/notification/notify/cmd/version"
+	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 
-	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/config"
+	// mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+
+	generated "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
+
+var serviceConfig = internal.NewConfig(internal.ServiceName)
 
 func main() {
 	ccmd.ProcessVersionArgument(internal.ServiceName, os.Args, version.Version)
 
-	/* Log level */
-	logrus.SetLevel(logrus.TraceLevel)
-
-	/*Signal handler for SIGINT or SIGTERM to cancel a context in
-	order to clean up and shut down gracefully if Ctrl+C is hit. */
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	/* Signal Handling */
-	sig.HandleSigterm(func() {
-		logrus.Infof("Cleaning %s service.", internal.ServiceName)
-		/* Call anything required for clean exit */
-
-		cancel()
-	})
-
-	/* Config parsing */
 	initConfig()
+	metrics.StartMetricsServer(serviceConfig.Metrics)
 
-	/*  Database */
-	d := initDb()
+	nodeDb := initDb()
+	runGrpcServer(nodeDb)
+}
 
-	/* Start the HTTP server. */
-	startHTTPServer(ctx, d)
+// initConfig reads in config file, ENV variables, and flags if set.
+func initConfig() {
+	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
+	if err != nil {
+		log.Fatal("Error reading config ", err)
+	} else if serviceConfig.DebugMode {
+		b, err := yaml.Marshal(serviceConfig)
+		if err != nil {
+			log.Infof("Config:\n%s", string(b))
+		}
+	}
+
+	internal.IsDebugMode = serviceConfig.DebugMode
 }
 
 func initDb() sql.Db {
-	logrus.Infof("Initializing Database")
-	d := sql.NewDb(internal.ServiceConfig.DB, internal.ServiceConfig.DebugMode)
+	log.Infof("Initializing Database")
+
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+
 	err := d.Init(&db.Notification{})
 	if err != nil {
-		logrus.Fatalf("Database initialization failed. Error: %v", err)
+		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
+
 	return d
 }
 
-/* Start HTTP server for accepting REST  request */
-func startHTTPServer(ctx context.Context, d sql.Db) {
+func runGrpcServer(gormdb sql.Db) {
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		instanceId = uuid.NewV4().String()
+		// instanceId = inst.String()
+	}
 
-	logrus.Tracef("Config is %+v", internal.ServiceConfig)
+	// mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
+	// internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
+	// serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+	// serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+	// serviceConfig.MsgClient.RetryCount,
+	// serviceConfig.MsgClient.ListenerRoutes)
 
-	metrics.StartMetricsServer(&internal.ServiceConfig.Metrics)
+	// log.Debugf("MessageBus Client is %+v", mbClient)
 
-	r := server.NewRouter(internal.ServiceConfig, db.NewNotificationRepo(d))
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		srv := server.NewNotifyServer(db.NewNotificationRepo(gormdb)) // mbClient,
+		generated.RegisterNotifyServiceServer(s, srv)
+	})
 
-	r.Run()
+	// go msgBusListener(mbClient)
 
-	logrus.Infof("Exiting service %s", internal.ServiceName)
+	grpcServer.StartServer()
 }
 
-/* initConfig reads in config file, ENV variables, and flags if set. */
-func initConfig() {
-	internal.ServiceConfig = internal.NewConfig()
-	logrus.Tracef("Config is %+v", internal.ServiceConfig)
-	config.LoadConfig(internal.ServiceName, internal.ServiceConfig)
-	internal.IsDebugMode = internal.ServiceConfig.DebugMode
-}
+// func msgBusListener(m mb.MsgBusServiceClient) {
+
+// if err := m.Register(); err != nil {
+// log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+// }
+
+// if err := m.Start(); err != nil {
+// log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", internal.ServiceName, err.Error())
+// }
+// }

@@ -1,29 +1,34 @@
 package internal
 
 import (
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/rest"
+	"time"
+
+	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {
-	config.BaseConfig `mapstructure:",squash"`
-	Metrics           config.Metrics
-	Server            rest.HttpConfig
-	DB                config.Database
-	Queue             config.Queue
+	uconf.BaseConfig `mapstructure:",squash"`
+	DB               *uconf.Database  `default:"{}"`
+	Grpc             *uconf.Grpc      `default:"{}"`
+	Metrics          *uconf.Metrics   `default:"{}"`
+	Timeout          time.Duration    `default:"3s"`
+	Queue            *uconf.Queue     `default:"{}"`
+	MsgClient        *uconf.MsgClient `default:"{}"`
+	Service          *uconf.Service
 }
 
-var ServiceConfig *Config
-
-func NewConfig() *Config {
-
+func NewConfig(name string) *Config {
 	return &Config{
-		Server: rest.DefaultHTTPConfig(),
-
-		Queue: config.Queue{
-			Uri: "amqp://guest:guest@localhost:5672",
+		DB: &uconf.Database{
+			DbName: name,
 		},
-
-		DB: config.DefaultDatabaseName(ServiceName),
+		Service: uconf.LoadServiceHostConfig(name),
+		MsgClient: &uconf.MsgClient{
+			Timeout:        5 * time.Second,
+			ListenerRoutes: []string{
+				// "event.cloud.node.node.online",
+				// "event.cloud.node.node.offline",
+			},
+		},
 	}
 }

@@ -2,20 +2,18 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
 type NotificationRepo interface {
-	Insert(n *Notification) error
-	DeleteNotification(id string) error
-	List() (*[]Notification, error)
-	GetNotificationForService(service string, ntype string) (*[]Notification, error)
-	GetNotificationForNode(nodeId string, ntype string) (*[]Notification, error)
-	DeleteNotificationForService(service string, ntype string) error
-	DeleteNotificationForNode(nodeId string, ntype string) error
-	ListNotificationForService(service string, count int) (*[]Notification, error)
-	ListNotificationForNode(nodeId string, count int) (*[]Notification, error)
-	CleanEverything() error
+	Add(n *Notification) error
+	Get(id uuid.UUID) (*Notification, error)
+	List(nodeId, serviceName, nType string, count uint32, sort bool) ([]Notification, error)
+	Delete(id uuid.UUID) error
+	Purge(nodeId, serviceName, nType string) ([]Notification, error)
 }
 
 type notificationRepo struct {
@@ -28,115 +26,94 @@ func NewNotificationRepo(db sql.Db) *notificationRepo {
 	}
 }
 
-/* Update is used when we know the node id */
-func (r *notificationRepo) Insert(n *Notification) error {
-
+func (r *notificationRepo) Add(n *Notification) error {
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
 		DoNothing: true,
 	}).Create(n)
+
 	return d.Error
 }
 
-/* Delete notification */
-func (r *notificationRepo) DeleteNotification(id string) error {
-	result := r.Db.GetGormDb().Unscoped().Where("notification_id = ?", id).Delete(&Notification{})
+func (r *notificationRepo) Get(id uuid.UUID) (*Notification, error) {
+	Notification := Notification{}
+
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&Notification, "id = ?", id.String())
 	if result.Error != nil {
-		return result.Error
+		return nil, result.Error
 	}
-	return nil
+
+	return &Notification, nil
 }
 
-/* List all Modules */
-func (r *notificationRepo) List() (*[]Notification, error) {
+func (r *notificationRepo) List(nodeId, serviceName, nType string, count uint32, sort bool) ([]Notification, error) {
 	notifications := []Notification{}
 
-	result := r.Db.GetGormDb().Preload(clause.Associations).Find(&notifications)
+	tx := r.Db.GetGormDb().Preload(clause.Associations)
+	if nodeId != "" {
+		tx = tx.Where("node_id = ?", nodeId)
+	}
+
+	if serviceName != "" {
+		tx = tx.Where("service_name = ?", serviceName)
+	}
+
+	if nType != "" {
+		tx = tx.Where("notification_type = ?", nType)
+	}
+
+	if sort {
+		tx = tx.Order("time DESC")
+	}
+
+	if count > 0 {
+		tx = tx.Limit(int(count))
+	}
+
+	result := tx.Find(&notifications)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	if result.RowsAffected == 0 {
-		return nil, nil
-	} else {
-		return &notifications, nil
+		return nil, gorm.ErrRecordNotFound
 	}
+
+	return notifications, nil
 }
 
-/* Get Notification info */
-func (r *notificationRepo) GetNotification(id string) (*Notification, error) {
-	Notification := Notification{}
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&Notification, "notification_id = ?", id)
+func (r *notificationRepo) Delete(id uuid.UUID) error {
+	result := r.Db.GetGormDb().Where("id = ?", id.String()).Delete(&Notification{})
+
+	return result.Error
+}
+
+func (r *notificationRepo) Purge(nodeId, serviceName, nType string) ([]Notification, error) {
+	notifications := []Notification{}
+
+	tx := r.Db.GetGormDb().Preload(clause.Associations)
+	if nodeId != "" {
+		tx = tx.Where("node_id = ?", nodeId)
+	}
+
+	if serviceName != "" {
+		tx = tx.Where("service_name = ?", serviceName)
+	}
+
+	if nType != "" {
+		tx = tx.Where("notification_type = ?", nType)
+	}
+
+	tx = tx.Where("deleted_at IS NULL")
+
+	result := tx.Delete(&notifications)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &Notification, nil
-}
 
-/* Get Notification for node */
-func (r *notificationRepo) GetNotificationForNode(NodeID string, nType string) (*[]Notification, error) {
-	notification := []Notification{}
-	result := r.Db.GetGormDb().Find(&notification, "node_id = ? AND type = ?", NodeID, nType)
-	if result.Error != nil {
-		return nil, result.Error
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
-	return &notification, nil
-}
 
-/* Get Notification for Service */
-func (r *notificationRepo) GetNotificationForService(service string, nType string) (*[]Notification, error) {
-	notification := []Notification{}
-	result := r.Db.GetGormDb().Find(&notification, "service_name = ? AND type = ?", service, nType)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &notification, nil
-}
-
-/* Delete Notification for node */
-func (r *notificationRepo) DeleteNotificationForNode(NodeID string, nType string) error {
-	result := r.Db.GetGormDb().Unscoped().Where("node_id = ? AND type = ?", NodeID, nType).Delete(&Notification{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-
-}
-
-/* Delete Notification for Service */
-func (r *notificationRepo) DeleteNotificationForService(service string, nType string) error {
-	result := r.Db.GetGormDb().Unscoped().Where("service_name = ? AND type = ?", service, nType).Delete(&Notification{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
-/* List specifc notification for node */
-func (r *notificationRepo) ListNotificationForNode(NodeID string, count int) (*[]Notification, error) {
-	notification := []Notification{}
-	result := r.Db.GetGormDb().Limit(count).Order("time DESC").Find(&notification, "node_id = ?", NodeID)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &notification, nil
-}
-
-/* List specifc notification for service */
-func (r *notificationRepo) ListNotificationForService(service string, count int) (*[]Notification, error) {
-	notification := []Notification{}
-	result := r.Db.GetGormDb().Limit(count).Order("time DESC").Find(&notification, "service_name = ?", service)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &notification, nil
-}
-
-/* Clean all */
-func (r *notificationRepo) CleanEverything() error {
-	result := r.Db.GetGormDb().Unscoped().Where("id = *").Delete(&Notification{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
+	return notifications, nil
 }

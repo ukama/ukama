@@ -8,6 +8,8 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
+	regexp "regexp"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -15,6 +17,60 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *NotificationMsg) Validate() error {
+func (this *AddRequest) Validate() error {
+	return nil
+}
+func (this *AddResponse) Validate() error {
+	return nil
+}
+
+var _regex_GetRequest_NotificationId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetRequest) Validate() error {
+	if !_regex_GetRequest_NotificationId.MatchString(this.NotificationId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NotificationId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NotificationId))
+	}
+	if this.NotificationId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NotificationId", fmt.Errorf(`value '%v' must not be an empty string`, this.NotificationId))
+	}
+	return nil
+}
+func (this *GetResponse) Validate() error {
+	if this.Notification != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Notification); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Notification", err)
+		}
+	}
+	return nil
+}
+func (this *ListRequest) Validate() error {
+	return nil
+}
+func (this *ListResponse) Validate() error {
+	for _, item := range this.Notifications {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Notifications", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *DeleteResponse) Validate() error {
+	return nil
+}
+func (this *PurgeRequest) Validate() error {
+	return nil
+}
+
+var _regex_Notification_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *Notification) Validate() error {
+	if !_regex_Notification_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
 	return nil
 }

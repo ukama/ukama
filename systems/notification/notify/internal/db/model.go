@@ -2,8 +2,9 @@ package db
 
 import (
 	"fmt"
+	"time"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
@@ -30,16 +31,18 @@ const (
 )
 
 type Notification struct {
-	gorm.Model
-	NotificationID uuid.UUID        `gorm:"unique;type:string;size:128;expression:lower(node_id);" json:"id"`
-	NodeID         string           `gorm:"type:string;size:23;expression:lower(node_id);" json:"nodeID"`
-	NodeType       string           `json:"nodeType"`
-	Severity       SeverityType     `gorm:"type:string;expression:lower(severity)" json:"severity"`
-	Type           NotificationType `gorm:"type:string;expression:lower(notification_type)" json:"notificationType"`
-	ServiceName    string           `json:"serviceName"`
-	Time           uint32           `json:"time"`
-	Description    string           `json:"description"`
-	Details        datatypes.JSON   `json:"details"`
+	Id          uuid.UUID        `gorm:"primaryKey;type:uuid"`
+	NodeId      string           `gorm:"type:string;size:23;expression:lower(node_id);" json:"nodeId"`
+	NodeType    string           `json:"nodeType"`
+	Severity    SeverityType     `gorm:"type:string;expression:lower(severity)" json:"severity"`
+	Type        NotificationType `gorm:"type:string;expression:lower(notification_type)" json:"notificationType"`
+	ServiceName string           `json:"serviceName"`
+	Time        uint32           `json:"time"`
+	Description string           `json:"description"`
+	Details     datatypes.JSON   `json:"details"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 func (n NotificationType) String() string {

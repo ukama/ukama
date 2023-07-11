@@ -6,14 +6,71 @@ import "validator.proto";
 
 package ukama.notification.notify.v1;
 
-// Virtual Node Status update event 
-message NotificationMsg  {
-    string NotificationID = 1;
-    string NodeID = 2;
-    string NodeType = 3;
-    string NotificationType = 4;
-    string Description = 5;
-    string Severity = 6;
-    string ServiceName = 7;
-    uint32 EpochTime = 8; 
+
+service NotifyService {
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc List(ListRequest) returns (ListResponse);
+    rpc Delete(GetRequest) returns (DeleteResponse);
+    rpc Purge(PurgeRequest) returns (ListResponse);
+}
+
+
+message AddRequest {
+    string nodeId = 1 [json_name = "node_id"];
+    string description = 2;
+    string severity = 3;
+    string type = 4;
+    string serviceName = 5 [json_name = "service_name"];
+    uint32 epochTime = 6 [json_name = "time"];
+    string details = 7;
+}
+
+message AddResponse {
+}
+
+
+message GetRequest {
+    string notificationId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "notification_id"];
+}
+
+message GetResponse {
+    Notification notification = 1;
+}
+
+
+message ListRequest {
+    string nodeId = 1 [json_name = "node_id"];
+    string serviceName = 2 [json_name = "service_name"];
+    string type = 3;
+    uint32 count = 4;
+    bool sort = 5;
+}
+
+message ListResponse {
+    repeated Notification notifications = 1;
+}
+
+
+message DeleteResponse {
+}
+
+
+message PurgeRequest {
+    string nodeId = 1 [json_name = "node_id"];
+    string serviceName = 2 [json_name = "service_name"];
+    string type = 3;
+}
+
+
+message Notification {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+    string nodeId = 2 [json_name = "node_id"];
+    string nodeType = 3;
+    string description = 4;
+    string severity = 5;
+    string type = 6;
+    string serviceName = 7 [json_name = "service_name"];
+    uint32 epochTime = 8 [json_name = "time"];
+    string details = 9;
 }
