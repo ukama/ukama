@@ -21,7 +21,7 @@ const yoga = createYoga({
   schema: createSchema({
     typeDefs,
     resolvers,
-  }),
+  }) as any,
   logging: true,
   context: {
     pubSub,
