@@ -1,17 +1,17 @@
 type Query {
- getMetrics(input: GetMetricInput!): [Metric!]!
+  getMetrics(input: GetMetricInput!): [Metric!]!
 }
 
 type Subscription {
- getMetricEvent(input: GetMetricInput!): Metric!
+  getMetricEvent(input: GetMetricInput!): Metric!
 }
 
 type Metric {
- value: String
+  value: String
 }
 
 input GetMetricInput {
- userId: String
- orgId: String
- type: String
+  userId: String
+  orgId: String
+  type: String
 }
