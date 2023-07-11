@@ -1,17 +1,11 @@
-import axios from 'axios'
-import { ApiMethodDataDto } from '../types'
+import { ApiMethodDataDto } from "../types";
+import { axiosErrorHandler } from "./../errors/index";
+import ApiMethods from "./client";
 
-class ApiMethods {
- constructor() {
-  axios.create({
-   timeout: 10000,
-  })
- }
- fetch = async (req: ApiMethodDataDto) => {
-  return axios(req as any).catch((err) => {
-   throw err
-  })
- }
-}
-
-export default new ApiMethods()
+export const asyncRestCall = async (req: ApiMethodDataDto): Promise<any> => {
+  try {
+    return await ApiMethods.fetch(req);
+  } catch (error) {
+    return axiosErrorHandler(error);
+  }
+};

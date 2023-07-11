@@ -1,0 +1,13 @@
+build
+src/.DS_Store
+yarn.lock
+README.md
+.DS_Store
+.env
+.env.example
+.eslintignore
+.gitattributes
+.gitignore
+.prettierignore
+planning-tool/prisma
+yarn-error.log

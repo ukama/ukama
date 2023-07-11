@@ -1,29 +1,31 @@
-import 'dotenv/config'
-import * as fs from 'fs'
-import { createPubSub, createSchema, createYoga } from 'graphql-yoga'
-import { createServer } from 'node:http'
-import * as path from 'path'
-import resolvers from './resolvers'
+import "dotenv/config";
+import * as fs from "fs";
+import { createPubSub, createSchema, createYoga } from "graphql-yoga";
+import { createServer } from "node:http";
+import * as path from "path";
 
-const typeDefs = fs.readFileSync(path.join(process.cwd(), 'schema.graphql'), {
- encoding: 'utf-8',
-})
+import { METRICS_PORT } from "./../../common/configs";
+import resolvers from "./resolvers";
 
-const pubSub = createPubSub({})
+const typeDefs = fs.readFileSync(path.join(process.cwd(), "schema.graphql"), {
+  encoding: "utf-8",
+});
+
+const pubSub = createPubSub({});
 
 const yoga = createYoga({
- schema: createSchema({
-  typeDefs,
-  resolvers,
- }),
- logging: true,
- context: {
-  pubSub,
- },
-})
+  schema: createSchema({
+    typeDefs,
+    resolvers,
+  }),
+  logging: true,
+  context: {
+    pubSub,
+  },
+});
 
-const server = createServer(yoga)
+const server = createServer(yoga);
 
-server.listen(4000, () => {
- console.info('Server is running on http://localhost:4000/graphql')
-})
+server.listen(METRICS_PORT, () => {
+  console.info("Server is running on http://localhost:4000/graphql");
+});

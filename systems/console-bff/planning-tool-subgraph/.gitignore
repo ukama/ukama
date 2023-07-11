@@ -1,7 +1,0 @@
-node_modules
-dist
-src/.DS_Store
-.env.local
-.env.development
-.env.test
-.env.production
