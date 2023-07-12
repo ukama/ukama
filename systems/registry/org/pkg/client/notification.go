@@ -3,11 +3,9 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/rest"
+	res "github.com/ukama/ukama/systems/common/rest"
 )
 
 type SendEmailReq struct {
@@ -22,7 +20,7 @@ type NotificationClient interface {
 }
 
 type notificationClient struct {
-	RestClient *RestClient
+	RestClient *res.RestClient
 }
 
 type Notification struct {
@@ -35,7 +33,7 @@ type notificationResponse struct {
 }
 
 func NewNotificationClient(url string, debug bool) (*notificationClient, error) {
-	restClient, err := NewRestClient(url, debug)
+	restClient, err := res.NewRestClient(url, debug)
 	if err != nil {
 		logrus.Errorf("Failed to connect to %s. Error: %s", url, err.Error())
 		return nil, err
@@ -49,17 +47,17 @@ func NewNotificationClient(url string, debug bool) (*notificationClient, error) 
 }
 
 func (nc *notificationClient) SendEmail(emailBody SendEmailReq) error {
-	errStatus := &rest.ErrorMessage{}
+	errStatus := &res.ErrorMessage{}
 	notificationRes := &notificationResponse{}
 
-	resp, err := nc.RestClient.Client.R().
+	resp, err := nc.RestClient.C.R().
 		SetError(errStatus).
 		SetBody(emailBody).
 		Post(nc.RestClient.URL.String() + "/v1/mailer/sendEmail")
 	if err != nil {
 		logrus.Errorf("Failed to send API request to the notification system. Error: %s", err.Error())
 		return err
-	}	
+	}
 	err = json.Unmarshal(resp.Body(), &notificationRes)
 	if err != nil {
 		logrus.Tracef("Failed to deserialize. Error message: %s", err.Error())
@@ -67,27 +65,4 @@ func (nc *notificationClient) SendEmail(emailBody SendEmailReq) error {
 	}
 
 	return nil
-}
-
-type RestClient struct {
-	Client *resty.Client
-	URL    *url.URL
-}
-
-func NewRestClient(path string, debug bool) (*RestClient, error) {
-	parsedURL, err := url.Parse(path)
-	if err != nil {
-		return nil, err
-	}
-
-	client := resty.New()
-	client.SetDebug(debug)
-
-	restClient := &RestClient{
-		Client: client,
-		URL:    parsedURL,
-	}
-
-	logrus.Tracef("Client created %+v for %s", restClient, restClient.URL.String())
-	return restClient, nil
 }
