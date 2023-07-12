@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -11,10 +13,96 @@ import (
 	"github.com/ukama/ukama/systems/registry/org/mocks"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
 const testOrgName = "test-org"
+
+
+func TestAddInvitation(t *testing.T) {
+	// Mock dependencies
+	mockNotificationClient := &mocks.NotificationClient{}
+	mockOrgRepo := &mocks.OrgRepo{}
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	mockRegistryUserService := &mocks.RegistryUsersClientProvider{}
+
+	s := NewOrgServer(mockOrgRepo, nil, "", msgclientRepo, "", nil, mockRegistryUserService, time.Now().Add(3*24*time.Hour))
+
+	invitationId := uuid.NewV4()
+	role := db.Admin
+	email := "test@ukama.com"
+	name := "test"
+	orgName := "ukama"
+	status := db.Pending
+	expiresAt := time.Now().Add(time.Hour * 24 * 7)
+
+	// Generate input invitation object
+	expiringLink := fmt.Sprintf("https://auth.ukama.com/auth/login?linkId=%s&expires=%d", invitationId, expiresAt.Unix())
+
+	inputInvitation := &pb.AddInvitationRequest{
+		Org:    orgName,
+		Email:  email,
+		Name:   name,
+		Role:   pb.RoleType(db.Admin),
+		Status: pb.InvitationStatus(db.Pending),
+	}
+
+	// Mock calls to dependencies
+	orgId:= uuid.NewV4()
+	res := &db.Org{
+		Id:	orgId,
+		Name: orgName,
+		Owner: uuid.NewV4(),
+	}
+	mockOrgRepo.On("GetByName", orgName).Return(res, nil).Once()
+	mockRegistryUserService.On("GetClient").Return(nil).Once()
+	mockRegistryUserService.On("Get", mock.Anything, &pb.GetRequest{Id: res.Id.String()}).Return(&pb.GetResponse{
+		Org: &pb.Organization{
+			Name: "OwnerName",
+		},
+	}, nil).Once()
+
+	mockOrgRepo.On("AddInvitation", &db.Invitation{
+		Id:        invitationId,
+		Org:       orgName,
+		Link:      expiringLink,
+		Email:     email,
+		Name:      name,
+		ExpiresAt: expiresAt,
+		Role:      role,
+		Status:    status,
+	}, mock.Anything).Return(nil).Once()
+
+	mockNotificationClient.On("SendInvitation", &pb.Invitation{
+		Id:        invitationId.String(),
+		Org:       orgName,
+		Link:      expiringLink,
+		Email:     email,
+		ExpiresAt: timestamppb.New(expiresAt),
+		Status:    pb.InvitationStatus(status),
+	}).Return(nil).Once()
+
+	// Initialize OrgService
+	orgService := &OrgService{
+		orgRepo:               mockOrgRepo,
+		notification:          mockNotificationClient,
+		invitationExpiryTime:  expiresAt,
+		RegistryUserService:   mockRegistryUserService,
+	}
+
+	// Assign orgService to s
+	s = orgService
+
+	// Call method to be tested
+	_, err := s.AddInvitation(context.Background(), inputInvitation)
+
+	// Assert that expected results were returned
+	assert.NoError(t, err)
+	mockOrgRepo.AssertExpectations(t)
+	mockNotificationClient.AssertExpectations(t)
+}
+
 
 func TestOrgServer_Add(t *testing.T) {
 	// Arrange
@@ -50,7 +138,7 @@ func TestOrgServer_Add(t *testing.T) {
 	orgRepo.On("GetMemberCount", mock.Anything).Return(int64(1), int64(0), nil).Once()
 	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "", nil,nil)
+	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour))
 
 	t.Run("AddValidOrg", func(tt *testing.T) {
 		// Act
@@ -94,13 +182,14 @@ func TestOrgServer_Add(t *testing.T) {
 
 }
 
+
 func TestOrgServer_Get(t *testing.T) {
 	orgId := uuid.NewV4()
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour))
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("Get", mock.Anything).Return(&db.Org{Id: orgId}, nil).Once()
@@ -131,7 +220,7 @@ func TestOrgServer_GetByName(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour))
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
@@ -162,7 +251,7 @@ func TestOrgServer_GetByOwner(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour))
 
 	t.Run("OwnerFound", func(tt *testing.T) {
 		orgRepo.On("GetByOwner", mock.Anything).
@@ -199,7 +288,7 @@ func TestOrgServer_GetByUser(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour))
 
 	t.Run("UserFoundOnOwnersAndMembers", func(tt *testing.T) {
 		orgRepo.On("GetByOwner", userId).
@@ -286,7 +375,7 @@ func TestOrgServer_AddMember(t *testing.T) {
 
 	orgRepo.On("GetMemberCount", mock.Anything).Return(int64(1), int64(0), nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "", nil,nil)
+	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour))
 
 	t.Run("AddValidMember", func(tt *testing.T) {
 		orgRepo.On("GetByName", mock.Anything).Return(org, nil).Once()
@@ -357,7 +446,7 @@ func TestOrgServer_GetMember(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour))
 
 	t.Run("MemberFound", func(tt *testing.T) {
 		orgRepo.On("GetMember", orgId, userId).
@@ -410,7 +499,7 @@ func TestOrgServer_GetMembers(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil)
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour))
 
 	t.Run("MembersFound", func(tt *testing.T) {
 		orgRepo.On("GetMembers", orgId).
