@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 // API GWs
 export const PLANNING_API_URL = process.env.PLANNING_API_URL;
 export const METRIC_API_GW = process.env.METRIC_API_GW || "";
