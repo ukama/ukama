@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/rest"
+	log "github.com/sirupsen/logrus"
+	res "github.com/ukama/ukama/systems/common/rest"
 )
 
 type NetworkInfoClient interface {
@@ -14,7 +14,7 @@ type NetworkInfoClient interface {
 }
 
 type networkInfoClient struct {
-	R *RestClient
+	R *res.RestClient
 }
 
 type Network struct {
@@ -30,9 +30,9 @@ type NetworkInfo struct {
 }
 
 func NewNetworkClient(url string, debug bool) (*networkInfoClient, error) {
-	restClient, err := NewRestClient(url, debug)
+	restClient, err := res.NewRestClient(url, debug)
 	if err != nil {
-		logrus.Errorf("Can't connect to %s. Error: %s", url, err.Error())
+		log.Errorf("Can't connect to %s. Error: %s", url, err.Error())
 		return nil, err
 	}
 
@@ -44,30 +44,30 @@ func NewNetworkClient(url string, debug bool) (*networkInfoClient, error) {
 }
 
 func (nc *networkInfoClient) GetNetworkInfo(networkId string, orgId string) (*NetworkInfo, error) {
-	errStatus := &rest.ErrorMessage{}
+	errStatus := &res.ErrorMessage{}
 	network := &Network{}
 
-	resp, err := nc.R.Client.R().
+	resp, err := nc.R.C.R().
 		SetError(errStatus).
 		Get(nc.R.URL.String() + "/v1/networks/" + networkId)
 	if err != nil {
-		logrus.Errorf("Failed to send API request to network registry. Error: %s", err.Error())
+		log.Errorf("Failed to send API request to network registry. Error: %s", err.Error())
 		return nil, err
 	}
 
 	if !resp.IsSuccess() {
-		logrus.Tracef("Failed to fetch network info. HTTP response code: %d, Error message: %s", resp.StatusCode(), errStatus.Message)
+		log.Tracef("Failed to fetch network info. HTTP response code: %d, Error message: %s", resp.StatusCode(), errStatus.Message)
 		return nil, fmt.Errorf("Network info failure: %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), &network)
 	if err != nil {
-		logrus.Tracef("Failed to deserialize network info. Error message: %s", err.Error())
+		log.Tracef("Failed to deserialize network info. Error message: %s", err.Error())
 		return nil, fmt.Errorf("Network info deserialization failure: %s", err.Error())
 	}
 
 	if orgId != network.NetworkInfo.OrgId {
-		logrus.Error("Missing network.")
+		log.Error("Missing network.")
 		return nil, fmt.Errorf("Network mismatch")
 	}
 
