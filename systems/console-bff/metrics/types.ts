@@ -24,12 +24,15 @@ export type GetMetricInput = {
 
 export type Metric = {
   __typename?: 'Metric';
-  value?: Maybe<Scalars['String']['output']>;
+  env?: Maybe<Scalars['String']['output']>;
+  nodeid?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+  value?: Maybe<Array<Maybe<Array<Maybe<Scalars['Float']['output']>>>>>;
 };
 
 export type Query = {
   __typename?: 'Query';
-  getMetrics: Array<Metric>;
+  getMetrics: Metric;
 };
 
 
@@ -119,6 +122,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
+  Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   GetMetricInput: GetMetricInput;
   Metric: ResolverTypeWrapper<Metric>;
   Query: ResolverTypeWrapper<{}>;
@@ -129,6 +133,7 @@ export type ResolversTypes = {
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
   Boolean: Scalars['Boolean']['output'];
+  Float: Scalars['Float']['output'];
   GetMetricInput: GetMetricInput;
   Metric: Metric;
   Query: {};
@@ -137,12 +142,15 @@ export type ResolversParentTypes = {
 };
 
 export type MetricResolvers<ContextType = any, ParentType extends ResolversParentTypes['Metric'] = ResolversParentTypes['Metric']> = {
-  value?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  env?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  nodeid?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  value?: Resolver<Maybe<Array<Maybe<Array<Maybe<ResolversTypes['Float']>>>>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  getMetrics?: Resolver<Array<ResolversTypes['Metric']>, ParentType, ContextType, RequireFields<QueryGetMetricsArgs, 'input'>>;
+  getMetrics?: Resolver<ResolversTypes['Metric'], ParentType, ContextType, RequireFields<QueryGetMetricsArgs, 'input'>>;
 };
 
 export type SubscriptionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
