@@ -29,7 +29,7 @@ type Config struct {
 	OrgOwnerUUID      string
 	Pushgateway       string `default:"http://localhost:9091"`
 	NotificationHost  string `default:"http://192.168.1.81:8089"`
-	InvitationExpiryTime time.Time `default:"72h"`	
+	InvitationExpiryTime time.Time 	
 }
 
 var OrgMetrics = []metric.MetricConfig{

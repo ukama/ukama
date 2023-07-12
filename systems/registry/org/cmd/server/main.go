@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"os"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -91,12 +92,20 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
+	var invitationExpiryTime time.Time
+	if !svcConf.InvitationExpiryTime.IsZero() {
+		invitationExpiryTime = svcConf.InvitationExpiryTime
+	} else {
+		invitationExpiryTime = time.Now().Add(3 * 24 * time.Hour)
+		log.Warnf("InvitationExpiryTime not set, using default value: %v", invitationExpiryTime)
+	}
+
 	
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
 		svcConf.OrgName, mbClient,
 		svcConf.Pushgateway, notificationClient,client.NewRegistryUsersClientProvider(svcConf.Users, svcConf.MsgClient.Timeout),
-		svcConf.InvitationExpiryTime,
+		invitationExpiryTime,
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

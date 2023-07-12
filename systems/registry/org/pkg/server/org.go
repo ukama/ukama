@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -38,6 +42,10 @@ type OrgService struct {
 	notification   client.NotificationClient
 	invitationExpiryTime time.Time
 }
+type EmailData struct {
+	RecipientName string
+}
+
 
 func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient ,RegistryUserService client.RegistryUsersClientProvider,invitationExpiryTime time.Time ) *OrgService {
 	return &OrgService{
@@ -95,11 +103,33 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	if err != nil {
 		return nil, err
 	}
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Error getting working directory: %s", err)
+	}
+	templateDir := filepath.Join(wd, "templates")
+	templateFile := filepath.Join(templateDir, "email_template.gotml")
+	tmpl, err := template.ParseFiles(templateFile)
+	if err != nil {
+		log.Fatalf("Error parsing template file: %s", err)
+	}
+	data := EmailData{
+		RecipientName: "John Doe",
+	}
+	var renderedEmailBody string
+	buf := new(strings.Builder)
+	err = tmpl.Execute(buf, data)
+	if err != nil {
+		log.Fatalf("Error rendering template: %s", err)
+	}
+	renderedEmailBody = buf.String()
+	fmt.Println("Rendered email body:", renderedEmailBody)
+	fmt.Println("Email body:", emailBody)
 	
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
 		Subject: "[Ukama] Team invite from " + res.Name,
-		Body:    emailBody,
+		Body:    renderedEmailBody,
 		Values:  map[string]string{"EmailID": invitationId.String()},
 	})
 
