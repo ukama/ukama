@@ -36,10 +36,10 @@ type OrgService struct {
 	msgbus         mb.MsgBusServiceClient
 	pushgateway    string
 	notification   client.NotificationClient
-	invitationExpiry time.Time
+	invitationExpiryTime time.Time
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient ,RegistryUserService client.RegistryUsersClientProvider,invitationExpiry time.Time ) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient ,RegistryUserService client.RegistryUsersClientProvider,invitationExpiryTime time.Time ) *OrgService {
 	return &OrgService{
 		orgRepo:        orgRepo,
 		userRepo:       userRepo,
@@ -49,7 +49,7 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 		RegistryUserService: RegistryUserService,
 		pushgateway:    pushgateway,
 		notification:   notification,
-		invitationExpiry: invitationExpiry,
+		invitationExpiryTime: invitationExpiryTime,
 	}
 }
 
@@ -68,7 +68,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, status.Errorf(codes.InvalidArgument, "Name is required")
 	}
 
-	link, err := generateInvitationLink(o.invitationExpiry)
+	link, err := generateInvitationLink(o.invitationExpiryTime)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 			Link:      link,
 			Email:     req.GetEmail(),
 			Role:      pbRoleTypeToDb(req.GetRole()),
-			ExpiresAt: o.invitationExpiry,
+			ExpiresAt: o.invitationExpiryTime,
 			Status:    db.Pending,
 		},
 	)
