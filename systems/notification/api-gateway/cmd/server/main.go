@@ -3,14 +3,14 @@ package main
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/notification/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/rest"
 
+	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
 )
 
 var svcConf = pkg.NewConfig()
@@ -22,7 +22,7 @@ func main() {
 	clientSet := rest.NewClientsSet(&svcConf.Services)
 	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
 	if err != nil {
-		logrus.Errorf("Failed to create auth client: %v", err)
+		log.Errorf("Failed to create auth client: %v", err)
 	}
 
 	router := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
