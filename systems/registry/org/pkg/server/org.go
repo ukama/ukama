@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+
 type OrgService struct {
 	pb.UnimplementedOrgServiceServer
 	orgRepo        db.OrgRepo
@@ -35,9 +36,10 @@ type OrgService struct {
 	msgbus         mb.MsgBusServiceClient
 	pushgateway    string
 	notification   client.NotificationClient
+	invitationExpiry time.Time
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient ,RegistryUserService client.RegistryUsersClientProvider) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient ,RegistryUserService client.RegistryUsersClientProvider,invitationExpiry time.Time ) *OrgService {
 	return &OrgService{
 		orgRepo:        orgRepo,
 		userRepo:       userRepo,
@@ -47,6 +49,7 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 		RegistryUserService: RegistryUserService,
 		pushgateway:    pushgateway,
 		notification:   notification,
+		invitationExpiry: invitationExpiry,
 	}
 }
 
@@ -65,28 +68,13 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, status.Errorf(codes.InvalidArgument, "Name is required")
 	}
 
-	link, err := generateInvitationLink()
+	link, err := generateInvitationLink(o.invitationExpiry)
 	if err != nil {
 		return nil, err
 	}
-	expiresAt := time.Now().Add(3 * 24 * time.Hour) // Set the expiration time to three days from now
 
 	invitationId := uuid.NewV4()
-	err = o.orgRepo.AddInvitation(
-		&db.Invitation{
-			Id:        invitationId,
-			Org:       req.GetOrg(),
-			Name:      req.GetName(),
-			Link:      link,
-			Email:     req.GetEmail(),
-			Role:      pbRoleTypeToDb(req.GetRole()),
-			ExpiresAt: expiresAt,
-			Status:    db.InvitationStatus(req.GetStatus()),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+	
 
 	res, err := o.orgRepo.GetByName(req.GetOrg())
 	if err != nil {
@@ -107,7 +95,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	if err != nil {
 		return nil, err
 	}
-
+	
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
 		Subject: "[Ukama] Team invite from " + res.Name,
@@ -117,6 +105,21 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "Unable to send email %s", err.Error())
+	}
+	err = o.orgRepo.AddInvitation(
+		&db.Invitation{
+			Id:        invitationId,
+			Org:       req.GetOrg(),
+			Name:      req.GetName(),
+			Link:      link,
+			Email:     req.GetEmail(),
+			Role:      pbRoleTypeToDb(req.GetRole()),
+			ExpiresAt: o.invitationExpiry,
+			Status:    db.Pending,
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return &pb.AddInvitationResponse{}, nil
@@ -414,17 +417,6 @@ func (o *OrgService) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
-	emailReq := client.SendEmailReq{
-		To:      []string{"brackley@ukama.com"},
-		Subject: "Test Email",
-		Body:    "This is a test email.",
-		Values:  nil,
-	}
-
-	err = o.notification.SendEmail(emailReq)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
-	}
 
 	route := o.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
 	err = o.msgbus.PublishRequest(route, req)
@@ -709,7 +701,7 @@ func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
 	}
 }
 
-func pbInvitationStatusToDb(status pb.InvitationStatus) db.InvitationStatus {
+func pbInvitationStatusToDbInvitationStatus(status pb.InvitationStatus) db.InvitationStatus {
 	switch status {
 	case pb.InvitationStatus_PENDING:
 		return db.Pending
@@ -723,9 +715,7 @@ func pbInvitationStatusToDb(status pb.InvitationStatus) db.InvitationStatus {
 
 }
 
-func generateInvitationLink() (string, error) {
-	expirationTime := time.Now().Add(3 * 24 * time.Hour) // Set the expiration time to three days from now
-
+func generateInvitationLink(expirationTime time.Time ) (string, error) {
 	link := "http://localhost:4455/auth/login"
 	linkID := uuid.NewV4().String() 
 
