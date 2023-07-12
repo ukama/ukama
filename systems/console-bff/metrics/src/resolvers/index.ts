@@ -3,7 +3,7 @@ import { Worker } from "worker_threads";
 import { METRIC_API_GW, STORAGE_KEY } from "../../../common/configs";
 import { logger } from "../../../common/logger";
 import { storeInStorage } from "../../../common/storage";
-import { getTimestampCount } from "../../../common/utils/inde";
+import { getTimestampCount } from "../../../common/utils/";
 import { Resolvers } from "../../types";
 
 const WS_THREAD = "./threads/MetricsWSThread.ts";

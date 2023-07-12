@@ -17,10 +17,9 @@ export type Scalars = {
 };
 
 export type GetMetricInput = {
-  __typename?: 'GetMetricInput';
-  orgId?: Maybe<Scalars['String']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
-  userId?: Maybe<Scalars['String']['output']>;
+  orgId?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Metric = {
@@ -120,7 +119,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
-  GetMetricInput: ResolverTypeWrapper<GetMetricInput>;
+  GetMetricInput: GetMetricInput;
   Metric: ResolverTypeWrapper<Metric>;
   Query: ResolverTypeWrapper<{}>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
@@ -137,13 +136,6 @@ export type ResolversParentTypes = {
   Subscription: {};
 };
 
-export type GetMetricInputResolvers<ContextType = any, ParentType extends ResolversParentTypes['GetMetricInput'] = ResolversParentTypes['GetMetricInput']> = {
-  orgId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  userId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type MetricResolvers<ContextType = any, ParentType extends ResolversParentTypes['Metric'] = ResolversParentTypes['Metric']> = {
   value?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -158,7 +150,6 @@ export type SubscriptionResolvers<ContextType = any, ParentType extends Resolver
 };
 
 export type Resolvers<ContextType = any> = {
-  GetMetricInput?: GetMetricInputResolvers<ContextType>;
   Metric?: MetricResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
