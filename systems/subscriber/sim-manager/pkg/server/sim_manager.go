@@ -30,6 +30,7 @@ import (
 )
 
 const DefaultDaysDelayForPackageStartDate = 1
+const mailerServerName = "[Ukama]"
 
 type SimManagerServer struct {
 	simRepo                   sims.SimRepo
@@ -245,10 +246,10 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		return nil, err
 	}
-	if poolSim.QrCode != "" {
+	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		err = s.notificationClient.SendEmail(providers.SendEmailReq{
 			To:      []string{remoteSubResp.Subscriber.Email},
-			Subject: "[Ukama] " + netInfo.Name + " invited you to use their network",
+			Subject: mailerServerName + netInfo.Name + " invited you to use their network",
 			Body:    emailBody,
 			Values:  map[string]string{"SubscriberID": remoteSubResp.Subscriber.SubscriberId},
 		})
@@ -831,18 +832,4 @@ func dbPackagesToPbPackages(packages []sims.Package) []*pb.Package {
 	}
 
 	return res
-}
-
-func isEsim(isEsim bool) (qrCode string, e error) {
-
-	if isEsim {
-		qrCode = "esim"
-
-		return qrCode, nil
-	} else {
-		qrCode = "sim"
-
-		return "", nil
-	}
-
 }
