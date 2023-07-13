@@ -1,26 +1,34 @@
 {
-	"version": "0.1",
-	"serial": "abcd-ef-ghi-009910-xyz",
-	"target": "serial",
-
-	"ukama-cApp": [
-               {
-                        "name": "mesh",
-                        "tag": "latest",
-                        "restart": "no",
-                        "contained": "boot"
-                }
-
-	],
-
-	"namespaces": [{
-			"type": "pid"
-		},
-		{
-			"type": "user"
-		},
-		{
-			"type": "mount"
-		}
-	]
+  "version": "0.1",
+  "target": "ukma-xx-xx-xxxx",
+  "boot": [
+    {
+      "name": "bootstrap",
+      "tag": "latest",
+      "restart": "no",
+      "pre": "none"
+    },
+    {
+      "name": "mesh",
+      "tag": "latest",
+      "restart": "yes",
+      "pre": "bootstrap"
+    }
+  ],
+  "services": [
+    {
+      "name": "metrics.d",
+      "tag": "v0.2.4",
+      "restart": "no",
+      "pre": "none"
+    }
+  ],
+  "reboot": [
+    {
+      "name": "bootstrap",
+      "tag": "latest",
+      "restart": "no",
+      "pre": "none"
+    }
+  ]
 }

@@ -213,6 +213,7 @@ int main(int argc, char **argv) {
   }
   print_config(config);
 
+#if 0
   /* Step-2: read cspace config file(s) */
   if (config->cSpaceConfigs) {
     cSpaces = (CSpace *)calloc(1, sizeof(CSpace));
@@ -246,14 +247,7 @@ int main(int argc, char **argv) {
     }
     cPtr = cPtr->next;
   }
-
-  /* setup bridge/NAT */
-  if (ipnet_setup(IPNET_DEV_TYPE_BRIDGE, DEF_BRIDGE, config->bridgeIface,
-		  config->bridgeIP, NULL, NULL, 0) != TRUE) {
-    log_error("Error setting up bridge %s on interface %s", DEF_BRIDGE,
-	      config->bridgeIface);
-    exit(1);
-  }
+#endif
 
   /* Step-3: process manifest.json file. */
   manifest = (Manifest *)calloc(1, sizeof(Manifest));
@@ -262,7 +256,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  if (process_manifest(manifestFile, manifest, cSpaces) != TRUE) {
+  if (process_manifest(&manifest, manifestFile, cSpaces) != TRUE) {
     log_error("Error process the manifest file: %s", manifestFile);
     exit(1);
   }
@@ -272,7 +266,7 @@ int main(int argc, char **argv) {
    *          DEF_CAPP_PATH: /capps/pkgs
    *          DEF_CSPACE_ROOTFS_PATH: /capps/rootfs
    */
-  copy_capps_to_cspace_rootfs(manifest, DEF_CAPP_PATH, DEF_CSPACE_ROOTFS_PATH);
+  copy_capps_to_rootfs(manifest);
   if (!unpack_all_capps_to_cspace_rootfs(manifest, DEF_CSPACE_ROOTFS_PATH,
 					 DEF_CAPP_PATH)) {
     log_error("Unable to unpack the capps for cspace rootfs. Exiting.");
@@ -286,6 +280,7 @@ int main(int argc, char **argv) {
    */
   cPtr = cSpaces;
 
+#if 0  
   /* Go over the cSpaces, start thread and create actual contained spaces. */
   for (cPtr=cSpaces; cPtr; cPtr=cPtr->next) {
 
@@ -307,6 +302,7 @@ int main(int argc, char **argv) {
 	     * to be created to avoid missing any mutex issues. Ideally
 	     * this to be done via flag
 	     */
+#endif
 
   /* Step-6: Move all valid cApps into pending list/state. */
   if (!capps_init(&apps, config, manifest, cSpaces)) {
@@ -333,13 +329,14 @@ int main(int argc, char **argv) {
   ulfius_clean_instance(&clientInst);
 
   clear_config(config);
-  clear_manifest(manifest);
+  free_manifest(manifest);
 
+#if 0
   /* clear the capps from all queues. */
   for (i=START_LIST+1; i!=END_LIST; i++) {
     clear_capps(apps, i);
   }
-
+#endif
   free(apps);
   free(config);
   free(manifest);
