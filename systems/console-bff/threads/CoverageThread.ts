@@ -4,7 +4,6 @@ const axios = require("axios");
 
 const runWorker = async () => {
   if (!isMainThread) {
-    console.log("workerData", workerData);
     const config = {
       method: "post",
       maxBodyLength: Infinity,
