@@ -1,0 +1,3 @@
+interface GetNode {
+  id: string;
+}

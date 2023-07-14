@@ -11,7 +11,6 @@ import {
   AUTH_APP_URL,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
-  METRICS_PORT,
   PLANNING_SERVICE_PORT,
   PLAYGROUND_URL,
 } from "../common/configs";
@@ -25,7 +24,7 @@ const startServer = async () => {
   const gateway = new ApolloGateway({
     supergraphSdl: new IntrospectAndCompose({
       subgraphs: [
-        { name: "metrics", url: `http://localhost:${METRICS_PORT}` },
+        // { name: "metrics", url: `http://localhost:${METRICS_PORT}` },
         { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
       ],
     }),
