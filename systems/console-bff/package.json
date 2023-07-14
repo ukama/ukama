@@ -15,6 +15,7 @@
     "schema": "./planning-tool/prisma/schema.prisma"
   },
   "dependencies": {
+    "@apollo/datasource-rest": "^6.0.1",
     "@apollo/gateway": "^2.4.9",
     "@apollo/server": "^4.7.5",
     "@apollo/subgraph": "^2.4.9",
