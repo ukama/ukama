@@ -1,7 +1,0 @@
-overwrite: true
-schema: metrics-schema.graphql
-generates:
-  metrics/types.ts:
-    plugins:
-      - typescript
-      - typescript-resolvers
