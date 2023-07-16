@@ -28,9 +28,9 @@
 #include "jserdes.h"
 #include "map.h"
 #include "u_amqp.h"
+#include "httpStatus.h"
 
-extern WorkList *Transmit;
-extern MapTable *IDTable;
+extern MapTable *IDsTable;
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -44,57 +44,54 @@ extern void  websocket_onclose(const URequest *request, WSManager *manager,
  * Ulfius main callback function, send AMQP msg and calls the websocket
  * manager and closes.
  */
-int callback_websocket (const URequest *request, UResponse *response,
-						void *data) {
+int callback_websocket(const URequest *request, UResponse *response,
+                       void *data) {
 	int ret;
-	char *idStr=NULL;
-	Config *config = (Config *)data;
-	uuid_t uuid;
+	char *nodeID=NULL;
+	Config *config=NULL;
+    MapItem *map=NULL;
+    char ip[INET_ADDRSTRLEN]={0};
+    struct sockaddr_in *sin=NULL;
 
-	idStr = u_map_get(request->map_header, "User-Agent");
-	if (idStr == NULL) {
-		log_error("Missing UUID as User-Agent");
+    config = (Config *)data;
+
+    sin = (struct sockaddr_in *)request->client_address;
+    inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
+
+	nodeID = u_map_get(request->map_header, "User-Agent");
+	if (nodeID == NULL) {
+		log_error("Missing NodeID as User-Agent");
 		return U_CALLBACK_ERROR;
 	}
 
-	if (uuid_parse(idStr, uuid)==-1) {
-		log_error("Error parsing the UUID into binary: %s", idStr);
-		return U_CALLBACK_ERROR;
+    map = add_map_to_table(&IDsTable,
+                           nodeID,
+                           &ip[0], sin->sin_port,
+                           &ip[0], sin->sin_port);
+	if (map == NULL) {
+        return U_CALLBACK_CONTINUE; // XXX
 	}
 
-	if (config->deviceInfo) {
-		if (uuid_compare(config->deviceInfo->uuid, uuid) != 0) {
-			/* Only accept one device at a time until the socket is closed. */
-			log_error("Only accept one device at a time. Ignoring");
-			return U_CALLBACK_ERROR;
-		}
-	} else {
-		config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
-		if (config->deviceInfo == NULL) {
-			log_error("Error allocating memory: %d", sizeof(DeviceInfo));
-			free(idStr);
-			return U_CALLBACK_ERROR;
-		}
-		uuid_copy(config->deviceInfo->uuid, uuid);
-	}
+    map->configData = data;
 
-	/* Publish device (uuid) 'connect' event to AMQP exchange */
-	if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CONNECT,
-						   uuid) == FALSE) {
+	/* Publish device (nodeID) 'connect' event to AMQP exchange */
+	if (publish_event(CONN_CONNECT,
+                      nodeID,
+                      &ip[0], sin->sin_port,
+                      &ip[0], sin->sin_port) == FALSE) {
 		log_error("Error publishing device connect msg on AMQP exchange");
-		free(idStr);
-		return U_CALLBACK_ERROR;
+        //		return U_CALLBACK_ERROR; xxx
 	} else {
-		log_debug("AMQP device connect msg successfull for UUID: %s", idStr);
+		log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
 	}
 
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
 											 &websocket_manager,
-											 data,
+											 map->nodeInfo->nodeID,
 											 &websocket_incoming_message,
-											 data,
+											 map->nodeInfo->nodeID,
 											 &websocket_onclose,
-											 data)) == U_OK) {
+											 map->nodeInfo->nodeID)) == U_OK) {
 		ulfius_add_websocket_deflate_extension(response);
 		return U_CALLBACK_CONTINUE;
 	}
@@ -153,64 +150,62 @@ int callback_ping(const URequest *request, UResponse *response,
 int callback_webservice(const URequest *request, UResponse *response,
 						void *data) {
 
-	json_t *jReq=NULL;
-	Config *config;
 	int ret, statusCode=200;
 	char *str;
-	char ip[INET_ADDRSTRLEN];
-	unsigned short port;
 	MapItem *map=NULL;
 	struct sockaddr_in *sin;
+    char *nodeID=NULL, *nodePort=NULL, *url=NULL, *agent=NULL;
+    char *packetStr=NULL;
+    char *requestStr=NULL, *responseStr=NULL;
 
-	config = (Config *)data;
-  
-	/* For every incoming request, do following:
-	 *
-	 * 1. Sanity check.
-	 * 2. Convert request into JSON.
-	 * 3. Send request to Ukama proxy via websocket.
-	 * 4. Process websocket response.
-	 * 5. Wait for the response from server.
-	 * 6. Process response.
-	 * 7. Send response back to the client.
-	 * 8. Done
-	 */
+    /*
+     * Find the NodeID from the URL.
+     * For the given NodeID, look up the Map item in the IDstable.
+     *   If match found, add the task to the transmit list and set cond
+     *   otherwise return 503 (Service Unavailable)
+     */
 
-	sin = (struct sockaddr_in *)request->client_address;
-	inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
-	port = sin->sin_port;
+    url   = u_map_get(request->map_header, "Host");
+    agent = u_map_get(request->map_header, "User-Agent");
+    split_strings(url, &nodeID, &nodePort, ":");
 
-	map = add_map_to_table(&IDTable, &ip[0], port);
-	if (map == NULL) {
-		statusCode = 500;
-		goto done;
-	}
+    if (nodeID == NULL || nodePort == NULL) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
 
-	ret = serialize_forward_request(request, &jReq, config, map->uuid);
-	if (ret == FALSE && jReq == NULL) {
+    map = is_existing_item(IDsTable, nodeID);
+    if (map == NULL) { /* No matching node connected. */
+        log_error("For agent: %s No matching node with nodeID: %s",
+                  agent, nodeID);
+        ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                        HttpStatusStr(HttpStatus_NotFound));
+        return U_CALLBACK_CONTINUE;
+    }
+
+	ret = serialize_websocket_message(&requestStr, request, nodeID, nodePort,
+                                      agent);
+	if (ret == FALSE && requestStr == NULL) {
 		log_error("Failed to convert request to JSON");
 		statusCode = 400;
 		goto done;
 	} else {
-		str = json_dumps(jReq, 0);
-		log_debug("Forward request JSON: %s", str);
-		free(str);
+		log_debug("Forward request JSON: %s", requestStr);
 	}
 
 	/* Add work for the websocket for transmission. */
-	if (jReq != NULL) {
-		/* No pre/post transmission func. This will block. */
-		add_work_to_queue(&Transmit, (Packet)jReq, NULL, 0, NULL, 0);
-	}
+    add_work_to_queue(&map->transmit, requestStr, NULL, 0, NULL, 0);
 
 	/* Wait for the response back. The cond is set by the websocket thread */
 	pthread_mutex_lock(&(map->mutex));
 	log_debug("Waiting for response back from the server ...");
-	pthread_cond_wait(&(map->hasResp), &(map->mutex));
+	pthread_cond_wait(&(map->receive->hasWork), &(map->mutex));
 	pthread_mutex_unlock(&(map->mutex));
 
-	log_debug("Got response back from server. Len: %d Response: %s",
-			  map->size, (char *)map->data);
+    // xxx
+    responseStr = map->receive->first->data;
+	log_debug("Got response back from server. Response: %s", responseStr);
 
 	/* Send response back. */
 	if (map->size == 0) {
@@ -219,15 +214,19 @@ int callback_webservice(const URequest *request, UResponse *response,
 	}
   
  done:
+    // xxx
 	/* Send response back to the callee */
-	if (statusCode != 200) {
-		ulfius_set_string_body_response(response, statusCode, "");
-	} else {
-		ulfius_set_string_body_response(response, statusCode, map->data);
-	}
-
-	if (map->size)
-		free(map->data);
+	// if (statusCode != 200) {
+	//	ulfius_set_string_body_response(response, statusCode, "");
+	//} else {
+	//	ulfius_set_string_body_response(response, statusCode, map->data);
+	//}
+    ulfius_set_string_body_response(response, 200, responseStr);
+    //    free(packetStr);
+    // free(requestStr);
+    
+	// if (map->size)
+	//	free(map->data);
 
 	return U_CALLBACK_CONTINUE;
 }

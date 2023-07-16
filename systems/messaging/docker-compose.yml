@@ -1,0 +1,135 @@
+version: "3.3"
+services:
+  postgresd-messaging:
+    image: postgres:13.3
+    ports:
+      - "5409:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
+  # mesh:
+  #   build:
+  #     dockerfile: ./Dockerfile
+  #     context: ./mesh
+  #   restart: always
+  #   ports:
+  #     - "9275:9275"
+  #   networks:
+  #     - ukama-net
+
+  # initclient-messaging:
+  #   build:
+  #     dockerfile: ./Dockerfile
+  #     context: ../services/initClient
+  #   environment:
+  #     - ENV_SYSTEM_ORG=ukama001
+  #     - ENV_SYSTEM_NAME=messaging
+  #     - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_SYSTEM_PORT=8889
+  #     - ENV_SYSTEM_CERT=This-is-a-certificate
+  #     - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_INIT_SYSTEM_PORT=8071
+  #     - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_INIT_CLIENT_PORT=9091
+  #     - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+  #   restart: always
+  #   networks:
+  #     - ukama-net
+  
+  gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./api-gateway
+    ports:
+      - "8079:8080"
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
+      - NODEMETRICSPORT=10251
+      - SERVICES_NNS=nnsd:9090
+    depends_on:
+      - nnsd
+    networks:
+      - ukama-net
+
+  etcd:
+    image: 'bitnami/etcd:latest'
+    networks:
+      - ukama-net
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    ports:
+      - 2379:2379
+      - 2380:2380
+
+  nnsd:
+    build:    
+      dockerfile: ./Dockerfile
+      context: ./nns
+    environment:
+      - DEBUGMODE=true
+      - DNS_NODEDOMAIN=node.mesh
+      - ETCDHOST=etcd:2379
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-messaging:9095
+      - NNS_SERVICE_HOST=nnsd
+      - NNS_SERVICE_PORT=9090
+      - REGISTRY=http://${LOCAL_HOST_IP}:8075
+      - ORG=36960fb9-dc87-4fe6-9275-583b694a89a3
+    restart: always
+    networks:
+      ukama-net:
+         ipv4_address: 10.1.0.100
+         
+    depends_on:
+      - msgclient-messaging
+  
+  msgclient-messaging:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-messaging
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - SYSTEM=messaging
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-messaging
+
+  coredns:
+    image: coredns/coredns:latest
+    command: -conf /etc/coredns/Corefile -dns.port 53
+    restart: on-failure
+    networks:
+      - ukama-net
+    expose:
+      - '53'
+      - '53/udp'
+    ports:
+      - '5053:53'
+      - '5053:53/udp'
+    volumes:
+      - './coredns/Corefile:/etc/coredns/Corefile'
+
+  bastion:
+    image: nicolaka/netshoot:latest
+    command: tail -F anything
+    restart: always
+
+networks:
+  ukama-net:
+    external: true
+    name: services_dev-net
+
+volumes:
+  postgress-data:
+

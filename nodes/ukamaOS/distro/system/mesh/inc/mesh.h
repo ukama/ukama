@@ -40,8 +40,10 @@
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
 
-#define MESH_TYPE_FWD_REQ "forward_request"
-#define MESH_TYPE_FWD_RESP "forward_response"
+#define MESH_SERVICE_REQUEST  "service_request"
+#define MESH_SERVICE_RESPONSE "service_response"
+#define MESH_NODE_REQUEST     "node_request"
+#define MESH_NODE_RESPONSE    "node_response"
 
 /* For MAP */
 #define MESH_MAP_TYPE_URL  1
@@ -54,6 +56,8 @@
 #define MESH_MAP_TYPE_POST_STR   "map_post"
 #define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
 
+#define MESH_LOCK_TIMEOUT 10 /* seconds */
+
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
 typedef struct _u_response UResponse;
@@ -62,13 +66,32 @@ typedef struct _websocket_message WSMessage;
 typedef struct _u_map UMap;
 
 typedef struct {
+    void      *config;
+    WSManager *handler;
+} ThreadArgs;
 
-	uuid_t uuid;
+typedef struct {
+
+    struct _websocket_client_handler *handler;
+    struct _u_instance *webInst;
+    void    *config;
+} State;
+
+typedef struct {
+
+	char *nodeID;
+    char *port;
+} NodeInfo;
+
+typedef struct {
+
+    char *nodeID;
 } DeviceInfo;
 
 typedef struct {
 
-	uuid_t uuid;
+    char *name;
+    char *port;
 } ServiceInfo;
 
 typedef struct {
@@ -90,5 +113,16 @@ typedef struct {
 	void        *data;
 	ServiceInfo *serviceInfo;
 } MResponse;
+
+typedef struct {
+
+    char        *reqType;
+    int         seqNo;
+    NodeInfo    *nodeInfo;
+    ServiceInfo *serviceInfo;
+    int         dataSize;
+    int         code;
+    char        *data;   /* RequestInfo or actual response */
+} Message;
 
 #endif /* MESH_H */

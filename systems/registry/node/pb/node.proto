@@ -1,77 +1,36 @@
 syntax = "proto3";
 
-option go_package = "pb/gen";
+option go_package = "github.com/ukama/ukama/systems/registry/node/pb/gen";
 
-package ukama.node.v1;
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+
+package ukama.registry.node.v1;
 
 
 service NodeService {
+    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+    rpc GetNodesForSite(GetBySiteRequest) returns (GetBySiteResponse);
+    rpc GetNodesForOrg(GetByOrgRequest) returns (GetByOrgResponse);
+    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
+    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
     rpc AttachNodes(AttachNodesRequest) returns (AttachNodesResponse);
     rpc DetachNode(DetachNodeRequest) returns (DetachNodeResponse);
-    rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeStateResponse);
-    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
-    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
-    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
-    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc AddNodeToSite(AddNodeToSiteRequest)returns (AddNodeToSiteResponse);
+    rpc ReleaseNodeFromSite(ReleaseNodeFromSiteRequest)returns (ReleaseNodeFromSiteResponse);
 }
 
-
-message AttachNodesRequest {
-    string parentNodeId = 1;
-    repeated string  attachedNodeIds = 2;
-}
-
-message AttachNodesResponse {
-
-}
-
-message DetachNodeRequest{
-    string detachedNodeId = 2;
-}
-
-message DetachNodeResponse {
-
-}
-
-message  UpdateNodeStateRequest{
-    string nodeId = 1;
-    NodeState state = 2;
-}
-
-message UpdateNodeStateResponse{
-    string nodeId = 1;
-    NodeState state = 2;
-}
-
-
-message  UpdateNodeRequest{
-    string nodeId = 1;
-    string name = 2;
-}
-
-message UpdateNodeResponse {
-    Node node = 1;
-}
-
-message GetNodeRequest{
-    string nodeId = 1;
-}
-
-message GetNodeResponse{
-    Node node = 1;
-}
-
-
-message Node {
-    string nodeId = 1;
-    NodeState state = 4;
-    NodeType type = 5;
-    string name = 6;
-    repeated Node attached = 7;
-}
 
 message AddNodeRequest{
-    Node node = 1;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string name = 3;
 }
 
 message AddNodeResponse{
@@ -79,23 +38,115 @@ message AddNodeResponse{
 }
 
 
-message DeleteRequest{
-    string nodeId = 1;
+message GetNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 }
 
-message DeleteResponse{
-    string nodeId = 1;
+message GetNodeResponse{
+    Node node = 1;
 }
 
-enum NodeState {
-    UNDEFINED = 0;
-    PENDING = 1;
-    ONBOARDED = 2;
+
+message GetBySiteRequest{
+    string siteId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "site_id"];
 }
 
-enum NodeType{
-    NODE_TYPE_UNDEFINED = 0;
-    HOME = 1;
-    TOWER = 2;
-    AMPLIFIER = 3;
+message GetBySiteResponse{
+    string siteId = 1 [json_name = "site_id"];
+    repeated Node nodes = 2;
+}
+
+
+message GetByOrgRequest{
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    bool free = 2;
+}
+
+
+message GetByOrgResponse{
+    string orgId = 1 [json_name = "org_id"];
+    repeated Node nodes = 2;
+}
+
+
+message GetNodesRequest{
+    bool free = 1;
+}
+
+message GetNodesResponse{
+   repeated Node node = 1;
+}
+
+message NodeStatus {
+    string connectivity = 1;
+    string state = 2; 
+}
+
+message  UpdateNodeStateRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string connectivity = 2;
+    string state = 3;
+}
+
+message  UpdateNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string name = 2;
+}
+
+message UpdateNodeResponse {
+    Node node = 1;
+}
+
+
+message DeleteNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message DeleteNodeResponse{
+}
+
+
+message AttachNodesRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    repeated string  attachedNodes = 2;
+}
+
+message AttachNodesResponse {
+}
+
+
+message DetachNodeRequest{
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message DetachNodeResponse {
+}
+
+
+message AddNodeToSiteRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+    string networkId = 2;
+    string siteId = 3;
+}
+
+message AddNodeToSiteResponse {
+}
+
+
+message ReleaseNodeFromSiteRequest {
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message ReleaseNodeFromSiteResponse {
+}
+
+
+message Node {
+    string id = 1 [(validator.field) = {string_not_empty: true}];
+    string name = 2;
+    string orgId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    string type = 4;
+    NodeStatus status = 5;
+    repeated Node attached = 6;
+    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
 }

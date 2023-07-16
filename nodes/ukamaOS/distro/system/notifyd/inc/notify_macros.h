@@ -10,11 +10,7 @@
 #ifndef NOTIFY_MACROS_H_
 #define NOTIFY_MACROS_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define SERVICE_NAME           "NotifyD"
+#define SERVICE_NAME           "notifyD"
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
@@ -28,12 +24,13 @@ extern "C" {
 #define NOTIFY_VERSION         "0.0.0"
 
 #define DEF_NODED_HOST         "localhost"
-#define DEF_NODE_PORT          "8095"
+#define DEF_NODED_PORT         "8095"
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
 #define DEF_REMOTE_SERVER      "http://localhost:8091"
 #define DEF_REMOTE_EP          "/notification"
+#define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
+#define DEF_MAP_FILE           "status.map"
 
-#ifdef __cplusplus
-}
-#endif
+#define ENV_NOTIFY_DEBUG_MODE  "NOTIFYD_DEBUG_MODE"
+
 #endif /* INC_NOTIFY_MACROS_H_ */

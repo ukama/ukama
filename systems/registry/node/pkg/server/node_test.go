@@ -1,110 +1,145 @@
-package server
+package server_test
 
 import (
 	"context"
 	"testing"
 
-	mocks "github.com/ukama/ukama/systems/registry/node/mocks"
-	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	"github.com/ukama/ukama/systems/registry/node/pkg/db"
-
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/registry/node/mocks"
+	"github.com/ukama/ukama/systems/registry/node/pkg/db"
+	"github.com/ukama/ukama/systems/registry/node/pkg/server"
+	"gorm.io/gorm"
+
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	opb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	omocks "github.com/ukama/ukama/systems/registry/org/pb/gen/mocks"
 )
 
-var testNodeId = ukama.NewVirtualNodeId("HomeNode")
+var testNode = ukama.NewVirtualNodeId("HomeNode")
+var orgId = uuid.NewV4()
 
-func TestRegistryServer_GetNode(t *testing.T) {
+func TestNodeServer_Add(t *testing.T) {
+	nodeId := testNode.String()
+
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	nodeRepo := &mocks.NodeRepo{}
+	nodeStatusRepo := &mocks.NodeStatusRepo{}
+	orgService := &mocks.OrgClientProvider{}
+	networkService := &mocks.NetworkClientProvider{}
 
-	nodeRepo.On("Get", testNodeId).Return(&db.Node{NodeID: testNodeId.String(),
-		State: db.Pending, Type: db.NodeTypeHome,
-	}, nil).Once()
+	const nodeName = "node-A"
+	const nodeType = "hnode"
 
-	s := NewNodeServer(nodeRepo, "")
+	s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", msgbusClient, orgService, networkService, orgId)
 
-	node, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: testNodeId.String()})
-
-	assert.NoError(t, err)
-	assert.Equal(t, pb.NodeState_PENDING, node.Node.State)
-	assert.Equal(t, pb.NodeType_HOME, node.Node.Type)
-	nodeRepo.AssertExpectations(t)
-}
-
-func TestRegistryServer_UpdateNodeState(t *testing.T) {
-	nodeRepo := &mocks.NodeRepo{}
-
-	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeState) bool {
-		return *ns == db.Onboarded
-	}), (*string)(nil)).Return(nil).Once()
-	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
-
-	s := NewNodeServer(nodeRepo, "")
-
-	_, err := s.UpdateNodeState(context.TODO(), &pb.UpdateNodeStateRequest{
-		NodeId: testNodeId.String(),
-		State:  pb.NodeState_ONBOARDED,
-	})
-
-	// Assert
-	assert.NoError(t, err)
-	nodeRepo.AssertExpectations(t)
-}
-
-func TestRegistryServer_AddNode(t *testing.T) {
-	// Arrange
-	nodeId := testNodeId.String()
-	nodeRepo := &mocks.NodeRepo{}
-
-	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
-		return n.State == db.Pending && n.NodeID == nodeId
-	})).Return(nil).Once()
-	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
-
-	s := NewNodeServer(nodeRepo, "")
-
-	// Act
-	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
-		Node: &pb.Node{
+	node := &db.Node{
+		Id:    nodeId,
+		Name:  nodeName,
+		OrgId: orgId,
+		Type:  testNode.GetNodeType(),
+		Status: db.NodeStatus{
 			NodeId: nodeId,
-			State:  pb.NodeState_PENDING,
+			Conn:   db.Unknown,
+			State:  db.Undefined,
 		},
+	}
+
+	nodeRepo.On("Add", node, mock.Anything).Return(nil).Once()
+	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+	t.Run("NodeStateValid", func(t *testing.T) {
+		// Arrange
+		orgClient := orgService.On("GetClient").
+			Return(&omocks.OrgServiceClient{}, nil).
+			Once().
+			ReturnArguments.Get(0).(*omocks.OrgServiceClient)
+
+		orgClient.On("Get", mock.Anything,
+			&opb.GetRequest{Id: orgId.String()}).
+			Return(&opb.GetResponse{
+				Org: &opb.Organization{
+					Id: orgId.String(),
+				},
+			}, nil).Once()
+
+		// Act
+		res, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
+			NodeId: nodeId,
+			Name:   nodeName,
+		})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, nodeName, res.Node.Name)
+		assert.Equal(t, nodeType, res.Node.Type)
+		nodeRepo.AssertExpectations(t)
 	})
 
-	// Assert
-	assert.NoError(t, err)
-	assert.NotEmpty(t, actNode.Node.Name)
-	nodeRepo.AssertExpectations(t)
 }
 
-func Test_toDbNodeType(t *testing.T) {
-	tests := []struct {
-		nodeId ukama.NodeID
-		want   db.NodeType
-	}{
-		{
-			nodeId: ukama.NewVirtualHomeNodeId(),
-			want:   db.NodeTypeHome,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE),
-			want:   db.NodeTypeTower,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE),
-			want:   db.NodeTypeAmplifier,
-		},
-		{
-			nodeId: ukama.NewVirtualNodeId("unknown"),
-			want:   db.NodeTypeUnknown,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.nodeId.String(), func(t *testing.T) {
+func TestNodeServer_Get(t *testing.T) {
+	t.Run("NodeFound", func(t *testing.T) {
+		const nodeName = "node-A"
+		const nodeType = ukama.NODE_ID_TYPE_HOMENODE
+		var nodeId = ukama.NewVirtualNodeId(nodeType)
 
-			got := toDbNodeType(tt.nodeId.GetNodeType())
-			assert.Equal(t, tt.want, got)
-		})
-	}
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+		nodeRepo.On("Get", nodeId).Return(
+			&db.Node{Id: nodeId.StringLowercase(),
+				Name: nodeName,
+				Type: ukama.NODE_ID_TYPE_HOMENODE,
+			}, nil).Once()
+
+		s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
+
+		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
+			NodeId: nodeId.StringLowercase()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, nodeId.String(), resp.GetNode().GetId())
+		assert.Equal(t, nodeName, resp.GetNode().Name)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		var nodeId = ukama.NewVirtualAmplifierNodeId()
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
+
+		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
+			NodeId: nodeId.StringLowercase()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("NodeIdInvalid", func(t *testing.T) {
+		var nodeId = uuid.NewV4()
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+		s := server.NewNodeServer(nodeRepo, nil, nodeStatusRepo, "", nil, nil, nil, orgId)
+
+		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
+			NodeId: nodeId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
 }

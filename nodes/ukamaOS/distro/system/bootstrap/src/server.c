@@ -14,7 +14,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <jansson.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
+#include "httpStatus.h"
 #include "jserdes.h"
 #include "server.h"
 #include "log.h"
@@ -47,7 +51,8 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  * send_request_to_server
  *
  */
-static long send_request_to_server(char *url, Response *response) {
+static long send_request_to_server(char *url, Response *response,
+                                   char **retStr) {
 
 	long resCode=0;
 	CURL *curl=NULL;
@@ -78,6 +83,7 @@ static long send_request_to_server(char *url, Response *response) {
 	} else {
 		/* get status code */
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &resCode);
+        *retStr = strdup(response->buffer);
 	}
 
 	curl_slist_free_all(headers);
@@ -119,21 +125,29 @@ static int process_response_from_server(char *response, ServerInfo *server) {
 }
 
 /*
- * register_to_server --
+ * send_request_to_init -- send request to the bootstrap at init system
+ *                         1: if successful
+ *                         0: if error
+ *                        -1: if the nodeid is not found
  *
  */
-int register_to_server(char *bootstrapServer, char *uuid, ServerInfo *server) {
+int send_request_to_init(char *bootstrapServer, char *uuid, ServerInfo *server,
+                         char **responseStr) {
 
-	int ret=FALSE;
+	int ret=FALSE, respCode=0;
 	Response response = {NULL, 0};
 	char url[MAX_GET_URL_LEN] = {0};
 
 	if (bootstrapServer == NULL || uuid == NULL) return FALSE;
 
-	sprintf(url, "http://%s/service/?%s=%s&%s=%s", bootstrapServer,
-			KEY_NODE, uuid, KEY_LOOKING_FOR, VALUE_VALIDATION);
+    /* Create URL + request */
+	sprintf(url, "http://%s/%s/%s/%s", bootstrapServer, API_VERSION, EP_NODES,
+            uuid);
 
-	if (send_request_to_server(&url[0], &response) == 200) {
+    respCode = send_request_to_server(&url[0], &response, responseStr);
+
+    switch(respCode) {
+    case HttpStatus_OK:
 		if (process_response_from_server(response.buffer, server)) {
 			log_debug_server(server);
 			log_debug("Recevied server IP: %s", server->IP);
@@ -142,18 +156,56 @@ int register_to_server(char *bootstrapServer, char *uuid, ServerInfo *server) {
 					  bootstrapServer);
 			goto done;
 		}
-	} else {
-		log_error("Unable to send request to bootstrap server at: %s",
-				  bootstrapServer);
-		goto done;
-	}
-
-	ret = TRUE;
+        ret=TRUE;
+        break;
+    case HttpStatus_NotFound:
+        log_debug("NodeID: %s not found on server: %s", uuid, bootstrapServer);
+        ret=-1;
+        break;
+    default:
+        log_error("Error sending request to init %s. Error: %s",
+                  bootstrapServer, HttpStatusStr(respCode));
+        ret=FALSE;
+        break;
+    }
 
  done:
 	if (response.buffer) free(response.buffer);
 
 	return ret;
+}
+
+/*
+ * send_reuqest_to_init_with_exponential_backoff --
+ *
+ */
+void send_request_to_init_with_exponential_backoff(char *bootstrapServer,
+                                                   char *uuid,
+                                                   ServerInfo *server) {
+
+    int backoffTime=1;
+    int maxBackoff, backoffInterval;
+    char *responseStr;
+
+    srand(time(NULL));
+
+    do {
+        if (send_request_to_init(bootstrapServer, uuid, server, &responseStr) ==
+            TRUE) {
+            return;
+        }
+
+        // Calculate exponential backoff time
+        maxBackoff = (1 << backoffTime) - 1;
+        backoffInterval = rand() % maxBackoff + 1;
+
+        printf("Error: %s. Retrying the boostrap in  %d seconds.\n",
+               responseStr, backoffInterval);
+        free(responseStr);
+        sleep(backoffInterval);
+
+        backoffTime = (backoffTime < MAX_BACKOFF) ? backoffTime+1 : MAX_BACKOFF;
+    } while (TRUE);
 }
 
 /*

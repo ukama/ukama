@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	client "github.com/ukama/ukama/systems/billing/collector/internal/clients"
+	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 
 	mock "github.com/stretchr/testify/mock"
 )

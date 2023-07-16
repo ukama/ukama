@@ -86,6 +86,29 @@ func (this *GetByOwnerResponse) Validate() error {
 	}
 	return nil
 }
+
+var _regex_GetByUserResponse_User = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetByUserResponse) Validate() error {
+	if !_regex_GetByUserResponse_User.MatchString(this.User) {
+		return github_com_mwitkow_go_proto_validators.FieldError("User", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.User))
+	}
+	for _, item := range this.OwnerOf {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("OwnerOf", err)
+			}
+		}
+	}
+	for _, item := range this.MemberOf {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("MemberOf", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *GetByNameRequest) Validate() error {
 	return nil
 }

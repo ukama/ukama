@@ -10,13 +10,7 @@
 #ifndef INC_WEB_SERVICE_H_
 #define INC_WEB_SERVICE_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "config.h"
-#include "web.h"
-
 #include "ulfius.h"
 
 #define EP_BS                           "/"
@@ -38,6 +32,16 @@ extern "C" {
 #define API_RES_EP(RES)                 EP_BS RES
 
 
+#define METHOD_LENGTH                   7
+#define URL_EXT_LENGTH                  64
+#define MAX_END_POINTS                  64
+#define MAX_URL_LENGTH                  128
+
+typedef struct _u_instance  UInst;
+typedef struct _u_instance  UInst;
+typedef struct _u_request   URequest;
+typedef struct _u_response  UResponse;
+    
 /* Callback function used by ulfius when APU is request */
 typedef int (*HttpCb)(const URequest *request, // Input parameters (set by the framework)
                  UResponse* response,         // Output parameters (set by the user)
@@ -85,7 +89,17 @@ void web_service_add_node_endpoints();
  *
  */
 void web_service_exit();
-#ifdef __cplusplus
-}
-#endif
+
+int web_service_cb_ping(const URequest *request,
+                        UResponse *response,
+                        void *epConfig);
+
+int web_service_cb_post_event(const URequest *request,
+                              UResponse *response,
+                              void *epConfig);
+
+int web_service_cb_default(const URequest *request,
+                           UResponse *response,
+                           void *epConfig);
+
 #endif /* INC_WEB_SERVICE_H_ */

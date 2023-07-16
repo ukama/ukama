@@ -9,6 +9,7 @@ import (
 	"github.com/ukama/ukama/systems/metrics/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg/rest"
+	"github.com/ukama/ukama/systems/common/providers"
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	"github.com/ukama/ukama/systems/common/config"
@@ -30,7 +31,11 @@ func main() {
 		panic("Error creating NodeMetrics. Error: " + err.Error())
 	}
 
-	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), m)
+	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to create auth client: %v", err)
+	}
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), m, ac.AuthenticateUser)
 	r.Run()
 }
 

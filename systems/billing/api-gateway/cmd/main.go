@@ -6,8 +6,8 @@ import (
 	"github.com/ukama/ukama/systems/common/metrics"
 
 	"github.com/ukama/ukama/systems/billing/api-gateway/cmd/version"
-	pkg "github.com/ukama/ukama/systems/billing/api-gateway/internal"
-	"github.com/ukama/ukama/systems/billing/api-gateway/internal/rest"
+	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/billing/api-gateway/pkg/rest"
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	"github.com/ukama/ukama/systems/common/config"

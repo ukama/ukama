@@ -93,6 +93,7 @@ func (rt *Router) Run() {
 func (r *Router) init() {
 	const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 
+
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	v1 := r.f.Group("/v1", "Init system ", "Init system version v1")
 

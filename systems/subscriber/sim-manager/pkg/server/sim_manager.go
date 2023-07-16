@@ -168,6 +168,17 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"invalid format of subscriber's org uuid. Error %s", err.Error())
 	}
 
+	simAgent, ok := s.agentFactory.GetAgentAdapter(simType)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim with lCCID: %q", simType, poolSim.Iccid)
+	}
+
+	_, err = simAgent.BindSim(ctx, poolSim.Iccid)
+	if err != nil {
+		return nil, err
+	}
+
 	sim := &sims.Sim{
 		SubscriberId: subscriberID,
 		NetworkId:    networkID,

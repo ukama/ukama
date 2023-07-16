@@ -1,5 +1,16 @@
 version: "3.9"
 services:
+  postgresd-metrics:
+    image: postgres:13.3
+    ports:
+      - "5407:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
 
   prometheus:
     image: prom/prometheus:latest
@@ -24,7 +35,7 @@ services:
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient:9095
+      - MSGCLIENT_HOST=msgclient-metrics:9095
       - EXPORTER_SERVICE_HOST=exporter
       - EXPORTER_SERVICE_PORT=9092
     restart: always
@@ -37,24 +48,25 @@ services:
       context: ./api-gateway
       dockerfile: ./Dockerfile
     ports:
-      - "8082:8080"
+      - "8077:8080"
     environment:
       - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
+      - AUTH_BYPASSAUTHMODE=true
     restart: always
     depends_on:
       - exporter
     networks:
       - ukama-net
 
-  msgclient:
+  msgclient-metrics:
     build: 
-      context: ../messaging/msgClient
+      context: ../services/msgClient
       dockerfile: ./Dockerfile
     ports:
       - "9095:9095"
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd
+      - DB_HOST=postgresd-metrics
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672

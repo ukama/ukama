@@ -8,13 +8,17 @@ package ukama.users.v1;
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
+
 
 service UserService {
     rpc Add (AddRequest) returns (AddResponse);
     rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByAuthId(GetByAuthIdRequest) returns (GetResponse);
     rpc Update(UpdateRequest) returns (UpdateResponse);
     rpc Deactivate(DeactivateRequest) returns (DeactivateResponse);
     rpc Delete (DeleteRequest) returns (DeleteResponse);
+    rpc Whoami (GetRequest) returns (WhoamiResponse);
 }
 
 message AddRequest{
@@ -26,7 +30,11 @@ message AddResponse{
 }
 
 message GetRequest {
-    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+    string userId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_id"];
+}
+
+message GetByAuthIdRequest {
+    string authId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "auth_id"];
 }
 
 message GetResponse {
@@ -34,7 +42,7 @@ message GetResponse {
 }
 
 message UpdateRequest {
-    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+    string userId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_id"];
     UserAttributes user = 2;
 }
 
@@ -43,7 +51,7 @@ message UpdateResponse {
 }
 
 message DeactivateRequest {
-    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+    string userId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_id"];
 }
 
 message  DeactivateResponse{
@@ -51,7 +59,7 @@ message  DeactivateResponse{
 }
 
 message DeleteRequest{
-    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+    string userId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_id"];
 }
 
 message DeleteResponse {
@@ -64,10 +72,44 @@ message UserAttributes {
 }
 
 message User {
-    string name = 1 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
-    string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
-    string phone = 3  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string uuid = 4  [(validator.field) = {uuid_ver: 4}];
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string name = 2 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+    string phone = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     bool isDeactivated = 5 [json_name = "is_deactivated"];
-    google.protobuf.Timestamp created_at = 6 [json_name = "registered_since"];
+    string authId = 6 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "auth_id"];
+    google.protobuf.Timestamp created_at = 7 [json_name = "registered_since"];
+}
+
+
+message Organization {
+    string id = 1 [(validator.field) = {uuid_ver: 4}];
+    string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
+    string owner = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string certificate = 4;
+    bool isDeactivated = 5 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 6 [json_name = "created_at"];
+}
+
+
+message OrgUser {
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    // uint64 userId = 2 [json_name = "user_id"];
+    RoleType role = 3 ;
+    string uuid = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    bool isDeactivated = 5 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 6 [json_name = "member_since"];
+}
+
+enum RoleType {
+    OWNER = 0;
+    ADMIN = 1;
+    VENDOR = 2;
+    MEMBER = 3;
+}
+
+message WhoamiResponse {
+  User user = 1;
+  repeated Organization  ownerOf = 2;
+  repeated OrgUser memberOf = 3;
 }

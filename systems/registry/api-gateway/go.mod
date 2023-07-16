@@ -93,6 +93,7 @@ require (
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.9 // indirect
+	github.com/ukama/ukama/systems/registry/node v0.0.0-20230504181210-bf6632801c73
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
