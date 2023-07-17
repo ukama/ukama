@@ -13,7 +13,6 @@ type ContainerHeaderProps = {
   showButton?: boolean;
   showSearchBox?: boolean;
   handleSearchChange?: Function;
-  handleAllNodeUpdate?: Function;
   handleButtonAction?: Function;
 };
 
@@ -28,9 +27,6 @@ const ContainerHeader = ({
   title,
   stats,
   buttonTitle,
-  handleAllNodeUpdate = () => {
-    /* Default empty function */
-  },
   showButton = false,
   buttonSize = 'large',
   showSearchBox = false,
@@ -48,9 +44,14 @@ const ContainerHeader = ({
   }, [currentSearchValue]);
 
   return (
-    <Grid container spacing={{ xs: 2, md: 0 }} justifyContent="space-between">
+    <Grid
+      container
+      spacing={{ xs: 2, md: 0 }}
+      alignItems={'center'}
+      justifyContent="space-between"
+    >
       <Grid item xs={6} md={showSearchBox ? 7 : 9}>
-        <Stack direction="row" alignItems="center" spacing={{ xs: 1, md: 2 }}>
+        <Stack direction="row" alignItems="center" spacing={{ xs: 1 }}>
           <Typography variant="h6">{title}</Typography>
           {stats && (
             <Typography
@@ -126,7 +127,7 @@ const ContainerHeader = ({
           }}
           size={buttonSize}
           variant="contained"
-          onClick={() => handleAllNodeUpdate()}
+          onClick={() => handleButtonAction()}
         >
           {buttonTitle}
         </Button>

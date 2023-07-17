@@ -1,5 +1,4 @@
 import { ColumnsWithOptions, MenuItemType } from '@/types';
-import UserIcon from '@mui/icons-material/Person';
 import {
   Box,
   Link,
@@ -16,6 +15,7 @@ import OptionsPopover from '../OptionsPopover';
 
 interface DataTableWithOptionsInterface {
   dataset: any;
+  icon?: any;
   emptyViewLabel?: string;
   onMenuItemClick: Function;
   menuOptions: MenuItemType[];
@@ -50,24 +50,13 @@ const CellValueByType = ({
           handleItemClick={onMenuItemClick}
         />
       );
-    // case 'dataUsage':
-    //   return (
-    //     <LoadingWrapper
-    //       width="60px"
-    //       height="23px"
-    //       radius="small"
-    //       variant="text"
-    //       isLoading={!row.dataPlan}
-    //     >
-    //       {formatBytesToMB(parseInt(row[type] || '0'))} MB
-    //     </LoadingWrapper>
-    //   );
     default:
-      return <Typography variant="caption">{row[type]}</Typography>;
+      return <Typography variant="body2">{row[type]}</Typography>;
   }
 };
 
 const DataTableWithOptions = ({
+  icon: Icon,
   columns,
   dataset,
   menuOptions,
@@ -131,7 +120,7 @@ const DataTableWithOptions = ({
           </Table>
         </TableContainer>
       ) : (
-        <EmptyView size="large" title={emptyViewLabel} icon={UserIcon} />
+        <EmptyView size="medium" title={emptyViewLabel} icon={Icon} />
       )}
     </Box>
   );

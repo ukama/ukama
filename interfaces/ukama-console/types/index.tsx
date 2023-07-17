@@ -112,6 +112,10 @@ export type TMetric = {
   [key: string]: { name: string; data: MetricDto[] } | null;
 };
 
+export type Record = {
+  [key: string]: string;
+};
+
 export type TUser = {
   id: string;
   name: string;

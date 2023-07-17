@@ -19,9 +19,9 @@ const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
 const SETTING_MENU = [
-  { id: "personal-settings", name: 'My Account' },
-  { id: "billing", name: 'Billing' },
-  { id: "appearance", name: 'Appearance' },
+  { id: 'personal-settings', name: 'My Account' },
+  { id: 'billing', name: 'Billing' },
+  { id: 'appearance', name: 'Appearance' },
 ];
 const NODE_ACTIONS = ['Turn node off', 'Restart', 'Turn RF off'];
 const TABLE_EXPORT_OPTIONS = [
@@ -141,6 +141,23 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
   { id: 3, Icon: null, title: 'Pause service', route: 'pause-service' },
   { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
+];
+export const NODE_TABLE_COLUMNS: ColumnsWithOptions[] = [
+  { id: 'name', label: 'Name', minWidth: 160 },
+  { id: 'type', label: 'Type', minWidth: 180 },
+  { id: 'state', label: 'State', minWidth: 140 },
+  { id: 'network', label: 'Network', minWidth: 140 },
+  { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
+];
+export const NODE_TABLE_MENU: MenuItemType[] = [
+  {
+    id: 1,
+    Icon: null,
+    title: 'Edit node',
+    route: 'edit-node',
+  },
+  { id: 2, Icon: null, title: 'Detach node', route: 'detach-node' },
+  { id: 3, Icon: null, title: 'Delete node', route: 'delete-node' },
 ];
 export const MANAGE_MENU_LIST = [
   {

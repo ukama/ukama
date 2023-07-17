@@ -14,6 +14,7 @@ import { TCommonData, TSnackMessage } from '@/types';
 import DataTableWithOptions from '@/ui/molecules/DataTableWithOptions';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
+import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import { AlertColor } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
@@ -103,6 +104,7 @@ const Page = () => {
         <VerticalContainer>
           <ContainerMax mt={4.5}>
             <DataTableWithOptions
+              icon={SubscriberIcon}
               columns={SUBSCRIBER_TABLE_COLUMNS}
               dataset={structureData(subscriber)}
               menuOptions={SUBSCRIBER_TABLE_MENU}

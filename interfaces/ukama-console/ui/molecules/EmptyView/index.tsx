@@ -1,5 +1,5 @@
-import { ElementType } from 'react';
 import { Stack, Typography } from '@mui/material';
+import { ElementType } from 'react';
 
 interface IEmptyView {
   icon: ElementType;
@@ -19,8 +19,8 @@ const EmptyView = ({ title, icon: Icon, size = 'medium' }: IEmptyView) => {
         alignItems: 'center',
       }}
     >
-      <Typography variant="body1">{title}</Typography>
       <Icon fontSize={size} color="textPrimary" style={{ opacity: 0.6 }} />
+      <Typography variant="body2">{title}</Typography>
     </Stack>
   );
 };
