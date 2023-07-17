@@ -13,6 +13,8 @@ const getTitleFromPath = (path: string) => {
       return 'Sites';
     case '/node':
       return 'Nodes';
+    case '/node/[id]':
+      return 'Nodes';
     case '/subscriber':
       return 'Subscribers';
     case '/site_planning':

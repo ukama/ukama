@@ -1,7 +1,6 @@
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import {
   Box,
-  Link,
   Table,
   TableBody,
   TableCell,
@@ -10,6 +9,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import Link from 'next/link';
 import EmptyView from '../EmptyView';
 import OptionsPopover from '../OptionsPopover';
 
@@ -38,7 +38,7 @@ const CellValueByType = ({
   switch (type) {
     case 'name':
       return (
-        <Link href="#" underline="hover">
+        <Link href={`node/${row['id']}`} unselectable="on">
           {row[type]}
         </Link>
       );
