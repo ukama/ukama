@@ -13,3 +13,7 @@ export type ErrorType = {
   code: number;
   description?: string;
 };
+
+export type BooleanResponse = {
+  success: boolean;
+}
