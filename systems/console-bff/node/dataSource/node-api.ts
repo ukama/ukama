@@ -1,7 +1,7 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { REGISTRY_API_GW } from "../../common/configs";
-import { BooleanResponse } from "../../common/types";
+import { TBooleanResponse } from "../../common/types";
 
 class NodeAPI extends RESTDataSource {
   baseURL = REGISTRY_API_GW;
@@ -14,7 +14,7 @@ class NodeAPI extends RESTDataSource {
     const nodes = await this.get("/v1/nodes");
     return { nodes };
   }
-  async getFreeNode(): Promise<GetNodes> {
+  async getFreeNodes(): Promise<GetNodes> {
     const nodes = await this.get("/v1/nodes/free");
     return { nodes };
   }
@@ -22,7 +22,7 @@ class NodeAPI extends RESTDataSource {
     const node = await this.delete(`/v1/nodes/${args.id}`);
     return { node };
   }
-  async attachNode(args: AttachNodeArgs): Promise<BooleanResponse> {
+  async attachNode(args: AttachNodeArgs): Promise<TBooleanResponse> {
     const node = await this.post("/v1/nodes/attach", {
       body: {
         anodel: args.anodel,
@@ -34,7 +34,7 @@ class NodeAPI extends RESTDataSource {
       success: node.success,
     };
   }
-  async detachhNode(args: NodeId): Promise<BooleanResponse> {
+  async detachhNode(args: NodeId): Promise<TBooleanResponse> {
     const node = await this.post("/v1/nodes/detach", {
       body: {
         node: args.id,
@@ -52,11 +52,13 @@ class NodeAPI extends RESTDataSource {
     });
     return node;
   }
-  async releaseNodeFromNetwork(args: NodeId): Promise<BooleanResponse> {
+  async releaseNodeFromNetwork(args: NodeId): Promise<TBooleanResponse> {
     const node = await this.post(`/v1/nodes/${args.id}/networks/release`);
     return { success: node.success };
   }
-  async addNodeToNetwork(args: AddNodeToNetworkArgs): Promise<BooleanResponse> {
+  async addNodeToNetwork(
+    args: AddNodeToNetworkArgs
+  ): Promise<TBooleanResponse> {
     const node = await this.post(
       `/v1/nodes/${args.nodeId}/networks/${args.networkId}/assign`
     );
