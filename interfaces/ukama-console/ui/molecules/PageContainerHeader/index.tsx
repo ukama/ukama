@@ -63,7 +63,7 @@ const PageContainerHeader = ({
             variant="contained"
             color="primary"
             size="medium"
-            sx={{ width: { xs: '100%', md: '220px' } }}
+            sx={{ width: { xs: '100%', md: 'fit-content' } }}
             onClick={() => handleButtonAction()}
           >
             {buttonTitle}

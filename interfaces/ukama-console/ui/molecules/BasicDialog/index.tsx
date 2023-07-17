@@ -1,14 +1,14 @@
+import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
   Dialog,
-  IconButton,
-  Typography,
   DialogActions,
   DialogContent,
-  Stack,
   DialogTitle,
+  IconButton,
+  Stack,
+  Typography,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 
 type BasicDialogProps = {
   title: string;
@@ -47,7 +47,7 @@ const BasicDialog = ({
           onClick={handleCloseAction}
           sx={{ position: 'relative', right: 8 }}
         >
-          <CloseIcon />
+          <CloseIcon fontSize="small" />
         </IconButton>
       </Stack>
 
