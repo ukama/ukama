@@ -38,6 +38,31 @@ static char *capp_status_str(int status) {
     return str;
 }
 
+static Capp *find_matching_capp(char *spaceName, char *cappName) {
+
+    SpaceList *spacePtr = NULL;
+    CappList  *cappList  = NULL;
+
+    for (spacePtr = gSpaceList;
+         spacePtr;
+         spacePtr = spacePtr->next) {
+
+        if (strcmp(spacePtr->space->name, spaceName) != 0)
+            continue;
+
+        for (cappList=spacePtr->space->cappList;
+             cappList;
+             cappList=cappList->next) {
+
+            if (strcmp(cappList->capp->name, cappName) == 0)
+                return cappList->capp;
+
+        }
+    }
+
+    return NULL;
+}
+
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
                         void *epConfig) {
@@ -62,33 +87,24 @@ int web_service_cb_get_status(const URequest *request,
                               UResponse *response,
                               void *epConfig) {
 
-    char      *cappName=NULL, *space=NULL;
-    SpaceList *spacePtr = NULL;
-    CappList  *cappList  = NULL;
-    int       status=-1;
+    char   *cappName=NULL, *spaceName=NULL;
+    Capp   *capp = NULL;
+    int    status=-1;
 
-    cappName = u_map_get(request->map_url, "name");
-    space    = u_map_get(request->map_url, "space");
+    cappName  = u_map_get(request->map_url, "name");
+    spaceName = u_map_get(request->map_url, "space");
 
-    for (spacePtr = gSpaceList;
-         spacePtr;
-         spacePtr = spacePtr->next) {
+    capp = find_matching_capp(cappName, spaceName);
+    if (capp == NULL) {
+        ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                        HttpStatusStr(HttpStatus_NotFound));
+        return U_CALLBACK_CONTINUE;
+    }
 
-        if (strcmp(spacePtr->space->name, space) != 0)
-            continue;
-
-        for (cappList=spacePtr->space->cappList;
-             cappList;
-             cappList=cappList->next) {
-
-            if (strcmp(cappList->capp->name, cappName) != 0)
-                continue;
-
-            if (cappList->capp->runtime)
-                status = cappList->capp->runtime->status;
-            else
-                status = CAPP_RUNTIME_NO_EXEC;
-        }
+    if (capp->runtime) {
+            status = capp->runtime->status;
+    } else {
+            status = CAPP_RUNTIME_NO_EXEC;
     }
 
     if (status == -1) {
