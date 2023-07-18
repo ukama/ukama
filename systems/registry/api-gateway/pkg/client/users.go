@@ -66,7 +66,7 @@ func (r *Users) Deactivate(userUUID string, requesterId string) (*pbusers.Deacti
 	return r.client.Deactivate(ctx, &pbusers.DeactivateRequest{UserId: userUUID})
 }
 
-func (r *Users) AddUser(user *pbusers.UserAttributes, requesterId string) (*pbusers.AddResponse, error) {
+func (r *Users) AddUser(user *pbusers.User, requesterId string) (*pbusers.AddResponse, error) {
 	ctx, cancel := r.getContext(requesterId)
 	defer cancel()
 	return r.client.Add(ctx, &pbusers.AddRequest{User: user})

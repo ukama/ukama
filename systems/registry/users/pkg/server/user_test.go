@@ -439,11 +439,7 @@ func TestUserService_Validation_Add(t *testing.T) {
 
 			// test add requeset
 			r := &pb.AddRequest{
-				User: &pb.UserAttributes{
-					Name:  test.user.Name,
-					Email: test.user.Email,
-					Phone: test.user.Phone,
-				},
+				User: test.user,
 			}
 
 			err := r.Validate()
@@ -463,11 +459,9 @@ func TestUserService_Validation_Update(t *testing.T) {
 		errContains string
 	}{
 		{
-			name: "emptyName",
-			user: &pb.User{
-				Name: "",
-			},
-			expectErr: true,
+			name:      "emptyName",
+			user:      &pb.User{},
+			expectErr: false,
 		},
 		{
 			name:        "email",

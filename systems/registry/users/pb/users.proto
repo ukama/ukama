@@ -22,7 +22,7 @@ service UserService {
 }
 
 message AddRequest{
-    UserAttributes user = 1;
+    User user = 1 [(validator.field) = { msg_exists: true }];
 }
 
 message AddResponse{
@@ -66,7 +66,7 @@ message DeleteResponse {
 }
 
 message UserAttributes {
-    string name = 1   [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    string name = 1;
     string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     string phone = 3  ;
 }

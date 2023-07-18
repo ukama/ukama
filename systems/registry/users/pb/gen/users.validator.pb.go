@@ -7,10 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	_ "google.golang.org/protobuf/types/known/structpb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	_ "google.golang.org/protobuf/types/known/structpb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -21,6 +21,9 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *AddRequest) Validate() error {
+	if nil == this.User {
+		return github_com_mwitkow_go_proto_validators.FieldError("User", fmt.Errorf("message must exist"))
+	}
 	if this.User != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.User); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("User", err)
@@ -132,12 +135,6 @@ func (this *DeleteResponse) Validate() error {
 var _regex_UserAttributes_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 
 func (this *UserAttributes) Validate() error {
-	if this.Name == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
-	}
-	if !(len(this.Name) > 1) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Name))
-	}
 	if !_regex_UserAttributes_Email.MatchString(this.Email) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
 	}
