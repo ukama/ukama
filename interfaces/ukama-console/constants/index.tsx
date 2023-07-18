@@ -23,7 +23,21 @@ const SETTING_MENU = [
   { id: 'billing', name: 'Billing' },
   { id: 'appearance', name: 'Appearance' },
 ];
-const NODE_ACTIONS = ['Turn node off', 'Restart', 'Turn RF off'];
+const NODE_ACTIONS_BUTTONS = [
+  {
+    id: 'node-on-off',
+    name: 'Turn Node Off',
+  },
+  {
+    id: 'node-restart',
+    name: 'Restart',
+  },
+  {
+    id: 'node-rf-off',
+    name: 'Turn RF Off',
+  },
+];
+
 const TABLE_EXPORT_OPTIONS = [
   { id: 1, label: 'EXPORT', value: 'EXPORT' },
   { id: 2, label: 'WORD', value: 'WORD' },
@@ -1629,7 +1643,7 @@ export {
   MASK_BY_TYPE,
   MASK_PLACEHOLDERS,
   MONTH_FILTER,
-  NODE_ACTIONS,
+  NODE_ACTIONS_BUTTONS,
   NODE_IMAGES,
   NODE_TYPE,
   NodePageTabs,

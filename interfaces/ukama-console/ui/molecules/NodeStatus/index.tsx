@@ -1,7 +1,9 @@
-import { GetNodeStatusRes, NodeDto, Org_Node_State } from '@/generated';
+import { GetNodeStatusRes, NodeDto } from '@/generated';
 import { Button, Grid } from '@mui/material';
 import { styled } from '@mui/styles';
-import { LoadingWrapper, NodeDropDown, SplitButton } from '..';
+import LoadingWrapper from '../LoadingWrapper';
+import NodeDropDown from '../NodeDropDown';
+import SplitButton from '../SplitButton';
 
 const StyledBtn = styled(Button)({
   whiteSpace: 'nowrap',
@@ -10,15 +12,15 @@ const StyledBtn = styled(Button)({
 
 interface INodeStatus {
   loading: boolean;
-  nodes: NodeDto[] | [];
   onAddNode: Function;
+  nodes: any;
   nodeActionOptions: any[];
-  onNodeSelected: Function;
   nodeStatusLoading: boolean;
-  onUpdateNodeClick: Function;
+  handleNodeSelected: Function;
+  handleEditNodeClick: Function;
   handleNodeActionClick: Function;
-  onNodeActionItemSelected: Function;
   selectedNode: NodeDto | undefined;
+  handleNodeActionItemSelected: Function;
   nodeStatus: GetNodeStatusRes | undefined;
 }
 
@@ -26,30 +28,17 @@ const NodeStatus = ({
   nodes,
   onAddNode,
   nodeStatus,
+  selectedNode,
   loading = false,
-  selectedNode = {
-    id: '1',
-    name: '',
-    type: 'HOME',
-    totalUser: 4,
-    status: Org_Node_State.Undefined,
-    description: 'Node 1 description',
-    isUpdateAvailable: false,
-    updateDescription: '',
-    updateShortNote: '',
-    updateVersion: '',
-  },
-  onNodeSelected,
-  onUpdateNodeClick,
   nodeActionOptions,
   nodeStatusLoading,
+  handleNodeSelected,
+  handleEditNodeClick,
   handleNodeActionClick,
-  onNodeActionItemSelected,
+  handleNodeActionItemSelected,
 }: INodeStatus) => {
   const handleUpdateNode = () =>
-    onUpdateNodeClick(
-      nodes.find((item: NodeDto) => item.id === selectedNode?.id),
-    );
+    handleEditNodeClick(nodes.find((item: any) => item.id === selectedNode));
 
   return (
     <Grid container>
@@ -60,7 +49,7 @@ const NodeStatus = ({
           onAddNode={onAddNode}
           nodeStatus={nodeStatus}
           selectedNode={selectedNode}
-          onNodeSelected={onNodeSelected}
+          onNodeSelected={handleNodeSelected}
           nodeStatusLoading={nodeStatusLoading}
         />
       </Grid>
@@ -68,7 +57,7 @@ const NodeStatus = ({
         <Grid item>
           <LoadingWrapper isLoading={loading} height={40}>
             <StyledBtn variant="contained" onClick={handleUpdateNode}>
-              UPDATE NODE
+              Edit NODE
             </StyledBtn>
           </LoadingWrapper>
         </Grid>
@@ -78,7 +67,7 @@ const NodeStatus = ({
             <SplitButton
               options={nodeActionOptions}
               handleSplitActionClick={handleNodeActionClick}
-              handleSelectedItem={onNodeActionItemSelected}
+              handleSelectedItem={handleNodeActionItemSelected}
             />
           </LoadingWrapper>
         </Grid>
