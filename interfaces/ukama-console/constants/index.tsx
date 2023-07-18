@@ -19,9 +19,9 @@ const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
 const SETTING_MENU = [
-  { id: "personal-settings", name: 'My Account' },
-  { id: "billing", name: 'Billing' },
-  { id: "appearance", name: 'Appearance' },
+  { id: 'personal-settings', name: 'My Account' },
+  { id: 'billing', name: 'Billing' },
+  { id: 'appearance', name: 'Appearance' },
 ];
 const NODE_ACTIONS = ['Turn node off', 'Restart', 'Turn RF off'];
 const TABLE_EXPORT_OPTIONS = [
@@ -177,10 +177,12 @@ export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'iccid', label: 'ICCID', minWidth: 160 },
   { id: 'simType', label: 'Type', minWidth: 180 },
   { id: 'qrCode', label: 'QR Code', minWidth: 140 },
+  { id: 'status', label: 'Status', minWidth: 140 },
 ];
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'id', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
+  { id: 'network', label: 'Network', minWidth: 180 },
   { id: 'dateClaimed', label: 'Date claimed', minWidth: 140 },
 ];
 const BASIC_MENU_ACTIONS: MenuItemType[] = [

@@ -445,6 +445,7 @@ const Manage = () => {
             <Member
               search={memberSearch}
               setSearch={setMemberSearch}
+              invitationTitle=" There is one pending invitation."
               data={data.members}
               handleButtonAction={() => setIsInviteMember(true)}
             />

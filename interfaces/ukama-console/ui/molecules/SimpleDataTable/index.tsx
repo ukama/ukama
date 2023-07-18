@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useRecoilValue } from 'recoil';
+import { colors } from '@/styles/theme';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
@@ -66,7 +67,21 @@ const SimpleDataTable = ({
                   }}
                 >
                   {column.id === 'role' ? (
-                    <Chip label={row[column.id]} variant="outlined" />
+                    <div>
+                      {row[column.id].map((role: string) => (
+                        <Chip
+                          key={role}
+                          label={role}
+                          sx={{
+                            backgroundColor: colors.blueGray,
+                            color: colors.black,
+                            marginRight: '4px',
+                            marginBottom: '4px',
+                            borderRadius: '4px',
+                          }}
+                        />
+                      ))}
+                    </div>
                   ) : column.id === 'pdf' ? (
                     <Link
                       target="_blank"

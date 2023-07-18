@@ -37,6 +37,8 @@ const colors = {
   darkBlue: '#394b59',
   darkGray: '#4d4d4d',
   lightChocolate: '#757575',
+  blueGray: '#e9f4feff',
+
   vulcan: '#37393E',
   vulcan60: 'rgba(55, 57, 62, 0.6)',
   vulcan70: 'rgba(55, 57, 62, 0.7)',

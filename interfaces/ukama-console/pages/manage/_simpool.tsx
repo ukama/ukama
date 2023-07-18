@@ -26,7 +26,7 @@ const SimPool = ({ data, handleActionButon }: ISimPool) => {
         subtitle={data.length || '0'}
         showSearch={false}
         title={'My SIM pool'}
-        buttonTitle={'IMPORT SIMS'}
+        buttonTitle={'CLAIM SIMS'}
         handleButtonAction={handleActionButon}
       />
       <br />

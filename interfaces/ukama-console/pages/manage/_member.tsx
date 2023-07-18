@@ -3,16 +3,23 @@ import EmptyView from '@/ui/molecules/EmptyView';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import { Paper } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 
 interface IMember {
   data: any;
   search: string;
   setSearch: (value: string) => void;
   handleButtonAction: () => void;
+  invitationTitle: string;
 }
 
-const Member = ({ data, search, setSearch, handleButtonAction }: IMember) => {
+const Member = ({
+  data,
+  search,
+  setSearch,
+  handleButtonAction,
+  invitationTitle,
+}: IMember) => {
   return (
     <Paper
       sx={{
