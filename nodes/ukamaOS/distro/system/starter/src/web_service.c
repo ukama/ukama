@@ -7,6 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <signal.h>
+
 #include "web_service.h"
 #include "http_status.h"
 #include "config.h"
@@ -130,18 +132,43 @@ int web_service_cb_post_update(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
-int web_service_cb_post_restart(const URequest *request,
-                                UResponse *response,
-                                void *epConfig) {
+int web_service_cb_post_terminate(const URequest *request,
+                                  UResponse *response,
+                                  void *epConfig) {
 
-    char *name=NULL;
+    char   *cappName=NULL, *spaceName=NULL;
+    Capp   *capp = NULL;
+    int    status;
 
-    name = u_map_get(request->map_url, "name");
-    ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+    cappName  = u_map_get(request->map_url, "name");
+    spaceName = u_map_get(request->map_url, "space");
 
+    capp = find_matching_capp(cappName, spaceName);
+    if (capp == NULL) {
+        ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                        HttpStatusStr(HttpStatus_NotFound));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    if (capp->runtime == NULL) {
+        /* capp is not running */
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    status = killpg(capp->runtime->pid, SIGTERM);
+    if ( status == 0 ){
+        usys_log_debug("SIGTERM send to capp: %s:%s", capp->name, capp->tag);
+        ulfius_set_string_body_response(response, HttpStatus_Accepted,
+                                        HttpStatusStr(HttpStatus_Accepted));
+    } else {
+        usys_log_debug("Unable to kill capp: %s:%s", capp->name, capp->tag);
+        ulfius_set_string_body_response(response,
+                              HttpStatus_InternalServerError,
+                              HttpStatusStr(HttpStatus_InternalServerError));
+    }
+    
     return U_CALLBACK_CONTINUE;
 }
-
-
-
 

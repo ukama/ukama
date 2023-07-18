@@ -20,9 +20,9 @@ int web_service_cb_get_status(const URequest *request,
                               UResponse *response,
                               void *epConfig);
 
-int web_service_cb_post_restart(const URequest *request,
-                                UResponse *response,
-                                void *epConfig);
+int web_service_cb_post_terminate(const URequest *request,
+                                  UResponse *response,
+                                  void *epConfig);
 
 int web_service_cb_post_update(const URequest *request,
                                UResponse *response,
