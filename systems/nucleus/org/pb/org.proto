@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/nucleus/org/pb/gen";
+
+package ukama.nucleus.org.v1;
+
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+service OrgService {
+    /* Orgs */
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
+    rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
+    rpc GetByUser(GetByOwnerRequest) returns (GetByUserResponse);
+
+
+    /* Users */
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+
+    /* Members */
+    rpc RegisterUser(RegisterUserRequest) returns (MemberResponse);
+    rpc AddMember(AddMemberRequest) returns (MemberResponse);
+    rpc GetMember(MemberRequest) returns (MemberResponse);
+    rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
+    rpc UpdateMember(UpdateMemberRequest) returns (MemberResponse);
+    rpc RemoveMember(MemberRequest) returns (MemberResponse);
+}
+
+message AddRequest{
+    Organization org = 1 [(validator.field) = {msg_exists : true}];
+}
+
+message AddResponse{
+    Organization org = 1;
+}
+
+message GetRequest {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+}
+
+message GetResponse{
+    Organization org = 1;
+}
+
+message GetByOwnerRequest{
+    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+}
+
+message GetByOwnerResponse{
+    string owner = 1 [(validator.field) = {uuid_ver: 4}];
+    repeated Organization orgs = 2;
+}
+
+
+message GetByUserResponse{
+    string user = 1 [(validator.field) = {uuid_ver: 4}];
+    repeated Organization ownerOf = 2 [json_name = "owner_of"];
+    repeated OrgUser memberOf = 3 [json_name = "member_of"];
+}
+
+message GetByNameRequest {
+    string name = 1;
+}
+
+message GetByNameResponse{
+    Organization org = 1;
+}
+
+message AddMemberRequest{
+    string orgName = 1 [json_name = "org"];
+    string userUuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+    RoleType role = 3;
+}
+
+message MemberRequest{
+    string orgName = 1 [json_name = "org"];
+    string userUuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+}
+
+message MemberResponse{
+  OrgUser member = 1;
+}
+
+message RegisterUserRequest{
+    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+}
+
+message GetMembersRequest {
+    string orgName = 1 [json_name = "org"];
+}
+
+message GetMembersResponse{
+    string org = 1 [json_name = "org"];
+    repeated OrgUser members = 2;
+}
+
+message UpdateMemberRequest {
+  MemberRequest member = 1;
+  OrgUserAttributes attributes = 2;
+}
+
+message UpdateUserRequest {
+    string userUuid = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "user_uuid"];
+    UserAttributes attributes = 2;
+}
+
+message UpdateUserResponse {
+    User user = 1;
+}
+
+message Organization {
+    string id = 1 [(validator.field) = {uuid_ver: 4}];
+    string name = 2 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
+    string owner = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string certificate = 4;
+    bool isDeactivated = 5 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 6 [json_name = "created_at"];
+}
+
+message UserAttributes {
+    bool isDeactivated = 3 [json_name = "is_deactivated"];
+}
+
+message User {
+    uint64 userId = 1 [json_name = "user_id"];
+    string uuid = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    bool isDeactivated = 3 [json_name = "is_deactivated"];
+}
+
+message OrgUserAttributes {
+    bool isDeactivated = 1 [json_name = "is_deactivated"];
+}
+
+message OrgUser {
+    string orgId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
+    uint64 userId = 2 [json_name = "user_id"];
+    RoleType role = 3 ;
+    string uuid = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    bool isDeactivated = 5 [json_name = "is_deactivated"];
+    google.protobuf.Timestamp created_at = 6 [json_name = "member_since"];
+}
+
+enum RoleType {
+    OWNER = 0;
+    ADMIN = 1;
+    VENDOR = 2;
+    MEMBER = 3;
+}
