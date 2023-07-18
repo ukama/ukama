@@ -32,6 +32,15 @@ type OrgInfo struct {
 	Org *Org `json:"org"`
 }
 
+type RegistryInfo struct {
+	Id       string `json:"uuid"`
+	Name     string `json:"name"`
+	OrgId    string `json:"org_id"`
+	SimType  string `json:"sim_type"`
+	IsActive bool   `json:"active"`
+	Duration uint   `json:"duration,string"`
+}
+
 func NewOrgClientProvider(url string, debug bool) OrgClientProvider {
 	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
