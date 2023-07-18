@@ -343,6 +343,7 @@ const Manage = () => {
         data: {
           email: member.email as string,
           role: member.role as string,
+          // name: member.name as string,
         },
       },
     });
