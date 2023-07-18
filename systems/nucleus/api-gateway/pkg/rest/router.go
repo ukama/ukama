@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
@@ -17,13 +16,13 @@ import (
 	"github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/client"
 
 	"github.com/gin-gonic/gin"
-	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-	userspb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
+	"github.com/sirupsen/logrus"
+	orgpb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
+	userspb "github.com/ukama/ukama/systems/nucleus/users/pb/gen"
 )
 
 const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
-const DUMMY_AUTH_ID = "4eaef5fa-6548-481c-87eb-2b2d85ce6141"
 
 type Router struct {
 	f       *fizz.Fizz
@@ -40,22 +39,20 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Organization organization
-	User         *client.Users
+	Registry registry
+	User     *client.Users
 }
 
-type organization interface {
+type registry interface {
 	AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error)
 	GetOrg(orgName string) (*orgpb.GetByNameResponse, error)
-	GetOrgs(ownerUUID string) (*orgpb.GetByUserResponse, error)
-	UpdateOrgToUser(orgId string, userId string) (*orgpb.UpdateOrgForUserResponse, error)
-	RemoveOrgForUser(orgId string, userId string) (*orgpb.RemoveOrgForUserResponse, error)
+	GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Organization = client.NewOrgRegistry(endpoints.Org, endpoints.Timeout)
-	c.User = client.NewUsers(endpoints.User, endpoints.Timeout)
+	c.Registry = client.NewRegistry(endpoints.Network, endpoints.Org, endpoints.Timeout)
+	c.User = client.NewUsers(endpoints.Users, endpoints.Timeout)
 	return c
 }
 
@@ -84,7 +81,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 }
 
 func (rt *Router) Run() {
-	log.Info("Listening on port ", rt.config.serverConf.Port)
+	logrus.Info("Listening on port ", rt.config.serverConf.Port)
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
 		panic(err)
@@ -95,8 +92,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	auth := r.f.Group("/v1", "API gateway", "Registry system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
-			ctx.Set(USER_ID_KEY, DUMMY_AUTH_ID)
-			log.Info("Bypassing auth")
+			logrus.Info("Bypassing auth")
 			return
 		}
 		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
@@ -116,10 +112,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const org = "/orgs"
 		orgs := auth.Group(org, "Orgs", "Operations on Orgs")
 		orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
-		orgs.GET("/:org", formatDoc("Get Org by name", "Get organization by name"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 		orgs.POST("", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
-		orgs.PUT("/:org_id/users/:user_id", formatDoc("Add user to orgs", "set association between user and org"), tonic.Handler(r.updateOrgToUserHandler, http.StatusCreated))
-		orgs.DELETE("/:org_id/users/:user_id", formatDoc("Remove user from org", "remove association between user and org"), tonic.Handler(r.removeUserFromOrgHandler, http.StatusCreated))
+		orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 
 		// Users routes
 		const user = "/users"
@@ -138,51 +132,43 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 // Org handlers
 func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetByNameResponse, error) {
-	return r.clients.Organization.GetOrg(req.OrgName)
+	return r.clients.Registry.GetOrg(c.Param("org"))
 }
 
-func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.GetByUserResponse, error) {
+func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.GetByOwnerResponse, error) {
 	ownerUUID, ok := c.GetQuery("user_uuid")
 	if !ok {
 		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
 			Message: "user_uuid is a mandatory query parameter"}
 	}
 
-	return r.clients.Organization.GetOrgs(ownerUUID)
+	return r.clients.Registry.GetOrgs(ownerUUID)
 }
 
 func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddResponse, error) {
-	return r.clients.Organization.AddOrg(req.OrgName, req.Owner, req.Certificate)
-}
-
-func (r *Router) updateOrgToUserHandler(c *gin.Context, req *UserOrgRequest) (*orgpb.UpdateOrgForUserResponse, error) {
-	return r.clients.Organization.UpdateOrgToUser(req.OrgId, req.UserId)
-}
-
-func (r *Router) removeUserFromOrgHandler(c *gin.Context, req *UserOrgRequest) (*orgpb.RemoveOrgForUserResponse, error) {
-	return r.clients.Organization.RemoveOrgForUser(req.OrgId, req.UserId)
+	return r.clients.Registry.AddOrg(req.OrgName, req.Owner, req.Certificate)
 }
 
 // Users handlers
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.Get(req.UserId)
+	return r.clients.User.Get(c.Param("user_id"), c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) getUserByAuthIdHandler(c *gin.Context, req *GetUserByAuthIdRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.GetByAuthId(req.AuthId)
+	return r.clients.User.GetByAuthId(c.Param("auth_id"), c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) whoamiHandler(c *gin.Context, req *GetUserRequest) (*userspb.WhoamiResponse, error) {
-	return r.clients.User.Whoami(req.UserId)
+	return r.clients.User.Whoami(c.Param("user_id"), c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
 	return r.clients.User.AddUser(&userspb.User{
-		Name:   req.Name,
-		Email:  req.Email,
-		Phone:  req.Phone,
-		AuthId: req.AuthId,
-	})
+		Name:  req.Name,
+		Email: req.Email,
+		Phone: req.Phone,
+	},
+		c.GetString(USER_ID_KEY))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

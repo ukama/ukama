@@ -5,10 +5,11 @@ import (
 	extsql "database/sql"
 	"regexp"
 	"testing"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/uuid"
-	org_db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
+	org_db "github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
@@ -312,75 +313,75 @@ func TestOrgRepo_GetByOwner(t *testing.T) {
 	})
 }
 
-// func TestOrgRepo_GetByMember(t *testing.T) {
-// 	var db *extsql.DB
+func TestOrgRepo_GetByMember(t *testing.T) {
+	var db *extsql.DB
 
-// 	db, mock, err := sqlmock.New() // mock sql.DB
-// 	assert.NoError(t, err)
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
 
-// 	dialector := postgres.New(postgres.Config{
-// 		DSN:                  "sqlmock_db_0",
-// 		DriverName:           "postgres",
-// 		Conn:                 db,
-// 		PreferSimpleProtocol: true,
-// 	})
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
 
-// 	gdb, err := gorm.Open(dialector, &gorm.Config{})
-// 	assert.NoError(t, err)
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
 
-// 	r := org_db.NewOrgRepo(&UkamaDbMock{
-// 		GormDb: gdb,
-// 	})
+	r := org_db.NewOrgRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
 
-// 	t.Run("MemberFound", func(t *testing.T) {
-// 		// Arrange
-// 		const userId = 1
-// 		const deactivated = false
+	t.Run("MemberFound", func(t *testing.T) {
+		// Arrange
+		const userId = 1
+		const deactivated = false
 
-// 		var orgId = uuid.NewV4()
-// 		var uuid = uuid.NewV4()
+		var orgId = uuid.NewV4()
+		var uuid = uuid.NewV4()
 
-// 		rows := sqlmock.NewRows([]string{"id","org_id", "user_id", "uuid", "deactivated"}).
-// 			AddRow(orgId, userId, uuid, deactivated)
+		rows := sqlmock.NewRows([]string{"org_id", "user_id", "uuid", "deactivated"}).
+			AddRow(orgId, userId, uuid, deactivated)
 
-// 		mock.ExpectQuery(`^SELECT.*org_users.*`).
-// 			WithArgs(userId).
-// 			WillReturnRows(rows)
+		mock.ExpectQuery(`^SELECT.*org_users.*`).
+			WithArgs(uuid).
+			WillReturnRows(rows)
 
-// 		// Act
-// 		members, err := r.GetByMember(userId)
+		// Act
+		members, err := r.GetByMember(uuid)
 
-// 		// Assert
-// 		assert.NoError(t, err)
-// 		assert.NotNil(t, members)
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, members)
 
-// 		assert.Equal(t, orgId, members[0].OrgId)
-// 		assert.Equal(t, uuid, members[0].Uuid)
-// 		assert.Equal(t, deactivated, members[0].Deactivated)
+		assert.Equal(t, orgId, members[0].OrgId)
+		assert.Equal(t, uuid, members[0].Uuid)
+		assert.Equal(t, deactivated, members[0].Deactivated)
 
-// 		err = mock.ExpectationsWereMet()
-// 		assert.NoError(t, err)
-// 	})
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 
-// 	t.Run("MemberNotFound", func(t *testing.T) {
-// 		// Arrange
-// 		var uuid = uuid.NewV4()
+	t.Run("MemberNotFound", func(t *testing.T) {
+		// Arrange
+		var uuid = uuid.NewV4()
 
-// 		mock.ExpectQuery(`^SELECT.*org_users.*`).
-// 			WithArgs(uuid).
-// 			WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(`^SELECT.*org_users.*`).
+			WithArgs(uuid).
+			WillReturnError(sql.ErrNoRows)
 
-// 		// Act
-// 		members, err := r.GetByMember(uuid)
+		// Act
+		members, err := r.GetByMember(uuid)
 
-// 		// Assert
-// 		assert.Error(t, err)
-// 		assert.Nil(t, members)
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, members)
 
-// 		err = mock.ExpectationsWereMet()
-// 		assert.NoError(t, err)
-// 	})
-//}
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
 
 func TestOrgRepo_GetAll(t *testing.T) {
 	var db *extsql.DB
@@ -427,5 +428,342 @@ func TestOrgRepo_GetAll(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+	})
+}
+
+func TestOrgRepo_AddMember(t *testing.T) {
+	// Arrange
+	member := org_db.OrgUser{
+		OrgId:       uuid.NewV4(),
+		UserId:      1,
+		Uuid:        uuid.NewV4(),
+		Role:        org_db.Member,
+		Deactivated: false,
+		CreatedAt:   time.Now(),
+	}
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := org_db.NewOrgRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	t.Run("AddMember", func(t *testing.T) {
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(member.OrgId, member.UserId, member.Uuid, member.Deactivated,
+				member.CreatedAt, sqlmock.AnyArg(), org_db.RoleType(org_db.Member)).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectCommit()
+
+		// Act
+		err = r.AddMember(&member)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
+func TestOrgRepo_GetMember(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := org_db.NewOrgRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	t.Run("MemberFound", func(t *testing.T) {
+		// Arrange
+		orgId := uuid.NewV4()
+		userUuid := uuid.NewV4()
+
+		rows := sqlmock.NewRows([]string{"org_id", "uuid"}).
+			AddRow(orgId, userUuid)
+
+		mock.ExpectQuery(`^SELECT.*org_users.*`).
+			WithArgs(orgId, userUuid).
+			WillReturnRows(rows)
+
+		// Act
+		member, err := r.GetMember(orgId, userUuid)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, member)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("MemberNotFound", func(t *testing.T) {
+		// Arrange
+		orgId := uuid.NewV4()
+		userUuid := uuid.NewV4()
+
+		mock.ExpectQuery(`^SELECT.*org_users.*`).
+			WithArgs(orgId, userUuid).
+			WillReturnError(sql.ErrNoRows)
+
+		// Act
+		member, err := r.GetMember(orgId, userUuid)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, member)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
+func TestOrgRepo_GetMembers(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := org_db.NewOrgRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	t.Run("MembersFound", func(t *testing.T) {
+		// Arrange
+		orgId := uuid.NewV4()
+
+		rows := sqlmock.NewRows([]string{"org_id"}).
+			AddRow(orgId)
+
+		mock.ExpectQuery(`^SELECT.*org_users.*`).
+			WithArgs(orgId).
+			WillReturnRows(rows)
+
+		// Act
+		members, err := r.GetMembers(orgId)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.NotNil(t, members)
+	})
+
+	t.Run("MembersNotFound", func(t *testing.T) {
+		// Arrange
+		orgId := uuid.NewV4()
+
+		mock.ExpectQuery(`^SELECT.*org_users.*`).
+			WithArgs(orgId).
+			WillReturnError(sql.ErrNoRows)
+
+		// Act
+		members, err := r.GetMembers(orgId)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, members)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
+func TestOrgRepo_RemoveMember(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := org_db.NewOrgRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	t.Run("MemberFound", func(t *testing.T) {
+		var orgId = uuid.NewV4()
+		var uuid = uuid.NewV4()
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "org_users" SET`)).
+			WithArgs(sqlmock.AnyArg(), orgId, uuid).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectCommit()
+
+		// Act
+		err = r.RemoveMember(orgId, uuid)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("UserNotFound", func(t *testing.T) {
+		var orgId = uuid.NewV4()
+		var uuid = uuid.NewV4()
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "org_users" SET`)).
+			WithArgs(sqlmock.AnyArg(), orgId, uuid).
+			WillReturnError(sql.ErrNoRows)
+
+		// Act
+		err = r.RemoveMember(orgId, uuid)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
+func TestOrgRepo_GetOrgCount(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := org_db.NewOrgRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	t.Run("MemberFound", func(t *testing.T) {
+		// Arrange
+
+		rowsCount1 := sqlmock.NewRows([]string{"count"}).
+			AddRow(2)
+
+		rowsCount2 := sqlmock.NewRows([]string{"count"}).
+			AddRow(1)
+
+		mock.ExpectQuery(`^SELECT count(\\*).*orgs.*`).
+			WillReturnRows(rowsCount1)
+
+		mock.ExpectQuery(`^SELECT count(\\*).*orgs.*WHERE.*`).
+			WillReturnRows(rowsCount2)
+
+		// Act
+		activeUsr, inactiveUsr, err := r.GetOrgCount()
+		assert.NoError(t, err)
+
+		// Assert
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+		assert.Equal(t, int64(2), activeUsr)
+		assert.Equal(t, int64(1), inactiveUsr)
+	})
+}
+
+func TestOrgRepo_GetMemberCount(t *testing.T) {
+	var db *extsql.DB
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := org_db.NewOrgRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	orgId := uuid.NewV4()
+
+	t.Run("MemberFound", func(t *testing.T) {
+		// Arrange
+
+		rowsCount1 := sqlmock.NewRows([]string{"count"}).
+			AddRow(2)
+
+		rowsCount2 := sqlmock.NewRows([]string{"count"}).
+			AddRow(1)
+
+		mock.ExpectQuery(`^SELECT count(\\*).*org_users.*`).
+			WillReturnRows(rowsCount1)
+
+		mock.ExpectQuery(`^SELECT count(\\*).*org_users.*WHERE.*`).
+			WillReturnRows(rowsCount2)
+
+		// Act
+		activeUsr, inactiveUsr, err := r.GetMemberCount(orgId)
+		assert.NoError(t, err)
+
+		// Assert
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+		assert.Equal(t, int64(2), activeUsr)
+		assert.Equal(t, int64(1), inactiveUsr)
 	})
 }

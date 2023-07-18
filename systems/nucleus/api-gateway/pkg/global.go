@@ -1,4 +1,4 @@
 package pkg
 
 const ServiceName = "gateway"
-const SystemName = "nucleus"
+const SystemName = "registry"

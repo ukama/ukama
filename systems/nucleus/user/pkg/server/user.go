@@ -13,7 +13,7 @@ import (
 	pb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"github.com/ukama/ukama/systems/nucleus/user/pkg"
 
-	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pkgP "github.com/ukama/ukama/systems/nucleus/user/pkg/providers"
@@ -28,7 +28,6 @@ const uuidParsingError = "Error parsing UUID"
 
 type UserService struct {
 	pb.UnimplementedUserServiceServer
-	orgName         string
 	userRepo        db.UserRepo
 	orgService      pkgP.OrgClientProvider
 	baseRoutingKey  msgbus.RoutingKeyBuilder
@@ -36,12 +35,11 @@ type UserService struct {
 	pushGatewayHost string
 }
 
-func NewUserService(orgName string, userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *UserService {
+func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGatewayHost string) *UserService {
 	return &UserService{
-		orgName:         orgName,
 		userRepo:        userRepo,
 		orgService:      orgService,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		msgbus:          msgBus,
 		pushGatewayHost: pushGatewayHost,
 	}
@@ -273,8 +271,8 @@ func (u *UserService) Whoami(ctx context.Context, req *pb.GetRequest) (*pb.Whoam
 
 	res := &pb.WhoamiResponse{
 		User:     dbUserToPbUser(user),
-		OwnerOf:  orgOgrsToUserOrgs(userOrgs.OwnerOf),
-		MemberOf: orgOgrsToUserOrgs(userOrgs.MemberOf),
+		OwnerOf:  orgOwnOgrsToUserOwnOrgs(userOrgs.OwnerOf),
+		MemberOf: orgMmbOgrsToUserMnbOrgs(userOrgs.MemberOf),
 	}
 
 	return res, nil
@@ -313,7 +311,7 @@ func dbUserToPbUser(user *db.User) *pb.User {
 	}
 }
 
-func orgOgrsToUserOrgs(orgs []*orgpb.Organization) []*pb.Organization {
+func orgOwnOgrsToUserOwnOrgs(orgs []*orgpb.Organization) []*pb.Organization {
 	res := []*pb.Organization{}
 
 	for _, o := range orgs {
@@ -332,20 +330,20 @@ func orgOgrsToUserOrgs(orgs []*orgpb.Organization) []*pb.Organization {
 	return res
 }
 
-// func orgMmbOgrsToUserMnbOrgs(orgs []*orgpb.OrgUser) []*pb.OrgUser {
-// 	res := []*pb.OrgUser{}
+func orgMmbOgrsToUserMnbOrgs(orgs []*orgpb.OrgUser) []*pb.OrgUser {
+	res := []*pb.OrgUser{}
 
-// 	for _, o := range orgs {
-// 		org := &pb.OrgUser{
-// 			OrgId:         o.OrgId,
-// 			Uuid:          o.Uuid,
-// 			Role:          pb.RoleType(o.Role),
-// 			IsDeactivated: o.IsDeactivated,
-// 			CreatedAt:     o.CreatedAt,
-// 		}
+	for _, o := range orgs {
+		org := &pb.OrgUser{
+			OrgId:         o.OrgId,
+			Uuid:          o.Uuid,
+			Role:          pb.RoleType(o.Role),
+			IsDeactivated: o.IsDeactivated,
+			CreatedAt:     o.CreatedAt,
+		}
 
-// 		res = append(res, org)
-// 	}
+		res = append(res, org)
+	}
 
-// 	return res
-// }
+	return res
+}

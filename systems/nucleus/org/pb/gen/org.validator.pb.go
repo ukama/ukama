@@ -121,6 +121,38 @@ func (this *GetByNameResponse) Validate() error {
 	return nil
 }
 
+var _regex_AddMemberRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *AddMemberRequest) Validate() error {
+	if !_regex_AddMemberRequest_UserUuid.MatchString(this.UserUuid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserUuid))
+	}
+	if this.UserUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.UserUuid))
+	}
+	return nil
+}
+
+var _regex_MemberRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *MemberRequest) Validate() error {
+	if !_regex_MemberRequest_UserUuid.MatchString(this.UserUuid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserUuid))
+	}
+	if this.UserUuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.UserUuid))
+	}
+	return nil
+}
+func (this *MemberResponse) Validate() error {
+	if this.Member != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Member); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Member", err)
+		}
+	}
+	return nil
+}
+
 var _regex_RegisterUserRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *RegisterUserRequest) Validate() error {
@@ -132,10 +164,30 @@ func (this *RegisterUserRequest) Validate() error {
 	}
 	return nil
 }
-func (this *RegisterUserResponse) Validate() error {
+func (this *GetMembersRequest) Validate() error {
 	return nil
 }
-func (this *GetMembersRequest) Validate() error {
+func (this *GetMembersResponse) Validate() error {
+	for _, item := range this.Members {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Members", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *UpdateMemberRequest) Validate() error {
+	if this.Member != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Member); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Member", err)
+		}
+	}
+	if this.Attributes != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Attributes); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Attributes", err)
+		}
+	}
 	return nil
 }
 
@@ -202,47 +254,30 @@ func (this *User) Validate() error {
 	}
 	return nil
 }
+func (this *OrgUserAttributes) Validate() error {
+	return nil
+}
 
-var _regex_UpdateOrgForUserRequest_UserId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_UpdateOrgForUserRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_OrgUser_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_OrgUser_Uuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *UpdateOrgForUserRequest) Validate() error {
-	if !_regex_UpdateOrgForUserRequest_UserId.MatchString(this.UserId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserId))
-	}
-	if this.UserId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must not be an empty string`, this.UserId))
-	}
-	if !_regex_UpdateOrgForUserRequest_OrgId.MatchString(this.OrgId) {
+func (this *OrgUser) Validate() error {
+	if !_regex_OrgUser_OrgId.MatchString(this.OrgId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
 	}
 	if this.OrgId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
 	}
-	return nil
-}
-func (this *UpdateOrgForUserResponse) Validate() error {
-	return nil
-}
-
-var _regex_RemoveOrgForUserRequest_UserId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_RemoveOrgForUserRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *RemoveOrgForUserRequest) Validate() error {
-	if !_regex_RemoveOrgForUserRequest_UserId.MatchString(this.UserId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserId))
+	if !_regex_OrgUser_Uuid.MatchString(this.Uuid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Uuid))
 	}
-	if this.UserId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must not be an empty string`, this.UserId))
+	if this.Uuid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Uuid", fmt.Errorf(`value '%v' must not be an empty string`, this.Uuid))
 	}
-	if !_regex_RemoveOrgForUserRequest_OrgId.MatchString(this.OrgId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
 	}
-	if this.OrgId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgId))
-	}
-	return nil
-}
-func (this *RemoveOrgForUserResponse) Validate() error {
 	return nil
 }

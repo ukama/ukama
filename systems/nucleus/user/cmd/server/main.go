@@ -20,6 +20,7 @@ import (
 
 	provider "github.com/ukama/ukama/systems/nucleus/user/pkg/providers"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 
@@ -84,10 +85,10 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
+	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
-	log.Debugf("MessageBus Client is %+v", mbClient)
-	userService := server.NewUserService(svcConf.OrgName, db.NewUserRepo(gormdb),
+	logrus.Debugf("MessageBus Client is %+v", mbClient)
+	userService := server.NewUserService(db.NewUserRepo(gormdb),
 		provider.NewOrgClientProvider(svcConf.Org), mbClient,
 		svcConf.PushGatewayHost,
 	)
@@ -111,22 +112,17 @@ func initUsersDB(usersDB *gorm.DB) {
 		if err := usersDB.First(&db.User{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Iniiialzing users table")
 			var ownerUUID uuid.UUID
-			var authUUID uuid.UUID
 			var err error
-			if ownerUUID, err = uuid.FromString(svcConf.OwnerId); err != nil {
-				log.Fatalf("Database initialization failed, need valid %s envronment variable. Error: %v", "OWNERID", err)
-			}
 
-			if authUUID, err = uuid.FromString(svcConf.AuthId); err != nil {
-				log.Fatalf("Database initialization failed, need valid %s envronment variable. Error: %v", "AUTHID", err)
+			if ownerUUID, err = uuid.FromString(svcConf.OrgOWnerUUID); err != nil {
+				log.Fatalf("Database initialization failed, need valid %s envronment variable. Error: %v", "ORGOWNERUUID", err)
 			}
 
 			usersDB.Create(&db.User{
-				Id:     ownerUUID,
-				Name:   svcConf.OwnerName,
-				Email:  svcConf.OwnerEmail,
-				Phone:  svcConf.OwnerPhone,
-				AuthId: authUUID,
+				Id:    ownerUUID,
+				Name:  svcConf.OrgOWnerName,
+				Email: svcConf.OrgOWnerEmail,
+				Phone: svcConf.OrgOWnerPhone,
 			})
 		}
 	}

@@ -1,10 +1,10 @@
 version: "3.2"
 services:
 
-  postgresd-nucleus:
+  postgresd-registry:
     image: postgres:13.3
     ports:
-      - "5411:5432"
+      - "5405:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=Pass2020!
@@ -13,51 +13,68 @@ services:
     volumes:
       - postgress-data:/var/lib/postgresql
 
-  org:
-    build: ./org
-    ports:
-      - "9061:9090"
+  network:
+    build:
+      context: ./network
+      dockerfile: ./Dockerfile
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd-nucleus
+      - DB_HOST=postgresd-registry
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - OWNERID=018688fa-d861-4e7b-b119-ffc5e1637ba8
-      - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
-      - ORGNAME=ukama-test-org
+      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
+      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
+      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
+      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
+      - DEBUG_DISABLEBOOTSTRAP=true
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-nucleus:9095
-      - ORG_SERVICE_HOST=org
-      - ORG_SERVICE_PORT=9090
+      - MSGCLIENT_HOST=msgclient-registry:9095
+      - NETWORK_SERVICE_HOST=network
+      - NETWORK_SERVICE_PORT=9090
       - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-      - INITCLIENTHOST=http://initclient-nucleus:8080
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - msgclient-nucleus
+      - msgclient-registry
 
-  user:
-    build: ./user
-    ports:
-      - "9062:9090"
+  org:
+    build: ./org
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd-nucleus
+      - DB_HOST=postgresd-registry
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+      - ORGNAME=ukama-test-org
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-registry:9095
+      - ORG_SERVICE_HOST=org
+      - ORG_SERVICE_PORT=9090
+      - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-registry
+
+  users:
+    build: ./users
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-registry
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
-      - OWNERID=018688fa-d861-4e7b-b119-ffc5e1637ba8
-      - AUTHID=00000000-0000-0000-0000-00000000
-      - OWNERNAME=ukama-test-org-owner
-      - OWNEREMAIL=ukama-test-org-owner@domain.com
-      - OWNERPHONE=0123456789
+      - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+      - ORGOWNERNAME=ukama-test-org-owner
+      - ORGOWNEREMAIL=ukama-test-org-owner@domain.com
+      - ORGOWNERPHONE=0123456789
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-nucleus:9095
-      - USER_SERVICE_HOST=user
-      - USER_SERVICE_PORT=9090
+      - MSGCLIENT_HOST=msgclient-registry:9095
+      - USERS_SERVICE_HOST=users
+      - USERS_SERVICE_PORT=9090
       - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
-      - ORG=org:9090
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
       # - SIMMANAGER_TIMEOUT=3s
@@ -65,16 +82,16 @@ services:
     networks:
       - ukama-net
     depends_on:
-      - msgclient-nucleus
+      - msgclient-registry
 
 
-  api-gateway-nucleus:
+  api-gateway:
     build:
       dockerfile: ./Dockerfile
       context: ./api-gateway
     restart: always
     ports:
-      - "8060:8080"
+      - "8075:8080"
     networks:
       - ukama-net
     environment:
@@ -83,46 +100,70 @@ services:
       # - CORS_ALLOWALLORIGINS=true
       # - CORS_ALLOWORIGINS=""
     depends_on:
+      - network
       - org
-      - user
-      - postgresd-nucleus
+      - users
+      - postgresd-registry
   
-  msgclient-nucleus:
+  msgclient-registry:
     build: ../services/msgClient
     environment:
       - DEBUGMODE=true
-      - DB_HOST=postgresd-nucleus
+      - DB_HOST=postgresd-registry
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - SYSTEM=nucleus
+      - SYSTEM=registry
     restart: always
     networks:
       - ukama-net
     depends_on:
-      - postgresd-nucleus
-  
-  initclient-nucleus:
+      - postgresd-registry
+
+  node:
     build:
       dockerfile: ./Dockerfile
-      context: ../services/initClient
+      context: ./node
     environment:
-      - ENV_SYSTEM_ORG=ukama-test-org
-      - ENV_DNS_REFRESH_TIME_PERIOD=30
-      - ENV_SYSTEM_NAME=nucleus
-      - ENV_SYSTEM_DNS=api-gateway-nucleus
-      - ENV_DNS_SERVER=false
-      - ENV_SYSTEM_PORT=8080
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=initclient-nucleus
-      - ENV_INIT_CLIENT_PORT=8080
-      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-registry
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-registry:9095
+      - NODE_SERVICE_HOST=node
+      - NODE_SERVICE_PORT=9090
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+      # - HSSHOST=hss:9090
+      # - SIMMANAGER_HOST=simmanager:9090
+      # - SIMMANAGER_TIMEOUT=3s
     restart: always
     networks:
       - ukama-net
+    depends_on:
+      - msgclient-registry
+      - postgresd-registry
 
+  # initclient-registry:
+  #   build:
+  #     dockerfile: ./Dockerfile
+  #     context: ../services/initClient
+  #   environment:
+  #     - ENV_SYSTEM_ORG=ukama001
+  #     - ENV_SYSTEM_NAME=registry
+  #     - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_SYSTEM_PORT=8889
+  #     - ENV_SYSTEM_CERT=This-is-a-certificate
+  #     - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_INIT_SYSTEM_PORT=8071
+  #     - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+  #     - ENV_INIT_CLIENT_PORT=9091
+  #     - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+  #   restart: always
+  #   networks:
+  #     - ukama-net
+     
 networks:
   ukama-net:
     external: true

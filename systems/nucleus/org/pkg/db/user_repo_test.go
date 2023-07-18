@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/ukama/ukama/systems/common/uuid"
-	org_db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
+	org_db "github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"

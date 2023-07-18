@@ -1,7 +1,7 @@
 package pkg
 
-const ServiceName = "user"
-const SystemName = "nucleus"
+const ServiceName = "users"
+const SystemName = "registry"
 
 var IsDebugMode = false
-var InstanceId = ServiceName + "-debug"
+var InstanceId = "users-debug"

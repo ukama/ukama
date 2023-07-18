@@ -35,7 +35,7 @@ func init() {
 // ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 // defer cancel()
 
-// log.Infoln("Connecting to service ", testConf.UsersHost)
+// logrus.Infoln("Connecting to service ", testConf.UsersHost)
 
 // conn, err := grpc.DialContext(ctx, testConf.UsersHost, grpc.WithInsecure(), grpc.WithBlock())
 // if err != nil {
@@ -72,7 +72,7 @@ func init() {
 // Org:      testOrg})
 
 // if handleResponse(tt, err, addResp) {
-// log.Info("Failed to add")
+// logrus.Info("Failed to add")
 // assert.NotEmpty(tt, addResp.User.Uuid)
 // } else {
 // t.FailNow()
@@ -92,7 +92,7 @@ func init() {
 // Org: testOrg})
 
 // if handleResponse(tt, err, esimUsr) {
-// log.Info("Failed to add")
+// logrus.Info("Failed to add")
 // assert.NotEmpty(tt, esimUsr.User.Uuid)
 // } else {
 // t.FailNow()
@@ -196,13 +196,13 @@ func init() {
 // }
 
 // func cleanupUser(c pb.UserServiceClient, addResp ...*pb.AddResponse) {
-// log.Info("Cleaning up")
+// logrus.Info("Cleaning up")
 
 // for _, rsp := range addResp {
 // if rsp != nil && rsp.User != nil {
 // r := *rsp
 
-// log.Info("Deleting user: ", r.User.Uuid, " Iccid: ", r.Iccid)
+// logrus.Info("Deleting user: ", r.User.Uuid, " Iccid: ", r.Iccid)
 
 // ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 // defer cancel()
@@ -213,7 +213,7 @@ func init() {
 // return
 // }
 
-// log.Errorf("Failed to delete user %s: %v", r.User.Uuid, err)
+// logrus.Errorf("Failed to delete user %s: %v", r.User.Uuid, err)
 // }
 // }
 // }

@@ -8,17 +8,16 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-	"github.com/ukama/ukama/systems/nucleus/org/pkg/providers"
-	"github.com/ukama/ukama/systems/nucleus/org/pkg/server"
+	pb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
+	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/server"
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/systems/nucleus/org/pkg"
+	"github.com/ukama/ukama/systems/nucleus/orgs/pkg"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ukama/ukama/systems/nucleus/org/cmd/version"
+	"github.com/ukama/ukama/systems/nucleus/orgs/cmd/version"
 
-	"github.com/ukama/ukama/systems/nucleus/org/pkg/db"
+	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
 
 	"github.com/num30/config"
 	log "github.com/sirupsen/logrus"
@@ -63,7 +62,7 @@ func initDb() sql.Db {
 
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.Org{}, &db.User{})
+	err := d.Init(&db.Org{}, &db.User{}, &db.OrgUser{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -83,16 +82,13 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
-
-	user := providers.NewUserClientProvider(svcConf.UserHost)
-	orch := providers.NewOrchestratorProvider(svcConf.OrchestratorHost, svcConf.DebugMode)
-	registry := providers.NewRegistryProvider(svcConf.InitClientHost, svcConf.DebugMode)
+	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
-	regServer := server.NewOrgServer(svcConf.OrgName, db.NewOrgRepo(gormdb),
-		db.NewUserRepo(gormdb), orch, user, registry,
-		mbClient, svcConf.Pushgateway, svcConf.DebugMode)
+	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
+		db.NewUserRepo(gormdb),
+		svcConf.OrgName, mbClient,
+		svcConf.Pushgateway)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)
@@ -112,19 +108,15 @@ func initOrgDB(orgDB *gorm.DB) {
 		if err := orgDB.First(&db.Org{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Iniiialzing orgs table")
 
-			var OwnerUUID, OrgUUID uuid.UUID
+			var OwnerUUID uuid.UUID
 			var err error
 
-			if OwnerUUID, err = uuid.FromString(svcConf.OwnerId); err != nil {
-				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "OWNERID", err)
-			}
-
-			if OrgUUID, err = uuid.FromString(svcConf.OrgId); err != nil {
-				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGID", err)
+			if OwnerUUID, err = uuid.FromString(svcConf.OrgOwnerUUID); err != nil {
+				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGOWNERUUID", err)
 			}
 
 			org := &db.Org{
-				Id:    OrgUUID,
+				Id:    uuid.NewV4(),
 				Name:  svcConf.OrgName,
 				Owner: OwnerUUID,
 			}
@@ -134,29 +126,21 @@ func initOrgDB(orgDB *gorm.DB) {
 			}
 
 			if err := orgDB.Transaction(func(tx *gorm.DB) error {
-				if err := tx.Create(usr).Error; err != nil {
-					return err
-				}
-
-				u := &db.User{}
-				if err := tx.First(&u, usr).Error; err != nil {
-					return err
-				}
-
-				org.Users = append(org.Users, *u)
 				if err := tx.Create(org).Error; err != nil {
 					return err
 				}
 
-				// o := &db.Org{}
-				// if err := tx.First(&o, org).Error; err != nil {
-				// 	return err
-				// }
+				if err := tx.Create(usr).Error; err != nil {
+					return err
+				}
 
-				// usr.Org = []*db.Org{o}
-				// if err := tx.Create(usr).Error; err != nil {
-				// 	return err
-				// }
+				if err := tx.Create(&db.OrgUser{
+					OrgId:  org.Id,
+					UserId: usr.Id,
+					Uuid:   usr.Uuid,
+				}).Error; err != nil {
+					return err
+				}
 
 				return nil
 			}); err != nil {

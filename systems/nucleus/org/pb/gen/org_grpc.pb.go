@@ -28,11 +28,15 @@ type OrgServiceClient interface {
 	GetByName(ctx context.Context, in *GetByNameRequest, opts ...grpc.CallOption) (*GetByNameResponse, error)
 	GetByOwner(ctx context.Context, in *GetByOwnerRequest, opts ...grpc.CallOption) (*GetByOwnerResponse, error)
 	GetByUser(ctx context.Context, in *GetByOwnerRequest, opts ...grpc.CallOption) (*GetByUserResponse, error)
-	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error)
 	// Users
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
-	UpdateOrgForUser(ctx context.Context, in *UpdateOrgForUserRequest, opts ...grpc.CallOption) (*UpdateOrgForUserResponse, error)
-	RemoveOrgForUser(ctx context.Context, in *RemoveOrgForUserRequest, opts ...grpc.CallOption) (*RemoveOrgForUserResponse, error)
+	// Members
+	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
+	UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 }
 
 type orgServiceClient struct {
@@ -88,15 +92,6 @@ func (c *orgServiceClient) GetByUser(ctx context.Context, in *GetByOwnerRequest,
 	return out, nil
 }
 
-func (c *orgServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error) {
-	out := new(RegisterUserResponse)
-	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/RegisterUser", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *orgServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
 	out := new(UpdateUserResponse)
 	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/UpdateUser", in, out, opts...)
@@ -106,18 +101,54 @@ func (c *orgServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest
 	return out, nil
 }
 
-func (c *orgServiceClient) UpdateOrgForUser(ctx context.Context, in *UpdateOrgForUserRequest, opts ...grpc.CallOption) (*UpdateOrgForUserResponse, error) {
-	out := new(UpdateOrgForUserResponse)
-	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/UpdateOrgForUser", in, out, opts...)
+func (c *orgServiceClient) RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/RegisterUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *orgServiceClient) RemoveOrgForUser(ctx context.Context, in *RemoveOrgForUserRequest, opts ...grpc.CallOption) (*RemoveOrgForUserResponse, error) {
-	out := new(RemoveOrgForUserResponse)
-	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/RemoveOrgForUser", in, out, opts...)
+func (c *orgServiceClient) AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/AddMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/GetMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error) {
+	out := new(GetMembersResponse)
+	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/GetMembers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/UpdateMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) RemoveMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/RemoveMember", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -134,11 +165,15 @@ type OrgServiceServer interface {
 	GetByName(context.Context, *GetByNameRequest) (*GetByNameResponse, error)
 	GetByOwner(context.Context, *GetByOwnerRequest) (*GetByOwnerResponse, error)
 	GetByUser(context.Context, *GetByOwnerRequest) (*GetByUserResponse, error)
-	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error)
 	// Users
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
-	UpdateOrgForUser(context.Context, *UpdateOrgForUserRequest) (*UpdateOrgForUserResponse, error)
-	RemoveOrgForUser(context.Context, *RemoveOrgForUserRequest) (*RemoveOrgForUserResponse, error)
+	// Members
+	RegisterUser(context.Context, *RegisterUserRequest) (*MemberResponse, error)
+	AddMember(context.Context, *AddMemberRequest) (*MemberResponse, error)
+	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
+	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
+	UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error)
+	RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	mustEmbedUnimplementedOrgServiceServer()
 }
 
@@ -161,17 +196,26 @@ func (UnimplementedOrgServiceServer) GetByOwner(context.Context, *GetByOwnerRequ
 func (UnimplementedOrgServiceServer) GetByUser(context.Context, *GetByOwnerRequest) (*GetByUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetByUser not implemented")
 }
-func (UnimplementedOrgServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterUser not implemented")
-}
 func (UnimplementedOrgServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
-func (UnimplementedOrgServiceServer) UpdateOrgForUser(context.Context, *UpdateOrgForUserRequest) (*UpdateOrgForUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrgForUser not implemented")
+func (UnimplementedOrgServiceServer) RegisterUser(context.Context, *RegisterUserRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterUser not implemented")
 }
-func (UnimplementedOrgServiceServer) RemoveOrgForUser(context.Context, *RemoveOrgForUserRequest) (*RemoveOrgForUserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveOrgForUser not implemented")
+func (UnimplementedOrgServiceServer) AddMember(context.Context, *AddMemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddMember not implemented")
+}
+func (UnimplementedOrgServiceServer) GetMember(context.Context, *MemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMember not implemented")
+}
+func (UnimplementedOrgServiceServer) GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMembers not implemented")
+}
+func (UnimplementedOrgServiceServer) UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMember not implemented")
+}
+func (UnimplementedOrgServiceServer) RemoveMember(context.Context, *MemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveMember not implemented")
 }
 func (UnimplementedOrgServiceServer) mustEmbedUnimplementedOrgServiceServer() {}
 
@@ -276,24 +320,6 @@ func _OrgService_GetByUser_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrgService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OrgServiceServer).RegisterUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.nucleus.org.v1.OrgService/RegisterUser",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).RegisterUser(ctx, req.(*RegisterUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _OrgService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
@@ -312,38 +338,110 @@ func _OrgService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrgService_UpdateOrgForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateOrgForUserRequest)
+func _OrgService_RegisterUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrgServiceServer).UpdateOrgForUser(ctx, in)
+		return srv.(OrgServiceServer).RegisterUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.nucleus.org.v1.OrgService/UpdateOrgForUser",
+		FullMethod: "/ukama.nucleus.org.v1.OrgService/RegisterUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).UpdateOrgForUser(ctx, req.(*UpdateOrgForUserRequest))
+		return srv.(OrgServiceServer).RegisterUser(ctx, req.(*RegisterUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrgService_RemoveOrgForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveOrgForUserRequest)
+func _OrgService_AddMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMemberRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrgServiceServer).RemoveOrgForUser(ctx, in)
+		return srv.(OrgServiceServer).AddMember(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.nucleus.org.v1.OrgService/RemoveOrgForUser",
+		FullMethod: "/ukama.nucleus.org.v1.OrgService/AddMember",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).RemoveOrgForUser(ctx, req.(*RemoveOrgForUserRequest))
+		return srv.(OrgServiceServer).AddMember(ctx, req.(*AddMemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_GetMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).GetMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.nucleus.org.v1.OrgService/GetMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).GetMember(ctx, req.(*MemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_GetMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMembersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).GetMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.nucleus.org.v1.OrgService/GetMembers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).GetMembers(ctx, req.(*GetMembersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_UpdateMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).UpdateMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.nucleus.org.v1.OrgService/UpdateMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).UpdateMember(ctx, req.(*UpdateMemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_RemoveMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).RemoveMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.nucleus.org.v1.OrgService/RemoveMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).RemoveMember(ctx, req.(*MemberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -376,20 +474,32 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrgService_GetByUser_Handler,
 		},
 		{
-			MethodName: "RegisterUser",
-			Handler:    _OrgService_RegisterUser_Handler,
-		},
-		{
 			MethodName: "UpdateUser",
 			Handler:    _OrgService_UpdateUser_Handler,
 		},
 		{
-			MethodName: "UpdateOrgForUser",
-			Handler:    _OrgService_UpdateOrgForUser_Handler,
+			MethodName: "RegisterUser",
+			Handler:    _OrgService_RegisterUser_Handler,
 		},
 		{
-			MethodName: "RemoveOrgForUser",
-			Handler:    _OrgService_RemoveOrgForUser_Handler,
+			MethodName: "AddMember",
+			Handler:    _OrgService_AddMember_Handler,
+		},
+		{
+			MethodName: "GetMember",
+			Handler:    _OrgService_GetMember_Handler,
+		},
+		{
+			MethodName: "GetMembers",
+			Handler:    _OrgService_GetMembers_Handler,
+		},
+		{
+			MethodName: "UpdateMember",
+			Handler:    _OrgService_UpdateMember_Handler,
+		},
+		{
+			MethodName: "RemoveMember",
+			Handler:    _OrgService_RemoveMember_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

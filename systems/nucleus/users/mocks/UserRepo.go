@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	db "github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
+	db "github.com/ukama/ukama/systems/nucleus/users/pkg/db"
 	gorm "gorm.io/gorm"
 
 	mock "github.com/stretchr/testify/mock"
@@ -30,13 +30,13 @@ func (_m *UserRepo) Add(user *db.User, nestedFunc func(*db.User, *gorm.DB) error
 	return r0
 }
 
-// Delete provides a mock function with given fields: _a0
-func (_m *UserRepo) Delete(_a0 uuid.UUID) error {
-	ret := _m.Called(_a0)
+// Delete provides a mock function with given fields: id, nestedFunc
+func (_m *UserRepo) Delete(id uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+	ret := _m.Called(id, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) error); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(uuid.UUID, func(uuid.UUID, *gorm.DB) error) error); ok {
+		r0 = rf(id, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -44,17 +44,17 @@ func (_m *UserRepo) Delete(_a0 uuid.UUID) error {
 	return r0
 }
 
-// Get provides a mock function with given fields: _a0
-func (_m *UserRepo) Get(_a0 uuid.UUID) (*db.User, error) {
-	ret := _m.Called(_a0)
+// Get provides a mock function with given fields: id
+func (_m *UserRepo) Get(id uuid.UUID) (*db.User, error) {
+	ret := _m.Called(id)
 
 	var r0 *db.User
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.User, error)); ok {
-		return rf(_a0)
+		return rf(id)
 	}
 	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.User); ok {
-		r0 = rf(_a0)
+		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.User)
@@ -62,7 +62,33 @@ func (_m *UserRepo) Get(_a0 uuid.UUID) (*db.User, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(_a0)
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetByAuthId provides a mock function with given fields: id
+func (_m *UserRepo) GetByAuthId(id uuid.UUID) (*db.User, error) {
+	ret := _m.Called(id)
+
+	var r0 *db.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.User, error)); ok {
+		return rf(id)
+	}
+	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.User); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -101,30 +127,18 @@ func (_m *UserRepo) GetUserCount() (int64, int64, error) {
 	return r0, r1, r2
 }
 
-// Update provides a mock function with given fields: _a0
-func (_m *UserRepo) Update(_a0 *db.User) (*db.User, error) {
-	ret := _m.Called(_a0)
+// Update provides a mock function with given fields: user, nestedFunc
+func (_m *UserRepo) Update(user *db.User, nestedFunc func(*db.User, *gorm.DB) error) error {
+	ret := _m.Called(user, nestedFunc)
 
-	var r0 *db.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(*db.User) (*db.User, error)); ok {
-		return rf(_a0)
-	}
-	if rf, ok := ret.Get(0).(func(*db.User) *db.User); ok {
-		r0 = rf(_a0)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.User, func(*db.User, *gorm.DB) error) error); ok {
+		r0 = rf(user, nestedFunc)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.User)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(*db.User) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 type mockConstructorTestingTNewUserRepo interface {

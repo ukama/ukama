@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -12,9 +13,8 @@ import (
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
-	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-	orgmocks "github.com/ukama/ukama/systems/nucleus/org/pb/gen/mocks"
-	usermocks "github.com/ukama/ukama/systems/nucleus/user/pb/gen/mocks"
+	orgpb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
+	orgmocks "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen/mocks"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -44,9 +44,9 @@ var testClientSet *Clients
 
 func init() {
 	gin.SetMode(gin.TestMode)
-	// testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-	// 	Timeout: 1 * time.Second,
-	// })
+	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
+		Timeout: 1 * time.Second,
+	})
 }
 
 func TestPingRoute(t *testing.T) {
@@ -69,12 +69,10 @@ func TestGetOrg_NotFound(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/v1/orgs/org-name", nil)
 	arc := &providers.AuthRestClient{}
 	o := &orgmocks.OrgServiceClient{}
-	u := &usermocks.UserServiceClient{}
 	o.On("GetByName", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "org not found"))
 
 	r := NewRouter(&Clients{
-		Organization: client.NewOrgRegistryFromClient(o),
-		User:         client.NewUserRegistryFromClient(u),
+		Registry: client.NewRegistryFromClient(o),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	// act
@@ -91,7 +89,6 @@ func TestGetOrg(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/orgs/"+orgName, nil)
 	o := &orgmocks.OrgServiceClient{}
-	u := &usermocks.UserServiceClient{}
 	arc := &providers.AuthRestClient{}
 	o.On("GetByName", mock.Anything, mock.Anything).Return(&orgpb.GetByNameResponse{
 		Org: &orgpb.Organization{
@@ -101,9 +98,9 @@ func TestGetOrg(t *testing.T) {
 	}, nil)
 
 	r := NewRouter(&Clients{
-		Organization: client.NewOrgRegistryFromClient(o),
-		User:         client.NewUserRegistryFromClient(u),
+		Registry: client.NewRegistryFromClient(o),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
 	// act
 	r.ServeHTTP(w, req)
 
