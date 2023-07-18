@@ -4,15 +4,13 @@ go 1.19
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
-replace github.com/ukama/ukama/systems/nucleus/users => ../../nucleus/users
+replace github.com/ukama/ukama/systems/registry/users => ../../nucleus/users
 
 replace github.com/ukama/ukama/systems/registry/network => ../network
 
 replace github.com/ukama/ukama/systems/registry/node => ../node
 
-replace github.com/ukama/ukama/systems/registry/invitation => ../invitation
-
-replace github.com/ukama/ukama/systems/nucleus/org => ../../nucleus/org
+replace github.com/ukama/ukama/systems/registry/org => ../../nucleus/org
 
 replace github.com/ukama/ukama/systems/registry/api-gateway => ./
 

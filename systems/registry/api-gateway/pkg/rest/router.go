@@ -22,8 +22,6 @@ import (
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
 const USER_ID_KEY = "UserId"
@@ -44,13 +42,17 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Network    network
-	Node       node
-	Member     member
-	Invitation invitation
+	Registry registry
+	Node     *client.Node
 }
 
-type network interface {
+type registry interface {
+	// GetMember(orgName string, userUUID string) (*orgpb.MemberResponse, error)
+	// GetMembers(orgName string) (*orgpb.GetMembersResponse, error)
+	// AddMember(orgName string, userUUID string, role string) (*orgpb.MemberResponse, error)
+	// UpdateMember(orgName string, userUUID string, isDeactivated bool, role string) error
+	// RemoveMember(orgName string, userUUID string) error
+
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
@@ -78,11 +80,7 @@ type network interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Network = client.NewNetworkRegistry(endpoints.Network, endpoints.Timeout)
-	c.Node = client.NewNode(endpoints.Node, endpoints.Timeout)
-	c.Member = client.NewMemberRegistry(endpoints.Member, endpoints.Timeout)
-	c.Invitation = client.NewInvitationRegistry(endpoints.Invitation, endpoints.Timeout)
-
+	c.Registry = client.NewRegistry(endpoints.Network, endpoints.Org, endpoints.Timeout)
 	return c
 }
 
@@ -147,29 +145,20 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// update org
 		// Deactivate org
 		// Delete org
-		const mem = "/members"
-		member := auth.Group(mem, "Members", "Operations on Members")
-		member.GET("", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
-		member.POST("", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
-		member.POST("/others", formatDoc("Add a member of other org", "Add a member to an organization who's already existing member of other org"), tonic.Handler(r.postOtherMemberHandler, http.StatusCreated))
-		member.GET("/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
-		member.PATCH("/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
-		member.DELETE("/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
-
-		// Invitation routes
-		const inv = "/invitations"
-		invitations := auth.Group(inv, "Invitations", "Operations on Invitations")
-		invitations.POST("", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.postInvitationHandler, http.StatusCreated))
-		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
-		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
-		invitations.DELETE("/:invitation_id", formatDoc("Remove Invitation", "Remove a invitation from an organization"), tonic.Handler(r.removeInvitationHandler, http.StatusOK))
-		invitations.GET("/org/:org", formatDoc("Get Invitation By Org", "Get all invitations of an organization"), tonic.Handler(r.getInvitationByOrgHandler, http.StatusOK))
+		// orgs.GET("/:org/members", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
+		// orgs.POST("/:org/members", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
+		// orgs.GET("/:org/members/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
+		// orgs.PATCH("/:org/members/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
+		// orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
+		// orgs.GET("/:org/nodes", formatDoc("Get Org Nodes", "Get all or free nodes of an organization"), tonic.Handler(r.getOrgNodesHandler, http.StatusOK))
 
 		// Users routes
-		const user = "/users"
-		users := auth.Group(user, "Users", "Operations on Users")
-		users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
-		users.GET("/:user_id", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+		// const user = "/users"
+		// users := auth.Group(user, "Users", "Operations on Users")
+		// users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
+		// users.GET("/:user_id", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+		// users.GET("/auth/:auth_id", formatDoc("Get User By AuthId", "Get a specific user by authId"), tonic.Handler(r.getUserByAuthIdHandler, http.StatusOK))
+		// users.GET("/whoami/:user_id", formatDoc("Get detailed User", "Get a specific user details with all linked orgs"), tonic.Handler(r.whoamiHandler, http.StatusOK))
 		// user orgs-member
 
 		// Network routes
@@ -265,58 +254,25 @@ func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*nod
 	return r.clients.Node.DeleteNode(req.NodeId)
 }
 
-/* Member */
-func (r *Router) getMembersHandler(c *gin.Context, req *GetMembersRequest) (*mpb.GetMembersResponse, error) {
-	return r.clients.Member.GetMembers()
-}
+// func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetMembersResponse, error) {
+// 	return r.clients.Registry.GetMembers(c.Param("org"))
+// }
 
-func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*mpb.MemberResponse, error) {
-	return r.clients.Member.GetMember(req.UserUuid)
-}
+// func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb.MemberResponse, error) {
+// 	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
+// }
 
-func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.MemberResponse, error) {
-	return r.clients.Member.AddMember(req.UserUuid, req.Role)
-}
+// func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
+// 	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid, req.Role)
+// }
 
-func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetMembersResponse, error) {
-	return r.clients.Registry.GetMembers(c.Param("org"))
-}
+// func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
+// 	return r.clients.Registry.UpdateMember(req.OrgName, req.UserUuid, req.IsDeactivated, req.Role)
+// }
 
-func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb.MemberResponse, error) {
-	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
-}
-func (r *Router) postNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Registry.AddNode(req.NodeId, req.Name, req.OrgId)
-}
-func (r *Router) patchNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*nodepb.UpdateNodeResponse, error) {
-	return r.clients.Registry.UpdateNode(req.NodeId, req.Name)
-}
-func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
-	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid, req.Role)
-}
-
-func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Member.UpdateMember(req.UserUuid, req.IsDeactivated, req.Role)
-}
-
-func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {
-	return r.clients.Registry.RemoveMember(c.Param("org"), c.Param("user_uuid"))
-}
-
-// Users handlers
-
-func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.Get(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
-}
-
-func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*userspb.UpdateResponse, error) {
-	return r.clients.User.Update(c.Param("user_uuid"), &userspb.UserAttributes{
-		Name:  req.Name,
-		Email: req.Email,
-		Phone: req.Phone,
-	},
-		c.GetString(USER_ID_KEY))
-}
+// func (r *Router) removeMemberHandler(c *gin.Context, req *GetMemberRequest) error {
+// 	return r.clients.Registry.RemoveMember(c.Param("org"), c.Param("user_uuid"))
+// }
 
 func (r *Router) deactivateUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeactivateResponse, error) {
 	return r.clients.User.Deactivate(c.Param("user_uuid"), c.GetString(USER_ID_KEY))

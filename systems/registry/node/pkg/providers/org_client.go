@@ -6,7 +6,10 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/rest"
+	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const orgEndpoint = "/v1/orgs"
