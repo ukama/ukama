@@ -151,12 +151,21 @@ int web_service_cb_post_terminate(const URequest *request,
     }
 
     if (capp->runtime == NULL) {
-        /* capp is not running */
+        /* capp is not yet gone through the runtime setup */
         ulfius_set_string_body_response(response, HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
         return U_CALLBACK_CONTINUE;
+    } else {
+        /* already done or not executing */
+        if (capp->runtime->status == CAPP_RUNTIME_NO_EXEC ||
+            capp->runtime->status == CAPP_RUNTIME_DONE) {
+            ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+            return U_CALLBACK_CONTINUE;
+        }
     }
 
+    /* Only if the capp is running */
     status = killpg(capp->runtime->pid, SIGTERM);
     if ( status == 0 ){
         usys_log_debug("SIGTERM send to capp: %s:%s", capp->name, capp->tag);
@@ -171,4 +180,3 @@ int web_service_cb_post_terminate(const URequest *request,
     
     return U_CALLBACK_CONTINUE;
 }
-
