@@ -50,7 +50,7 @@ func (n *Node) Close() {
 	n.conn.Close()
 }
 
-func (n *Node) AddNode(nodeId, name, orgId, state string) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(nodeId, name, orgId string) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
@@ -58,7 +58,6 @@ func (n *Node) AddNode(nodeId, name, orgId, state string) (*pb.AddNodeResponse, 
 		NodeId: nodeId,
 		Name:   name,
 		OrgId:  orgId,
-		State:  state,
 	})
 	if err != nil {
 		return nil, err

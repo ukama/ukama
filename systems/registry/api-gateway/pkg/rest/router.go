@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
@@ -63,8 +64,8 @@ type registry interface {
 	GetSite(netID string, siteName string) (*netpb.GetSiteResponse, error)
 	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)
 
-	AddNode(nodeId string, state nodepb.NodeState, name string) (*nodepb.AddNodeResponse, error)
-	DeleteNode(nodeId string) (*nodepb.DeleteResponse, error)
+	AddNode(nodeId string, name string, orgId string) (*nodepb.AddNodeResponse, error)
+	DeleteNode(nodeId string) (*nodepb.DeleteNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
 	UpdateNode(nodeId string, name string) (*nodepb.UpdateNodeResponse, error)
 }
@@ -148,7 +149,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const user = "/users"
 		users := auth.Group(user, "Users", "Operations on Users")
 		users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
-		users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
+		users.GET("/:user_id", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
 		// user orgs-member
 		// update user
 		// Deactivate user
@@ -206,7 +207,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.Ge
 }
 
 func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Node.AddNode(req.NodeId, req.Name, req.OrgId, req.State)
+	return r.clients.Node.AddNode(req.NodeId, req.Name, req.OrgId)
 }
 
 func (r *Router) postAttachedNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {
@@ -264,13 +265,7 @@ func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb
 	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
 }
 func (r *Router) postNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Registry.AddNode(req.NodeId, pbNodeStateToDb(req.State), req.Name)
-}
-func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeNodeRequest) (*nodepb.DeleteResponse, error) {
-	return r.clients.Registry.DeleteNode(c.Param("node_id"))
-}
-func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.GetNodeResponse, error) {
-	return r.clients.Registry.GetNode(c.Param("node_id"))
+	return r.clients.Registry.AddNode(req.NodeId, req.Name, req.OrgId)
 }
 func (r *Router) patchNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*nodepb.UpdateNodeResponse, error) {
 	return r.clients.Registry.UpdateNode(req.NodeId, req.Name)
@@ -313,7 +308,7 @@ func (r *Router) deactivateUserHandler(c *gin.Context, req *GetUserRequest) (*us
 	return r.clients.User.Deactivate(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
-func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeleteResponse, error) {
+func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) error {
 	return r.clients.User.Delete(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
@@ -363,19 +358,4 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
-}
-
-func pbNodeStateToDb(state string) nodepb.NodeState {
-	var State nodepb.NodeState
-
-	switch state {
-	case "ONBOARDED":
-		State = nodepb.NodeState_ONBOARDED
-	case "PENDING":
-		State = nodepb.NodeState_PENDING
-	default:
-		State = nodepb.NodeState_UNDEFINED
-	}
-
-	return State
 }

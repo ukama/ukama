@@ -20,16 +20,13 @@ require (
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
-	github.com/wI2L/fizz v0.22.0
-	google.golang.org/grpc v1.51.0
-)
-
-require (
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/users v0.0.0-00010101000000-000000000000
+	github.com/wI2L/fizz v0.22.0
+	google.golang.org/grpc v1.51.0
 )
 
 require (
@@ -93,7 +90,6 @@ require (
 	github.com/subosito/gotenv v1.4.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.9 // indirect
-	github.com/ukama/ukama/systems/registry/node v0.0.0-20230504181210-bf6632801c73
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.5.0 // indirect

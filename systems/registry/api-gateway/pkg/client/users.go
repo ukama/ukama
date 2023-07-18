@@ -57,13 +57,13 @@ func (r *Users) GetByAuthId(authId string, requesterId string) (*pbusers.GetResp
 func (r *Users) Update(userUUID string, user *pbusers.UserAttributes, requesterId string) (*pbusers.UpdateResponse, error) {
 	ctx, cancel := r.getContext(requesterId)
 	defer cancel()
-	return r.client.Update(ctx, &pbusers.UpdateRequest{UserUuid: userUUID, User: user})
+	return r.client.Update(ctx, &pbusers.UpdateRequest{UserId: userUUID, User: user})
 }
 
 func (r *Users) Deactivate(userUUID string, requesterId string) (*pbusers.DeactivateResponse, error) {
 	ctx, cancel := r.getContext(requesterId)
 	defer cancel()
-	return r.client.Deactivate(ctx, &pbusers.DeactivateRequest{UserUuid: userUUID})
+	return r.client.Deactivate(ctx, &pbusers.DeactivateRequest{UserId: userUUID})
 }
 
 func (r *Users) AddUser(user *pbusers.UserAttributes, requesterId string) (*pbusers.AddResponse, error) {
