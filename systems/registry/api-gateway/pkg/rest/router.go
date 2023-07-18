@@ -182,6 +182,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nodes := auth.Group(node, "Nodes", "Operations on Nodes")
 		nodes.GET("", formatDoc("Get Nodes", "Get all or free Nodes"), tonic.Handler(r.getAllNodesHandler, http.StatusOK))
 		nodes.GET("/:node_id", formatDoc("Get Node", "Get a specific node"), tonic.Handler(r.getNodeHandler, http.StatusOK))
+		nodes.GET("sites/:site_id", formatDoc("Get Nodes For Site", "Get all nodes of a site"), tonic.Handler(r.getSiteNodesHandler, http.StatusOK))
 		nodes.POST("", formatDoc("Add Node", "Add a new Node to an organization"), tonic.Handler(r.postAddNodeHandler, http.StatusCreated))
 		nodes.PUT("/:node_id", formatDoc("Update Node", "Update node name or state"), tonic.Handler(r.putUpdateNodeHandler, http.StatusOK))
 		nodes.PATCH("/:node_id", formatDoc("Update Node State", "Update node state"), tonic.Handler(r.patchUpdateNodeStateHandler, http.StatusOK))
@@ -196,6 +197,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 // Node handlers
 func (r *Router) getOrgNodesHandler(c *gin.Context, req *GetOrgNodesRequest) (*nodepb.GetByOrgResponse, error) {
 	return r.clients.Node.GetOrgNodes(req.OrgId, req.Free)
+}
+
+func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
+	return r.clients.Node.GetSiteNodes(req.SiteId)
 }
 
 func (r *Router) getAllNodesHandler(c *gin.Context, req *GetNodesRequest) (*nodepb.GetNodesResponse, error) {
@@ -313,10 +318,11 @@ func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) error {
 }
 
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
-	return r.clients.User.AddUser(&userspb.UserAttributes{
-		Name:  req.Name,
-		Email: req.Email,
-		Phone: req.Phone,
+	return r.clients.User.AddUser(&userspb.User{
+		Name:   req.Name,
+		Email:  req.Email,
+		Phone:  req.Phone,
+		AuthId: req.AuthId,
 	},
 		c.GetString(USER_ID_KEY))
 }

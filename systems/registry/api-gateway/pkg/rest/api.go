@@ -58,9 +58,10 @@ type UpdateUserRequest struct {
 }
 
 type AddUserRequest struct {
-	Name  string `example:"John" json:"name,omitempty" validate:"required"`
-	Email string `example:"john@example.com" json:"email" validate:"required"`
-	Phone string `example:"4151231234" json:"phone,omitempty"`
+	Name   string `example:"John" json:"name,omitempty" validate:"required"`
+	Email  string `example:"john@example.com" json:"email" validate:"required"`
+	Phone  string `example:"4151231234" json:"phone,omitempty"`
+	AuthId string `example:"{{AuthId}}" json:"auth_id" validate:"required"`
 }
 
 // Network group
@@ -118,6 +119,10 @@ type GetNodesRequest struct {
 type GetOrgNodesRequest struct {
 	OrgId string `example:"{{OrgId}}" path:"org" validate:"required"`
 	Free  bool   `form:"free" json:"free" query:"free" binding:"required"`
+}
+
+type GetSiteNodesRequest struct {
+	SiteId string `example:"{{SiteId}}" path:"site_id" validate:"required"`
 }
 
 type AddNodeRequest struct {
