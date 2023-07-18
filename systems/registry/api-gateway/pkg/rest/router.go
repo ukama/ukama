@@ -22,6 +22,8 @@ import (
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
+	userspb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 )
 
 const USER_ID_KEY = "UserId"
@@ -58,25 +60,8 @@ type network interface {
 	GetSites(netID string) (*netpb.GetSitesByNetworkResponse, error)
 }
 
-type invitation interface {
-	AddInvitation(org, name, email, role string) (*invpb.AddInvitationResponse, error)
-	GetInvitationById(invitationId string) (*invpb.GetInvitationResponse, error)
-	UpdateInvitation(invitationId string, status string) (*invpb.UpdateInvitationStatusResponse, error)
-	RemoveInvitation(invitationId string) (*invpb.DeleteInvitationResponse, error)
-	GetInvitationByOrg(org string) (*invpb.GetInvitationByOrgResponse, error)
-}
-
-type member interface {
-	GetMember(userUUID string) (*mpb.MemberResponse, error)
-	GetMembers() (*mpb.GetMembersResponse, error)
-	AddMember(userUUID string, role string) (*mpb.MemberResponse, error)
-	AddOtherMember(userUUID string, role string) (*mpb.MemberResponse, error)
-	UpdateMember(userUUID string, isDeactivated bool, role string) error
-	RemoveMember(userUUID string) error
-}
-
-type node interface {
-	AddNode(nodeId, name, orgId, state string) (*nodepb.AddNodeResponse, error)
+	AddNode(nodeId string, name string, orgId string) (*nodepb.AddNodeResponse, error)
+	DeleteNode(nodeId string) (*nodepb.DeleteNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
 	GetOrgNodes(orgId string, free bool) (*nodepb.GetByOrgResponse, error)
 	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
@@ -184,10 +169,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const user = "/users"
 		users := auth.Group(user, "Users", "Operations on Users")
 		users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
-		users.GET("/:user_uuid", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
-		users.PUT("/:user_uuid", formatDoc("Update User", "Update user data"), tonic.Handler(r.updateUserHandler, http.StatusOK))
-		users.PATCH("/:user_uuid", formatDoc("Deactivate User", "Deactivate user"), tonic.Handler(r.deactivateUserHandler, http.StatusOK))
-		users.DELETE("/:user_uuid", formatDoc("Delete User", "Delete a user from the registry"), tonic.Handler(r.deleteUserHandler, http.StatusOK))
+		users.GET("/:user_id", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
 		// user orgs-member
 
 		// Network routes
@@ -249,7 +231,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.Ge
 }
 
 func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Node.AddNode(req.NodeId, req.Name, req.OrgId, req.State)
+	return r.clients.Node.AddNode(req.NodeId, req.Name, req.OrgId)
 }
 
 func (r *Router) postAttachedNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {
@@ -293,8 +275,21 @@ func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.Mem
 	return r.clients.Member.AddMember(req.UserUuid, req.Role)
 }
 
-func (r *Router) postOtherMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.MemberResponse, error) {
-	return r.clients.Member.AddOtherMember(req.UserUuid, req.Role)
+func (r *Router) getMembersHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetMembersResponse, error) {
+	return r.clients.Registry.GetMembers(c.Param("org"))
+}
+
+func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*orgpb.MemberResponse, error) {
+	return r.clients.Registry.GetMember(c.Param("org"), c.Param("user_uuid"))
+}
+func (r *Router) postNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
+	return r.clients.Registry.AddNode(req.NodeId, req.Name, req.OrgId)
+}
+func (r *Router) patchNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*nodepb.UpdateNodeResponse, error) {
+	return r.clients.Registry.UpdateNode(req.NodeId, req.Name)
+}
+func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*orgpb.MemberResponse, error) {
+	return r.clients.Registry.AddMember(req.OrgName, req.UserUuid, req.Role)
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
@@ -324,7 +319,7 @@ func (r *Router) deactivateUserHandler(c *gin.Context, req *GetUserRequest) (*us
 	return r.clients.User.Deactivate(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
-func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.DeleteResponse, error) {
+func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) error {
 	return r.clients.User.Delete(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
