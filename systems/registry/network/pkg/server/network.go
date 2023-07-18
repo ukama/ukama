@@ -18,8 +18,6 @@ import (
 
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
-	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -57,12 +55,12 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	if err != nil {
 		logrus.Infof("lookup for org %s remotely", orgName)
 
-		svc, err := n.orgService.GetClient()
-		if err != nil {
-			return nil, err
-		}
+		// svc, err := n.orgService.GetClient()
+		// if err != nil {
+		// 	return nil, err
+		// }
 
-		remoteOrg, err := svc.GetByName(ctx, &orgpb.GetByNameRequest{Name: orgName})
+		remoteOrg, err := n.orgService.GetByName(orgName)
 		if err != nil {
 			return nil, err
 		}
