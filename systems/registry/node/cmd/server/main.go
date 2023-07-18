@@ -93,7 +93,7 @@ func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewNodeServer(db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
 			serviceConfig.PushGateway, mbClient,
-			providers.NewOrgClientProvider(serviceConfig.OrgHost),
+			providers.NewOrgClientProvider(serviceConfig.OrgHost, serviceConfig.DebugMode),
 			providers.NewNetworkClientProvider(serviceConfig.NetworkHost),
 			orgId)
 

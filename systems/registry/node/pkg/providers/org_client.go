@@ -1,51 +1,89 @@
 package providers
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/ukama/ukama/systems/common/rest"
 )
 
-// OrgClientProvider creates a local client to interact with
-// a remote instance of  Org service.
+const orgEndpoint = "/v1/orgs"
+
 type OrgClientProvider interface {
-	GetClient() (pb.OrgServiceClient, error)
+	GetByName(name string) (*OrgInfo, error)
 }
 
-type orgClientProvider struct {
-	orgService pb.OrgServiceClient
-	orgHost    string
+type registryInfoClient struct {
+	R *rest.RestClient
 }
 
-func NewOrgClientProvider(orgHost string) OrgClientProvider {
-	return &orgClientProvider{orgHost: orgHost}
+type Org struct {
+	Id            string    `json:"id,omitempty"`
+	Name          string    `json:"name,omitempty"`
+	Owner         string    `json:"owner,omitempty"`
+	Certificate   string    `json:"certificate,omitempty"`
+	IsDeactivated bool      `json:"isDeactivated,omitempty"`
+	CreatedAt     time.Time `json:"created_AT,omitempty"`
 }
 
-func (o *orgClientProvider) GetClient() (pb.OrgServiceClient, error) {
-	if o.orgService == nil {
-		var conn *grpc.ClientConn
+type OrgInfo struct {
+	Org *Org `json:"org"`
+}
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
+type RegistryInfo struct {
+	Id       string `json:"uuid"`
+	Name     string `json:"name"`
+	OrgId    string `json:"org_id"`
+	SimType  string `json:"sim_type"`
+	IsActive bool   `json:"active"`
+	Duration uint   `json:"duration,string"`
+}
 
-		log.Infoln("Connecting to Org service ", o.orgHost)
-
-		conn, err := grpc.DialContext(ctx, o.orgHost, grpc.WithBlock(),
-			grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			log.Errorf("Failed to connect to Org service %s. Error: %v", o.orgHost, err)
-
-			return nil, fmt.Errorf("failed to connect to remote org service: %w", err)
-		}
-
-		o.orgService = pb.NewOrgServiceClient(conn)
+func NewOrgClientProvider(url string, debug bool) OrgClientProvider {
+	f, err := rest.NewRestClient(url, debug)
+	if err != nil {
+		log.Fatalf("Can't connect to %s url. Error %s", url, err.Error())
 	}
 
-	return o.orgService, nil
+	n := &registryInfoClient{
+		R: f,
+	}
+
+	return n
 }
+
+func (p *registryInfoClient) GetByName(name string) (*OrgInfo, error) {
+	errStatus := &rest.ErrorMessage{}
+
+	pkg := OrgInfo{}
+
+	resp, err := p.R.C.R().
+		SetError(errStatus).
+		Get(p.R.URL.String() + orgEndpoint + "/" + name)
+
+	if err != nil {
+		log.Errorf("Failed to send api request to registry/org. Error %s", err.Error())
+
+		return nil, fmt.Errorf("api request to org system failure: %w", err)
+	}
+
+	if !resp.IsSuccess() {
+		log.Tracef("Failed to fetch org info. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+
+		return nil, fmt.Errorf("Org Info failure %s", errStatus.Message)
+	}
+
+	err = json.Unmarshal(resp.Body(), &pkg)
+	if err != nil {
+		log.Tracef("Failed to deserialize org info. Error message is %s", err.Error())
+
+		return nil, fmt.Errorf("org info deserailization failure: %w", err)
+	}
+
+	log.Infof("Org Info: %+v", pkg)
+
+	return &pkg, nil
+}
+
