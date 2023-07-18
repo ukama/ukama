@@ -6,10 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/ukama/ukama/systems/common/rest"
 )
 
 const orgEndpoint = "/v1/orgs"
@@ -33,6 +30,15 @@ type Org struct {
 
 type OrgInfo struct {
 	Org *Org `json:"org"`
+}
+
+type RegistryInfo struct {
+	Id       string `json:"uuid"`
+	Name     string `json:"name"`
+	OrgId    string `json:"org_id"`
+	SimType  string `json:"sim_type"`
+	IsActive bool   `json:"active"`
+	Duration uint   `json:"duration,string"`
 }
 
 func NewOrgClientProvider(url string, debug bool) OrgClientProvider {
