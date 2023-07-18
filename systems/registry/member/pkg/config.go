@@ -21,8 +21,7 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
-	OrgRegistryHost  string           `default:"http://org:8080"`
-	OwnerId          string
+	OrgHost          string           `default:"org:9090"`
 	OrgId            string
 	OrgName          string
 	Service          *uconf.Service

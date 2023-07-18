@@ -21,10 +21,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const uuidParsingError = "Error parsing UUID"
+
 type MemberServer struct {
 	pb.UnimplementedMemberServiceServer
 	mRepo          db.MemberRepo
-	nucleusSystem  providers.NucleusClientProvider
+	orgService     providers.OrgClientProvider
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
@@ -32,20 +34,19 @@ type MemberServer struct {
 	OrgName        string
 }
 
-func NewMemberServer(orgName string, mRepo db.MemberRepo, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID) *MemberServer {
+func NewMemberServer(mRepo db.MemberRepo, orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID, name string) *MemberServer {
 
 	return &MemberServer{
 		mRepo:          mRepo,
-		nucleusSystem:  nucleusSystem,
+		orgService:     orgService,
 		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		pushGateway:    pushGateway,
 		OrgId:          id,
-		OrgName:        orgName,
+		OrgName:        name,
 	}
 }
 
-/* This will be called by nucleus/org service on every user invited to be member */
 func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
 
 	// Get the User
@@ -56,46 +57,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 	}
 
 	/* validate user uuid */
-	/* Causing a loop when user is getting added a memeber by default */
-	// _, err = m.nucleusSystem.GetUserById(userUUID.String())
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
-	// }
-
-	log.Infof("Adding member")
-	member := &db.Member{
-		UserId: userUUID,
-		Role:   db.RoleType(req.Role),
-	}
-
-	err = m.mRepo.AddMember(member, m.OrgId.String(), nil)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "member")
-	}
-
-	route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
-	err = m.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
-	}
-
-	_ = m.PushOrgMemberCountMetric(m.OrgId)
-
-	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
-}
-
-/* This is called when user already exists as a member of another org */
-func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
-
-	// Get the User
-	userUUID, err := uuid.FromString(req.GetUserUuid())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of user uuid. Error %s", err.Error())
-	}
-
-	/* validate user uuid */
-	_, err = m.nucleusSystem.GetUserById(userUUID.String())
+	_, err = m.orgService.GetUserById(userUUID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
 	}
@@ -106,18 +68,12 @@ func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequ
 		Role:   db.RoleType(req.Role),
 	}
 
-	err = m.mRepo.AddMember(member, m.OrgId.String(), func(orgId string, userId string) error {
-		err := m.nucleusSystem.UpdateOrgToUser(orgId, userId)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = m.mRepo.AddMember(member)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
+	route := m.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
 	err = m.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -196,18 +152,12 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 			"member must be deactivated first")
 	}
 
-	err = m.mRepo.RemoveMember(uuid, m.OrgId.String(), func(orgId string, userId string) error {
-		err := m.nucleusSystem.RemoveOrgFromUser(orgId, userId)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = m.mRepo.RemoveMember(uuid)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetActionDelete().SetObject("member").MustBuild()
+	route := m.baseRoutingKey.SetAction("remove").SetObject("member").MustBuild()
 	err = m.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())

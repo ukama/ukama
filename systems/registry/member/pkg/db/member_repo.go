@@ -11,11 +11,11 @@ import (
 type MemberRepo interface {
 
 	/* Members */
-	AddMember(member *Member, orgId string, nestedFunc func(string, string) error) error
+	AddMember(member *Member) error
 	GetMember(userUUID uuid.UUID) (*Member, error)
 	GetMembers() ([]Member, error)
 	UpdateMember(member *Member) error
-	RemoveMember(userUUID uuid.UUID, orgId string, nestedFunc func(string, string) error) error
+	RemoveMember(userUUID uuid.UUID) error
 	GetMemberCount() (int64, int64, error)
 }
 
@@ -29,24 +29,10 @@ func NewMemberRepo(db sql.Db) MemberRepo {
 	}
 }
 
-func (r *memberRepo) AddMember(member *Member, orgId string, nestedFunc func(string, string) error) error {
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if nestedFunc != nil {
-			nestErr := nestedFunc(orgId, member.UserId.String())
-			if nestErr != nil {
-				return nestErr
-			}
-		}
+func (r *memberRepo) AddMember(member *Member) error {
+	d := r.Db.GetGormDb().Create(member)
 
-		d := tx.Create(member)
-		if d.Error != nil {
-			return d.Error
-		}
-
-		return nil
-	})
-
-	return err
+	return d.Error
 }
 
 func (r *memberRepo) GetMember(userUUID uuid.UUID) (*Member, error) {
@@ -84,28 +70,17 @@ func (r *memberRepo) UpdateMember(member *Member) error {
 	return d.Error
 }
 
-func (r *memberRepo) RemoveMember(userUUID uuid.UUID, orgId string, nestedFunc func(string, string) error) error {
-	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if nestedFunc != nil {
-			nestErr := nestedFunc(orgId, userUUID.String())
-			if nestErr != nil {
-				return nestErr
-			}
-		}
+func (r *memberRepo) RemoveMember(userUUID uuid.UUID) error {
+	var member Member
 
-		d := tx.Where("user_id = ?", userUUID).Delete(&Member{})
-		if d.Error != nil {
-			return d.Error
-		}
+	d := r.Db.GetGormDb().
+		Where("user_id = ?", userUUID).Delete(&member)
 
-		if d.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
-		}
+	if d.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
 
-		return nil
-	})
-
-	return err
+	return d.Error
 }
 
 func (r *memberRepo) GetMemberCount() (int64, int64, error) {

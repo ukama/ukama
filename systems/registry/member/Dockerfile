@@ -1,5 +1,5 @@
 FROM alpine:3.13.5
 
-COPY bin/member /usr/bin/member
+COPY bin/network /usr/bin/network
 
-CMD ["/usr/bin/member"]
+CMD ["/usr/bin/network"]

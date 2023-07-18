@@ -14,13 +14,13 @@ type MemberRepo struct {
 	mock.Mock
 }
 
-// AddMember provides a mock function with given fields: member, orgId, nestedFunc
-func (_m *MemberRepo) AddMember(member *db.Member, orgId string, nestedFunc func(string, string) error) error {
-	ret := _m.Called(member, orgId, nestedFunc)
+// AddMember provides a mock function with given fields: member
+func (_m *MemberRepo) AddMember(member *db.Member) error {
+	ret := _m.Called(member)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Member, string, func(string, string) error) error); ok {
-		r0 = rf(member, orgId, nestedFunc)
+	if rf, ok := ret.Get(0).(func(*db.Member) error); ok {
+		r0 = rf(member)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -111,13 +111,13 @@ func (_m *MemberRepo) GetMembers() ([]db.Member, error) {
 	return r0, r1
 }
 
-// RemoveMember provides a mock function with given fields: userUUID, orgId, nestedFunc
-func (_m *MemberRepo) RemoveMember(userUUID uuid.UUID, orgId string, nestedFunc func(string, string) error) error {
-	ret := _m.Called(userUUID, orgId, nestedFunc)
+// RemoveMember provides a mock function with given fields: userUUID
+func (_m *MemberRepo) RemoveMember(userUUID uuid.UUID) error {
+	ret := _m.Called(userUUID)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, string, func(string, string) error) error); ok {
-		r0 = rf(userUUID, orgId, nestedFunc)
+	if rf, ok := ret.Get(0).(func(uuid.UUID) error); ok {
+		r0 = rf(userUUID)
 	} else {
 		r0 = ret.Error(0)
 	}
