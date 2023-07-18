@@ -25,6 +25,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 )
 
 type NodeServer struct {
@@ -72,13 +73,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	strState := strings.ToLower(req.GetState())
-	nodeState := db.ParseNodeState(strState)
-	if req.GetState() != "" && nodeState == db.Undefined {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid node state. Error: node state %q not supported", req.GetState())
-	}
-
 	orgId, err := uuid.FromString(req.GetOrgId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -107,11 +101,15 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	}
 
 	node := &db.Node{
-		Id:    nId.StringLowercase(),
-		OrgId: orgId,
-		State: nodeState,
-		Type:  nId.GetNodeType(),
-		Name:  req.Name,
+		Id:    req.NodeId,
+		OrgId: n.org,
+		Status: db.NodeStatus{
+			NodeId: req.NodeId,
+			Conn:   db.Unknown,
+			State:  db.Undefined,
+		},
+		Type: nId.GetNodeType(),
+		Name: req.Name,
 	}
 
 	err = n.nodeRepo.Add(node, nil)
