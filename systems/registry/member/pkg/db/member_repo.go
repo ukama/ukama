@@ -71,14 +71,13 @@ func (r *memberRepo) UpdateMember(member *Member) error {
 }
 
 func (r *memberRepo) RemoveMember(userUUID uuid.UUID) error {
-	var member Member
 
 	d := r.Db.GetGormDb().
-		Where("user_id = ?", userUUID).Delete(&member)
+		Where("user_id = ?", userUUID).Delete(&Member{})
 
-	if d.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
+	// if d.RowsAffected == 0 {
+	// 	return gorm.ErrRecordNotFound
+	// }
 
 	return d.Error
 }

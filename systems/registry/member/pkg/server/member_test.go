@@ -2,190 +2,377 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	"github.com/ukama/ukama/systems/common/uuid"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/member/mocks"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
 	"gorm.io/gorm"
 )
 
-const testOrgName = "test-org"
+func TestNetworkServer_Get(t *testing.T) {
+	t.Run("Network found", func(t *testing.T) {
+		var netID = uuid.NewV4()
+		const netName = "network-1"
 
-var orgId = uuid.NewV4()
+		netRepo := &mocks.NetRepo{}
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
 
-func TestMemberServer_AddMember(t *testing.T) {
-	// Arrange
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+		netRepo.On("Get", netID).Return(
+			&db.Network{Id: netID,
+				Name:        netName,
+				OrgId:       uuid.NewV4(),
+				Deactivated: false,
+			}, nil).Once()
 
-	mRepo := &mocks.MemberRepo{}
-	nOrg := &mocks.NucleusClientProvider{}
+		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo, "")
+		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
+			NetworkId: netID.String()})
 
-	member := db.Member{
-		UserId: uuid.NewV4(),
-		Role:   db.Users,
-	}
-
-	mRepo.On("AddMember", mock.Anything, orgId.String(), mock.Anything).Return(nil).Once()
-	// mOrg.On("GetUserById", member.UserId.String()).Return(&providers.UserInfo{
-	// 	Id: member.UserId.String(),
-	// }, nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddMemberRequest{
-		UserUuid: member.UserId.String(),
-		Role:     pb.RoleType(db.Users),
-	}).Return(nil).Once()
-	mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
-	s := NewMemberServer(testOrgName, mRepo, nOrg, msgclientRepo, "", orgId)
-
-	// Act
-	_, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
-		UserUuid: member.UserId.String(),
-		Role:     pb.RoleType(db.Users),
-	})
-
-	// Assert
-	msgclientRepo.AssertExpectations(t)
-	assert.NoError(t, err)
-
-	mRepo.AssertExpectations(t)
-}
-
-func TestMemberServer_GetMember(t *testing.T) {
-	// Arrange
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-
-	mRepo := &mocks.MemberRepo{}
-
-	member := db.Member{
-		Model: gorm.Model{
-			ID: 1},
-		UserId: uuid.NewV4(),
-		Role:   db.Users,
-	}
-
-	mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
-
-	s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
-
-	// Act
-	resp, err := s.GetMember(context.TODO(), &pb.MemberRequest{
-		UserUuid: member.UserId.String(),
-	})
-
-	// Assert
-	msgclientRepo.AssertExpectations(t)
-	if assert.NoError(t, err) {
-		assert.Equal(t, member.UserId.String(), resp.Member.UserId)
-	}
-
-	mRepo.AssertExpectations(t)
-}
-
-func TestMemberServer_GetMembers(t *testing.T) {
-
-	// Arrange
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-
-	mRepo := &mocks.MemberRepo{}
-
-	members := []db.Member{
-		{
-			Model: gorm.Model{
-				ID: 1},
-			UserId: uuid.NewV4(),
-			Role:   db.Users,
-		},
-		{
-			Model: gorm.Model{
-				ID: 2},
-			UserId: uuid.NewV4(),
-			Role:   db.Users,
-		},
-	}
-
-	mRepo.On("GetMembers").Return(members, nil).Once()
-
-	s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
-
-	// Act
-	resp, err := s.GetMembers(context.TODO(), &pb.GetMembersRequest{})
-
-	// Assert
-	msgclientRepo.AssertExpectations(t)
-	if assert.NoError(t, err) {
-		assert.Equal(t, len(members), len(resp.Members))
-		assert.Equal(t, members[0].UserId.String(), resp.Members[0].UserId)
-		assert.Equal(t, members[1].UserId.String(), resp.Members[1].UserId)
-	}
-
-	mRepo.AssertExpectations(t)
-}
-
-func TestMemberServer_RemoveMember(t *testing.T) {
-	t.Run("RemoveMember_Success", func(t *testing.T) {
-		msgclientRepo := &mbmocks.MsgBusServiceClient{}
-
-		mRepo := &mocks.MemberRepo{}
-
-		member := db.Member{
-			Model: gorm.Model{
-				ID: 1},
-			UserId:      uuid.NewV4(),
-			Deactivated: true,
-			Role:        db.Users,
-		}
-
-		mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
-		mRepo.On("RemoveMember", member.UserId, orgId.String(), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, &pb.MemberRequest{
-			UserUuid: member.UserId.String(),
-		}).Return(nil).Once()
-		mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
-		s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
-
-		// Act
-		_, err := s.RemoveMember(context.TODO(), &pb.MemberRequest{
-			UserUuid: member.UserId.String(),
-		})
-
-		// Assert
-		msgclientRepo.AssertExpectations(t)
 		assert.NoError(t, err)
-
-		mRepo.AssertExpectations(t)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, netID.String(), netResp.GetNetwork().GetId())
+		assert.Equal(t, netName, netResp.Network.Name)
+		netRepo.AssertExpectations(t)
 	})
 
-	t.Run("RemoveMember_Fails", func(t *testing.T) {
+	t.Run("Network not found", func(t *testing.T) {
+		var netID = uuid.NewV4()
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", netID).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo, "")
+		netResp, err := s.Get(context.TODO(), &pb.GetRequest{
+			NetworkId: netID.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetByName(t *testing.T) {
+	t.Run("Org and Network found", func(t *testing.T) {
+		var netID = uuid.NewV4()
+		const orgName = "org-1"
+		const netName = "network-1"
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("GetByName", orgName, netName).Return(
+			&db.Network{Id: netID,
+				Name:        netName,
+				OrgId:       uuid.NewV4(),
+				Deactivated: false,
+			}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo, "")
+		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, netID.String(), netResp.GetNetwork().GetId())
+		assert.Equal(t, netName, netResp.Network.Name)
+		netRepo.AssertExpectations(t)
+	})
+
+	t.Run("Org or Network not found", func(t *testing.T) {
+		const orgName = "org-1"
+		const netName = "network-1"
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("GetByName", orgName, netName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, nil, nil, msgcRepo, "")
+		netResp, err := s.GetByName(context.TODO(), &pb.GetByNameRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetByOrg(t *testing.T) {
+	t.Run("Org found", func(t *testing.T) {
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
+		const netName = "network-1"
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
+
+		netRepo.On("GetByOrg", orgID).Return(
+			[]db.Network{
+				{Id: netID,
+					Name:        netName,
+					OrgId:       orgID,
+					Deactivated: false,
+				}}, nil).Once()
+
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil, msgcRepo, "")
+		netResp, err := s.GetByOrg(context.TODO(),
+			&pb.GetByOrgRequest{OrgId: orgID.String()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, netID.String(), netResp.GetNetworks()[0].GetId())
+		assert.Equal(t, orgID.String(), netResp.OrgId)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_Delete(t *testing.T) {
+	t.Run("Org and Network exist", func(t *testing.T) {
+		const orgName = "org-1"
+		orgId := uuid.NewV4()
+		const netName = "network-1"
 		msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
-		mRepo := &mocks.MemberRepo{}
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
+		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
+		netRepo.On("Delete", orgName, netName).Return(nil).Once()
+		msgclientRepo.On("PublishRequest", mock.Anything, &pb.DeleteRequest{
+			Name:    netName,
+			OrgName: orgName,
+		}).Return(nil).Once()
+		netRepo.On("GetNetworkCount", orgId).Return(int64(2), nil).Once()
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil, msgclientRepo, "")
+		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
+			Name: netName, OrgName: orgName})
 
-		member := db.Member{
-			Model: gorm.Model{
-				ID: 1},
-			UserId:      uuid.NewV4(),
-			Deactivated: false,
-			Role:        db.Users,
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		netRepo.AssertExpectations(t)
+	})
+
+	t.Run("Network does not exist", func(t *testing.T) {
+		// const netID = 1
+		const orgName = "org-1"
+		orgId := uuid.NewV4()
+		const netName = "network-1"
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		netRepo := &mocks.NetRepo{}
+		orgRepo := &mocks.OrgRepo{}
+		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
+		netRepo.On("Delete", orgName, netName).Return(gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, orgRepo, nil, nil, msgcRepo, "")
+		netResp, err := s.Delete(context.TODO(), &pb.DeleteRequest{
+			Name: netName, OrgName: orgName})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		netRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_AddSite(t *testing.T) {
+	t.Run("Network exists", func(t *testing.T) {
+		// Arrange
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
+		const netName = "network-1"
+		const siteName = "site-A"
+		msgclientRepo := &mbmocks.MsgBusServiceClient{}
+
+		netRepo := &mocks.NetRepo{}
+		siteRepo := &mocks.SiteRepo{}
+
+		site := &db.Site{
+			Name:      siteName,
+			NetworkId: netID,
 		}
 
-		mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
+		netRepo.On("Get", netID).Return(
+			&db.Network{Id: netID,
+				Name:        netName,
+				OrgId:       orgID,
+				Deactivated: false,
+			}, nil).Once()
 
-		s := NewMemberServer(testOrgName, mRepo, nil, msgclientRepo, "", orgId)
+		siteRepo.On("Add", site, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddSiteRequest{
+			NetworkId: netID.String(),
+			SiteName:  siteName,
+		}).Return(nil).Once()
+		siteRepo.On("GetSiteCount", netID).Return(int64(2), nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgclientRepo, "")
 
 		// Act
-		_, err := s.RemoveMember(context.TODO(), &pb.MemberRequest{
-			UserUuid: member.UserId.String(),
+		res, err := s.AddSite(context.TODO(), &pb.AddSiteRequest{
+			NetworkId: netID.String(),
+			SiteName:  siteName,
 		})
 
 		// Assert
-		if assert.Error(t, err) {
-			assert.ErrorContains(t, err, "member must be deactivated first")
-		}
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		assert.Equal(t, siteName, res.Site.Name)
+		assert.Equal(t, netID.String(), res.Site.NetworkId)
+		netRepo.AssertExpectations(t)
+	})
+}
 
-		mRepo.AssertExpectations(t)
+func TestNetworkServer_GetSite(t *testing.T) {
+	t.Run("Site exists", func(t *testing.T) {
+		var siteID = uuid.NewV4()
+		const siteName = "site-A"
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		siteRepo := &mocks.SiteRepo{}
+
+		siteRepo.On("Get", siteID).Return(
+			&db.Site{Id: siteID,
+				Name:        siteName,
+				NetworkId:   uuid.NewV4(),
+				Deactivated: false,
+			}, nil).Once()
+
+		s := NewNetworkServer(nil, nil, siteRepo, nil, msgcRepo, "")
+		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
+			SiteId: siteID.String()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, siteID.String(), netResp.GetSite().GetId())
+		assert.Equal(t, siteName, netResp.GetSite().GetName())
+		siteRepo.AssertExpectations(t)
+	})
+
+	t.Run("Site not found", func(t *testing.T) {
+		var siteID = uuid.NewV4()
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		siteRepo := &mocks.SiteRepo{}
+
+		siteRepo.On("Get", siteID).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(nil, nil, siteRepo, nil, msgcRepo, "")
+		netResp, err := s.GetSite(context.TODO(), &pb.GetSiteRequest{
+			SiteId: fmt.Sprint(siteID)})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		siteRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetSiteByName(t *testing.T) {
+	t.Run("Site exists", func(t *testing.T) {
+		var siteID = uuid.NewV4()
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
+		const siteName = "site-A"
+		const netName = "net-1"
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		siteRepo := &mocks.SiteRepo{}
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", netID).Return(
+			&db.Network{Id: netID,
+				Name:        netName,
+				OrgId:       orgID,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByName", netID, siteName).Return(
+			&db.Site{Id: siteID,
+				Name:        siteName,
+				NetworkId:   netID,
+				Deactivated: false,
+			}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo, "")
+		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
+			NetworkId: netID.String(), SiteName: siteName})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, siteID.String(), netResp.GetSite().GetId())
+		assert.Equal(t, siteName, netResp.GetSite().GetName())
+		siteRepo.AssertExpectations(t)
+	})
+
+	t.Run("Site not found", func(t *testing.T) {
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
+		const siteName = "site-A"
+		const netName = "net-1"
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		siteRepo := &mocks.SiteRepo{}
+		netRepo := &mocks.NetRepo{}
+
+		netRepo.On("Get", netID).Return(
+			&db.Network{Id: netID,
+				Name:        netName,
+				OrgId:       orgID,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByName", netID, siteName).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo, "")
+		netResp, err := s.GetSiteByName(context.TODO(), &pb.GetSiteByNameRequest{
+			NetworkId: netID.String(), SiteName: siteName})
+
+		assert.Error(t, err)
+		assert.Nil(t, netResp)
+		siteRepo.AssertExpectations(t)
+	})
+}
+
+func TestNetworkServer_GetSiteByNetwork(t *testing.T) {
+	t.Run("Network found", func(t *testing.T) {
+		var netID = uuid.NewV4()
+		var orgID = uuid.NewV4()
+		const siteName = "site-A"
+		const netName = "network-1"
+		msgcRepo := &mbmocks.MsgBusServiceClient{}
+
+		netRepo := &mocks.NetRepo{}
+		siteRepo := &mocks.SiteRepo{}
+
+		netRepo.On("Get", netID).Return(
+			&db.Network{Id: netID,
+				Name:        netName,
+				OrgId:       orgID,
+				Deactivated: false,
+			}, nil).Once()
+
+		siteRepo.On("GetByNetwork", netID).Return(
+			[]db.Site{
+				{Id: netID,
+					Name:        siteName,
+					NetworkId:   netID,
+					Deactivated: false,
+				}}, nil).Once()
+
+		s := NewNetworkServer(netRepo, nil, siteRepo, nil, msgcRepo, "")
+		netResp, err := s.GetSitesByNetwork(context.TODO(),
+			&pb.GetSitesByNetworkRequest{NetworkId: netID.String()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, netResp)
+		assert.Equal(t, netID.String(), netResp.GetSites()[0].GetId())
+		netRepo.AssertExpectations(t)
 	})
 }
