@@ -56,7 +56,7 @@
 #define UKAMA_AMPLIFIER_NODE "amplifier"
 #define UKAMA_POWER_NODE     "power"
 
-#define MAX_BUFFER          2048
+#define MAX_BUFFER          3072
 #define SPACE_MAX_BUFFER    1024
 #define CAPP_MAX_BUFFER     1024
 

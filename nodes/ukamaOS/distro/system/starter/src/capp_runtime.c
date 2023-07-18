@@ -20,6 +20,8 @@
 #include "usys_types.h"
 #include "usys_log.h"
 
+extern char **environ;
+
 static int token_count(char *str) {
 
     int count=0, i;
@@ -163,7 +165,9 @@ static bool setup_and_execute_capp(Capp *capp, int *error) {
             return USYS_FALSE;
         }
     }
-    log_runtime(runtime, argc, envc);
+
+    capp->runtime = runtime;
+    log_runtime(capp->runtime, argc, envc);
 
     /* thread up */
     pthread_create(&thread,
@@ -176,7 +180,7 @@ static bool setup_and_execute_capp(Capp *capp, int *error) {
     return USYS_TRUE;
 }
 
-bool create_and_run_capps(Capp *capp, int *error) {
+static bool create_and_run_capps(Capp *capp, int *error) {
 
     char *configFileName = NULL;
 

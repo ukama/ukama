@@ -155,9 +155,9 @@ static void copy_capps_to_space_rootfs(char *spaceName,
     CappList *currentCapp = NULL;
     Capp *capp = NULL;
 
-    char src[SPACE_MAX_BUFFER]   = {0};
-    char dest[SPACE_MAX_BUFFER]  = {0};
-    char runMe[SPACE_MAX_BUFFER] = {0};
+    char src[SPACE_MAX_BUFFER]  = {0};
+    char dest[SPACE_MAX_BUFFER] = {0};
+    char runMe[MAX_BUFFER]      = {0};
 
     if (cappList == NULL) return;
 

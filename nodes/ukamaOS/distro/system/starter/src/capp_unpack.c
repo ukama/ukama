@@ -150,9 +150,13 @@ static bool unpack_all_capps_to_space_rootfs(CappList *cappList,
             capp->rootfs = (char *)malloc(strlen(unpackPath) +
                                           strlen(capp->name) +
                                           strlen(capp->tag)  + 4);
-            /* TODO, hard coded path. FixME */
-            sprintf(capp->rootfs, "/capps/pkgs/unpack/%s_%s",
-                    capp->name, capp->tag);
+
+            sprintf(capp->rootfs, "%s/%s/%s/unpack/%s_%s",
+                    rootfsPath,
+                    capp->space,
+                    cappPath,
+                    capp->name,
+                    capp->tag);
         }
     }
 
