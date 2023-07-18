@@ -42,15 +42,15 @@ static void setup_webservice_endpoints(Config *config,
                                &web_service_cb_ping, config);
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
-                               API_RES_EP("status/:name"), 0,
+                               API_RES_EP("status/:space/:name"), 0,
                                &web_service_cb_get_status, config);
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("restart/:name"), 0,
+                               API_RES_EP("restart/:space/:name"), 0,
                                &web_service_cb_post_restart, config);
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("update/:name"), 0,
+                               API_RES_EP("update/:space/:name"), 0,
                                &web_service_cb_post_update, config);
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);

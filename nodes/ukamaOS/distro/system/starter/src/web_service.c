@@ -11,7 +11,32 @@
 #include "http_status.h"
 #include "config.h"
 
+#include "starter.h"
 #include "usys_log.h"
+
+extern SpaceList *gSpaceList;
+
+static char *capp_status_str(int status) {
+
+    char *str;
+
+    switch(status) {
+    case CAPP_RUNTIME_NO_EXEC:
+        str = "Not running";
+        break;
+    case CAPP_RUNTIME_EXEC:
+        str = "Running";
+        break;
+    case CAPP_RUNTIME_DONE:
+        str = "Done";
+        break;
+    default:
+        str = "Uknown";
+        break;
+    }
+
+    return str;
+}
 
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
@@ -37,10 +62,42 @@ int web_service_cb_get_status(const URequest *request,
                               UResponse *response,
                               void *epConfig) {
 
-    char *name=NULL;
+    char      *cappName=NULL, *space=NULL;
+    SpaceList *spacePtr = NULL;
+    CappList  *cappList  = NULL;
+    int       status=-1;
 
-    name = u_map_get(request->map_url, "name");
-    ulfius_set_empty_body_response(response, HttpStatus_OK);
+    cappName = u_map_get(request->map_url, "name");
+    space    = u_map_get(request->map_url, "space");
+
+    for (spacePtr = gSpaceList;
+         spacePtr;
+         spacePtr = spacePtr->next) {
+
+        if (strcmp(spacePtr->space->name, space) != 0)
+            continue;
+
+        for (cappList=spacePtr->space->cappList;
+             cappList;
+             cappList=cappList->next) {
+
+            if (strcmp(cappList->capp->name, cappName) != 0)
+                continue;
+
+            if (cappList->capp->runtime)
+                status = cappList->capp->runtime->status;
+            else
+                status = CAPP_RUNTIME_NO_EXEC;
+        }
+    }
+
+    if (status == -1) {
+        ulfius_set_string_body_response(response, HttpStatus_NotFound,
+                                        HttpStatusStr(HttpStatus_NotFound));
+    } else {
+        ulfius_set_string_body_response(response, HttpStatus_OK,
+                                        capp_status_str(status));
+    }
 
     return U_CALLBACK_CONTINUE;
 }
