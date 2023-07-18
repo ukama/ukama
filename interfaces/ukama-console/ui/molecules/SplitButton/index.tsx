@@ -1,13 +1,13 @@
-import * as React from 'react';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Grow from '@mui/material/Grow';
-import Paper from '@mui/material/Paper';
-import Popper from '@mui/material/Popper';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
+import Paper from '@mui/material/Paper';
+import Popper from '@mui/material/Popper';
+import * as React from 'react';
 
 type splitButtonProps = {
   options: any[];
@@ -17,13 +17,13 @@ type splitButtonProps = {
 const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
-  const [selectedIndex, setSelectedIndex] = React.useState(1);
+  const [selectedIndex, setSelectedIndex] = React.useState('node-on-off');
 
   const handleOptionSelected = (
     event: React.MouseEvent<HTMLLIElement, MouseEvent>,
-    index: number,
+    id: string,
   ) => {
-    setSelectedIndex(index);
+    setSelectedIndex(id);
     setOpen(false);
   };
 
@@ -50,8 +50,14 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
         aria-label="split button"
         sx={{ whiteSpace: 'nowrap', minWidth: 'max-content' }}
       >
-        <Button onClick={() => handleSplitActionClick(options[selectedIndex])}>
-          {options[selectedIndex]}
+        <Button
+          onClick={() =>
+            handleSplitActionClick(
+              options.find((i) => i.id === selectedIndex).id,
+            )
+          }
+        >
+          {options.find((i) => i.id === selectedIndex).name}
         </Button>
         <Button
           size="small"
@@ -80,14 +86,14 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
           >
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
-                <MenuList id="split-button-menu">
-                  {options.map((option, index) => (
+                <MenuList id="node-action-menu">
+                  {options.map(({ id, name }, index) => (
                     <MenuItem
-                      key={option}
-                      selected={index === selectedIndex}
-                      onClick={(event) => handleOptionSelected(event, index)}
+                      key={id}
+                      selected={id === selectedIndex}
+                      onClick={(event) => handleOptionSelected(event, id)}
                     >
-                      {option}
+                      {name}
                     </MenuItem>
                   ))}
                 </MenuList>

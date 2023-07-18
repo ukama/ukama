@@ -3,7 +3,7 @@ import { TObject } from '@/types';
 import { Typography } from '@mui/material';
 import { format, intervalToDuration } from 'date-fns';
 import { Alert_Type, Graphs_Tab, NodeDto, Node_Type } from '../generated';
-const getTitleFromPath = (path: string) => {
+const getTitleFromPath = (path: string, id: string) => {
   switch (path) {
     case '/home':
       return 'Home';
@@ -14,7 +14,7 @@ const getTitleFromPath = (path: string) => {
     case '/node':
       return 'Nodes';
     case '/node/[id]':
-      return 'Nodes';
+      return `Nodes > ${id}`;
     case '/subscriber':
       return 'Subscribers';
     case '/site_planning':

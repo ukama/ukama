@@ -13,7 +13,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { LoadingWrapper } from '..';
+import LoadingWrapper from '../LoadingWrapper';
 import { PaperProps, SelectDisplayProps, useStyles } from './styles';
 
 const getStatus = (status: Org_Node_State, time: number) => {

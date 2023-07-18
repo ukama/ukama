@@ -2,13 +2,11 @@ import { HealtChartsConfigure, TooltipsText } from '@/constants';
 import { NodeDto, NodeResponse, Node_Type } from '@/generated';
 import { Grid, Paper, Stack, Typography, capitalize } from '@mui/material';
 import { useEffect, useState } from 'react';
-import {
-  ApexLineChart,
-  NodeDetailsCard,
-  NodeGroup,
-  NodeStatsContainer,
-} from '..';
+import ApexLineChart from '../ApexLineChart';
+import NodeDetailsCard from '../NodeDetailsCard';
+import NodeGroup from '../NodeGroup';
 import NodeStatItem from '../NodeStatItem';
+import NodeStatsContainer from '../NodeStatsContainer';
 
 interface INodeOverviewTab {
   metrics: any;
