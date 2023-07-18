@@ -58,7 +58,6 @@ func (n *Node) AddNode(nodeId, name, orgId, state string) (*pb.AddNodeResponse, 
 		NodeId: nodeId,
 		Name:   name,
 		OrgId:  orgId,
-		State:  state,
 	})
 	if err != nil {
 		return nil, err
