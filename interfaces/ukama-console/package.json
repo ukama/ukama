@@ -11,7 +11,8 @@
     "prettier": "prettier --write --ignore-unknown .",
     "codegen": "graphql-codegen --config codegen.yml",
     "prettier:check": "prettier --check --ignore-unknown .",
-    "planning-codegen": "graphql-codegen --config planning-codegen.yml"
+    "planning-codegen": "graphql-codegen --config planning-codegen.yml",
+    "node-codegen": "graphql-codegen --config node-codegen.yml"
   },
   "git": {
     "pre-commit": "lint-staged"
