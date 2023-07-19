@@ -11,6 +11,8 @@ import {
   useGetSimsLazyQuery,
   useUpdatePacakgeMutation,
   useUploadSimsMutation,
+  useGetNetworkQuery,
+  useGetNetworksQuery,
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TObject, TSnackMessage } from '@/types';
@@ -116,6 +118,7 @@ const Manage = () => {
     simPool: [],
     dataPlan: [],
     node: NODE_POOL_DATA,
+    networkList: [],
   });
   const [dataplan, setDataplan] = useState({
     id: '',
@@ -141,6 +144,24 @@ const Manage = () => {
     onError: (error) => {
       setSnackbarMessage({
         id: 'org-members',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const { data: networks, loading: networkLoading } = useGetNetworksQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        networkList: networks?.getNetworks.networks,
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'network',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -422,6 +443,9 @@ const Manage = () => {
     }
   };
 
+  const handleCreateNetwork = () => {
+    console.log('adding node to network');
+  };
   const isLoading =
     packagesLoading ||
     simsLoading ||
@@ -430,7 +454,8 @@ const Manage = () => {
     uploadSimsLoading ||
     dataPlanLoading ||
     deletePkgLoading ||
-    updatePkgLoading;
+    updatePkgLoading ||
+    networkLoading;
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
@@ -461,6 +486,8 @@ const Manage = () => {
               data={data.node}
               search={nodeSearch}
               setSearch={setNodeSearch}
+              networkList={data.networkList}
+              handleCreateNetwork={handleCreateNetwork}
             />
           )}
           {menu === 'manage-data-plan' && (

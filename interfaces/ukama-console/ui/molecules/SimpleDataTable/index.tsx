@@ -1,5 +1,6 @@
 import { isDarkmode } from '@/app-recoil';
 import { ColumnsWithOptions } from '@/types';
+import ChipDropdown from '@/ui/components/ChipDropDown';
 import {
   Chip,
   Link,
@@ -19,6 +20,8 @@ interface SimpleDataTableInterface {
   dataset: any;
   height?: string;
   columns: ColumnsWithOptions[];
+  networkList?: string[] | [] | undefined;
+  handleCreateNetwork?: any;
 }
 
 const SimpleDataTable = ({
@@ -26,6 +29,8 @@ const SimpleDataTable = ({
   columns,
   dataset,
   height,
+  networkList,
+  handleCreateNetwork,
 }: SimpleDataTableInterface) => {
   const _isDarkMode = useRecoilValue(isDarkmode);
   return (
@@ -90,6 +95,11 @@ const SimpleDataTable = ({
                     >
                       View as PDF
                     </Link>
+                  ) : column.id === 'network' ? (
+                    <ChipDropdown
+                      onCreateNetwork={handleCreateNetwork}
+                      menu={networkList}
+                    />
                   ) : (
                     <Typography variant={'body2'} sx={{ padding: '8px' }}>
                       {row[column.id]}
