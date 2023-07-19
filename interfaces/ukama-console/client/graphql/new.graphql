@@ -1,3 +1,93 @@
+# NODE GRAPH
+
+fragment node on Node {
+  allocated
+  attached
+  name
+  network
+  node
+  state
+  type
+}
+
+query getNode($data: NodeInput!) {
+  getNode(data: $data) {
+    node {
+      ...node
+    }
+  }
+}
+
+query getNodes {
+  getNodes {
+    nodes {
+      ...node
+    }
+  }
+}
+
+query getFreeNodes {
+  getFreeNodes {
+    nodes {
+      ...node
+    }
+  }
+}
+
+mutation deleteNode($data: NodeInput!) {
+  deleteNodeFromOrg(data: $data) {
+    id
+  }
+}
+
+mutation attachNode($data: AttachNodeInput!) {
+  attachNode(data: $data) {
+    success
+  }
+}
+
+mutation detachhNode($data: NodeInput!) {
+  detachhNode(data: $data) {
+    success
+  }
+}
+
+mutation addNode($data: AddNodeInput!) {
+  addNode(data: $data) {
+    node {
+      ...node
+    }
+  }
+}
+
+mutation releaseNodeFromNetwork($data: NodeInput!) {
+  releaseNodeFromNetwork(data: $data) {
+    success
+  }
+}
+
+mutation addNodeToNetwork($data: AddNodeToNetworkInput!) {
+  addNodeToNetwork(data: $data) {
+    success
+  }
+}
+
+mutation updateNodeState($data: UpdateNodeStateInput!) {
+  updateNodeState(data: $data) {
+    id
+    state
+  }
+}
+
+mutation UpdateNode($data: UpdateNodeInput!) {
+  updateNode(data: $data) {
+    node {
+      ...node
+    }
+  }
+}
+
+# PLANNING TOOL GRAPH
 fragment location on Location {
   id
   lat
