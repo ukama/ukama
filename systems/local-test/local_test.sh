@@ -130,6 +130,6 @@ docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $SIMPOOL_DB -c "$SIMP
 echo "Inserting data into Subscriber DB..."
 docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $SUBSCRIBER_DB -c "$SUBSCRIBER_QUERY"
 
-echo "Inserting data into Sims DB..."
-docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $SIMS_DB -c "$SIMS_QUERY"
-docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $SIMS_DB -c "$SIMS_PACKAGE_QUERY"
+echo "Inserting data into Nodes DB..."
+docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $NODES_DB -c "$NODES_QUERY"
+docker exec -it $DB_CONTAINER_NAME psql -U $DB_USERNAME -d $NODES_DB -c "$NODES_STATUSES_QUERY"
