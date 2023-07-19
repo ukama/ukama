@@ -73,7 +73,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetAction("add").SetObject("member").MustBuild()
+	route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
 	err = m.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
@@ -157,7 +157,7 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
 
-	route := m.baseRoutingKey.SetAction("remove").SetObject("member").MustBuild()
+	route := m.baseRoutingKey.SetActionDelete().SetObject("member").MustBuild()
 	err = m.msgbus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
