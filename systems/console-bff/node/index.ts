@@ -2,7 +2,6 @@ import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginInlineTrace } from "@apollo/server/plugin/inlineTrace";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { buildSubgraphSchema, printSubgraphSchema } from "@apollo/subgraph";
-import express from "express";
 import { GraphQLScalarType } from "graphql";
 import { DateTimeResolver } from "graphql-scalars";
 import gql from "graphql-tag";
@@ -14,7 +13,6 @@ import { logger } from "./../common/logger";
 import NodeAPI from "./dataSource/node-api";
 import resolvers from "./resolvers";
 
-const app = express();
 const runServer = async () => {
   const ts = await tq.buildSchema({
     resolvers: resolvers,
@@ -30,7 +28,7 @@ const runServer = async () => {
   const server = new ApolloServer({
     schema: federatedSchema,
     csrfPrevention: false,
-
+    introspection: true,
     plugins: [ApolloServerPluginInlineTrace({})],
   });
 

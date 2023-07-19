@@ -30,7 +30,7 @@ const startServer = async () => {
       ],
     }),
   });
-  await gateway.load();
+  // await gateway.load();
   const server = new ApolloServer({
     gateway,
     plugins: [
