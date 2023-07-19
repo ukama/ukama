@@ -63,6 +63,9 @@
 #define SPACE_BOOT   "boot"
 #define SPACE_REBOOT "reboot"
 
+#define CAPP_PKG_NOT_FOUND 0
+#define CAPP_PKG_FOUND     1
+
 typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;
@@ -87,6 +90,7 @@ typedef struct _capp {
     char        *rootfs;   /* Location where the rootfs is at */
     char        *space;    /* group it belongs to */
     int         restart;   /* 1: yes, always restart. 0: No */
+    int         fetch;     /* fetch from hub? */
     CappRuntime *runtime;  /* runtime of capp */
     CappConfig  *config;   /* configuration of the capp */
 } Capp;

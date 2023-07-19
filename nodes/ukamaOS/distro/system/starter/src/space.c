@@ -8,9 +8,27 @@
  */
 
 #include <string.h>
+#include <sys/stat.h>
 
 #include "starter.h"
 #include "manifest.h"
+
+static int need_to_fetch_capp_from_hub(char *spaceName, char *cappPkg) {
+
+    struct stat stats;
+
+    if (stat(cappPkg, &stats) == 0) {
+        return CAPP_PKG_FOUND;
+    }
+
+    if (strcmp(spaceName, SPACE_BOOT) == 0 ||
+        strcmp(spaceName, SPACE_REBOOT) == 0) {
+        usys_log_error("Mandatory capp not found. space: %s capp: %s",
+                       spaceName, cappPkg);
+    }
+
+    return CAPP_PKG_NOT_FOUND;
+}
 
 bool find_matching_space(SpaceList **spaceList, char *name, Space **space) {
 
@@ -185,6 +203,13 @@ static void copy_capps_to_space_rootfs(char *spaceName,
          * /capps/rootfs/[spaceName]/capps/pkgs/[name]_[tag].tar.gz
          */
         sprintf(src,  "%s/%s_%s.tar.gz", sPath, capp->name, capp->tag);
+
+        /* Flag if capp needs to be fetched from hub via wimc */
+        capp->fetch = need_to_fetch_capp_from_hub(spaceName, src);
+        if (capp->fetch == CAPP_PKG_NOT_FOUND) {
+            continue;
+        }
+
         sprintf(dest, "%s/%s/%s/%s_%s.tar.gz", dPath, spaceName, sPath,
                 capp->name, capp->tag);
         sprintf(runMe, "/bin/cp %s %s", src, dest);
@@ -200,7 +225,7 @@ static void copy_capps_to_space_rootfs(char *spaceName,
 void copy_capps_to_rootfs(SpaceList *spaceList) {
 
     SpaceList *currentSpace;
-    
+
     /* for each space, copy its "capps rootfs" to its own rootfs" */
     for (currentSpace = spaceList;
          currentSpace;

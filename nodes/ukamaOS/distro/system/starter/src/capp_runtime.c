@@ -207,6 +207,8 @@ void run_space_all_capps(Space *space) {
          cappList;
          cappList=cappList->next) {
 
+        if (cappList->capp->fetch == CAPP_PKG_NOT_FOUND) continue;
+
         if (create_and_run_capps(cappList->capp, &error)) {
             usys_log_error("Unable to execute capp: %s:%s Error: %d",
                            cappList->capp->name,

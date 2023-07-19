@@ -100,6 +100,8 @@ static bool unpack_all_capps_to_space_rootfs(CappList *cappList,
 
         if (capp->name == NULL || capp->tag == NULL) continue;
 
+        if (capp->fetch == CAPP_PKG_NOT_FOUND) continue;
+
         /* existing capps will be at:
          * /capps/rootfs/[contained]/capps/pkgs/unpack
          * delete the whole directory for the space
@@ -127,6 +129,8 @@ static bool unpack_all_capps_to_space_rootfs(CappList *cappList,
         capp = currentCapp->capp;
 
         if (capp->name == NULL || capp->tag == NULL) continue;
+
+        if (capp->fetch == CAPP_PKG_NOT_FOUND) continue;
 
         /* create unpack directory */
         sprintf(unpackPath, "%s/%s/%s/unpack",
