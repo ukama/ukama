@@ -15,6 +15,7 @@ import {
   Select,
   Stack,
   TextField,
+  Typography,
 } from '@mui/material';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -28,6 +29,7 @@ interface IDataPlanDialog {
   labelSuccessBtn?: string;
   handleSuccessAction: any;
   labelNegativeBtn?: string;
+  organizationName: string;
 }
 
 const DataPlanDialog = ({
@@ -40,6 +42,7 @@ const DataPlanDialog = ({
   labelNegativeBtn,
   handleCloseAction,
   handleSuccessAction,
+  organizationName,
 }: IDataPlanDialog) => (
   <Dialog
     fullWidth
@@ -69,6 +72,22 @@ const DataPlanDialog = ({
         alignItems={'center'}
         justifyContent={'center'}
       >
+        <Grid item xs={12}>
+          <Typography variant="body1">
+            {`Create a custom data plan that can be assigned to subscribers. The
+            price you set will be what subscribers pay, but a portion of that
+            will be allocated to service fees - view how much you’ll end up
+            receiving below. *Each plan will be effective immediately and will
+            sync with standard monthly/daily billing time cycles. ${organizationName} earns [$X] per [unit] per subscriber on this data plan.`}
+          </Typography>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Typography variant="body1">
+            *Each plan will be effective immediately and will sync with standard
+            monthly/daily billing time cycles.
+          </Typography>
+        </Grid>
         <Grid item xs={12}>
           <TextField
             fullWidth

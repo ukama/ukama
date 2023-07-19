@@ -1,4 +1,4 @@
-import { snackbarMessage } from '@/app-recoil';
+import { commonData, snackbarMessage } from '@/app-recoil';
 import { MANAGE_MENU_LIST } from '@/constants';
 import {
   MemberObj,
@@ -11,11 +11,10 @@ import {
   useGetSimsLazyQuery,
   useUpdatePacakgeMutation,
   useUploadSimsMutation,
-  useGetNetworkQuery,
   useGetNetworksQuery,
 } from '@/generated';
 import { colors } from '@/styles/theme';
-import { TObject, TSnackMessage } from '@/types';
+import { TCommonData, TObject, TSnackMessage } from '@/types';
 import DataPlanDialog from '@/ui/molecules/DataPlanDialog';
 import FileDropBoxDialog from '@/ui/molecules/FileDropBoxDialog';
 import InviteMemberDialog from '@/ui/molecules/InviteMemberDialog';
@@ -31,7 +30,7 @@ import {
 } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
-import { useSetRecoilState } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 const SimPool = dynamic(() => import('./_simpool'));
 const NodePool = dynamic(() => import('./_nodepool'));
@@ -111,6 +110,7 @@ const Manage = () => {
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
   const [menu, setMenu] = useState<string>('manage-members');
   const [memberSearch, setMemberSearch] = useState<string>('');
+  const _commonData = useRecoilValue<TCommonData>(commonData);
   const [nodeSearch, setNodeSearch] = useState<string>('');
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
   const [data, setData] = useState<any>({
@@ -522,6 +522,7 @@ const Manage = () => {
       {isDataPlan && (
         <DataPlanDialog
           data={dataplan}
+          organizationName={_commonData.orgName}
           action={dataplan.id ? 'update' : 'add'}
           isOpen={isDataPlan}
           setData={setDataplan}
