@@ -21,8 +21,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const uuidParsingError = "Error parsing UUID"
-
 type MemberServer struct {
 	pb.UnimplementedMemberServiceServer
 	mRepo          db.MemberRepo
