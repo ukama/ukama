@@ -65,7 +65,8 @@ const NodeDropDown = ({
   nodes = [],
   onAddNode,
   nodeStatus = {
-    status: Org_Node_State.Undefined,
+    // status: Org_Node_State.Undefined,
+    status: undefined,
     uptime: new Date().getTime(),
   },
   selectedNode,

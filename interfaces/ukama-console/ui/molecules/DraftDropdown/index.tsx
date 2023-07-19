@@ -1,4 +1,4 @@
-import { Draft } from '@/generated/planning-tool';
+import { Draft } from '@/generated';
 import { colors } from '@/styles/theme';
 import { hexToRGB } from '@/utils';
 import { Edit } from '@mui/icons-material';

@@ -7,10 +7,8 @@ import {
   snackbarMessage,
   user,
 } from '@/app-recoil';
-import { useGetNetworksLazyQuery, useWhoamiLazyQuery } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
 import { getTitleFromPath } from '@/utils';
-import { AlertColor } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -33,71 +31,71 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
-  const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery({
-    fetchPolicy: 'cache-first',
-    onCompleted: (data) => {
-      if (data.whoami) {
-        if (!_user?.id)
-          _setUser({
-            id: data.whoami.id,
-            name: data.whoami.name,
-            email: data.whoami.email,
-            role: data.whoami.role,
-            isFirstVisit: data.whoami.isFirstVisit,
-          });
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'whoami-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-      // resetData();
-      // window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
-    },
-  });
-  const [
-    getNetworks,
-    { data: networksData, error: networksError, loading: networksLoading },
-  ] = useGetNetworksLazyQuery({
-    fetchPolicy: 'cache-first',
-    onCompleted: (data) => {
-      if (data.getNetworks.networks.length === 1) {
-        setCommonData({
-          ..._commonData,
-          networkId: data.getNetworks.networks[0].id,
-          networkName: data.getNetworks.networks[0].name,
-        });
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  // const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery({
+  //   fetchPolicy: 'cache-first',
+  //   onCompleted: (data) => {
+  //     if (data.whoami) {
+  //       if (!_user?.id)
+  //         _setUser({
+  //           id: data.whoami.id,
+  //           name: data.whoami.name,
+  //           email: data.whoami.email,
+  //           role: data.whoami.role,
+  //           isFirstVisit: data.whoami.isFirstVisit,
+  //         });
+  //     }
+  //   },
+  //   onError: (error) => {
+  //     setSnackbarMessage({
+  //       id: 'whoami-msg',
+  //       message: error.message,
+  //       type: 'error' as AlertColor,
+  //       show: true,
+  //     });
+  //     // resetData();
+  //     // window.location.replace(`${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}`);
+  //   },
+  // });
+  // const [
+  //   getNetworks,
+  //   { data: networksData, error: networksError, loading: networksLoading },
+  // ] = useGetNetworksLazyQuery({
+  //   fetchPolicy: 'cache-first',
+  //   onCompleted: (data) => {
+  //     if (data.getNetworks.networks.length === 1) {
+  //       setCommonData({
+  //         ..._commonData,
+  //         networkId: data.getNetworks.networks[0].id,
+  //         networkName: data.getNetworks.networks[0].name,
+  //       });
+  //     }
+  //   },
+  //   onError: (error) => {
+  //     setSnackbarMessage({
+  //       id: 'networks-msg',
+  //       message: error.message,
+  //       type: 'error' as AlertColor,
+  //       show: true,
+  //     });
+  //   },
+  // });
 
   useEffect(() => {
     setSkeltonLoading(true);
-    getWhoami();
-    getNetworks();
+    // getWhoami();
+    // getNetworks();
   }, []);
 
   useEffect(() => {
-    if (
-      data?.whoami.id &&
-      networksData?.getNetworks?.networks &&
-      networksData?.getNetworks?.networks.length > 0
-    ) {
-      setSkeltonLoading(false);
-    }
+    // if (
+    //   data?.whoami.id &&
+    //   networksData?.getNetworks?.networks &&
+    //   networksData?.getNetworks?.networks.length > 0
+    // ) {
+    //   setSkeltonLoading(false);
+    // }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, networksData]);
+  }, []);
 
   // useEffect(() => {
   //   const { id, name, email } = _user;
@@ -147,14 +145,15 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   };
 
   const handlePageChange = (page: string) => setPage(page);
-  const handleNetworkChange = (id: string) =>
-    setCommonData({
-      ..._commonData,
-      networkId: id,
-      networkName:
-        networksData?.getNetworks.networks.filter((n) => n.id === id)[0].name ??
-        '',
-    });
+  const handleNetworkChange = (id: string) => {
+    // setCommonData({
+    //   ..._commonData,
+    //   networkId: id,
+    //   networkName:
+    //     networksData?.getNetworks.networks.filter((n) => n.id === id)[0].name ??
+    //     '',
+    // });
+  };
 
   return (
     <Layout
@@ -166,7 +165,8 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       networkId={_commonData?.networkId}
       handlePageChange={handlePageChange}
       handleNetworkChange={handleNetworkChange}
-      networks={networksData?.getNetworks.networks}
+      // networks={networksData?.getNetworks.networks}
+      networks={[]}
     >
       <Component {...pageProps} />
     </Layout>

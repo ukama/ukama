@@ -1,33 +1,25 @@
 # NODE GRAPH
 
 fragment node on Node {
-  allocated
-  attached
+  id
   name
-  network
-  node
-  state
+  orgId
   type
+  attached
+  status {
+    connectivity
+    state
+  }
 }
 
 query getNode($data: NodeInput!) {
   getNode(data: $data) {
-    node {
-      ...node
-    }
+    ...node
   }
 }
 
-query getNodes {
-  getNodes {
-    nodes {
-      ...node
-    }
-  }
-}
-
-query getFreeNodes {
-  getFreeNodes {
+query getNodes($data: GetNodesInput!) {
+  getNodes(data: $data) {
     nodes {
       ...node
     }
@@ -54,36 +46,31 @@ mutation detachhNode($data: NodeInput!) {
 
 mutation addNode($data: AddNodeInput!) {
   addNode(data: $data) {
-    node {
-      ...node
-    }
+    ...node
   }
 }
 
-mutation releaseNodeFromNetwork($data: NodeInput!) {
-  releaseNodeFromNetwork(data: $data) {
+mutation releaseNodeFromSite($data: NodeInput!) {
+  releaseNodeFromSite(data: $data) {
     success
   }
 }
 
-mutation addNodeToNetwork($data: AddNodeToNetworkInput!) {
-  addNodeToNetwork(data: $data) {
+mutation addNodeToSite($data: AddNodeToSiteInput!) {
+  addNodeToSite(data: $data) {
     success
   }
 }
 
 mutation updateNodeState($data: UpdateNodeStateInput!) {
   updateNodeState(data: $data) {
-    id
-    state
+    ...node
   }
 }
 
 mutation UpdateNode($data: UpdateNodeInput!) {
   updateNode(data: $data) {
-    node {
-      ...node
-    }
+    ...node
   }
 }
 

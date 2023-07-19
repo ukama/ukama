@@ -25,12 +25,14 @@ export type AddDraftInput = {
 
 export type AddNodeInput = {
   id: Scalars['String']['input'];
-  state: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
 };
 
-export type AddNodeToNetworkInput = {
+export type AddNodeToSiteInput = {
   networkId: Scalars['String']['input'];
   nodeId: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
 };
 
 export type AttachNodeInput = {
@@ -90,14 +92,13 @@ export type Event = {
   value: Scalars['String']['output'];
 };
 
-export type GetNode = {
-  __typename?: 'GetNode';
-  node: Node;
-};
-
 export type GetNodes = {
   __typename?: 'GetNodes';
   nodes: Array<Node>;
+};
+
+export type GetNodesInput = {
+  isFree: Scalars['Boolean']['input'];
 };
 
 export type Link = {
@@ -132,8 +133,8 @@ export type Mutation = {
   __typename?: 'Mutation';
   addDraft: Draft;
   addLink: Draft;
-  addNode: GetNode;
-  addNodeToNetwork: CBooleanResponse;
+  addNode: Node;
+  addNodeToSite: CBooleanResponse;
   addSite: Draft;
   attachNode: CBooleanResponse;
   coverage: Site;
@@ -142,12 +143,12 @@ export type Mutation = {
   deleteNodeFromOrg: DeleteNode;
   deleteSite: DeleteSiteRes;
   detachhNode: CBooleanResponse;
-  releaseNodeFromNetwork: CBooleanResponse;
+  releaseNodeFromSite: CBooleanResponse;
   updateDraftName: Draft;
   updateEvent: Event;
   updateLocation: Location;
-  updateNode: GetNode;
-  updateNodeState: NodeState;
+  updateNode: Node;
+  updateNodeState: Node;
   updateSite: Draft;
 };
 
@@ -168,8 +169,8 @@ export type MutationAddNodeArgs = {
 };
 
 
-export type MutationAddNodeToNetworkArgs = {
-  data: AddNodeToNetworkInput;
+export type MutationAddNodeToSiteArgs = {
+  data: AddNodeToSiteInput;
 };
 
 
@@ -217,7 +218,7 @@ export type MutationDetachhNodeArgs = {
 };
 
 
-export type MutationReleaseNodeFromNetworkArgs = {
+export type MutationReleaseNodeFromSiteArgs = {
   data: NodeInput;
 };
 
@@ -259,12 +260,11 @@ export type MutationUpdateSiteArgs = {
 
 export type Node = {
   __typename?: 'Node';
-  allocated: Scalars['Boolean']['output'];
   attached: Array<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  network: Scalars['String']['output'];
-  node: Scalars['String']['output'];
-  state: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  status: NodeStatus;
   type: Scalars['String']['output'];
 };
 
@@ -272,9 +272,9 @@ export type NodeInput = {
   id: Scalars['String']['input'];
 };
 
-export type NodeState = {
-  __typename?: 'NodeState';
-  id: Scalars['String']['output'];
+export type NodeStatus = {
+  __typename?: 'NodeStatus';
+  connectivity: Scalars['String']['output'];
   state: Scalars['String']['output'];
 };
 
@@ -282,8 +282,7 @@ export type Query = {
   __typename?: 'Query';
   getDraft: Draft;
   getDrafts: Array<Draft>;
-  getFreeNodes: GetNodes;
-  getNode: GetNode;
+  getNode: Node;
   getNodes: GetNodes;
 };
 
@@ -300,6 +299,11 @@ export type QueryGetDraftsArgs = {
 
 export type QueryGetNodeArgs = {
   data: NodeInput;
+};
+
+
+export type QueryGetNodesArgs = {
+  data: GetNodesInput;
 };
 
 export type Site = {
@@ -351,24 +355,21 @@ export type UpdateNodeStateInput = {
   state: Scalars['String']['input'];
 };
 
-export type NodeFragment = { __typename?: 'Node', allocated: boolean, attached: Array<string>, name: string, network: string, node: string, state: string, type: string };
+export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
 
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'GetNode', node: { __typename?: 'Node', allocated: boolean, attached: Array<string>, name: string, network: string, node: string, state: string, type: string } } };
+export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
-export type GetNodesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'GetNodes', nodes: Array<{ __typename?: 'Node', allocated: boolean, attached: Array<string>, name: string, network: string, node: string, state: string, type: string }> } };
-
-export type GetFreeNodesQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetNodesQueryVariables = Exact<{
+  data: GetNodesInput;
+}>;
 
 
-export type GetFreeNodesQuery = { __typename?: 'Query', getFreeNodes: { __typename?: 'GetNodes', nodes: Array<{ __typename?: 'Node', allocated: boolean, attached: Array<string>, name: string, network: string, node: string, state: string, type: string }> } };
+export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'GetNodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -396,35 +397,35 @@ export type AddNodeMutationVariables = Exact<{
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'GetNode', node: { __typename?: 'Node', allocated: boolean, attached: Array<string>, name: string, network: string, node: string, state: string, type: string } } };
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
-export type ReleaseNodeFromNetworkMutationVariables = Exact<{
+export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type ReleaseNodeFromNetworkMutation = { __typename?: 'Mutation', releaseNodeFromNetwork: { __typename?: 'CBooleanResponse', success: boolean } };
+export type ReleaseNodeFromSiteMutation = { __typename?: 'Mutation', releaseNodeFromSite: { __typename?: 'CBooleanResponse', success: boolean } };
 
-export type AddNodeToNetworkMutationVariables = Exact<{
-  data: AddNodeToNetworkInput;
+export type AddNodeToSiteMutationVariables = Exact<{
+  data: AddNodeToSiteInput;
 }>;
 
 
-export type AddNodeToNetworkMutation = { __typename?: 'Mutation', addNodeToNetwork: { __typename?: 'CBooleanResponse', success: boolean } };
+export type AddNodeToSiteMutation = { __typename?: 'Mutation', addNodeToSite: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type UpdateNodeStateMutationVariables = Exact<{
   data: UpdateNodeStateInput;
 }>;
 
 
-export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'NodeState', id: string, state: string } };
+export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
 }>;
 
 
-export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'GetNode', node: { __typename?: 'Node', allocated: boolean, attached: Array<string>, name: string, network: string, node: string, state: string, type: string } } };
+export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
 
@@ -532,13 +533,15 @@ export type CoverageMutation = { __typename?: 'Mutation', coverage: { __typename
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
-  allocated
-  attached
+  id
   name
-  network
-  node
-  state
+  orgId
   type
+  attached
+  status {
+    connectivity
+    state
+  }
 }
     `;
 export const LinkFragmentDoc = gql`
@@ -608,9 +611,7 @@ ${EventFragmentDoc}`;
 export const GetNodeDocument = gql`
     query getNode($data: NodeInput!) {
   getNode(data: $data) {
-    node {
-      ...node
-    }
+    ...node
   }
 }
     ${NodeFragmentDoc}`;
@@ -643,8 +644,8 @@ export type GetNodeQueryHookResult = ReturnType<typeof useGetNodeQuery>;
 export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
 export type GetNodeQueryResult = Apollo.QueryResult<GetNodeQuery, GetNodeQueryVariables>;
 export const GetNodesDocument = gql`
-    query getNodes {
-  getNodes {
+    query getNodes($data: GetNodesInput!) {
+  getNodes(data: $data) {
     nodes {
       ...node
     }
@@ -664,10 +665,11 @@ export const GetNodesDocument = gql`
  * @example
  * const { data, loading, error } = useGetNodesQuery({
  *   variables: {
+ *      data: // value for 'data'
  *   },
  * });
  */
-export function useGetNodesQuery(baseOptions?: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
+export function useGetNodesQuery(baseOptions: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
       }
@@ -678,42 +680,6 @@ export function useGetNodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
 export type GetNodesQueryHookResult = ReturnType<typeof useGetNodesQuery>;
 export type GetNodesLazyQueryHookResult = ReturnType<typeof useGetNodesLazyQuery>;
 export type GetNodesQueryResult = Apollo.QueryResult<GetNodesQuery, GetNodesQueryVariables>;
-export const GetFreeNodesDocument = gql`
-    query getFreeNodes {
-  getFreeNodes {
-    nodes {
-      ...node
-    }
-  }
-}
-    ${NodeFragmentDoc}`;
-
-/**
- * __useGetFreeNodesQuery__
- *
- * To run a query within a React component, call `useGetFreeNodesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetFreeNodesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetFreeNodesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetFreeNodesQuery(baseOptions?: Apollo.QueryHookOptions<GetFreeNodesQuery, GetFreeNodesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetFreeNodesQuery, GetFreeNodesQueryVariables>(GetFreeNodesDocument, options);
-      }
-export function useGetFreeNodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetFreeNodesQuery, GetFreeNodesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetFreeNodesQuery, GetFreeNodesQueryVariables>(GetFreeNodesDocument, options);
-        }
-export type GetFreeNodesQueryHookResult = ReturnType<typeof useGetFreeNodesQuery>;
-export type GetFreeNodesLazyQueryHookResult = ReturnType<typeof useGetFreeNodesLazyQuery>;
-export type GetFreeNodesQueryResult = Apollo.QueryResult<GetFreeNodesQuery, GetFreeNodesQueryVariables>;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($data: NodeInput!) {
   deleteNodeFromOrg(data: $data) {
@@ -816,9 +782,7 @@ export type DetachhNodeMutationOptions = Apollo.BaseMutationOptions<DetachhNodeM
 export const AddNodeDocument = gql`
     mutation addNode($data: AddNodeInput!) {
   addNode(data: $data) {
-    node {
-      ...node
-    }
+    ...node
   }
 }
     ${NodeFragmentDoc}`;
@@ -848,80 +812,79 @@ export function useAddNodeMutation(baseOptions?: Apollo.MutationHookOptions<AddN
 export type AddNodeMutationHookResult = ReturnType<typeof useAddNodeMutation>;
 export type AddNodeMutationResult = Apollo.MutationResult<AddNodeMutation>;
 export type AddNodeMutationOptions = Apollo.BaseMutationOptions<AddNodeMutation, AddNodeMutationVariables>;
-export const ReleaseNodeFromNetworkDocument = gql`
-    mutation releaseNodeFromNetwork($data: NodeInput!) {
-  releaseNodeFromNetwork(data: $data) {
+export const ReleaseNodeFromSiteDocument = gql`
+    mutation releaseNodeFromSite($data: NodeInput!) {
+  releaseNodeFromSite(data: $data) {
     success
   }
 }
     `;
-export type ReleaseNodeFromNetworkMutationFn = Apollo.MutationFunction<ReleaseNodeFromNetworkMutation, ReleaseNodeFromNetworkMutationVariables>;
+export type ReleaseNodeFromSiteMutationFn = Apollo.MutationFunction<ReleaseNodeFromSiteMutation, ReleaseNodeFromSiteMutationVariables>;
 
 /**
- * __useReleaseNodeFromNetworkMutation__
+ * __useReleaseNodeFromSiteMutation__
  *
- * To run a mutation, you first call `useReleaseNodeFromNetworkMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useReleaseNodeFromNetworkMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useReleaseNodeFromSiteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReleaseNodeFromSiteMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [releaseNodeFromNetworkMutation, { data, loading, error }] = useReleaseNodeFromNetworkMutation({
+ * const [releaseNodeFromSiteMutation, { data, loading, error }] = useReleaseNodeFromSiteMutation({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useReleaseNodeFromNetworkMutation(baseOptions?: Apollo.MutationHookOptions<ReleaseNodeFromNetworkMutation, ReleaseNodeFromNetworkMutationVariables>) {
+export function useReleaseNodeFromSiteMutation(baseOptions?: Apollo.MutationHookOptions<ReleaseNodeFromSiteMutation, ReleaseNodeFromSiteMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ReleaseNodeFromNetworkMutation, ReleaseNodeFromNetworkMutationVariables>(ReleaseNodeFromNetworkDocument, options);
+        return Apollo.useMutation<ReleaseNodeFromSiteMutation, ReleaseNodeFromSiteMutationVariables>(ReleaseNodeFromSiteDocument, options);
       }
-export type ReleaseNodeFromNetworkMutationHookResult = ReturnType<typeof useReleaseNodeFromNetworkMutation>;
-export type ReleaseNodeFromNetworkMutationResult = Apollo.MutationResult<ReleaseNodeFromNetworkMutation>;
-export type ReleaseNodeFromNetworkMutationOptions = Apollo.BaseMutationOptions<ReleaseNodeFromNetworkMutation, ReleaseNodeFromNetworkMutationVariables>;
-export const AddNodeToNetworkDocument = gql`
-    mutation addNodeToNetwork($data: AddNodeToNetworkInput!) {
-  addNodeToNetwork(data: $data) {
+export type ReleaseNodeFromSiteMutationHookResult = ReturnType<typeof useReleaseNodeFromSiteMutation>;
+export type ReleaseNodeFromSiteMutationResult = Apollo.MutationResult<ReleaseNodeFromSiteMutation>;
+export type ReleaseNodeFromSiteMutationOptions = Apollo.BaseMutationOptions<ReleaseNodeFromSiteMutation, ReleaseNodeFromSiteMutationVariables>;
+export const AddNodeToSiteDocument = gql`
+    mutation addNodeToSite($data: AddNodeToSiteInput!) {
+  addNodeToSite(data: $data) {
     success
   }
 }
     `;
-export type AddNodeToNetworkMutationFn = Apollo.MutationFunction<AddNodeToNetworkMutation, AddNodeToNetworkMutationVariables>;
+export type AddNodeToSiteMutationFn = Apollo.MutationFunction<AddNodeToSiteMutation, AddNodeToSiteMutationVariables>;
 
 /**
- * __useAddNodeToNetworkMutation__
+ * __useAddNodeToSiteMutation__
  *
- * To run a mutation, you first call `useAddNodeToNetworkMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddNodeToNetworkMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAddNodeToSiteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddNodeToSiteMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [addNodeToNetworkMutation, { data, loading, error }] = useAddNodeToNetworkMutation({
+ * const [addNodeToSiteMutation, { data, loading, error }] = useAddNodeToSiteMutation({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useAddNodeToNetworkMutation(baseOptions?: Apollo.MutationHookOptions<AddNodeToNetworkMutation, AddNodeToNetworkMutationVariables>) {
+export function useAddNodeToSiteMutation(baseOptions?: Apollo.MutationHookOptions<AddNodeToSiteMutation, AddNodeToSiteMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddNodeToNetworkMutation, AddNodeToNetworkMutationVariables>(AddNodeToNetworkDocument, options);
+        return Apollo.useMutation<AddNodeToSiteMutation, AddNodeToSiteMutationVariables>(AddNodeToSiteDocument, options);
       }
-export type AddNodeToNetworkMutationHookResult = ReturnType<typeof useAddNodeToNetworkMutation>;
-export type AddNodeToNetworkMutationResult = Apollo.MutationResult<AddNodeToNetworkMutation>;
-export type AddNodeToNetworkMutationOptions = Apollo.BaseMutationOptions<AddNodeToNetworkMutation, AddNodeToNetworkMutationVariables>;
+export type AddNodeToSiteMutationHookResult = ReturnType<typeof useAddNodeToSiteMutation>;
+export type AddNodeToSiteMutationResult = Apollo.MutationResult<AddNodeToSiteMutation>;
+export type AddNodeToSiteMutationOptions = Apollo.BaseMutationOptions<AddNodeToSiteMutation, AddNodeToSiteMutationVariables>;
 export const UpdateNodeStateDocument = gql`
     mutation updateNodeState($data: UpdateNodeStateInput!) {
   updateNodeState(data: $data) {
-    id
-    state
+    ...node
   }
 }
-    `;
+    ${NodeFragmentDoc}`;
 export type UpdateNodeStateMutationFn = Apollo.MutationFunction<UpdateNodeStateMutation, UpdateNodeStateMutationVariables>;
 
 /**
@@ -951,9 +914,7 @@ export type UpdateNodeStateMutationOptions = Apollo.BaseMutationOptions<UpdateNo
 export const UpdateNodeDocument = gql`
     mutation UpdateNode($data: UpdateNodeInput!) {
   updateNode(data: $data) {
-    node {
-      ...node
-    }
+    ...node
   }
 }
     ${NodeFragmentDoc}`;

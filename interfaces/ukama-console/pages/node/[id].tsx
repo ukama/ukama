@@ -1,4 +1,5 @@
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
+import { useGetNodesQuery } from '@/generated';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
@@ -10,6 +11,13 @@ import { useState } from 'react';
 export default function Page() {
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const onTabSelected = (e: any, value: number) => setSelectedTab(value);
+
+  const { data: getNodeData, loading: getNodeLoading } = useGetNodesQuery({
+    onCompleted: (e) => {
+      console.log(e);
+    },
+    onError: () => {},
+  });
   return (
     <Stack width={'100%'}>
       <NodeStatus

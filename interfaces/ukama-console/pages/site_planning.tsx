@@ -13,7 +13,7 @@ import {
   useUpdateDraftNameMutation,
   useUpdateLocationMutation,
   useUpdateSiteMutation,
-} from '@/generated/planning-tool';
+} from '@/generated';
 import styles from '@/styles/Site_Planning.module.css';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
@@ -296,21 +296,15 @@ const Page = () => {
       },
     });
 
-  const [getCoverageCall, { loading: coverageLoading }] =
-    useCoverageMutation({
-      onCompleted: () => {
-        refetchDrafts();
-        showAlert(
-          'coverage-success',
-          'Coverage successfully.',
-          'success',
-          true,
-        );
-      },
-      onError: (error) => {
-        showAlert('coverage-error', error.message, 'error', true);
-      },
-    });
+  const [getCoverageCall, { loading: coverageLoading }] = useCoverageMutation({
+    onCompleted: () => {
+      refetchDrafts();
+      showAlert('coverage-success', 'Coverage successfully.', 'success', true);
+    },
+    onError: (error) => {
+      showAlert('coverage-error', error.message, 'error', true);
+    },
+  });
 
   useEffect(() => {
     if (selectedDraft) {
