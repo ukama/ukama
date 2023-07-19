@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  InputAdornment,
   DialogTitle,
   FormControl,
   Grid,
@@ -103,12 +104,28 @@ const DataPlanDialog = ({
         </Grid>
         {action !== 'update' && (
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
-            <Grid item xs={6}>
+            <Grid item xs={5}>
+              <TextField
+                label="PRICE"
+                required
+                type="number"
+                id="price"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">$</InputAdornment>
+                  ),
+                }}
+                onChange={(e) =>
+                  setDataplan({ ...dataplan, amount: e.target.value })
+                }
+              />
+            </Grid>
+            <Grid item xs={5}>
               <TextField
                 fullWidth
                 required
                 type="number"
-                label="DATA LIMIT"
+                label="DATA"
                 value={dataplan.dataVolume}
                 id={'data-plan-limit'}
                 InputLabelProps={{
@@ -118,25 +135,6 @@ const DataPlanDialog = ({
                   setDataplan({
                     ...dataplan,
                     dataVolume: parseInt(e.target.value as string),
-                  })
-                }
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                required
-                type="number"
-                label="PACKAGE PRICE"
-                value={dataplan.amount}
-                id={'data-plan-price'}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                onChange={(e) =>
-                  setDataplan({
-                    ...dataplan,
-                    amount: parseInt(e.target.value as string),
                   })
                 }
               />
@@ -184,7 +182,7 @@ const DataPlanDialog = ({
                     },
                   }}
                 >
-                  PRICE PER
+                  DURATION
                 </InputLabel>
                 <Select
                   notched
