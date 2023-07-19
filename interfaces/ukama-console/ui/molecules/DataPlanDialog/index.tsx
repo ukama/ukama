@@ -104,7 +104,7 @@ const DataPlanDialog = ({
         </Grid>
         {action !== 'update' && (
           <Grid item container xs={12} sm={6} columnSpacing={1} rowSpacing={2}>
-            <Grid item xs={5}>
+            <Grid item xs={6}>
               <TextField
                 label="PRICE"
                 required
@@ -120,7 +120,7 @@ const DataPlanDialog = ({
                 }
               />
             </Grid>
-            <Grid item xs={5}>
+            <Grid item xs={6}>
               <TextField
                 fullWidth
                 required
@@ -208,6 +208,12 @@ const DataPlanDialog = ({
             </Grid>
           </Grid>
         )}
+        <Grid item xs={12}>
+          <Typography>
+            {`${organizationName} earns [$X] per [unit] per subscriber on this
+            data plan.`}
+          </Typography>
+        </Grid>
       </Grid>
     </DialogContent>
 
