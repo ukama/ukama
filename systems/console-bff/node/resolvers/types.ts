@@ -2,27 +2,32 @@ import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
+export class NodeStatus {
+  @Field()
+  connectivity: string;
+
+  @Field()
+  state: string;
+}
+@ObjectType()
 export class Node {
   @Field()
-  allocated: boolean;
-
-  @Field(() => [String])
-  attached: string[];
+  id: string;
 
   @Field()
   name: string;
 
   @Field()
-  network: string;
-
-  @Field()
-  node: string;
-
-  @Field()
-  state: string;
+  orgId: string;
 
   @Field()
   type: string;
+
+  @Field(() => [String])
+  attached: string[];
+
+  @Field(() => NodeStatus)
+  status: NodeStatus;
 }
 
 @ObjectType()
@@ -42,6 +47,13 @@ export class GetNodes {
 export class NodeInput {
   @Field()
   id: string;
+}
+
+@ArgsType()
+@InputType()
+export class GetNodesInput {
+  @Field()
+  isFree?: boolean;
 }
 
 @ObjectType()
@@ -67,19 +79,26 @@ export class AttachNodeInput {
 @InputType()
 export class AddNodeInput {
   @Field()
+  name: string;
+
+  @Field()
   id: string;
 
   @Field()
-  state: string;
+  orgId: string;
 }
 
 @ArgsType()
 @InputType()
-export class AddNodeToNetworkInput {
+export class AddNodeToSiteInput {
   @Field()
   nodeId: string;
+
   @Field()
   networkId: string;
+
+  @Field()
+  siteId: string;
 }
 
 @ArgsType()

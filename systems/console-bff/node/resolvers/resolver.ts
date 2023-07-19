@@ -4,39 +4,30 @@ import { Context } from "../context";
 import { CBooleanResponse } from "./../../common/types/index";
 import {
   AddNodeInput,
-  AddNodeToNetworkInput,
+  AddNodeToSiteInput,
   AttachNodeInput,
   DeleteNode,
   GetNode,
   GetNodes,
+  GetNodesInput,
   Node,
   NodeInput,
-  NodeState,
   UpdateNodeInput,
   UpdateNodeStateInput,
 } from "./types";
 
 @Resolver(Node)
 class NodeResolvers {
-  @Query(() => GetNode)
+  @Query(() => Node)
   async getNode(@Arg("data") data: NodeInput, @Ctx() context: Context) {
     const { dataSources } = context;
-    const node = await dataSources.dataSource.getNode({ id: data.id });
-    return node;
+    return await dataSources.dataSource.getNode({ id: data.id });
   }
 
   @Query(() => GetNodes)
-  async getNodes(@Ctx() context: Context) {
+  async getNodes(@Arg("data") data: GetNodesInput, @Ctx() context: Context) {
     const { dataSources } = context;
-    const nodes = await dataSources.dataSource.getNodes();
-    return nodes;
-  }
-
-  @Query(() => GetNodes)
-  async getFreeNodes(@Ctx() context: Context) {
-    const { dataSources } = context;
-    const nodes = await dataSources.dataSource.getFreeNodes();
-    return nodes;
+    return await dataSources.dataSource.getNodes(data?.isFree || false);
   }
 
   @Mutation(() => DeleteNode)
@@ -45,10 +36,9 @@ class NodeResolvers {
     @Ctx() context: Context
   ) {
     const { dataSources } = context;
-    const node = await dataSources.dataSource.deleteNodeFromOrg({
+    return await dataSources.dataSource.deleteNodeFromOrg({
       id: data.id,
     });
-    return { id: node.node };
   }
 
   @Mutation(() => CBooleanResponse)
@@ -57,82 +47,77 @@ class NodeResolvers {
     @Ctx() context: Context
   ) {
     const { dataSources } = context;
-    const node = await dataSources.dataSource.attachNode({
+    return await dataSources.dataSource.attachNode({
       anodel: data.anodel,
       anoder: data.anoder,
       parentNode: data.parentNode,
     });
-    return node;
   }
 
   @Mutation(() => CBooleanResponse)
   async detachhNode(@Arg("data") data: NodeInput, @Ctx() context: Context) {
     const { dataSources } = context;
-    const node = await dataSources.dataSource.detachhNode({
+    return await dataSources.dataSource.detachhNode({
       id: data.id,
     });
-    return node;
   }
 
-  @Mutation(() => GetNode)
+  @Mutation(() => Node)
   async addNode(@Arg("data") data: AddNodeInput, @Ctx() context: Context) {
     const { dataSources } = context;
-    const node = await dataSources.dataSource.addNode({
+    return await dataSources.dataSource.addNode({
       id: data.id,
-      state: data.state,
+      name: data.name,
+      orgId: data.orgId,
     });
-    return node;
   }
 
   @Mutation(() => CBooleanResponse)
-  async releaseNodeFromNetwork(
+  async addNodeToSite(
+    @Arg("data") data: AddNodeToSiteInput,
+    @Ctx() context: Context
+  ) {
+    const { dataSources } = context;
+    return dataSources.dataSource.addNodeToSite({
+      nodeId: data.nodeId,
+      networkId: data.networkId,
+      siteId: data.siteId,
+    });
+  }
+
+  @Mutation(() => CBooleanResponse)
+  async releaseNodeFromSite(
     @Arg("data") data: NodeInput,
     @Ctx() context: Context
   ) {
     const { dataSources } = context;
-    const node = await dataSources.dataSource.releaseNodeFromNetwork({
+    return await dataSources.dataSource.releaseNodeFromSite({
       id: data.id,
     });
-    return node;
   }
 
-  @Mutation(() => CBooleanResponse)
-  async addNodeToNetwork(
-    @Arg("data") data: AddNodeToNetworkInput,
-    @Ctx() context: Context
-  ) {
-    const { dataSources } = context;
-    const node = await dataSources.dataSource.addNodeToNetwork({
-      networkId: data.networkId,
-      nodeId: data.nodeId,
-    });
-    return node;
-  }
-
-  @Mutation(() => NodeState)
+  @Mutation(() => Node)
   async updateNodeState(
     @Arg("data") data: UpdateNodeStateInput,
     @Ctx() context: Context
   ) {
     const { dataSources } = context;
-    const node = await dataSources.dataSource.updateNodeState({
+    return await dataSources.dataSource.updateNodeState({
       id: data.id,
       state: data.state,
     });
-    return node;
   }
 
-  @Mutation(() => GetNode)
+  @Mutation(() => Node)
   async updateNode(
     @Arg("data") data: UpdateNodeInput,
     @Ctx() context: Context
   ) {
     const { dataSources } = context;
-    const node = await dataSources.dataSource.updateNode({
+    return await dataSources.dataSource.updateNode({
       id: data.id,
       name: data.name,
     });
-    return node;
   }
 }
 

@@ -2,7 +2,6 @@ import { GetNodeStatusRes, NodeDto } from '@/generated';
 import { Button, Grid } from '@mui/material';
 import { styled } from '@mui/styles';
 import LoadingWrapper from '../LoadingWrapper';
-import NodeDropDown from '../NodeDropDown';
 import SplitButton from '../SplitButton';
 
 const StyledBtn = styled(Button)({
@@ -43,7 +42,7 @@ const NodeStatus = ({
   return (
     <Grid container>
       <Grid item xs={12} md={8}>
-        <NodeDropDown
+        {/* <NodeDropDown
           nodes={nodes}
           loading={loading}
           onAddNode={onAddNode}
@@ -51,7 +50,7 @@ const NodeStatus = ({
           selectedNode={selectedNode}
           onNodeSelected={handleNodeSelected}
           nodeStatusLoading={nodeStatusLoading}
-        />
+        /> */}
       </Grid>
       <Grid item md={4} xs={12} container spacing={2} justifyContent="flex-end">
         <Grid item>
