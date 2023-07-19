@@ -13,6 +13,7 @@ import {
   NodeInput,
   NodeState,
   UpdateNodeInput,
+  UpdateNodeStateInput,
 } from "./types";
 
 @Resolver(Node)
@@ -110,7 +111,7 @@ class NodeResolvers {
 
   @Mutation(() => NodeState)
   async updateNodeState(
-    @Arg("data") data: UpdateNodeState,
+    @Arg("data") data: UpdateNodeStateInput,
     @Ctx() context: Context
   ) {
     const { dataSources } = context;

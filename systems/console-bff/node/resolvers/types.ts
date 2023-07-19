@@ -6,7 +6,7 @@ export class Node {
   @Field()
   allocated: boolean;
 
-  @Field()
+  @Field(() => [String])
   attached: string[];
 
   @Field()
@@ -84,7 +84,7 @@ export class AddNodeToNetworkInput {
 
 @ArgsType()
 @InputType()
-export class UpdateNodeState {
+export class UpdateNodeStateInput {
   @Field()
   id: string;
 
