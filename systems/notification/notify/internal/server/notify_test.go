@@ -14,6 +14,7 @@ import (
 	"github.com/ukama/ukama/systems/notification/notify/mocks"
 	"gorm.io/gorm"
 
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	pb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 	jdb "gorm.io/datatypes"
 )
@@ -46,14 +47,17 @@ func NewTestPbNotification(nodeId string, ntype string) *pb.Notification {
 	}
 }
 
-func TestNotifyServer_Insert(t *testing.T) {
+func TestNotifyServer_Add(t *testing.T) {
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
 	node := ukama.NewVirtualHomeNodeId().String()
 
 	nt := NewTestDbNotification(node, "alert")
 
 	repo := mocks.NotificationRepo{}
 
-	s := server.NewNotifyServer(&repo)
+	s := server.NewNotifyServer(&repo, msgbusClient)
 
 	notif := &pb.AddRequest{
 		NodeId:      nt.NodeId,
@@ -79,7 +83,7 @@ func TestNotifyServer_Get(t *testing.T) {
 
 	repo := &mocks.NotificationRepo{}
 
-	s := server.NewNotifyServer(repo)
+	s := server.NewNotifyServer(repo, nil)
 
 	t.Run("NotificationFound", func(tt *testing.T) {
 		repo.On("Get", mock.Anything).
@@ -121,7 +125,7 @@ func TestNotifyServer_List(t *testing.T) {
 	node := ukama.NewVirtualHomeNodeId().String()
 	repo := mocks.NotificationRepo{}
 	resp := make([]db.Notification, 1)
-	n := server.NewNotifyServer(&repo)
+	n := server.NewNotifyServer(&repo, nil)
 
 	t.Run("ListAll", func(t *testing.T) {
 		nt := NewTestDbNotification(node, "alert")
@@ -205,7 +209,7 @@ func TestNotifyServer_List(t *testing.T) {
 
 	t.Run("ListSortedAlertsForServiceWithCount", func(t *testing.T) {
 		repo := mocks.NotificationRepo{}
-		n := server.NewNotifyServer(&repo)
+		n := server.NewNotifyServer(&repo, nil)
 
 		service := "noded"
 		ntype := "alert"
@@ -287,11 +291,14 @@ func TestNotifyServer_List(t *testing.T) {
 }
 
 func TestNotifyServer_Delete(t *testing.T) {
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
 	id := uuid.NewV4()
 
 	repo := mocks.NotificationRepo{}
 
-	n := server.NewNotifyServer(&repo)
+	n := server.NewNotifyServer(&repo, msgbusClient)
 
 	repo.On("Delete", mock.Anything).Return(nil)
 	_, err := n.Delete(context.TODO(), &pb.GetRequest{NotificationId: id.String()})
@@ -300,10 +307,13 @@ func TestNotifyServer_Delete(t *testing.T) {
 }
 
 func TestNotifyServer_Purge(t *testing.T) {
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
 	node := ukama.NewVirtualHomeNodeId().String()
 	repo := mocks.NotificationRepo{}
 	resp := make([]db.Notification, 1)
-	n := server.NewNotifyServer(&repo)
+	n := server.NewNotifyServer(&repo, msgbusClient)
 
 	t.Run("DeleteAll", func(t *testing.T) {
 		nt := NewTestDbNotification(node, "alert")

@@ -15,6 +15,7 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
+	System           string `default:"notification"`
 }
 
 func NewConfig(name string) *Config {
@@ -22,8 +23,11 @@ func NewConfig(name string) *Config {
 		DB: &uconf.Database{
 			DbName: name,
 		},
+
 		Service: uconf.LoadServiceHostConfig(name),
+
 		MsgClient: &uconf.MsgClient{
+			Host:           "msg-client-notification:9095",
 			Timeout:        5 * time.Second,
 			ListenerRoutes: []string{
 				// "event.cloud.node.node.online",

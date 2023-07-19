@@ -4,27 +4,33 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/notification/notify/internal"
 	"github.com/ukama/ukama/systems/notification/notify/internal/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/datatypes"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
 
 type NotifyServer struct {
-	repo db.NotificationRepo
-	// msgbus         mb.MsgBusServiceClient
-	// baseRoutingKey msgbus.RoutingKeyBuilder
+	repo           db.NotificationRepo
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedNotifyServiceServer
 }
 
-func NewNotifyServer(d db.NotificationRepo) *NotifyServer {
+func NewNotifyServer(d db.NotificationRepo, msgBus mb.MsgBusServiceClient) *NotifyServer {
 	return &NotifyServer{
-		repo: d,
+		repo:           d,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
 	}
 }
 
@@ -61,7 +67,6 @@ func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 		Details:     datatypes.JSON([]byte(req.Details)),
 	}
 
-	// notif.NotificationID = uuid.Must(uuid.NewV4(), err)
 	log.Debugf("New notification is : %+v.", notification)
 
 	err = n.repo.Add(notification)
@@ -70,12 +75,24 @@ func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 		return nil, err
 	}
 
-	/* Publish on message queue */
-	// err = n.Publish(notif)
-	// if err != nil {
-	// log.Errorf("Error publishing new notification.Error: %s\n", err.Error())
-	// return nil, err
-	// }
+	route := n.baseRoutingKey.SetAction("store").SetObject("notification").MustBuild()
+
+	evt := &epb.NotificationStoredEvent{
+		Id:          notification.Id.String(),
+		NodeId:      notification.NodeId,
+		NodeType:    notification.NodeType,
+		Severity:    notification.Severity.String(),
+		Type:        notification.Type.String(),
+		ServiceName: notification.ServiceName,
+		EpochTime:   notification.Time,
+		Description: notification.Description,
+		Details:     notification.Details.String(),
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+	}
 
 	return &pb.AddResponse{}, nil
 }
@@ -144,6 +161,17 @@ func (n *NotifyServer) Delete(ctx context.Context, req *pb.GetRequest) (*pb.Dele
 		return nil, err
 	}
 
+	route := n.baseRoutingKey.SetAction("delete").SetObject("notification").MustBuild()
+
+	evt := &epb.NotificationDeletedEvent{
+		Id: notificationId.String(),
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+	}
+
 	return &pb.DeleteResponse{}, nil
 }
 
@@ -177,51 +205,6 @@ func (n *NotifyServer) Purge(ctx context.Context, req *pb.PurgeRequest) (*pb.Lis
 
 	return &pb.ListResponse{Notifications: dbNotificationsToPbNotifications(nts)}, nil
 }
-
-// func (n *NotifyServer) Publish(notif *db.Notification) error {
-// if n.m == nil {
-// log.Errorf("No msgbus registerd to service.")
-// return nil
-// }
-
-// msg := &pb.Notification{
-// Id:          notif.Id.String(),
-// NodeId:      notif.NodeId,
-// NodeType:    notif.NodeType,
-// Description: notif.Description,
-// Severity:    string(notif.Severity),
-// ServiceName: notif.ServiceName,
-// EpochTime:   notif.Time,
-// Type:        notif.Type.String(),
-// }
-
-// log.Debugf("Broadcasted notification: %+v.", notif)
-// // Routing key
-// key := msgbus.NewRoutingKeyBuilder().
-// SetDeviceSource().
-// SetContainer(internal.ServiceName).
-// SetEventType().
-// SetObject("notification").
-// SetAction(msg.Type).
-// MustBuild()
-// routingKey := msgbus.RoutingKey(key)
-
-// // Marshal
-// data, err := proto.Marshal(msg)
-// if err != nil {
-// log.Errorf("Router:: fail marshal: %s", err.Error())
-// return err
-// }
-// log.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, n.m)
-
-// // Publish a message
-// err = n.m.Publish(data, msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, routingKey, msgbus.DeviceQ.ExchangeType)
-// if err != nil {
-// log.Errorf(err.Error())
-// }
-
-// return nil
-// }
 
 func dbNotificationToPbNotification(notif *db.Notification) *pb.Notification {
 	return &pb.Notification{

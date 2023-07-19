@@ -17,9 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-
-	// mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	generated "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
 
@@ -65,38 +63,39 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
+
 	if instanceId == "" {
 		/* used on local machines */
 		instanceId = uuid.NewV4().String()
-		// instanceId = inst.String()
 	}
 
-	// mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
-	// internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
-	// serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-	// serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-	// serviceConfig.MsgClient.RetryCount,
-	// serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, internal.SystemName,
+		internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
 
-	// log.Debugf("MessageBus Client is %+v", mbClient)
+	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNotifyServer(db.NewNotificationRepo(gormdb)) // mbClient,
+		srv := server.NewNotifyServer(db.NewNotificationRepo(gormdb), mbClient) // mbClient,
 		generated.RegisterNotifyServiceServer(s, srv)
 	})
 
-	// go msgBusListener(mbClient)
+	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
 }
 
-// func msgBusListener(m mb.MsgBusServiceClient) {
+func msgBusListener(m mb.MsgBusServiceClient) {
 
-// if err := m.Register(); err != nil {
-// log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
-// }
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
 
-// if err := m.Start(); err != nil {
-// log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", internal.ServiceName, err.Error())
-// }
-// }
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s",
+			internal.ServiceName, err.Error())
+	}
+}
