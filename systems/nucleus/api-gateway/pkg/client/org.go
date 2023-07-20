@@ -14,13 +14,13 @@ import (
 
 const DefaultNetworkName = "default"
 
-type Registry struct {
+type OrgRegistry struct {
 	conn      *grpc.ClientConn
 	orgClient orgpb.OrgServiceClient
 	timeout   time.Duration
 }
 
-func NewRegistry(networkHost string, orgHost string, timeout time.Duration) *Registry {
+func NewOrgRegistry(networkHost string, orgHost string, timeout time.Duration) *OrgRegistry {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -31,26 +31,26 @@ func NewRegistry(networkHost string, orgHost string, timeout time.Duration) *Reg
 	}
 	orgClient := orgpb.NewOrgServiceClient(orgConn)
 
-	return &Registry{
+	return &OrgRegistry{
 		conn:      orgConn,
 		orgClient: orgClient,
 		timeout:   timeout,
 	}
 }
 
-func NewRegistryFromClient(orgClient orgpb.OrgServiceClient) *Registry {
-	return &Registry{
+func NewOrgRegistryFromClient(orgClient orgpb.OrgServiceClient) *OrgRegistry {
+	return &OrgRegistry{
 		timeout:   1 * time.Second,
 		conn:      nil,
 		orgClient: orgClient,
 	}
 }
 
-func (r *Registry) Close() {
+func (r *OrgRegistry) Close() {
 	r.conn.Close()
 }
 
-func (r *Registry) GetOrg(orgName string) (*orgpb.GetByNameResponse, error) {
+func (r *OrgRegistry) GetOrg(orgName string) (*orgpb.GetByNameResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -62,7 +62,7 @@ func (r *Registry) GetOrg(orgName string) (*orgpb.GetByNameResponse, error) {
 	return res, nil
 }
 
-func (r *Registry) GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error) {
+func (r *OrgRegistry) GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -78,7 +78,7 @@ func (r *Registry) GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error) 
 	return res, nil
 }
 
-func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error) {
+func (r *OrgRegistry) AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 

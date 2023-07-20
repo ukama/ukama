@@ -18,11 +18,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	orgpb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
-	userspb "github.com/ukama/ukama/systems/nucleus/users/pb/gen"
+	userspb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 )
 
 const USER_ID_KEY = "UserId"
 const ORG_URL_PARAMETER = "org"
+const DUMMY_AUTH_ID = "4eaef5fa-6548-481c-87eb-2b2d85ce6141"
 
 type Router struct {
 	f       *fizz.Fizz
@@ -39,11 +40,11 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Registry registry
-	User     *client.Users
+	Organization organization
+	User         *client.Users
 }
 
-type registry interface {
+type organization interface {
 	AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error)
 	GetOrg(orgName string) (*orgpb.GetByNameResponse, error)
 	GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error)
@@ -51,8 +52,8 @@ type registry interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Registry = client.NewRegistry(endpoints.Network, endpoints.Org, endpoints.Timeout)
-	c.User = client.NewUsers(endpoints.Users, endpoints.Timeout)
+	c.Organization = client.NewOrgRegistry(endpoints.Org, endpoints.Org, endpoints.Timeout)
+	c.User = client.NewUsers(endpoints.User, endpoints.Timeout)
 	return c
 }
 
@@ -92,6 +93,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	auth := r.f.Group("/v1", "API gateway", "Registry system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
+			ctx.Set(USER_ID_KEY, DUMMY_AUTH_ID)
 			logrus.Info("Bypassing auth")
 			return
 		}
@@ -132,7 +134,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 // Org handlers
 func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetByNameResponse, error) {
-	return r.clients.Registry.GetOrg(c.Param("org"))
+	return r.clients.Organization.GetOrg(c.Param("org"))
 }
 
 func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.GetByOwnerResponse, error) {
@@ -142,11 +144,11 @@ func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.Get
 			Message: "user_uuid is a mandatory query parameter"}
 	}
 
-	return r.clients.Registry.GetOrgs(ownerUUID)
+	return r.clients.Organization.GetOrgs(ownerUUID)
 }
 
 func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddResponse, error) {
-	return r.clients.Registry.AddOrg(req.OrgName, req.Owner, req.Certificate)
+	return r.clients.Organization.AddOrg(req.OrgName, req.Owner, req.Certificate)
 }
 
 // Users handlers
