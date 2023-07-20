@@ -168,6 +168,7 @@ const Manage = () => {
       });
     },
   });
+  console.log('NETWORKS', data.networkList);
 
   const [getSims, { loading: simsLoading, refetch: refetchSims }] =
     useGetSimsLazyQuery({
@@ -486,8 +487,7 @@ const Manage = () => {
               data={data.node}
               search={nodeSearch}
               setSearch={setNodeSearch}
-              // networkList={data.networkList}
-              networkList={[]}
+              networkList={data.networkList || []}
               handleCreateNetwork={handleCreateNetwork}
             />
           )}

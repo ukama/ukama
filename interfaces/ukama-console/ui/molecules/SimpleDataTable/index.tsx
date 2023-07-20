@@ -15,13 +15,14 @@ import {
 import { useRecoilValue } from 'recoil';
 import { colors } from '@/styles/theme';
 import React from 'react';
+import { NetworkDto } from '@/generated';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
   dataset: any;
   height?: string;
   columns: ColumnsWithOptions[];
-  networkList?: string[] | [] | undefined;
+  networkList?: any;
   handleCreateNetwork?: any;
 }
 
@@ -100,11 +101,23 @@ const MemoizedTableCell = React.memo(
         ) : column.id === 'network' ? (
           <ChipDropdown
             onCreateNetwork={handleCreateNetwork}
-            menu={networkList}
+            menu={
+              (networkList &&
+                networkList.map((network: any) => network.name)) ||
+              []
+            }
           />
         ) : (
-          <Typography variant={'body2'} sx={{ padding: '8px' }}>
-            {row[column.id]}
+          <Typography
+            variant={'body2'}
+            sx={{ padding: '8px' }}
+            color={row[column.id] === 'false' ? 'primary' : ''}
+          >
+            {row[column.id] === 'true'
+              ? 'Assigned'
+              : row[column.id] === 'false'
+              ? 'Unassigned'
+              : row[column.id]}
           </Typography>
         )}
       </TableCell>
