@@ -1,24 +1,5 @@
 package rest
 
-// org group
-
-type GetOrgsRequest struct {
-	UserUuid string `example:"{{UserUUID}}" form:"user_uuid" json:"user_uuid" query:"user_uuid" binding:"required" validate:"required"`
-}
-
-type DeleteNodeNodeRequest struct {
-	NodeId string `path:"node_id" validate:"required"`
-}
-type GetOrgRequest struct {
-	OrgName string `example:"milky-way" path:"org" validate:"required"`
-}
-
-type AddOrgRequest struct {
-	OrgName     string `example:"milky-way" json:"name" validate:"required"`
-	Owner       string `example:"{{UserUUID}}" json:"owner_uuid" validate:"required"`
-	Certificate string `example:"test_cert" json:"certificate"`
-}
-
 type MemberRequest struct {
 	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
 	Role     string `example:"member" json:"role" validate:"required"`
@@ -42,25 +23,6 @@ type UpdateMemberRequest struct {
 	UserUuid      string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
 	IsDeactivated bool   `example:"false" json:"isDeactivated,omitempty"`
 	Role          string `example:"member" json:"role,omitempty"`
-}
-
-// Users group
-
-type GetUserRequest struct {
-	UserUuid string `example:"{{UserUUID}}" path:"user_uuid" validate:"required"`
-}
-type UpdateUserRequest struct {
-	UserUUID string `path:"user_uuid" validate:"required"`
-	Name     string `json:"name,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Phone    string `json:"phone,omitempty"`
-}
-
-type AddUserRequest struct {
-	Name   string `example:"John" json:"name,omitempty" validate:"required"`
-	Email  string `example:"john@example.com" json:"email" validate:"required"`
-	Phone  string `example:"4151231234" json:"phone,omitempty"`
-	AuthId string `example:"{{AuthId}}" json:"auth_id" validate:"required"`
 }
 
 // Network group

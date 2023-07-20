@@ -16,21 +16,21 @@ type OrgClientProvider struct {
 func (_m *OrgClientProvider) GetByName(name string) (*providers.OrgInfo, error) {
 	ret := _m.Called(name)
 
-	var r0 gen.OrgServiceClient
+	var r0 *providers.OrgInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (gen.OrgServiceClient, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(string) (*providers.OrgInfo, error)); ok {
+		return rf(name)
 	}
-	if rf, ok := ret.Get(0).(func() gen.OrgServiceClient); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string) *providers.OrgInfo); ok {
+		r0 = rf(name)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*providers.OrgInfo)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(name)
 	} else {
 		r1 = ret.Error(1)
 	}

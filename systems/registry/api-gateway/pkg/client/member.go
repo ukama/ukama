@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -19,14 +18,14 @@ type MemberRegistry struct {
 	host    string
 }
 
-func NewMemberRegistry(memberHost string, timeout time.Duration) *MemberRegistry {
+func NewMemberRegistry(networkHost string, timeout time.Duration) *MemberRegistry {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, memberHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		logrus.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewMemberServiceClient(conn)
 
@@ -34,7 +33,7 @@ func NewMemberRegistry(memberHost string, timeout time.Duration) *MemberRegistry
 		conn:    conn,
 		client:  client,
 		timeout: timeout,
-		host:    memberHost,
+		host:    networkHost,
 	}
 }
 
@@ -81,20 +80,6 @@ func (r *MemberRegistry) AddMember(userUUID string, role string) (*pb.MemberResp
 
 	member := &pb.AddMemberRequest{UserUuid: userUUID, Role: pb.RoleType(pb.RoleType_value[role])}
 	res, err := r.client.AddMember(ctx, member)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (r *MemberRegistry) AddOtherMember(userUUID string, role string) (*pb.MemberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
-
-	member := &pb.AddMemberRequest{UserUuid: userUUID, Role: pb.RoleType(pb.RoleType_value[role])}
-	res, err := r.client.AddOtherMember(ctx, member)
 
 	if err != nil {
 		return nil, err

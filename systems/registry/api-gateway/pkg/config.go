@@ -18,11 +18,10 @@ type Config struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout    time.Duration
-	Network    string
-	Member     string
-	Node       string
-	Invitation string
+	Timeout time.Duration
+	Network string
+	Member  string
+	Node    string
 }
 
 type HttpEndpoints struct {
@@ -41,11 +40,10 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:    3 * time.Second,
-			Network:    "network:9090",
-			Member:     "member:9090",
-			Node:       "node:9090",
-			Invitation: "invitation:9090",
+			Timeout: 3 * time.Second,
+			Network: "network:9090",
+			Member:  "member:9090",
+			Node:    "node:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
