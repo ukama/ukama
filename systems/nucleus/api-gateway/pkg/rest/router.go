@@ -153,24 +153,24 @@ func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddR
 
 // Users handlers
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.Get(c.Param("user_id"), c.GetString(USER_ID_KEY))
+	return r.clients.User.Get(req.UserUuid)
 }
 
 func (r *Router) getUserByAuthIdHandler(c *gin.Context, req *GetUserByAuthIdRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.GetByAuthId(c.Param("auth_id"), c.GetString(USER_ID_KEY))
+	return r.clients.User.GetByAuthId(req.UserUuid)
 }
 
 func (r *Router) whoamiHandler(c *gin.Context, req *GetUserRequest) (*userspb.WhoamiResponse, error) {
-	return r.clients.User.Whoami(c.Param("user_id"), c.GetString(USER_ID_KEY))
+	return r.clients.User.Whoami(req.UserUuid)
 }
 
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
 	return r.clients.User.AddUser(&userspb.User{
-		Name:  req.Name,
-		Email: req.Email,
-		Phone: req.Phone,
-	},
-		c.GetString(USER_ID_KEY))
+		Name:   req.Name,
+		Email:  req.Email,
+		Phone:  req.Phone,
+		AuthId: req.AuthId,
+	})
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
