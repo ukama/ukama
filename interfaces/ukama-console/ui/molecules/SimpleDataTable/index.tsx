@@ -15,7 +15,6 @@ import {
 import { useRecoilValue } from 'recoil';
 import { colors } from '@/styles/theme';
 import React from 'react';
-import { NetworkDto } from '@/generated';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
