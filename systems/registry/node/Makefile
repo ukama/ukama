@@ -18,13 +18,14 @@ deps:
 	go install
 
 gen:
-	protoc -I ./pb -I ../../common/pb/dep  --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
+	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
 					  node.proto
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm pb/gen/*.go
+	rm mocks/*.go
 
 
 # integration tests
@@ -35,3 +36,6 @@ integration.test:
 
 integration.build:
 	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+
+server:
+	go run cmd/server/main.go

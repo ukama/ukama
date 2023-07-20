@@ -14,6 +14,7 @@ service OrgService {
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByName(GetByNameRequest) returns (GetByNameResponse);
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
+    rpc GetByUser(GetByOwnerRequest) returns (GetByUserResponse);
 
 
     /* Users */
@@ -51,6 +52,13 @@ message GetByOwnerRequest{
 message GetByOwnerResponse{
     string owner = 1 [(validator.field) = {uuid_ver: 4}];
     repeated Organization orgs = 2;
+}
+
+
+message GetByUserResponse{
+    string user = 1 [(validator.field) = {uuid_ver: 4}];
+    repeated Organization ownerOf = 2 [json_name = "owner_of"];
+    repeated OrgUser memberOf = 3 [json_name = "member_of"];
 }
 
 message GetByNameRequest {

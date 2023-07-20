@@ -10,10 +10,6 @@
 #ifndef INC_JSON_TYPES_H_
 #define INC_JSON_TYPES_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "notify_macros.h"
 #include "usys_types.h"
 
@@ -118,17 +114,20 @@ typedef  json_error_t   JsonErrObj;
 #define JTAG_METHOD                     "method"
 #define JTAG_URL_EP                     "endPoint"
 
-#define JTAG_NOTIFY                     "notify"
-#define JTAG_SERVICE_NAME               "serviceName"
-#define JTAG_SEVERITY                   "severity"
-#define JTAG_NOTIFICATION_TYPE          "notificationType"
-#define JTAG_NODE_ID                    "nodeID"
-#define JTAG_NODE_TYPE                  "nodeType"
-#define JTAG_NOTIF_SEVERITY             "severity"
-#define JTAG_NOTIF_DETAILS              "details"
-#define JTAG_NOTIF_REASON               "reason"
-#define JTAG_NOTIF_ATTR                 "attribute"
-#define JTAG_EPOCH_TIME                 "time"
+#define JTAG_SERVICE_NAME       "serviceName"
+#define JTAG_SEVERITY           "severity"
+#define JTAG_TIME               "time"
+#define JTAG_TYPE               "type"
+#define JTAG_NODE_ID            "nodeID"
+#define JTAG_SEVERITY           "severity"
+#define JTAG_DETAILS            "details"
+#define JTAG_DESCRIPTION        "description"
+#define JTAG_UNITS              "units"
+#define JTAG_NAME               "name"
+#define JTAG_VALUE              "value"
+#define JTAG_DETAILS            "details"
+#define JTAG_MODULE             "module"
+#define JTAG_STATUS             "status"
 
 typedef enum {
     TYPE_NULL = 0,
@@ -147,9 +146,5 @@ typedef enum {
     TYPE_STRING,
     TYPE_MAX
 } DataType;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* INC_JSON_TYPES_H_ */

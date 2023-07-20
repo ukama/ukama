@@ -96,7 +96,8 @@ int main (int argc, char **argv) {
 	char *configFile=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	char *nodeID=NULL;
-	int opt, opdidx, ret=TRUE;
+	int opt, opdidx;
+    char buffer[MAX_BUFFER] = {0};
 
 	/* Prase command line args. */
 	while (TRUE) {
@@ -180,12 +181,8 @@ int main (int argc, char **argv) {
 	}
 
 	/* Step-3: connect with the ukama bootstrap server */
-	if (register_to_server(config->bootstrapServer, nodeID, serverInfo)
-		!= TRUE) {
-		log_error("Error receiving server info from boostrap server: %s for %s",
-				  config->bootstrapServer, nodeID);
-		goto done;
-	}
+    send_request_to_init_with_exponential_backoff(config->bootstrapServer,
+                                                  nodeID, serverInfo);
 	
 	/* Step-4: read mesh config file, update server IP and certs */
 	if (read_mesh_config_file(config->meshConfig, meshConfig) != TRUE) {
@@ -194,9 +191,9 @@ int main (int argc, char **argv) {
 	}
 
 	/* Step-5: update mesh.d configuration with the recevied server info. */
-	ret &= write_to_file(meshConfig->remoteIPFile, serverInfo->IP);
-	ret &= write_to_file(meshConfig->certFile,     serverInfo->cert);
-	if (ret == FALSE) {
+    sprintf(buffer, "%s;%s", serverInfo->IP, nodeID);
+	if (write_to_file(meshConfig->remoteIPFile, buffer) <= 0 ||
+        write_to_file(meshConfig->certFile, serverInfo->cert) <= 0) {
 		log_error("Error updating mesh.d configs. File: %s",
 				  config->meshConfig);
 		goto done;

@@ -102,13 +102,7 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 
 	int ret;
   
-	/* open HTTPS/HTTP connection. */
-	if (config->secure && flag == WEB_SOCKETS) {
-		ret = ulfius_start_secure_framework(instance, config->keyFile,
-											config->certFile);
-	} else {
-		ret = ulfius_start_framework(instance);
-	}
+    ret = ulfius_start_framework(instance);
 
 	if (ret != U_OK) {
 		log_error("Error starting the webservice/websocket.");
@@ -116,7 +110,6 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 		/* clean up. */
 		ulfius_stop_framework(instance); /* don't think need this. XXX */
 		ulfius_clean_instance(instance);
-    
 		return FALSE;
 	}
 
@@ -133,59 +126,26 @@ static int start_framework(Config *config, UInst *instance, int flag) {
  * start_websocket_server -- start websocket server on the server port.
  *
  */
-
-int start_websocket_server(Config *cfg, UInst *serverInst) {
+int start_websocket_server(Config *config, UInst *websocketInst) {
 
 	/* Initialize the admin and client webservices framework. */
-	if (init_framework(serverInst, atoi(cfg->remoteAccept)) != TRUE) {
-		log_error("Error initializing webservice framework");
+	if (init_framework(websocketInst, atoi(config->websocketPort)) != TRUE) {
+		log_error("Error initializing websocket framework");
 		return FALSE;
 	}
 
 	/* setup endpoints and methods callback. */
-	setup_websocket_endpoints(cfg, serverInst);
-  
+	setup_websocket_endpoints(config, websocketInst);
+
 	/* open connection for both admin and client webservices */
-	if (start_framework(cfg, serverInst, WEB_SOCKETS)==FALSE) {
+	if (start_framework(config, websocketInst, WEB_SOCKETS)==FALSE) {
 		log_error("Failed to start websocket at remote port %s",
-				  cfg->remoteAccept);
+				  config->websocketPort);
 		return FALSE;
 	}
-  
-	log_debug("Websocket on remote port %s: started.", cfg->remoteAccept);
+	log_debug("Websocket accepting on port: %s", config->websocketPort);
 
  	return TRUE;
-}
-
-/*
- * add_device_info_to_request -- Add device related information to the
- *                               request
- *
- */
-static int add_device_info_to_request(struct _u_request *request,
-									  Config *config) {
-	json_t *json=NULL;
-	char *jStr=NULL;
-
-	if (serialize_device_info(&json, config->deviceInfo) == FALSE) {
-		log_error("Failed to serialize device info for request");
-		return FALSE;
-	}
-
-	/* Add the json into request body. */
-	jStr = json_dumps(json, 0);
-	if (jStr == NULL) {
-		json_decref(json);
-		return FALSE;
-	}
-
-	request->binary_body_length = strlen(jStr);
-	request->binary_body = strdup(jStr);
-
-	free(jStr);
-	json_decref(json);
-
-	return TRUE;
 }
 
 /*
@@ -195,7 +155,7 @@ static int add_device_info_to_request(struct _u_request *request,
 int start_web_services(Config *config, UInst *clientInst) {
 
 	/* Initialize the admin and client webservices framework. */
-	if (init_framework(clientInst, atoi(config->localAccept)) != TRUE){
+	if (init_framework(clientInst, atoi(config->servicesPort)) != TRUE){
 		log_error("Error initializing webservice framework");
 		return FALSE;
 	}
@@ -206,11 +166,11 @@ int start_web_services(Config *config, UInst *clientInst) {
 	/* open connection for both admin and client webservices */
 	if (!start_framework(config, clientInst, WEB_SERVICE)) {
 		log_error("Failed to start webservices for client: %s",
-				  config->localAccept);
+                  config->servicesPort);
 		return FALSE;
 	}
 
-	log_debug("Webservice on client port: %s started.", config->localAccept);
+	log_debug("Service accepting on port: %s", config->servicesPort);
 
 	return TRUE;
 }

@@ -155,6 +155,34 @@ func (o *OrgService) GetByOwner(ctx context.Context, req *pb.GetByOwnerRequest) 
 	return resp, nil
 }
 
+func (o *OrgService) GetByUser(ctx context.Context, req *pb.GetByOwnerRequest) (*pb.GetByUserResponse, error) {
+	log.Infof("Getting all orgs both of membership or owned by %v", req.GetUserUuid())
+
+	userId, err := uuid.FromString(req.GetUserUuid())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
+	}
+
+	ownedOrgs, err := o.orgRepo.GetByOwner(userId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "owned orgs")
+	}
+
+	membOrgs, err := o.orgRepo.GetByMember(userId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "memb orgs")
+	}
+
+	resp := &pb.GetByUserResponse{
+		User:     req.GetUserUuid(),
+		OwnerOf:  dbOrgsToPbOrgs(ownedOrgs),
+		MemberOf: dbMembersToPbMembers(membOrgs),
+	}
+
+	return resp, nil
+}
+
 func (o *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 	uuid, err := uuid.FromString(req.UserUuid)
 	if err != nil {
@@ -419,7 +447,7 @@ func dbMemberToPbMember(member *db.OrgUser) *pb.OrgUser {
 		Uuid:          member.Uuid.String(),
 		Role:          pb.RoleType(member.Role),
 		IsDeactivated: member.Deactivated,
-		// CreatedAt:     timestamppb.New(member.CreatedAt),
+		CreatedAt:     timestamppb.New(member.CreatedAt),
 	}
 }
 

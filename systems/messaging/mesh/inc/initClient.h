@@ -30,8 +30,8 @@ typedef struct systemInfo_ {
 	char *health;
 } SystemInfo;
 
-int get_systemInfo_from_initClient(Config *config, char *systemName,
-								   char **host, char **port);
+int get_systemInfo_from_initClient(char *systemName,
+                                   char **systemHost, char **systemPort);
 void free_system_info(SystemInfo *systemInfo);
 
 #endif /* NODE_INFO_H */

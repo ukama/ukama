@@ -21,13 +21,13 @@ type Registry struct {
 	conn          *grpc.ClientConn
 	orgConn       *grpc.ClientConn
 	networkClient pb.NetworkServiceClient
-	nodeClient   nodepb.NodeServiceClient
+	nodeClient    nodepb.NodeServiceClient
 	orgClient     orgpb.OrgServiceClient
 	timeout       time.Duration
 	host          string
 }
 
-func NewRegistry(networkHost string, orgHost string, nodeHost string ,timeout time.Duration) *Registry {
+func NewRegistry(networkHost string, orgHost string, nodeHost string, timeout time.Duration) *Registry {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -49,7 +49,6 @@ func NewRegistry(networkHost string, orgHost string, nodeHost string ,timeout ti
 		logrus.Fatalf("did not connect: %v", err)
 	}
 	nodeClient := nodepb.NewNodeServiceClient(nodeConn)
-
 
 	return &Registry{
 		conn:          conn,
@@ -118,18 +117,14 @@ func (r *Registry) AddOrg(orgName string, owner string, certificate string) (*or
 
 	return res, nil
 }
-func (r *Registry) AddNode (nodeId string,state nodepb.NodeState,name string,) (*nodepb.AddNodeResponse, error) {
+func (r *Registry) AddNode(nodeId string, name string, orgId string) (*nodepb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	node := &nodepb.Node{
-		NodeId: nodeId,
-		Name: name,
-		State: state,
-	
-	}
 	res, err := r.nodeClient.AddNode(ctx, &nodepb.AddNodeRequest{
-		Node: node,
+		NodeId: nodeId,
+		OrgId:  orgId,
+		Name:   name,
 	})
 
 	if err != nil {
@@ -138,7 +133,7 @@ func (r *Registry) AddNode (nodeId string,state nodepb.NodeState,name string,) (
 
 	return res, nil
 }
-func (r *Registry) GetNode (nodeId string) (*nodepb.GetNodeResponse, error) {
+func (r *Registry) GetNode(nodeId string) (*nodepb.GetNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -152,14 +147,13 @@ func (r *Registry) GetNode (nodeId string) (*nodepb.GetNodeResponse, error) {
 
 	return res, nil
 }
-func (r *Registry) UpdateNode (nodeId string,name string,) (*nodepb.UpdateNodeResponse, error) {
+func (r *Registry) UpdateNode(nodeId string, name string) (*nodepb.UpdateNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	res, err := r.nodeClient.UpdateNode(ctx, &nodepb.UpdateNodeRequest{
 		NodeId: nodeId,
-		Name: name,
-
+		Name:   name,
 	})
 
 	if err != nil {
@@ -168,11 +162,11 @@ func (r *Registry) UpdateNode (nodeId string,name string,) (*nodepb.UpdateNodeRe
 
 	return res, nil
 }
-func (r *Registry) DeleteNode (nodeId string) (*nodepb.DeleteResponse, error) {
+func (r *Registry) DeleteNode(nodeId string) (*nodepb.DeleteNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.nodeClient.Delete(ctx, &nodepb.DeleteRequest{
+	res, err := r.nodeClient.DeleteNode(ctx, &nodepb.DeleteNodeRequest{
 		NodeId: nodeId,
 	})
 

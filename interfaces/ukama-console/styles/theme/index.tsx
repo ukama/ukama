@@ -5,7 +5,7 @@ const theme = (isDarkmode: boolean) =>
   responsiveFontSizes(
     createTheme({
       typography: {
-        fontSize: 16,
+        // fontSize: 16,
         fontFamily: 'Rubik, sans-serif;',
         subtitle1: { fontFamily: 'Work Sans, sans-serif' },
         subtitle2: { fontFamily: 'Work Sans, sans-serif' },
@@ -278,4 +278,4 @@ const theme = (isDarkmode: boolean) =>
     }),
   );
 
-export { theme, colors };
+export { colors, theme };

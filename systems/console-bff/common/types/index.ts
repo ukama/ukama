@@ -1,3 +1,5 @@
+import { Field, ObjectType } from "type-graphql";
+
 import { API_METHOD_TYPE } from "../enums";
 
 export type ApiMethodDataDto = {
@@ -13,3 +15,13 @@ export type ErrorType = {
   code: number;
   description?: string;
 };
+
+export type TBooleanResponse = {
+  success: boolean;
+};
+
+@ObjectType()
+export class CBooleanResponse {
+  @Field()
+  success: boolean;
+}

@@ -13,7 +13,7 @@
 #include "mesh.h"
 #include <rabbitmq-c/amqp.h>
 
-#define MSG_CONTAINER "MeshD" /* use in AMQP routing key */
+#define MSG_CONTAINER "mesh" /* use in AMQP routing key */
 
 #define MAX_FRAME  131072
 #define MAX_EVENTS 10
@@ -31,6 +31,7 @@
 #define SOURCE_CLOUD_STR  "cloud"
 
 #define OBJECT_LINK_STR "link"
+#define OBJECT_NODE_STR "node"
 #define OBJECT_CERT_STR "cert"
 
 #define STATE_CONNECT_STR "connect"
@@ -43,6 +44,8 @@
 #define STATE_INVALID_STR "invalid"
 #define STATE_UPDATE_STR  "update"
 #define STATE_EXPIRED_STR "expired"
+#define STATE_ONLINE_STR  "online"
+#define STATE_OFFLINE_STR "offline"
 
 static int free_stop;
 #define FREE( ... ) Free( &free_stop , __VA_ARGS__ , &free_stop )
@@ -114,9 +117,6 @@ typedef struct _routing_key {
 	ObjectState state;  /* State of the object. */
 } AMQPRoutingKey;
 
-WAMQPConn *init_amqp_connection(char *host, char *port);
-void close_amqp_connection(WAMQPConn *conn);
-int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
-					   uuid_t uuid);
-
+int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
+                  char *meshIP, int meshPort);
 #endif /* MESH_AMQP_H */

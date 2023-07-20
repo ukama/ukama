@@ -10,13 +10,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <uuid/uuid.h>
 
 #include "rabbitmq-c/amqp.h"
 
 #include "mesh.h"
 #include "u_amqp.h"
-#include "link.pb-c.h"
+#include "nodeEvent.pb-c.h"
 
 /* 
  * AMQP Routing key:
@@ -37,8 +36,9 @@ static char *convert_object_to_str(MsgObject object);
 static char *convert_state_to_str(ObjectState state);
 static int is_valid_event(MeshEvent event);
 static char *create_routing_key(MeshEvent event);
-static void *serialize_link_msg(uuid_t uuid);
 static int object_type(MeshEvent event);
+static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
+                                  char *meshIP, int meshPort);
 
 /* Mapping between Mesh.d internal state and AMQP routing key. 
  *
@@ -161,7 +161,7 @@ static char *convert_object_to_str(MsgObject object) {
 	switch(object) {
 
 	case LINK:
-		str = OBJECT_LINK_STR;
+		str = OBJECT_NODE_STR;
 		break;
 
 	case CERT:
@@ -186,27 +186,15 @@ static char *convert_state_to_str(ObjectState state) {
 	switch(state) {
 
 	case CONNECT:
-		str = STATE_CONNECT_STR;
-		break;
+    case ACTIVE:
+        str = STATE_ONLINE_STR;
+        break;
 
 	case FAIL:
-		str = STATE_FAIL_STR;
-		break;
-
-	case ACTIVE:
-		str = STATE_ACTIVE_STR;
-		break;
-
 	case LOST:
-		str = STATE_LOST_STR;
-		break;
-
 	case END:
-		str = STATE_END_STR;
-		break;
-
 	case CLOSE:
-		str = STATE_CLOSE_STR;
+		str = STATE_OFFLINE_STR;
 		break;
 
 	case VALID:
@@ -307,7 +295,7 @@ static void log_amqp_response(WAMQPReply reply, const char *context) {
  *
  */
 
-WAMQPConn *init_amqp_connection(char *host, char *port) {
+static WAMQPConn *init_amqp_connection(char *host, char *port) {
 
 	int ret;
 	WAMQPConn *conn=NULL;
@@ -367,17 +355,6 @@ WAMQPConn *init_amqp_connection(char *host, char *port) {
 }
 
 /*
- * close_amqp_connection --
- *
- */
-void close_amqp_connection(WAMQPConn *conn) {
-
-	amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-	amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
-	amqp_destroy_connection(conn);
-}
-
-/*
  * create_routing_key --
  *
  */
@@ -424,26 +401,25 @@ static char *create_routing_key(MeshEvent event) {
 }
 
 /*
- * serialize_link_msg -- Serialize the protobuf msg for the Link object
+ * serialize_node_event -- Serialize the protobuf msg for the Link object
  *
  */
-static void *serialize_link_msg(uuid_t uuid) {
+static void *serialize_node_event(char *nodeID, char *nodeIP, int nodePort,
+                                char *meshIP, int meshPort) {
 
-	char idStr[36+1];
-	Link linkMsg = LINK__INIT;
+	NodeEvent nodeEvent = NODE_EVENT__INIT;
 	void *buff=NULL;
-	size_t len, idLen=36+1;
+	size_t len;
 
-	if (uuid_is_null(uuid)) {
-		return NULL;
-	}
+	if (nodeID == NULL || nodeIP == NULL || meshIP == NULL) return NULL;
 
-	uuid_unparse(uuid, &idStr[0]);
+    nodeEvent.nodeid   = strdup(nodeID);
+    nodeEvent.nodeip   = nodeIP;
+    nodeEvent.nodeport = nodePort;
+    nodeEvent.meship   = strdup(meshIP);
+    nodeEvent.meshport = meshPort;
 
-	linkMsg.uuid = (char *)malloc(idLen);
-	strncpy(linkMsg.uuid, &idStr[0], idLen);
-
-	len = link__get_packed_size(&linkMsg);
+	len = node_event__get_packed_size(&nodeEvent);
 
 	buff = malloc(len);
 	if (buff==NULL) {
@@ -451,9 +427,11 @@ static void *serialize_link_msg(uuid_t uuid) {
 		return NULL;
 	}
 
-	link__pack(&linkMsg, buff);
+	node_event__pack(&nodeEvent, buff);
 
-	free(linkMsg.uuid);
+	free(nodeEvent.nodeid);
+    free(nodeEvent.nodeip);
+    free(nodeEvent.meship);
 
 	return buff;
 }
@@ -498,8 +476,9 @@ static int object_type(MeshEvent event) {
  * publish_amqp_event --
  *
  */
-int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
-					   uuid_t uuid) {
+static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
+                              char *nodeID, char *nodeIP, int nodePort,
+                              char *meshIP, int meshPort) {
 
 	/* THREAD? XXX - Think about me*/
 	char *key=NULL;
@@ -512,9 +491,9 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 		return FALSE;
 	}
 
-	if (uuid_is_null(uuid)) {
-		return FALSE;
-	}
+    if (nodeID == NULL) {
+        return FALSE;
+    }
 
 	/* Step-1: build the routing key for the event. 
 	 * <type>.<source>.<container>.<object>.<state>
@@ -535,7 +514,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	/* Step-3: protobuf msg. */
 	if (object_type(event) == OBJECT_LINK) {
 
-		buff = serialize_link_msg(uuid);
+		buff = serialize_node_event(nodeID, nodeIP, nodePort, meshIP, meshPort);
 		if (buff==NULL) {
 			log_error("Error serializing Link packet for AMQP. Event: %d",
 					  event);
@@ -549,7 +528,7 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	}
 
 	/* Step-4: send the message to AMQP broker */
-	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
+	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(""),
 							 amqp_cstring_bytes(key), 0, 0, &prop,
 							 amqp_cstring_bytes(buff));
 	if (ret < 0) {
@@ -558,10 +537,44 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 				  amqp_error_string2(ret));
 	} else {
 		ret = TRUE;
-		log_debug("AMQP message successfully sent to exchange");
+		log_debug("AMQP message successfully sent to default exchange");
 	}
 
 	free(buff);
 	free(key);
 	return ret;
+}
+
+/*
+ * publish_event --
+ */
+int publish_event(MeshEvent event, char *nodeID, char *nodeIP, int nodePort,
+                  char *meshIP, int meshPort) {
+
+    WAMQPConn *conn=NULL;
+    char *amqpHost=NULL, *amqpPort=NULL;
+
+    amqpHost = getenv(ENV_AMQP_HOST);
+    amqpPort = getenv(ENV_AMQP_PORT);
+
+    conn = init_amqp_connection(amqpHost, amqpPort);
+    if (conn == NULL) {
+        log_error("Failed to connect with AMQP at %s:%s", amqpHost, amqpPort);
+        return FALSE;
+    }
+
+    if (object_type(event) == OBJECT_LINK) {
+        publish_amqp_event(conn, DEFAULT_MESH_AMQP_EXCHANGE, event,
+                           nodeID,
+                           nodeIP, nodePort,
+                           meshIP, meshPort);
+    } else {
+        log_error("Invalid event type. No publish");
+    }
+
+    amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
+	amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
+	amqp_destroy_connection(conn);
+
+    return TRUE;
 }

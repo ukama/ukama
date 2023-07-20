@@ -1,0 +1,49 @@
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/notification/mailer/pb/gen";
+
+import "google/protobuf/timestamp.proto";
+package ukama.notification.mailer.v1;
+import "validator.proto";
+
+
+/*
+Mailer sub-system is responsible of:
+    - Sending Emails
+*/
+// Defines the service for mailer  operations
+service MailerService {
+rpc SendEmail (SendEmailRequest) returns (SendEmailResponse) {}
+rpc GetEmailById (GetEmailByIdRequest) returns (GetEmailByIdResponse) {}
+}
+// Defines the request and response for getting email by id
+message GetEmailByIdRequest{
+    string mailId = 1;
+}
+// Defines the response for getting email by id
+message GetEmailByIdResponse{
+    string mailId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "mailer_id"];
+    string to = 2;
+    string subject = 3;
+    string body = 4;
+    string status = 5;
+    string SentAt = 6;
+    map<string, string> values = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+}
+
+// Defines the request and response for sending emails
+message SendEmailRequest{
+    repeated string to = 1;
+    string subject = 2;
+    string body = 3;
+    map<string, string> values = 4;
+    
+}
+
+// Defines the response for sending emails
+message SendEmailResponse{
+    string message = 1;
+    string mailId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "mailer_id"];
+}
+

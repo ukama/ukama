@@ -23,7 +23,21 @@ const SETTING_MENU = [
   { id: 'billing', name: 'Billing' },
   { id: 'appearance', name: 'Appearance' },
 ];
-const NODE_ACTIONS = ['Turn node off', 'Restart', 'Turn RF off'];
+const NODE_ACTIONS_BUTTONS = [
+  {
+    id: 'node-on-off',
+    name: 'Turn Node Off',
+  },
+  {
+    id: 'node-restart',
+    name: 'Restart',
+  },
+  {
+    id: 'node-rf-off',
+    name: 'Turn RF Off',
+  },
+];
+
 const TABLE_EXPORT_OPTIONS = [
   { id: 1, label: 'EXPORT', value: 'EXPORT' },
   { id: 2, label: 'WORD', value: 'WORD' },
@@ -141,6 +155,23 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
   { id: 3, Icon: null, title: 'Pause service', route: 'pause-service' },
   { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
+];
+export const NODE_TABLE_COLUMNS: ColumnsWithOptions[] = [
+  { id: 'name', label: 'Name', minWidth: 160 },
+  { id: 'type', label: 'Type', minWidth: 180 },
+  { id: 'state', label: 'State', minWidth: 140 },
+  { id: 'network', label: 'Network', minWidth: 140 },
+  { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
+];
+export const NODE_TABLE_MENU: MenuItemType[] = [
+  {
+    id: 1,
+    Icon: null,
+    title: 'Edit node',
+    route: 'edit-node',
+  },
+  { id: 2, Icon: null, title: 'Detach node', route: 'detach-node' },
+  { id: 3, Icon: null, title: 'Delete node', route: 'delete-node' },
 ];
 export const MANAGE_MENU_LIST = [
   {
@@ -1614,7 +1645,7 @@ export {
   MASK_BY_TYPE,
   MASK_PLACEHOLDERS,
   MONTH_FILTER,
-  NODE_ACTIONS,
+  NODE_ACTIONS_BUTTONS,
   NODE_IMAGES,
   NODE_TYPE,
   NodePageTabs,

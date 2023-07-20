@@ -11,6 +11,7 @@ import (
 const OperatorEndpoint = "/v1/sims/"
 
 type OperatorClient interface {
+	BindSim(iccid string) (*SimInfo, error)
 	GetSimInfo(iccid string) (*SimInfo, error)
 	ActivateSim(iccid string) error
 	DeactivateSim(iccid string) error
@@ -43,6 +44,11 @@ func NewOperatorClient(url string, debug bool) (*operatorClient, error) {
 	}
 
 	return N, nil
+}
+
+func (o *operatorClient) BindSim(iccid string) (*SimInfo, error) {
+	// Bind sim is a no-op for operator sims for now
+	return &SimInfo{}, nil
 }
 
 func (o *operatorClient) GetSimInfo(iccid string) (*SimInfo, error) {

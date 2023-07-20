@@ -24,9 +24,11 @@ const _ = grpc.SupportPackageIsVersion7
 type UserServiceClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	GetByAuthId(ctx context.Context, in *GetByAuthIdRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Deactivate(ctx context.Context, in *DeactivateRequest, opts ...grpc.CallOption) (*DeactivateResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Whoami(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WhoamiResponse, error)
 }
 
 type userServiceClient struct {
@@ -49,6 +51,15 @@ func (c *userServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grp
 func (c *userServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetByAuthId(ctx context.Context, in *GetByAuthIdRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/GetByAuthId", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,15 +93,26 @@ func (c *userServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts 
 	return out, nil
 }
 
+func (c *userServiceClient) Whoami(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*WhoamiResponse, error) {
+	out := new(WhoamiResponse)
+	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/Whoami", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	GetByAuthId(context.Context, *GetByAuthIdRequest) (*GetResponse, error)
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	Deactivate(context.Context, *DeactivateRequest) (*DeactivateResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Whoami(context.Context, *GetRequest) (*WhoamiResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -104,6 +126,9 @@ func (UnimplementedUserServiceServer) Add(context.Context, *AddRequest) (*AddRes
 func (UnimplementedUserServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
+func (UnimplementedUserServiceServer) GetByAuthId(context.Context, *GetByAuthIdRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByAuthId not implemented")
+}
 func (UnimplementedUserServiceServer) Update(context.Context, *UpdateRequest) (*UpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
@@ -112,6 +137,9 @@ func (UnimplementedUserServiceServer) Deactivate(context.Context, *DeactivateReq
 }
 func (UnimplementedUserServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedUserServiceServer) Whoami(context.Context, *GetRequest) (*WhoamiResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Whoami not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -158,6 +186,24 @@ func _UserService_Get_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetByAuthId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByAuthIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetByAuthId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.users.v1.UserService/GetByAuthId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetByAuthId(ctx, req.(*GetByAuthIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -216,6 +262,24 @@ func _UserService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_Whoami_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).Whoami(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.users.v1.UserService/Whoami",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).Whoami(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +296,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_Get_Handler,
 		},
 		{
+			MethodName: "GetByAuthId",
+			Handler:    _UserService_GetByAuthId_Handler,
+		},
+		{
 			MethodName: "Update",
 			Handler:    _UserService_Update_Handler,
 		},
@@ -242,6 +310,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _UserService_Delete_Handler,
+		},
+		{
+			MethodName: "Whoami",
+			Handler:    _UserService_Whoami_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

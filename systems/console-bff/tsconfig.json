@@ -1,6 +1,8 @@
 {
   "include": [
     "planning-tool",
+    "metrics",
+    "node",
     "gateway"
   ],
   "compilerOptions": {

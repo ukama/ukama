@@ -38,18 +38,20 @@ WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
  *
  * @param   nodeAlerts
  */
-void clean_noded_notifiocation( NodedNotifDetails *nodeAlerts) {
-    if (nodeAlerts) {
-        usys_free(nodeAlerts->serviceName);
-        usys_free(nodeAlerts->severity);
-        usys_free(nodeAlerts->deviceAttr);
-        usys_free(nodeAlerts->deviceAttrValue);
-        usys_free(nodeAlerts->deviceDesc);
-        usys_free(nodeAlerts->deviceName);
-        usys_free(nodeAlerts->moduleID);
-        usys_free(nodeAlerts->units);
-        nodeAlerts = NULL;
-    }
+void clean_noded_notification(Notification *ptr) {
+
+    if (ptr == NULL)  return;
+
+    usys_free(ptr->serviceName);
+    usys_free(ptr->severity);
+    usys_free(ptr->module);
+    usys_free(ptr->device);
+    usys_free(ptr->propertyName);
+    usys_free(ptr->propertyValue);
+    usys_free(ptr->propertyUnit);
+    usys_free(ptr->details);
+    usys_free(ptr);
+    ptr = NULL;
 }
 
 /**
@@ -106,120 +108,121 @@ int device_object_property_table(DevObj* obj, Property **prop, uint16_t* pCount)
  * @param   alertCbData
  * @param   count
  */
-void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *count) {
-    if (*alertCbData) {
-        Property* prop = NULL;
-        uint16_t pCount = 0;
-        JsonObj *json = NULL;
-        URequest alertNotification;
-        UResponse alertNotificationResp;
-        AlertCallBackData *adata = *alertCbData;
+void web_service_alert_cb(DevObj *obj,
+                          AlertCallBackData **alertCbData,
+                          int *count) {
+
+    int ret;
+    Property* prop = NULL;
+    uint16_t pCount = 0;
+    double value;
+    JsonObj *json = NULL;
+    URequest alertNotification;
+    UResponse alertNotificationResp;
+    AlertCallBackData *adata = *alertCbData;
+    Notification nodeAlerts = {0};
+    
+    if (*alertCbData == NULL) {
+        usys_log_error( "Web service alert callback function for Device name %s"
+                       " Disc: %s Module UUID %s called with %d alerts but with"
+                       "any alert details.",
+                        obj->name, obj->desc, obj->modUuid, *count);
+        return;
+    } else {
+        
         usys_log_debug(
             "Web service alert callback function for Device name %s Disc: %s "
             "Module UUID %s called with %d alerts.",
             obj->name, obj->desc, obj->modUuid, *count);
-
-        int ret = device_object_property_table(obj, &prop, &pCount);
-        if (ret != STATUS_OK) {
-            usys_log_error("Web Service Failed to get  alert property details "
-                            "from property table.");
-            goto cleanup;
-        }
-
-        if (!prop) {
-            goto cleanup;
-        }
-
-        int pidx = adata->pidx;
-        int didx = prop[pidx].depProp->currIdx;
-        uint8_t alertstate = adata->alertState;
-
-        /* Considered double but need to be read based on type in
-         * g_prop[pidx].data_type
-         * int size = get_sizeof(prop[dep_idx].data_type);
-         *  */
-        double value = *(double *)adata->sValue;
-
-        usys_log_debug("Alert %d received for Property[%d], Name: %s ,"
-                        " Value %lf %s.",
-                        alertstate, pidx, prop[pidx].name,
-                        value, prop[didx].units);
-
-        /* Notifications */
-        NodedNotifDetails nodeAlerts = {0};
-        nodeAlerts.serviceName = usys_strdup(SERVICE_NAME);
-        nodeAlerts.severity = usys_strdup(prop[pidx].name);
-        nodeAlerts.epochTime = usys_time(NULL);
-        nodeAlerts.moduleID = usys_strdup(obj->modUuid);
-        nodeAlerts.deviceName =  usys_strdup(obj->name);
-        nodeAlerts.deviceDesc = usys_strdup(obj->desc);
-        nodeAlerts.deviceAttr = usys_strdup(prop[didx].name);
-        nodeAlerts.dataType = prop[didx].dataType;
-        nodeAlerts.deviceAttrValue = usys_calloc(1, sizeof(double));
-        if (nodeAlerts.deviceAttrValue) {
-            *nodeAlerts.deviceAttrValue = value;
-        }
-        nodeAlerts.units = usys_strdup(prop[didx].units);
-
-        /* Report alert */
-        ret = json_serialize_notification_data(&json, &nodeAlerts);
-        if (ret != JSON_ENCODING_OK) {
-            usys_log_error( "Web service alert callback function for "
-                            "Device name %s Disc: %s Module UUID %s called "
-                            "with %d alerts failed to serialize alert",
-                            obj->name, obj->desc, obj->modUuid, *count);
-            goto cleanup;
-        } else {
-            char urlWithEp[MAX_URL_LENGTH] = {0};
-            usys_sprintf(urlWithEp, "%s%s%s",gNotifServer, NOTIFY_ALERT_EP,
-                            SERVICE_NAME);
-
-            ulfius_init_request(&alertNotification);
-            ulfius_init_response(&alertNotificationResp);
-            ulfius_set_request_properties(&alertNotification,
-                            U_OPT_HTTP_VERB, "POST",
-                            U_OPT_HTTP_URL, urlWithEp,
-                            U_OPT_TIMEOUT, 20,
-                            U_OPT_NONE);
-
-            if(json) {
-                if(STATUS_OK != ulfius_set_json_body_request(&alertNotification,
-                                     json)) {
-                    goto cleanup;
-                }
-            }
-
-            ret = ulfius_send_http_request(&alertNotification,
-                            &alertNotificationResp);
-            if (ret != STATUS_OK) {
-                usys_log_error( "Web service alert callback function not able "
-                                "to notify notification service.");
-            } else {
-                usys_log_debug( "Web service alert callback function"
-                                " notification  response is %d.",
-                                alertNotificationResp.status);
-            }
-            ulfius_clean_request(&alertNotification);
-        }
-
-        usys_free(prop);
-
-        cleanup:
-        usys_free(adata->sValue);
-        usys_free(adata);
-        clean_noded_notifiocation(&nodeAlerts);
-        json_free(&json);
-        ulfius_clean_request(&alertNotification);
-        ulfius_clean_response(&alertNotificationResp);
-
-    } else {
-
-        usys_log_error( "Web service alert callback function for Device name %s"
-                        " Disc: %s Module UUID %s called with %d alerts but with"
-                        "any alert details.",
-                        obj->name, obj->desc, obj->modUuid, *count);
-
     }
+    
+    ret = device_object_property_table(obj, &prop, &pCount);
+    if (ret != STATUS_OK) {
+        usys_log_error("Web Service Failed to get  alert property details "
+                       "from property table.");
+        goto cleanup;
+    }
+
+    if (!prop) {
+        goto cleanup;
+    }
+
+    int pidx = adata->pidx;
+    int didx = prop[pidx].depProp->currIdx;
+    uint8_t alertstate = adata->alertState;
+
+    /* Considered double but need to be read based on type in
+     * g_prop[pidx].data_type
+     * int size = get_sizeof(prop[dep_idx].data_type);
+     *  */
+    value = *(double *)adata->sValue;
+    usys_log_debug("Alert %d received for Property[%d], Name: %s ,"
+                   " Value %lf %s.",
+                   alertstate, pidx, prop[pidx].name,
+                   value, prop[didx].units);
+    
+    /* Notifications */
+    nodeAlerts.serviceName = usys_strdup(SERVICE_NAME);
+    nodeAlerts.severity    = usys_strdup(prop[pidx].name);
+    nodeAlerts.epochTime   = usys_time(NULL);
+    nodeAlerts.module      = usys_strdup(obj->modUuid);
+    nodeAlerts.device      = usys_strdup(obj->name);
+    nodeAlerts.propertyName = usys_strdup(prop[didx].name);
+    sprintf(nodeAlerts.propertyValue, "%d", value);
+    nodeAlerts.propertyUnit = usys_strdup(prop[didx].units);
+
+    /* Report alert */
+    ret = json_serialize_notification_data(&json, &nodeAlerts);
+    if (ret != JSON_ENCODING_OK) {
+        usys_log_error( "Web service alert callback function for "
+                        "Device name %s Disc: %s Module UUID %s called "
+                        "with %d alerts failed to serialize alert",
+                        obj->name, obj->desc, obj->modUuid, *count);
+        goto cleanup;
+    } else {
+        char urlWithEp[MAX_URL_LENGTH] = {0};
+        usys_sprintf(urlWithEp, "%s%s%s",gNotifServer, NOTIFY_ALERT_EP,
+                     SERVICE_NAME);
+        
+        ulfius_init_request(&alertNotification);
+        ulfius_init_response(&alertNotificationResp);
+        ulfius_set_request_properties(&alertNotification,
+                                      U_OPT_HTTP_VERB, "POST",
+                                      U_OPT_HTTP_URL, urlWithEp,
+                                      U_OPT_TIMEOUT, 20,
+                                      U_OPT_NONE);
+
+        if(json) {
+            if(STATUS_OK != ulfius_set_json_body_request(&alertNotification,
+                                                         json)) {
+                goto cleanup;
+            }
+        }
+        
+        ret = ulfius_send_http_request(&alertNotification,
+                                       &alertNotificationResp);
+        if (ret != STATUS_OK) {
+            usys_log_error( "Web service alert callback function not able "
+                            "to notify notification service.");
+        } else {
+            usys_log_debug( "Web service alert callback function"
+                            " notification  response is %d.",
+                            alertNotificationResp.status);
+        }
+        ulfius_clean_request(&alertNotification);
+    }
+    
+    usys_free(prop);
+    
+cleanup:
+    usys_free(adata->sValue);
+    usys_free(adata);
+    clean_noded_notification(&nodeAlerts);
+    json_free(&json);
+    ulfius_clean_request(&alertNotification);
+    ulfius_clean_response(&alertNotificationResp);
+
+    return;
 }
 
 /**

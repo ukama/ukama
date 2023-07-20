@@ -1,0 +1,5 @@
+FROM alpine:3.13.5
+
+COPY bin/listener /usr/bin/listener
+
+CMD ["/usr/bin/listener"]

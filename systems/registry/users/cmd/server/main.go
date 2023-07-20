@@ -89,10 +89,10 @@ func runGrpcServer(gormdb sql.Db) {
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
-
 		provider.NewOrgClientProvider(svcConf.Org), mbClient,
 		svcConf.PushGatewayHost,
 	)
+
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		gen.RegisterUserServiceServer(s, userService)
 	})
@@ -119,7 +119,7 @@ func initUsersDB(usersDB *gorm.DB) {
 			}
 
 			usersDB.Create(&db.User{
-				Uuid:  ownerUUID,
+				Id:    ownerUUID,
 				Name:  svcConf.OrgOWnerName,
 				Email: svcConf.OrgOWnerEmail,
 				Phone: svcConf.OrgOWnerPhone,
@@ -129,7 +129,6 @@ func initUsersDB(usersDB *gorm.DB) {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}

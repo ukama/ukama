@@ -130,7 +130,8 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_NOTIF_REASON               "reason"
 #define JTAG_NOTIF_ATTR                 "attribute"
 #define JTAG_EPOCH_TIME                 "time"
-
+#define JTAG_MODULE                     "module"
+    
 /**
  * @fn      bool parser_read_boolean_object(const JsonObj*, const char*, bool*)
  * @brief   Parses the object which contain boolean object with key
