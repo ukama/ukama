@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	pbusers "github.com/ukama/ukama/systems/nucleus/users/pb/gen"
+	pbusers "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
