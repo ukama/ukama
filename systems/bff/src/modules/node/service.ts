@@ -19,6 +19,7 @@ import {
     AddNodeResponse,
     GetNodeStatusInput,
     GetNodeStatusRes,
+    NodesBySiteResDto,
     LinkNodes,
     MetricDto,
     MetricRes,
@@ -55,6 +56,24 @@ export class NodeService implements INodeService {
         }
         return NodeMapper.dtoToNodeResponsedto(res);
     };
+
+    getNodesBySite = async (
+        siteId: string,
+        headers: THeaders
+    ): Promise<NodesBySiteResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.REGISTRY_NODE_API_URL}/sites/${siteId}`,
+            headers: getHeaders(headers),
+        });
+        console.log("NODES", res);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
+        return res;
+    };
+
     linkNodes = async (
         req: LinkNodes,
         headers: THeaders

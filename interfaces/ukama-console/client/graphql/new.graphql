@@ -1,205 +1,694 @@
-# NODE GRAPH
+# query getDataUsage($filter: TIME_FILTER!) {
+#   getDataUsage(filter: $filter) {
+#     id
+#     dataConsumed
+#     dataPackage
+#   }
+# }
 
-fragment node on Node {
-  id
-  name
+# subscription getLatestDataUsage {
+#   getDataUsage {
+#     id
+#     dataConsumed
+#     dataPackage
+#   }
+# }
+
+# query getConnectedUsers($filter: TIME_FILTER!) {
+#   getConnectedUsers(filter: $filter) {
+#     totalUser
+#   }
+# }
+
+# subscription getLatestConnectedUsers {
+#   getConnectedUsers {
+#     totalUser
+#   }
+# }
+
+# subscription getLatestDataBill {
+#   getDataBill {
+#     id
+#     dataBill
+#     billDue
+#   }
+# }
+# query getBillHistory {
+#   getBillHistory {
+#     id
+#     date
+#     description
+#     totalUsage
+#     subtotal
+#   }
+# }
+# query getCurrentBill {
+#   getCurrentBill {
+#     bill {
+#       id
+#       name
+#       dataUsed
+#       rate
+#       subtotal
+#     }
+#     total
+#     billMonth
+#     dueDate
+#   }
+# }
+# query getAlerts($data: PaginationDto!) {
+#   getAlerts(data: $data) {
+#     meta {
+#       count
+#       page
+#       size
+#       pages
+#     }
+#     alerts {
+#       id
+#       type
+#       title
+#       description
+#       alertDate
+#     }
+#   }
+# }
+# query getEsimQR($data: GetESimQRCodeInput!) {
+#   getEsimQR(data: $data) {
+#     qrCode
+#   }
+# }
+
+# subscription getLatestAlerts {
+#   getAlerts {
+#     id
+#     type
+#     title
+#     description
+#     alertDate
+#   }
+# }
+# query getNodeAppsVersionLogs {
+#   getNodeAppsVersionLogs {
+#     version
+#     date
+#     notes
+#   }
+# }
+# query getNodeApps {
+#   getNodeApps {
+#     id
+#     title
+#     version
+#     cpu
+#     memory
+#   }
+# }
+# query getUsersByOrg {
+#   getUsersByOrg {
+#     id
+#     name
+#     email
+#     dataPlan
+#     dataUsage
+#   }
+# }
+# query getUser($userId: String!) {
+#   getUser(userId: $userId) {
+#     id
+#     status
+#     name
+#     eSimNumber
+#     iccid
+#     email
+#     roaming
+#     dataPlan
+#     dataUsage
+#   }
+# }
+
+# query getNetworkStatus {
+#   getNetworkStatus {
+#     totalNodes
+#     liveNode
+#     status
+#   }
+# }
+
+# subscription getNetworkStatusS {
+#   getNetworkStatus {
+#     totalNodes
+#     liveNode
+#     status
+#   }
+# }
+
+# mutation deactivateUser($id: String!) {
+#   deactivateUser(id: $id) {
+#     uuid
+#     name
+#     email
+#     isDeactivated
+#   }
+# }
+# mutation addUser($data: UserInputDto!) {
+#   addUser(data: $data) {
+#     name
+#     email
+#     iccid
+#     id
+#   }
+# }
+# mutation updateFirstVisit($data: UserFistVisitInputDto!) {
+#   updateFirstVisit(data: $data) {
+#     firstVisit
+#   }
+# }
+
+# mutation deleteNode($id: String!) {
+#   deleteNode(id: $id) {
+#     nodeId
+#   }
+# }
+
+# mutation updateUser($userId: String!, $data: UserInputDto!) {
+#   updateUser(data: $data, userId: $userId) {
+#     name
+#     email
+#     iccid
+#     id
+#   }
+# }
+# mutation addNode($data: AddNodeDto!) {
+#   addNode(data: $data) {
+#     success
+#   }
+# }
+# mutation updateNode($data: UpdateNodeDto!) {
+#   updateNode(data: $data) {
+#     nodeId
+#     state
+#     type
+#     name
+#   }
+# }
+
+# query getDataBill($data: DATA_BILL_FILTER!) {
+#   getDataBill(filter: $data) {
+#     id
+#     dataBill
+#     billDue
+#   }
+# }
+# query getMetricsByTab($data: MetricsByTabInputDTO!) {
+#   getMetricsByTab(data: $data) {
+#     to
+#     next
+#     metrics {
+#       type
+#       name
+#       next
+#       data {
+#         y
+#         x
+#       }
+#     }
+#   }
+# }
+
+# subscription getMetricsByTabS {
+#   getMetricsByTab {
+#     type
+#     name
+#     next
+#     data {
+#       x
+#       y
+#     }
+#   }
+# }
+
+# mutation updateUserStatus($data: UpdateUserServiceInput!) {
+#   updateUserStatus(data: $data) {
+#     iccid
+#     isPhysical
+#     ukama {
+#       status
+#       services {
+#         voice
+#         data
+#         sms
+#       }
+#     }
+#     carrier {
+#       status
+#       services {
+#         voice
+#         data
+#         sms
+#       }
+#     }
+#   }
+# }
+
+# query getNode($nodeId: String!) {
+#   getNode(nodeId: $nodeId) {
+#     nodeId
+#     type
+#     state
+#     name
+#     attached {
+#       nodeId
+#       type
+#       state
+#       name
+#     }
+#   }
+# }
+
+# query getUsersDataUsage($data: DataUsageInputDto!) {
+#   getUsersDataUsage(data: $data) {
+#     id
+#     name
+#     email
+#     dataPlan
+#     dataUsage
+#   }
+# }
+
+# subscription getUsersDataUsageS {
+#   getUsersDataUsage {
+#     id
+#     name
+#     email
+#     dataPlan
+#     dataUsage
+#   }
+# }
+
+# query getNode($nodeId: String!) {
+#   getNode(nodeId: $nodeId) {
+#     nodeId
+#     type
+#     state
+#     name
+#     attached {
+#       nodeId
+#       type
+#       state
+#       name
+#     }
+#   }
+# }
+# query getAccountDetails {
+#   getAccountDetails {
+#     email
+#     isFirstVisit
+#   }
+# }
+
+# query getNodeStatus($data: GetNodeStatusInput!) {
+#   getNodeStatus(data: $data) {
+#     uptime
+#     status
+#   }
+# }
+
+# mutation updateUserRoaming($data: UpdateUserServiceInput!) {
+#   updateUserRoaming(data: $data) {
+#     iccid
+#     isPhysical
+#     ukama {
+#       status
+#       services {
+#         data
+#       }
+#     }
+#     carrier {
+#       services {
+#         data
+#       }
+#     }
+#   }
+# }
+
+# query GetStripeCustomer {
+#   getStripeCustomer {
+#     id
+#     name
+#     email
+#   }
+# }
+
+# mutation CreateCustomer($name: String!, $email: String!) {
+#   createCustomer(data: { name: $name, email: $email }) {
+#     id
+#     name
+#     email
+#   }
+# }
+
+# mutation AttachPaymentWithCustomer($paymentId: String!) {
+#   attachPaymentWithCustomer(paymentId: $paymentId)
+# }
+
+# query RetrivePaymentMethods {
+#   retrivePaymentMethods {
+#     id
+#     brand
+#     cvc_check
+#     country
+#     exp_month
+#     exp_year
+#     funding
+#     last4
+#     type
+#     created
+#   }
+# }
+
+# API's V2
+query Whoami {
+  whoami {
+    id
+    name
+    email
+    role
+    isFirstVisit
+  }
+}
+
+query GetSubscriberMetricByNetwork($networkId: String!) {
+  getSubscriberMetricsByNetwork(networkId: $networkId) {
+    total
+    active
+    inactive
+    terminated
+  }
+}
+
+query GetNetworkNodesStat($networkId: String!) {
+  getNetworkNodesStat(networkId: $networkId) {
+    totalCount
+    upCount
+    claimCount
+  }
+}
+
+query GetNetworkDataUsage($networkId: String!, $filter: TIME_FILTER!) {
+  getNetworkDataUsage(networkId: $networkId, filter: $filter) {
+    usage
+  }
+}
+
+### Subscriber Start ###
+
+fragment SubscriberSim on SubscriberDto {
+  sim {
+    id
+    subscriberId
+    networkId
+    orgId
+    iccid
+    msisdn
+    imsi
+    type
+    status
+    firstActivatedOn
+    lastActivatedOn
+    activationsCount
+    deactivationsCount
+    allocatedAt
+    isPhysical
+    package
+  }
+}
+
+fragment Subscriber on SubscriberDto {
+  uuid
+  address
+  dob
+  email
+  firstName
+  lastName
+  gender
+  idSerial
+  networkId
   orgId
-  type
-  attached
-  status {
-    connectivity
-    state
+  phone
+  proofOfIdentification
+  ...SubscriberSim
+}
+
+mutation addSubscriber($data: SubscriberInputDto!) {
+  addSubscriber(data: $data) {
+    ...Subscriber
   }
 }
 
-query getNode($data: NodeInput!) {
-  getNode(data: $data) {
-    ...node
+query getSubscriber($subscriberId: String!) {
+  getSubscriber(subscriberId: $subscriberId) {
+    ...Subscriber
   }
 }
 
-query getNodes($data: GetNodesInput!) {
-  getNodes(data: $data) {
-    nodes {
-      ...node
+mutation updateSubscriber(
+  $subscriberId: String!
+  $data: UpdateSubscriberInputDto!
+) {
+  updateSubscriber(subscriberId: $subscriberId, data: $data) {
+    success
+  }
+}
+
+mutation deleteSubscriber($subscriberId: String!) {
+  deleteSubscriber(subscriberId: $subscriberId) {
+    success
+  }
+}
+
+query getSubscribersByNetwork($networkId: String!) {
+  getSubscribersByNetwork(networkId: $networkId) {
+    subscribers {
+      ...Subscriber
     }
   }
 }
 
-mutation deleteNode($data: NodeInput!) {
-  deleteNodeFromOrg(data: $data) {
-    id
+query getSubscriberMetricsByNetwork($networkId: String!) {
+  getSubscriberMetricsByNetwork(networkId: $networkId) {
+    total
+    active
+    inactive
+    terminated
   }
 }
+### Subscriber End ###
 
-mutation attachNode($data: AttachNodeInput!) {
-  attachNode(data: $data) {
-    success
-  }
-}
-
-mutation detachhNode($data: NodeInput!) {
-  detachhNode(data: $data) {
-    success
-  }
-}
-
-mutation addNode($data: AddNodeInput!) {
-  addNode(data: $data) {
-    ...node
-  }
-}
-
-mutation releaseNodeFromSite($data: NodeInput!) {
-  releaseNodeFromSite(data: $data) {
-    success
-  }
-}
-
-mutation addNodeToSite($data: AddNodeToSiteInput!) {
-  addNodeToSite(data: $data) {
-    success
-  }
-}
-
-mutation updateNodeState($data: UpdateNodeStateInput!) {
-  updateNodeState(data: $data) {
-    ...node
-  }
-}
-
-mutation UpdateNode($data: UpdateNodeInput!) {
-  updateNode(data: $data) {
-    ...node
-  }
-}
-
-# PLANNING TOOL GRAPH
-fragment location on Location {
+### Network Start ###
+fragment Network on NetworkDto {
   id
-  lat
-  lng
-  address
-}
-fragment link on Link {
-  id
-  siteA
-  siteB
-}
-fragment site on Site {
-  id
-  url
-  east
   name
-  west
-  north
-  south
-  status
-  height
-  apOption
-  isSetlite
-  solarUptime
-  populationUrl
-  populationCovered
-  totalBoxesCovered
-  location {
-    ...location
-  }
-}
-fragment event on Event {
-  id
-  value
-  operation
+  orgId
+  isDeactivated
   createdAt
 }
-fragment draft on Draft {
-  id
+
+query getNetwork($networkId: String!) {
+  getNetwork(networkId: $networkId) {
+    ...Network
+  }
+}
+
+query getNetworks {
+  getNetworks {
+    orgId
+    networks {
+      ...Network
+    }
+  }
+}
+### Network End ###
+
+### Package Start ###
+fragment PackageRate on PackageDto {
+  rate {
+    sms_mo
+    sms_mt
+    data
+    amount
+  }
+}
+fragment PackageMarkup on PackageDto {
+  markup {
+    baserate
+    markup
+  }
+}
+fragment Package on PackageDto {
+  uuid
   name
+  orgId
+  active
+  duration
+  simType
+  createdAt
+  deletedAt
+  updatedAt
+  smsVolume
+  dataVolume
+  voiceVolume
+  ulbr
+  dlbr
+  type
+  dataUnit
+  voiceUnit
+  messageUnit
+  flatrate
+  currency
+  from
+  to
+  country
+  provider
+  apn
+  ownerId
+  amount
+  ...PackageRate
+  ...PackageMarkup
+}
+query getPackages {
+  getPackages {
+    packages {
+      ...Package
+    }
+  }
+}
+query getPackage($packageId: String!) {
+  getPackage(packageId: $packageId) {
+    ...Package
+  }
+}
+
+query getPackages {
+  getPackages {
+    packages {
+      ...Package
+    }
+  }
+}
+
+mutation addPackage($data: AddPackageInputDto!) {
+  addPackage(data: $data) {
+    ...Package
+  }
+}
+
+mutation deletePacakge($packageId: String!) {
+  deletePackage(packageId: $packageId) {
+    uuid
+  }
+}
+
+mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
+  updatePackage(packageId: $packageId, data: $data) {
+    ...Package
+  }
+}
+
+### Package End ###
+
+### SimPool Start ###
+fragment SimPool on SimDto {
+  activationCode
+  createdAt
+  iccid
+  id
+  isAllocated
+  isPhysical
+  msisdn
+  qrCode
+  simType
+  smapAddress
+}
+
+query getSims($type: String!) {
+  getSims(type: $type) {
+    sim {
+      ...SimPool
+    }
+  }
+}
+
+query getSimpoolStats($type: String!) {
+  getSimPoolStats(type: $type) {
+    total
+    available
+    consumed
+    failed
+    physical
+    esim
+  }
+}
+mutation uploadSims($data: UploadSimsInputDto!) {
+  uploadSims(data: $data) {
+    iccid
+  }
+}
+
+### SimPool End ###
+
+### Org Start ###
+fragment OrgUser on UserResDto {
+  name
+  email
+  uuid
+  phone
+  isDeactivated
+  registeredSince
+}
+fragment Member on MemberObj {
+  uuid
   userId
-  lastSaved
-  links {
-    ...link
+  orgId
+  role
+  isDeactivated
+  memberSince
+}
+query getOrgMember {
+  getOrgMembers {
+    org
+    members {
+      ...Member
+      user {
+        ...OrgUser
+      }
+    }
   }
-  sites {
-    ...site
-  }
-  events {
-    ...event
+}
+mutation addMember($data: AddMemberInputDto!) {
+  addMember(data: $data) {
+    ...Member
   }
 }
 
-mutation AddDraft($data: AddDraftInput!) {
-  addDraft(data: $data) {
-    ...draft
-  }
-}
+### Org End ###
 
-mutation UpdateDraftName($draftId: String!, $name: String!) {
-  updateDraftName(id: $draftId, name: $name) {
-    ...draft
-  }
-}
+### Node Start ###
 
-query GetDrafts($userId: String!) {
-  getDrafts(userId: $userId) {
-    ...draft
-  }
-}
-
-query GetDraft($draftId: String!) {
-  getDraft(id: $draftId) {
-    ...draft
-  }
-}
-
-mutation addSite($draftId: String!, $data: SiteInput!) {
-  addSite(draftId: $draftId, data: $data) {
-    ...draft
-  }
-}
-
-mutation UpdateSite($draftId: String!, $siteId: String!, $data: SiteInput!) {
-  updateSite(draftId: $draftId, siteId: $siteId, data: $data) {
-    ...draft
-  }
-}
-
-mutation UpdateLocation(
-  $draftId: String!
-  $locationId: String!
-  $data: LocationInput!
-) {
-  updateLocation(draftId: $draftId, locationId: $locationId, data: $data) {
-    ...location
-  }
-}
-
-mutation DeleteDraft($draftId: String!) {
-  deleteDraft(id: $draftId) {
-    id
-  }
-}
-
-mutation DeleteSite($siteId: String!) {
-  deleteSite(id: $siteId) {
-    id
-  }
-}
-
-mutation DeleteLink($lastSaved: Float!, $draftId: String!, $linkId: String!) {
-  deleteLink(lastSaved: $lastSaved, draftId: $draftId, linkId: $linkId) {
-    id
-  }
-}
-
-mutation AddLink($data: LinkInput!, $draftId: String!) {
-  addLink(data: $data, draftId: $draftId) {
-    ...draft
-  }
-}
-
-mutation Coverage($siteId: String!, $data: CoverageInput!) {
-  coverage(data: $data, siteId: $siteId) {
-    ...site
+query getNodesBySite($siteId: String!) {
+  getNodesBySite(siteId: $siteId) {
+    site_id
+    nodes {
+      id
+      name
+      org_id
+      type
+      status {
+        connectivity
+        state
+      }
+      attached
+      created_at
+    }
   }
 }

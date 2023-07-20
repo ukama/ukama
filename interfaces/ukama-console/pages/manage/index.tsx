@@ -11,7 +11,8 @@ import {
   useGetSimsLazyQuery,
   useUpdatePacakgeMutation,
   useUploadSimsMutation,
-  useGetNetworksQuery,
+  useGetNetworksLazyQuery,
+  useGetNodesBySiteLazyQuery,
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TCommonData, TObject, TSnackMessage } from '@/types';
@@ -31,24 +32,25 @@ import {
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { parseISO, format } from 'date-fns';
 
 const SimPool = dynamic(() => import('./_simpool'));
 const NodePool = dynamic(() => import('./_nodepool'));
 const Member = dynamic(() => import('./_member'));
 const DataPlan = dynamic(() => import('./_dataplan'));
 
-const NODE_POOL_DATA = [
-  {
-    type: 'Tower Node',
-    dateClaimed: '1231412414',
-    id: '8910-3333-0000-3540-833',
-  },
-  {
-    type: 'Amplifier Node',
-    dateClaimed: '123120412414',
-    id: '8910-3000-0000-3540-833',
-  },
-];
+// const NODE_POOL_DATA = [
+//   {
+//     type: 'Tower Node',
+//     dateClaimed: '1231412414',
+//     id: '8910-3333-0000-3540-833',
+//   },
+//   {
+//     type: 'Amplifier Node',
+//     dateClaimed: '123120412414',
+//     id: '8910-3000-0000-3540-833',
+//   },
+// ];
 
 const structureData = (data: any) =>
   data && data.length > 0
@@ -117,7 +119,7 @@ const Manage = () => {
     members: [],
     simPool: [],
     dataPlan: [],
-    node: NODE_POOL_DATA,
+    node: [],
     networkList: [],
   });
   const [dataplan, setDataplan] = useState({
@@ -151,12 +153,12 @@ const Manage = () => {
     },
   });
 
-  const { data: networks, loading: networkLoading } = useGetNetworksQuery({
+  const [getNetworks, { loading: networkLoading }] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       setData((prev: any) => ({
         ...prev,
-        networkList: networks?.getNetworks.networks,
+        networkList: data?.getNetworks.networks ?? [],
       }));
     },
     onError: (error) => {
@@ -168,7 +170,32 @@ const Manage = () => {
       });
     },
   });
-  console.log('NETWORKS', data.networkList);
+  const [getNodesBySite, { loading: getNodeBySiteLoading }] =
+    useGetNodesBySiteLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        const filteredNodes = data?.getNodesBySite.nodes
+          .filter((node) => node.created_at)
+          .map((node) => ({
+            ...node,
+            created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
+          }));
+
+        console.log('filteredNodes', filteredNodes);
+        setData((prev: any) => ({
+          ...prev,
+          node: filteredNodes ?? [],
+        }));
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'node',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   const [getSims, { loading: simsLoading, refetch: refetchSims }] =
     useGetSimsLazyQuery({
@@ -339,12 +366,12 @@ const Manage = () => {
 
   useEffect(() => {
     if (nodeSearch.length > 3) {
-      const nodes = NODE_POOL_DATA.filter((node) => {
+      const nodes = data.node.filter((node: any) => {
         if (node.id.includes(nodeSearch)) return node;
       });
       setData((prev: any) => ({ ...prev, node: nodes || [] }));
     } else if (nodeSearch.length === 0) {
-      setData((prev: any) => ({ ...prev, node: NODE_POOL_DATA }));
+      setData((prev: any) => ({ ...prev, node: data.node }));
     }
   }, [nodeSearch]);
 
@@ -356,6 +383,15 @@ const Manage = () => {
         },
       });
     else if (id === 'manage-data-plan') getPackages();
+    else if (id === 'manage-node') {
+      getNetworks();
+      getNodesBySite({
+        variables: {
+          siteId: '440bd561-bf0b-4e6d-9789-ca64ef20f4c7',
+        },
+      });
+    }
+
     setMenu(id);
   };
 
@@ -434,7 +470,7 @@ const Manage = () => {
       );
       setDataplan({
         id: id,
-        amount: d.rate.amount,
+        amount: typeof d.rate.amount === 'number' ? d.rate.amount : 0,
         dataUnit: d.dataUnit,
         dataVolume: parseInt(parseInt(d.dataVolume).toFixed(2)),
         duration: parseInt(d.duration),
@@ -456,7 +492,8 @@ const Manage = () => {
     dataPlanLoading ||
     deletePkgLoading ||
     updatePkgLoading ||
-    networkLoading;
+    networkLoading ||
+    getNodeBySiteLoading;
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />

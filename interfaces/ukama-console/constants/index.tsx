@@ -211,11 +211,12 @@ export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'isAllocated', label: 'Status', minWidth: 140 },
 ];
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
-  { id: 'id', label: 'Node #', minWidth: 160 },
+  { id: 'name', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
   { id: 'network', label: 'Network', minWidth: 180 },
-  { id: 'dateClaimed', label: 'Date claimed', minWidth: 140 },
+  { id: 'created_at', label: 'Date claimed', minWidth: 140 },
 ];
+
 const BASIC_MENU_ACTIONS: MenuItemType[] = [
   { id: 1, Icon: EditIcon, title: 'Edit', route: 'edit' },
   {

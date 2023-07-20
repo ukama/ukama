@@ -278,3 +278,44 @@ export class NodeStatsResponse {
     @Field()
     claimCount: number;
 }
+
+@ObjectType()
+export class Node {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    org_id: string;
+
+    @Field()
+    type: string;
+
+    @Field(() => Status)
+    status: Status;
+
+    @Field(() => [String])
+    attached: string[];
+
+    @Field()
+    created_at: string;
+}
+
+@ObjectType()
+export class Status {
+    @Field()
+    connectivity: string;
+
+    @Field()
+    state: string;
+}
+@ObjectType()
+export class NodesBySiteResDto {
+    @Field()
+    site_id: string;
+
+    @Field(() => [Node])
+    nodes: Node[];
+}
