@@ -74,7 +74,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 	memberServer := server.NewMemberServer(db.NewMemberRepo(gormdb),
-		providers.NewOrgClientProvider(serviceConfig.OrgHost, serviceConfig.DebugMode), mbClient, serviceConfig.PushGateway, id, serviceConfig.OrgName)
+		providers.NewOrgClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode), mbClient, serviceConfig.PushGateway, id, serviceConfig.OrgName)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
