@@ -8,10 +8,10 @@ export class PackageRateAPIDto {
     @Field()
     sms_mt: number;
 
-    @Field()
+    @Field({ nullable: true })
     data: number;
 
-    @Field()
+    @Field({ nullable: true })
     amount: number;
 }
 @ObjectType()
@@ -71,13 +71,13 @@ export class PackageAPIDto {
     type: string;
 
     @Field()
-    data_unit: string;
+    dataUnit: string;
 
     @Field()
-    voice_unit: string;
+    voiceUnit: string;
 
     @Field()
-    message_unit: string;
+    messageunit: string;
 
     @Field()
     flatrate: boolean;
@@ -101,7 +101,7 @@ export class PackageAPIDto {
     apn: string;
 
     @Field()
-    owner_id: string;
+    OwnerId: string;
 
     @Field()
     amount: number;

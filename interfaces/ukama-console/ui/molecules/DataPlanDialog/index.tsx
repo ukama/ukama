@@ -116,7 +116,10 @@ const DataPlanDialog = ({
                   ),
                 }}
                 onChange={(e) =>
-                  setDataplan({ ...dataplan, amount: e.target.value })
+                  setDataplan({
+                    ...dataplan,
+                    amount: parseInt(e.target.value as string),
+                  })
                 }
               />
             </Grid>

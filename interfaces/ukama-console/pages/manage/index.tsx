@@ -486,7 +486,8 @@ const Manage = () => {
               data={data.node}
               search={nodeSearch}
               setSearch={setNodeSearch}
-              networkList={data.networkList}
+              // networkList={data.networkList}
+              networkList={[]}
               handleCreateNetwork={handleCreateNetwork}
             />
           )}
