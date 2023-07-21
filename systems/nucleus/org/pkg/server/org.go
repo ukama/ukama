@@ -63,14 +63,15 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 	err = o.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
 		org.Id = uuid.NewV4()
+		//TODO: Enabele later
+		// _, err := o.orchestratorService.DeployOrg(providers.DeployOrgRequest{
+		// 	OrgId:   org.Id.String(),
+		// 	OrgName: org.Name,
+		// 	OwnerId: org.Owner.String(),
+		// })
 
-		_, err := o.orchestratorService.DeployOrg(providers.DeployOrgRequest{
-			OrgId:   org.Id.String(),
-			OrgName: org.Name,
-			OwnerId: org.Owner.String(),
-		})
-
-		return err
+		// return err
+		return nil
 	})
 
 	if err != nil {
@@ -211,21 +212,8 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	}
 
 	user := &db.User{Uuid: userUUID}
-	//member := &db.OrgUser{}
 
 	err = o.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
-		//txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
-
-		// member := &db.OrgUser{
-		// 	OrgId:  org.Id,
-		// 	UserId: user.Id,
-		// 	Uuid:   userUUID,
-		// }
-
-		// err = db.NewOrgRepo(txDb).AddMember(member)
-		// if err != nil {
-		// 	return err
-		// }
 
 		return nil
 	})
