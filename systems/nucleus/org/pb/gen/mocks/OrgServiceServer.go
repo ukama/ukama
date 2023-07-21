@@ -40,32 +40,6 @@ func (_m *OrgServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*gen.
 	return r0, r1
 }
 
-// AddMember provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) AddMember(_a0 context.Context, _a1 *gen.AddMemberRequest) (*gen.MemberResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddMemberRequest) (*gen.MemberResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddMemberRequest) *gen.MemberResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddMemberRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Get provides a mock function with given fields: _a0, _a1
 func (_m *OrgServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.GetResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -170,128 +144,24 @@ func (_m *OrgServiceServer) GetByUser(_a0 context.Context, _a1 *gen.GetByOwnerRe
 	return r0, r1
 }
 
-// GetMember provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) GetMember(_a0 context.Context, _a1 *gen.MemberRequest) (*gen.MemberResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest) (*gen.MemberResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest) *gen.MemberResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetMembers provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) GetMembers(_a0 context.Context, _a1 *gen.GetMembersRequest) (*gen.GetMembersResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.GetMembersResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMembersRequest) (*gen.GetMembersResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMembersRequest) *gen.GetMembersResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetMembersResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMembersRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RegisterUser provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) RegisterUser(_a0 context.Context, _a1 *gen.RegisterUserRequest) (*gen.MemberResponse, error) {
+func (_m *OrgServiceServer) RegisterUser(_a0 context.Context, _a1 *gen.RegisterUserRequest) (*gen.RegisterUserResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.MemberResponse
+	var r0 *gen.RegisterUserResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest) (*gen.MemberResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest) (*gen.RegisterUserResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest) *gen.MemberResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest) *gen.RegisterUserResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
+			r0 = ret.Get(0).(*gen.RegisterUserResponse)
 		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.RegisterUserRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// RemoveMember provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) RemoveMember(_a0 context.Context, _a1 *gen.MemberRequest) (*gen.MemberResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest) (*gen.MemberResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest) *gen.MemberResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateMember provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) UpdateMember(_a0 context.Context, _a1 *gen.UpdateMemberRequest) (*gen.MemberResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateMemberRequest) (*gen.MemberResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateMemberRequest) *gen.MemberResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateMemberRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

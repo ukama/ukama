@@ -49,39 +49,6 @@ func (_m *OrgServiceClient) Add(ctx context.Context, in *gen.AddRequest, opts ..
 	return r0, r1
 }
 
-// AddMember provides a mock function with given fields: ctx, in, opts
-func (_m *OrgServiceClient) AddMember(ctx context.Context, in *gen.AddMemberRequest, opts ...grpc.CallOption) (*gen.MemberResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddMemberRequest, ...grpc.CallOption) (*gen.MemberResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddMemberRequest, ...grpc.CallOption) *gen.MemberResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddMemberRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Get provides a mock function with given fields: ctx, in, opts
 func (_m *OrgServiceClient) Get(ctx context.Context, in *gen.GetRequest, opts ...grpc.CallOption) (*gen.GetResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -214,74 +181,8 @@ func (_m *OrgServiceClient) GetByUser(ctx context.Context, in *gen.GetByOwnerReq
 	return r0, r1
 }
 
-// GetMember provides a mock function with given fields: ctx, in, opts
-func (_m *OrgServiceClient) GetMember(ctx context.Context, in *gen.MemberRequest, opts ...grpc.CallOption) (*gen.MemberResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest, ...grpc.CallOption) (*gen.MemberResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest, ...grpc.CallOption) *gen.MemberResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetMembers provides a mock function with given fields: ctx, in, opts
-func (_m *OrgServiceClient) GetMembers(ctx context.Context, in *gen.GetMembersRequest, opts ...grpc.CallOption) (*gen.GetMembersResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.GetMembersResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMembersRequest, ...grpc.CallOption) (*gen.GetMembersResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMembersRequest, ...grpc.CallOption) *gen.GetMembersResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetMembersResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMembersRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RegisterUser provides a mock function with given fields: ctx, in, opts
-func (_m *OrgServiceClient) RegisterUser(ctx context.Context, in *gen.RegisterUserRequest, opts ...grpc.CallOption) (*gen.MemberResponse, error) {
+func (_m *OrgServiceClient) RegisterUser(ctx context.Context, in *gen.RegisterUserRequest, opts ...grpc.CallOption) (*gen.RegisterUserResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -291,86 +192,20 @@ func (_m *OrgServiceClient) RegisterUser(ctx context.Context, in *gen.RegisterUs
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.MemberResponse
+	var r0 *gen.RegisterUserResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest, ...grpc.CallOption) (*gen.MemberResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest, ...grpc.CallOption) (*gen.RegisterUserResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest, ...grpc.CallOption) *gen.MemberResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RegisterUserRequest, ...grpc.CallOption) *gen.RegisterUserResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
+			r0 = ret.Get(0).(*gen.RegisterUserResponse)
 		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.RegisterUserRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// RemoveMember provides a mock function with given fields: ctx, in, opts
-func (_m *OrgServiceClient) RemoveMember(ctx context.Context, in *gen.MemberRequest, opts ...grpc.CallOption) (*gen.MemberResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest, ...grpc.CallOption) (*gen.MemberResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.MemberRequest, ...grpc.CallOption) *gen.MemberResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.MemberRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateMember provides a mock function with given fields: ctx, in, opts
-func (_m *OrgServiceClient) UpdateMember(ctx context.Context, in *gen.UpdateMemberRequest, opts ...grpc.CallOption) (*gen.MemberResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.MemberResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateMemberRequest, ...grpc.CallOption) (*gen.MemberResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateMemberRequest, ...grpc.CallOption) *gen.MemberResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.MemberResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateMemberRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

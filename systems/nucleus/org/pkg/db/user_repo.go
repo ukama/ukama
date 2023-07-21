@@ -68,15 +68,15 @@ func (u *userRepo) Update(user *User) (*User, error) {
 			return result.Error
 		}
 
-		member := &OrgUser{
-			Deactivated: user.Deactivated,
-		}
+		// member := &OrgUser{
+		// 	Deactivated: user.Deactivated,
+		// }
 
-		result = tx.Model(OrgUser{}).Where("uuid = ?", user.Uuid).Updates(member)
+		// result = tx.Model(OrgUser{}).Where("uuid = ?", user.Uuid).Updates(member)
 
-		if result.Error != nil {
-			return result.Error
-		}
+		// if result.Error != nil {
+		// 	return result.Error
+		// }
 
 		return nil
 	})

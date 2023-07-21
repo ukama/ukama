@@ -11,7 +11,6 @@ import (
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
 	"github.com/ukama/ukama/systems/nucleus/orgs/pkg"
@@ -60,26 +59,26 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	err = o.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
 		org.Id = uuid.NewV4()
 
-		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
+		//txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 
 		// Adding owner as a member
-		user, err := db.NewUserRepo(txDb).Get(owner)
-		if err != nil {
-			return err
-		}
+		// user, err := db.NewUserRepo(txDb).Get(owner)
+		// if err != nil {
+		// 	return err
+		// }
 
-		log.Infof("Adding owner as member")
-		member := &db.OrgUser{
-			OrgId:  org.Id,
-			UserId: user.Id,
-			Uuid:   org.Owner,
-			Role:   pbRoleTypeToDb(pb.RoleType_OWNER),
-		}
+		// log.Infof("Adding owner as member")
+		// member := &db.OrgUser{
+		// 	OrgId:  org.Id,
+		// 	UserId: user.Id,
+		// 	Uuid:   org.Owner,
+		// 	Role:   pbRoleTypeToDb(pb.RoleType_OWNER),
+		// }
 
-		err = db.NewOrgRepo(txDb).AddMember(member)
-		if err != nil {
-			return err
-		}
+		// err = db.NewOrgRepo(txDb).AddMember(member)
+		// if err != nil {
+		// 	return err
+		// }
 
 		return nil
 	})
@@ -176,7 +175,7 @@ func (o *OrgService) GetByUser(ctx context.Context, req *pb.GetByOwnerRequest) (
 	resp := &pb.GetByUserResponse{
 		User:     req.GetUserUuid(),
 		OwnerOf:  dbOrgsToPbOrgs(ownedOrgs),
-		MemberOf: dbMembersToPbMembers(membOrgs),
+		MemberOf: dbOrgsToPbOrgs(membOrgs),
 	}
 
 	return resp, nil
@@ -201,9 +200,9 @@ func (o *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 	return &pb.UpdateUserResponse{User: dbUserToPbUser(user)}, nil
 }
 
-func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.MemberResponse, error) {
+func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterUserResponse, error) {
 	// Get the Organization
-	org, err := o.orgRepo.GetByName(o.orgName)
+	_, err := o.orgRepo.GetByName(o.orgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -222,21 +221,21 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	}
 
 	user := &db.User{Uuid: userUUID}
-	member := &db.OrgUser{}
+	//member := &db.OrgUser{}
 
 	err = o.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
-		txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
+		//txDb := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
 
-		member := &db.OrgUser{
-			OrgId:  org.Id,
-			UserId: user.Id,
-			Uuid:   userUUID,
-		}
+		// member := &db.OrgUser{
+		// 	OrgId:  org.Id,
+		// 	UserId: user.Id,
+		// 	Uuid:   userUUID,
+		// }
 
-		err = db.NewOrgRepo(txDb).AddMember(member)
-		if err != nil {
-			return err
-		}
+		// err = db.NewOrgRepo(txDb).AddMember(member)
+		// if err != nil {
+		// 	return err
+		// }
 
 		return nil
 	})
@@ -251,10 +250,9 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	
 	_ = o.pushUserCountMetric()
 
-	return &pb.MemberResponse{Member: dbMemberToPbMember(member)}, nil
+	return &pb.RegisterUserResponse{}, nil
 }
 
 func dbOrgToPbOrg(org *db.Org) *pb.Organization {

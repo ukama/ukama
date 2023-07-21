@@ -26,13 +26,12 @@ type User struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
-type OrgUser struct {
-	OrgId       uuid.UUID `gorm:"primaryKey;type:uuid"`
-	UserId      uint      `gorm:"primaryKey"`
-	Uuid        uuid.UUID `gorm:"not null;type:uuid"`
-	Deactivated bool
-	CreatedAt   time.Time
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	Role        RoleType       `gorm:"type:uint;not null;default:3"` // Set the default value to Member
-}
-
+// type OrgUser struct {
+// 	OrgId       uuid.UUID `gorm:"primaryKey;type:uuid"`
+// 	UserId      uint      `gorm:"primaryKey"`
+// 	Uuid        uuid.UUID `gorm:"not null;type:uuid"`
+// 	Deactivated bool
+// 	CreatedAt   time.Time
+// 	DeletedAt   gorm.DeletedAt `gorm:"index"`
+// 	Role        RoleType       `gorm:"type:uint;not null;default:3"` // Set the default value to Member
+// }

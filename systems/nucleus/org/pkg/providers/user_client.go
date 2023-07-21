@@ -5,7 +5,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/nucleus/users/pb/gen"
+	pb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
