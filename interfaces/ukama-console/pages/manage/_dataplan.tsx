@@ -12,7 +12,15 @@ interface IDataPlan {
   handleActionButon: Function;
   handleOptionMenuItemAction: Function;
 }
-
+function convertToWeeksOrMonths(number: number): string {
+  if (number >= 4) {
+    const months = Math.floor(number / 4);
+    return `${months <= 1 ? 'month' : 'months'} `;
+  } else {
+    const weeks = Math.floor(number);
+    return ` ${weeks <= 1 ? 'week' : 'weeks'} `;
+  }
+}
 const DataPlan = ({
   data,
   handleActionButon,
@@ -97,7 +105,7 @@ const DataPlan = ({
                     </Grid>
                     <Typography variant="body2" fontWeight={400}>
                       {getDataPlanUsage(
-                        duration,
+                        convertToWeeksOrMonths(duration),
                         currency,
                         amount,
                         dataVolume,
