@@ -26,6 +26,7 @@
 
 #define DEF_NODED_HOST         "localhost"
 #define DEF_NOTIFY_HOST        "localhost"
+#define DEF_WIMC_HOST          "localhost"
 #define DEF_NOTIFY_PORT        "8085"
 #define DEF_NODED_PORT         "8095"
 #define DEF_WIMC_PORT          "8075"

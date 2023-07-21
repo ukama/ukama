@@ -210,6 +210,21 @@ int main(int argc, char **argv) {
         run_space_all_capps(spacePtr->space);
     }
 
+    /* for each capp, with missing pkg, run a thred which fetch via wimc,
+     *  unpack into its space rootfs and run.
+     */
+    for (spacePtr = gSpaceList;
+         spacePtr;
+         spacePtr = spacePtr->next) {
+
+        /* BOOT space is already running */
+        if (strcmp(spacePtr->space->name, SPACE_BOOT) == 0) {
+            continue;
+        }
+
+        fetch_unpack_run(spacePtr->space, serviceConfig);
+    }
+
     /* and finally, start the web service */
     if (start_web_service(&serviceConfig,
                           &serviceInst) != USYS_TRUE) {

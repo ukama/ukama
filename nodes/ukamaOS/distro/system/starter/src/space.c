@@ -160,71 +160,62 @@ void print_spaces_list(SpaceList *spaceList) {
 }
 
 /*
- * copy_capps_to_space_rootfs --
+ * copy_capp_to_space_rootfs --
  *                             sPath: /capps/pkgs
  *                             dPath: /capps/rootfs
  */
-static void copy_capps_to_space_rootfs(char *spaceName,
-                                       CappList *cappList,
-                                       char *sPath,
-                                       char *dPath) {
+void copy_capp_to_space_rootfs(char *spaceName,
+                               Capp *capp,
+                               char *sPath,
+                               char *dPath) {
 
     int ret=0;
-    CappList *currentCapp = NULL;
-    Capp *capp = NULL;
 
     char src[SPACE_MAX_BUFFER]  = {0};
     char dest[SPACE_MAX_BUFFER] = {0};
     char runMe[MAX_BUFFER]      = {0};
 
-    if (cappList == NULL) return;
+    if (capp == NULL || spaceName == NULL) return;
 
-    for (currentCapp = cappList;
-         currentCapp;
-         currentCapp = currentCapp->next) {
+    if (capp->name == NULL || capp->tag == NULL ) {
+        usys_log_error("Invalid capp entry. Ignoring");
+        return;
+    }
 
-        capp = currentCapp->capp;
-        
-        if (capp->name == NULL || capp->tag == NULL ) {
-            usys_log_error("Invalid capp entry. Ignoring");
-            continue;
-        }
+    /* Create dest dir if needed */
+    sprintf(runMe, "/bin/mkdir -p %s/%s/%s", dPath, spaceName, sPath);
+    log_debug("Running command: %s", runMe);
+    if ((ret = system(runMe)) < 0) {
+        usys_log_error("Unable to execute cmd %s for space: %s Code: %d",
+                       runMe, spaceName, ret);
+        return;
+    }
 
-        /* Create dest dir if needed */
-        sprintf(runMe, "/bin/mkdir -p %s/%s/%s", dPath, spaceName, sPath);
-        log_debug("Running command: %s", runMe);
-        if ((ret = system(runMe)) < 0) {
-            usys_log_error("Unable to execute cmd %s for space: %s Code: %d",
-                           runMe, spaceName, ret);
-            continue;
-        }
+    /* Copy the pkg from /capps/pkgs/[name]_[tag].tar.gz to
+     * /capps/rootfs/[spaceName]/capps/pkgs/[name]_[tag].tar.gz
+     */
+    sprintf(src,  "%s/%s_%s.tar.gz", sPath, capp->name, capp->tag);
 
-        /* Copy the pkg from /capps/pkgs/[name]_[tag].tar.gz to
-         * /capps/rootfs/[spaceName]/capps/pkgs/[name]_[tag].tar.gz
-         */
-        sprintf(src,  "%s/%s_%s.tar.gz", sPath, capp->name, capp->tag);
+    /* Flag if capp needs to be fetched from hub via wimc */
+    capp->fetch = need_to_fetch_capp_from_hub(spaceName, src);
+    if (capp->fetch == CAPP_PKG_NOT_FOUND) {
+        return;
+    }
 
-        /* Flag if capp needs to be fetched from hub via wimc */
-        capp->fetch = need_to_fetch_capp_from_hub(spaceName, src);
-        if (capp->fetch == CAPP_PKG_NOT_FOUND) {
-            continue;
-        }
-
-        sprintf(dest, "%s/%s/%s/%s_%s.tar.gz", dPath, spaceName, sPath,
-                capp->name, capp->tag);
-        sprintf(runMe, "/bin/cp %s %s", src, dest);
-        usys_log_debug("Running command: %s", runMe);
-        if ((ret = system(runMe)) < 0) {
-            usys_log_error("Unable to copy file src: %s dest: %s code: %d",
-                      src, dest, ret);
-            continue;
-        }
+    sprintf(dest, "%s/%s/%s/%s_%s.tar.gz", dPath, spaceName, sPath,
+            capp->name, capp->tag);
+    sprintf(runMe, "/bin/cp %s %s", src, dest);
+    usys_log_debug("Running command: %s", runMe);
+    if ((ret = system(runMe)) < 0) {
+        usys_log_error("Unable to copy file src: %s dest: %s code: %d",
+                       src, dest, ret);
     }
 }
 
 void copy_capps_to_rootfs(SpaceList *spaceList) {
 
     SpaceList *currentSpace;
+    CappList  *currentCapp = NULL;
 
     /* for each space, copy its "capps rootfs" to its own rootfs" */
     for (currentSpace = spaceList;
@@ -233,10 +224,15 @@ void copy_capps_to_rootfs(SpaceList *spaceList) {
 
         if (currentSpace->space) {
 
-            copy_capps_to_space_rootfs(currentSpace->space->name,
-                                       currentSpace->space->cappList,
-                                       DEF_CAPP_PATH,
-                                       DEF_SPACE_ROOTFS_PATH);
+            for (currentCapp = currentSpace->space->cappList;
+                 currentCapp;
+                 currentCapp = currentCapp->next) {
+
+                copy_capp_to_space_rootfs(currentSpace->space->name,
+                                          currentCapp->capp,
+                                          DEF_CAPP_PATH,
+                                          DEF_SPACE_ROOTFS_PATH);
+            }
         }
     }
 }

@@ -16,6 +16,7 @@
 #include <pthread.h>
 
 #include "starter.h"
+#include "config.h"
 
 #include "usys_types.h"
 #include "usys_log.h"
@@ -209,6 +210,13 @@ void run_space_all_capps(Space *space) {
 
         if (cappList->capp->fetch == CAPP_PKG_NOT_FOUND) continue;
 
+        /* skip if already running or done */
+        if (cappList->capp->runtime != NULL) {
+            if (cappList->capp->runtime->status == CAPP_RUNTIME_EXEC ||
+                cappList->capp->runtime->status == CAPP_RUNTIME_DONE)
+                continue;
+        }
+
         if (create_and_run_capps(cappList->capp, &error)) {
             usys_log_error("Unable to execute capp: %s:%s Error: %d",
                            cappList->capp->name,
@@ -217,9 +225,57 @@ void run_space_all_capps(Space *space) {
             error = 0;
             continue;
         }
-        
+
         usys_log_debug("Executing capp: %s:%s",
                        cappList->capp->name,
                        cappList->capp->tag);
     }
+}
+
+void fetch_unpack_run(Space *space, Config *config) {
+
+    CappList *cappList = NULL;
+    Capp     *capp = NULL;
+    char     *path = NULL;
+    int      ret=0;
+
+    char runMe[MAX_BUFFER]      = {0};
+
+    for (cappList=space->cappList;
+         cappList;
+         cappList=cappList->next) {
+
+        if (cappList->capp->fetch == CAPP_PKG_FOUND) continue;
+
+        capp = cappList->capp;
+
+        /* get the file from wimc.d */
+        if (get_capp_path(config, capp->name, capp->tag, &path) == USYS_FALSE) {
+            log_error("Error getting path for capp: %s:%s",
+                      capp->name, capp->tag);
+            continue;
+        }
+
+        /* Move file from path to DEF_CAPP_PATH */
+        sprintf(runMe, "/bin/cp %s/%s_%s.tar.gz %s",
+                path,
+                capp->name,
+                capp->tag,
+                DEF_CAPP_PATH);
+        log_debug("Running command: %s", runMe);
+        if ((ret = system(runMe)) < 0) {
+            usys_log_error("Unable to execute cmd %s for space: %s Code: %d",
+                           runMe, space->name, ret);
+            continue;
+        }
+
+        /* copy the capp file to the space rootfs */
+        copy_capp_to_space_rootfs(space->name,
+                                  cappList->capp,
+                                  DEF_CAPP_PATH,
+                                  DEF_SPACE_ROOTFS_PATH);
+    }
+
+    /* Now run them all */
+    run_space_all_capps(space);
 }
