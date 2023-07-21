@@ -15,10 +15,10 @@ interface IDataPlan {
 function convertToWeeksOrMonths(number: number): string {
   if (number >= 4) {
     const months = Math.floor(number / 4);
-    return `${months <= 1 ? 'month' : 'months'} `;
+    return `${months <= 1 ? 'Month' : 'Months'} `;
   } else {
     const weeks = Math.floor(number);
-    return ` ${weeks <= 1 ? 'week' : 'weeks'} `;
+    return ` ${weeks <= 1 ? 'Week' : 'Weeks'} `;
   }
 }
 const DataPlan = ({
