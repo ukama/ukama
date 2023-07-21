@@ -153,15 +153,15 @@ func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddR
 
 // Users handlers
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.Get(req.UserUuid)
+	return r.clients.User.Get(req.UserId)
 }
 
 func (r *Router) getUserByAuthIdHandler(c *gin.Context, req *GetUserByAuthIdRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.GetByAuthId(req.UserUuid)
+	return r.clients.User.GetByAuthId(req.AuthId)
 }
 
 func (r *Router) whoamiHandler(c *gin.Context, req *GetUserRequest) (*userspb.WhoamiResponse, error) {
-	return r.clients.User.Whoami(req.UserUuid)
+	return r.clients.User.Whoami(req.UserId)
 }
 
 func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
