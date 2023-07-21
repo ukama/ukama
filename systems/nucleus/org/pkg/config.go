@@ -24,7 +24,8 @@ type Config struct {
 	Service           *config.Service   `default:"{}"`
 	Queue             *config.Queue     `default:"{}"`
 	MsgClient         *config.MsgClient `default:"{}"`
-	Users             string            `default:"users:9090"`
+	UserHost          string            `default:"http://user:8080"`
+	OrchestratorHost  string            `default:"http://orchestrator:8080"`
 	OrgName           string            `default:"ukama"`
 	OrgOwnerUUID      string
 	Pushgateway       string `default:"http://localhost:9091"`

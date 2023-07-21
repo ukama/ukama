@@ -15,6 +15,7 @@ import (
 	pb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
 	"github.com/ukama/ukama/systems/nucleus/orgs/pkg"
 	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
+	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -22,22 +23,26 @@ import (
 
 type OrgService struct {
 	pb.UnimplementedOrgServiceServer
-	orgRepo        db.OrgRepo
-	userRepo       db.UserRepo
-	orgName        string
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	msgbus         mb.MsgBusServiceClient
-	pushgateway    string
+	orgRepo             db.OrgRepo
+	userRepo            db.UserRepo
+	orchestratorService providers.OrchestratorProvider
+	userService         providers.UserClientProvider
+	orgName             string
+	baseRoutingKey      msgbus.RoutingKeyBuilder
+	msgbus              mb.MsgBusServiceClient
+	pushgateway         string
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, user providers.UserClientProvider, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string) *OrgService {
 	return &OrgService{
-		orgRepo:        orgRepo,
-		userRepo:       userRepo,
-		orgName:        defaultOrgName,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		msgbus:         msgBus,
-		pushgateway:    pushgateway,
+		orgRepo:             orgRepo,
+		userRepo:            userRepo,
+		orchestratorService: orch,
+		userService:         user,
+		orgName:             defaultOrgName,
+		baseRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		msgbus:              msgBus,
+		pushgateway:         pushgateway,
 	}
 }
 
@@ -58,7 +63,14 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 	err = o.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
 		org.Id = uuid.NewV4()
-		return nil
+
+		_, err := o.orchestratorService.DeployOrg(providers.DeployOrgRequest{
+			OrgId:   org.Id.String(),
+			OrgName: org.Name,
+			OwnerId: org.Owner.String(),
+		})
+
+		return err
 	})
 
 	if err != nil {
