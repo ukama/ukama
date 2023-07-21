@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/notification/notify/internal"
 	"github.com/ukama/ukama/systems/notification/notify/internal/db"
 	"google.golang.org/protobuf/proto"
@@ -10,7 +11,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
@@ -73,5 +73,5 @@ func (n *NotifiyEventServer) unmarshalNotificationSentEvent(msg *anypb.Any) (*ep
 
 func (n *NotifiyEventServer) handleNotificationSentEvent(key string, msg *epb.Notification) error {
 	return add(msg.NodeId, msg.Severity, msg.Type, msg.ServiceName, msg.Description,
-		msg.Details, msg.EpochTime, n.notifyRepo, n.msgbus, n.baseRoutingKey)
+		msg.Details, msg.Status, msg.EpochTime, n.notifyRepo, n.msgbus, n.baseRoutingKey)
 }

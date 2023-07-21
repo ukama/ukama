@@ -6,13 +6,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/notification/notify/internal/server"
+	"github.com/ukama/ukama/systems/notification/notify/mocks"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/notification/notify/internal/server"
-	"github.com/ukama/ukama/systems/notification/notify/mocks"
 )
 
 func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
@@ -38,6 +38,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Severity:    nt.Severity.String(),
 			Type:        nt.Type.String(),
 			ServiceName: nt.ServiceName,
+			Status:      nt.Status,
 			EpochTime:   nt.Time,
 			Description: nt.Description,
 			Details:     nt.Details.String(),
@@ -68,6 +69,7 @@ func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
 			Severity:    nt.Severity.String(),
 			Type:        "bar",
 			ServiceName: nt.ServiceName,
+			Status:      nt.Status,
 			EpochTime:   nt.Time,
 			Description: nt.Description,
 			Details:     nt.Details.String(),

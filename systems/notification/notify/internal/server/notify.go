@@ -11,6 +11,7 @@ import (
 	"github.com/ukama/ukama/systems/notification/notify/internal/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
 
 	log "github.com/sirupsen/logrus"
@@ -37,7 +38,7 @@ func NewNotifyServer(nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient) *
 
 func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	err := add(req.NodeId, req.Severity, req.Type, req.ServiceName, req.Description,
-		req.Details, req.EpochTime, n.notifyRepo, n.msgbus, n.baseRoutingKey)
+		req.Details, req.Status, req.EpochTime, n.notifyRepo, n.msgbus, n.baseRoutingKey)
 
 	if err != nil {
 		return nil, err
@@ -156,7 +157,7 @@ func (n *NotifyServer) Purge(ctx context.Context, req *pb.PurgeRequest) (*pb.Lis
 	return &pb.ListResponse{Notifications: dbNotificationsToPbNotifications(nts)}, nil
 }
 
-func add(nodeId, severity, ntype, serviceName, description, details string, epochTime uint32,
+func add(nodeId, severity, nType, serviceName, description, details string, nStatus uint32, epochTime uint32,
 	notifyRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	var nNodeId ukama.NodeID = ""
 	var nodeType string = ""
@@ -177,7 +178,7 @@ func add(nodeId, severity, ntype, serviceName, description, details string, epoc
 			"invalid format for severity. Error %s", err.Error())
 	}
 
-	notificationType, err := db.GetNotificationType(ntype)
+	notificationType, err := db.GetNotificationType(nType)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument,
 			"invalid format for notification type. Error %s", err.Error())
@@ -190,6 +191,7 @@ func add(nodeId, severity, ntype, serviceName, description, details string, epoc
 		Severity:    *nseverity,
 		Type:        *notificationType,
 		ServiceName: serviceName,
+		Status:      nStatus,
 		Time:        epochTime,
 		Description: description,
 		Details:     datatypes.JSON([]byte(details)),
@@ -214,6 +216,7 @@ func add(nodeId, severity, ntype, serviceName, description, details string, epoc
 		Severity:    notification.Severity.String(),
 		Type:        notification.Type.String(),
 		ServiceName: notification.ServiceName,
+		Status:      notification.Status,
 		EpochTime:   notification.Time,
 		Description: notification.Description,
 		Details:     notification.Details.String(),
@@ -236,10 +239,11 @@ func dbNotificationToPbNotification(notif *db.Notification) *pb.Notification {
 		Severity:    notif.Severity.String(),
 		Type:        notif.Type.String(),
 		ServiceName: notif.ServiceName,
+		Status:      notif.Status,
 		EpochTime:   notif.Time,
 		Description: notif.Description,
 		Details:     notif.Details.String(),
-		// CreatedAt:   timestamppb.New(nt.CreatedAt),
+		CreatedAt:   timestamppb.New(notif.CreatedAt),
 	}
 }
 

@@ -3,6 +3,7 @@ syntax="proto3";
 option go_package = "github.com/ukama/ukama/systems/notification/notify/pb/gen";
 
 import "validator.proto";
+import "google/protobuf/timestamp.proto";
 
 package ukama.notification.notify.v1;
 
@@ -22,8 +23,9 @@ message AddRequest {
     string severity = 3;
     string type = 4;
     string serviceName = 5 [json_name = "service_name"];
-    uint32 epochTime = 6 [json_name = "time"];
-    string details = 7;
+    uint32 status = 6;
+    uint32 epochTime = 7 [json_name = "time"];
+    string details = 8;
 }
 
 message AddResponse {
@@ -66,11 +68,13 @@ message PurgeRequest {
 message Notification {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     string nodeId = 2 [json_name = "node_id"];
-    string nodeType = 3;
+    string nodeType = 3 [json_name = "node_type"];;
     string description = 4;
     string severity = 5;
     string type = 6;
     string serviceName = 7 [json_name = "service_name"];
-    uint32 epochTime = 8 [json_name = "time"];
-    string details = 9;
+    uint32 status = 8;
+    uint32 epochTime = 9 [json_name = "time"];
+    string details = 10;
+    google.protobuf.Timestamp createdAt = 11 [json_name = "stored_at"];
 }

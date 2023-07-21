@@ -16,8 +16,9 @@ message Notification {
     string severity = 5;
     string type = 6;
     string serviceName = 7 [json_name = "service_name"];
-    uint32 epochTime = 8 [json_name = "time"];
-    string details = 9;
+    uint32 status = 8;
+    uint32 epochTime = 9 [json_name = "time"];
+    string details = 10;
 }
 
 message NotificationDeletedEvent{
