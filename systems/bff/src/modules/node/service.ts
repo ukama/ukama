@@ -17,6 +17,7 @@ import NodeMapper from "./mapper";
 import {
     AddNodeDto,
     AddNodeResponse,
+    GetNodesResDto,
     GetNodeStatusInput,
     GetNodeStatusRes,
     NodesBySiteResDto,
@@ -66,7 +67,6 @@ export class NodeService implements INodeService {
             path: `${SERVER.REGISTRY_NODE_API_URL}/sites/${siteId}`,
             headers: getHeaders(headers),
         });
-        console.log("NODES", res);
         if (checkError(res)) {
             logger.error(res);
             throw new Error(res.message);
@@ -139,6 +139,21 @@ export class NodeService implements INodeService {
         }
         return NodeMapper.dtoToNodesDto(headers.orgId, res);
     };
+
+    getNodes = async (headers: THeaders): Promise<GetNodesResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.REGISTRY_NODE_API_URL}`,
+            headers: getHeaders(headers),
+        });
+        console.log("NODES", res);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
+        return res;
+    };
+
     getNode = async (
         nodeId: string,
         headers: THeaders

@@ -319,3 +319,9 @@ export class NodesBySiteResDto {
     @Field(() => [Node])
     nodes: Node[];
 }
+
+@ObjectType()
+export class GetNodesResDto {
+    @Field(() => [Node])
+    node: Node[];
+}
