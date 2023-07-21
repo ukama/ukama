@@ -111,5 +111,5 @@ enum RoleType {
 message WhoamiResponse {
   User user = 1;
   repeated Organization  ownerOf = 2;
-  repeated OrgUser memberOf = 3;
+  repeated Organization memberOf = 3;
 }

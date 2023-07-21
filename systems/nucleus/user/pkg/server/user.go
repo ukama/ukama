@@ -271,8 +271,8 @@ func (u *UserService) Whoami(ctx context.Context, req *pb.GetRequest) (*pb.Whoam
 
 	res := &pb.WhoamiResponse{
 		User:     dbUserToPbUser(user),
-		OwnerOf:  orgOwnOgrsToUserOwnOrgs(userOrgs.OwnerOf),
-		MemberOf: orgMmbOgrsToUserMnbOrgs(userOrgs.MemberOf),
+		OwnerOf:  orgOgrsToUserOrgs(userOrgs.OwnerOf),
+		MemberOf: orgOgrsToUserOrgs(userOrgs.MemberOf),
 	}
 
 	return res, nil
@@ -311,7 +311,7 @@ func dbUserToPbUser(user *db.User) *pb.User {
 	}
 }
 
-func orgOwnOgrsToUserOwnOrgs(orgs []*orgpb.Organization) []*pb.Organization {
+func orgOgrsToUserOrgs(orgs []*orgpb.Organization) []*pb.Organization {
 	res := []*pb.Organization{}
 
 	for _, o := range orgs {
@@ -330,20 +330,20 @@ func orgOwnOgrsToUserOwnOrgs(orgs []*orgpb.Organization) []*pb.Organization {
 	return res
 }
 
-func orgMmbOgrsToUserMnbOrgs(orgs []*orgpb.OrgUser) []*pb.OrgUser {
-	res := []*pb.OrgUser{}
+// func orgMmbOgrsToUserMnbOrgs(orgs []*orgpb.OrgUser) []*pb.OrgUser {
+// 	res := []*pb.OrgUser{}
 
-	for _, o := range orgs {
-		org := &pb.OrgUser{
-			OrgId:         o.OrgId,
-			Uuid:          o.Uuid,
-			Role:          pb.RoleType(o.Role),
-			IsDeactivated: o.IsDeactivated,
-			CreatedAt:     o.CreatedAt,
-		}
+// 	for _, o := range orgs {
+// 		org := &pb.OrgUser{
+// 			OrgId:         o.OrgId,
+// 			Uuid:          o.Uuid,
+// 			Role:          pb.RoleType(o.Role),
+// 			IsDeactivated: o.IsDeactivated,
+// 			CreatedAt:     o.CreatedAt,
+// 		}
 
-		res = append(res, org)
-	}
+// 		res = append(res, org)
+// 	}
 
-	return res
-}
+// 	return res
+// }
