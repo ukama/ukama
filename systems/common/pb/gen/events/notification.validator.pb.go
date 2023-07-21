@@ -16,7 +16,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *NotificationStoredEvent) Validate() error {
+func (this *Notification) Validate() error {
 	return nil
 }
 func (this *NotificationDeletedEvent) Validate() error {

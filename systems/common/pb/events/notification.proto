@@ -8,7 +8,7 @@ import "validator.proto";
 import "google/protobuf/any.proto";
 
 
-message NotificationStoredEvent {
+message Notification {
     string id = 1;
     string nodeId = 2 [json_name = "node_id"];
     string nodeType = 3 [json_name = "node_type"];

@@ -19,34 +19,6 @@ import (
 	jdb "gorm.io/datatypes"
 )
 
-func NewTestDbNotification(nodeId string, ntype string) db.Notification {
-	return db.Notification{
-		Id:          uuid.NewV4(),
-		NodeId:      nodeId,
-		NodeType:    *ukama.GetNodeType(nodeId),
-		Severity:    db.SeverityType("high"),
-		Type:        db.NotificationType(ntype),
-		ServiceName: "noded",
-		Time:        uint32(time.Now().Unix()),
-		Description: "Some random alert",
-		Details:     jdb.JSON(`{"reason": "testing", "component":"router_test"}`),
-	}
-}
-
-func NewTestPbNotification(nodeId string, ntype string) *pb.Notification {
-	return &pb.Notification{
-		Id:          uuid.NewV4().String(),
-		NodeId:      nodeId,
-		NodeType:    *ukama.GetNodeType(nodeId),
-		Severity:    db.SeverityType("high").String(),
-		Type:        db.NotificationType(ntype).String(),
-		ServiceName: "noded",
-		EpochTime:   uint32(time.Now().Unix()),
-		Description: "Some random alert",
-		Details:     jdb.JSON(`{"reason": "testing", "component":"router_test"}`).String(),
-	}
-}
-
 func TestNotifyServer_Add(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -549,5 +521,33 @@ func assertList(t *testing.T, list *pb.ListResponse, resp []db.Notification) {
 		assert.Equal(t, nt.NodeId, resp[idx].NodeId)
 		assert.Equal(t, nt.ServiceName, resp[idx].ServiceName)
 		assert.Equal(t, nt.Type, resp[idx].Type.String())
+	}
+}
+
+func NewTestDbNotification(nodeId string, ntype string) db.Notification {
+	return db.Notification{
+		Id:          uuid.NewV4(),
+		NodeId:      nodeId,
+		NodeType:    *ukama.GetNodeType(nodeId),
+		Severity:    db.SeverityType("high"),
+		Type:        db.NotificationType(ntype),
+		ServiceName: "noded",
+		Time:        uint32(time.Now().Unix()),
+		Description: "Some random alert",
+		Details:     jdb.JSON(`{"reason": "testing", "component":"router_test"}`),
+	}
+}
+
+func NewTestPbNotification(nodeId string, ntype string) *pb.Notification {
+	return &pb.Notification{
+		Id:          uuid.NewV4().String(),
+		NodeId:      nodeId,
+		NodeType:    *ukama.GetNodeType(nodeId),
+		Severity:    db.SeverityType("high").String(),
+		Type:        db.NotificationType(ntype).String(),
+		ServiceName: "noded",
+		EpochTime:   uint32(time.Now().Unix()),
+		Description: "Some random alert",
+		Details:     jdb.JSON(`{"reason": "testing", "component":"router_test"}`).String(),
 	}
 }

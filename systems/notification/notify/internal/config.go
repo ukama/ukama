@@ -27,11 +27,17 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 
 		MsgClient: &uconf.MsgClient{
-			Host:           "msg-client-notification:9095",
-			Timeout:        5 * time.Second,
+			Host:    "msg-client-notification:9095",
+			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				// "event.cloud.node.node.online",
-				// "event.cloud.node.node.offline",
+				"event.cloud.org.notification.sent",
+				"event.cloud.users.notification.sent",
+				"event.cloud.network.notification.sent",
+				"event.cloud.node.notification.sent",
+
+				// Add any other services that send
+				// notification using the same route scheme:
+				// event.cloud.service-name.notification.sent
 			},
 		},
 	}

@@ -18,6 +18,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	generated "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
 
@@ -79,8 +80,13 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNotifyServer(db.NewNotificationRepo(gormdb), mbClient) // mbClient,
+		srv := server.NewNotifyServer(db.NewNotificationRepo(gormdb), mbClient)
 		generated.RegisterNotifyServiceServer(s, srv)
+
+		eSrv := server.NewNotifyEventServer(db.NewNotificationRepo(gormdb), mbClient,
+			serviceConfig.MsgClient.ListenerRoutes)
+		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
+
 	})
 
 	go msgBusListener(mbClient)
