@@ -1,10 +1,8 @@
 import { HealtChartsConfigure, TooltipsText } from '@/constants';
-import { NodeDto, NodeResponse, Node_Type } from '@/generated';
+import { Node, NodeTypeEnum } from '@/generated';
 import { Grid, Paper, Stack, Typography, capitalize } from '@mui/material';
 import { useEffect, useState } from 'react';
-import ApexLineChart from '../ApexLineChart';
 import NodeDetailsCard from '../NodeDetailsCard';
-import NodeGroup from '../NodeGroup';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
@@ -13,14 +11,12 @@ interface INodeOverviewTab {
   loading: boolean;
   metricsLoading: boolean;
   onNodeSelected: Function;
-  nodeGroupLoading: boolean;
   uptime: number | undefined;
   isUpdateAvailable: boolean;
   handleUpdateNode: Function;
-  selectedNode: NodeDto | undefined;
+  selectedNode: Node | undefined;
   connectedUsers: string | undefined;
   getNodeSoftwareUpdateInfos: Function;
-  nodeGroupData: NodeResponse | undefined;
 }
 
 const NodeOverviewTab = ({
@@ -28,15 +24,14 @@ const NodeOverviewTab = ({
   uptime,
   loading,
   selectedNode,
-  nodeGroupData,
   metricsLoading,
   connectedUsers = '0',
   onNodeSelected,
-  nodeGroupLoading,
   handleUpdateNode,
   isUpdateAvailable,
   getNodeSoftwareUpdateInfos,
 }: INodeOverviewTab) => {
+  const nodeType = selectedNode?.type || NodeTypeEnum.Hnode;
   const [selected, setSelected] = useState<number>(0);
 
   useEffect(() => {
@@ -46,7 +41,7 @@ const NodeOverviewTab = ({
   const handleOnSelected = (value: number) => setSelected(value);
 
   return (
-    <Grid container spacing={3}>
+    <Grid container columnSpacing={3}>
       <Grid item xs={12} md={4}>
         <Stack spacing={2}>
           <NodeStatsContainer
@@ -57,22 +52,18 @@ const NodeOverviewTab = ({
             title={'Node Information'}
             handleAction={handleOnSelected}
           >
-            <Grid container spacing={1}>
-              <Grid item xs={12}>
-                <NodeStatItem
-                  value={`${capitalize(
-                    selectedNode?.type.toLowerCase() || 'HOME',
-                  )} Node`}
-                  name={'Model type'}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <NodeStatItem
-                  value={selectedNode?.id.toLowerCase() || '-'}
-                  name={'Serial #'}
-                />
-              </Grid>
-              {selectedNode?.type === 'TOWER' && (
+            <NodeStatItem
+              value={`${capitalize(
+                selectedNode?.type.toLowerCase() || 'HOME',
+              )} Node`}
+              name={'Model type'}
+            />
+
+            <NodeStatItem
+              value={selectedNode?.id.toLowerCase() || '-'}
+              name={'Serial #'}
+            />
+            {/* {selectedNode?.type === 'TOWER' && (
                 <Grid item xs={12}>
                   <NodeGroup
                     nodes={nodeGroupData?.attached || []}
@@ -80,8 +71,7 @@ const NodeOverviewTab = ({
                     handleNodeAction={onNodeSelected}
                   />
                 </Grid>
-              )}
-            </Grid>
+              )} */}
           </NodeStatsContainer>
           <NodeStatsContainer
             index={1}
@@ -91,45 +81,30 @@ const NodeOverviewTab = ({
             title={'Node Health'}
             handleAction={handleOnSelected}
           >
-            {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][0]
-              .show && (
+            {HealtChartsConfigure[nodeType][0].show && (
               <NodeStatItem
                 value={'24 °C'}
-                name={
-                  HealtChartsConfigure[
-                    (selectedNode?.type as string) || 'HOME'
-                  ][0].name
-                }
+                name={HealtChartsConfigure[nodeType][0].name}
                 showAlertInfo={false}
                 nameInfo={TooltipsText.TRX}
               />
             )}
-            {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][1]
-              .show && (
+            {HealtChartsConfigure[nodeType][1].show && (
               <NodeStatItem
                 value={'22 °C'}
-                name={
-                  HealtChartsConfigure[
-                    (selectedNode?.type as string) || 'HOME'
-                  ][1].name
-                }
+                name={HealtChartsConfigure[nodeType][1].name}
                 nameInfo={TooltipsText.COM}
               />
             )}
-            {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][2]
-              .show && (
+            {HealtChartsConfigure[nodeType][2].show && (
               <NodeStatItem
-                name={
-                  HealtChartsConfigure[
-                    (selectedNode?.type as string) || 'HOME'
-                  ][2].name
-                }
+                name={HealtChartsConfigure[nodeType][2].name}
                 nameInfo={TooltipsText.COM}
                 value={uptime ? `${Math.floor(uptime / 60 / 60)} hours` : 'NA'}
               />
             )}
           </NodeStatsContainer>
-          {selectedNode?.type !== 'AMPLIFIER' && (
+          {selectedNode?.type !== NodeTypeEnum.Anode && (
             <NodeStatsContainer
               index={2}
               loading={loading}
@@ -159,7 +134,7 @@ const NodeOverviewTab = ({
       <Grid item xs={12} md={8}>
         {selected === 0 && (
           <NodeDetailsCard
-            nodeType={(selectedNode?.type as Node_Type) || undefined}
+            nodeType={selectedNode?.type || undefined}
             getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
             loading={loading}
             nodeTitle={selectedNode?.name || 'HOME'}
@@ -171,7 +146,7 @@ const NodeOverviewTab = ({
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Node Health</Typography>
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][0]
+              {/* {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][0]
                 .show && (
                 <ApexLineChart
                   loading={metricsLoading}
@@ -209,15 +184,15 @@ const NodeOverviewTab = ({
                     ]
                   }
                 />
-              )}
+              )} */}
             </Stack>
           </Paper>
         )}
-        {selected === 2 && selectedNode?.type !== 'AMPLIFIER' && (
+        {selected === 2 && nodeType !== NodeTypeEnum.Anode && (
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Subscribers</Typography>
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][3]
+              {/* {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][3]
                 .show && (
                 <ApexLineChart
                   loading={metricsLoading}
@@ -242,7 +217,7 @@ const NodeOverviewTab = ({
                     ]
                   }
                 />
-              )}
+              )} */}
             </Stack>
           </Paper>
         )}

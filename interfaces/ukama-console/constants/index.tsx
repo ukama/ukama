@@ -1559,7 +1559,7 @@ const NodePageTabs = [
 ];
 
 const NodeResourcesTabConfigure: any = {
-  HOME: [
+  hnode: [
     { name: 'MEMORY-TRX', show: true, id: 'memorytrxused' },
     { name: 'none', show: false, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cputrxusage' },
@@ -1568,7 +1568,7 @@ const NodeResourcesTabConfigure: any = {
     { name: 'none', show: false, id: 'diskcomused' },
     { name: 'none', show: false, id: 'powerlevel' },
   ],
-  AMPLIFIER: [
+  anode: [
     { name: 'MEMORY-TRX', show: true, id: 'memoryctlused' },
     { name: 'none', show: false, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cpuctlused' },
@@ -1577,7 +1577,7 @@ const NodeResourcesTabConfigure: any = {
     { name: 'none', show: false, id: 'diskcomused' },
     { name: 'none', show: false, id: 'powerlevel' },
   ],
-  TOWER: [
+  tnode: [
     { name: 'MEMORY-TRX', show: true, id: 'memorytrxused' },
     { name: 'MEMORY-COM', show: true, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cputrxusage' },
@@ -1588,19 +1588,19 @@ const NodeResourcesTabConfigure: any = {
   ],
 };
 const HealtChartsConfigure: any = {
-  HOME: [
+  hnode: [
     { name: 'Temp. (TRX)', show: true, id: 'temperaturetrx' },
     { name: 'Temp. (RFE)', show: true, id: 'temperaturerfe' },
     { name: 'none', show: false, id: '' },
     { name: 'Attached ', show: true, id: 'subscribersattached' },
     { name: 'Active ', show: true, id: 'subscribersactive' },
   ],
-  AMPLIFIER: [
+  anode: [
     { name: 'Temp. (CTL)', show: true, id: 'temperaturectl' },
     { name: 'Temp. (RFE)', show: true, id: 'temperaturerfe' },
     { name: 'none', show: false, id: '' },
   ],
-  TOWER: [
+  tnode: [
     { name: 'Temp. (TRX)', show: true, id: 'temperaturetrx' },
     { name: 'Temp. (COM)', show: true, id: 'temperaturecom' },
     { name: 'Uptime', show: true, id: 'uptimetrx' },
@@ -1610,15 +1610,15 @@ const HealtChartsConfigure: any = {
 };
 
 const MASK_BY_TYPE = {
-  HOME: '{uk- }######{ -hnode- }##{ - }####',
-  AMPLIFIER: '{uk- }######{ -\\anode- }##{ - }}####',
-  TOWER: '{uk- }######{ -tnode- }##{ - }}####',
+  hnode: '{uk- }######{ -hnode- }##{ - }####',
+  anode: '{uk- }######{ -\\anode- }##{ - }}####',
+  tnode: '{uk- }######{ -tnode- }##{ - }}####',
 };
 
 const MASK_PLACEHOLDERS = {
-  HOME: 'uk- ______ -hnode- __ - ____',
-  AMPLIFIER: 'uk- ______ -anode- __ - ____',
-  TOWER: 'uk- ______ -tnode- __ - ____',
+  hnode: 'uk- ______ -hnode- __ - ____',
+  anode: 'uk- ______ -anode- __ - ____',
+  tnode: 'uk- ______ -tnode- __ - ____',
 };
 
 const SIM_VARIANT = [

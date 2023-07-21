@@ -260,13 +260,20 @@ export type MutationUpdateSiteArgs = {
 
 export type Node = {
   __typename?: 'Node';
-  attached: Array<Scalars['String']['output']>;
+  attached: Array<Node>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   orgId: Scalars['String']['output'];
   status: NodeStatus;
-  type: Scalars['String']['output'];
+  type: NodeTypeEnum;
 };
+
+/** Node connectivity enums */
+export enum NodeConnectivityEnum {
+  Offline = 'OFFLINE',
+  Online = 'ONLINE',
+  Unknown = 'UNKNOWN'
+}
 
 export type NodeInput = {
   id: Scalars['String']['input'];
@@ -274,9 +281,26 @@ export type NodeInput = {
 
 export type NodeStatus = {
   __typename?: 'NodeStatus';
-  connectivity: Scalars['String']['output'];
-  state: Scalars['String']['output'];
+  connectivity: NodeConnectivityEnum;
+  state: NodeStatusEnum;
 };
+
+/** Node status enums */
+export enum NodeStatusEnum {
+  Active = 'ACTIVE',
+  Configured = 'CONFIGURED',
+  Faulty = 'FAULTY',
+  Maintenance = 'MAINTENANCE',
+  Onboarded = 'ONBOARDED',
+  Undefined = 'UNDEFINED'
+}
+
+/** Node type enums */
+export enum NodeTypeEnum {
+  Anode = 'anode',
+  Hnode = 'hnode',
+  Tnode = 'tnode'
+}
 
 export type Query = {
   __typename?: 'Query';
@@ -352,24 +376,24 @@ export type UpdateNodeInput = {
 
 export type UpdateNodeStateInput = {
   id: Scalars['String']['input'];
-  state: Scalars['String']['input'];
+  state: NodeStatusEnum;
 };
 
-export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
+export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } };
 
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } } };
 
 export type GetNodesQueryVariables = Exact<{
   data: GetNodesInput;
 }>;
 
 
-export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'GetNodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'GetNodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -397,7 +421,7 @@ export type AddNodeMutationVariables = Exact<{
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } } };
 
 export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
@@ -418,14 +442,14 @@ export type UpdateNodeStateMutationVariables = Exact<{
 }>;
 
 
-export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
 }>;
 
 
-export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, attached: Array<string>, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } } };
 
 export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
 
@@ -537,7 +561,16 @@ export const NodeFragmentDoc = gql`
   name
   orgId
   type
-  attached
+  attached {
+    id
+    name
+    orgId
+    type
+    status {
+      connectivity
+      state
+    }
+  }
   status {
     connectivity
     state

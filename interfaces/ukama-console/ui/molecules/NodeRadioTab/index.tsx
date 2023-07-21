@@ -1,7 +1,8 @@
 import { TooltipsText } from '@/constants';
-import { Grid, Paper, Stack } from '@mui/material';
+import { Grid, Paper } from '@mui/material';
 import { useState } from 'react';
-import { ApexLineChart, NodeStatItem, NodeStatsContainer } from '..';
+import NodeStatsContainer from '../NodeStatsContainer';
+import NodeStatItem from '../NodeStatItem';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeRadioTab {
@@ -45,11 +46,11 @@ const NodeRadioTab = ({ loading, metrics }: INodeRadioTab) => {
       </Grid>
       <Grid item lg={isCollapse ? 11 : 8} md xs>
         <Paper sx={{ p: 3, width: '100%' }}>
-          <Stack spacing={4}>
+          {/* <Stack spacing={4}>
             <ApexLineChart data={metrics['txpower']} />
             <ApexLineChart data={metrics['rxpower']} />
             <ApexLineChart data={metrics['papower']} />
-          </Stack>
+          </Stack> */}
         </Paper>
       </Grid>
     </Grid>

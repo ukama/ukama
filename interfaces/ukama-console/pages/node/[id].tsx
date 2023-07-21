@@ -1,8 +1,11 @@
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
-import { useGetNodesQuery } from '@/generated';
-import { PageContainer } from '@/styles/global';
+import { Node, useGetNodesQuery } from '@/generated';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
+import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
+import NodeOverviewTab from '@/ui/molecules/NodeOverviewTab';
+import NodeRadioTab from '@/ui/molecules/NodeRadioTab';
+import NodeResourcesTab from '@/ui/molecules/NodeResourcesTab';
 import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
 import { Stack, Tab, Tabs } from '@mui/material';
@@ -10,23 +13,28 @@ import { useState } from 'react';
 
 export default function Page() {
   const [selectedTab, setSelectedTab] = useState<number>(0);
+  const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
   const onTabSelected = (e: any, value: number) => setSelectedTab(value);
 
   const { data: getNodeData, loading: getNodeLoading } = useGetNodesQuery({
-    onCompleted: (e) => {
-      console.log(e);
+    variables: {
+      data: {
+        isFree: false,
+      },
+    },
+    onCompleted: (data) => {
+      if (!selectedNode) setSelectedNode(data.getNodes.nodes[0]);
     },
     onError: () => {},
   });
+
   return (
-    <Stack width={'100%'}>
+    <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
-        nodes={[]}
-        loading={false}
+        nodes={getNodeData?.getNodes.nodes || []}
+        loading={getNodeLoading}
         onAddNode={() => {}}
-        nodeStatus={undefined}
-        selectedNode={undefined}
-        nodeStatusLoading={false}
+        selectedNode={selectedNode}
         handleNodeSelected={() => {}}
         handleEditNodeClick={() => {}}
         handleNodeActionClick={() => {}}
@@ -34,7 +42,7 @@ export default function Page() {
         nodeActionOptions={NODE_ACTIONS_BUTTONS}
       />
 
-      <Tabs value={selectedTab} onChange={onTabSelected}>
+      <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>
         {NodePageTabs.map(({ id, label, value }) => (
           <Tab
             key={id}
@@ -60,59 +68,51 @@ export default function Page() {
           backgroundColor: false ? colors.white : 'transparent',
         }}
       >
-        <PageContainer>
-          <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
-            <h1>Overview Tab</h1>
-            {/* <NodeOverviewTab
-              metrics={[]}
-              isUpdateAvailable={true}
-              selectedNode={selectedNode}
-              metricsLoading={metricsLoading}
-              nodeGroupLoading={getNodeLoading}
-              handleUpdateNode={handleUpdateNode}
-              nodeGroupData={getNodeData?.getNode}
-              connectedUsers={connectedUserRes?.getConnectedUsers.totalUser}
-              onNodeSelected={onNodeSelectedFromGroup}
-              uptime={getNodeStatusData?.getNodeStatus.uptime}
-              getNodeSoftwareUpdateInfos={handleSoftwareInfos}
-              loading={isLoading || nodesLoading || !selectedNode}
-            /> */}
-          </TabPanel>
-          <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
-            <h1>Network Tab</h1>
-            {/* <NodeNetworkTab metrics={metrics} loading={isLoading} /> */}
-          </TabPanel>
-          <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
-            <h1>Resources Tab</h1>
-            {/* <NodeResourcesTab
-              metrics={metrics}
-              selectedNode={selectedNode}
-              loading={isLoading}
-            /> */}
-          </TabPanel>
-          <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
-            <h1>Radio Tab</h1>
-            {/* <NodeRadioTab metrics={metrics} loading={isLoading} /> */}
-          </TabPanel>
-          <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
-            <h1>Software Tab</h1>
-            {/* <NodeSoftwareTab
+        <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
+          <NodeOverviewTab
+            metrics={[]}
+            isUpdateAvailable={true}
+            selectedNode={selectedNode}
+            metricsLoading={false}
+            handleUpdateNode={() => {}}
+            connectedUsers={'0'}
+            onNodeSelected={() => {}}
+            uptime={0}
+            getNodeSoftwareUpdateInfos={() => {}}
+            loading={false}
+          />
+        </TabPanel>
+        <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
+          <NodeNetworkTab metrics={[]} loading={false} />
+        </TabPanel>
+        <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
+          <NodeResourcesTab
+            metrics={[]}
+            selectedNode={selectedNode}
+            loading={false}
+          />
+        </TabPanel>
+        <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
+          <NodeRadioTab metrics={[]} loading={false} />
+        </TabPanel>
+        <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
+          <h1>Software Tab</h1>
+          {/* <NodeSoftwareTab
               loading={isLoading || nodeAppsLogsLoading || nodeAppsLoading}
               nodeApps={nodeAppsRes?.getNodeApps}
               NodeLogs={nodeAppsLogsRes?.getNodeAppsVersionLogs}
               getNodeAppDetails={getNodeAppDetails}
             /> */}
-          </TabPanel>
-          <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
-            <h1>Schematic Tab</h1>
-            {/* <NodeSchematicTab
+        </TabPanel>
+        <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
+          <h1>Schematic Tab</h1>
+          {/* <NodeSchematicTab
               getSearchValue={getSpecsSchematicSearch}
               schematicsSpecsData={SpecsDocsData}
               nodeTitle={selectedNode?.name}
               loading={nodesLoading}
             /> */}
-          </TabPanel>
-        </PageContainer>
+        </TabPanel>
       </LoadingWrapper>
     </Stack>
   );

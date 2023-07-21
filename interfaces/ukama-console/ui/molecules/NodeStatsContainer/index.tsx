@@ -2,7 +2,7 @@ import { colors } from '@/styles/theme';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { IconButton, Paper, Stack, Typography } from '@mui/material';
 import React from 'react';
-import { LoadingWrapper } from '..';
+import LoadingWrapper from '../LoadingWrapper';
 interface INodeStatsContainer {
   index: number;
   title: string;
@@ -33,7 +33,7 @@ const NodeStatsContainer = ({
   return (
     <LoadingWrapper
       width="100%"
-      height="100px"
+      height="fit-content"
       radius="small"
       isLoading={loading}
     >

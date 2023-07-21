@@ -1,7 +1,8 @@
 import { TooltipsText } from '@/constants';
-import { Grid, Paper, Stack } from '@mui/material';
+import { Grid, Paper } from '@mui/material';
 import { useState } from 'react';
-import { ApexLineChart, NodeStatItem, NodeStatsContainer } from '..';
+import NodeStatItem from '../NodeStatItem';
+import NodeStatsContainer from '../NodeStatsContainer';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeOverviewTab {
@@ -58,13 +59,13 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
       </Grid>
       <Grid item lg={isCollapse ? 11 : 8} md xs>
         <Paper sx={{ p: 3, width: '100%' }}>
-          <Stack spacing={4}>
+          {/* <Stack spacing={4}>
             <ApexLineChart data={metrics['throughputuplink']} />
             <ApexLineChart data={metrics['throughputdownlink']} />
             <ApexLineChart data={metrics['rrc']} />
             <ApexLineChart data={metrics['erab']} />
             <ApexLineChart data={metrics['rlc']} />
-          </Stack>
+          </Stack> */}
         </Paper>
       </Grid>
     </Grid>
