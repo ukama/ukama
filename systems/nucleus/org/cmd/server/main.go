@@ -62,7 +62,7 @@ func initDb() sql.Db {
 
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.Org{}, &db.User{}, &db.OrgUser{})
+	err := d.Init(&db.Org{}, &db.User{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -134,13 +134,13 @@ func initOrgDB(orgDB *gorm.DB) {
 					return err
 				}
 
-				if err := tx.Create(&db.OrgUser{
-					OrgId:  org.Id,
-					UserId: usr.Id,
-					Uuid:   usr.Uuid,
-				}).Error; err != nil {
-					return err
-				}
+				// if err := tx.Create(&db.OrgUser{
+				// 	OrgId:  org.Id,
+				// 	UserId: usr.Id,
+				// 	Uuid:   usr.Uuid,
+				// }).Error; err != nil {
+				// 	return err
+				// }
 
 				return nil
 			}); err != nil {

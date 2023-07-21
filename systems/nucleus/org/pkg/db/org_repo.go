@@ -16,8 +16,9 @@ type OrgRepo interface {
 	Get(id uuid.UUID) (*Org, error)
 	GetByName(name string) (*Org, error)
 	GetByOwner(uuid uuid.UUID) ([]Org, error)
-	GetByMember(uuid uuid.UUID) ([]OrgUser, error)
+	GetByMember(uuid uuid.UUID) ([]Org, error)
 	GetAll() ([]Org, error)
+	GetOrgCount() (int64, int64, error)
 	// Update(id uint) error
 	// Deactivate(id uint) error
 	// Delete(id uint) error
@@ -92,13 +93,13 @@ func (r *orgRepo) GetByOwner(uuid uuid.UUID) ([]Org, error) {
 	return orgs, nil
 }
 
-func (r *orgRepo) GetByMember(uuid uuid.UUID) ([]OrgUser, error) {
-	var membOrgs []OrgUser
-
-	result := r.Db.GetGormDb().Where(&OrgUser{Uuid: uuid}).Find(&membOrgs)
-	if result.Error != nil {
-		return nil, result.Error
-	}
+func (r *orgRepo) GetByMember(uuid uuid.UUID) ([]Org, error) {
+	var membOrgs []Org
+	//TODO: fix this
+	// result := r.Db.GetGormDb().Where(&Org{Uuid: uuid}).Find(&membOrgs)
+	// if result.Error != nil {
+	// 	return nil, result.Error
+	// }
 
 	return membOrgs, nil
 }
@@ -112,4 +113,25 @@ func (r *orgRepo) GetAll() ([]Org, error) {
 	}
 
 	return orgs, nil
+}
+
+func (r *orgRepo) GetOrgCount() (int64, int64, error) {
+	var activeOrgCount int64
+	var deactiveOrgCount int64
+
+	result := r.Db.GetGormDb().Model(&Org{}).
+		Where("deactivated = ?", false).Count(&activeOrgCount)
+
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	result = r.Db.GetGormDb().Model(&Org{}).
+		Where("deactivated = ?", true).Count(&deactiveOrgCount)
+
+	if result.Error != nil {
+		return 0, 0, result.Error
+	}
+
+	return activeOrgCount, deactiveOrgCount, nil
 }
