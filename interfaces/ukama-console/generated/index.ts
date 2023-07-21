@@ -367,6 +367,11 @@ export type GetNodeStatusRes = {
   uptime: Scalars['Float']['output'];
 };
 
+export type GetNodesResDto = {
+  __typename?: 'GetNodesResDto';
+  node: Array<Node>;
+};
+
 export type GetPackagesForSimInputDto = {
   simId: Scalars['String']['input'];
 };
@@ -1079,6 +1084,7 @@ export type Query = {
   getNodeApps: Array<NodeAppResponse>;
   getNodeAppsVersionLogs: Array<NodeAppsVersionLogsResponse>;
   getNodeStatus: GetNodeStatusRes;
+  getNodes: GetNodesResDto;
   getNodesByOrg: OrgNodeResponseDto;
   getNodesBySite: NodesBySiteResDto;
   getOrg: OrgDto;
@@ -1760,6 +1766,13 @@ export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string }> } };
 
+export type GetSitesQueryVariables = Exact<{
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetSitesQuery = { __typename?: 'Query', getSites: { __typename?: 'SitesResDto', networkId: string, sites: Array<{ __typename?: 'SiteDto', id: string, name: string, networkId: string, isDeactivated: string }> } };
+
 export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data?: number | null, amount?: number | null } };
 
 export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
@@ -1845,6 +1858,11 @@ export type GetNodesBySiteQueryVariables = Exact<{
 
 
 export type GetNodesBySiteQuery = { __typename?: 'Query', getNodesBySite: { __typename?: 'NodesBySiteResDto', site_id: string, nodes: Array<{ __typename?: 'Node', id: string, name: string, org_id: string, type: string, attached: Array<string>, created_at: string, status: { __typename?: 'Status', connectivity: string, state: string } }> } };
+
+export type GetNodesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'GetNodesResDto', node: Array<{ __typename?: 'Node', id: string, name: string, org_id: string, type: string, attached: Array<string>, created_at: string, status: { __typename?: 'Status', connectivity: string, state: string } }> } };
 
 export const SubscriberSimFragmentDoc = gql`
     fragment SubscriberSim on SubscriberDto {
@@ -2411,6 +2429,47 @@ export function useGetNetworksLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
 export type GetNetworksQueryHookResult = ReturnType<typeof useGetNetworksQuery>;
 export type GetNetworksLazyQueryHookResult = ReturnType<typeof useGetNetworksLazyQuery>;
 export type GetNetworksQueryResult = Apollo.QueryResult<GetNetworksQuery, GetNetworksQueryVariables>;
+export const GetSitesDocument = gql`
+    query getSites($networkId: String!) {
+  getSites(networkId: $networkId) {
+    networkId
+    sites {
+      id
+      name
+      networkId
+      isDeactivated
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetSitesQuery__
+ *
+ * To run a query within a React component, call `useGetSitesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSitesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSitesQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetSitesQuery(baseOptions: Apollo.QueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
+      }
+export function useGetSitesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
+        }
+export type GetSitesQueryHookResult = ReturnType<typeof useGetSitesQuery>;
+export type GetSitesLazyQueryHookResult = ReturnType<typeof useGetSitesLazyQuery>;
+export type GetSitesQueryResult = Apollo.QueryResult<GetSitesQuery, GetSitesQueryVariables>;
 export const GetPackagesDocument = gql`
     query getPackages {
   getPackages {
@@ -2813,3 +2872,48 @@ export function useGetNodesBySiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
 export type GetNodesBySiteQueryHookResult = ReturnType<typeof useGetNodesBySiteQuery>;
 export type GetNodesBySiteLazyQueryHookResult = ReturnType<typeof useGetNodesBySiteLazyQuery>;
 export type GetNodesBySiteQueryResult = Apollo.QueryResult<GetNodesBySiteQuery, GetNodesBySiteQueryVariables>;
+export const GetNodesDocument = gql`
+    query getNodes {
+  getNodes {
+    node {
+      id
+      name
+      org_id
+      type
+      status {
+        connectivity
+        state
+      }
+      attached
+      created_at
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetNodesQuery__
+ *
+ * To run a query within a React component, call `useGetNodesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetNodesQuery(baseOptions?: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
+      }
+export function useGetNodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
+        }
+export type GetNodesQueryHookResult = ReturnType<typeof useGetNodesQuery>;
+export type GetNodesLazyQueryHookResult = ReturnType<typeof useGetNodesLazyQuery>;
+export type GetNodesQueryResult = Apollo.QueryResult<GetNodesQuery, GetNodesQueryVariables>;

@@ -508,6 +508,18 @@ query getNetworks {
     }
   }
 }
+
+query getSites($networkId: String!) {
+  getSites(networkId: $networkId) {
+    networkId
+    sites {
+      id
+      name
+      networkId
+      isDeactivated
+    }
+  }
+}
 ### Network End ###
 
 ### Package Start ###
@@ -679,6 +691,23 @@ query getNodesBySite($siteId: String!) {
   getNodesBySite(siteId: $siteId) {
     site_id
     nodes {
+      id
+      name
+      org_id
+      type
+      status {
+        connectivity
+        state
+      }
+      attached
+      created_at
+    }
+  }
+}
+
+query getNodes {
+  getNodes {
+    node {
       id
       name
       org_id

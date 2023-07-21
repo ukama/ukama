@@ -12,7 +12,7 @@ import {
   useUpdatePacakgeMutation,
   useUploadSimsMutation,
   useGetNetworksLazyQuery,
-  useGetNodesBySiteLazyQuery,
+  useGetNodesLazyQuery,
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TCommonData, TObject, TSnackMessage } from '@/types';
@@ -38,19 +38,6 @@ const SimPool = dynamic(() => import('./_simpool'));
 const NodePool = dynamic(() => import('./_nodepool'));
 const Member = dynamic(() => import('./_member'));
 const DataPlan = dynamic(() => import('./_dataplan'));
-
-// const NODE_POOL_DATA = [
-//   {
-//     type: 'Tower Node',
-//     dateClaimed: '1231412414',
-//     id: '8910-3333-0000-3540-833',
-//   },
-//   {
-//     type: 'Amplifier Node',
-//     dateClaimed: '123120412414',
-//     id: '8910-3000-0000-3540-833',
-//   },
-// ];
 
 const structureData = (data: any) =>
   data && data.length > 0
@@ -115,6 +102,7 @@ const Manage = () => {
   const _commonData = useRecoilValue<TCommonData>(commonData);
   const [nodeSearch, setNodeSearch] = useState<string>('');
   const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+
   const [data, setData] = useState<any>({
     members: [],
     simPool: [],
@@ -170,32 +158,31 @@ const Manage = () => {
       });
     },
   });
-  const [getNodesBySite, { loading: getNodeBySiteLoading }] =
-    useGetNodesBySiteLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        const filteredNodes = data?.getNodesBySite.nodes
-          .filter((node) => node.created_at)
-          .map((node) => ({
-            ...node,
-            created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
-          }));
 
-        console.log('filteredNodes', filteredNodes);
-        setData((prev: any) => ({
-          ...prev,
-          node: filteredNodes ?? [],
+  const [getNodes, { loading: getNodesLoading }] = useGetNodesLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      const filteredNodes = data?.getNodes.node
+        .filter((node) => node.created_at)
+        .map((node) => ({
+          ...node,
+          created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
         }));
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'node',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+
+      setData((prev: any) => ({
+        ...prev,
+        node: filteredNodes ?? [],
+      }));
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'node',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const [getSims, { loading: simsLoading, refetch: refetchSims }] =
     useGetSimsLazyQuery({
@@ -385,11 +372,7 @@ const Manage = () => {
     else if (id === 'manage-data-plan') getPackages();
     else if (id === 'manage-node') {
       getNetworks();
-      getNodesBySite({
-        variables: {
-          siteId: '440bd561-bf0b-4e6d-9789-ca64ef20f4c7',
-        },
-      });
+      getNodes();
     }
 
     setMenu(id);
@@ -483,6 +466,7 @@ const Manage = () => {
   const handleCreateNetwork = () => {
     console.log('adding node to network');
   };
+
   const isLoading =
     packagesLoading ||
     simsLoading ||
@@ -493,7 +477,7 @@ const Manage = () => {
     deletePkgLoading ||
     updatePkgLoading ||
     networkLoading ||
-    getNodeBySiteLoading;
+    getNodesLoading;
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
       <ManageMenu selectedId={menu} onMenuItemClick={onMenuItemClick} />
