@@ -1,7 +1,8 @@
-import { GetNodeStatusRes, NodeDto } from '@/generated';
+import { Node } from '@/generated';
 import { Button, Grid } from '@mui/material';
 import { styled } from '@mui/styles';
 import LoadingWrapper from '../LoadingWrapper';
+import NodeDropDown from '../NodeDropDown';
 import SplitButton from '../SplitButton';
 
 const StyledBtn = styled(Button)({
@@ -10,27 +11,23 @@ const StyledBtn = styled(Button)({
 });
 
 interface INodeStatus {
+  nodes: Node[];
   loading: boolean;
   onAddNode: Function;
-  nodes: any;
   nodeActionOptions: any[];
-  nodeStatusLoading: boolean;
   handleNodeSelected: Function;
   handleEditNodeClick: Function;
+  selectedNode: Node | undefined;
   handleNodeActionClick: Function;
-  selectedNode: NodeDto | undefined;
   handleNodeActionItemSelected: Function;
-  nodeStatus: GetNodeStatusRes | undefined;
 }
 
 const NodeStatus = ({
   nodes,
   onAddNode,
-  nodeStatus,
   selectedNode,
   loading = false,
   nodeActionOptions,
-  nodeStatusLoading,
   handleNodeSelected,
   handleEditNodeClick,
   handleNodeActionClick,
@@ -42,15 +39,13 @@ const NodeStatus = ({
   return (
     <Grid container>
       <Grid item xs={12} md={8}>
-        {/* <NodeDropDown
+        <NodeDropDown
           nodes={nodes}
           loading={loading}
           onAddNode={onAddNode}
-          nodeStatus={nodeStatus}
           selectedNode={selectedNode}
           onNodeSelected={handleNodeSelected}
-          nodeStatusLoading={nodeStatusLoading}
-        /> */}
+        />
       </Grid>
       <Grid item md={4} xs={12} container spacing={2} justifyContent="flex-end">
         <Grid item>

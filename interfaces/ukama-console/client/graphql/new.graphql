@@ -5,7 +5,16 @@ fragment node on Node {
   name
   orgId
   type
-  attached
+  attached {
+    id
+    name
+    orgId
+    type
+    status {
+      connectivity
+      state
+    }
+  }
   status {
     connectivity
     state

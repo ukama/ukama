@@ -1,6 +1,7 @@
-import { GetNodeStatusRes, NodeDto, Org_Node_State } from '@/generated';
+import { Node, NodeStatusEnum } from '@/generated';
 import { colors } from '@/styles/theme';
-import { hexToRGB, secToHoursNMints } from '@/utils';
+import { hexToRGB } from '@/utils';
+import { AddCircleOutlineRounded } from '@mui/icons-material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CircleIcon from '@mui/icons-material/Circle';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
@@ -16,35 +17,40 @@ import {
 import LoadingWrapper from '../LoadingWrapper';
 import { PaperProps, SelectDisplayProps, useStyles } from './styles';
 
-const getStatus = (status: Org_Node_State, time: number) => {
+const getStatus = (status: NodeStatusEnum, time: number) => {
+  let str = '';
   switch (status) {
-    case Org_Node_State.Onboarded:
-      return (
-        <Stack display="flex" flexDirection="row" alignItems={'center'}>
-          <Typography variant={'h6'} mr={'6px'}>
-            is online and well for
-          </Typography>
-          <Typography variant={'h6'} color="primary">
-            {secToHoursNMints(time, ' hours and ')}
-          </Typography>
-        </Stack>
-      );
-
-    case Org_Node_State.Pending:
-      return <Typography variant={'h6'}>is configuring.</Typography>;
-
+    case NodeStatusEnum.Active:
+      str = 'Active';
+    case NodeStatusEnum.Maintenance:
+      str = 'Maintainance';
+    case NodeStatusEnum.Configured:
+      str = 'Configured';
+    case NodeStatusEnum.Onboarded:
+      str = 'Onboarded';
+    case NodeStatusEnum.Faulty:
+      str = 'Faulty';
     default:
-      return '';
+      str = 'Unknown';
   }
+  return (
+    <Typography variant={'h6'} mr={'6px'}>
+      {str}
+    </Typography>
+  );
 };
 
-const getStatusIcon = (status: Org_Node_State) => {
+const getStatusIcon = (status: NodeStatusEnum) => {
   switch (status) {
-    case Org_Node_State.Onboarded:
+    case NodeStatusEnum.Active:
       return <CheckCircleIcon htmlColor={colors.green} fontSize={'small'} />;
-    case Org_Node_State.Pending:
+    case NodeStatusEnum.Maintenance:
       return <InfoIcon htmlColor={colors.yellow} fontSize={'small'} />;
-    case Org_Node_State.Error:
+    case NodeStatusEnum.Configured:
+      return <InfoIcon htmlColor={colors.black38} fontSize={'small'} />;
+    case NodeStatusEnum.Onboarded:
+      return <InfoIcon htmlColor={colors.darkGreen05} fontSize={'small'} />;
+    case NodeStatusEnum.Faulty:
       return <InfoIcon htmlColor={colors.red} fontSize={'small'} />;
     default:
       return <CircleIcon htmlColor={colors.black38} fontSize={'small'} />;
@@ -54,38 +60,30 @@ const getStatusIcon = (status: Org_Node_State) => {
 interface INodeDropDown {
   loading: boolean;
   onAddNode: Function;
-  nodes: NodeDto[] | [];
+  nodes: Node[] | [];
   onNodeSelected: Function;
-  nodeStatusLoading: boolean;
-  selectedNode: NodeDto | undefined;
-  nodeStatus: GetNodeStatusRes | undefined;
+  selectedNode: Node | undefined;
 }
 
 const NodeDropDown = ({
   nodes = [],
   onAddNode,
-  nodeStatus = {
-    // status: Org_Node_State.Undefined,
-    status: undefined,
-    uptime: new Date().getTime(),
-  },
   selectedNode,
   loading = true,
   onNodeSelected,
-  nodeStatusLoading,
 }: INodeDropDown) => {
   const classes = useStyles();
   const handleChange = (e: SelectChangeEvent<string>) => {
     const { target } = e;
     target.value &&
-      onNodeSelected(nodes.find((item: NodeDto) => item.name === target.value));
+      onNodeSelected(nodes.find((item: Node) => item.name === target.value));
   };
   return (
     <Stack direction={'row'} spacing={1} alignItems="center">
-      {getStatusIcon(nodeStatus.status)}
+      {selectedNode && getStatusIcon(selectedNode.status.state)}
 
       <LoadingWrapper
-        height={38}
+        height={'fit-content'}
         isLoading={loading}
         width={loading ? '144px' : 'fit-content'}
       >
@@ -107,6 +105,7 @@ const NodeDropDown = ({
             },
             PaperProps: {
               sx: {
+                width: '164px',
                 ...PaperProps,
               },
             },
@@ -147,9 +146,11 @@ const NodeDropDown = ({
             <Button
               variant="text"
               sx={{
+                p: 0,
                 typography: 'body1',
                 textTransform: 'none',
               }}
+              startIcon={<AddCircleOutlineRounded />}
             >
               Add node
             </Button>
@@ -157,13 +158,12 @@ const NodeDropDown = ({
         </Select>
       </LoadingWrapper>
 
-      <LoadingWrapper
+      {/* <LoadingWrapper
         height={38}
-        isLoading={nodeStatusLoading}
-        width={nodeStatusLoading ? '200px' : 'fit-content'}
+        width={'fit-content'}
       >
         {getStatus(nodeStatus.status, nodeStatus.uptime)}
-      </LoadingWrapper>
+      </LoadingWrapper> */}
     </Stack>
   );
 };

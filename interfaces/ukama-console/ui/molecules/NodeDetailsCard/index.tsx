@@ -1,13 +1,11 @@
-import { Node_Type } from '@/generated';
 import colors from '@/styles/theme/colors';
 import { Chip, Grid, Link, Paper, Stack, Typography } from '@mui/material';
-import { LoadingWrapper } from '..';
-import DeviceModalView from '../DeviceModalView';
+import LoadingWrapper from '../LoadingWrapper';
 
 interface INodeDetailsCard {
   loading: boolean;
   nodeTitle: string;
-  nodeType?: Node_Type;
+  nodeType?: any;
   isUpdateAvailable: boolean;
   handleUpdateNode: Function;
   getNodeUpdateInfos: Function;
@@ -18,7 +16,7 @@ const NodeDetailsCard = ({
   nodeTitle,
   isUpdateAvailable,
   getNodeUpdateInfos,
-  nodeType = Node_Type.Home,
+  nodeType = 'HOME',
 }: INodeDetailsCard) => {
   return (
     <LoadingWrapper
@@ -63,7 +61,7 @@ const NodeDetailsCard = ({
             )}
           </Grid>
 
-          <DeviceModalView nodeType={nodeType} />
+          {/* <DeviceModalView nodeType={nodeType} /> */}
         </Stack>
       </Paper>
     </LoadingWrapper>
