@@ -12,7 +12,7 @@ import (
 )
 
 type Notify interface {
-	Add(nodeId, severity, ntype, serviceName, description, details string, epochTime uint32) (*pb.AddResponse, error)
+	Add(nodeId, severity, ntype, serviceName, description, details string, status, epochTime uint32) (*pb.AddResponse, error)
 	Get(id string) (*pb.GetResponse, error)
 	List(nodeId, serviceName, nType string, count uint32, sort bool) (*pb.ListResponse, error)
 	Delete(id string) (*pb.DeleteResponse, error)
@@ -61,7 +61,7 @@ func (m *notify) Close() {
 }
 
 func (n *notify) Add(nodeId, severity, ntype, serviceName,
-	description, details string, epochTime uint32) (*pb.AddResponse, error) {
+	description, details string, status, epochTime uint32) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
@@ -71,6 +71,7 @@ func (n *notify) Add(nodeId, severity, ntype, serviceName,
 			Severity:    severity,
 			Type:        ntype,
 			ServiceName: serviceName,
+			Status:      status,
 			EpochTime:   epochTime,
 			Description: description,
 			Details:     details,

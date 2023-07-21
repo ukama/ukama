@@ -164,7 +164,7 @@ func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (mess
 
 func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {
 	return r.clients.n.Add(req.NodeId, req.Severity,
-		req.Type, req.ServiceName, req.Description, req.Details, req.Time)
+		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
 }
 
 func (r *Router) getNotification(c *gin.Context, req *GetNotificationReq) (*npb.GetResponse, error) {

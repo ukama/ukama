@@ -4,78 +4,45 @@ import (
 	"context"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/notification/notify/internal"
 	"github.com/ukama/ukama/systems/notification/notify/internal/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
 
 type NotifyServer struct {
-	repo db.NotificationRepo
-	// msgbus         mb.MsgBusServiceClient
-	// baseRoutingKey msgbus.RoutingKeyBuilder
+	notifyRepo     db.NotificationRepo
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedNotifyServiceServer
 }
 
-func NewNotifyServer(d db.NotificationRepo) *NotifyServer {
+func NewNotifyServer(nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient) *NotifyServer {
 	return &NotifyServer{
-		repo: d,
+		notifyRepo: nRepo,
+		msgbus:     msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().
+			SetCloudSource().SetContainer(internal.ServiceName),
 	}
 }
 
 func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	log.Infof("Adding notification %v", req)
+	err := add(req.NodeId, req.Severity, req.Type, req.ServiceName, req.Description,
+		req.Details, req.Status, req.EpochTime, n.notifyRepo, n.msgbus, n.baseRoutingKey)
 
-	nodeId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format for node id. Error %s", err.Error())
-	}
-
-	severity, err := db.GetSeverityType(req.Severity)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format for severity. Error %s", err.Error())
-	}
-
-	notificationType, err := db.GetNotificationType(req.Type)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format for notification type. Error %s", err.Error())
-	}
-
-	notification := &db.Notification{
-		Id:          uuid.NewV4(),
-		NodeId:      nodeId.StringLowercase(),
-		NodeType:    nodeId.GetNodeType(),
-		Severity:    *severity,
-		Type:        *notificationType,
-		ServiceName: req.ServiceName,
-		Time:        req.EpochTime,
-		Description: req.Description,
-		Details:     datatypes.JSON([]byte(req.Details)),
-	}
-
-	// notif.NotificationID = uuid.Must(uuid.NewV4(), err)
-	log.Debugf("New notification is : %+v.", notification)
-
-	err = n.repo.Add(notification)
-	if err != nil {
-		log.Errorf("Error adding new notification to database. Error: %s\n", err.Error())
 		return nil, err
 	}
-
-	/* Publish on message queue */
-	// err = n.Publish(notif)
-	// if err != nil {
-	// log.Errorf("Error publishing new notification.Error: %s\n", err.Error())
-	// return nil, err
-	// }
 
 	return &pb.AddResponse{}, nil
 }
@@ -89,7 +56,7 @@ func (n *NotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResp
 			"invalid format for notification uuid. Error %s", err.Error())
 	}
 
-	nt, err := n.repo.Get(notificationId)
+	nt, err := n.notifyRepo.Get(notificationId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "notification")
 	}
@@ -120,7 +87,7 @@ func (n *NotifyServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 		req.Type = notificationType.String()
 	}
 
-	nts, err := n.repo.List(req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
+	nts, err := n.notifyRepo.List(req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "notifications")
 	}
@@ -137,11 +104,23 @@ func (n *NotifyServer) Delete(ctx context.Context, req *pb.GetRequest) (*pb.Dele
 			"invalid format for notification uuid. Error %s", err.Error())
 	}
 
-	err = n.repo.Delete(notificationId)
+	err = n.notifyRepo.Delete(notificationId)
 	if err != nil {
 		log.Errorf("Error deleting notification from database. Error: %s\n", err.Error())
 
 		return nil, err
+	}
+
+	route := n.baseRoutingKey.SetAction("delete").SetObject("notification").MustBuild()
+
+	evt := &epb.NotificationDeletedEvent{
+		Id: notificationId.String(),
+	}
+
+	err = n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
 	}
 
 	return &pb.DeleteResponse{}, nil
@@ -170,7 +149,7 @@ func (n *NotifyServer) Purge(ctx context.Context, req *pb.PurgeRequest) (*pb.Lis
 		req.Type = notificationType.String()
 	}
 
-	nts, err := n.repo.Purge(req.NodeId, req.ServiceName, req.Type)
+	nts, err := n.notifyRepo.Purge(req.NodeId, req.ServiceName, req.Type)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "notifications")
 	}
@@ -178,50 +157,79 @@ func (n *NotifyServer) Purge(ctx context.Context, req *pb.PurgeRequest) (*pb.Lis
 	return &pb.ListResponse{Notifications: dbNotificationsToPbNotifications(nts)}, nil
 }
 
-// func (n *NotifyServer) Publish(notif *db.Notification) error {
-// if n.m == nil {
-// log.Errorf("No msgbus registerd to service.")
-// return nil
-// }
+func add(nodeId, severity, nType, serviceName, description, details string, nStatus uint32, epochTime uint32,
+	notifyRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	var nNodeId ukama.NodeID = ""
+	var nodeType string = ""
 
-// msg := &pb.Notification{
-// Id:          notif.Id.String(),
-// NodeId:      notif.NodeId,
-// NodeType:    notif.NodeType,
-// Description: notif.Description,
-// Severity:    string(notif.Severity),
-// ServiceName: notif.ServiceName,
-// EpochTime:   notif.Time,
-// Type:        notif.Type.String(),
-// }
+	if nodeId != "" {
+		nNodeId, err := ukama.ValidateNodeId(nodeId)
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument,
+				"invalid format for node id. Error %s", err.Error())
+		}
 
-// log.Debugf("Broadcasted notification: %+v.", notif)
-// // Routing key
-// key := msgbus.NewRoutingKeyBuilder().
-// SetDeviceSource().
-// SetContainer(internal.ServiceName).
-// SetEventType().
-// SetObject("notification").
-// SetAction(msg.Type).
-// MustBuild()
-// routingKey := msgbus.RoutingKey(key)
+		nodeType = nNodeId.GetNodeType()
+	}
 
-// // Marshal
-// data, err := proto.Marshal(msg)
-// if err != nil {
-// log.Errorf("Router:: fail marshal: %s", err.Error())
-// return err
-// }
-// log.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, n.m)
+	nseverity, err := db.GetSeverityType(severity)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format for severity. Error %s", err.Error())
+	}
 
-// // Publish a message
-// err = n.m.Publish(data, msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, routingKey, msgbus.DeviceQ.ExchangeType)
-// if err != nil {
-// log.Errorf(err.Error())
-// }
+	notificationType, err := db.GetNotificationType(nType)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format for notification type. Error %s", err.Error())
+	}
 
-// return nil
-// }
+	notification := &db.Notification{
+		Id:          uuid.NewV4(),
+		NodeId:      nNodeId.StringLowercase(),
+		NodeType:    nodeType,
+		Severity:    *nseverity,
+		Type:        *notificationType,
+		ServiceName: serviceName,
+		Status:      nStatus,
+		Time:        epochTime,
+		Description: description,
+		Details:     datatypes.JSON([]byte(details)),
+	}
+
+	log.Debugf("New notification is : %+v.", notification)
+
+	err = notifyRepo.Add(notification)
+	if err != nil {
+		log.Errorf("Error adding new notification to database. Error: %s\n",
+			err.Error())
+
+		return err
+	}
+
+	route := baseRoutingKey.SetAction("store").SetObject("notification").MustBuild()
+
+	evt := &epb.Notification{
+		Id:          notification.Id.String(),
+		NodeId:      notification.NodeId,
+		NodeType:    notification.NodeType,
+		Severity:    notification.Severity.String(),
+		Type:        notification.Type.String(),
+		ServiceName: notification.ServiceName,
+		Status:      notification.Status,
+		EpochTime:   notification.Time,
+		Description: notification.Description,
+		Details:     notification.Details.String(),
+	}
+
+	err = msgBus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
+	}
+
+	return nil
+}
 
 func dbNotificationToPbNotification(notif *db.Notification) *pb.Notification {
 	return &pb.Notification{
@@ -231,10 +239,11 @@ func dbNotificationToPbNotification(notif *db.Notification) *pb.Notification {
 		Severity:    notif.Severity.String(),
 		Type:        notif.Type.String(),
 		ServiceName: notif.ServiceName,
+		Status:      notif.Status,
 		EpochTime:   notif.Time,
 		Description: notif.Description,
 		Details:     notif.Details.String(),
-		// CreatedAt:   timestamppb.New(nt.CreatedAt),
+		CreatedAt:   timestamppb.New(notif.CreatedAt),
 	}
 }
 
