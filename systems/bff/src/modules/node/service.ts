@@ -146,7 +146,6 @@ export class NodeService implements INodeService {
             path: `${SERVER.REGISTRY_NODE_API_URL}`,
             headers: getHeaders(headers),
         });
-        console.log("NODES", res);
         if (checkError(res)) {
             logger.error(res);
             throw new Error(res.message);
