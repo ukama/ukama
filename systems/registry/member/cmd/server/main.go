@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -8,6 +9,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	generated "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"gopkg.in/yaml.v2"
+	"gorm.io/gorm"
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/registry/member/cmd/version"
@@ -71,10 +73,10 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		log.Fatalf("invalid org uuid. Error %s", err.Error())
 	}
-
+	p := providers.NewOrgClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode)
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 	memberServer := server.NewMemberServer(db.NewMemberRepo(gormdb),
-		providers.NewOrgClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode), mbClient, serviceConfig.PushGateway, id, serviceConfig.OrgName)
+		p, mbClient, serviceConfig.PushGateway, id, serviceConfig.OrgName)
 
 	logrus.Debugf("MessageBus Client is %+v", mbClient)
 
@@ -87,6 +89,8 @@ func runGrpcServer(gormdb sql.Db) {
 	go msgBusListener(mbClient)
 
 	_ = memberServer.PushOrgMemberCountMetric(id)
+
+	initMemberDB(gormdb, p)
 
 	waitForExit()
 }
@@ -115,4 +119,58 @@ func waitForExit() {
 	log.Debug("awaiting terminate/interrrupt signal")
 	<-done
 	log.Infof("exiting service %s", pkg.ServiceName)
+}
+
+func initMemberDB(d sql.Db, p providers.OrgClientProvider) {
+	mDB := d.GetGormDb()
+	if mDB.Migrator().HasTable(&db.Member{}) {
+		if err := mDB.First(&db.Member{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Info("Iniiialzing orgs table")
+
+			var OwnerUUID uuid.UUID
+			var err error
+
+			if OwnerUUID, err = uuid.FromString(serviceConfig.OwnerId); err != nil {
+				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGOWNERUUID", err)
+			}
+
+			/* TODO: validate the user from user services */
+			u, err := p.GetUserById(serviceConfig.OwnerId)
+			if err != nil {
+				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OwnerId, err)
+			}
+
+			o, err := p.GetOrgByName(serviceConfig.OrgName)
+			if err != nil {
+				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OwnerId, err)
+			}
+
+			if u.Id != o.Org.Owner {
+				log.Fatalf("Failed to validate user %s as owner of org.", serviceConfig.OwnerId)
+			}
+
+			if u.IsDeactivated {
+				log.Fatalf("User is %s is in %s state", serviceConfig.OwnerId, "deactivated")
+			}
+
+			if o.Org.IsDeactivated {
+				log.Fatalf("Org is %s in %s state", serviceConfig.OwnerId, "deactivated")
+			}
+
+			member := &db.Member{
+				UserId:      OwnerUUID,
+				Deactivated: false,
+				Role:        db.Owner,
+			}
+
+			if err := mDB.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Create(member).Error; err != nil {
+					return err
+				}
+				return nil
+			}); err != nil {
+				log.Fatalf("Database initialization failed, invalid initial state. Error: %v", err)
+			}
+		}
+	}
 }
