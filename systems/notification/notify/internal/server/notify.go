@@ -28,9 +28,10 @@ type NotifyServer struct {
 
 func NewNotifyServer(d db.NotificationRepo, msgBus mb.MsgBusServiceClient) *NotifyServer {
 	return &NotifyServer{
-		repo:           d,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName),
+		repo:   d,
+		msgbus: msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().
+			SetCloudSource().SetContainer(internal.ServiceName),
 	}
 }
 
@@ -71,7 +72,9 @@ func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 
 	err = n.repo.Add(notification)
 	if err != nil {
-		log.Errorf("Error adding new notification to database. Error: %s\n", err.Error())
+		log.Errorf("Error adding new notification to database. Error: %s\n",
+			err.Error())
+
 		return nil, err
 	}
 
@@ -91,7 +94,8 @@ func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 
 	err = n.msgbus.PublishRequest(route, evt)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
 	}
 
 	return &pb.AddResponse{}, nil
@@ -169,7 +173,8 @@ func (n *NotifyServer) Delete(ctx context.Context, req *pb.GetRequest) (*pb.Dele
 
 	err = n.msgbus.PublishRequest(route, evt)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
 	}
 
 	return &pb.DeleteResponse{}, nil

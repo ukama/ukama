@@ -59,23 +59,79 @@ func TestNotifyServer_Add(t *testing.T) {
 
 	s := server.NewNotifyServer(&repo, msgbusClient)
 
-	notif := &pb.AddRequest{
-		NodeId:      nt.NodeId,
-		Severity:    nt.Severity.String(),
-		Type:        nt.Type.String(),
-		ServiceName: nt.ServiceName,
-		EpochTime:   nt.Time,
-		Description: nt.Description,
-		Details:     nt.Details.String(),
-	}
+	t.Run("NotificationIsValid", func(tt *testing.T) {
+		notif := &pb.AddRequest{
+			NodeId:      nt.NodeId,
+			Severity:    nt.Severity.String(),
+			Type:        nt.Type.String(),
+			ServiceName: nt.ServiceName,
+			EpochTime:   nt.Time,
+			Description: nt.Description,
+			Details:     nt.Details.String(),
+		}
 
-	repo.On("Add", mock.Anything).Return(nil)
+		repo.On("Add", mock.Anything).Return(nil)
 
-	resp, err := s.Add(context.TODO(), notif)
+		resp, err := s.Add(context.TODO(), notif)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
-	repo.AssertExpectations(t)
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("NodeIdNotValid", func(tt *testing.T) {
+		notif := &pb.AddRequest{
+			NodeId:      "lol",
+			Severity:    nt.Severity.String(),
+			Type:        nt.Type.String(),
+			ServiceName: nt.ServiceName,
+			EpochTime:   nt.Time,
+			Description: nt.Description,
+			Details:     nt.Details.String(),
+		}
+		resp, err := s.Add(context.TODO(), notif)
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("SeverityNotValid", func(tt *testing.T) {
+		notif := &pb.AddRequest{
+			NodeId:      nt.NodeId,
+			Severity:    "foo",
+			Type:        nt.Type.String(),
+			ServiceName: nt.ServiceName,
+			EpochTime:   nt.Time,
+			Description: nt.Description,
+			Details:     nt.Details.String(),
+		}
+
+		resp, err := s.Add(context.TODO(), notif)
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("NotificationTypeNotValid", func(tt *testing.T) {
+		notif := &pb.AddRequest{
+			NodeId:      nt.NodeId,
+			Severity:    nt.Severity.String(),
+			Type:        "bar",
+			ServiceName: nt.ServiceName,
+			EpochTime:   nt.Time,
+			Description: nt.Description,
+			Details:     nt.Details.String(),
+		}
+
+		resp, err := s.Add(context.TODO(), notif)
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
 }
 
 func TestNotifyServer_Get(t *testing.T) {
@@ -98,22 +154,22 @@ func TestNotifyServer_Get(t *testing.T) {
 		repo.AssertExpectations(t)
 	})
 
-	t.Run("NotificationNotFound", func(tt *testing.T) {
-		repo.On("Get", mock.Anything).Return(nil, gorm.ErrRecordNotFound).Once()
-
+	t.Run("NotificationInvalid", func(tt *testing.T) {
 		// Act
 		resp, err := s.Get(context.TODO(),
-			&pb.GetRequest{NotificationId: notificationId.String()})
+			&pb.GetRequest{NotificationId: "lol"})
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 		repo.AssertExpectations(t)
 	})
 
-	t.Run("NotificationInvalid", func(tt *testing.T) {
+	t.Run("NotificationNotFound", func(tt *testing.T) {
+		repo.On("Get", mock.Anything).Return(nil, gorm.ErrRecordNotFound).Once()
+
 		// Act
 		resp, err := s.Get(context.TODO(),
-			&pb.GetRequest{NotificationId: "lol"})
+			&pb.GetRequest{NotificationId: notificationId.String()})
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
@@ -173,6 +229,33 @@ func TestNotifyServer_List(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, list)
 		assertList(t, list, resp)
+	})
+
+	t.Run("ListInvalidEventsForService", func(t *testing.T) {
+		service := "deviced"
+		ntype := "warnings"
+		nt := NewTestDbNotification(node, ntype)
+		resp[0] = nt
+
+		list, err := n.List(context.TODO(), &pb.ListRequest{
+			ServiceName: service,
+			Type:        ntype,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("ListAlertsForInvalidNode", func(t *testing.T) {
+		ntype := "alert"
+
+		list, err := n.List(context.TODO(), &pb.ListRequest{
+			NodeId: "foo",
+			Type:   ntype,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
 	})
 
 	t.Run("ListAlertsForNode", func(t *testing.T) {
@@ -292,18 +375,52 @@ func TestNotifyServer_List(t *testing.T) {
 
 func TestNotifyServer_Delete(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-	id := uuid.NewV4()
 
 	repo := mocks.NotificationRepo{}
 
 	n := server.NewNotifyServer(&repo, msgbusClient)
 
-	repo.On("Delete", mock.Anything).Return(nil)
-	_, err := n.Delete(context.TODO(), &pb.GetRequest{NotificationId: id.String()})
+	t.Run("NotificationNotFound", func(tt *testing.T) {
+		notificationId := uuid.NewV4()
 
-	assert.NoError(t, err)
+		repo.On("Delete", notificationId).Return(gorm.ErrRecordNotFound).Once()
+
+		// Act
+		resp, err := n.Delete(context.TODO(),
+			&pb.GetRequest{NotificationId: notificationId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("NotificationInvalid", func(tt *testing.T) {
+		// Act
+		resp, err := n.Delete(context.TODO(),
+			&pb.GetRequest{NotificationId: "lol"})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("NotificationFound", func(tt *testing.T) {
+		notificationId := uuid.NewV4()
+
+		msgbusClient.On("PublishRequest",
+			mock.Anything, mock.Anything).Return(nil).Once()
+
+		repo.On("Delete", notificationId).Return(nil)
+
+		// Act
+		resp, err := n.Delete(context.TODO(),
+			&pb.GetRequest{NotificationId: notificationId.String()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		// repo.AssertExpectations(t)
+	})
+
 }
 
 func TestNotifyServer_Purge(t *testing.T) {
@@ -315,15 +432,17 @@ func TestNotifyServer_Purge(t *testing.T) {
 	resp := make([]db.Notification, 1)
 	n := server.NewNotifyServer(&repo, msgbusClient)
 
-	t.Run("DeleteAll", func(t *testing.T) {
-		nt := NewTestDbNotification(node, "alert")
-
+	t.Run("DeleteEventsForNode", func(t *testing.T) {
+		ntype := "event"
+		nt := NewTestDbNotification(node, ntype)
 		resp[0] = nt
 
-		repo.On("Purge", "", "", "").Return(resp, nil)
-
+		repo.On("Purge", node, "", ntype).Return(resp, nil)
 		deletedItems, err := n.Purge(context.TODO(),
-			&pb.PurgeRequest{})
+			&pb.PurgeRequest{
+				NodeId: node,
+				Type:   ntype,
+			})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, deletedItems)
@@ -383,21 +502,45 @@ func TestNotifyServer_Purge(t *testing.T) {
 		assertList(t, deletedItems, resp)
 	})
 
-	t.Run("DeleteEventsForNode", func(t *testing.T) {
-		ntype := "event"
-		nt := NewTestDbNotification(node, ntype)
+	t.Run("DeleteAlertsForInvalidNode", func(t *testing.T) {
+		ntype := "alert"
+
+		deletedItems, err := n.Purge(context.TODO(),
+			&pb.PurgeRequest{
+				NodeId: "lol",
+				Type:   ntype,
+			})
+
+		assert.Error(t, err)
+		assert.Nil(t, deletedItems)
+	})
+
+	t.Run("DeleteAll", func(t *testing.T) {
+		nt := NewTestDbNotification(node, "alert")
+
 		resp[0] = nt
 
-		repo.On("Purge", node, "", ntype).Return(resp, nil)
+		repo.On("Purge", "", "", "").Return(resp, nil)
+
+		deletedItems, err := n.Purge(context.TODO(),
+			&pb.PurgeRequest{})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, deletedItems)
+		assertList(t, deletedItems, resp)
+	})
+
+	t.Run("DeleteInvalidNotificationTypeForNode", func(t *testing.T) {
+		ntype := "warnings"
+
 		deletedItems, err := n.Purge(context.TODO(),
 			&pb.PurgeRequest{
 				NodeId: node,
 				Type:   ntype,
 			})
 
-		assert.NoError(t, err)
-		assert.NotNil(t, deletedItems)
-		assertList(t, deletedItems, resp)
+		assert.Error(t, err)
+		assert.Nil(t, deletedItems)
 	})
 }
 

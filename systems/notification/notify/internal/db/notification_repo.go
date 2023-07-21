@@ -38,7 +38,9 @@ func (r *notificationRepo) Add(n *Notification) error {
 func (r *notificationRepo) Get(id uuid.UUID) (*Notification, error) {
 	Notification := Notification{}
 
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&Notification, "id = ?", id.String())
+	result := r.Db.GetGormDb().Preload(clause.Associations).
+		First(&Notification, "id = ?", id.String())
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -46,7 +48,8 @@ func (r *notificationRepo) Get(id uuid.UUID) (*Notification, error) {
 	return &Notification, nil
 }
 
-func (r *notificationRepo) List(nodeId, serviceName, nType string, count uint32, sort bool) ([]Notification, error) {
+func (r *notificationRepo) List(nodeId, serviceName, nType string,
+	count uint32, sort bool) ([]Notification, error) {
 	notifications := []Notification{}
 
 	tx := r.Db.GetGormDb().Preload(clause.Associations)
