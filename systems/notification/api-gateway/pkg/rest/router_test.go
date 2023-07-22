@@ -55,19 +55,22 @@ func init() {
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
 		Timeout: 1 * time.Second,
 		Mailer:  "0.0.0.0:9092",
+		Notify:  "0.0.0.0:9093",
 	})
 }
 
-func TestPingRoute(t *testing.T) {
-	// arrange
-	m := &mmocks.MailerServiceClient{}
+func TestRouter_PingRoute(t *testing.T) {
+	var m = &mmocks.MailerServiceClient{}
+	var n = &nmocks.NotifyServiceClient{}
+	var arc = &providers.AuthRestClient{}
 
-	arc := &providers.AuthRestClient{}
+	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
 	r := NewRouter(&Clients{
 		m: client.NewMailerFromClient(m),
+		n: client.NewNotifyFromClient(n),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
@@ -106,21 +109,22 @@ func TestRouter_sendEmail(t *testing.T) {
 
 }
 
-var m = &nmocks.NotifyServiceClient{}
-var arc = &providers.AuthRestClient{}
-
 var nodeId = ukama.NewVirtualHomeNodeId().String()
 var nt = AddNotificationReq{
 	NodeId:      nodeId,
 	Severity:    "high",
 	Type:        "event",
 	ServiceName: "noded",
+	Status:      8300,
 	Time:        uint32(time.Now().Unix()),
 	Description: "Some random alert",
 	Details:     `{"reason": "testing", "component":"router_test"}`,
 }
 
 func TestRouter_Add(t *testing.T) {
+	var m = &nmocks.NotifyServiceClient{}
+	var arc = &providers.AuthRestClient{}
+
 	t.Run("NotificationIsValid", func(t *testing.T) {
 		body, err := json.Marshal(nt)
 		if err != nil {
@@ -135,6 +139,7 @@ func TestRouter_Add(t *testing.T) {
 			Severity:    nt.Severity,
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
+			Status:      nt.Status,
 			EpochTime:   nt.Time,
 			Description: nt.Description,
 			Details:     nt.Details,
@@ -171,6 +176,7 @@ func TestRouter_Add(t *testing.T) {
 			Severity:    nt.Severity,
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
+			Status:      nt.Status,
 			EpochTime:   nt.Time,
 			Description: nt.Description,
 			Details:     nt.Details,
@@ -236,6 +242,7 @@ func TestRouter_Get(t *testing.T) {
 			Severity:    nt.Severity,
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
+			Status:      nt.Status,
 			EpochTime:   nt.Time,
 			Description: nt.Description,
 			Details:     nt.Details,
@@ -391,6 +398,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -430,6 +438,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -474,6 +483,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -516,6 +526,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -562,6 +573,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -606,6 +618,7 @@ func TestRouter_Purge(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -646,6 +659,7 @@ func TestRouter_Purge(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -689,6 +703,7 @@ func TestRouter_Purge(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,

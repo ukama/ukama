@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/systems/common/config"
@@ -16,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
 	"github.com/wI2L/fizz/openapi"
 
+	log "github.com/sirupsen/logrus"
 	emailPkg "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	npb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
@@ -40,11 +40,18 @@ type Clients struct {
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
-	c := &Clients{}
 	var err error
+
+	c := &Clients{}
+
 	c.m, err = client.NewMailer(endpoints.Mailer, endpoints.Timeout)
 	if err != nil {
-		logrus.Fatalf("failed to create mailer client: %v", err)
+		log.Fatalf("failed to create mailer client: %v", err)
+	}
+
+	c.n, err = client.NewNotify(endpoints.Notify, endpoints.Timeout)
+	if err != nil {
+		log.Fatalf("failed to create notify client: %v", err)
 	}
 
 	return c
@@ -61,6 +68,7 @@ func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Contex
 	}
 
 	r.init(authfunc)
+
 	return r
 }
 
@@ -73,7 +81,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 }
 
 func (rt *Router) Run() {
-	logrus.Info("Listening on port ", rt.config.serverConf.Port)
+	log.Info("Listening on port ", rt.config.serverConf.Port)
+
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
 		panic(err)
@@ -85,7 +94,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 	auth := r.f.Group("/v1", "Notification API GW ", "Notification system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
-			logrus.Info("Bypassing auth")
+			log.Info("Bypassing auth")
+
 			return
 		}
 
@@ -95,6 +105,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		err := f(ctx, r.config.auth.AuthServerUrl)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+
 			return
 		}
 		if err == nil {
@@ -133,6 +144,7 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (message em
 		Body:    req.Body,
 		Values:  req.Values,
 	}
+
 	res, err := r.clients.m.SendEmail(&payload)
 	if err != nil {
 		return emailPkg.SendEmailResponse{}, err
@@ -148,6 +160,7 @@ func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (mess
 	payload := emailPkg.GetEmailByIdRequest{
 		MailId: req.MailerId,
 	}
+
 	res, err := r.clients.m.GetEmailById(&payload)
 	if err != nil {
 		return emailPkg.GetEmailByIdResponse{}, err

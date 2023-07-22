@@ -18,6 +18,7 @@ type Config struct {
 type GrpcEndpoints struct {
 	Timeout time.Duration
 	Mailer  string
+	Notify  string
 }
 
 func NewConfig() *Config {
@@ -33,6 +34,7 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout: 5 * time.Second,
 			Mailer:  "mailer:9090",
+			Notify:  "notify:9090",
 		},
 
 		Server: rest.HttpConfig{
