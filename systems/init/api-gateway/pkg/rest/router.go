@@ -93,7 +93,6 @@ func (rt *Router) Run() {
 func (r *Router) init() {
 	const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 
-
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	v1 := r.f.Group("/v1", "Init system ", "Init system version v1")
 
@@ -122,18 +121,15 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*pb.GetOrgResponse, error) {
-	org := c.Param("org")
-
 	return r.clients.l.GetOrg(&pb.GetOrgRequest{
-		OrgName: org,
+		OrgName: req.OrgName,
 	})
 }
 
 func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pb.AddOrgResponse, error) {
-	org := c.Param("org")
-
 	return r.clients.l.AddOrg(&pb.AddOrgRequest{
-		OrgName:     org,
+		OrgName:     req.OrgName,
+		OrgId:       req.OrgId,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 	})
@@ -141,52 +137,40 @@ func (r *Router) putOrgHandler(c *gin.Context, req *AddOrgRequest) (*pb.AddOrgRe
 }
 
 func (r *Router) patchOrgHandler(c *gin.Context, req *UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
-	org := c.Param("org")
 
 	return r.clients.l.UpdateOrg(&pb.UpdateOrgRequest{
-		OrgName:     org,
+		OrgName:     req.OrgName,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 	})
 }
 
 func (r *Router) putNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.AddNodeResponse, error) {
-	org := c.Param("org")
-	node := c.Param("node")
-
 	return r.clients.l.AddNodeForOrg(&pb.AddNodeRequest{
-		OrgName: org,
-		NodeId:  node,
+		OrgName: req.OrgName,
+		NodeId:  req.NodeId,
 	})
 }
 
 func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNodeResponse, error) {
-	org := c.Param("org")
-	node := c.Param("node")
-
 	return r.clients.l.GetNodeForOrg(&pb.GetNodeForOrgRequest{
-		OrgName: org,
-		NodeId:  node,
+		OrgName: req.OrgName,
+		NodeId:  req.NodeId,
 	})
 }
 
 func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
-	org := c.Param("org")
-	node := c.Param("node")
 
 	return r.clients.l.DeleteNodeForOrg(&pb.DeleteNodeRequest{
-		OrgName: org,
-		NodeId:  node,
+		OrgName: req.OrgName,
+		NodeId:  req.NodeId,
 	})
 }
 
 func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.AddSystemResponse, error) {
-	org := c.Param("org")
-	sys := c.Param("system")
-
 	return r.clients.l.AddSystemForOrg(&pb.AddSystemRequest{
-		OrgName:     org,
-		SystemName:  sys,
+		OrgName:     req.OrgName,
+		SystemName:  req.SysName,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 		Port:        req.Port,
@@ -195,12 +179,10 @@ func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.Ad
 }
 
 func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
-	org := c.Param("org")
-	sys := c.Param("system")
 
 	return r.clients.l.UpdateSystemForOrg(&pb.UpdateSystemRequest{
-		OrgName:     org,
-		SystemName:  sys,
+		OrgName:     req.OrgName,
+		SystemName:  req.SysName,
 		Certificate: req.Certificate,
 		Ip:          req.Ip,
 		Port:        req.Port,
@@ -208,21 +190,16 @@ func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*
 }
 
 func (r *Router) getSystemHandler(c *gin.Context, req *GetSystemRequest) (*pb.GetSystemResponse, error) {
-	org := c.Param("org")
-	sys := c.Param("system")
-
 	return r.clients.l.GetSystemForOrg(&pb.GetSystemRequest{
-		OrgName:    org,
-		SystemName: sys,
+		OrgName:    req.OrgName,
+		SystemName: req.SysName,
 	})
 }
 
 func (r *Router) deleteSystemHandler(c *gin.Context, req *DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {
-	org := c.Param("org")
-	sys := c.Param("system")
 
 	return r.clients.l.DeleteSystemForOrg(&pb.DeleteSystemRequest{
-		OrgName:    org,
-		SystemName: sys,
+		OrgName:    req.OrgName,
+		SystemName: req.SysName,
 	})
 }
