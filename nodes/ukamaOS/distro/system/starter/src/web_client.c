@@ -148,9 +148,7 @@ int get_capp_path(Config *config, char *name, char *tag,
     ret = wc_send_http_request(httpReq, &httpResp);
     if (ret != STATUS_OK) {
         usys_log_error("Failed sending rquest to wimc.d");
-        usys_log_error("URL: %s Code: %d Str: %s",
-                       url, httpResp->status,
-                       HttpStatusStr(httpResp->status));
+        *retCode = 0;
         ret = USYS_NOK;
         goto done;
     }

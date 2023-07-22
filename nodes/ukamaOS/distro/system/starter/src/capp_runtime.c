@@ -238,6 +238,7 @@ void fetch_unpack_run(Space *space, Config *config) {
     Capp     *capp = NULL;
     char     *path = NULL;
     int      ret=0;
+    int      httpStatus=0;
 
     char runMe[MAX_BUFFER]      = {0};
 
@@ -250,11 +251,15 @@ void fetch_unpack_run(Space *space, Config *config) {
         capp = cappList->capp;
 
         /* get the file from wimc.d */
-        if (get_capp_path(config, capp->name, capp->tag, &path) == USYS_FALSE) {
+        if (get_capp_path(config, capp->name, capp->tag,
+                          &path, &httpStatus) == USYS_NOK) {
             log_error("Error getting path for capp: %s:%s",
                       capp->name, capp->tag);
             continue;
         }
+
+        /* set the fetch flag to avoid fetching the pkg again */
+        cappList->capp->fetch = CAPP_PKG_FOUND;
 
         /* Move file from path to DEF_CAPP_PATH */
         sprintf(runMe, "/bin/cp %s/%s_%s.tar.gz %s",
