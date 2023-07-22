@@ -1,6 +1,8 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,10 +11,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"
@@ -113,8 +116,18 @@ func TestRouter_GetOrg(t *testing.T) {
 
 func TestRouter_AddOrg(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name",
-		strings.NewReader(`{"Certificate": "helloOrg","Ip": "0.0.0.0"}`))
+	id := uuid.NewV4().String()
+	rd := AddOrgRequest{
+		OrgName:     "org-name",
+		Certificate: "helloOrg",
+		Ip:          "0.0.0.0",
+		OrgId:       id,
+	}
+
+	jd, err := json.Marshal(&rd)
+	assert.NoError(t, err)
+
+	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name", bytes.NewReader(jd))
 
 	m := &lmocks.LookupServiceClient{}
 
@@ -122,6 +135,7 @@ func TestRouter_AddOrg(t *testing.T) {
 		OrgName:     "org-name",
 		Certificate: "helloOrg",
 		Ip:          "0.0.0.0",
+		OrgId:       id,
 	}
 	m.On("AddOrg", mock.Anything, org).Return(&pb.AddOrgResponse{}, nil)
 
@@ -251,7 +265,7 @@ func TestRouter_DeleteNode(t *testing.T) {
 
 func TestRouter_GetSystem(t *testing.T) {
 	sys := "sys"
-	sysId := uuid.New().String()
+	sysId := uuid.NewV4().String()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/orgs/org-name/systems/"+sys, nil)
 
