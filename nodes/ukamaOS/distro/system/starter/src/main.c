@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        fetch_unpack_run(spacePtr->space, serviceConfig);
+        fetch_unpack_run(spacePtr->space, &serviceConfig);
     }
 
     /* and finally, start the web service */
