@@ -1,13 +1,15 @@
 import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
+import { NODE_CONNECTIVITY, NODE_STATUS, NODE_TYPE } from "../../common/enums";
+
 @ObjectType()
 export class NodeStatus {
-  @Field()
-  connectivity: string;
+  @Field(() => NODE_CONNECTIVITY)
+  connectivity: NODE_CONNECTIVITY;
 
-  @Field()
-  state: string;
+  @Field(() => NODE_STATUS)
+  state: NODE_STATUS;
 }
 @ObjectType()
 export class Node {
@@ -20,11 +22,11 @@ export class Node {
   @Field()
   orgId: string;
 
-  @Field()
-  type: string;
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
 
-  @Field(() => [String])
-  attached: string[];
+  @Field(() => [Node])
+  attached: Node[];
 
   @Field(() => NodeStatus)
   status: NodeStatus;
@@ -107,8 +109,8 @@ export class UpdateNodeStateInput {
   @Field()
   id: string;
 
-  @Field()
-  state: string;
+  @Field(() => NODE_STATUS)
+  state: NODE_STATUS;
 }
 
 @ObjectType()
@@ -116,8 +118,8 @@ export class NodeState {
   @Field()
   id: string;
 
-  @Field()
-  state: string;
+  @Field(() => NODE_STATUS)
+  state: NODE_STATUS;
 }
 
 @ArgsType()

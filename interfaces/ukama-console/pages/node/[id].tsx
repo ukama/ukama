@@ -14,7 +14,7 @@ import { useState } from 'react';
 export default function Page() {
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
-  const onTabSelected = (e: any, value: number) => setSelectedTab(value);
+  const onTabSelected = (_: any, value: number) => setSelectedTab(value);
 
   const { data: getNodeData, loading: getNodeLoading } = useGetNodesQuery({
     variables: {
