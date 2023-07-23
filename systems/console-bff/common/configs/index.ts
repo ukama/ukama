@@ -20,3 +20,4 @@ export const PLANNING_SERVICE_PORT = parseInt(
 export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT || "4000");
 export const METRICS_PORT = parseInt(process.env.METRICS_PORT || "4042");
 export const USER_PORT = parseInt(process.env.USER_PORT || "4043");
+export const PACKAGE_PORT = parseInt(process.env.USER_PORT || "4044");
