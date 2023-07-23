@@ -15,10 +15,17 @@ export const parseNodeRes = (res: any): Node => {
     name: res.name,
     type: res.type,
     orgId: res.org_id,
-    attached: res.attached,
+    attached: parseAttachedNodeRes(res.attached),
     status: {
       state: res.status.state,
       connectivity: res.status.connectivity,
     },
   };
+};
+
+const parseAttachedNodeRes = (res: any): [Node] => {
+  const nodes = res.map((node: any) => {
+    return parseNodeRes(node);
+  });
+  return nodes;
 };
