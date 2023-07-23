@@ -53,6 +53,10 @@ static void setup_webservice_endpoints(Config *config,
                                API_RES_EP("update/:space/:name/:tag"), 0,
                                &web_service_cb_post_update, config);
 
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("exec/:space/:name/:tag"), 0,
+                               &web_service_cb_post_exec, config);
+
     ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
 }
 

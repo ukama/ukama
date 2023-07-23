@@ -56,7 +56,7 @@ static Capp *find_matching_capp(char *spaceName, char *cappName, char *tag) {
              cappList;
              cappList=cappList->next) {
 
-            if (strcmp(cappList->capp->name, cappName) == 0)
+            if (strcmp(cappList->capp->name, cappName) == 0) {
 
                 if (tag != NULL) {
                     if (strcmp(cappList->capp->tag, tag) == 0)
@@ -66,10 +66,75 @@ static Capp *find_matching_capp(char *spaceName, char *cappName, char *tag) {
                 } else {
                     return cappList->capp;
                 }
+            }
         }
     }
 
     return NULL;
+}
+
+static int add_new_capp_to_space(char *spaceName,
+                                 char *cappName,
+                                 char *cappTag) {
+
+    SpaceList *currentSpaceList = NULL, *newSpaceList = NULL;
+    CappList  *newCappList = NULL;
+    Space     *newSpace = NULL;
+
+    bool addSpace = USYS_TRUE;
+
+    for (currentSpaceList = gSpaceList;
+         currentSpaceList;
+         currentSpaceList = currentSpaceList->next) {
+
+        if (strcmp(currentSpaceList->space->name, spaceName) == 0) {
+            addSpace = USYS_FALSE;
+        }
+    }
+
+    if (addSpace) {
+        /* add new space */
+        SpaceList *newSpaceList = (SpaceList *) calloc(1, sizeof(SpaceList));
+        newSpaceList->space     = (Space *) calloc(1, sizeof(Space));
+
+        newSpaceList->space->name     = strdup(spaceName);
+        newSpaceList->space->rootfs   = NULL;
+        newSpaceList->space->cappList = NULL;
+        newSpaceList->next            = NULL;
+
+        /* Forward to last spot on the list*/
+        for (currentSpaceList = gSpaceList;
+             currentSpaceList->next;
+             currentSpaceList = currentSpaceList->next) ;
+
+        currentSpaceList->next = newSpaceList;
+    }
+
+    /* Now find the matching space and add to it */
+    for (currentSpaceList = gSpaceList;
+         currentSpaceList;
+         currentSpaceList = currentSpaceList->next) {
+
+        if (strcmp(currentSpaceList->space->name, spaceName) == 0) {
+
+            newCappList = (CappList *)calloc(1, sizeof(CappList));
+
+            newCappList->capp          = (Capp *)calloc(1, sizeof(Capp));
+            newCappList->capp->name    = strdup(cappName);
+            newCappList->capp->tag     = strdup(cappTag);
+            newCappList->capp->rootfs  = NULL;
+            newCappList->capp->space   = strdup(spaceName);
+            newCappList->capp->restart = USYS_FALSE;
+            newCappList->capp->fetch   = CAPP_PKG_NOT_FOUND;
+
+            newCappList->next = currentSpaceList->space->cappList;
+            currentSpaceList->space->cappList = newCappList;
+
+            return USYS_TRUE;
+        }
+    }
+
+    return USYS_FALSE;
 }
 
 int web_service_cb_ping(const URequest *request,
@@ -140,6 +205,15 @@ int web_service_cb_post_update(const URequest *request,
     cappName  = u_map_get(request->map_url, "name");
     tag       = u_map_get(request->map_url, "tag");
 
+    if (strcmp(spaceName, SPACE_BOOT) == 0 ||
+        strcmp(spaceName, SPACE_REBOOT) == 0) {
+
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_Forbidden,
+                                        HttpStatusStr(HttpStatus_Forbidden));
+        return U_CALLBACK_CONTINUE;
+    }
+
     capp = find_matching_capp(spaceName, cappName, tag);
     if (capp == NULL) {
         ulfius_set_string_body_response(response, HttpStatus_NotFound,
@@ -185,6 +259,15 @@ int web_service_cb_post_terminate(const URequest *request,
     cappName  = u_map_get(request->map_url, "name");
     spaceName = u_map_get(request->map_url, "space");
 
+    if (strcmp(spaceName, SPACE_BOOT) == 0 ||
+        strcmp(spaceName, SPACE_REBOOT) == 0) {
+
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_Forbidden,
+                                        HttpStatusStr(HttpStatus_Forbidden));
+        return U_CALLBACK_CONTINUE;
+    }
+
     capp = find_matching_capp(spaceName, cappName, NULL);
     if (capp == NULL) {
         ulfius_set_string_body_response(response, HttpStatus_NotFound,
@@ -219,6 +302,59 @@ int web_service_cb_post_terminate(const URequest *request,
                               HttpStatus_InternalServerError,
                               HttpStatusStr(HttpStatus_InternalServerError));
     }
-    
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_post_exec(const URequest *request,
+                             UResponse *response,
+                             void *epConfig) {
+
+    char *cappName = NULL, *tag = NULL;
+    char *spaceName = NULL;
+    Capp *capp = NULL;
+
+    spaceName = u_map_get(request->map_url, "space");
+    cappName  = u_map_get(request->map_url, "name");
+    tag       = u_map_get(request->map_url, "tag");
+
+    if (strcmp(spaceName, SPACE_BOOT) == 0 ||
+        strcmp(spaceName, SPACE_REBOOT) == 0) {
+
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_Forbidden,
+                                        HttpStatusStr(HttpStatus_Forbidden));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    capp = find_matching_capp(spaceName, cappName, tag);
+    if (capp != NULL) {
+        if (capp->runtime) {
+            if (capp->runtime->status == CAPP_RUNTIME_EXEC) {
+                usys_log_debug("Can't exec already running capp %s:%s:%s",
+                               spaceName, cappName, tag);
+                ulfius_set_string_body_response(response,
+                                         HttpStatus_Forbidden,
+                                         HttpStatusStr(HttpStatus_Forbidden));
+                return U_CALLBACK_CONTINUE;
+            }
+        }
+
+        /* Set the fetch flag so it can automatically start in next cycle */
+        capp->fetch = CAPP_PKG_NOT_FOUND;
+
+        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+        return U_CALLBACK_CONTINUE;
+    }
+
+    /* Add new capp */
+    if (add_new_capp_to_space(spaceName, cappName, tag)) {
+        ulfius_set_empty_body_response(response, HttpStatus_Accepted);
+    } else {
+        ulfius_set_string_body_response(response,
+                               HttpStatus_InternalServerError,
+                               HttpStatusStr(HttpStatus_InternalServerError));
+    }
+
     return U_CALLBACK_CONTINUE;
 }

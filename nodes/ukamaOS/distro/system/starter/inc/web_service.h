@@ -28,6 +28,10 @@ int web_service_cb_post_update(const URequest *request,
                                UResponse *response,
                                void *epConfig);
 
+int web_service_cb_post_exec(const URequest *request,
+                             UResponse *response,
+                             void *epConfig);
+
 int web_service_cb_default(const URequest *request,
                            UResponse *response,
                            void *epConfig);
