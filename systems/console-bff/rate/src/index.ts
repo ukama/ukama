@@ -10,9 +10,9 @@ import "reflect-metadata";
 import * as tq from "type-graphql";
 
 import { logger } from "../../common/logger";
-import { PackageApi } from "./datasource/package_api";
+import { RateApi } from "./datasource/rate_api";
 import resolvers from "./resolver";
-import { PACKAGE_PORT } from "../../common/configs";
+import { RATE_PORT } from "../../common/configs";
 
 const app = express();
 const runServer = async () => {
@@ -40,15 +40,15 @@ const runServer = async () => {
         // We create new instances of our data sources with each request,
         // passing in our server's cache.
         dataSources: {
-          nodeAPI: new PackageApi(),
+          nodeAPI: new RateApi(),
         },
       };
     },
-    listen: { port: PACKAGE_PORT },
+    listen: { port: RATE_PORT },
   });
 
   logger.info(
-    `🚀 Ukama Package service running at http://localhost:${PACKAGE_PORT}/graphql`
+    `🚀 Ukama Rate service running at http://localhost:${RATE_PORT}/graphql`
   );
 };
 
