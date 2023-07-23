@@ -67,6 +67,9 @@
 #define CAPP_PKG_NOT_FOUND 0
 #define CAPP_PKG_FOUND     1
 
+/* number of second to wait and retry on the capp pkg */
+#define FETCH_AND_UPDATE_RETRY 10
+
 typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;

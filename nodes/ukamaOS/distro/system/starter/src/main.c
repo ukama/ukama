@@ -7,6 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <pthread.h>
+
 #include "config.h"
 #include "starter.h"
 #include "manifest.h"
@@ -17,6 +19,8 @@
 #include "usys_log.h"
 #include "usys_string.h"
 #include "usys_types.h"
+
+SpaceList *gSpaceList = NULL;
 
 void handle_sigint(int signum) {
     usys_log_debug("Terminate signal.\n");
@@ -63,8 +67,31 @@ void usage() {
     usys_puts("-v, --version                 Software version");
 }
 
-/* Global */
-SpaceList *gSpaceList = NULL;
+void fetch_and_update(void *config) {
+
+    SpaceList *spacePtr=NULL;
+
+    while (USYS_TRUE) {
+        /* for each capp, with missing pkg, run a thred which fetch via wimc,
+         * unpack into its space rootfs and run.
+         */
+        for (spacePtr = gSpaceList;
+             spacePtr;
+             spacePtr = spacePtr->next) {
+
+            /* Always skip BOOT space */
+            if (strcmp(spacePtr->space->name, SPACE_BOOT) == 0) {
+                continue;
+            }
+
+            fetch_unpack_run(spacePtr->space, (Config *)config);
+        }
+
+        sleep(FETCH_AND_UPDATE_RETRY);
+    }
+
+    return NULL;
+}
 
 int main(int argc, char **argv) {
 
@@ -81,6 +108,8 @@ int main(int argc, char **argv) {
     Manifest  *manifest=NULL;
     SpaceList *spacePtr=NULL;
     Space     *bootSpace=NULL;
+
+    pthread_t thread;
     
     /* Parsing command line args. */
     while (true) {
@@ -225,6 +254,11 @@ int main(int argc, char **argv) {
         fetch_unpack_run(spacePtr->space, &serviceConfig);
     }
 
+    pthread_create(&thread,
+                   NULL,
+                   fetch_and_update,
+                   &serviceConfig);
+
     /* and finally, start the web service */
     if (start_web_service(&serviceConfig,
                           &serviceInst) != USYS_TRUE) {
@@ -232,6 +266,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    pthread_join(thread, NULL);
     pause();
 
 done:
@@ -240,3 +275,4 @@ done:
 
     return USYS_TRUE;
 }
+
