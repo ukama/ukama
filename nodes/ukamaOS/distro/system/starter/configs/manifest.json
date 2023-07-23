@@ -1,0 +1,25 @@
+{
+    "version": "0.1",
+    "target": "ukma-xx-xx-xxxx",
+
+    "spaces" : [
+        { "name" : "boot" },
+        { "name" : "services" },
+        { "name" : "reboot" }
+    ],
+    
+    "capps": [
+        {
+            "name"   : "mesh",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "boot"
+        },
+        {
+            "name"   : "mesh",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "reboot"
+        }
+    ]
+}
