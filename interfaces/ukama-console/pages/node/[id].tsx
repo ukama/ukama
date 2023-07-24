@@ -11,6 +11,7 @@ import NodeResourcesTab from '@/ui/molecules/NodeResourcesTab';
 import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
 import { Stack, Tab, Tabs } from '@mui/material';
+import PubSub from 'pubsub-js';
 import { useEffect, useState } from 'react';
 
 export default function Page() {
@@ -33,7 +34,7 @@ export default function Page() {
   const {
     data: metricsData,
     loading: metricsLoading,
-    subscribeToMore,
+    subscribeToMore: metricsSubForMore,
   } = useGetMetricsQuery({
     client: metricsClient,
     variables: {
@@ -46,21 +47,8 @@ export default function Page() {
     },
   });
 
-  // useGetMetricSubscription({
-  //   variables: {
-  //     nodeId: 'uk-test17-hnode-a1-31df',
-  //     type: 'node',
-  //     orgId: '123',
-  //     userId: 'salman',
-  //   },
-  //   client: metricsClient,
-  //   onSubscriptionData: (data) => {
-  //     console.log(data);
-  //   },
-  // });
-
   useEffect(() => {
-    subscribeToMore({
+    metricsSubForMore({
       document: GetMetricDocument,
       variables: {
         nodeId: 'uk-test17-hnode-a1-31df',
@@ -71,19 +59,18 @@ export default function Page() {
       updateQuery: (prev, { subscriptionData }) => {
         if (!subscriptionData.data) return prev;
         const metricItem = subscriptionData.data['getMetric'];
-        return Object.assign({}, prev, {
-          getMetrics: {
-            ...prev.getMetrics,
-            value: [...prev.getMetrics.value, metricItem.value],
-          },
-        });
+        PubSub.publish('METRIC', metricItem.value);
+        // return Object.assign({}, prev, {
+        //   getMetrics: {
+        //     ...prev.getMetrics,
+        //     value: [...prev.getMetrics.value, metricItem.value],
+        //   },
+        // });
+        return prev;
       },
     });
   }, []);
 
-  useEffect(() => {
-    console.log('DATA', metricsData);
-  }, [metricsData]);
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
