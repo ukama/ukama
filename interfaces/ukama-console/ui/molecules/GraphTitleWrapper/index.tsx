@@ -1,8 +1,10 @@
-import React from 'react';
-import { EmptyView, GraphLoading, TimeFilter } from '..';
-import { Grid, Typography } from '@mui/material';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import { Grid, Typography } from '@mui/material';
 import { Variant } from '@mui/material/styles/createTypography';
+import React from 'react';
+import EmptyView from '../EmptyView';
+import GraphLoading from '../GraphLoading';
+import TimeFilter from '../TimeFilter';
 
 interface IGraphTitleWrapper {
   title?: string;
