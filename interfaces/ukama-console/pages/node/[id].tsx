@@ -1,5 +1,7 @@
+import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import { Node, useGetNodesQuery } from '@/generated';
+import { GetMetricDocument, useGetMetricsQuery } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
@@ -9,7 +11,7 @@ import NodeResourcesTab from '@/ui/molecules/NodeResourcesTab';
 import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
 import { Stack, Tab, Tabs } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Page() {
   const [selectedTab, setSelectedTab] = useState<number>(0);
@@ -28,6 +30,60 @@ export default function Page() {
     onError: () => {},
   });
 
+  const {
+    data: metricsData,
+    loading: metricsLoading,
+    subscribeToMore,
+  } = useGetMetricsQuery({
+    client: metricsClient,
+    variables: {
+      data: {
+        nodeId: 'uk-test17-hnode-a1-31df',
+        type: 'node',
+        orgId: '123',
+        userId: 'salman',
+      },
+    },
+  });
+
+  // useGetMetricSubscription({
+  //   variables: {
+  //     nodeId: 'uk-test17-hnode-a1-31df',
+  //     type: 'node',
+  //     orgId: '123',
+  //     userId: 'salman',
+  //   },
+  //   client: metricsClient,
+  //   onSubscriptionData: (data) => {
+  //     console.log(data);
+  //   },
+  // });
+
+  useEffect(() => {
+    subscribeToMore({
+      document: GetMetricDocument,
+      variables: {
+        nodeId: 'uk-test17-hnode-a1-31df',
+        type: 'node',
+        orgId: '123',
+        userId: 'salman',
+      },
+      updateQuery: (prev, { subscriptionData }) => {
+        if (!subscriptionData.data) return prev;
+        const metricItem = subscriptionData.data['getMetric'];
+        return Object.assign({}, prev, {
+          getMetrics: {
+            ...prev.getMetrics,
+            value: [...prev.getMetrics.value, metricItem.value],
+          },
+        });
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log('DATA', metricsData);
+  }, [metricsData]);
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus

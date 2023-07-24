@@ -15,7 +15,12 @@ import "reflect-metadata";
 import * as tq from "type-graphql";
 import { WebSocketServer } from "ws";
 
-import { METRICS_PORT } from "../../common/configs";
+import {
+  AUTH_APP_URL,
+  CONSOLE_APP_URL,
+  METRICS_PORT,
+  PLAYGROUND_URL,
+} from "../../common/configs";
 import { logger } from "../../common/logger";
 import resolvers from "./resolvers";
 
@@ -63,7 +68,10 @@ const runServer = async () => {
   await server.start();
   app.use(
     "/graphql",
-    cors<cors.CorsRequest>(),
+    cors({
+      origin: [AUTH_APP_URL, PLAYGROUND_URL, CONSOLE_APP_URL],
+      credentials: true,
+    }),
     bodyParser.json(),
     expressMiddleware(server)
   );

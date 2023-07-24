@@ -47,7 +47,6 @@ const startServer = async () => {
       origin: [AUTH_APP_URL, PLAYGROUND_URL, CONSOLE_APP_URL],
       credentials: true,
     }),
-
     json(),
     expressMiddleware(server)
   );
