@@ -68,7 +68,7 @@ class MetricResolvers {
       return args.nodeId === payload.nodeid;
     },
   })
-  async getMetricEvent(
+  async getMetric(
     @Root() payload: MetricRes,
     @Args() args: GetMetricInput
   ): Promise<MetricRes> {

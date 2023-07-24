@@ -1,0 +1,29 @@
+# Metrics Query
+query GetMetrics($data: GetMetricInput!) {
+  getMetrics(data: $data) {
+    env
+    type
+    nodeid
+    value {
+      x
+      y
+    }
+  }
+}
+
+subscription getMetric(
+  $orgId: String!
+  $userId: String!
+  $type: String!
+  $nodeId: String!
+) {
+  getMetric(orgId: $orgId, userId: $userId, type: $type, nodeId: $nodeId) {
+    env
+    type
+    nodeid
+    value {
+      x
+      y
+    }
+  }
+}
