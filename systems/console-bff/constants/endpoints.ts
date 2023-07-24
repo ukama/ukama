@@ -1,0 +1,60 @@
+import {
+    API_URL,
+    AUTH_API_URL,
+    DATA_PLAN_API_URL,
+    REGISTRY_API_URL,
+    SUBSCRIBER_API_URL,
+} from "../constants/index";
+
+const version = "v1";
+
+export const SERVER = {
+    AUTH_API_URL: `${AUTH_API_URL}/${version}`,
+    DATA_PLAN_MARKUP_API_URL: `${DATA_PLAN_API_URL}/${version}/markup`,
+    DATA_PLAN_PACKAGES_API_URL: `${DATA_PLAN_API_URL}/${version}/packages`,
+    REGISTRY_USERS_API_URL: `${REGISTRY_API_URL}/${version}/users`,
+    REGISTRY_NODE_API_URL: `${REGISTRY_API_URL}/${version}/nodes`,
+    REGISTRY_ORGS_API_URL: `${REGISTRY_API_URL}/${version}/orgs`,
+    REGISTRY_NETWORKS_API_URL: `${REGISTRY_API_URL}/${version}/networks`,
+    SUBSCRIBER_REGISTRY_API_URL: `${SUBSCRIBER_API_URL}/${version}/subscriber`,
+    SUBSCRIBER_SIMPOOL_API_URL: `${SUBSCRIBER_API_URL}/${version}/simpool`,
+    GET_CONNECTED_USERS: `${API_URL}/user/get_conneted_users`,
+    GET_DATA_USAGE: `${API_URL}/data/data_usage`,
+    GET_DATA_BILL: `${API_URL}/data/data_bill`,
+    GET_ALERTS: `${API_URL}/alert/get_alerts`,
+    GET_NODES: `${API_URL}/node/get_nodes`,
+    GET_RESIDENTS: `${API_URL}/resident/get_residents`,
+    GET_ESIMS: `${API_URL}/esims/get_esims`,
+    POST_ACTIVE_USER: `${API_URL}/user/active_user`,
+    GET_USERS: `${API_URL}/user/get_users`,
+    POST_ADD_NODE: `${API_URL}/node/add_node`,
+    GET_CURRENT_BILL: `${API_URL}/bill/get_current_bill`,
+    GET_BILL_HISTORY: `${API_URL}/bill/get_bill_history`,
+    GET_NETWORK: `${API_URL}/network/get_network`,
+    POST_UPDATE_USER: `${API_URL}/user/update_user`,
+    POST_DEACTIVATE_USER: `${API_URL}/user/deactivate_user`,
+    POST_UPDATE_NODE: `${API_URL}/node/update_node`,
+    POST_DELETE_NODE: `${API_URL}/node/delete_node`,
+    GET_USER: `${API_URL}/user/get_user`,
+    ORG: `${API_URL}/orgs`,
+    GET_SOFTWARE_LOGS: `${API_URL}/software_logs`,
+    GET_NODE_APPS: `${API_URL}/node_apps`,
+    GET_NODE_DETAIL: `${API_URL}/node/node_details`,
+    GET_NODE_META_DATA: `${API_URL}/node/meta_data`,
+    GET_NODE_PHYSICAL_HEALTH: `${API_URL}/node/physical_health`,
+    GET_NODE_RF_KPI: `${API_URL}/node/rf_kpis`,
+    GET_NODE_NETWORK: `${API_URL}/node/get_network`,
+    GET_THROUGHPUT_METRICS: `${API_URL}/metrics/throughput`,
+    GET_USERS_ATTACHED_METRICS: `${API_URL}/metrics/user`,
+    GET_CPU_USAGE_METRICS: `${API_URL}/metrics/cpu`,
+    GET_TEMPERATURE_METRICS: `${API_URL}/metrics/temperature`,
+    GET_IO_METRICS: `${API_URL}/metrics/io`,
+    GET_MEMORY_USAGE_METRICS: `${API_URL}/metrics/memory`,
+    GET_IDENTITY: `https://kratos-admin.dev.ukama.com/admin/identities`,
+};
+
+export const getMetricUri = (
+    orgId: string,
+    nodeId: string,
+    endpoint: string
+): string => `${SERVER.ORG}/${orgId}/nodes/${nodeId}/metrics/${endpoint}`;
