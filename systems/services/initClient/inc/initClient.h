@@ -17,6 +17,9 @@
 #define TRUE  1
 #define FALSE 0
 
+#define REGISTER_TO_GLOBAL_INIT 1
+#define REGISTER_TO_LOCAL_INIT  0
+
 #define DEFAULT_LOG_LEVEL  "DEBUG"
 #define DEFAULT_SYSTEM_ORG "Ukama"
 #define DEFAULT_API_VER    "v1"
@@ -25,11 +28,12 @@
 #define MAX_URL_LEN     1024
 #define MAX_UUID_LEN    37
 
-#define REG_STATUS_NONE         0x00
-#define REG_STATUS_NO_UUID      0x04
-#define REG_STATUS_HAVE_UUID    0x08
-#define REG_STATUS_NO_MATCH     0x16
-#define REG_STATUS_MATCH        0x32
+#define REG_STATUS_NONE         	0x00
+#define REG_STATUS_NO_UUID      	0x02
+#define REG_STATUS_HAVE_UUID    	0x04
+#define REG_STATUS_NO_MATCH     	0x08
+#define REG_STATUS_MATCH        	0x10
+#define REG_STATUS_PARSING_FAILURE  0x20
 
 #define QUERY_OK    0x00
 #define QUERY_ERROR 0x01
@@ -81,6 +85,11 @@ typedef struct {
 	Register *reg;
 } Request;
 
+typedef struct {
+	char* localUUID;
+	char* globalUUID;
+} SystemRegistrationId;
+
 struct Response {
 
 	char *buffer;
@@ -88,9 +97,10 @@ struct Response {
 };
 
 void free_query_response(QueryResponse *response);
-int send_request_to_init(ReqType reqType, Config *config, char *systemName,
-						 char **response);
-int existing_registration(Config *config, char **cacheUUID, char **systemUUID);
-int get_system_info(Config *config, char *systemName, char **systemInfo);
-
+int send_request_to_init(ReqType reqType, Config *config,
+						 char *systemName, char **response, int global );
+int existing_registration(Config *config, char **systemUUID,
+		SystemRegistrationId *sysReg, int global);
+int get_system_info(Config *config, char *systemName, char **systemInfo, int global);
+int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg);
 #endif /* INIT_CLIENT_H */

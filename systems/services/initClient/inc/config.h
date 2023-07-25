@@ -25,6 +25,9 @@
 
 #define ENV_INIT_SYSTEM_ADDR "ENV_INIT_SYSTEM_ADDR"
 #define ENV_INIT_SYSTEM_PORT "ENV_INIT_SYSTEM_PORT"
+#define ENV_GLOBAL_INIT_SYSTEM_ADDR "ENV_GLOBAL_INIT_SYSTEM_ADDR"
+#define ENV_GLOBAL_INIT_SYSTEM_PORT "ENV_GLOBAL_INIT_SYSTEM_PORT"
+
 #define ENV_INIT_SYSTEM_API  "ENV_INIT_SYSTEM_API"
 
 #define ENV_INIT_CLIENT_LOG_LEVEL "ENV_INIT_CLIENT_LOG_LEVEL"
@@ -48,6 +51,8 @@ typedef struct {
 	char *initSystemAPIVer; /* API version for init system */
 	char *initSystemAddr;   /* address for init system */
 	char *initSystemPort;   /* port for init system */
+	char *globalInitSystemAddr;   /* address for global init system */
+	char *globalInitSystemPort;   /* port for global init system */
 } Config;
 
 void clear_config(Config *config);

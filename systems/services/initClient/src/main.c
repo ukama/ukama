@@ -36,7 +36,7 @@ typedef struct {
 extern int start_web_services(Config *config, UInst *webtInst); /*network.c */
 
 /* Global */
-State *state=NULL; 
+State *state=NULL;
 
 /*
  * usage -- Usage options for initClient
@@ -49,14 +49,16 @@ void usage() {
 	fprintf(stdout, "--h, --help     this menu\n");
 	fprintf(stdout, "--V, --version  Version\n");
 	fprintf(stdout, "Environment variable used are: \n");
-	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n",
+	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s\n\t %s \n\t",
 			ENV_INIT_CLIENT_LOG_LEVEL,
 			ENV_SYSTEM_ORG,
 			ENV_SYSTEM_NAME,
 			ENV_SYSTEM_ADDR,
 			ENV_SYSTEM_PORT,
 			ENV_INIT_SYSTEM_ADDR,
-			ENV_INIT_SYSTEM_PORT);
+			ENV_INIT_SYSTEM_PORT,
+			ENV_GLOBAL_INIT_SYSTEM_ADDR,
+			ENV_GLOBAL_INIT_SYSTEM_PORT);
 }
 
 /*
@@ -90,7 +92,7 @@ void signal_term_handler(void) {
 
 	/* un-register the system */
 	if (send_request_to_init(REQ_UNREGISTER, state->config, NULL,
-							 &response) != TRUE) {
+							 &response, REGISTER_TO_LOCAL_INIT) != TRUE) {
 		log_error("Error registrating with the init system");
 	}
 
@@ -126,24 +128,64 @@ void catch_sigterm(void) {
     sigaction(SIGTERM, &saction, NULL);
 }
 
+int store_cache_uuid(char *fileName, char* uuid, int global) {
+	SystemRegistrationId *sysReg;
+	if (!parse_cache_uuid(fileName, sysReg)) {
+		/* Parsing Failed this means problem with file */
+		sysReg = (SystemRegistrationId*)calloc(1, sizeof(SystemRegistrationId));
+	}
+
+	if (!sysReg) {
+		return FALSE;
+	}
+
+	if (global) {
+		if (sysReg->globalUUID) free(sysReg->globalUUID);
+		sysReg->globalUUID = strdup(uuid);
+	} else {
+		if (sysReg->localUUID) free(sysReg->localUUID);
+		sysReg->localUUID = strdup(uuid);
+	}
+
+	if (!create_temp_file_and_store_uuid(fileName, sysReg)) {
+		return FALSE;
+	}
+	return TRUE;
+}
 /*
  * create_temp_file_and_store_uuid --
  *
  */
-int create_temp_file_and_store_uuid(char *fileName, char *uuid) {
+int create_temp_file_and_store_uuid(char *fileName, SystemRegistrationId* sysReg) {
 
-    FILE *fp=NULL;
+	json_t *json = NULL;
+	FILE *fp=NULL;
+	char* str = NULL;
 
-    if ((fp = fopen(fileName, "w")) == NULL) {
+	if ((fp = fopen(fileName, "w")) == NULL) {
 		log_error("Unable to create cache temp file: %s Error: %s",
-				  fileName, strerror(errno));
-        return FALSE;
-    }
+				fileName, strerror(errno));
+		return FALSE;
+	}
 
-    fputs(uuid, fp);
+	if (!serialize_uuids_from_file(sysReg, &json)) {
+		log_error("Error serializing registration status in file : %s Error :%s",
+				fileName, strerror(errno));
+		return REG_STATUS_NO_UUID;
+	}
+
+	str = json_dumps(json, 0);
+	if (str) {
+		fputs(str, fp);
+		free(str);
+	} else {
+		log_error("Unable to create cache temp file: %s Error: %s",
+						fileName, strerror(errno));
+		return FALSE;
+	}
 	fclose(fp);
 
-    return TRUE;
+	return TRUE;
 }
 
 /*
@@ -164,7 +206,8 @@ int main (int argc, char *argv[]) {
 	char *response=NULL;
 	struct _u_instance webInst;
 	Config *config=NULL;
-	char *cacheUUID=NULL, *systemUUID=NULL;
+	char *systemUUID=NULL;
+	SystemRegistrationId* sysReg = NULL;
 	QueryResponse *queryResponse=NULL;
 
 	state = (State *)calloc(1, sizeof(State));
@@ -224,7 +267,7 @@ int main (int argc, char *argv[]) {
 	}
 
 	/* Step-2: check current registration status */
-	regStatus = existing_registration(config, &cacheUUID, &systemUUID);
+	regStatus = existing_registration(config, &systemUUID, &sysReg, REGISTER_TO_LOCAL_INIT);
 
 	/* Step-3: take action(s) */
 	switch(regStatus) {
@@ -235,11 +278,13 @@ int main (int argc, char *argv[]) {
 	case REG_STATUS_MATCH | REG_STATUS_NO_UUID:
 		log_debug("Storing UUID %s to tempFile: %s", systemUUID,
 				  config->tempFile);
-		create_temp_file_and_store_uuid(config->tempFile, systemUUID);
+		store_cache_uuid(config->tempFile,
+				queryResponse->systemID, REGISTER_TO_LOCAL_INIT);
+
 		break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
-		if (send_request_to_init(REQ_UPDATE, config, NULL, &response) != TRUE) {
+		if (send_request_to_init(REQ_UPDATE, config, NULL, &response, REGISTER_TO_LOCAL_INIT) != TRUE) {
 			log_error("Error updating with the init system");
 			exitStatus = 1;
 			goto exit_program;
@@ -248,7 +293,7 @@ int main (int argc, char *argv[]) {
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
 		/* first time registering */
-		if (send_request_to_init(REQ_REGISTER, config, NULL, &response)
+		if (send_request_to_init(REQ_REGISTER, config, NULL, &response, REGISTER_TO_LOCAL_INIT)
 			!= TRUE) {
 			log_error("Error registrating with the init system");
 			exitStatus = 1;
@@ -263,8 +308,9 @@ int main (int argc, char *argv[]) {
 			exitStatus = 1;
 			goto exit_program;
 		}
-		create_temp_file_and_store_uuid(config->tempFile,
-									   queryResponse->systemID);
+		store_cache_uuid(config->tempFile,
+				queryResponse->systemID, REGISTER_TO_LOCAL_INIT);
+
 		break;
 
 	default:
@@ -282,7 +328,7 @@ int main (int argc, char *argv[]) {
 
 	log_debug("Goodbye ... ");
 
-	send_request_to_init(REQ_UNREGISTER, config, NULL, &response);
+	send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_LOCAL_INIT);
 	ulfius_stop_framework(&webInst);
 	ulfius_clean_instance(&webInst);
 

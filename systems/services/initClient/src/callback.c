@@ -111,8 +111,8 @@ int callback_get_systems(const URequest *request, UResponse *response,
 		return U_CALLBACK_CONTINUE;
 	}
 
-	/* REST call to init and get requested info about the system */
-	if (get_system_info((Config *)data, systemName, &responseStr) == QUERY_OK) {
+	/* REST call to init and get requested info about the system */ /* TODO: global based on parameter */
+	if (get_system_info((Config *)data, systemName, &responseStr, REGISTER_TO_LOCAL_INIT) == QUERY_OK) {
 		ulfius_set_string_body_response(response, HttpStatus_OK, responseStr);
 	} else {
 		ulfius_set_string_body_response(response, HttpStatus_BadRequest,

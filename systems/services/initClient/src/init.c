@@ -131,7 +131,7 @@ static long send_http_request(char *url, Request *request, json_t *json,
  *
  */
 static void create_url(char *url, Config *config, char *name,
-					   ReqType reqType) {
+					   ReqType reqType, int global) {
 
 	char *systemName=NULL;
 
@@ -146,13 +146,21 @@ static void create_url(char *url, Config *config, char *name,
 	}
 
 	/* URL -> host:port/v1/orgs/{org}/systems/{system} */
-	sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
-			config->initSystemAddr,
-			config->initSystemPort,
-			config->initSystemAPIVer,
-			ORGS_STR, config->systemOrg,
-			SYSTEMS_STR, systemName);
-
+	if (global) {
+		sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
+					config->globalInitSystemAddr,
+					config->globalInitSystemPort,
+					config->initSystemAPIVer,
+					ORGS_STR, config->systemOrg,
+					SYSTEMS_STR, systemName);
+	} else {
+		sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
+				config->initSystemAddr,
+				config->initSystemPort,
+				config->initSystemAPIVer,
+				ORGS_STR, config->systemOrg,
+				SYSTEMS_STR, systemName);
+	}
 	log_debug("Request URL: %s", url);
 }
 
@@ -211,6 +219,20 @@ static void free_request(Request *request) {
 	free(request);
 }
 
+void free_system_registration(SystemRegistrationId* sysReg) {
+	if (sysReg == NULL) return;
+
+	if (sysReg->globalUUID) {
+		free(sysReg->globalUUID);
+	}
+
+	if (sysReg->localUUID) {
+		free(sysReg->localUUID);
+	}
+
+	free(sysReg);
+}
+
 /*
  * free_query_response --
  *
@@ -227,12 +249,7 @@ void free_query_response(QueryResponse *response) {
 	free(response);
 }
 
-/*
- * read_cache_uuid --
- *
- */
-static int read_cache_uuid(char *fileName, char **uuid) {
-
+int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg) {
 	FILE *fp;
 	struct stat sb;
 	char buffer[MAX_BUFFER_SIZE] = {0};
@@ -240,27 +257,57 @@ static int read_cache_uuid(char *fileName, char **uuid) {
 	/* Check to see if the cache file exist. */
 	if (stat(fileName, &sb) == -1) {
 		log_debug("Cache file does not exist: %s Error: %s",
-				  fileName, strerror(errno));
-		return REG_STATUS_NO_UUID;
+				fileName, strerror(errno));
+		return FALSE;
 	}
 
 	/* Try to open it */
 	fp = fopen(fileName, "r");
 	if (fp == NULL) {
 		log_error("Error opening cache file: %s Error: %s",
-				  fileName, strerror(errno));
-		return REG_STATUS_NO_UUID;
+				fileName, strerror(errno));
+		return FALSE;
 	}
 
+	fseek(fp, 0, SEEK_END);
+	long fsize = ftell(fp);
+	fseek(fp, 0, SEEK_SET);  /* same as rewind(f); */
+
+	char *string = malloc(fsize + 1);
 	/* Try to read the uuid */
 	if (fread(buffer, 1, MAX_UUID_LEN, fp) == 0) {
 		log_error("Error reading from the cache file: %s Error :%s",
-				  fileName, strerror(errno));
-		return REG_STATUS_NO_UUID;
+				fileName, strerror(errno));
+		return FALSE;
+	}
+	fclose(fp);
+
+	if (!deserialize_uuids_from_file(string, &sysReg)) {
+		log_error("Error parsing the cache file: %s Error :%s",
+				fileName, strerror(errno));
+		return FALSE;
 	}
 
-	*uuid = strndup(buffer, MAX_UUID_LEN);
-	return REG_STATUS_HAVE_UUID;
+	return TRUE;
+}
+/*
+ * read_cache_uuid --
+ *
+ */
+static int read_cache_uuid(char *fileName, char** uuid, int global) {
+	SystemRegistrationId *sysReg;
+	if (parse_cache_uuid(fileName, sysReg)) {
+		if (global && sysReg->globalUUID) {
+			uuid = strdup(sysReg->globalUUID);
+			return REG_STATUS_HAVE_UUID;
+		} else if (sysReg->localUUID){
+			uuid = strdup(sysReg->localUUID);
+			return REG_STATUS_HAVE_UUID;
+		}
+	}
+
+	free_system_registration(sysReg);
+	return REG_STATUS_NO_UUID;
 }
 
 /*
@@ -272,7 +319,7 @@ static int read_cache_uuid(char *fileName, char **uuid) {
  *
  */
 int send_request_to_init(ReqType reqType, Config *config,
-						 char *systemName, char **response) {
+						 char *systemName, char **response, int global ) {
 
 	Request *request=NULL;
 	json_t *json=NULL;
@@ -305,7 +352,7 @@ int send_request_to_init(ReqType reqType, Config *config,
 	}
 
 	/* Step-3 create URL for init system */
-	create_url(&url[0], config, systemName, reqType);
+	create_url(&url[0], config, systemName, reqType, global);
 
 	/* Step-3 send over the wire */
 	respCode = send_http_request(&url[0], request, json, response);
@@ -352,14 +399,14 @@ int send_request_to_init(ReqType reqType, Config *config,
  * existing_registration --
  *
  */
-int existing_registration(Config *config, char **cacheUUID,
-						  char **systemUUID) {
+int existing_registration(Config *config, char **systemUUID,
+		SystemRegistrationId *sysReg, int global) {
 
 	int status=REG_STATUS_NONE;
 	char *str=NULL;
 	QueryResponse *queryResponse=NULL;
-
-	if (send_request_to_init(REQ_QUERY, config, NULL, &str)) {
+	char* cacheUUID = NULL;
+	if (send_request_to_init(REQ_QUERY, config, NULL, &str, global)) {
 		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
 			log_error("Error deserialize query response. Str: %s", str);
 			return -1;
@@ -369,7 +416,7 @@ int existing_registration(Config *config, char **cacheUUID,
 		goto return_function;
 	}
 
-	status = read_cache_uuid(config->tempFile, cacheUUID);
+	status = read_cache_uuid(config->tempFile, &cacheUUID, global);
 
 	/* match? */
 	if (strcmp(config->systemName, queryResponse->systemName) == 0 &&
@@ -378,7 +425,7 @@ int existing_registration(Config *config, char **cacheUUID,
 		atoi(config->systemPort) == queryResponse->port) {
 
 		if (status == REG_STATUS_HAVE_UUID) {
-			if (strcmp(*cacheUUID, queryResponse->systemID) == 0){
+			if (strcmp(cacheUUID, queryResponse->systemID) == 0){
 				status |= REG_STATUS_MATCH;
 			} else {
 				status |= REG_STATUS_NO_MATCH;
@@ -396,8 +443,8 @@ int existing_registration(Config *config, char **cacheUUID,
 
  return_function:
 	if (str)  free(str);
+	if (cacheUUID) free (cacheUUID);
 	free_query_response(queryResponse);
-
 	return status;
 }
 
@@ -405,13 +452,13 @@ int existing_registration(Config *config, char **cacheUUID,
  * get_system_info -- get info about 'system' from the init.
  *
  */
-int get_system_info(Config *config, char *systemName, char **systemInfo) {
+int get_system_info(Config *config, char *systemName, char **systemInfo, int global) {
 
 	int status=QUERY_OK;
 	char *str=NULL;
 	QueryResponse *queryResponse=NULL;
 
-	if (send_request_to_init(REQ_QUERY_SYSTEM, config, systemName, &str)) {
+	if (send_request_to_init(REQ_QUERY_SYSTEM, config, systemName, &str, global)) {
 		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
 			free(str);
 			log_error("Error deserialize query response. Str: %s", str);

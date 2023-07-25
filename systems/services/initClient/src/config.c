@@ -36,6 +36,7 @@ int read_config_from_env(Config **config){
 	char *port=NULL, *addr=NULL, *tempFile=NULL;
 	char *systemName=NULL, *systemAddr=NULL, *systemPort=NULL;
 	char *initSystemAddr=NULL, *initSystemPort=NULL;
+	char *globalInitSystemAddr=NULL, *globalInitSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
 
 	if ((addr = getenv(ENV_INIT_CLIENT_ADDR)) == NULL ||
@@ -53,9 +54,11 @@ int read_config_from_env(Config **config){
 		(systemPort = getenv(ENV_SYSTEM_PORT)) == NULL ||
 		(systemCert = getenv(ENV_SYSTEM_CERT)) == NULL ||
 		(initSystemAddr = getenv(ENV_INIT_SYSTEM_ADDR)) == NULL ||
-		(initSystemPort = getenv(ENV_INIT_SYSTEM_PORT)) == NULL ) {
-	    log_error("Required env variables not defined");
-		return FALSE;
+		(initSystemPort = getenv(ENV_INIT_SYSTEM_PORT)) == NULL ||
+		(globalInitSystemAddr = getenv(ENV_GLOBAL_INIT_SYSTEM_ADDR)) == NULL ||
+		(globalInitSystemPort = getenv(ENV_GLOBAL_INIT_SYSTEM_PORT)) == NULL ) {
+	    	log_error("Required env variables not defined");
+	    	return FALSE;
 	}
 
 	if ((systemOrg = getenv(ENV_SYSTEM_ORG)) == NULL) {
@@ -87,6 +90,8 @@ int read_config_from_env(Config **config){
 	(*config)->initSystemAPIVer = strdup(apiVersion);
 	(*config)->initSystemAddr   = strdup(initSystemAddr);
 	(*config)->initSystemPort   = strdup(initSystemPort);
+	(*config)->globalInitSystemAddr   = strdup(globalInitSystemAddr);
+	(*config)->globalInitSystemPort   = strdup(globalInitSystemPort);
 
 	if (!(*config)->logLevel) {
 		log_debug("Log level not defined, setting to default: DEBUG");
@@ -104,18 +109,19 @@ void clear_config(Config *config) {
 
 	if (config == NULL) return;
 
-	if (config->addr)             free(config->addr);
-	if (config->port)             free(config->port);
-	if (config->tempFile)         free(config->tempFile);
-
-	if (config->systemOrg)        free(config->systemOrg);
-	if (config->systemName)       free(config->systemName);
-	if (config->systemAddr)       free(config->systemAddr);
-	if (config->systemPort)       free(config->systemPort);
-	if (config->systemCert)       free(config->systemCert);
-	if (config->initSystemAddr)   free(config->initSystemAddr);
-	if (config->initSystemPort)   free(config->initSystemPort);
-	if (config->initSystemAPIVer) free(config->initSystemAPIVer);
+	if (config->addr)             		free(config->addr);
+	if (config->port)            	 	free(config->port);
+	if (config->tempFile)         		free(config->tempFile);
+	if (config->systemOrg)        		free(config->systemOrg);
+	if (config->systemName)       		free(config->systemName);
+	if (config->systemAddr)       		free(config->systemAddr);
+	if (config->systemPort)       		free(config->systemPort);
+	if (config->systemCert)       		free(config->systemCert);
+	if (config->initSystemAddr)   		free(config->initSystemAddr);
+	if (config->initSystemPort)   		free(config->initSystemPort);
+	if (config->initSystemAPIVer) 		free(config->initSystemAPIVer);
+	if (config->globalInitSystemPort)   free(config->globalInitSystemPort);
+	if (config->globalInitSystemAddr)   free(config->globalInitSystemAddr);
 
 	free(config);
 }
