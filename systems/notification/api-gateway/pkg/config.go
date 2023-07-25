@@ -11,8 +11,15 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints `mapstructure:"services"`
-	Auth              *config.Auth  `mapstructure:"auth"`
+	Services          GrpcEndpoints  `mapstructure:"services"`
+	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
+	Metrics           config.Metrics `mapstructure:"metrics"`
+	Auth              *config.Auth   `mapstructure:"auth"`
+}
+
+type HttpEndpoints struct {
+	Timeout     time.Duration
+	NodeMetrics string
 }
 
 type GrpcEndpoints struct {
@@ -33,14 +40,22 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 5 * time.Second,
-			Mailer:  "mailer:9090",
-			Notify:  "notify:9090",
+			Mailer:  "notification-mailer:9090",
+			Notify:  "notification-notify:9090",
 		},
 
 		Server: rest.HttpConfig{
-			Port: 8085,
+			Port: 8080,
 			Cors: defaultCors,
 		},
+
+		HttpServices: HttpEndpoints{
+			Timeout:     3 * time.Second,
+			NodeMetrics: "http://localhost",
+		},
+
+		Metrics: *config.DefaultMetrics(),
+
 		Auth: config.LoadAuthHostConfig("auth"),
 	}
 }
