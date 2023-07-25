@@ -25,3 +25,4 @@ export const RATE_PORT = parseInt(process.env.RATE_PORT || "4045");
 export const ORG_PORT = parseInt(process.env.ORG_PORT || "4046");
 export const NETWORK_PORT = parseInt(process.env.NETWORK_PORT || "4047");
 export const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT || "4048");
+export const ALERT_PORT = parseInt(process.env.ALERT_PORT || "4049");
