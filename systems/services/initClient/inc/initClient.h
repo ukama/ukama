@@ -99,8 +99,8 @@ struct Response {
 void free_query_response(QueryResponse *response);
 int send_request_to_init(ReqType reqType, Config *config,
 						 char *systemName, char **response, int global );
-int existing_registration(Config *config, char **systemUUID,
-		SystemRegistrationId *sysReg, int global);
+int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
+		 int global);
 int get_system_info(Config *config, char *systemName, char **systemInfo, int global);
 int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg);
 #endif /* INIT_CLIENT_H */

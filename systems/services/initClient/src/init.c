@@ -295,13 +295,13 @@ int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg) {
  *
  */
 static int read_cache_uuid(char *fileName, char** uuid, int global) {
-	SystemRegistrationId *sysReg;
+	SystemRegistrationId *sysReg = NULL;
 	if (parse_cache_uuid(fileName, sysReg)) {
 		if (global && sysReg->globalUUID) {
-			uuid = strdup(sysReg->globalUUID);
+			*uuid = strdup(sysReg->globalUUID);
 			return REG_STATUS_HAVE_UUID;
 		} else if (sysReg->localUUID){
-			uuid = strdup(sysReg->localUUID);
+			*uuid = strdup(sysReg->localUUID);
 			return REG_STATUS_HAVE_UUID;
 		}
 	}
@@ -399,13 +399,12 @@ int send_request_to_init(ReqType reqType, Config *config,
  * existing_registration --
  *
  */
-int existing_registration(Config *config, char **systemUUID,
-		SystemRegistrationId *sysReg, int global) {
+int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
+		 int global) {
 
 	int status=REG_STATUS_NONE;
 	char *str=NULL;
 	QueryResponse *queryResponse=NULL;
-	char* cacheUUID = NULL;
 	if (send_request_to_init(REQ_QUERY, config, NULL, &str, global)) {
 		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
 			log_error("Error deserialize query response. Str: %s", str);
@@ -416,7 +415,7 @@ int existing_registration(Config *config, char **systemUUID,
 		goto return_function;
 	}
 
-	status = read_cache_uuid(config->tempFile, &cacheUUID, global);
+	status = read_cache_uuid(config->tempFile, cacheUUID, global);
 
 	/* match? */
 	if (strcmp(config->systemName, queryResponse->systemName) == 0 &&
@@ -425,7 +424,7 @@ int existing_registration(Config *config, char **systemUUID,
 		atoi(config->systemPort) == queryResponse->port) {
 
 		if (status == REG_STATUS_HAVE_UUID) {
-			if (strcmp(cacheUUID, queryResponse->systemID) == 0){
+			if (strcmp(*cacheUUID, queryResponse->systemID) == 0){
 				status |= REG_STATUS_MATCH;
 			} else {
 				status |= REG_STATUS_NO_MATCH;
@@ -443,7 +442,7 @@ int existing_registration(Config *config, char **systemUUID,
 
  return_function:
 	if (str)  free(str);
-	if (cacheUUID) free (cacheUUID);
+	if (*cacheUUID) free (*cacheUUID);
 	free_query_response(queryResponse);
 	return status;
 }

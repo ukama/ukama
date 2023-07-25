@@ -32,4 +32,7 @@
 int serialize_request(Request *request, json_t **json);
 int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 						 char *str);
+int serialize_uuids_from_file(SystemRegistrationId *sysReg, json_t **json);
+int deserialize_uuids_from_file(char* str, SystemRegistrationId** sysReg);
+
 #endif /* INIT_CLIENT_JSERDES_H */

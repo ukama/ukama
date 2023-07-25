@@ -129,7 +129,7 @@ void catch_sigterm(void) {
 }
 
 int store_cache_uuid(char *fileName, char* uuid, int global) {
-	SystemRegistrationId *sysReg;
+	SystemRegistrationId *sysReg = NULL;
 	if (!parse_cache_uuid(fileName, sysReg)) {
 		/* Parsing Failed this means problem with file */
 		sysReg = (SystemRegistrationId*)calloc(1, sizeof(SystemRegistrationId));
@@ -191,12 +191,11 @@ int create_temp_file_and_store_uuid(char *fileName, SystemRegistrationId* sysReg
 int register_system(Config *config, int global){
 	int regStatus=REG_STATUS_NONE;
 	char *response=NULL;
-	char *systemUUID=NULL;
-	SystemRegistrationId* sysReg = NULL;
+	char *cacheUUID=NULL, *systemUUID=NULL;
 	QueryResponse *queryResponse=NULL;
 
 	/* Step-2: check current registration status */
-	regStatus = existing_registration(config, &systemUUID, &sysReg, global);
+	regStatus = existing_registration(config, &cacheUUID, &systemUUID, global);
 
 	/* Step-3: take action(s) */
 	switch(regStatus) {
