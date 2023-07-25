@@ -188,6 +188,67 @@ int create_temp_file_and_store_uuid(char *fileName, SystemRegistrationId* sysReg
 	return TRUE;
 }
 
+int register_system(Config *config, int global){
+	int regStatus=REG_STATUS_NONE;
+	char *response=NULL;
+	char *systemUUID=NULL;
+	SystemRegistrationId* sysReg = NULL;
+	QueryResponse *queryResponse=NULL;
+
+	/* Step-2: check current registration status */
+	regStatus = existing_registration(config, &systemUUID, &sysReg, global);
+
+	/* Step-3: take action(s) */
+	switch(regStatus) {
+	case REG_STATUS_MATCH | REG_STATUS_HAVE_UUID:
+	log_debug("System already registerd with init.");
+	break;
+
+	case REG_STATUS_MATCH | REG_STATUS_NO_UUID:
+	log_debug("Storing UUID %s to tempFile: %s", systemUUID,
+			config->tempFile);
+	store_cache_uuid(config->tempFile,
+			queryResponse->systemID, global);
+
+	break;
+
+	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
+					if (send_request_to_init(REQ_UPDATE, config, NULL, &response, global) != TRUE) {
+						log_error("Error updating with the init system");
+						return FALSE;
+					}
+	break;
+
+	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
+					/* first time registering */
+					if (send_request_to_init(REQ_REGISTER, config, NULL, &response, global)
+							!= TRUE) {
+						log_error("Error registrating with the init system");
+						return FALSE;
+					}
+
+	/* read the UUID and log it into tempfile. */
+	if (deserialize_response(REQ_REGISTER, &queryResponse,
+			response) != TRUE) {
+		log_error("Error deserialize the registration response. Str: %s",
+				response);
+		return FALSE;
+	}
+	store_cache_uuid(config->tempFile,
+			queryResponse->systemID, global);
+
+	break;
+
+	default:
+		break;
+	}
+
+	if (queryResponse) free_query_response(queryResponse);
+	if (response)      free(response);
+	return TRUE;
+
+}
+
 /*
  * Life of initClient:
  *
@@ -201,14 +262,11 @@ int create_temp_file_and_store_uuid(char *fileName, SystemRegistrationId* sysReg
  */
 int main (int argc, char *argv[]) {
 
-	int exitStatus=0, regStatus=REG_STATUS_NONE;
+	int exitStatus=0;
 	char *debug=DEFAULT_LOG_LEVEL;
 	char *response=NULL;
 	struct _u_instance webInst;
 	Config *config=NULL;
-	char *systemUUID=NULL;
-	SystemRegistrationId* sysReg = NULL;
-	QueryResponse *queryResponse=NULL;
 
 	state = (State *)calloc(1, sizeof(State));
 	if (state == NULL) {
@@ -266,62 +324,19 @@ int main (int argc, char *argv[]) {
 		goto exit_program;
 	}
 
-	/* Step-2: check current registration status */
-	regStatus = existing_registration(config, &systemUUID, &sysReg, REGISTER_TO_LOCAL_INIT);
-
-	/* Step-3: take action(s) */
-	switch(regStatus) {
-	case REG_STATUS_MATCH | REG_STATUS_HAVE_UUID:
-		log_debug("System already registerd with init.");
-		break;
-
-	case REG_STATUS_MATCH | REG_STATUS_NO_UUID:
-		log_debug("Storing UUID %s to tempFile: %s", systemUUID,
-				  config->tempFile);
-		store_cache_uuid(config->tempFile,
-				queryResponse->systemID, REGISTER_TO_LOCAL_INIT);
-
-		break;
-
-	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
-		if (send_request_to_init(REQ_UPDATE, config, NULL, &response, REGISTER_TO_LOCAL_INIT) != TRUE) {
-			log_error("Error updating with the init system");
-			exitStatus = 1;
-			goto exit_program;
-		}
-		break;
-
-	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
-		/* first time registering */
-		if (send_request_to_init(REQ_REGISTER, config, NULL, &response, REGISTER_TO_LOCAL_INIT)
-			!= TRUE) {
-			log_error("Error registrating with the init system");
-			exitStatus = 1;
-			goto exit_program;
-		}
-
-		/* read the UUID and log it into tempfile. */
-		if (deserialize_response(REQ_REGISTER, &queryResponse,
-								 response) != TRUE) {
-			log_error("Error deserialize the registration response. Str: %s",
-					  response);
-			exitStatus = 1;
-			goto exit_program;
-		}
-		store_cache_uuid(config->tempFile,
-				queryResponse->systemID, REGISTER_TO_LOCAL_INIT);
-
-		break;
-
-	default:
-		break;
+	/* registration process for local init */
+	if (!register_system(config, REGISTER_TO_LOCAL_INIT)) {
+		exitStatus = 1;
+		goto exit_program;
 	}
 
-	if (queryResponse) free_query_response(queryResponse);
-	if (response)      free(response);
+	/* registration process for global init */
+	if (!register_system(config, REGISTER_TO_GLOBAL_INIT)) {
+		exitStatus = 1;
+		goto exit_program;
+	}
 
 	/* Wait here for ever. XXX */
-
 	log_debug("initClient running ...");
 
 	getchar(); /* For now. */
@@ -329,6 +344,7 @@ int main (int argc, char *argv[]) {
 	log_debug("Goodbye ... ");
 
 	send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_LOCAL_INIT);
+	send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_GLOBAL_INIT);
 	ulfius_stop_framework(&webInst);
 	ulfius_clean_instance(&webInst);
 
