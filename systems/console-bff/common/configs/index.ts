@@ -23,3 +23,4 @@ export const USER_PORT = parseInt(process.env.USER_PORT || "4043");
 export const PACKAGE_PORT = parseInt(process.env.PACKAGE_PORT || "4044");
 export const RATE_PORT = parseInt(process.env.RATE_PORT || "4045");
 export const ORG_PORT = parseInt(process.env.ORG_PORT || "4046");
+export const NETWORK_PORT = parseInt(process.env.NETWORK_PORT || "4047");
