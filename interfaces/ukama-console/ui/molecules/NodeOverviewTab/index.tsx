@@ -147,46 +147,33 @@ const NodeOverviewTab = ({
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Node Health</Typography>
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][0]
-                .show && (
+              {HealtChartsConfigure[nodeType][0].show && (
                 <LineChart
-                  loading={metricsLoading}
                   initData={metrics}
-                  topic={
-                    HealtChartsConfigure[
-                      (selectedNode?.type as string) || 'HOME'
-                    ][0].id
-                  }
-                  hasData={true}
-                  title="Test"
+                  loading={metricsLoading}
+                  hasData={metrics.length > 0}
+                  topic={HealtChartsConfigure[nodeType][0].id}
+                  title={HealtChartsConfigure[nodeType][0].name}
                 />
               )}
-              {/* {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][1]
-                .show && (
-                <ApexLineChart
+              {HealtChartsConfigure[nodeType][1].show && (
+                <LineChart
+                  initData={metrics}
                   loading={metricsLoading}
-                  data={
-                    metrics[
-                      HealtChartsConfigure[
-                        (selectedNode?.type as string) || 'HOME'
-                      ][1].id
-                    ]
-                  }
+                  hasData={metrics.length > 0}
+                  topic={HealtChartsConfigure[nodeType][1].id}
+                  title={HealtChartsConfigure[nodeType][1].name}
                 />
               )}
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][2]
-                .show && (
-                <ApexLineChart
+              {HealtChartsConfigure[nodeType][2].show && (
+                <LineChart
+                  initData={metrics}
                   loading={metricsLoading}
-                  data={
-                    metrics[
-                      HealtChartsConfigure[
-                        (selectedNode?.type as string) || 'HOME'
-                      ][2].id
-                    ]
-                  }
+                  hasData={metrics.length > 0}
+                  topic={HealtChartsConfigure[nodeType][2].id}
+                  title={HealtChartsConfigure[nodeType][2].name}
                 />
-              )} */}
+              )}
             </Stack>
           </Paper>
         )}
@@ -194,32 +181,26 @@ const NodeOverviewTab = ({
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Subscribers</Typography>
-              {/* {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][3]
+              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][3]
                 .show && (
-                <ApexLineChart
+                <LineChart
+                  initData={metrics}
                   loading={metricsLoading}
-                  data={
-                    metrics[
-                      HealtChartsConfigure[
-                        (selectedNode?.type as string) || 'HOME'
-                      ][3].id
-                    ]
-                  }
+                  hasData={metrics.length > 0}
+                  topic={HealtChartsConfigure[nodeType][3].id}
+                  title={HealtChartsConfigure[nodeType][3].name}
                 />
               )}
               {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][4]
                 .show && (
-                <ApexLineChart
+                <LineChart
+                  initData={metrics}
                   loading={metricsLoading}
-                  data={
-                    metrics[
-                      HealtChartsConfigure[
-                        (selectedNode?.type as string) || 'HOME'
-                      ][4].id
-                    ]
-                  }
+                  hasData={metrics.length > 0}
+                  topic={HealtChartsConfigure[nodeType][4].id}
+                  title={HealtChartsConfigure[nodeType][4].name}
                 />
-              )} */}
+              )}
             </Stack>
           </Paper>
         )}

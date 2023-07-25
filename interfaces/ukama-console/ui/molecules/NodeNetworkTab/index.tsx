@@ -1,6 +1,7 @@
 import { TooltipsText } from '@/constants';
-import { Grid, Paper } from '@mui/material';
+import { Grid, Paper, Stack } from '@mui/material';
 import { useState } from 'react';
+import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
@@ -59,13 +60,43 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
       </Grid>
       <Grid item lg={isCollapse ? 11 : 8} md xs>
         <Paper sx={{ p: 3, width: '100%' }}>
-          {/* <Stack spacing={4}>
-            <ApexLineChart data={metrics['throughputuplink']} />
-            <ApexLineChart data={metrics['throughputdownlink']} />
-            <ApexLineChart data={metrics['rrc']} />
-            <ApexLineChart data={metrics['erab']} />
-            <ApexLineChart data={metrics['rlc']} />
-          </Stack> */}
+          <Stack spacing={4}>
+            <LineChart
+              loading={loading}
+              initData={metrics}
+              hasData={metrics.length > 0}
+              topic={'throughputuplink'}
+              title={'Throughput (U/L)'}
+            />
+            <LineChart
+              loading={loading}
+              initData={metrics}
+              hasData={metrics.length > 0}
+              topic={'throughputdownlink'}
+              title={'Throughput (D/L)'}
+            />
+            <LineChart
+              loading={loading}
+              initData={metrics}
+              hasData={metrics.length > 0}
+              topic={'rrc'}
+              title={'RRC'}
+            />
+            <LineChart
+              loading={loading}
+              initData={metrics}
+              hasData={metrics.length > 0}
+              topic={'erab'}
+              title={'ERAB'}
+            />
+            <LineChart
+              loading={loading}
+              initData={metrics}
+              hasData={metrics.length > 0}
+              topic={'rlc'}
+              title={'RLC'}
+            />
+          </Stack>
         </Paper>
       </Grid>
     </Grid>
