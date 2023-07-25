@@ -161,9 +161,10 @@ func add(nodeId, severity, nType, serviceName, description, details string, nSta
 	notifyRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	var nNodeId ukama.NodeID = ""
 	var nodeType string = ""
+	var err error
 
 	if nodeId != "" {
-		nNodeId, err := ukama.ValidateNodeId(nodeId)
+		nNodeId, err = ukama.ValidateNodeId(nodeId)
 		if err != nil {
 			return status.Errorf(codes.InvalidArgument,
 				"invalid format for node id. Error %s", err.Error())

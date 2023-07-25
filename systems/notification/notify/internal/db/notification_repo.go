@@ -62,7 +62,7 @@ func (r *notificationRepo) List(nodeId, serviceName, nType string,
 	}
 
 	if nType != "" {
-		tx = tx.Where("notification_type = ?", nType)
+		tx = tx.Where("type = ?", nType)
 	}
 
 	if sort {
@@ -104,7 +104,7 @@ func (r *notificationRepo) Purge(nodeId, serviceName, nType string) ([]Notificat
 	}
 
 	if nType != "" {
-		tx = tx.Where("notification_type = ?", nType)
+		tx = tx.Where("type = ?", nType)
 	}
 
 	tx = tx.Where("deleted_at IS NULL")
