@@ -1,5 +1,6 @@
-import { Paper, Typography } from '@mui/material';
+import { Paper } from '@mui/material';
 import dynamic from 'next/dynamic';
+import { LabelOverlayUI, SitesSelection, SitesTree } from './OverlayUI';
 const DynamicMap = dynamic(() => import('./DynamicMap'), {
   ssr: false,
 });
@@ -8,13 +9,15 @@ const NetworkMap = () => {
     <Paper
       sx={{
         borderRadius: '5px',
-        height: 'calc(100vh - 210px)',
+        height: 'calc(100vh - 310px)',
       }}
     >
       <DynamicMap id="network-map" zoom={6} className="network-map">
         {() => (
           <>
-            <Typography variant="h6">Network Map</Typography>
+            <LabelOverlayUI />
+            <SitesTree />
+            <SitesSelection />
           </>
         )}
       </DynamicMap>
