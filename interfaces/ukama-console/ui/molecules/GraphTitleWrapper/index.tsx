@@ -53,7 +53,8 @@ const GraphTitleWrapper = ({
       <Grid
         item
         container
-        height={'300px'}
+        width={'100%'}
+        height={'400px'}
         alignItems={'center'}
         justifyContent="center"
       >

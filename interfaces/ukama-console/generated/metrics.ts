@@ -31,13 +31,7 @@ export type MetricRes = {
   env: Scalars['String']['output'];
   nodeid: Scalars['String']['output'];
   type: Scalars['String']['output'];
-  value: Array<MetricValue>;
-};
-
-export type MetricValue = {
-  __typename?: 'MetricValue';
-  x: Scalars['Float']['output'];
-  y: Scalars['Float']['output'];
+  value: Array<Array<Scalars['Float']['output']>>;
 };
 
 export type Query = {
@@ -74,7 +68,7 @@ export type GetMetricsQueryVariables = Exact<{
 }>;
 
 
-export type GetMetricsQuery = { __typename?: 'Query', getMetrics: { __typename?: 'MetricRes', env: string, type: string, nodeid: string, value: Array<{ __typename?: 'MetricValue', x: number, y: number }> } };
+export type GetMetricsQuery = { __typename?: 'Query', getMetrics: { __typename?: 'MetricRes', env: string, type: string, nodeid: string, value: Array<Array<number>> } };
 
 export type GetMetricSubscriptionVariables = Exact<{
   orgId: Scalars['String']['input'];
@@ -84,7 +78,7 @@ export type GetMetricSubscriptionVariables = Exact<{
 }>;
 
 
-export type GetMetricSubscription = { __typename?: 'Subscription', getMetric: { __typename?: 'MetricRes', env: string, type: string, nodeid: string, value: Array<{ __typename?: 'MetricValue', x: number, y: number }> } };
+export type GetMetricSubscription = { __typename?: 'Subscription', getMetric: { __typename?: 'MetricRes', env: string, type: string, nodeid: string, value: Array<Array<number>> } };
 
 
 export const GetMetricsDocument = gql`
@@ -93,10 +87,7 @@ export const GetMetricsDocument = gql`
     env
     type
     nodeid
-    value {
-      x
-      y
-    }
+    value
   }
 }
     `;
@@ -134,10 +125,7 @@ export const GetMetricDocument = gql`
     env
     type
     nodeid
-    value {
-      x
-      y
-    }
+    value
   }
 }
     `;
