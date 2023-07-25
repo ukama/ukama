@@ -4,10 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -29,34 +25,34 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-
 type OrgService struct {
 	pb.UnimplementedOrgServiceServer
-	orgRepo        db.OrgRepo
-	userRepo       db.UserRepo
-	orgName        string
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	RegistryUserService client.RegistryUsersClientProvider
-	msgbus         mb.MsgBusServiceClient
-	pushgateway    string
-	notification   client.NotificationClient
+	orgRepo              db.OrgRepo
+	userRepo             db.UserRepo
+	orgName              string
+	baseRoutingKey       msgbus.RoutingKeyBuilder
+	RegistryUserService  client.RegistryUsersClientProvider
+	msgbus               mb.MsgBusServiceClient
+	pushgateway          string
+	notification         client.NotificationClient
 	invitationExpiryTime time.Time
 }
 type EmailData struct {
 	RecipientName string
 }
 
+const emailSubject = "[Ukama] Team invite from "
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient ,RegistryUserService client.RegistryUsersClientProvider,invitationExpiryTime time.Time ) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient, RegistryUserService client.RegistryUsersClientProvider, invitationExpiryTime time.Time) *OrgService {
 	return &OrgService{
-		orgRepo:        orgRepo,
-		userRepo:       userRepo,
-		orgName:        defaultOrgName,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		msgbus:         msgBus,
-		RegistryUserService: RegistryUserService,
-		pushgateway:    pushgateway,
-		notification:   notification,
+		orgRepo:              orgRepo,
+		userRepo:             userRepo,
+		orgName:              defaultOrgName,
+		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		msgbus:               msgBus,
+		RegistryUserService:  RegistryUserService,
+		pushgateway:          pushgateway,
+		notification:         notification,
 		invitationExpiryTime: invitationExpiryTime,
 	}
 }
@@ -82,7 +78,6 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	}
 
 	invitationId := uuid.NewV4()
-	
 
 	res, err := o.orgRepo.GetByName(req.GetOrg())
 	if err != nil {
@@ -103,33 +98,11 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	if err != nil {
 		return nil, err
 	}
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error getting working directory: %s", err)
-	}
-	templateDir := filepath.Join(wd, "templates")
-	templateFile := filepath.Join(templateDir, "email_template.gotml")
-	tmpl, err := template.ParseFiles(templateFile)
-	if err != nil {
-		log.Fatalf("Error parsing template file: %s", err)
-	}
-	data := EmailData{
-		RecipientName: "John Doe",
-	}
-	var renderedEmailBody string
-	buf := new(strings.Builder)
-	err = tmpl.Execute(buf, data)
-	if err != nil {
-		log.Fatalf("Error rendering template: %s", err)
-	}
-	renderedEmailBody = buf.String()
-	fmt.Println("Rendered email body:", renderedEmailBody)
-	fmt.Println("Email body:", emailBody)
-	
+
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
-		Subject: "[Ukama] Team invite from " + res.Name,
-		Body:    renderedEmailBody,
+		Subject: emailSubject + res.Name,
+		Body:    emailBody,
 		Values:  map[string]string{"EmailID": invitationId.String()},
 	})
 
@@ -745,13 +718,11 @@ func pbInvitationStatusToDbInvitationStatus(status pb.InvitationStatus) db.Invit
 
 }
 
-func generateInvitationLink(expirationTime time.Time ) (string, error) {
+func generateInvitationLink(expirationTime time.Time) (string, error) {
 	link := "http://localhost:4455/auth/login"
-	linkID := uuid.NewV4().String() 
+	linkID := uuid.NewV4().String()
 
 	expiringLink := fmt.Sprintf("%s?linkId=%s&expires=%d", link, linkID, expirationTime.Unix())
 
 	return expiringLink, nil
 }
-
-
