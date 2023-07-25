@@ -84,7 +84,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName,
 		version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 
-	auth := r.f.Group("/v1", "Notification API GW ", "Notification system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "Notification NODE GW ", "Notification system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
 
@@ -125,7 +125,7 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {
 	return r.clients.n.Add(req.NodeId, req.Severity,
-		req.Type, req.ServiceName, req.Description, req.Details, req.Time)
+		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
 }
 
 func (r *Router) getNotification(c *gin.Context, req *GetNotificationReq) (*npb.GetResponse, error) {

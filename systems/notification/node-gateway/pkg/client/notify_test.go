@@ -25,17 +25,19 @@ var req = &rest.AddNotificationReq{
 	Severity:    "high",
 	Type:        "alert",
 	ServiceName: "noded",
+	Status:      8200,
 	Time:        uint32(time.Now().Unix()),
 	Description: "Some random alert",
 	Details:     `{"reason": "testing", "component":"router_test"}`,
 }
 
-func TestNotifyClient_Insert(t *testing.T) {
+func TestNotifyClient_Add(t *testing.T) {
 	notifReq := &pb.AddRequest{
 		NodeId:      req.NodeId,
 		Severity:    req.Severity,
 		Type:        req.Type,
 		ServiceName: req.ServiceName,
+		Status:      req.Status,
 		EpochTime:   req.Time,
 		Description: req.Description,
 		Details:     req.Details,
@@ -46,7 +48,7 @@ func TestNotifyClient_Insert(t *testing.T) {
 	c := client.NewNotifyFromClient(nc)
 
 	_, err := c.Add(req.NodeId, req.Severity,
-		req.Type, req.ServiceName, req.Description, req.Details, req.Time)
+		req.Type, req.ServiceName, req.Description, req.Details, req.Status, req.Time)
 
 	assert.NoError(t, err)
 	nc.AssertExpectations(t)
@@ -61,6 +63,7 @@ func TestNotifyClient_Get(t *testing.T) {
 		Severity:    req.Severity,
 		Type:        req.Type,
 		ServiceName: req.ServiceName,
+		Status:      req.Status,
 		EpochTime:   req.Time,
 		Description: req.Description,
 		Details:     req.Details,
@@ -92,6 +95,7 @@ func TestNotifyClient_List(t *testing.T) {
 			Severity:    req.Severity,
 			Type:        req.Type,
 			ServiceName: req.ServiceName,
+			Status:      req.Status,
 			EpochTime:   req.Time,
 			Description: req.Description,
 			Details:     req.Details,

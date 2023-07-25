@@ -21,6 +21,7 @@ type AddNotificationReq struct {
 	Severity    string `json:"severity,omitempty" type:"string"`
 	Type        string `json:"notification_type,omitempty" validate:"eq=alert|eq=event"`
 	ServiceName string `json:"service_name,omitempty"`
+	Status      uint32 `json:"status,omitempty"`
 	Time        uint32 `json:"time,omitempty"`
 	Description string `json:"description,omitempty"`
 	Details     string `json:"details,omitempty"`

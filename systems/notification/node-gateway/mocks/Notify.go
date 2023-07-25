@@ -12,25 +12,25 @@ type Notify struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: nodeId, severity, ntype, serviceName, description, details, epochTime
-func (_m *Notify) Add(nodeId string, severity string, ntype string, serviceName string, description string, details string, epochTime uint32) (*gen.AddResponse, error) {
-	ret := _m.Called(nodeId, severity, ntype, serviceName, description, details, epochTime)
+// Add provides a mock function with given fields: nodeId, severity, ntype, serviceName, description, details, status, epochTime
+func (_m *Notify) Add(nodeId string, severity string, ntype string, serviceName string, description string, details string, status uint32, epochTime uint32) (*gen.AddResponse, error) {
+	ret := _m.Called(nodeId, severity, ntype, serviceName, description, details, status, epochTime)
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, uint32) (*gen.AddResponse, error)); ok {
-		return rf(nodeId, severity, ntype, serviceName, description, details, epochTime)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, uint32, uint32) (*gen.AddResponse, error)); ok {
+		return rf(nodeId, severity, ntype, serviceName, description, details, status, epochTime)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, uint32) *gen.AddResponse); ok {
-		r0 = rf(nodeId, severity, ntype, serviceName, description, details, epochTime)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, uint32, uint32) *gen.AddResponse); ok {
+		r0 = rf(nodeId, severity, ntype, serviceName, description, details, status, epochTime)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, uint32) error); ok {
-		r1 = rf(nodeId, severity, ntype, serviceName, description, details, epochTime)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, uint32, uint32) error); ok {
+		r1 = rf(nodeId, severity, ntype, serviceName, description, details, status, epochTime)
 	} else {
 		r1 = ret.Error(1)
 	}

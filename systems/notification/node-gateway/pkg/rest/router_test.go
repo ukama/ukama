@@ -47,24 +47,24 @@ var routerConfig = &RouterConfig{
 
 var testClientSet *Clients
 
-var m = &nmocks.NotifyServiceClient{}
-var arc = &providers.AuthRestClient{}
-
 func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
 		Timeout: 1 * time.Second,
-		Notify:  "0.0.0.0:9092",
+		Notify:  "0.0.0.0:9093",
 	})
 }
 
-func TestPingRoute(t *testing.T) {
+func TestRouter_PingRoute(t *testing.T) {
+	var n = &nmocks.NotifyServiceClient{}
+	var arc = &providers.AuthRestClient{}
+
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
 	r := NewRouter(&Clients{
-		n: client.NewNotifyFromClient(m),
+		n: client.NewNotifyFromClient(n),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
@@ -79,12 +79,16 @@ var nt = AddNotificationReq{
 	Severity:    "high",
 	Type:        "event",
 	ServiceName: "noded",
+	Status:      8300,
 	Time:        uint32(time.Now().Unix()),
 	Description: "Some random alert",
 	Details:     `{"reason": "testing", "component":"router_test"}`,
 }
 
 func TestRouter_Add(t *testing.T) {
+	var m = &nmocks.NotifyServiceClient{}
+	var arc = &providers.AuthRestClient{}
+
 	t.Run("NotificationIsValid", func(t *testing.T) {
 		body, err := json.Marshal(nt)
 		if err != nil {
@@ -99,6 +103,7 @@ func TestRouter_Add(t *testing.T) {
 			Severity:    nt.Severity,
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
+			Status:      nt.Status,
 			EpochTime:   nt.Time,
 			Description: nt.Description,
 			Details:     nt.Details,
@@ -135,6 +140,7 @@ func TestRouter_Add(t *testing.T) {
 			Severity:    nt.Severity,
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
+			Status:      nt.Status,
 			EpochTime:   nt.Time,
 			Description: nt.Description,
 			Details:     nt.Details,
@@ -200,6 +206,7 @@ func TestRouter_Get(t *testing.T) {
 			Severity:    nt.Severity,
 			Type:        nt.Type,
 			ServiceName: nt.ServiceName,
+			Status:      nt.Status,
 			EpochTime:   nt.Time,
 			Description: nt.Description,
 			Details:     nt.Details,
@@ -355,6 +362,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -394,6 +402,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -438,6 +447,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -480,6 +490,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -526,6 +537,7 @@ func TestRouter_List(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -570,6 +582,7 @@ func TestRouter_Purge(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -610,6 +623,7 @@ func TestRouter_Purge(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
@@ -653,6 +667,7 @@ func TestRouter_Purge(t *testing.T) {
 				Severity:    nt.Severity,
 				Type:        nt.Type,
 				ServiceName: nt.ServiceName,
+				Status:      nt.Status,
 				EpochTime:   nt.Time,
 				Description: nt.Description,
 				Details:     nt.Details,
