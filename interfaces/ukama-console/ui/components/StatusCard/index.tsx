@@ -56,7 +56,10 @@ const StatusCard = ({
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
 
   return (
-    <LoadingWrapper height={isSmall ? 64 : 100} isLoading={loading}>
+    <LoadingWrapper
+      height={loading ? (isSmall ? 64 : 100) : 'fit-content'}
+      isLoading={loading}
+    >
       {isSmall ? (
         <Box
           component="div"

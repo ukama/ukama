@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import { Dispatch, SetStateAction, useEffect } from 'react';
 import * as ReactLeaflet from 'react-leaflet';
 import CustomMarker from './CustomMarker';
-import styles from './Map.module.css';
+import styles from '@/styles/Map.module.css'
 
 const { MapContainer } = ReactLeaflet;
 
