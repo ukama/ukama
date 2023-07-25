@@ -2,7 +2,7 @@
 # All rights reserved.
 
 #
-# Makefile for the bootstrap client
+# Makefile for the mock_provider
 #
 
 include ../../../../config.mk
