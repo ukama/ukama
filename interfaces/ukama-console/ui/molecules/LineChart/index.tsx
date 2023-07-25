@@ -1,3 +1,4 @@
+import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
@@ -25,9 +26,9 @@ const LineChart = ({
       events: {
         load: function () {
           var series: any = Highcharts.charts[0]?.series[0];
-          PubSub.subscribe(topic, (_, data) =>
-            series.addPoint([data[0].x, data[0].y], true, true),
-          );
+          PubSub.subscribe(topic, (_, data) => {
+            series.setData(data[0], true, true);
+          });
           //  setInterval(function () {
           //   var x = new Date().getTime(),
           //    y = Math.round(Math.random() * 100)
@@ -72,7 +73,7 @@ const LineChart = ({
 
     series: [
       {
-        name: 'topic',
+        name: title,
         data: (() => initData)(),
       },
     ],
@@ -87,11 +88,13 @@ const LineChart = ({
       loading={loading || !initData}
       hasData={initData?.length > 0 || false}
     >
-      <HighchartsReact
-        options={options}
-        highcharts={Highcharts}
-        constructorType={'stockChart'}
-      />
+      <Box sx={{ width: '100%' }}>
+        <HighchartsReact
+          options={options}
+          highcharts={Highcharts}
+          constructorType={'stockChart'}
+        />
+      </Box>
     </GraphTitleWrapper>
   );
 };

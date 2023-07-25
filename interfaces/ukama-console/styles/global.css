@@ -156,3 +156,6 @@ body {
   margin: 0;
   overflow-x: hidden;
 }
+*.highcharts-credits {
+  display: none;
+}

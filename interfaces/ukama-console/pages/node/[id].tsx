@@ -59,7 +59,7 @@ export default function Page() {
       updateQuery: (prev, { subscriptionData }) => {
         if (!subscriptionData.data) return prev;
         const metricItem = subscriptionData.data['getMetric'];
-        PubSub.publish('METRIC', metricItem.value);
+        PubSub.publish('temperaturectl', metricItem.value);
         // return Object.assign({}, prev, {
         //   getMetrics: {
         //     ...prev.getMetrics,
@@ -113,7 +113,7 @@ export default function Page() {
       >
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
-            metrics={[]}
+            metrics={metricsData?.getMetrics.value}
             isUpdateAvailable={true}
             selectedNode={selectedNode}
             metricsLoading={false}

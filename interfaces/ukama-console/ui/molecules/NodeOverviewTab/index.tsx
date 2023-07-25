@@ -2,6 +2,7 @@ import { HealtChartsConfigure, TooltipsText } from '@/constants';
 import { Node, NodeTypeEnum } from '@/generated';
 import { Grid, Paper, Stack, Typography, capitalize } from '@mui/material';
 import { useEffect, useState } from 'react';
+import LineChart from '../LineChart';
 import NodeDetailsCard from '../NodeDetailsCard';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
@@ -146,20 +147,21 @@ const NodeOverviewTab = ({
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Node Health</Typography>
-              {/* {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][0]
+              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][0]
                 .show && (
-                <ApexLineChart
+                <LineChart
                   loading={metricsLoading}
-                  data={
-                    metrics[
-                      HealtChartsConfigure[
-                        (selectedNode?.type as string) || 'HOME'
-                      ][0].id
-                    ]
+                  initData={metrics}
+                  topic={
+                    HealtChartsConfigure[
+                      (selectedNode?.type as string) || 'HOME'
+                    ][0].id
                   }
+                  hasData={true}
+                  title="Test"
                 />
               )}
-              {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][1]
+              {/* {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][1]
                 .show && (
                 <ApexLineChart
                   loading={metricsLoading}

@@ -21,8 +21,8 @@ export class MetricRes {
   @Field()
   type: string;
 
-  @Field(() => [MetricValue])
-  value: MetricValue[];
+  @Field(() => [[Number, Number]])
+  value: [number, number][];
 }
 
 @ArgsType()
