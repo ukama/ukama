@@ -150,8 +150,7 @@ int json_serialize_node_info(JsonObj** obj, NodeInfo* nodeInfo);
  * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
  *          On Failure, NodeD JSON error code
  */
-int json_serialize_notification_data(JsonObj **json,
-                NodedNotifDetails *notif);
+int json_serialize_notification_data(JsonObj **json, Notification *notif);
 /**
  * @fn      void json_free(JsonObj*)
  * @brief   Free the json object

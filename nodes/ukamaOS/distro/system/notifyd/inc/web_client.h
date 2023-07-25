@@ -10,10 +10,6 @@
 #ifndef WEB_CLIENT_H_
 #define WEB_CLIENT_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "config.h"
 #include "notify_macros.h"
 #include "web.h"
@@ -38,26 +34,23 @@ int wc_forward_notification(char* url, char* method,
  *          service.
  *
  * @param   nodeID
- * @param   nodeType
  * @param   config
  * @return  On success, STATUS_OK
  *          On Failure, STATUS_NOK
  */
-int wc_read_node_info(char* nodeID, char* nodeType, Config* config);
+int wc_read_node_info(Config* config);
 
 /**
  * @fn      int web_client_init(char*, char*)
  * @brief   Connected to Noded for reading Unit info.
  *
  * @param   nodeID
- * @param   nodeType
  * @param   config
  * @return  On success, STATUS_OK
  *          On Failure, STATUS_NOK
  */
-int web_client_init(char* nodeID, char* nodeType, Config* config);
+int web_client_init(char* nodeID, Config* config);
 
-#ifdef __cplusplus
-}
-#endif
+int get_nodeid_from_noded(Config *config);
+
 #endif /* INC_WEB_CLIENT_H_ */

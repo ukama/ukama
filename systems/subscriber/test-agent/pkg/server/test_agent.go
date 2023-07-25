@@ -23,10 +23,25 @@ func NewTestAgentServer(storage storage.Storage) *TestAgentServer {
 	}
 }
 
+func (s *TestAgentServer) BindSim(ctx context.Context, req *pb.BindSimRequest) (*pb.BindSimResponse, error) {
+	log.Infof("BindSim: %+v", req)
+
+	_, err := s.getOrCreateSimInfo(ctx, req.Iccid)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, status.Errorf(codes.NotFound, "sim not found.")
+		}
+
+		return nil, status.Errorf(codes.Internal, "an unexpected error has occurred")
+	}
+
+	return &pb.BindSimResponse{}, nil
+}
+
 func (s *TestAgentServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
 	log.Infof("GetSim: %+v", req)
 
-	sim, err := s.getOrCreateSimInfo(ctx, req)
+	sim, err := s.getOrCreateSimInfo(ctx, req.Iccid)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
 			return nil, status.Errorf(codes.NotFound, "sim not found.")
@@ -107,26 +122,26 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 	return &pb.TerminateSimResponse{}, nil
 }
 
-func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, req *pb.GetSimRequest) (*storage.SimInfo, error) {
-	log.Infof("Get sim info for iccid: %s", req.Iccid)
+func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, iccid string) (*storage.SimInfo, error) {
+	log.Infof("Get sim info for iccid: %s", iccid)
 
-	sim, err := s.getSimInfo(ctx, req.Iccid)
+	sim, err := s.getSimInfo(ctx, iccid)
 
 	if err != nil {
 		if !errors.Is(err, storage.ErrNotFound) {
 			return nil, err
 		}
 
-		log.Infof("Sim info for iccid: %s does not exist. Adding new sim info to Storage", req.Iccid)
-		imsi := req.Iccid[len(req.Iccid)-15:]
+		log.Infof("Sim info for iccid: %s does not exist. Adding new sim info to Storage", iccid)
+		imsi := iccid[len(iccid)-15:]
 
 		sim = &storage.SimInfo{
-			Iccid:  req.Iccid,
+			Iccid:  iccid,
 			Imsi:   imsi,
 			Status: storage.SimStatusInactive.String(),
 		}
 
-		err := s.storage.Put(req.Iccid, sim)
+		err := s.storage.Put(iccid, sim)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add sim info into storage: %w", err)
 		}
