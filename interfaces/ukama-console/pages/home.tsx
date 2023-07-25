@@ -1,31 +1,63 @@
-import { PageContainer } from '@/styles/global';
-import { colors } from '@/styles/theme';
-import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
-import ConstructionSharpIcon from '@mui/icons-material/ConstructionSharp';
-import { Stack, Typography } from '@mui/material';
+import { MONTH_FILTER, TIME_FILTER } from '@/constants';
+import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
+import StatusCard from '@/ui/components/StatusCard';
+import NetworkMap from '@/ui/molecules/NetworkMap';
+import NetworkStatus from '@/ui/molecules/NetworkStatus';
+import Grid from '@mui/material/Unstable_Grid2';
 
 export default function Page() {
   return (
-    <LoadingWrapper
-      radius="small"
-      width={'100%'}
-      isLoading={false}
-      cstyle={{
-        backgroundColor: false ? colors.white : 'transparent',
-      }}
-    >
-      <PageContainer>
-        <Stack
-          height={'100%'}
-          direction={'column'}
-          alignItems={'center'}
-          justifyContent={'center'}
-        >
-          <ConstructionSharpIcon />
-          <Typography variant="subtitle2">Under developement.</Typography>
-        </Stack>
-      </PageContainer>
-    </LoadingWrapper>
+    <>
+      <Grid container spacing={2}>
+        <Grid xs={12}>
+          <NetworkStatus
+            loading={false}
+            availableNodes={4}
+            statusType="ONLINE"
+            tooltipInfo="Network is online"
+          />
+        </Grid>
+        <Grid xs={12} md={6} lg={4}>
+          <StatusCard
+            Icon={UsersWithBG}
+            title={'Connected Users'}
+            options={TIME_FILTER}
+            subtitle1={'0'}
+            subtitle2={''}
+            option={''}
+            loading={false}
+            handleSelect={(value: string) => {}}
+          />
+        </Grid>
+        <Grid xs={12} md={6} lg={4}>
+          <StatusCard
+            title={'Data Usage'}
+            subtitle1={`0`}
+            subtitle2={`Package`}
+            Icon={DataUsage}
+            options={TIME_FILTER}
+            option={'usage'}
+            loading={false}
+            handleSelect={(value: string) => {}}
+          />
+        </Grid>
+        <Grid xs={12} md={6} lg={4}>
+          <StatusCard
+            title={'Data Bill'}
+            subtitle1={`$ 0`}
+            subtitle2={`0 / due in  days`}
+            Icon={DataBilling}
+            options={MONTH_FILTER}
+            loading={false}
+            option={'bill'}
+            handleSelect={(value: string) => {}}
+          />
+        </Grid>
+        <Grid xs={12}>
+          <NetworkMap />
+        </Grid>
+      </Grid>
+    </>
   );
 }
 
