@@ -93,8 +93,25 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 	return nodes, nil
 }
 
-// TODO: check for still allocated and attached nodes
 func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
+	ok, _ := isAllocated(n.Db.GetGormDb(), nodeId)
+	if ok {
+		return status.Errorf(codes.FailedPrecondition, "node is still assigned to site/network")
+	}
+
+	res := n.Db.GetGormDb().Exec("select * from attached_nodes where attached_id= ?  OR node_id= ?",
+		nodeId.StringLowercase(), nodeId.StringLowercase())
+
+	if res.Error != nil {
+		return status.Errorf(codes.Internal,
+			"failed to get node grouping result. error %s", res.Error.Error())
+	}
+
+	if res.RowsAffected > 0 {
+		return status.Errorf(codes.FailedPrecondition,
+			"node is grouped with other nodes.")
+	}
+
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Select(clause.Associations, "NodeStatus").Delete(&Node{Id: nodeId.StringLowercase()})
 		if result.Error != nil {
@@ -119,12 +136,12 @@ func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) er
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Clauses(clause.Returning{}).Updates(node)
 
-		if result.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
-		}
-
 		if result.Error != nil {
 			return result.Error
+		}
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
 		}
 
 		if nestedFunc != nil {
@@ -144,10 +161,15 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) err
 	batchGet := func(nodeIds []string) ([]Site, error) {
 		var nodes []Site
 
-		result := n.Db.GetGormDb().Where("id IN ?", nodeIds).Find(&nodes)
+		result := n.Db.GetGormDb().Where("node_id IN ?", nodeIds).Find(&nodes)
 
 		if result.Error != nil {
 			return nil, result.Error
+		}
+
+		if len(nodes) == 0 || len(nodes) != len(nodeIds) {
+			return nil,
+				fmt.Errorf("some of these nodes are not yet allocated to a site or are duplicated")
 		}
 
 		return nodes, nil
@@ -171,7 +193,8 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) err
 	}
 
 	if parentNode.Type != ukama.NODE_ID_TYPE_TOWERNODE {
-		return status.Errorf(codes.InvalidArgument, "node type must be a towernode")
+		return status.Errorf(codes.InvalidArgument,
+			"node type must be a towernode")
 	}
 
 	if parentNode.Attached == nil {
@@ -179,7 +202,8 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) err
 	}
 
 	if len(attachedNodeId)+len(parentNode.Attached) > MaxAttachedNodes {
-		return status.Errorf(codes.InvalidArgument, "max number of attached nodes is %d", MaxAttachedNodes)
+		return status.Errorf(codes.InvalidArgument,
+			"max number of attached nodes is %d", MaxAttachedNodes)
 	}
 
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
@@ -193,12 +217,15 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) err
 			if err != nil {
 				return err
 			}
+
 			if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
-				return status.Errorf(codes.InvalidArgument, "cannot attach non amplifier node")
+				return status.Errorf(codes.InvalidArgument,
+					"cannot attach non amplifier node")
 			}
 
 			if parentNodeSite.SiteId != aNds.SiteId {
-				return status.Errorf(codes.InvalidArgument, "cannot attach nodes from different sites")
+				return status.Errorf(codes.InvalidArgument,
+					"cannot attach nodes from different sites")
 			}
 
 			parentNode.Attached = append(parentNode.Attached, an)
@@ -217,11 +244,18 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) err
 
 func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Exec("delete from attached_nodes where attached_id=(select id from nodes where node_id=?) OR node_id=(select id from nodes where node_id=?)",
+		// result := tx.Exec("delete from attached_nodes where attached_id=(select id from nodes where id=?) OR node_id=(select id from nodes where id=?)",
+		// detachNodeId, detachNodeId)
+
+		result := tx.Exec("delete from attached_nodes where attached_id=? OR node_id=?",
 			detachNodeId, detachNodeId)
 
 		if result.Error != nil {
 			return fmt.Errorf("failed to remove from group for %s node: error %s", detachNodeId.StringLowercase(), result.Error)
+		}
+
+		if result.RowsAffected == 0 {
+			return fmt.Errorf("node %s is not attached", detachNodeId.StringLowercase())
 		}
 
 		return nil

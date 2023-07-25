@@ -122,4 +122,6 @@ type Site struct {
 	SiteId    uuid.UUID `gorm:"type:uuid"`
 	NetworkId uuid.UUID `gorm:"type:uuid;"`
 	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
