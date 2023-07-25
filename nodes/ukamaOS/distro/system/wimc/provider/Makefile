@@ -1,53 +1,80 @@
-#
-# Copyright (c) 2021-present, Ukama Inc.
+# Copyright (c) 2022-present, Ukama Inc.
 # All rights reserved.
-#
-# This source code is licensed under the XXX-style license found in the
-# LICENSE file in the root directory of this source tree. An additional grant
-# of patent rights can be found in the PATENTS file in the same directory.
-#
 
 #
-# Makefile for Mock Provider
+# Makefile for the bootstrap client
 #
 
-UKAMAOS=/home/kashif/work/ukama/ukamaOS
-COMMON_DIR=$(UKAMAOS)/distro/system/common
-SRC_DIR=$(UKAMAOS)/distro/system/wimc/provider
-ULFIUS=$(COMMON_DIR)/third_party/ulfius/src
-ULFIUS_INC=$(COMMON_DIR)/third_party/ulfius/include
-COMMON_INC=$(COMMON_DIR)/inc
+include ../../../../config.mk
 
-BUILD=./build
-SRC=./
-SRCS=$(wildcard $(SRC)/*.c)
-OBJS=$(patsubst $(SRC)/%.c,$(BUILD)/%.o,$(SRCS))
-EXE=mock_provider
+TARGET_EXEC = mock_provider
 
-CC=gcc
-CFLAGS+=-c -Wall -I$(ULFIUS_INC) -I$(COMMON_INC) -I./inc -D_REENTRANT -g -O0
-LIBS=-lulfius -lsqlite3 -ljansson -lorcania -lcurl
+UKAMAOS_ROOT = ../../../../
 
-.PHONY: all run clean
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
-all: $(EXE)
+PLATFORM_DIR     = $(UKAMAOS_ROOT)/distro/platform/
+PLATFORM_BUILD   = $(PLATFORM_DIR)/build/
+PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
+PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
+PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
-libulfius:
-	cd $(ULFIUS) && $(MAKE) static GNUTLSFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 UWSCFLAG=1 && cp libulfius.a $(SRC_DIR)/$(BUILD)
+# Packages needed to compile target
+VENDOR_PKG = tomlc curl jansson ulfius libuuid
 
-$(EXE): $(BUILD) $(OBJS)
-	$(CC) $(OBJS) -o $(BUILD)/$@ $(LDFLAGS) $(LIBS)
-	echo "Binary available at: $(BUILD)/$(EXE)"
+# Setting up various compile and link flags
+CFLAGS=-c
+CFLAGS+=-g
+CFLAGS+=-Wall
+CFLAGS+=-O0
+CFLAGS+=-I$(VENDOR_INC)
+CFLAGS+=-I$(PLATFORM_INC_SYS)
+CFLAGS+=-I$(PLATFORM_INC_LOG)
+CFLAGS+=-I./inc
+CFLAGS+=-I./inc/common/
+CFLAGS+=-I../common/inc
+CFLAGS+=-D_REENTRANT
 
-$(BUILD)/%.o: $(SRC)/%.c $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -c $< -o $@
+LDFLAGS+=-L$(VENDOR_LIB)
+LDFLAGS+=-L$(VENDOR_LIB64)
+LDFLAGS+=-L$(PLATFORM_LIB)
 
-$(BUILD):
-	mkdir -p $@
+# Libraries needed
+CURL_LIB=-lcurl -lssl -lcrypto
+ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+LIBS = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS+=-ltoml
+LIBS+=-ljansson
+LIBS+=-lusys
+LIBS+=-lsqlite3
 
-run: $(EXE)
-	$<
+# Soruce files
+CFILES   = $(wildcard ./*.c)
+OBJFILES = $(CFILES:.c=.o)
+
+XCC := $(XGCCPATH)$(XGCC)
+XLD := $(XGCCPATH)$(XLD)
+
+.PHONY: $(TARGET_EXEC)
+
+mock_provider: $(TARGET_EXEC)
+
+$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
+	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+
+$(VENDOR_PKG):
+	$(MAKE) -C $(VENDOR_DIR) $@
+
+%.o: %.c
+	$(XCC) $(CFLAGS) -c $< -o $@
+
+all: mock_provider
 
 clean:
-	rm -rf $(BUILD);
-	cd $(ULFIUS) && make clean
+	rm -f $(TARGET_EXEC) $(OBJFILES)
