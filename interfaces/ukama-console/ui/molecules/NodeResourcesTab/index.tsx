@@ -1,7 +1,8 @@
 import { NodeResourcesTabConfigure, TooltipsText } from '@/constants';
 import { Node, NodeTypeEnum } from '@/generated';
-import { Grid, Paper } from '@mui/material';
+import { Grid, Paper, Stack } from '@mui/material';
 import { useState } from 'react';
+import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
@@ -91,92 +92,71 @@ const NodeResourcesTab = ({
       </Grid>
       <Grid item lg={isCollapse ? 11 : 8} md xs>
         <Paper sx={{ p: 3, width: '100%' }}>
-          {/* <Stack spacing={4}>
-            {NodeResourcesTabConfigure[nodeType][0]
-              .show && (
-              <ApexLineChart
-                data={
-                  metrics[
-                    NodeResourcesTabConfigure[
-                      nodeType
-                    ][0].id
-                  ]
-                }
+          <Stack spacing={4}>
+            {NodeResourcesTabConfigure[nodeType][0].show && (
+              <LineChart
+                loading={loading}
+                initData={metrics}
+                hasData={metrics.length > 0}
+                topic={NodeResourcesTabConfigure[nodeType][0].id}
+                title={NodeResourcesTabConfigure[nodeType][0].name}
               />
             )}
-            {NodeResourcesTabConfigure[nodeType][1]
-              .show && (
-              <ApexLineChart
-                data={
-                  metrics[
-                    NodeResourcesTabConfigure[
-                      nodeType
-                    ][1].id
-                  ]
-                }
+            {NodeResourcesTabConfigure[nodeType][1].show && (
+              <LineChart
+                loading={loading}
+                initData={metrics}
+                hasData={metrics.length > 0}
+                topic={NodeResourcesTabConfigure[nodeType][1].id}
+                title={NodeResourcesTabConfigure[nodeType][1].name}
               />
             )}
-            {NodeResourcesTabConfigure[nodeType][2]
-              .show && (
-              <ApexLineChart
-                data={
-                  metrics[
-                    NodeResourcesTabConfigure[
-                      nodeType
-                    ][2].id
-                  ]
-                }
+            {NodeResourcesTabConfigure[nodeType][2].show && (
+              <LineChart
+                loading={loading}
+                initData={metrics}
+                hasData={metrics.length > 0}
+                topic={NodeResourcesTabConfigure[nodeType][2].id}
+                title={NodeResourcesTabConfigure[nodeType][2].name}
               />
             )}
-            {NodeResourcesTabConfigure[nodeType][3]
-              .show && (
-              <ApexLineChart
-                data={
-                  metrics[
-                    NodeResourcesTabConfigure[
-                      nodeType
-                    ][3].id
-                  ]
-                }
+            {NodeResourcesTabConfigure[nodeType][3].show && (
+              <LineChart
+                loading={loading}
+                initData={metrics}
+                hasData={metrics.length > 0}
+                topic={NodeResourcesTabConfigure[nodeType][3].id}
+                title={NodeResourcesTabConfigure[nodeType][3].name}
               />
             )}
-            {NodeResourcesTabConfigure[nodeType][4]
-              .show && (
-              <ApexLineChart
-                data={
-                  metrics[
-                    NodeResourcesTabConfigure[
-                      nodeType
-                    ][4].id
-                  ]
-                }
+            {NodeResourcesTabConfigure[nodeType][4].show && (
+              <LineChart
+                loading={loading}
+                initData={metrics}
+                hasData={metrics.length > 0}
+                topic={NodeResourcesTabConfigure[nodeType][4].id}
+                title={NodeResourcesTabConfigure[nodeType][4].name}
               />
             )}
-            {NodeResourcesTabConfigure[nodeType][5]
-              .show && (
-              <ApexLineChart
-                data={
-                  metrics[
-                    NodeResourcesTabConfigure[
-                      nodeType
-                    ][5].id
-                  ]
-                }
+            {NodeResourcesTabConfigure[nodeType][5].show && (
+              <LineChart
+                loading={loading}
+                initData={metrics}
+                hasData={metrics.length > 0}
+                topic={NodeResourcesTabConfigure[nodeType][5].id}
+                title={NodeResourcesTabConfigure[nodeType][5].name}
               />
             )}
-            {NodeResourcesTabConfigure[nodeType][6]
-              .show && (
-              <ApexLineChart
-                data={
-                  metrics[
-                    NodeResourcesTabConfigure[
-                      nodeType
-                    ][6].id
-                  ]
-                }
+            {NodeResourcesTabConfigure[nodeType][6].show && (
+              <LineChart
+                loading={loading}
+                initData={metrics}
+                hasData={metrics.length > 0}
+                topic={NodeResourcesTabConfigure[nodeType][6].id}
+                title={NodeResourcesTabConfigure[nodeType][6].name}
               />
             )}
-          </Stack> */}
+          </Stack>
         </Paper>
       </Grid>
     </Grid>
