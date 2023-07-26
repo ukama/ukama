@@ -17,6 +17,8 @@ enum
 	MAXREVLEN     = 73,
 };
 
+UpdateIpCallback register_fxn_cb = NULL;
+
 static struct addrinfo *resolve_server(const char *server)
 {
 	/* translate the server name to an address */
@@ -235,6 +237,12 @@ char* nslookup(char* name, char *server)
 	return ip;
 }
 
+void register_callback(UpdateIpCallback cb) {
+	if (cb) {
+		register_fxn_cb = cb;
+	}
+}
+
 void* refresh_lookup(void* args) {
 	Config *c = (struct Config*) args;
 	char* rIp = NULL;
@@ -248,7 +256,12 @@ void* refresh_lookup(void* args) {
 				free(rIp);
 
 				/* callback function */
-				register_to_inits(c);
+				if (register_fxn_cb) {
+				  int status = register_fxn_cb(c);
+				  if (status) {
+					  log_info("Failed to update IP for the %s to %s.", c->systemName, c->systemAddr);
+				  }
+				}
 			}
 		}
 		sleep(c->timePeriod);

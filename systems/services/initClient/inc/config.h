@@ -72,9 +72,11 @@ typedef struct {
 	char *globalInitSystemPort;   /* port for global init system */
 } Config;
 
+typedef int (*UpdateIpCallback)(Config *config);
 void clear_config(Config *config);
 int read_config_from_env(Config **config);
 char* nslookup(char* name, char *server);
 void* refresh_lookup(void* args);
+void register_callback(UpdateIpCallback cb);
 
 #endif /* INIT_CLIENT_CONFIG_H */

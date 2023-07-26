@@ -37,6 +37,7 @@ extern int start_web_services(Config *config, UInst *webtInst); /*network.c */
 
 /* Global */
 State *state=NULL;
+pthread_t child = 0;
 
 /*
  * usage -- Usage options for initClient
@@ -252,13 +253,14 @@ int register_system(Config *config, int global){
 
 int register_to_inits(Config *config) {
 
-	/* registration process for local init */
+	/* registration process for local Init */
 	if (!register_system(config, REGISTER_TO_LOCAL_INIT)) {
 		return 1;
 	}
 
+	/* registration process for global Init */
 	if (config->globalInitSystemEnable) {
-		/* registration process for global init */
+		/* registration process for global Init */
 		if (!register_system(config, REGISTER_TO_GLOBAL_INIT)) {
 			return 1;
 		}
@@ -335,13 +337,17 @@ int main (int argc, char *argv[]) {
 	}
 	state->config = config;
 
-	/* Step-2: start webservice */
+	/* Step 2: register callback to update Inits */
+	register_callback(&register_to_inits);
+
+	/* Step-3: start webservice */
 	if (start_web_services(config, &webInst) != TRUE) {
 		log_error("Webservice failed to setup for clients. Exiting.");
 		exitStatus = 1;
 		goto exit_program;
 	}
 
+	/* Step-3: registration to init systems */
 	exitStatus = register_to_inits(config);
 	if (exitStatus) {
 		goto exit_program;
@@ -351,18 +357,22 @@ int main (int argc, char *argv[]) {
 	log_debug("initClient running ...");
 
 	if (config->systemDNS) {
-		/* Start thread : Need a cleanup so that its always dns no IP as arg for system */
-		pthread_create(&child, NULL,refresh_lookup,config);
+		/* Start thread : Need a cleanup so that it's always dns no IP as arg for system */
+		pthread_create(&child, NULL, refresh_lookup, config);
 		pthread_join (child, (void **)&childStatus);
+	} else {
+		getchar(); /* For now. */
 	}
-
-	getchar(); /* For now. */
 
 	log_debug("Goodbye ... ");
 
 	send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_LOCAL_INIT);
 	if (config->globalInitSystemEnable) {
 		send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_GLOBAL_INIT);
+	}
+
+	if (child) {
+		pthread_cancel(&child);
 	}
 	ulfius_stop_framework(&webInst);
 	ulfius_clean_instance(&webInst);
