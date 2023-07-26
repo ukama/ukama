@@ -11,6 +11,20 @@ export class MetricValue {
 }
 
 @ObjectType()
+export class LatestMetricRes {
+  @Field()
+  env: string;
+
+  @Field()
+  nodeid: string;
+
+  @Field()
+  type: string;
+
+  @Field(() => [Number, String])
+  value: [number, string];
+}
+@ObjectType()
 export class MetricRes {
   @Field()
   env: string;
@@ -21,22 +35,43 @@ export class MetricRes {
   @Field()
   type: string;
 
-  @Field(() => [[Number, Number]])
-  value: [number, number][];
+  @Field(() => [[Number, String]])
+  values: [number, string][];
 }
-
 @ArgsType()
 @InputType()
-export class GetMetricInput {
+export class GetLatestMetricInput {
   @Field()
   nodeId: string;
 
   @Field()
-  orgId: string;
+  type: string;
+}
+
+@ArgsType()
+@InputType()
+export class GetMetricRangeInput {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  orgId?: string;
 
   @Field()
   type: string;
 
   @Field()
-  userId: string;
+  userId?: string;
+
+  @Field({ nullable: true })
+  from?: number;
+
+  @Field({ nullable: true })
+  to?: number;
+
+  @Field({ nullable: true })
+  step?: number;
+
+  @Field()
+  withSubscription: boolean;
 }
