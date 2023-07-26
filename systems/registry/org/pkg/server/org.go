@@ -41,7 +41,6 @@ type EmailData struct {
 	RecipientName string
 }
 
-const emailSubject = "[Ukama] Team invite from "
 
 func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient, RegistryUserService client.RegistryUsersClientProvider, invitationExpiryTime time.Time) *OrgService {
 	return &OrgService{
@@ -94,20 +93,23 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, err
 	}
 
-	emailBody, err := pkg.GenerateEmailBody(invitationId.String(), link, remoteUserResp.User.Name, res.Name, req.GetRole().String(), req.GetName())
-	if err != nil {
-		return nil, err
-	}
-
+	
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
-		Subject: emailSubject + res.Name,
-		Body:    emailBody,
-		Values:  map[string]string{"EmailID": invitationId.String()},
+		TemplateName: "member-invitation",
+	    Values:  map[string]interface{}{
+			"INVITATIONID": invitationId.String(),
+			"LINK": link,
+			"OWNER": remoteUserResp.User.Name,
+			"ORG": res.Name,
+			"ROLE": req.GetRole().String(),
+			"NAME": req.GetName(),
+		},
+		
 	})
 
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Unable to send email %s", err.Error())
+		return nil, err
 	}
 	err = o.orgRepo.AddInvitation(
 		&db.Invitation{
