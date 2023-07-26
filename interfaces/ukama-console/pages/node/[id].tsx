@@ -1,7 +1,10 @@
 import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import { Node, useGetNodesQuery } from '@/generated';
-import { GetMetricDocument, useGetMetricsQuery } from '@/generated/metrics';
+import {
+  GetMetricRangeSubDocument,
+  useGetMetricRangeQuery,
+} from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
@@ -10,12 +13,11 @@ import NodeRadioTab from '@/ui/molecules/NodeRadioTab';
 import NodeResourcesTab from '@/ui/molecules/NodeResourcesTab';
 import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
+import { getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
-import PubSub from 'pubsub-js';
 import { useEffect, useState } from 'react';
 
 export default function Page() {
-  
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
   const onTabSelected = (_: any, value: number) => setSelectedTab(value);
@@ -36,31 +38,53 @@ export default function Page() {
     data: metricsData,
     loading: metricsLoading,
     subscribeToMore: metricsSubForMore,
-  } = useGetMetricsQuery({
+    variables: metricsVariables,
+  } = useGetMetricRangeQuery({
     client: metricsClient,
     variables: {
       data: {
         nodeId: 'uk-test17-hnode-a1-31df',
-        type: 'node',
+        type: 'memory_trx_used',
         orgId: '123',
         userId: 'salman',
+        from: getUnixTime() - 60,
+        withSubscription: true,
       },
     },
   });
 
+  // useGetMetricRangeSubSubscription({
+  //   client: metricsClient,
+  //   variables: {
+  //     nodeId: 'uk-test17-hnode-a1-31df',
+  //     type: 'memory_trx_used',
+  //     orgId: '123',
+  //     userId: 'salman',
+  //   },
+  //   onData: (res) => {
+  //     console.log(res.data.data?.getMetricRangeSub.values);
+  //     // PubSub.publish('temperaturectl', res.data.data?.getMetric.value);
+  //   },
+  // });
+
   useEffect(() => {
     metricsSubForMore({
-      document: GetMetricDocument,
+      document: GetMetricRangeSubDocument,
       variables: {
-        nodeId: 'uk-test17-hnode-a1-31df',
-        type: 'node',
-        orgId: '123',
-        userId: 'salman',
+        data: {
+          nodeId: 'uk-test17-hnode-a1-31df',
+          type: 'memory_trx_used',
+          orgId: '123',
+          userId: 'salman',
+          from: metricsVariables?.data.from,
+        },
       },
+
       updateQuery: (prev, { subscriptionData }) => {
-        if (!subscriptionData.data) return prev;
-        const metricItem = subscriptionData.data['getMetric'];
-        PubSub.publish('temperaturectl', metricItem.value);
+        console.log(subscriptionData);
+        // if (!subscriptionData.data) return prev;
+        // const metricItem = subscriptionData;
+        // PubSub.publish('temperaturectl', metricItem.value);
         // return Object.assign({}, prev, {
         //   getMetrics: {
         //     ...prev.getMetrics,
@@ -114,7 +138,7 @@ export default function Page() {
       >
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
-            metrics={metricsData?.getMetrics.value}
+            metrics={metricsData?.getMetricRange.values}
             isUpdateAvailable={true}
             selectedNode={selectedNode}
             metricsLoading={false}

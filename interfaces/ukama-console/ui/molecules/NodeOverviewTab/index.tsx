@@ -151,12 +151,12 @@ const NodeOverviewTab = ({
                 <LineChart
                   initData={metrics}
                   loading={metricsLoading}
-                  hasData={metrics.length > 0}
+                  hasData={metrics?.length > 0 || false}
                   topic={HealtChartsConfigure[nodeType][0].id}
                   title={HealtChartsConfigure[nodeType][0].name}
                 />
               )}
-              {HealtChartsConfigure[nodeType][1].show && (
+              {/* {HealtChartsConfigure[nodeType][1].show && (
                 <LineChart
                   initData={metrics}
                   loading={metricsLoading}
@@ -173,7 +173,7 @@ const NodeOverviewTab = ({
                   topic={HealtChartsConfigure[nodeType][2].id}
                   title={HealtChartsConfigure[nodeType][2].name}
                 />
-              )}
+              )} */}
             </Stack>
           </Paper>
         )}

@@ -440,6 +440,10 @@ function calculateCenterLatLng(coordinates: any) {
   return { lat: avgLat, lng: avgLng };
 }
 
+const getUnixTime = (): number => {
+  return Math.floor(Date.now() / 1000);
+};
+
 export {
   calculateCenterLatLng,
   doesHttpOnlyCookieExist,
@@ -458,6 +462,7 @@ export {
   getStatusByType,
   getTitleFromPath,
   getTowerNodeFromNodes,
+  getUnixTime,
   hexToRGB,
   isContainNodeUpdate,
   isEmailValid,

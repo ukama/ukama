@@ -34,7 +34,7 @@ const removeKeyFromStorage = async (key: string, storageKey: string) => {
 const runWorker = async () => {
   if (!isMainThread) {
     const WebSocket = require("ws");
-    const { url, orgId, userId, type, key: storageKey } = workerData;
+    const { url, orgId, userId, type, key: storageKey, timestamp } = workerData;
     const ws = new WebSocket(url);
 
     ws.on("error", e =>
@@ -43,7 +43,7 @@ const runWorker = async () => {
 
     ws.on("open", async function open() {
       await storeInStorage(
-        `${orgId}/${userId}/${type}`,
+        `${orgId}/${userId}/${type}/${timestamp}`,
         getTimestampCount("0"),
         storageKey
       );
@@ -51,20 +51,19 @@ const runWorker = async () => {
 
     ws.on("message", async function message(data) {
       const value = await retriveFromStorage(
-        `${orgId}/${userId}/${type}`,
+        `${orgId}/${userId}/${type}/${timestamp}`,
         storageKey
       );
       let occurance = value ? parseInt(value.split("-")[1]) : 0;
       occurance += 1;
       await storeInStorage(
-        `${orgId}/${userId}/${type}`,
+        `${orgId}/${userId}/${type}/${timestamp}`,
         getTimestampCount(`${occurance}`),
         storageKey
       );
-      if (occurance === 9) {
-        ws.close();
+      if (occurance === 5) {
         ws.terminate();
-        removeKeyFromStorage(`${orgId}/${userId}/${type}`, storageKey);
+        ws.close();
         process.exit(0);
       }
       parentPort.postMessage({
