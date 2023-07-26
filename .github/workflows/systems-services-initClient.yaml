@@ -23,7 +23,10 @@ jobs:
     - name: Checkout submodules
       run: git submodule update --init --recursive
 
-    - name: build dependency
+    - name: Dependencies
+      run:  sudo apt-get update && sudo apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript libnftnl-dev libmnl-dev patchelf -y
+
+    - name: build vendor libs
       uses: ./.github/actions/build-c
       with:
         working-directory: nodes/ukamaOS/distro/vendor/
