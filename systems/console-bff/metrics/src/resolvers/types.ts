@@ -75,3 +75,19 @@ export class GetMetricRangeInput {
   @Field()
   withSubscription: boolean;
 }
+
+@ArgsType()
+@InputType()
+export class SubMetricRangeInput {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  orgId: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  userId: string;
+}
