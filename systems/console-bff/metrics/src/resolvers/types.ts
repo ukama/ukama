@@ -64,7 +64,7 @@ export class GetMetricRangeInput {
   userId?: string;
 
   @Field({ nullable: true })
-  from?: number;
+  from: number;
 
   @Field({ nullable: true })
   to?: number;
@@ -72,8 +72,8 @@ export class GetMetricRangeInput {
   @Field({ nullable: true })
   step?: number;
 
-  @Field()
-  withSubscription: boolean;
+  @Field({ nullable: true })
+  withSubscription?: boolean;
 }
 
 @ArgsType()

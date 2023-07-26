@@ -1,7 +1,6 @@
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
-import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
@@ -25,10 +24,10 @@ const LineChart = ({
     chart: {
       events: {
         load: function () {
-          var series: any = Highcharts.charts[0]?.series[0];
-          PubSub.subscribe(topic, (_, data) => {
-            series.setData(data[0], true, true);
-          });
+          // var series: any = Highcharts.charts[0]?.series[0];
+          // PubSub.subscribe(topic, (_, data) => {
+          //   series.setData(data[0], true, true);
+          // });
           //  setInterval(function () {
           //   var x = new Date().getTime(),
           //    y = Math.round(Math.random() * 100)

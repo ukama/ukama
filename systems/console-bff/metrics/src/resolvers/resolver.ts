@@ -12,7 +12,7 @@ import { Worker } from "worker_threads";
 
 import { METRIC_API_GW_SOCKET, STORAGE_KEY } from "../../../common/configs";
 import { logger } from "../../../common/logger";
-import { storeInStorage } from "../../../common/storage";
+import { removeKeyFromStorage, storeInStorage } from "../../../common/storage";
 import { getTimestampCount } from "../../../common/utils";
 import { getLatestMetric, getMetricRange } from "../datasource/metrics-api";
 import {
@@ -20,7 +20,6 @@ import {
   GetMetricRangeInput,
   LatestMetricRes,
   MetricRes,
-  SubMetricRangeInput,
 } from "./types";
 
 const WS_THREAD = "./threads/MetricsWSThread.ts";
@@ -37,15 +36,16 @@ class MetricResolvers {
     @Arg("data") data: GetMetricRangeInput,
     @PubSub() pubSub: PubSubEngine
   ) {
-    const { type, orgId, userId, nodeId, withSubscription } = data;
-
-    if (withSubscription) {
+    const { type, orgId, userId, nodeId, withSubscription, from } = data;
+    const res = await getMetricRange(data);
+    if (withSubscription && res.env) {
       const workerData: any = {
         type,
         orgId,
         userId,
         url: `${METRIC_API_GW_SOCKET}/v1/live/metric?interval=1&metric=${type}`,
         key: STORAGE_KEY,
+        timestamp: from,
       };
       const worker = new Worker(WS_THREAD, {
         workerData,
@@ -55,7 +55,7 @@ class MetricResolvers {
           const res = JSON.parse(_data.data);
           const result = res.data.result[0];
           pubSub.publish(`metric-${type}`, {
-            env: result.metric.env,
+            env: result.metric?.env,
             nodeid: nodeId,
             type: type,
             value: result.value,
@@ -63,13 +63,14 @@ class MetricResolvers {
         }
       });
       worker.on("exit", (code: any) => {
+        removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`, STORAGE_KEY);
         logger.info(
           `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
         );
       });
     }
 
-    return await getMetricRange(data);
+    return res;
   }
 
   @Subscription(() => LatestMetricRes, {
@@ -78,12 +79,12 @@ class MetricResolvers {
       return args.nodeId === payload.nodeid;
     },
   })
-  async getMetric(
+  async getMetricRangeSub(
     @Root() payload: LatestMetricRes,
-    @Args() args: SubMetricRangeInput
+    @Args() args: GetMetricRangeInput
   ): Promise<LatestMetricRes> {
     await storeInStorage(
-      `${args.orgId}/${args.userId}/${args.type}`,
+      `${args.orgId}/${args.userId}/${args.type}/${args.from}`,
       getTimestampCount("0")
     );
     return payload;

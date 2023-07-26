@@ -18,16 +18,21 @@ query GetMetricRange($data: GetMetricRangeInput!) {
   }
 }
 
-subscription GetMetric(
+subscription GetMetricRangeSub(
   $nodeId: String!
   $orgId: String!
   $type: String!
   $userId: String!
 ) {
-  getMetric(nodeId: $nodeId, orgId: $orgId, type: $type, userId: $userId) {
+  getMetricRangeSub(
+    nodeId: $nodeId
+    orgId: $orgId
+    type: $type
+    userId: $userId
+  ) {
     env
     nodeid
     type
-    value
+    values
   }
 }
