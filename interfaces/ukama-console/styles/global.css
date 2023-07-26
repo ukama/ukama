@@ -159,3 +159,9 @@ body {
 *.highcharts-credits {
   display: none;
 }
+*.highcharts-title {
+  display: none;
+}
+*.highcharts-legend {
+  display: none;
+}

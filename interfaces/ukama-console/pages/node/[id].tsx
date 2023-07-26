@@ -2,8 +2,8 @@ import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import { Node, useGetNodesQuery } from '@/generated';
 import {
-  GetMetricRangeSubDocument,
   useGetMetricRangeQuery,
+  useMetricRangeSubscription,
 } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
@@ -15,7 +15,7 @@ import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
 import { getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function Page() {
   const [selectedTab, setSelectedTab] = useState<number>(0);
@@ -47,54 +47,22 @@ export default function Page() {
         type: 'memory_trx_used',
         orgId: '123',
         userId: 'salman',
-        from: getUnixTime() - 60,
+        from: getUnixTime() - 120,
         withSubscription: true,
       },
     },
   });
 
-  // useGetMetricRangeSubSubscription({
-  //   client: metricsClient,
-  //   variables: {
-  //     nodeId: 'uk-test17-hnode-a1-31df',
-  //     type: 'memory_trx_used',
-  //     orgId: '123',
-  //     userId: 'salman',
-  //   },
-  //   onData: (res) => {
-  //     console.log(res.data.data?.getMetricRangeSub.values);
-  //     // PubSub.publish('temperaturectl', res.data.data?.getMetric.value);
-  //   },
-  // });
-
-  useEffect(() => {
-    metricsSubForMore({
-      document: GetMetricRangeSubDocument,
-      variables: {
-        data: {
-          nodeId: 'uk-test17-hnode-a1-31df',
-          type: 'memory_trx_used',
-          orgId: '123',
-          userId: 'salman',
-          from: metricsVariables?.data.from,
-        },
-      },
-
-      updateQuery: (prev, { subscriptionData }) => {
-        console.log(subscriptionData);
-        // if (!subscriptionData.data) return prev;
-        // const metricItem = subscriptionData;
-        // PubSub.publish('temperaturectl', metricItem.value);
-        // return Object.assign({}, prev, {
-        //   getMetrics: {
-        //     ...prev.getMetrics,
-        //     value: [...prev.getMetrics.value, metricItem.value],
-        //   },
-        // });
-        return prev;
-      },
-    });
-  }, []);
+  useMetricRangeSubscription({
+    client: metricsClient,
+    variables: {
+      nodeId: 'uk-test17-hnode-a1-31df',
+      type: 'memory_trx_used',
+      orgId: '123',
+      userId: 'salman',
+      from: metricsVariables?.data.from || 0,
+    },
+  });
 
   return (
     <Stack width={'100%'} mt={1} spacing={1}>

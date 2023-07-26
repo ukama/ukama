@@ -45,4 +45,5 @@ scrape_configs:
     static_configs:
       - targets: ["192.168.100.12:10250"]
         labels:
+          nodeid: "uk-123456-hnode-77-8888"
           env: "dev"

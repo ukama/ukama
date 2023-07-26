@@ -90,4 +90,7 @@ export class SubMetricRangeInput {
 
   @Field()
   userId: string;
+
+  @Field()
+  from: number;
 }

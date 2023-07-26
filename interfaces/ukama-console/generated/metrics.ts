@@ -70,19 +70,16 @@ export type QueryGetMetricRangeArgs = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  getMetricRangeSub: MetricRes;
+  getMetricRangeSub: LatestMetricRes;
 };
 
 
 export type SubscriptionGetMetricRangeSubArgs = {
-  from?: InputMaybe<Scalars['Float']['input']>;
+  from: Scalars['Float']['input'];
   nodeId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
-  step?: InputMaybe<Scalars['Float']['input']>;
-  to?: InputMaybe<Scalars['Float']['input']>;
   type: Scalars['String']['input'];
   userId: Scalars['String']['input'];
-  withSubscription?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type _Service = {
@@ -104,15 +101,16 @@ export type GetMetricRangeQueryVariables = Exact<{
 
 export type GetMetricRangeQuery = { __typename?: 'Query', getMetricRange: { __typename?: 'MetricRes', env: string, nodeid: string, type: string, values: Array<Array<number>> } };
 
-export type GetMetricRangeSubSubscriptionVariables = Exact<{
+export type MetricRangeSubscriptionVariables = Exact<{
   nodeId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
   type: Scalars['String']['input'];
   userId: Scalars['String']['input'];
+  from: Scalars['Float']['input'];
 }>;
 
 
-export type GetMetricRangeSubSubscription = { __typename?: 'Subscription', getMetricRangeSub: { __typename?: 'MetricRes', env: string, nodeid: string, type: string, values: Array<Array<number>> } };
+export type MetricRangeSubscription = { __typename?: 'Subscription', getMetricRangeSub: { __typename?: 'LatestMetricRes', env: string, nodeid: string, type: string, value: Array<number> } };
 
 
 export const GetLatestMetricDocument = gql`
@@ -191,39 +189,46 @@ export function useGetMetricRangeLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
 export type GetMetricRangeQueryHookResult = ReturnType<typeof useGetMetricRangeQuery>;
 export type GetMetricRangeLazyQueryHookResult = ReturnType<typeof useGetMetricRangeLazyQuery>;
 export type GetMetricRangeQueryResult = Apollo.QueryResult<GetMetricRangeQuery, GetMetricRangeQueryVariables>;
-export const GetMetricRangeSubDocument = gql`
-    subscription GetMetricRangeSub($nodeId: String!, $orgId: String!, $type: String!, $userId: String!) {
-  getMetricRangeSub(nodeId: $nodeId, orgId: $orgId, type: $type, userId: $userId) {
+export const MetricRangeDocument = gql`
+    subscription MetricRange($nodeId: String!, $orgId: String!, $type: String!, $userId: String!, $from: Float!) {
+  getMetricRangeSub(
+    nodeId: $nodeId
+    orgId: $orgId
+    type: $type
+    userId: $userId
+    from: $from
+  ) {
     env
     nodeid
     type
-    values
+    value
   }
 }
     `;
 
 /**
- * __useGetMetricRangeSubSubscription__
+ * __useMetricRangeSubscription__
  *
- * To run a query within a React component, call `useGetMetricRangeSubSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetMetricRangeSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useMetricRangeSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useMetricRangeSubscription` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetMetricRangeSubSubscription({
+ * const { data, loading, error } = useMetricRangeSubscription({
  *   variables: {
  *      nodeId: // value for 'nodeId'
  *      orgId: // value for 'orgId'
  *      type: // value for 'type'
  *      userId: // value for 'userId'
+ *      from: // value for 'from'
  *   },
  * });
  */
-export function useGetMetricRangeSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetMetricRangeSubSubscription, GetMetricRangeSubSubscriptionVariables>) {
+export function useMetricRangeSubscription(baseOptions: Apollo.SubscriptionHookOptions<MetricRangeSubscription, MetricRangeSubscriptionVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetMetricRangeSubSubscription, GetMetricRangeSubSubscriptionVariables>(GetMetricRangeSubDocument, options);
+        return Apollo.useSubscription<MetricRangeSubscription, MetricRangeSubscriptionVariables>(MetricRangeDocument, options);
       }
-export type GetMetricRangeSubSubscriptionHookResult = ReturnType<typeof useGetMetricRangeSubSubscription>;
-export type GetMetricRangeSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricRangeSubSubscription>;
+export type MetricRangeSubscriptionHookResult = ReturnType<typeof useMetricRangeSubscription>;
+export type MetricRangeSubscriptionResult = Apollo.SubscriptionResult<MetricRangeSubscription>;
