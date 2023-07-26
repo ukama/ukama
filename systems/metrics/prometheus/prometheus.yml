@@ -40,3 +40,9 @@ scrape_configs:
       - targets: ["exporter:10251"]
         labels:
           env: dev
+  - job_name: "nodes"
+    honor_labels: true
+    static_configs:
+      - targets: ["192.168.100.12:10250"]
+        labels:
+          env: "dev"
