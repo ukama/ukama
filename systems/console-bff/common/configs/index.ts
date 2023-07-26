@@ -29,3 +29,4 @@ export const NETWORK_PORT = parseInt(process.env.NETWORK_PORT || "4047");
 export const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT || "4048");
 export const ALERT_PORT = parseInt(process.env.ALERT_PORT || "4049");
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT || "4050");
+export const SIM_PORT = parseInt(process.env.SIM_PORT || "4051");
