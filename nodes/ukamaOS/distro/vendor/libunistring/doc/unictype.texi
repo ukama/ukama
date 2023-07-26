@@ -263,19 +263,19 @@ Some code points in this category are invalid characters.
 The following functions combine general categories, like in a boolean algebra,
 except that there is no @samp{not} operation.
 
-@deftypefun uc_general_category_t uc_general_category_or (uc_general_category_t @var{category1}, uc_general_category_t @var{category2})
+@deftypefun uc_general_category_t uc_general_category_or (uc_general_category_t@tie{}@var{category1}, uc_general_category_t@tie{}@var{category2})
 Returns the union of two general categories.
 This corresponds to the unions of the two sets of characters.
 @end deftypefun
 
-@deftypefun uc_general_category_t uc_general_category_and (uc_general_category_t @var{category1}, uc_general_category_t @var{category2})
+@deftypefun uc_general_category_t uc_general_category_and (uc_general_category_t@tie{}@var{category1}, uc_general_category_t@tie{}@var{category2})
 Returns the intersection of two general categories as bit masks.
 This @emph{does not} correspond to the intersection of the two sets of
 characters.
 @c Really??
 @end deftypefun
 
-@deftypefun uc_general_category_t uc_general_category_and_not (uc_general_category_t @var{category1}, uc_general_category_t @var{category2})
+@deftypefun uc_general_category_t uc_general_category_and_not (uc_general_category_t@tie{}@var{category1}, uc_general_category_t@tie{}@var{category2})
 Returns the intersection of a general category with the complement of a
 second general category, as bit masks.
 This @emph{does not} correspond to the intersection with complement, when
@@ -285,19 +285,19 @@ viewing the categories as sets of characters.
 
 The following functions associate general categories with their name.
 
-@deftypefun {const char *} uc_general_category_name (uc_general_category_t @var{category})
+@deftypefun {const char *} uc_general_category_name (uc_general_category_t@tie{}@var{category})
 Returns the name of a general category, more precisely, the abbreviated name.
 Returns NULL if the general category corresponds to a bit mask that does not
 have a name.
 @end deftypefun
 
-@deftypefun {const char *} uc_general_category_long_name (uc_general_category_t @var{category})
+@deftypefun {const char *} uc_general_category_long_name (uc_general_category_t@tie{}@var{category})
 Returns the long name of a general category.
 Returns NULL if the general category corresponds to a bit mask that does not
 have a name.
 @end deftypefun
 
-@deftypefun uc_general_category_t uc_general_category_byname (const char *@var{category_name})
+@deftypefun uc_general_category_t uc_general_category_byname (const@tie{}char@tie{}*@var{category_name})
 Returns the general category given by name, e.g@. @code{"Lu"}, or by long
 name, e.g@. @code{"Uppercase Letter"}.
 This lookup ignores spaces, underscores, or hyphens as word separators and is
@@ -306,13 +306,13 @@ case-insignificant.
 
 The following functions view general categories as sets of Unicode characters.
 
-@deftypefun uc_general_category_t uc_general_category (ucs4_t @var{uc})
+@deftypefun uc_general_category_t uc_general_category (ucs4_t@tie{}@var{uc})
 Returns the general category of a Unicode character.
 
 This function uses a big table.
 @end deftypefun
 
-@deftypefun bool uc_is_general_category (ucs4_t @var{uc}, uc_general_category_t @var{category})
+@deftypefun bool uc_is_general_category (ucs4_t@tie{}@var{uc}, uc_general_category_t@tie{}@var{category})
 Tests whether a Unicode character belongs to a given category.
 The @var{category} argument can be a predefined general category or the
 combination of several predefined general categories.
@@ -366,7 +366,7 @@ Additional general categories may be added in the future.
 
 The following function views general categories as sets of Unicode characters.
 
-@deftypefun bool uc_is_general_category_withtable (ucs4_t @var{uc}, uint32_t @var{bitmask})
+@deftypefun bool uc_is_general_category_withtable (ucs4_t@tie{}@var{uc}, uint32_t@tie{}@var{bitmask})
 Tests whether a Unicode character belongs to a given category.
 The @var{bitmask} argument can be a predefined general category bitmask or the
 combination of several predefined general category bitmasks.
@@ -392,7 +392,7 @@ combining classes are attached "first" or "closer" to the base character.
 
 The canonical combining class of a character is a number in the range
 0..255.  The possible values are described in the Unicode Character Database
-@texnl{}@url{http://www.unicode.org/Public/UNIDATA/UCD.html}.  The list here is
+@texnl{}@url{https://www.unicode.org/Public/UNIDATA/UCD.html}.  The list here is
 not definitive; more values can be added in future versions.
 
 @deftypevr Constant int UC_CCC_NR
@@ -478,20 +478,20 @@ The canonical combining class value for ``Iota Subscript'' characters.
 
 The following functions associate canonical combining classes with their name.
 
-@deftypefun {const char *} uc_combining_class_name (int @var{ccc})
+@deftypefun {const char *} uc_combining_class_name (int@tie{}@var{ccc})
 Returns the name of a canonical combining class, more precisely, the
 abbreviated name.
 Returns NULL if the canonical combining class is a numeric value without a
 name.
 @end deftypefun
 
-@deftypefun {const char *} uc_combining_class_long_name (int @var{ccc})
+@deftypefun {const char *} uc_combining_class_long_name (int@tie{}@var{ccc})
 Returns the long name of a canonical combining class.
 Returns NULL if the canonical combining class is a numeric value without a
 name.
 @end deftypefun
 
-@deftypefun int uc_combining_class_byname (const char *@var{ccc_name})
+@deftypefun int uc_combining_class_byname (const@tie{}char@tie{}*@var{ccc_name})
 Returns the canonical combining class given by name, e.g@. @code{"BL"}, or by
 long name, e.g@. @code{"Below Left"}.
 This lookup ignores spaces, underscores, or hyphens as word separators and is
@@ -500,7 +500,7 @@ case-insignificant.
 
 The following function looks up the canonical combining class of a character.
 
-@deftypefun int uc_combining_class (ucs4_t @var{uc})
+@deftypefun int uc_combining_class (ucs4_t@tie{}@var{uc})
 Returns the canonical combining class of a Unicode character.
 @end deftypefun
 
@@ -515,7 +515,7 @@ Every Unicode character or code point has a @emph{bidi class} assigned to it.
 Before Unicode 4.0, this concept was known as @emph{bidirectional category}.
 
 The bidi class guides the bidirectional algorithm@texnl{}
-(@url{http://www.unicode.org/reports/tr9/}).  The possible values are
+(@url{https://www.unicode.org/reports/tr9/}).  The possible values are
 the following.
 
 @deftypevr Constant int UC_BIDI_L
@@ -594,20 +594,36 @@ The bidi class for ``Whitespace'' characters.
 The bidi class for ``Other Neutral'' characters.
 @end deftypevr
 
+@deftypevr Constant int UC_BIDI_LRI
+The bidi class for ``Left-to-Right Isolate'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_RLI
+The bidi class for ``Right-to-Left Isolate'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_FSI
+The bidi class for ``First Strong Isolate'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_PDI
+The bidi class for ``Pop Directional Isolate'' characters.
+@end deftypevr
+
 The following functions implement the association between a bidirectional
 category and its name.
 
-@deftypefun {const char *} uc_bidi_class_name (int @var{bidi_class})
-@deftypefunx {const char *} uc_bidi_category_name (int @var{category})
+@deftypefun {const char *} uc_bidi_class_name (int@tie{}@var{bidi_class})
+@deftypefunx {const char *} uc_bidi_category_name (int@tie{}@var{category})
 Returns the name of a bidi class, more precisely, the abbreviated name.
 @end deftypefun
 
-@deftypefun {const char *} uc_bidi_class_long_name (int @var{bidi_class})
+@deftypefun {const char *} uc_bidi_class_long_name (int@tie{}@var{bidi_class})
 Returns the long name of a bidi class.
 @end deftypefun
 
-@deftypefun int uc_bidi_class_byname (const char *@var{bidi_class_name})
-@deftypefunx int uc_bidi_category_byname (const char *@var{category_name})
+@deftypefun int uc_bidi_class_byname (const@tie{}char@tie{}*@var{bidi_class_name})
+@deftypefunx int uc_bidi_category_byname (const@tie{}char@tie{}*@var{category_name})
 Returns the bidi class given by name, e.g@. @code{"LRE"}, or by long name,
 e.g@. @code{"Left-to-Right Embedding"}.
 This lookup ignores spaces, underscores, or hyphens as word separators and is
@@ -617,13 +633,13 @@ case-insignificant.
 The following functions view bidirectional categories as sets of Unicode
 characters.
 
-@deftypefun int uc_bidi_class (ucs4_t @var{uc})
-@deftypefunx int uc_bidi_category (ucs4_t @var{uc})
+@deftypefun int uc_bidi_class (ucs4_t@tie{}@var{uc})
+@deftypefunx int uc_bidi_category (ucs4_t@tie{}@var{uc})
 Returns the bidi class of a Unicode character.
 @end deftypefun
 
-@deftypefun bool uc_is_bidi_class (ucs4_t @var{uc}, int @var{bidi_class})
-@deftypefunx bool uc_is_bidi_category (ucs4_t @var{uc}, int @var{category})
+@deftypefun bool uc_is_bidi_class (ucs4_t@tie{}@var{uc}, int@tie{}@var{bidi_class})
+@deftypefunx bool uc_is_bidi_category (ucs4_t@tie{}@var{uc}, int@tie{}@var{category})
 Tests whether a Unicode character belongs to a given bidi class.
 @end deftypefun
 
@@ -636,7 +652,7 @@ Decimal digits (like the digits from @samp{0} to @samp{9}) exist in many
 scripts.  The following function converts a decimal digit character to its
 numerical value.
 
-@deftypefun int uc_decimal_value (ucs4_t @var{uc})
+@deftypefun int uc_decimal_value (ucs4_t@tie{}@var{uc})
 Returns the decimal digit value of a Unicode character.
 The return value is an integer in the range 0..9, or -1 for characters that
 do not represent a decimal digit.
@@ -651,7 +667,7 @@ Digit characters are like decimal digit characters, possibly in special forms,
 like as superscript, subscript, or circled.  The following function converts a
 digit character to its numerical value.
 
-@deftypefun int uc_digit_value (ucs4_t @var{uc})
+@deftypefun int uc_digit_value (ucs4_t@tie{}@var{uc})
 Returns the digit value of a Unicode character.
 The return value is an integer in the range 0..9, or -1 for characters that
 do not represent a digit.
@@ -678,7 +694,7 @@ An integer @var{n} is represented by @code{numerator = @var{n}},
 
 The following function converts a number character to its numerical value.
 
-@deftypefun uc_fraction_t uc_numeric_value (ucs4_t @var{uc})
+@deftypefun uc_fraction_t uc_numeric_value (ucs4_t@tie{}@var{uc})
 Returns the numeric value of a Unicode character.
 The return value is a fraction, or the pseudo-fraction @code{@{ 0, 0 @}} for
 characters that do not represent a number.
@@ -695,7 +711,7 @@ opening brace character, and so on.
 
 The following function looks up the mirrored character of a Unicode character.
 
-@deftypefun bool uc_mirror_char (ucs4_t @var{uc}, ucs4_t *@var{puc})
+@deftypefun bool uc_mirror_char (ucs4_t@tie{}@var{uc}, ucs4_t@tie{}*@var{puc})
 Stores the mirrored character of a Unicode character @var{uc} in
 @code{*@var{puc}} and returns @code{true}, if it exists.  Otherwise it
 stores @var{uc} unmodified in @code{*@var{puc}} and returns @code{false}.
@@ -758,15 +774,15 @@ initial, medial, final, and isolated.
 The following functions implement the association between a joining type
 and its name.
 
-@deftypefun {const char *} uc_joining_type_name (int @var{joining_type})
+@deftypefun {const char *} uc_joining_type_name (int@tie{}@var{joining_type})
 Returns the name of a joining type.
 @end deftypefun
 
-@deftypefun {const char *} uc_joining_type_long_name (int @var{joining_type})
+@deftypefun {const char *} uc_joining_type_long_name (int@tie{}@var{joining_type})
 Returns the long name of a joining type.
 @end deftypefun
 
-@deftypefun int uc_joining_type_byname (const char *@var{joining_type_name})
+@deftypefun int uc_joining_type_byname (const@tie{}char@tie{}*@var{joining_type_name})
 Returns the joining type given by name, e.g@. @code{"D"}, or by long name,
 e.g@. @code{"Dual Joining}.
 This lookup ignores spaces, underscores, or hyphens as word separators and is
@@ -775,7 +791,7 @@ case-insignificant.
 
 The following function gives the joining type of every Unicode character.
 
-@deftypefun int uc_joining_type (ucs4_t @var{uc})
+@deftypefun int uc_joining_type (ucs4_t@tie{}@var{uc})
 Returns the joining type of a Unicode character.
 @end deftypefun
 
@@ -846,16 +862,63 @@ The joining group has the following possible values:
 @deftypevrx Constant int UC_JOINING_GROUP_YUDH_HE
 @deftypevrx Constant int UC_JOINING_GROUP_ZAIN
 @deftypevrx Constant int UC_JOINING_GROUP_ZHAIN
+@deftypevrx Constant int UC_JOINING_GROUP_ROHINGYA_YEH
+@deftypevrx Constant int UC_JOINING_GROUP_STRAIGHT_WAW
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_ALEPH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_BETH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_GIMEL
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_DALETH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_WAW
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_ZAYIN
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_HETH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_TETH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_YODH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_KAPH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_LAMEDH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_DHAMEDH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_THAMEDH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_MEM
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_NUN
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_SAMEKH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_AYIN
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_PE
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_SADHE
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_QOPH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_RESH
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_TAW
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_ONE
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_FIVE
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_TEN
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_TWENTY
+@deftypevrx Constant int UC_JOINING_GROUP_MANICHAEAN_HUNDRED
+@deftypevrx Constant int UC_JOINING_GROUP_AFRICAN_FEH
+@deftypevrx Constant int UC_JOINING_GROUP_AFRICAN_QAF
+@deftypevrx Constant int UC_JOINING_GROUP_AFRICAN_NOON
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_NGA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_JA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_NYA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_TTA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_NNA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_NNNA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_BHA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_RA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_LLA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_LLLA
+@deftypevrx Constant int UC_JOINING_GROUP_MALAYALAM_SSA
+@deftypevrx Constant int UC_JOINING_GROUP_HANIFI_ROHINGYA_PA
+@deftypevrx Constant int UC_JOINING_GROUP_HANIFI_ROHINGYA_KINNA_YA
+@deftypevrx Constant int UC_JOINING_GROUP_THIN_YEH
+@deftypevrx Constant int UC_JOINING_GROUP_VERTICAL_TAIL
 @end deftypevr
 
 The following functions implement the association between a joining group
 and its name.
 
-@deftypefun {const char *} uc_joining_group_name (int @var{joining_group})
+@deftypefun {const char *} uc_joining_group_name (int@tie{}@var{joining_group})
 Returns the name of a joining group.
 @end deftypefun
 
-@deftypefun int uc_joining_group_byname (const char *@var{joining_group_name})
+@deftypefun int uc_joining_group_byname (const@tie{}char@tie{}*@var{joining_group_name})
 Returns the joining group given by name, e.g@. @code{"Teh_Marbuta"}.
 This lookup ignores spaces, underscores, or hyphens as word separators and is
 case-insignificant.
@@ -863,7 +926,7 @@ case-insignificant.
 
 The following function gives the joining group of every Unicode character.
 
-@deftypefun int uc_joining_group (ucs4_t @var{uc})
+@deftypefun int uc_joining_group (ucs4_t@tie{}@var{uc})
 Returns the joining group of a Unicode character.
 @end deftypefun
 
@@ -989,6 +1052,16 @@ The following properties deal with CJK.
 @deftypevrx Constant uc_property_t UC_PROPERTY_IDS_TRINARY_OPERATOR
 @end deftypevr
 
+The following properties deal with pictographic symbols.
+
+@deftypevr Constant uc_property_t UC_PROPERTY_EMOJI
+@deftypevrx Constant uc_property_t UC_PROPERTY_EMOJI_PRESENTATION
+@deftypevrx Constant uc_property_t UC_PROPERTY_EMOJI_MODIFIER
+@deftypevrx Constant uc_property_t UC_PROPERTY_EMOJI_MODIFIER_BASE
+@deftypevrx Constant uc_property_t UC_PROPERTY_EMOJI_COMPONENT
+@deftypevrx Constant uc_property_t UC_PROPERTY_EXTENDED_PICTOGRAPHIC
+@end deftypevr
+
 Other miscellaneous properties are:
 
 @deftypevr Constant uc_property_t UC_PROPERTY_ZERO_WIDTH
@@ -1016,11 +1089,12 @@ Other miscellaneous properties are:
 @deftypevrx Constant uc_property_t UC_PROPERTY_DIACRITIC
 @deftypevrx Constant uc_property_t UC_PROPERTY_EXTENDER
 @deftypevrx Constant uc_property_t UC_PROPERTY_IGNORABLE_CONTROL
+@deftypevrx Constant uc_property_t UC_PROPERTY_REGIONAL_INDICATOR
 @end deftypevr
 
 The following function looks up a property by its name.
 
-@deftypefun uc_property_t uc_property_byname (const char *@var{property_name})
+@deftypefun uc_property_t uc_property_byname (const@tie{}char@tie{}*@var{property_name})
 Returns the property given by name, e.g@. @code{"White space"}.  If a property
 with the given name exists, the result will satisfy the
 @code{uc_property_is_valid} predicate.  Otherwise the result will not satisfy
@@ -1035,14 +1109,14 @@ This function references a big table of all predefined properties.  Its use
 can significantly increase the size of your application.
 @end deftypefun
 
-@deftypefun bool uc_property_is_valid (uc_property_t property)
+@deftypefun bool uc_property_is_valid (uc_property_t@tie{}property)
 Returns @code{true} when the given property is valid, or @code{false}
 otherwise.
 @end deftypefun
 
 The following function views a property as a set of Unicode characters.
 
-@deftypefun bool uc_is_property (ucs4_t @var{uc}, uc_property_t @var{property})
+@deftypefun bool uc_is_property (ucs4_t@tie{}@var{uc}, uc_property_t@tie{}@var{property})
 Tests whether the Unicode character @var{uc} has the given property.
 @end deftypefun
 
@@ -1051,120 +1125,131 @@ Tests whether the Unicode character @var{uc} has the given property.
 
 The following are general properties.
 
-@deftypefun bool uc_is_property_white_space (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_alphabetic (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_other_alphabetic (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_not_a_character (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_default_ignorable_code_point (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_other_default_ignorable_code_point (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_deprecated (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_logical_order_exception (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_variation_selector (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_private_use (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_unassigned_code_value (ucs4_t @var{uc})
+@deftypefun bool uc_is_property_white_space (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_alphabetic (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_other_alphabetic (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_not_a_character (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_default_ignorable_code_point (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_other_default_ignorable_code_point (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_deprecated (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_logical_order_exception (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_variation_selector (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_private_use (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_unassigned_code_value (ucs4_t@tie{}@var{uc})
 @end deftypefun
 
 The following properties are related to case folding.
 
-@deftypefun bool uc_is_property_uppercase (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_other_uppercase (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_lowercase (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_other_lowercase (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_titlecase (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_cased (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_case_ignorable (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_changes_when_lowercased (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_changes_when_uppercased (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_changes_when_titlecased (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_changes_when_casefolded (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_changes_when_casemapped (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_soft_dotted (ucs4_t @var{uc})
+@deftypefun bool uc_is_property_uppercase (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_other_uppercase (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_lowercase (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_other_lowercase (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_titlecase (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_cased (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_case_ignorable (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_changes_when_lowercased (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_changes_when_uppercased (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_changes_when_titlecased (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_changes_when_casefolded (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_changes_when_casemapped (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_soft_dotted (ucs4_t@tie{}@var{uc})
 @end deftypefun
 
 The following properties are related to identifiers.
 
-@deftypefun bool uc_is_property_id_start (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_other_id_start (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_id_continue (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_other_id_continue (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_xid_start (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_xid_continue (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_pattern_white_space (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_pattern_syntax (ucs4_t @var{uc})
+@deftypefun bool uc_is_property_id_start (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_other_id_start (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_id_continue (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_other_id_continue (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_xid_start (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_xid_continue (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_pattern_white_space (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_pattern_syntax (ucs4_t@tie{}@var{uc})
 @end deftypefun
 
 The following properties have an influence on shaping and rendering.
 
-@deftypefun bool uc_is_property_join_control (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_grapheme_base (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_grapheme_extend (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_other_grapheme_extend (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_grapheme_link (ucs4_t @var{uc})
+@deftypefun bool uc_is_property_join_control (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_grapheme_base (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_grapheme_extend (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_other_grapheme_extend (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_grapheme_link (ucs4_t@tie{}@var{uc})
 @end deftypefun
 
 The following properties relate to bidirectional reordering.
 
-@deftypefun bool uc_is_property_bidi_control (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_left_to_right (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_hebrew_right_to_left (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_arabic_right_to_left (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_european_digit (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_eur_num_separator (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_eur_num_terminator (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_arabic_digit (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_common_separator (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_block_separator (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_segment_separator (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_whitespace (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_non_spacing_mark (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_boundary_neutral (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_pdf (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_embedding_or_override (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_bidi_other_neutral (ucs4_t @var{uc})
+@deftypefun bool uc_is_property_bidi_control (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_left_to_right (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_hebrew_right_to_left (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_arabic_right_to_left (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_european_digit (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_eur_num_separator (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_eur_num_terminator (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_arabic_digit (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_common_separator (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_block_separator (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_segment_separator (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_whitespace (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_non_spacing_mark (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_boundary_neutral (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_pdf (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_embedding_or_override (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_bidi_other_neutral (ucs4_t@tie{}@var{uc})
 @end deftypefun
 
 The following properties deal with number representations.
 
-@deftypefun bool uc_is_property_hex_digit (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_ascii_hex_digit (ucs4_t @var{uc})
+@deftypefun bool uc_is_property_hex_digit (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_ascii_hex_digit (ucs4_t@tie{}@var{uc})
 @end deftypefun
 
 The following properties deal with CJK.
 
-@deftypefun bool uc_is_property_ideographic (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_unified_ideograph (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_radical (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_ids_binary_operator (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_ids_trinary_operator (ucs4_t @var{uc})
+@deftypefun bool uc_is_property_ideographic (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_unified_ideograph (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_radical (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_ids_binary_operator (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_ids_trinary_operator (ucs4_t@tie{}@var{uc})
+@end deftypefun
+
+The following properties deal with pictographic symbols.
+
+@deftypefun bool uc_is_property_emoji (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_emoji_presentation (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_emoji_modifier (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_emoji_modifier_base (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_emoji_component (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_extended_pictographic (ucs4_t@tie{}@var{uc})
 @end deftypefun
 
 Other miscellaneous properties are:
 
-@deftypefun bool uc_is_property_zero_width (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_space (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_non_break (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_iso_control (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_format_control (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_dash (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_hyphen (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_punctuation (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_line_separator (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_paragraph_separator (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_quotation_mark (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_sentence_terminal (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_terminal_punctuation (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_currency_symbol (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_math (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_other_math (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_paired_punctuation (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_left_of_pair (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_combining (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_composite (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_decimal_digit (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_numeric (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_diacritic (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_extender (ucs4_t @var{uc})
-@deftypefunx bool uc_is_property_ignorable_control (ucs4_t @var{uc})
+@deftypefun bool uc_is_property_zero_width (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_space (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_non_break (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_iso_control (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_format_control (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_dash (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_hyphen (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_punctuation (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_line_separator (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_paragraph_separator (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_quotation_mark (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_sentence_terminal (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_terminal_punctuation (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_currency_symbol (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_math (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_other_math (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_paired_punctuation (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_left_of_pair (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_combining (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_composite (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_decimal_digit (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_numeric (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_diacritic (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_extender (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_ignorable_control (ucs4_t@tie{}@var{uc})
+@deftypefunx bool uc_is_property_regional_indicator (ucs4_t@tie{}@var{uc})
 @end deftypefun
 
 @node Scripts
@@ -1188,25 +1273,25 @@ The @code{name} field contains the name of the script.
 @cindex Unicode character, script
 The following functions look up a script.
 
-@deftypefun {const uc_script_t *} uc_script (ucs4_t @var{uc})
+@deftypefun {const uc_script_t *} uc_script (ucs4_t@tie{}@var{uc})
 Returns the script of a Unicode character.  Returns NULL if @var{uc} does not
 belong to any script.
 @end deftypefun
 
-@deftypefun {const uc_script_t *} uc_script_byname (const char *@var{script_name})
+@deftypefun {const uc_script_t *} uc_script_byname (const@tie{}char@tie{}*@var{script_name})
 Returns the script given by its name, e.g@. @code{"HAN"}.  Returns NULL if a
 script with the given name does not exist.
 @end deftypefun
 
 The following function views a script as a set of Unicode characters.
 
-@deftypefun bool uc_is_script (ucs4_t @var{uc}, const uc_script_t *@var{script})
+@deftypefun bool uc_is_script (ucs4_t@tie{}@var{uc}, const@tie{}uc_script_t@tie{}*@var{script})
 Tests whether a Unicode character belongs to a given script.
 @end deftypefun
 
 The following gives a global picture of all scripts.
 
-@deftypefun void uc_all_scripts (const uc_script_t **@var{scripts}, size_t *@var{count})
+@deftypefun void uc_all_scripts (const@tie{}uc_script_t@tie{}**@var{scripts}, size_t@tie{}*@var{count})
 Get the list of all scripts.  Stores a pointer to an array of all scripts in
 @code{*@var{scripts}} and the length of this array in @code{*@var{count}}.
 @end deftypefun
@@ -1239,19 +1324,19 @@ The @code{name} field is the name of the block.
 @cindex Unicode character, block
 The following function looks up a block.
 
-@deftypefun {const uc_block_t *} uc_block (ucs4_t @var{uc})
+@deftypefun {const uc_block_t *} uc_block (ucs4_t@tie{}@var{uc})
 Returns the block a character belongs to.
 @end deftypefun
 
 The following function views a block as a set of Unicode characters.
 
-@deftypefun bool uc_is_block (ucs4_t @var{uc}, const uc_block_t *@var{block})
+@deftypefun bool uc_is_block (ucs4_t@tie{}@var{uc}, const@tie{}uc_block_t@tie{}*@var{block})
 Tests whether a Unicode character belongs to a given block.
 @end deftypefun
 
 The following gives a global picture of all block.
 
-@deftypefun void uc_all_blocks (const uc_block_t **@var{blocks}, size_t *@var{count})
+@deftypefun void uc_all_blocks (const@tie{}uc_block_t@tie{}**@var{blocks}, size_t@tie{}*@var{count})
 Get the list of all blocks.  Stores a pointer to an array of all blocks in
 @code{*@var{blocks}} and the length of this array in @code{*@var{count}}.
 @end deftypefun
@@ -1265,11 +1350,11 @@ Get the list of all blocks.  Stores a pointer to an array of all blocks in
 The following properties are taken from language standards.  The supported
 language standards are ISO C 99 and Java.
 
-@deftypefun bool uc_is_c_whitespace (ucs4_t @var{uc})
+@deftypefun bool uc_is_c_whitespace (ucs4_t@tie{}@var{uc})
 Tests whether a Unicode character is considered whitespace in ISO C 99.
 @end deftypefun
 
-@deftypefun bool uc_is_java_whitespace (ucs4_t @var{uc})
+@deftypefun bool uc_is_java_whitespace (ucs4_t@tie{}@var{uc})
 Tests whether a Unicode character is considered whitespace in Java.
 @end deftypefun
 
@@ -1298,13 +1383,13 @@ The following function determine whether a given character can be a constituent
 of an identifier in the given programming language.
 
 @cindex Unicode character, validity in C identifiers
-@deftypefun int uc_c_ident_category (ucs4_t @var{uc})
+@deftypefun int uc_c_ident_category (ucs4_t@tie{}@var{uc})
 Returns the categorization of a Unicode character with respect to the ISO C 99
 identifier syntax.
 @end deftypefun
 
 @cindex Unicode character, validity in Java identifiers
-@deftypefun int uc_java_ident_category (ucs4_t @var{uc})
+@deftypefun int uc_java_ident_category (ucs4_t@tie{}@var{uc})
 Returns the categorization of a Unicode character with respect to the Java
 identifier syntax.
 @end deftypefun
@@ -1321,63 +1406,63 @@ cannot reflect the more diverse reality of the Unicode character set.  But
 they can be a quick-and-dirty porting aid when migrating from @code{wchar_t}
 APIs to Unicode strings.
 
-@deftypefun bool uc_is_alnum (ucs4_t @var{uc})
+@deftypefun bool uc_is_alnum (ucs4_t@tie{}@var{uc})
 Tests for any character for which @code{uc_is_alpha} or @code{uc_is_digit} is
 true.
 @end deftypefun
 
-@deftypefun bool uc_is_alpha (ucs4_t @var{uc})
+@deftypefun bool uc_is_alpha (ucs4_t@tie{}@var{uc})
 Tests for any character for which @code{uc_is_upper} or @code{uc_is_lower} is
 true, or any character that is one of a locale-specific set of characters for
 which none of @code{uc_is_cntrl}, @code{uc_is_digit}, @code{uc_is_punct}, or
 @code{uc_is_space} is true.
 @end deftypefun
 
-@deftypefun bool uc_is_cntrl (ucs4_t @var{uc})
+@deftypefun bool uc_is_cntrl (ucs4_t@tie{}@var{uc})
 Tests for any control character.
 @end deftypefun
 
-@deftypefun bool uc_is_digit (ucs4_t @var{uc})
+@deftypefun bool uc_is_digit (ucs4_t@tie{}@var{uc})
 Tests for any character that corresponds to a decimal-digit character.
 @end deftypefun
 
-@deftypefun bool uc_is_graph (ucs4_t @var{uc})
+@deftypefun bool uc_is_graph (ucs4_t@tie{}@var{uc})
 Tests for any character for which @code{uc_is_print} is true and
 @code{uc_is_space} is false.
 @end deftypefun
 
-@deftypefun bool uc_is_lower (ucs4_t @var{uc})
+@deftypefun bool uc_is_lower (ucs4_t@tie{}@var{uc})
 Tests for any character that corresponds to a lowercase letter or is one
 of a locale-specific set of characters for which none of @code{uc_is_cntrl},
 @code{uc_is_digit}, @code{uc_is_punct}, or @code{uc_is_space} is true.
 @end deftypefun
 
-@deftypefun bool uc_is_print (ucs4_t @var{uc})
+@deftypefun bool uc_is_print (ucs4_t@tie{}@var{uc})
 Tests for any printing character.
 @end deftypefun
 
-@deftypefun bool uc_is_punct (ucs4_t @var{uc})
+@deftypefun bool uc_is_punct (ucs4_t@tie{}@var{uc})
 Tests for any printing character that is one of a locale-specific set of
 characters for which neither @code{uc_is_space} nor @code{uc_is_alnum} is true.
 @end deftypefun
 
-@deftypefun bool uc_is_space (ucs4_t @var{uc})
+@deftypefun bool uc_is_space (ucs4_t@tie{}@var{uc})
 Test for any character that corresponds to a locale-specific set of characters
 for which none of @code{uc_is_alnum}, @code{uc_is_graph}, or @code{uc_is_punct}
 is true.
 @end deftypefun
 
-@deftypefun bool uc_is_upper (ucs4_t @var{uc})
+@deftypefun bool uc_is_upper (ucs4_t@tie{}@var{uc})
 Tests for any character that corresponds to an uppercase letter or is one
 of a locale-specific set of characters for which none of @code{uc_is_cntrl},
 @code{uc_is_digit}, @code{uc_is_punct}, or @code{uc_is_space} is true.
 @end deftypefun
 
-@deftypefun bool uc_is_xdigit (ucs4_t @var{uc})
+@deftypefun bool uc_is_xdigit (ucs4_t@tie{}@var{uc})
 Tests for any character that corresponds to a hexadecimal-digit character.
 @end deftypefun
 
-@deftypefun bool uc_is_blank (ucs4_t @var{uc})
+@deftypefun bool uc_is_blank (ucs4_t@tie{}@var{uc})
 Tests for any character that corresponds to a standard blank character or
 a locale-specific set of characters for which @code{uc_is_alnum} is false.
 @end deftypefun

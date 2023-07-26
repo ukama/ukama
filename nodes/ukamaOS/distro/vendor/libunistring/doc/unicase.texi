@@ -33,15 +33,15 @@ German, Greek and Lithuanian.  Better use the functions below that treat an
 entire string at once and are language aware.
 @end cartouche
 
-@deftypefun ucs4_t uc_toupper (ucs4_t @var{uc})
+@deftypefun ucs4_t uc_toupper (ucs4_t@tie{}@var{uc})
 Returns the uppercase mapping of the Unicode character @var{uc}.
 @end deftypefun
 
-@deftypefun ucs4_t uc_tolower (ucs4_t @var{uc})
+@deftypefun ucs4_t uc_tolower (ucs4_t@tie{}@var{uc})
 Returns the lowercase mapping of the Unicode character @var{uc}.
 @end deftypefun
 
-@deftypefun ucs4_t uc_totitle (ucs4_t @var{uc})
+@deftypefun ucs4_t uc_totitle (ucs4_t@tie{}@var{uc})
 Returns the titlecase mapping of the Unicode character @var{uc}.
 
 The titlecase mapping of a character is to be used when the character should
@@ -54,7 +54,7 @@ Bosnian, and Serbian languages.
 
 @c Normally we would use .33 space for each column, but this is too much in
 @c TeX mode, see
-@c <http://lists.gnu.org/archive/html/bug-texinfo/2009-05/msg00016.html>.
+@c <https://lists.gnu.org/archive/html/bug-texinfo/2009-05/msg00016.html>.
 @multitable @columnfractions .31 .31 .31
 @headitem Lower case @tab Title case @tab Upper case
 @item LATIN SMALL LETTER LJ
@@ -99,9 +99,9 @@ Returns the ISO 639 language code of the current locale.
 Returns @code{""} if it is unknown, or in the "C" locale.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_toupper (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_toupper (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_toupper (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_toupper (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_toupper (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_toupper (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the uppercase mapping of a string.
 
 The @var{nf} argument identifies the normalization form to apply after the
@@ -111,9 +111,9 @@ The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_tolower (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_tolower (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_tolower (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_tolower (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_tolower (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_tolower (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the lowercase mapping of a string.
 
 The @var{nf} argument identifies the normalization form to apply after the
@@ -123,9 +123,9 @@ The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_totitle (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_totitle (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_totitle (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_totitle (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_totitle (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_totitle (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the titlecase mapping of a string.
 
 Mapping to title case means that, in each word, the first cased character
@@ -162,15 +162,15 @@ string.
 
 The following functions return @code{casing_prefix_context_t} objects:
 
-@deftypefun casing_prefix_context_t u8_casing_prefix_context (const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx casing_prefix_context_t u16_casing_prefix_context (const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx casing_prefix_context_t u32_casing_prefix_context (const uint32_t *@var{s}, size_t @var{n})
+@deftypefun casing_prefix_context_t u8_casing_prefix_context (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx casing_prefix_context_t u16_casing_prefix_context (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx casing_prefix_context_t u32_casing_prefix_context (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 Returns the case-mapping context of a given prefix string.
 @end deftypefun
 
-@deftypefun casing_prefix_context_t u8_casing_prefixes_context (const uint8_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{a_context})
-@deftypefunx casing_prefix_context_t u16_casing_prefixes_context (const uint16_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{a_context})
-@deftypefunx casing_prefix_context_t u32_casing_prefixes_context (const uint32_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{a_context})
+@deftypefun casing_prefix_context_t u8_casing_prefixes_context (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{a_context})
+@deftypefunx casing_prefix_context_t u16_casing_prefixes_context (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{a_context})
+@deftypefunx casing_prefix_context_t u32_casing_prefixes_context (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{a_context})
 Returns the case-mapping context of the prefix concat(@var{a}, @var{s}),
 given the case-mapping context of the prefix @var{a}.
 @end deftypefun
@@ -188,15 +188,15 @@ string.
 
 The following functions return @code{casing_suffix_context_t} objects:
 
-@deftypefun casing_suffix_context_t u8_casing_suffix_context (const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx casing_suffix_context_t u16_casing_suffix_context (const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx casing_suffix_context_t u32_casing_suffix_context (const uint32_t *@var{s}, size_t @var{n})
+@deftypefun casing_suffix_context_t u8_casing_suffix_context (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx casing_suffix_context_t u16_casing_suffix_context (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx casing_suffix_context_t u32_casing_suffix_context (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 Returns the case-mapping context of a given suffix string.
 @end deftypefun
 
-@deftypefun casing_suffix_context_t u8_casing_suffixes_context (const uint8_t *@var{s}, size_t @var{n}, casing_suffix_context_t @var{a_context})
-@deftypefunx casing_suffix_context_t u16_casing_suffixes_context (const uint16_t *@var{s}, size_t @var{n}, casing_suffix_context_t @var{a_context})
-@deftypefunx casing_suffix_context_t u32_casing_suffixes_context (const uint32_t *@var{s}, size_t @var{n}, casing_suffix_context_t @var{a_context})
+@deftypefun casing_suffix_context_t u8_casing_suffixes_context (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_suffix_context_t@tie{}@var{a_context})
+@deftypefunx casing_suffix_context_t u16_casing_suffixes_context (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_suffix_context_t@tie{}@var{a_context})
+@deftypefunx casing_suffix_context_t u32_casing_suffixes_context (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_suffix_context_t@tie{}@var{a_context})
 Returns the case-mapping context of the suffix concat(@var{s}, @var{a}),
 given the case-mapping context of the suffix @var{a}.
 @end deftypefun
@@ -204,9 +204,9 @@ given the case-mapping context of the suffix @var{a}.
 The following functions perform a case mapping, considering the
 prefix context and the suffix context.
 
-@deftypefun {uint8_t *} u8_ct_toupper (const uint8_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_ct_toupper (const uint16_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_ct_toupper (const uint32_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_ct_toupper (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_ct_toupper (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_ct_toupper (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the uppercase mapping of a string that is surrounded by a prefix
 and a suffix.
 
@@ -214,9 +214,9 @@ The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_ct_tolower (const uint8_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_ct_tolower (const uint16_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_ct_tolower (const uint32_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_ct_tolower (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_ct_tolower (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_ct_tolower (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the lowercase mapping of a string that is surrounded by a prefix
 and a suffix.
 
@@ -224,9 +224,9 @@ The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_ct_totitle (const uint8_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_ct_totitle (const uint16_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_ct_totitle (const uint32_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_ct_totitle (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_ct_totitle (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_ct_totitle (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the titlecase mapping of a string that is surrounded by a prefix
 and a suffix.
 
@@ -256,9 +256,9 @@ uint8_t result =
 The following functions implement comparison that ignores differences in case
 and normalization.
 
-@deftypefun {uint8_t *} u8_casefold (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_casefold (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_casefold (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_casefold (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_casefold (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_casefold (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the case folded string.
 
 Comparing @code{u8_casefold (@var{s1})} and @code{u8_casefold (@var{s2})}
@@ -272,9 +272,9 @@ The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_ct_casefold (const uint8_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_ct_casefold (const uint16_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_ct_casefold (const uint32_t *@var{s}, size_t @var{n}, casing_prefix_context_t @var{prefix_context}, casing_suffix_context_t @var{suffix_context}, const char *@var{iso639_language}, uninorm_t @var{nf}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_ct_casefold (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_ct_casefold (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_ct_casefold (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, casing_prefix_context_t@tie{}@var{prefix_context}, casing_suffix_context_t@tie{}@var{suffix_context}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the case folded string.  The case folding takes into account the
 case mapping contexts of the prefix and suffix strings.
 
@@ -282,10 +282,10 @@ The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun int u8_casecmp (const uint8_t *@var{s1}, size_t @var{n1}, const uint8_t *@var{s2}, size_t @var{n2}, const char *@var{iso639_language}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int u16_casecmp (const uint16_t *@var{s1}, size_t @var{n1}, const uint16_t *@var{s2}, size_t @var{n2}, const char *@var{iso639_language}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int u32_casecmp (const uint32_t *@var{s1}, size_t @var{n1}, const uint32_t *@var{s2}, size_t @var{n2}, const char *@var{iso639_language}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int ulc_casecmp (const char *@var{s1}, size_t @var{n1}, const char *@var{s2}, size_t @var{n2}, const char *@var{iso639_language}, uninorm_t @var{nf}, int *@var{resultp})
+@deftypefun int u8_casecmp (const@tie{}uint8_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint8_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int u16_casecmp (const@tie{}uint16_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint16_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int u32_casecmp (const@tie{}uint32_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint32_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int ulc_casecmp (const@tie{}char@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}char@tie{}*@var{s2}, size_t@tie{}@var{n2}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
 Compares @var{s1} and @var{s2}, ignoring differences in case and normalization.
 
 The @var{nf} argument identifies the normalization form to apply after the
@@ -303,10 +303,10 @@ Upon failure, returns -1 with @code{errno} set.
 The following functions additionally take into account the sorting rules of the
 current locale.
 
-@deftypefun {char *} u8_casexfrm (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {char *} u16_casexfrm (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {char *} u32_casexfrm (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {char *} ulc_casexfrm (const char *@var{s}, size_t @var{n}, const char *@var{iso639_language}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {char *} u8_casexfrm (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {char *} u16_casexfrm (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {char *} u32_casexfrm (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {char *} ulc_casexfrm (const@tie{}char@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts the string @var{s} of length @var{n} to a NUL-terminated byte
 sequence, in such a way that comparing @code{u8_casexfrm (@var{s1})} and
 @code{u8_casexfrm (@var{s2})} with the gnulib function @code{memcmp2} is
@@ -319,10 +319,10 @@ The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun int u8_casecoll (const uint8_t *@var{s1}, size_t @var{n1}, const uint8_t *@var{s2}, size_t @var{n2}, const char *@var{iso639_language}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int u16_casecoll (const uint16_t *@var{s1}, size_t @var{n1}, const uint16_t *@var{s2}, size_t @var{n2}, const char *@var{iso639_language}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int u32_casecoll (const uint32_t *@var{s1}, size_t @var{n1}, const uint32_t *@var{s2}, size_t @var{n2}, const char *@var{iso639_language}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int ulc_casecoll (const char *@var{s1}, size_t @var{n1}, const char *@var{s2}, size_t @var{n2}, const char *@var{iso639_language}, uninorm_t @var{nf}, int *@var{resultp})
+@deftypefun int u8_casecoll (const@tie{}uint8_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint8_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int u16_casecoll (const@tie{}uint16_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint16_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int u32_casecoll (const@tie{}uint32_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint32_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int ulc_casecoll (const@tie{}char@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}char@tie{}*@var{s2}, size_t@tie{}@var{n2}, const@tie{}char@tie{}*@var{iso639_language}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
 Compares @var{s1} and @var{s2}, ignoring differences in case and normalization,
 using the collation rules of the current locale.
 
@@ -344,33 +344,33 @@ The following functions determine whether a Unicode string is entirely in
 upper case. or entirely in lower case, or entirely in title case, or already
 case-folded.
 
-@deftypefun int u8_is_uppercase (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u16_is_uppercase (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u32_is_uppercase (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
+@deftypefun int u8_is_uppercase (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u16_is_uppercase (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u32_is_uppercase (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
 Sets @code{*@var{resultp}} to true if mapping NFD(@var{s}) to upper case is
 a no-op, or to false otherwise, and returns 0.  Upon failure, returns -1 with
 @code{errno} set.
 @end deftypefun
 
-@deftypefun int u8_is_lowercase (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u16_is_lowercase (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u32_is_lowercase (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
+@deftypefun int u8_is_lowercase (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u16_is_lowercase (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u32_is_lowercase (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
 Sets @code{*@var{resultp}} to true if mapping NFD(@var{s}) to lower case is
 a no-op, or to false otherwise, and returns 0.  Upon failure, returns -1 with
 @code{errno} set.
 @end deftypefun
 
-@deftypefun int u8_is_titlecase (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u16_is_titlecase (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u32_is_titlecase (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
+@deftypefun int u8_is_titlecase (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u16_is_titlecase (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u32_is_titlecase (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
 Sets @code{*@var{resultp}} to true if mapping NFD(@var{s}) to title case is
 a no-op, or to false otherwise, and returns 0.  Upon failure, returns -1 with
 @code{errno} set.
 @end deftypefun
 
-@deftypefun int u8_is_casefolded (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u16_is_casefolded (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u32_is_casefolded (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
+@deftypefun int u8_is_casefolded (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u16_is_casefolded (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u32_is_casefolded (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
 Sets @code{*@var{resultp}} to true if applying case folding to NFD(@var{S}) is
 a no-op, or to false otherwise, and returns 0.  Upon failure, returns -1 with
 @code{errno} set.
@@ -379,9 +379,9 @@ a no-op, or to false otherwise, and returns 0.  Upon failure, returns -1 with
 The following functions determine whether case mappings have any effect on a
 Unicode string.
 
-@deftypefun int u8_is_cased (const uint8_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u16_is_cased (const uint16_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
-@deftypefunx int u32_is_cased (const uint32_t *@var{s}, size_t @var{n}, const char *@var{iso639_language}, bool *@var{resultp})
+@deftypefun int u8_is_cased (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u16_is_cased (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
+@deftypefunx int u32_is_cased (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{iso639_language}, bool@tie{}*@var{resultp})
 Sets @code{*@var{resultp}} to true if case matters for @var{s}, that is, if
 mapping NFD(@var{s}) to either upper case or lower case or title case is not
 a no-op.  Set @code{*@var{resultp}} to false if NFD(@var{s}) maps to itself

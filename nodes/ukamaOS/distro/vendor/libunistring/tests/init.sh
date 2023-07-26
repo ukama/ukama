@@ -1,6 +1,6 @@
 # source this file; set up for tests
 
-# Copyright (C) 2009-2018 Free Software Foundation, Inc.
+# Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,6 +60,9 @@
 #   4. Finally
 #   $ exit
 
+# =============================================================================
+# Elementary diagnostics
+
 ME_=`expr "./$0" : '.*/\(.*\)$'`
 
 # Prepare PATH_SEPARATOR.
@@ -109,26 +112,8 @@ skip_ () { warn_ "$ME_: skipped test: $@"; Exit 77; }
 fatal_ () { warn_ "$ME_: hard error: $@"; Exit 99; }
 framework_failure_ () { warn_ "$ME_: set-up failure: $@"; Exit 99; }
 
-# This is used to simplify checking of the return value
-# which is useful when ensuring a command fails as desired.
-# I.e., just doing `command ... &&fail=1` will not catch
-# a segfault in command for example.  With this helper you
-# instead check an explicit exit code like
-#   returns_ 1 command ... || fail
-returns_ () {
-  # Disable tracing so it doesn't interfere with stderr of the wrapped command
-  { set +x; } 2>/dev/null
-
-  local exp_exit="$1"
-  shift
-  "$@"
-  test $? -eq $exp_exit && ret_=0 || ret_=1
-
-  if test "$VERBOSE" = yes && test "$gl_set_x_corrupts_stderr_" = false; then
-    set -x
-  fi
-  { return $ret_; } 2>/dev/null
-}
+# =============================================================================
+# Ensure the shell supports modern syntax.
 
 # Sanitize this shell to POSIX mode, if possible.
 DUALCASE=1; export DUALCASE
@@ -144,6 +129,8 @@ else
 fi
 
 # We require $(...) support unconditionally.
+# We require that the printf built-in work correctly regarding octal escapes;
+# this eliminates /bin/sh on AIX 7.2.
 # We require non-surprising "local" semantics (this eliminates dash).
 # This takes the admittedly draconian step of eliminating dash, because the
 # assignment tab=$(printf '\t') works fine, yet preceding it with "local "
@@ -173,6 +160,12 @@ fi
 #  ? - not ok
 gl_shell_test_script_='
 test $(echo y) = y || exit 1
+LC_ALL=en_US.UTF-8 printf "\\351" 2>/dev/null \
+  | LC_ALL=C tr "\\351" x | LC_ALL=C grep "^x$" > /dev/null \
+  || exit 1
+printf "\\351" 2>/dev/null \
+  | LC_ALL=C tr "\\351" x | LC_ALL=C grep "^x$" > /dev/null \
+  || exit 1
 f_local_() { local v=1; }; f_local_ || exit 1
 f_dash_local_fail_() { local t=$(printf " 1"); }; f_dash_local_fail_
 score_=10
@@ -255,6 +248,9 @@ else
   fi
 fi
 
+# =============================================================================
+# Ensure the shell behaves reasonably.
+
 # If this is bash, turn off all aliases.
 test -n "$BASH_VERSION" && unalias -a
 
@@ -265,99 +261,199 @@ test -n "$BASH_VERSION" && unalias -a
 # widespread than that for hyphen-containing function names.
 test -n "$EXEEXT" && test -n "$BASH_VERSION" && shopt -s expand_aliases
 
-# Enable glibc's malloc-perturbing option.
-# This is useful for exposing code that depends on the fact that
-# malloc-related functions often return memory that is mostly zeroed.
-# If you have the time and cycles, use valgrind to do an even better job.
-: ${MALLOC_PERTURB_=87}
-export MALLOC_PERTURB_
+# =============================================================================
+# Creating a temporary directory (needed by the core test framework)
+
+# Create a temporary directory, much like mktemp -d does.
+# Written by Jim Meyering.
+#
+# Usage: mktempd_ /tmp phoey.XXXXXXXXXX
+#
+# First, try to use the mktemp program.
+# Failing that, we'll roll our own mktemp-like function:
+#  - try to get random bytes from /dev/urandom, mapping them to file-name bytes
+#  - failing that, generate output from a combination of quickly-varying
+#      sources and awk.
+#  - try to create the desired directory.
+#  - make only $MAX_TRIES_ attempts
+
+# Helper function.  Print $N pseudo-random bytes from a-zA-Z0-9.
+rand_bytes_ ()
+{
+  n_=$1
+
+  # Maybe try openssl rand -base64 $n_prime_|tr '+/=\012' abcd first?
+  # But if they have openssl, they probably have mktemp, too.
+
+  chars_=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
+  dev_rand_=/dev/urandom
+  if test -r "$dev_rand_"; then
+    # Note: 256-length($chars_) == 194; 3 copies of $chars_ is 186 + 8 = 194.
+    dd ibs=$n_ count=1 if=$dev_rand_ 2>/dev/null \
+      | LC_ALL=C tr -c $chars_ 01234567$chars_$chars_$chars_
+    return
+  fi
+
+  # Fall back on quickly-varying sources + awk.
+  # Limit awk program to 7th Edition Unix so that it works even on Solaris 10.
+
+  (date; date +%N; free; who -a; w; ps auxww; ps -ef) 2>&1 | awk '
+     BEGIN {
+       n = '"$n_"'
+       for (i = 0; i < 256; i++)
+         ordinal[sprintf ("%c", i)] = i
+     }
+     {
+       for (i = 1; i <= length; i++)
+         a[ai++ % n] += ordinal[substr ($0, i, 1)]
+     }
+     END {
+       chars = "'"$chars_"'"
+       charslen = length (chars)
+       for (i = 0; i < n; i++)
+         printf "%s", substr (chars, a[i] % charslen + 1, 1)
+       printf "\n"
+     }
+  '
+}
+
+mktempd_ ()
+{
+  case $# in
+  2);;
+  *) fail_ "Usage: mktempd_ DIR TEMPLATE";;
+  esac
+
+  destdir_=$1
+  template_=$2
+
+  MAX_TRIES_=4
+
+  # Disallow any trailing slash on specified destdir:
+  # it would subvert the post-mktemp "case"-based destdir test.
+  case $destdir_ in
+  / | //) destdir_slash_=$destdir;;
+  */) fail_ "invalid destination dir: remove trailing slash(es)";;
+  *) destdir_slash_=$destdir_/;;
+  esac
+
+  case $template_ in
+  *XXXX) ;;
+  *) fail_ \
+       "invalid template: $template_ (must have a suffix of at least 4 X's)";;
+  esac
+
+  # First, try to use mktemp.
+  d=`unset TMPDIR; { mktemp -d -t -p "$destdir_" "$template_"; } 2>/dev/null` &&
+
+  # The resulting name must be in the specified directory.
+  case $d in "$destdir_slash_"*) :;; *) false;; esac &&
+
+  # It must have created the directory.
+  test -d "$d" &&
+
+  # It must have 0700 permissions.  Handle sticky "S" bits.
+  perms=`ls -dgo "$d" 2>/dev/null` &&
+  case $perms in drwx--[-S]---*) :;; *) false;; esac && {
+    echo "$d"
+    return
+  }
+
+  # If we reach this point, we'll have to create a directory manually.
+
+  # Get a copy of the template without its suffix of X's.
+  base_template_=`echo "$template_"|sed 's/XX*$//'`
+
+  # Calculate how many X's we've just removed.
+  template_length_=`echo "$template_" | wc -c`
+  nx_=`echo "$base_template_" | wc -c`
+  nx_=`expr $template_length_ - $nx_`
+
+  err_=
+  i_=1
+  while :; do
+    X_=`rand_bytes_ $nx_`
+    candidate_dir_="$destdir_slash_$base_template_$X_"
+    err_=`mkdir -m 0700 "$candidate_dir_" 2>&1` \
+      && { echo "$candidate_dir_"; return; }
+    test $MAX_TRIES_ -le $i_ && break;
+    i_=`expr $i_ + 1`
+  done
+  fail_ "$err_"
+}
+
+# =============================================================================
+# Core test framework
+
+# An arbitrary prefix to help distinguish test directories.
+testdir_prefix_ () { printf gt; }
+
+# Set up the environment for the test to run in.
+setup_ ()
+{
+  if test "$VERBOSE" = yes; then
+    # Test whether set -x may cause the selected shell to corrupt an
+    # application's stderr.  Many do, including zsh-4.3.10 and the /bin/sh
+    # from SunOS 5.11, OpenBSD 4.7 and Irix 6.5.
+    # If enabling verbose output this way would cause trouble, simply
+    # issue a warning and refrain.
+    if $gl_set_x_corrupts_stderr_; then
+      warn_ "using SHELL=$SHELL with 'set -x' corrupts stderr"
+    else
+      set -x
+    fi
+  fi
+
+  initial_cwd_=$PWD
+
+  # Create and enter the temporary directory.
+  pfx_=`testdir_prefix_`
+  test_dir_=`mktempd_ "$initial_cwd_" "$pfx_-$ME_.XXXX"` \
+    || fail_ "failed to create temporary directory in $initial_cwd_"
+  cd "$test_dir_" || fail_ "failed to cd to temporary directory"
+  # Set variables srcdir, builddir, for the convenience of the test.
+  case $srcdir in
+    /* | ?:*) ;;
+    *) srcdir="../$srcdir" ;;
+  esac
+  builddir=".."
+  export srcdir builddir
+
+  # As autoconf-generated configure scripts do, ensure that IFS
+  # is defined initially, so that saving and restoring $IFS works.
+  gl_init_sh_nl_='
+'
+  IFS=" ""	$gl_init_sh_nl_"
+
+  # This trap statement, along with a trap on 0 below, ensure that the
+  # temporary directory, $test_dir_, is removed upon exit as well as
+  # upon receipt of any of the listed signals.
+  for sig_ in 1 2 3 13 15; do
+    eval "trap 'Exit $(expr $sig_ + 128)' $sig_"
+  done
+
+  # Remove relative and non-accessible directories from PATH, including '.'
+  # and Zero-length entries.
+  saved_IFS="$IFS"
+  IFS=:
+  new_PATH=
+  sep_=
+  for dir in $PATH; do
+    case "$dir" in
+      /*) test -d "$dir/." || continue
+          new_PATH="${new_PATH}${sep_}${dir}"
+          sep_=':';;
+    esac
+  done
+  IFS="$saved_IFS"
+  PATH="$new_PATH"
+  export PATH
+}
 
 # This is a stub function that is run upon trap (upon regular exit and
 # interrupt).  Override it with a per-test function, e.g., to unmount
 # a partition, or to undo any other global state changes.
 cleanup_ () { :; }
-
-# Emit a header similar to that from diff -u;  Print the simulated "diff"
-# command so that the order of arguments is clear.  Don't bother with @@ lines.
-emit_diff_u_header_ ()
-{
-  printf '%s\n' "diff -u $*" \
-    "--- $1	1970-01-01" \
-    "+++ $2	1970-01-01"
-}
-
-# Arrange not to let diff or cmp operate on /dev/null,
-# since on some systems (at least OSF/1 5.1), that doesn't work.
-# When there are not two arguments, or no argument is /dev/null, return 2.
-# When one argument is /dev/null and the other is not empty,
-# cat the nonempty file to stderr and return 1.
-# Otherwise, return 0.
-compare_dev_null_ ()
-{
-  test $# = 2 || return 2
-
-  if test "x$1" = x/dev/null; then
-    test -s "$2" || return 0
-    emit_diff_u_header_ "$@"; sed 's/^/+/' "$2"
-    return 1
-  fi
-
-  if test "x$2" = x/dev/null; then
-    test -s "$1" || return 0
-    emit_diff_u_header_ "$@"; sed 's/^/-/' "$1"
-    return 1
-  fi
-
-  return 2
-}
-
-for diff_opt_ in -u -U3 -c '' no; do
-  test "$diff_opt_" != no &&
-    diff_out_=`exec 2>/dev/null; diff $diff_opt_ "$0" "$0" < /dev/null` &&
-    break
-done
-if test "$diff_opt_" != no; then
-  if test -z "$diff_out_"; then
-    compare_ () { diff $diff_opt_ "$@"; }
-  else
-    compare_ ()
-    {
-      # If no differences were found, AIX and HP-UX 'diff' produce output
-      # like "No differences encountered".  Hide this output.
-      diff $diff_opt_ "$@" > diff.out
-      diff_status_=$?
-      test $diff_status_ -eq 0 || cat diff.out || diff_status_=2
-      rm -f diff.out || diff_status_=2
-      return $diff_status_
-    }
-  fi
-elif cmp -s /dev/null /dev/null 2>/dev/null; then
-  compare_ () { cmp -s "$@"; }
-else
-  compare_ () { cmp "$@"; }
-fi
-
-# Usage: compare EXPECTED ACTUAL
-#
-# Given compare_dev_null_'s preprocessing, defer to compare_ if 2 or more.
-# Otherwise, propagate $? to caller: any diffs have already been printed.
-compare ()
-{
-  # This looks like it can be factored to use a simple "case $?"
-  # after unchecked compare_dev_null_ invocation, but that would
-  # fail in a "set -e" environment.
-  if compare_dev_null_ "$@"; then
-    return 0
-  else
-    case $? in
-      1) return 1;;
-      *) compare_ "$@";;
-    esac
-  fi
-}
-
-# An arbitrary prefix to help distinguish test directories.
-testdir_prefix_ () { printf gt; }
 
 # Run the user-overridable cleanup_ function, remove the temporary
 # directory and exit with the incoming value of $?.
@@ -376,6 +472,9 @@ remove_tmp_ ()
   fi
   exit $__st
 }
+
+# =============================================================================
+# Prepending directories to PATH
 
 # Given a directory name, DIR, if every entry in it that matches *.exe
 # contains only the specified bytes (see the case stmt below), then print
@@ -458,159 +557,147 @@ path_prepend_ ()
   export PATH
 }
 
-setup_ ()
+# =============================================================================
+# Convenience environment variables for the tests
+
+# -----------------------------------------------------------------------------
+
+# Enable glibc's malloc-perturbing option.
+# This is useful for exposing code that depends on the fact that
+# malloc-related functions often return memory that is mostly zeroed.
+# If you have the time and cycles, use valgrind to do an even better job.
+: ${MALLOC_PERTURB_=87}
+export MALLOC_PERTURB_
+
+# -----------------------------------------------------------------------------
+
+# The interpreter for Bourne-shell scripts.
+# No special standards compatibility requirements.
+# Some environments, such as Android, don't have /bin/sh.
+if test -f /bin/sh$EXEEXT; then
+  BOURNE_SHELL=/bin/sh
+else
+  BOURNE_SHELL=sh
+fi
+
+# =============================================================================
+# Convenience functions for the tests
+
+# -----------------------------------------------------------------------------
+# Return value checking
+
+# This is used to simplify checking of the return value
+# which is useful when ensuring a command fails as desired.
+# I.e., just doing `command ... &&fail=1` will not catch
+# a segfault in command for example.  With this helper you
+# instead check an explicit exit code like
+#   returns_ 1 command ... || fail
+returns_ () {
+  # Disable tracing so it doesn't interfere with stderr of the wrapped command
+  { set +x; } 2>/dev/null
+
+  local exp_exit="$1"
+  shift
+  "$@"
+  test $? -eq $exp_exit && ret_=0 || ret_=1
+
+  if test "$VERBOSE" = yes && test "$gl_set_x_corrupts_stderr_" = false; then
+    set -x
+  fi
+  { return $ret_; } 2>/dev/null
+}
+
+# -----------------------------------------------------------------------------
+# Text file comparison
+
+# Emit a header similar to that from diff -u;  Print the simulated "diff"
+# command so that the order of arguments is clear.  Don't bother with @@ lines.
+emit_diff_u_header_ ()
 {
-  if test "$VERBOSE" = yes; then
-    # Test whether set -x may cause the selected shell to corrupt an
-    # application's stderr.  Many do, including zsh-4.3.10 and the /bin/sh
-    # from SunOS 5.11, OpenBSD 4.7 and Irix 5.x and 6.5.
-    # If enabling verbose output this way would cause trouble, simply
-    # issue a warning and refrain.
-    if $gl_set_x_corrupts_stderr_; then
-      warn_ "using SHELL=$SHELL with 'set -x' corrupts stderr"
-    else
-      set -x
-    fi
+  printf '%s\n' "diff -u $*" \
+    "--- $1	1970-01-01" \
+    "+++ $2	1970-01-01"
+}
+
+# Arrange not to let diff or cmp operate on /dev/null,
+# since on some systems (at least OSF/1 5.1), that doesn't work.
+# When there are not two arguments, or no argument is /dev/null, return 2.
+# When one argument is /dev/null and the other is not empty,
+# cat the nonempty file to stderr and return 1.
+# Otherwise, return 0.
+compare_dev_null_ ()
+{
+  test $# = 2 || return 2
+
+  if test "x$1" = x/dev/null; then
+    test -s "$2" || return 0
+    emit_diff_u_header_ "$@"; sed 's/^/+/' "$2"
+    return 1
   fi
 
-  initial_cwd_=$PWD
-
-  pfx_=`testdir_prefix_`
-  test_dir_=`mktempd_ "$initial_cwd_" "$pfx_-$ME_.XXXX"` \
-    || fail_ "failed to create temporary directory in $initial_cwd_"
-  cd "$test_dir_" || fail_ "failed to cd to temporary directory"
-
-  # As autoconf-generated configure scripts do, ensure that IFS
-  # is defined initially, so that saving and restoring $IFS works.
-  gl_init_sh_nl_='
-'
-  IFS=" ""	$gl_init_sh_nl_"
-
-  # This trap statement, along with a trap on 0 below, ensure that the
-  # temporary directory, $test_dir_, is removed upon exit as well as
-  # upon receipt of any of the listed signals.
-  for sig_ in 1 2 3 13 15; do
-    eval "trap 'Exit $(expr $sig_ + 128)' $sig_"
-  done
-}
-
-# Create a temporary directory, much like mktemp -d does.
-# Written by Jim Meyering.
-#
-# Usage: mktempd_ /tmp phoey.XXXXXXXXXX
-#
-# First, try to use the mktemp program.
-# Failing that, we'll roll our own mktemp-like function:
-#  - try to get random bytes from /dev/urandom
-#  - failing that, generate output from a combination of quickly-varying
-#      sources and gzip.  Ignore non-varying gzip header, and extract
-#      "random" bits from there.
-#  - given those bits, map to file-name bytes using tr, and try to create
-#      the desired directory.
-#  - make only $MAX_TRIES_ attempts
-
-# Helper function.  Print $N pseudo-random bytes from a-zA-Z0-9.
-rand_bytes_ ()
-{
-  n_=$1
-
-  # Maybe try openssl rand -base64 $n_prime_|tr '+/=\012' abcd first?
-  # But if they have openssl, they probably have mktemp, too.
-
-  chars_=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
-  dev_rand_=/dev/urandom
-  if test -r "$dev_rand_"; then
-    # Note: 256-length($chars_) == 194; 3 copies of $chars_ is 186 + 8 = 194.
-    dd ibs=$n_ count=1 if=$dev_rand_ 2>/dev/null \
-      | LC_ALL=C tr -c $chars_ 01234567$chars_$chars_$chars_
-    return
+  if test "x$2" = x/dev/null; then
+    test -s "$1" || return 0
+    emit_diff_u_header_ "$@"; sed 's/^/-/' "$1"
+    return 1
   fi
 
-  n_plus_50_=`expr $n_ + 50`
-  cmds_='date; date +%N; free; who -a; w; ps auxww; ps -ef'
-  data_=` (eval "$cmds_") 2>&1 | gzip `
-
-  # Ensure that $data_ has length at least 50+$n_
-  while :; do
-    len_=`echo "$data_"|wc -c`
-    test $n_plus_50_ -le $len_ && break;
-    data_=` (echo "$data_"; eval "$cmds_") 2>&1 | gzip `
-  done
-
-  echo "$data_" \
-    | dd bs=1 skip=50 count=$n_ 2>/dev/null \
-    | LC_ALL=C tr -c $chars_ 01234567$chars_$chars_$chars_
+  return 2
 }
 
-mktempd_ ()
+for diff_opt_ in -u -U3 -c '' no; do
+  test "$diff_opt_" != no &&
+    diff_out_=`exec 2>/dev/null; diff $diff_opt_ "$0" "$0" < /dev/null` &&
+    break
+done
+if test "$diff_opt_" != no; then
+  if test -z "$diff_out_"; then
+    compare_ () { diff $diff_opt_ "$@"; }
+  else
+    compare_ ()
+    {
+      # If no differences were found, AIX and HP-UX 'diff' produce output
+      # like "No differences encountered".  Hide this output.
+      diff $diff_opt_ "$@" > diff.out
+      diff_status_=$?
+      test $diff_status_ -eq 0 || cat diff.out || diff_status_=2
+      rm -f diff.out || diff_status_=2
+      return $diff_status_
+    }
+  fi
+elif cmp -s /dev/null /dev/null 2>/dev/null; then
+  compare_ () { cmp -s "$@"; }
+else
+  compare_ () { cmp "$@"; }
+fi
+
+# Usage: compare EXPECTED ACTUAL
+#
+# Given compare_dev_null_'s preprocessing, defer to compare_ if 2 or more.
+# Otherwise, propagate $? to caller: any diffs have already been printed.
+compare ()
 {
-  case $# in
-  2);;
-  *) fail_ "Usage: mktempd_ DIR TEMPLATE";;
-  esac
-
-  destdir_=$1
-  template_=$2
-
-  MAX_TRIES_=4
-
-  # Disallow any trailing slash on specified destdir:
-  # it would subvert the post-mktemp "case"-based destdir test.
-  case $destdir_ in
-  / | //) destdir_slash_=$destdir;;
-  */) fail_ "invalid destination dir: remove trailing slash(es)";;
-  *) destdir_slash_=$destdir_/;;
-  esac
-
-  case $template_ in
-  *XXXX) ;;
-  *) fail_ \
-       "invalid template: $template_ (must have a suffix of at least 4 X's)";;
-  esac
-
-  # First, try to use mktemp.
-  d=`unset TMPDIR; { mktemp -d -t -p "$destdir_" "$template_"; } 2>/dev/null` &&
-
-  # The resulting name must be in the specified directory.
-  case $d in "$destdir_slash_"*) :;; *) false;; esac &&
-
-  # It must have created the directory.
-  test -d "$d" &&
-
-  # It must have 0700 permissions.  Handle sticky "S" bits.
-  perms=`ls -dgo "$d" 2>/dev/null` &&
-  case $perms in drwx--[-S]---*) :;; *) false;; esac && {
-    echo "$d"
-    return
-  }
-
-  # If we reach this point, we'll have to create a directory manually.
-
-  # Get a copy of the template without its suffix of X's.
-  base_template_=`echo "$template_"|sed 's/XX*$//'`
-
-  # Calculate how many X's we've just removed.
-  template_length_=`echo "$template_" | wc -c`
-  nx_=`echo "$base_template_" | wc -c`
-  nx_=`expr $template_length_ - $nx_`
-
-  err_=
-  i_=1
-  while :; do
-    X_=`rand_bytes_ $nx_`
-    candidate_dir_="$destdir_slash_$base_template_$X_"
-    err_=`mkdir -m 0700 "$candidate_dir_" 2>&1` \
-      && { echo "$candidate_dir_"; return; }
-    test $MAX_TRIES_ -le $i_ && break;
-    i_=`expr $i_ + 1`
-  done
-  fail_ "$err_"
+  # This looks like it can be factored to use a simple "case $?"
+  # after unchecked compare_dev_null_ invocation, but that would
+  # fail in a "set -e" environment.
+  if compare_dev_null_ "$@"; then
+    return 0
+  else
+    case $? in
+      1) return 1;;
+      *) compare_ "$@";;
+    esac
+  fi
 }
+
+# -----------------------------------------------------------------------------
 
 # If you want to override the testdir_prefix_ function,
 # or to add more utility functions, use this file.
 test -f "$srcdir/init.cfg" \
   && . "$srcdir/init.cfg"
+
+# =============================================================================
+# Set up the environment for the test to run in.
 
 setup_ "$@"
 # This trap is here, rather than in the setup_ function, because some

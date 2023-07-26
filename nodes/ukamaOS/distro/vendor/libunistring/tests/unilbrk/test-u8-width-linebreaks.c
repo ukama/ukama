@@ -1,9 +1,9 @@
 /* Test of line breaking of UTF-8 strings.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -24,11 +24,12 @@
 
 #include "macros.h"
 
-int
-main ()
+static void
+test_function (int (*my_u8_width_linebreaks) (const uint8_t *, size_t, int, int, int, const char *, const char *, char *_UC_RESTRICT),
+               int version)
 {
   /* Test case n = 0.  */
-  u8_width_linebreaks (NULL, 0, 80, 0, 0, NULL, "GB18030", NULL);
+  my_u8_width_linebreaks (NULL, 0, 80, 0, 0, NULL, "GB18030", NULL);
 
   {
     static const uint8_t input[91] =
@@ -39,7 +40,7 @@ main ()
       char *p = (char *) malloc (SIZEOF (input));
       size_t i;
 
-      u8_width_linebreaks (input, SIZEOF (input), 25, 0, 0, NULL, "GB18030", p);
+      my_u8_width_linebreaks (input, SIZEOF (input), 25, 0, 0, NULL, "GB18030", p);
       for (i = 0; i < 91; i++)
         {
           ASSERT (p[i] == (i == 90 ? UC_BREAK_MANDATORY :
@@ -53,7 +54,7 @@ main ()
       char *p = (char *) malloc (SIZEOF (input));
       size_t i;
 
-      u8_width_linebreaks (input, SIZEOF (input), 25, 0, 0, NULL, "GB2312", p);
+      my_u8_width_linebreaks (input, SIZEOF (input), 25, 0, 0, NULL, "GB2312", p);
       for (i = 0; i < 91; i++)
         {
           ASSERT (p[i] == (i == 90 ? UC_BREAK_MANDATORY :
@@ -63,6 +64,14 @@ main ()
       free (p);
     }
   }
+}
+
+int
+main ()
+{
+  test_function (u8_width_linebreaks, 2);
+#undef u8_width_linebreaks
+  test_function (u8_width_linebreaks, 1);
 
   return 0;
 }

@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -47,7 +47,10 @@
     { 0x1D5F6, 0x1D5F7 },
     { 0x1D62A, 0x1D62B },
     { 0x1D65E, 0x1D65F },
-    { 0x1D692, 0x1D693 }
+    { 0x1D692, 0x1D693 },
+    { 0x1DF1A, 0x1DF1A },
+    { 0x1E04C, 0x1E04D },
+    { 0x1E068, 0x1E068 }
 
 #define PREDICATE(c) uc_is_property_soft_dotted (c)
 #include "test-predicate-part2.h"

@@ -1,5 +1,5 @@
-# isnanf.m4 serial 15
-dnl Copyright (C) 2007-2018 Free Software Foundation, Inc.
+# isnanf.m4 serial 18
+dnl Copyright (C) 2007-2022 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -74,9 +74,9 @@ AC_DEFUN([gl_HAVE_ISNANF_NO_LIBM],
       AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
            [[#include <math.h>
-             #if __GNUC__ >= 4
+             #if (__GNUC__ >= 4) || (__clang_major__ >= 4)
              # undef isnanf
-             # define isnanf(x) __builtin_isnanf ((float)(x))
+             # define isnanf(x) __builtin_isnan ((float)(x))
              #elif defined isnan
              # undef isnanf
              # define isnanf(x) isnan ((float)(x))
@@ -99,9 +99,9 @@ AC_DEFUN([gl_HAVE_ISNANF_IN_LIBM],
       AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
            [[#include <math.h>
-             #if __GNUC__ >= 4
+             #if (__GNUC__ >= 4) || (__clang_major__ >= 4)
              # undef isnanf
-             # define isnanf(x) __builtin_isnanf ((float)(x))
+             # define isnanf(x) __builtin_isnan ((float)(x))
              #elif defined isnan
              # undef isnanf
              # define isnanf(x) isnan ((float)(x))
@@ -127,9 +127,9 @@ AC_DEFUN([gl_ISNANF_WORKS],
       AC_RUN_IFELSE(
         [AC_LANG_SOURCE([[
 #include <math.h>
-#if __GNUC__ >= 4
+#if (__GNUC__ >= 4) || (__clang_major__ >= 4)
 # undef isnanf
-# define isnanf(x) __builtin_isnanf ((float)(x))
+# define isnanf(x) __builtin_isnan ((float)(x))
 #elif defined isnan
 # undef isnanf
 # define isnanf(x) isnan ((float)(x))
@@ -169,7 +169,7 @@ int main()
       m.value = NaN ();
       /* Set the bits below the exponent to 01111...111.  */
       m.word[0] &= -1U << FLT_EXPBIT0_BIT;
-      m.word[0] |= 1U << (FLT_EXPBIT0_BIT - 1) - 1;
+      m.word[0] |= (1U << (FLT_EXPBIT0_BIT - 1)) - 1;
       if (!isnanf (m.value))
         result |= 4;
     }

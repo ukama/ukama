@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Test whether a traditional french locale is installed.
-: ${LOCALE_FR=fr_FR}
+: "${LOCALE_FR=fr_FR}"
 if test $LOCALE_FR != none; then
   testlocale=$LOCALE_FR
 else
@@ -14,8 +14,8 @@ else
 fi
 
 LC_ALL=$testlocale \
-./test-u32-vasnprintf1${EXEEXT} \
+${CHECKER} ./test-u32-vasnprintf1${EXEEXT} \
   || exit 1
 
 LC_ALL=$testlocale \
-./test-u32-vasnprintf2${EXEEXT}
+${CHECKER} ./test-u32-vasnprintf2${EXEEXT}

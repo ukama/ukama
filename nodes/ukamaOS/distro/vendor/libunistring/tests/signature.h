@@ -1,9 +1,9 @@
 /* Macro for checking that a function declaration is compliant.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -43,6 +43,6 @@
 # define SIGNATURE_CHECK1(fn, ret, args, id) \
   SIGNATURE_CHECK2 (fn, ret, args, id) /* macroexpand line */
 # define SIGNATURE_CHECK2(fn, ret, args, id) \
-  static ret (* _GL_UNUSED signature_check ## id) args = fn
+  _GL_UNUSED static ret (*signature_check ## id) args = fn
 
 #endif /* SIGNATURE_CHECK */

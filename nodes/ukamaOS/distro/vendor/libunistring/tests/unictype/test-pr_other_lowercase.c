@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -24,6 +24,7 @@
     { 0x02E0, 0x02E4 },
     { 0x0345, 0x0345 },
     { 0x037A, 0x037A },
+    { 0x10FC, 0x10FC },
     { 0x1D2C, 0x1D6A },
     { 0x1D78, 0x1D78 },
     { 0x1D9B, 0x1DBF },
@@ -35,8 +36,15 @@
     { 0x2C7C, 0x2C7D },
     { 0xA69C, 0xA69D },
     { 0xA770, 0xA770 },
+    { 0xA7F2, 0xA7F4 },
     { 0xA7F8, 0xA7F9 },
-    { 0xAB5C, 0xAB5F }
+    { 0xAB5C, 0xAB5F },
+    { 0xAB69, 0xAB69 },
+    { 0x10780, 0x10780 },
+    { 0x10783, 0x10785 },
+    { 0x10787, 0x107B0 },
+    { 0x107B2, 0x107BA },
+    { 0x1E030, 0x1E06D }
 
 #define PREDICATE(c) uc_is_property_other_lowercase (c)
 #include "test-predicate-part2.h"

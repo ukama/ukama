@@ -1,6 +1,30 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Arabic joining group of Unicode characters.  */
-/* Generated automatically by gen-uni-tables.c for Unicode 9.0.0.  */
+/* Generated automatically by gen-uni-tables.c for Unicode 15.0.0.  */
+
+/* Copyright (C) 2000-2022 Free Software Foundation, Inc.
+
+   This file is free software.
+   It is dual-licensed under "the GNU LGPLv3+ or the GNU GPLv2+".
+   You can redistribute it and/or modify it under either
+     - the terms of the GNU Lesser General Public License as published
+       by the Free Software Foundation, either version 3, or (at your
+       option) any later version, or
+     - the terms of the GNU General Public License as published by the
+       Free Software Foundation; either version 2, or (at your option)
+       any later version, or
+     - the same dual license "the GNU LGPLv3+ or the GNU GPLv2+".
+
+   This file is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License and the GNU General Public License
+   for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License and of the GNU General Public License along with this
+   program.  If not, see <https://www.gnu.org/licenses/>.  */
+
 #define joining_group_header_0 16
 #define joining_group_header_1 2
 #define joining_group_header_2 7
@@ -11,7 +35,7 @@ struct
   {
     int level1[2];
     short level2[2 << 9];
-    unsigned short level3[5 * 56 + 1];
+    unsigned short level3[7 * 56 + 1];
   }
 u_joining_group =
 {
@@ -19,7 +43,7 @@ u_joining_group =
   {
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,     0,   128,   256,    -1,
-       -1,   384,    -1,    -1,    -1,    -1,    -1,    -1,
+      384,   512,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
@@ -83,8 +107,8 @@ u_joining_group =
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-       -1,    -1,    -1,    -1,    -1,   512,    -1,    -1,
-       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+       -1,    -1,    -1,    -1,    -1,   640,    -1,    -1,
+       -1,    -1,   768,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
@@ -169,9 +193,16 @@ u_joining_group =
     0x0a74, 0x0204, 0x860c, 0xe1c3, 0x6cd8, 0x9d3a, 0x664e, 0x3a34,
     0x2041, 0x11a7, 0x3064, 0x2850, 0xb164, 0xc198, 0x3900, 0x2a9d,
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0xed59, 0xdb96, 0x7ef5, 0x61c1, 0x18f1, 0x0000,
+    0x0000, 0xc183, 0x3060, 0x0c18, 0x8306, 0x60c1, 0x1830, 0x060c,
+    0xc183, 0x0000, 0x9800, 0x8001, 0x840e, 0x72c5, 0x019c, 0x0000,
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0204, 0xc584,
-    0x6508, 0x3236, 0x28d9, 0x0396, 0x4a1c, 0xdd0e, 0x5028, 0x1001,
-    0x8408, 0xcc91, 0xc57a, 0x0002, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x6508, 0x3236, 0x28d9, 0x0396, 0x4a1c, 0xdd0e, 0x5028, 0x1109,
+    0x8408, 0xcc91, 0xc57a, 0x0812, 0x8804, 0x7023, 0x4085, 0x0e32,
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -182,6 +213,13 @@ u_joining_group =
     0x1020, 0x0800, 0x870a, 0x2244, 0x68b1, 0x223c, 0xca93, 0x92e5,
     0x6cc9, 0x9d3a, 0x27ce, 0x0000, 0x0005, 0x0000, 0x2000, 0x9d2a,
     0xab52, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0019, 0x0000, 0x0000, 0x0032, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x8000, 0x0032, 0x0640, 0x0194, 0x0065, 0x0ca0,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     0x0000
   }
 };

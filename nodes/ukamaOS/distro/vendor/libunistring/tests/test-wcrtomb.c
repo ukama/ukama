@@ -1,9 +1,9 @@
 /* Test of conversion of wide character to multibyte character.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -155,6 +155,10 @@ main (int argc, char *argv[])
           check_character (input + 1, 2);
           check_character (input + 3, 4);
         }
+        return 0;
+
+      case '5':
+        /* C locale; tested above.  */
         return 0;
       }
 

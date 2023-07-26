@@ -1,9 +1,9 @@
 /* Common macros used by gnulib tests.
-   Copyright (C) 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -22,10 +22,10 @@
 #include <stdlib.h>
 
 #ifndef FALLTHROUGH
-# if __GNUC__ < 7
-#  define FALLTHROUGH ((void) 0)
-# else
+# if (__GNUC__ >= 7) || (__clang_major__ >= 10)
 #  define FALLTHROUGH __attribute__ ((__fallthrough__))
+# else
+#  define FALLTHROUGH ((void) 0)
 # endif
 #endif
 
@@ -56,13 +56,41 @@
     {                                                                        \
       if (!(expr))                                                           \
         {                                                                    \
-          fprintf (ASSERT_STREAM, "%s:%d: assertion '%s' failed\n",     \
-                   __FILE__, __LINE__, #expr);                          \
+          fprintf (ASSERT_STREAM, "%s:%d: assertion '%s' failed\n",          \
+                   __FILE__, __LINE__, #expr);                               \
           fflush (ASSERT_STREAM);                                            \
           abort ();                                                          \
         }                                                                    \
     }                                                                        \
   while (0)
+
+/* Like ASSERT, except that it uses no stdio.
+   Requires #include <string.h> and #include <unistd.h>.  */
+#define ASSERT_NO_STDIO(expr) \
+  do                                                        \
+    {                                                       \
+      if (!(expr))                                          \
+        {                                                   \
+          WRITE_TO_STDERR (__FILE__);                       \
+          WRITE_TO_STDERR (":");                            \
+          WRITE_MACROEXPANDED_INTEGER_TO_STDERR (__LINE__); \
+          WRITE_TO_STDERR (": assertion '");                \
+          WRITE_TO_STDERR (#expr);                          \
+          WRITE_TO_STDERR ("' failed\n");                   \
+          abort ();                                         \
+        }                                                   \
+    }                                                       \
+  while (0)
+#define WRITE_MACROEXPANDED_INTEGER_TO_STDERR(integer) \
+  WRITE_INTEGER_TO_STDERR(integer)
+#define WRITE_INTEGER_TO_STDERR(integer) \
+  WRITE_TO_STDERR (#integer)
+#define WRITE_TO_STDERR(string_literal) \
+  {                                     \
+    const char *s = string_literal;     \
+    int ret = write (2, s, strlen (s)); \
+    (void) ret;                         \
+  }
 
 /* SIZEOF (array)
    returns the number of elements of an array.  It works for arrays that are

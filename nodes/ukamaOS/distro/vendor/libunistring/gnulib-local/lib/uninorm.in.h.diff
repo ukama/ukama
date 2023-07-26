@@ -1,11 +1,14 @@
-*** uninorm.in.h.orig	2009-04-05 12:38:24.000000000 +0200
---- uninorm.in.h	2009-04-12 04:31:52.000000000 +0200
+*** uninorm.in.h.orig	2021-08-07 14:40:34.920237057 +0200
+--- uninorm.in.h	2021-08-08 02:17:17.145608518 +0200
 ***************
 *** 18,23 ****
---- 18,26 ----
+--- 18,29 ----
   #ifndef _UNINORM_H
   #define _UNINORM_H
   
++ /* Get common macros for C.  */
++ #include <unistring/cdefs.h>
++ 
 + /* Get LIBUNISTRING_DLL_VARIABLE.  */
 + #include <unistring/woe32dll.h>
 + 

@@ -1,9 +1,9 @@
 /* Test of line breaking of strings.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -24,11 +24,12 @@
 
 #include "macros.h"
 
-int
-main ()
+static void
+test_function (void (*my_ulc_possible_linebreaks) (const char *, size_t, const char *, char *_UC_RESTRICT),
+               int version)
 {
   /* Test case n = 0.  */
-  ulc_possible_linebreaks (NULL, 0, "GB18030", NULL);
+  my_ulc_possible_linebreaks (NULL, 0, "GB18030", NULL);
 
 #if HAVE_ICONV
   {
@@ -38,17 +39,40 @@ main ()
     char *p = (char *) malloc (SIZEOF (input));
     size_t i;
 
-    ulc_possible_linebreaks (input, SIZEOF (input), "ISO-8859-1", p);
+    my_ulc_possible_linebreaks (input, SIZEOF (input), "ISO-8859-1", p);
     for (i = 0; i < 36; i++)
       {
         ASSERT (p[i] == (i == 35 ? UC_BREAK_MANDATORY :
-                         i == 5 || i == 11 || i == 15 || i == 16
+                         i == 5 || i == 11 || i == 15
                          || i == 31 ? UC_BREAK_POSSIBLE :
                          UC_BREAK_PROHIBITED));
       }
     free (p);
   }
+
+  /* Test line breaking in a string with HTML markup.  */
+  {
+    static const char input[21] = "<P>Some sentence.</P>";
+    char *p = (char *) malloc (SIZEOF (input));
+    size_t i;
+
+    my_ulc_possible_linebreaks (input, SIZEOF (input), "UTF-8", p);
+    for (i = 0; i < 21; i++)
+      {
+        ASSERT (p[i] == (i == 8 || i == 17 || i == 19 ? UC_BREAK_POSSIBLE :
+                         UC_BREAK_PROHIBITED));
+      }
+    free (p);
+  }
 #endif
+}
+
+int
+main ()
+{
+  test_function (ulc_possible_linebreaks, 2);
+#undef ulc_possible_linebreaks
+  test_function (ulc_possible_linebreaks, 1);
 
   return 0;
 }

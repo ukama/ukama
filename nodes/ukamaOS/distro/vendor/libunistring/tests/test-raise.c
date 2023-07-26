@@ -1,9 +1,9 @@
 /* Test raising a signal.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -17,6 +17,7 @@
 #include <config.h>
 
 #include <signal.h>
+#include <unistd.h>
 
 #include "signature.h"
 SIGNATURE_CHECK (raise, int, (int));
@@ -31,7 +32,7 @@ SIGNATURE_CHECK (raise, int, (int));
 static _Noreturn void
 handler (int sig)
 {
-  exit (0);
+  _exit (0);
 }
 
 int

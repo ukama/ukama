@@ -1,9 +1,9 @@
 /* Test of uN_cmp() functions.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -20,7 +20,10 @@ static void
 test_cmp (void)
 {
   /* Test equal / not equal distinction.  */
-  ASSERT (U_CMP (zerosize_ptr (), zerosize_ptr (), 0) == 0);
+  void *page_boundary1 = zerosize_ptr ();
+  void *page_boundary2 = zerosize_ptr ();
+  if (page_boundary1 && page_boundary2)
+    ASSERT (U_CMP (page_boundary1, page_boundary2, 0) == 0);
   {
     static const UNIT input1[] = { 'f', 'o', 'o', 0 };
     static const UNIT input2[] = { 'f', 'o', 'o', 'b', 'a', 'r', 0 };

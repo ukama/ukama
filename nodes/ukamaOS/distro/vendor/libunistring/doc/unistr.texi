@@ -20,9 +20,9 @@ essentially the equivalent of what @code{<string.h>} is for C strings.
 @cindex well-formed
 The following function is available to verify the integrity of a Unicode string.
 
-@deftypefun {const uint8_t *} u8_check (const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx {const uint16_t *} u16_check (const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx {const uint32_t *} u32_check (const uint32_t *@var{s}, size_t @var{n})
+@deftypefun {const uint8_t *} u8_check (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx {const uint16_t *} u16_check (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx {const uint32_t *} u32_check (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 This function checks whether a Unicode string is well-formed.
 It returns NULL if valid, or a pointer to the first invalid unit otherwise.
 @end deftypefun
@@ -33,42 +33,42 @@ It returns NULL if valid, or a pointer to the first invalid unit otherwise.
 @cindex converting
 The following functions perform conversions between the different forms of Unicode strings.
 
-@deftypefun {uint16_t *} u8_to_u16 (const uint8_t *@var{s}, size_t @var{n}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint16_t *} u8_to_u16 (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts an UTF-8 string to an UTF-16 string.
 
 The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint32_t *} u8_to_u32 (const uint8_t *@var{s}, size_t @var{n}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint32_t *} u8_to_u32 (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts an UTF-8 string to an UTF-32 string.
 
 The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint8_t *} u16_to_u8 (const uint16_t *@var{s}, size_t @var{n}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u16_to_u8 (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts an UTF-16 string to an UTF-8 string.
 
 The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint32_t *} u16_to_u32 (const uint16_t *@var{s}, size_t @var{n}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint32_t *} u16_to_u32 (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts an UTF-16 string to an UTF-32 string.
 
 The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint8_t *} u32_to_u8 (const uint32_t *@var{s}, size_t @var{n}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u32_to_u8 (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts an UTF-32 string to an UTF-8 string.
 
 The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun {uint16_t *} u32_to_u16 (const uint32_t *@var{s}, size_t @var{n}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint16_t *} u32_to_u16 (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts an UTF-32 string to an UTF-16 string.
 
 The @var{resultbuf} and @var{lengthp} arguments are as described in
@@ -94,9 +94,9 @@ chapter @ref{Conventions}.
 The following functions inspect and return details about the first character
 in a Unicode string.
 
-@deftypefun int u8_mblen (const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx int u16_mblen (const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx int u32_mblen (const uint32_t *@var{s}, size_t @var{n})
+@deftypefun int u8_mblen (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx int u16_mblen (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx int u32_mblen (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 Returns the length (number of units) of the first character in @var{s}, which
 is no longer than @var{n}.  Returns 0 if it is the NUL character.  Returns -1
 upon failure.
@@ -105,9 +105,9 @@ This function is similar to @posixfunc{mblen}, except that it operates on a
 Unicode string and that @var{s} must not be NULL.
 @end deftypefun
 
-@deftypefun int u8_mbtouc (ucs4_t *@var{puc}, const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx int u16_mbtouc (ucs4_t *@var{puc}, const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx int u32_mbtouc (ucs4_t *@var{puc}, const uint32_t *@var{s}, size_t @var{n})
+@deftypefun int u8_mbtouc (ucs4_t@tie{}*@var{puc}, const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx int u16_mbtouc (ucs4_t@tie{}*@var{puc}, const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx int u32_mbtouc (ucs4_t@tie{}*@var{puc}, const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 Returns the length (number of units) of the first character in @var{s},
 putting its @code{ucs4_t} representation in @code{*@var{puc}}.  Upon failure,
 @code{*@var{puc}} is set to @code{0xfffd}, and an appropriate number of units
@@ -124,17 +124,17 @@ Unicode string, @var{puc} and @var{s} must not be NULL, @var{n} must be > 0,
 and the NUL character is not treated specially.
 @end deftypefun
 
-@deftypefun int u8_mbtouc_unsafe (ucs4_t *@var{puc}, const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx int u16_mbtouc_unsafe (ucs4_t *@var{puc}, const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx int u32_mbtouc_unsafe (ucs4_t *@var{puc}, const uint32_t *@var{s}, size_t @var{n})
+@deftypefun int u8_mbtouc_unsafe (ucs4_t@tie{}*@var{puc}, const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx int u16_mbtouc_unsafe (ucs4_t@tie{}*@var{puc}, const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx int u32_mbtouc_unsafe (ucs4_t@tie{}*@var{puc}, const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 This function is identical to @code{u8_mbtouc}/@code{u16_mbtouc}/@code{u32_mbtouc}.
 Earlier versions of this function performed fewer range-checks on the sequence
 of units.
 @end deftypefun
 
-@deftypefun int u8_mbtoucr (ucs4_t *@var{puc}, const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx int u16_mbtoucr (ucs4_t *@var{puc}, const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx int u32_mbtoucr (ucs4_t *@var{puc}, const uint32_t *@var{s}, size_t @var{n})
+@deftypefun int u8_mbtoucr (ucs4_t@tie{}*@var{puc}, const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx int u16_mbtoucr (ucs4_t@tie{}*@var{puc}, const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx int u32_mbtoucr (ucs4_t@tie{}*@var{puc}, const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 Returns the length (number of units) of the first character in @var{s},
 putting its @code{ucs4_t} representation in @code{*@var{puc}}.  Upon failure,
 @code{*@var{puc}} is set to @code{0xfffd}, and -1 is returned for an invalid
@@ -152,9 +152,9 @@ gives more details about the failure, similar to @posixfunc{mbrtowc}.
 The following function stores a Unicode character as a Unicode string in
 memory.
 
-@deftypefun int u8_uctomb (uint8_t *@var{s}, ucs4_t @var{uc}, int @var{n})
-@deftypefunx int u16_uctomb (uint16_t *@var{s}, ucs4_t @var{uc}, int @var{n})
-@deftypefunx int u32_uctomb (uint32_t *@var{s}, ucs4_t @var{uc}, int @var{n})
+@deftypefun int u8_uctomb (uint8_t@tie{}*@var{s}, ucs4_t@tie{}@var{uc}, ptrdiff_t@tie{}@var{n})
+@deftypefunx int u16_uctomb (uint16_t@tie{}*@var{s}, ucs4_t@tie{}@var{uc}, ptrdiff_t@tie{}@var{n})
+@deftypefunx int u32_uctomb (uint32_t@tie{}*@var{s}, ucs4_t@tie{}@var{uc}, ptrdiff_t@tie{}@var{n})
 Puts the multibyte character represented by @var{uc} in @var{s}, returning its
 length.  Returns -1 upon failure, -2 if the number of available units, @var{n},
 is too small.  The latter case cannot occur if @var{n} >= 6/2/1, respectively.
@@ -170,18 +170,18 @@ specified.
 @cindex copying
 The following functions copy Unicode strings in memory.
 
-@deftypefun {uint8_t *} u8_cpy (uint8_t *@var{dest}, const uint8_t *@var{src}, size_t @var{n})
-@deftypefunx {uint16_t *} u16_cpy (uint16_t *@var{dest}, const uint16_t *@var{src}, size_t @var{n})
-@deftypefunx {uint32_t *} u32_cpy (uint32_t *@var{dest}, const uint32_t *@var{src}, size_t @var{n})
+@deftypefun {uint8_t *} u8_cpy (uint8_t@tie{}*@var{dest}, const@tie{}uint8_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint16_t *} u16_cpy (uint16_t@tie{}*@var{dest}, const@tie{}uint16_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint32_t *} u32_cpy (uint32_t@tie{}*@var{dest}, const@tie{}uint32_t@tie{}*@var{src}, size_t@tie{}@var{n})
 Copies @var{n} units from @var{src} to @var{dest}.
 
 This function is similar to @posixfunc{memcpy}, except that it operates on
 Unicode strings.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_move (uint8_t *@var{dest}, const uint8_t *@var{src}, size_t @var{n})
-@deftypefunx {uint16_t *} u16_move (uint16_t *@var{dest}, const uint16_t *@var{src}, size_t @var{n})
-@deftypefunx {uint32_t *} u32_move (uint32_t *@var{dest}, const uint32_t *@var{src}, size_t @var{n})
+@deftypefun {uint8_t *} u8_move (uint8_t@tie{}*@var{dest}, const@tie{}uint8_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint16_t *} u16_move (uint16_t@tie{}*@var{dest}, const@tie{}uint16_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint32_t *} u32_move (uint32_t@tie{}*@var{dest}, const@tie{}uint32_t@tie{}*@var{src}, size_t@tie{}@var{n})
 Copies @var{n} units from @var{src} to @var{dest}, guaranteeing correct
 behavior for overlapping memory areas.
 
@@ -191,9 +191,9 @@ Unicode strings.
 
 The following function fills a Unicode string.
 
-@deftypefun {uint8_t *} u8_set (uint8_t *@var{s}, ucs4_t @var{uc}, size_t @var{n})
-@deftypefunx {uint16_t *} u16_set (uint16_t *@var{s}, ucs4_t @var{uc}, size_t @var{n})
-@deftypefunx {uint32_t *} u32_set (uint32_t *@var{s}, ucs4_t @var{uc}, size_t @var{n})
+@deftypefun {uint8_t *} u8_set (uint8_t@tie{}*@var{s}, ucs4_t@tie{}@var{uc}, size_t@tie{}@var{n})
+@deftypefunx {uint16_t *} u16_set (uint16_t@tie{}*@var{s}, ucs4_t@tie{}@var{uc}, size_t@tie{}@var{n})
+@deftypefunx {uint32_t *} u32_set (uint32_t@tie{}*@var{s}, ucs4_t@tie{}@var{uc}, size_t@tie{}@var{n})
 Sets the first @var{n} characters of @var{s} to @var{uc}.  @var{uc} should be
 a character that occupies only 1 unit.
 
@@ -207,9 +207,9 @@ Unicode strings.
 @cindex comparing
 The following function compares two Unicode strings of the same length.
 
-@deftypefun int u8_cmp (const uint8_t *@var{s1}, const uint8_t *@var{s2}, size_t @var{n})
-@deftypefunx int u16_cmp (const uint16_t *@var{s1}, const uint16_t *@var{s2}, size_t @var{n})
-@deftypefunx int u32_cmp (const uint32_t *@var{s1}, const uint32_t *@var{s2}, size_t @var{n})
+@deftypefun int u8_cmp (const@tie{}uint8_t@tie{}*@var{s1}, const@tie{}uint8_t@tie{}*@var{s2}, size_t@tie{}@var{n})
+@deftypefunx int u16_cmp (const@tie{}uint16_t@tie{}*@var{s1}, const@tie{}uint16_t@tie{}*@var{s2}, size_t@tie{}@var{n})
+@deftypefunx int u32_cmp (const@tie{}uint32_t@tie{}*@var{s1}, const@tie{}uint32_t@tie{}*@var{s2}, size_t@tie{}@var{n})
 Compares @var{s1} and @var{s2}, each of length @var{n}, lexicographically.
 Returns a negative value if @var{s1} compares smaller than @var{s2},
 a positive value if @var{s1} compares larger than @var{s2}, or 0 if
@@ -222,9 +222,9 @@ Unicode strings.
 The following function compares two Unicode strings of possibly different
 lengths.
 
-@deftypefun int u8_cmp2 (const uint8_t *@var{s1}, size_t @var{n1}, const uint8_t *@var{s2}, size_t @var{n2})
-@deftypefunx int u16_cmp2 (const uint16_t *@var{s1}, size_t @var{n1}, const uint16_t *@var{s2}, size_t @var{n2})
-@deftypefunx int u32_cmp2 (const uint32_t *@var{s1}, size_t @var{n1}, const uint32_t *@var{s2}, size_t @var{n2})
+@deftypefun int u8_cmp2 (const@tie{}uint8_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint8_t@tie{}*@var{s2}, size_t@tie{}@var{n2})
+@deftypefunx int u16_cmp2 (const@tie{}uint16_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint16_t@tie{}*@var{s2}, size_t@tie{}@var{n2})
+@deftypefunx int u32_cmp2 (const@tie{}uint32_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint32_t@tie{}*@var{s2}, size_t@tie{}@var{n2})
 Compares @var{s1} and @var{s2}, lexicographically.
 Returns a negative value if @var{s1} compares smaller than @var{s2},
 a positive value if @var{s1} compares larger than @var{s2}, or 0 if
@@ -240,9 +240,9 @@ operates on Unicode strings.
 @cindex searching, for a character
 The following function searches for a given Unicode character.
 
-@deftypefun {uint8_t *} u8_chr (const uint8_t *@var{s}, size_t @var{n}, ucs4_t @var{uc})
-@deftypefunx {uint16_t *} u16_chr (const uint16_t *@var{s}, size_t @var{n}, ucs4_t @var{uc})
-@deftypefunx {uint32_t *} u32_chr (const uint32_t *@var{s}, size_t @var{n}, ucs4_t @var{uc})
+@deftypefun {uint8_t *} u8_chr (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, ucs4_t@tie{}@var{uc})
+@deftypefunx {uint16_t *} u16_chr (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, ucs4_t@tie{}@var{uc})
+@deftypefunx {uint32_t *} u32_chr (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, ucs4_t@tie{}@var{uc})
 Searches the string at @var{s} for @var{uc}.  Returns a pointer to the first
 occurrence of @var{uc} in @var{s}, or NULL if @var{uc} does not occur in
 @var{s}.
@@ -257,9 +257,9 @@ Unicode strings.
 @cindex counting
 The following function counts the number of Unicode characters.
 
-@deftypefun size_t u8_mbsnlen (const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx size_t u16_mbsnlen (const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx size_t u32_mbsnlen (const uint32_t *@var{s}, size_t @var{n})
+@deftypefun size_t u8_mbsnlen (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx size_t u16_mbsnlen (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx size_t u32_mbsnlen (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 Counts and returns the number of Unicode characters in the @var{n} units
 from @var{s}.
 
@@ -273,9 +273,9 @@ it operates on Unicode strings.
 @cindex duplicating
 The following function copies a Unicode string.
 
-@deftypefun {uint8_t *} u8_cpy_alloc (const uint8_t *@var{s}, size_t @var{n})
-@deftypefunx {uint16_t *} u16_cpy_alloc (const uint16_t *@var{s}, size_t @var{n})
-@deftypefunx {uint32_t *} u32_cpy_alloc (const uint32_t *@var{s}, size_t @var{n})
+@deftypefun {uint8_t *} u8_cpy_alloc (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx {uint16_t *} u16_cpy_alloc (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n})
+@deftypefunx {uint32_t *} u32_cpy_alloc (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n})
 Makes a freshly allocated copy of @var{s}, of length @var{n}.
 @end deftypefun
 
@@ -299,25 +299,25 @@ Makes a freshly allocated copy of @var{s}, of length @var{n}.
 The following functions inspect and return details about the first character
 in a Unicode string.
 
-@deftypefun int u8_strmblen (const uint8_t *@var{s})
-@deftypefunx int u16_strmblen (const uint16_t *@var{s})
-@deftypefunx int u32_strmblen (const uint32_t *@var{s})
+@deftypefun int u8_strmblen (const@tie{}uint8_t@tie{}*@var{s})
+@deftypefunx int u16_strmblen (const@tie{}uint16_t@tie{}*@var{s})
+@deftypefunx int u32_strmblen (const@tie{}uint32_t@tie{}*@var{s})
 Returns the length (number of units) of the first character in @var{s}.
 Returns 0 if it is the NUL character.  Returns -1 upon failure.
 @end deftypefun
 
 @cindex iterating
-@deftypefun int u8_strmbtouc (ucs4_t *@var{puc}, const uint8_t *@var{s})
-@deftypefunx int u16_strmbtouc (ucs4_t *@var{puc}, const uint16_t *@var{s})
-@deftypefunx int u32_strmbtouc (ucs4_t *@var{puc}, const uint32_t *@var{s})
+@deftypefun int u8_strmbtouc (ucs4_t@tie{}*@var{puc}, const@tie{}uint8_t@tie{}*@var{s})
+@deftypefunx int u16_strmbtouc (ucs4_t@tie{}*@var{puc}, const@tie{}uint16_t@tie{}*@var{s})
+@deftypefunx int u32_strmbtouc (ucs4_t@tie{}*@var{puc}, const@tie{}uint32_t@tie{}*@var{s})
 Returns the length (number of units) of the first character in @var{s},
 putting its @code{ucs4_t} representation in @code{*@var{puc}}.  Returns 0
 if it is the NUL character.  Returns -1 upon failure.
 @end deftypefun
 
-@deftypefun {const uint8_t *} u8_next (ucs4_t *@var{puc}, const uint8_t *@var{s})
-@deftypefunx {const uint16_t *} u16_next (ucs4_t *@var{puc}, const uint16_t *@var{s})
-@deftypefunx {const uint32_t *} u32_next (ucs4_t *@var{puc}, const uint32_t *@var{s})
+@deftypefun {const uint8_t *} u8_next (ucs4_t@tie{}*@var{puc}, const@tie{}uint8_t@tie{}*@var{s})
+@deftypefunx {const uint16_t *} u16_next (ucs4_t@tie{}*@var{puc}, const@tie{}uint16_t@tie{}*@var{s})
+@deftypefunx {const uint32_t *} u32_next (ucs4_t@tie{}*@var{puc}, const@tie{}uint32_t@tie{}*@var{s})
 Forward iteration step.  Advances the pointer past the next character,
 or returns NULL if the end of the string has been reached.  Puts the
 character's @code{ucs4_t} representation in @code{*@var{puc}}.
@@ -326,9 +326,9 @@ character's @code{ucs4_t} representation in @code{*@var{puc}}.
 The following function inspects and returns details about the previous
 character in a Unicode string.
 
-@deftypefun {const uint8_t *} u8_prev (ucs4_t *@var{puc}, const uint8_t *@var{s}, const uint8_t *@var{start})
-@deftypefunx {const uint16_t *} u16_prev (ucs4_t *@var{puc}, const uint16_t *@var{s}, const uint16_t *@var{start})
-@deftypefunx {const uint32_t *} u32_prev (ucs4_t *@var{puc}, const uint32_t *@var{s}, const uint32_t *@var{start})
+@deftypefun {const uint8_t *} u8_prev (ucs4_t@tie{}*@var{puc}, const@tie{}uint8_t@tie{}*@var{s}, const@tie{}uint8_t@tie{}*@var{start})
+@deftypefunx {const uint16_t *} u16_prev (ucs4_t@tie{}*@var{puc}, const@tie{}uint16_t@tie{}*@var{s}, const@tie{}uint16_t@tie{}*@var{start})
+@deftypefunx {const uint32_t *} u32_prev (ucs4_t@tie{}*@var{puc}, const@tie{}uint32_t@tie{}*@var{s}, const@tie{}uint32_t@tie{}*@var{start})
 Backward iteration step.  Advances the pointer to point to the previous
 character (the one that ends at @code{@var{s}}), or returns NULL if the
 beginning of the string (specified by @code{@var{start}}) had been reached.
@@ -341,18 +341,18 @@ Note that this function works only on well-formed Unicode strings.
 
 The following functions determine the length of a Unicode string.
 
-@deftypefun size_t u8_strlen (const uint8_t *@var{s})
-@deftypefunx size_t u16_strlen (const uint16_t *@var{s})
-@deftypefunx size_t u32_strlen (const uint32_t *@var{s})
+@deftypefun size_t u8_strlen (const@tie{}uint8_t@tie{}*@var{s})
+@deftypefunx size_t u16_strlen (const@tie{}uint16_t@tie{}*@var{s})
+@deftypefunx size_t u32_strlen (const@tie{}uint32_t@tie{}*@var{s})
 Returns the number of units in @var{s}.
 
 This function is similar to @posixfunc{strlen} and @posixfunc{wcslen}, except
 that it operates on Unicode strings.
 @end deftypefun
 
-@deftypefun size_t u8_strnlen (const uint8_t *@var{s}, size_t @var{maxlen})
-@deftypefunx size_t u16_strnlen (const uint16_t *@var{s}, size_t @var{maxlen})
-@deftypefunx size_t u32_strnlen (const uint32_t *@var{s}, size_t @var{maxlen})
+@deftypefun size_t u8_strnlen (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{maxlen})
+@deftypefunx size_t u16_strnlen (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{maxlen})
+@deftypefunx size_t u32_strnlen (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{maxlen})
 Returns the number of units in @var{s}, but at most @var{maxlen}.
 
 This function is similar to @posixfunc{strnlen} and @posixfunc{wcsnlen}, except
@@ -365,18 +365,18 @@ that it operates on Unicode strings.
 @cindex copying
 The following functions copy portions of Unicode strings in memory.
 
-@deftypefun {uint8_t *} u8_strcpy (uint8_t *@var{dest}, const uint8_t *@var{src})
-@deftypefunx {uint16_t *} u16_strcpy (uint16_t *@var{dest}, const uint16_t *@var{src})
-@deftypefunx {uint32_t *} u32_strcpy (uint32_t *@var{dest}, const uint32_t *@var{src})
+@deftypefun {uint8_t *} u8_strcpy (uint8_t@tie{}*@var{dest}, const@tie{}uint8_t@tie{}*@var{src})
+@deftypefunx {uint16_t *} u16_strcpy (uint16_t@tie{}*@var{dest}, const@tie{}uint16_t@tie{}*@var{src})
+@deftypefunx {uint32_t *} u32_strcpy (uint32_t@tie{}*@var{dest}, const@tie{}uint32_t@tie{}*@var{src})
 Copies @var{src} to @var{dest}.
 
 This function is similar to @posixfunc{strcpy} and @posixfunc{wcscpy}, except
 that it operates on Unicode strings.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_stpcpy (uint8_t *@var{dest}, const uint8_t *@var{src})
-@deftypefunx {uint16_t *} u16_stpcpy (uint16_t *@var{dest}, const uint16_t *@var{src})
-@deftypefunx {uint32_t *} u32_stpcpy (uint32_t *@var{dest}, const uint32_t *@var{src})
+@deftypefun {uint8_t *} u8_stpcpy (uint8_t@tie{}*@var{dest}, const@tie{}uint8_t@tie{}*@var{src})
+@deftypefunx {uint16_t *} u16_stpcpy (uint16_t@tie{}*@var{dest}, const@tie{}uint16_t@tie{}*@var{src})
+@deftypefunx {uint32_t *} u32_stpcpy (uint32_t@tie{}*@var{dest}, const@tie{}uint32_t@tie{}*@var{src})
 Copies @var{src} to @var{dest}, returning the address of the terminating NUL
 in @var{dest}.
 
@@ -384,18 +384,18 @@ This function is similar to @posixfunc{stpcpy}, except that it operates on
 Unicode strings.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_strncpy (uint8_t *@var{dest}, const uint8_t *@var{src}, size_t @var{n})
-@deftypefunx {uint16_t *} u16_strncpy (uint16_t *@var{dest}, const uint16_t *@var{src}, size_t @var{n})
-@deftypefunx {uint32_t *} u32_strncpy (uint32_t *@var{dest}, const uint32_t *@var{src}, size_t @var{n})
+@deftypefun {uint8_t *} u8_strncpy (uint8_t@tie{}*@var{dest}, const@tie{}uint8_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint16_t *} u16_strncpy (uint16_t@tie{}*@var{dest}, const@tie{}uint16_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint32_t *} u32_strncpy (uint32_t@tie{}*@var{dest}, const@tie{}uint32_t@tie{}*@var{src}, size_t@tie{}@var{n})
 Copies no more than @var{n} units of @var{src} to @var{dest}.
 
 This function is similar to @posixfunc{strncpy} and @posixfunc{wcsncpy}, except
 that it operates on Unicode strings.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_stpncpy (uint8_t *@var{dest}, const uint8_t *@var{src}, size_t @var{n})
-@deftypefunx {uint16_t *} u16_stpncpy (uint16_t *@var{dest}, const uint16_t *@var{src}, size_t @var{n})
-@deftypefunx {uint32_t *} u32_stpncpy (uint32_t *@var{dest}, const uint32_t *@var{src}, size_t @var{n})
+@deftypefun {uint8_t *} u8_stpncpy (uint8_t@tie{}*@var{dest}, const@tie{}uint8_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint16_t *} u16_stpncpy (uint16_t@tie{}*@var{dest}, const@tie{}uint16_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint32_t *} u32_stpncpy (uint32_t@tie{}*@var{dest}, const@tie{}uint32_t@tie{}*@var{src}, size_t@tie{}@var{n})
 Copies no more than @var{n} units of @var{src} to @var{dest}.  Returns a
 pointer past the last non-NUL unit written into @var{dest}.  In other words,
 if the units written into @var{dest} include a NUL, the return value is the
@@ -406,18 +406,18 @@ This function is similar to @posixfunc{stpncpy}, except that it operates on
 Unicode strings.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_strcat (uint8_t *@var{dest}, const uint8_t *@var{src})
-@deftypefunx {uint16_t *} u16_strcat (uint16_t *@var{dest}, const uint16_t *@var{src})
-@deftypefunx {uint32_t *} u32_strcat (uint32_t *@var{dest}, const uint32_t *@var{src})
+@deftypefun {uint8_t *} u8_strcat (uint8_t@tie{}*@var{dest}, const@tie{}uint8_t@tie{}*@var{src})
+@deftypefunx {uint16_t *} u16_strcat (uint16_t@tie{}*@var{dest}, const@tie{}uint16_t@tie{}*@var{src})
+@deftypefunx {uint32_t *} u32_strcat (uint32_t@tie{}*@var{dest}, const@tie{}uint32_t@tie{}*@var{src})
 Appends @var{src} onto @var{dest}.
 
 This function is similar to @posixfunc{strcat} and @posixfunc{wcscat}, except
 that it operates on Unicode strings.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_strncat (uint8_t *@var{dest}, const uint8_t *@var{src}, size_t @var{n})
-@deftypefunx {uint16_t *} u16_strncat (uint16_t *@var{dest}, const uint16_t *@var{src}, size_t @var{n})
-@deftypefunx {uint32_t *} u32_strncat (uint32_t *@var{dest}, const uint32_t *@var{src}, size_t @var{n})
+@deftypefun {uint8_t *} u8_strncat (uint8_t@tie{}*@var{dest}, const@tie{}uint8_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint16_t *} u16_strncat (uint16_t@tie{}*@var{dest}, const@tie{}uint16_t@tie{}*@var{src}, size_t@tie{}@var{n})
+@deftypefunx {uint32_t *} u32_strncat (uint32_t@tie{}*@var{dest}, const@tie{}uint32_t@tie{}*@var{src}, size_t@tie{}@var{n})
 Appends no more than @var{n} units of @var{src} onto @var{dest}.
 
 This function is similar to @posixfunc{strncat} and @posixfunc{wcsncat}, except
@@ -430,9 +430,9 @@ that it operates on Unicode strings.
 @cindex comparing
 The following functions compare two Unicode strings.
 
-@deftypefun int u8_strcmp (const uint8_t *@var{s1}, const uint8_t *@var{s2})
-@deftypefunx int u16_strcmp (const uint16_t *@var{s1}, const uint16_t *@var{s2})
-@deftypefunx int u32_strcmp (const uint32_t *@var{s1}, const uint32_t *@var{s2})
+@deftypefun int u8_strcmp (const@tie{}uint8_t@tie{}*@var{s1}, const@tie{}uint8_t@tie{}*@var{s2})
+@deftypefunx int u16_strcmp (const@tie{}uint16_t@tie{}*@var{s1}, const@tie{}uint16_t@tie{}*@var{s2})
+@deftypefunx int u32_strcmp (const@tie{}uint32_t@tie{}*@var{s1}, const@tie{}uint32_t@tie{}*@var{s2})
 Compares @var{s1} and @var{s2}, lexicographically.
 Returns a negative value if @var{s1} compares smaller than @var{s2},
 a positive value if @var{s1} compares larger than @var{s2}, or 0 if
@@ -443,9 +443,9 @@ that it operates on Unicode strings.
 @end deftypefun
 
 @cindex comparing, with collation rules
-@deftypefun int u8_strcoll (const uint8_t *@var{s1}, const uint8_t *@var{s2})
-@deftypefunx int u16_strcoll (const uint16_t *@var{s1}, const uint16_t *@var{s2})
-@deftypefunx int u32_strcoll (const uint32_t *@var{s1}, const uint32_t *@var{s2})
+@deftypefun int u8_strcoll (const@tie{}uint8_t@tie{}*@var{s1}, const@tie{}uint8_t@tie{}*@var{s2})
+@deftypefunx int u16_strcoll (const@tie{}uint16_t@tie{}*@var{s1}, const@tie{}uint16_t@tie{}*@var{s2})
+@deftypefunx int u32_strcoll (const@tie{}uint32_t@tie{}*@var{s1}, const@tie{}uint32_t@tie{}*@var{s2})
 Compares @var{s1} and @var{s2} using the collation rules of the current
 locale.
 Returns -1 if @var{s1} < @var{s2}, 0 if @var{s1} = @var{s2}, 1 if
@@ -459,9 +459,9 @@ of the same string as having a large distance.  It is therefore better to
 use the function @code{u8_normcoll} instead of this one; see @ref{uninorm.h}.
 @end deftypefun
 
-@deftypefun int u8_strncmp (const uint8_t *@var{s1}, const uint8_t *@var{s2}, size_t @var{n})
-@deftypefunx int u16_strncmp (const uint16_t *@var{s1}, const uint16_t *@var{s2}, size_t @var{n})
-@deftypefunx int u32_strncmp (const uint32_t *@var{s1}, const uint32_t *@var{s2}, size_t @var{n})
+@deftypefun int u8_strncmp (const@tie{}uint8_t@tie{}*@var{s1}, const@tie{}uint8_t@tie{}*@var{s2}, size_t@tie{}@var{n})
+@deftypefunx int u16_strncmp (const@tie{}uint16_t@tie{}*@var{s1}, const@tie{}uint16_t@tie{}*@var{s2}, size_t@tie{}@var{n})
+@deftypefunx int u32_strncmp (const@tie{}uint32_t@tie{}*@var{s1}, const@tie{}uint32_t@tie{}*@var{s2}, size_t@tie{}@var{n})
 Compares no more than @var{n} units of @var{s1} and @var{s2}.
 
 This function is similar to @posixfunc{strncmp} and @posixfunc{wcsncmp}, except
@@ -474,9 +474,9 @@ that it operates on Unicode strings.
 @cindex duplicating
 The following function allocates a duplicate of a Unicode string.
 
-@deftypefun {uint8_t *} u8_strdup (const uint8_t *@var{s})
-@deftypefunx {uint16_t *} u16_strdup (const uint16_t *@var{s})
-@deftypefunx {uint32_t *} u32_strdup (const uint32_t *@var{s})
+@deftypefun {uint8_t *} u8_strdup (const@tie{}uint8_t@tie{}*@var{s})
+@deftypefunx {uint16_t *} u16_strdup (const@tie{}uint16_t@tie{}*@var{s})
+@deftypefunx {uint32_t *} u32_strdup (const@tie{}uint32_t@tie{}*@var{s})
 Duplicates @var{s}, returning an identical malloc'd string.
 
 This function is similar to @posixfunc{strdup} and @posixfunc{wcsdup}, except
@@ -489,18 +489,18 @@ that it operates on Unicode strings.
 @cindex searching, for a character
 The following functions search for a given Unicode character.
 
-@deftypefun {uint8_t *} u8_strchr (const uint8_t *@var{str}, ucs4_t @var{uc})
-@deftypefunx {uint16_t *} u16_strchr (const uint16_t *@var{str}, ucs4_t @var{uc})
-@deftypefunx {uint32_t *} u32_strchr (const uint32_t *@var{str}, ucs4_t @var{uc})
+@deftypefun {uint8_t *} u8_strchr (const@tie{}uint8_t@tie{}*@var{str}, ucs4_t@tie{}@var{uc})
+@deftypefunx {uint16_t *} u16_strchr (const@tie{}uint16_t@tie{}*@var{str}, ucs4_t@tie{}@var{uc})
+@deftypefunx {uint32_t *} u32_strchr (const@tie{}uint32_t@tie{}*@var{str}, ucs4_t@tie{}@var{uc})
 Finds the first occurrence of @var{uc} in @var{str}.
 
 This function is similar to @posixfunc{strchr} and @posixfunc{wcschr}, except
 that it operates on Unicode strings.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_strrchr (const uint8_t *@var{str}, ucs4_t @var{uc})
-@deftypefunx {uint16_t *} u16_strrchr (const uint16_t *@var{str}, ucs4_t @var{uc})
-@deftypefunx {uint32_t *} u32_strrchr (const uint32_t *@var{str}, ucs4_t @var{uc})
+@deftypefun {uint8_t *} u8_strrchr (const@tie{}uint8_t@tie{}*@var{str}, ucs4_t@tie{}@var{uc})
+@deftypefunx {uint16_t *} u16_strrchr (const@tie{}uint16_t@tie{}*@var{str}, ucs4_t@tie{}@var{uc})
+@deftypefunx {uint32_t *} u32_strrchr (const@tie{}uint32_t@tie{}*@var{str}, ucs4_t@tie{}@var{uc})
 Finds the last occurrence of @var{uc} in @var{str}.
 
 This function is similar to @posixfunc{strrchr} and @posixfunc{wcsrchr}, except
@@ -510,9 +510,9 @@ that it operates on Unicode strings.
 The following functions search for the first occurrence of some Unicode
 character in or outside a given set of Unicode characters.
 
-@deftypefun size_t u8_strcspn (const uint8_t *@var{str}, const uint8_t *@var{reject})
-@deftypefunx size_t u16_strcspn (const uint16_t *@var{str}, const uint16_t *@var{reject})
-@deftypefunx size_t u32_strcspn (const uint32_t *@var{str}, const uint32_t *@var{reject})
+@deftypefun size_t u8_strcspn (const@tie{}uint8_t@tie{}*@var{str}, const@tie{}uint8_t@tie{}*@var{reject})
+@deftypefunx size_t u16_strcspn (const@tie{}uint16_t@tie{}*@var{str}, const@tie{}uint16_t@tie{}*@var{reject})
+@deftypefunx size_t u32_strcspn (const@tie{}uint32_t@tie{}*@var{str}, const@tie{}uint32_t@tie{}*@var{reject})
 Returns the length of the initial segment of @var{str} which consists entirely
 of Unicode characters not in @var{reject}.
 
@@ -520,9 +520,9 @@ This function is similar to @posixfunc{strcspn} and @posixfunc{wcscspn}, except
 that it operates on Unicode strings.
 @end deftypefun
 
-@deftypefun size_t u8_strspn (const uint8_t *@var{str}, const uint8_t *@var{accept})
-@deftypefunx size_t u16_strspn (const uint16_t *@var{str}, const uint16_t *@var{accept})
-@deftypefunx size_t u32_strspn (const uint32_t *@var{str}, const uint32_t *@var{accept})
+@deftypefun size_t u8_strspn (const@tie{}uint8_t@tie{}*@var{str}, const@tie{}uint8_t@tie{}*@var{accept})
+@deftypefunx size_t u16_strspn (const@tie{}uint16_t@tie{}*@var{str}, const@tie{}uint16_t@tie{}*@var{accept})
+@deftypefunx size_t u32_strspn (const@tie{}uint32_t@tie{}*@var{str}, const@tie{}uint32_t@tie{}*@var{accept})
 Returns the length of the initial segment of @var{str} which consists entirely
 of Unicode characters in @var{accept}.
 
@@ -530,9 +530,9 @@ This function is similar to @posixfunc{strspn} and @posixfunc{wcsspn}, except
 that it operates on Unicode strings.
 @end deftypefun
 
-@deftypefun {uint8_t *} u8_strpbrk (const uint8_t *@var{str}, const uint8_t *@var{accept})
-@deftypefunx {uint16_t *} u16_strpbrk (const uint16_t *@var{str}, const uint16_t *@var{accept})
-@deftypefunx {uint32_t *} u32_strpbrk (const uint32_t *@var{str}, const uint32_t *@var{accept})
+@deftypefun {uint8_t *} u8_strpbrk (const@tie{}uint8_t@tie{}*@var{str}, const@tie{}uint8_t@tie{}*@var{accept})
+@deftypefunx {uint16_t *} u16_strpbrk (const@tie{}uint16_t@tie{}*@var{str}, const@tie{}uint16_t@tie{}*@var{accept})
+@deftypefunx {uint32_t *} u32_strpbrk (const@tie{}uint32_t@tie{}*@var{str}, const@tie{}uint32_t@tie{}*@var{accept})
 Finds the first occurrence in @var{str} of any character in @var{accept}.
 
 This function is similar to @posixfunc{strpbrk} and @posixfunc{wcspbrk}, except
@@ -546,24 +546,24 @@ that it operates on Unicode strings.
 The following functions search whether a given Unicode string is a substring
 of another Unicode string.
 
-@deftypefun {uint8_t *} u8_strstr (const uint8_t *@var{haystack}, const uint8_t *@var{needle})
-@deftypefunx {uint16_t *} u16_strstr (const uint16_t *@var{haystack}, const uint16_t *@var{needle})
-@deftypefunx {uint32_t *} u32_strstr (const uint32_t *@var{haystack}, const uint32_t *@var{needle})
+@deftypefun {uint8_t *} u8_strstr (const@tie{}uint8_t@tie{}*@var{haystack}, const@tie{}uint8_t@tie{}*@var{needle})
+@deftypefunx {uint16_t *} u16_strstr (const@tie{}uint16_t@tie{}*@var{haystack}, const@tie{}uint16_t@tie{}*@var{needle})
+@deftypefunx {uint32_t *} u32_strstr (const@tie{}uint32_t@tie{}*@var{haystack}, const@tie{}uint32_t@tie{}*@var{needle})
 Finds the first occurrence of @var{needle} in @var{haystack}.
 
 This function is similar to @posixfunc{strstr} and @posixfunc{wcsstr}, except
 that it operates on Unicode strings.
 @end deftypefun
 
-@deftypefun bool u8_startswith (const uint8_t *@var{str}, const uint8_t *@var{prefix})
-@deftypefunx bool u16_startswith (const uint16_t *@var{str}, const uint16_t *@var{prefix})
-@deftypefunx bool u32_startswith (const uint32_t *@var{str}, const uint32_t *@var{prefix})
+@deftypefun bool u8_startswith (const@tie{}uint8_t@tie{}*@var{str}, const@tie{}uint8_t@tie{}*@var{prefix})
+@deftypefunx bool u16_startswith (const@tie{}uint16_t@tie{}*@var{str}, const@tie{}uint16_t@tie{}*@var{prefix})
+@deftypefunx bool u32_startswith (const@tie{}uint32_t@tie{}*@var{str}, const@tie{}uint32_t@tie{}*@var{prefix})
 Tests whether @var{str} starts with @var{prefix}.
 @end deftypefun
 
-@deftypefun bool u8_endswith (const uint8_t *@var{str}, const uint8_t *@var{suffix})
-@deftypefunx bool u16_endswith (const uint16_t *@var{str}, const uint16_t *@var{suffix})
-@deftypefunx bool u32_endswith (const uint32_t *@var{str}, const uint32_t *@var{suffix})
+@deftypefun bool u8_endswith (const@tie{}uint8_t@tie{}*@var{str}, const@tie{}uint8_t@tie{}*@var{suffix})
+@deftypefunx bool u16_endswith (const@tie{}uint16_t@tie{}*@var{str}, const@tie{}uint16_t@tie{}*@var{suffix})
+@deftypefunx bool u32_endswith (const@tie{}uint32_t@tie{}*@var{str}, const@tie{}uint32_t@tie{}*@var{suffix})
 Tests whether @var{str} ends with @var{suffix}.
 @end deftypefun
 
@@ -572,9 +572,9 @@ Tests whether @var{str} ends with @var{suffix}.
 
 The following function does one step in tokenizing a Unicode string.
 
-@deftypefun {uint8_t *} u8_strtok (uint8_t *@var{str}, const uint8_t *@var{delim}, uint8_t **@var{ptr})
-@deftypefunx {uint16_t *} u16_strtok (uint16_t *@var{str}, const uint16_t *@var{delim}, uint16_t **@var{ptr})
-@deftypefunx {uint32_t *} u32_strtok (uint32_t *@var{str}, const uint32_t *@var{delim}, uint32_t **@var{ptr})
+@deftypefun {uint8_t *} u8_strtok (uint8_t@tie{}*@var{str}, const@tie{}uint8_t@tie{}*@var{delim}, uint8_t@tie{}**@var{ptr})
+@deftypefunx {uint16_t *} u16_strtok (uint16_t@tie{}*@var{str}, const@tie{}uint16_t@tie{}*@var{delim}, uint16_t@tie{}**@var{ptr})
+@deftypefunx {uint32_t *} u32_strtok (uint32_t@tie{}*@var{str}, const@tie{}uint32_t@tie{}*@var{delim}, uint32_t@tie{}**@var{ptr})
 Divides @var{str} into tokens separated by characters in @var{delim}.
 
 This function is similar to @posixfunc{strtok_r} and @posixfunc{wcstok}, except

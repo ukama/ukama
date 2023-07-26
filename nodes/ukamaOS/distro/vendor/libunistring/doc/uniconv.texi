@@ -9,7 +9,7 @@ The following function returns the locale encoding.
 
 @deftypefun {const char *} locale_charset ()
 Determines the current locale's character encoding, and canonicalizes it
-into one of the canonical names listed in @file{config.charset}.
+into one of the canonical names listed in @file{localcharset.h}.
 If the canonical name cannot be determined, the result is a non-canonical
 name.
 
@@ -37,6 +37,12 @@ This handler causes the function to return with @code{errno} set to
 This handler produces one question mark @samp{?} per unconvertible character.
 @end deftypevr
 
+@deftypevr Constant {enum iconv_ilseq_handler} iconveh_question_replacement_character
+This handler produces one U+FFFD per unconvertible character if that
+fits in the target encoding, otherwise one question mark @samp{?} per
+unconvertible character.
+@end deftypevr
+
 @deftypevr Constant {enum iconv_ilseq_handler} iconveh_escape_sequence
 This handler produces an escape sequence @code{\u@var{xxxx}} or
 @code{\U@var{xxxxxxxx}} for each unconvertible character.
@@ -46,9 +52,9 @@ This handler produces an escape sequence @code{\u@var{xxxx}} or
 The following functions convert between strings in a specified encoding and
 Unicode strings.
 
-@deftypefun {uint8_t *} u8_conv_from_encoding (const char *@var{fromcode}, enum iconv_ilseq_handler @var{handler}, const char *@var{src}, size_t @var{srclen}, size_t *@var{offsets}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_conv_from_encoding (const char *@var{fromcode}, enum iconv_ilseq_handler @var{handler}, const char *@var{src}, size_t @var{srclen}, size_t *@var{offsets}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_conv_from_encoding (const char *@var{fromcode}, enum iconv_ilseq_handler @var{handler}, const char *@var{src}, size_t @var{srclen}, size_t *@var{offsets}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_conv_from_encoding (const@tie{}char@tie{}*@var{fromcode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler}, const@tie{}char@tie{}*@var{src}, size_t@tie{}@var{srclen}, size_t@tie{}*@var{offsets}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_conv_from_encoding (const@tie{}char@tie{}*@var{fromcode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler}, const@tie{}char@tie{}*@var{src}, size_t@tie{}@var{srclen}, size_t@tie{}*@var{offsets}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_conv_from_encoding (const@tie{}char@tie{}*@var{fromcode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler}, const@tie{}char@tie{}*@var{src}, size_t@tie{}@var{srclen}, size_t@tie{}*@var{offsets}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts an entire string, possibly including NUL bytes, from one encoding
 to UTF-8 encoding.
 
@@ -78,9 +84,9 @@ In case of error: NULL is returned and @code{errno} is set.
 Particular @code{errno} values: @code{EINVAL}, @code{EILSEQ}, @code{ENOMEM}.
 @end deftypefun
 
-@deftypefun {char *} u8_conv_to_encoding (const char *@var{tocode}, enum iconv_ilseq_handler @var{handler}, const uint8_t *@var{src}, size_t @var{srclen}, size_t *@var{offsets}, char *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {char *} u16_conv_to_encoding (const char *@var{tocode}, enum iconv_ilseq_handler @var{handler}, const uint16_t *@var{src}, size_t @var{srclen}, size_t *@var{offsets}, char *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {char *} u32_conv_to_encoding (const char *@var{tocode}, enum iconv_ilseq_handler @var{handler}, const uint32_t *@var{src}, size_t @var{srclen}, size_t *@var{offsets}, char *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {char *} u8_conv_to_encoding (const@tie{}char@tie{}*@var{tocode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler}, const@tie{}uint8_t@tie{}*@var{src}, size_t@tie{}@var{srclen}, size_t@tie{}*@var{offsets}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {char *} u16_conv_to_encoding (const@tie{}char@tie{}*@var{tocode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler}, const@tie{}uint16_t@tie{}*@var{src}, size_t@tie{}@var{srclen}, size_t@tie{}*@var{offsets}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {char *} u32_conv_to_encoding (const@tie{}char@tie{}*@var{tocode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler}, const@tie{}uint32_t@tie{}*@var{src}, size_t@tie{}@var{srclen}, size_t@tie{}*@var{offsets}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts an entire Unicode string, possibly including NUL units, from UTF-8
 encoding to a given encoding.
 
@@ -113,9 +119,9 @@ Particular @code{errno} values: @code{EINVAL}, @code{EILSEQ}, @code{ENOMEM}.
 The following functions convert between NUL terminated strings in a specified
 encoding and NUL terminated Unicode strings.
 
-@deftypefun {uint8_t *} u8_strconv_from_encoding (const char *@var{string}, const char *@var{fromcode}, enum iconv_ilseq_handler @var{handler})
-@deftypefunx {uint16_t *} u16_strconv_from_encoding (const char *@var{string}, const char *@var{fromcode}, enum iconv_ilseq_handler @var{handler})
-@deftypefunx {uint32_t *} u32_strconv_from_encoding (const char *@var{string}, const char *@var{fromcode}, enum iconv_ilseq_handler @var{handler})
+@deftypefun {uint8_t *} u8_strconv_from_encoding (const@tie{}char@tie{}*@var{string}, const@tie{}char@tie{}*@var{fromcode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler})
+@deftypefunx {uint16_t *} u16_strconv_from_encoding (const@tie{}char@tie{}*@var{string}, const@tie{}char@tie{}*@var{fromcode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler})
+@deftypefunx {uint32_t *} u32_strconv_from_encoding (const@tie{}char@tie{}*@var{string}, const@tie{}char@tie{}*@var{fromcode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler})
 Converts a NUL terminated string from a given encoding.
 
 The result is @code{malloc} allocated, or NULL (with @var{errno} set) in case of error.
@@ -123,9 +129,9 @@ The result is @code{malloc} allocated, or NULL (with @var{errno} set) in case of
 Particular @code{errno} values: @code{EILSEQ}, @code{ENOMEM}.
 @end deftypefun
 
-@deftypefun {char *} u8_strconv_to_encoding (const uint8_t *@var{string}, const char *@var{tocode}, enum iconv_ilseq_handler @var{handler})
-@deftypefunx {char *} u16_strconv_to_encoding (const uint16_t *@var{string}, const char *@var{tocode}, enum iconv_ilseq_handler @var{handler})
-@deftypefunx {char *} u32_strconv_to_encoding (const uint32_t *@var{string}, const char *@var{tocode}, enum iconv_ilseq_handler @var{handler})
+@deftypefun {char *} u8_strconv_to_encoding (const@tie{}uint8_t@tie{}*@var{string}, const@tie{}char@tie{}*@var{tocode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler})
+@deftypefunx {char *} u16_strconv_to_encoding (const@tie{}uint16_t@tie{}*@var{string}, const@tie{}char@tie{}*@var{tocode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler})
+@deftypefunx {char *} u32_strconv_to_encoding (const@tie{}uint32_t@tie{}*@var{string}, const@tie{}char@tie{}*@var{tocode}, enum@tie{}iconv_ilseq_handler@tie{}@var{handler})
 Converts a NUL terminated string to a given encoding.
 
 The result is @code{malloc} allocated, or NULL (with @code{errno} set) in case of error.
@@ -136,9 +142,9 @@ Particular @code{errno} values: @code{EILSEQ}, @code{ENOMEM}.
 The following functions are shorthands that convert between NUL terminated
 strings in locale encoding and NUL terminated Unicode strings.
 
-@deftypefun {uint8_t *} u8_strconv_from_locale (const char *@var{string})
-@deftypefunx {uint16_t *} u16_strconv_from_locale (const char *@var{string})
-@deftypefunx {uint32_t *} u32_strconv_from_locale (const char *@var{string})
+@deftypefun {uint8_t *} u8_strconv_from_locale (const@tie{}char@tie{}*@var{string})
+@deftypefunx {uint16_t *} u16_strconv_from_locale (const@tie{}char@tie{}*@var{string})
+@deftypefunx {uint32_t *} u32_strconv_from_locale (const@tie{}char@tie{}*@var{string})
 Converts a NUL terminated string from the locale encoding.
 
 The result is @code{malloc} allocated, or NULL (with @code{errno} set) in case of error.
@@ -146,9 +152,9 @@ The result is @code{malloc} allocated, or NULL (with @code{errno} set) in case o
 Particular @code{errno} values: @code{ENOMEM}.
 @end deftypefun
 
-@deftypefun {char *} u8_strconv_to_locale (const uint8_t *@var{string})
-@deftypefunx {char *} u16_strconv_to_locale (const uint16_t *@var{string})
-@deftypefunx {char *} u32_strconv_to_locale (const uint32_t *@var{string})
+@deftypefun {char *} u8_strconv_to_locale (const@tie{}uint8_t@tie{}*@var{string})
+@deftypefunx {char *} u16_strconv_to_locale (const@tie{}uint16_t@tie{}*@var{string})
+@deftypefunx {char *} u32_strconv_to_locale (const@tie{}uint32_t@tie{}*@var{string})
 Converts a NUL terminated string to the locale encoding.
 
 The result is @code{malloc} allocated, or NULL (with @code{errno} set) in case of error.

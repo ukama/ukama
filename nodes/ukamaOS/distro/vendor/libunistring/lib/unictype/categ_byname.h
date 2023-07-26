@@ -1,4 +1,4 @@
-/* ANSI-C code produced by gperf version 3.1 */
+/* ANSI-C code produced by gperf version 3.2 */
 /* Command-line: gperf -m 10 ./unictype/categ_byname.gperf  */
 /* Computed positions: -k'1-2,7,$' */
 
@@ -29,7 +29,7 @@
 #error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gperf@gnu.org>."
 #endif
 
-#line 2 "./unictype/categ_byname.gperf"
+#line 25 "./unictype/categ_byname.gperf"
 struct named_category { int name; unsigned int category_index; };
 
 #define TOTAL_KEYWORDS 103
@@ -41,7 +41,7 @@ struct named_category { int name; unsigned int category_index; };
 
 #ifndef GPERF_DOWNCASE
 #define GPERF_DOWNCASE 1
-static unsigned char gperf_downcase[256] =
+static const unsigned char gperf_downcase[256] =
   {
       0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
      15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,
@@ -125,6 +125,11 @@ general_category_hash (register const char *str, register size_t len)
     {
       default:
         hval += asso_values[(unsigned char)str[6]];
+#if defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang_major__ && defined __clang_minor__ && __clang_major__ + (__clang_minor__ >= 9) > 3))
+      [[fallthrough]];
+#elif defined __GNUC__ && __GNUC__ >= 7
+      __attribute__ ((__fallthrough__));
+#endif
       /*FALLTHROUGH*/
       case 6:
       case 5:
@@ -132,6 +137,11 @@ general_category_hash (register const char *str, register size_t len)
       case 3:
       case 2:
         hval += asso_values[(unsigned char)str[1]];
+#if defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang_major__ && defined __clang_minor__ && __clang_major__ + (__clang_minor__ >= 9) > 3))
+      [[fallthrough]];
+#elif defined __GNUC__ && __GNUC__ >= 7
+      __attribute__ ((__fallthrough__));
+#endif
       /*FALLTHROUGH*/
       case 1:
         hval += asso_values[(unsigned char)str[0]];
@@ -357,243 +367,243 @@ static const struct general_category_stringpool_t general_category_stringpool_co
 static const struct named_category general_category_names[] =
   {
     {-1},
-#line 14 "./unictype/categ_byname.gperf"
+#line 37 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str1, UC_CATEGORY_INDEX_L},
-#line 17 "./unictype/categ_byname.gperf"
+#line 40 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str2, UC_CATEGORY_INDEX_Ll},
-#line 46 "./unictype/categ_byname.gperf"
+#line 69 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str3, UC_CATEGORY_INDEX_C},
-#line 15 "./unictype/categ_byname.gperf"
+#line 38 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str4, UC_CATEGORY_INDEX_LC},
-#line 47 "./unictype/categ_byname.gperf"
+#line 70 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str5, UC_CATEGORY_INDEX_Cc},
-#line 27 "./unictype/categ_byname.gperf"
+#line 50 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str6, UC_CATEGORY_INDEX_Nl},
     {-1}, {-1},
-#line 25 "./unictype/categ_byname.gperf"
+#line 48 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str9, UC_CATEGORY_INDEX_N},
-#line 30 "./unictype/categ_byname.gperf"
+#line 53 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str10, UC_CATEGORY_INDEX_Pc},
-#line 51 "./unictype/categ_byname.gperf"
+#line 74 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str11, UC_CATEGORY_INDEX_Cn},
-#line 18 "./unictype/categ_byname.gperf"
+#line 41 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str12, UC_CATEGORY_INDEX_Lt},
-#line 29 "./unictype/categ_byname.gperf"
+#line 52 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str13, UC_CATEGORY_INDEX_P},
     {-1},
-#line 111 "./unictype/categ_byname.gperf"
+#line 134 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str15, UC_CATEGORY_INDEX_Cc},
-#line 20 "./unictype/categ_byname.gperf"
+#line 43 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str16, UC_CATEGORY_INDEX_Lo},
-#line 50 "./unictype/categ_byname.gperf"
+#line 73 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str17, UC_CATEGORY_INDEX_Co},
-#line 16 "./unictype/categ_byname.gperf"
+#line 39 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str18, UC_CATEGORY_INDEX_Lu},
     {-1},
-#line 28 "./unictype/categ_byname.gperf"
+#line 51 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str20, UC_CATEGORY_INDEX_No},
-#line 48 "./unictype/categ_byname.gperf"
+#line 71 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str21, UC_CATEGORY_INDEX_Cf},
-#line 36 "./unictype/categ_byname.gperf"
+#line 59 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str22, UC_CATEGORY_INDEX_Po},
-#line 102 "./unictype/categ_byname.gperf"
+#line 125 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str23, UC_CATEGORY_INDEX_So},
-#line 98 "./unictype/categ_byname.gperf"
+#line 121 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str24, UC_CATEGORY_INDEX_Sc},
-#line 97 "./unictype/categ_byname.gperf"
+#line 120 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str25, UC_CATEGORY_INDEX_Sc},
-#line 35 "./unictype/categ_byname.gperf"
+#line 58 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str26, UC_CATEGORY_INDEX_Pf},
-#line 112 "./unictype/categ_byname.gperf"
+#line 135 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str27, UC_CATEGORY_INDEX_Cf},
-#line 86 "./unictype/categ_byname.gperf"
+#line 109 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str28, UC_CATEGORY_INDEX_Pe},
-#line 87 "./unictype/categ_byname.gperf"
+#line 110 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str29, UC_CATEGORY_INDEX_Pe},
     {-1}, {-1}, {-1}, {-1}, {-1}, {-1},
-#line 85 "./unictype/categ_byname.gperf"
+#line 108 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str36, UC_CATEGORY_INDEX_Ps},
-#line 81 "./unictype/categ_byname.gperf"
+#line 104 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str37, UC_CATEGORY_INDEX_Pc},
-#line 80 "./unictype/categ_byname.gperf"
+#line 103 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str38, UC_CATEGORY_INDEX_Pc},
-#line 92 "./unictype/categ_byname.gperf"
+#line 115 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str39, UC_CATEGORY_INDEX_Po},
-#line 93 "./unictype/categ_byname.gperf"
+#line 116 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str40, UC_CATEGORY_INDEX_Po},
-#line 84 "./unictype/categ_byname.gperf"
+#line 107 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str41, UC_CATEGORY_INDEX_Ps},
-#line 110 "./unictype/categ_byname.gperf"
+#line 133 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str42, UC_CATEGORY_INDEX_C},
-#line 72 "./unictype/categ_byname.gperf"
+#line 95 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str43, UC_CATEGORY_INDEX_N},
     {-1},
-#line 79 "./unictype/categ_byname.gperf"
+#line 102 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str45, UC_CATEGORY_INDEX_P},
-#line 39 "./unictype/categ_byname.gperf"
+#line 62 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str46, UC_CATEGORY_INDEX_Sc},
-#line 44 "./unictype/categ_byname.gperf"
+#line 67 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str47, UC_CATEGORY_INDEX_Zl},
-#line 94 "./unictype/categ_byname.gperf"
+#line 117 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str48, UC_CATEGORY_INDEX_S},
-#line 63 "./unictype/categ_byname.gperf"
+#line 86 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str49, UC_CATEGORY_INDEX_Lo},
-#line 33 "./unictype/categ_byname.gperf"
+#line 56 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str50, UC_CATEGORY_INDEX_Pe},
     {-1},
-#line 52 "./unictype/categ_byname.gperf"
+#line 75 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str52, UC_CATEGORY_INDEX_L},
-#line 77 "./unictype/categ_byname.gperf"
+#line 100 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str53, UC_CATEGORY_INDEX_No},
-#line 53 "./unictype/categ_byname.gperf"
+#line 76 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str54, UC_CATEGORY_INDEX_LC},
-#line 23 "./unictype/categ_byname.gperf"
+#line 46 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str55, UC_CATEGORY_INDEX_Mc},
-#line 78 "./unictype/categ_byname.gperf"
+#line 101 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str56, UC_CATEGORY_INDEX_No},
     {-1},
-#line 41 "./unictype/categ_byname.gperf"
+#line 64 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str58, UC_CATEGORY_INDEX_So},
-#line 45 "./unictype/categ_byname.gperf"
+#line 68 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str59, UC_CATEGORY_INDEX_Zp},
-#line 75 "./unictype/categ_byname.gperf"
+#line 98 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str60, UC_CATEGORY_INDEX_Nl},
-#line 22 "./unictype/categ_byname.gperf"
+#line 45 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str61, UC_CATEGORY_INDEX_Mn},
-#line 76 "./unictype/categ_byname.gperf"
+#line 99 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str62, UC_CATEGORY_INDEX_Nl},
-#line 58 "./unictype/categ_byname.gperf"
+#line 81 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str63, UC_CATEGORY_INDEX_Ll},
-#line 57 "./unictype/categ_byname.gperf"
+#line 80 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str64, UC_CATEGORY_INDEX_Ll},
     {-1},
-#line 101 "./unictype/categ_byname.gperf"
+#line 124 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str66, UC_CATEGORY_INDEX_So},
     {-1}, {-1},
-#line 64 "./unictype/categ_byname.gperf"
+#line 87 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str69, UC_CATEGORY_INDEX_Lo},
-#line 56 "./unictype/categ_byname.gperf"
+#line 79 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str70, UC_CATEGORY_INDEX_Lu},
-#line 55 "./unictype/categ_byname.gperf"
+#line 78 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str71, UC_CATEGORY_INDEX_Lu},
     {-1}, {-1},
-#line 54 "./unictype/categ_byname.gperf"
+#line 77 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str74, UC_CATEGORY_INDEX_LC},
-#line 67 "./unictype/categ_byname.gperf"
+#line 90 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str75, UC_CATEGORY_INDEX_Mn},
-#line 66 "./unictype/categ_byname.gperf"
+#line 89 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str76, UC_CATEGORY_INDEX_Mn},
     {-1},
-#line 95 "./unictype/categ_byname.gperf"
+#line 118 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str78, UC_CATEGORY_INDEX_Sm},
     {-1}, {-1},
-#line 109 "./unictype/categ_byname.gperf"
+#line 132 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str81, UC_CATEGORY_INDEX_Zp},
-#line 108 "./unictype/categ_byname.gperf"
+#line 131 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str82, UC_CATEGORY_INDEX_Zp},
-#line 115 "./unictype/categ_byname.gperf"
+#line 138 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str83, UC_CATEGORY_INDEX_Co},
-#line 114 "./unictype/categ_byname.gperf"
+#line 137 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str84, UC_CATEGORY_INDEX_Co},
-#line 37 "./unictype/categ_byname.gperf"
+#line 60 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str85, UC_CATEGORY_INDEX_S},
     {-1},
-#line 49 "./unictype/categ_byname.gperf"
+#line 72 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str87, UC_CATEGORY_INDEX_Cs},
-#line 89 "./unictype/categ_byname.gperf"
+#line 112 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str88, UC_CATEGORY_INDEX_Pi},
-#line 88 "./unictype/categ_byname.gperf"
+#line 111 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str89, UC_CATEGORY_INDEX_Pi},
     {-1},
-#line 42 "./unictype/categ_byname.gperf"
+#line 65 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str91, UC_CATEGORY_INDEX_Z},
-#line 32 "./unictype/categ_byname.gperf"
+#line 55 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str92, UC_CATEGORY_INDEX_Ps},
-#line 100 "./unictype/categ_byname.gperf"
+#line 123 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str93, UC_CATEGORY_INDEX_Sk},
-#line 99 "./unictype/categ_byname.gperf"
+#line 122 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str94, UC_CATEGORY_INDEX_Sk},
-#line 24 "./unictype/categ_byname.gperf"
+#line 47 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str95, UC_CATEGORY_INDEX_Me},
-#line 113 "./unictype/categ_byname.gperf"
+#line 136 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str96, UC_CATEGORY_INDEX_Cs},
     {-1},
-#line 90 "./unictype/categ_byname.gperf"
+#line 113 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str98, UC_CATEGORY_INDEX_Pf},
-#line 91 "./unictype/categ_byname.gperf"
+#line 114 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str99, UC_CATEGORY_INDEX_Pf},
     {-1}, {-1},
-#line 103 "./unictype/categ_byname.gperf"
+#line 126 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str102, UC_CATEGORY_INDEX_Z},
-#line 21 "./unictype/categ_byname.gperf"
+#line 44 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str103, UC_CATEGORY_INDEX_M},
-#line 19 "./unictype/categ_byname.gperf"
+#line 42 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str104, UC_CATEGORY_INDEX_Lm},
-#line 83 "./unictype/categ_byname.gperf"
+#line 106 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str105, UC_CATEGORY_INDEX_Pd},
-#line 107 "./unictype/categ_byname.gperf"
+#line 130 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str106, UC_CATEGORY_INDEX_Zl},
     {-1},
-#line 105 "./unictype/categ_byname.gperf"
+#line 128 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str108, UC_CATEGORY_INDEX_Zs},
     {-1},
-#line 82 "./unictype/categ_byname.gperf"
+#line 105 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str110, UC_CATEGORY_INDEX_Pd},
     {-1}, {-1},
-#line 116 "./unictype/categ_byname.gperf"
+#line 139 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str113, UC_CATEGORY_INDEX_Cn},
     {-1}, {-1}, {-1}, {-1},
-#line 62 "./unictype/categ_byname.gperf"
+#line 85 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str118, UC_CATEGORY_INDEX_Lm},
-#line 61 "./unictype/categ_byname.gperf"
+#line 84 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str119, UC_CATEGORY_INDEX_Lm},
-#line 65 "./unictype/categ_byname.gperf"
+#line 88 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str120, UC_CATEGORY_INDEX_M},
     {-1},
-#line 106 "./unictype/categ_byname.gperf"
+#line 129 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str122, UC_CATEGORY_INDEX_Zl},
-#line 60 "./unictype/categ_byname.gperf"
+#line 83 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str123, UC_CATEGORY_INDEX_Lt},
-#line 59 "./unictype/categ_byname.gperf"
+#line 82 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str124, UC_CATEGORY_INDEX_Lt},
-#line 74 "./unictype/categ_byname.gperf"
+#line 97 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str125, UC_CATEGORY_INDEX_Nd},
-#line 73 "./unictype/categ_byname.gperf"
+#line 96 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str126, UC_CATEGORY_INDEX_Nd},
     {-1},
-#line 96 "./unictype/categ_byname.gperf"
+#line 119 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str128, UC_CATEGORY_INDEX_Sm},
     {-1},
-#line 104 "./unictype/categ_byname.gperf"
+#line 127 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str130, UC_CATEGORY_INDEX_Zs},
-#line 43 "./unictype/categ_byname.gperf"
+#line 66 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str131, UC_CATEGORY_INDEX_Zs},
-#line 34 "./unictype/categ_byname.gperf"
+#line 57 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str132, UC_CATEGORY_INDEX_Pi},
-#line 69 "./unictype/categ_byname.gperf"
+#line 92 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str133, UC_CATEGORY_INDEX_Mc},
-#line 68 "./unictype/categ_byname.gperf"
+#line 91 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str134, UC_CATEGORY_INDEX_Mc},
     {-1}, {-1}, {-1},
-#line 26 "./unictype/categ_byname.gperf"
+#line 49 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str138, UC_CATEGORY_INDEX_Nd},
     {-1},
-#line 31 "./unictype/categ_byname.gperf"
+#line 54 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str140, UC_CATEGORY_INDEX_Pd},
     {-1},
-#line 40 "./unictype/categ_byname.gperf"
+#line 63 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str142, UC_CATEGORY_INDEX_Sk},
     {-1}, {-1}, {-1},
-#line 38 "./unictype/categ_byname.gperf"
+#line 61 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str146, UC_CATEGORY_INDEX_Sm},
     {-1}, {-1},
-#line 71 "./unictype/categ_byname.gperf"
+#line 94 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str149, UC_CATEGORY_INDEX_Me},
-#line 70 "./unictype/categ_byname.gperf"
+#line 93 "./unictype/categ_byname.gperf"
     {(int)(size_t)&((struct general_category_stringpool_t *)0)->general_category_stringpool_str150, UC_CATEGORY_INDEX_Me}
   };
 
-const struct named_category *
+static const struct named_category *
 uc_general_category_lookup (register const char *str, register size_t len)
 {
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

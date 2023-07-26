@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -44,7 +44,7 @@
     { 0x0275, 0x0275 },
     { 0x027D, 0x027D },
     { 0x0280, 0x0280 },
-    { 0x0283, 0x0283 },
+    { 0x0282, 0x0283 },
     { 0x0287, 0x028C },
     { 0x0292, 0x0292 },
     { 0x029D, 0x029E },
@@ -67,11 +67,16 @@
     { 0x10A0, 0x10C5 },
     { 0x10C7, 0x10C7 },
     { 0x10CD, 0x10CD },
+    { 0x10D0, 0x10FA },
+    { 0x10FD, 0x10FF },
     { 0x13A0, 0x13F5 },
     { 0x13F8, 0x13FD },
     { 0x1C80, 0x1C88 },
+    { 0x1C90, 0x1CBA },
+    { 0x1CBD, 0x1CBF },
     { 0x1D79, 0x1D79 },
     { 0x1D7D, 0x1D7D },
+    { 0x1D8E, 0x1D8E },
     { 0x1E00, 0x1E9B },
     { 0x1E9E, 0x1E9E },
     { 0x1EA0, 0x1F15 },
@@ -100,9 +105,7 @@
     { 0x2160, 0x217F },
     { 0x2183, 0x2184 },
     { 0x24B6, 0x24E9 },
-    { 0x2C00, 0x2C2E },
-    { 0x2C30, 0x2C5E },
-    { 0x2C60, 0x2C70 },
+    { 0x2C00, 0x2C70 },
     { 0x2C72, 0x2C73 },
     { 0x2C75, 0x2C76 },
     { 0x2C7E, 0x2CE3 },
@@ -117,9 +120,12 @@
     { 0xA732, 0xA76F },
     { 0xA779, 0xA787 },
     { 0xA78B, 0xA78D },
-    { 0xA790, 0xA793 },
+    { 0xA790, 0xA794 },
     { 0xA796, 0xA7AE },
-    { 0xA7B0, 0xA7B7 },
+    { 0xA7B0, 0xA7CA },
+    { 0xA7D0, 0xA7D1 },
+    { 0xA7D6, 0xA7D9 },
+    { 0xA7F5, 0xA7F6 },
     { 0xAB53, 0xAB53 },
     { 0xAB70, 0xABBF },
     { 0xFB00, 0xFB06 },
@@ -129,9 +135,18 @@
     { 0x10400, 0x1044F },
     { 0x104B0, 0x104D3 },
     { 0x104D8, 0x104FB },
+    { 0x10570, 0x1057A },
+    { 0x1057C, 0x1058A },
+    { 0x1058C, 0x10592 },
+    { 0x10594, 0x10595 },
+    { 0x10597, 0x105A1 },
+    { 0x105A3, 0x105B1 },
+    { 0x105B3, 0x105B9 },
+    { 0x105BB, 0x105BC },
     { 0x10C80, 0x10CB2 },
     { 0x10CC0, 0x10CF2 },
     { 0x118A0, 0x118DF },
+    { 0x16E40, 0x16E7F },
     { 0x1E900, 0x1E943 }
 
 #define PREDICATE(c) uc_is_property_changes_when_casemapped (c)

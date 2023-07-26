@@ -1,5 +1,5 @@
 ## Makefile for the lib subdirectory of GNU libunistring.
-## Copyright (C) 2009-2011 Free Software Foundation, Inc.
+## Copyright (C) 2009-2022 Free Software Foundation, Inc.
 ##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 ## GNU General Public License for more details.
 ##
 ## You should have received a copy of the GNU General Public License
-## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+## along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ## Process this file with automake to produce Makefile.in.
 
@@ -28,7 +28,7 @@ SUFFIXES =
 
 lib_LTLIBRARIES = libunistring.la
 
-nobase_include_HEADERS = \
+nodist_include_HEADERS = \
   unitypes.h \
   unistr.h \
   uniconv.h \
@@ -40,7 +40,9 @@ nobase_include_HEADERS = \
   uniwbrk.h \
   unilbrk.h \
   uninorm.h \
-  unicase.h \
+  unicase.h
+
+nobase_include_HEADERS = \
   unistring/inline.h
 
 noinst_HEADERS = \
@@ -161,24 +163,13 @@ CLEANFILES       += unistring/iconveh.h
 nobase_nodist_include_HEADERS += unistring/version.h
 
 # unistring/cdefs.h is not public, but is included by other header files.
-nobase_nodist_include_HEADERS += unistring/cdefs.h
-unistring/cdefs.h : unistring/cdefs.in.h $(UNUSED_PARAMETER_H)
-	@MKDIR_P@ unistring
-	rm -f $@-t $@
-	sed -e '/definition of _GL_UNUSED_PARAMETER/r $(UNUSED_PARAMETER_H)' \
-	    < $(srcdir)/unistring/cdefs.in.h \
-	    > $@-t
-	mv $@-t $@
-BUILT_SOURCES    += unistring/cdefs.h
-MOSTLYCLEANFILES += unistring/cdefs.h-t
-CLEANFILES       += unistring/cdefs.h
-EXTRA_DIST       += unistring/cdefs.in.h
+nobase_include_HEADERS += unistring/cdefs.h
 
 # unistring/woe32dll.h is not public, but is included by other header files.
 nobase_nodist_include_HEADERS += unistring/woe32dll.h
 
 # Directories that contain some CLEANFILES.
-CLEANDIRS = 
+CLEANDIRS =
 CLEANDIRS_NOT_IN_SRCDIR = unistring
 clean-local: clean-generic
 	@for dir in '' $(CLEANDIRS); do \
@@ -188,6 +179,24 @@ clean-local: clean-generic
 	done; \
 	if test '$(srcdir)' != '.'; then \
 	  for dir in '' $(CLEANDIRS_NOT_IN_SRCDIR); do \
+	    if test -n "$$dir" && test -d $$dir; then \
+	      echo "rmdir $$dir"; rmdir $$dir; \
+	    fi; \
+	  done; \
+	fi; \
+        :
+
+# Directories that contain some DISTCLEANFILES.
+DISTCLEANDIRS = sys
+DISTCLEANDIRS_NOT_IN_SRCDIR =
+distclean-local: distclean-generic
+	@for dir in '' $(DISTCLEANDIRS); do \
+	  if test -n "$$dir" && test -d $$dir; then \
+	    echo "rmdir $$dir"; rmdir $$dir; \
+	  fi; \
+	done; \
+	if test '$(srcdir)' != '.'; then \
+	  for dir in '' $(DISTCLEANDIRS_NOT_IN_SRCDIR); do \
 	    if test -n "$$dir" && test -d $$dir; then \
 	      echo "rmdir $$dir"; rmdir $$dir; \
 	    fi; \
@@ -221,19 +230,35 @@ HEADERS_WITH_EXTERNS = \
 # This file has the same format as the one expected by the libtool option
 # '-export-symbols', but we don't use this option, because it would prevent us
 # from building some of the gnulib unit tests.
-libunistring.sym : $(HEADERS_WITH_EXTERNS)
-	for f in $(HEADERS_WITH_EXTERNS); do \
-	  if test -f $$f; then \
-	    cat $$f; \
+$(srcdir)/libunistring.sym : $(HEADERS_WITH_EXTERNS)
+	if \
+	  for f in $(HEADERS_WITH_EXTERNS); do \
+	    if test -f $$f; then \
+	      cat $$f; \
+	    else \
+	      cat $(srcdir)/$$f; \
+	    fi; \
+	  done \
+	  | $(srcdir)/declared.sh > $@-t1; \
+	then \
+	  LC_ALL=C sort < $@-t1 | LC_ALL=C uniq > $@-t2 && mv $@-t2 $@; \
+	else \
+	  if test -f $@; then \
+	    echo "Continuing with existing libunistring.sym."; \
 	  else \
-	    cat $(srcdir)/$$f; \
+	    exit 1; \
 	  fi; \
-	done \
-	  | $(srcdir)/declared.sh | LC_ALL=C sort | LC_ALL=C uniq \
-	  > $@-t
-	mv $@-t $@
+	fi
 # We distribute it because declared.sh relies on GNU sed.
-MOSTLYCLEANFILES     += libunistring.sym-t
+# The GNU Coding Standards say in
+# <https://www.gnu.org/prep/standards/html_node/Makefile-Basics.html>:
+#   "GNU distributions usually contain some files which are not source files
+#    ... . Since these files normally appear in the source directory, they
+#    should always appear in the source directory, not in the build directory.
+#    So Makefile rules to update them should put the updated files in the
+#    source directory."
+# Therefore we put this file in the source directory, not the build directory.
+MOSTLYCLEANFILES     += libunistring.sym-t1 libunistring.sym-t2
 MAINTAINERCLEANFILES += libunistring.sym
 EXTRA_DIST           += libunistring.sym declared.sh
 
@@ -246,8 +271,10 @@ endif
 # Hide undesired symbols that are defined by libunistring_la_SOURCES or
 # libunistring_la_LIBADD from the global namespace, by prefixing them with
 # "libunistring_".
+# But don't hide symbols that start with "libintl_locale", for the reason
+# stated in localename-table.h.
 all check install: config.h
-config.h: $(BUILT_SOURCES) libunistring.sym
+config.h: $(BUILT_SOURCES) $(srcdir)/libunistring.sym
 	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
 	  : "Avoid double inclusion, to avoid a warning about redefinitions."; \
 	  echo '#ifndef UNISTRING_CONFIG_H'; \
@@ -274,16 +301,11 @@ config.h: $(BUILT_SOURCES) libunistring.sym
 	            ;; \
 	        esac; \
 	      done; \
-	    } 5>&1 \
-	      | sed -e 's,.* ,,' | LC_ALL=C sort | LC_ALL=C uniq \
-	      | { \
-	          if test -f libunistring.sym; then \
-	            symfile='libunistring.sym'; \
-	          else \
-	            symfile='$(srcdir)/libunistring.sym'; \
-	          fi; \
-	          LC_ALL=C join -v 1 - $$symfile; \
-	        } \
+	    } 5>&1 1>&2 \
+	      | sed -e 's,.* ,,' | grep -v '@' | LC_ALL=C sort | LC_ALL=C uniq \
+	      | LC_ALL=C $(top_srcdir)/build-aux/join-v-1 - $(srcdir)/libunistring.sym \
+	      | grep -v '^libintl_locale' \
+	      | grep -v 'gl_get_setlocale_null_lock' \
 	      | sed -e 's,^\(.*\)$$,#define \1 libunistring_\1,' > config.h-t; \
 	  } 6>&1 && \
 	  if test -f config.h; then \
@@ -314,9 +336,9 @@ AM_CPPFLAGS += -DDEPENDS_ON_LIBICONV=1
 
 # Libtool's library version information for libunistring.
 # See the libtool documentation, section "Library interface versions".
-LTV_CURRENT=3
+LTV_CURRENT=5
 LTV_REVISION=0
-LTV_AGE=1
+LTV_AGE=0
 
 # How to build libunistring.la.
 libunistring_la_LDFLAGS += \

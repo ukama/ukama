@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright (C) 2009 Free Software Foundation, Inc.
+# Copyright (C) 2009-2022 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
 # This program is a test driver that supports running a test under valgrind.
@@ -47,9 +47,9 @@ Report bugs to Bruno Haible."
 func_version ()
 {
   echo "\
-run-test (GNU libunistring)
-Copyright (C) 2009 Free Software Foundation, Inc.
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+run-test (GNU gnulib)
+Copyright (C) 2019 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 
@@ -104,17 +104,26 @@ func_fatal_error ()
 
 if test -z "$checker"; then
   # No checker. Run the test directly.
-  exec "$@"
+  case "$1" in
+    *.sh)
+     # Support environments where sh exists but not /bin/sh.
+     exec sh "$@"
+     ;;
+    *)
+     exec "$@"
+     ;;
+  esac
 else
   # Using valgrind. We want to apply valgrind only to executables, not to
-  # shell script, because
+  # shell scripts, because
   # 1. we don't want to look for memory leaks in bash,
   # 2. on a bi-arch system, we would get an error message such as
   #    "valgrind: wrong executable class (eg. 32-bit instead of 64-bit)".
   case "$1" in
     *.sh)
       # A shell script. Ignore the checker.
-      exec "$@"
+      # Support environments where sh exists but not /bin/sh.
+      exec sh "$@"
       ;;
     *)
       # The 'file' command is not portable enough. So, look

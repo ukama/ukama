@@ -1,18 +1,18 @@
 /* Pausing execution of the current thread.
-   Copyright (C) 2007, 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007, 2009-2022 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2007.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
@@ -21,8 +21,6 @@
 #include <unistd.h>
 
 #include <limits.h>
-
-#include "verify.h"
 
 #if defined _WIN32 && ! defined __CYGWIN__
 
@@ -56,7 +54,7 @@ unsigned int
 rpl_sleep (unsigned int seconds)
 {
   /* This requires int larger than 16 bits.  */
-  verify (UINT_MAX / 24 / 24 / 60 / 60);
+  static_assert (UINT_MAX / 24 / 24 / 60 / 60);
   const unsigned int limit = 24 * 24 * 60 * 60;
   while (limit < seconds)
     {

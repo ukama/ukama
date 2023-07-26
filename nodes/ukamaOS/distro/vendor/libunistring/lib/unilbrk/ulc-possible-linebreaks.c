@@ -1,28 +1,27 @@
 /* Line breaking of strings.
-   Copyright (C) 2001-2003, 2006-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2003, 2006-2022 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2001.
 
-   This program is free software: you can redistribute it and/or
-   modify it under the terms of either:
+   This file is free software.
+   It is dual-licensed under "the GNU LGPLv3+ or the GNU GPLv2+".
+   You can redistribute it and/or modify it under either
+     - the terms of the GNU Lesser General Public License as published
+       by the Free Software Foundation, either version 3, or (at your
+       option) any later version, or
+     - the terms of the GNU General Public License as published by the
+       Free Software Foundation; either version 2, or (at your option)
+       any later version, or
+     - the same dual license "the GNU LGPLv3+ or the GNU GPLv2+".
 
-     * the GNU Lesser General Public License as published by the Free
-       Software Foundation; either version 3 of the License, or (at your
-       option) any later version.
-
-   or
-
-     * the GNU General Public License as published by the Free
-       Software Foundation; either version 2 of the License, or (at your
-       option) any later version.
-
-   or both in parallel, as here.
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Lesser General Public License for more details.
+   Lesser General Public License and the GNU General Public License
+   for more details.
 
-   You should have received a copy of the GNU Lesser General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU Lesser General Public
+   License and of the GNU General Public License along with this
+   program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -34,6 +33,8 @@
 
 #include "c-ctype.h"
 #include "uniconv.h"
+#include "unilbrk/internal.h"
+#include "unilbrk/lbrktables.h"
 #include "unilbrk/ulc-common.h"
 
 /* Line breaking of a string in an arbitrary encoding.
@@ -49,14 +50,14 @@
    but this is not backed by an RFC.  So we use UTF-8. It supports
    characters up to \U7FFFFFFF and is unambiguously defined.  */
 
-void
-ulc_possible_linebreaks (const char *s, size_t n, const char *encoding,
-                         char *p)
+static void
+ulc_possible_linebreaks_internal (const char *s, size_t n, const char *encoding,
+                                  int cr, char *p)
 {
   if (n > 0)
     {
       if (is_utf8_encoding (encoding))
-        u8_possible_linebreaks ((const uint8_t *) s, n, encoding, p);
+        u8_possible_linebreaks_loop ((const uint8_t *) s, n, encoding, cr, p);
       else
         {
           /* Convert the string to UTF-8 and build a translation table
@@ -80,7 +81,7 @@ ulc_possible_linebreaks (const char *s, size_t n, const char *encoding,
 
                       /* Determine the possible line breaks of the UTF-8
                          string.  */
-                      u8_possible_linebreaks (t, m, encoding, q);
+                      u8_possible_linebreaks_loop (t, m, encoding, cr, q);
 
                       /* Translate the result back to the original string.  */
                       memset (p, UC_BREAK_PROHIBITED, n);
@@ -103,7 +104,7 @@ ulc_possible_linebreaks (const char *s, size_t n, const char *encoding,
           if (is_all_ascii (s, n))
             {
               /* ASCII is a subset of UTF-8.  */
-              u8_possible_linebreaks ((const uint8_t *) s, n, encoding, p);
+              u8_possible_linebreaks_loop ((const uint8_t *) s, n, encoding, cr, p);
               return;
             }
 #endif
@@ -115,13 +116,36 @@ ulc_possible_linebreaks (const char *s, size_t n, const char *encoding,
             const char *s_end = s + n;
             while (s < s_end)
               {
-                *p = (*s == '\n' ? UC_BREAK_MANDATORY : UC_BREAK_PROHIBITED);
+                *p = (*s == '\n'
+                      ? UC_BREAK_MANDATORY
+                      : ((cr >= 0
+                          && *s == '\r'
+                          && s + 1 < s_end
+                          && *(s + 1) == '\n')
+                         ? UC_BREAK_CR_BEFORE_LF
+                         : UC_BREAK_PROHIBITED));
                 s++;
                 p++;
               }
           }
         }
     }
+}
+
+#undef ulc_possible_linebreaks
+
+void
+ulc_possible_linebreaks (const char *s, size_t n, const char *encoding,
+                         char *p)
+{
+  ulc_possible_linebreaks_internal (s, n, encoding, -1, p);
+}
+
+void
+ulc_possible_linebreaks_v2 (const char *s, size_t n, const char *encoding,
+                            char *p)
+{
+  ulc_possible_linebreaks_internal (s, n, encoding, LBP_CR, p);
 }
 
 
@@ -191,7 +215,7 @@ main (int argc, char * argv[])
       char *breaks = malloc (length);
       int i;
 
-      ulc_possible_linebreaks (input, length, locale_charset (), breaks);
+      ulc_possible_linebreaks_v2 (input, length, locale_charset (), breaks);
 
       for (i = 0; i < length; i++)
         {
@@ -201,6 +225,8 @@ main (int argc, char * argv[])
               putc ('|', stdout);
               break;
             case UC_BREAK_MANDATORY:
+              break;
+            case UC_BREAK_CR_BEFORE_LF:
               break;
             case UC_BREAK_PROHIBITED:
               break;

@@ -1,4 +1,4 @@
-/* ANSI-C code produced by gperf version 3.1 */
+/* ANSI-C code produced by gperf version 3.2 */
 /* Command-line: gperf -m 10 ./unicase/locale-languages.gperf  */
 /* Computed positions: -k'1-3' */
 
@@ -84,9 +84,19 @@ uc_locale_language_hash (register const char *str, register size_t len)
     {
       default:
         hval += asso_values[(unsigned char)str[2]+2];
+#if defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang_major__ && defined __clang_minor__ && __clang_major__ + (__clang_minor__ >= 9) > 3))
+      [[fallthrough]];
+#elif defined __GNUC__ && __GNUC__ >= 7
+      __attribute__ ((__fallthrough__));
+#endif
       /*FALLTHROUGH*/
       case 2:
         hval += asso_values[(unsigned char)str[1]+17];
+#if defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang_major__ && defined __clang_minor__ && __clang_major__ + (__clang_minor__ >= 9) > 3))
+      [[fallthrough]];
+#elif defined __GNUC__ && __GNUC__ >= 7
+      __attribute__ ((__fallthrough__));
+#endif
       /*FALLTHROUGH*/
       case 1:
         hval += asso_values[(unsigned char)str[0]+3];
@@ -95,7 +105,7 @@ uc_locale_language_hash (register const char *str, register size_t len)
   return hval;
 }
 
-const char *
+static const char *
 uc_locale_languages_lookup (register const char *str, register size_t len)
 {
   struct stringpool_t
@@ -1026,7 +1036,7 @@ uc_locale_languages_lookup (register const char *str, register size_t len)
     }
   return 0;
 }
-#line 271 "./unicase/locale-languages.gperf"
+#line 295 "./unicase/locale-languages.gperf"
 
 /*
  * Local Variables:

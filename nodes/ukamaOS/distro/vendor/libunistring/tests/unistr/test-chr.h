@@ -1,9 +1,9 @@
 /* Test of uN_chr() functions.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -48,7 +48,9 @@ main (void)
   ASSERT (U_CHR (input, length, 'a') == input);
 
   ASSERT (U_CHR (input, 0, 'a') == NULL);
-  ASSERT (U_CHR (zerosize_ptr (), 0, 'a') == NULL);
+  void *page_boundary = zerosize_ptr ();
+  if (page_boundary)
+    ASSERT (U_CHR (page_boundary, 0, 'a') == NULL);
 
   ASSERT (U_CHR (input, length, 'b') == input + 1);
   ASSERT (U_CHR (input, length, 'c') == input + 2);
@@ -132,6 +134,8 @@ main (void)
   }
 
   free (input);
+  if (sizeof (UNIT) != sizeof (uint32_t))
+    free (input32);
 
   return 0;
 }

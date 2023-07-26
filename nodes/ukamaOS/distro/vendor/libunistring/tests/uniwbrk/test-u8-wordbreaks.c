@@ -1,9 +1,9 @@
 /* Test of word breaks in UTF-8 strings.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -46,7 +46,8 @@ main ()
                          || (i >= 37 && i <= 44)
                          || i == 46 || (i >= 50 && i <= 52)
                          || (i >= 54 && i <= 55)
-                         || (i >= 58 && i <= 62) || (i >= 64 && i <= 67)
+                         || (i >= 58 && i <= 62) || (i >= 64 && i <= 65)
+                         || i == 67
                          || i == 70 || i == 73 || i == 76
                          || i == 77 || i == 80 || i == 83
                          || i == 84 || i == 90
@@ -72,11 +73,43 @@ main ()
                          || (i >= 40 && i <= 47)
                          || i == 49 || (i >= 53 && i <= 55)
                          || (i >= 57 && i <= 58)
-                         || (i >= 61 && i <= 65) || (i >= 67 && i <= 70)
+                         || (i >= 61 && i <= 65) || (i >= 67 && i <= 68)
+                         || i == 70
                          || i == 73 || i == 76 || i == 79
                          || i == 80 || i == 83 || i == 86
                          || i == 87 || i == 105
                          ? 1 : 0));
+      }
+    free (p);
+  }
+
+  /* CR LF handling.  */
+  {
+    static const uint8_t input[8] = "a\nb\rc\r\nd";
+    char *p = (char *) malloc (SIZEOF (input));
+    size_t i;
+
+    u8_wordbreaks (input, SIZEOF (input), p);
+    for (i = 0; i < 8; i++)
+      {
+        ASSERT (p[i] == (i == 1 || i == 2 || i == 3 || i == 4 || i == 5
+                         || i == 7 ? 1 :
+                         0));
+      }
+    free (p);
+  }
+
+  /* Test regional indicators.  */
+  {
+    static const uint8_t input[18] =
+      ".\360\237\207\251\360\237\207\252\360\237\207\253\360\237\207\267.";
+    char *p = (char *) malloc (SIZEOF (input));
+    size_t i;
+
+    u8_wordbreaks (input, SIZEOF (input), p);
+    for (i = 0; i < 18; i++)
+      {
+        ASSERT (p[i] == (i == 1 || i == 9 || i == 17 ? 1 : 0));
       }
     free (p);
   }

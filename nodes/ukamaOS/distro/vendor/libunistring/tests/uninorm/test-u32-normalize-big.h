@@ -1,9 +1,9 @@
 /* Test of Unicode compliance of normalization of UTF-32 strings.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -48,7 +48,7 @@ struct normalization_test_file
      sentinel value of 0x110000 at the end.  */
   ucs4_t *part1_c1_sorted;
   /* The filename of the NormalizationTest.txt file.  */
-  const char *filename;
+  char *filename;
 };
 
 /* Read the NormalizationTest.txt file and return its contents.  */
@@ -68,3 +68,7 @@ extern void
 /* Perform the second compliance test.  */
 extern void
        test_other (const struct normalization_test_file *file, uninorm_t nf);
+
+/* Free the representation of the NormalizationTest.txt file.  */
+extern void
+       free_normalization_test_file (struct normalization_test_file *file);

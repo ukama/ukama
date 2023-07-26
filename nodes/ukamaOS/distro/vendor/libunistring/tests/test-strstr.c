@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2004, 2007-2018 Free Software Foundation, Inc.
+ * Copyright (C) 2004, 2007-2022 Free Software Foundation, Inc.
  * Written by Bruno Haible and Eric Blake
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -60,7 +60,7 @@ main (int argc, char *argv[])
        read access for strstr().
        See <https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=521737>.
        This is a bug in memchr(), see the Austin Group's clarification
-       <http://www.opengroup.org/austin/docs/austin_454.txt>.  */
+       <https://www.opengroup.org/austin/docs/austin_454.txt>.  */
     const char *fix = "aBaaaaaaaaaaax";
     char *page_boundary = (char *) zerosize_ptr ();
     size_t len = strlen (fix) + 1;
@@ -272,6 +272,28 @@ main (int argc, char *argv[])
         ASSERT (p);
         ASSERT (p - haystack == i);
       }
+    free (haystack);
+  }
+
+  /* Test long needles.  */
+  {
+    size_t m = 1024;
+    char *haystack = (char *) malloc (2 * m + 1);
+    char *needle = (char *) malloc (m + 1);
+    if (haystack != NULL && needle != NULL)
+      {
+        const char *p;
+        haystack[0] = 'x';
+        memset (haystack + 1, ' ', m - 1);
+        memset (haystack + m, 'x', m);
+        haystack[2 * m] = '\0';
+        memset (needle, 'x', m);
+        needle[m] = '\0';
+        p = strstr (haystack, needle);
+        ASSERT (p);
+        ASSERT (p - haystack == m);
+      }
+    free (needle);
     free (haystack);
   }
 

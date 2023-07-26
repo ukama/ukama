@@ -1,9 +1,9 @@
 /* Test of Unicode compliance of normalization of UTF-32 strings.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -118,7 +118,7 @@ read_normalization_test_file (const char *filename,
             {
               lines =
                 (struct normalization_test_line *)
-                xnrealloc (lines, lines_length, sizeof (struct normalization_test_line));
+                xreallocarray (lines, lines_length, sizeof *lines);
               file->parts[part_index].lines = lines;
               file->parts[part_index].lines_length = lines_length;
             }
@@ -158,7 +158,7 @@ read_normalization_test_file (const char *filename,
               /* Append uc to the sequence.  */
               sequence =
                 (uint32_t *)
-                xnrealloc (sequence, sequence_length + 2, sizeof (uint32_t));
+                xreallocarray (sequence, sequence_length + 2, sizeof *sequence);
               sequence[sequence_length] = uc;
               sequence_length++;
 
@@ -190,7 +190,7 @@ read_normalization_test_file (const char *filename,
             lines_allocated = 7;
           lines =
             (struct normalization_test_line *)
-            xnrealloc (lines, lines_allocated, sizeof (struct normalization_test_line));
+            xreallocarray (lines, lines_allocated, sizeof *lines);
         }
       lines[lines_length] = line;
       lines_length++;
@@ -200,7 +200,7 @@ read_normalization_test_file (const char *filename,
     {
       lines =
         (struct normalization_test_line *)
-        xnrealloc (lines, lines_length, sizeof (struct normalization_test_line));
+        xreallocarray (lines, lines_length, sizeof *lines);
       file->parts[part_index].lines = lines;
       file->parts[part_index].lines_length = lines_length;
     }
@@ -297,8 +297,34 @@ test_other (const struct normalization_test_file *file, uninorm_t nf)
           input[0] = uc;
           result = u32_normalize (nf, input, 1, NULL, &length);
           ASSERT (result != NULL && length == 1 && result[0] == uc);
+
+          free (result);
         }
     }
+}
+
+void
+free_normalization_test_file (struct normalization_test_file *file)
+{
+  size_t part_index;
+
+  for (part_index = 0; part_index < 4; part_index++)
+    {
+      const struct normalization_test_part *p = &file->parts[part_index];
+      size_t line_index;
+
+      for (line_index = 0; line_index < p->lines_length; line_index++)
+        {
+          const struct normalization_test_line *l = &p->lines[line_index];
+          size_t sequence_index;
+
+          for (sequence_index = 0; sequence_index < 5; sequence_index++)
+            free (l->sequences[sequence_index]);
+        }
+      free (p->lines);
+    }
+  free (file->part1_c1_sorted);
+  free (file->filename);
 }
 
 #endif

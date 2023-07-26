@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -28,7 +28,7 @@
     { 0x05C3, 0x05C3 },
     { 0x060C, 0x060C },
     { 0x061B, 0x061B },
-    { 0x061F, 0x061F },
+    { 0x061D, 0x061F },
     { 0x06D4, 0x06D4 },
     { 0x0700, 0x070A },
     { 0x070C, 0x070C },
@@ -41,7 +41,7 @@
     { 0x0F0D, 0x0F12 },
     { 0x104A, 0x104B },
     { 0x1361, 0x1368 },
-    { 0x166D, 0x166E },
+    { 0x166E, 0x166E },
     { 0x16EB, 0x16ED },
     { 0x1735, 0x1736 },
     { 0x17D4, 0x17D6 },
@@ -52,6 +52,7 @@
     { 0x1AA8, 0x1AAB },
     { 0x1B5A, 0x1B5B },
     { 0x1B5D, 0x1B5F },
+    { 0x1B7D, 0x1B7E },
     { 0x1C3B, 0x1C3F },
     { 0x1C7E, 0x1C7F },
     { 0x203C, 0x203D },
@@ -59,6 +60,9 @@
     { 0x2E2E, 0x2E2E },
     { 0x2E3C, 0x2E3C },
     { 0x2E41, 0x2E41 },
+    { 0x2E4C, 0x2E4C },
+    { 0x2E4E, 0x2E4F },
+    { 0x2E53, 0x2E54 },
     { 0x3001, 0x3002 },
     { 0xA4FE, 0xA4FF },
     { 0xA60D, 0xA60F },
@@ -88,6 +92,8 @@
     { 0x10AF0, 0x10AF5 },
     { 0x10B3A, 0x10B3F },
     { 0x10B99, 0x10B9C },
+    { 0x10F55, 0x10F59 },
+    { 0x10F86, 0x10F89 },
     { 0x11047, 0x1104D },
     { 0x110BE, 0x110C1 },
     { 0x11141, 0x11143 },
@@ -97,18 +103,26 @@
     { 0x11238, 0x1123C },
     { 0x112A9, 0x112A9 },
     { 0x1144B, 0x1144D },
-    { 0x1145B, 0x1145B },
+    { 0x1145A, 0x1145B },
     { 0x115C2, 0x115C5 },
     { 0x115C9, 0x115D7 },
     { 0x11641, 0x11642 },
     { 0x1173C, 0x1173E },
+    { 0x11944, 0x11944 },
+    { 0x11946, 0x11946 },
+    { 0x11A42, 0x11A43 },
+    { 0x11A9B, 0x11A9C },
+    { 0x11AA1, 0x11AA2 },
     { 0x11C41, 0x11C43 },
     { 0x11C71, 0x11C71 },
+    { 0x11EF7, 0x11EF8 },
+    { 0x11F43, 0x11F44 },
     { 0x12470, 0x12474 },
     { 0x16A6E, 0x16A6F },
     { 0x16AF5, 0x16AF5 },
     { 0x16B37, 0x16B39 },
     { 0x16B44, 0x16B44 },
+    { 0x16E97, 0x16E98 },
     { 0x1BC9F, 0x1BC9F },
     { 0x1DA87, 0x1DA8A }
 

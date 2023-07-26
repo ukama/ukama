@@ -1,9 +1,9 @@
 /* Test of word breaks in UTF-32 strings.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -52,7 +52,8 @@ main ()
                          || (i >= 23 && i <= 31)
                          || (i >= 35 && i <= 39)
                          || (i >= 42 && i <= 46)
-                         || (i >= 48 && i <= 58)
+                         || (i >= 48 && i <= 49)
+                         || (i >= 51 && i <= 58)
                          || i == 60
                          ? 1 : 0));
       }
@@ -83,9 +84,42 @@ main ()
                          || (i >= 25 && i <= 33)
                          || (i >= 37 && i <= 41)
                          || (i >= 44 && i <= 48)
-                         || (i >= 50 && i <= 60)
+                         || (i >= 50 && i <= 51)
+                         || (i >= 53 && i <= 60)
                          || i == 66
                          ? 1 : 0));
+      }
+    free (p);
+  }
+
+  /* CR LF handling.  */
+  {
+    static const uint32_t input[8] =
+      { 'a', '\n', 'b', '\r', 'c', '\r', '\n', 'd' };
+    char *p = (char *) malloc (SIZEOF (input));
+    size_t i;
+
+    u32_wordbreaks (input, SIZEOF (input), p);
+    for (i = 0; i < 8; i++)
+      {
+        ASSERT (p[i] == (i == 1 || i == 2 || i == 3 || i == 4 || i == 5
+                         || i == 7 ? 1 :
+                         0));
+      }
+    free (p);
+  }
+
+  /* Test regional indicators.  */
+  {
+    static const uint32_t input[6] =
+      { '.', 0x1F1E9, 0x1F1EA, 0x1F1EB, 0x1F1F7, '.' };
+    char *p = (char *) malloc (SIZEOF (input));
+    size_t i;
+
+    u32_wordbreaks (input, SIZEOF (input), p);
+    for (i = 0; i < 6; i++)
+      {
+        ASSERT (p[i] == (i == 1 || i == 3 || i == 5 ? 1 : 0));
       }
     free (p);
   }

@@ -1,5 +1,5 @@
-# iconv_open.m4 serial 14
-dnl Copyright (C) 2007-2018 Free Software Foundation, Inc.
+# iconv_open.m4 serial 16
+dnl Copyright (C) 2007-2022 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -23,11 +23,12 @@ AC_DEFUN([gl_FUNC_ICONV_OPEN],
     if test $gl_func_iconv_gnu = no; then
       iconv_flavor=
       case "$host_os" in
-        aix*)     iconv_flavor=ICONV_FLAVOR_AIX ;;
-        irix*)    iconv_flavor=ICONV_FLAVOR_IRIX ;;
-        hpux*)    iconv_flavor=ICONV_FLAVOR_HPUX ;;
-        osf*)     iconv_flavor=ICONV_FLAVOR_OSF ;;
-        solaris*) iconv_flavor=ICONV_FLAVOR_SOLARIS ;;
+        aix*)         iconv_flavor=ICONV_FLAVOR_AIX ;;
+        irix*)        iconv_flavor=ICONV_FLAVOR_IRIX ;;
+        hpux*)        iconv_flavor=ICONV_FLAVOR_HPUX ;;
+        osf*)         iconv_flavor=ICONV_FLAVOR_OSF ;;
+        solaris*)     iconv_flavor=ICONV_FLAVOR_SOLARIS ;;
+        openedition*) iconv_flavor=ICONV_FLAVOR_ZOS ;;
       esac
       if test -n "$iconv_flavor"; then
         AC_DEFINE_UNQUOTED([ICONV_FLAVOR], [$iconv_flavor],
@@ -38,13 +39,16 @@ AC_DEFUN([gl_FUNC_ICONV_OPEN],
     fi
     m4_ifdef([gl_FUNC_ICONV_OPEN_UTF_SUPPORT], [
       gl_FUNC_ICONV_OPEN_UTF_SUPPORT
-      if test $gl_cv_func_iconv_supports_utf = no; then
-        REPLACE_ICONV_UTF=1
-        AC_DEFINE([REPLACE_ICONV_UTF], [1],
-          [Define if the iconv() functions are enhanced to handle the UTF-{16,32}{BE,LE} encodings.])
-        REPLACE_ICONV=1
-        gl_REPLACE_ICONV_OPEN
-      fi
+      case "$gl_cv_func_iconv_supports_utf" in
+        *yes) ;;
+        *)
+          REPLACE_ICONV_UTF=1
+          AC_DEFINE([REPLACE_ICONV_UTF], [1],
+            [Define if the iconv() functions are enhanced to handle the UTF-{16,32}{BE,LE} encodings.])
+          REPLACE_ICONV=1
+          gl_REPLACE_ICONV_OPEN
+          ;;
+      esac
     ])
   fi
 ])

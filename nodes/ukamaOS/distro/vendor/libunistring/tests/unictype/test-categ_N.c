@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -101,7 +101,7 @@
     { 0x109BC, 0x109BD },
     { 0x109C0, 0x109CF },
     { 0x109D2, 0x109FF },
-    { 0x10A40, 0x10A47 },
+    { 0x10A40, 0x10A48 },
     { 0x10A7D, 0x10A7E },
     { 0x10A9D, 0x10A9F },
     { 0x10AEB, 0x10AEF },
@@ -109,7 +109,11 @@
     { 0x10B78, 0x10B7F },
     { 0x10BA9, 0x10BAF },
     { 0x10CFA, 0x10CFF },
+    { 0x10D30, 0x10D39 },
     { 0x10E60, 0x10E7E },
+    { 0x10F1D, 0x10F26 },
+    { 0x10F51, 0x10F54 },
+    { 0x10FC5, 0x10FCB },
     { 0x11052, 0x1106F },
     { 0x110F0, 0x110F9 },
     { 0x11136, 0x1113F },
@@ -122,16 +126,34 @@
     { 0x116C0, 0x116C9 },
     { 0x11730, 0x1173B },
     { 0x118E0, 0x118F2 },
+    { 0x11950, 0x11959 },
     { 0x11C50, 0x11C6C },
+    { 0x11D50, 0x11D59 },
+    { 0x11DA0, 0x11DA9 },
+    { 0x11F50, 0x11F59 },
+    { 0x11FC0, 0x11FD4 },
     { 0x12400, 0x1246E },
     { 0x16A60, 0x16A69 },
+    { 0x16AC0, 0x16AC9 },
     { 0x16B50, 0x16B59 },
     { 0x16B5B, 0x16B61 },
-    { 0x1D360, 0x1D371 },
+    { 0x16E80, 0x16E96 },
+    { 0x1D2C0, 0x1D2D3 },
+    { 0x1D2E0, 0x1D2F3 },
+    { 0x1D360, 0x1D378 },
     { 0x1D7CE, 0x1D7FF },
+    { 0x1E140, 0x1E149 },
+    { 0x1E2F0, 0x1E2F9 },
+    { 0x1E4F0, 0x1E4F9 },
     { 0x1E8C7, 0x1E8CF },
     { 0x1E950, 0x1E959 },
-    { 0x1F100, 0x1F10C }
+    { 0x1EC71, 0x1ECAB },
+    { 0x1ECAD, 0x1ECAF },
+    { 0x1ECB1, 0x1ECB4 },
+    { 0x1ED01, 0x1ED2D },
+    { 0x1ED2F, 0x1ED3D },
+    { 0x1F100, 0x1F10C },
+    { 0x1FBF0, 0x1FBF9 }
 
 #define PREDICATE(c) uc_is_general_category (c, UC_CATEGORY_N)
 #include "test-predicate-part2.h"

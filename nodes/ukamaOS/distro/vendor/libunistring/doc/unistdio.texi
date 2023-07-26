@@ -44,154 +44,154 @@ returned string.  In case of error, NULL is returned and @code{errno} is set.
 The following functions take an ASCII format string and return a result that
 is a @code{char *} string in locale encoding.
 
-@deftypefun int ulc_sprintf (char *@var{buf}, const char *@var{format}, ...)
+@deftypefun int ulc_sprintf (char@tie{}*@var{buf}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
 
-@deftypefun int ulc_snprintf (char *@var{buf}, size_t size, const char *@var{format}, ...)
+@deftypefun int ulc_snprintf (char@tie{}*@var{buf}, size_t@tie{}size, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
 
-@deftypefun int ulc_asprintf (char **@var{resultp}, const char *@var{format}, ...)
+@deftypefun int ulc_asprintf (char@tie{}**@var{resultp}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
 
-@deftypefun {char *} ulc_asnprintf (char *@var{resultbuf}, size_t *@var{lengthp}, const char *@var{format}, ...)
+@deftypefun {char *} ulc_asnprintf (char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
 
-@deftypefun int ulc_vsprintf (char *@var{buf}, const char *@var{format}, va_list @var{ap})
+@deftypefun int ulc_vsprintf (char@tie{}*@var{buf}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
-@deftypefun int ulc_vsnprintf (char *@var{buf}, size_t size, const char *@var{format}, va_list @var{ap})
+@deftypefun int ulc_vsnprintf (char@tie{}*@var{buf}, size_t@tie{}size, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
-@deftypefun int ulc_vasprintf (char **@var{resultp}, const char *@var{format}, va_list @var{ap})
+@deftypefun int ulc_vasprintf (char@tie{}**@var{resultp}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
-@deftypefun {char *} ulc_vasnprintf (char *@var{resultbuf}, size_t *@var{lengthp}, const char *@var{format}, va_list @var{ap})
+@deftypefun {char *} ulc_vasnprintf (char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
 The following functions take an ASCII format string and return a result in
 UTF-8 format.
 
-@deftypefun int u8_sprintf (uint8_t *@var{buf}, const char *@var{format}, ...)
+@deftypefun int u8_sprintf (uint8_t@tie{}*@var{buf}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u8_snprintf (uint8_t *@var{buf}, size_t @var{size}, const char *@var{format}, ...)
+@deftypefun int u8_snprintf (uint8_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u8_asprintf (uint8_t **@var{resultp}, const char *@var{format}, ...)
+@deftypefun int u8_asprintf (uint8_t@tie{}**@var{resultp}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun {uint8_t *} u8_asnprintf (uint8_t *@var{resultbuf}, size_t *@var{lengthp}, const char *@var{format}, ...)
+@deftypefun {uint8_t *} u8_asnprintf (uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u8_vsprintf (uint8_t *@var{buf}, const char *@var{format}, va_list ap)
+@deftypefun int u8_vsprintf (uint8_t@tie{}*@var{buf}, const@tie{}char@tie{}*@var{format}, va_list@tie{}ap)
 @end deftypefun
-@deftypefun int u8_vsnprintf (uint8_t *@var{buf}, size_t @var{size}, const char *@var{format}, va_list @var{ap})
+@deftypefun int u8_vsnprintf (uint8_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u8_vasprintf (uint8_t **@var{resultp}, const char *@var{format}, va_list @var{ap})
+@deftypefun int u8_vasprintf (uint8_t@tie{}**@var{resultp}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun {uint8_t *} u8_vasnprintf (uint8_t *resultbuf, size_t *@var{lengthp}, const char *@var{format}, va_list @var{ap})
+@deftypefun {uint8_t *} u8_vasnprintf (uint8_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
 The following functions take an UTF-8 format string and return a result in
 UTF-8 format.
 
-@deftypefun int u8_u8_sprintf (uint8_t *@var{buf}, const uint8_t *@var{format}, ...)
+@deftypefun int u8_u8_sprintf (uint8_t@tie{}*@var{buf}, const@tie{}uint8_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u8_u8_snprintf (uint8_t *@var{buf}, size_t @var{size}, const uint8_t *@var{format}, ...)
+@deftypefun int u8_u8_snprintf (uint8_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}uint8_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u8_u8_asprintf (uint8_t **@var{resultp}, const uint8_t *@var{format}, ...)
+@deftypefun int u8_u8_asprintf (uint8_t@tie{}**@var{resultp}, const@tie{}uint8_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun {uint8_t *} u8_u8_asnprintf (uint8_t *resultbuf, size_t *@var{lengthp}, const uint8_t *@var{format}, ...)
+@deftypefun {uint8_t *} u8_u8_asnprintf (uint8_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}uint8_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u8_u8_vsprintf (uint8_t *@var{buf}, const uint8_t *@var{format}, va_list @var{ap})
+@deftypefun int u8_u8_vsprintf (uint8_t@tie{}*@var{buf}, const@tie{}uint8_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u8_u8_vsnprintf (uint8_t *@var{buf}, size_t @var{size}, const uint8_t *@var{format}, va_list @var{ap})
+@deftypefun int u8_u8_vsnprintf (uint8_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}uint8_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u8_u8_vasprintf (uint8_t **@var{resultp}, const uint8_t *@var{format}, va_list @var{ap})
+@deftypefun int u8_u8_vasprintf (uint8_t@tie{}**@var{resultp}, const@tie{}uint8_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun {uint8_t *} u8_u8_vasnprintf (uint8_t *resultbuf, size_t *@var{lengthp}, const uint8_t *@var{format}, va_list @var{ap})
+@deftypefun {uint8_t *} u8_u8_vasnprintf (uint8_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}uint8_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
 The following functions take an ASCII format string and return a result in
 UTF-16 format.
 
-@deftypefun int u16_sprintf (uint16_t *@var{buf}, const char *@var{format}, ...)
+@deftypefun int u16_sprintf (uint16_t@tie{}*@var{buf}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u16_snprintf (uint16_t *@var{buf}, size_t @var{size}, const char *@var{format}, ...)
+@deftypefun int u16_snprintf (uint16_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u16_asprintf (uint16_t **@var{resultp}, const char *@var{format}, ...)
+@deftypefun int u16_asprintf (uint16_t@tie{}**@var{resultp}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun {uint16_t *} u16_asnprintf (uint16_t *@var{resultbuf}, size_t *@var{lengthp}, const char *@var{format}, ...)
+@deftypefun {uint16_t *} u16_asnprintf (uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u16_vsprintf (uint16_t *@var{buf}, const char *@var{format}, va_list ap)
+@deftypefun int u16_vsprintf (uint16_t@tie{}*@var{buf}, const@tie{}char@tie{}*@var{format}, va_list@tie{}ap)
 @end deftypefun
-@deftypefun int u16_vsnprintf (uint16_t *@var{buf}, size_t @var{size}, const char *@var{format}, va_list @var{ap})
+@deftypefun int u16_vsnprintf (uint16_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u16_vasprintf (uint16_t **@var{resultp}, const char *@var{format}, va_list @var{ap})
+@deftypefun int u16_vasprintf (uint16_t@tie{}**@var{resultp}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun {uint16_t *} u16_vasnprintf (uint16_t *resultbuf, size_t *@var{lengthp}, const char *@var{format}, va_list @var{ap})
+@deftypefun {uint16_t *} u16_vasnprintf (uint16_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
 The following functions take an UTF-16 format string and return a result in
 UTF-16 format.
 
-@deftypefun int u16_u16_sprintf (uint16_t *@var{buf}, const uint16_t *@var{format}, ...)
+@deftypefun int u16_u16_sprintf (uint16_t@tie{}*@var{buf}, const@tie{}uint16_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u16_u16_snprintf (uint16_t *@var{buf}, size_t @var{size}, const uint16_t *@var{format}, ...)
+@deftypefun int u16_u16_snprintf (uint16_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}uint16_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u16_u16_asprintf (uint16_t **@var{resultp}, const uint16_t *@var{format}, ...)
+@deftypefun int u16_u16_asprintf (uint16_t@tie{}**@var{resultp}, const@tie{}uint16_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun {uint16_t *} u16_u16_asnprintf (uint16_t *resultbuf, size_t *@var{lengthp}, const uint16_t *@var{format}, ...)
+@deftypefun {uint16_t *} u16_u16_asnprintf (uint16_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}uint16_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u16_u16_vsprintf (uint16_t *@var{buf}, const uint16_t *@var{format}, va_list @var{ap})
+@deftypefun int u16_u16_vsprintf (uint16_t@tie{}*@var{buf}, const@tie{}uint16_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u16_u16_vsnprintf (uint16_t *@var{buf}, size_t @var{size}, const uint16_t *@var{format}, va_list @var{ap})
+@deftypefun int u16_u16_vsnprintf (uint16_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}uint16_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u16_u16_vasprintf (uint16_t **@var{resultp}, const uint16_t *@var{format}, va_list @var{ap})
+@deftypefun int u16_u16_vasprintf (uint16_t@tie{}**@var{resultp}, const@tie{}uint16_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun {uint16_t *} u16_u16_vasnprintf (uint16_t *resultbuf, size_t *@var{lengthp}, const uint16_t *@var{format}, va_list @var{ap})
+@deftypefun {uint16_t *} u16_u16_vasnprintf (uint16_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}uint16_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
 The following functions take an ASCII format string and return a result in
 UTF-32 format.
 
-@deftypefun int u32_sprintf (uint32_t *@var{buf}, const char *@var{format}, ...)
+@deftypefun int u32_sprintf (uint32_t@tie{}*@var{buf}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u32_snprintf (uint32_t *@var{buf}, size_t @var{size}, const char *@var{format}, ...)
+@deftypefun int u32_snprintf (uint32_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u32_asprintf (uint32_t **@var{resultp}, const char *@var{format}, ...)
+@deftypefun int u32_asprintf (uint32_t@tie{}**@var{resultp}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun {uint32_t *} u32_asnprintf (uint32_t *@var{resultbuf}, size_t *@var{lengthp}, const char *@var{format}, ...)
+@deftypefun {uint32_t *} u32_asnprintf (uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u32_vsprintf (uint32_t *@var{buf}, const char *@var{format}, va_list ap)
+@deftypefun int u32_vsprintf (uint32_t@tie{}*@var{buf}, const@tie{}char@tie{}*@var{format}, va_list@tie{}ap)
 @end deftypefun
-@deftypefun int u32_vsnprintf (uint32_t *@var{buf}, size_t @var{size}, const char *@var{format}, va_list @var{ap})
+@deftypefun int u32_vsnprintf (uint32_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u32_vasprintf (uint32_t **@var{resultp}, const char *@var{format}, va_list @var{ap})
+@deftypefun int u32_vasprintf (uint32_t@tie{}**@var{resultp}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun {uint32_t *} u32_vasnprintf (uint32_t *resultbuf, size_t *@var{lengthp}, const char *@var{format}, va_list @var{ap})
+@deftypefun {uint32_t *} u32_vasnprintf (uint32_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
 The following functions take an UTF-32 format string and return a result in
 UTF-32 format.
 
-@deftypefun int u32_u32_sprintf (uint32_t *@var{buf}, const uint32_t *@var{format}, ...)
+@deftypefun int u32_u32_sprintf (uint32_t@tie{}*@var{buf}, const@tie{}uint32_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u32_u32_snprintf (uint32_t *@var{buf}, size_t @var{size}, const uint32_t *@var{format}, ...)
+@deftypefun int u32_u32_snprintf (uint32_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}uint32_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u32_u32_asprintf (uint32_t **@var{resultp}, const uint32_t *@var{format}, ...)
+@deftypefun int u32_u32_asprintf (uint32_t@tie{}**@var{resultp}, const@tie{}uint32_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun {uint32_t *} u32_u32_asnprintf (uint32_t *resultbuf, size_t *@var{lengthp}, const uint32_t *@var{format}, ...)
+@deftypefun {uint32_t *} u32_u32_asnprintf (uint32_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}uint32_t@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int u32_u32_vsprintf (uint32_t *@var{buf}, const uint32_t *@var{format}, va_list @var{ap})
+@deftypefun int u32_u32_vsprintf (uint32_t@tie{}*@var{buf}, const@tie{}uint32_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u32_u32_vsnprintf (uint32_t *@var{buf}, size_t @var{size}, const uint32_t *@var{format}, va_list @var{ap})
+@deftypefun int u32_u32_vsnprintf (uint32_t@tie{}*@var{buf}, size_t@tie{}@var{size}, const@tie{}uint32_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun int u32_u32_vasprintf (uint32_t **@var{resultp}, const uint32_t *@var{format}, va_list @var{ap})
+@deftypefun int u32_u32_vasprintf (uint32_t@tie{}**@var{resultp}, const@tie{}uint32_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
-@deftypefun {uint32_t *} u32_u32_vasnprintf (uint32_t *resultbuf, size_t *@var{lengthp}, const uint32_t *@var{format}, va_list @var{ap})
+@deftypefun {uint32_t *} u32_u32_vasnprintf (uint32_t@tie{}*resultbuf, size_t@tie{}*@var{lengthp}, const@tie{}uint32_t@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun
 
 The following functions take an ASCII format string and produce output in
 locale encoding to a @code{FILE} stream.
 
-@deftypefun int ulc_fprintf (FILE *@var{stream}, const char *@var{format}, ...)
+@deftypefun int ulc_fprintf (FILE@tie{}*@var{stream}, const@tie{}char@tie{}*@var{format}, ...)
 @end deftypefun
-@deftypefun int ulc_vfprintf (FILE *@var{stream}, const char *@var{format}, va_list @var{ap})
+@deftypefun int ulc_vfprintf (FILE@tie{}*@var{stream}, const@tie{}char@tie{}*@var{format}, va_list@tie{}@var{ap})
 @end deftypefun

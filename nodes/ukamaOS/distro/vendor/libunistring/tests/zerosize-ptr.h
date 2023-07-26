@@ -1,9 +1,9 @@
 /* Return a pointer to a zero-size object in memory.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -36,8 +36,9 @@
 /* Test whether mmap() and mprotect() are available.
    We don't use HAVE_MMAP, because AC_FUNC_MMAP would not define it on HP-UX.
    HAVE_MPROTECT is not enough, because mingw does not have mmap() but has an
-   mprotect() function in libgcc.a.  */
-#if HAVE_SYS_MMAN_H && HAVE_MPROTECT
+   mprotect() function in libgcc.a.
+   And OS/2 kLIBC has <sys/mman.h> and mprotect(), but not mmap().  */
+#if HAVE_SYS_MMAN_H && HAVE_MPROTECT && !defined __KLIBC__
 # include <fcntl.h>
 # include <unistd.h>
 # include <sys/types.h>
@@ -58,7 +59,7 @@ zerosize_ptr (void)
 {
 /* Use mmap and mprotect when they exist.  Don't test HAVE_MMAP, because it is
    not defined on HP-UX 11 (since it does not support MAP_FIXED).  */
-#if HAVE_SYS_MMAN_H && HAVE_MPROTECT
+#if HAVE_SYS_MMAN_H && HAVE_MPROTECT && !defined __KLIBC__
 # if HAVE_MAP_ANONYMOUS
   const int flags = MAP_ANONYMOUS | MAP_PRIVATE;
   const int fd = -1;

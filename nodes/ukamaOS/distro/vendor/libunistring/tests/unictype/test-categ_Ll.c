@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -286,7 +286,9 @@
     { 0x052B, 0x052B },
     { 0x052D, 0x052D },
     { 0x052F, 0x052F },
-    { 0x0561, 0x0587 },
+    { 0x0560, 0x0588 },
+    { 0x10D0, 0x10FA },
+    { 0x10FD, 0x10FF },
     { 0x13F8, 0x13FD },
     { 0x1C80, 0x1C88 },
     { 0x1D00, 0x1D2B },
@@ -446,7 +448,7 @@
     { 0x2146, 0x2149 },
     { 0x214E, 0x214E },
     { 0x2184, 0x2184 },
-    { 0x2C30, 0x2C5E },
+    { 0x2C30, 0x2C5F },
     { 0x2C61, 0x2C61 },
     { 0x2C65, 0x2C66 },
     { 0x2C68, 0x2C68 },
@@ -608,19 +610,39 @@
     { 0xA7A5, 0xA7A5 },
     { 0xA7A7, 0xA7A7 },
     { 0xA7A9, 0xA7A9 },
+    { 0xA7AF, 0xA7AF },
     { 0xA7B5, 0xA7B5 },
     { 0xA7B7, 0xA7B7 },
+    { 0xA7B9, 0xA7B9 },
+    { 0xA7BB, 0xA7BB },
+    { 0xA7BD, 0xA7BD },
+    { 0xA7BF, 0xA7BF },
+    { 0xA7C1, 0xA7C1 },
+    { 0xA7C3, 0xA7C3 },
+    { 0xA7C8, 0xA7C8 },
+    { 0xA7CA, 0xA7CA },
+    { 0xA7D1, 0xA7D1 },
+    { 0xA7D3, 0xA7D3 },
+    { 0xA7D5, 0xA7D5 },
+    { 0xA7D7, 0xA7D7 },
+    { 0xA7D9, 0xA7D9 },
+    { 0xA7F6, 0xA7F6 },
     { 0xA7FA, 0xA7FA },
     { 0xAB30, 0xAB5A },
-    { 0xAB60, 0xAB65 },
+    { 0xAB60, 0xAB68 },
     { 0xAB70, 0xABBF },
     { 0xFB00, 0xFB06 },
     { 0xFB13, 0xFB17 },
     { 0xFF41, 0xFF5A },
     { 0x10428, 0x1044F },
     { 0x104D8, 0x104FB },
+    { 0x10597, 0x105A1 },
+    { 0x105A3, 0x105B1 },
+    { 0x105B3, 0x105B9 },
+    { 0x105BB, 0x105BC },
     { 0x10CC0, 0x10CF2 },
     { 0x118C0, 0x118DF },
+    { 0x16E60, 0x16E7F },
     { 0x1D41A, 0x1D433 },
     { 0x1D44E, 0x1D454 },
     { 0x1D456, 0x1D467 },
@@ -649,6 +671,9 @@
     { 0x1D7AA, 0x1D7C2 },
     { 0x1D7C4, 0x1D7C9 },
     { 0x1D7CB, 0x1D7CB },
+    { 0x1DF00, 0x1DF09 },
+    { 0x1DF0B, 0x1DF1E },
+    { 0x1DF25, 0x1DF2A },
     { 0x1E922, 0x1E943 }
 
 #define PREDICATE(c) uc_is_general_category (c, UC_CATEGORY_Ll)

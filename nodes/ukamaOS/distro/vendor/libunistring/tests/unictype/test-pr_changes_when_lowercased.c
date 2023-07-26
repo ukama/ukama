@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -292,6 +292,8 @@
     { 0x10C7, 0x10C7 },
     { 0x10CD, 0x10CD },
     { 0x13A0, 0x13F5 },
+    { 0x1C90, 0x1CBA },
+    { 0x1CBD, 0x1CBF },
     { 0x1E00, 0x1E00 },
     { 0x1E02, 0x1E02 },
     { 0x1E04, 0x1E04 },
@@ -440,7 +442,7 @@
     { 0x2160, 0x216F },
     { 0x2183, 0x2183 },
     { 0x24B6, 0x24CF },
-    { 0x2C00, 0x2C2E },
+    { 0x2C00, 0x2C2F },
     { 0x2C60, 0x2C60 },
     { 0x2C62, 0x2C64 },
     { 0x2C67, 0x2C67 },
@@ -601,11 +603,28 @@
     { 0xA7AA, 0xA7AE },
     { 0xA7B0, 0xA7B4 },
     { 0xA7B6, 0xA7B6 },
+    { 0xA7B8, 0xA7B8 },
+    { 0xA7BA, 0xA7BA },
+    { 0xA7BC, 0xA7BC },
+    { 0xA7BE, 0xA7BE },
+    { 0xA7C0, 0xA7C0 },
+    { 0xA7C2, 0xA7C2 },
+    { 0xA7C4, 0xA7C7 },
+    { 0xA7C9, 0xA7C9 },
+    { 0xA7D0, 0xA7D0 },
+    { 0xA7D6, 0xA7D6 },
+    { 0xA7D8, 0xA7D8 },
+    { 0xA7F5, 0xA7F5 },
     { 0xFF21, 0xFF3A },
     { 0x10400, 0x10427 },
     { 0x104B0, 0x104D3 },
+    { 0x10570, 0x1057A },
+    { 0x1057C, 0x1058A },
+    { 0x1058C, 0x10592 },
+    { 0x10594, 0x10595 },
     { 0x10C80, 0x10CB2 },
     { 0x118A0, 0x118BF },
+    { 0x16E40, 0x16E5F },
     { 0x1E900, 0x1E921 }
 
 #define PREDICATE(c) uc_is_property_changes_when_lowercased (c)

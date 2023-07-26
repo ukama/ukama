@@ -15,13 +15,13 @@ This macro expands to a constant that is the required size of buffer for a
 Unicode character name.
 @end deftypevr
 
-@deftypefun {char *} unicode_character_name (ucs4_t @var{uc}, char *@var{buf})
+@deftypefun {char *} unicode_character_name (ucs4_t@tie{}@var{uc}, char@tie{}*@var{buf})
 Looks up the name of a Unicode character, in uppercase ASCII.
 @var{buf} must point to a buffer, at least @code{UNINAME_MAX} bytes in size.
 Returns the filled @var{buf}, or NULL if the character does not have a name.
 @end deftypefun
 
-@deftypefun ucs4_t unicode_name_character (const char *@var{name})
+@deftypefun ucs4_t unicode_name_character (const@tie{}char@tie{}*@var{name})
 Looks up the Unicode character with a given name, in upper- or lowercase
 ASCII.  @var{NAME} can also be an alias name of a character.
 Returns the character if found, or @code{UNINAME_INVALID} if not found.

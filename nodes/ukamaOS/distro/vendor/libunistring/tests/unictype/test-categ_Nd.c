@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -55,6 +55,7 @@
     { 0xABF0, 0xABF9 },
     { 0xFF10, 0xFF19 },
     { 0x104A0, 0x104A9 },
+    { 0x10D30, 0x10D39 },
     { 0x11066, 0x1106F },
     { 0x110F0, 0x110F9 },
     { 0x11136, 0x1113F },
@@ -66,11 +67,20 @@
     { 0x116C0, 0x116C9 },
     { 0x11730, 0x11739 },
     { 0x118E0, 0x118E9 },
+    { 0x11950, 0x11959 },
     { 0x11C50, 0x11C59 },
+    { 0x11D50, 0x11D59 },
+    { 0x11DA0, 0x11DA9 },
+    { 0x11F50, 0x11F59 },
     { 0x16A60, 0x16A69 },
+    { 0x16AC0, 0x16AC9 },
     { 0x16B50, 0x16B59 },
     { 0x1D7CE, 0x1D7FF },
-    { 0x1E950, 0x1E959 }
+    { 0x1E140, 0x1E149 },
+    { 0x1E2F0, 0x1E2F9 },
+    { 0x1E4F0, 0x1E4F9 },
+    { 0x1E950, 0x1E959 },
+    { 0x1FBF0, 0x1FBF9 }
 
 #define PREDICATE(c) uc_is_general_category (c, UC_CATEGORY_Nd)
 #include "test-predicate-part2.h"

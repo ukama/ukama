@@ -1,9 +1,9 @@
 /* Test of gl_locale_name function and its variants.
-   Copyright (C) 2007-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -26,8 +26,12 @@
 
 #include "macros.h"
 
+#if HAVE_WORKING_NEWLOCALE && HAVE_WORKING_USELOCALE && !HAVE_FAKE_LOCALES
+# define HAVE_GOOD_USELOCALE 1
+#endif
 
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+
+#if HAVE_GOOD_USELOCALE
 
 static struct { int cat; int mask; const char *string; } const categories[] =
   {
@@ -63,6 +67,7 @@ static struct { int cat; int mask; const char *string; } const categories[] =
 static void
 test_locale_name (void)
 {
+  const char *ret;
   const char *name;
 
   /* Check that gl_locale_name returns non-NULL.  */
@@ -70,7 +75,7 @@ test_locale_name (void)
 
   /* Get into a defined state,  */
   setlocale (LC_ALL, "en_US.UTF-8");
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+#if HAVE_GOOD_USELOCALE
   uselocale (LC_GLOBAL_LOCALE);
 #endif
 
@@ -81,7 +86,21 @@ test_locale_name (void)
   unsetenv ("LC_MESSAGES");
   unsetenv ("LC_NUMERIC");
   unsetenv ("LANG");
-  setlocale (LC_ALL, "");
+  /* Need also to unset all environment variables that specify standard or
+     non-standard locale categories.  Otherwise, on glibc systems, when some
+     of these variables are set and reference a nonexistent locale, the
+     setlocale (LC_ALL, "") call below would fail.  */
+  unsetenv ("LC_COLLATE");
+  unsetenv ("LC_MONETARY");
+  unsetenv ("LC_TIME");
+  unsetenv ("LC_ADDRESS");
+  unsetenv ("LC_IDENTIFICATION");
+  unsetenv ("LC_MEASUREMENT");
+  unsetenv ("LC_NAME");
+  unsetenv ("LC_PAPER");
+  unsetenv ("LC_TELEPHONE");
+  ret = setlocale (LC_ALL, "");
+  ASSERT (ret != NULL);
   ASSERT (strcmp (gl_locale_name (LC_MESSAGES, "LC_MESSAGES"),
                   gl_locale_name_default ()) == 0);
   ASSERT (strcmp (gl_locale_name (LC_NUMERIC, "LC_NUMERIC"),
@@ -181,7 +200,7 @@ test_locale_name (void)
       ASSERT (strcmp (name, "fr_FR.UTF-8") == 0);
     }
 
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+#if HAVE_GOOD_USELOCALE
   /* Check that gl_locale_name considers the thread locale.  */
   {
     locale_t locale = newlocale (LC_ALL_MASK, "fr_FR.UTF-8", NULL);
@@ -241,7 +260,7 @@ test_locale_name_thread (void)
   /* Get into a defined state,  */
   setlocale (LC_ALL, "en_US.UTF-8");
 
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+#if HAVE_GOOD_USELOCALE
   /* Check that gl_locale_name_thread returns NULL when no thread locale is
      set.  */
   uselocale (LC_GLOBAL_LOCALE);
@@ -492,11 +511,12 @@ test_locale_name_thread (void)
 static void
 test_locale_name_posix (void)
 {
+  const char *ret;
   const char *name;
 
   /* Get into a defined state,  */
   setlocale (LC_ALL, "en_US.UTF-8");
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+#if HAVE_GOOD_USELOCALE
   uselocale (LC_GLOBAL_LOCALE);
 #endif
 
@@ -507,7 +527,21 @@ test_locale_name_posix (void)
   unsetenv ("LC_MESSAGES");
   unsetenv ("LC_NUMERIC");
   unsetenv ("LANG");
-  setlocale (LC_ALL, "");
+  /* Need also to unset all environment variables that specify standard or
+     non-standard locale categories.  Otherwise, on glibc systems, when some
+     of these variables are set and reference a nonexistent locale, the
+     setlocale (LC_ALL, "") call below would fail.  */
+  unsetenv ("LC_COLLATE");
+  unsetenv ("LC_MONETARY");
+  unsetenv ("LC_TIME");
+  unsetenv ("LC_ADDRESS");
+  unsetenv ("LC_IDENTIFICATION");
+  unsetenv ("LC_MEASUREMENT");
+  unsetenv ("LC_NAME");
+  unsetenv ("LC_PAPER");
+  unsetenv ("LC_TELEPHONE");
+  ret = setlocale (LC_ALL, "");
+  ASSERT (ret != NULL);
   name = gl_locale_name_posix (LC_MESSAGES, "LC_MESSAGES");
   ASSERT (name == NULL || strcmp (name, gl_locale_name_default ()) == 0);
   name = gl_locale_name_posix (LC_NUMERIC, "LC_NUMERIC");
@@ -605,7 +639,7 @@ test_locale_name_posix (void)
       ASSERT (strcmp (name, "fr_FR.UTF-8") == 0);
     }
 
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+#if HAVE_GOOD_USELOCALE
   /* Check that gl_locale_name_posix ignores the thread locale.  */
   {
     locale_t locale = newlocale (LC_ALL_MASK, "fr_FR.UTF-8", NULL);
@@ -634,7 +668,7 @@ test_locale_name_environ (void)
 
   /* Get into a defined state,  */
   setlocale (LC_ALL, "en_US.UTF-8");
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+#if HAVE_GOOD_USELOCALE
   uselocale (LC_GLOBAL_LOCALE);
 #endif
 
@@ -719,7 +753,7 @@ test_locale_name_environ (void)
   name = gl_locale_name_environ (LC_MESSAGES, "LC_MESSAGES");
   ASSERT (strcmp (name, "fr_FR.UTF-8") == 0);
 
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+#if HAVE_GOOD_USELOCALE
   /* Check that gl_locale_name_environ ignores the thread locale.  */
   {
     locale_t locale = newlocale (LC_ALL_MASK, "fr_FR.UTF-8", NULL);
@@ -754,7 +788,7 @@ test_locale_name_default (void)
   ASSERT (strcmp (name, "C") == 0);
 #endif
 
-#if HAVE_NEWLOCALE && HAVE_USELOCALE
+#if HAVE_GOOD_USELOCALE
   /* Check that gl_locale_name_default ignores the thread locale.  */
   {
     locale_t locale = newlocale (LC_ALL_MASK, "fr_FR.UTF-8", NULL);

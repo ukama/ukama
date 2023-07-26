@@ -116,7 +116,7 @@ the @code{uc_decomposition} and @code{uc_canonical_decomposition} functions.
 
 The following functions decompose a Unicode character.
 
-@deftypefun int uc_decomposition (ucs4_t @var{uc}, int *@var{decomp_tag}, ucs4_t *@var{decomposition})
+@deftypefun int uc_decomposition (ucs4_t@tie{}@var{uc}, int@tie{}*@var{decomp_tag}, ucs4_t@tie{}*@var{decomposition})
 Returns the character decomposition mapping of the Unicode character @var{uc}.
 @var{decomposition} must point to an array of at least
 @code{UC_DECOMPOSITION_MAX_LENGTH} @code{ucs_t} elements.
@@ -126,7 +126,7 @@ When a decomposition exists, @code{@var{decomposition}[0..@var{n}-1]} and
 returned.
 @end deftypefun
 
-@deftypefun int uc_canonical_decomposition (ucs4_t @var{uc}, ucs4_t *@var{decomposition})
+@deftypefun int uc_canonical_decomposition (ucs4_t@tie{}@var{uc}, ucs4_t@tie{}*@var{decomposition})
 Returns the canonical character decomposition mapping of the Unicode character
 @var{uc}.  @var{decomposition} must point to an array of at least
 @code{UC_DECOMPOSITION_MAX_LENGTH} @code{ucs_t} elements.
@@ -148,7 +148,7 @@ function @code{u*_normalize} with argument @code{UNINORM_NFD} instead.
 The following function composes a Unicode character from two Unicode
 characters.
 
-@deftypefun ucs4_t uc_composition (ucs4_t @var{uc1}, ucs4_t @var{uc2})
+@deftypefun ucs4_t uc_composition (ucs4_t@tie{}@var{uc1}, ucs4_t@tie{}@var{uc2})
 Attempts to combine the Unicode characters @var{uc1}, @var{uc2}.
 @var{uc1} is known to have canonical combining class 0.
 
@@ -190,24 +190,24 @@ Normalization form KC: compatibility decomposition, then canonical composition.
 
 The following functions operate on @code{uninorm_t} objects.
 
-@deftypefun bool uninorm_is_compat_decomposing (uninorm_t @var{nf})
+@deftypefun bool uninorm_is_compat_decomposing (uninorm_t@tie{}@var{nf})
 Tests whether the normalization form @var{nf} does compatibility decomposition.
 @end deftypefun
 
-@deftypefun bool uninorm_is_composing (uninorm_t @var{nf})
+@deftypefun bool uninorm_is_composing (uninorm_t@tie{}@var{nf})
 Tests whether the normalization form @var{nf} includes canonical composition.
 @end deftypefun
 
-@deftypefun uninorm_t uninorm_decomposing_form (uninorm_t @var{nf})
+@deftypefun uninorm_t uninorm_decomposing_form (uninorm_t@tie{}@var{nf})
 Returns the decomposing variant of the normalization form @var{nf}.
 This maps NFC,NFD @arrow{} NFD and NFKC,NFKD @arrow{} NFKD.
 @end deftypefun
 
 The following functions apply a Unicode normalization form to a Unicode string.
 
-@deftypefun {uint8_t *} u8_normalize (uninorm_t @var{nf}, const uint8_t *@var{s}, size_t @var{n}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint16_t *} u16_normalize (uninorm_t @var{nf}, const uint16_t *@var{s}, size_t @var{n}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {uint32_t *} u32_normalize (uninorm_t @var{nf}, const uint32_t *@var{s}, size_t @var{n}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {uint8_t *} u8_normalize (uninorm_t@tie{}@var{nf}, const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint8_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint16_t *} u16_normalize (uninorm_t@tie{}@var{nf}, const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint16_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {uint32_t *} u32_normalize (uninorm_t@tie{}@var{nf}, const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, uint32_t@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Returns the specified normalization form of a string.
 
 The @var{resultbuf} and @var{lengthp} arguments are as described in
@@ -221,9 +221,9 @@ chapter @ref{Conventions}.
 The following functions compare Unicode string, ignoring differences in
 normalization.
 
-@deftypefun int u8_normcmp (const uint8_t *@var{s1}, size_t @var{n1}, const uint8_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int u16_normcmp (const uint16_t *@var{s1}, size_t @var{n1}, const uint16_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int u32_normcmp (const uint32_t *@var{s1}, size_t @var{n1}, const uint32_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
+@deftypefun int u8_normcmp (const@tie{}uint8_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint8_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int u16_normcmp (const@tie{}uint16_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint16_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int u32_normcmp (const@tie{}uint32_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint32_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
 Compares @var{s1} and @var{s2}, ignoring differences in normalization.
 
 @var{nf} must be either @code{UNINORM_NFD} or @code{UNINORM_NFKD}.
@@ -235,9 +235,9 @@ Upon failure, returns -1 with @code{errno} set.
 
 @cindex comparing, ignoring normalization, with collation rules
 @cindex comparing, with collation rules, ignoring normalization
-@deftypefun {char *} u8_normxfrm (const uint8_t *@var{s}, size_t @var{n}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {char *} u16_normxfrm (const uint16_t *@var{s}, size_t @var{n}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
-@deftypefunx {char *} u32_normxfrm (const uint32_t *@var{s}, size_t @var{n}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefun {char *} u8_normxfrm (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, uninorm_t@tie{}@var{nf}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {char *} u16_normxfrm (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, uninorm_t@tie{}@var{nf}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
+@deftypefunx {char *} u32_normxfrm (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, uninorm_t@tie{}@var{nf}, char@tie{}*@var{resultbuf}, size_t@tie{}*@var{lengthp})
 Converts the string @var{s} of length @var{n} to a NUL-terminated byte
 sequence, in such a way that comparing @code{u8_normxfrm (@var{s1})} and
 @code{u8_normxfrm (@var{s2})} with the @code{u8_cmp2} function is equivalent to
@@ -249,9 +249,9 @@ The @var{resultbuf} and @var{lengthp} arguments are as described in
 chapter @ref{Conventions}.
 @end deftypefun
 
-@deftypefun int u8_normcoll (const uint8_t *@var{s1}, size_t @var{n1}, const uint8_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int u16_normcoll (const uint16_t *@var{s1}, size_t @var{n1}, const uint16_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
-@deftypefunx int u32_normcoll (const uint32_t *@var{s1}, size_t @var{n1}, const uint32_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
+@deftypefun int u8_normcoll (const@tie{}uint8_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint8_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int u16_normcoll (const@tie{}uint16_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint16_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
+@deftypefunx int u32_normcoll (const@tie{}uint32_t@tie{}*@var{s1}, size_t@tie{}@var{n1}, const@tie{}uint32_t@tie{}*@var{s2}, size_t@tie{}@var{n2}, uninorm_t@tie{}@var{nf}, int@tie{}*@var{resultp})
 Compares @var{s1} and @var{s2}, ignoring differences in normalization, using
 the collation rules of the current locale.
 
@@ -276,7 +276,7 @@ input according to a given normalization form and passes the normalized
 character sequence to the encapsulated stream of Unicode characters.
 @end deftp
 
-@deftypefun {struct uninorm_filter *} uninorm_filter_create (uninorm_t @var{nf}, int (*@var{stream_func}) (void *@var{stream_data}, ucs4_t @var{uc}), void *@var{stream_data})
+@deftypefun {struct uninorm_filter *} uninorm_filter_create (uninorm_t@tie{}@var{nf}, int@tie{}(*@var{stream_func})@tie{}(void@tie{}*@var{stream_data}, ucs4_t@tie{}@var{uc}), void@tie{}*@var{stream_data})
 Creates and returns a normalization filter for Unicode characters.
 
 The pair (@var{stream_func}, @var{stream_data}) is the encapsulated stream.
@@ -287,12 +287,12 @@ upon failure.
 Returns the new filter, or NULL with @code{errno} set upon failure.
 @end deftypefun
 
-@deftypefun int uninorm_filter_write (struct uninorm_filter *@var{filter}, ucs4_t @var{uc})
+@deftypefun int uninorm_filter_write (struct@tie{}uninorm_filter@tie{}*@var{filter}, ucs4_t@tie{}@var{uc})
 Stuffs a Unicode character into a normalizing filter.
 Returns 0 if successful, or -1 with @code{errno} set upon failure.
 @end deftypefun
 
-@deftypefun int uninorm_filter_flush (struct uninorm_filter *@var{filter})
+@deftypefun int uninorm_filter_flush (struct@tie{}uninorm_filter@tie{}*@var{filter})
 Brings data buffered in the filter to its destination, the encapsulated stream.
 
 Returns 0 if successful, or -1 with @code{errno} set upon failure.
@@ -302,7 +302,7 @@ into the filter, the resulting character sequence in the encapsulated stream
 will not necessarily be normalized.
 @end deftypefun
 
-@deftypefun int uninorm_filter_free (struct uninorm_filter *@var{filter})
+@deftypefun int uninorm_filter_free (struct@tie{}uninorm_filter@tie{}*@var{filter})
 Brings data buffered in the filter to its destination, the encapsulated stream,
 then closes and frees the filter.
 

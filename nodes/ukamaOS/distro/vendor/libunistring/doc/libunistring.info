@@ -1,4 +1,4 @@
-This is libunistring.info, produced by makeinfo version 6.4 from
+This is libunistring.info, produced by makeinfo version 6.8 from
 libunistring.texi.
 
 INFO-DIR-SECTION Software development
@@ -34,6 +34,7 @@ GNU libunistring
 * Using the library::           How to link with the library and use it?
 * More functionality::          More advanced functionality
 * The wchar_t mess::            Why ‘wchar_t *’ strings are useless
+* The char32_t problem::        Why ‘char32_t *’ strings are problematic
 * Licenses::                    Licenses
 
 * Index::                       General Index
@@ -239,11 +240,11 @@ in the same document.  Due to the many encodings for Japanese, even the
 processing of pure Japanese text was error prone.
 
    References:
-   • The Unicode standard: <http://www.unicode.org/>
-   • Definition of UTF-8: <http://www.rfc-editor.org/rfc/rfc3629.txt>
-   • Definition of UTF-16: <http://www.rfc-editor.org/rfc/rfc2781.txt>
+   • The Unicode standard: <https://www.unicode.org/>
+   • Definition of UTF-8: <https://www.rfc-editor.org/rfc/rfc3629.txt>
+   • Definition of UTF-16: <https://www.rfc-editor.org/rfc/rfc2781.txt>
    • Markus Kuhn’s UTF-8 and Unicode FAQ:
-     <http://www.cl.cam.ac.uk/~mgk25/unicode.html>
+     <https://www.cl.cam.ac.uk/~mgk25/unicode.html>
 
 
 File: libunistring.info,  Node: Unicode and i18n,  Next: Locale encodings,  Prev: Unicode,  Up: Introduction
@@ -415,7 +416,7 @@ encoding; therefore, the majority of users are using multibyte locales.
      work with multibyte strings.
 
    The workarounds can be found in GNU gnulib
-<http://www.gnu.org/software/gnulib/>.
+<https://www.gnu.org/software/gnulib/>.
    • gnulib has modules ‘mbchar’, ‘mbiter’, ‘mbuiter’ that represent
      multibyte characters and allow to iterate across a multibyte string
      with the same ease as through a unibyte string.
@@ -616,22 +617,22 @@ File: libunistring.info,  Node: Elementary string conversions,  Next: Elementary
    The following functions perform conversions between the different
 forms of Unicode strings.
 
- -- Function: uint16_t * u8_to_u16 (const uint8_t *S, size_t N, uint16_t
-          *RESULTBUF, size_t *LENGTHP)
+ -- Function: uint16_t * u8_to_u16 (const uint8_t *S, size_t N,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
      Converts an UTF-8 string to an UTF-16 string.
 
      The RESULTBUF and LENGTHP arguments are as described in chapter
      *note Conventions::.
 
- -- Function: uint32_t * u8_to_u32 (const uint8_t *S, size_t N, uint32_t
-          *RESULTBUF, size_t *LENGTHP)
+ -- Function: uint32_t * u8_to_u32 (const uint8_t *S, size_t N,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Converts an UTF-8 string to an UTF-32 string.
 
      The RESULTBUF and LENGTHP arguments are as described in chapter
      *note Conventions::.
 
- -- Function: uint8_t * u16_to_u8 (const uint16_t *S, size_t N, uint8_t
-          *RESULTBUF, size_t *LENGTHP)
+ -- Function: uint8_t * u16_to_u8 (const uint16_t *S, size_t N,
+          uint8_t *RESULTBUF, size_t *LENGTHP)
      Converts an UTF-16 string to an UTF-8 string.
 
      The RESULTBUF and LENGTHP arguments are as described in chapter
@@ -644,8 +645,8 @@ forms of Unicode strings.
      The RESULTBUF and LENGTHP arguments are as described in chapter
      *note Conventions::.
 
- -- Function: uint8_t * u32_to_u8 (const uint32_t *S, size_t N, uint8_t
-          *RESULTBUF, size_t *LENGTHP)
+ -- Function: uint8_t * u32_to_u8 (const uint32_t *S, size_t N,
+          uint8_t *RESULTBUF, size_t *LENGTHP)
      Converts an UTF-32 string to an UTF-8 string.
 
      The RESULTBUF and LENGTHP arguments are as described in chapter
@@ -743,9 +744,9 @@ File: libunistring.info,  Node: Creating Unicode strings,  Next: Copying Unicode
    The following function stores a Unicode character as a Unicode string
 in memory.
 
- -- Function: int u8_uctomb (uint8_t *S, ucs4_t UC, int N)
- -- Function: int u16_uctomb (uint16_t *S, ucs4_t UC, int N)
- -- Function: int u32_uctomb (uint32_t *S, ucs4_t UC, int N)
+ -- Function: int u8_uctomb (uint8_t *S, ucs4_t UC, ptrdiff_t N)
+ -- Function: int u16_uctomb (uint16_t *S, ucs4_t UC, ptrdiff_t N)
+ -- Function: int u32_uctomb (uint32_t *S, ucs4_t UC, ptrdiff_t N)
      Puts the multibyte character represented by UC in S, returning its
      length.  Returns -1 upon failure, -2 if the number of available
      units, N, is too small.  The latter case cannot occur if N >=
@@ -806,8 +807,8 @@ File: libunistring.info,  Node: Comparing Unicode strings,  Next: Searching for 
    The following function compares two Unicode strings of the same
 length.
 
- -- Function: int u8_cmp (const uint8_t *S1, const uint8_t *S2, size_t
-          N)
+ -- Function: int u8_cmp (const uint8_t *S1, const uint8_t *S2,
+          size_t N)
  -- Function: int u16_cmp (const uint16_t *S1, const uint16_t *S2,
           size_t N)
  -- Function: int u32_cmp (const uint32_t *S1, const uint32_t *S2,
@@ -822,12 +823,12 @@ length.
    The following function compares two Unicode strings of possibly
 different lengths.
 
- -- Function: int u8_cmp2 (const uint8_t *S1, size_t N1, const uint8_t
-          *S2, size_t N2)
- -- Function: int u16_cmp2 (const uint16_t *S1, size_t N1, const
-          uint16_t *S2, size_t N2)
- -- Function: int u32_cmp2 (const uint32_t *S1, size_t N1, const
-          uint32_t *S2, size_t N2)
+ -- Function: int u8_cmp2 (const uint8_t *S1, size_t N1,
+          const uint8_t *S2, size_t N2)
+ -- Function: int u16_cmp2 (const uint16_t *S1, size_t N1,
+          const uint16_t *S2, size_t N2)
+ -- Function: int u32_cmp2 (const uint32_t *S1, size_t N1,
+          const uint32_t *S2, size_t N2)
      Compares S1 and S2, lexicographically.  Returns a negative value if
      S1 compares smaller than S2, a positive value if S1 compares larger
      than S2, or 0 if they compare equal.
@@ -844,10 +845,10 @@ File: libunistring.info,  Node: Searching for a character,  Next: Counting chara
    The following function searches for a given Unicode character.
 
  -- Function: uint8_t * u8_chr (const uint8_t *S, size_t N, ucs4_t UC)
- -- Function: uint16_t * u16_chr (const uint16_t *S, size_t N, ucs4_t
-          UC)
- -- Function: uint32_t * u32_chr (const uint32_t *S, size_t N, ucs4_t
-          UC)
+ -- Function: uint16_t * u16_chr (const uint16_t *S, size_t N,
+          ucs4_t UC)
+ -- Function: uint32_t * u32_chr (const uint32_t *S, size_t N,
+          ucs4_t UC)
      Searches the string at S for UC.  Returns a pointer to the first
      occurrence of UC in S, or NULL if UC does not occur in S.
 
@@ -978,20 +979,20 @@ File: libunistring.info,  Node: Copying a NUL terminated Unicode string,  Next: 
    The following functions copy portions of Unicode strings in memory.
 
  -- Function: uint8_t * u8_strcpy (uint8_t *DEST, const uint8_t *SRC)
- -- Function: uint16_t * u16_strcpy (uint16_t *DEST, const uint16_t
-          *SRC)
- -- Function: uint32_t * u32_strcpy (uint32_t *DEST, const uint32_t
-          *SRC)
+ -- Function: uint16_t * u16_strcpy (uint16_t *DEST,
+          const uint16_t *SRC)
+ -- Function: uint32_t * u32_strcpy (uint32_t *DEST,
+          const uint32_t *SRC)
      Copies SRC to DEST.
 
      This function is similar to ‘strcpy’ and ‘wcscpy’, except that it
      operates on Unicode strings.
 
  -- Function: uint8_t * u8_stpcpy (uint8_t *DEST, const uint8_t *SRC)
- -- Function: uint16_t * u16_stpcpy (uint16_t *DEST, const uint16_t
-          *SRC)
- -- Function: uint32_t * u32_stpcpy (uint32_t *DEST, const uint32_t
-          *SRC)
+ -- Function: uint16_t * u16_stpcpy (uint16_t *DEST,
+          const uint16_t *SRC)
+ -- Function: uint32_t * u32_stpcpy (uint32_t *DEST,
+          const uint32_t *SRC)
      Copies SRC to DEST, returning the address of the terminating NUL in
      DEST.
 
@@ -1000,10 +1001,10 @@ File: libunistring.info,  Node: Copying a NUL terminated Unicode string,  Next: 
 
  -- Function: uint8_t * u8_strncpy (uint8_t *DEST, const uint8_t *SRC,
           size_t N)
- -- Function: uint16_t * u16_strncpy (uint16_t *DEST, const uint16_t
-          *SRC, size_t N)
- -- Function: uint32_t * u32_strncpy (uint32_t *DEST, const uint32_t
-          *SRC, size_t N)
+ -- Function: uint16_t * u16_strncpy (uint16_t *DEST,
+          const uint16_t *SRC, size_t N)
+ -- Function: uint32_t * u32_strncpy (uint32_t *DEST,
+          const uint32_t *SRC, size_t N)
      Copies no more than N units of SRC to DEST.
 
      This function is similar to ‘strncpy’ and ‘wcsncpy’, except that it
@@ -1011,10 +1012,10 @@ File: libunistring.info,  Node: Copying a NUL terminated Unicode string,  Next: 
 
  -- Function: uint8_t * u8_stpncpy (uint8_t *DEST, const uint8_t *SRC,
           size_t N)
- -- Function: uint16_t * u16_stpncpy (uint16_t *DEST, const uint16_t
-          *SRC, size_t N)
- -- Function: uint32_t * u32_stpncpy (uint32_t *DEST, const uint32_t
-          *SRC, size_t N)
+ -- Function: uint16_t * u16_stpncpy (uint16_t *DEST,
+          const uint16_t *SRC, size_t N)
+ -- Function: uint32_t * u32_stpncpy (uint32_t *DEST,
+          const uint32_t *SRC, size_t N)
      Copies no more than N units of SRC to DEST.  Returns a pointer past
      the last non-NUL unit written into DEST.  In other words, if the
      units written into DEST include a NUL, the return value is the
@@ -1024,10 +1025,10 @@ File: libunistring.info,  Node: Copying a NUL terminated Unicode string,  Next: 
      Unicode strings.
 
  -- Function: uint8_t * u8_strcat (uint8_t *DEST, const uint8_t *SRC)
- -- Function: uint16_t * u16_strcat (uint16_t *DEST, const uint16_t
-          *SRC)
- -- Function: uint32_t * u32_strcat (uint32_t *DEST, const uint32_t
-          *SRC)
+ -- Function: uint16_t * u16_strcat (uint16_t *DEST,
+          const uint16_t *SRC)
+ -- Function: uint32_t * u32_strcat (uint32_t *DEST,
+          const uint32_t *SRC)
      Appends SRC onto DEST.
 
      This function is similar to ‘strcat’ and ‘wcscat’, except that it
@@ -1035,10 +1036,10 @@ File: libunistring.info,  Node: Copying a NUL terminated Unicode string,  Next: 
 
  -- Function: uint8_t * u8_strncat (uint8_t *DEST, const uint8_t *SRC,
           size_t N)
- -- Function: uint16_t * u16_strncat (uint16_t *DEST, const uint16_t
-          *SRC, size_t N)
- -- Function: uint32_t * u32_strncat (uint32_t *DEST, const uint32_t
-          *SRC, size_t N)
+ -- Function: uint16_t * u16_strncat (uint16_t *DEST,
+          const uint16_t *SRC, size_t N)
+ -- Function: uint32_t * u32_strncat (uint32_t *DEST,
+          const uint32_t *SRC, size_t N)
      Appends no more than N units of SRC onto DEST.
 
      This function is similar to ‘strncat’ and ‘wcsncat’, except that it
@@ -1131,36 +1132,36 @@ File: libunistring.info,  Node: Searching for a character in a NUL terminated Un
    The following functions search for the first occurrence of some
 Unicode character in or outside a given set of Unicode characters.
 
- -- Function: size_t u8_strcspn (const uint8_t *STR, const uint8_t
-          *REJECT)
- -- Function: size_t u16_strcspn (const uint16_t *STR, const uint16_t
-          *REJECT)
- -- Function: size_t u32_strcspn (const uint32_t *STR, const uint32_t
-          *REJECT)
+ -- Function: size_t u8_strcspn (const uint8_t *STR,
+          const uint8_t *REJECT)
+ -- Function: size_t u16_strcspn (const uint16_t *STR,
+          const uint16_t *REJECT)
+ -- Function: size_t u32_strcspn (const uint32_t *STR,
+          const uint32_t *REJECT)
      Returns the length of the initial segment of STR which consists
      entirely of Unicode characters not in REJECT.
 
      This function is similar to ‘strcspn’ and ‘wcscspn’, except that it
      operates on Unicode strings.
 
- -- Function: size_t u8_strspn (const uint8_t *STR, const uint8_t
-          *ACCEPT)
- -- Function: size_t u16_strspn (const uint16_t *STR, const uint16_t
-          *ACCEPT)
- -- Function: size_t u32_strspn (const uint32_t *STR, const uint32_t
-          *ACCEPT)
+ -- Function: size_t u8_strspn (const uint8_t *STR,
+          const uint8_t *ACCEPT)
+ -- Function: size_t u16_strspn (const uint16_t *STR,
+          const uint16_t *ACCEPT)
+ -- Function: size_t u32_strspn (const uint32_t *STR,
+          const uint32_t *ACCEPT)
      Returns the length of the initial segment of STR which consists
      entirely of Unicode characters in ACCEPT.
 
      This function is similar to ‘strspn’ and ‘wcsspn’, except that it
      operates on Unicode strings.
 
- -- Function: uint8_t * u8_strpbrk (const uint8_t *STR, const uint8_t
-          *ACCEPT)
- -- Function: uint16_t * u16_strpbrk (const uint16_t *STR, const
-          uint16_t *ACCEPT)
- -- Function: uint32_t * u32_strpbrk (const uint32_t *STR, const
-          uint32_t *ACCEPT)
+ -- Function: uint8_t * u8_strpbrk (const uint8_t *STR,
+          const uint8_t *ACCEPT)
+ -- Function: uint16_t * u16_strpbrk (const uint16_t *STR,
+          const uint16_t *ACCEPT)
+ -- Function: uint32_t * u32_strpbrk (const uint32_t *STR,
+          const uint32_t *ACCEPT)
      Finds the first occurrence in STR of any character in ACCEPT.
 
      This function is similar to ‘strpbrk’ and ‘wcspbrk’, except that it
@@ -1175,31 +1176,31 @@ File: libunistring.info,  Node: Searching for a substring,  Next: Tokenizing,  P
    The following functions search whether a given Unicode string is a
 substring of another Unicode string.
 
- -- Function: uint8_t * u8_strstr (const uint8_t *HAYSTACK, const
-          uint8_t *NEEDLE)
- -- Function: uint16_t * u16_strstr (const uint16_t *HAYSTACK, const
-          uint16_t *NEEDLE)
- -- Function: uint32_t * u32_strstr (const uint32_t *HAYSTACK, const
-          uint32_t *NEEDLE)
+ -- Function: uint8_t * u8_strstr (const uint8_t *HAYSTACK,
+          const uint8_t *NEEDLE)
+ -- Function: uint16_t * u16_strstr (const uint16_t *HAYSTACK,
+          const uint16_t *NEEDLE)
+ -- Function: uint32_t * u32_strstr (const uint32_t *HAYSTACK,
+          const uint32_t *NEEDLE)
      Finds the first occurrence of NEEDLE in HAYSTACK.
 
      This function is similar to ‘strstr’ and ‘wcsstr’, except that it
      operates on Unicode strings.
 
- -- Function: bool u8_startswith (const uint8_t *STR, const uint8_t
-          *PREFIX)
- -- Function: bool u16_startswith (const uint16_t *STR, const uint16_t
-          *PREFIX)
- -- Function: bool u32_startswith (const uint32_t *STR, const uint32_t
-          *PREFIX)
+ -- Function: bool u8_startswith (const uint8_t *STR,
+          const uint8_t *PREFIX)
+ -- Function: bool u16_startswith (const uint16_t *STR,
+          const uint16_t *PREFIX)
+ -- Function: bool u32_startswith (const uint32_t *STR,
+          const uint32_t *PREFIX)
      Tests whether STR starts with PREFIX.
 
- -- Function: bool u8_endswith (const uint8_t *STR, const uint8_t
-          *SUFFIX)
- -- Function: bool u16_endswith (const uint16_t *STR, const uint16_t
-          *SUFFIX)
- -- Function: bool u32_endswith (const uint32_t *STR, const uint32_t
-          *SUFFIX)
+ -- Function: bool u8_endswith (const uint8_t *STR,
+          const uint8_t *SUFFIX)
+ -- Function: bool u16_endswith (const uint16_t *STR,
+          const uint16_t *SUFFIX)
+ -- Function: bool u32_endswith (const uint32_t *STR,
+          const uint32_t *SUFFIX)
      Tests whether STR ends with SUFFIX.
 
 
@@ -1212,10 +1213,10 @@ File: libunistring.info,  Node: Tokenizing,  Prev: Searching for a substring,  U
 
  -- Function: uint8_t * u8_strtok (uint8_t *STR, const uint8_t *DELIM,
           uint8_t **PTR)
- -- Function: uint16_t * u16_strtok (uint16_t *STR, const uint16_t
-          *DELIM, uint16_t **PTR)
- -- Function: uint32_t * u32_strtok (uint32_t *STR, const uint32_t
-          *DELIM, uint32_t **PTR)
+ -- Function: uint16_t * u16_strtok (uint16_t *STR,
+          const uint16_t *DELIM, uint16_t **PTR)
+ -- Function: uint32_t * u32_strtok (uint32_t *STR,
+          const uint32_t *DELIM, uint32_t **PTR)
      Divides STR into tokens separated by characters in DELIM.
 
      This function is similar to ‘strtok_r’ and ‘wcstok’, except that it
@@ -1237,7 +1238,7 @@ encodings.
  -- Function: const char * locale_charset ()
      Determines the current locale’s character encoding, and
      canonicalizes it into one of the canonical names listed in
-     ‘config.charset’.  If the canonical name cannot be determined, the
+     ‘localcharset.h’.  If the canonical name cannot be determined, the
      result is a non-canonical name.
 
      The result must not be freed; it is statically allocated.
@@ -1263,6 +1264,12 @@ be parametrized through the following enumeration type:
      This handler produces one question mark ‘?’ per unconvertible
      character.
 
+ -- Constant: enum iconv_ilseq_handler
+          iconveh_question_replacement_character
+     This handler produces one U+FFFD per unconvertible character if
+     that fits in the target encoding, otherwise one question mark ‘?’
+     per unconvertible character.
+
  -- Constant: enum iconv_ilseq_handler iconveh_escape_sequence
      This handler produces an escape sequence ‘\uXXXX’ or ‘\UXXXXXXXX’
      for each unconvertible character.
@@ -1271,14 +1278,17 @@ be parametrized through the following enumeration type:
 encoding and Unicode strings.
 
  -- Function: uint8_t * u8_conv_from_encoding (const char *FROMCODE,
-          enum iconv_ilseq_handler HANDLER, const char *SRC, size_t
-          SRCLEN, size_t *OFFSETS, uint8_t *RESULTBUF, size_t *LENGTHP)
+          enum iconv_ilseq_handler HANDLER, const char *SRC,
+          size_t SRCLEN, size_t *OFFSETS, uint8_t *RESULTBUF,
+          size_t *LENGTHP)
  -- Function: uint16_t * u16_conv_from_encoding (const char *FROMCODE,
-          enum iconv_ilseq_handler HANDLER, const char *SRC, size_t
-          SRCLEN, size_t *OFFSETS, uint16_t *RESULTBUF, size_t *LENGTHP)
+          enum iconv_ilseq_handler HANDLER, const char *SRC,
+          size_t SRCLEN, size_t *OFFSETS, uint16_t *RESULTBUF,
+          size_t *LENGTHP)
  -- Function: uint32_t * u32_conv_from_encoding (const char *FROMCODE,
-          enum iconv_ilseq_handler HANDLER, const char *SRC, size_t
-          SRCLEN, size_t *OFFSETS, uint32_t *RESULTBUF, size_t *LENGTHP)
+          enum iconv_ilseq_handler HANDLER, const char *SRC,
+          size_t SRCLEN, size_t *OFFSETS, uint32_t *RESULTBUF,
+          size_t *LENGTHP)
      Converts an entire string, possibly including NUL bytes, from one
      encoding to UTF-8 encoding.
 
@@ -1307,15 +1317,18 @@ encoding and Unicode strings.
      In case of error: NULL is returned and ‘errno’ is set.  Particular
      ‘errno’ values: ‘EINVAL’, ‘EILSEQ’, ‘ENOMEM’.
 
- -- Function: char * u8_conv_to_encoding (const char *TOCODE, enum
-          iconv_ilseq_handler HANDLER, const uint8_t *SRC, size_t
-          SRCLEN, size_t *OFFSETS, char *RESULTBUF, size_t *LENGTHP)
- -- Function: char * u16_conv_to_encoding (const char *TOCODE, enum
-          iconv_ilseq_handler HANDLER, const uint16_t *SRC, size_t
-          SRCLEN, size_t *OFFSETS, char *RESULTBUF, size_t *LENGTHP)
- -- Function: char * u32_conv_to_encoding (const char *TOCODE, enum
-          iconv_ilseq_handler HANDLER, const uint32_t *SRC, size_t
-          SRCLEN, size_t *OFFSETS, char *RESULTBUF, size_t *LENGTHP)
+ -- Function: char * u8_conv_to_encoding (const char *TOCODE,
+          enum iconv_ilseq_handler HANDLER, const uint8_t *SRC,
+          size_t SRCLEN, size_t *OFFSETS, char *RESULTBUF,
+          size_t *LENGTHP)
+ -- Function: char * u16_conv_to_encoding (const char *TOCODE,
+          enum iconv_ilseq_handler HANDLER, const uint16_t *SRC,
+          size_t SRCLEN, size_t *OFFSETS, char *RESULTBUF,
+          size_t *LENGTHP)
+ -- Function: char * u32_conv_to_encoding (const char *TOCODE,
+          enum iconv_ilseq_handler HANDLER, const uint32_t *SRC,
+          size_t SRCLEN, size_t *OFFSETS, char *RESULTBUF,
+          size_t *LENGTHP)
      Converts an entire Unicode string, possibly including NUL units,
      from UTF-8 encoding to a given encoding.
 
@@ -1441,19 +1454,19 @@ result that is a ‘char *’ string in locale encoding.
 
  -- Function: int ulc_sprintf (char *BUF, const char *FORMAT, ...)
 
- -- Function: int ulc_snprintf (char *BUF, size_t size, const char
-          *FORMAT, ...)
+ -- Function: int ulc_snprintf (char *BUF, size_t size,
+          const char *FORMAT, ...)
 
  -- Function: int ulc_asprintf (char **RESULTP, const char *FORMAT, ...)
 
  -- Function: char * ulc_asnprintf (char *RESULTBUF, size_t *LENGTHP,
           const char *FORMAT, ...)
 
- -- Function: int ulc_vsprintf (char *BUF, const char *FORMAT, va_list
-          AP)
+ -- Function: int ulc_vsprintf (char *BUF, const char *FORMAT,
+          va_list AP)
 
- -- Function: int ulc_vsnprintf (char *BUF, size_t size, const char
-          *FORMAT, va_list AP)
+ -- Function: int ulc_vsnprintf (char *BUF, size_t size,
+          const char *FORMAT, va_list AP)
 
  -- Function: int ulc_vasprintf (char **RESULTP, const char *FORMAT,
           va_list AP)
@@ -1465,118 +1478,118 @@ result that is a ‘char *’ string in locale encoding.
 result in UTF-8 format.
 
  -- Function: int u8_sprintf (uint8_t *BUF, const char *FORMAT, ...)
- -- Function: int u8_snprintf (uint8_t *BUF, size_t SIZE, const char
-          *FORMAT, ...)
+ -- Function: int u8_snprintf (uint8_t *BUF, size_t SIZE,
+          const char *FORMAT, ...)
  -- Function: int u8_asprintf (uint8_t **RESULTP, const char *FORMAT,
           ...)
- -- Function: uint8_t * u8_asnprintf (uint8_t *RESULTBUF, size_t
-          *LENGTHP, const char *FORMAT, ...)
- -- Function: int u8_vsprintf (uint8_t *BUF, const char *FORMAT, va_list
-          ap)
- -- Function: int u8_vsnprintf (uint8_t *BUF, size_t SIZE, const char
-          *FORMAT, va_list AP)
+ -- Function: uint8_t * u8_asnprintf (uint8_t *RESULTBUF,
+          size_t *LENGTHP, const char *FORMAT, ...)
+ -- Function: int u8_vsprintf (uint8_t *BUF, const char *FORMAT,
+          va_list ap)
+ -- Function: int u8_vsnprintf (uint8_t *BUF, size_t SIZE,
+          const char *FORMAT, va_list AP)
  -- Function: int u8_vasprintf (uint8_t **RESULTP, const char *FORMAT,
           va_list AP)
- -- Function: uint8_t * u8_vasnprintf (uint8_t *resultbuf, size_t
-          *LENGTHP, const char *FORMAT, va_list AP)
+ -- Function: uint8_t * u8_vasnprintf (uint8_t *resultbuf,
+          size_t *LENGTHP, const char *FORMAT, va_list AP)
 
    The following functions take an UTF-8 format string and return a
 result in UTF-8 format.
 
  -- Function: int u8_u8_sprintf (uint8_t *BUF, const uint8_t *FORMAT,
           ...)
- -- Function: int u8_u8_snprintf (uint8_t *BUF, size_t SIZE, const
-          uint8_t *FORMAT, ...)
- -- Function: int u8_u8_asprintf (uint8_t **RESULTP, const uint8_t
-          *FORMAT, ...)
- -- Function: uint8_t * u8_u8_asnprintf (uint8_t *resultbuf, size_t
-          *LENGTHP, const uint8_t *FORMAT, ...)
+ -- Function: int u8_u8_snprintf (uint8_t *BUF, size_t SIZE,
+          const uint8_t *FORMAT, ...)
+ -- Function: int u8_u8_asprintf (uint8_t **RESULTP,
+          const uint8_t *FORMAT, ...)
+ -- Function: uint8_t * u8_u8_asnprintf (uint8_t *resultbuf,
+          size_t *LENGTHP, const uint8_t *FORMAT, ...)
  -- Function: int u8_u8_vsprintf (uint8_t *BUF, const uint8_t *FORMAT,
           va_list AP)
- -- Function: int u8_u8_vsnprintf (uint8_t *BUF, size_t SIZE, const
-          uint8_t *FORMAT, va_list AP)
- -- Function: int u8_u8_vasprintf (uint8_t **RESULTP, const uint8_t
-          *FORMAT, va_list AP)
- -- Function: uint8_t * u8_u8_vasnprintf (uint8_t *resultbuf, size_t
-          *LENGTHP, const uint8_t *FORMAT, va_list AP)
+ -- Function: int u8_u8_vsnprintf (uint8_t *BUF, size_t SIZE,
+          const uint8_t *FORMAT, va_list AP)
+ -- Function: int u8_u8_vasprintf (uint8_t **RESULTP,
+          const uint8_t *FORMAT, va_list AP)
+ -- Function: uint8_t * u8_u8_vasnprintf (uint8_t *resultbuf,
+          size_t *LENGTHP, const uint8_t *FORMAT, va_list AP)
 
    The following functions take an ASCII format string and return a
 result in UTF-16 format.
 
  -- Function: int u16_sprintf (uint16_t *BUF, const char *FORMAT, ...)
- -- Function: int u16_snprintf (uint16_t *BUF, size_t SIZE, const char
-          *FORMAT, ...)
+ -- Function: int u16_snprintf (uint16_t *BUF, size_t SIZE,
+          const char *FORMAT, ...)
  -- Function: int u16_asprintf (uint16_t **RESULTP, const char *FORMAT,
           ...)
- -- Function: uint16_t * u16_asnprintf (uint16_t *RESULTBUF, size_t
-          *LENGTHP, const char *FORMAT, ...)
+ -- Function: uint16_t * u16_asnprintf (uint16_t *RESULTBUF,
+          size_t *LENGTHP, const char *FORMAT, ...)
  -- Function: int u16_vsprintf (uint16_t *BUF, const char *FORMAT,
           va_list ap)
- -- Function: int u16_vsnprintf (uint16_t *BUF, size_t SIZE, const char
-          *FORMAT, va_list AP)
+ -- Function: int u16_vsnprintf (uint16_t *BUF, size_t SIZE,
+          const char *FORMAT, va_list AP)
  -- Function: int u16_vasprintf (uint16_t **RESULTP, const char *FORMAT,
           va_list AP)
- -- Function: uint16_t * u16_vasnprintf (uint16_t *resultbuf, size_t
-          *LENGTHP, const char *FORMAT, va_list AP)
+ -- Function: uint16_t * u16_vasnprintf (uint16_t *resultbuf,
+          size_t *LENGTHP, const char *FORMAT, va_list AP)
 
    The following functions take an UTF-16 format string and return a
 result in UTF-16 format.
 
- -- Function: int u16_u16_sprintf (uint16_t *BUF, const uint16_t
-          *FORMAT, ...)
- -- Function: int u16_u16_snprintf (uint16_t *BUF, size_t SIZE, const
-          uint16_t *FORMAT, ...)
- -- Function: int u16_u16_asprintf (uint16_t **RESULTP, const uint16_t
-          *FORMAT, ...)
- -- Function: uint16_t * u16_u16_asnprintf (uint16_t *resultbuf, size_t
-          *LENGTHP, const uint16_t *FORMAT, ...)
- -- Function: int u16_u16_vsprintf (uint16_t *BUF, const uint16_t
-          *FORMAT, va_list AP)
- -- Function: int u16_u16_vsnprintf (uint16_t *BUF, size_t SIZE, const
-          uint16_t *FORMAT, va_list AP)
- -- Function: int u16_u16_vasprintf (uint16_t **RESULTP, const uint16_t
-          *FORMAT, va_list AP)
- -- Function: uint16_t * u16_u16_vasnprintf (uint16_t *resultbuf, size_t
-          *LENGTHP, const uint16_t *FORMAT, va_list AP)
+ -- Function: int u16_u16_sprintf (uint16_t *BUF,
+          const uint16_t *FORMAT, ...)
+ -- Function: int u16_u16_snprintf (uint16_t *BUF, size_t SIZE,
+          const uint16_t *FORMAT, ...)
+ -- Function: int u16_u16_asprintf (uint16_t **RESULTP,
+          const uint16_t *FORMAT, ...)
+ -- Function: uint16_t * u16_u16_asnprintf (uint16_t *resultbuf,
+          size_t *LENGTHP, const uint16_t *FORMAT, ...)
+ -- Function: int u16_u16_vsprintf (uint16_t *BUF,
+          const uint16_t *FORMAT, va_list AP)
+ -- Function: int u16_u16_vsnprintf (uint16_t *BUF, size_t SIZE,
+          const uint16_t *FORMAT, va_list AP)
+ -- Function: int u16_u16_vasprintf (uint16_t **RESULTP,
+          const uint16_t *FORMAT, va_list AP)
+ -- Function: uint16_t * u16_u16_vasnprintf (uint16_t *resultbuf,
+          size_t *LENGTHP, const uint16_t *FORMAT, va_list AP)
 
    The following functions take an ASCII format string and return a
 result in UTF-32 format.
 
  -- Function: int u32_sprintf (uint32_t *BUF, const char *FORMAT, ...)
- -- Function: int u32_snprintf (uint32_t *BUF, size_t SIZE, const char
-          *FORMAT, ...)
+ -- Function: int u32_snprintf (uint32_t *BUF, size_t SIZE,
+          const char *FORMAT, ...)
  -- Function: int u32_asprintf (uint32_t **RESULTP, const char *FORMAT,
           ...)
- -- Function: uint32_t * u32_asnprintf (uint32_t *RESULTBUF, size_t
-          *LENGTHP, const char *FORMAT, ...)
+ -- Function: uint32_t * u32_asnprintf (uint32_t *RESULTBUF,
+          size_t *LENGTHP, const char *FORMAT, ...)
  -- Function: int u32_vsprintf (uint32_t *BUF, const char *FORMAT,
           va_list ap)
- -- Function: int u32_vsnprintf (uint32_t *BUF, size_t SIZE, const char
-          *FORMAT, va_list AP)
+ -- Function: int u32_vsnprintf (uint32_t *BUF, size_t SIZE,
+          const char *FORMAT, va_list AP)
  -- Function: int u32_vasprintf (uint32_t **RESULTP, const char *FORMAT,
           va_list AP)
- -- Function: uint32_t * u32_vasnprintf (uint32_t *resultbuf, size_t
-          *LENGTHP, const char *FORMAT, va_list AP)
+ -- Function: uint32_t * u32_vasnprintf (uint32_t *resultbuf,
+          size_t *LENGTHP, const char *FORMAT, va_list AP)
 
    The following functions take an UTF-32 format string and return a
 result in UTF-32 format.
 
- -- Function: int u32_u32_sprintf (uint32_t *BUF, const uint32_t
-          *FORMAT, ...)
- -- Function: int u32_u32_snprintf (uint32_t *BUF, size_t SIZE, const
-          uint32_t *FORMAT, ...)
- -- Function: int u32_u32_asprintf (uint32_t **RESULTP, const uint32_t
-          *FORMAT, ...)
- -- Function: uint32_t * u32_u32_asnprintf (uint32_t *resultbuf, size_t
-          *LENGTHP, const uint32_t *FORMAT, ...)
- -- Function: int u32_u32_vsprintf (uint32_t *BUF, const uint32_t
-          *FORMAT, va_list AP)
- -- Function: int u32_u32_vsnprintf (uint32_t *BUF, size_t SIZE, const
-          uint32_t *FORMAT, va_list AP)
- -- Function: int u32_u32_vasprintf (uint32_t **RESULTP, const uint32_t
-          *FORMAT, va_list AP)
- -- Function: uint32_t * u32_u32_vasnprintf (uint32_t *resultbuf, size_t
-          *LENGTHP, const uint32_t *FORMAT, va_list AP)
+ -- Function: int u32_u32_sprintf (uint32_t *BUF,
+          const uint32_t *FORMAT, ...)
+ -- Function: int u32_u32_snprintf (uint32_t *BUF, size_t SIZE,
+          const uint32_t *FORMAT, ...)
+ -- Function: int u32_u32_asprintf (uint32_t **RESULTP,
+          const uint32_t *FORMAT, ...)
+ -- Function: uint32_t * u32_u32_asnprintf (uint32_t *resultbuf,
+          size_t *LENGTHP, const uint32_t *FORMAT, ...)
+ -- Function: int u32_u32_vsprintf (uint32_t *BUF,
+          const uint32_t *FORMAT, va_list AP)
+ -- Function: int u32_u32_vsnprintf (uint32_t *BUF, size_t SIZE,
+          const uint32_t *FORMAT, va_list AP)
+ -- Function: int u32_u32_vasprintf (uint32_t **RESULTP,
+          const uint32_t *FORMAT, va_list AP)
+ -- Function: uint32_t * u32_u32_vasnprintf (uint32_t *resultbuf,
+          size_t *LENGTHP, const uint32_t *FORMAT, va_list AP)
 
    The following functions take an ASCII format string and produce
 output in locale encoding to a ‘FILE’ stream.
@@ -1853,21 +1866,21 @@ macros are aliases, for use when readable code is preferred.
 algebra, except that there is no ‘not’ operation.
 
  -- Function: uc_general_category_t uc_general_category_or
-          (uc_general_category_t CATEGORY1, uc_general_category_t
-          CATEGORY2)
+          (uc_general_category_t CATEGORY1,
+          uc_general_category_t CATEGORY2)
      Returns the union of two general categories.  This corresponds to
      the unions of the two sets of characters.
 
  -- Function: uc_general_category_t uc_general_category_and
-          (uc_general_category_t CATEGORY1, uc_general_category_t
-          CATEGORY2)
+          (uc_general_category_t CATEGORY1,
+          uc_general_category_t CATEGORY2)
      Returns the intersection of two general categories as bit masks.
      This _does not_ correspond to the intersection of the two sets of
      characters.
 
  -- Function: uc_general_category_t uc_general_category_and_not
-          (uc_general_category_t CATEGORY1, uc_general_category_t
-          CATEGORY2)
+          (uc_general_category_t CATEGORY1,
+          uc_general_category_t CATEGORY2)
      Returns the intersection of a general category with the complement
      of a second general category, as bit masks.  This _does not_
      correspond to the intersection with complement, when viewing the
@@ -1887,8 +1900,8 @@ algebra, except that there is no ‘not’ operation.
      general category corresponds to a bit mask that does not have a
      name.
 
- -- Function: uc_general_category_t uc_general_category_byname (const
-          char *CATEGORY_NAME)
+ -- Function: uc_general_category_t uc_general_category_byname
+          (const char *CATEGORY_NAME)
      Returns the general category given by name, e.g.  ‘"Lu"’, or by
      long name, e.g.  ‘"Uppercase Letter"’.  This lookup ignores spaces,
      underscores, or hyphens as word separators and is
@@ -1959,8 +1972,8 @@ Additional general categories may be added in the future.
    The following function views general categories as sets of Unicode
 characters.
 
- -- Function: bool uc_is_general_category_withtable (ucs4_t UC, uint32_t
-          BITMASK)
+ -- Function: bool uc_is_general_category_withtable (ucs4_t UC,
+          uint32_t BITMASK)
      Tests whether a Unicode character belongs to a given category.  The
      BITMASK argument can be a predefined general category bitmask or
      the combination of several predefined general category bitmasks.
@@ -1987,7 +2000,7 @@ to the base character.
 
    The canonical combining class of a character is a number in the range
 0..255.  The possible values are described in the Unicode Character
-Database <http://www.unicode.org/Public/UNIDATA/UCD.html>.  The list
+Database <https://www.unicode.org/Public/UNIDATA/UCD.html>.  The list
 here is not definitive; more values can be added in future versions.
 
  -- Constant: int UC_CCC_NR
@@ -2091,7 +2104,7 @@ it.  Before Unicode 4.0, this concept was known as _bidirectional
 category_.
 
    The bidi class guides the bidirectional algorithm
-(<http://www.unicode.org/reports/tr9/>).  The possible values are the
+(<https://www.unicode.org/reports/tr9/>).  The possible values are the
 following.
 
  -- Constant: int UC_BIDI_L
@@ -2150,6 +2163,18 @@ following.
 
  -- Constant: int UC_BIDI_ON
      The bidi class for “Other Neutral” characters.
+
+ -- Constant: int UC_BIDI_LRI
+     The bidi class for “Left-to-Right Isolate” characters.
+
+ -- Constant: int UC_BIDI_RLI
+     The bidi class for “Right-to-Left Isolate” characters.
+
+ -- Constant: int UC_BIDI_FSI
+     The bidi class for “First Strong Isolate” characters.
+
+ -- Constant: int UC_BIDI_PDI
+     The bidi class for “Pop Directional Isolate” characters.
 
    The following functions implement the association between a
 bidirectional category and its name.
@@ -2396,6 +2421,53 @@ two contexts of right-joining characters.
  -- Constant: int UC_JOINING_GROUP_YUDH_HE
  -- Constant: int UC_JOINING_GROUP_ZAIN
  -- Constant: int UC_JOINING_GROUP_ZHAIN
+ -- Constant: int UC_JOINING_GROUP_ROHINGYA_YEH
+ -- Constant: int UC_JOINING_GROUP_STRAIGHT_WAW
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_ALEPH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_BETH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_GIMEL
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_DALETH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_WAW
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_ZAYIN
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_HETH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_TETH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_YODH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_KAPH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_LAMEDH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_DHAMEDH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_THAMEDH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_MEM
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_NUN
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_SAMEKH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_AYIN
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_PE
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_SADHE
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_QOPH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_RESH
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_TAW
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_ONE
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_FIVE
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_TEN
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_TWENTY
+ -- Constant: int UC_JOINING_GROUP_MANICHAEAN_HUNDRED
+ -- Constant: int UC_JOINING_GROUP_AFRICAN_FEH
+ -- Constant: int UC_JOINING_GROUP_AFRICAN_QAF
+ -- Constant: int UC_JOINING_GROUP_AFRICAN_NOON
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_NGA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_JA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_NYA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_TTA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_NNA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_NNNA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_BHA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_RA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_LLA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_LLLA
+ -- Constant: int UC_JOINING_GROUP_MALAYALAM_SSA
+ -- Constant: int UC_JOINING_GROUP_HANIFI_ROHINGYA_PA
+ -- Constant: int UC_JOINING_GROUP_HANIFI_ROHINGYA_KINNA_YA
+ -- Constant: int UC_JOINING_GROUP_THIN_YEH
+ -- Constant: int UC_JOINING_GROUP_VERTICAL_TAIL
 
    The following functions implement the association between a joining
 group and its name.
@@ -2403,8 +2475,8 @@ group and its name.
  -- Function: const char * uc_joining_group_name (int JOINING_GROUP)
      Returns the name of a joining group.
 
- -- Function: int uc_joining_group_byname (const char
-          *JOINING_GROUP_NAME)
+ -- Function: int uc_joining_group_byname
+          (const char *JOINING_GROUP_NAME)
      Returns the joining group given by name, e.g.  ‘"Teh_Marbuta"’.
      This lookup ignores spaces, underscores, or hyphens as word
      separators and is case-insignificant.
@@ -2534,6 +2606,15 @@ File: libunistring.info,  Node: Properties as objects,  Next: Properties as func
  -- Constant: uc_property_t UC_PROPERTY_IDS_BINARY_OPERATOR
  -- Constant: uc_property_t UC_PROPERTY_IDS_TRINARY_OPERATOR
 
+   The following properties deal with pictographic symbols.
+
+ -- Constant: uc_property_t UC_PROPERTY_EMOJI
+ -- Constant: uc_property_t UC_PROPERTY_EMOJI_PRESENTATION
+ -- Constant: uc_property_t UC_PROPERTY_EMOJI_MODIFIER
+ -- Constant: uc_property_t UC_PROPERTY_EMOJI_MODIFIER_BASE
+ -- Constant: uc_property_t UC_PROPERTY_EMOJI_COMPONENT
+ -- Constant: uc_property_t UC_PROPERTY_EXTENDED_PICTOGRAPHIC
+
    Other miscellaneous properties are:
 
  -- Constant: uc_property_t UC_PROPERTY_ZERO_WIDTH
@@ -2561,11 +2642,12 @@ File: libunistring.info,  Node: Properties as objects,  Next: Properties as func
  -- Constant: uc_property_t UC_PROPERTY_DIACRITIC
  -- Constant: uc_property_t UC_PROPERTY_EXTENDER
  -- Constant: uc_property_t UC_PROPERTY_IGNORABLE_CONTROL
+ -- Constant: uc_property_t UC_PROPERTY_REGIONAL_INDICATOR
 
    The following function looks up a property by its name.
 
- -- Function: uc_property_t uc_property_byname (const char
-          *PROPERTY_NAME)
+ -- Function: uc_property_t uc_property_byname
+          (const char *PROPERTY_NAME)
      Returns the property given by name, e.g.  ‘"White space"’.  If a
      property with the given name exists, the result will satisfy the
      ‘uc_property_is_valid’ predicate.  Otherwise the result will not
@@ -2601,8 +2683,8 @@ File: libunistring.info,  Node: Properties as functions,  Prev: Properties as ob
  -- Function: bool uc_is_property_alphabetic (ucs4_t UC)
  -- Function: bool uc_is_property_other_alphabetic (ucs4_t UC)
  -- Function: bool uc_is_property_not_a_character (ucs4_t UC)
- -- Function: bool uc_is_property_default_ignorable_code_point (ucs4_t
-          UC)
+ -- Function: bool uc_is_property_default_ignorable_code_point
+          (ucs4_t UC)
  -- Function: bool uc_is_property_other_default_ignorable_code_point
           (ucs4_t UC)
  -- Function: bool uc_is_property_deprecated (ucs4_t UC)
@@ -2679,6 +2761,15 @@ File: libunistring.info,  Node: Properties as functions,  Prev: Properties as ob
  -- Function: bool uc_is_property_ids_binary_operator (ucs4_t UC)
  -- Function: bool uc_is_property_ids_trinary_operator (ucs4_t UC)
 
+   The following properties deal with pictographic symbols.
+
+ -- Function: bool uc_is_property_emoji (ucs4_t UC)
+ -- Function: bool uc_is_property_emoji_presentation (ucs4_t UC)
+ -- Function: bool uc_is_property_emoji_modifier (ucs4_t UC)
+ -- Function: bool uc_is_property_emoji_modifier_base (ucs4_t UC)
+ -- Function: bool uc_is_property_emoji_component (ucs4_t UC)
+ -- Function: bool uc_is_property_extended_pictographic (ucs4_t UC)
+
    Other miscellaneous properties are:
 
  -- Function: bool uc_is_property_zero_width (ucs4_t UC)
@@ -2706,6 +2797,7 @@ File: libunistring.info,  Node: Properties as functions,  Prev: Properties as ob
  -- Function: bool uc_is_property_diacritic (ucs4_t UC)
  -- Function: bool uc_is_property_extender (ucs4_t UC)
  -- Function: bool uc_is_property_ignorable_control (ucs4_t UC)
+ -- Function: bool uc_is_property_regional_indicator (ucs4_t UC)
 
 
 File: libunistring.info,  Node: Scripts,  Next: Blocks,  Prev: Properties,  Up: unictype.h
@@ -2730,8 +2822,8 @@ File: libunistring.info,  Node: Scripts,  Next: Blocks,  Prev: Properties,  Up: 
      Returns the script of a Unicode character.  Returns NULL if UC does
      not belong to any script.
 
- -- Function: const uc_script_t * uc_script_byname (const char
-          *SCRIPT_NAME)
+ -- Function: const uc_script_t * uc_script_byname
+          (const char *SCRIPT_NAME)
      Returns the script given by its name, e.g.  ‘"HAN"’.  Returns NULL
      if a script with the given name does not exist.
 
@@ -2742,8 +2834,8 @@ File: libunistring.info,  Node: Scripts,  Next: Blocks,  Prev: Properties,  Up: 
 
    The following gives a global picture of all scripts.
 
- -- Function: void uc_all_scripts (const uc_script_t **SCRIPTS, size_t
-          *COUNT)
+ -- Function: void uc_all_scripts (const uc_script_t **SCRIPTS,
+          size_t *COUNT)
      Get the list of all scripts.  Stores a pointer to an array of all
      scripts in ‘*SCRIPTS’ and the length of this array in ‘*COUNT’.
 
@@ -2783,8 +2875,8 @@ interval of Unicode code points.
 
    The following gives a global picture of all block.
 
- -- Function: void uc_all_blocks (const uc_block_t **BLOCKS, size_t
-          *COUNT)
+ -- Function: void uc_all_blocks (const uc_block_t **BLOCKS,
+          size_t *COUNT)
      Get the list of all blocks.  Stores a pointer to an array of all
      blocks in ‘*BLOCKS’ and the length of this array in ‘*COUNT’.
 
@@ -2929,12 +3021,12 @@ identifies the encoding (e.g.  ‘"ISO-8859-2"’ for Polish).
      UC.  Returns -1 if UC is a control character that has an influence
      on the column position when output.
 
- -- Function: int u8_width (const uint8_t *S, size_t N, const char
-          *ENCODING)
- -- Function: int u16_width (const uint16_t *S, size_t N, const char
-          *ENCODING)
- -- Function: int u32_width (const uint32_t *S, size_t N, const char
-          *ENCODING)
+ -- Function: int u8_width (const uint8_t *S, size_t N,
+          const char *ENCODING)
+ -- Function: int u16_width (const uint16_t *S, size_t N,
+          const char *ENCODING)
+ -- Function: int u32_width (const uint32_t *S, size_t N,
+          const char *ENCODING)
      Determines and returns the number of column positions required for
      first N units (or fewer if S ends before this) in S.  This function
      ignores control characters in the string.
@@ -2986,12 +3078,12 @@ File: libunistring.info,  Node: Grapheme cluster breaks in a string,  Next: Grap
    The following functions find a single boundary between grapheme
 clusters in a string.
 
- -- Function: void u8_grapheme_next (const uint8_t *S, const uint8_t
-          *END)
- -- Function: void u16_grapheme_next (const uint16_t *S, const uint16_t
-          *END)
- -- Function: void u32_grapheme_next (const uint32_t *S, const uint32_t
-          *END)
+ -- Function: void u8_grapheme_next (const uint8_t *S,
+          const uint8_t *END)
+ -- Function: void u16_grapheme_next (const uint16_t *S,
+          const uint16_t *END)
+ -- Function: void u32_grapheme_next (const uint32_t *S,
+          const uint32_t *END)
      Returns the start of the next grapheme cluster following S, or END
      if no grapheme cluster break is encountered before it.  Returns
      NULL if and only if ‘S == END’.
@@ -3000,12 +3092,12 @@ clusters in a string.
      outside of the range between S and END is needed to determine the
      boundary.  Use ‘_grapheme_breaks’ functions for such cases.
 
- -- Function: void u8_grapheme_prev (const uint8_t *S, const uint8_t
-          *START)
- -- Function: void u16_grapheme_prev (const uint16_t *S, const uint16_t
-          *START)
- -- Function: void u32_grapheme_prev (const uint32_t *S, const uint32_t
-          *START)
+ -- Function: void u8_grapheme_prev (const uint8_t *S,
+          const uint8_t *START)
+ -- Function: void u16_grapheme_prev (const uint16_t *S,
+          const uint16_t *START)
+ -- Function: void u32_grapheme_prev (const uint32_t *S,
+          const uint32_t *START)
      Returns the start of the grapheme cluster preceding S, or START if
      no grapheme cluster break is encountered before it.  Returns NULL
      if and only if ‘S == START’.
@@ -3014,19 +3106,22 @@ clusters in a string.
      outside of the range between START and S is needed to determine the
      boundary.  Use ‘_grapheme_breaks’ functions for such cases.
 
+     Note also that these functions work only on well-formed Unicode
+     strings.
+
    The following functions determine all of the grapheme cluster
 boundaries in a string.
 
- -- Function: void u8_grapheme_breaks (const uint8_t *S, size_t N, char
-          *P)
+ -- Function: void u8_grapheme_breaks (const uint8_t *S, size_t N,
+          char *P)
  -- Function: void u16_grapheme_breaks (const uint16_t *S, size_t N,
           char *P)
  -- Function: void u32_grapheme_breaks (const uint32_t *S, size_t N,
           char *P)
- -- Function: void ulc_grapheme_breaks (const char *S, size_t N, char
-          *P)
- -- Function: void uc_grapheme_breaks (const ucs_t *S, size_t N, char
-          *P)
+ -- Function: void ulc_grapheme_breaks (const char *S, size_t N,
+          char *P)
+ -- Function: void uc_grapheme_breaks (const ucs_t *S, size_t N,
+          char *P)
      Determines the grapheme cluster break points in S, an array of N
      units, and stores the result at ‘P[0..NX-1]’.
      ‘P[i] = 1’
@@ -3055,7 +3150,7 @@ File: libunistring.info,  Node: Grapheme cluster break property,  Prev: Grapheme
    This is a more low-level API. The grapheme cluster break property is
 a property defined in Unicode Standard Annex #29, section “Grapheme
 Cluster Boundaries”, see
-<http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries>.  It
+<https://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries>.  It
 is used for determining the grapheme cluster breaks in a string.
 
    The following are the possible values of the grapheme cluster break
@@ -3155,7 +3250,7 @@ File: libunistring.info,  Node: Word break property,  Prev: Word breaks in a str
 
    This is a more low-level API. The word break property is a property
 defined in Unicode Standard Annex #29, section “Word Boundaries”, see
-<http://www.unicode.org/reports/tr29/#Word_Boundaries>.  It is used for
+<https://www.unicode.org/reports/tr29/#Word_Boundaries>.  It is used for
 determining the word breaks in a string.
 
    The following are the possible values of the word break property.
@@ -3211,6 +3306,10 @@ meanings:
  -- Constant: int UC_BREAK_MANDATORY
      This value indicates that ‘S[I]’ is a line break character.
 
+ -- Constant: int UC_BREAK_CR_BEFORE_LF
+     This value is a variant of ‘UC_BREAK_MANDATORY’.  It indicates that
+     ‘S[I]’ is a CR character and that ‘S[I+1]’ is a LF character.
+
  -- Constant: int UC_BREAK_POSSIBLE
      This value indicates that a line break may be inserted between
      ‘S[I-1]’ and ‘S[I]’.
@@ -3242,25 +3341,25 @@ are possible.
           const char *ENCODING, char *P)
      Determines the line break points in S, and stores the result at
      ‘P[0..N-1]’.  Every ‘P[I]’ is assigned one of the values
-     ‘UC_BREAK_MANDATORY’, ‘UC_BREAK_POSSIBLE’, ‘UC_BREAK_HYPHENATION’,
-     ‘UC_BREAK_PROHIBITED’.
+     ‘UC_BREAK_MANDATORY’, ‘UC_BREAK_CR_BEFORE_LF’, ‘UC_BREAK_POSSIBLE’,
+     ‘UC_BREAK_HYPHENATION’, ‘UC_BREAK_PROHIBITED’.
 
    The following functions determine where line breaks should be
 inserted so that each line fits in a given width, when output to a
 device that uses non-proportional fonts.
 
- -- Function: int u8_width_linebreaks (const uint8_t *S, size_t N, int
-          WIDTH, int START_COLUMN, int AT_END_COLUMNS, const char
-          *OVERRIDE, const char *ENCODING, char *P)
- -- Function: int u16_width_linebreaks (const uint16_t *S, size_t N, int
-          WIDTH, int START_COLUMN, int AT_END_COLUMNS, const char
-          *OVERRIDE, const char *ENCODING, char *P)
- -- Function: int u32_width_linebreaks (const uint32_t *S, size_t N, int
-          WIDTH, int START_COLUMN, int AT_END_COLUMNS, const char
-          *OVERRIDE, const char *ENCODING, char *P)
- -- Function: int ulc_width_linebreaks (const char *S, size_t N, int
-          WIDTH, int START_COLUMN, int AT_END_COLUMNS, const char
-          *OVERRIDE, const char *ENCODING, char *P)
+ -- Function: int u8_width_linebreaks (const uint8_t *S, size_t N,
+          int WIDTH, int START_COLUMN, int AT_END_COLUMNS,
+          const char *OVERRIDE, const char *ENCODING, char *P)
+ -- Function: int u16_width_linebreaks (const uint16_t *S, size_t N,
+          int WIDTH, int START_COLUMN, int AT_END_COLUMNS,
+          const char *OVERRIDE, const char *ENCODING, char *P)
+ -- Function: int u32_width_linebreaks (const uint32_t *S, size_t N,
+          int WIDTH, int START_COLUMN, int AT_END_COLUMNS,
+          const char *OVERRIDE, const char *ENCODING, char *P)
+ -- Function: int ulc_width_linebreaks (const char *S, size_t N,
+          int WIDTH, int START_COLUMN, int AT_END_COLUMNS,
+          const char *OVERRIDE, const char *ENCODING, char *P)
      Chooses the best line breaks, assuming that every character
      occupies a width given by the ‘uc_width’ function (see *note
      uniwidth.h::).
@@ -3280,9 +3379,10 @@ device that uses non-proportional fonts.
 
      Returns the column after the end of the string, and stores the
      result at ‘P[0..N-1]’.  Every ‘P[I]’ is assigned one of the values
-     ‘UC_BREAK_MANDATORY’, ‘UC_BREAK_POSSIBLE’, ‘UC_BREAK_HYPHENATION’,
-     ‘UC_BREAK_PROHIBITED’.  Here the value ‘UC_BREAK_POSSIBLE’
-     indicates that a line break _should_ be inserted.
+     ‘UC_BREAK_MANDATORY’, ‘UC_BREAK_CR_BEFORE_LF’, ‘UC_BREAK_POSSIBLE’,
+     ‘UC_BREAK_HYPHENATION’, ‘UC_BREAK_PROHIBITED’.  Here the value
+     ‘UC_BREAK_POSSIBLE’ indicates that a line break _should_ be
+     inserted.
 
 
 File: libunistring.info,  Node: uninorm.h,  Next: unicase.h,  Prev: unilbrk.h,  Up: Top
@@ -3383,8 +3483,8 @@ single Unicode character.
 
    The following functions decompose a Unicode character.
 
- -- Function: int uc_decomposition (ucs4_t UC, int *DECOMP_TAG, ucs4_t
-          *DECOMPOSITION)
+ -- Function: int uc_decomposition (ucs4_t UC, int *DECOMP_TAG,
+          ucs4_t *DECOMPOSITION)
      Returns the character decomposition mapping of the Unicode
      character UC.  DECOMPOSITION must point to an array of at least
      ‘UC_DECOMPOSITION_MAX_LENGTH’ ‘ucs_t’ elements.
@@ -3393,8 +3493,8 @@ single Unicode character.
      ‘*DECOMP_TAG’ are filled and N is returned.  Otherwise -1 is
      returned.
 
- -- Function: int uc_canonical_decomposition (ucs4_t UC, ucs4_t
-          *DECOMPOSITION)
+ -- Function: int uc_canonical_decomposition (ucs4_t UC,
+          ucs4_t *DECOMPOSITION)
      Returns the canonical character decomposition mapping of the
      Unicode character UC.  DECOMPOSITION must point to an array of at
      least ‘UC_DECOMPOSITION_MAX_LENGTH’ ‘ucs_t’ elements.
@@ -3492,12 +3592,12 @@ File: libunistring.info,  Node: Normalizing comparisons,  Next: Normalization of
    The following functions compare Unicode string, ignoring differences
 in normalization.
 
- -- Function: int u8_normcmp (const uint8_t *S1, size_t N1, const
-          uint8_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
- -- Function: int u16_normcmp (const uint16_t *S1, size_t N1, const
-          uint16_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
- -- Function: int u32_normcmp (const uint32_t *S1, size_t N1, const
-          uint32_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
+ -- Function: int u8_normcmp (const uint8_t *S1, size_t N1,
+          const uint8_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
+ -- Function: int u16_normcmp (const uint16_t *S1, size_t N1,
+          const uint16_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
+ -- Function: int u32_normcmp (const uint32_t *S1, size_t N1,
+          const uint32_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
      Compares S1 and S2, ignoring differences in normalization.
 
      NF must be either ‘UNINORM_NFD’ or ‘UNINORM_NFKD’.
@@ -3505,8 +3605,8 @@ in normalization.
      If successful, sets ‘*RESULTP’ to -1 if S1 < S2, 0 if S1 = S2, 1 if
      S1 > S2, and returns 0.  Upon failure, returns -1 with ‘errno’ set.
 
- -- Function: char * u8_normxfrm (const uint8_t *S, size_t N, uninorm_t
-          NF, char *RESULTBUF, size_t *LENGTHP)
+ -- Function: char * u8_normxfrm (const uint8_t *S, size_t N,
+          uninorm_t NF, char *RESULTBUF, size_t *LENGTHP)
  -- Function: char * u16_normxfrm (const uint16_t *S, size_t N,
           uninorm_t NF, char *RESULTBUF, size_t *LENGTHP)
  -- Function: char * u32_normxfrm (const uint32_t *S, size_t N,
@@ -3521,12 +3621,12 @@ in normalization.
      The RESULTBUF and LENGTHP arguments are as described in chapter
      *note Conventions::.
 
- -- Function: int u8_normcoll (const uint8_t *S1, size_t N1, const
-          uint8_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
- -- Function: int u16_normcoll (const uint16_t *S1, size_t N1, const
-          uint16_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
- -- Function: int u32_normcoll (const uint32_t *S1, size_t N1, const
-          uint32_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
+ -- Function: int u8_normcoll (const uint8_t *S1, size_t N1,
+          const uint8_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
+ -- Function: int u16_normcoll (const uint16_t *S1, size_t N1,
+          const uint16_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
+ -- Function: int u32_normcoll (const uint32_t *S1, size_t N1,
+          const uint32_t *S2, size_t N2, uninorm_t NF, int *RESULTP)
      Compares S1 and S2, ignoring differences in normalization, using
      the collation rules of the current locale.
 
@@ -3551,9 +3651,9 @@ function that “flushes” the stream.
      passes the normalized character sequence to the encapsulated stream
      of Unicode characters.
 
- -- Function: struct uninorm_filter * uninorm_filter_create (uninorm_t
-          NF, int (*STREAM_FUNC) (void *STREAM_DATA, ucs4_t UC), void
-          *STREAM_DATA)
+ -- Function: struct uninorm_filter * uninorm_filter_create
+          (uninorm_t NF, int (*STREAM_FUNC) (void *STREAM_DATA,
+          ucs4_t UC), void *STREAM_DATA)
      Creates and returns a normalization filter for Unicode characters.
 
      The pair (STREAM_FUNC, STREAM_DATA) is the encapsulated stream.
@@ -3679,15 +3779,15 @@ locale independent case mappings.
      Returns the ISO 639 language code of the current locale.  Returns
      ‘""’ if it is unknown, or in the "C" locale.
 
- -- Function: uint8_t * u8_toupper (const uint8_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
+ -- Function: uint8_t * u8_toupper (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
           size_t *LENGTHP)
- -- Function: uint16_t * u16_toupper (const uint16_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint16_t *RESULTBUF,
-          size_t *LENGTHP)
- -- Function: uint32_t * u32_toupper (const uint32_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint32_t *RESULTBUF,
-          size_t *LENGTHP)
+ -- Function: uint16_t * u16_toupper (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
+ -- Function: uint32_t * u32_toupper (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Returns the uppercase mapping of a string.
 
      The NF argument identifies the normalization form to apply after
@@ -3696,15 +3796,15 @@ locale independent case mappings.
      The RESULTBUF and LENGTHP arguments are as described in chapter
      *note Conventions::.
 
- -- Function: uint8_t * u8_tolower (const uint8_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
+ -- Function: uint8_t * u8_tolower (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
           size_t *LENGTHP)
- -- Function: uint16_t * u16_tolower (const uint16_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint16_t *RESULTBUF,
-          size_t *LENGTHP)
- -- Function: uint32_t * u32_tolower (const uint32_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint32_t *RESULTBUF,
-          size_t *LENGTHP)
+ -- Function: uint16_t * u16_tolower (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
+ -- Function: uint32_t * u32_tolower (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Returns the lowercase mapping of a string.
 
      The NF argument identifies the normalization form to apply after
@@ -3713,15 +3813,15 @@ locale independent case mappings.
      The RESULTBUF and LENGTHP arguments are as described in chapter
      *note Conventions::.
 
- -- Function: uint8_t * u8_totitle (const uint8_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
+ -- Function: uint8_t * u8_totitle (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
           size_t *LENGTHP)
- -- Function: uint16_t * u16_totitle (const uint16_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint16_t *RESULTBUF,
-          size_t *LENGTHP)
- -- Function: uint32_t * u32_totitle (const uint32_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint32_t *RESULTBUF,
-          size_t *LENGTHP)
+ -- Function: uint16_t * u16_totitle (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
+ -- Function: uint32_t * u32_totitle (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Returns the titlecase mapping of a string.
 
      Mapping to title case means that, in each word, the first cased
@@ -3760,20 +3860,23 @@ it (the “suffix”).
 
    The following functions return ‘casing_prefix_context_t’ objects:
 
- -- Function: casing_prefix_context_t u8_casing_prefix_context (const
-          uint8_t *S, size_t N)
- -- Function: casing_prefix_context_t u16_casing_prefix_context (const
-          uint16_t *S, size_t N)
- -- Function: casing_prefix_context_t u32_casing_prefix_context (const
-          uint32_t *S, size_t N)
+ -- Function: casing_prefix_context_t u8_casing_prefix_context
+          (const uint8_t *S, size_t N)
+ -- Function: casing_prefix_context_t u16_casing_prefix_context
+          (const uint16_t *S, size_t N)
+ -- Function: casing_prefix_context_t u32_casing_prefix_context
+          (const uint32_t *S, size_t N)
      Returns the case-mapping context of a given prefix string.
 
- -- Function: casing_prefix_context_t u8_casing_prefixes_context (const
-          uint8_t *S, size_t N, casing_prefix_context_t A_CONTEXT)
- -- Function: casing_prefix_context_t u16_casing_prefixes_context (const
-          uint16_t *S, size_t N, casing_prefix_context_t A_CONTEXT)
- -- Function: casing_prefix_context_t u32_casing_prefixes_context (const
-          uint32_t *S, size_t N, casing_prefix_context_t A_CONTEXT)
+ -- Function: casing_prefix_context_t u8_casing_prefixes_context
+          (const uint8_t *S, size_t N,
+          casing_prefix_context_t A_CONTEXT)
+ -- Function: casing_prefix_context_t u16_casing_prefixes_context
+          (const uint16_t *S, size_t N,
+          casing_prefix_context_t A_CONTEXT)
+ -- Function: casing_prefix_context_t u32_casing_prefixes_context
+          (const uint32_t *S, size_t N,
+          casing_prefix_context_t A_CONTEXT)
      Returns the case-mapping context of the prefix concat(A, S), given
      the case-mapping context of the prefix A.
 
@@ -3789,20 +3892,23 @@ it (the “suffix”).
 
    The following functions return ‘casing_suffix_context_t’ objects:
 
- -- Function: casing_suffix_context_t u8_casing_suffix_context (const
-          uint8_t *S, size_t N)
- -- Function: casing_suffix_context_t u16_casing_suffix_context (const
-          uint16_t *S, size_t N)
- -- Function: casing_suffix_context_t u32_casing_suffix_context (const
-          uint32_t *S, size_t N)
+ -- Function: casing_suffix_context_t u8_casing_suffix_context
+          (const uint8_t *S, size_t N)
+ -- Function: casing_suffix_context_t u16_casing_suffix_context
+          (const uint16_t *S, size_t N)
+ -- Function: casing_suffix_context_t u32_casing_suffix_context
+          (const uint32_t *S, size_t N)
      Returns the case-mapping context of a given suffix string.
 
- -- Function: casing_suffix_context_t u8_casing_suffixes_context (const
-          uint8_t *S, size_t N, casing_suffix_context_t A_CONTEXT)
- -- Function: casing_suffix_context_t u16_casing_suffixes_context (const
-          uint16_t *S, size_t N, casing_suffix_context_t A_CONTEXT)
- -- Function: casing_suffix_context_t u32_casing_suffixes_context (const
-          uint32_t *S, size_t N, casing_suffix_context_t A_CONTEXT)
+ -- Function: casing_suffix_context_t u8_casing_suffixes_context
+          (const uint8_t *S, size_t N,
+          casing_suffix_context_t A_CONTEXT)
+ -- Function: casing_suffix_context_t u16_casing_suffixes_context
+          (const uint16_t *S, size_t N,
+          casing_suffix_context_t A_CONTEXT)
+ -- Function: casing_suffix_context_t u32_casing_suffixes_context
+          (const uint32_t *S, size_t N,
+          casing_suffix_context_t A_CONTEXT)
      Returns the case-mapping context of the suffix concat(S, A), given
      the case-mapping context of the suffix A.
 
@@ -3811,19 +3917,19 @@ prefix context and the suffix context.
 
  -- Function: uint8_t * u8_ct_toupper (const uint8_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
+          size_t *LENGTHP)
  -- Function: uint16_t * u16_ct_toupper (const uint16_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint16_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
  -- Function: uint32_t * u32_ct_toupper (const uint32_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint32_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Returns the uppercase mapping of a string that is surrounded by a
      prefix and a suffix.
 
@@ -3832,19 +3938,19 @@ prefix context and the suffix context.
 
  -- Function: uint8_t * u8_ct_tolower (const uint8_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
+          size_t *LENGTHP)
  -- Function: uint16_t * u16_ct_tolower (const uint16_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint16_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
  -- Function: uint32_t * u32_ct_tolower (const uint32_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint32_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Returns the lowercase mapping of a string that is surrounded by a
      prefix and a suffix.
 
@@ -3853,19 +3959,19 @@ prefix context and the suffix context.
 
  -- Function: uint8_t * u8_ct_totitle (const uint8_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
+          size_t *LENGTHP)
  -- Function: uint16_t * u16_ct_totitle (const uint16_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint16_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
  -- Function: uint32_t * u32_ct_totitle (const uint32_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint32_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Returns the titlecase mapping of a string that is surrounded by a
      prefix and a suffix.
 
@@ -3893,15 +3999,15 @@ File: libunistring.info,  Node: Case insensitive comparison,  Next: Case detecti
    The following functions implement comparison that ignores differences
 in case and normalization.
 
- -- Function: uint8_t * u8_casefold (const uint8_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
+ -- Function: uint8_t * u8_casefold (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
           size_t *LENGTHP)
  -- Function: uint16_t * u16_casefold (const uint16_t *S, size_t N,
-          const char *ISO639_LANGUAGE, uninorm_t NF, uint16_t
-          *RESULTBUF, size_t *LENGTHP)
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
  -- Function: uint32_t * u32_casefold (const uint32_t *S, size_t N,
-          const char *ISO639_LANGUAGE, uninorm_t NF, uint32_t
-          *RESULTBUF, size_t *LENGTHP)
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Returns the case folded string.
 
      Comparing ‘u8_casefold (S1)’ and ‘u8_casefold (S2)’ with the
@@ -3916,37 +4022,37 @@ in case and normalization.
 
  -- Function: uint8_t * u8_ct_casefold (const uint8_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF, uint8_t *RESULTBUF,
+          size_t *LENGTHP)
  -- Function: uint16_t * u16_ct_casefold (const uint16_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint16_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint16_t *RESULTBUF, size_t *LENGTHP)
  -- Function: uint32_t * u32_ct_casefold (const uint32_t *S, size_t N,
           casing_prefix_context_t PREFIX_CONTEXT,
-          casing_suffix_context_t SUFFIX_CONTEXT, const char
-          *ISO639_LANGUAGE, uninorm_t NF, uint32_t *RESULTBUF, size_t
-          *LENGTHP)
+          casing_suffix_context_t SUFFIX_CONTEXT,
+          const char *ISO639_LANGUAGE, uninorm_t NF,
+          uint32_t *RESULTBUF, size_t *LENGTHP)
      Returns the case folded string.  The case folding takes into
      account the case mapping contexts of the prefix and suffix strings.
 
      The RESULTBUF and LENGTHP arguments are as described in chapter
      *note Conventions::.
 
- -- Function: int u8_casecmp (const uint8_t *S1, size_t N1, const
-          uint8_t *S2, size_t N2, const char *ISO639_LANGUAGE, uninorm_t
-          NF, int *RESULTP)
- -- Function: int u16_casecmp (const uint16_t *S1, size_t N1, const
-          uint16_t *S2, size_t N2, const char *ISO639_LANGUAGE,
+ -- Function: int u8_casecmp (const uint8_t *S1, size_t N1,
+          const uint8_t *S2, size_t N2, const char *ISO639_LANGUAGE,
           uninorm_t NF, int *RESULTP)
- -- Function: int u32_casecmp (const uint32_t *S1, size_t N1, const
-          uint32_t *S2, size_t N2, const char *ISO639_LANGUAGE,
+ -- Function: int u16_casecmp (const uint16_t *S1, size_t N1,
+          const uint16_t *S2, size_t N2, const char *ISO639_LANGUAGE,
           uninorm_t NF, int *RESULTP)
- -- Function: int ulc_casecmp (const char *S1, size_t N1, const char
-          *S2, size_t N2, const char *ISO639_LANGUAGE, uninorm_t NF, int
-          *RESULTP)
+ -- Function: int u32_casecmp (const uint32_t *S1, size_t N1,
+          const uint32_t *S2, size_t N2, const char *ISO639_LANGUAGE,
+          uninorm_t NF, int *RESULTP)
+ -- Function: int ulc_casecmp (const char *S1, size_t N1,
+          const char *S2, size_t N2, const char *ISO639_LANGUAGE,
+          uninorm_t NF, int *RESULTP)
      Compares S1 and S2, ignoring differences in case and normalization.
 
      The NF argument identifies the normalization form to apply after
@@ -3958,18 +4064,18 @@ in case and normalization.
    The following functions additionally take into account the sorting
 rules of the current locale.
 
- -- Function: char * u8_casexfrm (const uint8_t *S, size_t N, const char
-          *ISO639_LANGUAGE, uninorm_t NF, char *RESULTBUF, size_t
-          *LENGTHP)
- -- Function: char * u16_casexfrm (const uint16_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, char *RESULTBUF, size_t
-          *LENGTHP)
- -- Function: char * u32_casexfrm (const uint32_t *S, size_t N, const
-          char *ISO639_LANGUAGE, uninorm_t NF, char *RESULTBUF, size_t
-          *LENGTHP)
- -- Function: char * ulc_casexfrm (const char *S, size_t N, const char
-          *ISO639_LANGUAGE, uninorm_t NF, char *RESULTBUF, size_t
-          *LENGTHP)
+ -- Function: char * u8_casexfrm (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF, char *RESULTBUF,
+          size_t *LENGTHP)
+ -- Function: char * u16_casexfrm (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF, char *RESULTBUF,
+          size_t *LENGTHP)
+ -- Function: char * u32_casexfrm (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF, char *RESULTBUF,
+          size_t *LENGTHP)
+ -- Function: char * ulc_casexfrm (const char *S, size_t N,
+          const char *ISO639_LANGUAGE, uninorm_t NF, char *RESULTBUF,
+          size_t *LENGTHP)
      Converts the string S of length N to a NUL-terminated byte
      sequence, in such a way that comparing ‘u8_casexfrm (S1)’ and
      ‘u8_casexfrm (S2)’ with the gnulib function ‘memcmp2’ is equivalent
@@ -3981,18 +4087,18 @@ rules of the current locale.
      The RESULTBUF and LENGTHP arguments are as described in chapter
      *note Conventions::.
 
- -- Function: int u8_casecoll (const uint8_t *S1, size_t N1, const
-          uint8_t *S2, size_t N2, const char *ISO639_LANGUAGE, uninorm_t
-          NF, int *RESULTP)
- -- Function: int u16_casecoll (const uint16_t *S1, size_t N1, const
-          uint16_t *S2, size_t N2, const char *ISO639_LANGUAGE,
+ -- Function: int u8_casecoll (const uint8_t *S1, size_t N1,
+          const uint8_t *S2, size_t N2, const char *ISO639_LANGUAGE,
           uninorm_t NF, int *RESULTP)
- -- Function: int u32_casecoll (const uint32_t *S1, size_t N1, const
-          uint32_t *S2, size_t N2, const char *ISO639_LANGUAGE,
+ -- Function: int u16_casecoll (const uint16_t *S1, size_t N1,
+          const uint16_t *S2, size_t N2, const char *ISO639_LANGUAGE,
           uninorm_t NF, int *RESULTP)
- -- Function: int ulc_casecoll (const char *S1, size_t N1, const char
-          *S2, size_t N2, const char *ISO639_LANGUAGE, uninorm_t NF, int
-          *RESULTP)
+ -- Function: int u32_casecoll (const uint32_t *S1, size_t N1,
+          const uint32_t *S2, size_t N2, const char *ISO639_LANGUAGE,
+          uninorm_t NF, int *RESULTP)
+ -- Function: int ulc_casecoll (const char *S1, size_t N1,
+          const char *S2, size_t N2, const char *ISO639_LANGUAGE,
+          uninorm_t NF, int *RESULTP)
      Compares S1 and S2, ignoring differences in case and normalization,
      using the collation rules of the current locale.
 
@@ -4013,42 +4119,42 @@ File: libunistring.info,  Node: Case detection,  Prev: Case insensitive comparis
 entirely in upper case.  or entirely in lower case, or entirely in title
 case, or already case-folded.
 
- -- Function: int u8_is_uppercase (const uint8_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u16_is_uppercase (const uint16_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u32_is_uppercase (const uint32_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u8_is_uppercase (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u16_is_uppercase (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u32_is_uppercase (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
      Sets ‘*RESULTP’ to true if mapping NFD(S) to upper case is a no-op,
      or to false otherwise, and returns 0.  Upon failure, returns -1
      with ‘errno’ set.
 
- -- Function: int u8_is_lowercase (const uint8_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u16_is_lowercase (const uint16_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u32_is_lowercase (const uint32_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u8_is_lowercase (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u16_is_lowercase (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u32_is_lowercase (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
      Sets ‘*RESULTP’ to true if mapping NFD(S) to lower case is a no-op,
      or to false otherwise, and returns 0.  Upon failure, returns -1
      with ‘errno’ set.
 
- -- Function: int u8_is_titlecase (const uint8_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u16_is_titlecase (const uint16_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u32_is_titlecase (const uint32_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u8_is_titlecase (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u16_is_titlecase (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u32_is_titlecase (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
      Sets ‘*RESULTP’ to true if mapping NFD(S) to title case is a no-op,
      or to false otherwise, and returns 0.  Upon failure, returns -1
      with ‘errno’ set.
 
- -- Function: int u8_is_casefolded (const uint8_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u16_is_casefolded (const uint16_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u32_is_casefolded (const uint32_t *S, size_t N, const
-          char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u8_is_casefolded (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u16_is_casefolded (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u32_is_casefolded (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
      Sets ‘*RESULTP’ to true if applying case folding to NFD(S) is a
      no-op, or to false otherwise, and returns 0.  Upon failure, returns
      -1 with ‘errno’ set.
@@ -4056,12 +4162,12 @@ case, or already case-folded.
    The following functions determine whether case mappings have any
 effect on a Unicode string.
 
- -- Function: int u8_is_cased (const uint8_t *S, size_t N, const char
-          *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u16_is_cased (const uint16_t *S, size_t N, const char
-          *ISO639_LANGUAGE, bool *RESULTP)
- -- Function: int u32_is_cased (const uint32_t *S, size_t N, const char
-          *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u8_is_cased (const uint8_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u16_is_cased (const uint16_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
+ -- Function: int u32_is_cased (const uint32_t *S, size_t N,
+          const char *ISO639_LANGUAGE, bool *RESULTP)
      Sets ‘*RESULTP’ to true if case matters for S, that is, if mapping
      NFD(S) to either upper case or lower case or title case is not a
      no-op.  Set ‘*RESULTP’ to false if NFD(S) maps to itself under the
@@ -4182,7 +4288,7 @@ File: libunistring.info,  Node: Autoconf macro,  Next: Reporting problems,  Prev
    GNU Gnulib provides an autoconf macro that tests for the availability
 of ‘libunistring’.  It is contained in the Gnulib module ‘libunistring’,
 see
-<http://www.gnu.org/software/gnulib/MODULES.html#module=libunistring>.
+<https://www.gnu.org/software/gnulib/MODULES.html#module=libunistring>.
 
    The macro is called ‘gl_LIBUNISTRING’.  It searches for an installed
 libunistring.  If found, it sets and AC_SUBSTs ‘HAVE_LIBUNISTRING=yes’
@@ -4213,10 +4319,10 @@ File: libunistring.info,  Node: Reporting problems,  Prev: Autoconf macro,  Up: 
 16.5 Reporting problems
 =======================
 
-   If you encounter any problem, please don’t hesitate to send a
-detailed bug report to the ‘bug-libunistring@gnu.org’ mailing list.  You
-can alternatively also use the bug tracker at the project page
-<https://savannah.gnu.org/projects/libunistring>.
+   If you encounter any problem, please don’t hesitate to submit a
+detailed bug report either in the bug tracker at the project page
+<https://savannah.gnu.org/projects/libunistring>, or by email to the
+‘bug-libunistring@gnu.org’ mailing list.
 
    Please always include the version number of this library, and a short
 description of your operating system and compilation environment with
@@ -4238,10 +4344,10 @@ library: <http://www.fribidi.org/>.
 
    For the rendering of Unicode strings outside of the context of a
 given toolkit (KDE/Qt or GNOME/Gtk), we recommend the Pango library:
-<http://www.pango.org/>.
+<https://www.pango.org/>.
 
 
-File: libunistring.info,  Node: The wchar_t mess,  Next: Licenses,  Prev: More functionality,  Up: Top
+File: libunistring.info,  Node: The wchar_t mess,  Next: The char32_t problem,  Prev: More functionality,  Up: Top
 
 Appendix A The ‘wchar_t’ mess
 *****************************
@@ -4286,22 +4392,67 @@ faithfully transport malformed characters that were present in the
 input, without requiring the program to produce garbage or abort.
 
 
-File: libunistring.info,  Node: Licenses,  Next: Index,  Prev: The wchar_t mess,  Up: Top
+File: libunistring.info,  Node: The char32_t problem,  Next: Licenses,  Prev: The wchar_t mess,  Up: Top
 
-Appendix B Licenses
+Appendix B The ‘char32_t’ problem
+*********************************
+
+   In response to the ‘wchar_t’ mess described in the previous section,
+ISO C 11 introduces two new types: ‘char32_t’ and ‘char16_t’.
+
+   ‘char32_t’ is a type like ‘wchar_t’, with the added guarantee that it
+is 32 bits wide.  So, it is a type that is appropriate for encoding a
+Unicode character.  It is meant to resolve the problems of the 16-bit
+wide ‘wchar_t’ on AIX and Windows platforms, and allow a saner
+programming model for wide character strings across all platforms.
+
+   ‘char16_t’ is a type like ‘wchar_t’, with the added guarantee that it
+is 16 bits wide.  It is meant to allow porting programs that use the
+broken wide character strings programming model from Windows to all
+platforms.  Of course, no one needs this.
+
+   These types are accompanied with a syntax for defining wide string
+literals with these element types: ‘u"..."’ and ‘U"..."’.
+
+   So far, so good.  What the ISO C designers forgot, is to provide
+standardized C library functions that operate on these wide character
+strings.  They standardized only the most basic functions, ‘mbrtoc32’
+and ‘c32rtomb’, which are analogous to ‘mbrtowc’ and ‘wcrtomb’,
+respectively.  For the rest, GNU gnulib
+<https://www.gnu.org/software/gnulib/> provides the functions:
+   • Functions for converting an entire string: ‘mbstoc32s’ – like
+     ‘mbstowcs’, ‘c32stombs’ – like ‘wcstombs’.
+   • Functions for testing the properties of a 32-bit wide character:
+     ‘c32isalnum’, ‘c32isalpha’, etc.  – like ‘iswalnum’, ‘iswalpha’,
+     etc.
+
+   Still, this API has two problems:
+   • The ‘char32_t’ encoding is locale dependent and undocumented.  This
+     means, if you want to know any property of a ‘char32_t’ character,
+     other than the properties defined by ‘<wctype.h>’ – such as whether
+     it’s a dash, currency symbol, paragraph separator, or similar –,
+     you have to convert it to ‘char *’ encoding first, by use of the
+     function ‘c32tomb’.
+   • Even on platforms where ‘wchar_t’ is 32 bits wide, the ‘char32_t’
+     encoding may be different from the ‘wchar_t’ encoding.
+
+
+File: libunistring.info,  Node: Licenses,  Next: Index,  Prev: The char32_t problem,  Up: Top
+
+Appendix C Licenses
 *******************
 
    The files of this package are covered by the licenses indicated in
 each particular file or directory.  Here is a summary:
 
    • The ‘libunistring’ library and its header files are dual-licensed
-     under "the GNU LGPLv3+ or the GNU GPLv2".  This means, you can use
+     under "the GNU LGPLv3+ or the GNU GPLv2+".  This means, you can use
      it under either
         • − the terms of the GNU Lesser General Public License (LGPL)
           version 3 or (at your option) any later version, or
-        • − the terms of the GNU General Public License (GPL) version 2,
-          or
-        • − the same dual license "the GNU LGPLv3+ or the GNU GPLv2".
+        • − the terms of the GNU General Public License (GPL) version 2
+          or (at your option) any later version, or
+        • − the same dual license "the GNU LGPLv3+ or the GNU GPLv2+".
      You find the GNU LGPL version 3 in *note GNU LGPL::.  This license
      is based on the GNU GPL version 3, see *note GNU GPL::.
      You can find the GNU GPL version 2 at
@@ -4336,12 +4487,12 @@ each particular file or directory.  Here is a summary:
 
 File: libunistring.info,  Node: GNU GPL,  Next: GNU LGPL,  Up: Licenses
 
-B.1 GNU GENERAL PUBLIC LICENSE
+C.1 GNU GENERAL PUBLIC LICENSE
 ==============================
 
                         Version 3, 29 June 2007
 
-     Copyright © 2007 Free Software Foundation, Inc. <http://fsf.org/>
+     Copyright © 2007 Free Software Foundation, Inc. <https://fsf.org/>
 
      Everyone is permitted to copy and distribute verbatim copies of this
      license document, but changing it is not allowed.
@@ -4958,11 +5109,11 @@ TERMS AND CONDITIONS
   15. Disclaimer of Warranty.
 
      THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
-     APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE
+     APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE
      COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM “AS IS”
      WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
      INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE
+     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE
      RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.
      SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
      NECESSARY SERVICING, REPAIR OR CORRECTION.
@@ -5019,7 +5170,7 @@ state the exclusion of warranty; and each file should have at least the
      General Public License for more details.
 
      You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
    Also add information on how to contact you by electronic and paper
 mail.
@@ -5040,24 +5191,24 @@ use an “about box”.
    You should also get your employer (if you work as a programmer) or
 school, if any, to sign a “copyright disclaimer” for the program, if
 necessary.  For more information on this, and how to apply and follow
-the GNU GPL, see <http://www.gnu.org/licenses/>.
+the GNU GPL, see <https://www.gnu.org/licenses/>.
 
    The GNU General Public License does not permit incorporating your
 program into proprietary programs.  If your program is a subroutine
 library, you may consider it more useful to permit linking proprietary
 applications with the library.  If this is what you want to do, use the
 GNU Lesser General Public License instead of this License.  But first,
-please read <http://www.gnu.org/philosophy/why-not-lgpl.html>.
+please read <https://www.gnu.org/licenses/why-not-lgpl.html>.
 
 
 File: libunistring.info,  Node: GNU LGPL,  Next: GNU FDL,  Prev: GNU GPL,  Up: Licenses
 
-B.2 GNU LESSER GENERAL PUBLIC LICENSE
+C.2 GNU LESSER GENERAL PUBLIC LICENSE
 =====================================
 
                         Version 3, 29 June 2007
 
-     Copyright © 2007 Free Software Foundation, Inc. <http://fsf.org/>
+     Copyright © 2007 Free Software Foundation, Inc. <https://fsf.org/>
 
      Everyone is permitted to copy and distribute verbatim copies of this
      license document, but changing it is not allowed.
@@ -5224,13 +5375,13 @@ supplemented by the additional permissions listed below.
 
 File: libunistring.info,  Node: GNU FDL,  Prev: GNU LGPL,  Up: Licenses
 
-B.3 GNU Free Documentation License
+C.3 GNU Free Documentation License
 ==================================
 
                      Version 1.3, 3 November 2008
 
      Copyright © 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
-     <http://fsf.org/>
+     <https://fsf.org/>
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -5627,7 +5778,7 @@ B.3 GNU Free Documentation License
      the GNU Free Documentation License from time to time.  Such new
      versions will be similar in spirit to the present version, but may
      differ in detail to address new problems or concerns.  See
-     <http://www.gnu.org/copyleft/>.
+     <https://www.gnu.org/copyleft/>.
 
      Each version of the License is given a distinguishing version
      number.  If the Document specifies that a particular numbered
@@ -5740,8 +5891,12 @@ Index
 * casing_prefix_context_t:               Case mappings of substrings.
                                                               (line  14)
 * casing_suffix_context_t:               Case mappings of substrings.
-                                                              (line  43)
+                                                              (line  46)
 * char, type:                            char * strings.      (line  22)
+* char16_t, type:                        The char32_t problem.
+                                                              (line   6)
+* char32_t, type:                        The char32_t problem.
+                                                              (line   6)
 * combining, Unicode characters:         Composition of characters.
                                                               (line   6)
 * comparing:                             Comparing Unicode strings.
@@ -5773,7 +5928,7 @@ Index
                                                               (line   6)
 * converting:                            Elementary string conversions.
                                                               (line   6)
-* converting <1>:                        uniconv.h.           (line  45)
+* converting <1>:                        uniconv.h.           (line  51)
 * copying:                               Copying Unicode strings.
                                                               (line   6)
 * copying <1>:                           Copying a NUL terminated Unicode string.
@@ -5858,13 +6013,13 @@ Index
 * u16_casexfrm:                          Case insensitive comparison.
                                                               (line  77)
 * u16_casing_prefixes_context:           Case mappings of substrings.
-                                                              (line  36)
+                                                              (line  37)
 * u16_casing_prefix_context:             Case mappings of substrings.
                                                               (line  28)
 * u16_casing_suffixes_context:           Case mappings of substrings.
-                                                              (line  65)
+                                                              (line  69)
 * u16_casing_suffix_context:             Case mappings of substrings.
-                                                              (line  57)
+                                                              (line  60)
 * u16_check:                             Elementary string checks.
                                                               (line  10)
 * u16_chr:                               Searching for a character.
@@ -5873,8 +6028,8 @@ Index
                                                               (line  11)
 * u16_cmp2:                              Comparing Unicode strings.
                                                               (line  27)
-* u16_conv_from_encoding:                uniconv.h.           (line  51)
-* u16_conv_to_encoding:                  uniconv.h.           (line  88)
+* u16_conv_from_encoding:                uniconv.h.           (line  58)
+* u16_conv_to_encoding:                  uniconv.h.           (line  98)
 * u16_cpy:                               Copying Unicode strings.
                                                               (line  10)
 * u16_cpy_alloc:                         Elementary string functions with memory allocation.
@@ -5882,15 +6037,15 @@ Index
 * u16_ct_casefold:                       Case insensitive comparison.
                                                               (line  35)
 * u16_ct_tolower:                        Case mappings of substrings.
-                                                              (line 101)
+                                                              (line 107)
 * u16_ct_totitle:                        Case mappings of substrings.
-                                                              (line 122)
+                                                              (line 128)
 * u16_ct_toupper:                        Case mappings of substrings.
-                                                              (line  80)
+                                                              (line  86)
 * u16_endswith:                          Searching for a substring.
                                                               (line  30)
 * u16_grapheme_breaks:                   Grapheme cluster breaks in a string.
-                                                              (line  42)
+                                                              (line  45)
 * u16_grapheme_next:                     Grapheme cluster breaks in a string.
                                                               (line  11)
 * u16_grapheme_prev:                     Grapheme cluster breaks in a string.
@@ -5917,7 +6072,7 @@ Index
                                                               (line  40)
 * u16_normxfrm:                          Normalizing comparisons.
                                                               (line  24)
-* u16_possible_linebreaks:               unilbrk.h.           (line  44)
+* u16_possible_linebreaks:               unilbrk.h.           (line  48)
 * u16_prev:                              Iterating over a NUL terminated Unicode string.
                                                               (line  34)
 * u16_set:                               Copying Unicode strings.
@@ -5938,10 +6093,10 @@ Index
                                                               (line   9)
 * u16_strcoll:                           Comparing NUL terminated Unicode strings.
                                                               (line  19)
-* u16_strconv_from_encoding:             uniconv.h.           (line 127)
-* u16_strconv_from_locale:               uniconv.h.           (line 156)
-* u16_strconv_to_encoding:               uniconv.h.           (line 140)
-* u16_strconv_to_locale:                 uniconv.h.           (line 166)
+* u16_strconv_from_encoding:             uniconv.h.           (line 139)
+* u16_strconv_from_locale:               uniconv.h.           (line 168)
+* u16_strconv_to_encoding:               uniconv.h.           (line 152)
+* u16_strconv_to_locale:                 uniconv.h.           (line 178)
 * u16_strcpy:                            Copying a NUL terminated Unicode string.
                                                               (line   9)
 * u16_strcspn:                           Searching for a character in a NUL terminated Unicode string.
@@ -5995,7 +6150,7 @@ Index
 * u16_vsnprintf:                         unistdio.h.          (line 115)
 * u16_vsprintf:                          unistdio.h.          (line 113)
 * u16_width:                             uniwidth.h.          (line  29)
-* u16_width_linebreaks:                  unilbrk.h.           (line  62)
+* u16_width_linebreaks:                  unilbrk.h.           (line  66)
 * u16_wordbreaks:                        Word breaks in a string.
                                                               (line   9)
 * u32_asnprintf:                         unistdio.h.          (line 150)
@@ -6009,13 +6164,13 @@ Index
 * u32_casexfrm:                          Case insensitive comparison.
                                                               (line  80)
 * u32_casing_prefixes_context:           Case mappings of substrings.
-                                                              (line  38)
+                                                              (line  40)
 * u32_casing_prefix_context:             Case mappings of substrings.
                                                               (line  30)
 * u32_casing_suffixes_context:           Case mappings of substrings.
-                                                              (line  67)
+                                                              (line  72)
 * u32_casing_suffix_context:             Case mappings of substrings.
-                                                              (line  59)
+                                                              (line  62)
 * u32_check:                             Elementary string checks.
                                                               (line  11)
 * u32_chr:                               Searching for a character.
@@ -6024,8 +6179,8 @@ Index
                                                               (line  13)
 * u32_cmp2:                              Comparing Unicode strings.
                                                               (line  29)
-* u32_conv_from_encoding:                uniconv.h.           (line  54)
-* u32_conv_to_encoding:                  uniconv.h.           (line  91)
+* u32_conv_from_encoding:                uniconv.h.           (line  62)
+* u32_conv_to_encoding:                  uniconv.h.           (line 102)
 * u32_cpy:                               Copying Unicode strings.
                                                               (line  12)
 * u32_cpy_alloc:                         Elementary string functions with memory allocation.
@@ -6033,15 +6188,15 @@ Index
 * u32_ct_casefold:                       Case insensitive comparison.
                                                               (line  40)
 * u32_ct_tolower:                        Case mappings of substrings.
-                                                              (line 106)
+                                                              (line 112)
 * u32_ct_totitle:                        Case mappings of substrings.
-                                                              (line 127)
+                                                              (line 133)
 * u32_ct_toupper:                        Case mappings of substrings.
-                                                              (line  85)
+                                                              (line  91)
 * u32_endswith:                          Searching for a substring.
                                                               (line  32)
 * u32_grapheme_breaks:                   Grapheme cluster breaks in a string.
-                                                              (line  44)
+                                                              (line  47)
 * u32_grapheme_next:                     Grapheme cluster breaks in a string.
                                                               (line  13)
 * u32_grapheme_prev:                     Grapheme cluster breaks in a string.
@@ -6068,7 +6223,7 @@ Index
                                                               (line  42)
 * u32_normxfrm:                          Normalizing comparisons.
                                                               (line  26)
-* u32_possible_linebreaks:               unilbrk.h.           (line  46)
+* u32_possible_linebreaks:               unilbrk.h.           (line  50)
 * u32_prev:                              Iterating over a NUL terminated Unicode string.
                                                               (line  36)
 * u32_set:                               Copying Unicode strings.
@@ -6089,10 +6244,10 @@ Index
                                                               (line  10)
 * u32_strcoll:                           Comparing NUL terminated Unicode strings.
                                                               (line  20)
-* u32_strconv_from_encoding:             uniconv.h.           (line 129)
-* u32_strconv_from_locale:               uniconv.h.           (line 157)
-* u32_strconv_to_encoding:               uniconv.h.           (line 142)
-* u32_strconv_to_locale:                 uniconv.h.           (line 167)
+* u32_strconv_from_encoding:             uniconv.h.           (line 141)
+* u32_strconv_from_locale:               uniconv.h.           (line 169)
+* u32_strconv_to_encoding:               uniconv.h.           (line 154)
+* u32_strconv_to_locale:                 uniconv.h.           (line 179)
 * u32_strcpy:                            Copying a NUL terminated Unicode string.
                                                               (line  11)
 * u32_strcspn:                           Searching for a character in a NUL terminated Unicode string.
@@ -6146,7 +6301,7 @@ Index
 * u32_vsnprintf:                         unistdio.h.          (line 154)
 * u32_vsprintf:                          unistdio.h.          (line 152)
 * u32_width:                             uniwidth.h.          (line  31)
-* u32_width_linebreaks:                  unilbrk.h.           (line  65)
+* u32_width_linebreaks:                  unilbrk.h.           (line  69)
 * u32_wordbreaks:                        Word breaks in a string.
                                                               (line  10)
 * u8_asnprintf:                          unistdio.h.          (line  72)
@@ -6164,9 +6319,9 @@ Index
 * u8_casing_prefix_context:              Case mappings of substrings.
                                                               (line  26)
 * u8_casing_suffixes_context:            Case mappings of substrings.
-                                                              (line  63)
+                                                              (line  66)
 * u8_casing_suffix_context:              Case mappings of substrings.
-                                                              (line  55)
+                                                              (line  58)
 * u8_check:                              Elementary string checks.
                                                               (line   9)
 * u8_chr:                                Searching for a character.
@@ -6175,8 +6330,8 @@ Index
                                                               (line   9)
 * u8_cmp2:                               Comparing Unicode strings.
                                                               (line  25)
-* u8_conv_from_encoding:                 uniconv.h.           (line  48)
-* u8_conv_to_encoding:                   uniconv.h.           (line  85)
+* u8_conv_from_encoding:                 uniconv.h.           (line  54)
+* u8_conv_to_encoding:                   uniconv.h.           (line  94)
 * u8_cpy:                                Copying Unicode strings.
                                                               (line   8)
 * u8_cpy_alloc:                          Elementary string functions with memory allocation.
@@ -6184,15 +6339,15 @@ Index
 * u8_ct_casefold:                        Case insensitive comparison.
                                                               (line  30)
 * u8_ct_tolower:                         Case mappings of substrings.
-                                                              (line  96)
+                                                              (line 102)
 * u8_ct_totitle:                         Case mappings of substrings.
-                                                              (line 117)
+                                                              (line 123)
 * u8_ct_toupper:                         Case mappings of substrings.
-                                                              (line  75)
+                                                              (line  81)
 * u8_endswith:                           Searching for a substring.
                                                               (line  28)
 * u8_grapheme_breaks:                    Grapheme cluster breaks in a string.
-                                                              (line  40)
+                                                              (line  43)
 * u8_grapheme_next:                      Grapheme cluster breaks in a string.
                                                               (line   9)
 * u8_grapheme_prev:                      Grapheme cluster breaks in a string.
@@ -6219,7 +6374,7 @@ Index
                                                               (line  38)
 * u8_normxfrm:                           Normalizing comparisons.
                                                               (line  22)
-* u8_possible_linebreaks:                unilbrk.h.           (line  42)
+* u8_possible_linebreaks:                unilbrk.h.           (line  46)
 * u8_prev:                               Iterating over a NUL terminated Unicode string.
                                                               (line  32)
 * u8_set:                                Copying Unicode strings.
@@ -6240,10 +6395,10 @@ Index
                                                               (line   8)
 * u8_strcoll:                            Comparing NUL terminated Unicode strings.
                                                               (line  18)
-* u8_strconv_from_encoding:              uniconv.h.           (line 125)
-* u8_strconv_from_locale:                uniconv.h.           (line 155)
-* u8_strconv_to_encoding:                uniconv.h.           (line 138)
-* u8_strconv_to_locale:                  uniconv.h.           (line 165)
+* u8_strconv_from_encoding:              uniconv.h.           (line 137)
+* u8_strconv_from_locale:                uniconv.h.           (line 167)
+* u8_strconv_to_encoding:                uniconv.h.           (line 150)
+* u8_strconv_to_locale:                  uniconv.h.           (line 177)
 * u8_strcpy:                             Copying a NUL terminated Unicode string.
                                                               (line   8)
 * u8_strcspn:                            Searching for a character in a NUL terminated Unicode string.
@@ -6297,20 +6452,20 @@ Index
 * u8_vsnprintf:                          unistdio.h.          (line  76)
 * u8_vsprintf:                           unistdio.h.          (line  74)
 * u8_width:                              uniwidth.h.          (line  27)
-* u8_width_linebreaks:                   unilbrk.h.           (line  59)
+* u8_width_linebreaks:                   unilbrk.h.           (line  63)
 * u8_wordbreaks:                         Word breaks in a string.
                                                               (line   8)
 * UCS-4:                                 Unicode.             (line  14)
 * ucs4_t:                                unitypes.h.          (line  15)
 * uc_all_blocks:                         Blocks.              (line  36)
 * uc_all_scripts:                        Scripts.             (line  35)
-* uc_bidi_category:                      Bidi class.          (line  93)
-* uc_bidi_category_byname:               Bidi class.          (line  83)
-* uc_bidi_category_name:                 Bidi class.          (line  75)
-* uc_bidi_class:                         Bidi class.          (line  92)
-* uc_bidi_class_byname:                  Bidi class.          (line  82)
-* uc_bidi_class_long_name:               Bidi class.          (line  79)
-* uc_bidi_class_name:                    Bidi class.          (line  74)
+* uc_bidi_category:                      Bidi class.          (line 105)
+* uc_bidi_category_byname:               Bidi class.          (line  95)
+* uc_bidi_category_name:                 Bidi class.          (line  87)
+* uc_bidi_class:                         Bidi class.          (line 104)
+* uc_bidi_class_byname:                  Bidi class.          (line  94)
+* uc_bidi_class_long_name:               Bidi class.          (line  91)
+* uc_bidi_class_name:                    Bidi class.          (line  86)
 * uc_block:                              Blocks.              (line  26)
 * uc_block_t:                            Blocks.              (line  11)
 * uc_canonical_decomposition:            Decomposition of characters.
@@ -6343,13 +6498,13 @@ Index
 * uc_graphemeclusterbreak_property:      Grapheme cluster break property.
                                                               (line  37)
 * uc_grapheme_breaks:                    Grapheme cluster breaks in a string.
-                                                              (line  48)
+                                                              (line  51)
 * uc_is_alnum:                           Classifications like in ISO C.
                                                               (line  13)
 * uc_is_alpha:                           Classifications like in ISO C.
                                                               (line  17)
-* uc_is_bidi_category:                   Bidi class.          (line  97)
-* uc_is_bidi_class:                      Bidi class.          (line  96)
+* uc_is_bidi_category:                   Bidi class.          (line 109)
+* uc_is_bidi_class:                      Bidi class.          (line 108)
 * uc_is_blank:                           Classifications like in ISO C.
                                                               (line  63)
 * uc_is_block:                           Blocks.              (line  31)
@@ -6372,7 +6527,7 @@ Index
 * uc_is_print:                           Classifications like in ISO C.
                                                               (line  40)
 * uc_is_property:                        Properties as objects.
-                                                              (line 150)
+                                                              (line 160)
 * uc_is_property_alphabetic:             Properties as functions.
                                                               (line   9)
 * uc_is_property_ascii_hex_digit:        Properties as functions.
@@ -6426,25 +6581,37 @@ Index
 * uc_is_property_changes_when_uppercased: Properties as functions.
                                                               (line  32)
 * uc_is_property_combining:              Properties as functions.
-                                                              (line 110)
+                                                              (line 119)
 * uc_is_property_composite:              Properties as functions.
-                                                              (line 111)
+                                                              (line 120)
 * uc_is_property_currency_symbol:        Properties as functions.
-                                                              (line 105)
+                                                              (line 114)
 * uc_is_property_dash:                   Properties as functions.
-                                                              (line  97)
+                                                              (line 106)
 * uc_is_property_decimal_digit:          Properties as functions.
-                                                              (line 112)
+                                                              (line 121)
 * uc_is_property_default_ignorable_code_point: Properties as functions.
                                                               (line  12)
 * uc_is_property_deprecated:             Properties as functions.
                                                               (line  16)
 * uc_is_property_diacritic:              Properties as functions.
-                                                              (line 114)
-* uc_is_property_extender:               Properties as functions.
-                                                              (line 115)
-* uc_is_property_format_control:         Properties as functions.
+                                                              (line 123)
+* uc_is_property_emoji:                  Properties as functions.
+                                                              (line  92)
+* uc_is_property_emoji_component:        Properties as functions.
                                                               (line  96)
+* uc_is_property_emoji_modifier:         Properties as functions.
+                                                              (line  94)
+* uc_is_property_emoji_modifier_base:    Properties as functions.
+                                                              (line  95)
+* uc_is_property_emoji_presentation:     Properties as functions.
+                                                              (line  93)
+* uc_is_property_extended_pictographic:  Properties as functions.
+                                                              (line  97)
+* uc_is_property_extender:               Properties as functions.
+                                                              (line 124)
+* uc_is_property_format_control:         Properties as functions.
+                                                              (line 105)
 * uc_is_property_grapheme_base:          Properties as functions.
                                                               (line  52)
 * uc_is_property_grapheme_extend:        Properties as functions.
@@ -6454,7 +6621,7 @@ Index
 * uc_is_property_hex_digit:              Properties as functions.
                                                               (line  79)
 * uc_is_property_hyphen:                 Properties as functions.
-                                                              (line  98)
+                                                              (line 107)
 * uc_is_property_ideographic:            Properties as functions.
                                                               (line  84)
 * uc_is_property_ids_binary_operator:    Properties as functions.
@@ -6466,27 +6633,27 @@ Index
 * uc_is_property_id_start:               Properties as functions.
                                                               (line  40)
 * uc_is_property_ignorable_control:      Properties as functions.
-                                                              (line 116)
+                                                              (line 125)
 * uc_is_property_iso_control:            Properties as functions.
-                                                              (line  95)
+                                                              (line 104)
 * uc_is_property_join_control:           Properties as functions.
                                                               (line  51)
 * uc_is_property_left_of_pair:           Properties as functions.
-                                                              (line 109)
+                                                              (line 118)
 * uc_is_property_line_separator:         Properties as functions.
-                                                              (line 100)
+                                                              (line 109)
 * uc_is_property_logical_order_exception: Properties as functions.
                                                               (line  17)
 * uc_is_property_lowercase:              Properties as functions.
                                                               (line  26)
 * uc_is_property_math:                   Properties as functions.
-                                                              (line 106)
+                                                              (line 115)
 * uc_is_property_non_break:              Properties as functions.
-                                                              (line  94)
+                                                              (line 103)
 * uc_is_property_not_a_character:        Properties as functions.
                                                               (line  11)
 * uc_is_property_numeric:                Properties as functions.
-                                                              (line 113)
+                                                              (line 122)
 * uc_is_property_other_alphabetic:       Properties as functions.
                                                               (line  10)
 * uc_is_property_other_default_ignorable_code_point: Properties as functions.
@@ -6500,13 +6667,13 @@ Index
 * uc_is_property_other_lowercase:        Properties as functions.
                                                               (line  27)
 * uc_is_property_other_math:             Properties as functions.
-                                                              (line 107)
+                                                              (line 116)
 * uc_is_property_other_uppercase:        Properties as functions.
                                                               (line  25)
 * uc_is_property_paired_punctuation:     Properties as functions.
-                                                              (line 108)
+                                                              (line 117)
 * uc_is_property_paragraph_separator:    Properties as functions.
-                                                              (line 101)
+                                                              (line 110)
 * uc_is_property_pattern_syntax:         Properties as functions.
                                                               (line  47)
 * uc_is_property_pattern_white_space:    Properties as functions.
@@ -6514,19 +6681,21 @@ Index
 * uc_is_property_private_use:            Properties as functions.
                                                               (line  19)
 * uc_is_property_punctuation:            Properties as functions.
-                                                              (line  99)
+                                                              (line 108)
 * uc_is_property_quotation_mark:         Properties as functions.
-                                                              (line 102)
+                                                              (line 111)
 * uc_is_property_radical:                Properties as functions.
                                                               (line  86)
+* uc_is_property_regional_indicator:     Properties as functions.
+                                                              (line 126)
 * uc_is_property_sentence_terminal:      Properties as functions.
-                                                              (line 103)
+                                                              (line 112)
 * uc_is_property_soft_dotted:            Properties as functions.
                                                               (line  36)
 * uc_is_property_space:                  Properties as functions.
-                                                              (line  93)
+                                                              (line 102)
 * uc_is_property_terminal_punctuation:   Properties as functions.
-                                                              (line 104)
+                                                              (line 113)
 * uc_is_property_titlecase:              Properties as functions.
                                                               (line  28)
 * uc_is_property_unassigned_code_value:  Properties as functions.
@@ -6544,7 +6713,7 @@ Index
 * uc_is_property_xid_start:              Properties as functions.
                                                               (line  44)
 * uc_is_property_zero_width:             Properties as functions.
-                                                              (line  92)
+                                                              (line 101)
 * uc_is_punct:                           Classifications like in ISO C.
                                                               (line  43)
 * uc_is_script:                          Scripts.             (line  30)
@@ -6556,9 +6725,9 @@ Index
                                                               (line  59)
 * uc_java_ident_category:                ISO C and Java syntax.
                                                               (line  42)
-* uc_joining_group:                      Joining group.       (line  85)
-* uc_joining_group_byname:               Joining group.       (line  76)
-* uc_joining_group_name:                 Joining group.       (line  73)
+* uc_joining_group:                      Joining group.       (line 132)
+* uc_joining_group_byname:               Joining group.       (line 123)
+* uc_joining_group_name:                 Joining group.       (line 120)
 * uc_joining_type:                       Joining type.        (line  54)
 * uc_joining_type_byname:                Joining type.        (line  45)
 * uc_joining_type_long_name:             Joining type.        (line  42)
@@ -6568,9 +6737,9 @@ Index
 * uc_mirror_char:                        Mirrored character.  (line  13)
 * uc_numeric_value:                      Numeric value.       (line  21)
 * uc_property_byname:                    Properties as objects.
-                                                              (line 128)
+                                                              (line 138)
 * uc_property_is_valid:                  Properties as objects.
-                                                              (line 143)
+                                                              (line 153)
 * uc_property_t:                         Properties as objects.
                                                               (line   8)
 * uc_script:                             Scripts.             (line  19)
@@ -6597,8 +6766,8 @@ Index
                                                               (line  83)
 * ulc_fprintf:                           unistdio.h.          (line 184)
 * ulc_grapheme_breaks:                   Grapheme cluster breaks in a string.
-                                                              (line  46)
-* ulc_possible_linebreaks:               unilbrk.h.           (line  48)
+                                                              (line  49)
+* ulc_possible_linebreaks:               unilbrk.h.           (line  52)
 * ulc_snprintf:                          unistdio.h.          (line  44)
 * ulc_sprintf:                           unistdio.h.          (line  42)
 * ulc_vasnprintf:                        unistdio.h.          (line  61)
@@ -6606,7 +6775,7 @@ Index
 * ulc_vfprintf:                          unistdio.h.          (line 185)
 * ulc_vsnprintf:                         unistdio.h.          (line  55)
 * ulc_vsprintf:                          unistdio.h.          (line  52)
-* ulc_width_linebreaks:                  unilbrk.h.           (line  68)
+* ulc_width_linebreaks:                  unilbrk.h.           (line  72)
 * ulc_wordbreaks:                        Word breaks in a string.
                                                               (line  11)
 * Unicode:                               Unicode.             (line   6)
@@ -6680,92 +6849,93 @@ Index
 
 Tag Table:
 Node: Top269
-Node: Introduction3950
-Node: Unicode5971
-Node: Unicode and i18n7856
-Node: Locale encodings9518
-Node: In-memory representation11783
-Node: char * strings13781
-Node: Unicode strings19268
-Node: Conventions20451
-Node: unitypes.h22743
-Node: unistr.h23840
-Node: Elementary string checks24405
-Node: Elementary string conversions25027
-Node: Elementary string functions26905
-Node: Iterating27310
-Node: Creating Unicode strings30140
-Node: Copying Unicode strings31058
-Node: Comparing Unicode strings32671
-Node: Searching for a character34226
-Node: Counting characters35025
-Node: Elementary string functions with memory allocation35708
-Node: Elementary string functions on NUL terminated strings36330
-Node: Iterating over a NUL terminated Unicode string36929
-Node: Length39197
-Node: Copying a NUL terminated Unicode string40255
-Node: Comparing NUL terminated Unicode strings43359
-Node: Duplicating a NUL terminated Unicode string45455
-Node: Searching for a character in a NUL terminated Unicode string46224
-Node: Searching for a substring48988
-Node: Tokenizing50511
-Node: uniconv.h51384
-Node: unistdio.h59337
-Node: uniname.h67590
-Node: unictype.h68996
-Node: General category69924
-Node: Object oriented API70979
-Node: Bit mask API80820
-Node: Canonical combining class83115
-Node: Bidi class87349
-Node: Decimal digit value90762
-Node: Digit value91319
-Node: Numeric value91880
-Node: Mirrored character92782
-Node: Arabic shaping93475
-Node: Joining type93948
-Node: Joining group96098
-Node: Properties99536
-Node: Properties as objects100227
-Node: Properties as functions107249
-Node: Scripts113265
-Node: Blocks114670
-Node: ISO C and Java syntax116013
-Node: Classifications like in ISO C117731
-Node: uniwidth.h120543
-Node: unigbrk.h122589
-Node: Grapheme cluster breaks in a string124083
-Node: Grapheme cluster break property127018
-Node: uniwbrk.h129263
-Node: Word breaks in a string129801
-Node: Word break property130893
-Node: unilbrk.h132220
-Node: uninorm.h136516
-Node: Decomposition of characters137153
-Node: Composition of characters140934
-Node: Normalization of strings141647
-Node: Normalizing comparisons143820
-Node: Normalization of streams146318
-Node: unicase.h148443
-Node: Case mappings of characters149132
-Node: Case mappings of strings151281
-Node: Case mappings of substrings154920
-Node: Case insensitive comparison162130
-Node: Case detection167823
-Node: uniregex.h171137
-Node: Using the library171364
-Node: Installation171775
-Node: Compiler options172263
-Node: Include files173903
-Node: Autoconf macro175156
-Node: Reporting problems176796
-Node: More functionality177614
-Node: The wchar_t mess178065
-Node: Licenses180403
-Node: GNU GPL182832
-Node: GNU LGPL220577
-Node: GNU FDL229060
-Node: Index254369
+Node: Introduction4027
+Node: Unicode6048
+Node: Unicode and i18n7937
+Node: Locale encodings9599
+Node: In-memory representation11864
+Node: char * strings13862
+Node: Unicode strings19350
+Node: Conventions20533
+Node: unitypes.h22825
+Node: unistr.h23922
+Node: Elementary string checks24487
+Node: Elementary string conversions25109
+Node: Elementary string functions26987
+Node: Iterating27392
+Node: Creating Unicode strings30222
+Node: Copying Unicode strings31158
+Node: Comparing Unicode strings32771
+Node: Searching for a character34326
+Node: Counting characters35125
+Node: Elementary string functions with memory allocation35808
+Node: Elementary string functions on NUL terminated strings36430
+Node: Iterating over a NUL terminated Unicode string37029
+Node: Length39297
+Node: Copying a NUL terminated Unicode string40355
+Node: Comparing NUL terminated Unicode strings43459
+Node: Duplicating a NUL terminated Unicode string45555
+Node: Searching for a character in a NUL terminated Unicode string46324
+Node: Searching for a substring49088
+Node: Tokenizing50611
+Node: uniconv.h51484
+Node: unistdio.h59764
+Node: uniname.h68017
+Node: unictype.h69423
+Node: General category70351
+Node: Object oriented API71406
+Node: Bit mask API81247
+Node: Canonical combining class83542
+Node: Bidi class87777
+Node: Decimal digit value91572
+Node: Digit value92129
+Node: Numeric value92690
+Node: Mirrored character93592
+Node: Arabic shaping94285
+Node: Joining type94758
+Node: Joining group96908
+Node: Properties102720
+Node: Properties as objects103411
+Node: Properties as functions110892
+Node: Scripts117409
+Node: Blocks118814
+Node: ISO C and Java syntax120157
+Node: Classifications like in ISO C121875
+Node: uniwidth.h124687
+Node: unigbrk.h126733
+Node: Grapheme cluster breaks in a string128227
+Node: Grapheme cluster break property131246
+Node: uniwbrk.h133492
+Node: Word breaks in a string134030
+Node: Word break property135122
+Node: unilbrk.h136450
+Node: uninorm.h141002
+Node: Decomposition of characters141639
+Node: Composition of characters145420
+Node: Normalization of strings146133
+Node: Normalizing comparisons148306
+Node: Normalization of streams150804
+Node: unicase.h152929
+Node: Case mappings of characters153618
+Node: Case mappings of strings155767
+Node: Case mappings of substrings159406
+Node: Case insensitive comparison166676
+Node: Case detection172369
+Node: uniregex.h175683
+Node: Using the library175910
+Node: Installation176321
+Node: Compiler options176809
+Node: Include files178449
+Node: Autoconf macro179702
+Node: Reporting problems181343
+Node: More functionality182153
+Node: The wchar_t mess182605
+Node: The char32_t problem184955
+Node: Licenses187330
+Node: GNU GPL189803
+Node: GNU LGPL227552
+Node: GNU FDL236036
+Node: Index261347
 
 End Tag Table
 

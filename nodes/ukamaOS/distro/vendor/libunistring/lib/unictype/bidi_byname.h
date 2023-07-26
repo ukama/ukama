@@ -1,4 +1,4 @@
-/* ANSI-C code produced by gperf version 3.1 */
+/* ANSI-C code produced by gperf version 3.2 */
 /* Command-line: gperf -m 10 ./unictype/bidi_byname.gperf  */
 /* Computed positions: -k'1,9,$' */
 
@@ -29,7 +29,7 @@
 #error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gperf@gnu.org>."
 #endif
 
-#line 2 "./unictype/bidi_byname.gperf"
+#line 25 "./unictype/bidi_byname.gperf"
 struct named_bidi_class { int name; int bidi_class; };
 
 #define TOTAL_KEYWORDS 69
@@ -41,7 +41,7 @@ struct named_bidi_class { int name; int bidi_class; };
 
 #ifndef GPERF_DOWNCASE
 #define GPERF_DOWNCASE 1
-static unsigned char gperf_downcase[256] =
+static const unsigned char gperf_downcase[256] =
   {
       0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
      15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,
@@ -125,6 +125,11 @@ bidi_class_hash (register const char *str, register size_t len)
     {
       default:
         hval += asso_values[(unsigned char)str[8]];
+#if defined __cplusplus && (__cplusplus >= 201703L || (__cplusplus >= 201103L && defined __clang_major__ && defined __clang_minor__ && __clang_major__ + (__clang_minor__ >= 9) > 3))
+      [[fallthrough]];
+#elif defined __GNUC__ && __GNUC__ >= 7
+      __attribute__ ((__fallthrough__));
+#endif
       /*FALLTHROUGH*/
       case 8:
       case 7:
@@ -289,157 +294,157 @@ static const struct bidi_class_stringpool_t bidi_class_stringpool_contents =
 static const struct named_bidi_class bidi_class_names[] =
   {
     {-1}, {-1}, {-1}, {-1}, {-1},
-#line 31 "./unictype/bidi_byname.gperf"
+#line 54 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str5, UC_BIDI_R},
-#line 19 "./unictype/bidi_byname.gperf"
+#line 42 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str6, UC_BIDI_EN},
-#line 32 "./unictype/bidi_byname.gperf"
+#line 55 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str7, UC_BIDI_RLE},
     {-1},
-#line 15 "./unictype/bidi_byname.gperf"
+#line 38 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str9, UC_BIDI_AN},
-#line 24 "./unictype/bidi_byname.gperf"
+#line 47 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str10, UC_BIDI_LRE},
-#line 23 "./unictype/bidi_byname.gperf"
+#line 46 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str11, UC_BIDI_L},
-#line 14 "./unictype/bidi_byname.gperf"
+#line 37 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str12, UC_BIDI_AL},
-#line 28 "./unictype/bidi_byname.gperf"
+#line 51 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str13, UC_BIDI_ON},
-#line 34 "./unictype/bidi_byname.gperf"
+#line 57 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str14, UC_BIDI_RLO},
     {-1},
-#line 33 "./unictype/bidi_byname.gperf"
+#line 56 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str16, UC_BIDI_RLI},
-#line 26 "./unictype/bidi_byname.gperf"
+#line 49 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str17, UC_BIDI_LRO},
-#line 30 "./unictype/bidi_byname.gperf"
+#line 53 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str18, UC_BIDI_PDI},
-#line 25 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str19, UC_BIDI_LRI},
 #line 48 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str19, UC_BIDI_LRI},
+#line 71 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str20, UC_BIDI_EN},
     {-1},
-#line 37 "./unictype/bidi_byname.gperf"
+#line 60 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str22, UC_BIDI_AL},
     {-1},
-#line 76 "./unictype/bidi_byname.gperf"
+#line 99 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str24, UC_BIDI_RLI},
-#line 78 "./unictype/bidi_byname.gperf"
+#line 101 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str25, UC_BIDI_RLO},
-#line 74 "./unictype/bidi_byname.gperf"
+#line 97 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str26, UC_BIDI_RLE},
-#line 60 "./unictype/bidi_byname.gperf"
+#line 83 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str27, UC_BIDI_LRI},
-#line 62 "./unictype/bidi_byname.gperf"
+#line 85 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str28, UC_BIDI_LRO},
-#line 58 "./unictype/bidi_byname.gperf"
+#line 81 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str29, UC_BIDI_LRE},
-#line 59 "./unictype/bidi_byname.gperf"
+#line 82 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str30, UC_BIDI_LRI},
-#line 61 "./unictype/bidi_byname.gperf"
+#line 84 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str31, UC_BIDI_LRO},
-#line 57 "./unictype/bidi_byname.gperf"
+#line 80 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str32, UC_BIDI_LRE},
-#line 47 "./unictype/bidi_byname.gperf"
+#line 70 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str33, UC_BIDI_EN},
-#line 21 "./unictype/bidi_byname.gperf"
+#line 44 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str34, UC_BIDI_ET},
-#line 17 "./unictype/bidi_byname.gperf"
+#line 40 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str35, UC_BIDI_BN},
-#line 49 "./unictype/bidi_byname.gperf"
+#line 72 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str36, UC_BIDI_ES},
-#line 51 "./unictype/bidi_byname.gperf"
+#line 74 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str37, UC_BIDI_ET},
-#line 20 "./unictype/bidi_byname.gperf"
+#line 43 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str38, UC_BIDI_ES},
-#line 75 "./unictype/bidi_byname.gperf"
+#line 98 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str39, UC_BIDI_RLI},
-#line 77 "./unictype/bidi_byname.gperf"
+#line 100 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str40, UC_BIDI_RLO},
-#line 73 "./unictype/bidi_byname.gperf"
+#line 96 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str41, UC_BIDI_RLE},
-#line 45 "./unictype/bidi_byname.gperf"
+#line 68 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str42, UC_BIDI_CS},
-#line 46 "./unictype/bidi_byname.gperf"
+#line 69 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str43, UC_BIDI_CS},
     {-1},
-#line 72 "./unictype/bidi_byname.gperf"
+#line 95 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str45, UC_BIDI_R},
-#line 81 "./unictype/bidi_byname.gperf"
+#line 104 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str46, UC_BIDI_WS},
     {-1},
-#line 56 "./unictype/bidi_byname.gperf"
+#line 79 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str48, UC_BIDI_L},
-#line 38 "./unictype/bidi_byname.gperf"
+#line 61 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str49, UC_BIDI_AL},
-#line 55 "./unictype/bidi_byname.gperf"
+#line 78 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str50, UC_BIDI_L},
-#line 69 "./unictype/bidi_byname.gperf"
+#line 92 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str51, UC_BIDI_PDI},
-#line 52 "./unictype/bidi_byname.gperf"
+#line 75 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str52, UC_BIDI_ET},
-#line 44 "./unictype/bidi_byname.gperf"
+#line 67 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str53, UC_BIDI_BN},
-#line 80 "./unictype/bidi_byname.gperf"
+#line 103 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str54, UC_BIDI_S},
-#line 50 "./unictype/bidi_byname.gperf"
+#line 73 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str55, UC_BIDI_ES},
-#line 66 "./unictype/bidi_byname.gperf"
+#line 89 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str56, UC_BIDI_ON},
-#line 70 "./unictype/bidi_byname.gperf"
+#line 93 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str57, UC_BIDI_PDI},
-#line 18 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str58, UC_BIDI_CS},
-#line 71 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str59, UC_BIDI_R},
-#line 29 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str60, UC_BIDI_PDF},
-#line 39 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str61, UC_BIDI_AN},
-#line 82 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str62, UC_BIDI_WS},
-#line 16 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str63, UC_BIDI_B},
-#line 36 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str64, UC_BIDI_WS},
-#line 27 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str65, UC_BIDI_NSM},
-#line 43 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str66, UC_BIDI_BN},
-#line 22 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str67, UC_BIDI_FSI},
-#line 65 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str68, UC_BIDI_ON},
-#line 35 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str69, UC_BIDI_S},
-#line 64 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str70, UC_BIDI_NSM},
-#line 63 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str71, UC_BIDI_NSM},
-#line 42 "./unictype/bidi_byname.gperf"
-    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str72, UC_BIDI_B},
 #line 41 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str58, UC_BIDI_CS},
+#line 94 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str59, UC_BIDI_R},
+#line 52 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str60, UC_BIDI_PDF},
+#line 62 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str61, UC_BIDI_AN},
+#line 105 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str62, UC_BIDI_WS},
+#line 39 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str63, UC_BIDI_B},
+#line 59 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str64, UC_BIDI_WS},
+#line 50 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str65, UC_BIDI_NSM},
+#line 66 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str66, UC_BIDI_BN},
+#line 45 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str67, UC_BIDI_FSI},
+#line 88 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str68, UC_BIDI_ON},
+#line 58 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str69, UC_BIDI_S},
+#line 87 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str70, UC_BIDI_NSM},
+#line 86 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str71, UC_BIDI_NSM},
+#line 65 "./unictype/bidi_byname.gperf"
+    {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str72, UC_BIDI_B},
+#line 64 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str73, UC_BIDI_B},
     {-1}, {-1}, {-1},
-#line 53 "./unictype/bidi_byname.gperf"
+#line 76 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str77, UC_BIDI_FSI},
-#line 67 "./unictype/bidi_byname.gperf"
+#line 90 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str78, UC_BIDI_PDF},
-#line 40 "./unictype/bidi_byname.gperf"
+#line 63 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str79, UC_BIDI_AN},
     {-1}, {-1},
-#line 54 "./unictype/bidi_byname.gperf"
+#line 77 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str82, UC_BIDI_FSI},
     {-1},
-#line 68 "./unictype/bidi_byname.gperf"
+#line 91 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str84, UC_BIDI_PDF},
     {-1}, {-1},
-#line 79 "./unictype/bidi_byname.gperf"
+#line 102 "./unictype/bidi_byname.gperf"
     {(int)(size_t)&((struct bidi_class_stringpool_t *)0)->bidi_class_stringpool_str87, UC_BIDI_S}
   };
 
-const struct named_bidi_class *
+static const struct named_bidi_class *
 uc_bidi_class_lookup (register const char *str, register size_t len)
 {
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

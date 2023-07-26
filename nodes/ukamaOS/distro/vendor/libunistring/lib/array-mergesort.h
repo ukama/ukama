@@ -1,25 +1,16 @@
 /* Stable-sorting of an array using mergesort.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2009.
 
-   This program is free software: you can redistribute it and/or
-   modify it under the terms of either:
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-     * the GNU Lesser General Public License as published by the Free
-       Software Foundation; either version 3 of the License, or (at your
-       option) any later version.
-
-   or
-
-     * the GNU General Public License as published by the Free
-       Software Foundation; either version 2 of the License, or (at your
-       option) any later version.
-
-   or both in parallel, as here.
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Lesser General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Lesser General Public License for more details.
 
    You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
@@ -38,6 +29,8 @@
                   respectively, less, equal, or greater than the element
                   pointed to by the second argument.
      STATIC       The storage class of the functions being defined.
+     STATIC_FROMTO  (Optional.) Overrides STATIC for the 'merge_sort_fromto'
+                    function.
    Before including this file, you also need to include:
      #include <stddef.h>
  */
@@ -96,7 +89,12 @@ merge (const ELEMENT *src1, size_t n1,
 /* Sort src[0..n-1] into dst[0..n-1], using tmp[0..n/2-1] as temporary
    (scratch) storage.
    The arrays src, dst, tmp must not overlap.  */
-STATIC void
+#ifdef STATIC_FROMTO
+STATIC_FROMTO
+#else
+STATIC
+#endif
+void
 merge_sort_fromto (const ELEMENT *src, ELEMENT *dst, size_t n, ELEMENT *tmp)
 {
   switch (n)

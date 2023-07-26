@@ -1,9 +1,9 @@
 /* Test of gl_thread_self () macro.
-   Copyright (C) 2011-2018 Free Software Foundation, Inc.
+   Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -28,7 +28,12 @@ main ()
   /* Check that gl_thread_self () can be used with just $(LIBTHREAD), not
      $(LIBMULTITHREAD), i.e. in libraries that are multithread-safe but don't
      create threads themselves.  */
+  /* This is not the case on AIX with --enable-threads=isoc+posix, because in
+     this case, $(LIBTHREAD) is empty whereas $(LIBMULTITHREAD) is '-lpthread'.
+   */
+#if !defined _AIX
   main_thread = gl_thread_self ();
+#endif
 
   return 0;
 }

@@ -1,0 +1,50 @@
+@node The char32_t problem
+@appendix The @code{char32_t} problem
+
+@cindex char32_t, type
+@cindex char16_t, type
+In response to the @code{wchar_t} mess described in the previous section,
+ISO C 11 introduces two new types: @code{char32_t} and @code{char16_t}.
+
+@code{char32_t} is a type like @code{wchar_t}, with the added guarantee that it
+is 32 bits wide.  So, it is a type that is appropriate for encoding a Unicode
+character.  It is meant to resolve the problems of the 16-bit wide
+@code{wchar_t} on AIX and Windows platforms, and allow a saner programming model
+for wide character strings across all platforms.
+
+@code{char16_t} is a type like @code{wchar_t}, with the added guarantee that it
+is 16 bits wide.  It is meant to allow porting programs that use the broken wide
+character strings programming model from Windows to all platforms.  Of course,
+no one needs this.
+
+These types are accompanied with a syntax for defining wide string literals with
+these element types: @code{u"..."} and @code{U"..."}.
+
+So far, so good.  What the ISO C designers forgot, is to provide standardized C
+library functions that operate on these wide character strings.  They
+standardized only the most basic functions, @code{mbrtoc32} and @code{c32rtomb},
+which are analogous to @code{mbrtowc} and @code{wcrtomb}, respectively.  For the
+rest, GNU gnulib @url{https://www.gnu.org/software/gnulib/} provides the
+functions:
+@itemize @bullet
+@item
+Functions for converting an entire string: @code{mbstoc32s} -- like
+@code{mbstowcs}, @code{c32stombs} -- like @code{wcstombs}.
+@item
+Functions for testing the properties of a 32-bit wide character:
+@code{c32isalnum}, @code{c32isalpha}, etc. -- like @code{iswalnum},
+@code{iswalpha}, etc.
+@end itemize
+
+Still, this API has two problems:
+@itemize @bullet
+@item
+The @code{char32_t} encoding is locale dependent and undocumented.  This means,
+if you want to know any property of a @code{char32_t} character, other than the
+properties defined by @code{<wctype.h>} -- such as whether it's a dash, currency
+symbol, paragraph separator, or similar --, you have to convert it to
+@code{char *} encoding first, by use of the function @code{c32tomb}.
+@item
+Even on platforms where @code{wchar_t} is 32 bits wide, the @code{char32_t}
+encoding may be different from the @code{wchar_t} encoding.
+@end itemize

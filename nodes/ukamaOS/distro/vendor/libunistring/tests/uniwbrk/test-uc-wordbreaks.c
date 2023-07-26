@@ -1,9 +1,9 @@
 /* Word break function test, using test data from UCD.
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify it
    under the terms of the GNU Lesser General Public License as published
-   by the Free Software Foundation; either version 3 of the License, or
+   by the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -56,6 +56,7 @@ wordbreakproperty_to_string (int wbp)
       CASE(EM)
       CASE(GAZ)
       CASE(EBG)
+      CASE(WSS)
     }
   abort ();
 }
@@ -114,12 +115,12 @@ main (int argc, char *argv[])
           p += strspn (p, " \t\r\n");
           if (!strncmp (p, "\303\267" /* ÷ */, 2))
             {
-	      breaks_expected[i] = 1;
+              breaks_expected[i] = 1;
               p += 2;
             }
           else if (!strncmp (p, "\303\227" /* × */, 2))
             {
-	      breaks_expected[i] = 0;
+              breaks_expected[i] = 0;
               p += 2;
             }
           else
@@ -144,11 +145,11 @@ main (int argc, char *argv[])
                 }
               p += n;
 
-	      input[i] = next_int;
-	    }
+              input[i] = next_int;
+            }
 
           p += strspn (p, " \t\r\n");
-	  i++;
+          i++;
         }
       while (*p != '\0');
 
@@ -157,29 +158,29 @@ main (int argc, char *argv[])
       /* u32_wordbreaks always set BREAKS[0] to 0.  */
       breaks[0] = breaks_expected[0] = 1;
       if (memcmp (breaks, breaks_expected, i - 1) != 0)
-	{
-	  int j;
+        {
+          int j;
 
-	  fprintf (stderr, "%s:%d: expected: ", filename, lineno);
-	  for (j = 0; j < i - 1; j++)
-	    {
-	      int input_wbp = uc_wordbreak_property (input[j]);
-	      fprintf (stderr, "%s U+%04X (%s) ",
-		       breaks_expected[j] == 1 ? "\303\267" : "\303\227",
-		       input[j], wordbreakproperty_to_string (input_wbp));
-	    }
-	  fprintf (stderr, "\n");
-	  fprintf (stderr, "%s:%d: actual: ", filename, lineno);
-	  for (j = 0; j < i - 1; j++)
-	    {
-	      int input_wbp = uc_wordbreak_property (input[j]);
-	      fprintf (stderr, "%s U+%04X (%s) ",
-		       breaks[j] == 1 ? "\303\267" : "\303\227",
-		       input[j], wordbreakproperty_to_string (input_wbp));
-	    }
-	  fprintf (stderr, "\n");
-	  exit_code = 1;
-	}
+          fprintf (stderr, "%s:%d: expected: ", filename, lineno);
+          for (j = 0; j < i - 1; j++)
+            {
+              int input_wbp = uc_wordbreak_property (input[j]);
+              fprintf (stderr, "%s U+%04X (%s) ",
+                       breaks_expected[j] == 1 ? "\303\267" : "\303\227",
+                       input[j], wordbreakproperty_to_string (input_wbp));
+            }
+          fprintf (stderr, "\n");
+          fprintf (stderr, "%s:%d: actual: ", filename, lineno);
+          for (j = 0; j < i - 1; j++)
+            {
+              int input_wbp = uc_wordbreak_property (input[j]);
+              fprintf (stderr, "%s U+%04X (%s) ",
+                       breaks[j] == 1 ? "\303\267" : "\303\227",
+                       input[j], wordbreakproperty_to_string (input_wbp));
+            }
+          fprintf (stderr, "\n");
+          exit_code = 1;
+        }
     }
 
   return exit_code;

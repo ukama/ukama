@@ -62,7 +62,7 @@ use File::Spec;
 # $Id: texi2html.pl,v 1.182 2007/05/07 22:56:02 pertusus Exp $
 
 # Homepage:
-my $T2H_HOMEPAGE = "http://www.nongnu.org/texi2html/";
+my $T2H_HOMEPAGE = "https://www.nongnu.org/texi2html/";
 
 # Authors (appears in comments):
 my $T2H_AUTHORS = <<EOT;
@@ -700,7 +700,7 @@ $DEBUG = 0;
 # for the document.
 # Definition: The SystemLiteral is called the entity's system
 # identifier. It is a URI, which may be used to retrieve the entity.
-# See http://www.xml.com/axml/target.html#NT-ExternalID
+# See https://www.xml.com/axml/target.html#NT-ExternalID
 $DOCTYPE = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">';
 
 # -frameset-doctype

@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -260,7 +260,7 @@
     { 0x3250, 0x325F },
     { 0x326E, 0x327E },
     { 0x32B1, 0x32CF },
-    { 0x3300, 0x33FF },
+    { 0x32FF, 0x33FF },
     { 0xAC00, 0xD7A4 },
     { 0xFB00, 0xFB06 },
     { 0xFB13, 0xFB17 },
@@ -293,13 +293,14 @@
     { 0x114BB, 0x114BC },
     { 0x114BE, 0x114BE },
     { 0x115BA, 0x115BB },
+    { 0x11938, 0x11938 },
     { 0x1D15E, 0x1D164 },
     { 0x1D1BB, 0x1D1C0 },
     { 0x1F100, 0x1F10A },
     { 0x1F110, 0x1F12A },
     { 0x1F12D, 0x1F12E },
     { 0x1F14A, 0x1F14F },
-    { 0x1F16A, 0x1F16B },
+    { 0x1F16A, 0x1F16C },
     { 0x1F190, 0x1F190 },
     { 0x1F200, 0x1F201 },
     { 0x1F240, 0x1F248 }

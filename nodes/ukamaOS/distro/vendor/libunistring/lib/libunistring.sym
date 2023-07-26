@@ -70,6 +70,12 @@ UC_PROPERTY_DECIMAL_DIGIT
 UC_PROPERTY_DEFAULT_IGNORABLE_CODE_POINT
 UC_PROPERTY_DEPRECATED
 UC_PROPERTY_DIACRITIC
+UC_PROPERTY_EMOJI
+UC_PROPERTY_EMOJI_COMPONENT
+UC_PROPERTY_EMOJI_MODIFIER
+UC_PROPERTY_EMOJI_MODIFIER_BASE
+UC_PROPERTY_EMOJI_PRESENTATION
+UC_PROPERTY_EXTENDED_PICTOGRAPHIC
 UC_PROPERTY_EXTENDER
 UC_PROPERTY_FORMAT_CONTROL
 UC_PROPERTY_GRAPHEME_BASE
@@ -109,6 +115,7 @@ UC_PROPERTY_PRIVATE_USE
 UC_PROPERTY_PUNCTUATION
 UC_PROPERTY_QUOTATION_MARK
 UC_PROPERTY_RADICAL
+UC_PROPERTY_REGIONAL_INDICATOR
 UC_PROPERTY_SENTENCE_TERMINAL
 UC_PROPERTY_SOFT_DOTTED
 UC_PROPERTY_SPACE
@@ -170,6 +177,7 @@ u16_normcmp
 u16_normcoll
 u16_normxfrm
 u16_possible_linebreaks
+u16_possible_linebreaks_v2
 u16_prev
 u16_set
 u16_snprintf
@@ -222,6 +230,7 @@ u16_vsnprintf
 u16_vsprintf
 u16_width
 u16_width_linebreaks
+u16_width_linebreaks_v2
 u16_wordbreaks
 u32_asnprintf
 u32_asprintf
@@ -266,6 +275,7 @@ u32_normcmp
 u32_normcoll
 u32_normxfrm
 u32_possible_linebreaks
+u32_possible_linebreaks_v2
 u32_prev
 u32_set
 u32_snprintf
@@ -317,6 +327,7 @@ u32_vsnprintf
 u32_vsprintf
 u32_width
 u32_width_linebreaks
+u32_width_linebreaks_v2
 u32_wordbreaks
 u8_asnprintf
 u8_asprintf
@@ -363,6 +374,7 @@ u8_normcmp
 u8_normcoll
 u8_normxfrm
 u8_possible_linebreaks
+u8_possible_linebreaks_v2
 u8_prev
 u8_set
 u8_snprintf
@@ -416,6 +428,7 @@ u8_vsnprintf
 u8_vsprintf
 u8_width
 u8_width_linebreaks
+u8_width_linebreaks_v2
 u8_wordbreaks
 uc_all_blocks
 uc_all_scripts
@@ -497,6 +510,12 @@ uc_is_property_decimal_digit
 uc_is_property_default_ignorable_code_point
 uc_is_property_deprecated
 uc_is_property_diacritic
+uc_is_property_emoji
+uc_is_property_emoji_component
+uc_is_property_emoji_modifier
+uc_is_property_emoji_modifier_base
+uc_is_property_emoji_presentation
+uc_is_property_extended_pictographic
 uc_is_property_extender
 uc_is_property_format_control
 uc_is_property_grapheme_base
@@ -536,6 +555,7 @@ uc_is_property_private_use
 uc_is_property_punctuation
 uc_is_property_quotation_mark
 uc_is_property_radical
+uc_is_property_regional_indicator
 uc_is_property_sentence_terminal
 uc_is_property_soft_dotted
 uc_is_property_space
@@ -581,6 +601,7 @@ ulc_casexfrm
 ulc_fprintf
 ulc_grapheme_breaks
 ulc_possible_linebreaks
+ulc_possible_linebreaks_v2
 ulc_snprintf
 ulc_sprintf
 ulc_vasnprintf
@@ -589,6 +610,7 @@ ulc_vfprintf
 ulc_vsnprintf
 ulc_vsprintf
 ulc_width_linebreaks
+ulc_width_linebreaks_v2
 ulc_wordbreaks
 unicase_empty_prefix_context
 unicase_empty_suffix_context

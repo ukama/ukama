@@ -1,17 +1,17 @@
 /* Program name management.
-   Copyright (C) 2016-2018 Free Software Foundation, Inc.
+   Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   it under the terms of the GNU Lesser General Public License as published by
+   the Free Software Foundation; either version 2.1 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
@@ -43,7 +43,7 @@
 # include <string.h>
 #endif
 
-#ifdef __sgi
+#if defined __sgi || defined __osf__
 # include <string.h>
 # include <unistd.h>
 # include <stdio.h>
@@ -51,7 +51,13 @@
 # include <sys/procfs.h>
 #endif
 
-#include "dirname.h"
+#if defined __SCO_VERSION__ || defined __sysv5__
+# include <fcntl.h>
+# include <stdlib.h>
+# include <string.h>
+#endif
+
+#include "basename-lgpl.h"
 
 #ifndef HAVE_GETPROGNAME             /* not Mac OS X, FreeBSD, NetBSD, OpenBSD >= 5.4, Cygwin */
 char const *
@@ -70,10 +76,10 @@ getprogname (void)
     p = "?";
   return last_component (p);
 # elif HAVE_DECL___ARGV                                     /* mingw, MSVC */
-  /* https://msdn.microsoft.com/en-us/library/dn727674.aspx */
+  /* https://docs.microsoft.com/en-us/cpp/c-runtime-library/argc-argv-wargv */
   const char *p = __argv && __argv[0] ? __argv[0] : "?";
   return last_component (p);
-# elif HAVE_VAR___PROGNAME                                  /* OpenBSD, QNX */
+# elif HAVE_VAR___PROGNAME                                  /* OpenBSD, Android, QNX */
   /* https://man.openbsd.org/style.9 */
   /* http://www.qnx.de/developers/docs/6.5.0/index.jsp?topic=%2Fcom.qnx.doc.neutrino_lib_ref%2Fp%2F__progname.html */
   /* Be careful to declare this only when we absolutely need it
@@ -82,7 +88,11 @@ getprogname (void)
      malfunction (have zero length) with Fedora 25's glibc.  */
   extern char *__progname;
   const char *p = __progname;
+#  if defined __ANDROID__
+  return last_component (p);
+#  else
   return p && p[0] ? p : "?";
+#  endif
 # elif _AIX                                                 /* AIX */
   /* Idea by Bastien ROUCARIÈS,
      https://lists.gnu.org/r/bug-gnulib/2010-12/msg00095.html
@@ -110,9 +120,73 @@ getprogname (void)
       first = 0;
       pid_t pid = getpid ();
       struct pst_status status;
-      p = (0 < pstat_getproc (&status, sizeof status, 0, pid)
-           ? strdup (status.pst_ucomm)
-           : NULL);
+      if (pstat_getproc (&status, sizeof status, 0, pid) > 0)
+        {
+          char *ucomm = status.pst_ucomm;
+          char *cmd = status.pst_cmd;
+          if (strlen (ucomm) < PST_UCOMMLEN - 1)
+            p = ucomm;
+          else
+            {
+              /* ucomm is truncated to length PST_UCOMMLEN - 1.
+                 Look at cmd instead.  */
+              char *space = strchr (cmd, ' ');
+              if (space != NULL)
+                *space = '\0';
+              p = strrchr (cmd, '/');
+              if (p != NULL)
+                p++;
+              else
+                p = cmd;
+              if (strlen (p) > PST_UCOMMLEN - 1
+                  && memcmp (p, ucomm, PST_UCOMMLEN - 1) == 0)
+                /* p is less truncated than ucomm.  */
+                ;
+              else
+                p = ucomm;
+            }
+          p = strdup (p);
+        }
+      else
+        {
+#  if !defined __LP64__
+          /* Support for 32-bit programs running in 64-bit HP-UX.
+             The documented way to do this is to use the same source code
+             as above, but in a compilation unit where '#define _PSTAT64 1'
+             is in effect.  I prefer a single compilation unit; the struct
+             size and the offsets are not going to change.  */
+          char status64[1216];
+          if (__pstat_getproc64 (status64, sizeof status64, 0, pid) > 0)
+            {
+              char *ucomm = status64 + 288;
+              char *cmd = status64 + 168;
+              if (strlen (ucomm) < PST_UCOMMLEN - 1)
+                p = ucomm;
+              else
+                {
+                  /* ucomm is truncated to length PST_UCOMMLEN - 1.
+                     Look at cmd instead.  */
+                  char *space = strchr (cmd, ' ');
+                  if (space != NULL)
+                    *space = '\0';
+                  p = strrchr (cmd, '/');
+                  if (p != NULL)
+                    p++;
+                  else
+                    p = cmd;
+                  if (strlen (p) > PST_UCOMMLEN - 1
+                      && memcmp (p, ucomm, PST_UCOMMLEN - 1) == 0)
+                    /* p is less truncated than ucomm.  */
+                    ;
+                  else
+                    p = ucomm;
+                }
+              p = strdup (p);
+            }
+          else
+#  endif
+            p = NULL;
+        }
       if (!p)
         p = "?";
     }
@@ -150,12 +224,16 @@ getprogname (void)
       free (buf.ps_pathptr);
     }
   return p;
-# elif defined __sgi                                        /* IRIX */
+# elif defined __sgi || defined __osf__                     /* IRIX or Tru64 */
   char filename[50];
   int fd;
 
-  sprintf (filename, "/proc/pinfo/%d", (int) getpid ());
-  fd = open (filename, O_RDONLY);
+  # if defined __sgi
+    sprintf (filename, "/proc/pinfo/%d", (int) getpid ());
+  # else
+    sprintf (filename, "/proc/%d", (int) getpid ());
+  # endif
+  fd = open (filename, O_RDONLY | O_CLOEXEC);
   if (0 <= fd)
     {
       prpsinfo_t buf;
@@ -165,17 +243,50 @@ getprogname (void)
         {
           char *name = buf.pr_fname;
           size_t namesize = sizeof buf.pr_fname;
+          /* It may not be NUL-terminated.  */
           char *namenul = memchr (name, '\0', namesize);
           size_t namelen = namenul ? namenul - name : namesize;
           char *namecopy = malloc (namelen + 1);
           if (namecopy)
             {
-              namecopy[namelen] = 0;
+              namecopy[namelen] = '\0';
               return memcpy (namecopy, name, namelen);
             }
         }
     }
   return NULL;
+# elif defined __SCO_VERSION__ || defined __sysv5__                /* SCO OpenServer6/UnixWare */
+  char buf[80];
+  int fd;
+  sprintf (buf, "/proc/%d/cmdline", getpid());
+  fd = open (buf, O_RDONLY);
+  if (0 <= fd)
+    {
+      size_t n = read (fd, buf, 79);
+      if (n > 0)
+        {
+          buf[n] = '\0'; /* Guarantee null-termination */
+          char *progname;
+          progname = strrchr (buf, '/');
+          if (progname)
+            {
+              progname = progname + 1; /* Skip the '/' */
+            }
+          else
+            {
+              progname = buf;
+            }
+          char *ret;
+          ret = malloc (strlen (progname) + 1);
+          if (ret)
+            {
+              strcpy (ret, progname);
+              return ret;
+            }
+        }
+      close (fd);
+    }
+  return "?";
 # else
 #  error "getprogname module not ported to this OS"
 # endif

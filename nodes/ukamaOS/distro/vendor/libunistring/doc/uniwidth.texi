@@ -21,23 +21,23 @@ the encoding (e.g@. @code{"ISO-8859-2"} for Polish).
 @cindex Unicode character, width
 @cindex halfwidth
 @cindex fullwidth
-@deftypefun int uc_width (ucs4_t @var{uc}, const char *@var{encoding})
+@deftypefun int uc_width (ucs4_t@tie{}@var{uc}, const@tie{}char@tie{}*@var{encoding})
 Determines and returns the number of column positions required for @var{uc}.
 Returns -1 if @var{uc} is a control character that has an influence on the
 column position when output.
 @end deftypefun
 
-@deftypefun int u8_width (const uint8_t *@var{s}, size_t @var{n}, const char *@var{encoding})
-@deftypefunx int u16_width (const uint16_t *@var{s}, size_t @var{n}, const char *@var{encoding})
-@deftypefunx int u32_width (const uint32_t *@var{s}, size_t @var{n}, const char *@var{encoding})
+@deftypefun int u8_width (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{encoding})
+@deftypefunx int u16_width (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{encoding})
+@deftypefunx int u32_width (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{encoding})
 Determines and returns the number of column positions required for first
 @var{n} units (or fewer if @var{s} ends before this) in @var{s}.  This
 function ignores control characters in the string.
 @end deftypefun
 
-@deftypefun int u8_strwidth (const uint8_t *@var{s}, const char *@var{encoding})
-@deftypefunx int u16_strwidth (const uint16_t *@var{s}, const char *@var{encoding})
-@deftypefunx int u32_strwidth (const uint32_t *@var{s}, const char *@var{encoding})
+@deftypefun int u8_strwidth (const@tie{}uint8_t@tie{}*@var{s}, const@tie{}char@tie{}*@var{encoding})
+@deftypefunx int u16_strwidth (const@tie{}uint16_t@tie{}*@var{s}, const@tie{}char@tie{}*@var{encoding})
+@deftypefunx int u32_strwidth (const@tie{}uint32_t@tie{}*@var{s}, const@tie{}char@tie{}*@var{encoding})
 Determines and returns the number of column positions required for @var{s}.
 This function ignores control characters in the string.
 @end deftypefun

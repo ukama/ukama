@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -29,6 +29,7 @@
     { 0x0D57, 0x0D57 },
     { 0x0DCF, 0x0DCF },
     { 0x0DDF, 0x0DDF },
+    { 0x1B35, 0x1B35 },
     { 0x200C, 0x200C },
     { 0x302E, 0x302F },
     { 0xFF9E, 0xFF9F },
@@ -37,6 +38,7 @@
     { 0x114B0, 0x114B0 },
     { 0x114BD, 0x114BD },
     { 0x115AF, 0x115AF },
+    { 0x11930, 0x11930 },
     { 0x1D165, 0x1D165 },
     { 0x1D16E, 0x1D172 },
     { 0xE0020, 0xE007F }

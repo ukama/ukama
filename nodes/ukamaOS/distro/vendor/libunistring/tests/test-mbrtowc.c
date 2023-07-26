@@ -1,9 +1,9 @@
 /* Test of conversion of multibyte character to wide character.
-   Copyright (C) 2008-2018 Free Software Foundation, Inc.
+   Copyright (C) 2008-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -111,7 +111,7 @@ main (int argc, char *argv[])
                locale.
                On most platforms, the bytes 0x80..0xFF map to U+0080..U+00FF.
                But on musl libc, the bytes 0x80..0xFF map to U+DF80..U+DFFF.  */
-            ASSERT (wc == (btowc (c) == WEOF ? c : btowc (c)));
+            ASSERT (wc == (btowc (c) == 0xDF00 + c ? btowc (c) : c));
           ASSERT (mbsinit (&state));
           ret = mbrtowc (NULL, buf, 1, &state);
           ASSERT (ret == 1);
@@ -338,7 +338,7 @@ main (int argc, char *argv[])
           ASSERT (ret == 1);
           ASSERT (wc == 'e');
           ASSERT (mbsinit (&state));
-          input[5] = '\0';
+          input[7] = '\0';
 
           wc = (wchar_t) 0xBADFACE;
           ret = mbrtowc (&wc, input + 8, 1, &state);

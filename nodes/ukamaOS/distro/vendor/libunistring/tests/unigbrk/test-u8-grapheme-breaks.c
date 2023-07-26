@@ -1,9 +1,9 @@
 /* Grapheme cluster breaks test.
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify it
    under the terms of the GNU Lesser General Public License as published
-   by the Free Software Foundation; either version 3 of the License, or
+   by the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -90,6 +90,17 @@ main (void)
   test_u8_grapheme_breaks ("e"ACUTE GRAVE, "#____");
   test_u8_grapheme_breaks ("e"ACUTE"x", "#__#");
   test_u8_grapheme_breaks ("e"ACUTE "e"ACUTE, "#__#__");
+
+  /* CR LF handling.  */
+  test_u8_grapheme_breaks ("a\nb\rc\r\nd", "######_#");
+
+  /* Emoji modifier / ZWJ sequence. */
+  test_u8_grapheme_breaks ("\342\230\205\314\205\315\207\342\200\215\342\230\200",
+                           "#____________");
+
+  /* Regional indicators. */
+  test_u8_grapheme_breaks (".\360\237\207\251\360\237\207\252\360\237\207\253\360\237\207\267.",
+                           "##_______#_______#");
 
   return 0;
 }

@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -32,6 +32,7 @@
     { 0x081A, 0x081A },
     { 0x0824, 0x0824 },
     { 0x0828, 0x0828 },
+    { 0x08C9, 0x08C9 },
     { 0x0971, 0x0971 },
     { 0x0E46, 0x0E46 },
     { 0x0EC6, 0x0EC6 },
@@ -62,6 +63,7 @@
     { 0xA717, 0xA71F },
     { 0xA770, 0xA770 },
     { 0xA788, 0xA788 },
+    { 0xA7F2, 0xA7F4 },
     { 0xA7F8, 0xA7F9 },
     { 0xA9CF, 0xA9CF },
     { 0xA9E6, 0xA9E6 },
@@ -69,11 +71,23 @@
     { 0xAADD, 0xAADD },
     { 0xAAF3, 0xAAF4 },
     { 0xAB5C, 0xAB5F },
+    { 0xAB69, 0xAB69 },
     { 0xFF70, 0xFF70 },
     { 0xFF9E, 0xFF9F },
+    { 0x10780, 0x10785 },
+    { 0x10787, 0x107B0 },
+    { 0x107B2, 0x107BA },
     { 0x16B40, 0x16B43 },
     { 0x16F93, 0x16F9F },
-    { 0x16FE0, 0x16FE0 }
+    { 0x16FE0, 0x16FE1 },
+    { 0x16FE3, 0x16FE3 },
+    { 0x1AFF0, 0x1AFF3 },
+    { 0x1AFF5, 0x1AFFB },
+    { 0x1AFFD, 0x1AFFE },
+    { 0x1E030, 0x1E06D },
+    { 0x1E137, 0x1E13D },
+    { 0x1E4EB, 0x1E4EB },
+    { 0x1E94B, 0x1E94B }
 
 #define PREDICATE(c) uc_is_general_category (c, UC_CATEGORY_Lm)
 #include "test-predicate-part2.h"

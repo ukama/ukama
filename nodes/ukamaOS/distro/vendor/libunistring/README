@@ -46,11 +46,12 @@ Copyright
 ---------
 
 The libunistring library and its header files are dual-licensed under
-"the GNU LGPLv3+ or the GNU GPLv2". This means, you can use it under either
+"the GNU LGPLv3+ or the GNU GPLv2+". This means, you can use it under either
   - the terms of the GNU Lesser General Public License (LGPL) version 3 or
     (at your option) any later version, or
-  - the terms of the GNU General Public License (GPL) version 2, or
-  - the same dual license "the GNU LGPLv3+ or the GNU GPLv2".
+  - the terms of the GNU General Public License (GPL) version 2 or
+    (at your option) any later version, or
+  - the same dual license "the GNU LGPLv3+ or the GNU GPLv2+".
 
 You find the GNU LGPL version 3 in the file COPYING.LIB.  This license is
 based on the GNU GPL version 3, see file COPYING.
@@ -68,17 +69,24 @@ The documentation is under another license; see in the documentation.
 Download
 --------
 
-    https://ftp.gnu.org/gnu/libunistring/libunistring-0.9.10.tar.gz
+    https://ftp.gnu.org/gnu/libunistring/libunistring-1.1.tar.gz
 
 Homepage
 --------
 
     https://www.gnu.org/software/libunistring/
 
-Bug reports to
---------------
+Bug reports
+-----------
 
-    <bug-libunistring@gnu.org>
+Report bugs
+  - in the bug tracker at <https://savannah.gnu.org/projects/libunistring>
+  - or by email to <bug-libunistring@gnu.org>.
+
+Join the GNU project
+--------------------
+
+See file JOIN-GNU.
 
 
 Bruno Haible <bruno@clisp.org>

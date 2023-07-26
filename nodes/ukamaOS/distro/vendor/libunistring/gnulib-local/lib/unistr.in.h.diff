@@ -1,28 +1,27 @@
-*** unistr.in.h.orig	2009-12-24 23:21:27.000000000 +0100
---- unistr.in.h	2009-12-25 02:04:40.000000000 +0100
+*** lib/unistr.in.h.orig	2021-08-01 16:43:54.915090697 +0200
+--- lib/unistr.in.h	2021-08-01 15:52:07.388856862 +0200
 ***************
-*** 20,29 ****
-  #include "unitypes.h"
+*** 19,26 ****
   
-  /* Get common macros for C.  */
-! #include "unused-parameter.h"
+  #include "unitypes.h"
   
   /* Get bool.  */
 ! #include <stdbool.h>
   
-  /* Get size_t.  */
+  /* Get size_t, ptrdiff_t.  */
   #include <stddef.h>
---- 20,32 ----
+--- 19,32 ----
+  
   #include "unitypes.h"
   
-  /* Get common macros for C.  */
-! #include <unistring/cdefs.h>
-! 
-! /* Get inline if available.  */
-! #include <unistring/inline.h>
-  
++ /* Get common macros for C.  */
++ #include <unistring/cdefs.h>
++ 
++ /* Get inline if available.  */
++ #include <unistring/inline.h>
++ 
   /* Get bool.  */
 ! #include <unistring/stdbool.h>
   
-  /* Get size_t.  */
+  /* Get size_t, ptrdiff_t.  */
   #include <stddef.h>

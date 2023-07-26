@@ -1,3 +1,423 @@
+2022-09-18  Bruno Haible  <bruno@clisp.org>
+
+	stdbool.mini.h: Improvements for MSVC 14 and Sun C++.
+	Applies gnulib changes
+	2022-09-04  Bruno Haible  <bruno@clisp.org>
+		* stdbool.in.h (_Bool, bool, false, true): In C++ mode with
+		MSVC 14, don't define these as macros.
+	2022-09-18  Bruno Haible  <bruno@clisp.org>
+		* stdbool.in.h (true): Redefine if it does not evaluate to 1 in
+		the preprocessor.
+
+2022-07-18  Bruno Haible  <bruno@clisp.org>
+
+	Move gnulib-tool invocation back from autopull.sh to autogen.sh.
+	* autogen.sh: Revert last change. Improve comments.
+	* autopull.sh: Only call 'gitsub.sh pull'.
+	* m4/init-package-version.m4: Revert last change.
+
+2022-07-17  Bruno Haible  <bruno@clisp.org>
+
+	Split autogen.sh into autopull.sh and autogen.sh.
+	* autopull.sh: New file, based on autogen.sh.
+	* autogen.sh: Remove code that was moved to autopull.sh. Remove
+	--skip-gnulib option.
+	* HACKING: Mention autopull.sh.
+	* m4/init-package-version.m4: Update comment.
+
+2022-05-22  Bruno Haible  <bruno@clisp.org>
+
+	Add GNU Project notice.
+	* JOIN-GNU: New file. Inspired by a suggestion from José E. Marchesi
+	on the gnu-prog-discuss mailing list.
+	* README: Refer to it.
+	* Makefile.am (EXTRA_DIST): Add it.
+
+2022-05-15  Bruno Haible  <bruno@clisp.org>
+
+	Upgrade to libtool 2.4.7.
+	* m4/libtool.m4: Update from libtool-2.4.7, with modifications.
+	2017-10-21  Bruno Haible  <bruno@clisp.org>
+		Fix -export-symbols and -export-symbols-regex support on
+		Solaris 11.3.
+		* m4/libtool.m4 (_LT_CMD_GLOBAL_SYMBOLS): Adjust symcode for
+		Solaris.
+	2009-04-23  Bruno Haible  <bruno@clisp.org>
+		Fix recognition of "nm" command.
+		* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when
+		compiling for mingw in a cygwin environment.
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Likewise.
+	* m4/ltsugar.m4: Likewise.
+	* m4/ltversion.m4: Likewise.
+	* m4/lt~obsolete.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2022-01-05  Bruno Haible  <bruno@clisp.org>
+
+	doc: Document a new feature (already in version 1.0).
+	* doc/uniconv.texi (uniconv.h): Document
+	iconveh_question_replacement_character.
+
+2022-01-04  Bruno Haible  <bruno@clisp.org>
+
+	Prepare for 1.0 release.
+	* version.sh: Bump version number, date, gnulib version.
+	* README: Update version.
+	* NEWS: Update version.
+	* lib/Makefile.am (LTV_*): Update to 4:0:2 (determined with help from
+	gnulib's libtool-next-version).
+	* doc/libunistring.texi: Bump copyright year.
+
+2022-01-04  Bruno Haible  <bruno@clisp.org>
+
+	build: Update Windows DLL exports.
+	* woe32dll/unistring-exports.c: Add new UC_PROPERTY_* variables.
+
+2021-12-31  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update for Unicode 14.0.0.
+	* doc/unictype.texi (Joining group): Document UC_JOINING_GROUP_THIN_YEH,
+	UC_JOINING_GROUP_VERTICAL_TAIL.
+	NEWS: Mention the update.
+
+2021-12-30  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update for Unicode 11.0.0.
+	* doc/unictype.texi (Joining group): Document
+	UC_JOINING_GROUP_HANIFI_ROHINGYA_*.
+
+2021-12-30  Bruno Haible  <bruno@clisp.org>
+
+	doc: Document properties for Emojis.
+	* doc/unictype.texi (Properties as objects): Document UC_PROPERTY_EMOJI,
+	UC_PROPERTY_EMOJI_PRESENTATION, UC_PROPERTY_EMOJI_MODIFIER,
+	UC_PROPERTY_EMOJI_MODIFIER_BASE, UC_PROPERTY_EMOJI_COMPONENT,
+	UC_PROPERTY_EXTENDED_PICTOGRAPHIC.
+	(Properties as functions): Document uc_is_property_emoji,
+	uc_is_property_emoji_presentation, uc_is_property_emoji_modifier,
+	uc_is_property_emoji_modifier_base, uc_is_property_emoji_component,
+	uc_is_property_extended_pictographic.
+	* NEWS: Mention the new properties.
+
+2021-12-29  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update for new behaviour of line breaking functions.
+	* doc/unilbrk.texi (unilbrk.h): Document UC_BREAK_CR_BEFORE_LF. Mention
+	that this value can occur in the array returned by
+	u*_possible_linebreaks and u*_width_linebreaks.
+	* NEWS: Mention the change.
+
+2021-12-26  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update for Unicode 10.0.0.
+	* doc/unictype.texi (Joining group): Document
+	UC_JOINING_GROUP_MALAYALAM_*.
+	(Properties as objects): Document UC_PROPERTY_REGIONAL_INDICATOR.
+	(Properties as functions): Document uc_is_property_regional_indicator.
+
+2021-12-26  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update for Unicode 9.0.0.
+	* doc/unictype.texi (Joining group): Document
+	UC_JOINING_GROUP_AFRICAN_*.
+
+2021-12-26  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update for Unicode 7.0.0.
+	* doc/unictype.texi (Joining group): Document
+	UC_JOINING_GROUP_STRAIGHT_WAW, UC_JOINING_GROUP_MANICHAEAN_*.
+
+2021-12-26  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update for Unicode 6.3.0.
+	* doc/unictype.texi (Bidi class): Document UC_BIDI_LRI, UC_BIDI_RLI,
+	UC_BIDI_FSI, UC_BIDI_PDI.
+
+2021-12-26  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update for Unicode 6.1.0.
+	* doc/unictype.texi (Joining group): Document
+	UC_JOINING_GROUP_ROHINGYA_YEH.
+
+2021-12-16  Bruno Haible  <bruno@clisp.org>
+
+	doc: Clarify u{8,16,32}_grapheme_prev behaviour.
+	Reported by Vincent Westenberg <vincent.westenberg@posteo.de> in
+	<https://lists.gnu.org/archive/html/bug-libunistring/2021-12/msg00001.html>.
+	* doc/unigbrk.texi (Grapheme cluster breaks in a string): Clarify that
+	the u{8,16,32}_grapheme_prev functions, like u{8,16,32}_prev, work only
+	on well-formed Unicode strings.
+
+2021-12-07  Bruno Haible  <bruno@clisp.org>
+
+	Clarify rationale for gl_INIT_PACKAGE.
+	* m4/init-package-version.m4: Add more comments.
+
+2021-12-07  Bruno Haible  <bruno@clisp.org>
+
+	Fix some license headers.
+	Reported by Dylan Aïssi <daissi@debian.org> at
+	<https://savannah.gnu.org/bugs/?61459>.
+	* lib/version.c: Change license header to LGPLv3+ or GPLv2+.
+	* lib/unistring-notinline.h: Likewise.
+	* lib/unistring/cdefs.h: Likewise.
+	* lib/unistring/inline.h: Likewise.
+	* lib/unistring/version.in.h: Likewise.
+	* lib/unistring/woe32dll.in.h: Likewise.
+
+2021-08-07  Bruno Haible  <bruno@clisp.org>
+
+	Make gl_INIT_PACKAGE work with Automake >= 1.16.4.
+	Reported and analyzed by Nicole Mazzuca <mazzucan@outlook.com> in
+	<https://lists.gnu.org/archive/html/bug-libunistring/2021-08/msg00002.html>.
+	* m4/init-package-version.m4 (gl_INIT_PACKAGE): Use a new macro
+	gl_INIT_EMPTY.
+	(gl_INIT_DUMMY): Expand to empty in two steps, via a new macro
+	gl_INIT_DUMMY2.
+
+2021-07-25  Bruno Haible  <bruno@clisp.org>
+
+	u{8,16,32}-uctomb: Avoid possible trouble with huge strings.
+	* doc/unistr.texi (Creating Unicode strings): Update prototypes of
+	u8_uctomb, u16_uctomb, u32_uctomb to match the change in gnulib on
+	2020-09-05.
+
+2021-05-30  Bruno Haible  <bruno@clisp.org>
+
+	Change license to LGPLv3+ or GPLv2+.
+	* README (Copyright): Adjust section.
+	* doc/libunistring.texi (Licenses): Change accordingly.
+	* NEWS: Mention the change.
+
+2021-04-06  Bruno Haible  <bruno@clisp.org>
+
+	build: Fix the set of exported symbols on Alpine Linux.
+	* build-aux/join-v-1: New file.
+	* Makefile.am (EXTRA_DIST): Add it.
+	* lib/Makefile.am (config.h): Use it instead of 'join -v 1'.
+
+2021-02-28  Bruno Haible  <bruno@clisp.org>
+
+	Update DEPENDENCIES.
+	* DEPENDENCIES: List the normal dependencies of a package with an
+	Autoconf-generated configure file. Update info regarding libiconv.
+
+2021-01-31  Bruno Haible  <bruno@clisp.org>
+
+	Switch to autoconf-2.71.
+	* autogen.sh: Update comments.
+
+2020-12-09  Bruno Haible  <bruno@clisp.org>
+
+	Allow use of autoconf-2.70.
+	* autogen.sh: Update comments.
+
+2020-11-21  Bruno Haible  <bruno@clisp.org>
+
+	build: Fix export of symbols in 64-bit mode on Windows.
+	Reported by kenjiuno <h8mastre@gmail.com> in
+	<https://savannah.gnu.org/bugs/?59491>.
+	* woe32dll/export.h (IMP): Correct definition in 64-bit mode.
+
+2020-09-06  Bruno Haible  <bruno@clisp.org>
+
+	build: Add support for clang on Windows.
+	* m4/woe32-dll.m4 (gl_WOE32_DLL): Set gl_cv_ld_autoimport to 'no' on
+	MSVC and MSVC/clang.
+
+2020-08-30  Bruno Haible  <bruno@clisp.org>
+
+	build: Update after gnulib changed.
+	* configure.ac (AC_PREREQ): Bump minimum Autoconf version to 2.64.
+
+2020-05-07  Daiki Ueno  <ueno@gnu.org>
+
+	build: Update after gnulib changed
+	In the latest Gnulib, the definition of _GL_UNUSED_PARAMETER is
+	expanded at configure time of the consumer project.  Let's include
+	only the fallback definition in <unistring/cdefs.h>.
+	Suggested by Dmitry Baryshkov <dbaryshkov@gmail.com> in:
+	<https://lists.gnu.org/archive/html/bug-libunistring/2020-05/msg00001.html>.
+	* lib/Makefile.am (unistring/cdefs.h): Don't generate the file.
+	* lib/unistring/cdefs.h: Include the expanded form instead of ...
+	* lib/unistring/cdefs.in.h: ... this.
+	* gnulib-m4/.gitignore, gnulib-m4/gnulib-cache.m4, lib/.gitignore,
+	tests/.gitignore: Updated.
+
+2019-12-23  Bruno Haible  <bruno@clisp.org>
+
+	doc: Update description of locale_charset.
+	* doc/uniconv.texi (uniconv.h): Fix reference to config.charset, which
+	was removed on 2018-05-19.
+
+2019-12-22  Bruno Haible  <bruno@clisp.org>
+
+	build: Don't erase the .sym file if 'sed' is not GNU sed.
+	* lib/Makefile.am (libunistring.sym): Test the exit status of the
+	declared.sh command. Preserve the existing libunistring.sym if it
+	failed.
+
+2019-12-22  Bruno Haible  <bruno@clisp.org>
+
+	build: Update after gnulib changed.
+	* lib/Makefile.am (libunistring.sym): Don't rename the
+	gl_get_setlocale_null_lock function.
+	* NEWS: Document the fixed multithread-safety bugs:
+	  2019-12-18  Bruno Haible  <bruno@clisp.org>
+	      hard-locale: Make multithread-safe.
+	      This fix impacts mbrtowc on Cygwin and Haiku.
+	  2019-12-17  Bruno Haible  <bruno@clisp.org>
+	      localcharset: Fix multithread-safety bug on Windows and OS/2.
+
+2019-12-22  Bruno Haible  <bruno@clisp.org>
+
+	build: Fix spurious error message in 'doc'.
+	* doc/Makefile.am (RM): New variable.
+
+2019-12-19  Bruno Haible  <bruno@clisp.org>
+
+	build: Remove generated lib/uni*.h files from the tarball.
+	* lib/Makefile.am (nodist_include_HEADERS): New variable.
+	(nobase_include_HEADERS): Remove the headers files listed in
+	nodist_include_HEADERS.
+
+2019-09-01  Bruno Haible  <bruno@clisp.org>
+
+	build: Explain how to avoid skipped tests.
+	* HACKING: Explain which locales to install, to avoid skipped tests.
+
+2019-09-01  Bruno Haible  <bruno@clisp.org>
+
+	build: Add support for shallow-cloning of subdirectories.
+	* gitsub.sh (func_usage): Document allowed git options with 'git pull'.
+	(func_pull): Accept GIT_OPTIONS argument.
+	(pull): Parse git options before complaining about too many arguments.
+	Pass the git options to func_pull.
+
+2019-08-18  Bruno Haible  <bruno@clisp.org>
+
+	build: Don't use an obsolete libtool macro.
+	* m4/exported.m4 (gt_GLOBAL_SYMBOL_PIPE): Require
+	_LT_CMD_GLOBAL_SYMBOLS, not AC_LIBTOOL_SYS_GLOBAL_SYMBOL_PIPE.
+
+2019-06-30  Bruno Haible  <bruno@clisp.org>
+
+	build: Fix build errors with MSVC.
+	* lib/exported.sh.in: Remove one level of eval.
+	* lib/Makefile.am (config.h): Redirect compiler output to stderr.
+	Remove symbols that contain an '@'.
+
+2019-05-11  Bruno Haible  <bruno@clisp.org>
+
+	Update bug reporting instructions.
+	* README: Tell users to report bugs in the bug tracker or by email.
+	* doc/libunistring.texi (Reporting problems): Likewise.
+
+2019-04-01  Bruno Haible  <bruno@clisp.org>
+
+	build: Separate git operations from build operations.
+	* gitsub.sh: New file, from gnulib.
+	* .gitmodules: New file.
+	* autogen.sh: Remove all git operations. Look at GNULIB_SRCDIR
+	environment variable. Ignore the GNULIB_TOOL environment variable.
+	* HACKING: Explain when to use gitsub.sh.
+
+2019-03-13  Bruno Haible  <bruno@clisp.org>
+
+	build: Update Windows support.
+	* lib/libunistring.rc: Update.
+
+2019-02-13  Bruno Haible  <bruno@clisp.org>
+
+	doc: Assume that the texinfo sources are in the source dir.
+	* doc/Makefile.am (stamp-vti, libunistring.html, libunistring_toc.html):
+	Lookup libunistring.texi in $(srcdir).
+
+2019-02-13  Bruno Haible  <bruno@clisp.org>
+
+	doc: Fix hyperlinks to table of contents in HTML doc.
+	Reported by Akim Demaille <akim.demaille@gmail.com>.
+	* doc/Makefile.am (libunistring_toc.html): Replace references to
+	libunistring.html with references to libunistring_toc.html.
+
+2019-02-13  Bruno Haible  <bruno@clisp.org>
+
+	doc: Make function declarations easier to read.
+	* doc/uni*.texi: Inside the argument list of function declarations, use
+	no-break spaces instead of spaces, except directly after a comma.
+	* doc/libunistring.texi: Bump copyright year.
+
+2019-02-13  Bruno Haible  <bruno@clisp.org>
+
+	build: Put the .sym file in the source directory.
+	* lib/Makefile.am (libunistring.sym): Generate in the source directory.
+	(config.h): Update rule.
+
+2019-02-13  Bruno Haible  <bruno@clisp.org>
+
+	doc: Simplify the title page.
+	* doc/libunistring.texi (titlepage): Remove redundant subtitle.
+
+2019-02-10  Bruno Haible  <bruno@clisp.org>
+
+	Update licenses.
+	* doc/fdl.texi: Update from gnulib.
+	* doc/gpl.texi: Likewise.
+	* doc/lgpl.texi: Likewise.
+
+2019-02-10  Bruno Haible  <bruno@clisp.org>
+
+	Use a newer texinfo.tex.
+	* autogen.sh (TEXINFO_VERSION): Bump to 6.5.
+	Fetch texinfo.tex from the texinfo git repository instead of the
+	obsolete texinfo CVS repository.
+
+2019-02-04  Bruno Haible  <bruno@clisp.org>
+
+	Remove left-over empty directories in 'make distclean'.
+	* lib/Makefile.am (DISTCLEANDIRS, DISTCLEANDIRS_NOT_IN_SRCDIR): New
+	variables.
+	(distclean-local): New target.
+	* tests/Makefile.am (distclean-local): New target.
+
+2019-02-04  Bruno Haible  <bruno@clisp.org>
+
+	Move run-test to gnulib.
+	* autogen.sh: Copy build-aux/run-test from gnulib.
+	* build-aux/run-test: Remove file.
+
+2019-02-03  Bruno Haible  <bruno@clisp.org>
+
+	Move declared.sh to gnulib.
+	* autogen.sh: Copy lib/declared.sh from gnulib.
+	* lib/declared.sh: Remove file.
+
+2019-01-28  Bruno Haible  <bruno@clisp.org>
+
+	Accommodate a shell that is not in /bin/sh.
+	* autogen.sh: Patch build-aux/test-driver with a patch from gnulib.
+
+2018-10-23  Bruno Haible  <bruno@clisp.org>
+
+	Support for per-thread locales on systems with HAVE_NAMELESS_LOCALES.
+	This allows 'uc_locale_language' to return the right locale name for
+	locales created by newlocale() or duplocale() on such systems, if and
+	only if the 'newlocale', 'duplocale' overrides from gnulib are used.
+	* lib/Makefile.am (config.h): Don't hide symbols that start with
+	'libintl_locale'.
+
+2018-09-17  Bruno Haible  <bruno@clisp.org>
+
+	Remove the 'fixaclocal' auxiliary script.
+	* autogen.sh: Don't invoke fixaclocal.
+	* Makefile.am (ACLOCAL): Remove override.
+	(EXTRA_DIST): Remove build-aux/fixaclocal.
+	* build-aux/fixaclocal: Remove file.
+
 2018-05-17  Bruno Haible  <bruno@clisp.org>
 
 	Prepare for 0.9.10 release.

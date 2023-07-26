@@ -20,6 +20,12 @@ following meanings:
 This value indicates that @code{@var{s}[@var{i}]} is a line break character.
 @end deftypevr
 
+@deftypevr Constant int UC_BREAK_CR_BEFORE_LF
+This value is a variant of @code{UC_BREAK_MANDATORY}.  It indicates that
+@code{@var{s}[@var{i}]} is a CR character and that @code{@var{s}[@var{i+1}]}
+is a LF character.
+@end deftypevr
+
 @deftypevr Constant int UC_BREAK_POSSIBLE
 This value indicates that a line break may be inserted between
 @code{@var{s}[@var{i}-1]} and @code{@var{s}[@var{i}]}.
@@ -45,24 +51,25 @@ override.
 The following functions determine the positions at which line breaks are
 possible.
 
-@deftypefun void u8_possible_linebreaks (const uint8_t *@var{s}, size_t @var{n}, const char *@var{encoding}, char *@var{p})
-@deftypefunx void u16_possible_linebreaks (const uint16_t *@var{s}, size_t @var{n}, const char *@var{encoding}, char *@var{p})
-@deftypefunx void u32_possible_linebreaks (const uint32_t *@var{s}, size_t @var{n}, const char *@var{encoding}, char *@var{p})
-@deftypefunx void ulc_possible_linebreaks (const char *@var{s}, size_t @var{n}, const char *@var{encoding}, char *@var{p})
+@deftypefun void u8_possible_linebreaks (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{encoding}, char@tie{}*@var{p})
+@deftypefunx void u16_possible_linebreaks (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{encoding}, char@tie{}*@var{p})
+@deftypefunx void u32_possible_linebreaks (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{encoding}, char@tie{}*@var{p})
+@deftypefunx void ulc_possible_linebreaks (const@tie{}char@tie{}*@var{s}, size_t@tie{}@var{n}, const@tie{}char@tie{}*@var{encoding}, char@tie{}*@var{p})
 Determines the line break points in @var{s}, and stores the result at
 @code{@var{p}[0..@var{n}-1]}.  Every @code{@var{p}[@var{i}]} is assigned one of
-the values @code{UC_BREAK_MANDATORY}, @code{UC_BREAK_POSSIBLE},
-@code{UC_BREAK_HYPHENATION}, @code{UC_BREAK_PROHIBITED}.
+the values @code{UC_BREAK_MANDATORY}, @code{UC_BREAK_CR_BEFORE_LF},
+@code{UC_BREAK_POSSIBLE}, @code{UC_BREAK_HYPHENATION},
+@code{UC_BREAK_PROHIBITED}.
 @end deftypefun
 
 The following functions determine where line breaks should be inserted so that
 each line fits in a given width, when output to a device that uses
 non-proportional fonts.
 
-@deftypefun int u8_width_linebreaks (const uint8_t *@var{s}, size_t @var{n}, int @var{width}, int @var{start_column}, int @var{at_end_columns}, const char *@var{override}, const char *@var{encoding}, char *@var{p})
-@deftypefunx int u16_width_linebreaks (const uint16_t *@var{s}, size_t @var{n}, int @var{width}, int @var{start_column}, int @var{at_end_columns}, const char *@var{override}, const char *@var{encoding}, char *@var{p})
-@deftypefunx int u32_width_linebreaks (const uint32_t *@var{s}, size_t @var{n}, int @var{width}, int @var{start_column}, int @var{at_end_columns}, const char *@var{override}, const char *@var{encoding}, char *@var{p})
-@deftypefunx int ulc_width_linebreaks (const char *@var{s}, size_t @var{n}, int @var{width}, int @var{start_column}, int @var{at_end_columns}, const char *@var{override}, const char *@var{encoding}, char *@var{p})
+@deftypefun int u8_width_linebreaks (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, int@tie{}@var{width}, int@tie{}@var{start_column}, int@tie{}@var{at_end_columns}, const@tie{}char@tie{}*@var{override}, const@tie{}char@tie{}*@var{encoding}, char@tie{}*@var{p})
+@deftypefunx int u16_width_linebreaks (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, int@tie{}@var{width}, int@tie{}@var{start_column}, int@tie{}@var{at_end_columns}, const@tie{}char@tie{}*@var{override}, const@tie{}char@tie{}*@var{encoding}, char@tie{}*@var{p})
+@deftypefunx int u32_width_linebreaks (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, int@tie{}@var{width}, int@tie{}@var{start_column}, int@tie{}@var{at_end_columns}, const@tie{}char@tie{}*@var{override}, const@tie{}char@tie{}*@var{encoding}, char@tie{}*@var{p})
+@deftypefunx int ulc_width_linebreaks (const@tie{}char@tie{}*@var{s}, size_t@tie{}@var{n}, int@tie{}@var{width}, int@tie{}@var{start_column}, int@tie{}@var{at_end_columns}, const@tie{}char@tie{}*@var{override}, const@tie{}char@tie{}*@var{encoding}, char@tie{}*@var{p})
 Chooses the best line breaks, assuming that every character occupies a width
 given by the @code{uc_width} function (see @ref{uniwidth.h}).
 
@@ -82,7 +89,8 @@ The given @var{encoding} is used for disambiguating widths in @code{uc_width}.
 
 Returns the column after the end of the string, and stores the result at
 @code{@var{p}[0..@var{n}-1]}.  Every @code{@var{p}[@var{i}]} is assigned one of
-the values @code{UC_BREAK_MANDATORY}, @code{UC_BREAK_POSSIBLE},
-@code{UC_BREAK_HYPHENATION}, @code{UC_BREAK_PROHIBITED}.  Here the value
-@code{UC_BREAK_POSSIBLE} indicates that a line break @emph{should} be inserted.
+the values @code{UC_BREAK_MANDATORY}, @code{UC_BREAK_CR_BEFORE_LF},
+@code{UC_BREAK_POSSIBLE}, @code{UC_BREAK_HYPHENATION},
+@code{UC_BREAK_PROHIBITED}.  Here the value @code{UC_BREAK_POSSIBLE} indicates
+that a line break @emph{should} be inserted.
 @end deftypefun

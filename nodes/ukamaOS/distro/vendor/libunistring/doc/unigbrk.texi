@@ -38,9 +38,9 @@ clusters.
 The following functions find a single boundary between grapheme
 clusters in a string.
 
-@deftypefun void u8_grapheme_next (const uint8_t *@var{s}, const uint8_t *@var{end})
-@deftypefunx void u16_grapheme_next (const uint16_t *@var{s}, const uint16_t *@var{end})
-@deftypefunx void u32_grapheme_next (const uint32_t *@var{s}, const uint32_t *@var{end})
+@deftypefun void u8_grapheme_next (const@tie{}uint8_t@tie{}*@var{s}, const@tie{}uint8_t@tie{}*@var{end})
+@deftypefunx void u16_grapheme_next (const@tie{}uint16_t@tie{}*@var{s}, const@tie{}uint16_t@tie{}*@var{end})
+@deftypefunx void u32_grapheme_next (const@tie{}uint32_t@tie{}*@var{s}, const@tie{}uint32_t@tie{}*@var{end})
 Returns the start of the next grapheme cluster following @var{s},
 or @var{end} if no grapheme cluster break is encountered before it.
 Returns NULL if and only if @code{@var{s} == @var{end}}.
@@ -51,9 +51,9 @@ determine the boundary.  Use @func{_grapheme_breaks} functions for such
 cases.
 @end deftypefun
 
-@deftypefun void u8_grapheme_prev (const uint8_t *@var{s}, const uint8_t *@var{start})
-@deftypefunx void u16_grapheme_prev (const uint16_t *@var{s}, const uint16_t *@var{start})
-@deftypefunx void u32_grapheme_prev (const uint32_t *@var{s}, const uint32_t *@var{start})
+@deftypefun void u8_grapheme_prev (const@tie{}uint8_t@tie{}*@var{s}, const@tie{}uint8_t@tie{}*@var{start})
+@deftypefunx void u16_grapheme_prev (const@tie{}uint16_t@tie{}*@var{s}, const@tie{}uint16_t@tie{}*@var{start})
+@deftypefunx void u32_grapheme_prev (const@tie{}uint32_t@tie{}*@var{s}, const@tie{}uint32_t@tie{}*@var{start})
 Returns the start of the grapheme cluster preceding @var{s}, or
 @var{start} if no grapheme cluster break is encountered before it.
 Returns NULL if and only if @code{@var{s} == @var{start}}.
@@ -62,16 +62,18 @@ Note that these functions do not handle the case when a character
 outside of the range between @var{start} and @var{s} is needed to
 determine the boundary.  Use @func{_grapheme_breaks} functions for such
 cases.
+
+Note also that these functions work only on well-formed Unicode strings.
 @end deftypefun
 
 The following functions determine all of the grapheme cluster
 boundaries in a string.
 
-@deftypefun void u8_grapheme_breaks (const uint8_t *@var{s}, size_t @var{n}, char *@var{p})
-@deftypefunx void u16_grapheme_breaks (const uint16_t *@var{s}, size_t @var{n}, char *@var{p})
-@deftypefunx void u32_grapheme_breaks (const uint32_t *@var{s}, size_t @var{n}, char *@var{p})
-@deftypefunx void ulc_grapheme_breaks (const char *@var{s}, size_t @var{n}, char *@var{p})
-@deftypefunx void uc_grapheme_breaks (const ucs_t *@var{s}, size_t @var{n}, char *@var{p})
+@deftypefun void u8_grapheme_breaks (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
+@deftypefunx void u16_grapheme_breaks (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
+@deftypefunx void u32_grapheme_breaks (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
+@deftypefunx void ulc_grapheme_breaks (const@tie{}char@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
+@deftypefunx void uc_grapheme_breaks (const@tie{}ucs_t@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
 Determines the grapheme cluster break points in @var{s}, an array of
 @var{n} units, and stores the result at @code{@var{p}[0..@var{nx}-1]}.
 @table @asis
@@ -99,7 +101,7 @@ characters.
 This is a more low-level API.  The grapheme cluster break property is a
 property defined in Unicode Standard Annex #29, section ``Grapheme Cluster
 Boundaries'', see
-@url{http://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries}.@texnl{}
+@url{https://www.unicode.org/reports/tr29/#Grapheme_Cluster_Boundaries}.@texnl{}
 It is used for determining the grapheme cluster breaks in a string.
 
 The following are the possible values of the grapheme cluster break
@@ -128,7 +130,7 @@ property.  More values may be added in the future.
 The following function looks up the grapheme cluster break property of a
 character.
 
-@deftypefun int uc_graphemeclusterbreak_property (ucs4_t @var{uc})
+@deftypefun int uc_graphemeclusterbreak_property (ucs4_t@tie{}@var{uc})
 Returns the Grapheme_Cluster_Break property of a Unicode character.
 @end deftypefun
 
@@ -136,7 +138,7 @@ The following function determines whether there is a grapheme cluster
 break between two Unicode characters.  It is the primitive upon which
 the higher-level functions in the previous section are directly based.
 
-@deftypefun bool uc_is_grapheme_break (ucs4_t @var{a}, ucs4_t @var{b})
+@deftypefun bool uc_is_grapheme_break (ucs4_t@tie{}@var{a}, ucs4_t@tie{}@var{b})
 Returns true if there is an grapheme cluster boundary between Unicode
 characters @var{a} and @var{b}.
 

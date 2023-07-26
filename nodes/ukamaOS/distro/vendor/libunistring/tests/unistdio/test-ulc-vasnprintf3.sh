@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Test whether a french Unicode locale is installed.
-: ${LOCALE_FR_UTF8=fr_FR.UTF-8}
+: "${LOCALE_FR_UTF8=fr_FR.UTF-8}"
 if test $LOCALE_FR_UTF8 != none; then
   testlocale=$LOCALE_FR_UTF8
 else
@@ -14,8 +14,8 @@ else
 fi
 
 LC_ALL=$testlocale \
-./test-ulc-vasnprintf1${EXEEXT} \
+${CHECKER} ./test-ulc-vasnprintf1${EXEEXT} \
   || exit 1
 
 LC_ALL=$testlocale \
-./test-ulc-vasnprintf3${EXEEXT}
+${CHECKER} ./test-ulc-vasnprintf3${EXEEXT}

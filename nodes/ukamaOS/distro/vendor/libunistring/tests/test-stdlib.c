@@ -1,9 +1,9 @@
 /* Test of <stdlib.h> substitute.
-   Copyright (C) 2007, 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007, 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -20,8 +20,6 @@
 
 #include <stdlib.h>
 
-#include "verify.h"
-
 /* Check that EXIT_SUCCESS is 0, per POSIX.  */
 static int exitcode = EXIT_SUCCESS;
 #if EXIT_SUCCESS
@@ -36,7 +34,7 @@ static int exitcode = EXIT_SUCCESS;
 
 /* Check that NULL can be passed through varargs as a pointer type,
    per POSIX 2008.  */
-verify (sizeof NULL == sizeof (void *));
+static_assert (sizeof NULL == sizeof (void *));
 
 #if GNULIB_TEST_SYSTEM_POSIX
 # include "test-sys_wait.h"

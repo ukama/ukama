@@ -1,13 +1,13 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Test the Unicode character type functions.
-   Copyright (C) 2007 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published
+   by the Free Software Foundation, either version 3 of the License,
+   or (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
@@ -21,6 +21,7 @@
     { 0x02D0, 0x02D1 },
     { 0x0640, 0x0640 },
     { 0x07FA, 0x07FA },
+    { 0x0B55, 0x0B55 },
     { 0x0E46, 0x0E46 },
     { 0x0EC6, 0x0EC6 },
     { 0x180A, 0x180A },
@@ -40,10 +41,14 @@
     { 0xAADD, 0xAADD },
     { 0xAAF3, 0xAAF4 },
     { 0xFF70, 0xFF70 },
+    { 0x10781, 0x10782 },
     { 0x1135D, 0x1135D },
     { 0x115C6, 0x115C8 },
+    { 0x11A98, 0x11A98 },
     { 0x16B42, 0x16B43 },
-    { 0x16FE0, 0x16FE0 },
+    { 0x16FE0, 0x16FE1 },
+    { 0x16FE3, 0x16FE3 },
+    { 0x1E13C, 0x1E13D },
     { 0x1E944, 0x1E946 }
 
 #define PREDICATE(c) uc_is_property_extender (c)

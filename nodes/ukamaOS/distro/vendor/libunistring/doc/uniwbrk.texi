@@ -21,10 +21,10 @@ operations.
 
 The following functions determine the word breaks in a string.
 
-@deftypefun void u8_wordbreaks (const uint8_t *@var{s}, size_t @var{n}, char *@var{p})
-@deftypefunx void u16_wordbreaks (const uint16_t *@var{s}, size_t @var{n}, char *@var{p})
-@deftypefunx void u32_wordbreaks (const uint32_t *@var{s}, size_t @var{n}, char *@var{p})
-@deftypefunx void ulc_wordbreaks (const char *@var{s}, size_t @var{n}, char *@var{p})
+@deftypefun void u8_wordbreaks (const@tie{}uint8_t@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
+@deftypefunx void u16_wordbreaks (const@tie{}uint16_t@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
+@deftypefunx void u32_wordbreaks (const@tie{}uint32_t@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
+@deftypefunx void ulc_wordbreaks (const@tie{}char@tie{}*@var{s}, size_t@tie{}@var{n}, char@tie{}*@var{p})
 Determines the word break points in @var{s}, an array of @var{n} units, and
 stores the result at @code{@var{p}[0..@var{n}-1]}.
 @table @asis
@@ -45,7 +45,7 @@ word break to be present at the beginning of the string (before
 
 This is a more low-level API.  The word break property is a property defined
 in Unicode Standard Annex #29, section ``Word Boundaries'', see
-@url{http://www.unicode.org/reports/tr29/#Word_Boundaries}.@texnl{}  It is
+@url{https://www.unicode.org/reports/tr29/#Word_Boundaries}.@texnl{}  It is
 used for determining the word breaks in a string.
 
 The following are the possible values of the word break property.  More values
@@ -77,6 +77,6 @@ may be added in the future.
 
 The following function looks up the word break property of a character.
 
-@deftypefun int uc_wordbreak_property (ucs4_t @var{uc})
+@deftypefun int uc_wordbreak_property (ucs4_t@tie{}@var{uc})
 Returns the Word_Break property of a Unicode character.
 @end deftypefun

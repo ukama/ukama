@@ -1,9 +1,9 @@
 /* Test of macros shared between <sys/wait.h> and <stdlib.h>.
-   Copyright (C) 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2010-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -40,14 +40,14 @@ test_sys_wait_macros (void)
     }
   i = WEXITSTATUS (i) + WSTOPSIG (i) + WTERMSIG (i);
 
+#if 0
   switch (i)
     {
-#if 0
   /* Gnulib doesn't guarantee these, yet.  */
     case WNOHANG:
     case WUNTRACED:
-#endif
       break;
     }
+#endif
   return 0;
 }

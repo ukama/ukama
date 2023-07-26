@@ -1,9 +1,9 @@
 /* Test of compatibility normalization of Unicode strings.
-   Copyright (C) 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -20,7 +20,7 @@
 
 #include "uninorm.h"
 
-#if !WOE32DLL
+#if !(((defined _WIN32 || defined __CYGWIN__) && (HAVE_LIBUNISTRING || WOE32DLL)) || defined __ANDROID__)
 /* Check that UNINORM_NFKC is defined and links.  */
 uninorm_t n = UNINORM_NFKC;
 #endif
@@ -33,7 +33,7 @@ int
 main ()
 {
   /* Check that UNINORM_NFKC is defined and links.  */
-  uninorm_t nf = UNINORM_NFKC;
+  volatile uninorm_t nf = UNINORM_NFKC;
   (void) nf;
 
   test_u32_nfkc ();

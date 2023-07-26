@@ -1,6 +1,30 @@
 /* DO NOT EDIT! GENERATED AUTOMATICALLY! */
 /* Mirrored Unicode characters.  */
-/* Generated automatically by gen-uni-tables.c for Unicode 9.0.0.  */
+/* Generated automatically by gen-uni-tables.c for Unicode 15.0.0.  */
+
+/* Copyright (C) 2000-2022 Free Software Foundation, Inc.
+
+   This file is free software.
+   It is dual-licensed under "the GNU LGPLv3+ or the GNU GPLv2+".
+   You can redistribute it and/or modify it under either
+     - the terms of the GNU Lesser General Public License as published
+       by the Free Software Foundation, either version 3, or (at your
+       option) any later version, or
+     - the terms of the GNU General Public License as published by the
+       Free Software Foundation; either version 2, or (at your option)
+       any later version, or
+     - the same dual license "the GNU LGPLv3+ or the GNU GPLv2+".
+
+   This file is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License and the GNU General Public License
+   for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License and of the GNU General Public License along with this
+   program.  If not, see <https://www.gnu.org/licenses/>.  */
+
 #define mirror_header_0 16
 #define mirror_header_1 2
 #define mirror_header_2 7
@@ -11,7 +35,7 @@ struct
   {
     int level1[2];
     short level2[2 << 9];
-    int level3[22 << 7];
+    int level3[23 << 7];
   }
 u_mirror =
 {
@@ -27,9 +51,9 @@ u_mirror =
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
       512,   640,   768,    -1,   896,  1024,  1152,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,  1280,  1408,
-       -1,    -1,    -1,  1536,  1664,  1792,    -1,    -1,
-       -1,    -1,    -1,    -1,  1920,    -1,    -1,    -1,
-     2048,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+       -1,    -1,    -1,  1536,  1664,  1792,    -1,  1920,
+       -1,    -1,    -1,    -1,  2048,    -1,    -1,    -1,
+     2176,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
@@ -80,7 +104,7 @@ u_mirror =
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-       -1,    -1,    -1,    -1,  2176,    -1,  2304,    -1,
+       -1,    -1,    -1,    -1,  2304,    -1,  2432,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
@@ -134,7 +158,7 @@ u_mirror =
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-       -1,    -1,    -1,    -1,    -1,  2432,  2560,  2688,
+       -1,    -1,    -1,    -1,    -1,  2560,  2688,  2816,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
        -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
@@ -343,7 +367,7 @@ u_mirror =
     54901, 54900, 54899, 54898, 54897, 54896, 54895, 54894,
     54893, 54892, 54891, 54890, 54889, 54888, 54887, 54886,
     54885,     0,     0, 54882, 54881, 54880, 54879, 54878,
-    54877, 54876, 54875, 54874, 54873, 54872, 54871, 54870,
+    54877,     0, 54875, 54874, 54873, 54872, 54871, 54870,
     54869, 54868, 54867, 54866, 54865, 54864, 54863, 54862,
         0,     0,     0,     0,     0,     0,     0,     0,
     54853,     0,     0,     0,     0,     0,     0,     0,
@@ -387,6 +411,22 @@ u_mirror =
         0,     0,     0,     0, 54545, 54544, 54543,     0,
         0,     0,     0, 54538,     0,     0,     0, 54534,
     54533, 54532, 54531, 54530,     0, 54528,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0, 54271,     0,
         0,     0, 53755, 53754, 53753, 53752,     0,     0,
         0, 53748, 53747,     0, 53745, 53744,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
@@ -397,8 +437,8 @@ u_mirror =
         0,     0,     0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
-        0,     0,     0,     0,     0,     0,     0,     0,
-        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0, 53672, 53671, 53670,
+    53669, 53668, 53667, 53666, 53665,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,

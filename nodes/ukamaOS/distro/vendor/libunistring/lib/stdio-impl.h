@@ -1,37 +1,33 @@
 /* Implementation details of FILE streams.
-   Copyright (C) 2007-2008, 2010-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2008, 2010-2022 Free Software Foundation, Inc.
 
-   This program is free software: you can redistribute it and/or
-   modify it under the terms of either:
+   This file is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
 
-     * the GNU Lesser General Public License as published by the Free
-       Software Foundation; either version 3 of the License, or (at your
-       option) any later version.
-
-   or
-
-     * the GNU General Public License as published by the Free
-       Software Foundation; either version 2 of the License, or (at your
-       option) any later version.
-
-   or both in parallel, as here.
-   This program is distributed in the hope that it will be useful,
+   This file is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   GNU Lesser General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
+   You should have received a copy of the GNU Lesser General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Many stdio implementations have the same logic and therefore can share
    the same implementation of stdio extension API, except that some fields
    have different naming conventions, or their access requires some casts.  */
 
-/* Glibc 2.28 made _IO_IN_BACKUP private.  For now, work around this
-   problem by defining it ourselves.  FIXME: Do not rely on glibc
+/* Glibc 2.28 made _IO_UNBUFFERED and _IO_IN_BACKUP private.  For now, work
+   around this problem by defining them ourselves.  FIXME: Do not rely on glibc
    internals.  */
-#if !defined _IO_IN_BACKUP && defined _IO_EOF_SEEN
-# define _IO_IN_BACKUP 0x100
+#if defined _IO_EOF_SEEN
+# if !defined _IO_UNBUFFERED
+#  define _IO_UNBUFFERED 0x2
+# endif
+# if !defined _IO_IN_BACKUP
+#  define _IO_IN_BACKUP 0x100
+# endif
 #endif
 
 /* BSD stdio derived implementations.  */
@@ -70,6 +66,11 @@
 #  define _r pub._r
 #  define _w pub._w
 # elif defined __ANDROID__ /* Android */
+#  ifdef __LP64__
+#   define _gl_flags_file_t int
+#  else
+#   define _gl_flags_file_t short
+#  endif
   /* Up to this commit from 2015-10-12
      <https://android.googlesource.com/platform/bionic.git/+/f0141dfab10a4b332769d52fa76631a64741297a>
      the innards of FILE were public, and fp_ub could be defined like for OpenBSD,
@@ -79,8 +80,8 @@
 #  define fp_ ((struct { unsigned char *_p; \
                          int _r; \
                          int _w; \
-                         int _flags; \
-                         int _file; \
+                         _gl_flags_file_t _flags; \
+                         _gl_flags_file_t _file; \
                          struct { unsigned char *_base; size_t _size; } _bf; \
                          int _lbfsize; \
                          void *_cookie; \
@@ -174,7 +175,7 @@
 #  define fp_ fp
 # endif
 
-# if defined _SCO_DS                /* OpenServer */
+# if defined _SCO_DS || (defined __SCO_VERSION__ || defined __sysv5__)  /* OpenServer 5, OpenServer 6, UnixWare 7 */
 #  define _cnt __cnt
 #  define _ptr __ptr
 #  define _base __base

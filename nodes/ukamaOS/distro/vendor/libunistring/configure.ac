@@ -1,5 +1,5 @@
 dnl Configuration for the toplevel directory of GNU libunistring
-dnl Copyright (C) 2009-2010 Free Software Foundation, Inc.
+dnl Copyright (C) 2009-2020 Free Software Foundation, Inc.
 dnl
 dnl This program is free software: you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -12,18 +12,18 @@ dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 dnl GNU General Public License for more details.
 dnl
 dnl You should have received a copy of the GNU General Public License
-dnl along with this program.  If not, see <http://www.gnu.org/licenses/>.
+dnl along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
+AC_PREREQ([2.64])
 AC_INIT
 AC_CONFIG_SRCDIR([lib/unistring/version.in.h])
 AC_CONFIG_AUX_DIR([build-aux])
 . $srcdir/version.sh
 gl_INIT_PACKAGE([libunistring], [$VERSION_NUMBER])
 AM_INIT_AUTOMAKE([silent-rules dist-xz])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 dnl Override automake's tar command used for creating distributions.
 am__tar='${AMTAR} chof - --owner=root --group=root "$$tardir"'

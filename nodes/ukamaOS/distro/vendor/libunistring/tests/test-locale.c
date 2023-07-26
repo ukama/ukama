@@ -1,9 +1,9 @@
 /* Test of <locale.h> substitute.
-   Copyright (C) 2007, 2009-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007, 2009-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -19,8 +19,6 @@
 #include <config.h>
 
 #include <locale.h>
-
-#include "verify.h"
 
 int a[] =
   {
@@ -39,12 +37,12 @@ int ls;
 
 /* Check that NULL can be passed through varargs as a pointer type,
    per POSIX 2008.  */
-verify (sizeof NULL == sizeof (void *));
+static_assert (sizeof NULL == sizeof (void *));
 
 int
 main ()
 {
-#if HAVE_NEWLOCALE
+#if HAVE_WORKING_NEWLOCALE
   /* Check that the locale_t type and the LC_GLOBAL_LOCALE macro are defined.  */
   locale_t b = LC_GLOBAL_LOCALE;
   (void) b;

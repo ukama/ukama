@@ -1,9 +1,9 @@
 /* Test of wcwidth() function.
-   Copyright (C) 2007-2018 Free Software Foundation, Inc.
+   Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -35,10 +35,12 @@ main ()
 {
   wchar_t wc;
 
-#ifdef C_CTYPE_ASCII
+#if !GNULIB_WCHAR_SINGLE_LOCALE
+# ifdef C_CTYPE_ASCII
   /* Test width of ASCII characters.  */
   for (wc = 0x20; wc < 0x7F; wc++)
     ASSERT (wcwidth (wc) == 1);
+# endif
 #endif
 
   /* Switch to an UTF-8 locale.  */
@@ -67,8 +69,28 @@ main ()
 #endif
 
       /* Test width of some zero width characters.  */
-      ASSERT (wcwidth (0x200B) == 0);
+      /* While it is desirable that U+200B, U+200C, U+200D have width 0,
+         because this makes wcswidth work better on strings that contain these
+         characters, it is acceptable if an implementation treats these
+         characters like control characters.  */
+      ASSERT (wcwidth (0x200B) <= 0);
       ASSERT (wcwidth (0xFEFF) <= 0);
+
+      /* Test width of some math symbols.
+         U+2202 is marked as having ambiguous width (A) in EastAsianWidth.txt
+         (see <https://www.unicode.org/Public/12.0.0/ucd/EastAsianWidth.txt>).
+         The Unicode Standard Annex 11
+         <https://www.unicode.org/reports/tr11/tr11-36.html>
+         says
+           "Ambiguous characters behave like wide or narrow characters
+            depending on the context (language tag, script identification,
+            associated font, source of data, or explicit markup; all can
+            provide the context). If the context cannot be established
+            reliably, they should be treated as narrow characters by default."
+         For wcwidth(), the only available context information is the locale.
+         "fr_FR.UTF-8" is a Western locale, not an East Asian locale, therefore
+         U+2202 should be treated like a narrow character.  */
+      ASSERT (wcwidth (0x2202) == 1);
 
       /* Test width of some CJK characters.  */
       ASSERT (wcwidth (0x3000) == 2);
