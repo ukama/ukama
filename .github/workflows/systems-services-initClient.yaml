@@ -10,15 +10,20 @@ on:
  
   workflow_dispatch:
 
-jobs:  
+jobs:
   build:
-    env: 
+    env:
       working-directory: systems/services/initClient
 
     name: build and test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+
+    - name: build dependency
+      uses: ./.github/actions/build-c
+      with:
+        working-directory: nodes/ukamaOS/distro/vendor/
 
     - name: build app
       uses: ./.github/actions/build-c
