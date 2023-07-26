@@ -8,12 +8,13 @@ import (
 	res "github.com/ukama/ukama/systems/common/rest"
 )
 
+
 type SendEmailReq struct {
-	To      []string          `json:"to" validate:"required"`
-	Subject string            `json:"subject" validate:"required"`
-	Body    string            `json:"body" validate:"required"`
-	Values  map[string]string `json:"values"`
+	To      []string `json:"to" validate:"required"`
+	TemplateName string `json:"template_name" validate:"required"`
+	Values  map[string]interface{}
 }
+
 
 type NotificationClient interface {
 	SendEmail(body SendEmailReq) error

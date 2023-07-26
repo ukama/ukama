@@ -241,20 +241,19 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "network not found for that org %s", err.Error())
 	}
-
-	emailBody, err := utils.GenerateEmailBody(netInfo.Name, remoteSubResp.Subscriber.FirstName, poolSim.QrCode)
-	if err != nil {
-		return nil, err
-	}
+	
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		err = s.notificationClient.SendEmail(providers.SendEmailReq{
 			To:      []string{remoteSubResp.Subscriber.Email},
-			Subject: mailerServerName + netInfo.Name + " invited you to use their network",
-			Body:    emailBody,
-			Values:  map[string]string{"SubscriberID": remoteSubResp.Subscriber.SubscriberId},
+			TemplateName: "sim-allocation",
+			Values:  map[string]interface{}{
+				"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
+				"NETWORK": netInfo.Name,
+				"NAME":    remoteSubResp.Subscriber.FirstName,
+				"QRCODE":  poolSim.QrCode,},
 		})
 		if err != nil {
-			return nil, status.Errorf(codes.NotFound, "Unable to send email %s", err.Error())
+			return nil, err
 		}
 
 	}

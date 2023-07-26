@@ -98,7 +98,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		To:      []string{req.GetEmail()},
 		TemplateName: "member-invitation",
 	    Values:  map[string]interface{}{
-			"INVITATIONID": invitationId.String(),
+			"INVITATION": invitationId.String(),
 			"LINK": link,
 			"OWNER": remoteUserResp.User.Name,
 			"ORG": res.Name,
