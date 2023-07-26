@@ -22,6 +22,14 @@ const LineChart = ({
 }: ILineChart) => {
   const options = {
     chart: {
+      title: {
+        style: {
+          display: 'none',
+        },
+      },
+
+      legend: { enabled: false },
+
       events: {
         load: function () {
           // var series: any = Highcharts.charts[0]?.series[0];
@@ -44,14 +52,14 @@ const LineChart = ({
     rangeSelector: {
       buttons: [
         {
+          count: 30,
+          type: 'second',
+          text: '30S',
+        },
+        {
           count: 1,
           type: 'minute',
           text: '1M',
-        },
-        {
-          count: 5,
-          type: 'minute',
-          text: '5M',
         },
         {
           type: 'all',
@@ -76,6 +84,20 @@ const LineChart = ({
         data: (() => initData)(),
       },
     ],
+    xAxis: {
+      type: 'datetime',
+      title: false,
+      labels: {
+        enabled: true,
+        formatter: function (value: any) {
+          return Highcharts.dateFormat('%H:%M:%S', value.value * 1000);
+        },
+      },
+    },
+    yAxis: {
+      title: false,
+      opposite: false,
+    },
   };
 
   return (

@@ -20,6 +20,7 @@ import {
   GetMetricRangeInput,
   LatestMetricRes,
   MetricRes,
+  SubMetricRangeInput,
 } from "./types";
 
 const WS_THREAD = "./threads/MetricsWSThread.ts";
@@ -63,7 +64,7 @@ class MetricResolvers {
         }
       });
       worker.on("exit", (code: any) => {
-        removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`, STORAGE_KEY);
+        removeKeyFromStorage(`${orgId}/${userId}/${type}/${from}`);
         logger.info(
           `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
         );
@@ -81,7 +82,7 @@ class MetricResolvers {
   })
   async getMetricRangeSub(
     @Root() payload: LatestMetricRes,
-    @Args() args: GetMetricRangeInput
+    @Args() args: SubMetricRangeInput
   ): Promise<LatestMetricRes> {
     await storeInStorage(
       `${args.orgId}/${args.userId}/${args.type}/${args.from}`,

@@ -23,14 +23,6 @@ const retriveFromStorage = async (
   return await storageKeyValue.get(key);
 };
 
-const removeKeyFromStorage = async (key: string, storageKey: string) => {
-  const storageKeyValue = await kvsLocalStorage({
-    name: storageKey,
-    version: 1,
-  });
-  await storageKeyValue.delete(key);
-};
-
 const runWorker = async () => {
   if (!isMainThread) {
     const WebSocket = require("ws");
