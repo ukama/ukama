@@ -18,7 +18,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-c
       with:
-        registry-name: services/initClient
+        registry-name: services/initclient
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
