@@ -106,6 +106,8 @@ func runGrpcServer(gormdb sql.Db) {
 		svcConf.OrgName, mbClient,
 		svcConf.Pushgateway, notificationClient,client.NewRegistryUsersClientProvider(svcConf.Users, svcConf.MsgClient.Timeout),
 		invitationExpiryTime,
+		svcConf.AuthLoginbaseURL,
+
 	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

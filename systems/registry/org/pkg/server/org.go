@@ -36,13 +36,14 @@ type OrgService struct {
 	pushgateway          string
 	notification         client.NotificationClient
 	invitationExpiryTime time.Time
+	authLoginbaseURL	 string
 }
 type EmailData struct {
 	RecipientName string
 }
 
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient, RegistryUserService client.RegistryUsersClientProvider, invitationExpiryTime time.Time) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient, RegistryUserService client.RegistryUsersClientProvider, invitationExpiryTime time.Time,authLoginbaseURL string) *OrgService {
 	return &OrgService{
 		orgRepo:              orgRepo,
 		userRepo:             userRepo,
@@ -53,6 +54,7 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 		pushgateway:          pushgateway,
 		notification:         notification,
 		invitationExpiryTime: invitationExpiryTime,
+		authLoginbaseURL: authLoginbaseURL,
 	}
 }
 
@@ -71,7 +73,8 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, status.Errorf(codes.InvalidArgument, "Name is required")
 	}
 
-	link, err := generateInvitationLink(o.invitationExpiryTime)
+	link, err := generateInvitationLink(o.authLoginbaseURL, uuid.NewV4().String(),
+	o.invitationExpiryTime)
 	if err != nil {
 		return nil, err
 	}
@@ -720,11 +723,12 @@ func pbInvitationStatusToDbInvitationStatus(status pb.InvitationStatus) db.Invit
 
 }
 
-func generateInvitationLink(expirationTime time.Time) (string, error) {
-	link := "http://localhost:4455/auth/login"
-	linkID := uuid.NewV4().String()
 
-	expiringLink := fmt.Sprintf("%s?linkId=%s&expires=%d", link, linkID, expirationTime.Unix())
 
-	return expiringLink, nil
+func generateInvitationLink(authLoginbaseURL string, linkID string, expirationTime time.Time) (string, error) {
+    link := fmt.Sprintf("%s?linkId=%s", authLoginbaseURL, linkID)
+
+    expiringLink := fmt.Sprintf("%s&expires=%d", link, expirationTime.Unix())
+
+    return expiringLink, nil
 }
