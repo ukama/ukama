@@ -19,11 +19,28 @@ export type Scalars = {
   _FieldSet: { input: any; output: any; }
 };
 
-export type GetMetricInput = {
+export type GetLatestMetricInput = {
+  nodeId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+};
+
+export type GetMetricRangeInput = {
+  from?: InputMaybe<Scalars['Float']['input']>;
   nodeId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
+  step?: InputMaybe<Scalars['Float']['input']>;
+  to?: InputMaybe<Scalars['Float']['input']>;
   type: Scalars['String']['input'];
   userId: Scalars['String']['input'];
+  withSubscription: Scalars['Boolean']['input'];
+};
+
+export type LatestMetricRes = {
+  __typename?: 'LatestMetricRes';
+  env: Scalars['String']['output'];
+  nodeid: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  value: Array<Scalars['Float']['output']>;
 };
 
 export type MetricRes = {
@@ -31,23 +48,29 @@ export type MetricRes = {
   env: Scalars['String']['output'];
   nodeid: Scalars['String']['output'];
   type: Scalars['String']['output'];
-  value: Array<Array<Scalars['Float']['output']>>;
+  values: Array<Array<Scalars['Float']['output']>>;
 };
 
 export type Query = {
   __typename?: 'Query';
   _service: _Service;
-  getMetrics: MetricRes;
+  getLatestMetric: LatestMetricRes;
+  getMetricRange: MetricRes;
 };
 
 
-export type QueryGetMetricsArgs = {
-  data: GetMetricInput;
+export type QueryGetLatestMetricArgs = {
+  data: GetLatestMetricInput;
+};
+
+
+export type QueryGetMetricRangeArgs = {
+  data: GetMetricRangeInput;
 };
 
 export type Subscription = {
   __typename?: 'Subscription';
-  getMetric: MetricRes;
+  getMetric: LatestMetricRes;
 };
 
 
@@ -63,68 +86,113 @@ export type _Service = {
   sdl?: Maybe<Scalars['String']['output']>;
 };
 
-export type GetMetricsQueryVariables = Exact<{
-  data: GetMetricInput;
+export type GetLatestMetricQueryVariables = Exact<{
+  data: GetLatestMetricInput;
 }>;
 
 
-export type GetMetricsQuery = { __typename?: 'Query', getMetrics: { __typename?: 'MetricRes', env: string, type: string, nodeid: string, value: Array<Array<number>> } };
+export type GetLatestMetricQuery = { __typename?: 'Query', getLatestMetric: { __typename?: 'LatestMetricRes', env: string, nodeid: string, type: string, value: Array<number> } };
+
+export type GetMetricRangeQueryVariables = Exact<{
+  data: GetMetricRangeInput;
+}>;
+
+
+export type GetMetricRangeQuery = { __typename?: 'Query', getMetricRange: { __typename?: 'MetricRes', env: string, nodeid: string, type: string, values: Array<Array<number>> } };
 
 export type GetMetricSubscriptionVariables = Exact<{
-  orgId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-  type: Scalars['String']['input'];
   nodeId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
 }>;
 
 
-export type GetMetricSubscription = { __typename?: 'Subscription', getMetric: { __typename?: 'MetricRes', env: string, type: string, nodeid: string, value: Array<Array<number>> } };
+export type GetMetricSubscription = { __typename?: 'Subscription', getMetric: { __typename?: 'LatestMetricRes', env: string, nodeid: string, type: string, value: Array<number> } };
 
 
-export const GetMetricsDocument = gql`
-    query GetMetrics($data: GetMetricInput!) {
-  getMetrics(data: $data) {
+export const GetLatestMetricDocument = gql`
+    query GetLatestMetric($data: GetLatestMetricInput!) {
+  getLatestMetric(data: $data) {
     env
-    type
     nodeid
+    type
     value
   }
 }
     `;
 
 /**
- * __useGetMetricsQuery__
+ * __useGetLatestMetricQuery__
  *
- * To run a query within a React component, call `useGetMetricsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetMetricsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetLatestMetricQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLatestMetricQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetMetricsQuery({
+ * const { data, loading, error } = useGetLatestMetricQuery({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useGetMetricsQuery(baseOptions: Apollo.QueryHookOptions<GetMetricsQuery, GetMetricsQueryVariables>) {
+export function useGetLatestMetricQuery(baseOptions: Apollo.QueryHookOptions<GetLatestMetricQuery, GetLatestMetricQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricsQuery, GetMetricsQueryVariables>(GetMetricsDocument, options);
+        return Apollo.useQuery<GetLatestMetricQuery, GetLatestMetricQueryVariables>(GetLatestMetricDocument, options);
       }
-export function useGetMetricsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricsQuery, GetMetricsQueryVariables>) {
+export function useGetLatestMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetLatestMetricQuery, GetLatestMetricQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricsQuery, GetMetricsQueryVariables>(GetMetricsDocument, options);
+          return Apollo.useLazyQuery<GetLatestMetricQuery, GetLatestMetricQueryVariables>(GetLatestMetricDocument, options);
         }
-export type GetMetricsQueryHookResult = ReturnType<typeof useGetMetricsQuery>;
-export type GetMetricsLazyQueryHookResult = ReturnType<typeof useGetMetricsLazyQuery>;
-export type GetMetricsQueryResult = Apollo.QueryResult<GetMetricsQuery, GetMetricsQueryVariables>;
-export const GetMetricDocument = gql`
-    subscription getMetric($orgId: String!, $userId: String!, $type: String!, $nodeId: String!) {
-  getMetric(orgId: $orgId, userId: $userId, type: $type, nodeId: $nodeId) {
+export type GetLatestMetricQueryHookResult = ReturnType<typeof useGetLatestMetricQuery>;
+export type GetLatestMetricLazyQueryHookResult = ReturnType<typeof useGetLatestMetricLazyQuery>;
+export type GetLatestMetricQueryResult = Apollo.QueryResult<GetLatestMetricQuery, GetLatestMetricQueryVariables>;
+export const GetMetricRangeDocument = gql`
+    query GetMetricRange($data: GetMetricRangeInput!) {
+  getMetricRange(data: $data) {
     env
-    type
     nodeid
+    type
+    values
+  }
+}
+    `;
+
+/**
+ * __useGetMetricRangeQuery__
+ *
+ * To run a query within a React component, call `useGetMetricRangeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricRangeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricRangeQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricRangeQuery(baseOptions: Apollo.QueryHookOptions<GetMetricRangeQuery, GetMetricRangeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMetricRangeQuery, GetMetricRangeQueryVariables>(GetMetricRangeDocument, options);
+      }
+export function useGetMetricRangeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricRangeQuery, GetMetricRangeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMetricRangeQuery, GetMetricRangeQueryVariables>(GetMetricRangeDocument, options);
+        }
+export type GetMetricRangeQueryHookResult = ReturnType<typeof useGetMetricRangeQuery>;
+export type GetMetricRangeLazyQueryHookResult = ReturnType<typeof useGetMetricRangeLazyQuery>;
+export type GetMetricRangeQueryResult = Apollo.QueryResult<GetMetricRangeQuery, GetMetricRangeQueryVariables>;
+export const GetMetricDocument = gql`
+    subscription GetMetric($nodeId: String!, $orgId: String!, $type: String!, $userId: String!) {
+  getMetric(nodeId: $nodeId, orgId: $orgId, type: $type, userId: $userId) {
+    env
+    nodeid
+    type
     value
   }
 }
@@ -142,10 +210,10 @@ export const GetMetricDocument = gql`
  * @example
  * const { data, loading, error } = useGetMetricSubscription({
  *   variables: {
- *      orgId: // value for 'orgId'
- *      userId: // value for 'userId'
- *      type: // value for 'type'
  *      nodeId: // value for 'nodeId'
+ *      orgId: // value for 'orgId'
+ *      type: // value for 'type'
+ *      userId: // value for 'userId'
  *   },
  * });
  */

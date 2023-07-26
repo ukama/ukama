@@ -1,23 +1,33 @@
 # Metrics Query
-query GetMetrics($data: GetMetricInput!) {
-  getMetrics(data: $data) {
+
+query GetLatestMetric($data: GetLatestMetricInput!) {
+  getLatestMetric(data: $data) {
     env
-    type
     nodeid
+    type
     value
   }
 }
 
-subscription getMetric(
-  $orgId: String!
-  $userId: String!
-  $type: String!
-  $nodeId: String!
-) {
-  getMetric(orgId: $orgId, userId: $userId, type: $type, nodeId: $nodeId) {
+query GetMetricRange($data: GetMetricRangeInput!) {
+  getMetricRange(data: $data) {
     env
-    type
     nodeid
+    type
+    values
+  }
+}
+
+subscription GetMetric(
+  $nodeId: String!
+  $orgId: String!
+  $type: String!
+  $userId: String!
+) {
+  getMetric(nodeId: $nodeId, orgId: $orgId, type: $type, userId: $userId) {
+    env
+    nodeid
+    type
     value
   }
 }

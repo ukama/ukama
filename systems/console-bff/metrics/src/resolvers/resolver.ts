@@ -20,6 +20,7 @@ import {
   GetMetricRangeInput,
   LatestMetricRes,
   MetricRes,
+  SubMetricRangeInput,
 } from "./types";
 
 const WS_THREAD = "./threads/MetricsWSThread.ts";
@@ -79,7 +80,7 @@ class MetricResolvers {
   })
   async getMetric(
     @Root() payload: LatestMetricRes,
-    @Args() args: GetMetricRangeInput
+    @Args() args: SubMetricRangeInput
   ): Promise<LatestMetricRes> {
     await storeInStorage(
       `${args.orgId}/${args.userId}/${args.type}`,
