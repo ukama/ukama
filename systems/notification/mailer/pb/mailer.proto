@@ -35,10 +35,8 @@ message GetEmailByIdResponse{
 // Defines the request and response for sending emails
 message SendEmailRequest{
     repeated string to = 1;
-    string subject = 2;
-    string body = 3;
-    map<string, string> values = 4;
-    
+    string TemplateName = 2 [(validator.field) = {string_not_empty: true}, json_name = "template_name"];
+    map<string, string> values = 3;
 }
 
 // Defines the response for sending emails

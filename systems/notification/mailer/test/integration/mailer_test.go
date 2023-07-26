@@ -47,8 +47,8 @@ func TestSendEmailAndGetEmail(t *testing.T) {
 	t.Run("SendEmail", func(t *testing.T) {
 		sendEmailResponse, err := c.SendEmail(ctx, &pb.SendEmailRequest{
 			To:      []string{"brackley@ukama.com"},
-			Subject: "test",
-			Body:    "test",
+			// Subject: "test",
+			// Body:    "test",
 		})
 		assert.NoError(t, err)
 		r, err := c.GetEmailById(ctx, &pb.GetEmailByIdRequest{

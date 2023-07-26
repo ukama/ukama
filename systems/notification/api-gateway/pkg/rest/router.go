@@ -118,20 +118,26 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (message emailPkg.SendEmailResponse, err error) {
 	payload := emailPkg.SendEmailRequest{
-		To:      req.To,
-		Subject: req.Subject,
-		Body:    req.Body,
-		Values:  req.Values,
+		To:           req.To,
+		TemplateName: req.TemplateName,
+		Values:       make(map[string]string),
 	}
+
+	// Convert map[string]interface{} to map[string]string
+	for key, value := range req.Values {
+		if strValue, ok := value.(string); ok {
+			payload.Values[key] = strValue
+		}
+	}
+
 	res, err := r.clients.m.SendEmail(&payload)
 	if err != nil {
 		return emailPkg.SendEmailResponse{}, err
 	}
 
-
 	return emailPkg.SendEmailResponse{
 		Message: res.Message,
-		MailId: res.MailId,
+		MailId:  res.MailId,
 	}, nil
 }
 

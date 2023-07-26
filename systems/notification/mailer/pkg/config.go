@@ -26,6 +26,7 @@ type Config struct {
 	Timeout          time.Duration   `default:"20s"`
 	Service          *uconf.Service
 	Mailer           *Mailer
+	TemplatesPath     string           `default:"templates"`
 }
 
 func NewConfig(name string) *Config {

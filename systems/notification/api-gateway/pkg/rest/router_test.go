@@ -67,15 +67,14 @@ func TestPingRoute(t *testing.T) {
 func TestRouter_sendEmail(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/mailer/sendEmail",
-		strings.NewReader(`{"to": ["brackley@ukama.com"], "subject": "test", "body": "welcome to ukama"}`))
+		strings.NewReader(`{"to": ["test@ukama.com"], "subject": "test", "body": "welcome to ukama"}`))
 
 	m := &mmocks.MailerServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &mailerpb.SendEmailRequest{
-		To:      []string{"brackley@ukama.com"},
-		Subject: "test",
-		Body:    "welcome to ukama",
-		Values:  nil,
+		To:      []string{"test@ukama.com"},
+		TemplateName: "test-template",
+		Values:  map[string]string{"Name": "test","Message": "welcome to ukama"},
 	}
 	m.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
 		Message: "email sent successfully",

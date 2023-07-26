@@ -3,12 +3,12 @@ package server
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/smtp"
-	"strconv"
-	"strings"
-	"time"
+	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -22,116 +22,124 @@ import (
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 )
 
-type EmailData struct {
+type EmailPayload struct {
 	To      []string
-	Subject string
-	Body    string
+	TemplateName string `json:"template_name"`
 	Values  map[string]interface{}
 }
+
 
 type MailerServer struct {
 	mailerRepoRepo db.MailerRepo
 	pb.UnimplementedMailerServiceServer
 	mailer *pkg.Mailer
+	templatesPath string
 }
 
-func NewMailerServer(mailerRepoRepo db.MailerRepo, mail *pkg.Mailer) *MailerServer {
+func NewMailerServer(mailerRepoRepo db.MailerRepo, mail *pkg.Mailer , templatesPath string) *MailerServer {
 	return &MailerServer{
 		mailerRepoRepo: mailerRepoRepo,
 		mailer:         mail,
+		templatesPath:  templatesPath,
+		
 	}
 }
-
 func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
+	log.Infof("Sending email to %v", req.To)
+	values := make(map[string]interface{})
 
-	if req.To == nil || req.Subject == "" || req.Body == "" {
-		return nil, errors.New("missing required fields in SendEmailRequest")
-	}
-	mailId := uuid.NewV4()
-	currentTime := time.Now()
-	sentAt := &currentTime
-
-	from := s.mailer.From
-	to := req.GetTo()
-	subject := req.GetSubject()
-	bodyTemplate := req.GetBody()
-	values := req.GetValues()
-	emailData := &EmailData{
-		Subject: subject,
-		Body:    bodyTemplate,
-		Values:  make(map[string]interface{}),
+	for key, value := range req.Values {
+		values[key] = value
 	}
 
-	for key, value := range values {
-		emailData.Values[key] = value
+	payload := &EmailPayload{
+		To:           req.To,
+		TemplateName: req.TemplateName,
+		Values:       values,
 	}
-	emailData.Values["EmailID"] = mailId.String()
-	tmpl, err := template.New("email").Parse(emailData.Body)
+
+	body, err := s.prepareMsg(payload)
 	if err != nil {
-		log.Errorf("Failed to parse email template: %v", err)
 		return nil, err
 	}
 
-	var bodyBuffer bytes.Buffer
-	err = tmpl.Execute(&bodyBuffer, emailData.Values)
+	
+	c, err := smtp.Dial(fmt.Sprintf("%s:%d", s.mailer.Host, s.mailer.Port))
 	if err != nil {
-		log.Errorf("Failed to render email template: %v", err)
 		return nil, err
 	}
-
-	var recipientList []string
-	if len(to) > 0 {
-		recipientList = make([]string, len(to))
-		copy(recipientList, to)
+	defer c.Close()
+	config := &tls.Config{
+		ServerName: s.mailer.Host,
 	}
-
-	msg := "From: " + from + "\r\n" +
-		"To: " + strings.Join(recipientList, ",") + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"MIME-Version: 1.0\r\n" +
-		"Content-Type: text/html; charset=utf-8\r\n" +
-		"\r\n" +
-		bodyBuffer.String()
+	if err = c.StartTLS(config); err != nil {
+		return nil, err
+	}
 
 	auth := smtp.PlainAuth("", s.mailer.Username, s.mailer.Password, s.mailer.Host)
-	port := strconv.Itoa(s.mailer.Port)
-	err = smtp.SendMail(s.mailer.Host+":"+port, auth, from, recipientList, []byte(msg))
-	if err != nil {
-		log.Errorf("Failed to send email: %v", err.Error())
-		err = s.mailerRepoRepo.SendEmail(&db.Mailing{
-			MailId:  mailId,
-			Email:   recipientList[0], // Use the first email if only one is provided
-			Subject: subject,
-			Body:    bodyBuffer.String(),
-			SentAt:  sentAt,
-			Status:  "failed",
-		})
+
+	// Authenticate with the SMTP server
+	if err = c.Auth(auth); err != nil {
 		return nil, err
 	}
 
-	log.Infof("Email sent successfully to %v", recipientList)
+	// Set the sender email address
+	if err = c.Mail(s.mailer.From); err != nil {
+		return nil, err
+	}
 
-	for _, recipient := range recipientList {
-		err = s.mailerRepoRepo.SendEmail(&db.Mailing{
-			MailId:  mailId,
-			Email:   recipient,
-			Subject: subject,
-			Body:    bodyBuffer.String(),
-			SentAt:  sentAt,
-			Status:  "sent",
-		})
-		if err != nil {
-			log.Error("Error while sending email" + err.Error())
-			return nil, grpc.SqlErrorToGrpc(err, "Failed to send email")
+	// Add the recipient email addresses
+	for _, recipient := range req.To {
+		if err = c.Rcpt(recipient); err != nil {
+			return nil, err
 		}
 	}
 
-	response := &pb.SendEmailResponse{
-		Message: "Email sent successfully",
-		MailId:  mailId.String(),
+	w, err := c.Data()
+	if err != nil {
+		return nil, err
+	}
+	defer w.Close()
+
+	_, err = w.Write(body.Bytes())
+	if err != nil {
+		return nil, err
 	}
 
-	return response, nil
+	err = c.Quit()
+	if err != nil {
+		log.Errorln("Email not sent ", err.Error())
+	}
+
+	mailId := uuid.NewV4()
+	return &pb.SendEmailResponse{
+		Message: "Email Sent!",
+		MailId:  mailId.String(),
+	}, nil
+}
+
+func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
+	tmplName := data.TemplateName
+	if filepath.Ext(tmplName) == "" {
+		tmplName += ".tmpl"
+	}
+
+	t, err := template.ParseFiles(filepath.Join(s.templatesPath, tmplName))
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+
+	var body bytes.Buffer
+
+	err = t.Execute(&body, data)
+	if err != nil {
+		return bytes.Buffer{}, err
+	}
+
+	if pkg.IsDebugMode {
+		log.Printf("%s", body.String())
+	}
+	return body, nil
 }
 
 func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
