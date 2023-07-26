@@ -57,8 +57,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig) *Router {
-
+func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
 	r := &Router{
 		clients: clients,
 		config:  config,
@@ -68,7 +67,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r.init()
+	r.init(authfunc)
 	return r
 }
 
@@ -90,27 +89,44 @@ func (rt *Router) Run() {
 	}
 }
 
-func (r *Router) init() {
-	const org = "/orgs/" + ":" + ORG_URL_PARAMETER
-
+func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	v1 := r.f.Group("/v1", "Init system ", "Init system version v1")
+	auth := r.f.Group("/v1", "API gateway", "Init system version v1", func(ctx *gin.Context) {
+		if r.config.auth.BypassAuthMode {
+			logrus.Info("Bypassing auth")
+			return
+		}
+		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.Request.Header.Set("Meta", s)
+		err := f(ctx, r.config.auth.AuthAPIGW)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
+			return
+		}
+		if err == nil {
+			return
+		}
+	})
+	auth.Use()
+	{
+		const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 
-	orgs := v1.Group(org, "Orgs", "looking for orgs credentials")
-	orgs.GET("", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getOrgHandler, http.StatusOK))
-	orgs.PUT("", formatDoc("Add Org and Credential", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
-	orgs.PATCH("", formatDoc("Update Orgs Credential", ""), tonic.Handler(r.patchOrgHandler, http.StatusOK))
+		orgs := auth.Group(org, "Orgs", "looking for orgs credentials")
+		orgs.GET("", formatDoc("Get Orgs Credential", ""), tonic.Handler(r.getOrgHandler, http.StatusOK))
+		orgs.PUT("", formatDoc("Add Org and Credential", ""), tonic.Handler(r.putOrgHandler, http.StatusCreated))
+		orgs.PATCH("", formatDoc("Update Orgs Credential", ""), tonic.Handler(r.patchOrgHandler, http.StatusOK))
 
-	nodes := orgs.Group("/nodes", "Nodes", "Orgs credentials for Node")
-	nodes.GET("/:node", formatDoc("Get Orgs credential for Node", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
-	nodes.PUT("/:node", formatDoc("Add Node to Org", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
-	nodes.DELETE("/:node", formatDoc("Delete Node from Org", ""), tonic.Handler(r.deleteNodeHandler, http.StatusOK))
+		nodes := orgs.Group("/nodes", "Nodes", "Orgs credentials for Node")
+		nodes.GET("/:node", formatDoc("Get Orgs credential for Node", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
+		nodes.PUT("/:node", formatDoc("Add Node to Org", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
+		nodes.DELETE("/:node", formatDoc("Delete Node from Org", ""), tonic.Handler(r.deleteNodeHandler, http.StatusOK))
 
-	systems := orgs.Group("/systems", "Systems", "Orgs System credentials")
-	systems.GET("/:system", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSystemHandler, http.StatusOK))
-	systems.PUT("/:system", formatDoc("Add or Update System credential for Org", ""), tonic.Handler(r.putSystemHandler, http.StatusCreated))
-	systems.DELETE("/:system", formatDoc("Delete System credential for Org", ""), tonic.Handler(r.deleteSystemHandler, http.StatusOK))
-	systems.PATCH("/:system", formatDoc("Update System Credential", ""), tonic.Handler(r.patchSystemHandler, http.StatusOK))
+		systems := orgs.Group("/systems", "Systems", "Orgs System credentials")
+		systems.GET("/:system", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSystemHandler, http.StatusOK))
+		systems.PUT("/:system", formatDoc("Add or Update System credential for Org", ""), tonic.Handler(r.putSystemHandler, http.StatusCreated))
+		systems.DELETE("/:system", formatDoc("Delete System credential for Org", ""), tonic.Handler(r.deleteSystemHandler, http.StatusOK))
+		systems.PATCH("/:system", formatDoc("Update System Credential", ""), tonic.Handler(r.patchSystemHandler, http.StatusOK))
+	}
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
