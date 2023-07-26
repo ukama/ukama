@@ -53,10 +53,12 @@ void usage() {
 			ENV_INIT_CLIENT_LOG_LEVEL,
 			ENV_SYSTEM_ORG,
 			ENV_SYSTEM_NAME,
+            ENV_SYSTEM_DNS,
 			ENV_SYSTEM_ADDR,
 			ENV_SYSTEM_PORT,
 			ENV_INIT_SYSTEM_ADDR,
 			ENV_INIT_SYSTEM_PORT,
+			ENV_GLOBAL_INIT_ENABLE,
 			ENV_GLOBAL_INIT_SYSTEM_ADDR,
 			ENV_GLOBAL_INIT_SYSTEM_PORT);
 }
@@ -248,6 +250,21 @@ int register_system(Config *config, int global){
 
 }
 
+int register_to_inits(Config *config) {
+
+	/* registration process for local init */
+	if (!register_system(config, REGISTER_TO_LOCAL_INIT)) {
+		return 1;
+	}
+
+	if (config->globalInitSystemEnable) {
+		/* registration process for global init */
+		if (!register_system(config, REGISTER_TO_GLOBAL_INIT)) {
+			return 1;
+		}
+	}
+	return 0;
+}
 /*
  * Life of initClient:
  *
@@ -266,6 +283,8 @@ int main (int argc, char *argv[]) {
 	char *response=NULL;
 	struct _u_instance webInst;
 	Config *config=NULL;
+	pthread_t child;
+	int *childStatus;
 
 	state = (State *)calloc(1, sizeof(State));
 	if (state == NULL) {
@@ -323,27 +342,28 @@ int main (int argc, char *argv[]) {
 		goto exit_program;
 	}
 
-	/* registration process for local init */
-	if (!register_system(config, REGISTER_TO_LOCAL_INIT)) {
-		exitStatus = 1;
-		goto exit_program;
-	}
-
-	/* registration process for global init */
-	if (!register_system(config, REGISTER_TO_GLOBAL_INIT)) {
-		exitStatus = 1;
+	exitStatus = register_to_inits(config);
+	if (exitStatus) {
 		goto exit_program;
 	}
 
 	/* Wait here for ever. XXX */
 	log_debug("initClient running ...");
 
+	if (config->systemDNS) {
+		/* Start thread : Need a cleanup so that its always dns no IP as arg for system */
+		pthread_create(&child, NULL,refresh_lookup,config);
+		pthread_join (child, (void **)&childStatus);
+	}
+
 	getchar(); /* For now. */
 
 	log_debug("Goodbye ... ");
 
 	send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_LOCAL_INIT);
-	send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_GLOBAL_INIT);
+	if (config->globalInitSystemEnable) {
+		send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_GLOBAL_INIT);
+	}
 	ulfius_stop_framework(&webInst);
 	ulfius_clean_instance(&webInst);
 
