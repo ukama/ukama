@@ -38,6 +38,7 @@ extern int start_web_services(Config *config, UInst *webtInst); /*network.c */
 /* Global */
 State *state=NULL;
 pthread_t child = 0;
+int globalInit = 0;
 
 /*
  * usage -- Usage options for initClient
@@ -97,6 +98,17 @@ void signal_term_handler(void) {
 	if (send_request_to_init(REQ_UNREGISTER, state->config, NULL,
 							 &response, REGISTER_TO_LOCAL_INIT) != TRUE) {
 		log_error("Error registrating with the init system");
+	}
+
+	if (globalInit) {
+		if (send_request_to_init(REQ_UNREGISTER, state->config, NULL,
+				&response, REGISTER_TO_GLOBAL_INIT) != TRUE) {
+			log_error("Error registrating with the init system");
+		}
+	}
+
+	if (child)	{
+		pthread_cancel(&child);
 	}
 
 	if (state->webInst) {
@@ -197,10 +209,10 @@ int register_system(Config *config, int global){
 	char *cacheUUID=NULL, *systemUUID=NULL;
 	QueryResponse *queryResponse=NULL;
 
-	/* Step-2: check current registration status */
+	/* Step-1: check current registration status */
 	regStatus = existing_registration(config, &cacheUUID, &systemUUID, global);
 
-	/* Step-3: take action(s) */
+	/* Step-2: take action(s) */
 	switch(regStatus) {
 	case REG_STATUS_MATCH | REG_STATUS_HAVE_UUID:
 	log_debug("System already registerd with init.");
@@ -222,24 +234,25 @@ int register_system(Config *config, int global){
 	break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
-					/* first time registering */
-					if (send_request_to_init(REQ_REGISTER, config, NULL, &response, global)
-							!= TRUE) {
-						log_error("Error registrating with the init system");
-						return FALSE;
-					}
+	case REG_STATUS_NO_MATCH:
+		/* first time registering */
+		if (send_request_to_init(REQ_REGISTER, config, NULL, &response, global)
+				!= TRUE) {
+			log_error("Error registrating with the init system");
+			return FALSE;
+		}
 
-	/* read the UUID and log it into tempfile. */
-	if (deserialize_response(REQ_REGISTER, &queryResponse,
-			response) != TRUE) {
-		log_error("Error deserialize the registration response. Str: %s",
-				response);
-		return FALSE;
-	}
-	store_cache_uuid(config->tempFile,
-			queryResponse->systemID, global);
+		/* read the UUID and log it into tempfile. */
+		if (deserialize_response(REQ_REGISTER, &queryResponse,
+				response) != TRUE) {
+			log_error("Error deserialize the registration response. Str: %s",
+					response);
+			return FALSE;
+		}
+		store_cache_uuid(config->tempFile,
+				queryResponse->systemID, global);
 
-	break;
+		break;
 
 	default:
 		break;

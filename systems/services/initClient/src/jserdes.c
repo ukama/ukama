@@ -124,7 +124,7 @@ int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 int serialize_uuids_from_file(SystemRegistrationId *sysReg, json_t **json) {
 
 	char *str=NULL;
-	if (sysReg) {
+	if (!sysReg) {
 		return FALSE;
 	}
 
