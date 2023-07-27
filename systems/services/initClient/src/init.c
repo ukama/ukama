@@ -130,7 +130,7 @@ static long send_http_request(char *url, Request *request, json_t *json,
  * create_url --
  *
  */
-static void create_url(char *url, Config *config, char *name,
+static void create_url(char *url, Config *config, char* org, char *name,
 					   ReqType reqType, int global) {
 
 	char *systemName=NULL;
@@ -151,14 +151,14 @@ static void create_url(char *url, Config *config, char *name,
 					config->globalInitSystemAddr,
 					config->globalInitSystemPort,
 					config->initSystemAPIVer,
-					ORGS_STR, config->systemOrg,
+					ORGS_STR, org,
 					SYSTEMS_STR, systemName);
 	} else {
 		sprintf(url, "http://%s:%s/%s/%s/%s/%s/%s",
 				config->initSystemAddr,
 				config->initSystemPort,
 				config->initSystemAPIVer,
-				ORGS_STR, config->systemOrg,
+				ORGS_STR, org,
 				SYSTEMS_STR, systemName);
 	}
 	log_debug("Request URL: %s", url);
@@ -318,7 +318,7 @@ static int read_cache_uuid(char *fileName, char** uuid, int global) {
  * send to init
  *
  */
-int send_request_to_init(ReqType reqType, Config *config,
+int send_request_to_init(ReqType reqType, Config *config, char* org,
 						 char *systemName, char **response, int global ) {
 
 	Request *request=NULL;
@@ -352,7 +352,7 @@ int send_request_to_init(ReqType reqType, Config *config,
 	}
 
 	/* Step-3 create URL for init system */
-	create_url(&url[0], config, systemName, reqType, global);
+	create_url(&url[0], config, org, systemName, reqType, global);
 
 	/* Step-3 send over the wire */
 	respCode = send_http_request(&url[0], request, json, response);
@@ -405,7 +405,7 @@ int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
 	int status=REG_STATUS_NONE;
 	char *str=NULL;
 	QueryResponse *queryResponse=NULL;
-	if (send_request_to_init(REQ_QUERY, config, NULL, &str, global)) {
+	if (send_request_to_init(REQ_QUERY, config, config->systemOrg, NULL, &str, global)) {
 		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
 			log_error("Error deserialize query response. Str: %s", str);
 			return -1;
@@ -451,13 +451,13 @@ int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
  * get_system_info -- get info about 'system' from the init.
  *
  */
-int get_system_info(Config *config, char *systemName, char **systemInfo, int global) {
+int get_system_info(Config *config, char *org, char *systemName, char **systemInfo, int global) {
 
 	int status=QUERY_OK;
 	char *str=NULL;
 	QueryResponse *queryResponse=NULL;
 
-	if (send_request_to_init(REQ_QUERY_SYSTEM, config, systemName, &str, global)) {
+	if (send_request_to_init(REQ_QUERY_SYSTEM, config, org, systemName, &str, global)) {
 		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
 			free(str);
 			log_error("Error deserialize query response. Str: %s", str);

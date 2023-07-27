@@ -137,7 +137,6 @@ static int dns_parse(const unsigned char *r, int rlen, void *ctx, char **ip)
 	}
 
 	while (ancount--) {
-		const void *as = p;
 		while (p-r < rlen && *p-1U < 127)
 			p++;
 
@@ -182,7 +181,6 @@ char* nslookup(char* name, char *server)
 {
 
 	char *ip = NULL;
-	int ret = FALSE;
 	unsigned char query[280];
 	unsigned char response[1024];
 
@@ -244,7 +242,7 @@ void register_callback(UpdateIpCallback cb) {
 }
 
 void* refresh_lookup(void* args) {
-	Config *c = (struct Config*) args;
+	Config *c = (Config*) args;
 	char* rIp = NULL;
 	while(TRUE) {
 		rIp = nslookup(c->systemDNS, c->dnsServer);

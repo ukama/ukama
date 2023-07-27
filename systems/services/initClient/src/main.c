@@ -95,13 +95,13 @@ void signal_term_handler(void) {
 	if (state == NULL) exit(1);
 
 	/* un-register the system */
-	if (send_request_to_init(REQ_UNREGISTER, state->config, NULL,
+	if (send_request_to_init(REQ_UNREGISTER, state->config, state->config->systemOrg, NULL,
 							 &response, REGISTER_TO_LOCAL_INIT) != TRUE) {
 		log_error("Error registrating with the init system");
 	}
 
 	if (globalInit) {
-		if (send_request_to_init(REQ_UNREGISTER, state->config, NULL,
+		if (send_request_to_init(REQ_UNREGISTER, state->config, state->config->systemOrg, NULL,
 				&response, REGISTER_TO_GLOBAL_INIT) != TRUE) {
 			log_error("Error registrating with the init system");
 		}
@@ -227,7 +227,7 @@ int register_system(Config *config, int global){
 	break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
-					if (send_request_to_init(REQ_UPDATE, config, NULL, &response, global) != TRUE) {
+					if (send_request_to_init(REQ_UPDATE, config,config->systemOrg, NULL, &response, global) != TRUE) {
 						log_error("Error updating with the init system");
 						return FALSE;
 					}
@@ -236,7 +236,7 @@ int register_system(Config *config, int global){
 	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
 	case REG_STATUS_NO_MATCH:
 		/* first time registering */
-		if (send_request_to_init(REQ_REGISTER, config, NULL, &response, global)
+		if (send_request_to_init(REQ_REGISTER, config, config->systemOrg, NULL, &response, global)
 				!= TRUE) {
 			log_error("Error registrating with the init system");
 			return FALSE;
@@ -379,13 +379,13 @@ int main (int argc, char *argv[]) {
 
 	log_debug("Goodbye ... ");
 
-	send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_LOCAL_INIT);
+	send_request_to_init(REQ_UNREGISTER, config, config->systemOrg, NULL, &response, REGISTER_TO_LOCAL_INIT);
 	if (config->globalInitSystemEnable) {
-		send_request_to_init(REQ_UNREGISTER, config, NULL, &response, REGISTER_TO_GLOBAL_INIT);
+		send_request_to_init(REQ_UNREGISTER, config, config->systemOrg, NULL, &response, REGISTER_TO_GLOBAL_INIT);
 	}
 
 	if (child) {
-		pthread_cancel(&child);
+		pthread_cancel(child);
 	}
 	ulfius_stop_framework(&webInst);
 	ulfius_clean_instance(&webInst);
