@@ -92,7 +92,7 @@ services:
       - DB_HOST=postgresd-registry
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - ORG_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
+      - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-registry:9095
       - NODE_SERVICE_HOST=node
@@ -147,6 +147,8 @@ services:
     build:
       dockerfile: ./Dockerfile
       context: ../services/initClient
+    ports:
+      - "8052:8052"
     environment:
       - ENV_SYSTEM_ORG=ukama
       - ENV_DNS_REFRESH_TIME_PERIOD=30
