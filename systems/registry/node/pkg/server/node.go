@@ -64,7 +64,7 @@ func NewNodeServer(nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db
 func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	log.Infof("Adding node  %v", req.NodeId)
 
-	nID, err := ukama.ValidateNodeId(req.NodeId)
+	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id. Error %s", err.Error())
@@ -75,14 +75,14 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	}
 
 	node := &db.Node{
-		Id:    req.NodeId,
+		Id:    nId.StringLowercase(),
 		OrgId: n.org,
 		Status: db.NodeStatus{
-			NodeId: req.NodeId,
+			NodeId: nId.StringLowercase(),
 			Conn:   db.Unknown,
 			State:  db.Undefined,
 		},
-		Type: nID.GetNodeType(),
+		Type: nId.GetNodeType(),
 		Name: req.Name,
 	}
 
@@ -94,7 +94,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	route := n.baseRoutingKey.SetAction("create").SetObject("node").MustBuild()
 
 	evt := &epb.NodeCreatedEvent{
-		NodeId: node.Id,
+		NodeId: nId.StringLowercase(),
 		Name:   node.Name,
 		Org:    node.OrgId.String(),
 		Type:   node.Type,
@@ -141,7 +141,7 @@ func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteReque
 
 	nodes, err := n.siteRepo.GetNodes(site)
 	if err != nil {
-		log.Error("error getting all nodes for site" + err.Error())
+		log.Errorf("error getting all nodes for site: %s", err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "nodes")
 	}
@@ -476,7 +476,7 @@ func (n *NodeServer) getFreeNodesForOrg(ctx context.Context, req *pb.GetByOrgReq
 
 	nodes, err := n.siteRepo.GetFreeNodesForOrg(org)
 	if err != nil {
-		log.Error("error getting free nodes for org" + err.Error())
+		log.Errorf("error getting free nodes for org: %s", err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "nodes")
 	}
@@ -513,7 +513,7 @@ func (n *NodeServer) getFreeNodes(ctx context.Context, req *pb.GetNodesRequest) 
 	nodes, err := n.siteRepo.GetFreeNodes()
 
 	if err != nil {
-		log.Error("error getting all free nodes" + err.Error())
+		log.Errorf("error getting all free nodes: %s", err.Error())
 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}

@@ -30,7 +30,7 @@ services:
       - msgclient-init
       - postgresd-init
 
-  node-gateway:
+  node-gateway-init:
     build:
       dockerfile: ./Dockerfile
       context: ./node-gateway
@@ -48,7 +48,7 @@ services:
     depends_on:
       - lookup
 
-  api-gateway:
+  api-gateway-init:
     build:
       dockerfile: ./Dockerfile
       context: ./api-gateway
