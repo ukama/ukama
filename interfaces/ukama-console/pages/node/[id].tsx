@@ -1,11 +1,7 @@
 import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import { Node, useGetNodesLazyQuery } from '@/generated';
-import {
-  MetricRangeDocument,
-  useGetNodeRangeMetricLazyQuery,
-  useMetricRangeSubscription,
-} from '@/generated/metrics';
+import { useGetNodeRangeMetricLazyQuery } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import NodeNetworkTab from '@/ui/molecules/NodeNetworkTab';
@@ -42,6 +38,9 @@ export default function Page() {
     },
   ] = useGetNodeRangeMetricLazyQuery({
     client: metricsClient,
+    onCompleted: (data) => {
+      setMetrics(data.getNodeRangeMetric.values);
+    },
   });
 
   useEffect(() => {
@@ -68,43 +67,9 @@ export default function Page() {
             nodeId: 'uk-123456-hnode-77-8888',
           },
         },
-      }).then((res) => {
-        setMetrics(res.data?.getNodeRangeMetric.values);
       });
   }, [metricFrom]);
 
-  useEffect(() => {
-    if (
-      nodeMetricsData?.getNodeRangeMetric.values.length &&
-      nodeMetricsData?.getNodeRangeMetric.values.length > 0
-    )
-      subscrieToMoreNodeMetrics({
-        document: MetricRangeDocument,
-        variables: {
-          data: nodeMetricsVariables?.data,
-        },
-        updateQuery: (prev, { subscriptionData }) => {
-          console.log(subscriptionData);
-          return prev;
-        },
-      });
-  }, [nodeMetricsData]);
-
-  // useMetricRangeSubscription({
-  //   client: metricsClient,
-  //   variables: {
-  //     orgId: '123',
-  //     userId: 'salman',
-  //     from: metricFrom,
-  //     type: 'memory_trx_used',
-  //     nodeId: 'uk-123456-hnode-77-8888',
-  //   },
-  //   onData: (data) => {
-  //     console.log(data);
-  //   },
-  // });
-
-  console.log('Parent Rendered');
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
@@ -147,6 +112,7 @@ export default function Page() {
       >
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
+            metricFrom={metricFrom}
             metrics={metrics}
             isUpdateAvailable={true}
             selectedNode={selectedNode}

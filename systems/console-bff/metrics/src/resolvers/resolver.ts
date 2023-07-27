@@ -110,7 +110,10 @@ class MetricResolvers {
               env: result.metric.env,
               nodeid: nodeId,
               type: type,
-              value: result.value,
+              value:
+                result.value.length > 0
+                  ? [Math.floor(result.value[0]) * 1000, result.value[1]]
+                  : [],
             } as LatestMetricRes);
           } else {
             throw new Error("Error getting metric data");

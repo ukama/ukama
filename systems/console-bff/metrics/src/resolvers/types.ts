@@ -21,8 +21,8 @@ export class LatestMetricRes {
   @Field()
   type: string;
 
-  @Field(() => [Number, String])
-  value: [number, string];
+  @Field(() => [Number, Number])
+  value: [number, number];
 }
 @ObjectType()
 export class MetricRes {
@@ -35,8 +35,8 @@ export class MetricRes {
   @Field()
   type: string;
 
-  @Field(() => [[Number, String]])
-  values: [number, string][];
+  @Field(() => [[Number, Number]])
+  values: [number, number][];
 }
 @ArgsType()
 @InputType()

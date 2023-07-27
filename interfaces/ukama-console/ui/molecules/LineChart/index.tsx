@@ -1,9 +1,12 @@
+import { MetricSub } from '@/pages/node/_metricSub';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
+import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
+  metricFrom: any;
   topic: string;
   initData: any;
   title?: string;
@@ -17,6 +20,7 @@ const LineChart = ({
   title,
   topic,
   initData,
+  metricFrom,
   loading = false,
   filter = 'LIVE',
 }: ILineChart) => {
@@ -32,15 +36,16 @@ const LineChart = ({
 
       events: {
         load: function () {
-          // var series: any = Highcharts.charts[0]?.series[0];
-          // PubSub.subscribe(topic, (_, data) => {
-          //   series.setData(data[0], true, true);
-          // });
-          //  setInterval(function () {
-          //   var x = new Date().getTime(),
-          //    y = Math.round(Math.random() * 100)
-          //   series.addPoint([x, y], true, true)
-          //  }, 1000)
+          var series: any = Highcharts.charts[0]?.series[0];
+          PubSub.subscribe('memory_trx_used', (_, data) => {
+            console.log('Subscription data: ', data);
+            series.addPoint(data, true, true);
+          });
+          // setInterval(function () {
+          //   var x = new Date().getTime() / 1000, // current time
+          //     y = Math.round(Math.random() * 100);
+          //   series.addPoint([Math.floor(x) * 1000, y], true, true);
+          // }, 1000);
         },
       },
     },
@@ -81,7 +86,10 @@ const LineChart = ({
     series: [
       {
         name: title,
-        data: (() => initData)(),
+        data: (function () {
+          var data = [...initData];
+          return data;
+        })(),
       },
     ],
     xAxis: {
@@ -89,9 +97,7 @@ const LineChart = ({
       title: false,
       labels: {
         enabled: true,
-        formatter: function (value: any) {
-          return Highcharts.dateFormat('%H:%M:%S', value.value * 1000);
-        },
+        formate: '{value:%H:%M:%S}',
       },
     },
     yAxis: {
@@ -110,11 +116,8 @@ const LineChart = ({
       hasData={initData?.length > 0 || false}
     >
       <Box sx={{ width: '100%' }}>
-        <HighchartsReact
-          options={options}
-          highcharts={Highcharts}
-          constructorType={'stockChart'}
-        />
+        <MetricSub from={metricFrom} />
+        <HighchartsReact options={options} highcharts={Highcharts} />
       </Box>
     </GraphTitleWrapper>
   );
