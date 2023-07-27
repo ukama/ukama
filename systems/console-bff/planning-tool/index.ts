@@ -8,9 +8,9 @@ import gql from "graphql-tag";
 import "reflect-metadata";
 import * as tq from "type-graphql";
 
-import { PLANNING_SERVICE_PORT } from "../../common/configs";
-import { logger } from "../../common/logger";
-import { PrismaContext, context } from "../../common/prisma";
+import { PLANNING_SERVICE_PORT } from "../common/configs";
+import { logger } from "../common/logger";
+import { PrismaContext, context } from "../common/prisma";
 import resolvers from "./modules";
 
 const app = async () => {

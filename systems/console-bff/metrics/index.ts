@@ -20,8 +20,8 @@ import {
   CONSOLE_APP_URL,
   METRICS_PORT,
   PLAYGROUND_URL,
-} from "../../common/configs";
-import { logger } from "../../common/logger";
+} from "../common/configs";
+import { logger } from "../common/logger";
 import resolvers from "./resolvers";
 
 const app = express();

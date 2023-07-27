@@ -1,9 +1,9 @@
-import { MetricSub } from '@/pages/node/_metricSub';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
+import { MetricSub } from './metricSub';
 
 interface ILineChart {
   metricFrom: any;

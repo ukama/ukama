@@ -10,10 +10,10 @@ import {
 } from "type-graphql";
 import { Worker } from "worker_threads";
 
-import { METRIC_API_GW_SOCKET, STORAGE_KEY } from "../../../common/configs";
-import { logger } from "../../../common/logger";
-import { removeKeyFromStorage, storeInStorage } from "../../../common/storage";
-import { getTimestampCount } from "../../../common/utils";
+import { METRIC_API_GW_SOCKET, STORAGE_KEY } from "../../common/configs";
+import { logger } from "../../common/logger";
+import { removeKeyFromStorage, storeInStorage } from "../../common/storage";
+import { getTimestampCount } from "../../common/utils";
 import {
   getLatestMetric,
   getMetricRange,

@@ -1,6 +1,6 @@
-import { asyncRestCall } from "../../../common/axiosClient";
-import { METRIC_API_GW } from "../../../common/configs";
-import { API_METHOD_TYPE } from "../../../common/enums";
+import { asyncRestCall } from "../../common/axiosClient";
+import { METRIC_API_GW } from "../../common/configs";
+import { API_METHOD_TYPE } from "../../common/enums";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
