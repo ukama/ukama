@@ -6,4 +6,5 @@ rm -rf ./libs
 mkdir ./libs
 
 #Copying dependencies 
-ldd $TARGET_EXEC | awk 'NF == 4 { system("cp -v " $3 " ./libs") }'
+ldd $TARGET_EXEC | awk 'NF == 4 { system("cp " $3 " ./libs") }'
+sleep 5;
