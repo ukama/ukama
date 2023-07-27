@@ -1,8 +1,9 @@
 import { metricsClient } from '@/client/ApolloClient';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
-import { Node, useGetNodesQuery } from '@/generated';
+import { Node, useGetNodesLazyQuery } from '@/generated';
 import {
-  useGetMetricRangeQuery,
+  MetricRangeDocument,
+  useGetNodeRangeMetricLazyQuery,
   useMetricRangeSubscription,
 } from '@/generated/metrics';
 import { colors } from '@/styles/theme';
@@ -15,55 +16,95 @@ import NodeStatus from '@/ui/molecules/NodeStatus';
 import TabPanel from '@/ui/molecules/TabPanel';
 import { getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Page() {
+  const [metricFrom, setMetricFrom] = useState<number>(0);
+  const [metrics, setMetrics] = useState<any>([]);
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
   const onTabSelected = (_: any, value: number) => setSelectedTab(value);
 
-  const { data: getNodeData, loading: getNodeLoading } = useGetNodesQuery({
-    variables: {
-      data: {
-        isFree: false,
+  const [getNodes, { data: getNodeData, loading: getNodeLoading }] =
+    useGetNodesLazyQuery({
+      onCompleted: (data) => {
+        if (!selectedNode) setSelectedNode(data.getNodes.nodes[0]);
       },
+    });
+
+  const [
+    getNodeMetricRange,
+    {
+      data: nodeMetricsData,
+      loading: nodeMetricsLoading,
+      variables: nodeMetricsVariables,
+      subscribeToMore: subscrieToMoreNodeMetrics,
     },
-    onCompleted: (data) => {
-      if (!selectedNode) setSelectedNode(data.getNodes.nodes[0]);
-    },
-    onError: () => {},
+  ] = useGetNodeRangeMetricLazyQuery({
+    client: metricsClient,
   });
 
-  const {
-    data: metricsData,
-    loading: metricsLoading,
-    subscribeToMore: metricsSubForMore,
-    variables: metricsVariables,
-  } = useGetMetricRangeQuery({
-    client: metricsClient,
-    variables: {
-      data: {
-        nodeId: 'uk-test17-hnode-a1-31df',
-        type: 'memory_trx_used',
-        orgId: '123',
-        userId: 'salman',
-        from: getUnixTime() - 120,
-        withSubscription: true,
+  useEffect(() => {
+    setMetricFrom(() => getUnixTime() - 120);
+    getNodes({
+      variables: {
+        data: {
+          isFree: false,
+        },
       },
-    },
-  });
+    });
+  }, []);
 
-  useMetricRangeSubscription({
-    client: metricsClient,
-    variables: {
-      nodeId: 'uk-test17-hnode-a1-31df',
-      type: 'memory_trx_used',
-      orgId: '123',
-      userId: 'salman',
-      from: metricsVariables?.data.from || 0,
-    },
-  });
+  useEffect(() => {
+    if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom)
+      getNodeMetricRange({
+        variables: {
+          data: {
+            orgId: '123',
+            userId: 'salman',
+            from: metricFrom,
+            type: 'memory_trx_used',
+            withSubscription: true,
+            nodeId: 'uk-123456-hnode-77-8888',
+          },
+        },
+      }).then((res) => {
+        setMetrics(res.data?.getNodeRangeMetric.values);
+      });
+  }, [metricFrom]);
 
+  useEffect(() => {
+    if (
+      nodeMetricsData?.getNodeRangeMetric.values.length &&
+      nodeMetricsData?.getNodeRangeMetric.values.length > 0
+    )
+      subscrieToMoreNodeMetrics({
+        document: MetricRangeDocument,
+        variables: {
+          data: nodeMetricsVariables?.data,
+        },
+        updateQuery: (prev, { subscriptionData }) => {
+          console.log(subscriptionData);
+          return prev;
+        },
+      });
+  }, [nodeMetricsData]);
+
+  // useMetricRangeSubscription({
+  //   client: metricsClient,
+  //   variables: {
+  //     orgId: '123',
+  //     userId: 'salman',
+  //     from: metricFrom,
+  //     type: 'memory_trx_used',
+  //     nodeId: 'uk-123456-hnode-77-8888',
+  //   },
+  //   onData: (data) => {
+  //     console.log(data);
+  //   },
+  // });
+
+  console.log('Parent Rendered');
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
@@ -106,7 +147,7 @@ export default function Page() {
       >
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
-            metrics={metricsData?.getMetricRange.values}
+            metrics={metrics}
             isUpdateAvailable={true}
             selectedNode={selectedNode}
             metricsLoading={false}

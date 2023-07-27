@@ -32,9 +32,9 @@ const NodeOverviewTab = ({
   isUpdateAvailable,
   getNodeSoftwareUpdateInfos,
 }: INodeOverviewTab) => {
+  console.log('Child Rendered');
   const nodeType = selectedNode?.type || NodeTypeEnum.Hnode;
   const [selected, setSelected] = useState<number>(0);
-
   useEffect(() => {
     setSelected(0);
   }, [selectedNode]);
