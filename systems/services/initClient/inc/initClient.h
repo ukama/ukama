@@ -39,7 +39,7 @@
 #define QUERY_ERROR 0x01
 
 #define EP_PING    "/ping"
-#define EP_SYSTEMS "/systems"
+#define EP_SYSTEMS "/v1/systems"
 #define ORGS_STR    "orgs"
 #define SYSTEMS_STR "systems"
 
