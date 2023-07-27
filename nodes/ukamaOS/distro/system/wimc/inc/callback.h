@@ -37,33 +37,19 @@
 #define WIMC_PARAMS_CONTAINER_STATUS "status" 
 #define WIMC_PARAMS_FLAGS            "flag"
 
-#define TRUE 1
-#define FALSE 0
 
-int callback_get_container(const struct _u_request *request,
-			   struct _u_response *response, void *user_data);
-int callback_post_container(const struct _u_request *request,
-			    struct _u_response *response, void *user_data);
-int callback_put_container(const struct _u_request *request,
-			   struct _u_response *response, void *user_data);
-int callback_delete_container(const struct _u_request *request,
-			      struct _u_response *response, void *user_data);
-int callback_get_stats(const struct _u_request *request,
-		       struct _u_response *response, void *user_data);
-int callback_put_agent_update(const struct _u_request *request,
-			      struct _u_response *response,
-			      void *user_data);
-int callback_post_agent(const struct _u_request *request,
-			struct _u_response *response, void *user_data);
-int callback_get_task(const struct _u_request *request,
-		      struct _u_response *response, void *user_data);
-int callback_delete_task(const struct _u_request *request,
-			 struct _u_response *response, void *user_data);
-int callback_not_allowed(const struct _u_request *request,
-			 struct _u_response *response, void *user_data);
-int callback_default(const struct _u_request *request,
-		     struct _u_response *response, void *user_data);
+int web_service_cb_ping(const URequest *request,
+                        UResponse *response,
+                        void *epConfig);
 
+int web_service_cb_default(const URequest *request,
+                           UResponse *response,
+                           void *epConfig);
+
+int web_service_cb_get_capp(const URequest *request,
+                            UResponse *response,
+                            void *epConfig);
+    
 extern int db_read_path(sqlite3 *db, char *name, char *tag, char *path);
 
 #endif /* CALLBACK_H */

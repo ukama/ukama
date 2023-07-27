@@ -29,7 +29,7 @@ struct Response {
 };
 
 static int copy_artifact(Artifact *src, Artifact *dest);
-static void create_hub_url(WimcCfg *cfg, char *url, char *name);
+static void create_hub_url(Config *cfg, char *url, char *name);
 static int process_response_from_hub(Artifact ***artifacts, void *resp);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp);
@@ -94,7 +94,7 @@ static int process_response_from_hub(Artifact ***artifacts, void *resp) {
  * create_hub_url --
  *
  */
-static void create_hub_url(WimcCfg *cfg, char *name, char *url) {
+static void create_hub_url(Config *cfg, char *name, char *url) {
 
   if (!cfg || !name || !url) return;
 
@@ -204,7 +204,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  *  0: error processing response.
  *  1: Success and curlCode is CURLE_OK
  */
-int get_artifacts_info_from_hub(Artifact *artifact, WimcCfg *cfg,
+int get_artifact_info_from_hub(Artifact *artifact, Config *cfg,
 				char *name, char *tag,
 				CURLcode *curlCode) {
 

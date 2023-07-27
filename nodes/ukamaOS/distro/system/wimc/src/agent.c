@@ -23,14 +23,14 @@
 #include "jserdes.h"
 #include "common/utils.h"
 
+#include "usys_types.h"
+#include "usys_mem.h"
+#include "usys_log.h"
+
 struct Response {
   char *buffer;
   size_t size;
 };
-
-/*
- * register_agent -- register new agent
- */
 
 int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid) {
 
@@ -43,12 +43,12 @@ int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid) {
     if (uuid_is_null(ptr[i].uuid)==0) { /* have valid agent id. */
       if (strcasecmp(method, ptr[i].method)==0 &&
 	  strcasecmp(url, ptr[i].url)==0) {
-	uuid_unparse(ptr[i].uuid, &idStr[0]);
-	uuid_copy(*uuid, ptr[i].uuid);
-	/* An existing entry. */
-	log_debug("Found similar agent at id: %s, method %s and url: %s",
-		  idStr, ptr[i].method, ptr[i].url);
-	return WIMC_ERROR_EXIST;
+          uuid_unparse(ptr[i].uuid, &idStr[0]);
+          uuid_copy(*uuid, ptr[i].uuid);
+          /* An existing entry. */
+          log_debug("Found similar agent at id: %s, method %s and url: %s",
+                    idStr, ptr[i].method, ptr[i].url);
+          return WIMC_ERROR_EXIST;
       }
     } else {
       uuid_generate(ptr[i].uuid);
@@ -67,12 +67,9 @@ int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid) {
   return WIMC_ERROR_MAX_AGENTS;
 }
 
-/*
- * process_agent_register_request --
- *
- */
-
-int process_agent_register_request(Agent **agents, AgentReq *req, uuid_t *uuid) {
+int process_agent_register_request(Agent **agents,
+                                   AgentReq *req,
+                                   uuid_t *uuid) {
 
   int ret=WIMC_OK;
   Register *reg;
@@ -179,28 +176,25 @@ int process_agent_update_request(WTasks **tasks, AgentReq *req, uuid_t *uuid,
   return ret;
 }
 
-/*
- * find_matching_agent -- return the Agent which can handle the request.
- */
 Agent *find_matching_agent(Agent *agents, char *method) {
 
-  int i;
-  Agent *ptr = agents;
+    int i;
+    Agent *ptr = agents;
 
-  /* Sanity check. */
-  if (agents == NULL)
-    return NULL;
+    /* Sanity check. */
+    if (agents == NULL)
+        return NULL;
 
-  for (i=0; i < MAX_AGENTS; i++) {
-    if (uuid_is_null(ptr[i].uuid)==0) { /* have valid agent id. */
-      if (strcmp(method, ptr[i].method)==0) {
-	  return ptr;
-      }
+    for (i=0; i < MAX_AGENTS; i++) {
+        if (uuid_is_null(ptr[i].uuid)==0) { /* have valid agent id. */
+            if (strcmp(method, ptr[i].method)==0) {
+                return ptr;
+            }
+        }
     }
-  }
 
-  /* NULL if no match found. */
-  return NULL;
+    /* NULL if no match found. */
+    return NULL;
 }
 
 /*
@@ -256,171 +250,120 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
   return realsize;
 }
 
-/*
- * create_wimc_request --
- *
- */
+WimcReq *create_wimc_request(char *name, char *tag,
+                             char *providerURL, char *cbURL,
+                             char *iURL, char *sURL,
+                             char *method, int interval) {
 
-WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
-			     char *providerURL, char *cbURL,
-			     char *iURL, char *sURL,
-			     char *method, int interval) {
-
-  WimcReq *request=NULL;
-  WFetch  *fetch=NULL;
+  WimcReq  *request=NULL;
+  WFetch   *fetch=NULL;
   WContent *content=NULL;
 
   request = (WimcReq *)calloc(1, sizeof(WimcReq));
-  if (request==NULL) {
-    goto done;
+  fetch   = (WFetch *)calloc(1, sizeof(WFetch));
+  content = (WContent *)calloc(1, sizeof(WContent));
+  
+  if (request == NULL || fetch == NULL || content == NULL) {
+      usys_free(request);
+      usys_free(fetch);
+      usys_free(content);
+
+      return NULL;
   }
 
-  if (reqType == (WReqType)WREQ_FETCH) { /* Request to fetch contents. */
+  request->type = WREQ_FETCH;
+  uuid_generate(fetch->uuid);
+  fetch->cbURL    = strdup(cbURL);
+  fetch->interval = interval;
 
-    fetch   = (WFetch *)malloc(sizeof(WFetch));
-    content = (WContent *)malloc(sizeof(WContent));
-
-    if (!fetch && !content) {
-      log_error("Error allocating memory: %d %s",
-		sizeof(WFetch), sizeof(WContent));
-      goto done;
-    }
-
-    request->type = WREQ_FETCH;
-
-    uuid_generate(fetch->uuid);
-    fetch->cbURL = strdup(cbURL);
-    fetch->interval = interval;
-
-    content->name = strdup(name);
-    content->tag  = strdup(tag);
-    content->providerURL = strdup(providerURL);
-    content->method = strdup(method);
-    content->indexURL = strdup(iURL);
-    content->storeURL = strdup(sURL);
-
-    fetch->content = content;
-    request->fetch = fetch;
-
-  } else if (reqType == (WReqType)WREQ_UPDATE) { /* update an existing req */
-
-  }
+  content->name        = strdup(name);
+  content->tag         = strdup(tag);
+  content->providerURL = strdup(providerURL);
+  content->method      = strdup(method);
+  content->indexURL    = strdup(iURL);
+  content->storeURL    = strdup(sURL);
+  
+  fetch->content = content;
+  request->fetch = fetch;
 
   return request;
-
- done:
-  if (content) {
-    free(content->name);
-    free(content->tag);
-    free(content->providerURL);
-    free(content->indexURL);
-    free(content->storeURL);
-    free(content);
-  }
-
-  if (fetch) {
-    free(fetch->cbURL);
-    free(fetch);
-  }
-
-  if (request) {
-    free(request);
-  }
-
-  return NULL;
 }
 
-/*
- * send_request_to_agent --
- *
- */
-static long send_request_to_agent(WReqType reqType, char *agentURL,
-				  json_t *json, int *retCode) {
+static long send_request_to_agent(char *agentURL,
+                                  json_t *json,
+                                  int *retCode) {
 
-  long code=0;
-  CURL *curl=NULL;
-  CURLcode res;
-  char *json_str;
-  struct curl_slist *headers=NULL;
-  struct Response response;
+    long code=0;
+    CURL *curl=NULL;
+    CURLcode res;
+    char *json_str;
+    struct curl_slist *headers=NULL;
+    struct Response response;
 
-  *retCode = 0;
-
-  /* sanity check */
-  if (json==NULL && agentURL==NULL) {
-    return code;
-  }
+    *retCode = 0;
   
-  curl_global_init(CURL_GLOBAL_ALL);
-  curl = curl_easy_init();
-  if (curl == NULL) {
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+    if (curl == NULL) {
+        usys_log_error("Error initializing curl");
+        return code;
+    }
+
+    response.buffer = malloc(1);
+    response.size   = 0;
+    json_str = json_dumps(json, 0);
+
+    /* Add to the header. */
+    headers = curl_slist_append(headers, "Accept: application/json");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "charset: utf-8");
+
+    curl_easy_setopt(curl, CURLOPT_URL, agentURL);
+
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
+
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc/0.1");
+
+    res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK) {
+        log_error("Error sending request to Agent: %s",
+                  curl_easy_strerror(res));
+    } else {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    }
+
+    free(json_str);
+    free(response.buffer);
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
     return code;
-  }
-
-  response.buffer = malloc(1);
-  response.size   = 0;
-  json_str = json_dumps(json, 0);
-
-  /* Add to the header. */
-  headers = curl_slist_append(headers, "Accept: application/json");
-  headers = curl_slist_append(headers, "Content-Type: application/json");
-  headers = curl_slist_append(headers, "charset: utf-8");
-
-  curl_easy_setopt(curl, CURLOPT_URL, agentURL);
-
-  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc/0.1");
-
-  res = curl_easy_perform(curl);
-
-  if (res != CURLE_OK) {
-    log_error("Error sending request to Agent: %s", curl_easy_strerror(res));
-  } else {
-    /* get status code. */
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-    //process_response_from_wimc(reqType, code, &response, id);
-  }
-
-  free(json_str);
-  free(response.buffer);
-  curl_slist_free_all(headers);
-  curl_easy_cleanup(curl);
-  curl_global_cleanup();
-
-  return code;
 }
 
-/*
- * communicate_with_agent --
- *
- */
-long communicate_with_agent(WReqType reqType, WimcReq *request, char *url,
-			    WimcCfg *cfg, uuid_t *uuid) {
+long communicate_with_agent(WimcReq *request,
+                            char *url,
+                            Config *config,
+                            uuid_t *uuid) {
 
-  int ret=FALSE;
   long code=0;
   json_t *json=NULL;
   int agentRetCode=0;
 
-  /* Some sanity check. */
-  if (!request && !url) {
-    return code;
-  }
-
-  ret = serialize_wimc_request(request, &json);
-  if (!ret) {
+  if (!serialize_wimc_request(request, &json)) {
     goto done;
   }
 
-  add_to_tasks(cfg->tasks, request);
+  add_to_tasks(config->tasks, request);
   uuid_copy(*uuid, request->fetch->uuid);
 
-  code = send_request_to_agent(reqType, url, json, &agentRetCode);
+  code = send_request_to_agent(url, json, &agentRetCode);
   if (code == 200) {
     log_debug("Agent command success. CURL return code: %d Agent code: %d",
 	      code, agentRetCode);
