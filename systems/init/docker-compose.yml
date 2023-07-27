@@ -41,7 +41,7 @@ services:
       - ukama-net
     environment:
       - DEBUGMODE=true
-      - BYPASSAUTHMODE=true
+      - BYPASS_AUTH_MODE=true
       - SERVICES_LOOKUP=lookup:9090
       # - CORS_ALLOWALLORIGINS=true
       # - CORS_ALLOWORIGINS=""
@@ -59,7 +59,7 @@ services:
       - ukama-net
     environment:
       - DEBUGMODE=true
-      - BYPASSAUTHMODE=true
+      - BYPASS_AUTH_MODE=true
       - SERVICES_LOOKUP=lookup:9090
       # - CORS_ALLOWALLORIGINS=true
       # - CORS_ALLOWORIGINS=""
