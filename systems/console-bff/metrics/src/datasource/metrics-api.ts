@@ -7,7 +7,11 @@ import {
   LatestMetricRes,
   MetricRes,
 } from "../resolvers/types";
-import { parseLatestMetricRes, parseMetricRes } from "./mapper";
+import {
+  parseLatestMetricRes,
+  parseMetricRes,
+  parseNodeMetricRes,
+} from "./mapper";
 
 const getLatestMetric = async (
   args: GetLatestMetricInput
@@ -28,4 +32,14 @@ const getMetricRange = async (
   }).then(res => parseMetricRes(res.data, args));
 };
 
-export { getLatestMetric, getMetricRange };
+const getNodeRangeMetric = async (
+  args: GetMetricRangeInput
+): Promise<MetricRes> => {
+  const { from, to = 0, step = 1 } = args;
+  return await asyncRestCall({
+    method: API_METHOD_TYPE.GET,
+    url: `${METRIC_API_GW}/v1/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
+  }).then(res => parseNodeMetricRes(res.data, args.type));
+};
+
+export { getLatestMetric, getMetricRange, getNodeRangeMetric };

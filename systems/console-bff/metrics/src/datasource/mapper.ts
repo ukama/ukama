@@ -28,3 +28,12 @@ export const parseMetricRes = (
     values: data.values,
   };
 };
+export const parseNodeMetricRes = (res: any, type: string): MetricRes => {
+  const data = res.data.result[0];
+  return {
+    type: type,
+    values: data.values,
+    env: data.metric.env,
+    nodeid: data.metric.nodeid,
+  };
+};

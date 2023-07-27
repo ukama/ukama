@@ -56,6 +56,7 @@ export type Query = {
   _service: _Service;
   getLatestMetric: LatestMetricRes;
   getMetricRange: MetricRes;
+  getNodeRangeMetric: MetricRes;
 };
 
 
@@ -65,6 +66,11 @@ export type QueryGetLatestMetricArgs = {
 
 
 export type QueryGetMetricRangeArgs = {
+  data: GetMetricRangeInput;
+};
+
+
+export type QueryGetNodeRangeMetricArgs = {
   data: GetMetricRangeInput;
 };
 
@@ -100,6 +106,13 @@ export type GetMetricRangeQueryVariables = Exact<{
 
 
 export type GetMetricRangeQuery = { __typename?: 'Query', getMetricRange: { __typename?: 'MetricRes', env: string, nodeid: string, type: string, values: Array<Array<number>> } };
+
+export type GetNodeRangeMetricQueryVariables = Exact<{
+  data: GetMetricRangeInput;
+}>;
+
+
+export type GetNodeRangeMetricQuery = { __typename?: 'Query', getNodeRangeMetric: { __typename?: 'MetricRes', env: string, type: string, nodeid: string, values: Array<Array<number>> } };
 
 export type MetricRangeSubscriptionVariables = Exact<{
   nodeId: Scalars['String']['input'];
@@ -189,6 +202,44 @@ export function useGetMetricRangeLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
 export type GetMetricRangeQueryHookResult = ReturnType<typeof useGetMetricRangeQuery>;
 export type GetMetricRangeLazyQueryHookResult = ReturnType<typeof useGetMetricRangeLazyQuery>;
 export type GetMetricRangeQueryResult = Apollo.QueryResult<GetMetricRangeQuery, GetMetricRangeQueryVariables>;
+export const GetNodeRangeMetricDocument = gql`
+    query GetNodeRangeMetric($data: GetMetricRangeInput!) {
+  getNodeRangeMetric(data: $data) {
+    env
+    type
+    nodeid
+    values
+  }
+}
+    `;
+
+/**
+ * __useGetNodeRangeMetricQuery__
+ *
+ * To run a query within a React component, call `useGetNodeRangeMetricQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeRangeMetricQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeRangeMetricQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodeRangeMetricQuery(baseOptions: Apollo.QueryHookOptions<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>(GetNodeRangeMetricDocument, options);
+      }
+export function useGetNodeRangeMetricLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>(GetNodeRangeMetricDocument, options);
+        }
+export type GetNodeRangeMetricQueryHookResult = ReturnType<typeof useGetNodeRangeMetricQuery>;
+export type GetNodeRangeMetricLazyQueryHookResult = ReturnType<typeof useGetNodeRangeMetricLazyQuery>;
+export type GetNodeRangeMetricQueryResult = Apollo.QueryResult<GetNodeRangeMetricQuery, GetNodeRangeMetricQueryVariables>;
 export const MetricRangeDocument = gql`
     subscription MetricRange($nodeId: String!, $orgId: String!, $type: String!, $userId: String!, $from: Float!) {
   getMetricRangeSub(

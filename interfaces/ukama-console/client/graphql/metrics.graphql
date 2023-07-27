@@ -18,6 +18,15 @@ query GetMetricRange($data: GetMetricRangeInput!) {
   }
 }
 
+query GetNodeRangeMetric($data: GetMetricRangeInput!) {
+  getNodeRangeMetric(data: $data) {
+    env
+    type
+    nodeid
+    values
+  }
+}
+
 subscription MetricRange(
   $nodeId: String!
   $orgId: String!
