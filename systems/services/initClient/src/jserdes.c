@@ -143,7 +143,7 @@ int serialize_uuids_from_file(SystemRegistrationId *sysReg, json_t **json) {
 
 	str = json_dumps(*json, 0);
 	if (str) {
-		log_debug("Systen Registration JSON: %s", str);
+		log_debug("System Registration JSON: %s", str);
 		free(str);
 	}
 
