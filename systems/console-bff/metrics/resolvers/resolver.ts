@@ -29,6 +29,16 @@ import {
 
 const WS_THREAD = "./threads/MetricsWSThread.ts";
 
+const getErrorRes = (msg: string) =>
+  ({
+    env: "",
+    msg: msg,
+    type: "",
+    nodeid: "",
+    values: [],
+    success: false,
+  } as MetricRes);
+
 @Resolver(MetricRes)
 class MetricResolvers {
   @Query(() => LatestMetricRes)
@@ -60,13 +70,17 @@ class MetricResolvers {
         if (!_data.isError) {
           const res = JSON.parse(_data.data);
           const result = res.data.result[0];
-          if (result.metric) {
+          if (result && result.metric && result.value.length > 0) {
             pubSub.publish(`metric-${type}`, {
+              success: true,
+              msg: "success",
               env: result.metric.env,
               nodeid: nodeId,
               type: type,
               value: result.value,
             } as LatestMetricRes);
+          } else {
+            return getErrorRes("No metric data found");
           }
         }
       });
@@ -105,7 +119,7 @@ class MetricResolvers {
         if (!_data.isError) {
           const res = JSON.parse(_data.data);
           const result = res.data.result[0];
-          if (result && result.metric) {
+          if (result && result.metric && result.value.length > 0) {
             pubSub.publish(`metric-${type}`, {
               env: result.metric.env,
               nodeid: nodeId,
@@ -116,7 +130,7 @@ class MetricResolvers {
                   : [],
             } as LatestMetricRes);
           } else {
-            throw new Error("Error getting metric data");
+            return getErrorRes("No metric data found");
           }
         }
       });

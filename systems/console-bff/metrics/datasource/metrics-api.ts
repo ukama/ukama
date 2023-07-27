@@ -29,7 +29,7 @@ const getMetricRange = async (
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${METRIC_API_GW}/v1/range/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
-  }).then(res => parseMetricRes(res.data, args));
+  }).then(res => parseMetricRes(res.data, args.type));
 };
 
 const getNodeRangeMetric = async (

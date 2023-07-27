@@ -2,11 +2,11 @@ import { metricsClient } from '@/client/ApolloClient';
 import { useMetricRangeSubscription } from '@/generated/metrics';
 import PubSub from 'pubsub-js';
 
-interface IMetricSub {
+interface IMetricSubscription {
   from: number;
 }
 
-const MetricSub = ({ from }: IMetricSub) => {
+const MetricSubscription = ({ from }: IMetricSubscription) => {
   useMetricRangeSubscription({
     client: metricsClient,
     variables: {
@@ -26,4 +26,4 @@ const MetricSub = ({ from }: IMetricSub) => {
   return <div></div>;
 };
 
-export { MetricSub };
+export default MetricSubscription;
