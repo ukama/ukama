@@ -84,8 +84,9 @@ CFILES_TEST   := $(wildcard ./src/*.c ./test/*.c $(UNITY_ROOT)/src/*.c)
 CFILES_TEST   := $(filter-out ./src/main.c, $(CFILES_TEST))
 OBJFILES_TEST := $(CFILES_TEST:.c=.o)
 
+.PHONY: libs
 # Main target for building
-all: $(TARGET_EXEC)
+all: $(TARGET_EXEC) libs
 	@echo Done.
 
 # CLANG FORMAT
@@ -140,7 +141,7 @@ checkcodestyle:
 	done
 	@echo "Ukama Coding Style check is ... PASS"
 
-initClient: $(TARGET_EXEC)
+#initClient: $(TARGET_EXEC)
 test: $(TARGET_EXEC_TEST)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
@@ -157,7 +158,13 @@ $(VENDOR_PKG):
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Memory check
+#libs
+libs: $(TARGET_EXEC)
+	@echo "Copying libs..." 
+	$(eval RET = $(shell ./copyLibs.sh $(TARGET_EXEC)))
+	@echo $(RET)
+
+#Memory check
 memcheck: $(TARGET_EXEC)
 	$(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(TARGET_EXEC)
 
