@@ -8,6 +8,7 @@ import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
 interface INodeOverviewTab {
+  metricFrom: any;
   metrics: any;
   loading: boolean;
   metricsLoading: boolean;
@@ -24,6 +25,7 @@ const NodeOverviewTab = ({
   metrics,
   uptime,
   loading,
+  metricFrom,
   selectedNode,
   metricsLoading,
   connectedUsers = '0',
@@ -32,7 +34,6 @@ const NodeOverviewTab = ({
   isUpdateAvailable,
   getNodeSoftwareUpdateInfos,
 }: INodeOverviewTab) => {
-  console.log('Child Rendered');
   const nodeType = selectedNode?.type || NodeTypeEnum.Hnode;
   const [selected, setSelected] = useState<number>(0);
   useEffect(() => {
@@ -149,6 +150,7 @@ const NodeOverviewTab = ({
               <Typography variant="h6">Node Health</Typography>
               {HealtChartsConfigure[nodeType][0].show && (
                 <LineChart
+                  metricFrom={metricFrom}
                   initData={metrics}
                   loading={metricsLoading}
                   hasData={metrics?.length > 0 || false}
@@ -184,6 +186,7 @@ const NodeOverviewTab = ({
               {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][3]
                 .show && (
                 <LineChart
+                  metricFrom={metricFrom}
                   initData={metrics}
                   loading={metricsLoading}
                   hasData={metrics.length > 0}
@@ -194,6 +197,7 @@ const NodeOverviewTab = ({
               {HealtChartsConfigure[(selectedNode?.type as string) || 'HOME'][4]
                 .show && (
                 <LineChart
+                  metricFrom={metricFrom}
                   initData={metrics}
                   loading={metricsLoading}
                   hasData={metrics.length > 0}
