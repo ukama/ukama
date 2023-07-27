@@ -8,3 +8,6 @@ initClient is:
 3. Send periodic health update, restart, update to init system (using UUID)
 4. De-register itself.
 5. handle GRPC from services within the System.
+
+Work required:
+1. Need to add support for maintaining URL's too in init.
