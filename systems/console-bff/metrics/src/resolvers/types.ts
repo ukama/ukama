@@ -2,16 +2,13 @@ import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
-export class MetricValue {
-  @Field(() => Number)
-  x: number;
-
-  @Field(() => Number)
-  y: number;
-}
-
-@ObjectType()
 export class LatestMetricRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
   @Field()
   env: string;
 
@@ -26,6 +23,12 @@ export class LatestMetricRes {
 }
 @ObjectType()
 export class MetricRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
   @Field()
   env: string;
 

@@ -1,9 +1,9 @@
-import { MetricSub } from '@/pages/node/_metricSub';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
+import MetricSubscription from './metricSubscription';
 
 interface ILineChart {
   metricFrom: any;
@@ -116,7 +116,7 @@ const LineChart = ({
       hasData={initData?.length > 0 || false}
     >
       <Box sx={{ width: '100%' }}>
-        <MetricSub from={metricFrom} />
+        <MetricSubscription from={metricFrom} />
         <HighchartsReact options={options} highcharts={Highcharts} />
       </Box>
     </GraphTitleWrapper>
