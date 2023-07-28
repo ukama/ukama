@@ -52,7 +52,7 @@ func NewInitClient(host string, debug bool) (*InitClient, error) {
 	return rc, nil
 }
 
-func GetHostUrl(host string, icHost string, org string, debug bool) (*url.URL, error) {
+func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, error) {
 	i, err := NewInitClient(icHost, debug)
 	if err != nil {
 		log.Errorf("Failed to get rest cleint.Error %+v", err)
@@ -115,14 +115,18 @@ func CreateHTTPSURL(s SystemIPInfo) (*url.URL, error) {
 }
 
 /* Host is expected to be orgname.systemname */
-func ParseHostString(host string, org string) (*SystemLookupReq, error) {
+func ParseHostString(host string, org *string) (*SystemLookupReq, error) {
 	tok := strings.Split(host, ".")
 	s := &SystemLookupReq{}
 
 	if len(tok) == 1 {
 		/* If it only has system name */
 		s.System = tok[0]
-		s.Org = org
+		if org != nil {
+			s.Org = *org
+		} else {
+			return nil, fmt.Errorf("missing organization string for resolving host")
+		}
 	} else if len(tok) == 2 {
 		s.System = tok[1]
 		s.Org = tok[0]
@@ -132,4 +136,8 @@ func ParseHostString(host string, org string) (*SystemLookupReq, error) {
 
 	return s, nil
 
+}
+
+func CreateHostString(org string, system string) string {
+	return fmt.Sprintf("%s.%s", org, system)
 }

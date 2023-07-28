@@ -29,6 +29,7 @@ type Config struct {
 	OrgName           string            `default:"ukama"`
 	OrgOwnerUUID      string
 	Pushgateway       string `default:"http://localhost:9091"`
+	InitClientHost    string `default:"http://ukamam.initclient:8080"`
 }
 
 var OrgMetrics = []metric.MetricConfig{
