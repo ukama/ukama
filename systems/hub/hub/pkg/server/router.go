@@ -16,12 +16,15 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/minio/minio-go/v7"
 	"github.com/ukama/ukama/systems/common/errors"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/hub/hub/cmd/version"
 	"github.com/ukama/ukama/systems/hub/hub/pkg"
 	"github.com/wI2L/fizz"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 const CappsPath = "/capps"
@@ -32,6 +35,8 @@ type Router struct {
 	storage               pkg.Storage
 	storageRequestTimeout time.Duration
 	chunker               pkg.Chunker
+	msgbus                mb.MsgBusServiceClient
+	baseRoutingKey        msgbus.RoutingKeyBuilder
 }
 
 func (r *Router) Run() {
@@ -43,7 +48,8 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *rest.HttpConfig, storage pkg.Storage, chunker pkg.Chunker, storageTimeout time.Duration) *Router {
+func NewRouter(config *rest.HttpConfig, storage pkg.Storage, chunker pkg.Chunker, storageTimeout time.Duration,
+	msgBus mb.MsgBusServiceClient) *Router {
 	f := rest.NewFizzRouter(config, pkg.ServiceName, version.Version, pkg.IsDebugMode, "")
 
 	r := &Router{
@@ -51,8 +57,13 @@ func NewRouter(config *rest.HttpConfig, storage pkg.Storage, chunker pkg.Chunker
 		port:                  config.Port,
 		storage:               storage,
 		storageRequestTimeout: storageTimeout,
-		chunker:               chunker}
+		chunker:               chunker,
+		msgbus:                msgBus,
+		baseRoutingKey:        msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+	}
+
 	r.init()
+
 	return r
 }
 
@@ -162,6 +173,18 @@ func (r *Router) cappPutHandler(c *gin.Context) error {
 			log.Errorf("Error chunking artifact: %s %s. Error: %+v", name, ver, err)
 		}
 	}()
+
+	capp := &epb.CappCreatedEvent{
+		Name:    name,
+		Version: ver,
+	}
+
+	route := r.baseRoutingKey.SetAction("create").SetObject("capp").MustBuild()
+
+	err = r.msgbus.PublishRequest(route, capp)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", capp, route, err.Error())
+	}
 
 	return nil
 }

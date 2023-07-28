@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"time"
+
 	cors "github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
@@ -12,6 +14,9 @@ type Config struct {
 	Server            rest.HttpConfig
 	Storage           MinioConfig
 	Chunker           ChunkerConfig
+	Service           *config.Service
+	Queue             *config.Queue     `default:"{}"`
+	MsgClient         *config.MsgClient `default:"{}"`
 }
 
 type MinioConfig struct {
@@ -29,7 +34,7 @@ type ChunkerConfig struct {
 	TimeoutSecond int
 }
 
-func NewConfig() *Config {
+func NewConfig(name string) *Config {
 	return &Config{
 		Server: rest.HttpConfig{
 			Port: 8080,
@@ -48,6 +53,11 @@ func NewConfig() *Config {
 		Chunker: ChunkerConfig{
 			Host:          "http://localhost:8080",
 			TimeoutSecond: 3,
+		},
+
+		Service: config.LoadServiceHostConfig(name),
+		MsgClient: &config.MsgClient{
+			Timeout: 5 * time.Second,
 		},
 	}
 }

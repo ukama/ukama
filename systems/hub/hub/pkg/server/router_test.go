@@ -20,6 +20,8 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/hub/hub/mocks"
 	"github.com/ukama/ukama/systems/hub/hub/pkg"
+
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
 var emptyChunker = &mocks.Chunker{}
@@ -39,7 +41,7 @@ func Test_RouterPing(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 	s := mocks.Storage{}
-	r := NewRouter(defaultCongif, &s, emptyChunker, time.Second).fizz.Engine()
+	r := NewRouter(defaultCongif, &s, emptyChunker, time.Second, nil).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -59,6 +61,9 @@ func Test_RouterPut(t *testing.T) {
 	ch := mocks.Chunker{}
 	ch.On("Chunk", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
 	ver := semver.MustParse("1.2.3")
 	s.On("PutFile", mock.Anything, "test-app", ver, pkg.TarGzExtension,
 		mock.MatchedBy(func(r io.Reader) bool {
@@ -70,7 +75,8 @@ func Test_RouterPut(t *testing.T) {
 			assert.Equal(t, st.Size(), int64(len(b)))
 			return true
 		})).Return("", nil)
-	r := NewRouter(defaultCongif, &s, &ch, time.Second).fizz.Engine()
+
+	r := NewRouter(defaultCongif, &s, &ch, time.Second, msgbusClient).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -92,7 +98,7 @@ func Test_RouterPutNotAtTargzFile(t *testing.T) {
 	req, _ := http.NewRequest("PUT", "/capps/test-app/1.2.3", bytes.NewReader(token))
 	s := mocks.Storage{}
 
-	r := NewRouter(defaultCongif, &s, emptyChunker, time.Second).fizz.Engine()
+	r := NewRouter(defaultCongif, &s, emptyChunker, time.Second, nil).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -116,7 +122,7 @@ func Test_RouterGet(t *testing.T) {
 	ver := semver.MustParse("1.2.3")
 
 	s.On("GetFile", mock.Anything, "test-app", ver, pkg.TarGzExtension).Return(io.NopCloser(bytes.NewReader(cont)), nil)
-	r := NewRouter(defaultCongif, &s, emptyChunker, time.Second).fizz.Engine()
+	r := NewRouter(defaultCongif, &s, emptyChunker, time.Second, nil).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -205,7 +211,7 @@ func Test_RouterGetReturnError(t *testing.T) {
 
 			req, _ := http.NewRequest("GET", tt.request, nil)
 
-			r := NewRouter(defaultCongif, tt.storageMockFunc(), emptyChunker, time.Second).fizz.Engine()
+			r := NewRouter(defaultCongif, tt.storageMockFunc(), emptyChunker, time.Second, nil).fizz.Engine()
 
 			// act
 			r.ServeHTTP(w, req)
@@ -262,7 +268,7 @@ func TestListApps(t *testing.T) {
 			s := mocks.Storage{}
 
 			s.On("ListVersions", mock.Anything, "test-app").Return(test.artifacts, nil)
-			r := NewRouter(defaultCongif, &s, emptyChunker, time.Second).fizz.Engine()
+			r := NewRouter(defaultCongif, &s, emptyChunker, time.Second, nil).fizz.Engine()
 
 			// act
 			r.ServeHTTP(w, req)
