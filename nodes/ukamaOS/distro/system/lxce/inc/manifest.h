@@ -16,48 +16,41 @@
 
 #define MANIFEST_MAX_SIZE 1000000 /* 1MB max. file size */
 
-#define JSON_VERSION  "version"
-#define JSON_SERIAL   "serial"
-#define JSON_TARGET   "target"
+#define JTAG_VERSION  "version"
+#define JTAG_TARGET   "target"
+#define JTAG_BOOT     "boot"
+#define JTAG_SERVICES "services"
+#define JTAG_REBOOT   "reboot"
 
-#define JSON_CAPP     "ukama-cApp"
-
-/* defines for Ukama Contained App cApp */
-#define JSON_NAME      "name"
-#define JSON_TAG       "tag"
-#define JSON_RESTART   "restart"
-#define JSON_CONTAINED "contained"
-
-#define MANIFEST_ALL    "all"
-#define MANIFEST_SERIAL "serial"
-
-#define TRUE  1
-#define FALSE 0
+#define JTAG_NAME     "name"
+#define JTAG_TAG       "tag"
+#define JTAG_RESTART   "restart"
 
 typedef struct _arrayElem {
+    char *name;      /* Name of the cApp */
+    char *tag;       /* cApp tag/version */
+    char *rootfs;    /* Location where the rootfs is at */
+    int  restart;    /* 1: yes, always restart. 0: No */
+    int  contained;
 
-  char *name;      /* Name of the cApp */
-  char *tag;       /* cApp tag */
-  char *contained; /* where this app is contained (boot, service, shutdown) */
-  char *rootfs;
-  int  restart;    /* 1: yes, always restart. 0: No */
-
-  struct _arrayElem *next; /* Next in the list */
+    struct _arrayElem *next; /* Next in the list */
 } ArrayElem;
 
 typedef struct {
 
-  char *version; /* version of manifest file */
-  char *serial;  /* Serial number this config applies (optional) */
-  char *target;  /* serial or anyone */
+    char *version; /* version of manifest file */
+    char *serial;  /* Serial number this config applies (optional) */
+    char *target;  /* serial or anyone */
 
-  ArrayElem *arrayElem;  /* cApps array elements */
+    ArrayElem *boot;
+    ArrayElem *services;
+    ArrayElem *reboot;
 } Manifest;
 
 /* Function headers. */
-int process_manifest(char *fileName, Manifest *manifest, void *space);
+int process_manifest(Manifest **manifest, char *fileName, void *space);
 void get_containers_local_path(Manifest *manifest, Config *config);
-void clear_manifest(Manifest *manifest);
-void copy_capps_to_cspace_rootfs(Manifest *manifest, char *sPath, char *dPath);
+void free_manifest(Manifest *manifest);
+void copy_capps_to_rootfs(Manifest *manifest);
 
 #endif /* LXCE_MANIFEST_H */
