@@ -130,31 +130,31 @@ func initMemberDB(d sql.Db, p providers.OrgClientProvider) {
 			var OwnerUUID uuid.UUID
 			var err error
 
-			if OwnerUUID, err = uuid.FromString(serviceConfig.OrgOwnerUUID); err != nil {
+			if OwnerUUID, err = uuid.FromString(serviceConfig.OwnerId); err != nil {
 				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGOWNERUUID", err)
 			}
 
 			/* TODO: validate the user from user services */
-			u, err := p.GetUserById(serviceConfig.OrgOwnerUUID)
+			u, err := p.GetUserById(serviceConfig.OwnerId)
 			if err != nil {
-				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OrgOwnerUUID, err)
+				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OwnerId, err)
 			}
 
 			o, err := p.GetOrgByName(serviceConfig.OrgName)
 			if err != nil {
-				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OrgOwnerUUID, err)
+				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OwnerId, err)
 			}
 
 			if u.Id != o.Org.Owner {
-				log.Fatalf("Failed to validate user %s as owner of org.", serviceConfig.OrgOwnerUUID)
+				log.Fatalf("Failed to validate user %s as owner of org.", serviceConfig.OwnerId)
 			}
 
 			if u.IsDeactivated {
-				log.Fatalf("User is %s is in %s state", serviceConfig.OrgOwnerUUID, "deactivated")
+				log.Fatalf("User is %s is in %s state", serviceConfig.OwnerId, "deactivated")
 			}
 
 			if o.Org.IsDeactivated {
-				log.Fatalf("Org is %s in %s state", serviceConfig.OrgOwnerUUID, "deactivated")
+				log.Fatalf("Org is %s in %s state", serviceConfig.OwnerId, "deactivated")
 			}
 
 			member := &db.Member{
