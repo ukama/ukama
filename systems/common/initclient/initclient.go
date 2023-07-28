@@ -52,10 +52,10 @@ func NewInitClient(host string, debug bool) (*InitClient, error) {
 	return rc, nil
 }
 
-func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, error) {
+func GetHostUrl(host string, icHost string, org string, debug bool) (*url.URL, error) {
 	i, err := NewInitClient(icHost, debug)
 	if err != nil {
-		log.Errorf("Failed to get rest client.Error %+v", err)
+		log.Errorf("Failed to get rest cleint.Error %+v", err)
 		return nil, err
 	}
 
@@ -69,12 +69,12 @@ func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, 
 
 	resp, err := i.C.R().
 		SetError(errStatus).
-		Get(i.URL.String() + SYSTEM_EP + "?org=" + *org + "&name=" + s.System)
+		Get(i.URL.String() + SYSTEM_EP + "?org=" + s.System + "&name=" + s.System)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to InitClient. Error %s", err.Error())
 
-		return nil, fmt.Errorf("api request to initclient system failure: %w", err)
+		return nil, fmt.Errorf("api request to initcleint system failure: %w", err)
 	}
 
 	if !resp.IsSuccess() {
@@ -115,31 +115,21 @@ func CreateHTTPSURL(s SystemIPInfo) (*url.URL, error) {
 }
 
 /* Host is expected to be orgname.systemname */
-func ParseHostString(host string, org *string) (*SystemLookupReq, error) {
+func ParseHostString(host string, org string) (*SystemLookupReq, error) {
 	tok := strings.Split(host, ".")
 	s := &SystemLookupReq{}
 
 	if len(tok) == 1 {
 		/* If it only has system name */
 		s.System = tok[0]
-		if org != nil {
-			s.Org = *org
-		} else {
-			return nil, fmt.Errorf("missing organization string for resolving host")
-		}
+		s.Org = org
 	} else if len(tok) == 2 {
 		s.System = tok[1]
 		s.Org = tok[0]
-	}
-
-	if s.System == "" || s.Org == "" {
+	} else {
 		return nil, fmt.Errorf("wrong hostname %s. Expected format orgname.systemname", host)
 	}
 
 	return s, nil
 
-}
-
-func CreateHostString(org string, system string) string {
-	return fmt.Sprintf("%s.%s", org, system)
 }
