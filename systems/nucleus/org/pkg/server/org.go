@@ -8,9 +8,11 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+
 	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
 	"github.com/ukama/ukama/systems/nucleus/orgs/pkg"
@@ -27,22 +29,26 @@ type OrgService struct {
 	userRepo            db.UserRepo
 	orchestratorService providers.OrchestratorProvider
 	userService         providers.UserClientProvider
+	registrySystem      providers.RegistryProvider
 	orgName             string
 	baseRoutingKey      msgbus.RoutingKeyBuilder
 	msgbus              mb.MsgBusServiceClient
 	pushgateway         string
+	debug               bool
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, user providers.UserClientProvider, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, user providers.UserClientProvider, registry providers.RegistryProvider, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {
 	return &OrgService{
 		orgRepo:             orgRepo,
 		userRepo:            userRepo,
 		orchestratorService: orch,
 		userService:         user,
+		registrySystem:      registry,
 		orgName:             defaultOrgName,
 		baseRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		msgbus:              msgBus,
 		pushgateway:         pushgateway,
+		debug:               debug,
 	}
 }
 
@@ -70,6 +76,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		// 	OwnerId: org.Owner.String(),
 		// })
 
+		/* Not required here:  Adding owner as member is done in member service on init */
 		// return err
 		return nil
 	})
@@ -193,7 +200,7 @@ func (o *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 
 func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterUserResponse, error) {
 	// Get the Organization
-	_, err := o.orgRepo.GetByName(o.orgName)
+	org, err := o.orgRepo.GetByName(o.orgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -206,16 +213,24 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	}
 
 	_, err = o.userRepo.Get(userUUID)
-	if err == nil {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"user is already registered")
+	if err != nil {
+		if !sql.IsNotFoundError(err) {
+			return nil, status.Errorf(codes.FailedPrecondition,
+				"failed to check user")
+		}
+	} else {
+		if !sql.IsNotFoundError(err) {
+			return nil, status.Errorf(codes.FailedPrecondition,
+				"user already exist")
+		}
 	}
 
 	user := &db.User{Uuid: userUUID}
 
 	err = o.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
+		/* Add user to members db of org */
+		return o.registrySystem.AddMember(org.Name, user.Uuid.String())
 
-		return nil
 	})
 
 	if err != nil {
