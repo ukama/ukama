@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"time"
 
@@ -44,6 +45,8 @@ func main() {
 
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 
+	go msgBusListener(mbClient)
+
 	r.Run()
 }
 
@@ -52,4 +55,13 @@ func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	config.LoadConfig(pkg.ServiceName, serviceConfig)
 	pkg.IsDebugMode = serviceConfig.DebugMode
+}
+
+func msgBusListener(m mb.MsgBusServiceClient) {
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }
