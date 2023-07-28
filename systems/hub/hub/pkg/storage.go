@@ -11,12 +11,12 @@ import (
 	"github.com/Masterminds/semver/v3"
 
 	"io"
-	"log"
 	"regexp"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/sirupsen/logrus"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // app name regex. Follows OCI image naming standards
@@ -68,13 +68,13 @@ func NewMinioWrapper(options *MinioConfig) *MinioWrapper {
 	}
 
 	if !options.SkipBucketCreation {
-		logrus.Infof("Creating bucket %s", m.bucketName)
+		log.Infof("Creating bucket %s", m.bucketName)
 		err := m.createBucketIfMissing()
 		if err != nil {
-			logrus.Fatalf("Failed to create bucket %s: %v", m.bucketName, err)
+			log.Fatalf("Failed to create bucket %s: %v", m.bucketName, err)
 		}
 	} else {
-		logrus.Infof("Skipping bucket creation")
+		log.Infof("Skipping bucket creation")
 	}
 
 	return m
@@ -104,16 +104,16 @@ func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, version
 		return "", err
 	}
 
-	logrus.Infof("Successfully uploaded %s of size %v\n", artifactName, n.Size)
+	log.Infof("Successfully uploaded %s of size %v\n", artifactName, n.Size)
 	if IsDebugMode {
-		logrus.Infof("File info: %+v", n)
+		log.Infof("File info: %+v", n)
 	}
 	return n.Location, nil
 }
 
 func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (reader io.ReadCloser, err error) {
 	fPath := formatCappFilename(artifactName, version, ext)
-	logrus.Infof("Downloading %s from bucket %s", fPath, m.bucketName)
+	log.Infof("Downloading %s from bucket %s", fPath, m.bucketName)
 	o, err := m.minioClient.GetObject(ctx, m.bucketName, fPath, minio.GetObjectOptions{})
 
 	if err != nil {
@@ -125,7 +125,7 @@ func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, version
 
 func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*[]AritfactInfo, error) {
 	path := formatCappPath(artifactName) + "/"
-	logrus.Infof("Listing objects in %s", path)
+	log.Infof("Listing objects in %s", path)
 	objectCh := m.minioClient.ListObjects(ctx, m.bucketName, minio.ListObjectsOptions{
 		Prefix:       path,
 		Recursive:    false,
@@ -137,10 +137,10 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 
 	for object := range objectCh {
 		if object.Err != nil {
-			logrus.Errorf("Failed to list objects: %v", object.Err)
+			log.Errorf("Failed to list objects: %v", object.Err)
 			return nil, object.Err
 		}
-		logrus.Infof("Listing object %s", object.Key)
+		log.Infof("Listing object %s", object.Key)
 
 		if strings.HasSuffix(object.Key, ChunkIndexExtension) {
 			chunked[strings.TrimSuffix(object.Key, ChunkIndexExtension)] = true
@@ -150,7 +150,7 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 			version := strings.TrimSuffix(strings.TrimPrefix(object.Key, formatCappPath(artifactName)+"/"), TarGzExtension)
 			_, err := semver.NewVersion(version)
 			if err != nil {
-				logrus.Errorf("Failed to parse version %s: %v", version, err)
+				log.Errorf("Failed to parse version %s: %v", version, err)
 				version = "INVALID_VERSION_FORMAT"
 			}
 
@@ -173,7 +173,7 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 
 func (m *MinioWrapper) ListApps(ctx context.Context) (*[]CappInfo, error) {
 
-	logrus.Infof("Listing all objects")
+	log.Infof("Listing all objects")
 	objectCh := m.minioClient.ListObjects(ctx, m.bucketName, minio.ListObjectsOptions{
 		Prefix:       cappsRoot,
 		Recursive:    false,
@@ -184,7 +184,7 @@ func (m *MinioWrapper) ListApps(ctx context.Context) (*[]CappInfo, error) {
 
 	for object := range objectCh {
 		if object.Err != nil {
-			logrus.Errorf("Failed to list objects: %v", object.Err)
+			log.Errorf("Failed to list objects: %v", object.Err)
 			return nil, object.Err
 		}
 
@@ -220,14 +220,14 @@ func (m *MinioWrapper) createBucketIfMissing() error {
 
 	exists, err := m.minioClient.BucketExists(ctx, m.bucketName)
 	if err == nil && exists {
-		logrus.Infof("Bucket %s already exists", m.bucketName)
+		log.Infof("Bucket %s already exists", m.bucketName)
 		return nil
 	}
 	if err != nil {
 		return errors.Wrap(err, "failed to check if bucket exists")
 	}
 
-	logrus.Infof("Bucket %s does not exist, creating it", m.bucketName)
+	log.Infof("Bucket %s does not exist, creating it", m.bucketName)
 	objLocking := true
 	if IsDebugMode {
 		objLocking = false
@@ -239,7 +239,7 @@ func (m *MinioWrapper) createBucketIfMissing() error {
 	if err != nil {
 		errResponse := minio.ToErrorResponse(err)
 		if errResponse.Code == "NotImplemented" {
-			logrus.Errorf("Bucket creation is not supported by the server. Try enabling debug mode if minio is running in FS mode")
+			log.Errorf("Bucket creation is not supported by the server. Try enabling debug mode if minio is running in FS mode")
 			return fmt.Errorf("bucket creation not supported by the server")
 		} else {
 			return err

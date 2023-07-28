@@ -2,17 +2,16 @@ package server
 
 import (
 	"bytes"
-	"reflect"
-
-	"github.com/minio/minio-go/v7"
-
 	"crypto/rand"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"testing"
 	"time"
+
+	"github.com/minio/minio-go/v7"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/gin-contrib/cors"

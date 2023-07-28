@@ -15,12 +15,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/minio/minio-go/v7"
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/errors"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/hub/hub/cmd/version"
 	"github.com/ukama/ukama/systems/hub/hub/pkg"
 	"github.com/wI2L/fizz"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const CappsPath = "/capps"
@@ -34,7 +35,8 @@ type Router struct {
 }
 
 func (r *Router) Run() {
-	logrus.Info("Listening on port ", r.port)
+	log.Info("Listening on port ", r.port)
+
 	err := r.fizz.Engine().Run(fmt.Sprint(":", r.port))
 	if err != nil {
 		panic(err)
@@ -63,7 +65,7 @@ func (r *Router) init() {
 }
 
 func (r *Router) cappGetHandler(c *gin.Context, req *CAppRequest) error {
-	logrus.Infof("Getting artifact: %s %s", req.Name, req.ArtifactName)
+	log.Infof("Getting artifact: %s %s", req.Name, req.ArtifactName)
 	v, ext, err := parseArtifactName(req.ArtifactName)
 	if err != nil {
 		return rest.HttpError{
@@ -117,7 +119,7 @@ func parseArtifactName(name string) (ver *semver.Version, ext string, err error)
 func (r *Router) cappPutHandler(c *gin.Context) error {
 	name := c.Param("name")
 	ver := c.Param("version")
-	logrus.Infof("Adding artifact: %s %s", name, ver)
+	log.Infof("Adding artifact: %s %s", name, ver)
 	ctx, cancel := context.WithTimeout(context.Background(), r.storageRequestTimeout)
 	defer cancel()
 
@@ -130,7 +132,7 @@ func (r *Router) cappPutHandler(c *gin.Context) error {
 
 	uncompressedStream, err := gzip.NewReader(bufReader)
 	if err != nil {
-		logrus.Infof("Failed to read gz file: %v", err)
+		log.Infof("Failed to read gz file: %v", err)
 		return rest.HttpError{
 			HttpCode: http.StatusBadRequest,
 			Message:  "Not a tar.gz file",
@@ -140,7 +142,7 @@ func (r *Router) cappPutHandler(c *gin.Context) error {
 	tr := tar.NewReader(uncompressedStream)
 	_, err = tr.Next()
 	if err != nil {
-		logrus.Infof("Failed to read tar file: %v", err)
+		log.Infof("Failed to read tar file: %v", err)
 		return rest.HttpError{
 			HttpCode: http.StatusBadRequest,
 			Message:  "Not a tar.gz file",
@@ -150,14 +152,14 @@ func (r *Router) cappPutHandler(c *gin.Context) error {
 
 	loc, err := r.storage.PutFile(ctx, name, v, pkg.TarGzExtension, bufReader)
 	if err != nil {
-		logrus.Errorf("Error adding artifact: %s %s", name, ver)
+		log.Errorf("Error adding artifact: %s %s", name, ver)
 		return err
 	}
 
 	go func() {
 		err = r.chunker.Chunk(name, v, loc)
 		if err != nil {
-			logrus.Errorf("Error chunking artifact: %s %s. Error: %+v", name, ver, err)
+			log.Errorf("Error chunking artifact: %s %s. Error: %+v", name, ver, err)
 		}
 	}()
 
@@ -165,7 +167,7 @@ func (r *Router) cappPutHandler(c *gin.Context) error {
 }
 
 func (r *Router) cappListVersionsHandler(c *gin.Context, req *VersionListRequest) (*VersionListResponse, error) {
-	logrus.Infof("Getting version list: %s", req.Name)
+	log.Infof("Getting version list: %s", req.Name)
 	ctx, cancel := context.WithTimeout(context.Background(), r.storageRequestTimeout)
 	defer cancel()
 
@@ -212,7 +214,7 @@ func (r *Router) cappListVersionsHandler(c *gin.Context, req *VersionListRequest
 }
 
 func (r *Router) listAllAppsHandler(c *gin.Context) (*CAppsListResponse, error) {
-	logrus.Infof("Getting list of apps")
+	log.Infof("Getting list of apps")
 	ctx, cancel := context.WithTimeout(context.Background(), r.storageRequestTimeout)
 	defer cancel()
 

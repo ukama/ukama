@@ -11,8 +11,9 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/errors"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Chunker interface {
@@ -62,13 +63,13 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		logrus.Errorf("chunk server returned status code %d", resp.StatusCode)
+		log.Errorf("chunk server returned status code %d", resp.StatusCode)
 		// print response body
 		b, errB := io.ReadAll(resp.Body)
 		if errB != nil {
-			logrus.Errorf("failed to read response body. Error: %+v", err)
+			log.Errorf("failed to read response body. Error: %+v", err)
 		}
-		logrus.Errorf("response body: %s", string(b))
+		log.Errorf("response body: %s", string(b))
 		return fmt.Errorf("failed to chunk file")
 	}
 

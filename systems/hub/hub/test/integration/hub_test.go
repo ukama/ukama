@@ -6,15 +6,16 @@ package integration
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-resty/resty/v2"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/config"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/systems/common/config"
 )
 
 type TestConfig struct {
@@ -30,8 +31,8 @@ func init() {
 	}
 
 	config.LoadConfig("integration", tConfig)
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
-	logrus.Infof("%+v", tConfig)
+	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	log.Infof("%+v", tConfig)
 }
 
 // Call webhost endpoint and check response
@@ -51,7 +52,7 @@ func Test_AddCApp(t *testing.T) {
 		r, err := rest.R().SetHeader("Content-Type", "application/octet-stream").SetBody(con).Put(appUrl)
 
 		assert.NoError(tt, err)
-		logrus.Infof("Response: '%s'", r.String())
+		log.Infof("Response: '%s'", r.String())
 		assert.Equal(tt, http.StatusCreated, r.StatusCode())
 	})
 
@@ -75,7 +76,7 @@ func Test_AddCApp(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			// wait for chunk to be created for 3 mins
 			time.Sleep(time.Second * 60)
-			logrus.Infof("Getting chunk index attempt %d", i)
+			log.Infof("Getting chunk index attempt %d", i)
 			r, err := rest.R().Get(appUrl + ".caidx")
 			if err != nil {
 				assert.FailNow(tt, err.Error())
