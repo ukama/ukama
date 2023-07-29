@@ -48,3 +48,7 @@ type CApp struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
+
+type CAppsLocationResponse struct {
+	Endpoint string `json:"endpoint"`
+}

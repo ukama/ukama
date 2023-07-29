@@ -51,6 +51,7 @@ type Storage interface {
 	GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (reader io.ReadCloser, err error)
 	ListVersions(ctx context.Context, artifactName string) (*[]AritfactInfo, error)
 	ListApps(ctx context.Context) (*[]CappInfo, error)
+	GetEndpoint() string
 }
 
 type MinioWrapper struct {
@@ -192,6 +193,10 @@ func (m *MinioWrapper) ListApps(ctx context.Context) (*[]CappInfo, error) {
 	}
 
 	return &ls, nil
+}
+
+func (m *MinioWrapper) GetEndpoint() string {
+	return m.minioClient.EndpointURL().String()
 }
 
 // host in host:port format

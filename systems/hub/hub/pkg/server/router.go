@@ -73,6 +73,7 @@ func (r *Router) init() {
 	capps.PUT("/:name/:version", nil, tonic.Handler(r.cappPutHandler, http.StatusCreated))
 	capps.GET("/:name", nil, tonic.Handler(r.cappListVersionsHandler, http.StatusOK))
 	capps.GET("/", nil, tonic.Handler(r.listAllAppsHandler, http.StatusOK))
+	capps.GET("/location", nil, tonic.Handler(r.cappLocationHandler, http.StatusOK))
 }
 
 func (r *Router) cappGetHandler(c *gin.Context, req *CAppRequest) error {
@@ -233,6 +234,14 @@ func (r *Router) cappListVersionsHandler(c *gin.Context, req *VersionListRequest
 	return &VersionListResponse{
 		Name:     req.Name,
 		Versions: &vers,
+	}, nil
+}
+
+func (r *Router) cappLocationHandler(c *gin.Context) (*CAppsLocationResponse, error) {
+	loc := r.storage.GetEndpoint()
+
+	return &CAppsLocationResponse{
+		Endpoint: loc,
 	}, nil
 }
 

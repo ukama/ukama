@@ -18,6 +18,20 @@ type Storage struct {
 	mock.Mock
 }
 
+// GetEndpoint provides a mock function with given fields:
+func (_m *Storage) GetEndpoint() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // GetFile provides a mock function with given fields: ctx, artifactName, version, ext
 func (_m *Storage) GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (io.ReadCloser, error) {
 	ret := _m.Called(ctx, artifactName, version, ext)
