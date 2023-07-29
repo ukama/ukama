@@ -45,6 +45,9 @@ func (this *GetEmailByIdResponse) Validate() error {
 	return nil
 }
 func (this *SendEmailRequest) Validate() error {
+	if this.TemplateName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("TemplateName", fmt.Errorf(`value '%v' must not be an empty string`, this.TemplateName))
+	}
 	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }

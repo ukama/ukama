@@ -64,11 +64,13 @@ func (m *Mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, err
 	return res, nil
 }
 
-func (m *Mailer) GetEmailById (req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
+func (m *Mailer) GetEmailById(mailerId string) (*pb.GetEmailByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := m.client.GetEmailById(ctx, req)
+	res, err := m.client.GetEmailById(ctx, &pb.GetEmailByIdRequest{
+		MailId:mailerId,
+	})
 	if err != nil {
 		return nil, err
 	}
