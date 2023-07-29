@@ -43,7 +43,7 @@ services:
       - MSGCLIENT_HOST=msgclient-hub:9095
       - HUB_SERVICE_HOST=hub
       - HUB_SERVICE_PORT=9090
-      # - CHUNKER_HOST=http://distr:8098
+      - CHUNKER_HOST=http://distr:8098
     restart: always
     networks:
       hub-net:
@@ -51,21 +51,23 @@ services:
       - msgclient-hub
 
 
-  # distr: # Here, this is where you can configure your gateway.
-    # build: .
-    # ports: [ "8098:8098", "8099:8099" ]
-    # networks:
-      # hub-net:
-    # restart: always
-    # environment:
-      # - DEBUGMODE=TRUE
-      # - STORE_ENDPOINT=minio:9000
-      # - DISTRIBUTION_CHUNK_STORES=s3+http://minio:9000/artifact-hub-local-test/chunks?lookup\=path
-      # - DISTRIBUTION_ADDRESSES=localhost:8099/chunks
-      # - STORAGE_ENDPOINT=minio:9000
-      # - STORAGE_ACCESSKEY=minio
-      # - STORAGE_SECRETKEY=minio123
-      #
+  distr: # Here, this is where you can configure your gateway.
+    build:
+      context: ./distributor
+      dockerfile: ./Dockerfile
+    ports: [ "8898:8098", "8899:8099" ]
+    environment:
+      - DEBUGMODE=TRUE
+      - STORE_ENDPOINT=minio:9000
+      - DISTRIBUTION_CHUNK_STORES=s3+http://minio:9000/artifact-hub-local-test/chunks?lookup\=path
+      - DISTRIBUTION_ADDRESSES=localhost:8899/chunks
+      - STORAGE_ENDPOINT=minio:9000
+      - STORAGE_ACCESSKEY=minio
+      - STORAGE_SECRETKEY=minio123
+    networks:
+      hub-net:
+    restart: always
+
 
 
   msgclient-hub:
