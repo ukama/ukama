@@ -326,7 +326,7 @@ func CreateChunkForBlob(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg
 	/* Create a index file. */
 	logrus.Debugf("Creating index for a  file %s.", content)
 	//pbi := NewProgressBar("index ")
-	index, stats, err := casync.IndexFromFile(ctx, content, chunkCfg.N, chunkCfg.MinChunkSize, chunkCfg.AvgChunkSize, chunkCfg.MaxChunkSize, nil)
+	index, stats, err := casync.IndexFromFile(ctx, content, chunkCfg.N, chunkCfg.MinChunkSize, chunkCfg.AvgChunkSize, chunkCfg.MaxChunkSize, casync.NullProgressBar{})
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +335,7 @@ func CreateChunkForBlob(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg
 	/* Create chunks for the file */
 	logrus.Debugf("Creating chunks for a  file %s and storing to %s.", content, store)
 	if s != nil {
-		err = casync.ChopFile(ctx, content, index.Chunks, s, chunkCfg.N, nil)
+		err = casync.ChopFile(ctx, content, index.Chunks, s, chunkCfg.N, casync.NullProgressBar{})
 		if err != nil {
 			return nil, err
 		}
