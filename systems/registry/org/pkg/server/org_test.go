@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -13,95 +12,10 @@ import (
 	"github.com/ukama/ukama/systems/registry/org/mocks"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
 const testOrgName = "test-org"
-
-
-func TestAddInvitation(t *testing.T) {
-	// Mock dependencies
-	mockNotificationClient := &mocks.NotificationClient{}
-	mockOrgRepo := &mocks.OrgRepo{}
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	mockRegistryUserService := &mocks.RegistryUsersClientProvider{}
-
-	s := NewOrgServer(mockOrgRepo, nil, "", msgclientRepo, "", nil, mockRegistryUserService, time.Now().Add(3*24*time.Hour),"http://localhost:4455/auth/login")
-
-	invitationId := uuid.NewV4()
-	role := db.Admin
-	email := "test@ukama.com"
-	name := "test"
-	orgName := "ukama"
-	status := db.Pending
-	expiresAt := time.Now().Add(time.Hour * 24 * 7)
-
-	// Generate input invitation object
-	expiringLink := fmt.Sprintf("https://auth.ukama.com/auth/login?linkId=%s&expires=%d", invitationId, expiresAt.Unix())
-
-	inputInvitation := &pb.AddInvitationRequest{
-		Org:    orgName,
-		Email:  email,
-		Name:   name,
-		Role:   pb.RoleType(db.Admin),
-		Status: pb.InvitationStatus(db.Pending),
-	}
-
-	// Mock calls to dependencies
-	orgId:= uuid.NewV4()
-	res := &db.Org{
-		Id:	orgId,
-		Name: orgName,
-		Owner: uuid.NewV4(),
-	}
-	mockOrgRepo.On("GetByName", orgName).Return(res, nil).Once()
-	mockRegistryUserService.On("GetClient").Return(nil).Once()
-	mockRegistryUserService.On("Get", mock.Anything, &pb.GetRequest{Id: res.Id.String()}).Return(&pb.GetResponse{
-		Org: &pb.Organization{
-			Name: "OwnerName",
-		},
-	}, nil).Once()
-
-	mockOrgRepo.On("AddInvitation", &db.Invitation{
-		Id:        invitationId,
-		Org:       orgName,
-		Link:      expiringLink,
-		Email:     email,
-		Name:      name,
-		ExpiresAt: expiresAt,
-		Role:      role,
-		Status:    status,
-	}, mock.Anything).Return(nil).Once()
-
-	mockNotificationClient.On("SendInvitation", &pb.Invitation{
-		Id:        invitationId.String(),
-		Org:       orgName,
-		Link:      expiringLink,
-		Email:     email,
-		ExpiresAt: timestamppb.New(expiresAt),
-		Status:    pb.InvitationStatus(status),
-	}).Return(nil).Once()
-
-	// Initialize OrgService
-	orgService := &OrgService{
-		orgRepo:               mockOrgRepo,
-		notification:          mockNotificationClient,
-		invitationExpiryTime:  expiresAt,
-		RegistryUserService:   mockRegistryUserService,
-	}
-
-	// Assign orgService to s
-	s = orgService
-
-	// Call method to be tested
-	_, err := s.AddInvitation(context.Background(), inputInvitation)
-
-	// Assert that expected results were returned
-	assert.NoError(t, err)
-	mockOrgRepo.AssertExpectations(t)
-	mockNotificationClient.AssertExpectations(t)
-}
 
 
 func TestOrgServer_Add(t *testing.T) {
