@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
         goto cleanup;
     }
 
-    getchar();
+    pause();
 
 cleanup:
     ulfius_stop_framework(&inst);

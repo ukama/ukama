@@ -177,32 +177,6 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
   return realsize;
 }
 
-#if 0
-static void process_response_from_wimc(ReqType reqType, long statusCode,
-				       void *resp, uuid_t *uuid) {
-
-  struct Response *response;
-
-  response = (struct Response *)resp;
-  
-  if (reqType == (ReqType)REQ_REG) {
-    if (statusCode == 200) { /* Success, response has ID. */
-      uuid_parse(response->buffer, *uuid);
-      log_debug("Registration successful. Status code: 200 Recevied ID: %s",
-		response->buffer);
-    } else if (statusCode == 400) { /* Failure. Report. */
-      log_debug("Registration unsuccessful. Status Code: 400 Response: %s",
-		response->buffer);
-    }
-  } else if (reqType == (ReqType)REQ_UNREG) {
-    
-  }
-
-
-  return;
-}
-#endif
-
 static long send_request_to_wimc(int reqType,
                                  char *wimcURL,
                                  json_t *json) {
