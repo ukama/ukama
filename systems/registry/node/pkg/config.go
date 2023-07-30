@@ -19,13 +19,14 @@ type Config struct {
 	Service          *uconf.Service
 	OrgHost          string `default:"org:9090"`
 	NetworkHost      string `default:"network:9090"`
+	OrgId            string `default:"org"`
 }
 
 const (
-	NumberOfNodes         = "number_of_nodes"
-	NumberOfActiveNodes   = "active_node_count"
-	NumberOfInactiveNodes = "inactive_node_count"
-	GaugeType             = "gauge"
+	NumberOfNodes        = "number_of_nodes"
+	NumberOfOnlineNodes  = "online_node_count"
+	NumberOfOfflineNodes = "offline_node_count"
+	GaugeType            = "gauge"
 )
 
 var NodeMetric = []metric.MetricConfig{
@@ -35,12 +36,12 @@ var NodeMetric = []metric.MetricConfig{
 		Value: 0,
 	},
 	{
-		Name:  NumberOfActiveNodes,
+		Name:  NumberOfOnlineNodes,
 		Type:  GaugeType,
 		Value: 0,
 	},
 	{
-		Name:  NumberOfInactiveNodes,
+		Name:  NumberOfOfflineNodes,
 		Type:  GaugeType,
 		Value: 0,
 	},
@@ -55,8 +56,8 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.node.node.online",
-				"event.cloud.node.node.offline",
+				"event.cloud.mesh.node.online",
+				"event.cloud.mesh.node.offline",
 			},
 		},
 	}

@@ -1,0 +1,76 @@
+name: Build image
+description: Build application and image
+
+inputs:
+  registry-name:
+    description: The repository where the code is. Should match with the folder on deployment-repo and the container name
+    required: true
+  working-directory:
+    description: The working directory for the application
+    required: true
+  github-bot-token:
+    description: The github bot token
+    required: true
+  aws-access-key: 
+    description: The AWS access key
+    required: true
+  aws-secret-key:
+    description: The AWS secret key
+    required: true
+  build-listener: 
+    description: The build listener image 
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+  - name: Init vars
+    id: vars_step
+    uses: ./.github/actions/git-vars
+
+  - name: Build
+    shell: bash
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+    run: make
+    working-directory: ${{ inputs.working-directory }}
+
+  - name: Configure AWS credentials
+    uses: aws-actions/configure-aws-credentials@v1
+    with:
+      aws-access-key-id: ${{ inputs.aws-access-key }}
+      aws-secret-access-key: ${{ inputs.aws-secret-key }}
+      aws-region: us-east-1
+
+  - name: Login to Amazon ECR
+    shell: bash
+    run: |
+      aws ecr get-login-password --region us-east-1 | \
+      buildah login \
+        --username AWS \
+        --password-stdin \
+        003664043471.dkr.ecr.us-east-1.amazonaws.com
+
+  - name: OCI build and push
+    shell: bash
+    working-directory: ${{ inputs.working-directory }}
+    env:
+     REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}
+    run: |
+      buildah bud --pull -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
+        -t $REGISTRY\:${{ steps.vars_step.outputs.tag }} \
+        -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+        -t $REGISTRY\:latest .  && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}  && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.tag }}  
+  
+  - name: OCI push [latest]
+    shell: bash
+    working-directory: ${{ inputs.working-directory }}
+    if: github.ref == 'refs/heads/main'
+    env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}
+    run:  buildah push $REGISTRY\:latest
+

@@ -120,3 +120,70 @@ int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 	json_decref(json);
 	return ret;
 }
+
+int serialize_uuids_from_file(SystemRegistrationId *sysReg, json_t **json) {
+
+	char *str=NULL;
+	if (!sysReg) {
+		return FALSE;
+	}
+
+	*json = json_object();
+	if (*json == NULL) {
+		return FALSE;
+	}
+
+	if (sysReg->globalUUID) {
+		json_object_set_new(*json, JSON_GLOBAL_UUID,   json_string(sysReg->globalUUID));
+	}
+
+	if (sysReg->localUUID) {
+		json_object_set_new(*json, JSON_LOCAL_UUID, json_string(sysReg->localUUID));
+	}
+
+	str = json_dumps(*json, 0);
+	if (str) {
+		log_debug("System Registration JSON: %s", str);
+		free(str);
+	}
+
+
+	return TRUE;
+
+}
+
+int deserialize_uuids_from_file(char* str, SystemRegistrationId** sysReg) {
+	int ret=TRUE;
+	json_t *json=NULL;
+	json_t *gUUID, *lUUID;
+	json = json_loads(str, JSON_DECODE_ANY, NULL);
+	if (!json) {
+		log_error("Can not load str into JSON object. Str: %s", str);
+		return FALSE;
+	}
+
+	gUUID   = json_object_get(json, JSON_GLOBAL_UUID);
+	lUUID   = json_object_get(json, JSON_LOCAL_UUID);
+
+
+
+	*sysReg = (SystemRegistrationId *)calloc(1, sizeof(SystemRegistrationId));
+	if (*sysReg == NULL) {
+		log_error("Memory allocation error of size: %ld",
+				  sizeof(SystemRegistrationId));
+		ret = FALSE;
+		goto failure;
+	}
+
+	if (gUUID) {
+		(*sysReg)->globalUUID  = strdup(json_string_value(gUUID));
+	}
+
+	if (lUUID) {
+		(*sysReg)->localUUID  = strdup(json_string_value(lUUID));
+	}
+
+	 failure:
+		json_decref(json);
+		return ret;
+}

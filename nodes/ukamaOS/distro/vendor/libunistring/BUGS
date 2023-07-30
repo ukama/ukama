@@ -1,6 +1,0 @@
-List of known bugs and limitations:
-
-- Line breaking of Thai text should use a dictionary based approach. If you
-  know of a public domain Thai word list that could be used for this purpose,
-  please let us know.
-
