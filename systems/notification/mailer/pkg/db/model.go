@@ -8,11 +8,12 @@ import (
 
 type Mailing struct {
 	MailId       uuid.UUID  `gorm:"primaryKey;type:uuid"`
-	Email        string     `gorm:"not null"`
-	TemplateName string     `gorm:"not null"`
+	Email        string         `gorm:"size:255"`
+	TemplateName string         `gorm:"size:255"`
 	SentAt       *time.Time `gorm:"index"`
 	Status       string     `gorm:"not null"`
 	CreatedAt    time.Time  `gorm:"not null"`
 	UpdatedAt    time.Time  `gorm:"not null"`
 	DeletedAt    *time.Time `gorm:"index"`
 }
+
