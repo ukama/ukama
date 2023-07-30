@@ -73,9 +73,8 @@
 #define WIMC_EP_CLIENT   "/content/containers/*"
 #define WIMC_EP_PROVIDER "/content/containers"
 #define WIMC_EP_TASKS    "/content/tasks"
-#define WIMC_EP_ADMIN    "/admin"
-#define WIMC_EP_AGENT    "/admin/agent"
-#define WIMC_EP_HUB_CAPPS    "capps"
+
+#define WIMC_EP_HUB_CAPPS    "v1/capps"
 #define WIMC_EP_AGENT_UPDATE "/admin/agent/update"
 
 #define WIMC_MAX_NAME_LEN   256

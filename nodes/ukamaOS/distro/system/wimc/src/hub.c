@@ -22,179 +22,145 @@
 #include "log.h"
 #include "hub.h"
 #include "jserdes.h"
+#include "http_status.h"
+
+#include "usys_types.h"
+#include "usys_log.h"
+#include "usys_mem.h"
 
 struct Response {
-  char *buffer;
-  size_t size;
+    char *buffer;
+    size_t size;
 };
 
-static int copy_artifact(Artifact *src, Artifact *dest);
-static void create_hub_url(Config *cfg, char *url, char *name);
-static int process_response_from_hub(Artifact ***artifacts, void *resp);
-static size_t response_callback(void *contents, size_t size, size_t nmemb,
-				void *userp);
-
-/*
- * process_response_from_hub --
- *
- */
 static int process_response_from_hub(Artifact ***artifacts, void *resp) {
 
-  struct Response *response=NULL;
-  ArtifactFormat *format=NULL;
-  json_t *json=NULL;
-  int count=0, i=0, j=0, ret=FALSE;
+    struct Response *response=NULL;
+    ArtifactFormat  *format=NULL;
+    json_t          *json=NULL;
+    int count=0;
 
-  response = (struct Response *)resp;
+    response = (struct Response *)resp;
 
-  json = json_loads(response->buffer, JSON_DECODE_ANY, NULL);
-
-  if (!json) {
-    log_error("Can not load str into JSON object. Str: %s", response->buffer);
-    goto done;
-  }
-
-  ret = deserialize_hub_response(artifacts, &count, json);
-
-  if (ret==FALSE) {
-    log_error("Deserialization failed for response: %s", response->buffer);
-    goto done;
-  }
-
-  if (count==0) {
-    log_debug("No matching capp available");
-    goto done;
-  }
-
-  log_debug("Received Artifacts from the hub. %d:", count);
-
-  for (i=0; i<count; i++) {
-    log_debug("\n\t Name: %s \n\t Version: %s", (*artifacts)[i]->name,
-	      (*artifacts)[i]->version);
-    log_debug("\t Formats: %d", (*artifacts)[i]->formatsCount);
-
-    for (j=0; j<(*artifacts)[i]->formatsCount; j++) {
-      format = (*artifacts)[i]->formats[j];
-
-      log_debug("\n\t %d:\n \t\t type: %s \n\t\t url: %s \n\t\t createdAt: %s",
-		j, format->type, format->url, format->createdAt);
-      log_debug("\t\t size: %d", format->size);
-      if (format->extraInfo) {
-	log_debug("\t\t extra: %s", format->extraInfo);
-      }
+    json = json_loads(response->buffer, JSON_DECODE_ANY, NULL);
+    if (!json) {
+        usys_log_error("failure loading str into JSON object. Str: %s",
+                       response->buffer);
+        return 0;
     }
-  }
 
- done:
-  json_decref(json);
-  return count;
-}
-
-/*
- * create_hub_url --
- *
- */
-static void create_hub_url(Config *cfg, char *name, char *url) {
-
-  if (!cfg || !name || !url) return;
-
-  sprintf(url, "%s/%s/%s", cfg->hubURL, WIMC_EP_HUB_CAPPS, name);
-
-  return;
-}
-
-/*
- * copy_artifact --
- *
- */
-static int copy_artifact(Artifact *src, Artifact *dest) {
-
-  int i;
-
-  if (src == NULL || dest == NULL) return FALSE;
-
-  dest->name         = strdup(src->name);
-  dest->version      = strdup(src->version);
-  dest->formatsCount = src->formatsCount;
-
-  dest->formats = (ArtifactFormat **)calloc(src->formatsCount,
-					    sizeof(ArtifactFormat *));
-  if (dest->formats == NULL) {
-    goto failure;
-  }
-
-  for (i=0; i<src->formatsCount; i++) {
-
-    dest->formats[i] = (ArtifactFormat *)calloc(1, sizeof(ArtifactFormat));
-
-    dest->formats[i]->type      = strdup(src->formats[i]->type);
-    dest->formats[i]->url       = strdup(src->formats[i]->url);
-    dest->formats[i]->createdAt = strdup(src->formats[i]->createdAt);
-    dest->formats[i]->size      = src->formats[i]->size;
-
-    if (src->formats[i]->extraInfo) {
-      dest->formats[i]->extraInfo = strdup(src->formats[i]->extraInfo);
+    if (!deserialize_hub_response(artifacts, &count, json)) {
+        usys_log_error("Deser failed for hub response: %s", response->buffer);
+        json_decref(json);
+        return 0;
     }
-  }
 
-  return TRUE;
+    if (count==0) {
+        usys_log_debug("No matching capp available");
+        json_decref(json);
+        return 0;
+    }
 
- failure:
-  if (dest->name)    free(dest->name);
-  if (dest->version) free(dest->version);
+    usys_log_debug("Received Artifacts from the hub. %d:", count);
 
-  return FALSE;
+    for (int i=0; i<count; i++) {
+        usys_log_debug("\n\t Name: %s \n\t Version: %s \n\t Formats: %d",
+                       (*artifacts)[i]->name,
+                       (*artifacts)[i]->version,
+                       (*artifacts)[i]->formatsCount);
+
+        for (int j=0; j<(*artifacts)[i]->formatsCount; j++) {
+            format = (*artifacts)[i]->formats[j];
+            usys_log_debug("\n\t %d:\n \t\t type: %s \n\t\t "
+                           "url: %s \n\t\t createdAt: %s \n\t\t size: %d",
+                           j, format->type,
+                           format->url,
+                           format->createdAt,
+                           format->size);
+            if (format->extraInfo) {
+                log_debug("\t\t extra: %s", format->extraInfo);
+            }
+        }
+    }
+
+    json_decref(json);
+
+    return count;
 }
 
-/*
- * free_artifact --
- *
- */
+static bool copy_artifact(Artifact *src, Artifact *dest) {
+
+    if (src == NULL || dest == NULL) return USYS_FALSE;
+
+    dest->name         = strdup(src->name);
+    dest->version      = strdup(src->version);
+    dest->formatsCount = src->formatsCount;
+
+    dest->formats = (ArtifactFormat **)calloc(src->formatsCount,
+                                              sizeof(ArtifactFormat *));
+    if (dest->formats == NULL) {
+        goto failure;
+    }
+
+    for (int i=0; i<src->formatsCount; i++) {
+
+        dest->formats[i] = (ArtifactFormat *)calloc(1, sizeof(ArtifactFormat));
+
+        dest->formats[i]->type      = strdup(src->formats[i]->type);
+        dest->formats[i]->url       = strdup(src->formats[i]->url);
+        dest->formats[i]->createdAt = strdup(src->formats[i]->createdAt);
+        dest->formats[i]->size      = src->formats[i]->size;
+
+        if (src->formats[i]->extraInfo) {
+            dest->formats[i]->extraInfo = strdup(src->formats[i]->extraInfo);
+        }
+    }
+
+    return USYS_TRUE;
+
+failure:
+    usys_free(dest->name);
+    usys_free(dest->version);
+
+    return USYS_FALSE;
+}
+
 void free_artifact(Artifact *artifact) {
 
-  int i;
+    if (artifact == NULL) return;
 
-  if (artifact == NULL) return;
+    usys_free(artifact->name);
+    usys_free(artifact->version);
+    usys_free(artifact->formats);
 
-  if (artifact->name)    free(artifact->name);
-  if (artifact->version) free(artifact->version);
-
-  for (i=0; i<artifact->formatsCount; i++) {
-    if(artifact->formats[i]->type)      free(artifact->formats[i]->type);
-    if(artifact->formats[i]->url)       free(artifact->formats[i]->url);
-    if(artifact->formats[i]->extraInfo) free(artifact->formats[i]->extraInfo);
-    if(artifact->formats[i]->createdAt) free(artifact->formats[i]->createdAt);
-
-    free(artifact->formats[i]);
-  }
-
-  if (artifact->formats) free(artifact->formats);
-
-  return;
+    for (int i=0; i<artifact->formatsCount; i++) {
+        usys_free(artifact->formats[i]->type);
+        usys_free(artifact->formats[i]->url);
+        usys_free(artifact->formats[i]->extraInfo);
+        usys_free(artifact->formats[i]->createdAt);
+        usys_free(artifact->formats[i]);
+    }
 }
 
-/*
- * response_callback --
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
-				void *userp) {
+                                void *userp) {
 
-  size_t realsize = size * nmemb;
-  struct Response *response = (struct Response *)userp;
+    size_t realsize = size * nmemb;
+    struct Response *response = (struct Response *)userp;
 
-  response->buffer = realloc(response->buffer, response->size + realsize + 1);
+    response->buffer = realloc(response->buffer, response->size + realsize + 1);
 
-  if(response->buffer == NULL) {
-    log_error("Not enough memory to realloc of size: %s",
-	      response->size + realsize + 1);
-    return 0;
-  }
+    if(response->buffer == NULL) {
+        usys_log_error("Not enough memory to realloc of size: %s",
+                       response->size + realsize + 1);
+        return 0;
+    }
 
-  memcpy(&(response->buffer[response->size]), contents, realsize);
-  response->size += realsize;
-  response->buffer[response->size] = 0; /* Null terminate. */
+    memcpy(&(response->buffer[response->size]), contents, realsize);
+    response->size += realsize;
+    response->buffer[response->size] = 0; /* Null terminate. */
 
-  return realsize;
+    return realsize;
 }
 
 /*
@@ -204,85 +170,81 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  *  0: error processing response.
  *  1: Success and curlCode is CURLE_OK
  */
-int get_artifact_info_from_hub(Artifact *artifact, Config *cfg,
-				char *name, char *tag,
-				CURLcode *curlCode) {
+bool get_artifact_info_from_hub(Artifact *artifact,
+                                Config *config,
+                                char *name, char *tag,
+                                int *status) {
 
-  int i, ret=TRUE, count=0;
-  char hubEP[WIMC_MAX_URL_LEN] = {0};
-  CURL *curl=NULL;
-  CURLcode res;
-  struct Response response;
-  Artifact **artifacts=NULL;
+    int i, count=0;
+    bool ret=USYS_FALSE;
+    char hubEP[WIMC_MAX_URL_LEN] = {0};
 
-  /* Sanity check. */
-  if (!name || !tag) {
-    ret = FALSE;
-    goto done;
-  }
+    CURL *curl=NULL;
+    CURLcode res;
+    struct Response response;
 
-  create_hub_url(cfg, name, &hubEP[0]);
+    Artifact **artifacts=NULL;
 
-  curl = curl_easy_init();
-  if (curl == NULL) {
-    ret = -1;
-    return ret;
-  }
+    if (name == NULL || tag == NULL) return USYS_FALSE;
 
-  response.buffer = (char *)malloc(1);
-  response.size   = 0;
+    /* create HUB EP: http://localhost:8001/v1/capps/:name */
+    sprintf(hubEP, "%s/%s/%s",
+            config->hubURL,
+            WIMC_EP_HUB_CAPPS,
+            name);
 
-  curl_easy_setopt(curl, CURLOPT_URL, hubEP);
-
-  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc/0.1");
-
-  *curlCode = curl_easy_perform(curl);
-
-  if (*curlCode != CURLE_OK) {
-    ret = -1;
-    log_error("Error sending request to hub: %s",
-	      curl_easy_strerror(*curlCode));
-    goto done;
-  }
-
-  /* get status code. */
-  count = process_response_from_hub(&artifacts, &response);
-
-  if (count == 0) { /* No matching capp found by 'name' */
-    ret = FALSE;
-    log_debug("No matching capp returned from the hub. Requested: %s tag: %s",
-	      name, tag);
-    goto done;
-  }
-
-  /* Validate the name */
-  if (strcmp(artifacts[0]->name, name) != 0) {
-    log_error("Got wrong capp. Requested: %s Got %s", name,
-	      artifacts[0]->name);
-    goto done;
-  }
-
-  /* Find matching capp */
-  for (i=0; i<count; i++) {
-    if (strcmp(artifacts[i]->version, tag)==0) {
-      copy_artifact(artifacts[i], artifact);
-      break;
+    curl = curl_easy_init();
+    if (curl == NULL) {
+        *status = HttpStatus_InternalServerError;
+        return USYS_FALSE;
     }
-  }
 
- done:
-  for (i=0; i<count; i++) {
-    free_artifact(artifacts[i]);
-    free(artifacts[i]);
-  }
-  free(artifacts);
-  free(response.buffer);
-  curl_easy_cleanup(curl);
+    response.buffer = (char *)malloc(1);
+    response.size   = 0;
 
-  return ret;
+    curl_easy_setopt(curl, CURLOPT_URL, hubEP);
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "wimc/0.1");
+
+    res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK) {
+        usys_log_error("Error sending request to hub for %s:%s: %s",
+                       curl_easy_strerror(res), name, tag);
+        *status = HttpStatus_InternalServerError;
+        goto done;
+    }
+
+    /* get status code. */
+    count = process_response_from_hub(&artifacts, &response);
+    if (count == 0) { /* No matching capp found by 'name' */
+        usys_log_debug("No matching capp returned from the hub "
+                       "Requested: %s:%s", name, tag);
+        *status = HttpStatus_NotFound;
+        goto done;
+    }
+
+    /* Find matching capp (with right tag/version) */
+    for (i=0; i<count; i++) {
+        if (strcmp(artifacts[i]->version, tag) == 0) {
+            copy_artifact(artifacts[i], artifact);
+            break;
+        }
+    }
+
+    *status = HttpStatus_OK;
+    ret = USYS_TRUE;
+
+done:
+    for (i=0; i<count; i++) {
+        free_artifact(artifacts[i]);
+        usys_free(artifacts[i]);
+    }
+    usys_free(artifacts);
+    usys_free(response.buffer);
+    curl_easy_cleanup(curl);
+
+    return ret;
 }
-

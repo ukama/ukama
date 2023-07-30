@@ -34,7 +34,8 @@ static void free_agent_request(AgentReq *req) {
 #endif
 }
 
-static void create_hub_urls_for_agent(char *hubURL, char *srcURL, char *destURL,
+static void create_hub_urls_for_agent(char *hubURL,
+                                      char *srcURL, char *destURL,
                                       char *srcExtraURL, char *destExtraURL) {
 
     if (hubURL == NULL || srcURL == NULL ||
@@ -62,6 +63,7 @@ int web_service_cb_get_capp(const URequest *request,
                             void *data) {
 
     int ret=TRUE, resCode=200, i=0;
+    int httpStatus=0;
     uuid_t uuid;
 
     char idStr[36+1]={0};
@@ -77,7 +79,6 @@ int web_service_cb_get_capp(const URequest *request,
     char *respBody=NULL, *name=NULL, *tag=NULL;
 
     WRespType respType=WRESP_ERROR;
-    CURLcode curlCode;
     Agent *agent=NULL;
     ArtifactFormat *artifactFormat=NULL;
   
@@ -104,20 +105,24 @@ int web_service_cb_get_capp(const URequest *request,
 #endif
 
     /* Check with hub */
-    ret = get_artifact_info_from_hub(&artifact, config, name, tag, &curlCode);
-    if (ret == -1) {
-        usys_log_error("Unable to connect with hub at: %s",
-                       config->hubURL);
-        ulfius_set_string_body_response(response,
+    if (!get_artifact_info_from_hub(&artifact,
+                                    config,
+                                    name, tag,
+                                    &httpStatus)) {
+        if (httpStatus == HttpStatus_InternalServerError) {
+            usys_log_error("Unable to connect with hub at: %s",
+                           config->hubURL);
+            ulfius_set_string_body_response(response,
                                 HttpStatus_InternalServerError,
                                 HttpStatusStr(HttpStatus_InternalServerError));
-        goto cleanup;
-    } else if (ret == USYS_FALSE) {
-        usys_log_error("No matching capp %s:%s found by hub: %s",
-                       name, tag, config->hubURL);
-        ulfius_set_string_body_response(response,
-                                        HttpStatus_NotFound,
-                                        HttpStatusStr(HttpStatus_NotFound));
+        } else if (httpStatus == HttpStatus_NotFound) {
+            usys_log_error("No matching capp %s:%s found by hub: %s",
+                           name, tag, config->hubURL);
+            ulfius_set_string_body_response(response,
+                                            HttpStatus_NotFound,
+                                            HttpStatusStr(HttpStatus_NotFound));
+        }
+
         goto cleanup;
     } else {
         usys_log_debug("capp %s:%s is available at hub: %s",
@@ -141,8 +146,8 @@ int web_service_cb_get_capp(const URequest *request,
         usys_log_error("No matching agent found for capp %s:%s",
                        name, tag);
         ulfius_set_string_body_response(response,
-                                HttpStatus_InternalServerError,
-                                HttpStatusStr(HttpStatus_InternalServerError));
+                                HttpStatus_ServiceUnavailable,
+                                HttpStatusStr(HttpStatus_ServiceUnavailable));
         goto cleanup;
     }
 
@@ -172,14 +177,14 @@ int web_service_cb_get_capp(const URequest *request,
                                         HttpStatus_Accepted,
                                         HttpStatusStr(HttpStatus_Accepted));
         goto cleanup;
-    }
-
-    usys_log_debug("No matching agent/resource found for capp %s:%s",
-                   name, tag);
+    } else {
+        usys_log_debug("No matching agent/resource found for capp %s:%s",
+                       name, tag);
     
-    ulfius_set_string_body_response(response,
+        ulfius_set_string_body_response(response,
                                HttpStatus_InternalServerError,
                                HttpStatusStr(HttpStatus_InternalServerError));
+    }
 
 cleanup:
     usys_free(respBody);
