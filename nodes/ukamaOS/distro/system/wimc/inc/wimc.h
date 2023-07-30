@@ -94,7 +94,7 @@
 #define WIMC_REQ_TYPE_AGENT_STR    "agent"
 #define WIMC_REQ_TYPE_PROVIDER_STR "provider"
 
-#define MAX_AGENTS 20
+#define MAX_AGENTS       10
 #define DEFAULT_INTERVAL 10 /* 10 seconds. */
 
 #define TRUE 1

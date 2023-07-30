@@ -14,14 +14,25 @@
 #include "agent.h"
 #include "wimc.h"
 #include "jserdes.h"
-
 #include "utils.h"
-
 #include "agent/jserdes.h"
+
+#include "usys_mem.h"
+#include "usys_log.h"
+
+static void json_log(json_t *json) {
+
+    char *str = NULL;
+
+    str = json_dumps(json, 0);
+    if (str) {
+        usys_log_debug("json str: %s", str);
+        usys_free(str);
+    }
+}
 
 static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json);
 
-/* JSON (de)-serialization functions. */
 
 /*
  * serialize_agent_request -- Serialize Agent request.
@@ -52,51 +63,6 @@ static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json);
  */
 
 /*
- * serialize_agent_request --
- *
- */
-
-int serialize_agent_request(AgentReq *request, json_t **json) {
-
-  int ret=FALSE;
-  json_t *req=NULL;
-
-  *json = json_object();
-  if (*json == NULL) {
-    return ret;
-  }
-  
-  json_object_set_new(*json, JSON_AGENT_REQUEST, json_object());
-  req = json_object_get(*json, JSON_AGENT_REQUEST);
-
-  if (req==NULL) {
-    return ret;
-  }
-  
-  if (request->type == (ReqType)REQ_REG) {
-    ret = serialize_agent_request_register(request, &req);
-  } else if (request->type == (ReqType)REQ_UPDATE) {
-    ret = serialize_agent_request_update(request, &req);
-  } else if (request->type == (ReqType)REQ_UNREG) {
-    ret = serialize_agent_request_unregister(request, &req);
-  }
-
-  if (ret) {
-    
-    char *str;
-    str = json_dumps(*json, 0);
-
-    if (str) {
-      log_debug("Agent request str: %s", str);
-      free(str);
-    }
-    ret = TRUE;
-  }
-
-  return ret;
-}
-
-/*
  * agent_request -> { type: "register",
  *              type_register: {
  *                      method: "ftp",
@@ -105,31 +71,23 @@ int serialize_agent_request(AgentReq *request, json_t **json) {
  *              }
  */
 
-/*
- * serialize_agent_request_register -- register agent into WIMC.d
- *
- */
-int serialize_agent_request_register(AgentReq *req, json_t **json) {
+bool serialize_agent_register_request(char *method,
+                                      char *url,
+                                      json_t **json) {
 
-  json_t *jreg;
-  Register *reg;
+    json_t   *jreg;
+    Register *reg;
 
-  if (req==NULL && req->reg==NULL) {
-    return FALSE;
-  }
+    *json = json_object();
+    if (*json == NULL) {
+        usys_log_error("Unable to initialize json object");
+        return USYS_FALSE;
+    }
+  
+    json_object_set_new(*json, JSON_METHOD, json_string(method));
+    json_object_set_new(*json, JSON_URL,    json_string(url));
 
-  reg = req->reg;
-
-  json_object_set_new(*json, JSON_TYPE, json_string(AGENT_REQ_TYPE_REG));
-
-  /* Add register object */
-  json_object_set_new(*json, JSON_TYPE_REGISTER, json_object());
-  jreg = json_object_get(*json, JSON_TYPE_REGISTER);
-
-  json_object_set_new(jreg, JSON_METHOD, json_string(reg->method));
-  json_object_set_new(jreg, JSON_AGENT_URL, json_string(reg->url));
-
-  return TRUE;
+    return USYS_TRUE;
 }
 
 /*
@@ -220,6 +178,36 @@ int serialize_agent_request_unregister(AgentReq *req, json_t **json) {
   return TRUE;
 }
 
+int serialize_agent_request(AgentReq *request, json_t **json) {
+
+    int ret=FALSE;
+    json_t *req=NULL;
+
+    *json = json_object();
+    if (*json == NULL) {
+        return ret;
+    }
+  
+    json_object_set_new(*json, JSON_AGENT_REQUEST, json_object());
+    req = json_object_get(*json, JSON_AGENT_REQUEST);
+
+    if (req==NULL) {
+        return ret;
+    }
+#if 0  
+    if (request->type == (ReqType)REQ_REG) {
+        ret = serialize_agent_request_register(request, &req);
+    } else if (request->type == (ReqType)REQ_UPDATE) {
+        ret = serialize_agent_request_update(request, &req);
+    } else if (request->type == (ReqType)REQ_UNREG) {
+        ret = serialize_agent_request_unregister(request, &req);
+    }
+#endif 
+    json_log(*json);
+
+    return ret;
+}
+
 /*
  * deserialize_wimc_request --
  *
@@ -229,6 +217,7 @@ int deserialize_wimc_request(WimcReq **request, json_t *json) {
   int ret=FALSE;
   json_t *jreq=NULL, *jtype=NULL;
 
+#if 0  
   WimcReq *req = *request;
 
   /* sanity check. */
@@ -263,6 +252,7 @@ int deserialize_wimc_request(WimcReq **request, json_t *json) {
   } else if (req->type == (WReqType)WREQ_UPDATE) {
 
   }
+#endif
 
   return ret;
 }

@@ -84,7 +84,8 @@ void read_stats_and_update_wimc(void *args) {
   char idStr[36+1], folder[WIMC_MAX_PATH_LEN]={0};
 
   params = (TParams *)args;
-  
+
+#if 0
   /* sanity check. */
   if (params == NULL)
     return;
@@ -147,4 +148,5 @@ void read_stats_and_update_wimc(void *args) {
  cleanup:
   free_fetch_request(fetch);
   free(fetch);
+#endif
 }

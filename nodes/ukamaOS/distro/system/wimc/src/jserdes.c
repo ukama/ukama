@@ -107,6 +107,7 @@ static int serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
   return TRUE;
 }
 
+#if 0
 /*
  * deserialize_agent_request_register --
  *
@@ -255,6 +256,8 @@ int deserialize_agent_request(AgentReq **request, json_t *json) {
 
   return ret;
 }
+
+#endif
 
 /*
  * deserialize_provider_response --

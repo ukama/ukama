@@ -170,7 +170,6 @@ int main (int argc, char **argv) {
 
     /* Step-1: open the local db */
     serviceConfig.db = open_db(serviceConfig.dbFile, WIMC_FLAG_CREATE_DB);
-
     if (serviceConfig.db == NULL) {
         usys_log_error("Error creating db at: %s", serviceConfig.dbFile);
         usys_exit(0);

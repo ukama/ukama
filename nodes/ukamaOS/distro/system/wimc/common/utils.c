@@ -89,23 +89,6 @@ AgentState convert_str_to_state(char *str) {
   return state;
 }
 
-ReqType convert_str_to_type(char *str) {
-
-  ReqType req;
-
-  if (strcmp(str, AGENT_REQ_TYPE_REG_STR)==0) {
-    req = REQ_REG;
-  } else if (strcmp(str, AGENT_REQ_TYPE_UNREG_STR)==0) {
-    req = REQ_UNREG;
-  } else if (strcmp(str, AGENT_REQ_TYPE_UPDATE_STR)==0) {
-    req = REQ_UPDATE;
-  } else if (strcmp(str, WIMC_REQ_TYPE_FETCH)==0) {
-    req = WREQ_FETCH;
-  }
-
-  return req;
-}
-
 char *convert_uuid_to_str(uuid_t uuid) {
 
   char *str;
@@ -114,17 +97,6 @@ char *convert_uuid_to_str(uuid_t uuid) {
   uuid_unparse(uuid, str);
 
   return str;
-}
-
-char *convert_type_to_str(ReqType req) {
-
-  if (req == REQ_REG) {
-    return AGENT_REQ_TYPE_REG_STR;
-  } else if (req == REQ_UNREG) {
-    return AGENT_REQ_TYPE_UNREG_STR;
-  } else if (req == REQ_UPDATE) {
-    return AGENT_REQ_TYPE_UPDATE_STR;
-  }
 }
 
 TransferState convert_str_to_tx_state(char *state) {

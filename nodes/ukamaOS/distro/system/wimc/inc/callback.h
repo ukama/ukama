@@ -49,7 +49,15 @@ int web_service_cb_default(const URequest *request,
 int web_service_cb_get_capp(const URequest *request,
                             UResponse *response,
                             void *epConfig);
-    
+
+int web_service_cb_post_agent(const URequest *request,
+                              UResponse *response,
+                              void *data);
+
+int web_service_cb_delete_agent(const URequest *request,
+                                UResponse *response,
+                                void *data);
+
 extern int db_read_path(sqlite3 *db, char *name, char *tag, char *path);
 
 #endif /* CALLBACK_H */

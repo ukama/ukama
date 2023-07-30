@@ -20,7 +20,7 @@
 #include "usys_types.h"
 
 static void free_agent_request(AgentReq *req) {
-
+#if 0
     if (req->type == REQ_REG) {
         free(req->reg->method);
         free(req->reg->url);
@@ -31,6 +31,7 @@ static void free_agent_request(AgentReq *req) {
     }
 
     free(req);
+#endif
 }
 
 static void create_hub_urls_for_agent(char *hubURL, char *srcURL, char *destURL,
@@ -193,13 +194,15 @@ int callback_put_agent_update(const struct _u_request *request,
 			      void *user_data) {
 
     int ret=WIMC_OK, retCode;
-    uuid_t uuid;
     char *resBody;
     json_t *jreq=NULL;
     json_error_t jerr;
     AgentReq *req=NULL;
 
-    WimcCfg *cfg = (WimcCfg *)user_data;
+    Config *config = NULL;
+
+
+    config = (Config *)user_data;
 
     req = (AgentReq *)calloc(sizeof(AgentReq), 1);
 
@@ -229,47 +232,124 @@ int callback_put_agent_update(const struct _u_request *request,
     return U_CALLBACK_CONTINUE;
 }
 
-int callback_post_agent(const struct _u_request *request,
-			struct _u_response *response,
-			void *user_data) {
-  int ret=WIMC_OK, retCode;
-  uuid_t uuid;
-  char *resBody;
-  json_t *jreq=NULL;
-  json_error_t jerr;
-  AgentReq *req=NULL;
-  char idStr[36+1];
-
-  WimcCfg *cfg = (WimcCfg *)user_data;
-
-  req = (AgentReq *)calloc(sizeof(AgentReq), 1);
-
-  jreq = ulfius_get_json_body_request(request, &jerr);
-  if (!jreq) {
-    log_error("json error: %s", jerr.text);
-  } else {
-    deserialize_agent_request(&req, jreq);
-  }
-
-  ret = process_agent_register_request(cfg->agents, req, &uuid);
-
-  if (ret == WIMC_OK) {
-    retCode = 200;
-    uuid_unparse(uuid, &idStr[0]);
-    resBody = msprintf("%s\n", idStr);
-  } else {
-    retCode = 400;
-    resBody = msprintf("%s\n", error_to_str(ret));
-  }
-
-  ulfius_set_string_body_response(response, retCode, resBody);
-  o_free(resBody);
-  free_agent_request(req);
-  json_decref(jreq);
-
-  return U_CALLBACK_CONTINUE;
-}
 #endif
+
+int web_service_cb_post_agent(const URequest *request,
+                              UResponse *response,
+                              void *data) {
+
+    int ret=WIMC_OK, retCode;
+    uuid_t uuid;
+    json_t *json=NULL, *jMethod=NULL, *jURL=NULL;
+    json_error_t jerr;
+
+    char *agentID     = NULL;
+    char *agentURL    = NULL;
+    char *agentMethod = NULL;
+
+    Config *config = NULL;
+
+    config = (Config *)data;
+    
+    agentID = (char *)u_map_get(request->map_url, "id");
+    if (agentID == NULL) {
+        usys_log_error("agent id not found");
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    /* convert id to uuid */
+    if (uuid_parse(agentID, uuid) == -1) {
+        usys_log_error("agent id not found");
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    json = ulfius_get_json_body_request(request, &jerr);
+    if (!json) {
+        usys_log_error("JSON error for the agent register request: %s",
+                       jerr.text);
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    jMethod = json_object_get(json, JSON_METHOD);
+    jURL    = json_object_get(json, JSON_URL);
+    if (jURL == NULL || jMethod == NULL) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        json_decref(json);
+        return U_CALLBACK_CONTINUE;
+    } else {
+        agentURL    = json_string_value(jURL);
+        agentMethod = json_string_value(jMethod);
+
+        if (agentURL == NULL || agentMethod == NULL) {
+            ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+            json_decref(json);
+            return U_CALLBACK_CONTINUE;
+        }
+    }
+
+    if (!register_agent(config->agents,agentID, agentMethod, agentURL)) {
+        ulfius_set_string_body_response(response,
+                                HttpStatus_Conflict,
+                                HttpStatusStr(HttpStatus_Conflict));
+        
+        json_decref(json);
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ulfius_set_string_body_response(response, HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
+    json_decref(json);
+    
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_delete_agent(const URequest *request,
+                                UResponse *response,
+                                void *data) {
+
+    int ret=WIMC_OK, retCode;
+    uuid_t uuid;
+
+    char *agentID  = NULL;
+    Config *config = NULL;
+
+    config = (Config *)data;
+    
+    agentID = (char *)u_map_get(request->map_url, "id");
+    if (agentID == NULL) {
+        usys_log_error("agent id not found");
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    /* convert id to uuid */
+    if (uuid_parse(agentID, uuid) == -1) {
+        usys_log_error("agent id not found");
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    /* Find matching agent and delete it */
+    if (!delete_agent(config->agents, agentID)) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+    } else {
+        ulfius_set_string_body_response(response, HttpStatus_OK,
+                                        HttpStatusStr(HttpStatus_OK));
+    }
+    
+    return U_CALLBACK_CONTINUE;
+}
 
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,

@@ -28,89 +28,82 @@
 #include "usys_log.h"
 
 struct Response {
-  char *buffer;
-  size_t size;
+    char *buffer;
+    size_t size;
 };
 
-int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid) {
+bool register_agent(Agent **agents,
+                    char *agentID,
+                    char *agentMethod,
+                    char *agentURL) {
 
-  int i;
-  char idStr[36+1];
-  Agent *ptr = *agents;
+    int i;
+    Agent *ptr = NULL;
+    uuid_t uuid;
+    
+    uuid_parse(agentID, uuid);
+    ptr = *agents;
 
-  for (i=0; i < MAX_AGENTS; i++) {
+    for (i=0; i < MAX_AGENTS; i++) {
+        if (uuid_is_null(ptr[i].uuid) == 0) { /* have valid agent id. */
+            if (strcasecmp(agentMethod, ptr[i].method) == 0 &&
+                strcasecmp(agentURL, ptr[i].url) == 0) {
+                /* An existing entry. */
+                log_debug("Found similar agent. id: %s, method %s and url: %s",
+                          agentID, agentMethod, agentURL);
+                return USYS_FALSE;
+            }
+        } else {
 
-    if (uuid_is_null(ptr[i].uuid)==0) { /* have valid agent id. */
-      if (strcasecmp(method, ptr[i].method)==0 &&
-	  strcasecmp(url, ptr[i].url)==0) {
-          uuid_unparse(ptr[i].uuid, &idStr[0]);
-          uuid_copy(*uuid, ptr[i].uuid);
-          /* An existing entry. */
-          log_debug("Found similar agent at id: %s, method %s and url: %s",
-                    idStr, ptr[i].method, ptr[i].url);
-          return WIMC_ERROR_EXIST;
-      }
-    } else {
-      uuid_generate(ptr[i].uuid);
-      ptr[i].method = strndup(method, strlen(method));
-      ptr[i].url    = strndup(url, strlen(url));
-      ptr[i].state  = WIMC_AGENT_STATE_REGISTER;
+            ptr[i].method = strdup(agentMethod);
+            ptr[i].url    = strdup(agentURL);
+            ptr[i].state  = WIMC_AGENT_STATE_REGISTER;
 
-      /* Return the ID. */
-      uuid_copy(*uuid, ptr[i].uuid);
-      return WIMC_OK;
+            uuid_copy(ptr[i].uuid, uuid);
+            
+            return USYS_TRUE;
+        }
     }
-  }
 
-  /* Max. reached */
-  log_debug("Max. allowable number of agents reached. Ignoring");
-  return WIMC_ERROR_MAX_AGENTS;
+    usys_log_debug("Max. allowable number of agents reached. Ignoring");
+    return USYS_FALSE;
 }
 
-int process_agent_register_request(Agent **agents,
-                                   AgentReq *req,
-                                   uuid_t *uuid) {
+bool delete_agent(Agent **agents,
+                  char *agentID) {
 
-  int ret=WIMC_OK;
-  Register *reg;
-  char idStr[36+1];
+    Agent *ptr = NULL;
+    uuid_t uuid;
 
-  if (req->type == (ReqType)REQ_REG) {
+    uuid_parse(agentID, uuid);
+    ptr = *agents;
 
-    reg = req->reg;
-    
-    /* validate the URL. */
-    ret = validate_url(reg->url);
-    if (ret != WIMC_OK) {
-      log_debug("Agent process failed, unreachable URL: %s: %s", reg->url,
-		error_to_str(ret));
-      goto done;
+    for (int i=0; i < MAX_AGENTS; i++) {
+        if (uuid_is_null(ptr[i].uuid) == 0) { /* have valid agent id. */
+            if (uuid_compare(uuid, ptr[i].uuid) == 0) { /* match */
+
+                usys_log_debug("Agent removed id: %s, method %s and url: %s",
+                               agentID, ptr[i].method, ptr[i].url);
+
+                uuid_clear(ptr[i].uuid);
+                usys_free(ptr[i].method);
+                usys_free(ptr[i].url);
+                ptr[i].state = 0;
+
+                return USYS_TRUE;
+            }
+        }
     }
-    
-    ret = register_agent(agents, reg->method, reg->url, uuid);
-    if (ret != WIMC_OK) {
-      goto done;
-    }
 
-    uuid_unparse(*uuid, &idStr[0]);
-    log_debug("Agent successfully registered. Id: %s Method: %s URL: %s",
-	      idStr, reg->method, reg->url);
-
-  } else {
-    log_debug("Invalid Agent request command: %d", req->type);
-    ret = WIMC_ERROR_BAD_METHOD;
-    goto done;
-  }
-
- done:
-  return ret;
+    usys_log_debug("Agent with UUID not found: %s", agentID);
+    return USYS_FALSE;
 }
 
+#if 0
 /*
  * process_agent_update_request --
  *
  */
-
 int process_agent_update_request(WTasks **tasks, AgentReq *req, uuid_t *uuid,
 				 sqlite3 *db) {
 
@@ -175,6 +168,7 @@ int process_agent_update_request(WTasks **tasks, AgentReq *req, uuid_t *uuid,
  done:
   return ret;
 }
+#endif
 
 Agent *find_matching_agent(Agent *agents, char *method) {
 

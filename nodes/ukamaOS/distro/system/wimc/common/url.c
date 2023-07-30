@@ -15,36 +15,32 @@
 #include "wimc.h"
 #include "err.h"
 
-/*
- * validate_agent_url -- validate agent URL by doing CURL request. 
- */
-int validate_url(char *url) {
+#include "usys_log.h"
+#include "usys_types.h"
+
+bool validate_url(char *url) {
   
-#if 0
-  CURL *curl;
-  CURLcode response;
+    CURL *curl;
+    CURLcode response;
 
-  if (url==NULL) {
-    return WIMC_ERROR_BAD_URL;
-  }
+    if (url == NULL) return USYS_FALSE;
 
-  curl = curl_easy_init();
-
-  if (curl) {
+    curl = curl_easy_init();
+    if (curl) {
     
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
 
-    response = curl_easy_perform(curl);
+        response = curl_easy_perform(curl);
 
-    curl_easy_cleanup(curl);
-  }
+        curl_easy_cleanup(curl);
+    }
 
-  if (response != CURLE_OK) {
-    return WIMC_ERROR_BAD_URL;
-  }
-#endif
-  return WIMC_OK;
+    if (response != CURLE_OK) {
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
 }
 
 /*
@@ -53,12 +49,12 @@ int validate_url(char *url) {
 
 int valid_url_format(char *url) {
 
-  if (url == NULL) {
-    return FALSE;
-  }
+if (url == NULL) {
+return FALSE;
+}
 
-  /* XXX */
+/* XXX */
 
-  return TRUE;
+return TRUE;
 }
 
