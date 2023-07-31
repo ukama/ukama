@@ -45,13 +45,13 @@ services:
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - UKAMA_UUID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
-      - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
-      - ORGOWNERNAME=ukama-test-org-owner
-      - ORGOWNEREMAIL=ukama-test-org-owner@domain.com
-      - ORGOWNERPHONE=0123456789
+      - OWNERID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+      - OWNERNAME=ukama-test-org-owner
+      - OWNEREMAIL=ukama-test-org-owner@domain.com
+      - OWNERPHONE=0123456789
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-nucleus:9095
-      - USERS_SERVICE_HOST=users
+      - USERS_SERVICE_HOST=user
       - USERS_SERVICE_PORT=9090
       - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
       # - HSSHOST=hss:9090
@@ -64,7 +64,7 @@ services:
       - msgclient-nucleus
 
 
-  api-gateway:
+  api-gateway-nucleus:
     build:
       dockerfile: ./Dockerfile
       context: ./api-gateway
@@ -91,13 +91,33 @@ services:
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - SYSTEM=registry
+      - SYSTEM=nucleus
     restart: always
     networks:
       - ukama-net
     depends_on:
       - postgresd-nucleus
-     
+  
+  initclient-nucleus:
+    build:
+      dockerfile: ./Dockerfile
+      context: ../services/initClient
+    environment:
+      - ENV_SYSTEM_ORG=ukama
+      - ENV_DNS_REFRESH_TIME_PERIOD=30
+      - ENV_SYSTEM_NAME=nucleus
+      - ENV_SYSTEM_DNS=api-gateway-nucleus
+      - ENV_SYSTEM_PORT=8060
+      - ENV_SYSTEM_CERT=This-is-a-certificate
+      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      - ENV_INIT_SYSTEM_PORT=8071
+      - ENV_INIT_CLIENT_ADDR=initclient-nucleus
+      - ENV_INIT_CLIENT_PORT=8080
+      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+    restart: always
+    networks:
+      - ukama-net
+
 networks:
   ukama-net:
     external: true
