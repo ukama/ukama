@@ -131,7 +131,7 @@ func initMemberDB(d sql.Db, p providers.OrgClientProvider) {
 			var err error
 
 			if OwnerUUID, err = uuid.FromString(serviceConfig.OwnerId); err != nil {
-				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGOWNERUUID", err)
+				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "OWNERID", err)
 			}
 
 			/* TODO: validate the user from user services */
@@ -142,18 +142,18 @@ func initMemberDB(d sql.Db, p providers.OrgClientProvider) {
 
 			o, err := p.GetOrgByName(serviceConfig.OrgName)
 			if err != nil {
-				log.Fatalf("Failed to connect to user service for validation of owner %s. Error: %v", serviceConfig.OwnerId, err)
+				log.Fatalf("Failed to connect to org service for validation of owner %s. Error: %v", serviceConfig.OrgName, err)
 			}
 
-			if u.Id != o.Org.Owner {
-				log.Fatalf("Failed to validate user %s as owner of org.", serviceConfig.OwnerId)
+			if u.Id != o.Owner {
+				log.Fatalf("Failed to validate user %s as owner of org %+v.", serviceConfig.OwnerId, o)
 			}
 
 			if u.IsDeactivated {
 				log.Fatalf("User is %s is in %s state", serviceConfig.OwnerId, "deactivated")
 			}
 
-			if o.Org.IsDeactivated {
+			if o.IsDeactivated {
 				log.Fatalf("Org is %s in %s state", serviceConfig.OwnerId, "deactivated")
 			}
 

@@ -21,17 +21,13 @@ type registryInfoClient struct {
 	R *rest.RestClient
 }
 
-type Org struct {
+type OrgInfo struct {
 	Id            string    `json:"id,omitempty"`
 	Name          string    `json:"name,omitempty"`
 	Owner         string    `json:"owner,omitempty"`
 	Certificate   string    `json:"certificate,omitempty"`
 	IsDeactivated bool      `json:"isDeactivated,omitempty"`
 	CreatedAt     time.Time `json:"created_AT,omitempty"`
-}
-
-type OrgInfo struct {
-	Org *Org `json:"org"`
 }
 
 type UserInfo struct {
