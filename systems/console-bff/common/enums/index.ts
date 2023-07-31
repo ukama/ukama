@@ -58,3 +58,13 @@ export enum NETWORK_STATUS {
 registerEnumType(NETWORK_STATUS, {
   name: "NETWORK_STATUS",
 });
+
+export enum SIM_TYPES {
+  UNKNOWN = "unknown",
+  TEST = "test",
+  OPERATOR_DATA = "operator_data",
+  UKAMA_DATA = "ukama_data",
+}
+registerEnumType(SIM_TYPES, {
+  name: "SIM_TYPES",
+});

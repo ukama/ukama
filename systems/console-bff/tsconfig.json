@@ -9,6 +9,8 @@
     "network",
     "org",
     "packages",
+    "rate",
+    "sim",
   ],
   "compilerOptions": {
     /* Basic Options */
