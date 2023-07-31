@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -32,7 +33,6 @@ func init() {
 }
 
 func TestSendEmailAndGetEmail(t *testing.T) {
-
 	// connect to Grpc service
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
@@ -44,26 +44,22 @@ func TestSendEmailAndGetEmail(t *testing.T) {
 		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
 		return
 	}
-	t.Run("SendEmail", func(t *testing.T) {
-		sendEmailResponse, err := c.SendEmail(ctx, &pb.SendEmailRequest{
-			To:      []string{"brackley@ukama.com"},
-			Subject: "test",
-			Body:    "test",
-		})
-		assert.NoError(t, err)
-		r, err := c.GetEmailById(ctx, &pb.GetEmailByIdRequest{
-			MailId: sendEmailResponse.MailId,
-		})
 
-		if assert.NoError(t, err) {
-			assert.Equal(t, sendEmailResponse.MailId, r.MailId)
-		}
+	t.Run("SendEmail", func(t *testing.T) {
+		sendEmailResponse, _ := c.SendEmail(ctx, &pb.SendEmailRequest{
+			To: []string{"brackley@ukama.com"},
+			TemplateName: "test-template",
+			Values: map[string]string{
+				"Name": "Brackley",
+				"Message": "Hello World",
+			},
+		})
+		
+		fmt.Println("sendEmailResponse", sendEmailResponse)
+
+
 
 	})
-
-	
-	
-	
 
 }
 

@@ -4,10 +4,13 @@
 package integration
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+	api "github.com/ukama/ukama/systems/init/api-gateway/pkg/rest"
 	"net/http"
 	"strings"
 	"testing"
@@ -52,9 +55,18 @@ func Test_LookupClientApi(t *testing.T) {
 	})
 
 	t.Run("AddOrg", func(tt *testing.T) {
+		id := uuid.NewV4().String()
+		rd := api.AddOrgRequest{
+			OrgName:     "org-name",
+			Certificate: "helloOrg",
+			Ip:          "0.0.0.0",
+			OrgId:       id,
+		}
+
+		jd, err := json.Marshal(&rd)
 		resp, err := client.R().
 			EnableTrace().
-			SetBody(strings.NewReader(`{"Certificate": "helloOrg","Ip": "0.0.0.0"}`)).
+			SetBody(jd).
 			Put(getApiUrl() + "/v1/orgs/" + org)
 
 		if err != nil {

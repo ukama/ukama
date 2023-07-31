@@ -8,17 +8,16 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
 
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/notification/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
-	emailPkg "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
-	"github.com/wI2L/fizz/openapi"
+	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 )
 
-var REDIRECT_URI = "https://subscriber.dev.ukama.com/swagger/#/"
 
 type Router struct {
 	f       *fizz.Fizz
@@ -26,21 +25,25 @@ type Router struct {
 	config  *RouterConfig
 }
 
+
 type RouterConfig struct {
 	debugMode  bool
 	serverConf *rest.HttpConfig
 	auth       *config.Auth
 }
 
+
 type Clients struct {
 	m notification
 }
 
+// notification represents the notification client interface.
 type notification interface {
-	SendEmail(*emailPkg.SendEmailRequest) (*emailPkg.SendEmailResponse, error)
-	GetEmailById(*emailPkg.GetEmailByIdRequest) (*emailPkg.GetEmailByIdResponse, error)
+	SendEmail(*mailerpb.SendEmailRequest) (*mailerpb.SendEmailResponse, error)
+	GetEmailById(mailId string) (*mailerpb.GetEmailByIdResponse, error)
 }
 
+// NewClientsSet creates a new set of clients.
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	var err error
@@ -53,7 +56,6 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 }
 
 func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
-
 	r := &Router{
 		clients: clients,
 		config:  config,
@@ -67,6 +69,7 @@ func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Contex
 	return r
 }
 
+// NewRouterConfig creates a new configuration for the API router.
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		serverConf: &svcConf.Server,
@@ -75,6 +78,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	}
 }
 
+// Run starts the API router.
 func (rt *Router) Run() {
 	logrus.Info("Listening on port ", rt.config.serverConf.Port)
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
@@ -82,6 +86,8 @@ func (rt *Router) Run() {
 		panic(err)
 	}
 }
+
+// init initializes the API router.
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	auth := r.f.Group("/v1", "Notification API GW ", "Notification system version v1", func(ctx *gin.Context) {
@@ -105,10 +111,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		mailer := auth.Group("/mailer", "Mailer", "Mailer")
 		mailer.POST("/sendEmail", formatDoc("Send email notification", ""), tonic.Handler(r.sendEmailHandler, http.StatusOK))
 		mailer.GET("/:mailer_id", formatDoc("Get email by id", ""), tonic.Handler(r.getEmailByIdHandler, http.StatusOK))
-
 	}
 }
 
+// formatDoc formats the documentation for an API endpoint.
 func formatDoc(summary string, description string) []fizz.OperationOption {
 	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
 		info.Summary = summary
@@ -116,39 +122,36 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (message emailPkg.SendEmailResponse, err error) {
-	payload := emailPkg.SendEmailRequest{
-		To:      req.To,
-		Subject: req.Subject,
-		Body:    req.Body,
-		Values:  req.Values,
+// sendEmailHandler handles the send email API endpoint.
+func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (*mailerpb.SendEmailResponse, error) {
+	payload := mailerpb.SendEmailRequest{
+		To:           req.To,
+		TemplateName: req.TemplateName,
+		Values:       make(map[string]string),
 	}
+
+	// Convert map[string]interface{} to map[string]string
+	for key, value := range req.Values {
+		if strValue, ok := value.(string); ok {
+			payload.Values[key] = strValue
+		}
+	}
+
 	res, err := r.clients.m.SendEmail(&payload)
 	if err != nil {
-		return emailPkg.SendEmailResponse{}, err
+		return nil, err
 	}
 
-
-	return emailPkg.SendEmailResponse{
-		Message: res.Message,
-		MailId: res.MailId,
-	}, nil
+	return res, nil
 }
 
-func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (message emailPkg.GetEmailByIdResponse, err error) {
-	payload := emailPkg.GetEmailByIdRequest{
-		MailId: req.MailerId,
-	}
-	res, err := r.clients.m.GetEmailById(&payload)
+// getEmailByIdHandler handles the get email by ID API endpoint.
+func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (*mailerpb.GetEmailByIdResponse, error) {
+	mailerId:=req.MailerId
+	res, err := r.clients.m.GetEmailById(mailerId)
 	if err != nil {
-		return emailPkg.GetEmailByIdResponse{}, err
+		return nil, err
 	}
 
-	return emailPkg.GetEmailByIdResponse{
-		MailId: res.MailId,
-		To:      res.To,
-		Subject: res.Subject,
-		Body:    res.Body,		
-	}, nil
-
+	return res, nil
 }

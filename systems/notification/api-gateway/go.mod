@@ -29,7 +29,7 @@ require (
 
 require (
 	github.com/stretchr/testify v1.8.1
-	github.com/ukama/ukama/systems/common v0.0.0-20230607142027-29e90fc8430b
+	github.com/ukama/ukama/systems/common v0.0.0-20230727230806-f34ca33a62c2
 )
 
 require (

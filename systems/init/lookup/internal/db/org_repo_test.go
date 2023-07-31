@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgtype"
 
+	"github.com/ukama/ukama/systems/common/uuid"
 	int_db "github.com/ukama/ukama/systems/init/lookup/internal/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -81,6 +82,7 @@ func Test_orgRepo_Add(t *testing.T) {
 			Name:        "ukama",
 			Certificate: "ukama_certs",
 			Ip:          dIp,
+			OrgId:       uuid.NewV4(),
 		}
 
 		var db *extsql.DB
@@ -91,7 +93,7 @@ func Test_orgRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, org.Certificate, org.Ip).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Name, org.OrgId, org.Certificate, org.Ip).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

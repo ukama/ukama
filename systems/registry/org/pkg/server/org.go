@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -15,7 +17,9 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 	"github.com/ukama/ukama/systems/registry/org/pkg"
+	"github.com/ukama/ukama/systems/registry/org/pkg/client"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
+	userRegpb "github.com/ukama/ukama/systems/registry/users/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -23,25 +27,157 @@ import (
 
 type OrgService struct {
 	pb.UnimplementedOrgServiceServer
-	orgRepo        db.OrgRepo
-	userRepo       db.UserRepo
-	orgName        string
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	msgbus         mb.MsgBusServiceClient
-	pushgateway    string
+	orgRepo              db.OrgRepo
+	userRepo             db.UserRepo
+	orgName              string
+	baseRoutingKey       msgbus.RoutingKeyBuilder
+	RegistryUserService  client.RegistryUsersClientProvider
+	msgbus               mb.MsgBusServiceClient
+	pushgateway          string
+	notification         client.NotificationClient
+	invitationExpiryTime time.Time
+	authLoginbaseURL	 string
+}
+type EmailData struct {
+	RecipientName string
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string) *OrgService {
+
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, notification client.NotificationClient, RegistryUserService client.RegistryUsersClientProvider, invitationExpiryTime time.Time,authLoginbaseURL string) *OrgService {
 	return &OrgService{
-		orgRepo:        orgRepo,
-		userRepo:       userRepo,
-		orgName:        defaultOrgName,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
-		msgbus:         msgBus,
-		pushgateway:    pushgateway,
+		orgRepo:              orgRepo,
+		userRepo:             userRepo,
+		orgName:              defaultOrgName,
+		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		msgbus:               msgBus,
+		RegistryUserService:  RegistryUserService,
+		pushgateway:          pushgateway,
+		notification:         notification,
+		invitationExpiryTime: invitationExpiryTime,
+		authLoginbaseURL: authLoginbaseURL,
 	}
 }
 
+func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
+	log.Infof("Adding invitation %v", req)
+
+	if req.GetOrg() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Org is required")
+	}
+
+	if req.GetEmail() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Email is required")
+	}
+
+	if req.GetName() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Name is required")
+	}
+
+	link, err := generateInvitationLink(o.authLoginbaseURL, uuid.NewV4().String(),
+	o.invitationExpiryTime)
+	if err != nil {
+		return nil, err
+	}
+
+	invitationId := uuid.NewV4()
+
+	res, err := o.orgRepo.GetByName(req.GetOrg())
+	if err != nil {
+		return nil, err
+	}
+
+	userRegistrySvc, err := o.RegistryUserService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+	remoteUserResp, err := userRegistrySvc.Get(ctx,
+		&userRegpb.GetRequest{UserId: res.Owner.String()})
+	if err != nil {
+		return nil, err
+	}
+
+	
+	err = o.notification.SendEmail(client.SendEmailReq{
+		To:      []string{req.GetEmail()},
+		TemplateName: "member-invitation",
+	    Values:  map[string]interface{}{
+			"INVITATION": invitationId.String(),
+			"LINK": link,
+			"OWNER": remoteUserResp.User.Name,
+			"ORG": res.Name,
+			"ROLE": req.GetRole().String(),
+			"NAME": req.GetName(),
+		},
+		
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	err = o.orgRepo.AddInvitation(
+		&db.Invitation{
+			Id:        invitationId,
+			Org:       req.GetOrg(),
+			Name:      req.GetName(),
+			Link:      link,
+			Email:     req.GetEmail(),
+			Role:      pbRoleTypeToDb(req.GetRole()),
+			ExpiresAt: o.invitationExpiryTime,
+			Status:    db.Pending,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AddInvitationResponse{}, nil
+}
+
+func (o *OrgService) GetInvitation(ctx context.Context, req *pb.GetInvitationRequest) (*pb.GetInvitationResponse, error) {
+	log.Infof("Getting invitation %v", req)
+	invitationId, err := uuid.FromString(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of invitationId. Error %s", err.Error())
+	}
+
+	invitation, err := o.orgRepo.GetInvitation(invitationId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetInvitationResponse{
+			Invitation: dbInvitationToPbInvitation(invitation),
+		},
+		nil
+}
+
+func (o *OrgService) UpdateInvitation(ctx context.Context, req *pb.UpdateInvitationRequest) (*pb.UpdateInvitationResponse, error) {
+	log.Infof("Updating invitation %v", req)
+	invitationId, err := uuid.FromString(req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of invitationId. Error %s", err.Error())
+	}
+
+	invitation, err := o.orgRepo.GetInvitation(invitationId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the invitation has expired
+	if time.Now().After(invitation.ExpiresAt) {
+		return nil, status.Errorf(codes.FailedPrecondition, "Invitation has expired and cannot be updated")
+	}
+
+	// Update the invitation status if it hasn't expired
+	err = o.orgRepo.UpdateInvitation(invitationId, db.InvitationStatus(req.GetStatus()))
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.UpdateInvitationResponse{}, nil
+}
 func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding org %v", req)
 
@@ -548,6 +684,15 @@ func (o *OrgService) PushMetrics() error {
 	return nil
 
 }
+func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
+	return &pb.Invitation{
+		Id:        invitation.Id.String(),
+		Link:      invitation.Link,
+		Email:     invitation.Email,
+		Status:    pb.InvitationStatus(invitation.Status),
+		ExpiresAt: timestamppb.New(invitation.ExpiresAt),
+	}
+}
 
 func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
 	switch role {
@@ -562,4 +707,28 @@ func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
 	default:
 		return db.Member
 	}
+}
+
+func pbInvitationStatusToDbInvitationStatus(status pb.InvitationStatus) db.InvitationStatus {
+	switch status {
+	case pb.InvitationStatus_PENDING:
+		return db.Pending
+	case pb.InvitationStatus_ACCEPTED:
+		return db.Accepted
+	case pb.InvitationStatus_REJECTED:
+		return db.Rejected
+	default:
+		return db.Pending
+	}
+
+}
+
+
+
+func generateInvitationLink(authLoginbaseURL string, linkID string, expirationTime time.Time) (string, error) {
+    link := fmt.Sprintf("%s?linkId=%s", authLoginbaseURL, linkID)
+
+    expiringLink := fmt.Sprintf("%s&expires=%d", link, expirationTime.Unix())
+
+    return expiringLink, nil
 }

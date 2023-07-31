@@ -89,9 +89,7 @@ const MemoizedTableCell = React.memo(
       >
         {column.id === 'role' ? (
           <div>
-            {row[column.id].map((role: string) => (
-              <MemoizedChip key={role} label={role} />
-            ))}
+            <MemoizedChip label={row[column.id]} />
           </div>
         ) : column.id === 'pdf' ? (
           <Link target="_blank" underline="hover" href={row[column.id]}>

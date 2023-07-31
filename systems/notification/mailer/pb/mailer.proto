@@ -23,22 +23,19 @@ message GetEmailByIdRequest{
 message GetEmailByIdResponse{
     string mailId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "mailer_id"];
     string to = 2;
-    string subject = 3;
-    string body = 4;
-    string status = 5;
-    string SentAt = 6;
-    map<string, string> values = 7;
-    google.protobuf.Timestamp created_at = 8;
-    google.protobuf.Timestamp updated_at = 9;
+    string templateName = 3;
+    string status = 4;
+    string SentAt = 5;
+    map<string, string> values = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
 }
 
 // Defines the request and response for sending emails
 message SendEmailRequest{
-    repeated string to = 1;
-    string subject = 2;
-    string body = 3;
+    repeated string to = 2;
+    string TemplateName = 3 [(validator.field) = {string_not_empty: true}, json_name = "template_name"];
     map<string, string> values = 4;
-    
 }
 
 // Defines the response for sending emails

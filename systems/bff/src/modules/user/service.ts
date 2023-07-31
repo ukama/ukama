@@ -79,6 +79,7 @@ export class UserService implements IUserService {
             headers: getHeaders(headers),
         });
         if (checkError(res)) throw new Error(res.message);
+
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return UserMapper.dtoToUserResDto(res);
     };

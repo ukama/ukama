@@ -56,6 +56,11 @@ type registry interface {
 	UpdateMember(orgName string, userUUID string, isDeactivated bool, role string) error
 	RemoveMember(orgName string, userUUID string) error
 
+	//Invitation for members to join an organization
+	AddInvitation(email string, role string ,org string,name string) (*orgpb.AddInvitationResponse, error)
+	GetInvitation(invitationId string) (*orgpb.GetInvitationResponse, error)
+	UpdateInvitation(invitationId string, status string) (*orgpb.UpdateInvitationResponse, error)
+
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
 	GetNetworks(org string) (*netpb.GetByOrgResponse, error)
@@ -145,6 +150,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		orgs.DELETE("/:org/members/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
 		orgs.GET("/:org/nodes", formatDoc("Get Org Nodes", "Get all or free nodes of an organization"), tonic.Handler(r.getOrgNodesHandler, http.StatusOK))
 
+		// org invitations
+		const invitation = "/invitations"
+		invitations := auth.Group(invitation, "Invitations", "Operations on Invitations")
+		invitations.POST("/:org", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.addInvitationHandler, http.StatusCreated))
+		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get an invitation of an organization"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
+		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update an invitation of an organization"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
 		// Users routes
 		const user = "/users"
 		users := auth.Group(user, "Users", "Operations on Users")
@@ -364,4 +375,16 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) addInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*orgpb.AddInvitationResponse, error) {
+
+	return r.clients.Registry.AddInvitation(req.Email,req.Role,c.Param("org"),req.Name)
+}
+
+func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*orgpb.GetInvitationResponse, error) {
+	return r.clients.Registry.GetInvitation(req.InvitationId)
+}
+func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*orgpb.UpdateInvitationResponse, error) {
+	return r.clients.Registry.UpdateInvitation(req.InvitationId,req.State) 
 }

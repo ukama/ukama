@@ -140,7 +140,7 @@ const Manage = () => {
       });
     },
   });
-
+  console.log('MEMBER DATA', data);
   const [getNetworks, { loading: networkLoading }] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
@@ -467,6 +467,7 @@ const Manage = () => {
     console.log('adding node to network');
   };
 
+  console.log('USERS', data.members);
   const isLoading =
     packagesLoading ||
     simsLoading ||

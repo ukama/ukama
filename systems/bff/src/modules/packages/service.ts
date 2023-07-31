@@ -34,7 +34,7 @@ export class PackageService implements IPackageService {
             path: `${SERVER.DATA_PLAN_PACKAGES_API_URL}/org/${headers.orgId}`,
             headers: getHeaders(headers),
         });
-        console.log("PKG", res);
+
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return PackageMapper.dtoToPackagesDto(res);

@@ -169,8 +169,8 @@ export class UserResDto {
     @Field()
     email: string;
 
-    @Field()
-    uuid: string;
+    @Field({ nullable: true })
+    uuid?: string;
 
     @Field()
     phone: string;

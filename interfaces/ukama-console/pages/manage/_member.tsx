@@ -3,7 +3,10 @@ import EmptyView from '@/ui/molecules/EmptyView';
 import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
 import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import { Paper, Typography } from '@mui/material';
+import { Paper, Tabs, Button, TextField, Grid, Box } from '@mui/material';
+import { Search } from '@mui/icons-material';
+import { colors } from '@/styles/theme';
+import React, { useState } from 'react';
 
 interface IMember {
   data: any;
@@ -11,6 +14,7 @@ interface IMember {
   setSearch: (value: string) => void;
   handleButtonAction: () => void;
   invitationTitle: string;
+  onSearchChange?: Function;
 }
 
 const Member = ({
@@ -19,7 +23,13 @@ const Member = ({
   setSearch,
   handleButtonAction,
   invitationTitle,
+  onSearchChange,
 }: IMember) => {
+  const [tabIndex, setTabIndex] = useState(0);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabIndex(newValue);
+  };
   return (
     <Paper
       sx={{
@@ -31,22 +41,55 @@ const Member = ({
         height: 'calc(100vh - 200px)',
       }}
     >
-      <PageContainerHeader
-        search={search}
-        title={'My members'}
-        buttonTitle={'Invite member'}
-        onSearchChange={(e: string) => setSearch(e)}
-        handleButtonAction={handleButtonAction}
-      />
-      <br />
-      {data && data.length > 0 ? (
-        <SimpleDataTable
-          dataKey="uuid"
-          dataset={data}
-          columns={MANAGE_TABLE_COLUMN}
-        />
-      ) : (
-        <EmptyView icon={PeopleAltIcon} title="No members yet!" />
+      <Tabs value={tabIndex} onChange={handleTabChange}>
+        <Tab label="team members" />
+      </Tabs>
+      {tabIndex === 0 && (
+        <Box sx={{ width: '100%', mt: 4 }}>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <TextField
+                id="subscriber-search"
+                variant="outlined"
+                size="small"
+                placeholder="Search"
+                value={search}
+                fullWidth
+                onChange={(e) =>
+                  onSearchChange && onSearchChange(e.target.value)
+                }
+                InputLabelProps={{
+                  shrink: false,
+                }}
+                InputProps={{
+                  endAdornment: <Search htmlColor={colors.black54} />,
+                }}
+              />
+            </Grid>
+            <Grid item xs={6} container justifyContent={'flex-end'}>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                sx={{ width: { xs: '100%', md: 'fit-content' } }}
+                onClick={() => handleButtonAction()}
+              >
+                {`INVITE MEMBER`}
+              </Button>
+            </Grid>
+          </Grid>
+
+          <br />
+          {data && data.length > 0 ? (
+            <SimpleDataTable
+              dataKey="uuid"
+              dataset={data && data}
+              columns={MANAGE_TABLE_COLUMN}
+            />
+          ) : (
+            <EmptyView icon={PeopleAltIcon} title="No members yet!" />
+          )}
+        </Box>
       )}
     </Paper>
   );

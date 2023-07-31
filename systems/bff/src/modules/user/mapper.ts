@@ -25,7 +25,7 @@ class UserMapper implements IUserMapper {
     };
     dtoToUserResDto = (res: UserAPIResDto): UserResDto => {
         return {
-            uuid: res.user.uuid,
+            uuid: res.user.uuid ?? "",
             email: res.user.email,
             isDeactivated: res.user.is_deactivated,
             name: res.user.name,

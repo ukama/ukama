@@ -27,6 +27,7 @@ export class OrgService implements IOrgService {
         });
 
         if (checkError(res)) throw new Error(res.message);
+        console.log("Members", res);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return OrgMapper.dtoToMembersResDto(res);
     };
