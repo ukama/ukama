@@ -196,7 +196,7 @@ func (m *MinioWrapper) ListApps(ctx context.Context) (*[]CappInfo, error) {
 }
 
 func (m *MinioWrapper) GetEndpoint() string {
-	return m.minioClient.EndpointURL().String()
+	return m.minioClient.EndpointURL().String() + "/" + cappsRoot
 }
 
 // host in host:port format
