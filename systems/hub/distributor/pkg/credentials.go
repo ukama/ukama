@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/minio/minio-go/v6/pkg/credentials"
+
 	mc "github.com/ukama/ukama/systems/hub/hub/pkg"
 )
 
@@ -55,7 +56,6 @@ func NewS3Credentials(accessKey, secretKey string) *credentials.Credentials {
 
 /* Get S3 credentilas */
 func GetS3CredentialsFor(fstore string) (*credentials.Credentials, *string, error) {
-
 	/* Get store config */
 	if store == nil {
 		return nil, nil, fmt.Errorf("no config for artifact store found")
@@ -63,7 +63,6 @@ func GetS3CredentialsFor(fstore string) (*credentials.Credentials, *string, erro
 	region := &store.Region
 
 	return NewS3Credentials(store.AccessKey, store.SecretKey), region, nil
-
 }
 
 /* Get credentials for local store */
@@ -72,5 +71,6 @@ func GetLocalStoreCredentialsFor(fstore string) (*StoreCredentialsOptions, error
 	if store == nil {
 		return nil, fmt.Errorf("no config for artifact store found")
 	}
+
 	return store, nil
 }

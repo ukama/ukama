@@ -8,9 +8,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
+
+	"github.com/stretchr/testify/assert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -77,6 +79,7 @@ func putIndexFileContent(tt *testing.T, br io.Reader) {
 	tt.Helper()
 
 	file := "./test/data/index/index.caidx"
+
 	f, err := os.Create(file)
 	if err != nil {
 		assert.FailNow(tt, err.Error())
@@ -91,5 +94,6 @@ func putIndexFileContent(tt *testing.T, br io.Reader) {
 	if bytes <= 0 {
 		assert.FailNow(tt, "expected file contents but looks like its empty")
 	}
-	logrus.Debugf("Index file %s created with %d bytes.", file, bytes)
+
+	log.Debugf("Index file %s created with %d bytes.", file, bytes)
 }

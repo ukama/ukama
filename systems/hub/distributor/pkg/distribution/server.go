@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 	"io"
-
 	"log"
 	"net/http"
 	"os"
 
-	casync "github.com/folbricht/desync"
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg/chunk"
+
+	"github.com/sirupsen/logrus"
+
+	casync "github.com/folbricht/desync"
 )
 
 var (
@@ -20,17 +21,18 @@ var (
 )
 
 func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) error {
-
 	addresses := serverCfg.Address
 	if len(addresses) == 0 {
 		addresses = []string{":http"}
 	}
+
 	logrus.Debugf("Starting distribution server at %+v", addresses)
 
 	/* Store set up */
 	s, err := chunkServerStore(serverCfg)
 	if err != nil {
 		logrus.Errorf("Error configuring distribution server store : %s", err.Error())
+
 		return err
 	}
 
@@ -53,6 +55,7 @@ func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) err
 			return err
 		}
 		defer l.Close()
+
 		handler = withLog(handler, log.New(l, "", log.LstdFlags))
 		logrus.Debugf("Distribution server logging at %s", serverCfg.LogFile)
 	}
@@ -67,6 +70,7 @@ func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) err
 func withLog(h http.Handler, log *log.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		lrw := &loggingResponseWriter{ResponseWriter: w}
+
 		h.ServeHTTP(lrw, r)
 		log.Printf("Client: %s, Request: %s %s, Response: %d", r.RemoteAddr, r.Method, r.RequestURI, lrw.statusCode)
 	}
@@ -122,16 +126,18 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 }
 
 func serve(ctx context.Context, storeOptions *pkg.SecurityConfig, addresses ...string) error {
-
 	logrus.Info("Starting Distribution server at", addresses)
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
 	for _, addr := range addresses {
 		go func(a string) {
 			server := &http.Server{
 				Addr:     a,
 				ErrorLog: log.New(stderr, "", log.LstdFlags),
 			}
+
 			err := server.ListenAndServe()
 
 			fmt.Fprintln(stderr, err)

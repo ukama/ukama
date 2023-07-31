@@ -6,17 +6,14 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
-
+	"github.com/ukama/ukama/systems/hub/distributor/cmd/version"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg/distribution"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg/server"
 
-	"github.com/ukama/ukama/systems/hub/distributor/cmd/version"
-
-	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/config"
-
+	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 )
 
@@ -33,7 +30,7 @@ func main() {
 
 	/* Signal Handling */
 	handleSigterm(func() {
-		logrus.Infof("Cleaning distribution service.")
+		log.Infof("Cleaning distribution service.")
 		/* Call anything required for clean exit */
 
 		cancel()
@@ -43,7 +40,7 @@ func main() {
 	initConfig()
 
 	/* Log level */
-	logrus.SetLevel(logrus.DebugLevel)
+	log.SetLevel(log.DebugLevel)
 
 	/* Intilaize credentials */
 	pkg.InitStoreCredentialsOptions(&serviceConfig.Storage)
@@ -59,7 +56,7 @@ func main() {
 func startDistributionServer(ctx context.Context) {
 	err := distribution.RunDistribution(ctx, &serviceConfig.Distribution)
 	if err != nil {
-		logrus.Errorf("Error while starting distribution server : %s", err.Error())
+		log.Errorf("Error while starting distribution server : %s", err.Error())
 		os.Exit(1)
 	}
 }
@@ -67,6 +64,7 @@ func startDistributionServer(ctx context.Context) {
 /* Start HTTP server for accepting chinking request from UkamaHub */
 func startChunkRequestServer(ctx context.Context) {
 	r := server.NewRouter(serviceConfig)
+
 	metrics.StartMetricsServer(&serviceConfig.Metrics)
 	r.Run()
 }
@@ -87,8 +85,7 @@ func handleSigterm(handleExit func()) {
 	go func() {
 		<-c
 		handleExit()
-		logrus.Infof("Exiting distribution service.")
+		log.Infof("Exiting distribution service.")
 		os.Exit(1)
 	}()
-
 }

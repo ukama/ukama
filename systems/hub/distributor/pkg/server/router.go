@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Masterminds/semver/v3"
-	"github.com/gin-gonic/gin"
-	"github.com/loopfz/gadgeto/tonic"
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/hub/distributor/cmd/version"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg/chunk"
+
+	"github.com/Masterminds/semver/v3"
+	"github.com/gin-gonic/gin"
+	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Router struct {
@@ -24,7 +26,8 @@ type Router struct {
 }
 
 func (r *Router) Run() {
-	logrus.Info("Listening on port ", r.port)
+	log.Info("Listening on port ", r.port)
+
 	err := r.fizz.Engine().Run(fmt.Sprint(":", r.port))
 	if err != nil {
 		panic(err)
@@ -58,40 +61,40 @@ func (r *Router) chunkPutHandler(c *gin.Context, req *ChunkRequest) error {
 		return err
 	}
 
-	logrus.Debugf("Handling chunking request %+v.", req)
+	log.Debugf("Handling chunking request %+v.", req)
+
 	index, err := chunk.CreateChunks(ctx, &r.Store, &r.Chunk, fname, ver, req.Store)
 	if err != nil {
-		logrus.Errorf("Error while chunking the file %s: %s", req.Name, err.Error())
+		log.Errorf("Error while chunking the file %s: %s", req.Name, err.Error())
+
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
 			Message:  err.Error(),
 		}
 	} else {
-
 		if index != nil {
 			c.Header("Content-Type", "application/octet-stream")
 			_, err = index.WriteTo(c.Writer)
-
 		}
 
 		if err != nil {
-			logrus.Errorf("Error while creating index file.")
+			log.Errorf("Error while creating index file.")
+
 			return rest.HttpError{
 				HttpCode: http.StatusInternalServerError,
 				Message:  err.Error(),
 			}
 		}
-
 	}
 
 	return nil
-
 }
 
 func chunkRootHandler(c *gin.Context, r *ChunkRequest) error {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Chunk Server",
 	})
+
 	return nil
 }
 
@@ -103,5 +106,6 @@ func (r *Router) parseVersion(version string) (*semver.Version, error) {
 			Message:  "Invalid version format. Refer to https://semver.org/ for more information",
 		}
 	}
+
 	return v, err
 }

@@ -3,9 +3,10 @@ package pkg
 import (
 	"time"
 
-	cors "github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
+
+	cors "github.com/gin-contrib/cors"
 )
 
 type StoreConfig struct {
@@ -47,6 +48,7 @@ type SecurityConfig struct {
 	ClientCA  string
 	Auth      string
 }
+
 type DistributionConfig struct {
 	Address        []string
 	LogFile        string
@@ -77,7 +79,6 @@ type Config struct {
 }
 
 func NewConfig() *Config {
-
 	return &Config{
 		Server: rest.HttpConfig{
 			Port: 8098,
@@ -132,5 +133,4 @@ func NewConfig() *Config {
 			SkipBucketCreation: true,
 		},
 	}
-
 }
