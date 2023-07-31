@@ -1,7 +1,7 @@
+import { IsOptional } from "class-validator";
 import { Field, ObjectType } from "type-graphql";
 
 import { API_METHOD_TYPE } from "../enums";
-import { IsOptional } from "class-validator";
 
 export type ApiMethodDataDto = {
   url: String;
@@ -48,29 +48,34 @@ export class PaginationResponse {
   meta: Meta;
 }
 
-
 @ObjectType()
 export class AuthType {
-    @Field()
-    @IsOptional()
-    Cookie?: string;
+  @Field()
+  @IsOptional()
+  Cookie?: string;
 
-    @Field()
-    @IsOptional()
-    Authorization?: string;
+  @Field()
+  @IsOptional()
+  Authorization?: string;
 }
 
 @ObjectType()
 export class THeaders {
-    @Field(() => AuthType)
-    auth: AuthType;
+  @Field(() => AuthType)
+  auth: AuthType;
 
-    @Field()
-    orgId: string;
+  @Field()
+  orgId: string;
 
-    @Field()
-    userId: string;
+  @Field()
+  userId: string;
 
-    @Field()
-    orgName: string;
+  @Field()
+  orgName: string;
+}
+
+@ObjectType()
+export class IdResponse {
+  @Field()
+  uuid: string;
 }
