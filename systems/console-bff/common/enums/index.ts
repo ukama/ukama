@@ -68,3 +68,13 @@ export enum SIM_TYPES {
 registerEnumType(SIM_TYPES, {
   name: "SIM_TYPES",
 });
+
+export enum TIME_FILTER {
+  TODAY = "TODAY",
+  WEEK = "WEEK",
+  MONTH = "MONTH",
+  TOTAL = "TOTAL",
+}
+registerEnumType(TIME_FILTER, {
+  name: "TIME_FILTER",
+});
