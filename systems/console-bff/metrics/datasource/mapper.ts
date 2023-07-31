@@ -4,38 +4,62 @@ import {
   MetricRes,
 } from "../resolvers/types";
 
+const ERROR_RESPONSE = {
+  success: true,
+  msg: "success",
+  env: "",
+  nodeid: "",
+  type: "",
+};
+
 export const parseLatestMetricRes = (
   res: any,
   args: GetLatestMetricInput
 ): LatestMetricRes => {
   const data = res.data.result[0];
-  return {
-    env: data.metric.env,
-    nodeid: args.nodeId,
-    type: args.type,
-    value: data.value,
-  };
+  if (data && data.value && data.value.lenght > 0) {
+    return {
+      success: true,
+      msg: "success",
+      env: data.metric.env,
+      nodeid: args.nodeId,
+      type: args.type,
+      value: data.value,
+    };
+  } else {
+    return { ...ERROR_RESPONSE, value: [0, 0] } as LatestMetricRes;
+  }
 };
-export const parseMetricRes = (
-  res: any,
-  args: GetLatestMetricInput
-): MetricRes => {
+
+export const parseMetricRes = (res: any, type: string): MetricRes => {
   const data = res.data.result[0];
-  return {
-    env: data.metric.env,
-    nodeid: args.nodeId,
-    type: args.type,
-    values: fixTimestampInMetricData(data.values),
-  };
+  if (data && data.value && data.value.lenght > 0) {
+    return {
+      type: type,
+      success: true,
+      msg: "success",
+      env: data.metric.env,
+      nodeid: data.metric.nodeid,
+      values: fixTimestampInMetricData(data.values),
+    };
+  } else {
+    return { ...ERROR_RESPONSE, values: [[0, 0]] } as MetricRes;
+  }
 };
 export const parseNodeMetricRes = (res: any, type: string): MetricRes => {
   const data = res.data.result[0];
-  return {
-    type: type,
-    values: fixTimestampInMetricData(data.values),
-    env: data.metric.env,
-    nodeid: data.metric.nodeid,
-  };
+  if (data && data.value && data.value.lenght > 0) {
+    return {
+      type: type,
+      success: true,
+      msg: "success",
+      env: data.metric.env,
+      nodeid: data.metric.nodeid,
+      values: fixTimestampInMetricData(data.values),
+    };
+  } else {
+    return { ...ERROR_RESPONSE, values: [[0, 0]] } as MetricRes;
+  }
 };
 
 const fixTimestampInMetricData = (
