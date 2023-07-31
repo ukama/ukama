@@ -2,9 +2,10 @@ package server
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var str = []byte("the quick brown fox jumps over the lazy dog")
@@ -12,6 +13,7 @@ var str = []byte("the quick brown fox jumps over the lazy dog")
 func Test_Read(t *testing.T) {
 	reader := NewBufReader(bytes.NewReader(str))
 	b, err := io.ReadAll(reader)
+
 	assert.NoError(t, err)
 	assert.Equal(t, str, b)
 }
@@ -72,9 +74,12 @@ func Test(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			reader := NewBufReader(bytes.NewReader(str))
+
 			test.preReads(reader)
 			reader.Reset()
+
 			b, err := io.ReadAll(reader)
+
 			assert.NoError(t, err)
 			assert.Equal(t, str, b)
 		})

@@ -3,16 +3,14 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"io"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/errors"
 
 	"github.com/Masterminds/semver/v3"
-
-	"io"
-	"regexp"
-
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
@@ -70,6 +68,7 @@ func NewMinioWrapper(options *MinioConfig) *MinioWrapper {
 
 	if !options.SkipBucketCreation {
 		log.Infof("Creating bucket %s", m.bucketName)
+
 		err := m.createBucketIfMissing()
 		if err != nil {
 			log.Fatalf("Failed to create bucket %s: %v", m.bucketName, err)
@@ -109,14 +108,15 @@ func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, version
 	if IsDebugMode {
 		log.Infof("File info: %+v", n)
 	}
+
 	return n.Location, nil
 }
 
 func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (reader io.ReadCloser, err error) {
 	fPath := formatCappFilename(artifactName, version, ext)
+
 	log.Infof("Downloading %s from bucket %s", fPath, m.bucketName)
 	o, err := m.minioClient.GetObject(ctx, m.bucketName, fPath, minio.GetObjectOptions{})
-
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +126,7 @@ func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, version
 
 func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*[]AritfactInfo, error) {
 	path := formatCappPath(artifactName) + "/"
+
 	log.Infof("Listing objects in %s", path)
 	objectCh := m.minioClient.ListObjects(ctx, m.bucketName, minio.ListObjectsOptions{
 		Prefix:       path,
@@ -139,16 +140,19 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 	for object := range objectCh {
 		if object.Err != nil {
 			log.Errorf("Failed to list objects: %v", object.Err)
+
 			return nil, object.Err
 		}
-		log.Infof("Listing object %s", object.Key)
 
+		log.Infof("Listing object %s", object.Key)
 		if strings.HasSuffix(object.Key, ChunkIndexExtension) {
 			chunked[strings.TrimSuffix(object.Key, ChunkIndexExtension)] = true
 		}
 
 		if strings.HasSuffix(object.Key, TarGzExtension) {
-			version := strings.TrimSuffix(strings.TrimPrefix(object.Key, formatCappPath(artifactName)+"/"), TarGzExtension)
+			version := strings.TrimSuffix(strings.TrimPrefix(object.Key,
+				formatCappPath(artifactName)+"/"), TarGzExtension)
+
 			_, err := semver.NewVersion(version)
 			if err != nil {
 				log.Errorf("Failed to parse version %s: %v", version, err)
@@ -164,6 +168,7 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 	}
 
 	var result []AritfactInfo
+
 	for k, v := range ls {
 		v.Chunked = chunked[k]
 		result = append(result, v)
@@ -173,8 +178,8 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 }
 
 func (m *MinioWrapper) ListApps(ctx context.Context) (*[]CappInfo, error) {
-
 	log.Infof("Listing all objects")
+
 	objectCh := m.minioClient.ListObjects(ctx, m.bucketName, minio.ListObjectsOptions{
 		Prefix:       cappsRoot,
 		Recursive:    false,
@@ -201,7 +206,6 @@ func (m *MinioWrapper) GetEndpoint() string {
 
 // host in host:port format
 func getClient(host string, accessKeyId string, accessSecret string) *minio.Client {
-
 	// Initialize minio client object.
 	c, err := minio.New(host, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKeyId, accessSecret, ""),
@@ -226,6 +230,7 @@ func (m *MinioWrapper) createBucketIfMissing() error {
 	exists, err := m.minioClient.BucketExists(ctx, m.bucketName)
 	if err == nil && exists {
 		log.Infof("Bucket %s already exists", m.bucketName)
+
 		return nil
 	}
 	if err != nil {
@@ -245,10 +250,12 @@ func (m *MinioWrapper) createBucketIfMissing() error {
 		errResponse := minio.ToErrorResponse(err)
 		if errResponse.Code == "NotImplemented" {
 			log.Errorf("Bucket creation is not supported by the server. Try enabling debug mode if minio is running in FS mode")
+
 			return fmt.Errorf("bucket creation not supported by the server")
 		} else {
 			return err
 		}
 	}
+
 	return nil
 }

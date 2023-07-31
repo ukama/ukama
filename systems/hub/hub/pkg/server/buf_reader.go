@@ -1,8 +1,6 @@
 package server
 
-import (
-	"io"
-)
+import "io"
 
 type bufReader struct {
 	r          io.Reader
@@ -21,6 +19,7 @@ func (s *bufReader) Read(p []byte) (n int, err error) {
 	if s.afterReset && len(s.buff) > 0 {
 		n = copy(p, s.buff)
 		s.buff = s.buff[n:]
+
 		return n, nil
 	}
 
@@ -36,5 +35,6 @@ func (s *bufReader) Reset() {
 	if s.afterReset {
 		panic("bufReader.Reset() called twice. Only one call of Reset() is allowed")
 	}
+
 	s.afterReset = true
 }

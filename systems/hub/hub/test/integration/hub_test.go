@@ -12,10 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-resty/resty/v2"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/config"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/stretchr/testify/assert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type TestConfig struct {
@@ -44,6 +46,7 @@ func Test_AddCApp(t *testing.T) {
 
 	t.Run("Ping", func(t *testing.T) {
 		r, err := rest.R().Get(tConfig.HubHost + "/ping")
+
 		assert.NoError(t, err)
 		assert.Equal(t, r.StatusCode(), http.StatusOK)
 	})
@@ -66,17 +69,18 @@ func Test_AddCApp(t *testing.T) {
 
 		body := r.Body()
 		assert.Equal(tt, len(con), len(body))
+
 		if !bytes.Equal(con, body) {
 			assert.Fail(tt, "Expected file content is not equal to actual content")
 		}
 	})
 
 	t.Run("GetChunkIndex", func(tt *testing.T) {
-
 		for i := 0; i < 3; i++ {
 			// wait for chunk to be created for 3 mins
 			time.Sleep(time.Second * 60)
 			log.Infof("Getting chunk index attempt %d", i)
+
 			r, err := rest.R().Get(appUrl + ".caidx")
 			if err != nil {
 				assert.FailNow(tt, err.Error())
@@ -89,7 +93,6 @@ func Test_AddCApp(t *testing.T) {
 			assert.Equal(tt, r.StatusCode(), http.StatusOK)
 			assert.NoError(tt, err)
 		}
-
 	})
 }
 
@@ -104,5 +107,6 @@ func getFileContent(t *testing.T) []byte {
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
+
 	return con
 }

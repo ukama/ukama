@@ -10,8 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/ukama/ukama/systems/common/errors"
+
+	"github.com/Masterminds/semver/v3"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -38,7 +39,8 @@ type chunkRequest struct {
 
 // Chunk sends request to chunk server to chunk the file and uploads chunk index file to storage
 func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(ch.conf.TimeoutSecond)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(ch.conf.TimeoutSecond)*time.Second)
 	defer cancel()
 
 	client := &http.Client{}
@@ -51,12 +53,14 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/chunk/%s/%s", ch.conf.Host, name, ver.String()), bytes.NewBuffer(json))
+	req, err := http.NewRequest(http.MethodPut,
+		fmt.Sprintf("%s/chunk/%s/%s", ch.conf.Host, name, ver.String()), bytes.NewBuffer(json))
 	if err != nil {
 		return errors.Wrap(err, "failed create chunk request")
 	}
 
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "failed to send chunk request")
@@ -64,12 +68,15 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 
 	if resp.StatusCode != http.StatusOK {
 		log.Errorf("chunk server returned status code %d", resp.StatusCode)
+
 		// print response body
 		b, errB := io.ReadAll(resp.Body)
 		if errB != nil {
 			log.Errorf("failed to read response body. Error: %+v", err)
 		}
+
 		log.Errorf("response body: %s", string(b))
+
 		return fmt.Errorf("failed to chunk file")
 	}
 
@@ -77,5 +84,6 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 	if err != nil {
 		return errors.Wrap(err, "failed to save index file")
 	}
+
 	return nil
 }

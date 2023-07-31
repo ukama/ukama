@@ -21,7 +21,6 @@ gen:
 	mockery --all --recursive --dir ./pkg
 
 clean:
-	# rm pb/gen/*.go
 	rm mocks/*.go
 
 

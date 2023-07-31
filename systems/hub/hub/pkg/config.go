@@ -54,7 +54,6 @@ func NewConfig(name string) *Config {
 			Host:          "http://localhost:8080",
 			TimeoutSecond: 3,
 		},
-
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout: 5 * time.Second,
