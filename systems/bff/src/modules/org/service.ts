@@ -15,10 +15,27 @@ import {
     OrgMembersResDto,
     OrgsResDto,
     UpdateMemberInputDto,
+    InvitationDto,
+    AddInvitationInputDto,
 } from "./types";
 
 @Service()
 export class OrgService implements IOrgService {
+    addInvitation = async (
+        req: AddInvitationInputDto,
+        headers: THeaders
+    ): Promise<InvitationDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.POST,
+            path: `${SERVER.REGISTRY_INVITATION_API_URL}/${headers.orgName}`,
+            headers: getHeaders(headers),
+            body: req,
+        });
+        console.log("INVITATION :", res);
+        if (checkError(res)) throw new Error(res.message);
+        return res;
+    };
+
     getOrgMembers = async (headers: THeaders): Promise<OrgMembersResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -27,7 +44,6 @@ export class OrgService implements IOrgService {
         });
 
         if (checkError(res)) throw new Error(res.message);
-        console.log("Members", res);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return OrgMapper.dtoToMembersResDto(res);
     };

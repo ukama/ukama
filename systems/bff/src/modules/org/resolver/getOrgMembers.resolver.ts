@@ -23,7 +23,7 @@ export class GetOrgMembersResolver {
                 member.uuid,
                 parseHeaders(ctx)
             );
-            console.log("RESOLVER USER", user);
+
             res.push({
                 ...member,
                 user: {

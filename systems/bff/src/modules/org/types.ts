@@ -169,3 +169,24 @@ export class UpdateMemberInputDto {
     @Field()
     isDeactivated: boolean;
 }
+
+@InputType()
+export class AddInvitationInputDto {
+    @Field()
+    email: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    role: MEMBER_ROLES;
+}
+
+@ObjectType()
+export class InvitationDto {
+    @Field()
+    mailId: string;
+
+    @Field()
+    message: string;
+}
