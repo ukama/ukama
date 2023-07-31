@@ -11,6 +11,8 @@
     "packages",
     "rate",
     "sim",
+    "user",
+    "subscriber",
   ],
   "compilerOptions": {
     /* Basic Options */

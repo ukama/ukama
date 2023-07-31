@@ -1,4 +1,4 @@
-import { SIM_TYPES } from "../../constants";
+import { SIM_TYPES } from "../../common/enums";
 import {
   SimAPIResDto,
   SimDetailsDto,
