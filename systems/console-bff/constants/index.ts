@@ -7,8 +7,6 @@ export const DATA_PLAN_API_URL = process.env.DATA_PLAN_API_URL;
 export const AUTH_API_URL = process.env.AUTH_API_URL;
 export const API_URL = process.env.API_URL;
 export const SUBSCRIBER_API_URL = process.env.SUBSCRIBER_API_URL;
-export const STRIP_SK =
-    "sk_test_51LN9vGHBOiFTwZOs0zrb6CkarnlRRocpGSoIZa3jL7vtMeolNjrzf7PAL3hMDHQZENnxIvbw8X7Bfx5CxsUfVfyu00HIVQCYAm";
 export const HEADER = {
     headers: {
         cookie: "",
@@ -107,15 +105,6 @@ export enum GET_USER_TYPE {
 registerEnumType(GET_USER_TYPE, {
     name: "GET_USER_TYPE",
 });
-export enum NETWORK_STATUS {
-    ONLINE = "ONLINE",
-    DOWN = "DOWN",
-    UNDEFINED = "UNDEFINED",
-}
-registerEnumType(NETWORK_STATUS, {
-    name: "NETWORK_STATUS",
-});
-
 export enum NETWORK_TYPE {
     PUBLIC = "PUBLIC",
     PRIVATE = "PRIVATE",

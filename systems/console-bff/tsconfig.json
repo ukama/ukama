@@ -3,7 +3,10 @@
     "planning-tool",
     "metrics",
     "node",
-    "gateway"
+    "gateway",
+    "alert",
+    "billing",
+    "network",
   ],
   "compilerOptions": {
     /* Basic Options */
