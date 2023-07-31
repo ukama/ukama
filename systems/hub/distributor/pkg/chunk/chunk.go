@@ -8,11 +8,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg/archiver"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/gofrs/uuid"
 
 	casync "github.com/folbricht/desync"
 	log "github.com/sirupsen/logrus"
@@ -185,13 +185,10 @@ func removeWorkplace(wp string) {
 /* Prepare w workplace dir */
 func prepareWorkplace() (string, error) {
 	/* Create temp Work place for chunking */
-	u1, err := uuid.NewV4()
-	if err != nil {
-		return "", err
-	}
+	u1 := uuid.NewV4()
 
 	wp := "/tmp/" + u1.String() + "/"
-	err = os.Mkdir(wp, 0755)
+	err := os.Mkdir(wp, 0755)
 	if err != nil {
 		removeWorkplace(wp)
 
