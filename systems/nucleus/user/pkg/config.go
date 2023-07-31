@@ -20,10 +20,10 @@ type Config struct {
 	Service           *config.Service   `default:"{}"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	Org               string            `default:"org:9090"`
-	OrgOWnerName      string            `default:"Ukama Root"`
-	OrgOWnerEmail     string            `default:"hello@ukama.com"`
-	OrgOWnerPhone     string            `default:"0000000000"`
-	OrgOWnerUUID      string
+	OwnerName         string            `default:"Ukama Root"`
+	OwnerEmail        string            `default:"hello@ukama.com"`
+	OwnerPhone        string            `default:"0000000000"`
+	OwnerId           string
 	Queue             *config.Queue `default:"{}"`
 	PushGatewayHost   string        `default:"http://localhost:9091"`
 }
@@ -46,7 +46,7 @@ var UserMetric = []metric.MetricConfig{
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &config.Database{
-			DbName: name,
+			DbName: name + "s",
 		},
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
