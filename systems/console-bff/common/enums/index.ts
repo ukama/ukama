@@ -15,25 +15,46 @@ export enum NODE_STATUS {
   CONFIGURED = "configured",
   UNDEFINED = "undefined",
 }
+registerEnumType(NODE_STATUS, {
+  name: "NodeStatusEnum",
+  description: "Node status enums",
+});
+
 export enum NODE_CONNECTIVITY {
   UNKNOWN = "unkown",
   OFFLINE = "offline",
   ONLINE = "online",
 }
+registerEnumType(NODE_CONNECTIVITY, {
+  name: "NodeConnectivityEnum",
+  description: "Node connectivity enums",
+});
+
 export enum NODE_TYPE {
   tnode = "tnode",
   anode = "anode",
   hnode = "hnode",
 }
-registerEnumType(NODE_STATUS, {
-  name: "NodeStatusEnum",
-  description: "Node status enums",
-});
-registerEnumType(NODE_CONNECTIVITY, {
-  name: "NodeConnectivityEnum",
-  description: "Node connectivity enums",
-});
 registerEnumType(NODE_TYPE, {
   name: "NodeTypeEnum",
   description: "Node type enums",
+});
+
+export enum ALERT_TYPE {
+  INFO = "INFO",
+  WARNING = "WARNING",
+  ERROR = "ERROR",
+}
+registerEnumType(ALERT_TYPE, {
+  name: "AlertTypeEnum",
+  description: "Alert type enums",
+});
+
+export enum NETWORK_STATUS {
+  ONLINE = "ONLINE",
+  DOWN = "DOWN",
+  UNDEFINED = "UNDEFINED",
+}
+registerEnumType(NETWORK_STATUS, {
+  name: "NETWORK_STATUS",
 });

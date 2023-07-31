@@ -78,7 +78,7 @@ export class THeaders {
     orgName: string;
 }
 
-export interface Context {
+export interface AuthContext {
     req: Request;
     authType: string;
 }
