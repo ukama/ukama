@@ -1,12 +1,9 @@
-import { convertCookieToObj } from "../../utils";
-import { HTTP401Error, Messages } from "../errors";
 import { THeaders } from "../types";
-import { AuthContext } from "./../types";
 
 const getTimestampCount = (count: string) =>
   parseInt((Date.now() / 1000).toString()) + "-" + count;
 
-const parseHeaders = (ctx: AuthContext): THeaders => {
+const parseHeaders = (): THeaders => {
   const headers: THeaders = {
     auth: {
       Cookie:
@@ -17,22 +14,22 @@ const parseHeaders = (ctx: AuthContext): THeaders => {
     userId: "851e0abc-7e91-4206-8c85-498e16f91e67",
     orgName: "ukama",
   };
-  const orgId = ctx.req.headers["org-id"];
-  const userId = ctx.req.headers["user-id"];
-  const orgName = ctx.req.headers["org-name"];
-  if (!orgId || !userId || !orgName)
-    throw new HTTP401Error(Messages.ERR_REQUIRED_HEADER_NOT_FOUND);
-  else {
-    headers.orgId = orgId as string;
-    headers.userId = userId as string;
-    headers.orgName = orgName as string;
-  }
-  if (ctx.authType === "token") {
-    headers.auth.Authorization = ctx.req.headers["x-session-token"] as string;
-  } else {
-    const cookieObj: any = convertCookieToObj(ctx.req.headers["cookie"] || "");
-    headers.auth.Cookie = `ukama_session=${cookieObj["ukama_session"]}`;
-  }
+  // const orgId = ctx.req.headers["org-id"];
+  // const userId = ctx.req.headers["user-id"];
+  // const orgName = ctx.req.headers["org-name"];
+  // if (!orgId || !userId || !orgName)
+  //   throw new HTTP401Error(Messages.ERR_REQUIRED_HEADER_NOT_FOUND);
+  // else {
+  //   headers.orgId = orgId as string;
+  //   headers.userId = userId as string;
+  //   headers.orgName = orgName as string;
+  // }
+  // if (ctx.authType === "token") {
+  //   headers.auth.Authorization = ctx.req.headers["x-session-token"] as string;
+  // } else {
+  //   const cookieObj: any = convertCookieToObj(ctx.req.headers["cookie"] || "");
+  //   headers.auth.Cookie = `ukama_session=${cookieObj["ukama_session"]}`;
+  // }
   return headers;
 };
 
