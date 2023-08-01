@@ -18,6 +18,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const ChunksPath = "/v1/chunks"
+
 type TestConfig struct {
 	config.BaseConfig
 	DistributionHost string
@@ -42,7 +44,7 @@ func init() {
 
 // Call webhost endpoint and check response
 func Test_PutChunks(t *testing.T) {
-	appUrl := fmt.Sprintf("%s/chunk", tConfig.DistributionHost)
+	appUrl := fmt.Sprintf("%s%s", tConfig.DistributionHost, ChunksPath)
 
 	rest := resty.New().EnableTrace().SetDebug(tConfig.DebugMode)
 

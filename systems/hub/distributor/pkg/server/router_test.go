@@ -41,7 +41,7 @@ func Test_RouterPut(t *testing.T) {
 	w := httptest.NewRecorder()
 	f := []byte(`{ "store":"./test/data/art" }`)
 
-	req, _ := http.NewRequest("PUT", "/chunk/ukamaos/1.0.1", bytes.NewBuffer(f))
+	req, _ := http.NewRequest("PUT", ChunksPath+"/ukamaos/1.0.1", bytes.NewBuffer(f))
 
 	defconf := pkg.NewConfig()
 	defconf.Distribution.Chunk.Stores[0] = "./test/data/store"
@@ -61,7 +61,7 @@ func Test_RouterPutNoStore(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 
-	req, _ := http.NewRequest("PUT", "/chunk/ukamaos/1.0.1", nil)
+	req, _ := http.NewRequest("PUT", ChunksPath+"/ukamaos/1.0.1", nil)
 
 	defconf := pkg.NewConfig()
 

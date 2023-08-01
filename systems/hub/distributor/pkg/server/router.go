@@ -18,6 +18,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const ChunksPath = "/v1/chunks"
+
 type Router struct {
 	fizz  *fizz.Fizz
 	port  int
@@ -43,9 +45,9 @@ func NewRouter(config *pkg.Config) *Router {
 		Chunk: config.Distribution.Chunk,
 	}
 
-	chunk := f.Group("/chunk", "ChunkServer", "Chunk Server for content to be distributed")
-	chunk.PUT("/:name/:version", nil, tonic.Handler(r.chunkPutHandler, http.StatusOK))
-	chunk.PUT("/", nil, tonic.Handler(chunkRootHandler, http.StatusOK))
+	chunks := f.Group(ChunksPath, "ChunksServer", "Chunks Server for content to be distributed")
+	chunks.PUT("/:name/:version", nil, tonic.Handler(r.chunkPutHandler, http.StatusOK))
+	chunks.PUT("/", nil, tonic.Handler(chunkRootHandler, http.StatusOK))
 
 	return r
 }
