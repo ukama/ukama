@@ -68,6 +68,7 @@ type node interface {
 	AddNode(nodeId, name, orgId, state string) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
 	GetOrgNodes(orgId string, free bool) (*nodepb.GetByOrgResponse, error)
+	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
 	GetAllNodes(free bool) (*nodepb.GetNodesResponse, error)
 	UpdateNodeState(nodeId string, state string) (*nodepb.UpdateNodeResponse, error)
 	UpdateNode(nodeId string, name string) (*nodepb.UpdateNodeResponse, error)

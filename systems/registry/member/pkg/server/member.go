@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	metric "github.com/ukama/ukama/systems/common/metrics"
@@ -55,10 +54,11 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 	}
 
 	/* validate user uuid */
-	_, err = m.orgService.GetUserById(userUUID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
-	}
+	/* Causing a loop when user is getting added a memeber by default */
+	// _, err = m.orgService.GetUserById(userUUID.String())
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
+	// }
 
 	log.Infof("Adding member")
 	member := &db.Member{
