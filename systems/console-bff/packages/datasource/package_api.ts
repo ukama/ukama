@@ -1,5 +1,6 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
+import { DATA_API_GW } from "../../common/configs";
 import { IdResponse, THeaders } from "../../common/types";
 import {
   AddPackageInputDto,
@@ -7,28 +8,25 @@ import {
   PackagesResDto,
   UpdatePackageInputDto,
 } from "../resolver/types";
-import { SERVER } from "./../../constants/endpoints";
 import { dtoToPackageDto, dtoToPackagesDto } from "./mapper";
 
+const version = "/v1/packages";
+
 class PackageApi extends RESTDataSource {
+  baseURL = DATA_API_GW + version;
   getPackage = async (packageId: string): Promise<PackageDto> => {
-    return this.get(
-      `${SERVER.DATA_PLAN_PACKAGES_API_URL}/${packageId}`,
-      {}
-    ).then(res => dtoToPackageDto(res));
+    return this.get(`/${packageId}`, {}).then(res => dtoToPackageDto(res));
   };
 
   getPackages = async (headers: THeaders): Promise<PackagesResDto> => {
-    return this.get(
-      `${SERVER.DATA_PLAN_PACKAGES_API_URL}/org/${headers.orgId}`
-    ).then(res => dtoToPackagesDto(res));
+    return this.get(`/org/${headers.orgId}`).then(res => dtoToPackagesDto(res));
   };
 
   addPackage = async (
     req: AddPackageInputDto,
     headers: THeaders
   ): Promise<PackageDto> => {
-    return this.post(SERVER.DATA_PLAN_PACKAGES_API_URL, {
+    return this.post("", {
       body: {
         duration: req.duration,
         active: true,
@@ -51,14 +49,8 @@ class PackageApi extends RESTDataSource {
     }).then(res => dtoToPackageDto(res));
   };
 
-  deletePackage = async (
-    packageId: string,
-    headers: THeaders
-  ): Promise<IdResponse> => {
-    return this.delete(
-      `${SERVER.DATA_PLAN_PACKAGES_API_URL}/${packageId}`,
-      {}
-    ).then(res => {
+  deletePackage = async (packageId: string): Promise<IdResponse> => {
+    return this.delete(`/${packageId}`).then(res => {
       return {
         uuid: packageId,
       };
@@ -67,10 +59,9 @@ class PackageApi extends RESTDataSource {
 
   updatePackage = async (
     packageId: string,
-    req: UpdatePackageInputDto,
-    headers: THeaders
+    req: UpdatePackageInputDto
   ): Promise<PackageDto> => {
-    return this.patch(`${SERVER.DATA_PLAN_PACKAGES_API_URL}/${packageId}`, {
+    return this.patch(`/${packageId}`, {
       body: req,
     }).then(res => dtoToPackageDto(res));
   };

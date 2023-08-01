@@ -1,5 +1,5 @@
 import { IsOptional } from "class-validator";
-import { Field, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
 import { API_METHOD_TYPE } from "../enums";
 
@@ -46,6 +46,15 @@ export class Meta {
 export class PaginationResponse {
   @Field()
   meta: Meta;
+}
+
+@InputType()
+export class PaginationDto {
+  @Field()
+  pageNo: number;
+
+  @Field()
+  pageSize: number;
 }
 
 @ObjectType()
