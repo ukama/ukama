@@ -28,16 +28,16 @@ func NewUserRepo(db sql.Db) UserRepo {
 
 func (u *userRepo) Add(user *User, nestedFunc func(user *User, tx *gorm.DB) error) error {
 	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Create(user)
-		if result.Error != nil {
-			return result.Error
-		}
-
 		if nestedFunc != nil {
 			nestErr := nestedFunc(user, tx)
 			if nestErr != nil {
 				return nestErr
 			}
+		}
+
+		result := tx.Create(user)
+		if result.Error != nil {
+			return result.Error
 		}
 
 		return nil

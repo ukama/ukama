@@ -22,7 +22,8 @@ services:
       - DB_HOST=postgresd-nucleus
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
-      - ORGOWNERUUID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+      - OWNERID=018688fa-d861-4e7b-b119-ffc5e1637ba8
+      - ORGID=8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc
       - ORGNAME=ukama-test-org
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-nucleus:9095

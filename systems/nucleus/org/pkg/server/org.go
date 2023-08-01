@@ -219,13 +219,15 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 				"failed to check user")
 		}
 	} else {
+		/* TODO: Error is nil why this needs to be done */
 		if !sql.IsNotFoundError(err) {
 			return nil, status.Errorf(codes.FailedPrecondition,
 				"user already exist")
 		}
 	}
 
-	user := &db.User{Uuid: userUUID}
+	/* Registering user */
+	user := &db.User{Uuid: userUUID, Org: []*db.Org{org}}
 
 	err = o.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
 		/* Add user to members db of org */
@@ -247,6 +249,15 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 
 	return &pb.RegisterUserResponse{}, nil
 }
+
+func UpdatingOrgsForUser() {
+
+}
+
+func RemovingUserFromOrg() {
+
+}
+
 
 func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 	return &pb.Organization{

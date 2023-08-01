@@ -113,15 +113,19 @@ func initOrgDB(orgDB *gorm.DB) {
 		if err := orgDB.First(&db.Org{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Iniiialzing orgs table")
 
-			var OwnerUUID uuid.UUID
+			var OwnerUUID, OrgUUID uuid.UUID
 			var err error
 
-			if OwnerUUID, err = uuid.FromString(svcConf.OrgOwnerUUID); err != nil {
-				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGOWNERUUID", err)
+			if OwnerUUID, err = uuid.FromString(svcConf.OwnerId); err != nil {
+				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "OWNERID", err)
+			}
+
+			if OrgUUID, err = uuid.FromString(svcConf.OrgId); err != nil {
+				log.Fatalf("Database initialization failed, need valid %v environment variable. Error: %v", "ORGID", err)
 			}
 
 			org := &db.Org{
-				Id:    uuid.NewV4(),
+				Id:    OrgUUID,
 				Name:  svcConf.OrgName,
 				Owner: OwnerUUID,
 			}
@@ -135,17 +139,15 @@ func initOrgDB(orgDB *gorm.DB) {
 					return err
 				}
 
-				if err := tx.Create(usr).Error; err != nil {
+				o := &db.Org{}
+				if err := tx.First(&o, org).Error; err != nil {
 					return err
 				}
 
-				// if err := tx.Create(&db.OrgUser{
-				// 	OrgId:  org.Id,
-				// 	UserId: usr.Id,
-				// 	Uuid:   usr.Uuid,
-				// }).Error; err != nil {
-				// 	return err
-				// }
+				usr.Org = []*db.Org{o}
+				if err := tx.Create(usr).Error; err != nil {
+					return err
+				}
 
 				return nil
 			}); err != nil {
