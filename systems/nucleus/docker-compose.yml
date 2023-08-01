@@ -29,6 +29,7 @@ services:
       - ORG_SERVICE_HOST=org
       - ORG_SERVICE_PORT=9090
       - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
+      - INITCLIENTHOST=http://initclient-nucleus:8080
     restart: always
     networks:
       - ukama-net
@@ -54,6 +55,7 @@ services:
       - USER_SERVICE_HOST=user
       - USER_SERVICE_PORT=9090
       - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
+      - ORG=org:9090
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
       # - SIMMANAGER_TIMEOUT=3s
