@@ -1,5 +1,5 @@
 {
-  "name": "console",
+  "name": "ukama-console",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -20,14 +20,14 @@
     "*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
-    "@apollo/client": "^3.7.14",
+    "@apollo/client": "^3.7.17",
     "@emotion/react": "latest",
     "@emotion/server": "latest",
     "@emotion/styled": "latest",
     "@mui/icons-material": "latest",
+    "@mui/lab": "latest",
     "@mui/material": "latest",
     "@mui/styles": "latest",
-    "@mui/lab": "latest",
     "@stripe/react-stripe-js": "^2.1.0",
     "@stripe/stripe-js": "^1.52.1",
     "apexcharts": "^3.40.0",
