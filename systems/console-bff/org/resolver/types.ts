@@ -1,7 +1,6 @@
 import { Field, InputType, ObjectType } from "type-graphql";
 
-import { MEMBER_ROLES } from "../../constants";
-import { UserResDto } from "./../../user/src/types";
+import { UserResDto } from "../../user/resolver/types";
 
 @ObjectType()
 export class MemberAPIObj {
@@ -54,7 +53,7 @@ export class MemberObj {
   isDeactivated: boolean;
 
   @Field()
-  role: MEMBER_ROLES;
+  role: string;
 
   @Field({ nullable: true })
   memberSince: string;
@@ -84,7 +83,7 @@ export class OrgAPIDto {
   owner: string;
 
   @Field()
-  certificate: boolean;
+  certificate: string;
 
   @Field()
   is_deactivated: boolean;
@@ -120,7 +119,7 @@ export class OrgDto {
   owner: string;
 
   @Field()
-  certificate: boolean;
+  certificate: string;
 
   @Field()
   isDeactivated: boolean;
@@ -162,7 +161,7 @@ export class AddMemberInputDto {
   email: string;
 
   @Field()
-  role: MEMBER_ROLES;
+  role: string;
 }
 
 @InputType()

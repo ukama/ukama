@@ -1,15 +1,12 @@
-import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Query, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
-import { Context } from "../context";
+import { getIdentity } from "../../common/auth/authCalls";
 import { WhoamiDto } from "./types";
 
 @Resolver()
 export class WhoamiResolver {
   @Query(() => WhoamiDto)
-  @UseMiddleware(Authentication)
-  async whoami(@Ctx() ctx: Context): Promise<WhoamiDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.whoami();
+  async whoami(@Arg("userId") userId: string): Promise<WhoamiDto> {
+    return await getIdentity(userId, "");
   }
 }
