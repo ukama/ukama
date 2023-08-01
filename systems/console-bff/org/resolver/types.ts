@@ -158,7 +158,10 @@ export class AddOrgInputDto {
 @InputType()
 export class AddMemberInputDto {
   @Field()
-  email: string;
+  orgName: string;
+
+  @Field()
+  userId: string;
 
   @Field()
   role: string;
@@ -167,5 +170,47 @@ export class AddMemberInputDto {
 @InputType()
 export class UpdateMemberInputDto {
   @Field()
+  orgName: string;
+
+  @Field()
   isDeactivated: boolean;
+
+  @Field()
+  role: string;
+}
+
+@InputType()
+export class MemberInputDto {
+  @Field()
+  memberId: boolean;
+
+  @Field()
+  orgName: boolean;
+}
+
+@ObjectType()
+export class UserAPIObj {
+  @Field()
+  name: string;
+
+  @Field()
+  email: string;
+
+  @Field()
+  id: string;
+
+  @Field()
+  phone: string;
+
+  @Field()
+  is_deactivated: boolean;
+
+  @Field()
+  registered_since: string;
+}
+
+@ObjectType()
+export class UserAPIResDto {
+  @Field(() => [UserAPIObj])
+  user: UserAPIObj;
 }

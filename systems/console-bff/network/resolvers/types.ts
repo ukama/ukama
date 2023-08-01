@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from "type-graphql";
 
-import { NETWORK_STATUS } from "../common/enums";
+import { NETWORK_STATUS } from "../../common/enums";
 
 @ObjectType()
 export class SiteAPIDto {

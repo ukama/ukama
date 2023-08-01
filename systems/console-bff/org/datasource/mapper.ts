@@ -1,3 +1,4 @@
+import { UserResDto } from "../../user/resolver/types";
 import {
   MemberObj,
   OrgAPIResDto,
@@ -7,6 +8,7 @@ import {
   OrgMembersResDto,
   OrgsAPIResDto,
   OrgsResDto,
+  UserAPIResDto,
 } from "../resolver/types";
 
 export const dtoToMemberResDto = (res: OrgMemberAPIResDto): MemberObj => {
@@ -68,5 +70,16 @@ export const dtoToMembersResDto = (
   return {
     org: res.org,
     members,
+  };
+};
+
+export const dtoToUserResDto = (res: UserAPIResDto): UserResDto => {
+  return {
+    uuid: res.user.id,
+    email: res.user.email,
+    isDeactivated: res.user.is_deactivated,
+    name: res.user.name,
+    phone: res.user.phone,
+    registeredSince: res.user.registered_since,
   };
 };

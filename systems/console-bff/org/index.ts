@@ -5,6 +5,7 @@ import SubGraphServer from "./../common/apollo";
 import { ORG_PORT } from "./../common/configs";
 import { logger } from "./../common/logger";
 import OrgAPI from "./datasource/org_api";
+import UserAPI from "./datasource/user_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
@@ -15,6 +16,7 @@ const runServer = async () => {
       return {
         dataSources: {
           dataSource: new OrgAPI(),
+          dataSoureceUser: new UserAPI(),
         },
       };
     },

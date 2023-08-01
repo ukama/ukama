@@ -9,13 +9,12 @@ import { UpdateMemberInputDto } from "./types";
 @Resolver()
 export class UpdateMemberResolver {
   @Mutation(() => CBooleanResponse)
-  @UseMiddleware(Authentication)
   async updateMember(
     @Arg("memberId") memberId: string,
     @Arg("data") data: UpdateMemberInputDto,
     @Ctx() ctx: Context
   ): Promise<CBooleanResponse> {
     const { dataSources } = ctx;
-    return dataSources.dataSource.updateMember(memberId, data, parseHeaders());
+    return dataSources.dataSource.updateMember(memberId, data);
   }
 }

@@ -1,7 +1,7 @@
 import { Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { NetworksResDto } from "../types";
+import { NetworksResDto } from "./types";
 
 @Resolver()
 export class GetNetworksResolver {

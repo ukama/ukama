@@ -4,7 +4,7 @@ import "reflect-metadata";
 import SubGraphServer from "./../common/apollo";
 import { USER_PORT } from "./../common/configs";
 import { logger } from "./../common/logger";
-import UserAPI from "./datasource/userapi";
+import UserAPI from "./datasource/user_api";
 import resolvers from "./resolver";
 
 const runServer = async () => {
