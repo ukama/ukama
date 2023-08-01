@@ -57,7 +57,6 @@ services:
     depends_on:
       - msgclient-registry
 
-
   node:
     build:
       dockerfile: ./Dockerfile
@@ -102,7 +101,6 @@ services:
       - network
       - postgresd-registry
 
-
   msgclient-registry:
     build: ../services/msgClient
     environment:
@@ -118,13 +116,12 @@ services:
     depends_on:
       - postgresd-registry
 
-
   initclient-registry:
     build:
       dockerfile: ./Dockerfile
       context: ../services/initClient
     environment:
-      - ENV_SYSTEM_ORG=ukama
+      - ENV_SYSTEM_ORG=ukama-test-org
       - ENV_DNS_REFRESH_TIME_PERIOD=30
       - ENV_SYSTEM_NAME=registry
       - ENV_SYSTEM_DNS=api-gateway-registry
