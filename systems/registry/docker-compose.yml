@@ -13,8 +13,6 @@ services:
     volumes:
       - postgress-data:/var/lib/postgresql
 
-
-
   member:
     build: ./member
     ports:
