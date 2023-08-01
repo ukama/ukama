@@ -28,7 +28,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
-const CappsPath = "/capps"
+const CappsPath = "/v1/capps"
 
 type Router struct {
 	fizz                  *fizz.Fizz

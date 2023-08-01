@@ -61,7 +61,7 @@ func Test_RouterPut(t *testing.T) {
 	f := getFileContent(t)
 	defer f.Close()
 
-	req, _ := http.NewRequest("PUT", "/capps/test-app/1.2.3", f)
+	req, _ := http.NewRequest("PUT", CappsPath+"/test-app/1.2.3", f)
 
 	ch.On("Chunk", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -102,7 +102,7 @@ func Test_RouterPutNotAtTargzFile(t *testing.T) {
 		assert.FailNowf(t, "failed to generate token", err.Error())
 	}
 
-	req, _ := http.NewRequest("PUT", "/capps/test-app/1.2.3", bytes.NewReader(token))
+	req, _ := http.NewRequest("PUT", CappsPath+"/test-app/1.2.3", bytes.NewReader(token))
 	r := NewRouter(defaultCongif, &s, emptyChunker, time.Second, nil).fizz.Engine()
 
 	// act
@@ -125,7 +125,7 @@ func Test_RouterGet(t *testing.T) {
 		t.Fatalf("failed to read testfile: %s", err)
 	}
 
-	req, _ := http.NewRequest("GET", "/capps/test-app/1.2.3.tar.gz", bytes.NewReader(cont))
+	req, _ := http.NewRequest("GET", CappsPath+"/test-app/1.2.3.tar.gz", bytes.NewReader(cont))
 	ver := semver.MustParse("1.2.3")
 
 	s.On("GetFile", mock.Anything, "test-app", ver, pkg.TarGzExtension).Return(io.NopCloser(bytes.NewReader(cont)), nil)
@@ -172,7 +172,7 @@ func Test_RouterGetReturnError(t *testing.T) {
 	}{
 		{
 			name:    "NotFoundInBucket",
-			request: "/capps/test-app/1.2.3.tar.gz",
+			request: CappsPath + "/test-app/1.2.3.tar.gz",
 			storageMockFunc: func() pkg.Storage {
 				s := mocks.Storage{}
 				s.On("GetFile", mock.Anything, "test-app", semver.MustParse("1.2.3"), pkg.TarGzExtension).Return(&FakeReader{}, nil)
@@ -183,7 +183,7 @@ func Test_RouterGetReturnError(t *testing.T) {
 		},
 		{
 			name:    "BadExtension",
-			request: "/capps/test-app/1.2.3.bad-extension",
+			request: CappsPath + "/test-app/1.2.3.bad-extension",
 			storageMockFunc: func() pkg.Storage {
 				s := mocks.Storage{}
 				return &s
@@ -193,7 +193,7 @@ func Test_RouterGetReturnError(t *testing.T) {
 		},
 		{
 			name:    "NoExtension",
-			request: "/capps/test-app/1.2.3",
+			request: CappsPath + "/test-app/1.2.3",
 			storageMockFunc: func() pkg.Storage {
 				s := mocks.Storage{}
 				return &s
@@ -203,7 +203,7 @@ func Test_RouterGetReturnError(t *testing.T) {
 		},
 		{
 			name:    "BadVersion",
-			request: "/capps/test-app/1.this-is-bad.3",
+			request: CappsPath + "/test-app/1.this-is-bad.3",
 			storageMockFunc: func() pkg.Storage {
 				s := mocks.Storage{}
 				return &s
@@ -254,8 +254,8 @@ func TestListApps(t *testing.T) {
 					CreatedAt: time.Now().Add(-4 * time.Hour),
 				},
 			},
-			wantBodyContains: []string{"capps/test-app/1.2.4.tar.gz", "1.2.4", "1.2.3",
-				"capps/test-app/1.2.3.caidx", `"type": "chunk"`},
+			wantBodyContains: []string{CappsPath + "/test-app/1.2.4.tar.gz", "1.2.4", "1.2.3",
+				CappsPath + "/test-app/1.2.3.caidx", `"type": "chunk"`},
 			wantCode: 200,
 		},
 
@@ -272,7 +272,7 @@ func TestListApps(t *testing.T) {
 			// arrange
 			s := mocks.Storage{}
 			w := httptest.NewRecorder()
-			req, _ := http.NewRequest("GET", "/capps/test-app", nil)
+			req, _ := http.NewRequest("GET", CappsPath+"/test-app", nil)
 
 			s.On("ListVersions", mock.Anything, "test-app").Return(test.artifacts, nil)
 			r := NewRouter(defaultCongif, &s, emptyChunker, time.Second, nil).fizz.Engine()

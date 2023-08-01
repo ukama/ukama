@@ -5,10 +5,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/hub/hub/cmd/version"
 	"github.com/ukama/ukama/systems/hub/hub/pkg"
 	"github.com/ukama/ukama/systems/hub/hub/pkg/server"
@@ -54,6 +53,7 @@ func main() {
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	config.LoadConfig(pkg.ServiceName, serviceConfig)
+
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
