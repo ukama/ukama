@@ -75,7 +75,7 @@
 #define WIMC_EP_TASKS    "/content/tasks"
 
 #define WIMC_EP_HUB_CAPPS    "v1/capps"
-#define WIMC_EP_AGENT_UPDATE "/admin/agent/update"
+#define WIMC_EP_AGENT_UPDATE "v1/agents"
 
 #define WIMC_MAX_NAME_LEN   256
 #define WIMC_MAX_PATH_LEN   256
@@ -191,7 +191,6 @@ typedef struct {
   char *name;        /* to fetch. */
   char *tag;         /* to fetch. */
   char *method;      /* Method to use with provider. */
-  char *providerURL; /* service provider URL. */
   char *indexURL;    /* index URL for CA */
   char *storeURL;    /* chunk store */
 } WContent;

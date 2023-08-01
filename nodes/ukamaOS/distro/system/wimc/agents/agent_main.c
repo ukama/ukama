@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     long code;
     char *url=DEF_WIMC_URL, *port=DEF_AGENT_SERVICE_PORT, *dbg=DEF_LOG_LEVEL;
     char *method="TEST";
-        
+
     char wimcURL[WIMC_MAX_URL_LEN] = {0};
     char servicePort[WIMC_MAX_URL_LEN] = {0};
     char debug[WIMC_MAX_URL_LEN] = {0};

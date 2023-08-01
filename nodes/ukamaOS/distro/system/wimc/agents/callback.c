@@ -19,308 +19,130 @@
 #include "err.h"
 #include "agent/jserdes.h"
 #include "common/utils.h"
+#include "http_status.h"
 
-/*
- * Callback functions for various endpoints.
- */
+#include "usys_types.h"
+#include "usys_mem.h"
+#include "usys_log.h"
 
-static void free_wimc_request(WimcReq *req);
-static int valid_req_type(WimcReq *req, MethodType method);
-static int validate_post_request(WimcReq *req, MethodType method);
+static void log_json(json_t *json) {
 
+    char *str = NULL;
 
-/*
- * decode a u_map into a string
- */
-
-static char *print_map(const struct _u_map * map) {
-
-  char * line, * to_return = NULL;
-  const char **keys, * value;
-  
-  int len, i;
-  
-  if (map != NULL) {
-    keys = u_map_enum_keys(map);
-    for (i=0; keys[i] != NULL; i++) {
-      value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, value is %s", keys[i], value);
-      line = o_malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, value is %s", keys[i], value);
-      if (to_return != NULL) {
-        len = o_strlen(to_return) + o_strlen(line) + 1;
-        to_return = o_realloc(to_return, (len+1)*sizeof(char));
-        if (o_strlen(to_return) > 0) {
-          strcat(to_return, "\n");
-        }
-      } else {
-        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
-        to_return[0] = 0;
-      }
-      strcat(to_return, line);
-      o_free(line);
+    if (json == NULL) return;
+    
+    str = json_dumps(json, 0);
+    if (str) {
+        usys_log_debug("json str: %s", str);
+        usys_free(str);
     }
-    return to_return;
-  } else {
-    return NULL;
-  }
 }
 
-/*
- * valid_req_type --
- *
- */
-
-static int valid_req_type(WimcReq *req, MethodType method) {
-
-  if (req->type == (WReqType)WREQ_FETCH)
-    return TRUE;
-
-  if (req->type == (WReqType)WREQ_UPDATE)
-    return TRUE;
-
-  if (req->type == (WReqType)WREQ_CANCEL)
-    return TRUE;
-
-  return FALSE;
-}
-
-/*
- * validate_post_request -- validate all parameters of POST are valid. 
- *
- */
-
-static int validate_post_request(WimcReq *req, MethodType method) {
+static int validate_post_request(WimcReq *req) {
 
   WFetch *fetch=NULL;
   WContent *content=NULL;
 
-  if (!valid_req_type(req, method)){
-    return WIMC_ERROR_BAD_TYPE;
-  }
-
-  if (req->type == (WReqType)WREQ_FETCH) {
-    fetch = req->fetch;
-  } else {
-    goto done;
-  }
-
-  /* Id and interval are always positive. */
-  if (uuid_is_null(fetch->uuid)) {
-    return WIMC_ERROR_BAD_ID;
-  }
-
-  if (fetch->interval <= 0) {
-    return WIMC_ERROR_BAD_INTERVAL;
-  }
-
-  if (validate_url(fetch->cbURL) != WIMC_OK) {
-    return WIMC_ERROR_BAD_URL;
-  }
-      
-  if (!fetch->content) {
-    return WIMC_ERROR_MISSING_CONTENT;
-  } else {
-    content = fetch->content;
-  }
+  fetch = req->fetch;
   
-  if (!content->name || !content->tag) {
-    return WIMC_ERROR_BAD_NAME;
-  }
+  if (!validate_url(fetch->cbURL) ||
+      !validate_url(fetch->content->indexURL) ||
+      !validate_url(fetch->content->storeURL))
+      return USYS_FALSE;
 
-  if (method == (MethodType)CHUNK) {
-    if (validate_url(content->indexURL) != WIMC_OK) {
-      return WIMC_ERROR_BAD_URL;
-    }
-
-    if (validate_url(content->storeURL) != WIMC_OK) {
-      return WIMC_ERROR_BAD_URL;
-    }
-  } else {
-    if (validate_url(content->providerURL) != WIMC_OK) {
-      return WIMC_ERROR_BAD_URL;
-    }
-  }
-
- done:
-  return WIMC_OK;
+  return USYS_TRUE;
 }
-
-/*
- * agent_callback_delete --
- *
- */
-
-int agent_callback_delete(const struct _u_request *request,
-			  struct _u_response *response,
-			  void *user_data) {
-  
-  char *post_params, *response_body;
-
-  post_params = print_map(request->map_post_body);
-  response_body = msprintf("OK!\n%s", post_params);
-  
-  ulfius_set_string_body_response(response, 200, response_body);
-  o_free(response_body);
-  o_free(post_params);
-  
-  return U_CALLBACK_CONTINUE;
-}
-
-/*
- * agent_callback_get --
- *
- */
-
-int agent_callback_get(const struct _u_request *request,
-		       struct _u_response *response,
-		       void *user_data) {
-  
-  char *post_params, *response_body;
-
-  post_params = print_map(request->map_post_body);
-  response_body = msprintf("OK!\n%s", post_params);
-  
-  ulfius_set_string_body_response(response, 200, response_body);
-  o_free(response_body);
-  o_free(post_params);
-
-  return U_CALLBACK_CONTINUE;
-}
-
-/*
- * agent_callback_put --
- *
- */
-int agent_callback_put(const struct _u_request *request,
-		       struct _u_response *response,
-		       void *user_data) {
-  
-  char *post_params, *response_body;
-
-  post_params = print_map(request->map_post_body);
-  response_body = msprintf("OK!\n%s", post_params);
-
-  ulfius_set_string_body_response(response, 200, response_body);
-  o_free(response_body);
-  o_free(post_params);
-
-  return U_CALLBACK_CONTINUE;
-}
-
-/*
- * agent_callback_post -- callback to handle WIMC request to fetch new content.
- *
- */
-int agent_callback_post(const struct _u_request *request,
-			struct _u_response *response, void *user_data) {
-
-  int ret, retCode;
-  char *resBody=NULL;
-  json_t *jreq=NULL;
-  json_error_t jerr;
-  MethodType *method = (MethodType *)user_data;
-  WimcReq *req=NULL;
-
-  jreq = ulfius_get_json_body_request(request, &jerr);
-  if (!jreq) {
-    log_error("json error: %s", jerr.text);
-    goto done;
-  }
-
-  req = (WimcReq *)calloc(1, sizeof(WimcReq));
-
-  ret = deserialize_wimc_request(&req, jreq);
-
-  if (ret) {
-    char *jStr;
-
-    jStr = json_dumps(jreq, 0);
-    if (jStr) {
-      log_debug("Wimc request received str: %s", jStr);
-      free(jStr);
-    }
-  }
-
-  ret = validate_post_request(req, *method);
-  if (ret != WIMC_OK) {
-    retCode = 400;
-    resBody = msprintf("%s\n", error_to_str(ret));
-    goto done;
-  } else {
-    retCode = 200;
-    resBody = msprintf("OK");
-  }
-
-  request_handler(req->fetch);
-  
- done:
-
-  ulfius_set_string_body_response(response, retCode, resBody);
-  free_wimc_request(req);
-  o_free(resBody);
-  json_decref(jreq);
-
-  return U_CALLBACK_CONTINUE;
-}
-
-/*
- * free_wimc_request --
- *
- */
 
 static void free_wimc_request(WimcReq *req) {
 
-  if (!req)
-    return;
-  
-  if (req->type == WREQ_FETCH) {
     WContent *content;
-    
+
+    if (!req) return;
+    if (req->type != WREQ_FETCH) return;
+
     free(req->fetch->cbURL);
     content = req->fetch->content;
 
     if (content) {
-      free(content->name);
-      free(content->tag);
-      free(content->method);
-      free(content->providerURL);
-      free(content->indexURL);
-      free(content->storeURL);
-      free(content);
+        usys_free(content->name);
+        usys_free(content->tag);
+        usys_free(content->method);
+        usys_free(content->indexURL);
+        usys_free(content->storeURL);
+        usys_free(content);
     }
 
-    free(req->fetch);
-  }
-  
-  free(req);
-}  
-
-/*
- * agent_callback_stats 
- *
- */
-int agent_callback_stats(const struct _u_request *request,
-			 struct _u_response *response,
-			 void *user_data) {
-  
-  char *post_params = print_map(request->map_post_body);
-  char *response_body = msprintf("OK!\n%s", post_params);
-  
-  ulfius_set_string_body_response(response, 200, response_body);
-  o_free(response_body);
-  o_free(post_params);
-  
-  return U_CALLBACK_CONTINUE;
+    usys_free(req->fetch);
+    usys_free(req);
 }
 
-/*
- * agent_callback_default -- default callback for no-match
- *
- */
-int agent_callback_default(const struct _u_request *request,
-			   struct _u_response *response, void *user_data) {
+int agent_web_service_cb_post_capp(const struct _u_request *request,
+                                   struct _u_response *response,
+                                   void *data) {
 
-  ulfius_set_string_body_response(response, 404, "What's wrong?\n");
-  return U_CALLBACK_CONTINUE;
+    int ret, retCode;
+    json_t       *json = NULL;
+    json_error_t jerr;
+    WimcReq      *req=NULL;
+
+    json = ulfius_get_json_body_request(request, &jerr);
+    if (!json) {
+        usys_log_error("JSON error for the agent register request: %s",
+                       jerr.text);
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        HttpStatusStr(HttpStatus_BadRequest));
+        return U_CALLBACK_CONTINUE;
+    }
+    log_json(json);
+    
+    req = (WimcReq *)calloc(1, sizeof(WimcReq));
+    if (req == NULL) {
+        usys_log_error("Error allocating memory of size: %ld", sizeof(WimcReq));
+        retCode = HttpStatus_InternalServerError;
+        goto done;
+    }
+
+    if (!deserialize_wimc_request(&req, json)) {
+        usys_log_error("Error deserializing wimc request");
+        retCode = HttpStatus_BadRequest;
+        goto done;
+    }
+
+    if (!validate_post_request(req)) {
+        usys_log_error("Invalid parameters for capp post");
+        retCode = HttpStatus_BadRequest;
+        goto done;
+    }
+
+    process_capp_fetch_request(req->fetch);
+
+done:
+    free_wimc_request(req);
+    json_decref(json);
+
+    ulfius_set_string_body_response(response, retCode, HttpStatusStr(retCode));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int agent_web_service_cb_default(const URequest *request,
+                                 UResponse *response,
+                                 void *data) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_Unauthorized,
+                                    HttpStatusStr(HttpStatus_Unauthorized));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int agent_web_service_cb_ping(const URequest *request,
+                              UResponse *response,
+                              void *data) {
+
+    ulfius_set_string_body_response(response,
+                                    HttpStatus_OK,
+                                    HttpStatusStr(HttpStatus_OK));
+
+    return U_CALLBACK_CONTINUE;
 }

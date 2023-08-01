@@ -10,17 +10,17 @@
 #ifndef AGENT_CALLBACK_H
 #define AGENT_CALLBACK_H
 
-int agent_callback_get(const struct _u_request *request,
-		       struct _u_response *response, void *user_data);
-int agent_callback_post(const struct _u_request *request,
-			struct _u_response *response, void *user_data);
-int agent_callback_put(const struct _u_request *request,
-		       struct _u_response *response, void *user_data);
-int agent_callback_delete(const struct _u_request *request,
-			  struct _u_response *response, void *user_data);
-int agent_callback_stats(const struct _u_request *request,
-			 struct _u_response *response, void *user_data);
-int agent_callback_default(const struct _u_request *request,
-			   struct _u_response *response, void *user_data);
+int agent_web_service_cb_default(const URequest *request,
+                                 UResponse *response,
+                                 void *data);
+int agent_web_service_cb_post_capp(const URequest *request,
+                                   UResponse *response,
+                                   void *data);
+int agent_web_service_cb_ping(const URequest *request,
+                              UResponse *response,
+                              void *data);
+int agent_web_service_cb_default(const URequest *request,
+                                 UResponse *response,
+                                 void *data);
 
 #endif /* AGENT_CALLBACK_H */

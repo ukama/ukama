@@ -31,9 +31,6 @@ static void json_log(json_t *json) {
     }
 }
 
-static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json);
-
-
 /*
  * serialize_agent_request -- Serialize Agent request.
  *
@@ -208,106 +205,66 @@ int serialize_agent_request(AgentReq *request, json_t **json) {
     return ret;
 }
 
-/*
- * deserialize_wimc_request --
- *
- */
-int deserialize_wimc_request(WimcReq **request, json_t *json) {
+static bool deserialize_wimc_request_fetch(WFetch **fetch, json_t *json) {
 
-  int ret=FALSE;
-  json_t *jreq=NULL, *jtype=NULL;
+    json_t *jfetch   = NULL;
+    json_t *jcontent = NULL;
+    json_t *jObj     = NULL;
 
-#if 0  
-  WimcReq *req = *request;
+    jfetch = json_object_get(json, JSON_TYPE_FETCH);
+    if (jfetch == NULL) return USYS_FALSE;
 
-  /* sanity check. */
-  if (!json) {
-    return FALSE;
-  }
+    *fetch = (WFetch *)calloc(1, sizeof(WFetch));
+    if (*fetch == NULL) return USYS_FALSE;
 
-  if (json) {
-    char *str;
+    jObj = json_object_get(jfetch, JSON_ID);
+    uuid_parse(json_string_value(jObj), (*fetch)->uuid);
 
-    str = json_dumps(json, 0);
-    if (str) {
-      log_debug("Deserializeing JSON: %s", str);
-      free(str);
-    }
-  }
+    jObj = json_object_get(jfetch, JSON_UPDATE_INTERVAL);
+    (*fetch)->interval = json_integer_value(jObj);
+
+    jObj = json_object_get(jfetch, JSON_CALLBACK_URL);
+    (*fetch)->cbURL = strdup(json_string_value(jObj));
+
+    jcontent = json_object_get(jfetch, JSON_CONTENT);
+    if (jcontent == NULL) return USYS_FALSE;
+
+    (*fetch)->content = (WContent *)calloc(1, sizeof(WContent));
   
-  jreq = json_object_get(json, JSON_WIMC_REQUEST);
-  if (jreq == NULL) {
-    return FALSE;
-  }
-    
-  jtype = json_object_get(jreq, JSON_TYPE);
-  if (jtype==NULL) {
-    return FALSE;
-  }
+    jObj = json_object_get(jcontent, JSON_NAME);
+    (*fetch)->content->name = strdup(json_string_value(jObj));
+  
+    jObj = json_object_get(jcontent, JSON_TAG);
+    (*fetch)->content->tag = strdup(json_string_value(jObj));
+  
+    jObj = json_object_get(jcontent, JSON_METHOD);
+    (*fetch)->content->method = strdup(json_string_value(jObj));
 
-  req->type = convert_str_to_type(json_string_value(jtype));
+    jObj = json_object_get(jcontent, JSON_INDEX_URL);
+    (*fetch)->content->indexURL = strdup(json_string_value(jObj));
 
-  if (req->type == (WReqType)WREQ_FETCH) {
-    ret = deserialize_wimc_request_fetch(&req->fetch, jreq);
-  } else if (req->type == (WReqType)WREQ_UPDATE) {
+    jObj = json_object_get(jcontent, JSON_STORE_URL);
+    (*fetch)->content->storeURL = strdup(json_string_value(jObj));
 
-  }
-#endif
-
-  return ret;
+    return USYS_TRUE;
 }
 
-/*
- * deserialize_wimc_request_fetch --
- *
- */
-static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json) {
+bool deserialize_wimc_request(WimcReq **request, json_t *json) {
 
-  json_t *jfetch=NULL, *jcontent=NULL, *jObj=NULL;
+    json_t *jreq  = NULL;
+    json_t *jtype = NULL;
 
-  jfetch = json_object_get(json, JSON_TYPE_FETCH);
-  if (jfetch == NULL) {
-    return FALSE;
-  }
+    if (!json) return USYS_FALSE;
 
-  *fetch = (WFetch *)calloc(1, sizeof(WFetch));
-  if (*fetch == NULL) {
-    return FALSE;
-  }
+    jreq = json_object_get(json, JSON_WIMC_REQUEST);
+    if (jreq == NULL) return USYS_FALSE;
 
-  jObj = json_object_get(jfetch, JSON_ID);
-  uuid_parse(json_string_value(jObj), (*fetch)->uuid);
+    jtype = json_object_get(jreq, JSON_TYPE);
+    if (jtype == NULL) return USYS_FALSE;
 
-  jObj = json_object_get(jfetch, JSON_UPDATE_INTERVAL);
-  (*fetch)->interval = json_integer_value(jObj);
+    if (strcmp(json_string_value(jtype), "fetch") == 0) {
+        return deserialize_wimc_request_fetch(&(*request)->fetch, jreq);
+    }
 
-  jObj = json_object_get(jfetch, JSON_CALLBACK_URL);
-  (*fetch)->cbURL = strdup(json_string_value(jObj));
-
-  jcontent = json_object_get(jfetch, JSON_CONTENT);
-  if (jcontent == NULL) {
-    return FALSE;
-  }
-
-  (*fetch)->content = (WContent *)calloc(1, sizeof(WContent));
-  
-  jObj = json_object_get(jcontent, JSON_NAME);
-  (*fetch)->content->name = strdup(json_string_value(jObj));
-  
-  jObj = json_object_get(jcontent, JSON_TAG);
-  (*fetch)->content->tag = strdup(json_string_value(jObj));
-  
-  jObj = json_object_get(jcontent, JSON_PROVIDER_URL);
-  (*fetch)->content->providerURL = strdup(json_string_value(jObj));
-
-  jObj = json_object_get(jcontent, JSON_METHOD);
-  (*fetch)->content->method = strdup(json_string_value(jObj));
-
-  jObj = json_object_get(jcontent, JSON_INDEX_URL);
-  (*fetch)->content->indexURL = strdup(json_string_value(jObj));
-
-  jObj = json_object_get(jcontent, JSON_STORE_URL);
-  (*fetch)->content->storeURL = strdup(json_string_value(jObj));
-
-  return TRUE;
+    return USYS_FALSE;
 }

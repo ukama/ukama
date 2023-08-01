@@ -63,218 +63,116 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
     return USYS_TRUE;
 }
 
-int serialize_wimc_request(WimcReq *request, json_t **json) {
+bool serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
 
-  int ret=FALSE;
-  json_t *req=NULL;
+    json_t *jfetch=NULL, *jcontent=NULL;;
+    WFetch *fetch=NULL;
+    WContent *content=NULL;
+    char idStr[36+1]; /* 36-bytes for UUID + trailing '\0' */
 
-  *json = json_object();
-  if (*json == NULL)
-    return ret;
-
-  json_object_set_new(*json, JSON_WIMC_REQUEST, json_object());
-  req = json_object_get(*json, JSON_WIMC_REQUEST);
-
-  if (req==NULL) {
-    return ret;
-  }
-
-  if (request->type == (WReqType)WREQ_FETCH) {
-    ret = serialize_wimc_request_fetch(request, &req);
-  } else if (request->type == (WReqType)WREQ_UPDATE) {
-
-  }
-
-  if (ret) {
-    char *str;
-    str = json_dumps(*json, 0);
-
-    if (str) {
-      log_debug("Wimc request str: %s", str);
-      free(str);
+    if (req == NULL && req->fetch == NULL) {
+        return USYS_FALSE;
     }
-    ret = TRUE;
-  }
 
-  return ret;
+    fetch = req->fetch;
+    content = fetch->content;
+
+    if (content == NULL) return USYS_FALSE;
+
+    json_object_set_new(*json, JSON_TYPE, json_string(WIMC_REQ_TYPE_FETCH));
+
+    /* Add fetch object */
+    json_object_set_new(*json, JSON_TYPE_FETCH, json_object());
+    jfetch = json_object_get(*json, JSON_TYPE_FETCH);
+
+    uuid_unparse(fetch->uuid, idStr);
+    json_object_set_new(jfetch, JSON_ID, json_string(idStr));
+    json_object_set_new(jfetch, JSON_UPDATE_INTERVAL,
+                        json_integer(fetch->interval));
+
+    json_object_set_new(jfetch, JSON_CONTENT, json_object());
+    jcontent = json_object_get(jfetch, JSON_CONTENT);
+
+    /* Add content object. */
+    json_object_set_new(jcontent, JSON_NAME,
+                        json_string(content->name));
+    json_object_set_new(jcontent, JSON_TAG,
+                        json_string(content->tag));
+    json_object_set_new(jcontent, JSON_METHOD,
+                        json_string(content->method));
+    json_object_set_new(jcontent, JSON_INDEX_URL,
+                        json_string(content->indexURL));
+    json_object_set_new(jcontent, JSON_STORE_URL,
+                        json_string(content->storeURL));
+
+    return USYS_TRUE;
 }
 
-/*
- * serialize_wimc_request_fetch --
- *
- */
-int serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
+bool serialize_wimc_request(WimcReq *request, json_t **json) {
 
-  json_t *jfetch=NULL, *jcontent=NULL;;
-  WFetch *fetch=NULL;
-  WContent *content=NULL;
-  char idStr[36+1]; /* 36-bytes for UUID + trailing '\0' */
+    json_t *req=NULL;
 
-  if (req==NULL && req->fetch==NULL) {
-    return FALSE;
-  }
+    *json = json_object();
+    if (*json == NULL) return USYS_FALSE;
 
-  fetch = req->fetch;
+    json_object_set_new(*json, JSON_WIMC_REQUEST, json_object());
+    req = json_object_get(*json, JSON_WIMC_REQUEST);
+    if (req == NULL) return USYS_FALSE;
 
-  if (fetch->content==NULL) {
-    return FALSE;
-  }
+    if (request->type == (WReqType)WREQ_FETCH) {
+        return serialize_wimc_request_fetch(request, &req);
+    } else if (request->type == (WReqType)WREQ_UPDATE) {
+        
+    }
 
-  content = fetch->content;
 
-  json_object_set_new(*json, JSON_TYPE, json_string(WIMC_REQ_TYPE_FETCH));
-
-  /* Add fetch object */
-  json_object_set_new(*json, JSON_TYPE_FETCH, json_object());
-  jfetch = json_object_get(*json, JSON_TYPE_FETCH);
-
-  uuid_unparse(fetch->uuid, idStr);
-  json_object_set_new(jfetch, JSON_ID, json_string(idStr));
-  json_object_set_new(jfetch, JSON_CALLBACK_URL, json_string(fetch->cbURL));
-  json_object_set_new(jfetch, JSON_UPDATE_INTERVAL,
-		      json_integer(fetch->interval));
-
-  json_object_set_new(jfetch, JSON_CONTENT, json_object());
-  jcontent = json_object_get(jfetch, JSON_CONTENT);
-
-  /* Add content object. */
-  json_object_set_new(jcontent, JSON_NAME, json_string(content->name));
-  json_object_set_new(jcontent, JSON_TAG, json_string(content->tag));
-  json_object_set_new(jcontent, JSON_METHOD, json_string(content->method));
-  json_object_set_new(jcontent, JSON_PROVIDER_URL,
-		      json_string(content->providerURL));
-  json_object_set_new(jcontent, JSON_INDEX_URL, json_string(content->indexURL));
-  json_object_set_new(jcontent, JSON_STORE_URL, json_string(content->storeURL));
-
-  return TRUE;
+    return USYS_FALSE;
 }
 
-#if 0
+bool deserialize_agent_request_update(Update **update, json_t *json) {
 
-/*
- * deserialize_agent_request_update --
- */
-static int deserialize_agent_request_update(Update **update, json_t *json) {
+    json_t *jupdate, *obj;
 
-  json_t *jupdate, *obj;
+    jupdate = json_object_get(json, JSON_TYPE_UPDATE);
 
-  jupdate = json_object_get(json, JSON_TYPE_UPDATE);
+    if (jupdate == NULL) return USYS_FALSE;
 
-  if (jupdate==NULL) {
-    return FALSE;
-  }
+    *update = (Update *)calloc(sizeof(Update), 1);
+    if (*update == NULL) return USYS_FALSE;
 
-  *update = (Update *)calloc(sizeof(Update), 1);
-  if (*update == NULL) {
-    return FALSE;
-  }
+    /* All updates must have the ID. */
+    obj = json_object_get(jupdate, JSON_ID);
+    if (obj == NULL) {
+        return USYS_FALSE;
+    } else {
+        uuid_parse(json_string_value(obj), (*update)->uuid);
+    }
 
-  /* All updates must have the ID. */
-  obj = json_object_get(jupdate, JSON_ID);
-  if (obj == NULL) {
-    return FALSE;
-  } else {
-    uuid_parse(json_string_value(obj), (*update)->uuid);
-  }
-
-  /* Total data to be transfered as part of this fetch (in KB) */
-  obj = json_object_get(jupdate, JSON_TOTAL_KBYTES);
-  if (obj) {
-    (*update)->totalKB = json_integer_value(obj);
-  }
-
-  /* Activity so far. */
-  obj = json_object_get(jupdate, JSON_TRANSFER_KBYTES);
-  if (obj) {
-    (*update)->transferKB = json_integer_value(obj);
-  }
-
-  /* Activity state. */
-  obj = json_object_get(jupdate, JSON_TRANSFER_STATE);
-  if (obj) {
-    (*update)->transferState = convert_str_to_tx_state(json_string_value(obj));
-    obj = json_object_get(jupdate, JSON_VOID_STR);
+    /* Total data to be transfered as part of this fetch (in KB) */
+    obj = json_object_get(jupdate, JSON_TOTAL_KBYTES);
     if (obj) {
-      (*update)->voidStr = strdup(json_string_value(obj));
+        (*update)->totalKB = json_integer_value(obj);
     }
-  }
 
-  return TRUE;
+    /* Activity so far. */
+    obj = json_object_get(jupdate, JSON_TRANSFER_KBYTES);
+    if (obj) {
+        (*update)->transferKB = json_integer_value(obj);
+    }
+
+    /* Activity state. */
+    obj = json_object_get(jupdate, JSON_TRANSFER_STATE);
+    if (obj) {
+        (*update)->transferState =
+            convert_str_to_tx_state(json_string_value(obj));
+        obj = json_object_get(jupdate, JSON_VOID_STR);
+        if (obj) {
+            (*update)->voidStr = strdup(json_string_value(obj));
+        }
+    }
+
+    return USYS_TRUE;
 }
-
-/*
- * deserialize_agent_request_unreg --
- */
-static int deserialize_agent_request_unreg(UnRegister *unReg, json_t *json) {
-
-  json_t *jreq, *obj;
-
-  jreq = json_object_get(json, JSON_TYPE_UNREGISTER);
-
-  if (jreq == NULL) {
-    return FALSE;
-  }
-
-  unReg = (UnRegister *)calloc(sizeof(UnRegister), 1);
-  if (unReg == NULL) {
-    return FALSE;
-  }
-
-  obj = json_object_get(jreq, JSON_ID);
-  if (obj) {
-    uuid_unparse(json_string_value(obj), unReg->uuid);
-  } else {
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-/*
- * deserialize_agent_request --
- *
- */
-int deserialize_agent_request(AgentReq **request, json_t *json) {
-
-  int ret=FALSE;
-  json_t *jreq, *jtype;
-
-  AgentReq *req = *request;
-  
-  if (!json) {
-    return FALSE;
-  }
-  
-  jreq = json_object_get(json, JSON_AGENT_REQUEST);
-  if (jreq == NULL) {
-    return FALSE;
-  }
-
-  jtype = json_object_get(jreq, JSON_TYPE);
-
-  if (jtype==NULL) {
-    return FALSE;
-  }
-
-  req->type = convert_str_to_type(json_string_value(jtype));
-
-  if (req->type == (ReqType)REQ_REG) {
-    ret = deserialize_agent_request_register(&req->reg, jreq);
-  } else if (req->type == (ReqType)REQ_UPDATE) {
-    ret = deserialize_agent_request_update(&req->update, jreq);
-  } else if (req->type == (ReqType)REQ_UNREG) {
-    ret = deserialize_agent_request_unreg(req->unReg, jreq);
-  }
-
-  return ret;
-}
-
-#endif
-
-/*
- * deserialize_provider_response --
- *
- */
 
 int deserialize_provider_response(ServiceURL **urls, int *counter,
 				  json_t *json) {

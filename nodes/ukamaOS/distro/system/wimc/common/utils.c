@@ -19,8 +19,6 @@
 
 #include "utils.h"
 
-/* Some utility functions for serdes */
-
 char *convert_method_to_str(MethodType method) {
 
   char *str;

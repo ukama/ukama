@@ -22,91 +22,50 @@
 #include "agent/jserdes.h"
 #include "agent/callback.h"
 
-#define AGENT_EP "/container"
+#include "usys_types.h"
+#include "usys_log.h"
+
+#define AGENT_EP "/v1/capps"
 #define STAT_EP  "/stats"
 
-/*
- * setup_endpoints -- setup various EP for HTTP methods.
- *
- */
-void setup_endpoints(MethodType *method, struct _u_instance *instance) {
+static void setup_endpoints(MethodType *method, struct _u_instance *instance) {
 
-  /* Endpoint decelrations. 
-   * 1. /container 
-   *     GET    - query an existing on-going fetch session with provider.
-   *     POST   - initiate a new session.
-   *     PUT    - update an existing session (inteval and CB URL).
-   *     DELETE - cancel an on-going session with provider.
-   */
-  ulfius_add_endpoint_by_val(instance, "GET", AGENT_EP, NULL, 0,
-                             &agent_callback_get, NULL);
-  ulfius_add_endpoint_by_val(instance, "POST", AGENT_EP, NULL, 0,
-                             &agent_callback_post, method);
-  ulfius_add_endpoint_by_val(instance, "PUT", AGENT_EP, NULL, 0,
-                             &agent_callback_put, NULL);
-  ulfius_add_endpoint_by_val(instance, "DELETE", AGENT_EP, NULL, 0,
-                             &agent_callback_delete, NULL);
-  
-  /* 2. /stats
-   *     GET  - get Agent various internal stats.
-   */
-  ulfius_add_endpoint_by_val(instance, "GET", STAT_EP, NULL, 0,
-                             &agent_callback_stats, NULL);
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("ping"), 0,
+                               &agent_web_service_cb_ping, NULL);
 
-  /* default endpoint. */
-  ulfius_set_default_endpoint(instance, &agent_callback_default, NULL);
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("capp"), 0,
+                               &agent_web_service_cb_post_capp, method);
+
+    ulfius_set_default_endpoint(instance,
+                                &agent_web_service_cb_default, NULL);
 }
 
-/* 
- * start_framework --
- *
- */
-int start_framework(struct _u_instance *instance) {
+bool start_web_service(char *port,
+                      MethodType *method,
+                      struct _u_instance *webInstance) {
 
-  int ret;
+    if (ulfius_init_instance(webInstance, atoi(port), NULL, NULL) != U_OK) {
+        usys_log_error("Error initializing instance for port %s", port);
+        return USYS_FALSE;
+    }
+
+    u_map_put(webInstance->default_headers, "Access-Control-Allow-Origin", "*");
+    webInstance->max_post_body_size = 1024;
+
+    setup_endpoints(method, webInstance);
   
-  /* open HTTP connection. */
-  ret = ulfius_start_framework(instance);
+    if (ulfius_start_framework(webInstance) != U_OK) {
+        usys_log_error("Failed to start webservices at port:%s", port);
 
-  if (ret != U_OK) {
-    log_error("Error starting the webservice.");
-    
-    /* clean up. */
-    ulfius_stop_framework(instance); 
-    ulfius_clean_instance(instance);
-    
-    return FALSE;
-  }
+        ulfius_stop_framework(webInstance); 
+        ulfius_clean_instance(webInstance);
+        
+        return USYS_FALSE;
+    }
 
-  return TRUE;
-}
+    usys_log_debug("Webservice started on port:%s", port);
 
-/*
- * start_web_services -- start accepting REST clients on 127.0.0.1:port
- *
- */
-int start_web_service(char *port, MethodType *method,
-		      struct _u_instance *inst) {
-
-  if (ulfius_init_instance(inst, atoi(port), NULL, NULL) != U_OK) {
-    log_error("Error initializing instance for port %s", port);
-    return FALSE;
-  }
-
-  /* Set few params. */
-  u_map_put(inst->default_headers, "Access-Control-Allow-Origin", "*");
-  inst->max_post_body_size = 1024;
-
-  /* Setup endpoints. */
-  setup_endpoints(method, inst);
-  
-  /* open connection for WIMC call-to-action */
-  if (!start_framework(inst)) {
-    log_error("Failed to start webservices at :%s", port);
-    return FALSE;
-  }
-  
-  log_debug("Webservice on port %s started.", port);
-
-  return TRUE;
+    return USYS_TRUE;
 }
