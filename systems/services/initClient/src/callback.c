@@ -96,6 +96,7 @@ int callback_get_systems(const URequest *request, UResponse *response,
 	/* GET /systems/?name=system_name */
 	int statusCode = 200;
 	char *systemName = NULL, *responseStr = NULL;
+	char *orgName = NULL;
 
 	log_request(request);
 
@@ -111,8 +112,21 @@ int callback_get_systems(const URequest *request, UResponse *response,
 		return U_CALLBACK_CONTINUE;
 	}
 
-	/* REST call to init and get requested info about the system */
-	if (get_system_info((Config *)data, systemName, &responseStr) == QUERY_OK) {
+	orgName = (char *)u_map_get(request->map_url, INIT_CLIENT_ORG_NAME_STR);
+		if (!orgName) {
+			log_error("Invalid org name in the GET request for EP: %s.",
+					  EP_SYSTEMS);
+			statusCode = 400;
+			responseStr = msprintf("%s", INIT_CLIENT_ERROR_INVALID_KEY_STR);
+			ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+											responseStr);
+
+			return U_CALLBACK_CONTINUE;
+		}
+
+
+	/* REST call to init and get requested info about the system */ /* TODO: global based on parameter */
+	if (get_system_info((Config *)data, orgName, systemName, &responseStr, REGISTER_TO_LOCAL_INIT) == QUERY_OK) {
 		ulfius_set_string_body_response(response, HttpStatus_OK, responseStr);
 	} else {
 		ulfius_set_string_body_response(response, HttpStatus_BadRequest,

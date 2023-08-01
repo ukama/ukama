@@ -300,11 +300,12 @@ func (r *Router) whoamiHandler(c *gin.Context, req *GetUserRequest) (*userspb.Wh
 	return r.clients.User.Whoami(c.Param("user_id"), c.GetString(USER_ID_KEY))
 }
 
-func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*userspb.UpdateResponse, error) {
-	return r.clients.User.Update(c.Param("user_uuid"), &userspb.UserAttributes{
-		Name:  req.Name,
-		Email: req.Email,
-		Phone: req.Phone,
+func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
+	return r.clients.User.AddUser(&userspb.User{
+		Name:   req.Name,
+		Email:  req.Email,
+		Phone:  req.Phone,
+		AuthId: req.AuthId,
 	},
 		c.GetString(USER_ID_KEY))
 }

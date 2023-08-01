@@ -30,7 +30,7 @@ services:
       - msgclient-init
       - postgresd-init
 
-  node-gateway:
+  node-gateway-init:
     build:
       dockerfile: ./Dockerfile
       context: ./node-gateway
@@ -41,14 +41,14 @@ services:
       - ukama-net
     environment:
       - DEBUGMODE=true
-      - BYPASSAUTHMODE=true
+      - BYPASS_AUTH_MODE=true
       - SERVICES_LOOKUP=lookup:9090
       # - CORS_ALLOWALLORIGINS=true
       # - CORS_ALLOWORIGINS=""
     depends_on:
       - lookup
 
-  api-gateway:
+  api-gateway-init:
     build:
       dockerfile: ./Dockerfile
       context: ./api-gateway
@@ -59,7 +59,7 @@ services:
       - ukama-net
     environment:
       - DEBUGMODE=true
-      - BYPASSAUTHMODE=true
+      - BYPASS_AUTH_MODE=true
       - SERVICES_LOOKUP=lookup:9090
       # - CORS_ALLOWALLORIGINS=true
       # - CORS_ALLOWORIGINS=""

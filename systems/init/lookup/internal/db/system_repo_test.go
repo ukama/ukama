@@ -25,7 +25,7 @@ func Test_systemRepo_Get(t *testing.T) {
 		const certs = "ukama_certs"
 		const port = 101
 		const health = 100
-
+		const orgId = uint(15)
 		var dIp pgtype.Inet
 		err := dIp.Set(ip)
 		assert.NoError(t, err)
@@ -39,7 +39,7 @@ func Test_systemRepo_Get(t *testing.T) {
 			AddRow(name, uuidStr, certs, dIp, port, health)
 
 		mock.ExpectQuery(`^SELECT.*systems.*`).
-			WithArgs(name).
+			WithArgs(name, orgId).
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
@@ -58,7 +58,7 @@ func Test_systemRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		node, err := r.GetByName(name)
+		node, err := r.GetByName(name, orgId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -75,7 +75,7 @@ func Test_systemRepo_Delete(t *testing.T) {
 	t.Run("DeleteSystem", func(t *testing.T) {
 
 		const name = "sys"
-
+		const orgId = uint(15)
 		var db *extsql.DB
 		var err error
 
@@ -84,7 +84,7 @@ func Test_systemRepo_Delete(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(name).
+		mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(name, orgId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
@@ -105,7 +105,7 @@ func Test_systemRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Delete(name)
+		err = r.Delete(name, orgId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -117,8 +117,7 @@ func Test_systemRepo_Delete(t *testing.T) {
 }
 
 func Test_systemRepo_Add(t *testing.T) {
-
-	t.Run("Add", func(t *testing.T) {
+	t.Run("Add_WithExistingSystemNameandOrgID", func(t *testing.T) {
 		// Arrange
 		const ip = "0.0.0.0"
 		const orgId = uint(15)
@@ -143,10 +142,9 @@ func Test_systemRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectBegin()
-
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health, sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
+			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health, system.OrgID, system.Name).
+			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectCommit()
 
@@ -206,7 +204,7 @@ func Test_systemRepo_Update(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health, system.Name).
+			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.Ip, system.Port, system.OrgID, system.Health, system.Name, system.OrgID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -227,7 +225,7 @@ func Test_systemRepo_Update(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Update(&system)
+		err = r.Update(&system, orgId)
 
 		// Assert
 		assert.NoError(t, err)
