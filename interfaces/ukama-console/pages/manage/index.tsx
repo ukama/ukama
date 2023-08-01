@@ -13,6 +13,7 @@ import {
   useUploadSimsMutation,
   useGetNetworksLazyQuery,
   useGetNodesLazyQuery,
+  useAddInvitationMutation,
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TCommonData, TObject, TSnackMessage } from '@/types';
@@ -140,7 +141,7 @@ const Manage = () => {
       });
     },
   });
-  console.log('MEMBER DATA', data);
+  console.log('MEMBER DATA', members);
   const [getNetworks, { loading: networkLoading }] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
@@ -242,6 +243,27 @@ const Manage = () => {
       });
     },
   });
+  const [sendInvitation, { loading: sendInvitationLoading }] =
+    useAddInvitationMutation({
+      onCompleted: () => {
+        refetchMembers();
+        setSnackbarMessage({
+          id: 'add-member',
+          message: 'Invitation sent successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        setIsInviteMember(false);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'add-member-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
     {
@@ -379,12 +401,22 @@ const Manage = () => {
   };
 
   const handleAddMemberAction = (member: TObject) => {
-    addMember({
+    // addMember({
+    //   variables: {
+    //     data: {
+    //       email: member.email as string,
+    //       role: member.role as string,
+    //       // name: member.name as string,
+    //     },
+    //   },
+    // });
+
+    sendInvitation({
       variables: {
         data: {
           email: member.email as string,
           role: member.role as string,
-          // name: member.name as string,
+          name: member.name as string,
         },
       },
     });

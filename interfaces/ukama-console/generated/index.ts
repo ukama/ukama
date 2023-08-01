@@ -32,6 +32,12 @@ export enum Api_Method_Type {
   Put = 'PUT'
 }
 
+export type AddInvitationInputDto = {
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+};
+
 export type AddMemberInputDto = {
   email: Scalars['String']['input'];
   role: Scalars['String']['input'];
@@ -427,6 +433,12 @@ export type IdResponse = {
   uuid: Scalars['String']['output'];
 };
 
+export type InvitationDto = {
+  __typename?: 'InvitationDto';
+  mailId?: Maybe<Scalars['String']['output']>;
+  message?: Maybe<Scalars['String']['output']>;
+};
+
 export type LinkNodes = {
   __typename?: 'LinkNodes';
   attachedNodeIds: Array<Scalars['String']['output']>;
@@ -520,6 +532,7 @@ export type MetricsInputDto = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  addInvitation: InvitationDto;
   addMember: MemberObj;
   addNetwork: NetworkDto;
   addNode: AddNodeResponse;
@@ -548,6 +561,11 @@ export type Mutation = {
   updateUserRoaming: OrgUserSimDto;
   updateUserStatus: OrgUserSimDto;
   uploadSims: UploadSimsResDto;
+};
+
+
+export type MutationAddInvitationArgs = {
+  data: AddInvitationInputDto;
 };
 
 
@@ -1643,7 +1661,7 @@ export type UserResDto = {
   name: Scalars['String']['output'];
   phone: Scalars['String']['output'];
   registeredSince: Scalars['String']['output'];
-  uuid: Scalars['String']['output'];
+  uuid?: Maybe<Scalars['String']['output']>;
 };
 
 export type UserServicesDto = {
@@ -1836,14 +1854,16 @@ export type UploadSimsMutationVariables = Exact<{
 
 export type UploadSimsMutation = { __typename?: 'Mutation', uploadSims: { __typename?: 'UploadSimsResDto', iccid: Array<string> } };
 
-export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string };
+export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: string, uuid?: string | null, phone: string, isDeactivated: boolean, registeredSince: string };
 
 export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null };
+
+export type InvitationFragment = { __typename?: 'InvitationDto', mailId?: string | null, message?: string | null };
 
 export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
+export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid?: string | null, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
 
 export type AddMemberMutationVariables = Exact<{
   data: AddMemberInputDto;
@@ -1851,6 +1871,13 @@ export type AddMemberMutationVariables = Exact<{
 
 
 export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null } };
+
+export type AddInvitationMutationVariables = Exact<{
+  data: AddInvitationInputDto;
+}>;
+
+
+export type AddInvitationMutation = { __typename?: 'Mutation', addInvitation: { __typename?: 'InvitationDto', mailId?: string | null, message?: string | null } };
 
 export type GetNodesBySiteQueryVariables = Exact<{
   siteId: Scalars['String']['input'];
@@ -1996,6 +2023,12 @@ export const MemberFragmentDoc = gql`
   role
   isDeactivated
   memberSince
+}
+    `;
+export const InvitationFragmentDoc = gql`
+    fragment invitation on InvitationDto {
+  mailId
+  message
 }
     `;
 export const WhoamiDocument = gql`
@@ -2825,6 +2858,39 @@ export function useAddMemberMutation(baseOptions?: Apollo.MutationHookOptions<Ad
 export type AddMemberMutationHookResult = ReturnType<typeof useAddMemberMutation>;
 export type AddMemberMutationResult = Apollo.MutationResult<AddMemberMutation>;
 export type AddMemberMutationOptions = Apollo.BaseMutationOptions<AddMemberMutation, AddMemberMutationVariables>;
+export const AddInvitationDocument = gql`
+    mutation addInvitation($data: AddInvitationInputDto!) {
+  addInvitation(data: $data) {
+    ...invitation
+  }
+}
+    ${InvitationFragmentDoc}`;
+export type AddInvitationMutationFn = Apollo.MutationFunction<AddInvitationMutation, AddInvitationMutationVariables>;
+
+/**
+ * __useAddInvitationMutation__
+ *
+ * To run a mutation, you first call `useAddInvitationMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddInvitationMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addInvitationMutation, { data, loading, error }] = useAddInvitationMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddInvitationMutation(baseOptions?: Apollo.MutationHookOptions<AddInvitationMutation, AddInvitationMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddInvitationMutation, AddInvitationMutationVariables>(AddInvitationDocument, options);
+      }
+export type AddInvitationMutationHookResult = ReturnType<typeof useAddInvitationMutation>;
+export type AddInvitationMutationResult = Apollo.MutationResult<AddInvitationMutation>;
+export type AddInvitationMutationOptions = Apollo.BaseMutationOptions<AddInvitationMutation, AddInvitationMutationVariables>;
 export const GetNodesBySiteDocument = gql`
     query getNodesBySite($siteId: String!) {
   getNodesBySite(siteId: $siteId) {

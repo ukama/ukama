@@ -654,6 +654,12 @@ fragment Member on MemberObj {
   isDeactivated
   memberSince
 }
+
+fragment invitation on InvitationDto {
+  mailId
+  message
+}
+
 query getOrgMember {
   getOrgMembers {
     org
@@ -665,9 +671,16 @@ query getOrgMember {
     }
   }
 }
+
 mutation addMember($data: AddMemberInputDto!) {
   addMember(data: $data) {
     ...Member
+  }
+}
+
+mutation addInvitation($data: AddInvitationInputDto!) {
+  addInvitation(data: $data) {
+    ...invitation
   }
 }
 
