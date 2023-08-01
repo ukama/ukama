@@ -91,3 +91,33 @@ func (r *OrgRegistry) AddOrg(orgName string, owner string, certificate string) (
 
 	return res, nil
 }
+
+func (r *OrgRegistry) UpdateOrgToUser(orgId string, userId string) (*orgpb.UpdateOrgForUserResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.UpdateOrgForUser(ctx, &orgpb.UpdateOrgForUserRequest{
+		UserId: userId,
+		OrgId:  orgId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *OrgRegistry) RemoveOrgForUser(orgId string, userId string) (*orgpb.RemoveOrgForUserResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.RemoveOrgForUser(ctx, &orgpb.RemoveOrgForUserRequest{
+		UserId: userId,
+		OrgId:  orgId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

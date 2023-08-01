@@ -48,6 +48,8 @@ type organization interface {
 	AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error)
 	GetOrg(orgName string) (*orgpb.GetByNameResponse, error)
 	GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error)
+	UpdateOrgToUser(orgId string, userId string) (*orgpb.UpdateOrgForUserResponse, error)
+	RemoveOrgForUser(orgId string, userId string) (*orgpb.RemoveOrgForUserResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -115,7 +117,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		orgs := auth.Group(org, "Orgs", "Operations on Orgs")
 		orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
 		orgs.POST("", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
-		orgs.GET("/:org", formatDoc("Get Org", "Get a specific organization"), tonic.Handler(r.getOrgHandler, http.StatusOK))
+		orgs.PUT("/:orgid/users/:userId", formatDoc("Add user to orgs", "set association between user and org"), tonic.Handler(r.updateOrgToUserHandler, http.StatusCreated))
+		orgs.DELETE("/:orgid/users/:userId", formatDoc("Add user to orgs", "remove association between user and org"), tonic.Handler(r.removeUserFromOrgHandler, http.StatusCreated))
 
 		// Users routes
 		const user = "/users"
@@ -149,6 +152,14 @@ func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.Get
 
 func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddResponse, error) {
 	return r.clients.Organization.AddOrg(req.OrgName, req.Owner, req.Certificate)
+}
+
+func (r *Router) updateOrgToUserHandler(c *gin.Context, req *UserOrgRequest) (*orgpb.UpdateOrgForUserResponse, error) {
+	return r.clients.Organization.UpdateOrgToUser(req.OrgId, req.UserId)
+}
+
+func (r *Router) removeUserFromOrgHandler(c *gin.Context, req *UserOrgRequest) (*orgpb.RemoveOrgForUserResponse, error) {
+	return r.clients.Organization.RemoveOrgForUser(req.OrgId, req.UserId)
 }
 
 // Users handlers

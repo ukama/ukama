@@ -69,7 +69,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 	err = o.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
 		org.Id = uuid.NewV4()
-		//TODO: Enabele later
+		//TODO: Enable later
 		// _, err := o.orchestratorService.DeployOrg(providers.DeployOrgRequest{
 		// 	OrgId:   org.Id.String(),
 		// 	OrgName: org.Name,
@@ -250,14 +250,93 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	return &pb.RegisterUserResponse{}, nil
 }
 
-func UpdatingOrgsForUser() {
+func (o *OrgService) UpdateOrgForUser(ctx context.Context, in *pb.UpdateOrgForUserRequest) (*pb.UpdateOrgForUserResponse, error) {
+	// Get the Organization
+	orgUUID, err := uuid.FromString(in.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
+	}
 
+	org, err := o.orgRepo.Get(orgUUID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	// Get the User
+	userUUID, err := uuid.FromString(in.GetUserId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
+	}
+
+	user, err := o.userRepo.Get(userUUID)
+	if err != nil {
+		if !sql.IsNotFoundError(err) {
+			return nil, status.Errorf(codes.FailedPrecondition,
+				"failed to check user")
+		}
+	}
+
+	err = o.userRepo.AddOrgToUser(user, org)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user to org")
+	}
+
+	route := o.baseRoutingKey.SetActionUpdate().SetObject("user").MustBuild()
+	err = o.msgbus.PublishRequest(route, in)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", in, route, err.Error())
+	}
+
+	_ = o.pushUserCountMetric()
+
+	return &pb.UpdateOrgForUserResponse{}, nil
 }
 
-func RemovingUserFromOrg() {
+func (o *OrgService) RemoveOrgForUser(ctx context.Context, in *pb.RemoveOrgForUserRequest) (*pb.RemoveOrgForUserResponse, error) {
+	// Get the Organization
+	orgUUID, err := uuid.FromString(in.GetOrgId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
+	}
 
+	org, err := o.orgRepo.Get(orgUUID)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	// Get the User
+	userUUID, err := uuid.FromString(in.GetUserId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
+	}
+
+	user, err := o.userRepo.Get(userUUID)
+	if err != nil {
+		if !sql.IsNotFoundError(err) {
+			return nil, status.Errorf(codes.FailedPrecondition,
+				"failed to check user")
+		}
+	}
+
+	err = o.userRepo.RemoveOrgFromUser(user, org)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org from user")
+	}
+
+	route := o.baseRoutingKey.SetActionUpdate().SetObject("user").MustBuild()
+	err = o.msgbus.PublishRequest(route, in)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", in, route, err.Error())
+	}
+
+	_ = o.pushUserCountMetric()
+
+	return &pb.RemoveOrgForUserResponse{}, nil
 }
-
 
 func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 	return &pb.Organization{

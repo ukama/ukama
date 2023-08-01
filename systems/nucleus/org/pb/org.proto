@@ -19,6 +19,8 @@ service OrgService {
 
     /* Users */
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+    rpc UpdateOrgForUser(UpdateOrgForUserRequest) returns (UpdateOrgForUserResponse);
+    rpc RemoveOrgForUser(RemoveOrgForUserRequest) returns (RemoveOrgForUserResponse);
 
 }
 
@@ -102,3 +104,20 @@ message User {
     bool isDeactivated = 3 [json_name = "is_deactivated"];
 }
 
+message UpdateOrgForUserRequest {  
+    string userId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message UpdateOrgForUserResponse {
+
+}
+
+message RemoveOrgForUserRequest {  
+    string userId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string orgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message RemoveOrgForUserResponse {
+
+}

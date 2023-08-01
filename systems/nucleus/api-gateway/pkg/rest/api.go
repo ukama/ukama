@@ -16,6 +16,11 @@ type AddOrgRequest struct {
 	Certificate string `example:"test_cert" json:"certificate"`
 }
 
+type UserOrgRequest struct {
+	UserId string `example:"{{UserId}}" path:"user_id" json:"user_id" query:"user_id" binding:"required" validate:"required"`
+	OrgId  string `example:"{{OrgId}}" path:"org_id" json:"org_id" query:"org_id" binding:"required" validate:"required"`
+}
+
 type MemberRequest struct {
 	OrgName  string `example:"milky-way" path:"org" validate:"required"`
 	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
@@ -49,9 +54,9 @@ type GetUserByAuthIdRequest struct {
 }
 
 type AddUserRequest struct {
-	Name  string `example:"John" json:"name,omitempty" validate:"required"`
-	Email string `example:"john@example.com" json:"email" validate:"required"`
-	Phone string `example:"4151231234" json:"phone,omitempty"`
+	Name   string `example:"John" json:"name,omitempty" validate:"required"`
+	Email  string `example:"john@example.com" json:"email" validate:"required"`
+	Phone  string `example:"4151231234" json:"phone,omitempty"`
 	AuthId string `example:"{{AuthId}}" json:"auth_id" validate:"required"`
 }
 
