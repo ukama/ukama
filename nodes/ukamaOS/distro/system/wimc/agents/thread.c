@@ -34,32 +34,20 @@ static char *memFile=NULL;
 static void *shMem=NULL;
 static int shmId=0;
 
-static int is_valid_folder(char *folder);
-static void log_wait_status(int status);
-static void configure_runtime_args(WFetch *fetch, char **arg);
-static void *execute_agent(void *data);
-static void copy_fetch_request(WFetch **dest, WFetch *src);
-void request_handler(WFetch *fetch);
-
 /* from shmem. */
 extern void *create_shared_memory(int *shmId, char *memFile, size_t size);
 extern void delete_shared_memory(int shmId, void *shMem);
 extern void read_stats_and_update_wimc(void *args);
 
-static int is_valid_folder(char *folder) {
+static bool is_valid_folder(char *folder) {
 
-struct stat sb;
+    struct stat sb;
   
-if (stat(folder, &sb) == -1) {
-return FALSE;
-}
-  
-/* Check to see if it was file. */
-if (S_ISDIR(sb.st_mode)) {
-return TRUE;
-} else {
-return FALSE;
-}
+    if (stat(folder, &sb) == 0) {
+        if (S_ISDIR(sb.st_mode)) return USYS_TRUE;
+    }
+
+    return USYS_FALSE;
 }
 
 static void create_working_dir_file(WFetch *fetch) {
