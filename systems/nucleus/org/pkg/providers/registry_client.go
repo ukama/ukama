@@ -10,6 +10,34 @@ import (
 
 const RegistryVersion = "/v1/"
 
+type RoleType int32
+
+const (
+	RoleType_OWNER    RoleType = 0
+	RoleType_ADMIN    RoleType = 1
+	RoleType_EMPLOYEE RoleType = 2
+	RoleType_VENDOR   RoleType = 3
+	RoleType_USERS    RoleType = 4
+)
+
+// Enum value maps for RoleType.
+var (
+	RoleType_name = map[int32]string{
+		0: "OWNER",
+		1: "ADMIN",
+		2: "EMPLOYEE",
+		3: "VENDOR",
+		4: "USERS",
+	}
+	RoleType_value = map[string]int32{
+		"OWNER":    0,
+		"ADMIN":    1,
+		"EMPLOYEE": 2,
+		"VENDOR":   3,
+		"USERS":    4,
+	}
+)
+
 type RegistryProvider interface {
 	AddMember(orgName string, uuid string) error
 }
@@ -61,12 +89,13 @@ func (r *registryProvider) AddMember(orgName string, uuid string) error {
 	errStatus := &rest.ErrorMessage{}
 	req := OrgMember{
 		UserUuid: uuid,
+		Role:     RoleType_name[4],
 	}
 
 	resp, err := r.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Post(r.R.URL.String() + RegistryVersion + "users")
+		Post(r.R.URL.String() + RegistryVersion + "member")
 
 	if err != nil {
 		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())
