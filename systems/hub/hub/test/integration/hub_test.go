@@ -20,6 +20,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const CappsPath = "/v1/capps"
+
 type TestConfig struct {
 	config.BaseConfig
 	HubHost string
@@ -40,7 +42,7 @@ func init() {
 // Call webhost endpoint and check response
 func Test_AddCApp(t *testing.T) {
 	ver := fmt.Sprintf("1.0.%d", time.Now().Unix())
-	appUrl := fmt.Sprintf("%s/capps/hub-integration-test/%s", tConfig.HubHost, ver)
+	appUrl := fmt.Sprintf("%s%s/hub-integration-test/%s", tConfig.HubHost, CappsPath, ver)
 	con := getFileContent(t)
 	rest := resty.New().EnableTrace().SetDebug(tConfig.DebugMode)
 

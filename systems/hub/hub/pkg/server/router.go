@@ -29,6 +29,7 @@ import (
 )
 
 const CappsPath = "/v1/capps"
+const ChunksPath = "/v1/chunks"
 
 type Router struct {
 	fizz                  *fizz.Fizz
@@ -235,7 +236,7 @@ func (r *Router) cappListVersionsHandler(c *gin.Context, req *VersionListRequest
 				Url:  path.Join(CappsPath, req.Name, v.Version+pkg.ChunkIndexExtension),
 				Type: "chunk",
 				ExtraInfo: map[string]string{
-					"chunks": "/chunks/",
+					"chunks": ChunksPath + "/",
 				},
 			})
 		}

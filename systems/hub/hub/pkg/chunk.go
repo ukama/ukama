@@ -17,6 +17,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const ChunksPath = "/v1/chunks"
+
 type Chunker interface {
 	Chunk(name string, ver *semver.Version, fileStorageUrl string) error
 }
@@ -54,7 +56,7 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 	}
 
 	req, err := http.NewRequest(http.MethodPut,
-		fmt.Sprintf("%s/chunk/%s/%s", ch.conf.Host, name, ver.String()), bytes.NewBuffer(json))
+		fmt.Sprintf("%s%s/%s/%s", ch.conf.Host, ChunksPath, name, ver.String()), bytes.NewBuffer(json))
 	if err != nil {
 		return errors.Wrap(err, "failed create chunk request")
 	}
