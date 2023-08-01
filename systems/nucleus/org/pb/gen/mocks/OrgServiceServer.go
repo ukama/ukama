@@ -170,6 +170,58 @@ func (_m *OrgServiceServer) RegisterUser(_a0 context.Context, _a1 *gen.RegisterU
 	return r0, r1
 }
 
+// RemoveOrgForUser provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) RemoveOrgForUser(_a0 context.Context, _a1 *gen.RemoveOrgForUserRequest) (*gen.RemoveOrgForUserResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.RemoveOrgForUserResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveOrgForUserRequest) (*gen.RemoveOrgForUserResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveOrgForUserRequest) *gen.RemoveOrgForUserResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemoveOrgForUserResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemoveOrgForUserRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateOrgForUser provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) UpdateOrgForUser(_a0 context.Context, _a1 *gen.UpdateOrgForUserRequest) (*gen.UpdateOrgForUserResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UpdateOrgForUserResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateOrgForUserRequest) (*gen.UpdateOrgForUserResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateOrgForUserRequest) *gen.UpdateOrgForUserResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateOrgForUserResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateOrgForUserRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateUser provides a mock function with given fields: _a0, _a1
 func (_m *OrgServiceServer) UpdateUser(_a0 context.Context, _a1 *gen.UpdateUserRequest) (*gen.UpdateUserResponse, error) {
 	ret := _m.Called(_a0, _a1)

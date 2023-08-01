@@ -31,6 +31,8 @@ type OrgServiceClient interface {
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error)
 	// Users
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
+	UpdateOrgForUser(ctx context.Context, in *UpdateOrgForUserRequest, opts ...grpc.CallOption) (*UpdateOrgForUserResponse, error)
+	RemoveOrgForUser(ctx context.Context, in *RemoveOrgForUserRequest, opts ...grpc.CallOption) (*RemoveOrgForUserResponse, error)
 }
 
 type orgServiceClient struct {
@@ -104,6 +106,24 @@ func (c *orgServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest
 	return out, nil
 }
 
+func (c *orgServiceClient) UpdateOrgForUser(ctx context.Context, in *UpdateOrgForUserRequest, opts ...grpc.CallOption) (*UpdateOrgForUserResponse, error) {
+	out := new(UpdateOrgForUserResponse)
+	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/UpdateOrgForUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) RemoveOrgForUser(ctx context.Context, in *RemoveOrgForUserRequest, opts ...grpc.CallOption) (*RemoveOrgForUserResponse, error) {
+	out := new(RemoveOrgForUserResponse)
+	err := c.cc.Invoke(ctx, "/ukama.nucleus.org.v1.OrgService/RemoveOrgForUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrgServiceServer is the server API for OrgService service.
 // All implementations must embed UnimplementedOrgServiceServer
 // for forward compatibility
@@ -117,6 +137,8 @@ type OrgServiceServer interface {
 	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error)
 	// Users
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	UpdateOrgForUser(context.Context, *UpdateOrgForUserRequest) (*UpdateOrgForUserResponse, error)
+	RemoveOrgForUser(context.Context, *RemoveOrgForUserRequest) (*RemoveOrgForUserResponse, error)
 	mustEmbedUnimplementedOrgServiceServer()
 }
 
@@ -144,6 +166,12 @@ func (UnimplementedOrgServiceServer) RegisterUser(context.Context, *RegisterUser
 }
 func (UnimplementedOrgServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedOrgServiceServer) UpdateOrgForUser(context.Context, *UpdateOrgForUserRequest) (*UpdateOrgForUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrgForUser not implemented")
+}
+func (UnimplementedOrgServiceServer) RemoveOrgForUser(context.Context, *RemoveOrgForUserRequest) (*RemoveOrgForUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveOrgForUser not implemented")
 }
 func (UnimplementedOrgServiceServer) mustEmbedUnimplementedOrgServiceServer() {}
 
@@ -284,6 +312,42 @@ func _OrgService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrgService_UpdateOrgForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateOrgForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).UpdateOrgForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.nucleus.org.v1.OrgService/UpdateOrgForUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).UpdateOrgForUser(ctx, req.(*UpdateOrgForUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_RemoveOrgForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveOrgForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).RemoveOrgForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.nucleus.org.v1.OrgService/RemoveOrgForUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).RemoveOrgForUser(ctx, req.(*RemoveOrgForUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OrgService_ServiceDesc is the grpc.ServiceDesc for OrgService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -318,6 +382,14 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUser",
 			Handler:    _OrgService_UpdateUser_Handler,
+		},
+		{
+			MethodName: "UpdateOrgForUser",
+			Handler:    _OrgService_UpdateOrgForUser_Handler,
+		},
+		{
+			MethodName: "RemoveOrgForUser",
+			Handler:    _OrgService_RemoveOrgForUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

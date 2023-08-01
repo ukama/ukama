@@ -214,6 +214,72 @@ func (_m *OrgServiceClient) RegisterUser(ctx context.Context, in *gen.RegisterUs
 	return r0, r1
 }
 
+// RemoveOrgForUser provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) RemoveOrgForUser(ctx context.Context, in *gen.RemoveOrgForUserRequest, opts ...grpc.CallOption) (*gen.RemoveOrgForUserResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.RemoveOrgForUserResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveOrgForUserRequest, ...grpc.CallOption) (*gen.RemoveOrgForUserResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemoveOrgForUserRequest, ...grpc.CallOption) *gen.RemoveOrgForUserResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RemoveOrgForUserResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemoveOrgForUserRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateOrgForUser provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) UpdateOrgForUser(ctx context.Context, in *gen.UpdateOrgForUserRequest, opts ...grpc.CallOption) (*gen.UpdateOrgForUserResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.UpdateOrgForUserResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateOrgForUserRequest, ...grpc.CallOption) (*gen.UpdateOrgForUserResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateOrgForUserRequest, ...grpc.CallOption) *gen.UpdateOrgForUserResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateOrgForUserResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateOrgForUserRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateUser provides a mock function with given fields: ctx, in, opts
 func (_m *OrgServiceClient) UpdateUser(ctx context.Context, in *gen.UpdateUserRequest, opts ...grpc.CallOption) (*gen.UpdateUserResponse, error) {
 	_va := make([]interface{}, len(opts))
