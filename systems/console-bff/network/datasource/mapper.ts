@@ -1,16 +1,13 @@
-import { NETWORK_STATUS } from "../../common/enums";
-import { MetricLatestValueRes } from "../../common/types";
 import {
   NetworkAPIResDto,
   NetworkDto,
-  NetworkStatusDto,
   NetworksAPIResDto,
   NetworksResDto,
   SiteAPIResDto,
   SiteDto,
   SitesAPIResDto,
   SitesResDto,
-} from "../types";
+} from "../resolvers/types";
 
 export const dtoToSitesDto = (res: SitesAPIResDto): SitesResDto => {
   const sites: SiteDto[] = [];
@@ -64,22 +61,4 @@ export const dtoToNetworkDto = (res: NetworkAPIResDto): NetworkDto => {
     isDeactivated: res.network.is_deactivated,
     createdAt: res.network.created_at,
   };
-};
-
-export const dtoToDto = (
-  totalNodes: number,
-  liveNodes: MetricLatestValueRes
-): NetworkStatusDto => {
-  let _liveNodes = 0;
-  let status = NETWORK_STATUS.UNDEFINED;
-  if (liveNodes) {
-    _liveNodes = parseFloat(liveNodes.value[1]);
-    if (_liveNodes > 0) {
-      status = NETWORK_STATUS.ONLINE;
-    } else {
-      status = NETWORK_STATUS.DOWN;
-    }
-  }
-
-  return { liveNode: _liveNodes, totalNodes: totalNodes, status: status };
 };

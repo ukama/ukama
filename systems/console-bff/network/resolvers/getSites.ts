@@ -1,7 +1,7 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { SitesResDto } from "../types";
+import { SitesResDto } from "./types";
 
 @Resolver()
 export class GetSitesResolver {

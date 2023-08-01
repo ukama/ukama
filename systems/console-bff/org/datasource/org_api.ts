@@ -1,10 +1,11 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { REGISTRY_API_GW, VERSION } from "../../common/configs";
-import { CBooleanResponse, THeaders } from "../../common/types";
+import { CBooleanResponse } from "../../common/types";
 import {
   AddMemberInputDto,
   AddOrgInputDto,
+  MemberInputDto,
   MemberObj,
   OrgDto,
   OrgMembersResDto,
@@ -20,26 +21,26 @@ import {
 
 class OrgApi extends RESTDataSource {
   baseURL = REGISTRY_API_GW;
-  getOrgMembers = async (headers: THeaders): Promise<OrgMembersResDto> => {
-    return this.get(`/${headers.orgName}/members`).then(res =>
+  getOrgMembers = async (orgName: string): Promise<OrgMembersResDto> => {
+    return this.get(`/${VERSION}/orgs/${orgName}/members`).then(res =>
       dtoToMembersResDto(res)
     );
   };
 
-  getOrgMember = async (headers: THeaders): Promise<MemberObj> => {
-    return this.get(`/${headers.orgName}/members/${headers.userId}`).then(res =>
-      dtoToMemberResDto(res)
-    );
+  getOrgMember = async (data: MemberInputDto): Promise<MemberObj> => {
+    return this.get(
+      `/${VERSION}/orgs/${data.orgName}/members/${data.memberId}`
+    ).then(res => dtoToMemberResDto(res));
   };
 
-  removeMember = async (headers: THeaders): Promise<CBooleanResponse> => {
-    return this.delete(`/${headers.orgName}/members/${headers.userId}`).then(
-      res => {
-        return {
-          success: true,
-        };
-      }
-    );
+  removeMember = async (data: MemberInputDto): Promise<CBooleanResponse> => {
+    return this.delete(
+      `/${VERSION}/orgs/${data.orgName}/members/${data.memberId}`
+    ).then(res => {
+      return {
+        success: true,
+      };
+    });
   };
 
   getOrgs = async (userId: string): Promise<OrgsResDto> => {
@@ -64,22 +65,21 @@ class OrgApi extends RESTDataSource {
     }).then(res => dtoToOrgResDto(res));
   };
 
-  addMember = async (
-    data: AddMemberInputDto,
-    headers: THeaders
-  ): Promise<MemberObj> => {
-    return this.post(`/${headers.orgName}/members`, {
-      body: { user_uuid: headers.userId, role: data.role },
+  addMember = async (data: AddMemberInputDto): Promise<MemberObj> => {
+    return this.post(`/${VERSION}/orgs/${data.orgName}/members`, {
+      body: { user_uuid: data.userId, role: data.role },
     }).then(res => dtoToMemberResDto(res));
   };
 
   updateMember = async (
     memberId: string,
-    req: UpdateMemberInputDto,
-    headers: THeaders
+    req: UpdateMemberInputDto
   ): Promise<CBooleanResponse> => {
-    return this.post(`/${headers.orgName}/members/${memberId}`, {
-      body: req,
+    return this.post(`/${VERSION}/orgs/${req.orgName}/members/${memberId}`, {
+      body: {
+        isDeactivated: req.isDeactivated,
+        role: req.role,
+      },
     }).then(res => {
       return {
         success: true,
