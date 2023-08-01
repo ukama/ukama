@@ -318,16 +318,6 @@ func (r *Router) deleteUserHandler(c *gin.Context, req *GetUserRequest) error {
 	return r.clients.User.Delete(c.Param("user_uuid"), c.GetString(USER_ID_KEY))
 }
 
-func (r *Router) postUserHandler(c *gin.Context, req *AddUserRequest) (*userspb.AddResponse, error) {
-	return r.clients.User.AddUser(&userspb.User{
-		Name:   req.Name,
-		Email:  req.Email,
-		Phone:  req.Phone,
-		AuthId: req.AuthId,
-	},
-		c.GetString(USER_ID_KEY))
-}
-
 // Network handlers
 
 func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
