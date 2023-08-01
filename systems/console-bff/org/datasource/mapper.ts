@@ -1,4 +1,3 @@
-import { MEMBER_ROLES } from "../../constants";
 import {
   MemberObj,
   OrgAPIResDto,
@@ -15,7 +14,7 @@ export const dtoToMemberResDto = (res: OrgMemberAPIResDto): MemberObj => {
     uuid: res.member.uuid,
     userId: res.member.user_id,
     orgId: res.member.org_id,
-    role: res.member.role as MEMBER_ROLES,
+    role: res.member.role,
     isDeactivated: res.member.is_deactivated,
     memberSince: res.member.member_since,
     user: undefined,
@@ -62,7 +61,7 @@ export const dtoToMembersResDto = (
       orgId: member.org_id,
       isDeactivated: member.is_deactivated,
       memberSince: member.member_since,
-      role: member.role as MEMBER_ROLES,
+      role: member.role,
       user: undefined,
     });
   });

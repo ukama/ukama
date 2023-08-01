@@ -1,22 +1,20 @@
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
-import { parseHeaders } from "../../common/utils";
-import { Context } from "../context";
+import { updateAttributes } from "./../../common/auth/authCalls";
 import { UserFistVisitInputDto, UserFistVisitResDto } from "./types";
 
 @Resolver()
 export class updateFirstVisitResolver {
   @Mutation(() => UserFistVisitResDto)
-  @UseMiddleware(Authentication)
   async updateFirstVisit(
-    @Arg("data") data: UserFistVisitInputDto,
-    @Ctx() ctx: Context
+    @Arg("data") data: UserFistVisitInputDto
   ): Promise<UserFistVisitResDto> {
-    const { dataSources } = ctx;
-    const user = await dataSources.dataSource.updateFirstVisit(
-      data,
-      parseHeaders()
+    const user = await updateAttributes(
+      data.userId,
+      data.email,
+      data.name,
+      "",
+      data.firstVisit
     );
     return user;
   }

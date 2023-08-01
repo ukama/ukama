@@ -1,6 +1,6 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW } from "../../common/configs";
+import { REGISTRY_API_GW, VERSION } from "../../common/configs";
 import { CBooleanResponse, THeaders } from "../../common/types";
 import {
   AddMemberInputDto,
@@ -18,10 +18,8 @@ import {
   dtoToOrgsResDto,
 } from "./mapper";
 
-const version = "/v1/orgs";
-
 class OrgApi extends RESTDataSource {
-  baseURL = REGISTRY_API_GW + version;
+  baseURL = REGISTRY_API_GW;
   getOrgMembers = async (headers: THeaders): Promise<OrgMembersResDto> => {
     return this.get(`/${headers.orgName}/members`).then(res =>
       dtoToMembersResDto(res)
@@ -44,17 +42,25 @@ class OrgApi extends RESTDataSource {
     );
   };
 
-  getOrgs = async (headers: THeaders): Promise<OrgsResDto> => {
-    return this.get(`/${headers.orgName}`).then(res => dtoToOrgsResDto(res));
+  getOrgs = async (userId: string): Promise<OrgsResDto> => {
+    return this.get(`/${VERSION}/orgs`, {
+      params: {
+        user_uuid: userId,
+      },
+    }).then(res => dtoToOrgsResDto(res));
   };
 
-  getOrg = async (orgName: string, headers: THeaders): Promise<OrgDto> => {
-    return this.get(`/${orgName}`, {}).then(res => dtoToOrgResDto(res));
+  getOrg = async (orgName: string): Promise<OrgDto> => {
+    return this.get(`/${VERSION}/orgs/${orgName}`).then(res =>
+      dtoToOrgResDto(res)
+    );
   };
 
-  addOrg = async (req: AddOrgInputDto, headers: THeaders): Promise<OrgDto> => {
-    return this.post("", {
-      body: req,
+  addOrg = async (req: AddOrgInputDto): Promise<OrgDto> => {
+    return this.post(`/${VERSION}/orgs`, {
+      body: {
+        ...req,
+      },
     }).then(res => dtoToOrgResDto(res));
   };
 

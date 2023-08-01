@@ -10,7 +10,9 @@
     "node-dev": "yarn clear-cache && ts-node-dev --no-notify --respawn --transpile-only ./node/index.ts",
     "dev": "yarn clear-cache && concurrently \"yarn planning-tool-dev\" \"yarn node-dev\"  \"yarn gateway\"",
     "metrics-dev": "yarn clear-cache && ts-node-dev --no-notify --respawn --transpile-only ./metrics/src/index.ts",
-    "planning-tool-dev": "ts-node-dev --no-notify --respawn --transpile-only ./planning-tool/src/index.ts"
+    "planning-tool-dev": "ts-node-dev --no-notify --respawn --transpile-only ./planning-tool/src/index.ts",
+    "user-dev": "ts-node-dev --no-notify --respawn --transpile-only ./user/index.ts",
+    "org-dev": "ts-node-dev --no-notify --respawn --transpile-only ./org/index.ts"
   },
   "prisma": {
     "seed": "ts-node ./planning-tool/prisma/seed.ts",
