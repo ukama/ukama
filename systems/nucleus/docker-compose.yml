@@ -51,8 +51,8 @@ services:
       - OWNERPHONE=0123456789
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - MSGCLIENT_HOST=msgclient-nucleus:9095
-      - USERS_SERVICE_HOST=user
-      - USERS_SERVICE_PORT=9090
+      - USER_SERVICE_HOST=user
+      - USER_SERVICE_PORT=9090
       - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
       # - HSSHOST=hss:9090
       # - SIMMANAGER_HOST=simmanager:9090
