@@ -5,6 +5,9 @@ export const PLANNING_API_URL = process.env.PLANNING_API_URL;
 export const METRIC_API_GW = process.env.METRIC_API_GW || "";
 export const METRIC_API_GW_SOCKET = process.env.METRIC_API_GW_SOCKET || "";
 export const REGISTRY_API_GW = process.env.REGISTRY_API_GW || "";
+export const SUBSCRIBER_API_GW = process.env.SUBSCRIBER_API_GW || "";
+export const DATA_API_GW = process.env.DATA_API_GW || "";
+export const BILLING_API_GW = process.env.BILLING_API_GW || "";
 
 // FRONTEND URLS
 export const AUTH_APP_URL = process.env.AUTH_APP_URL || "";

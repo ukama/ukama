@@ -7,7 +7,6 @@ import {
   AddNodeToSiteInput,
   AttachNodeInput,
   DeleteNode,
-  GetNode,
   GetNodes,
   GetNodesInput,
   Node,

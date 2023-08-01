@@ -1,5 +1,6 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
+import { SUBSCRIBER_API_GW } from "../../common/configs";
 import {
   SubscriberDto,
   SubscriberInputDto,
@@ -7,13 +8,16 @@ import {
   SubscribersResDto,
   UpdateSubscriberInputDto,
 } from "../resolver/types";
-import { BoolResponse } from "./../../common/types";
-import { SERVER } from "./../../constants/endpoints";
+import { CBooleanResponse } from "./../../common/types";
 import { dtoToSubscriberResDto, dtoToSubscribersResDto } from "./mapper";
 
+const version = "/v1/subscriber";
+
 class SubscriberApi extends RESTDataSource {
+  baseURL = SUBSCRIBER_API_GW + version;
+
   addSubscriber = async (req: SubscriberInputDto): Promise<SubscriberDto> => {
-    return this.put(`${SERVER.SUBSCRIBER_REGISTRY_API_URL}`, {
+    return this.put(``, {
       body: { ...req },
     }).then(res => dtoToSubscriberResDto(res));
   };
@@ -21,18 +25,18 @@ class SubscriberApi extends RESTDataSource {
   updateSubscriber = async (
     subscriberId: string,
     req: UpdateSubscriberInputDto
-  ): Promise<BoolResponse> => {
-    return this.patch(`${SERVER.SUBSCRIBER_REGISTRY_API_URL}/${subscriberId}`, {
+  ): Promise<CBooleanResponse> => {
+    return this.patch(`/${subscriberId}`, {
       body: { ...req },
     }).then(res => {
       return { success: true };
     });
   };
 
-  deleteSubscriber = async (subscriberId: string): Promise<BoolResponse> => {
-    return this.delete(
-      `${SERVER.SUBSCRIBER_REGISTRY_API_URL}/${subscriberId}`
-    ).then(res => {
+  deleteSubscriber = async (
+    subscriberId: string
+  ): Promise<CBooleanResponse> => {
+    return this.delete(`/${subscriberId}`).then(res => {
       return {
         success: true,
       };
@@ -40,10 +44,7 @@ class SubscriberApi extends RESTDataSource {
   };
 
   getSubscriber = async (subscriberId: string): Promise<SubscriberDto> => {
-    return this.get(
-      `${SERVER.SUBSCRIBER_REGISTRY_API_URL}/${subscriberId}`,
-      {}
-    ).then(res => dtoToSubscriberResDto(res));
+    return this.get(`/${subscriberId}`).then(res => dtoToSubscriberResDto(res));
   };
 
   getSubMetricsByNetwork = async (): Promise<SubscriberMetricsByNetworkDto> => {
@@ -58,9 +59,9 @@ class SubscriberApi extends RESTDataSource {
   getSubscribersByNetwork = async (
     networkId: string
   ): Promise<SubscribersResDto> => {
-    return this.get(
-      `${SERVER.SUBSCRIBER_REGISTRY_API_URL}s/networks/${networkId}`
-    ).then(res => dtoToSubscribersResDto(res));
+    return this.get(`s/networks/${networkId}`).then(res =>
+      dtoToSubscribersResDto(res)
+    );
   };
 }
 

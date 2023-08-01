@@ -1,6 +1,7 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { BoolResponse, THeaders } from "../../common/types";
+import { REGISTRY_API_GW } from "../../common/configs";
+import { CBooleanResponse, THeaders } from "../../common/types";
 import { SERVER } from "../../constants/endpoints";
 import { getHeaders } from "../../utils";
 import {
@@ -23,43 +24,43 @@ import {
   dtoToWhoamiResDto,
 } from "./mapper";
 
+const version = "/v1/users";
+
 class UserApi extends RESTDataSource {
+  baseURL = REGISTRY_API_GW + version;
+
   getConnectedUsers = async (headers: THeaders): Promise<ConnectedUserDto> => {
-    return this.get(
-      `${SERVER.ORG}/${headers.orgId}/metrics/subscribersattached`
-    ).then(res => connectedUsersDtoToDto(res.data.result));
+    return this.get(`/${headers.orgId}/metrics/subscribersattached`).then(res =>
+      connectedUsersDtoToDto(res.data.result)
+    );
   };
 
   updateUser = async (
     userId: string,
     req: UpdateUserInputDto
   ): Promise<UserResDto> => {
-    return this.put(`${SERVER.REGISTRY_USERS_API_URL}/${userId}`, {
+    return this.put(`/${userId}`, {
       body: { name: req.name, email: req.email, phone: req.phone },
     }).then(res => dtoToUserResDto(res));
   };
 
   deactivateUser = async (userId: string): Promise<UserResDto> => {
-    return this.patch(`${SERVER.REGISTRY_USERS_API_URL}/${userId}`, {
+    return this.patch(`/${userId}`, {
       body: { isDeactivated: true },
     }).then(res => dtoToUserResDto(res));
   };
 
   getUser = async (userId: string): Promise<UserResDto> => {
-    return this.get(`${SERVER.REGISTRY_USERS_API_URL}/${userId}`, {}).then(
-      res => dtoToUserResDto(res)
-    );
+    return this.get(`/${userId}`, {}).then(res => dtoToUserResDto(res));
   };
 
   whoami = async (): Promise<WhoamiDto> => {
-    return this.get(`${SERVER.AUTH_API_URL}/whoami}`, {}).then(res =>
-      dtoToWhoamiResDto(res)
-    );
+    return this.get(`/whoami}`, {}).then(res => dtoToWhoamiResDto(res));
   };
   getAccountDetails = async (
     headers: THeaders
   ): Promise<GetAccountDetailsDto> => {
-    return this.get(`${SERVER.GET_IDENTITY}/${headers.orgId}`).then(res => {
+    return this.get(`/${headers.orgId}`).then(res => {
       return {
         email: res?.traits.email,
         isFirstVisit:
@@ -68,7 +69,7 @@ class UserApi extends RESTDataSource {
     });
   };
   addUser = async (req: UserInputDto): Promise<UserResDto> => {
-    return this.post(`${SERVER.REGISTRY_USERS_API_URL}`, {
+    return this.post(``, {
       body: { ...req },
     }).then(res => dtoToUserResDto(res));
   };
@@ -95,21 +96,19 @@ class UserApi extends RESTDataSource {
     });
   };
 
-  deleteUser = async (userId: string): Promise<BoolResponse> => {
-    return this.delete(`${SERVER.REGISTRY_USERS_API_URL}/${userId}`).then(
-      res => {
-        return {
-          success: true,
-        };
-      }
-    );
+  deleteUser = async (userId: string): Promise<CBooleanResponse> => {
+    return this.delete(`/${userId}`).then(res => {
+      return {
+        success: true,
+      };
+    });
   };
   updateUserStatus = async (
     data: UpdateUserServiceInput,
     headers: THeaders
   ): Promise<OrgUserSimDto> => {
     return this.put(
-      `${SERVER.ORG}/${headers.orgId}/users/${data.userId}/sims/${data.simId}/services`,
+      `/${headers.orgId}/users/${data.userId}/sims/${data.simId}/services`,
       {
         body: {
           ukama: {
@@ -126,7 +125,7 @@ class UserApi extends RESTDataSource {
     headers: THeaders
   ): Promise<ESimQRCodeRes> => {
     return this.get(
-      `${SERVER.ORG}/${headers.orgId}/users/${data.userId}/sims/${data.simId}/qr`
+      `/${headers.orgId}/users/${data.userId}/sims/${data.simId}/qr`
     ).then(res => res);
   };
   updateUserRoaming = async (
@@ -134,7 +133,7 @@ class UserApi extends RESTDataSource {
     headers: THeaders
   ): Promise<OrgUserSimDto> => {
     return this.put(
-      `${SERVER.ORG}/${headers.orgId}/users/${data.userId}/sims/${data.simId}/services`,
+      `/${headers.orgId}/users/${data.userId}/sims/${data.simId}/services`,
       {
         body: {
           carrier: {

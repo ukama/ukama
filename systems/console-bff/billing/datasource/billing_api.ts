@@ -1,20 +1,18 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { SERVER } from "../../constants/endpoints";
+import { BILLING_API_GW } from "../../common/configs";
 import { BillHistoryDto, BillResponse } from "../resolvers/types";
-import BillMapper from "./mapper";
+import { billHistoryDtoToDto, dtoToDto } from "./mapper";
 
+const version = "/v1/invoices";
 class BillingAPI extends RESTDataSource {
+  baseURL = BILLING_API_GW + version;
   public getCurrentBill = async (): Promise<BillResponse> => {
-    return this.get(SERVER.GET_CURRENT_BILL).then(res =>
-      BillMapper.dtoToDto(res)
-    );
+    return this.get("/current").then(res => dtoToDto(res));
   };
 
   public getBillHistory = async (): Promise<BillHistoryDto[]> => {
-    return this.get(SERVER.GET_BILL_HISTORY).then(res =>
-      BillMapper.billHistoryDtoToDto(res)
-    );
+    return this.get("/history").then(res => billHistoryDtoToDto(res));
   };
 }
 
