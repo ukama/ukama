@@ -105,7 +105,7 @@ services:
       dockerfile: ./Dockerfile
       context: ../services/initClient
     environment:
-      - ENV_SYSTEM_ORG=ukama
+      - ENV_SYSTEM_ORG=ukama-test-org
       - ENV_DNS_REFRESH_TIME_PERIOD=30
       - ENV_SYSTEM_NAME=nucleus
       - ENV_SYSTEM_DNS=api-gateway-nucleus
