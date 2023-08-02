@@ -1,14 +1,12 @@
 import Stripe from "stripe";
-import { Arg, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/Authentication";
 import { STRIP_SK } from "../../common/configs";
 import { CreateCustomerDto, StripeCustomer } from "./types";
 
 @Resolver()
 export class CreateCustomerResolver {
   @Mutation(() => StripeCustomer)
-  @UseMiddleware(Authentication)
   async createCustomer(
     @Arg("data")
     req: CreateCustomerDto

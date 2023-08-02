@@ -6,14 +6,10 @@ import { ResolverData } from "type-graphql/dist/interfaces/ResolverData";
 import { Service } from "typedi";
 
 import { HTTP401Error, Messages } from "../errors";
-import { AuthContext } from "../types";
 
 @Service()
-export class Authentication implements MiddlewareInterface<AuthContext> {
-  async use(
-    { context }: ResolverData<AuthContext>,
-    next: NextFn
-  ): Promise<void> {
+export class Authentication implements MiddlewareInterface<any> {
+  async use({ context }: ResolverData<any>, next: NextFn): Promise<void> {
     if (context.req.headers !== undefined) {
       const token = context.req.headers["x-session-token"] || "";
       const cookie =

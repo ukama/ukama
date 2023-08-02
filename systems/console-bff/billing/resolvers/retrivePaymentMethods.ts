@@ -1,11 +1,10 @@
 import Stripe from "stripe";
 import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 
-import { parseHeaders } from "../../common";
-import { Authentication } from "../../common/Authentication";
+import { Authentication } from "../../common/auth";
 import { STRIP_SK } from "../../common/configs";
-import { Context } from "../../common/types";
-import { getStripeIdByUserId } from "../../utils";
+import { getStripeIdByUserId, parseHeaders } from "../../common/utils";
+import { Context } from "../context";
 import { StripePaymentMethods } from "./types";
 
 @Resolver()
@@ -21,7 +20,7 @@ export class RetrivePaymentMethodsResolver {
     });
     const pm: Stripe.ApiList<Stripe.PaymentMethod> =
       await stripe.customers.listPaymentMethods(
-        getStripeIdByUserId(parseHeaders(ctx).orgId),
+        getStripeIdByUserId(parseHeaders().orgId),
         {
           type: "card",
         }
