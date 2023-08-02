@@ -1,6 +1,6 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { getPaginatedOutput } from "../../utils";
+import { getPaginatedOutput } from "../../common/utils";
 import { AlertsResponse } from "../resolver/types";
 import { PaginationDto } from "./../../common/types";
 import { dtoToDto } from "./mapper";

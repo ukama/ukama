@@ -22,7 +22,7 @@ const runServer = async () => {
   });
 
   logger.info(
-    `🚀 Ukama Node service running at http://localhost:${USER_PORT}/graphql`
+    `🚀 Ukama User service running at http://localhost:${USER_PORT}/graphql`
   );
 };
 

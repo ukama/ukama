@@ -1,4 +1,4 @@
-import { THeaders } from "../types";
+import { Meta, THeaders } from "../types";
 
 const getTimestampCount = (count: string) =>
   parseInt((Date.now() / 1000).toString()) + "-" + count;
@@ -33,4 +33,31 @@ const parseHeaders = (): THeaders => {
   return headers;
 };
 
-export { getTimestampCount, parseHeaders };
+const getStripeIdByUserId = (uid: string): string => {
+  switch (uid) {
+    case "d0a36c51-6a66-4187-b786-72a9e09bf7a4":
+      return "cus_MFTZKUVOGtI2fU";
+    default:
+      return "cus_MFTZKUVOGtI2fU";
+  }
+};
+
+const getPaginatedOutput = (
+  page: number,
+  pageSize: number,
+  count: number
+): Meta => {
+  return {
+    count,
+    page: page ? page : 1,
+    size: pageSize ? pageSize : count,
+    pages: pageSize ? Math.ceil(count / pageSize) : 1,
+  };
+};
+
+export {
+  getPaginatedOutput,
+  getStripeIdByUserId,
+  getTimestampCount,
+  parseHeaders,
+};

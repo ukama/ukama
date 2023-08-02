@@ -2,18 +2,20 @@
   "name": "console-bff",
   "version": "1.0.0",
   "scripts": {
+    "build": "tsc",
     "seed": "prisma db seed",
     "migrate": "prisma migrate dev",
     "clear-cache": "rm -rf .cache/*",
-    "gateway": "ts-node --esm ./gateway/index.ts",
     "prettier": "prettier --write --config .prettierrc './**/**'",
-    "node-dev": "yarn clear-cache && ts-node-dev --no-notify --respawn --transpile-only ./node/index.ts",
-    "dev": "yarn clear-cache && concurrently \"yarn planning-tool-dev\" \"yarn node-dev\"  \"yarn gateway\"",
-    "metrics-dev": "yarn clear-cache && ts-node-dev --no-notify --respawn --transpile-only ./metrics/src/index.ts",
-    "planning-tool-dev": "ts-node-dev --no-notify --respawn --transpile-only ./planning-tool/src/index.ts",
-    "user-dev": "ts-node-dev --no-notify --respawn --transpile-only ./user/index.ts",
-    "org-dev": "ts-node-dev --no-notify --respawn --transpile-only ./org/index.ts",
-    "network-dev": "ts-node-dev --no-notify --respawn --transpile-only ./network/index.ts"
+    "org-dev": "nodemon --watch \"org/**\" --ext \"ts,json,graphql\" --exec \"node dist/org/index.js\"",
+    "user-dev": "nodemon --watch \"user/**\" --ext \"ts,json,graphql\" --exec \"node dist/user/index.js\"",
+    "gateway": "nodemon --watch \"gateway/**\" --ext \"ts,json,graphql\" --exec \"node dist/gateway/index.js\"",
+    "network-dev": "nodemon --watch \"network/**\" --ext \"ts,json,graphql\" --exec \"node dist/network/index.js\"",
+    "node-dev": "nodemon --watch \"node/**\" --ext \"ts,json,graphql\" --exec \"node dist/node/index.js\"",
+    "planning-tool-dev": "nodemon --watch \"planning-tool/**\" --ext \"ts,json,graphql\" --exec \"node dist/planning-tool/index.js\"",
+    "metrics-dev": "yarn clear-cache && ts-node-dev --log-error  --no-notify --respawn --transpile-only ./metrics/src/index.ts",
+    "all-dev": "yarn clear-cache && concurrently \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn planning-tool-dev\" \"yarn gateway\"",
+    "dev": "yarn build && yarn all-dev"
   },
   "prisma": {
     "seed": "ts-node ./planning-tool/prisma/seed.ts",
