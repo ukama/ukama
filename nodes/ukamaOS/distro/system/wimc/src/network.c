@@ -41,20 +41,20 @@ static void setup_webservice_endpoints(Config *config,
                                &web_service_cb_ping, config);
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
-                               API_RES_EP("capp/:name/:tag"), 0,
+                               API_RES_EP("capps/:name/:tag"), 0,
                                &web_service_cb_get_capp, config);
 
     /* Agent related end-points */
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("agent/:id"), 0,
+                               API_RES_EP("agents/:id"), 0,
                                &web_service_cb_post_agent, config);
 
     ulfius_add_endpoint_by_val(instance, "DELETE", URL_PREFIX,
-                               API_RES_EP("agent/:id"), 0,
+                               API_RES_EP("agents/:id"), 0,
                                &web_service_cb_delete_agent, config);
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("agent/updates/:id/"), 0,
+                               API_RES_EP("agents/updates/:id/"), 0,
                                &web_service_cb_post_agent_update, config);
 
     /* default - 403 */
