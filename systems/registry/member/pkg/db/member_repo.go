@@ -38,7 +38,7 @@ func (r *memberRepo) AddMember(member *Member, orgId string, nestedFunc func(str
 			}
 		}
 
-		d := r.Db.GetGormDb().Create(member)
+		d := tx.Create(member)
 		if d.Error != nil {
 			return d.Error
 		}
@@ -93,12 +93,12 @@ func (r *memberRepo) RemoveMember(userUUID uuid.UUID, orgId string, nestedFunc f
 			}
 		}
 
-		d := r.Db.GetGormDb().Where("user_id = ?", userUUID).Delete(&Member{})
+		d := tx.Where("user_id = ?", userUUID).Delete(&Member{})
 		if d.Error != nil {
 			return d.Error
 		}
 
-		if d.RowsAffected != 0 {
+		if d.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
 		}
 
