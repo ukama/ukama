@@ -65,6 +65,9 @@ const startServer = async () => {
     json(),
     expressMiddleware(server)
   );
+  app.get("/ping", (req, res) => {
+    res.send("pong");
+  });
   await new Promise((resolve: any) =>
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
