@@ -23,6 +23,17 @@ export type AddDraftInput = {
   userId: Scalars['String']['input'];
 };
 
+export type AddMemberInputDto = {
+  orgName: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
+};
+
+export type AddNetworkInputDto = {
+  network_name: Scalars['String']['input'];
+  org: Scalars['String']['input'];
+};
+
 export type AddNodeInput = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -33,6 +44,16 @@ export type AddNodeToSiteInput = {
   networkId: Scalars['String']['input'];
   nodeId: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
+};
+
+export type AddOrgInputDto = {
+  certificate: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  owner_uuid: Scalars['String']['input'];
+};
+
+export type AddSiteInputDto = {
+  site: Scalars['String']['input'];
 };
 
 export type AttachNodeInput = {
@@ -129,12 +150,31 @@ export type LocationInput = {
   lng: Scalars['String']['input'];
 };
 
+export type MemberInputDto = {
+  memberId: Scalars['Boolean']['input'];
+  orgName: Scalars['Boolean']['input'];
+};
+
+export type MemberObj = {
+  __typename?: 'MemberObj';
+  isDeactivated: Scalars['Boolean']['output'];
+  memberSince?: Maybe<Scalars['String']['output']>;
+  orgId: Scalars['String']['output'];
+  role: Scalars['String']['output'];
+  user: UserResDto;
+  userId: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   addDraft: Draft;
   addLink: Draft;
+  addMember: MemberObj;
+  addNetwork: NetworkDto;
   addNode: Node;
   addNodeToSite: CBooleanResponse;
+  addOrg: OrgDto;
   addSite: Draft;
   attachNode: CBooleanResponse;
   coverage: Site;
@@ -144,9 +184,12 @@ export type Mutation = {
   deleteSite: DeleteSiteRes;
   detachhNode: CBooleanResponse;
   releaseNodeFromSite: CBooleanResponse;
+  removeMember: CBooleanResponse;
   updateDraftName: Draft;
   updateEvent: Event;
+  updateFirstVisit: UserFistVisitResDto;
   updateLocation: Location;
+  updateMember: CBooleanResponse;
   updateNode: Node;
   updateNodeState: Node;
   updateSite: Draft;
@@ -164,6 +207,16 @@ export type MutationAddLinkArgs = {
 };
 
 
+export type MutationAddMemberArgs = {
+  data: AddMemberInputDto;
+};
+
+
+export type MutationAddNetworkArgs = {
+  data: AddNetworkInputDto;
+};
+
+
 export type MutationAddNodeArgs = {
   data: AddNodeInput;
 };
@@ -171,6 +224,11 @@ export type MutationAddNodeArgs = {
 
 export type MutationAddNodeToSiteArgs = {
   data: AddNodeToSiteInput;
+};
+
+
+export type MutationAddOrgArgs = {
+  data: AddOrgInputDto;
 };
 
 
@@ -223,6 +281,11 @@ export type MutationReleaseNodeFromSiteArgs = {
 };
 
 
+export type MutationRemoveMemberArgs = {
+  data: MemberInputDto;
+};
+
+
 export type MutationUpdateDraftNameArgs = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -235,10 +298,21 @@ export type MutationUpdateEventArgs = {
 };
 
 
+export type MutationUpdateFirstVisitArgs = {
+  data: UserFistVisitInputDto;
+};
+
+
 export type MutationUpdateLocationArgs = {
   data: LocationInput;
   draftId: Scalars['String']['input'];
   locationId: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateMemberArgs = {
+  data: UpdateMemberInputDto;
+  memberId: Scalars['String']['input'];
 };
 
 
@@ -256,6 +330,21 @@ export type MutationUpdateSiteArgs = {
   data: SiteInput;
   draftId: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
+};
+
+export type NetworkDto = {
+  __typename?: 'NetworkDto';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isDeactivated: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+};
+
+export type NetworksResDto = {
+  __typename?: 'NetworksResDto';
+  networks: Array<NetworkDto>;
+  orgId: Scalars['String']['output'];
 };
 
 export type Node = {
@@ -302,12 +391,50 @@ export enum NodeTypeEnum {
   Tnode = 'tnode'
 }
 
+export type OrgDto = {
+  __typename?: 'OrgDto';
+  certificate: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isDeactivated: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  owner: Scalars['String']['output'];
+};
+
+export type OrgMembersResDto = {
+  __typename?: 'OrgMembersResDto';
+  members: Array<MemberObj>;
+  org: Scalars['String']['output'];
+};
+
+export type OrgsResDto = {
+  __typename?: 'OrgsResDto';
+  orgs: Array<OrgDto>;
+  owner: Scalars['String']['output'];
+};
+
 export type Query = {
   __typename?: 'Query';
+  addSite: SiteDto;
   getDraft: Draft;
   getDrafts: Array<Draft>;
+  getNetwork: NetworkDto;
+  getNetworks: NetworksResDto;
   getNode: Node;
   getNodes: GetNodes;
+  getOrg: OrgDto;
+  getOrgMembers: OrgMembersResDto;
+  getOrgs: OrgsResDto;
+  getSite: SiteDto;
+  getSites: SitesResDto;
+  getUser: UserResDto;
+  whoami: WhoamiDto;
+};
+
+
+export type QueryAddSiteArgs = {
+  data: AddSiteInputDto;
+  networkId: Scalars['String']['input'];
 };
 
 
@@ -321,6 +448,11 @@ export type QueryGetDraftsArgs = {
 };
 
 
+export type QueryGetNetworkArgs = {
+  networkId: Scalars['String']['input'];
+};
+
+
 export type QueryGetNodeArgs = {
   data: NodeInput;
 };
@@ -328,6 +460,37 @@ export type QueryGetNodeArgs = {
 
 export type QueryGetNodesArgs = {
   data: GetNodesInput;
+};
+
+
+export type QueryGetOrgArgs = {
+  orgName: Scalars['String']['input'];
+};
+
+
+export type QueryGetOrgMembersArgs = {
+  orgName: Scalars['String']['input'];
+};
+
+
+export type QueryGetSiteArgs = {
+  networkId: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
+};
+
+
+export type QueryGetSitesArgs = {
+  networkId: Scalars['String']['input'];
+};
+
+
+export type QueryGetUserArgs = {
+  userId: Scalars['String']['input'];
+};
+
+
+export type QueryWhoamiArgs = {
+  userId: Scalars['String']['input'];
 };
 
 export type Site = {
@@ -351,6 +514,15 @@ export type Site = {
   west: Scalars['Float']['output'];
 };
 
+export type SiteDto = {
+  __typename?: 'SiteDto';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isDeactivated: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+};
+
 export type SiteInput = {
   address: Scalars['String']['input'];
   apOption: Scalars['String']['input'];
@@ -364,9 +536,21 @@ export type SiteInput = {
   solarUptime: Scalars['Float']['input'];
 };
 
+export type SitesResDto = {
+  __typename?: 'SitesResDto';
+  networkId: Scalars['String']['output'];
+  sites: Array<SiteDto>;
+};
+
 export type UpdateEventInput = {
   operation: Scalars['String']['input'];
   value: Scalars['String']['input'];
+};
+
+export type UpdateMemberInputDto = {
+  isDeactivated: Scalars['Boolean']['input'];
+  orgName: Scalars['String']['input'];
+  role: Scalars['String']['input'];
 };
 
 export type UpdateNodeInput = {
@@ -377,6 +561,37 @@ export type UpdateNodeInput = {
 export type UpdateNodeStateInput = {
   id: Scalars['String']['input'];
   state: NodeStatusEnum;
+};
+
+export type UserFistVisitInputDto = {
+  email: Scalars['String']['input'];
+  firstVisit: Scalars['Boolean']['input'];
+  name: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
+};
+
+export type UserFistVisitResDto = {
+  __typename?: 'UserFistVisitResDto';
+  firstVisit: Scalars['Boolean']['output'];
+};
+
+export type UserResDto = {
+  __typename?: 'UserResDto';
+  email: Scalars['String']['output'];
+  isDeactivated: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  registeredSince: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
+};
+
+export type WhoamiDto = {
+  __typename?: 'WhoamiDto';
+  email: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isFirstVisit: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  role: Scalars['String']['output'];
 };
 
 export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } };
