@@ -16,8 +16,8 @@
     "node-dev": "nodemon --watch \"node/**\" --ext \"ts,json,graphql\" --exec \"node dist/node/index.js\"",
     "planning-tool-dev": "nodemon --watch \"planning-tool/**\" --ext \"ts,json,graphql\" --exec \"node dist/planning-tool/index.js\"",
     "metrics-dev": "yarn clear-cache && nodemon --watch \"metrics/**\" --ext \"ts,json,graphql\" --exec \"node dist/metrics/index.js\"",
-    "all-dev": "concurrently \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn planning-tool-dev\" \"yarn gateway\"",
-    "all-start": "concurrently \"node dist/org/index.js\" \"node dist/user/index.js\" \"node dist/network/index.js\" \"node dist/node/index.js\" \"node dist/planning-tool/index.js\" \"yarn gateway\""
+    "all-dev": "concurrently \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn gateway\"",
+    "all-start": "concurrently \"node dist/org/index.js\" \"node dist/user/index.js\" \"node dist/network/index.js\" \"node dist/node/index.js\" \"yarn gateway\""
   },
   "prisma": {
     "seed": "ts-node ./planning-tool/prisma/seed.ts",

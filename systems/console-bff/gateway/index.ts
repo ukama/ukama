@@ -14,7 +14,6 @@ import {
   NETWORK_PORT,
   NODE_PORT,
   ORG_PORT,
-  PLANNING_SERVICE_PORT,
   PLAYGROUND_URL,
   USER_PORT,
 } from "../common/configs";
@@ -36,7 +35,7 @@ const loadServers = async () => {
         { name: "node", url: `http://localhost:${NODE_PORT}` },
         { name: "user", url: `http://localhost:${USER_PORT}` },
         { name: "network", url: `http://localhost:${NETWORK_PORT}` },
-        { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
+        // { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
       ],
     }),
   });
@@ -75,5 +74,4 @@ const startServer = async () => {
   });
   logger.info(`🚀 Server ready at http://localhost:${GATEWAY_PORT}/graphql`);
 };
-
 startServer();
