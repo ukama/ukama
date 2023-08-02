@@ -95,7 +95,7 @@ func (r *registryProvider) AddMember(orgName string, uuid string) error {
 	resp, err := r.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Post(r.R.URL.String() + RegistryVersion + "member")
+		Post(r.R.URL.String() + RegistryVersion + "members")
 
 	if err != nil {
 		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())
