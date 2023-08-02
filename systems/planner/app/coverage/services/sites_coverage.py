@@ -21,6 +21,10 @@ class SitesCoverage:
     def __init__(self):
         self.RF_SERVER_PATH = config.get_config().RF_SERVER_PATH
         self.SDF_FILES_PATH = os.getenv("SDF_DIR", config.get_config().SDF_FILES_PATH)
+        self.COLOR_FILES_PATH = os.getenv("COLOR_FILES_PATH", config.get_config().COLOR_FILES_PATH)
+        self.SCF_COLOR_FILE_PATH = self.COLOR_FILES_PATH + "/field_strength.scf"
+        self.DCF_COLOR_FILE_PATH = self.COLOR_FILES_PATH + "/receive_power.dcf"
+        self.LCF_COLOR_FILE_PATH = self.COLOR_FILES_PATH + "/path_loss.lcf"
         self.OUTPUT_PATH = config.get_config().OUTPUT_PATH
         self.TEMP_FOLDER = config.get_config().TEMP_FOLDER
         self.bucket_name = os.getenv("S3_BUCKET_NAME", config.get_config().S3_BUCKET_NAME)
@@ -31,7 +35,7 @@ class SitesCoverage:
         Session = sessionmaker(bind=engine)
         self.SESSION = Session()
 
-    def calculate_coverage(self, mode, sites: List[Site]) -> CoverageResponseSchema:
+    def calculate_coverage(self, mode, population_coverage, provide_interference_data, sites: List[Site]) -> CoverageResponseSchema:
         try:
             output_folder_path = self.generate_output_folder()
             sites_coverage_list = []
@@ -46,15 +50,15 @@ class SitesCoverage:
                     params.extend(["-txh", str(site['transmitter_height'])])
                 params.extend(["-f", "900", "-rt", "-110"])
                 if mode == CoverageEnum.PATH_LOSS.value:
-                    params.extend(["-erp", "0"])
+                    params.extend(["-erp", "0", "-color", self.LCF_COLOR_FILE_PATH])
                     output_func = CoverageEnum.PATH_LOSS.value
                 elif mode == CoverageEnum.FIELD_STRENGTH.value:
-                    params.extend(["-erp", "20"])
+                    params.extend(["-erp", "20", "-color", self.SCF_COLOR_FILE_PATH])
                     output_func = CoverageEnum.FIELD_STRENGTH.value
                 else:
-                    params.extend(["-erp", "20", "-dbm"])
+                    params.extend(["-erp", "20", "-color", self.DCF_COLOR_FILE_PATH, "-dbm"])
                     output_func = CoverageEnum.RECEIVE_POWER.value
-                params.extend(["-m", "-R", "30", "-res", "1200", "-pm", "1"])
+                params.extend(["-m", "-R", str(site['coverage_radius']), "-res", "1200", "-pm", "1"])
 
                 output_file_name = str("lat"+str(site['latitude']).replace(".", "_") + "lon" + str(site['longitude']).replace(".", "_"))
                 output_file_path = f"{output_folder_path}{output_file_name}"
@@ -90,13 +94,13 @@ class SitesCoverage:
             raise ex
         else:
             return self.merge_sites_output(
-                sites_coverage_list, output_file_path, output_folder_path, output_func
+                sites_coverage_list, output_file_path, output_folder_path, output_func, population_coverage, provide_interference_data
             )
         finally:
             self.remove_temp_folder()
 
     def merge_sites_output(
-        self, sites_coverage_list, output_file_path, output_folder_path, outputFunc
+        self, sites_coverage_list: List[CoverageResponseSchema], output_file_path, output_folder_path, outputFunc, population_coverage, provide_interference_data
     ):
         """
         Merges multiple geo tiff files into a single output Tiff image file along with new coordinates.
@@ -111,9 +115,24 @@ class SitesCoverage:
         - output: The output from the `merge_geo_tiff_files` function, which will be CoverageResponseSchema.
         """
         responseArray = self.create_geo_tiff_files(sites_coverage_list)
-        output = self.merge_geo_tiff_files(
-            responseArray, output_folder_path, output_file_path, outputFunc
-        )
+        output = None
+        if len(sites_coverage_list) > 1 or population_coverage:
+            output = self.merge_geo_tiff_files(
+                responseArray, output_folder_path, outputFunc, population_coverage, provide_interference_data
+            )
+        elif len(sites_coverage_list) == 1:
+           input = sites_coverage_list[0]
+           output = responseArray[0]
+           output_file_name = output["image_name"]+".tif"
+           west, south, east, north = input.west, input.south, input.east, input.north
+           self.upload_tiff_to_s3(output["image_url"], output_file_name)
+           output = {
+            "east": east,
+            "west": west,
+            "south": south,
+            "north": north,
+            "url": output_file_name
+        }
         return output
 
     # region Using gdal to merge files.
@@ -146,16 +165,18 @@ class SitesCoverage:
             )
         return responseImages
 
-    def merge_geo_tiff_files(self, inputs, output_folder_path, dcf_file_path, outputFunc):
+    def merge_geo_tiff_files(self, inputs, output_folder_path, outputFunc, population_coverage, provide_interference_data):
         pred_output_file_name = str(uuid.uuid4()) + "_merged.tif"
         pred_merged_file_url = output_folder_path + pred_output_file_name
         population_image_pixel_width, population_image_pixel_height = 0.0002777777777777777775, 0.0002777777777777777775 # this is default as given by the data downloaded for population
-        dcf_file_url = ""
+        color_file_url = ""
         if outputFunc == CoverageEnum.FIELD_STRENGTH.value:
-            dcf_file_url = dcf_file_path + ".scf"
+            color_file_url = self.SCF_COLOR_FILE_PATH
+        elif outputFunc == CoverageEnum.PATH_LOSS.value:
+            color_file_url = self.LCF_COLOR_FILE_PATH
         else:
-            dcf_file_url = dcf_file_path + ".dcf"
-        color_map = self.load_dcf_file(dcf_file_url)
+            color_file_url = self.DCF_COLOR_FILE_PATH
+        color_map = self.load_dcf_file(color_file_url)
 
         # Create a dictionary to store the combined values
         combined = {}
@@ -231,77 +252,79 @@ class SitesCoverage:
                             x_min, 
                             y_max, 
                             output_data)
-
-        # Creating interference geotiffs
         interference_files_urls = {}
-        for interference_data_key in output_data_interference:
-            output_url = output_folder_path + interference_data_key + ".tif"
-            s3_output_obj_name = self.create_geo_tiff_file(interference_data_key + ".tif",
-                                      output_url, 
-                                      ncols, 
-                                      nrows,
-                                      1,
-                                      gdal.GDT_Float32, 
-                                      pixel_width, 
-                                      pixel_height, 
-                                      x_min, 
-                                      y_max, 
-                                      output_data_interference[interference_data_key])
-            interference_files_urls[interference_data_key] = InterferenceDataResponse(url=s3_output_obj_name)
-
-
-        # Creating population coverage geotiffs
-        pop_data = self.get_population_data(x_min, x_max, y_min, y_max)
+        if provide_interference_data:
+            # Creating interference geotiffs
+            for interference_data_key in output_data_interference:
+                output_url = output_folder_path + interference_data_key + ".tif"
+                s3_output_obj_name = self.create_geo_tiff_file(interference_data_key + ".tif",
+                                        output_url, 
+                                        ncols, 
+                                        nrows,
+                                        1,
+                                        gdal.GDT_Float32, 
+                                        pixel_width, 
+                                        pixel_height, 
+                                        x_min, 
+                                        y_max, 
+                                        output_data_interference[interference_data_key])
+                interference_files_urls[interference_data_key] = InterferenceDataResponse(url=s3_output_obj_name)
         
-        pop_data_nrows = int(abs((y_max - y_min) / population_image_pixel_height))
-        pop_data_ncols = int(abs((x_max - x_min) / population_image_pixel_width))
-        population_output_data = {}
-        population_output_value = {}
-        population_output_total_boxes = {}
-        for input_file in inputs:
-            image_name = input_file["image_name"]
-            population_output_data[image_name] = np.full((pop_data_nrows, pop_data_ncols, 1), np.nan, dtype=np.float32)
-            population_output_value[image_name] = 0
-            population_output_total_boxes[image_name] = 0
+        population_data_dic = None
 
-        # Creating separate geotiff files for population prediction
-        for point in pop_data:
-            longitude = point.longitude
-            latitude = point.latitude
-            population = point.value
-
-            # Convert longitude and latitude to pixel coordinates
-            x = int((longitude - x_min) / population_image_pixel_width)
-            y = int((latitude - y_min) / population_image_pixel_height)
-            roundedLon = round(longitude, roundofCoord)
-            roundedLat = round(latitude, roundofCoord)
-            key = (0, roundedLon, roundedLat), (1, roundedLon, roundedLat), (2, roundedLon, roundedLat), (3, roundedLon, roundedLat)
-            # Write the population value to the raster
-            if key in combined:
-                population_output_data[combined[key][1]][pop_data_nrows - y - 1, x, 0] = population
-                population_output_value[combined[key][1]] += population
-                population_output_total_boxes[combined[key][1]] += 1
-
-        siteNumber = 1
-        population_data_dic = {}
-        for input_file in inputs:
-            image_name = input_file["image_name"]
-            population_image_out_url = output_folder_path + image_name + ".tif"
-            s3_output_obj_name = self.create_geo_tiff_file(image_name + ".tif",
-                                      population_image_out_url, 
-                                      pop_data_ncols, 
-                                      pop_data_nrows,
-                                      1,
-                                      gdal.GDT_Float32, 
-                                      population_image_pixel_width, 
-                                      -population_image_pixel_height, 
-                                      x_min, 
-                                      y_max, 
-                                      population_output_data[image_name])
+        if population_coverage:
+            # Creating population coverage geotiffs
+            pop_data = self.get_population_data(x_min, x_max, y_min, y_max)
             
-            print("site "+ str(siteNumber) + " population data file url: ", population_image_out_url)
-            siteNumber = siteNumber + 1 
-            population_data_dic[image_name] = PopulationDataResponse(url=s3_output_obj_name, population_covered=population_output_value[image_name], total_boxes_covered=population_output_total_boxes[image_name])
+            pop_data_nrows = int(abs((y_max - y_min) / population_image_pixel_height))
+            pop_data_ncols = int(abs((x_max - x_min) / population_image_pixel_width))
+            population_output_data = {}
+            population_output_value = {}
+            population_output_total_boxes = {}
+            for input_file in inputs:
+                image_name = input_file["image_name"]
+                population_output_data[image_name] = np.full((pop_data_nrows, pop_data_ncols, 1), np.nan, dtype=np.float32)
+                population_output_value[image_name] = 0
+                population_output_total_boxes[image_name] = 0
+
+            # Creating separate geotiff files for population prediction
+            for point in pop_data:
+                longitude = point.longitude
+                latitude = point.latitude
+                population = point.value
+
+                # Convert longitude and latitude to pixel coordinates
+                x = int((longitude - x_min) / population_image_pixel_width)
+                y = int((latitude - y_min) / population_image_pixel_height)
+                roundedLon = round(longitude, roundofCoord)
+                roundedLat = round(latitude, roundofCoord)
+                key = (0, roundedLon, roundedLat), (1, roundedLon, roundedLat), (2, roundedLon, roundedLat), (3, roundedLon, roundedLat)
+                # Write the population value to the raster
+                if key in combined:
+                    population_output_data[combined[key][1]][pop_data_nrows - y - 1, x, 0] = population
+                    population_output_value[combined[key][1]] += population
+                    population_output_total_boxes[combined[key][1]] += 1
+
+            population_data_dic = {}
+            siteNumber = 1
+            for input_file in inputs:
+                image_name = input_file["image_name"]
+                population_image_out_url = output_folder_path + image_name + ".tif"
+                s3_output_obj_name = self.create_geo_tiff_file(image_name + ".tif",
+                                        population_image_out_url, 
+                                        pop_data_ncols, 
+                                        pop_data_nrows,
+                                        1,
+                                        gdal.GDT_Float32, 
+                                        population_image_pixel_width, 
+                                        -population_image_pixel_height, 
+                                        x_min, 
+                                        y_max, 
+                                        population_output_data[image_name])
+                
+                print("site "+ str(siteNumber) + " population data file url: ", population_image_out_url)
+                siteNumber = siteNumber + 1 
+                population_data_dic[image_name] = PopulationDataResponse(url=s3_output_obj_name, population_covered=population_output_value[image_name], total_boxes_covered=population_output_total_boxes[image_name])
 
         print("East: ", x_max)
         print("West: ", x_min)

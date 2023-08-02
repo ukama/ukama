@@ -6,6 +6,7 @@ class Site(BaseModel):
     latitude: float
     longitude: float
     transmitter_height: int | None = 25
+    coverage_radius: float | None = 30
     
     class Config:
         orm_mode = True
@@ -13,6 +14,8 @@ class Site(BaseModel):
 
 class CoverageRequestSchema(BaseModel):
     mode: str
+    population_coverage: bool | None = True
+    provide_interference_data: bool | None = True
     sites: List[Site]
 
     class Config:
