@@ -8,9 +8,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/nucleus/orgs/mocks"
-	pb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
-	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
+	"github.com/ukama/ukama/systems/nucleus/org/mocks"
+	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/db"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/providers"
 	"gorm.io/gorm"
 )
 
@@ -25,6 +26,9 @@ func TestOrgServer_Add(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 	userRepo := &mocks.UserRepo{}
+	userService := &mocks.UserClientProvider{}
+	orchSystem := &mocks.OrchestratorProvider{}
+	registry := &mocks.RegistryProvider{}
 
 	org := &db.Org{
 		Owner:       ownerUuid,
@@ -32,12 +36,15 @@ func TestOrgServer_Add(t *testing.T) {
 		Name:        orgName,
 	}
 
+	pOrg := providers.DeployOrgRequest{
+		OrgId:   uuid.NewV4().String(),
+		OrgName: org.Name,
+		OwnerId: org.Owner.String(),
+	}
+
 	orgRepo.On("Add", org, mock.Anything).Return(nil).Once()
 
-	userRepo.On("Get", ownerUuid).Return(&db.User{
-		Id:   1,
-		Uuid: ownerUuid,
-	}, nil).Once()
+	orchSystem.On("DeployOrg", pOrg).Return(&providers.DeployOrgResponse{}, nil)
 
 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddRequest{
 		Org: &pb.Organization{
@@ -47,10 +54,8 @@ func TestOrgServer_Add(t *testing.T) {
 		}}).Return(nil).Once()
 
 	orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
-	orgRepo.On("GetMemberCount", mock.Anything).Return(int64(1), int64(0), nil).Once()
-	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
 
 	t.Run("AddValidOrg", func(tt *testing.T) {
 		// Act
@@ -99,8 +104,12 @@ func TestOrgServer_Get(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
+	userRepo := &mocks.UserRepo{}
+	userService := &mocks.UserClientProvider{}
+	orchSystem := &mocks.OrchestratorProvider{}
+	registry := &mocks.RegistryProvider{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("Get", mock.Anything).Return(&db.Org{Id: orgId}, nil).Once()
@@ -130,8 +139,12 @@ func TestOrgServer_GetByName(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
+	userRepo := &mocks.UserRepo{}
+	userService := &mocks.UserClientProvider{}
+	orchSystem := &mocks.OrchestratorProvider{}
+	registry := &mocks.RegistryProvider{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
@@ -161,8 +174,12 @@ func TestOrgServer_GetByOwner(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
+	userRepo := &mocks.UserRepo{}
+	userService := &mocks.UserClientProvider{}
+	orchSystem := &mocks.OrchestratorProvider{}
+	registry := &mocks.RegistryProvider{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
 
 	t.Run("OwnerFound", func(tt *testing.T) {
 		orgRepo.On("GetByOwner", mock.Anything).
@@ -194,19 +211,26 @@ func TestOrgServer_GetByUser(t *testing.T) {
 	ownerId := uuid.NewV4()
 	orgId := uuid.NewV4()
 	userId := uuid.NewV4()
+	var id uint = 1
 
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
+	userRepo := &mocks.UserRepo{}
+	userService := &mocks.UserClientProvider{}
+	orchSystem := &mocks.OrchestratorProvider{}
+	registry := &mocks.RegistryProvider{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, userRepo, orchSystem, userService, registry, testOrgName, msgclientRepo, "", true)
 
 	t.Run("UserFoundOnOwnersAndMembers", func(tt *testing.T) {
-		orgRepo.On("GetByOwner", userId).
-			Return([]db.Org{db.Org{Id: orgId, Owner: ownerId}}, nil).Once()
+		userRepo.On("Get", userId).Return(&db.User{Id: 1, Uuid: userId}, nil).Once()
 
-		orgRepo.On("GetByMember", userId).
-			Return([]db.OrgUser{db.OrgUser{OrgId: orgId, Uuid: userId}}, nil).Once()
+		orgRepo.On("GetByOwner", userId).
+			Return([]db.Org{{Id: orgId, Owner: ownerId}}, nil).Once()
+
+		orgRepo.On("GetByMember", id).
+			Return([]db.Org{{Id: orgId}}, nil).Once()
 
 		// Act
 		orgResp, err := s.GetByUser(context.TODO(), &pb.GetByOwnerRequest{
@@ -214,239 +238,49 @@ func TestOrgServer_GetByUser(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, orgResp)
+		assert.Equal(t, 1, len(orgResp.OwnerOf))
+		assert.Equal(t, 1, len(orgResp.MemberOf))
 		assert.Equal(t, userId.String(), orgResp.GetUser())
 		orgRepo.AssertExpectations(t)
 	})
 
 	t.Run("UserNotFoundOnOwners", func(tt *testing.T) {
+		userRepo.On("Get", userId).Return(&db.User{Id: 1, Uuid: userId}, nil).Once()
+
 		orgRepo.On("GetByOwner", userId).
 			Return(nil, gorm.ErrRecordNotFound).Once()
 
+		orgRepo.On("GetByMember", id).
+			Return([]db.Org{{Id: orgId}}, nil).Once()
 		// Act
 		orgResp, err := s.GetByUser(context.TODO(), &pb.GetByOwnerRequest{
 			UserUuid: userId.String()})
 
-		assert.Error(t, err)
-		assert.Nil(t, orgResp)
+		assert.NoError(t, err)
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, 0, len(orgResp.OwnerOf))
+		assert.Equal(t, 1, len(orgResp.MemberOf))
 		orgRepo.AssertExpectations(t)
 	})
 
 	t.Run("UserNotFoundMembers", func(tt *testing.T) {
-		orgRepo.On("GetByOwner", userId).
-			Return([]db.Org{db.Org{Id: orgId, Owner: ownerId}}, nil).Once()
+		userRepo.On("Get", userId).Return(&db.User{Id: 1, Uuid: userId}, nil).Once()
 
-		orgRepo.On("GetByMember", userId).
+		orgRepo.On("GetByOwner", userId).
+			Return([]db.Org{{Id: orgId, Owner: ownerId}}, nil).Once()
+
+		orgRepo.On("GetByMember", id).
 			Return(nil, gorm.ErrRecordNotFound).Once()
 
 		// Act
 		orgResp, err := s.GetByUser(context.TODO(), &pb.GetByOwnerRequest{
 			UserUuid: userId.String()})
 
-		assert.Error(t, err)
-		assert.Nil(t, orgResp)
-		orgRepo.AssertExpectations(t)
-	})
-
-}
-
-func TestOrgServer_AddMember(t *testing.T) {
-	// Arrange
-	orgName := "org-1"
-	ownerUuid := uuid.NewV4()
-	userUuid := uuid.NewV4()
-	certificate := "ukama_certs"
-
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-	orgRepo := &mocks.OrgRepo{}
-	userRepo := &mocks.UserRepo{}
-
-	org := &db.Org{
-		Owner:       ownerUuid,
-		Certificate: certificate,
-		Name:        orgName,
-	}
-
-	user := &db.User{
-		Id:   1,
-		Uuid: userUuid,
-	}
-
-	member := &db.OrgUser{
-		OrgId:  org.Id,
-		UserId: user.Id,
-		Uuid:   userUuid,
-		Role:   db.Member,
-	}
-
-	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddMemberRequest{
-		OrgName:  org.Name,
-		UserUuid: user.Uuid.String(),
-		Role:     pb.RoleType(member.Role),
-	}).Return(nil).Once()
-
-	orgRepo.On("GetMemberCount", mock.Anything).Return(int64(1), int64(0), nil).Once()
-
-	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "")
-
-	t.Run("AddValidMember", func(tt *testing.T) {
-		orgRepo.On("GetByName", mock.Anything).Return(org, nil).Once()
-		userRepo.On("Get", userUuid).Return(user, nil).Once()
-		orgRepo.On("AddMember", member).Return(nil).Once()
-
-		// Act
-		res, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
-			OrgName:  org.Name,
-			UserUuid: user.Uuid.String(),
-			Role:     pb.RoleType(member.Role),
-		})
-
-		// Assert
 		assert.NoError(t, err)
-		assert.NotNil(t, res)
-		assert.Equal(t, org.Id.String(), res.Member.OrgId)
-		assert.Equal(t, userUuid.String(), res.Member.Uuid)
-		orgRepo.AssertExpectations(t)
-		msgclientRepo.AssertExpectations(t)
-	})
-
-	t.Run("OrgNotFound", func(tt *testing.T) {
-		orgRepo.On("GetByName", mock.Anything).Return(nil, gorm.ErrRecordNotFound).Once()
-		// userRepo.On("Get", userUuid).Return(user, nil).Once()
-		// orgRepo.On("AddMember", member).Return(nil).Once()
-
-		// Act
-		res, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
-			OrgName:  org.Name,
-			UserUuid: user.Uuid.String(),
-			Role:     pb.RoleType(member.Role),
-		})
-
-		// Assert
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		orgRepo.AssertExpectations(t)
-		msgclientRepo.AssertExpectations(t)
-	})
-
-	t.Run("UserNotFound", func(tt *testing.T) {
-		orgRepo.On("GetByName", mock.Anything).Return(org, nil).Once()
-		userRepo.On("Get", userUuid).Return(nil, gorm.ErrRecordNotFound).Once()
-
-		// Act
-		res, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
-			OrgName:  org.Name,
-			UserUuid: user.Uuid.String(),
-			Role:     pb.RoleType(member.Role),
-		})
-
-		// Assert
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		orgRepo.AssertExpectations(t)
-		msgclientRepo.AssertExpectations(t)
-	})
-
-}
-
-func TestOrgServer_GetMember(t *testing.T) {
-	userId := uuid.NewV4()
-	orgId := uuid.NewV4()
-	orgName := "test-org"
-
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-
-	orgRepo := &mocks.OrgRepo{}
-
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
-
-	t.Run("MemberFound", func(tt *testing.T) {
-		orgRepo.On("GetMember", orgId, userId).
-			Return(&db.OrgUser{Uuid: userId, OrgId: orgId}, nil).Once()
-
-		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
-
-		// Act
-		membResp, err := s.GetMember(context.TODO(), &pb.MemberRequest{
-			OrgName: orgName, UserUuid: userId.String()})
-
-		assert.NoError(t, err)
-		assert.NotNil(t, membResp)
-		assert.Equal(t, userId.String(), membResp.GetMember().GetUuid())
+		assert.NotNil(t, orgResp)
+		assert.Equal(t, 1, len(orgResp.OwnerOf))
+		assert.Equal(t, 0, len(orgResp.MemberOf))
 		orgRepo.AssertExpectations(t)
 	})
 
-	t.Run("MemberNotFound", func(tt *testing.T) {
-		orgRepo.On("GetMember", orgId, userId).Return(nil, gorm.ErrRecordNotFound).Once()
-		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
-
-		// Act
-		membResp, err := s.GetMember(context.TODO(), &pb.MemberRequest{
-			OrgName: orgName, UserUuid: userId.String()})
-
-		assert.Error(t, err)
-		assert.Nil(t, membResp)
-		orgRepo.AssertExpectations(t)
-	})
-
-	t.Run("OrgNotFound", func(tt *testing.T) {
-		orgRepo.On("GetByName", orgName).Return(nil, gorm.ErrRecordNotFound).Once()
-
-		// Act
-		membResp, err := s.GetMember(context.TODO(), &pb.MemberRequest{
-			OrgName: orgName, UserUuid: userId.String()})
-
-		assert.Error(t, err)
-		assert.Nil(t, membResp)
-		orgRepo.AssertExpectations(t)
-	})
-}
-
-func TestOrgServer_GetMembers(t *testing.T) {
-	userId := uuid.NewV4()
-	orgId := uuid.NewV4()
-	orgName := "test-org"
-
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
-
-	orgRepo := &mocks.OrgRepo{}
-
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
-
-	t.Run("MembersFound", func(tt *testing.T) {
-		orgRepo.On("GetMembers", orgId).
-			Return([]db.OrgUser{db.OrgUser{Uuid: userId, OrgId: orgId}}, nil).Once()
-
-		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
-
-		// Act
-		membResp, err := s.GetMembers(context.TODO(), &pb.GetMembersRequest{OrgName: orgName})
-
-		assert.NoError(t, err)
-		assert.NotNil(t, membResp)
-		assert.Equal(t, userId.String(), membResp.GetMembers()[0].GetUuid())
-		orgRepo.AssertExpectations(t)
-	})
-
-	t.Run("MemberNotFound", func(tt *testing.T) {
-		orgRepo.On("GetMembers", orgId).Return(nil, gorm.ErrRecordNotFound).Once()
-		orgRepo.On("GetByName", orgName).Return(&db.Org{Id: orgId}, nil).Once()
-
-		// Act
-		membResp, err := s.GetMembers(context.TODO(), &pb.GetMembersRequest{OrgName: orgName})
-
-		assert.Error(t, err)
-		assert.Nil(t, membResp)
-		orgRepo.AssertExpectations(t)
-	})
-
-	t.Run("OrgNotFound", func(tt *testing.T) {
-		orgRepo.On("GetByName", orgName).Return(nil, gorm.ErrRecordNotFound).Once()
-
-		// Act
-		membResp, err := s.GetMembers(context.TODO(), &pb.GetMembersRequest{OrgName: orgName})
-
-		assert.Error(t, err)
-		assert.Nil(t, membResp)
-		orgRepo.AssertExpectations(t)
-	})
 }

@@ -14,10 +14,10 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
-	"github.com/ukama/ukama/systems/nucleus/orgs/pkg"
-	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
-	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/providers"
+	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/db"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -96,7 +96,6 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	}
 
 	_ = o.pushOrgCountMetric()
-	_ = o.pushUserCountMetric()
 
 	return &pb.AddResponse{Org: dbOrgToPbOrg(org)}, nil
 }
