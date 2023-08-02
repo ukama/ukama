@@ -13,7 +13,7 @@ import (
 	pb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"github.com/ukama/ukama/systems/nucleus/user/pkg"
 
-	orgpb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pkgP "github.com/ukama/ukama/systems/nucleus/user/pkg/providers"
