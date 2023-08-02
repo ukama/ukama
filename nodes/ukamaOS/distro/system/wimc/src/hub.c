@@ -131,7 +131,6 @@ void free_artifact(Artifact *artifact) {
 
     usys_free(artifact->name);
     usys_free(artifact->version);
-    usys_free(artifact->formats);
 
     for (int i=0; i<artifact->formatsCount; i++) {
         usys_free(artifact->formats[i]->type);
@@ -140,6 +139,8 @@ void free_artifact(Artifact *artifact) {
         usys_free(artifact->formats[i]->createdAt);
         usys_free(artifact->formats[i]);
     }
+
+    usys_free(artifact->formats);
 }
 
 static size_t response_callback(void *contents, size_t size, size_t nmemb,

@@ -138,6 +138,7 @@ int web_service_cb_get_capp(const URequest *request,
     if (agent == NULL) {
         usys_log_error("No matching agent found for capp %s:%s",
                        cappName, cappTag);
+        free_artifact(&artifact);
         ulfius_set_string_body_response(response,
                                 HttpStatus_ServiceUnavailable,
                                 HttpStatusStr(HttpStatus_ServiceUnavailable));
@@ -173,6 +174,7 @@ int web_service_cb_get_capp(const URequest *request,
                                HttpStatusStr(HttpStatus_ServiceUnavailable));
     }
 
+    free_artifact(&artifact);
     return U_CALLBACK_CONTINUE;
 }
 
