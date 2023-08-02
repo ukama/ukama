@@ -11,7 +11,6 @@ import (
 	"github.com/ukama/ukama/systems/registry/member/mocks"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	"github.com/ukama/ukama/systems/registry/member/pkg/db"
-	"github.com/ukama/ukama/systems/registry/member/pkg/providers"
 	"gorm.io/gorm"
 )
 
@@ -24,23 +23,23 @@ func TestMemberServer_AddMember(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	mRepo := &mocks.MemberRepo{}
-	mOrg := &mocks.OrgClientProvider{}
+	nOrg := &mocks.NucleusClientProvider{}
 
 	member := db.Member{
 		UserId: uuid.NewV4(),
 		Role:   db.Users,
 	}
 
-	mRepo.On("AddMember", mock.Anything).Return(nil).Once()
-	mOrg.On("GetUserById", member.UserId.String()).Return(&providers.UserInfo{
-		Id: member.UserId.String(),
-	}, nil).Once()
+	mRepo.On("AddMember", mock.Anything, orgId.String(), mock.Anything).Return(nil).Once()
+	// mOrg.On("GetUserById", member.UserId.String()).Return(&providers.UserInfo{
+	// 	Id: member.UserId.String(),
+	// }, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, &pb.AddMemberRequest{
 		UserUuid: member.UserId.String(),
 		Role:     pb.RoleType(db.Users),
 	}).Return(nil).Once()
 	mRepo.On("GetMemberCount").Return(int64(1), int64(1), nil).Once()
-	s := NewMemberServer(mRepo, mOrg, msgclientRepo, "", orgId, testOrgName)
+	s := NewMemberServer(mRepo, nOrg, msgclientRepo, "", orgId, testOrgName)
 
 	// Act
 	_, err := s.AddMember(context.TODO(), &pb.AddMemberRequest{
@@ -141,7 +140,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 		}
 
 		mRepo.On("GetMember", member.UserId).Return(&member, nil).Once()
-		mRepo.On("RemoveMember", member.UserId).Return(nil).Once()
+		mRepo.On("RemoveMember", member.UserId, orgId.String(), mock.Anything).Return(nil).Once()
 		msgclientRepo.On("PublishRequest", mock.Anything, &pb.MemberRequest{
 			UserUuid: member.UserId.String(),
 		}).Return(nil).Once()

@@ -46,6 +46,8 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
+var orgId = uuid.NewV4()
+
 func Test_AddMember(t *testing.T) {
 	t.Run("AddMember", func(t *testing.T) {
 		// Arrange
@@ -84,7 +86,7 @@ func Test_AddMember(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.AddMember(&member)
+		err = r.AddMember(&member, orgId.String(), nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -225,7 +227,7 @@ func Test_RemoveMember(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.RemoveMember(member.UserId)
+		err = r.RemoveMember(member.UserId, orgId.String(), nil)
 
 		// Assert
 		assert.NoError(t, err)
