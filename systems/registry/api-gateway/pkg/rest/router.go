@@ -209,9 +209,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 // Node handlers
-func (r *Router) getOrgNodesHandler(c *gin.Context, req *GetOrgNodesRequest) (*nodepb.GetByOrgResponse, error) {
-	return r.clients.Node.GetOrgNodes(req.OrgId, req.Free)
-}
+// func (r *Router) getOrgNodesHandler(c *gin.Context, req *GetOrgNodesRequest) (*nodepb.GetByOrgResponse, error) {
+// 	return r.clients.Node.GetOrgNodes(req.OrgId, req.Free)
+// }
 
 func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
 	return r.clients.Node.GetSiteNodes(req.SiteId)
