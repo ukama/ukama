@@ -160,15 +160,33 @@ func (o *OrgService) GetByUser(ctx context.Context, req *pb.GetByOwnerRequest) (
 			"invalid format of user uuid. Error %s", err.Error())
 	}
 
-	ownedOrgs, err := o.orgRepo.GetByOwner(userId)
+	user, err := o.userRepo.Get(userId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "owned orgs")
+		if sql.IsNotFoundError(err) {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"user doesn't exist.")
+		} else {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format of user uuid. Error %s", err.Error())
+		}
 	}
 
-	membOrgs, err := o.orgRepo.GetByMember(userId)
+	ownedOrgs, err := o.orgRepo.GetByOwner(userId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "memb orgs")
+		if !sql.IsNotFoundError(err) {
+			return nil, grpc.SqlErrorToGrpc(err, "owned orgs")
+		}
 	}
+
+	log.Infof("looking for orgs with member %s", userId.String())
+	membOrgs, err := o.orgRepo.GetByMember(user.Id)
+	if err != nil {
+		if !sql.IsNotFoundError(err) {
+			return nil, grpc.SqlErrorToGrpc(err, "member orgs")
+		}
+	}
+
+	log.Infof("found %d owned orgs and %d member orgs", len(ownedOrgs), len(membOrgs))
 
 	resp := &pb.GetByUserResponse{
 		User:     req.GetUserUuid(),
@@ -227,7 +245,7 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 	}
 
 	/* Registering user */
-	user := &db.User{Uuid: userUUID, Org: []*db.Org{org}}
+	user := &db.User{Uuid: userUUID}
 
 	err = o.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
 		/* Add user to members db of org */
@@ -278,7 +296,12 @@ func (o *OrgService) UpdateOrgForUser(ctx context.Context, in *pb.UpdateOrgForUs
 		}
 	}
 
-	err = o.userRepo.AddOrgToUser(user, org)
+	log.Infof("Adding org %s to user %s.", org.Name, userUUID.String())
+	// err = o.userRepo.AddOrgToUser(user, org)
+	// if err != nil {
+	// 	return nil, grpc.SqlErrorToGrpc(err, "user to org")
+	// }
+	err = o.orgRepo.AddUser(org, user)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user to org")
 	}

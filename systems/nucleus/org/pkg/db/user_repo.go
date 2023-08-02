@@ -88,12 +88,12 @@ func (u *userRepo) Update(user *User) (*User, error) {
 }
 
 func (u *userRepo) AddOrgToUser(user *User, org *Org) error {
-	err := u.Db.GetGormDb().Model(&User{}).Association("orgs").Append(org)
+	err := u.Db.GetGormDb().Model(user).Association("orgs").Append(org)
 	return err
 }
 
 func (u *userRepo) RemoveOrgFromUser(user *User, org *Org) error {
-	err := u.Db.GetGormDb().Model(&User{}).Association("orgs").Delete(org)
+	err := u.Db.GetGormDb().Model(user).Association("orgs").Delete(org)
 	return err
 }
 

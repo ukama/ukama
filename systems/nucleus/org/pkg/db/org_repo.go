@@ -16,9 +16,11 @@ type OrgRepo interface {
 	Get(id uuid.UUID) (*Org, error)
 	GetByName(name string) (*Org, error)
 	GetByOwner(uuid uuid.UUID) ([]Org, error)
-	GetByMember(uuid uuid.UUID) ([]Org, error)
+	GetByMember(id uint) ([]Org, error)
 	GetAll() ([]Org, error)
 	GetOrgCount() (int64, int64, error)
+	AddUser(org *Org, user *User) error
+	RemoveUser(org *Org, user *User) error
 	// Update(id uint) error
 	// Deactivate(id uint) error
 	// Delete(id uint) error
@@ -93,13 +95,12 @@ func (r *orgRepo) GetByOwner(uuid uuid.UUID) ([]Org, error) {
 	return orgs, nil
 }
 
-func (r *orgRepo) GetByMember(uuid uuid.UUID) ([]Org, error) {
+func (r *orgRepo) GetByMember(id uint) ([]Org, error) {
 	var membOrgs []Org
-	//TODO: fix this
-	// result := r.Db.GetGormDb().Where(&Org{Uuid: uuid}).Find(&membOrgs)
-	// if result.Error != nil {
-	// 	return nil, result.Error
-	// }
+	result := r.Db.GetGormDb().Preload("Users", "id IN (?)", id).Find(&membOrgs)
+	if result.Error != nil {
+		return nil, result.Error
+	}
 
 	return membOrgs, nil
 }
@@ -113,6 +114,16 @@ func (r *orgRepo) GetAll() ([]Org, error) {
 	}
 
 	return orgs, nil
+}
+
+func (r *orgRepo) AddUser(org *Org, user *User) error {
+	err := r.Db.GetGormDb().Model(org).Association("Users").Append(user)
+	return err
+}
+
+func (r *orgRepo) RemoveUser(org *Org, user *User) error {
+	err := r.Db.GetGormDb().Model(org).Association("Users").Append(user)
+	return err
 }
 
 func (r *orgRepo) GetOrgCount() (int64, int64, error) {

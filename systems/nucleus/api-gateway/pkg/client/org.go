@@ -62,19 +62,15 @@ func (r *OrgRegistry) GetOrg(orgName string) (*orgpb.GetByNameResponse, error) {
 	return res, nil
 }
 
-func (r *OrgRegistry) GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error) {
+func (r *OrgRegistry) GetOrgs(ownerUUID string) (*orgpb.GetByUserResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.GetByOwner(ctx, &orgpb.GetByOwnerRequest{UserUuid: ownerUUID})
+	res, err := r.orgClient.GetByUser(ctx, &orgpb.GetByOwnerRequest{UserUuid: ownerUUID})
 	if err != nil {
 		return nil, err
 	}
-
-	if res.Orgs == nil {
-		return &orgpb.GetByOwnerResponse{Orgs: []*orgpb.Organization{}, Owner: ownerUUID}, nil
-	}
-
+	
 	return res, nil
 }
 

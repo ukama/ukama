@@ -60,6 +60,7 @@ type member interface {
 	GetMember(userUUID string) (*mpb.MemberResponse, error)
 	GetMembers() (*mpb.GetMembersResponse, error)
 	AddMember(userUUID string, role string) (*mpb.MemberResponse, error)
+	AddOtherMember(userUUID string, role string) (*mpb.MemberResponse, error)
 	UpdateMember(userUUID string, isDeactivated bool, role string) error
 	RemoveMember(userUUID string) error
 }
@@ -153,6 +154,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		member := auth.Group(mem, "Members", "Operations on Members")
 		member.GET("", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
 		member.POST("", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
+		member.POST("/others", formatDoc("Add a member of other org", "Add a member to an organization who's already existing member of other org"), tonic.Handler(r.postOtherMemberHandler, http.StatusCreated))
 		member.GET("/:user_uuid", formatDoc("Get Member", "Get a member of an organization"), tonic.Handler(r.getMemberHandler, http.StatusOK))
 		member.PATCH("/:user_uuid", formatDoc("Update Member", "Update a member of an organization"), tonic.Handler(r.patchMemberHandler, http.StatusOK))
 		member.DELETE("/:user_uuid", formatDoc("Remove Member", "Remove a member from an organization"), tonic.Handler(r.removeMemberHandler, http.StatusOK))
@@ -270,6 +272,10 @@ func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*mpb.M
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.MemberResponse, error) {
 	return r.clients.Member.AddMember(req.UserUuid, req.Role)
+}
+
+func (r *Router) postOtherMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.MemberResponse, error) {
+	return r.clients.Member.AddOtherMember(req.UserUuid, req.Role)
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {

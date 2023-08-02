@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	metric "github.com/ukama/ukama/systems/common/metrics"
@@ -23,7 +24,7 @@ import (
 type MemberServer struct {
 	pb.UnimplementedMemberServiceServer
 	mRepo          db.MemberRepo
-	orgService     providers.OrgClientProvider
+	nucleusSystem  providers.NucleusClientProvider
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	pushGateway    string
@@ -31,11 +32,11 @@ type MemberServer struct {
 	OrgName        string
 }
 
-func NewMemberServer(mRepo db.MemberRepo, orgService providers.OrgClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID, name string) *MemberServer {
+func NewMemberServer(mRepo db.MemberRepo, nucleusSystem providers.NucleusClientProvider, msgBus mb.MsgBusServiceClient, pushGateway string, id uuid.UUID, name string) *MemberServer {
 
 	return &MemberServer{
 		mRepo:          mRepo,
-		orgService:     orgService,
+		nucleusSystem:  nucleusSystem,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 		pushGateway:    pushGateway,
@@ -44,6 +45,7 @@ func NewMemberServer(mRepo db.MemberRepo, orgService providers.OrgClientProvider
 	}
 }
 
+/* This will be called by nucleus/org service on every user invited to be member */
 func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
 
 	// Get the User
@@ -55,7 +57,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 
 	/* validate user uuid */
 	/* Causing a loop when user is getting added a memeber by default */
-	// _, err = m.orgService.GetUserById(userUUID.String())
+	// _, err = m.nucleusSystem.GetUserById(userUUID.String())
 	// if err != nil {
 	// 	return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
 	// }
@@ -66,7 +68,51 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 		Role:   db.RoleType(req.Role),
 	}
 
-	err = m.mRepo.AddMember(member)
+	err = m.mRepo.AddMember(member, m.OrgId.String(), nil)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "member")
+	}
+
+	route := m.baseRoutingKey.SetActionCreate().SetObject("member").MustBuild()
+	err = m.msgbus.PublishRequest(route, req)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	}
+
+	_ = m.PushOrgMemberCountMetric(m.OrgId)
+
+	return &pb.MemberResponse{Member: dbMemberToPbMember(member, m.OrgId.String())}, nil
+}
+
+/* This is called when user already exists as a member of another org */
+func (m *MemberServer) AddOtherMember(ctx context.Context, req *pb.AddMemberRequest) (*pb.MemberResponse, error) {
+
+	// Get the User
+	userUUID, err := uuid.FromString(req.GetUserUuid())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of user uuid. Error %s", err.Error())
+	}
+
+	/* validate user uuid */
+	_, err = m.nucleusSystem.GetUserById(userUUID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user with id %s. Error %s", userUUID.String(), err.Error())
+	}
+
+	log.Infof("Adding member")
+	member := &db.Member{
+		UserId: userUUID,
+		Role:   db.RoleType(req.Role),
+	}
+
+	err = m.mRepo.AddMember(member, m.OrgId.String(), func(orgId string, userId string) error {
+		err := m.nucleusSystem.UpdateOrgToUser(orgId, userId)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}
@@ -150,7 +196,13 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 			"member must be deactivated first")
 	}
 
-	err = m.mRepo.RemoveMember(uuid)
+	err = m.mRepo.RemoveMember(uuid, m.OrgId.String(), func(orgId string, userId string) error {
+		err := m.nucleusSystem.RemoveOrgFromUser(orgId, userId)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "member")
 	}

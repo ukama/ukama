@@ -12,7 +12,7 @@ type Org struct {
 	Name        string    `gorm:"uniqueIndex"`
 	Owner       uuid.UUID `gorm:"type:uuid"`
 	Certificate string
-	User        []*User `gorm:"many2many:org_users"`
+	Users       []User `gorm:"many2many:org_users"`
 	Deactivated bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -25,7 +25,6 @@ TODO: Check if this is user table is still required if not then instead of calli
 type User struct {
 	Id          uint      `gorm:"primaryKey"`
 	Uuid        uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
-	Org         []*Org    `gorm:"many2many:org_users"`
 	Deactivated bool
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
