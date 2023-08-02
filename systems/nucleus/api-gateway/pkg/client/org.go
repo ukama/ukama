@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	orgpb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -70,7 +70,7 @@ func (r *OrgRegistry) GetOrgs(ownerUUID string) (*orgpb.GetByUserResponse, error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return res, nil
 }
 
