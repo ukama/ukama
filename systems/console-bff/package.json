@@ -6,6 +6,8 @@
     "seed": "prisma db seed",
     "migrate": "prisma migrate dev",
     "clear-cache": "rm -rf .cache/*",
+    "dev": "yarn build && yarn all-dev",
+    "start": "yarn build && yarn all-start",
     "prettier": "prettier --write --config .prettierrc './**/**'",
     "org-dev": "nodemon --watch \"org/**\" --ext \"ts,json,graphql\" --exec \"node dist/org/index.js\"",
     "user-dev": "nodemon --watch \"user/**\" --ext \"ts,json,graphql\" --exec \"node dist/user/index.js\"",
@@ -15,7 +17,7 @@
     "planning-tool-dev": "nodemon --watch \"planning-tool/**\" --ext \"ts,json,graphql\" --exec \"node dist/planning-tool/index.js\"",
     "metrics-dev": "yarn clear-cache && ts-node-dev --log-error  --no-notify --respawn --transpile-only ./metrics/src/index.ts",
     "all-dev": "yarn clear-cache && concurrently \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn planning-tool-dev\" \"yarn gateway\"",
-    "dev": "yarn build && yarn all-dev"
+    "all-start": "yarn clear-cache && concurrently \"node dist/org/index.js\" \"node dist/user/index.js\" \"node dist/network/index.js\" \"node dist/node/index.js\" \"node dist/planning-tool/index.js\" \"yarn gateway\""
   },
   "prisma": {
     "seed": "ts-node ./planning-tool/prisma/seed.ts",
