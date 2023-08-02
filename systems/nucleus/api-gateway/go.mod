@@ -10,7 +10,7 @@ replace github.com/ukama/ukama/systems/registry/network => ../../registry/networ
 
 replace github.com/ukama/ukama/systems/registry/node => ../../registry/node
 
-replace github.com/ukama/ukama/systems/nucleus/orgs => ../org
+replace github.com/ukama/ukama/systems/nucleus/org => ../org
 
 replace github.com/ukama/ukama/systems/nucleus/api-gateway => ./
 
@@ -21,7 +21,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/ukama/ukama/systems/common v0.0.0-20230710205254-f576842a6ce8
-	github.com/ukama/ukama/systems/nucleus/orgs v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/nucleus/org v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/nucleus/user v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.56.2

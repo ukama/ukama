@@ -17,6 +17,14 @@ type Users struct {
 	host    string
 }
 
+func NewUserRegistryFromClient(client pbusers.UserServiceClient) *Users {
+	return &Users{
+		timeout: 1 * time.Second,
+		conn:    nil,
+		client:  client,
+	}
+}
+
 func NewUsers(host string, timeout time.Duration) *Users {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

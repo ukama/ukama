@@ -17,7 +17,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	orgpb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
+	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	userspb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 )
 
