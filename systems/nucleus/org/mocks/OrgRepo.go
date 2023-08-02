@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	db "github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
+	db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
 	gorm "gorm.io/gorm"
 
 	mock "github.com/stretchr/testify/mock"
@@ -23,6 +23,20 @@ func (_m *OrgRepo) Add(org *db.Org, nestedFunc func(*db.Org, *gorm.DB) error) er
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*db.Org, func(*db.Org, *gorm.DB) error) error); ok {
 		r0 = rf(org, nestedFunc)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddUser provides a mock function with given fields: org, user
+func (_m *OrgRepo) AddUser(org *db.Org, user *db.User) error {
+	ret := _m.Called(org, user)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Org, *db.User) error); ok {
+		r0 = rf(org, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -82,25 +96,25 @@ func (_m *OrgRepo) GetAll() ([]db.Org, error) {
 	return r0, r1
 }
 
-// GetByMember provides a mock function with given fields: _a0
-func (_m *OrgRepo) GetByMember(_a0 uuid.UUID) ([]db.Org, error) {
-	ret := _m.Called(_a0)
+// GetByMember provides a mock function with given fields: id
+func (_m *OrgRepo) GetByMember(id uint) ([]db.Org, error) {
+	ret := _m.Called(id)
 
 	var r0 []db.Org
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Org, error)); ok {
-		return rf(_a0)
+	if rf, ok := ret.Get(0).(func(uint) ([]db.Org, error)); ok {
+		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Org); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(uint) []db.Org); ok {
+		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Org)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(uint) error); ok {
+		r1 = rf(id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -189,6 +203,20 @@ func (_m *OrgRepo) GetOrgCount() (int64, int64, error) {
 	}
 
 	return r0, r1, r2
+}
+
+// RemoveUser provides a mock function with given fields: org, user
+func (_m *OrgRepo) RemoveUser(org *db.Org, user *db.User) error {
+	ret := _m.Called(org, user)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Org, *db.User) error); ok {
+		r0 = rf(org, user)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 type mockConstructorTestingTNewOrgRepo interface {

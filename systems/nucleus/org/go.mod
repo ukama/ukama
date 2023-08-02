@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/systems/nucleus/orgs
+module github.com/ukama/ukama/systems/nucleus/org
 
 go 1.19
 
@@ -8,7 +8,7 @@ replace github.com/ukama/ukama/systems/nucleus/user => ../user
 
 replace github.com/ukama/ukama/systems/registry/api-gateway => ../../registry/api-gateway
 
-replace github.com/ukama/ukama/systems/nucleus/orgs => ./
+replace github.com/ukama/ukama/systems/nucleus/org => ./
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 

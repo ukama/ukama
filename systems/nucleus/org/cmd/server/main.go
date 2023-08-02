@@ -8,17 +8,17 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/nucleus/orgs/pb/gen"
-	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/providers"
-	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/server"
+	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/providers"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/server"
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/systems/nucleus/orgs/pkg"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ukama/ukama/systems/nucleus/orgs/cmd/version"
+	"github.com/ukama/ukama/systems/nucleus/org/cmd/version"
 
-	"github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/db"
 
 	"github.com/num30/config"
 	log "github.com/sirupsen/logrus"

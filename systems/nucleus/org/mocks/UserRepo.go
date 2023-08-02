@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	db "github.com/ukama/ukama/systems/nucleus/orgs/pkg/db"
+	db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
 	gorm "gorm.io/gorm"
 
 	mock "github.com/stretchr/testify/mock"
@@ -23,6 +23,20 @@ func (_m *UserRepo) Add(user *db.User, nestedFunc func(*db.User, *gorm.DB) error
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*db.User, func(*db.User, *gorm.DB) error) error); ok {
 		r0 = rf(user, nestedFunc)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddOrgToUser provides a mock function with given fields: user, org
+func (_m *UserRepo) AddOrgToUser(user *db.User, org *db.Org) error {
+	ret := _m.Called(user, org)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.User, *db.Org) error); ok {
+		r0 = rf(user, org)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -99,6 +113,20 @@ func (_m *UserRepo) GetUserCount() (int64, int64, error) {
 	}
 
 	return r0, r1, r2
+}
+
+// RemoveOrgFromUser provides a mock function with given fields: user, org
+func (_m *UserRepo) RemoveOrgFromUser(user *db.User, org *db.Org) error {
+	ret := _m.Called(user, org)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.User, *db.Org) error); ok {
+		r0 = rf(user, org)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Update provides a mock function with given fields: _a0
