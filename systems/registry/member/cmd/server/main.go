@@ -73,7 +73,7 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		log.Fatalf("invalid org uuid. Error %s", err.Error())
 	}
-	p := providers.NewOrgClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode)
+	p := providers.NewNucleusClientProvider(serviceConfig.OrgRegistryHost, serviceConfig.DebugMode)
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 	memberServer := server.NewMemberServer(db.NewMemberRepo(gormdb),
 		p, mbClient, serviceConfig.PushGateway, id, serviceConfig.OrgName)
@@ -121,11 +121,11 @@ func waitForExit() {
 	log.Infof("exiting service %s", pkg.ServiceName)
 }
 
-func initMemberDB(d sql.Db, p providers.OrgClientProvider) {
+func initMemberDB(d sql.Db, p providers.NucleusClientProvider) {
 	mDB := d.GetGormDb()
 	if mDB.Migrator().HasTable(&db.Member{}) {
 		if err := mDB.First(&db.Member{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Info("Iniiialzing orgs table")
+			log.Info("Initializing registry member table for org")
 
 			var OwnerUUID uuid.UUID
 			var err error
@@ -145,15 +145,15 @@ func initMemberDB(d sql.Db, p providers.OrgClientProvider) {
 				log.Fatalf("Failed to connect to org service for validation of owner %s. Error: %v", serviceConfig.OrgName, err)
 			}
 
-			if u.Id != o.Owner {
+			if u.User.Id != o.Org.Owner {
 				log.Fatalf("Failed to validate user %s as owner of org %+v.", serviceConfig.OwnerId, o)
 			}
 
-			if u.IsDeactivated {
+			if u.User.IsDeactivated {
 				log.Fatalf("User is %s is in %s state", serviceConfig.OwnerId, "deactivated")
 			}
 
-			if o.IsDeactivated {
+			if o.Org.IsDeactivated {
 				log.Fatalf("Org is %s in %s state", serviceConfig.OwnerId, "deactivated")
 			}
 
@@ -164,10 +164,17 @@ func initMemberDB(d sql.Db, p providers.OrgClientProvider) {
 			}
 
 			if err := mDB.Transaction(func(tx *gorm.DB) error {
+
+				err := p.UpdateOrgToUser(o.Org.Id, member.UserId.String())
+				if err != nil {
+					return err
+				}
+
 				if err := tx.Create(member).Error; err != nil {
 					return err
 				}
 				return nil
+
 			}); err != nil {
 				log.Fatalf("Database initialization failed, invalid initial state. Error: %v", err)
 			}

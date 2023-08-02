@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type MemberServiceClient interface {
 	// Members
 	AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
+	AddOtherMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMember(ctx context.Context, in *MemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
 	GetMembers(ctx context.Context, in *GetMembersRequest, opts ...grpc.CallOption) (*GetMembersResponse, error)
 	UpdateMember(ctx context.Context, in *UpdateMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error)
@@ -41,6 +42,15 @@ func NewMemberServiceClient(cc grpc.ClientConnInterface) MemberServiceClient {
 func (c *memberServiceClient) AddMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
 	out := new(MemberResponse)
 	err := c.cc.Invoke(ctx, "/ukama.registry.member.v1.MemberService/AddMember", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *memberServiceClient) AddOtherMember(ctx context.Context, in *AddMemberRequest, opts ...grpc.CallOption) (*MemberResponse, error) {
+	out := new(MemberResponse)
+	err := c.cc.Invoke(ctx, "/ukama.registry.member.v1.MemberService/AddOtherMember", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +99,7 @@ func (c *memberServiceClient) RemoveMember(ctx context.Context, in *MemberReques
 type MemberServiceServer interface {
 	// Members
 	AddMember(context.Context, *AddMemberRequest) (*MemberResponse, error)
+	AddOtherMember(context.Context, *AddMemberRequest) (*MemberResponse, error)
 	GetMember(context.Context, *MemberRequest) (*MemberResponse, error)
 	GetMembers(context.Context, *GetMembersRequest) (*GetMembersResponse, error)
 	UpdateMember(context.Context, *UpdateMemberRequest) (*MemberResponse, error)
@@ -102,6 +113,9 @@ type UnimplementedMemberServiceServer struct {
 
 func (UnimplementedMemberServiceServer) AddMember(context.Context, *AddMemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMember not implemented")
+}
+func (UnimplementedMemberServiceServer) AddOtherMember(context.Context, *AddMemberRequest) (*MemberResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddOtherMember not implemented")
 }
 func (UnimplementedMemberServiceServer) GetMember(context.Context, *MemberRequest) (*MemberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMember not implemented")
@@ -142,6 +156,24 @@ func _MemberService_AddMember_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MemberServiceServer).AddMember(ctx, req.(*AddMemberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MemberService_AddOtherMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMemberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MemberServiceServer).AddOtherMember(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.registry.member.v1.MemberService/AddOtherMember",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MemberServiceServer).AddOtherMember(ctx, req.(*AddMemberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -228,6 +260,10 @@ var MemberService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddMember",
 			Handler:    _MemberService_AddMember_Handler,
+		},
+		{
+			MethodName: "AddOtherMember",
+			Handler:    _MemberService_AddOtherMember_Handler,
 		},
 		{
 			MethodName: "GetMember",

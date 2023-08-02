@@ -17,8 +17,8 @@ type AddOrgRequest struct {
 }
 
 type UserOrgRequest struct {
-	UserId string `example:"{{UserId}}" path:"user_id" json:"user_id" query:"user_id" binding:"required" validate:"required"`
-	OrgId  string `example:"{{OrgId}}" path:"org_id" json:"org_id" query:"org_id" binding:"required" validate:"required"`
+	OrgId  string `example:"{{OrgId}}" path:"org_id"  validate:"required"`
+	UserId string `example:"{{UserId}}" path:"user_id" validate:"required"`
 }
 
 type MemberRequest struct {

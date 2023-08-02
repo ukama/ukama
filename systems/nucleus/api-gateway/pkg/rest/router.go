@@ -47,7 +47,7 @@ type Clients struct {
 type organization interface {
 	AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error)
 	GetOrg(orgName string) (*orgpb.GetByNameResponse, error)
-	GetOrgs(ownerUUID string) (*orgpb.GetByOwnerResponse, error)
+	GetOrgs(ownerUUID string) (*orgpb.GetByUserResponse, error)
 	UpdateOrgToUser(orgId string, userId string) (*orgpb.UpdateOrgForUserResponse, error)
 	RemoveOrgForUser(orgId string, userId string) (*orgpb.RemoveOrgForUserResponse, error)
 }
@@ -116,9 +116,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const org = "/orgs"
 		orgs := auth.Group(org, "Orgs", "Operations on Orgs")
 		orgs.GET("", formatDoc("Get Orgs", "Get all organization owned by a user"), tonic.Handler(r.getOrgsHandler, http.StatusOK))
+		orgs.GET("/:org", formatDoc("Get Org by name", "Get organization by name"), tonic.Handler(r.getOrgHandler, http.StatusOK))
 		orgs.POST("", formatDoc("Add Org", "Add a new organization"), tonic.Handler(r.postOrgHandler, http.StatusCreated))
-		orgs.PUT("/:orgid/users/:userId", formatDoc("Add user to orgs", "set association between user and org"), tonic.Handler(r.updateOrgToUserHandler, http.StatusCreated))
-		orgs.DELETE("/:orgid/users/:userId", formatDoc("Add user to orgs", "remove association between user and org"), tonic.Handler(r.removeUserFromOrgHandler, http.StatusCreated))
+		orgs.PUT("/:org_id/users/:user_id", formatDoc("Add user to orgs", "set association between user and org"), tonic.Handler(r.updateOrgToUserHandler, http.StatusCreated))
+		orgs.DELETE("/:org_id/users/:user_id", formatDoc("Remove user from org", "remove association between user and org"), tonic.Handler(r.removeUserFromOrgHandler, http.StatusCreated))
 
 		// Users routes
 		const user = "/users"
@@ -137,10 +138,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 // Org handlers
 func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetByNameResponse, error) {
-	return r.clients.Organization.GetOrg(c.Param("org"))
+	return r.clients.Organization.GetOrg(req.OrgName)
 }
 
-func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.GetByOwnerResponse, error) {
+func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.GetByUserResponse, error) {
 	ownerUUID, ok := c.GetQuery("user_uuid")
 	if !ok {
 		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,

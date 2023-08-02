@@ -135,19 +135,29 @@ func initOrgDB(orgDB *gorm.DB) {
 			}
 
 			if err := orgDB.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Create(usr).Error; err != nil {
+					return err
+				}
+
+				u := &db.User{}
+				if err := tx.First(&u, usr).Error; err != nil {
+					return err
+				}
+
+				org.Users = append(org.Users, *u)
 				if err := tx.Create(org).Error; err != nil {
 					return err
 				}
 
-				o := &db.Org{}
-				if err := tx.First(&o, org).Error; err != nil {
-					return err
-				}
+				// o := &db.Org{}
+				// if err := tx.First(&o, org).Error; err != nil {
+				// 	return err
+				// }
 
-				usr.Org = []*db.Org{o}
-				if err := tx.Create(usr).Error; err != nil {
-					return err
-				}
+				// usr.Org = []*db.Org{o}
+				// if err := tx.Create(usr).Error; err != nil {
+				// 	return err
+				// }
 
 				return nil
 			}); err != nil {
