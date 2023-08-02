@@ -150,7 +150,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// update org
 		// Deactivate org
 		// Delete org
-		const mem = "/member"
+		const mem = "/members"
 		member := auth.Group(mem, "Members", "Operations on Members")
 		member.GET("", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
 		member.POST("", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
