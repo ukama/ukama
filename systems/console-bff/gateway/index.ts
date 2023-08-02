@@ -48,6 +48,7 @@ const startServer = async () => {
   const gateway = await loadServers();
   const server = new ApolloServer({
     gateway,
+
     plugins: [
       ApolloServerPluginInlineTrace({}),
       ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -65,12 +66,13 @@ const startServer = async () => {
     json(),
     expressMiddleware(server)
   );
-  app.get("/ping", (req, res) => {
-    res.send("pong");
-  });
   await new Promise((resolve: any) =>
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
+  app.get("/ping", (req, res) => {
+    console.log("PING:", req);
+    res.send("pong");
+  });
   logger.info(`🚀 Server ready at http://localhost:${GATEWAY_PORT}/graphql`);
 };
 
