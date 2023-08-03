@@ -22,17 +22,18 @@ import {
 @Service()
 export class OrgService implements IOrgService {
     addInvitation = async (
-        req: AddInvitationInputDto,
+        data: AddInvitationInputDto,
         headers: THeaders
     ): Promise<InvitationDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.REGISTRY_INVITATION_API_URL}/${headers.orgName}`,
+            body: { email: data.email, role: data.role, name: data.name },
             headers: getHeaders(headers),
-            body: req,
         });
         console.log("INVITATION :", res);
         if (checkError(res)) throw new Error(res.message);
+        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return res;
     };
 
@@ -42,7 +43,7 @@ export class OrgService implements IOrgService {
             path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members`,
             headers: getHeaders(headers),
         });
-
+        console.log("RESULTS :", res);
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return OrgMapper.dtoToMembersResDto(res);

@@ -184,9 +184,9 @@ export class AddInvitationInputDto {
 
 @ObjectType()
 export class InvitationDto {
-    @Field()
-    mailId: string;
+    @Field({ nullable: true })
+    mailId?: string;
 
-    @Field()
-    message: string;
+    @Field({ nullable: true })
+    message?: string;
 }
