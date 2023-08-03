@@ -25,6 +25,7 @@ type InviteMemberDialogProps = {
   labelNegativeBtn?: string;
   handleCloseAction: Function;
   handleSuccessAction?: Function;
+  invitationLoading?: boolean;
 };
 
 const InviteMemberDialog = ({
@@ -34,6 +35,7 @@ const InviteMemberDialog = ({
   labelNegativeBtn,
   handleCloseAction,
   handleSuccessAction,
+  invitationLoading,
 }: InviteMemberDialogProps) => {
   const [member, setMember] = useState({
     role: '',
@@ -136,7 +138,12 @@ const InviteMemberDialog = ({
           )}
           {labelSuccessBtn && (
             <Button
-              disabled={!member.role || !member.email || !member.name}
+              disabled={
+                !member.role ||
+                !member.email ||
+                !member.name ||
+                invitationLoading
+              }
               variant="contained"
               onClick={() =>
                 handleSuccessAction

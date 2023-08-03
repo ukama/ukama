@@ -14,6 +14,7 @@ import {
   useGetNetworksLazyQuery,
   useGetNodesLazyQuery,
   useAddInvitationMutation,
+  useGetInvitationsByOrgLazyQuery,
 } from '@/generated';
 import { colors } from '@/styles/theme';
 import { TCommonData, TObject, TSnackMessage } from '@/types';
@@ -110,6 +111,7 @@ const Manage = () => {
     dataPlan: [],
     node: [],
     networkList: [],
+    invitations: [],
   });
   const [dataplan, setDataplan] = useState({
     id: '',
@@ -129,7 +131,7 @@ const Manage = () => {
     onCompleted: (data) => {
       setData((prev: any) => ({
         ...prev,
-        members: structureData(members?.getOrgMembers.members),
+        members: members?.getOrgMembers.members,
       }));
     },
     onError: (error) => {
@@ -141,7 +143,7 @@ const Manage = () => {
       });
     },
   });
-  console.log('MEMBER DATA', members);
+
   const [getNetworks, { loading: networkLoading }] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
@@ -222,6 +224,28 @@ const Manage = () => {
         });
       },
     });
+
+  const [getInvitationsByOrg, { loading: invitationsLoading }] =
+    useGetInvitationsByOrgLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data) => {
+        setData((prev: any) => ({
+          ...prev,
+          invitations: data?.getInvitationsByOrg ?? [],
+        }));
+        console.log('INVITATIONS', data?.getInvitationsByOrg);
+      },
+
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'invitations',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+  console.log('INVITATIONS', data.invitations);
 
   const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
     onCompleted: () => {
@@ -422,6 +446,16 @@ const Manage = () => {
     });
   };
 
+  useEffect(() => {
+    getInvitationsByOrg({
+      variables: {
+        orgName: _commonData?.orgName,
+      },
+    });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [_commonData?.orgName]);
+
   const handleUploadSimsAction = (
     action: string,
     value: string,
@@ -505,11 +539,13 @@ const Manage = () => {
     simsLoading ||
     membersLoading ||
     addMemberLoading ||
+    sendInvitationLoading ||
     uploadSimsLoading ||
     dataPlanLoading ||
     deletePkgLoading ||
     updatePkgLoading ||
     networkLoading ||
+    invitationsLoading ||
     getNodesLoading;
   return (
     <Stack mt={3} direction={{ xs: 'column', md: 'row' }} spacing={3}>
@@ -526,7 +562,8 @@ const Manage = () => {
               search={memberSearch}
               setSearch={setMemberSearch}
               invitationTitle=" There is one pending invitation."
-              data={data.members}
+              memberData={data.members}
+              invitationsData={data.invitations}
               handleButtonAction={() => setIsInviteMember(true)}
             />
           )}
@@ -559,6 +596,7 @@ const Manage = () => {
           title={'Invite member'}
           isOpen={isInviteMember}
           labelNegativeBtn={'Cancel'}
+          invitationLoading={sendInvitationLoading}
           labelSuccessBtn={'Invite member'}
           handleSuccessAction={handleAddMemberAction}
           handleCloseAction={() => setIsInviteMember(false)}

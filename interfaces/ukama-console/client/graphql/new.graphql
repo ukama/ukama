@@ -670,6 +670,7 @@ fragment invitation on InvitationDto {
   mailId
   message
 }
+
 query getOrgMember {
   getOrgMembers {
     org
@@ -690,6 +691,22 @@ mutation addInvitation($data: AddInvitationInputDto!) {
   addInvitation(data: $data) {
     ...invitation
   }
+}
+query getInvitationsByOrg($orgName: String!) {
+  getInvitationsByOrg(orgName: $orgName) {
+    invitations {
+      ...orgInvitations
+    }
+  }
+}
+fragment orgInvitations on InvitationsByOrgDto {
+  name
+  email
+  link
+  expires_at
+  status
+  org
+  id
 }
 ### Org End ###
 

@@ -672,6 +672,22 @@ query getOrgMember {
   }
 }
 
+query getInvitationsByOrg($orgName: String!) {
+  getInvitationsByOrg(orgName: $orgName) {
+    invitations {
+      ...orgInvitations
+    }
+  }
+}
+fragment orgInvitations on InvitationsByOrgDto {
+  name
+  email
+  link
+  expires_at
+  status
+  org
+  id
+}
 mutation addMember($data: AddMemberInputDto!) {
   addMember(data: $data) {
     ...Member

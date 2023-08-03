@@ -1,35 +1,74 @@
-import { MANAGE_TABLE_COLUMN } from '@/constants';
-import EmptyView from '@/ui/molecules/EmptyView';
-import PageContainerHeader from '@/ui/molecules/PageContainerHeader';
-import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import { Paper, Tabs, Button, Tab, TextField, Grid, Box } from '@mui/material';
-import { Search } from '@mui/icons-material';
-import { colors } from '@/styles/theme';
 import React, { useState } from 'react';
+import {
+  Paper,
+  Tabs,
+  Tab,
+  TextField,
+  Grid,
+  Box,
+  Typography,
+  Button,
+} from '@mui/material';
+import { Search } from '@mui/icons-material';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
+import EmptyView from '@/ui/molecules/EmptyView';
+import { MANAGE_TABLE_COLUMN } from '@/constants';
+import { colors } from '@/styles/theme';
 
 interface IMember {
-  data: any;
+  memberData: any[];
+  invitationsData: any;
   search: string;
   setSearch: (value: string) => void;
   handleButtonAction: () => void;
   invitationTitle: string;
-  onSearchChange?: Function;
+  onSearchChange?: (value: string) => void;
 }
 
-const Member = ({
-  data,
+const Member: React.FC<IMember> = ({
+  memberData,
+  invitationsData,
   search,
   setSearch,
   handleButtonAction,
   invitationTitle,
   onSearchChange,
-}: IMember) => {
+}) => {
   const [tabIndex, setTabIndex] = useState(0);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
   };
+
+  const renderMemberDataTable = () => {
+    if (memberData && memberData.length > 0) {
+      return (
+        <>
+          <SimpleDataTable
+            dataKey="uuid"
+            dataset={memberData}
+            columns={MANAGE_TABLE_COLUMN}
+          />
+        </>
+      );
+    } else {
+      return (
+        <Box
+          sx={{
+            width: '100%',
+            mt: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <EmptyView icon={PeopleAltIcon} title="No members yet!" />
+        </Box>
+      );
+    }
+  };
+
   return (
     <Paper
       sx={{
@@ -66,28 +105,30 @@ const Member = ({
                 }}
               />
             </Grid>
-            <Grid item xs={6} container justifyContent={'flex-end'}>
+            <Grid item xs={6} container justifyContent="flex-end">
               <Button
                 variant="contained"
                 color="primary"
                 fullWidth
                 sx={{ width: { xs: '100%', md: 'fit-content' } }}
-                onClick={() => handleButtonAction()}
+                onClick={handleButtonAction}
               >
-                {`INVITE MEMBER`}
+                INVITE MEMBER
               </Button>
             </Grid>
           </Grid>
 
           <br />
-          {data && data.length > 0 ? (
-            <SimpleDataTable
-              dataKey="uuid"
-              dataset={data && data}
-              columns={MANAGE_TABLE_COLUMN}
-            />
-          ) : (
-            <EmptyView icon={PeopleAltIcon} title="No members yet!" />
+          {renderMemberDataTable()}
+          {invitationsData && invitationsData.invitations && (
+            <>
+              <Typography variant="body1">Pending invitations</Typography>
+              <SimpleDataTable
+                dataKey="uuid"
+                dataset={invitationsData.invitations}
+                columns={MANAGE_TABLE_COLUMN}
+              />
+            </>
           )}
         </Box>
       )}

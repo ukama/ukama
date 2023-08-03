@@ -8,13 +8,19 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  Menu,
   TableHead,
+  MenuItem,
   TableRow,
   Typography,
+  IconButton,
 } from '@mui/material';
 import { useRecoilValue } from 'recoil';
 import { colors } from '@/styles/theme';
-import React from 'react';
+import React, { useState } from 'react';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
@@ -23,9 +29,10 @@ interface SimpleDataTableInterface {
   columns: ColumnsWithOptions[];
   networkList?: any;
   handleCreateNetwork?: any;
+  handleDeleteElement?: any;
+  showActionButton?: boolean;
 }
 
-// eslint-disable-next-line react/display-name
 const MemoizedTableHeader = React.memo(
   ({ columns }: { columns: ColumnsWithOptions[] }) => {
     return (
@@ -50,8 +57,8 @@ const MemoizedTableHeader = React.memo(
     );
   },
 );
+MemoizedTableHeader.displayName = 'MemoizedTableHeader';
 
-// eslint-disable-next-line react/display-name
 const MemoizedChip = React.memo(({ label }: { label: string }) => {
   return (
     <Chip
@@ -66,18 +73,83 @@ const MemoizedChip = React.memo(({ label }: { label: string }) => {
     />
   );
 });
+MemoizedChip.displayName = 'MemoizedChip';
 
-// eslint-disable-next-line react/display-name
+// const MemoizedTableCell = React.memo(
+//   ({
+//     column,
+//     row,
+//     handleCreateNetwork,
+//     handleDeleteElement,
+//     networkList,
+//   }: {
+//     column: ColumnsWithOptions;
+//     row: any;
+//     handleCreateNetwork: any;
+//     handleDeleteElement: any;
+//     networkList: string[] | [] | undefined;
+//   }) => {
+//     return (
+//       <TableCell
+//         sx={{
+//           padding: 1,
+//           fontSize: '0.875rem',
+//         }}
+//       >
+//         {column.id === 'role' ? (
+//           <div>
+//             <MemoizedChip label={row[column.id]} />
+//           </div>
+//         ) : column.id === 'pdf' ? (
+//           <Link target="_blank" underline="hover" href={row[column.id]}>
+//             View as PDF
+//           </Link>
+//         ) : column.id === 'network' ? (
+//           <ChipDropdown
+//             onCreateNetwork={handleCreateNetwork}
+//             menu={
+//               (networkList &&
+//                 networkList.map((network: any) => network.name)) ||
+//               []
+//             }
+//           />
+//         ) : column.id === 'edit' ? (
+//           <IconButton onClick={() => console.log(row)}>
+//             <EditIcon />
+//           </IconButton>
+//         ) : column.id === 'delete' ? (
+//           <IconButton onClick={() => handleDeleteElement(row.id)}>
+//             <DeleteIcon />
+//           </IconButton>
+//         ) : (
+//           <Typography
+//             variant={'body2'}
+//             sx={{ padding: '8px' }}
+//             color={row[column.id] === 'false' ? 'primary' : ''}
+//           >
+//             {row[column.id] === 'true'
+//               ? 'Assigned'
+//               : row[column.id] === 'false'
+//               ? 'Unassigned'
+//               : row[column.id]}
+//           </Typography>
+//         )}
+//       </TableCell>
+//     );
+//   },
+// );
 const MemoizedTableCell = React.memo(
   ({
     column,
     row,
     handleCreateNetwork,
+    handleDeleteElement,
     networkList,
   }: {
     column: ColumnsWithOptions;
     row: any;
     handleCreateNetwork: any;
+    handleDeleteElement: any;
     networkList: string[] | [] | undefined;
   }) => {
     return (
@@ -104,6 +176,14 @@ const MemoizedTableCell = React.memo(
               []
             }
           />
+        ) : column.id === 'edit' ? (
+          <IconButton onClick={() => console.log(row)}>
+            <EditIcon />
+          </IconButton>
+        ) : column.id === 'delete' ? (
+          <IconButton onClick={() => handleDeleteElement(row.id)}>
+            <DeleteIcon />
+          </IconButton>
         ) : (
           <Typography
             variant={'body2'}
@@ -121,6 +201,7 @@ const MemoizedTableCell = React.memo(
     );
   },
 );
+MemoizedTableCell.displayName = 'MemoizedTableCell';
 
 const SimpleDataTable = React.memo(
   ({
@@ -128,10 +209,22 @@ const SimpleDataTable = React.memo(
     columns,
     dataset,
     height,
+    showActionButton = false,
     networkList,
     handleCreateNetwork,
+    handleDeleteElement,
   }: SimpleDataTableInterface) => {
     const _isDarkMode = useRecoilValue(isDarkmode);
+    const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+
+    const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+      setMenuAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+      setMenuAnchorEl(null);
+    };
+
     return (
       <TableContainer
         sx={{
@@ -151,11 +244,39 @@ const SimpleDataTable = React.memo(
                     column={column}
                     row={row}
                     handleCreateNetwork={handleCreateNetwork}
+                    handleDeleteElement={handleDeleteElement}
                     networkList={networkList}
                   />
                 ))}
               </TableRow>
             ))}
+
+            {showActionButton && (
+              <TableRow>
+                <TableCell colSpan={columns.length}>
+                  <IconButton
+                    aria-label="menu"
+                    aria-controls="simple-menu"
+                    aria-haspopup="true"
+                    onClick={handleMenuOpen}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                  <Menu
+                    id="simple-menu"
+                    anchorEl={menuAnchorEl}
+                    keepMounted
+                    open={Boolean(menuAnchorEl)}
+                    onClose={handleMenuClose}
+                  >
+                    <MenuItem onClick={() => alert('Resend email')}>
+                      Resend Email
+                    </MenuItem>
+                    <MenuItem onClick={() => alert('Delete')}>Delete</MenuItem>
+                  </Menu>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
