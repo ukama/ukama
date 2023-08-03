@@ -11,11 +11,12 @@ import (
 )
 
 type QueuePublisher struct {
-	q          string
-	name       string
-	exchange   string `default:"amq.topic"`
-	instanceId string
-	pub        mb.QPub
+	q              string
+	name           string
+	exchange       string `default:"amq.topic"`
+	instanceId     string
+	pub            mb.QPub
+	baseRoutingKey mb.RoutingKeyBuilder
 }
 
 func NewQueuePublisher(s db.Service) (*QueuePublisher, error) {
@@ -27,11 +28,12 @@ func NewQueuePublisher(s db.Service) (*QueuePublisher, error) {
 	}
 
 	qp := &QueuePublisher{
-		q:          s.PublQueue,
-		name:       s.Name,
-		instanceId: s.InstanceId,
-		pub:        pub,
-		exchange:   s.Exchange,
+		q:              s.PublQueue,
+		name:           s.Name,
+		instanceId:     s.InstanceId,
+		pub:            pub,
+		exchange:       s.Exchange,
+		baseRoutingKey: mb.NewRoutingKeyBuilder().SetCloudSource().SetContainer(s.Name),
 	}
 
 	return qp, nil
