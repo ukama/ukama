@@ -7,9 +7,10 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
 type Node struct {
@@ -26,7 +27,7 @@ func NewNode(nodeHost string, timeout time.Duration) *Node {
 
 	conn, err := grpc.DialContext(ctx, nodeHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewNodeServiceClient(conn)
 
