@@ -60,6 +60,7 @@ type registry interface {
 	AddInvitation(email string, role string ,org string,name string) (*orgpb.AddInvitationResponse, error)
 	GetInvitation(invitationId string) (*orgpb.GetInvitationResponse, error)
 	UpdateInvitation(invitationId string, status string) (*orgpb.UpdateInvitationResponse, error)
+	GetInvitationsByOrg(org string) (*orgpb.GetInvitationsByOrgResponse, error)
 
 	AddNetwork(orgName string, netName string) (*netpb.AddResponse, error)
 	GetNetwork(netID string) (*netpb.GetResponse, error)
@@ -156,6 +157,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		invitations.POST("/:org", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.addInvitationHandler, http.StatusCreated))
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get an invitation of an organization"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update an invitation of an organization"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
+		invitations.GET("/org/:org", formatDoc("Get Org Invitations", "Get all invitations of an organization"), tonic.Handler(r.getOrgInvitationsHandler, http.StatusOK))
 		// Users routes
 		const user = "/users"
 		users := auth.Group(user, "Users", "Operations on Users")
@@ -202,6 +204,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nodes.DELETE("/:node_id/attach", formatDoc("Dettach Node", "Move node out of group"), tonic.Handler(r.deleteAttachedNodeHandler, http.StatusOK))
 		nodes.POST("/:node_id/sites", formatDoc("Add To Site", "Add node to site"), tonic.Handler(r.postNodeToSiteHandler, http.StatusCreated))
 		nodes.DELETE("/:node_id/sites", formatDoc("Release From Site", "Release node from site"), tonic.Handler(r.deleteNodeFromSiteHandler, http.StatusOK))
+		
 	}
 }
 
@@ -216,6 +219,9 @@ func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (
 
 func (r *Router) getAllNodesHandler(c *gin.Context, req *GetNodesRequest) (*nodepb.GetNodesResponse, error) {
 	return r.clients.Node.GetAllNodes(req.Free)
+}
+func (r *Router) getOrgInvitationsHandler(c *gin.Context, req *GetOrgInvitationsByOrgRequest) (*orgpb.GetInvitationsByOrgResponse, error) {
+	return r.clients.Registry.GetInvitationsByOrg(c.Param("org"))
 }
 
 func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.GetNodeResponse, error) {

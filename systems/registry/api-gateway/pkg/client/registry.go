@@ -347,6 +347,19 @@ func (r *Registry) GetInvitation( invitationId string) (*orgpb.GetInvitationResp
 	return res, nil
 }
 
+func (r *Registry) GetInvitationsByOrg (org string ) (*orgpb.GetInvitationsByOrgResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.GetInvitationsByOrg(ctx, &orgpb.GetInvitationsByOrgRequest{Org: org,})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (r *Registry) UpdateInvitation( invitationId string, status string) (*orgpb.UpdateInvitationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()

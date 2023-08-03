@@ -19,6 +19,20 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *GetInvitationsByOrgRequest) Validate() error {
+	return nil
+}
+func (this *GetInvitationsByOrgResponse) Validate() error {
+	for _, item := range this.Invitations {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Invitations", err)
+			}
+		}
+	}
+	return nil
+}
+
 var _regex_Invitation_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Invitation) Validate() error {

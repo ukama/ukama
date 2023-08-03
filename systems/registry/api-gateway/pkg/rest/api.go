@@ -161,3 +161,7 @@ type UpdateInvitationRequest struct {
 	InvitationId    string `json:"invitation_id" path:"invitation_id" validate:"required"`
 	State string `json:"state" validate:"required"`
 }
+
+type GetOrgInvitationsByOrgRequest struct {
+	Org string `json:"org" path:"org" validate:"required"`
+}

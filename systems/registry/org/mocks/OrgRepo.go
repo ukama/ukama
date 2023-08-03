@@ -214,6 +214,32 @@ func (_m *OrgRepo) GetInvitation(id uuid.UUID) (*db.Invitation, error) {
 	return r0, r1
 }
 
+// GetInvitationsByOrg provides a mock function with given fields: org
+func (_m *OrgRepo) GetInvitationsByOrg(org string) ([]db.Invitation, error) {
+	ret := _m.Called(org)
+
+	var r0 []db.Invitation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]db.Invitation, error)); ok {
+		return rf(org)
+	}
+	if rf, ok := ret.Get(0).(func(string) []db.Invitation); ok {
+		r0 = rf(org)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Invitation)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(org)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMember provides a mock function with given fields: orgID, userUUID
 func (_m *OrgRepo) GetMember(orgID uuid.UUID, userUUID uuid.UUID) (*db.OrgUser, error) {
 	ret := _m.Called(orgID, userUUID)

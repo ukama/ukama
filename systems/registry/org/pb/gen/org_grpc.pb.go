@@ -33,6 +33,7 @@ type OrgServiceClient interface {
 	GetInvitation(ctx context.Context, in *GetInvitationRequest, opts ...grpc.CallOption) (*GetInvitationResponse, error)
 	UpdateInvitation(ctx context.Context, in *UpdateInvitationRequest, opts ...grpc.CallOption) (*UpdateInvitationResponse, error)
 	RemoveInvitation(ctx context.Context, in *RemoveInvitationRequest, opts ...grpc.CallOption) (*RemoveInvitationResponse, error)
+	GetInvitationsByOrg(ctx context.Context, in *GetInvitationsByOrgRequest, opts ...grpc.CallOption) (*GetInvitationsByOrgResponse, error)
 	// Users
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
 	// Members
@@ -133,6 +134,15 @@ func (c *orgServiceClient) RemoveInvitation(ctx context.Context, in *RemoveInvit
 	return out, nil
 }
 
+func (c *orgServiceClient) GetInvitationsByOrg(ctx context.Context, in *GetInvitationsByOrgRequest, opts ...grpc.CallOption) (*GetInvitationsByOrgResponse, error) {
+	out := new(GetInvitationsByOrgResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/GetInvitationsByOrg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *orgServiceClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
 	out := new(UpdateUserResponse)
 	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/UpdateUser", in, out, opts...)
@@ -211,6 +221,7 @@ type OrgServiceServer interface {
 	GetInvitation(context.Context, *GetInvitationRequest) (*GetInvitationResponse, error)
 	UpdateInvitation(context.Context, *UpdateInvitationRequest) (*UpdateInvitationResponse, error)
 	RemoveInvitation(context.Context, *RemoveInvitationRequest) (*RemoveInvitationResponse, error)
+	GetInvitationsByOrg(context.Context, *GetInvitationsByOrgRequest) (*GetInvitationsByOrgResponse, error)
 	// Users
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
 	// Members
@@ -253,6 +264,9 @@ func (UnimplementedOrgServiceServer) UpdateInvitation(context.Context, *UpdateIn
 }
 func (UnimplementedOrgServiceServer) RemoveInvitation(context.Context, *RemoveInvitationRequest) (*RemoveInvitationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveInvitation not implemented")
+}
+func (UnimplementedOrgServiceServer) GetInvitationsByOrg(context.Context, *GetInvitationsByOrgRequest) (*GetInvitationsByOrgResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInvitationsByOrg not implemented")
 }
 func (UnimplementedOrgServiceServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
@@ -450,6 +464,24 @@ func _OrgService_RemoveInvitation_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrgService_GetInvitationsByOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInvitationsByOrgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).GetInvitationsByOrg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/GetInvitationsByOrg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).GetInvitationsByOrg(ctx, req.(*GetInvitationsByOrgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _OrgService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
@@ -618,6 +650,10 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveInvitation",
 			Handler:    _OrgService_RemoveInvitation_Handler,
+		},
+		{
+			MethodName: "GetInvitationsByOrg",
+			Handler:    _OrgService_GetInvitationsByOrg_Handler,
 		},
 		{
 			MethodName: "UpdateUser",

@@ -36,6 +36,7 @@ type OrgRepo interface {
 	AddInvitation(invitation *Invitation) error
 	GetInvitation(id uuid.UUID) (*Invitation, error)
 	UpdateInvitation(id uuid.UUID, status InvitationStatus) error
+	GetInvitationsByOrg(org string) ([]Invitation, error)
 	RemoveInvitation(id uuid.UUID) error
 }
 
@@ -245,6 +246,8 @@ func (r *orgRepo) GetInvitation(id uuid.UUID) (*Invitation, error) {
 	return &invitation, nil
 }
 
+
+
 func (r *orgRepo) UpdateInvitation(invitationId uuid.UUID, status InvitationStatus) error {
 	d := r.Db.GetGormDb().Model(&Invitation{}).Where("id = ?", invitationId).Update("status", status)
 	if d.RowsAffected == 0 {
@@ -263,4 +266,15 @@ func (r *orgRepo) RemoveInvitation(id uuid.UUID) error {
 	}
 
 	return d.Error
+}
+
+func (r *orgRepo) GetInvitationsByOrg(org string) ([]Invitation, error) {
+	var invitations []Invitation
+
+	result := r.Db.GetGormDb().Where("org = ?", org).Find(&invitations)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return invitations, nil
 }

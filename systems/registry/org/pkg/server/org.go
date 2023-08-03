@@ -58,6 +58,22 @@ func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, defaultOrgName strin
 	}
 }
 
+func (o *OrgService) GetInvitationsByOrg( ctx context.Context , req *pb.GetInvitationsByOrgRequest) (*pb.GetInvitationsByOrgResponse, error) {
+	log.Infof("Getting invitations by org %v", req)
+
+	if req.GetOrg() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Org is required")
+	}
+
+	invitations, err := o.orgRepo.GetInvitationsByOrg(req.GetOrg())
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetInvitationsByOrgResponse{
+		Invitations: dbInvitationsToPbInvitations(invitations),
+	}, nil
+}
 func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
 	log.Infof("Adding invitation %v", req)
 
@@ -99,7 +115,8 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
-		TemplateName: "member-invitation",
+		// TemplateName: "member-invitation",
+		TemplateName:"test-template",
 	    Values:  map[string]interface{}{
 			"INVITATION": invitationId.String(),
 			"LINK": link,
@@ -687,11 +704,23 @@ func (o *OrgService) PushMetrics() error {
 func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 	return &pb.Invitation{
 		Id:        invitation.Id.String(),
+		Org: 	 invitation.Org,
 		Link:      invitation.Link,
 		Email:     invitation.Email,
+		Name: 	invitation.Name,
 		Status:    pb.InvitationStatus(invitation.Status),
 		ExpiresAt: timestamppb.New(invitation.ExpiresAt),
 	}
+}
+
+func dbInvitationsToPbInvitations(invitations []db.Invitation) []*pb.Invitation {
+	res := []*pb.Invitation{}
+
+	for _, i := range invitations {
+		res = append(res, dbInvitationToPbInvitation(&i))
+	}
+
+	return res
 }
 
 func pbRoleTypeToDb(role pb.RoleType) db.RoleType {
