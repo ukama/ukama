@@ -55,7 +55,7 @@ func NewInitClient(host string, debug bool) (*InitClient, error) {
 func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, error) {
 	i, err := NewInitClient(icHost, debug)
 	if err != nil {
-		log.Errorf("Failed to get rest cleint.Error %+v", err)
+		log.Errorf("Failed to get rest client.Error %+v", err)
 		return nil, err
 	}
 
@@ -69,12 +69,12 @@ func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, 
 
 	resp, err := i.C.R().
 		SetError(errStatus).
-		Get(i.URL.String() + SYSTEM_EP + "?org=" + s.System + "&name=" + s.System)
+		Get(i.URL.String() + SYSTEM_EP + "?org=" + *org + "&name=" + s.System)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to InitClient. Error %s", err.Error())
 
-		return nil, fmt.Errorf("api request to initcleint system failure: %w", err)
+		return nil, fmt.Errorf("api request to initclient system failure: %w", err)
 	}
 
 	if !resp.IsSuccess() {
