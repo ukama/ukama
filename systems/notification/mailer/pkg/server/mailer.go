@@ -58,49 +58,49 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 
 	body, err := s.prepareMsg(payload)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to prepare email body")
+		return nil, status.Errorf(codes.Internal, "failed to prepare email body")
 	}
 
 	c, err := smtp.Dial(fmt.Sprintf("%s:%d", s.mailer.Host, s.mailer.Port))
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to connect to SMTP server")
+		return nil, status.Errorf(codes.Internal, "failed to connect to SMTP server")
 	}
 	defer c.Close()
 	config := &tls.Config{
 		ServerName: s.mailer.Host,
 	}
 	if err = c.StartTLS(config); err != nil {
-		return nil, status.Error(codes.Internal, "failed to start TLS")
+		return nil, status.Errorf(codes.Internal, "failed to start TLS")
 	}
 
 	auth := smtp.PlainAuth("", s.mailer.Username, s.mailer.Password, s.mailer.Host)
 
 	// Authenticate with the SMTP server
 	if err = c.Auth(auth); err != nil {
-		return nil, status.Error(codes.Internal, "failed to authenticate with SMTP server")
+		return nil, status.Errorf(codes.Internal, "failed to authenticate with SMTP server")
 	}
 
 	// Set the sender email address
 	if err = c.Mail(s.mailer.From); err != nil {
-		return nil, status.Error(codes.Internal, "failed to set sender email address")
+		return nil, status.Errorf(codes.Internal, "failed to set sender email address")
 	}
 
 	// Add the recipient email addresses
 	for _, recipient := range req.To {
 		if err = c.Rcpt(recipient); err != nil {
-			return nil, status.Error(codes.Internal, "failed to add recipient email address")
+			return nil, status.Errorf(codes.Internal, "failed to add recipient email address")
 		}
 	}
 
 	w, err := c.Data()
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to open data connection")
+		return nil, status.Errorf(codes.Internal, "failed to open data connection")
 	}
 	defer w.Close()
 
 	_, err = w.Write(body.Bytes())
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to write email body")
+		return nil, status.Errorf(codes.Internal, "failed to write email body")
 	}
 
 	err = c.Quit()
@@ -111,26 +111,25 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 			MailId:       mailId,
 			Email:        req.To[0],
 			TemplateName: req.TemplateName,
-			Status:       "failed sent",
+			Status:       "failed",
+		})
+		if err != nil {
+			log.Error("Error while saving email" + err.Error())
+			return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
+		}
+	}else {
+		err = s.mailerRepo.SendEmail(&db.Mailing{
+			MailId:       mailId,
+			Email:        req.To[0],
+			TemplateName: req.TemplateName,
+			Status:       "sent",
 		})
 		if err != nil {
 			log.Error("Error while saving email" + err.Error())
 			return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
 		}
 	}
-
-	err = s.mailerRepo.SendEmail(&db.Mailing{
-		MailId:       mailId,
-		Email:        req.To[0],
-		TemplateName: req.TemplateName,
-		Status:       "sent",
-	})
-
-	if err != nil {
-		log.Error("Error while saving email" + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
-	}
-
+	
 	return &pb.SendEmailResponse{
 		Message: "Email Sent!",
 		MailId:  mailId.String(),
@@ -145,14 +144,14 @@ func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
 
 	t, err := template.ParseFiles(filepath.Join(s.templatesPath, tmplName))
 	if err != nil {
-		return bytes.Buffer{}, status.Error(codes.Internal, "failed to parse email template")
+		return bytes.Buffer{}, status.Errorf(codes.Internal, "failed to parse email template")
 	}
 
 	var body bytes.Buffer
 
 	err = t.Execute(&body, data)
 	if err != nil {
-		return bytes.Buffer{}, status.Error(codes.Internal, "failed to execute email template")
+		return bytes.Buffer{}, status.Errorf(codes.Internal, "failed to execute email template")
 	}
 
 	if pkg.IsDebugMode {
@@ -163,11 +162,11 @@ func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
 
 func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
 	if req.MailId == "" {
-		return nil, status.Error(codes.InvalidArgument, "missing mail ID")
+		return nil, status.Errorf(codes.InvalidArgument, "missing mail ID")
 	}
 	mailerId, err := uuid.FromString(req.GetMailId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid mail ID")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid mail ID")
 	}
 	mail, err := s.mailerRepo.GetEmailById(mailerId)
 	if err != nil {
