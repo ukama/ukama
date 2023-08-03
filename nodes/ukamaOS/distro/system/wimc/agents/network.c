@@ -28,7 +28,7 @@
 #define AGENT_EP "/v1/capps"
 #define STAT_EP  "/stats"
 
-static void setup_endpoints(MethodType *method, struct _u_instance *instance) {
+static void setup_endpoints(char *wimcURL, struct _u_instance *instance) {
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("ping"), 0,
@@ -36,15 +36,15 @@ static void setup_endpoints(MethodType *method, struct _u_instance *instance) {
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("capp"), 0,
-                               &agent_web_service_cb_post_capp, method);
+                               &agent_web_service_cb_post_capp, wimcURL);
 
     ulfius_set_default_endpoint(instance,
                                 &agent_web_service_cb_default, NULL);
 }
 
 bool start_web_service(char *port,
-                      MethodType *method,
-                      struct _u_instance *webInstance) {
+                       char *wimcURL,
+                       struct _u_instance *webInstance) {
 
     if (ulfius_init_instance(webInstance, atoi(port), NULL, NULL) != U_OK) {
         usys_log_error("Error initializing instance for port %s", port);
@@ -54,7 +54,7 @@ bool start_web_service(char *port,
     u_map_put(webInstance->default_headers, "Access-Control-Allow-Origin", "*");
     webInstance->max_post_body_size = 1024;
 
-    setup_endpoints(method, webInstance);
+    setup_endpoints(wimcURL, webInstance);
   
     if (ulfius_start_framework(webInstance) != U_OK) {
         usys_log_error("Failed to start webservices at port:%s", port);

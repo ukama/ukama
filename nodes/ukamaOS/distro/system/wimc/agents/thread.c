@@ -275,8 +275,9 @@ static void *execute_agent(void *data) {
     
         /* Step 4. process status chanage and update wimc.d */
         /* Thread to read the update status from agent and send to WIMC */
-        read_stats_and_update_wimc(params);
+        // read_stats_and_update_wimc(params);
         ret = 1; /* We are good. */
+        return;
     }
 
 failure:

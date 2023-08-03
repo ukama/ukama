@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     uuid_t uuid;
     long code;
     char *url=DEF_WIMC_URL, *port=DEF_AGENT_SERVICE_PORT, *dbg=DEF_LOG_LEVEL;
-    char *method="TEST";
+    char *method="test";
 
     char wimcURL[WIMC_MAX_URL_LEN] = {0};
     char servicePort[WIMC_MAX_URL_LEN] = {0};
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     strncpy(&debug[0],       dbg,    strlen(dbg));
     strncpy(&agentMethod[0], method, strlen(method));
     
-    if (start_web_service(&servicePort[0], &method[0], &inst) != TRUE) {
+    if (start_web_service(&servicePort[0], &wimcURL[0], &inst) != TRUE) {
         log_error("Failed to start webservice. Exiting.");
         exit(0);
     }

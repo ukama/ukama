@@ -54,7 +54,7 @@ static void setup_webservice_endpoints(Config *config,
                                &web_service_cb_delete_agent, config);
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
-                               API_RES_EP("agents/updates/:id/"), 0,
+                               API_RES_EP("agents/update/:id/"), 0,
                                &web_service_cb_post_agent_update, config);
 
     /* default - 403 */

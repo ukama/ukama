@@ -36,14 +36,14 @@ static void create_hub_urls_for_agent(char *hubURL,
 
     if (strstr(srcURL, "https://") == NULL ||
         strstr(srcURL, "http://") == NULL) {
-        sprintf(destURL, "%s/%s", hubURL, srcURL);
+        sprintf(destURL, "%s%s", hubURL, srcURL);
     } else {
         strncpy(destURL, srcURL, strlen(srcURL));
     }
 
     if (strstr(srcExtraURL, "https://") == NULL ||
         strstr(srcExtraURL, "http://") == NULL) {
-        sprintf(destExtraURL, "%s/%s", hubURL, srcExtraURL);
+        sprintf(destExtraURL, "%s%s", hubURL, srcExtraURL);
     } else {
         strncpy(destExtraURL, srcExtraURL, strlen(srcExtraURL));
     }
@@ -155,11 +155,12 @@ int web_service_cb_get_capp(const URequest *request,
     }
 
     /* create request */
-    wimcRequest = create_wimc_request(cappName, cappTag,
-                                      indexURL,
-                                      storeURL,
-                                      artifactFormat->type,
-                                      DEFAULT_INTERVAL);
+    create_wimc_request(&wimcRequest,
+                        cappName, cappTag,
+                        indexURL,
+                        storeURL,
+                        artifactFormat->type,
+                        DEFAULT_INTERVAL);
 
     /* Send the request to agent */
     if (communicate_with_agent(wimcRequest, agent->url, config, &uuid)) {
@@ -174,7 +175,9 @@ int web_service_cb_get_capp(const URequest *request,
                                HttpStatusStr(HttpStatus_ServiceUnavailable));
     }
 
+    cleanup_wimc_request(wimcRequest);
     free_artifact(&artifact);
+
     return U_CALLBACK_CONTINUE;
 }
 

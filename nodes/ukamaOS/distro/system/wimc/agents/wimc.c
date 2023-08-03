@@ -25,7 +25,7 @@
 #include "usys_log.h"
 
 #define AGENT_CB_EP "capp/"
-#define WIMC_EP     "v1/agent"
+#define WIMC_EP     "v1/agents"
 
 struct Response {
     char *buffer;
@@ -288,7 +288,7 @@ int register_agent_with_wimc(char *url,
     uuid_unparse(uuid, &idStr[0]);
 
     /* setup cbURL and wimcURL EP */
-    sprintf(cbURL,   "http://localhost:%s/%s", servicePort, AGENT_CB_EP);
+    sprintf(cbURL,   "http://localhost:%s/v1/%s", servicePort, AGENT_CB_EP);
     sprintf(wimcURL, "%s/%s/%s", url, WIMC_EP, idStr);
 
     if (communicate_with_wimc(REQUEST_REGISTER,

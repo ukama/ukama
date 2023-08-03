@@ -80,10 +80,14 @@ int agent_web_service_cb_post_capp(const struct _u_request *request,
                                    struct _u_response *response,
                                    void *data) {
 
-    int ret, retCode;
+    int retCode=0;
+
     json_t       *json = NULL;
     json_error_t jerr;
-    WimcReq      *req=NULL;
+    WimcReq      *req = NULL;
+    char         *wimcURL = NULL;
+
+    wimcURL = (char *)data;
 
     json = ulfius_get_json_body_request(request, &jerr);
     if (!json) {
@@ -108,12 +112,23 @@ int agent_web_service_cb_post_capp(const struct _u_request *request,
         goto done;
     }
 
+    /* setup cbURL */
+    req->fetch->cbURL = (char *)calloc(1, WIMC_MAX_URL_LEN);
+    if (req->fetch->cbURL != NULL) {
+        sprintf(req->fetch->cbURL, "%s/v1/agents/update", wimcURL);
+    } else {
+        usys_log_error("Error allocating memory: %ld", WIMC_MAX_URL_LEN);
+        retCode = HttpStatus_InternalServerError;
+        goto done;
+    }
+
     if (!validate_post_request(req)) {
         usys_log_error("Invalid parameters for capp post");
         retCode = HttpStatus_BadRequest;
         goto done;
     }
 
+    retCode = HttpStatus_OK;
     process_capp_fetch_request(req->fetch);
 
 done:

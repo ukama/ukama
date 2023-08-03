@@ -180,23 +180,26 @@ Agent *find_matching_agent(Agent *agents, char *method) {
  */
 void cleanup_wimc_request(WimcReq *request) {
 
-  if (request->type == (WReqType)WREQ_FETCH) {
-    WFetch *fetch = request->fetch;
-    WContent *content = fetch->content;
+    if (request == NULL) return;
 
-    if (content) {
-      free(content->name);
-      free(content->tag);
-      free(content->method);
-      free(content->indexURL);
-      free(content->storeURL);
-      free(content);
+    if (request->fetch) {
+        if (request->fetch->content) {
+
+            WFetch   *fetch   = request->fetch;
+            WContent *content = fetch->content;
+
+            usys_free(content->name);
+            usys_free(content->tag);
+            usys_free(content->method);
+            usys_free(content->indexURL);
+            usys_free(content->storeURL);
+            usys_free(content);
+        }
+
+        usys_free(request->fetch);
     }
 
-    usys_free(fetch);
-  }
-
-  free(request);
+    usys_free(request);
 }
 
 /*
@@ -223,29 +226,29 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
   return realsize;
 }
 
-WimcReq *create_wimc_request(char *name, char *tag,
-                             char *indexURL,
-                             char *storeURL,
-                             char *method,
-                             int interval) {
+void create_wimc_request(WimcReq **request,
+                         char *name, char *tag,
+                         char *indexURL,
+                         char *storeURL,
+                         char *method,
+                         int interval) {
 
-  WimcReq  *request=NULL;
   WFetch   *fetch=NULL;
   WContent *content=NULL;
 
-  request = (WimcReq *) calloc(1, sizeof(WimcReq));
-  fetch   = (WFetch *)  calloc(1, sizeof(WFetch));
-  content = (WContent *)calloc(1, sizeof(WContent));
+  *request = (WimcReq *) calloc(1, sizeof(WimcReq));
+  fetch    = (WFetch *)  calloc(1, sizeof(WFetch));
+  content  = (WContent *)calloc(1, sizeof(WContent));
   
-  if (request == NULL || fetch == NULL || content == NULL) {
-      usys_free(request);
+  if (*request == NULL || fetch == NULL || content == NULL) {
+      usys_free(*request);
       usys_free(fetch);
       usys_free(content);
 
       return NULL;
   }
 
-  request->type = WREQ_FETCH;
+  (*request)->type = WREQ_FETCH;
   uuid_generate(fetch->uuid);
   fetch->interval = interval;
 
@@ -255,10 +258,8 @@ WimcReq *create_wimc_request(char *name, char *tag,
   content->indexURL    = strdup(indexURL);
   content->storeURL    = strdup(storeURL);
   
-  fetch->content = content;
-  request->fetch = fetch;
-
-  return request;
+  fetch->content    = content;
+  (*request)->fetch = fetch;
 }
 
 static bool send_request_to_agent(char *agentURL,
