@@ -15,9 +15,9 @@
     "gateway": "nodemon --watch \"gateway/**\" --ext \"ts,json,graphql\" --exec \"node dist/gateway/index.js\"",
     "network-dev": "nodemon --watch \"network/**\" --ext \"ts,json,graphql\" --exec \"node dist/network/index.js\"",
     "node-dev": "nodemon --watch \"node/**\" --ext \"ts,json,graphql\" --exec \"node dist/node/index.js\"",
+    "all-dev": "concurrently \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn gateway\"",
     "planning-tool-dev": "nodemon --watch \"planning-tool/**\" --ext \"ts,json,graphql\" --exec \"node dist/planning-tool/index.js\"",
     "metrics-dev": "yarn clear-cache && nodemon --watch \"metrics/**\" --ext \"ts,json,graphql\" --exec \"node dist/metrics/index.js\"",
-    "all-dev": "concurrently \"yarn org-dev\" \"yarn user-dev\" \"yarn network-dev\" \"yarn node-dev\" \"yarn gateway\"",
     "all-start": "node dist/org/index.js & node dist/user/index.js & node dist/network/index.js & node dist/node/index.js & node dist/gateway/index.js"
   },
   "prisma": {

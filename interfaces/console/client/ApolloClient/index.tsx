@@ -12,12 +12,12 @@ const client = new ApolloClient({
 export default client;
 
 const httpLink = new HttpLink({
-  uri: 'http://localhost:4042/graphql',
+  uri: process.env.NEXT_PUBLIC_METRIC_URL,
 });
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: 'ws://localhost:4042/graphql',
+    url: process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL || '',
   }),
 );
 
