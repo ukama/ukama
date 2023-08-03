@@ -190,3 +190,32 @@ export class InvitationDto {
     @Field({ nullable: true })
     message?: string;
 }
+@ObjectType()
+export class InvitationsByOrgDto {
+    @Field()
+    name: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    link: string;
+
+    @Field()
+    expires_at: string;
+
+    @Field()
+    status: string;
+
+    @Field()
+    org: string;
+
+    @Field()
+    id: string;
+}
+
+@ObjectType()
+export class InvitationResDto {
+    @Field(() => [InvitationsByOrgDto])
+    invitations: InvitationsByOrgDto[];
+}

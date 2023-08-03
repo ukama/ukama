@@ -71,13 +71,13 @@ export class PackageAPIDto {
     type: string;
 
     @Field()
-    dataUnit: string;
+    data_unit: string;
 
     @Field()
-    voiceUnit: string;
+    voice_unit: string;
 
     @Field()
-    messageunit: string;
+    message_unit: string;
 
     @Field()
     flatrate: boolean;
@@ -101,7 +101,7 @@ export class PackageAPIDto {
     apn: string;
 
     @Field()
-    OwnerId: string;
+    owner_id: string;
 
     @Field()
     amount: number;

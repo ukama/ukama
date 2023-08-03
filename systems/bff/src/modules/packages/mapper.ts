@@ -9,6 +9,7 @@ import {
 class PackageMapper implements IPackageMapper {
     dtoToPackagesDto(res: PackagesAPIResDto): PackagesResDto {
         const packages: PackageDto[] = [];
+        console.log("Units", res);
         res.packages.forEach(p => {
             packages.push({
                 to: p.to,
@@ -25,10 +26,10 @@ class PackageMapper implements IPackageMapper {
                 amount: p.amount,
                 markup: p.markup,
                 country: p.country,
-                ownerId: p.OwnerId,
+                ownerId: p.owner_id,
                 simType: p.sim_type,
                 currency: p.currency,
-                dataUnit: p.dataUnit,
+                dataUnit: p.data_unit,
                 duration: p.duration,
                 flatrate: p.flatrate,
                 provider: p.provider,
@@ -36,9 +37,9 @@ class PackageMapper implements IPackageMapper {
                 deletedAt: p.deleted_at,
                 smsVolume: p.sms_volume,
                 updatedAt: p.updated_at,
-                voiceUnit: p.voiceUnit,
+                voiceUnit: p.voice_unit,
                 dataVolume: p.data_volume,
-                messageUnit: p.messageunit,
+                messageUnit: p.message_unit,
                 voiceVolume: p.voice_volume,
             });
         });
@@ -62,10 +63,10 @@ class PackageMapper implements IPackageMapper {
             amount: res.package.amount,
             markup: res.package.markup,
             country: res.package.country,
-            ownerId: res.package.OwnerId,
+            ownerId: res.package.owner_id,
             simType: res.package.sim_type,
             currency: res.package.currency,
-            dataUnit: res.package.dataUnit,
+            dataUnit: res.package.data_unit,
             duration: res.package.duration,
             flatrate: res.package.flatrate,
             provider: res.package.provider,
@@ -73,9 +74,9 @@ class PackageMapper implements IPackageMapper {
             deletedAt: res.package.deleted_at,
             smsVolume: res.package.sms_volume,
             updatedAt: res.package.updated_at,
-            voiceUnit: res.package.voiceUnit,
+            voiceUnit: res.package.voice_unit,
             dataVolume: res.package.data_volume,
-            messageUnit: res.package.messageunit,
+            messageUnit: res.package.message_unit,
             voiceVolume: res.package.voice_volume,
         };
     }

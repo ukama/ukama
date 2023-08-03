@@ -14,6 +14,7 @@ import {
     OrgDto,
     OrgMembersResDto,
     OrgsResDto,
+    InvitationResDto,
     UpdateMemberInputDto,
     InvitationDto,
     AddInvitationInputDto,
@@ -31,7 +32,6 @@ export class OrgService implements IOrgService {
             body: { email: data.email, role: data.role, name: data.name },
             headers: getHeaders(headers),
         });
-        console.log("INVITATION :", res);
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return res;
@@ -43,11 +43,29 @@ export class OrgService implements IOrgService {
             path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members`,
             headers: getHeaders(headers),
         });
-        console.log("RESULTS :", res);
+        console.log("MEMBERS :", res);
+
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return OrgMapper.dtoToMembersResDto(res);
     };
+
+    getInvitationsByOrg = async (
+        orgName: string,
+        headers: THeaders
+    ): Promise<InvitationResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.REGISTRY_INVITATION_API_URL}/org/${orgName}`,
+            headers: getHeaders(headers),
+        });
+        console.log("INVITATIONS :", res);
+
+        if (checkError(res)) throw new Error(res.message);
+        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
+        return res;
+    };
+
     getOrgMember = async (headers: THeaders): Promise<MemberObj> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
