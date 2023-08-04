@@ -16,6 +16,8 @@ import (
 	casync "github.com/folbricht/desync"
 )
 
+const ChunksPath = "/v1/chunks"
+
 var (
 	stderr io.Writer = os.Stderr
 )
@@ -26,7 +28,7 @@ func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) err
 		addresses = []string{":http"}
 	}
 
-	logrus.Debugf("Starting distribution server at %+v", addresses)
+	logrus.Debugf("Distribution server at %+v", addresses)
 
 	/* Store set up */
 	s, err := chunkServerStore(serverCfg)
@@ -52,6 +54,7 @@ func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) err
 		l, err := os.OpenFile(serverCfg.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			logrus.Errorf("Error while setting log filr for distribution server : %s", err.Error())
+
 			return err
 		}
 		defer l.Close()
@@ -60,7 +63,7 @@ func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) err
 		logrus.Debugf("Distribution server logging at %s", serverCfg.LogFile)
 	}
 
-	http.Handle("/", handler)
+	http.Handle(ChunksPath+"/", http.StripPrefix(ChunksPath, handler))
 
 	// Start the server
 	return serve(ctx, &serverCfg.Security, addresses...)

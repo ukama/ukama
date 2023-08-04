@@ -373,6 +373,7 @@ func CreateChunks(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.
 	wp, err := prepareWorkplace()
 	if err != nil {
 		log.Errorf("Failed to prepare workplace %s", err.Error())
+
 		return nil, err
 	}
 
@@ -383,6 +384,7 @@ func CreateChunks(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCfg *pkg.
 	content, isFS, err := ReadRemoteContents(ctx, fname, fversion, chunkCfg.Extension, fstore, wp)
 	if err != nil {
 		log.Errorf("Failed to read contents for chunking %s", err.Error())
+
 		return nil, err
 	}
 	log.Debugf("Workplace %s, Contents %s FS: %t Store %s", wp, content, isFS, storePath)
