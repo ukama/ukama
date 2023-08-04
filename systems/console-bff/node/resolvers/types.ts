@@ -25,8 +25,8 @@ export class Node {
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
 
-  @Field(() => [Node])
-  attached: Node[];
+  // @Field(() => [Node])
+  // attached: Node[];
 
   @Field(() => NodeStatus)
   status: NodeStatus;

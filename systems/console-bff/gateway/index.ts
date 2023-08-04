@@ -11,11 +11,8 @@ import {
   AUTH_APP_URL,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
-  NETWORK_PORT,
-  NODE_PORT,
   ORG_PORT,
   PLAYGROUND_URL,
-  USER_PORT,
 } from "../common/configs";
 import { logger } from "../common/logger";
 import { configureExpress } from "./configureExpress";
@@ -32,12 +29,18 @@ const loadServers = async () => {
     supergraphSdl: new IntrospectAndCompose({
       subgraphs: [
         { name: "org", url: `http://localhost:${ORG_PORT}` },
-        { name: "node", url: `http://localhost:${NODE_PORT}` },
-        { name: "user", url: `http://localhost:${USER_PORT}` },
-        { name: "network", url: `http://localhost:${NETWORK_PORT}` },
+        // { name: "node", url: `http://localhost:${NODE_PORT}` },
+        // { name: "user", url: `http://localhost:${USER_PORT}` },
+        // { name: "network", url: `http://localhost:${NETWORK_PORT}` },
         // { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
       ],
     }),
+    // introspectionHeaders: {
+    //   "x-session-token": "session-token",
+    //   "org-id": "org-id",
+    //   "user-id": "user-id",
+    //   "org-name": "org-name",
+    // },
   });
   return gateway;
 };
@@ -67,7 +70,7 @@ const startServer = async () => {
   await new Promise((resolve: any) =>
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
-  app.get("/ping", (req, res) => {
+  app.get("/ping", (_, res) => {
     res.send("pong");
   });
   logger.info(`🚀 Server ready at http://localhost:${GATEWAY_PORT}/graphql`);

@@ -6,4 +6,5 @@ export interface Context {
     dataSource: OrgAPI;
     dataSoureceUser: UserAPI;
   };
+  req: any;
 }

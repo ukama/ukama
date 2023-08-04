@@ -13,4 +13,9 @@ export default {
   ERR_REQUIRED_HEADER_NOT_FOUND: "Required headers not found",
   ERR_SERVER_REQUEST_FAILED: "Request failed",
   ERR_USER_METRICS_NOT_FOUND: "Active user metics not found",
+  //NEW
+  HEADER_ERR_ORG: "Required header org-id not found",
+  HEADER_ERR_USER: "Required header user-id not found",
+  HEADER_ERR_ORG_NAME: "Required header org-name not found",
+  HEADER_ERR_AUTH: "Required auth headers not found",
 };
