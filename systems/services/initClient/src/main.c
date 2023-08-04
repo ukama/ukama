@@ -220,7 +220,7 @@ int register_system(Config *config, int global){
 	break;
 
 	case REG_STATUS_MATCH | REG_STATUS_NO_UUID:
-	log_debug("Storing UUID %s to tempFile: %s", systemUUID,
+	log_debug("Storing UUID %s to tempFile: %s", queryResponse->systemID,
 			config->tempFile);
 	store_cache_uuid(config->tempFile,
 			systemUUID, global);
