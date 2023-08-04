@@ -25,7 +25,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 const CappsPath = "/v1/capps"
@@ -187,18 +186,6 @@ func (r *Router) cappPutHandler(c *gin.Context) error {
 			log.Errorf("Error chunking artifact: %s %s. Error: %+v", name, ver, err)
 		}
 	}()
-
-	capp := &epb.CappCreatedEvent{
-		Name:    name,
-		Version: ver,
-	}
-
-	route := r.baseRoutingKey.SetAction("create").SetObject("capp").MustBuild()
-
-	err = r.msgbus.PublishRequest(route, capp)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", capp, route, err.Error())
-	}
 
 	return nil
 }
