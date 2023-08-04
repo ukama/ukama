@@ -51,7 +51,7 @@ void usage() {
 	fprintf(stdout, "--h, --help     this menu\n");
 	fprintf(stdout, "--V, --version  Version\n");
 	fprintf(stdout, "Environment variable used are: \n");
-	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s\n\t %s \n\t",
+	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s\n\t %s \n\t %s \n\t %s \n\t",
 			ENV_INIT_CLIENT_LOG_LEVEL,
 			ENV_SYSTEM_ORG,
 			ENV_SYSTEM_NAME,
@@ -108,7 +108,7 @@ void signal_term_handler(void) {
 	}
 
 	if (child)	{
-		pthread_cancel(&child);
+		pthread_cancel(child);
 	}
 
 	if (state->webInst) {
@@ -162,6 +162,7 @@ int store_cache_uuid(char *fileName, char* uuid, int global) {
 		sysReg->localUUID = strdup(uuid);
 	}
 
+	log_debug("Creating file %s", fileName);
 	if (!create_temp_file_and_store_uuid(fileName, sysReg)) {
 		return FALSE;
 	}
@@ -219,7 +220,7 @@ int register_system(Config *config, int global){
 	break;
 
 	case REG_STATUS_MATCH | REG_STATUS_NO_UUID:
-	log_debug("Storing UUID %s to tempFile: %s", systemUUID,
+	log_debug("Storing UUID %s to tempFile: %s", queryResponse->systemID,
 			config->tempFile);
 	store_cache_uuid(config->tempFile,
 			queryResponse->systemID, global);

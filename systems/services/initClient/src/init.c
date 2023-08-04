@@ -273,7 +273,7 @@ int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg) {
 	long fsize = ftell(fp);
 	fseek(fp, 0, SEEK_SET);  /* same as rewind(f); */
 
-	char *string = malloc(fsize + 1);
+	char *str = malloc(fsize + 1);
 	/* Try to read the uuid */
 	if (fread(buffer, 1, MAX_UUID_LEN, fp) == 0) {
 		log_error("Error reading from the cache file: %s Error :%s",
@@ -282,7 +282,7 @@ int parse_cache_uuid(char *fileName, SystemRegistrationId* sysReg) {
 	}
 	fclose(fp);
 
-	if (!deserialize_uuids_from_file(string, &sysReg)) {
+	if (!deserialize_uuids_from_file(str, &sysReg)) {
 		log_error("Error parsing the cache file: %s Error :%s",
 				fileName, strerror(errno));
 		return FALSE;
