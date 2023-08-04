@@ -11,16 +11,18 @@ import {
   AUTH_APP_URL,
   CONSOLE_APP_URL,
   GATEWAY_PORT,
+  NETWORK_PORT,
+  NODE_PORT,
   ORG_PORT,
   PLAYGROUND_URL,
 } from "../common/configs";
 import { logger } from "../common/logger";
+import { USER_PORT } from "./../common/configs/index";
 import { configureExpress } from "./configureExpress";
 
 function delay(time: any) {
   return new Promise(resolve => setTimeout(resolve, time));
 }
-
 const app = configureExpress(logger);
 const httpServer = createServer(app);
 
@@ -29,18 +31,15 @@ const loadServers = async () => {
     supergraphSdl: new IntrospectAndCompose({
       subgraphs: [
         { name: "org", url: `http://localhost:${ORG_PORT}` },
-        // { name: "node", url: `http://localhost:${NODE_PORT}` },
-        // { name: "user", url: `http://localhost:${USER_PORT}` },
-        // { name: "network", url: `http://localhost:${NETWORK_PORT}` },
+        { name: "node", url: `http://localhost:${NODE_PORT}` },
+        { name: "user", url: `http://localhost:${USER_PORT}` },
+        { name: "network", url: `http://localhost:${NETWORK_PORT}` },
         // { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
       ],
+      introspectionHeaders: {
+        introspection: "true",
+      },
     }),
-    // introspectionHeaders: {
-    //   "x-session-token": "session-token",
-    //   "org-id": "org-id",
-    //   "user-id": "user-id",
-    //   "org-name": "org-name",
-    // },
   });
   return gateway;
 };

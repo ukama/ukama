@@ -15,7 +15,7 @@
     "gateway-dev": "nodemon --watch \"gateway/**\" --ext \"ts,json,graphql\" --exec \"ts-node gateway/index.ts\"",
     "network-dev": "nodemon --watch \"network/**\" --ext \"ts,json,graphql\" --exec \"ts-node network/index.ts\"",
     "node-dev": "nodemon --watch \"node/**\" --ext \"ts,json,graphql\" --exec \"ts-node node/index.ts\"",
-    "all-dev": "concurrently \"yarn org-dev\" \"yarn gateway-dev\"",
+    "all-dev": "concurrently \"yarn user-dev\" \"yarn gateway-dev\"",
     "planning-tool-dev": "nodemon --watch \"planning-tool/**\" --ext \"ts,json,graphql\" --exec \"ts-node planning-tool/index.ts\"",
     "metrics-dev": "yarn clear-cache && nodemon --watch \"metrics/**\" --ext \"ts,json,graphql\" --exec \"ts-node metrics/index.ts\"",
     "all-start": "node dist/org/index.js & node dist/user/index.js & node dist/network/index.js & node dist/node/index.js & node dist/gateway/index.js"
@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@apollo/datasource-rest": "^6.0.1",
-    "@apollo/gateway": "^2.5.1",
+    "@apollo/gateway": "^2.4.12",
     "@apollo/server": "^4.9.0",
-    "@apollo/subgraph": "^2.5.1",
+    "@apollo/subgraph": "^2.4.12",
     "@graphql-tools/schema": "^10.0.0",
     "@kvs/node-localstorage": "^2.1.5",
     "@prisma/client": "5.1.0",
