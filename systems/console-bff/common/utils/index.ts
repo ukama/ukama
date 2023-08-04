@@ -15,6 +15,7 @@ const parseHeaders = (reqHeader: any): THeaders => {
     orgName: "",
   };
 
+  if (reqHeader["introspection"] === "true") return headers;
   if (reqHeader["org-id"]) {
     headers.orgId = reqHeader["org-id"] as string;
   } else {

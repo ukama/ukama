@@ -15,8 +15,7 @@ const runServer = async () => {
     context: async ({ req, res }) => {
       const { cache } = server;
       return {
-        // headers: parseHeaders(req.headers),
-        req: req,
+        headers: parseHeaders(req.headers),
         dataSources: {
           dataSource: new OrgAPI(),
           dataSoureceUser: new UserAPI(),
