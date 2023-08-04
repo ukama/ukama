@@ -3,7 +3,7 @@ import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
 
 import { Authentication } from "../../common/auth";
 import { STRIP_SK } from "../../common/configs";
-import { getStripeIdByUserId, parseHeaders } from "../../common/utils";
+import { getStripeIdByUserId } from "../../common/utils";
 import { Context } from "../context";
 import { StripePaymentMethods } from "./types";
 
@@ -14,13 +14,14 @@ export class RetrivePaymentMethodsResolver {
   async retrivePaymentMethods(
     @Ctx() ctx: Context
   ): Promise<StripePaymentMethods[]> {
+    const { headers } = ctx;
     const stripe = new Stripe(STRIP_SK, {
       typescript: true,
       apiVersion: "2022-11-15",
     });
     const pm: Stripe.ApiList<Stripe.PaymentMethod> =
       await stripe.customers.listPaymentMethods(
-        getStripeIdByUserId(parseHeaders().orgId),
+        getStripeIdByUserId(headers.orgId),
         {
           type: "card",
         }

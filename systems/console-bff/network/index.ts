@@ -13,6 +13,7 @@ const runServer = async () => {
     context: async () => {
       const { cache } = server;
       return {
+        // headers: parseHeaders(req.headers),
         dataSources: {
           dataSource: new NetworkAPI(),
         },

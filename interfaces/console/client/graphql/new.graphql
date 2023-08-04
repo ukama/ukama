@@ -212,3 +212,5 @@ mutation Coverage($siteId: String!, $data: CoverageInput!) {
     ...site
   }
 }
+
+

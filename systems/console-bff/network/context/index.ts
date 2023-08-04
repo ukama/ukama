@@ -4,4 +4,5 @@ export interface Context {
   dataSources: {
     dataSource: NetworkAPI;
   };
+  // headers: THeaders;
 }
