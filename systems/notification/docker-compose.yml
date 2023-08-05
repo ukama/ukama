@@ -1,0 +1,145 @@
+version: "3.2"
+services:
+
+  postgresd-notification:
+    image: postgres:13.3
+    ports:
+      - "5405:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
+
+
+  notify:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./notify
+    ports:
+      - "9791:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-notification
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-notification:9095
+      - NOTIFY_SERVICE_HOST=notify
+      - NOTIFY_SERVICE_PORT=9090
+      - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-notification
+
+
+  # mailer:
+    # build:
+      # dockerfile: ./Dockerfile
+      # context: ./mailer
+    # ports:
+      # - "9792:9090"
+    # environment:
+      # - DEBUGMODE=true
+      # - DB_HOST=postgresd-notification
+      # - DB_PASSWORD=Pass2020!
+      # - DB_USER=postgres
+      # - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      # - MSGCLIENT_HOST=msgclient-notification:9095
+      # - MAILER_SERVICE_HOST=mailer
+      # - MAILER_SERVICE_PORT=9090
+      # - PUSHGATEWAYHOST=${LOCAL_HOST_IP}:9091
+    # restart: always
+    # networks:
+      # - ukama-net
+    # depends_on:
+      # - msgclient-notification
+
+
+  api-gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./api-gateway
+    restart: always
+    ports:
+      - "8780:8080"
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
+      # - CORS_ALLOWALLORIGINS=true
+      # - CORS_ALLOWORIGINS=""
+    depends_on:
+      - postgresd-notification
+
+
+  node-gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./node-gateway
+    restart: always
+    ports:
+      - "8781:8080"
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
+      # - CORS_ALLOWALLORIGINS=true
+      # - CORS_ALLOWORIGINS=""
+    depends_on:
+      - postgresd-notification
+
+
+  msgclient-notification:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-notification
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-notification:9095
+      - SYSTEM=notification
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-notification
+
+
+  initclient-notification:
+    build:
+      dockerfile: ./Dockerfile
+      context: ../services/initClient
+    environment:
+      - ENV_SYSTEM_ORG=ukama001
+      - ENV_SYSTEM_NAME=notification
+      - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      - ENV_SYSTEM_PORT=8889
+      - ENV_SYSTEM_CERT=This-is-a-certificate
+      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      - ENV_INIT_SYSTEM_PORT=8071
+      - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+      - ENV_INIT_CLIENT_PORT=9091
+      - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+    restart: always
+    networks:
+      - ukama-net
+
+
+
+
+networks:
+  ukama-net:
+    external: true
+    name: services_dev-net
+
+volumes:
+  postgress-data:
