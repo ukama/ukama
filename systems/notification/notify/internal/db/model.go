@@ -64,7 +64,6 @@ func GetNotificationType(s string) (*NotificationType, error) {
 	}
 
 	return &status, nil
-
 }
 
 func (n SeverityType) String() string {
@@ -93,5 +92,4 @@ func GetSeverityType(s string) (*SeverityType, error) {
 	}
 
 	return &status, nil
-
 }
