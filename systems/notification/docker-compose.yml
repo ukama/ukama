@@ -98,7 +98,9 @@ services:
 
 
   msgclient-notification:
-    build: ../services/msgClient
+    build:
+      dockerfile: ./Dockerfile
+      context: ../services/msgClient
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd-notification
