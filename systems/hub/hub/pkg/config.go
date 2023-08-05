@@ -37,7 +37,7 @@ type ChunkerConfig struct {
 func NewConfig(name string) *Config {
 	return &Config{
 		Server: rest.HttpConfig{
-			Port: 8080,
+			Port: 8088,
 			Cors: cors.Config{
 				AllowOrigins: []string{"http://localhost", "https://localhost"},
 			},
@@ -45,13 +45,13 @@ func NewConfig(name string) *Config {
 		Metrics: config.DefaultMetrics(),
 		Storage: MinioConfig{
 			Endpoint:      "localhost:9000",
-			AccessKey:     "minio",
-			SecretKey:     "minio123",
+			AccessKey:     "minioadmin",
+			SecretKey:     "minioadmin",
 			BucketSuffix:  "local-test",
 			TimeoutSecond: 3,
 		},
 		Chunker: ChunkerConfig{
-			Host:          "http://localhost:8080",
+			Host:          "http://localhost:8098",
 			TimeoutSecond: 3,
 		},
 		Service: config.LoadServiceHostConfig(name),

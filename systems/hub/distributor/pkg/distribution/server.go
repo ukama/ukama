@@ -16,7 +16,7 @@ import (
 	casync "github.com/folbricht/desync"
 )
 
-const ChunksPath = "/v1/chunks"
+//const ChunksPath = "/v1/chunks"
 
 var (
 	stderr io.Writer = os.Stderr
@@ -63,7 +63,7 @@ func RunDistribution(ctx context.Context, serverCfg *pkg.DistributionConfig) err
 		logrus.Debugf("Distribution server logging at %s", serverCfg.LogFile)
 	}
 
-	http.Handle(ChunksPath+"/", http.StripPrefix(ChunksPath, handler))
+	http.Handle("/", handler)
 
 	// Start the server
 	return serve(ctx, &serverCfg.Security, addresses...)

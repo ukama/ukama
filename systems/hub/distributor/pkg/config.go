@@ -3,10 +3,9 @@ package pkg
 import (
 	"time"
 
+	cors "github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
-
-	cors "github.com/gin-contrib/cors"
 )
 
 type StoreConfig struct {
@@ -48,7 +47,6 @@ type SecurityConfig struct {
 	ClientCA  string
 	Auth      string
 }
-
 type DistributionConfig struct {
 	Address        []string
 	LogFile        string
@@ -79,6 +77,7 @@ type Config struct {
 }
 
 func NewConfig() *Config {
+
 	return &Config{
 		Server: rest.HttpConfig{
 			Port: 8098,
@@ -89,7 +88,7 @@ func NewConfig() *Config {
 
 		Distribution: DistributionConfig{
 			Address:        []string{":8099"},
-			LogFile:        "/tmp/distribution.log",
+			LogFile:        "-",
 			HTTPTimeout:    20,
 			HTTPErrorRetry: 1,
 
@@ -106,7 +105,7 @@ func NewConfig() *Config {
 
 			Chunk: ChunkConfig{
 				N:            10,
-				Stores:       []string{"/tmp/castore"},
+				Stores:       []string{"s3+http://localhost:9000/artifact-hub-local-test/chunks?lookup=path"},
 				MinChunkSize: 64,
 				MaxChunkSize: 256,
 				AvgChunkSize: 64,
@@ -125,7 +124,7 @@ func NewConfig() *Config {
 		},
 
 		Storage: MinioConfig{
-			Endpoint:           "/tmp/art/",
+			Endpoint:           "localhost:9000",
 			AccessKey:          "minioadmin",
 			SecretKey:          "minioadmin",
 			BucketSuffix:       "local-test",
@@ -133,4 +132,5 @@ func NewConfig() *Config {
 			SkipBucketCreation: true,
 		},
 	}
+
 }
