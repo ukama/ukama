@@ -59,11 +59,11 @@ export class PaginationDto {
 
 @ObjectType()
 export class AuthType {
-  @Field()
+  @Field({ nullable: true })
   @IsOptional()
   Cookie?: string;
 
-  @Field()
+  @Field({ nullable: true })
   @IsOptional()
   Authorization?: string;
 }
