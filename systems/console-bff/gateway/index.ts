@@ -18,7 +18,11 @@ import {
   NETWORK_PORT,
   NODE_PORT,
   ORG_PORT,
+  PACKAGE_PORT,
   PLAYGROUND_URL,
+  RATE_PORT,
+  SIM_PORT,
+  SUBSCRIBER_PORT,
   USER_PORT,
 } from "../common/configs";
 import { logger } from "../common/logger";
@@ -50,6 +54,10 @@ const loadServers = async () => {
         { name: "node", url: `http://localhost:${NODE_PORT}` },
         { name: "user", url: `http://localhost:${USER_PORT}` },
         { name: "network", url: `http://localhost:${NETWORK_PORT}` },
+        { name: "subscriber", url: `http://localhost:${SUBSCRIBER_PORT}` },
+        { name: "sim", url: `http://localhost:${SIM_PORT}` },
+        { name: "package", url: `http://localhost:${PACKAGE_PORT}` },
+        { name: "rate", url: `http://localhost:${RATE_PORT}` },
         // { name: "planning", url: `http://localhost:${PLANNING_SERVICE_PORT}` },
       ],
       introspectionHeaders: {

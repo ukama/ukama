@@ -32,7 +32,7 @@ const parseHeaders = (reqHeader: any): THeaders => {
   }
 
   if (reqHeader.get("x-session-token") || reqHeader.get("cookie")) {
-    if (reqHeader["x-session-token"]) {
+    if (reqHeader.get("x-session-token")) {
       headers.auth.Authorization = reqHeader["x-session-token"] as string;
     } else {
       const cookie: string = reqHeader.get("cookie");

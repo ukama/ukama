@@ -8,11 +8,12 @@
     "billing",
     "network",
     "org",
-    "packages",
+    "package",
     "rate",
     "sim",
     "user",
     "subscriber",
+    "package",
   ],
   "compilerOptions": {
     /* Basic Options */

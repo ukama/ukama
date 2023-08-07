@@ -7,10 +7,12 @@ import { GetPackagesResolver } from "./getPackages";
 import { UpdatePackageResolver } from "./updatePackage";
 
 
-const resolvers: NonEmptyArray<Function> = [AddPackageResolver,
+const resolvers: NonEmptyArray<Function> = [
+    AddPackageResolver,
     DeletePackageResolver,
     GetPackageResolver,
     GetPackagesResolver,
-    UpdatePackageResolver];
+    UpdatePackageResolver
+];
 
 export default resolvers;
