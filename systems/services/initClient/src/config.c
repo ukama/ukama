@@ -77,11 +77,18 @@ int read_config_from_env(Config **config)
 		}
 	}
 
-	if ((dnsServer = getenv(ENV_DNS_SERVER)) == NULL)
+	if ((dnsServer = getenv(ENV_DNS_SERVER)) != NULL)
 	{
-		/* Fetching from /etc/resolv.conf */
-		log_info("Resolving nameserver from  /etc/resolv.conf");
-		dnsServer = parse_resolveconf();
+		if (strcmp(dnsServer, "true") == 0)
+		{
+			/* Fetching from /etc/resolv.conf */
+			log_info("Resolving nameserver from  /etc/resolv.conf");
+			dnsServer = parse_resolveconf();
+		}
+		else
+		{
+			dnsServer = NULL;
+		}
 	}
 
 	if ((systemDNS = getenv(ENV_SYSTEM_DNS)) != NULL)
