@@ -1,6 +1,6 @@
-import { FormControlCheckboxes } from '..';
+import { Divider, Grid, Typography } from '@mui/material';
 import { useCallback, useState } from 'react';
-import { Grid, Divider, Typography } from '@mui/material';
+import FormControlCheckboxes from '../FormControlCheckboxes';
 
 const LineDivider = () => (
   <Grid item xs={12}>

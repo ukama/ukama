@@ -1,10 +1,10 @@
-import { NodeDto } from '@/generated';
+import EmptyView from '@/ui/molecules/EmptyView';
 import RouterIcon from '@mui/icons-material/Router';
 import { Box } from '@mui/material';
 import React from 'react';
-import { EmptyView, NodeSlider } from '..';
+import NodeSlider from '../NodesSlider';
 type NodeContainerProps = {
-  items: NodeDto[];
+  items: any;
   handleItemAction: Function;
 };
 

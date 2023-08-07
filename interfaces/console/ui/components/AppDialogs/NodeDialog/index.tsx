@@ -1,5 +1,4 @@
 import { MASK_BY_TYPE, MASK_PLACEHOLDERS, NODE_TYPE } from '@/constants';
-import { Node_Type } from '@/generated';
 import { globalUseStyles } from '@/styles/global';
 import { colors } from '@/styles/theme';
 import CloseIcon from '@mui/icons-material/Close';
@@ -59,7 +58,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 interface CustomProps {
-  name: Node_Type;
+  name: string;
 }
 
 const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
@@ -70,8 +69,10 @@ const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
         {...other}
         lazy={false}
         unmask={false}
-        mask={MASK_BY_TYPE[props.name]}
-        placeholder={MASK_PLACEHOLDERS[props.name]}
+        mask={MASK_BY_TYPE[props.name as 'hnode' | 'anode' | 'tnode']}
+        placeholder={
+          MASK_PLACEHOLDERS[props.name as 'hnode' | 'anode' | 'tnode']
+        }
         definitions={{
           '#': /[a-zA-Z0-9]/,
         }}

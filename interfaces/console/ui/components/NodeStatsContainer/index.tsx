@@ -1,8 +1,8 @@
 import { colors } from '@/styles/theme';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { IconButton, Paper, Stack, Typography } from '@mui/material';
 import React from 'react';
-import { LoadingWrapper } from '..';
 interface INodeStatsContainer {
   index: number;
   title: string;

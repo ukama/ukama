@@ -1,5 +1,4 @@
 import { isDarkmode } from '@/app-recoil';
-import { NodeDto } from '@/generated';
 import { colors } from '@/styles/theme';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -7,10 +6,10 @@ import { IconButton, Stack, Theme, useMediaQuery } from '@mui/material';
 import { useEffect, useState } from 'react';
 import Carousel from 'react-material-ui-carousel';
 import { useRecoilValue } from 'recoil';
-import { NodeCard } from '..';
+import NodeCard from '../NodesCard';
 
 interface INodeSlider {
-  items: NodeDto[];
+  items: any;
   handleItemAction: Function;
 }
 

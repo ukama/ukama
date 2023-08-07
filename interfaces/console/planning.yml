@@ -1,11 +1,11 @@
 overwrite: true
 schema: 
-  - "http://localhost:4000/graphql":
+  - "http://localhost:4041/graphql":
       headers:
         introspection: "true"
-documents: './client/graphql/new.graphql'
+documents: './client/graphql/planning.graphql'
 generates:
-  ./generated/index.ts:
+  ./generated/planning.ts:
     plugins:
       - 'typescript'
       - 'typescript-operations'

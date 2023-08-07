@@ -1,4 +1,3 @@
-import { GetUserDto } from '@/generated';
 import { CenterContainer } from '@/styles/global';
 import colors from '@/styles/theme/colors';
 import CloseIcon from '@mui/icons-material/Close';
@@ -22,7 +21,7 @@ import EditableTextField from '../../EditableTextField';
 
 type BasicDialogProps = {
   type: string;
-  user: GetUserDto;
+  user: any;
   isOpen: boolean;
   setUserForm: any;
   loading: boolean;
@@ -42,7 +41,7 @@ type BasicDialogProps = {
 
 const UserDetailsDialog = ({
   type,
-  user,
+  user = { id: '', name: '', email: '' },
   isOpen,
   setUserForm,
   handleClose,

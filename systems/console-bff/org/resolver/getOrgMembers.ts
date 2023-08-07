@@ -1,4 +1,4 @@
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
 import { MemberObj, OrgMembersResDto } from "./types";
@@ -6,14 +6,11 @@ import { MemberObj, OrgMembersResDto } from "./types";
 @Resolver()
 export class GetOrgMembersResolver {
   @Query(() => OrgMembersResDto)
-  async getOrgMembers(
-    @Arg("orgName") orgName: string,
-    @Ctx() ctx: Context
-  ): Promise<OrgMembersResDto> {
-    const { dataSources } = ctx;
+  async getOrgMembers(@Ctx() ctx: Context): Promise<OrgMembersResDto> {
+    const { dataSources, headers } = ctx;
     const res: MemberObj[] = [];
     const members: OrgMembersResDto =
-      await dataSources.dataSource.getOrgMembers(orgName);
+      await dataSources.dataSource.getOrgMembers(headers.orgName);
 
     if (members.members.length === 0) return members;
     else {

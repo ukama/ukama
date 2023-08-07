@@ -1,8 +1,7 @@
-import { OrgNodeDto } from '@/generated';
 import { Grid, Link, Typography } from '@mui/material';
 import LoadingWrapper from '../../molecules/LoadingWrapper';
 interface INodeGroup {
-  nodes: OrgNodeDto[];
+  nodes: any;
   loading: boolean;
   handleNodeAction: Function;
 }
@@ -18,7 +17,7 @@ const NodeGroup = ({ nodes, loading, handleNodeAction }: INodeGroup) => {
       <Grid item xs={7}>
         <LoadingWrapper isLoading={loading} height={24} radius="small">
           {nodes.length > 0 ? (
-            nodes.map((item) => (
+            nodes.map((item: any) => (
               <Link
                 variant="body2"
                 fontWeight={500}

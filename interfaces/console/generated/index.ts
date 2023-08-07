@@ -17,14 +17,7 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
-export type AddDraftInput = {
-  lastSaved: Scalars['Float']['input'];
-  name: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-};
-
 export type AddMemberInputDto = {
-  orgName: Scalars['String']['input'];
   role: Scalars['String']['input'];
   userId: Scalars['String']['input'];
 };
@@ -52,8 +45,24 @@ export type AddOrgInputDto = {
   owner_uuid: Scalars['String']['input'];
 };
 
+export type AddPackageInputDto = {
+  amount: Scalars['Float']['input'];
+  dataUnit: Scalars['String']['input'];
+  dataVolume: Scalars['Int']['input'];
+  duration: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type AddSiteInputDto = {
   site: Scalars['String']['input'];
+};
+
+export type AllocateSimInputDto = {
+  iccid: Scalars['String']['input'];
+  networkId: Scalars['String']['input'];
+  packageId: Scalars['String']['input'];
+  simType: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
 };
 
 export type AttachNodeInput = {
@@ -67,50 +76,30 @@ export type CBooleanResponse = {
   success: Scalars['Boolean']['output'];
 };
 
-export type CoverageInput = {
-  height: Scalars['Float']['input'];
-  lat: Scalars['Float']['input'];
-  lng: Scalars['Float']['input'];
-  mode: Scalars['String']['input'];
+export type DefaultMarkupHistoryDto = {
+  __typename?: 'DefaultMarkupHistoryDto';
+  Markup: Scalars['Float']['output'];
+  createdAt: Scalars['String']['output'];
+  deletedAt: Scalars['String']['output'];
 };
 
-export type DeleteDraftRes = {
-  __typename?: 'DeleteDraftRes';
-  id: Scalars['String']['output'];
+export type DefaultMarkupHistoryResDto = {
+  __typename?: 'DefaultMarkupHistoryResDto';
+  markupRates?: Maybe<Array<DefaultMarkupHistoryDto>>;
 };
 
-export type DeleteLinkRes = {
-  __typename?: 'DeleteLinkRes';
-  id: Scalars['String']['output'];
+export type DefaultMarkupInputDto = {
+  markup: Scalars['Float']['input'];
+};
+
+export type DefaultMarkupResDto = {
+  __typename?: 'DefaultMarkupResDto';
+  markup: Scalars['Float']['output'];
 };
 
 export type DeleteNode = {
   __typename?: 'DeleteNode';
   id: Scalars['String']['output'];
-};
-
-export type DeleteSiteRes = {
-  __typename?: 'DeleteSiteRes';
-  id: Scalars['String']['output'];
-};
-
-export type Draft = {
-  __typename?: 'Draft';
-  events: Array<Event>;
-  id: Scalars['ID']['output'];
-  lastSaved: Scalars['Float']['output'];
-  links: Array<Link>;
-  name: Scalars['String']['output'];
-  sites: Array<Site>;
-  userId: Scalars['String']['output'];
-};
-
-export type Event = {
-  __typename?: 'Event';
-  createdAt: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  operation: Scalars['String']['output'];
-  value: Scalars['String']['output'];
 };
 
 export type GetNodes = {
@@ -122,32 +111,13 @@ export type GetNodesInput = {
   isFree: Scalars['Boolean']['input'];
 };
 
-export type Link = {
-  __typename?: 'Link';
-  id: Scalars['String']['output'];
-  siteA: Scalars['String']['output'];
-  siteB: Scalars['String']['output'];
+export type GetSimInputDto = {
+  simId: Scalars['String']['input'];
 };
 
-export type LinkInput = {
-  lastSaved: Scalars['Float']['input'];
-  siteA: Scalars['String']['input'];
-  siteB: Scalars['String']['input'];
-};
-
-export type Location = {
-  __typename?: 'Location';
-  address: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  lat: Scalars['String']['output'];
-  lng: Scalars['String']['output'];
-};
-
-export type LocationInput = {
-  address: Scalars['String']['input'];
-  lastSaved: Scalars['Float']['input'];
-  lat: Scalars['String']['input'];
-  lng: Scalars['String']['input'];
+export type IdResponse = {
+  __typename?: 'IdResponse';
+  uuid: Scalars['String']['output'];
 };
 
 export type MemberInputDto = {
@@ -168,42 +138,31 @@ export type MemberObj = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addDraft: Draft;
-  addLink: Draft;
   addMember: MemberObj;
   addNetwork: NetworkDto;
   addNode: Node;
   addNodeToSite: CBooleanResponse;
   addOrg: OrgDto;
-  addSite: Draft;
+  addPackage: PackageDto;
+  addSubscriber: SubscriberDto;
+  allocateSim: SimDto;
   attachNode: CBooleanResponse;
-  coverage: Site;
-  deleteDraft: DeleteDraftRes;
-  deleteLink: DeleteLinkRes;
+  defaultMarkup: CBooleanResponse;
   deleteNodeFromOrg: DeleteNode;
-  deleteSite: DeleteSiteRes;
+  deletePackage: IdResponse;
+  deleteSubscriber: CBooleanResponse;
   detachhNode: CBooleanResponse;
+  getSim: SetActivePackageForSimResDto;
   releaseNodeFromSite: CBooleanResponse;
   removeMember: CBooleanResponse;
-  updateDraftName: Draft;
-  updateEvent: Event;
+  toggleSimStatus: SimStatusResDto;
   updateFirstVisit: UserFistVisitResDto;
-  updateLocation: Location;
   updateMember: CBooleanResponse;
   updateNode: Node;
   updateNodeState: Node;
-  updateSite: Draft;
-};
-
-
-export type MutationAddDraftArgs = {
-  data: AddDraftInput;
-};
-
-
-export type MutationAddLinkArgs = {
-  data: LinkInput;
-  draftId: Scalars['String']['input'];
+  updatePackage: PackageDto;
+  updateSubscriber: CBooleanResponse;
+  uploadSims: UploadSimsResDto;
 };
 
 
@@ -232,9 +191,18 @@ export type MutationAddOrgArgs = {
 };
 
 
-export type MutationAddSiteArgs = {
-  data: SiteInput;
-  draftId: Scalars['String']['input'];
+export type MutationAddPackageArgs = {
+  data: AddPackageInputDto;
+};
+
+
+export type MutationAddSubscriberArgs = {
+  data: SubscriberInputDto;
+};
+
+
+export type MutationAllocateSimArgs = {
+  data: AllocateSimInputDto;
 };
 
 
@@ -243,21 +211,8 @@ export type MutationAttachNodeArgs = {
 };
 
 
-export type MutationCoverageArgs = {
-  data: CoverageInput;
-  siteId: Scalars['String']['input'];
-};
-
-
-export type MutationDeleteDraftArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type MutationDeleteLinkArgs = {
-  draftId: Scalars['String']['input'];
-  lastSaved: Scalars['Float']['input'];
-  linkId: Scalars['String']['input'];
+export type MutationDefaultMarkupArgs = {
+  data: DefaultMarkupInputDto;
 };
 
 
@@ -266,13 +221,23 @@ export type MutationDeleteNodeFromOrgArgs = {
 };
 
 
-export type MutationDeleteSiteArgs = {
-  id: Scalars['String']['input'];
+export type MutationDeletePackageArgs = {
+  packageId: Scalars['String']['input'];
+};
+
+
+export type MutationDeleteSubscriberArgs = {
+  subscriberId: Scalars['String']['input'];
 };
 
 
 export type MutationDetachhNodeArgs = {
   data: NodeInput;
+};
+
+
+export type MutationGetSimArgs = {
+  data: SetActivePackageForSimInputDto;
 };
 
 
@@ -286,27 +251,13 @@ export type MutationRemoveMemberArgs = {
 };
 
 
-export type MutationUpdateDraftNameArgs = {
-  id: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-};
-
-
-export type MutationUpdateEventArgs = {
-  data: UpdateEventInput;
-  eventId: Scalars['String']['input'];
+export type MutationToggleSimStatusArgs = {
+  data: ToggleSimStatusInputDto;
 };
 
 
 export type MutationUpdateFirstVisitArgs = {
   data: UserFistVisitInputDto;
-};
-
-
-export type MutationUpdateLocationArgs = {
-  data: LocationInput;
-  draftId: Scalars['String']['input'];
-  locationId: Scalars['String']['input'];
 };
 
 
@@ -326,10 +277,20 @@ export type MutationUpdateNodeStateArgs = {
 };
 
 
-export type MutationUpdateSiteArgs = {
-  data: SiteInput;
-  draftId: Scalars['String']['input'];
-  siteId: Scalars['String']['input'];
+export type MutationUpdatePackageArgs = {
+  data: UpdatePackageInputDto;
+  packageId: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateSubscriberArgs = {
+  data: UpdateSubscriberInputDto;
+  subscriberId: Scalars['String']['input'];
+};
+
+
+export type MutationUploadSimsArgs = {
+  data: UploadSimsInputDto;
 };
 
 export type NetworkDto = {
@@ -349,20 +310,12 @@ export type NetworksResDto = {
 
 export type Node = {
   __typename?: 'Node';
-  attached: Array<Node>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   orgId: Scalars['String']['output'];
   status: NodeStatus;
-  type: NodeTypeEnum;
+  type: Scalars['String']['output'];
 };
-
-/** Node connectivity enums */
-export enum NodeConnectivityEnum {
-  Offline = 'OFFLINE',
-  Online = 'ONLINE',
-  Unknown = 'UNKNOWN'
-}
 
 export type NodeInput = {
   id: Scalars['String']['input'];
@@ -370,8 +323,8 @@ export type NodeInput = {
 
 export type NodeStatus = {
   __typename?: 'NodeStatus';
-  connectivity: NodeConnectivityEnum;
-  state: NodeStatusEnum;
+  connectivity: Scalars['String']['output'];
+  state: Scalars['String']['output'];
 };
 
 /** Node status enums */
@@ -382,13 +335,6 @@ export enum NodeStatusEnum {
   Maintenance = 'MAINTENANCE',
   Onboarded = 'ONBOARDED',
   Undefined = 'UNDEFINED'
-}
-
-/** Node type enums */
-export enum NodeTypeEnum {
-  Anode = 'anode',
-  Hnode = 'hnode',
-  Tnode = 'tnode'
 }
 
 export type OrgDto = {
@@ -413,11 +359,64 @@ export type OrgsResDto = {
   owner: Scalars['String']['output'];
 };
 
+export type PackageDto = {
+  __typename?: 'PackageDto';
+  active: Scalars['Boolean']['output'];
+  amount: Scalars['Float']['output'];
+  apn: Scalars['String']['output'];
+  country: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  dataUnit: Scalars['String']['output'];
+  dataVolume: Scalars['String']['output'];
+  deletedAt: Scalars['String']['output'];
+  dlbr: Scalars['String']['output'];
+  duration: Scalars['String']['output'];
+  flatrate: Scalars['Boolean']['output'];
+  from: Scalars['String']['output'];
+  markup: PackageMarkupApiDto;
+  messageUnit: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  ownerId: Scalars['String']['output'];
+  provider: Scalars['String']['output'];
+  rate: PackageRateApiDto;
+  simType: Scalars['String']['output'];
+  smsVolume: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  ulbr: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  uuid: Scalars['String']['output'];
+  voiceUnit: Scalars['String']['output'];
+  voiceVolume: Scalars['String']['output'];
+};
+
+export type PackageMarkupApiDto = {
+  __typename?: 'PackageMarkupAPIDto';
+  baserate: Scalars['String']['output'];
+  markup: Scalars['Float']['output'];
+};
+
+export type PackageRateApiDto = {
+  __typename?: 'PackageRateAPIDto';
+  amount: Scalars['Float']['output'];
+  data: Scalars['Float']['output'];
+  sms_mo: Scalars['String']['output'];
+  sms_mt: Scalars['Float']['output'];
+};
+
+export type PackagesResDto = {
+  __typename?: 'PackagesResDto';
+  packages: Array<PackageDto>;
+};
+
 export type Query = {
   __typename?: 'Query';
   addSite: SiteDto;
-  getDraft: Draft;
-  getDrafts: Array<Draft>;
+  getDataUsage: SimDataUsage;
+  getDefaultMarkup: DefaultMarkupResDto;
+  getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
   getNetwork: NetworkDto;
   getNetworks: NetworksResDto;
   getNode: Node;
@@ -425,8 +424,16 @@ export type Query = {
   getOrg: OrgDto;
   getOrgMembers: OrgMembersResDto;
   getOrgs: OrgsResDto;
+  getPackage: PackageDto;
+  getPackages: PackagesResDto;
+  getSim: SimDto;
+  getSimPoolStats: SimPoolStatsDto;
+  getSims: SimsResDto;
   getSite: SiteDto;
   getSites: SitesResDto;
+  getSubscriber: SubscriberDto;
+  getSubscriberMetricsByNetwork: SubscriberMetricsByNetworkDto;
+  getSubscribersByNetwork: SubscribersResDto;
   getUser: UserResDto;
   whoami: WhoamiDto;
 };
@@ -438,13 +445,8 @@ export type QueryAddSiteArgs = {
 };
 
 
-export type QueryGetDraftArgs = {
-  id: Scalars['String']['input'];
-};
-
-
-export type QueryGetDraftsArgs = {
-  userId: Scalars['String']['input'];
+export type QueryGetDataUsageArgs = {
+  simId: Scalars['String']['input'];
 };
 
 
@@ -463,13 +465,23 @@ export type QueryGetNodesArgs = {
 };
 
 
-export type QueryGetOrgArgs = {
-  orgName: Scalars['String']['input'];
+export type QueryGetPackageArgs = {
+  packageId: Scalars['String']['input'];
 };
 
 
-export type QueryGetOrgMembersArgs = {
-  orgName: Scalars['String']['input'];
+export type QueryGetSimArgs = {
+  data: GetSimInputDto;
+};
+
+
+export type QueryGetSimPoolStatsArgs = {
+  type: Scalars['String']['input'];
+};
+
+
+export type QueryGetSimsArgs = {
+  type: Scalars['String']['input'];
 };
 
 
@@ -484,6 +496,21 @@ export type QueryGetSitesArgs = {
 };
 
 
+export type QueryGetSubscriberArgs = {
+  subscriberId: Scalars['String']['input'];
+};
+
+
+export type QueryGetSubscriberMetricsByNetworkArgs = {
+  networkId: Scalars['String']['input'];
+};
+
+
+export type QueryGetSubscribersByNetworkArgs = {
+  networkId: Scalars['String']['input'];
+};
+
+
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
@@ -493,25 +520,53 @@ export type QueryWhoamiArgs = {
   userId: Scalars['String']['input'];
 };
 
-export type Site = {
-  __typename?: 'Site';
-  apOption: Scalars['String']['output'];
-  draftId: Scalars['String']['output'];
-  east: Scalars['Float']['output'];
-  height: Scalars['Float']['output'];
+export type SetActivePackageForSimInputDto = {
+  packageId: Scalars['String']['input'];
+  simId: Scalars['String']['input'];
+};
+
+export type SetActivePackageForSimResDto = {
+  __typename?: 'SetActivePackageForSimResDto';
+  packageId?: Maybe<Scalars['String']['output']>;
+};
+
+export type SimDataUsage = {
+  __typename?: 'SimDataUsage';
+  usage: Scalars['String']['output'];
+};
+
+export type SimDto = {
+  __typename?: 'SimDto';
+  activationCode: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  iccid: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  isSetlite: Scalars['Boolean']['output'];
-  location: Location;
-  name: Scalars['String']['output'];
-  north: Scalars['Float']['output'];
-  populationCovered: Scalars['Float']['output'];
-  populationUrl: Scalars['String']['output'];
-  solarUptime: Scalars['Float']['output'];
-  south: Scalars['Float']['output'];
-  status: Scalars['String']['output'];
-  totalBoxesCovered: Scalars['Float']['output'];
-  url: Scalars['String']['output'];
-  west: Scalars['Float']['output'];
+  isAllocated: Scalars['String']['output'];
+  isPhysical: Scalars['String']['output'];
+  msisdn: Scalars['String']['output'];
+  qrCode: Scalars['String']['output'];
+  simType: Scalars['String']['output'];
+  smapAddress: Scalars['String']['output'];
+};
+
+export type SimPoolStatsDto = {
+  __typename?: 'SimPoolStatsDto';
+  available: Scalars['Float']['output'];
+  consumed: Scalars['Float']['output'];
+  esim: Scalars['Float']['output'];
+  failed: Scalars['Float']['output'];
+  physical: Scalars['Float']['output'];
+  total: Scalars['Float']['output'];
+};
+
+export type SimStatusResDto = {
+  __typename?: 'SimStatusResDto';
+  simId?: Maybe<Scalars['String']['output']>;
+};
+
+export type SimsResDto = {
+  __typename?: 'SimsResDto';
+  sim: Array<SimDto>;
 };
 
 export type SiteDto = {
@@ -523,28 +578,79 @@ export type SiteDto = {
   networkId: Scalars['String']['output'];
 };
 
-export type SiteInput = {
-  address: Scalars['String']['input'];
-  apOption: Scalars['String']['input'];
-  height: Scalars['Float']['input'];
-  isSetlite: Scalars['Boolean']['input'];
-  lastSaved: Scalars['Float']['input'];
-  lat: Scalars['String']['input'];
-  lng: Scalars['String']['input'];
-  locationId: Scalars['String']['input'];
-  siteName: Scalars['String']['input'];
-  solarUptime: Scalars['Float']['input'];
-};
-
 export type SitesResDto = {
   __typename?: 'SitesResDto';
   networkId: Scalars['String']['output'];
   sites: Array<SiteDto>;
 };
 
-export type UpdateEventInput = {
-  operation: Scalars['String']['input'];
-  value: Scalars['String']['input'];
+export type SubscriberDto = {
+  __typename?: 'SubscriberDto';
+  address: Scalars['String']['output'];
+  dob: Scalars['String']['output'];
+  email: Scalars['String']['output'];
+  firstName: Scalars['String']['output'];
+  gender: Scalars['String']['output'];
+  idSerial: Scalars['String']['output'];
+  lastName: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  proofOfIdentification: Scalars['String']['output'];
+  sim: Array<SubscriberSimDto>;
+  uuid: Scalars['String']['output'];
+};
+
+export type SubscriberInputDto = {
+  address: Scalars['String']['input'];
+  dob: Scalars['String']['input'];
+  email: Scalars['String']['input'];
+  first_name: Scalars['String']['input'];
+  gender: Scalars['String']['input'];
+  id_serial: Scalars['String']['input'];
+  last_name: Scalars['String']['input'];
+  network_id: Scalars['String']['input'];
+  org_id: Scalars['String']['input'];
+  phone: Scalars['String']['input'];
+  proof_of_identification: Scalars['String']['input'];
+};
+
+export type SubscriberMetricsByNetworkDto = {
+  __typename?: 'SubscriberMetricsByNetworkDto';
+  active: Scalars['Float']['output'];
+  inactive: Scalars['Float']['output'];
+  terminated: Scalars['Float']['output'];
+  total: Scalars['Float']['output'];
+};
+
+export type SubscriberSimDto = {
+  __typename?: 'SubscriberSimDto';
+  activationsCount: Scalars['String']['output'];
+  allocatedAt: Scalars['String']['output'];
+  deactivationsCount: Scalars['String']['output'];
+  firstActivatedOn?: Maybe<Scalars['String']['output']>;
+  iccid: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  imsi: Scalars['String']['output'];
+  isPhysical?: Maybe<Scalars['Boolean']['output']>;
+  lastActivatedOn?: Maybe<Scalars['String']['output']>;
+  msisdn: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  package?: Maybe<Scalars['String']['output']>;
+  status: Scalars['String']['output'];
+  subscriberId: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
+export type SubscribersResDto = {
+  __typename?: 'SubscribersResDto';
+  subscribers: Array<SubscriberDto>;
+};
+
+export type ToggleSimStatusInputDto = {
+  simId: Scalars['String']['input'];
+  status: Scalars['String']['input'];
 };
 
 export type UpdateMemberInputDto = {
@@ -561,6 +667,29 @@ export type UpdateNodeInput = {
 export type UpdateNodeStateInput = {
   id: Scalars['String']['input'];
   state: NodeStatusEnum;
+};
+
+export type UpdatePackageInputDto = {
+  active: Scalars['Boolean']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type UpdateSubscriberInputDto = {
+  address?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  id_serial?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
+  proof_of_identification?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UploadSimsInputDto = {
+  data: Scalars['String']['input'];
+  simType: Scalars['String']['input'];
+};
+
+export type UploadSimsResDto = {
+  __typename?: 'UploadSimsResDto';
+  iccid: Array<Scalars['String']['output']>;
 };
 
 export type UserFistVisitInputDto = {
@@ -594,21 +723,21 @@ export type WhoamiDto = {
   role: Scalars['String']['output'];
 };
 
-export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } };
+export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: string, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
 
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } } };
+export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type GetNodesQueryVariables = Exact<{
   data: GetNodesInput;
 }>;
 
 
-export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'GetNodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }> } };
+export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'GetNodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: string, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -636,7 +765,7 @@ export type AddNodeMutationVariables = Exact<{
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } } };
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
@@ -657,118 +786,140 @@ export type UpdateNodeStateMutationVariables = Exact<{
 }>;
 
 
-export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } } };
+export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
 }>;
 
 
-export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } }>, status: { __typename?: 'NodeStatus', connectivity: NodeConnectivityEnum, state: NodeStatusEnum } } };
+export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: string, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
-export type LocationFragment = { __typename?: 'Location', id: string, lat: string, lng: string, address: string };
+export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string };
 
-export type LinkFragment = { __typename?: 'Link', id: string, siteA: string, siteB: string };
+export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null };
 
-export type SiteFragment = { __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } };
+export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type EventFragment = { __typename?: 'Event', id: string, value: string, operation: string, createdAt: string };
 
-export type DraftFragment = { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> };
+export type GetOrgMemberQuery = { __typename?: 'Query', getOrgMembers: { __typename?: 'OrgMembersResDto', org: string, members: Array<{ __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null, user: { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string } }> } };
 
-export type AddDraftMutationVariables = Exact<{
-  data: AddDraftInput;
+export type AddMemberMutationVariables = Exact<{
+  data: AddMemberInputDto;
 }>;
 
 
-export type AddDraftMutation = { __typename?: 'Mutation', addDraft: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null } };
 
-export type UpdateDraftNameMutationVariables = Exact<{
-  draftId: Scalars['String']['input'];
-  name: Scalars['String']['input'];
+export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number } };
+
+export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
+
+export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
+
+export type GetPackagesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetPackagesQuery = { __typename?: 'Query', getPackages: { __typename?: 'PackagesResDto', packages: Array<{ __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } }> } };
+
+export type GetPackageQueryVariables = Exact<{
+  packageId: Scalars['String']['input'];
 }>;
 
 
-export type UpdateDraftNameMutation = { __typename?: 'Mutation', updateDraftName: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type GetPackageQuery = { __typename?: 'Query', getPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
-export type GetDraftsQueryVariables = Exact<{
-  userId: Scalars['String']['input'];
+export type AddPackageMutationVariables = Exact<{
+  data: AddPackageInputDto;
 }>;
 
 
-export type GetDraftsQuery = { __typename?: 'Query', getDrafts: Array<{ __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> }> };
+export type AddPackageMutation = { __typename?: 'Mutation', addPackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
-export type GetDraftQueryVariables = Exact<{
-  draftId: Scalars['String']['input'];
+export type DeletePacakgeMutationVariables = Exact<{
+  packageId: Scalars['String']['input'];
 }>;
 
 
-export type GetDraftQuery = { __typename?: 'Query', getDraft: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type DeletePacakgeMutation = { __typename?: 'Mutation', deletePackage: { __typename?: 'IdResponse', uuid: string } };
 
-export type AddSiteMutationVariables = Exact<{
-  draftId: Scalars['String']['input'];
-  data: SiteInput;
+export type UpdatePacakgeMutationVariables = Exact<{
+  packageId: Scalars['String']['input'];
+  data: UpdatePackageInputDto;
 }>;
 
 
-export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, orgId: string, active: boolean, duration: string, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: string, dataVolume: string, voiceVolume: string, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
-export type UpdateSiteMutationVariables = Exact<{
-  draftId: Scalars['String']['input'];
-  siteId: Scalars['String']['input'];
-  data: SiteInput;
+export type GetSimpoolStatsQueryVariables = Exact<{
+  type: Scalars['String']['input'];
 }>;
 
 
-export type UpdateSiteMutation = { __typename?: 'Mutation', updateSite: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type GetSimpoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, physical: number, esim: number } };
 
-export type UpdateLocationMutationVariables = Exact<{
-  draftId: Scalars['String']['input'];
-  locationId: Scalars['String']['input'];
-  data: LocationInput;
+export type UploadSimsMutationVariables = Exact<{
+  data: UploadSimsInputDto;
 }>;
 
 
-export type UpdateLocationMutation = { __typename?: 'Mutation', updateLocation: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } };
+export type UploadSimsMutation = { __typename?: 'Mutation', uploadSims: { __typename?: 'UploadSimsResDto', iccid: Array<string> } };
 
-export type DeleteDraftMutationVariables = Exact<{
-  draftId: Scalars['String']['input'];
+export type SimPoolFragment = { __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string };
+
+export type GetSimsQueryVariables = Exact<{
+  type: Scalars['String']['input'];
 }>;
 
 
-export type DeleteDraftMutation = { __typename?: 'Mutation', deleteDraft: { __typename?: 'DeleteDraftRes', id: string } };
+export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sim: Array<{ __typename?: 'SimDto', activationCode: string, createdAt: string, iccid: string, id: string, isAllocated: string, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
 
-export type DeleteSiteMutationVariables = Exact<{
-  siteId: Scalars['String']['input'];
+export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
+
+export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> };
+
+export type AddSubscriberMutationVariables = Exact<{
+  data: SubscriberInputDto;
 }>;
 
 
-export type DeleteSiteMutation = { __typename?: 'Mutation', deleteSite: { __typename?: 'DeleteSiteRes', id: string } };
+export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> } };
 
-export type DeleteLinkMutationVariables = Exact<{
-  lastSaved: Scalars['Float']['input'];
-  draftId: Scalars['String']['input'];
-  linkId: Scalars['String']['input'];
+export type GetSubscriberQueryVariables = Exact<{
+  subscriberId: Scalars['String']['input'];
 }>;
 
 
-export type DeleteLinkMutation = { __typename?: 'Mutation', deleteLink: { __typename?: 'DeleteLinkRes', id: string } };
+export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> } };
 
-export type AddLinkMutationVariables = Exact<{
-  data: LinkInput;
-  draftId: Scalars['String']['input'];
+export type UpdateSubscriberMutationVariables = Exact<{
+  subscriberId: Scalars['String']['input'];
+  data: UpdateSubscriberInputDto;
 }>;
 
 
-export type AddLinkMutation = { __typename?: 'Mutation', addLink: { __typename?: 'Draft', id: string, name: string, userId: string, lastSaved: number, links: Array<{ __typename?: 'Link', id: string, siteA: string, siteB: string }>, sites: Array<{ __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } }>, events: Array<{ __typename?: 'Event', id: string, value: string, operation: string, createdAt: string }> } };
+export type UpdateSubscriberMutation = { __typename?: 'Mutation', updateSubscriber: { __typename?: 'CBooleanResponse', success: boolean } };
 
-export type CoverageMutationVariables = Exact<{
-  siteId: Scalars['String']['input'];
-  data: CoverageInput;
+export type DeleteSubscriberMutationVariables = Exact<{
+  subscriberId: Scalars['String']['input'];
 }>;
 
 
-export type CoverageMutation = { __typename?: 'Mutation', coverage: { __typename?: 'Site', id: string, url: string, east: number, name: string, west: number, north: number, south: number, status: string, height: number, apOption: string, isSetlite: boolean, solarUptime: number, populationUrl: string, populationCovered: number, totalBoxesCovered: number, location: { __typename?: 'Location', id: string, lat: string, lng: string, address: string } } };
+export type DeleteSubscriberMutation = { __typename?: 'Mutation', deleteSubscriber: { __typename?: 'CBooleanResponse', success: boolean } };
+
+export type GetSubscribersByNetworkQueryVariables = Exact<{
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, orgId: string, phone: string, proofOfIdentification: string, sim: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, orgId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> }> } };
+
+export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
+  networkId: Scalars['String']['input'];
+}>;
+
+
+export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -776,86 +927,137 @@ export const NodeFragmentDoc = gql`
   name
   orgId
   type
-  attached {
-    id
-    name
-    orgId
-    type
-    status {
-      connectivity
-      state
-    }
-  }
   status {
     connectivity
     state
   }
 }
     `;
-export const LinkFragmentDoc = gql`
-    fragment link on Link {
-  id
-  siteA
-  siteB
-}
-    `;
-export const LocationFragmentDoc = gql`
-    fragment location on Location {
-  id
-  lat
-  lng
-  address
-}
-    `;
-export const SiteFragmentDoc = gql`
-    fragment site on Site {
-  id
-  url
-  east
+export const OrgUserFragmentDoc = gql`
+    fragment OrgUser on UserResDto {
   name
-  west
-  north
-  south
-  status
-  height
-  apOption
-  isSetlite
-  solarUptime
-  populationUrl
-  populationCovered
-  totalBoxesCovered
-  location {
-    ...location
-  }
-}
-    ${LocationFragmentDoc}`;
-export const EventFragmentDoc = gql`
-    fragment event on Event {
-  id
-  value
-  operation
-  createdAt
+  email
+  uuid
+  phone
+  isDeactivated
+  registeredSince
 }
     `;
-export const DraftFragmentDoc = gql`
-    fragment draft on Draft {
-  id
-  name
+export const MemberFragmentDoc = gql`
+    fragment Member on MemberObj {
+  uuid
   userId
-  lastSaved
-  links {
-    ...link
-  }
-  sites {
-    ...site
-  }
-  events {
-    ...event
+  orgId
+  role
+  isDeactivated
+  memberSince
+}
+    `;
+export const PackageRateFragmentDoc = gql`
+    fragment PackageRate on PackageDto {
+  rate {
+    sms_mo
+    sms_mt
+    data
+    amount
   }
 }
-    ${LinkFragmentDoc}
-${SiteFragmentDoc}
-${EventFragmentDoc}`;
+    `;
+export const PackageMarkupFragmentDoc = gql`
+    fragment PackageMarkup on PackageDto {
+  markup {
+    baserate
+    markup
+  }
+}
+    `;
+export const PackageFragmentDoc = gql`
+    fragment Package on PackageDto {
+  uuid
+  name
+  orgId
+  active
+  duration
+  simType
+  createdAt
+  deletedAt
+  updatedAt
+  smsVolume
+  dataVolume
+  voiceVolume
+  ulbr
+  dlbr
+  type
+  dataUnit
+  voiceUnit
+  messageUnit
+  flatrate
+  currency
+  from
+  to
+  country
+  provider
+  apn
+  ownerId
+  amount
+  ...PackageRate
+  ...PackageMarkup
+}
+    ${PackageRateFragmentDoc}
+${PackageMarkupFragmentDoc}`;
+export const SimPoolFragmentDoc = gql`
+    fragment SimPool on SimDto {
+  activationCode
+  createdAt
+  iccid
+  id
+  isAllocated
+  isPhysical
+  msisdn
+  qrCode
+  simType
+  smapAddress
+}
+    `;
+export const SubscriberSimFragmentDoc = gql`
+    fragment SubscriberSim on SubscriberDto {
+  sim {
+    id
+    subscriberId
+    networkId
+    orgId
+    iccid
+    msisdn
+    imsi
+    type
+    status
+    firstActivatedOn
+    lastActivatedOn
+    activationsCount
+    deactivationsCount
+    allocatedAt
+    isPhysical
+    package
+  }
+}
+    `;
+export const SubscriberFragmentDoc = gql`
+    fragment Subscriber on SubscriberDto {
+  uuid
+  address
+  dob
+  email
+  firstName
+  lastName
+  gender
+  idSerial
+  networkId
+  orgId
+  phone
+  proofOfIdentification
+  ...SubscriberSim
+}
+    ${SubscriberSimFragmentDoc}`;
 export const GetNodeDocument = gql`
     query getNode($data: NodeInput!) {
   getNode(data: $data) {
@@ -1192,413 +1394,568 @@ export function useUpdateNodeMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateNodeMutationHookResult = ReturnType<typeof useUpdateNodeMutation>;
 export type UpdateNodeMutationResult = Apollo.MutationResult<UpdateNodeMutation>;
 export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<UpdateNodeMutation, UpdateNodeMutationVariables>;
-export const AddDraftDocument = gql`
-    mutation AddDraft($data: AddDraftInput!) {
-  addDraft(data: $data) {
-    ...draft
-  }
-}
-    ${DraftFragmentDoc}`;
-export type AddDraftMutationFn = Apollo.MutationFunction<AddDraftMutation, AddDraftMutationVariables>;
-
-/**
- * __useAddDraftMutation__
- *
- * To run a mutation, you first call `useAddDraftMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddDraftMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [addDraftMutation, { data, loading, error }] = useAddDraftMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useAddDraftMutation(baseOptions?: Apollo.MutationHookOptions<AddDraftMutation, AddDraftMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddDraftMutation, AddDraftMutationVariables>(AddDraftDocument, options);
+export const GetOrgMemberDocument = gql`
+    query getOrgMember {
+  getOrgMembers {
+    org
+    members {
+      ...Member
+      user {
+        ...OrgUser
       }
-export type AddDraftMutationHookResult = ReturnType<typeof useAddDraftMutation>;
-export type AddDraftMutationResult = Apollo.MutationResult<AddDraftMutation>;
-export type AddDraftMutationOptions = Apollo.BaseMutationOptions<AddDraftMutation, AddDraftMutationVariables>;
-export const UpdateDraftNameDocument = gql`
-    mutation UpdateDraftName($draftId: String!, $name: String!) {
-  updateDraftName(id: $draftId, name: $name) {
-    ...draft
+    }
   }
 }
-    ${DraftFragmentDoc}`;
-export type UpdateDraftNameMutationFn = Apollo.MutationFunction<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>;
+    ${MemberFragmentDoc}
+${OrgUserFragmentDoc}`;
 
 /**
- * __useUpdateDraftNameMutation__
+ * __useGetOrgMemberQuery__
  *
- * To run a mutation, you first call `useUpdateDraftNameMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateDraftNameMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateDraftNameMutation, { data, loading, error }] = useUpdateDraftNameMutation({
- *   variables: {
- *      draftId: // value for 'draftId'
- *      name: // value for 'name'
- *   },
- * });
- */
-export function useUpdateDraftNameMutation(baseOptions?: Apollo.MutationHookOptions<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>(UpdateDraftNameDocument, options);
-      }
-export type UpdateDraftNameMutationHookResult = ReturnType<typeof useUpdateDraftNameMutation>;
-export type UpdateDraftNameMutationResult = Apollo.MutationResult<UpdateDraftNameMutation>;
-export type UpdateDraftNameMutationOptions = Apollo.BaseMutationOptions<UpdateDraftNameMutation, UpdateDraftNameMutationVariables>;
-export const GetDraftsDocument = gql`
-    query GetDrafts($userId: String!) {
-  getDrafts(userId: $userId) {
-    ...draft
-  }
-}
-    ${DraftFragmentDoc}`;
-
-/**
- * __useGetDraftsQuery__
- *
- * To run a query within a React component, call `useGetDraftsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetDraftsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetOrgMemberQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOrgMemberQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetDraftsQuery({
+ * const { data, loading, error } = useGetOrgMemberQuery({
  *   variables: {
- *      userId: // value for 'userId'
  *   },
  * });
  */
-export function useGetDraftsQuery(baseOptions: Apollo.QueryHookOptions<GetDraftsQuery, GetDraftsQueryVariables>) {
+export function useGetOrgMemberQuery(baseOptions?: Apollo.QueryHookOptions<GetOrgMemberQuery, GetOrgMemberQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetDraftsQuery, GetDraftsQueryVariables>(GetDraftsDocument, options);
+        return Apollo.useQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(GetOrgMemberDocument, options);
       }
-export function useGetDraftsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDraftsQuery, GetDraftsQueryVariables>) {
+export function useGetOrgMemberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrgMemberQuery, GetOrgMemberQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetDraftsQuery, GetDraftsQueryVariables>(GetDraftsDocument, options);
+          return Apollo.useLazyQuery<GetOrgMemberQuery, GetOrgMemberQueryVariables>(GetOrgMemberDocument, options);
         }
-export type GetDraftsQueryHookResult = ReturnType<typeof useGetDraftsQuery>;
-export type GetDraftsLazyQueryHookResult = ReturnType<typeof useGetDraftsLazyQuery>;
-export type GetDraftsQueryResult = Apollo.QueryResult<GetDraftsQuery, GetDraftsQueryVariables>;
-export const GetDraftDocument = gql`
-    query GetDraft($draftId: String!) {
-  getDraft(id: $draftId) {
-    ...draft
+export type GetOrgMemberQueryHookResult = ReturnType<typeof useGetOrgMemberQuery>;
+export type GetOrgMemberLazyQueryHookResult = ReturnType<typeof useGetOrgMemberLazyQuery>;
+export type GetOrgMemberQueryResult = Apollo.QueryResult<GetOrgMemberQuery, GetOrgMemberQueryVariables>;
+export const AddMemberDocument = gql`
+    mutation addMember($data: AddMemberInputDto!) {
+  addMember(data: $data) {
+    ...Member
   }
 }
-    ${DraftFragmentDoc}`;
+    ${MemberFragmentDoc}`;
+export type AddMemberMutationFn = Apollo.MutationFunction<AddMemberMutation, AddMemberMutationVariables>;
 
 /**
- * __useGetDraftQuery__
+ * __useAddMemberMutation__
  *
- * To run a query within a React component, call `useGetDraftQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetDraftQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a mutation, you first call `useAddMemberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddMemberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addMemberMutation, { data, loading, error }] = useAddMemberMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddMemberMutation(baseOptions?: Apollo.MutationHookOptions<AddMemberMutation, AddMemberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddMemberMutation, AddMemberMutationVariables>(AddMemberDocument, options);
+      }
+export type AddMemberMutationHookResult = ReturnType<typeof useAddMemberMutation>;
+export type AddMemberMutationResult = Apollo.MutationResult<AddMemberMutation>;
+export type AddMemberMutationOptions = Apollo.BaseMutationOptions<AddMemberMutation, AddMemberMutationVariables>;
+export const GetPackagesDocument = gql`
+    query getPackages {
+  getPackages {
+    packages {
+      ...Package
+    }
+  }
+}
+    ${PackageFragmentDoc}`;
+
+/**
+ * __useGetPackagesQuery__
+ *
+ * To run a query within a React component, call `useGetPackagesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPackagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetDraftQuery({
+ * const { data, loading, error } = useGetPackagesQuery({
  *   variables: {
- *      draftId: // value for 'draftId'
  *   },
  * });
  */
-export function useGetDraftQuery(baseOptions: Apollo.QueryHookOptions<GetDraftQuery, GetDraftQueryVariables>) {
+export function useGetPackagesQuery(baseOptions?: Apollo.QueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetDraftQuery, GetDraftQueryVariables>(GetDraftDocument, options);
+        return Apollo.useQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
       }
-export function useGetDraftLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDraftQuery, GetDraftQueryVariables>) {
+export function useGetPackagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetDraftQuery, GetDraftQueryVariables>(GetDraftDocument, options);
+          return Apollo.useLazyQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
         }
-export type GetDraftQueryHookResult = ReturnType<typeof useGetDraftQuery>;
-export type GetDraftLazyQueryHookResult = ReturnType<typeof useGetDraftLazyQuery>;
-export type GetDraftQueryResult = Apollo.QueryResult<GetDraftQuery, GetDraftQueryVariables>;
-export const AddSiteDocument = gql`
-    mutation addSite($draftId: String!, $data: SiteInput!) {
-  addSite(draftId: $draftId, data: $data) {
-    ...draft
+export type GetPackagesQueryHookResult = ReturnType<typeof useGetPackagesQuery>;
+export type GetPackagesLazyQueryHookResult = ReturnType<typeof useGetPackagesLazyQuery>;
+export type GetPackagesQueryResult = Apollo.QueryResult<GetPackagesQuery, GetPackagesQueryVariables>;
+export const GetPackageDocument = gql`
+    query getPackage($packageId: String!) {
+  getPackage(packageId: $packageId) {
+    ...Package
   }
 }
-    ${DraftFragmentDoc}`;
-export type AddSiteMutationFn = Apollo.MutationFunction<AddSiteMutation, AddSiteMutationVariables>;
+    ${PackageFragmentDoc}`;
 
 /**
- * __useAddSiteMutation__
+ * __useGetPackageQuery__
  *
- * To run a mutation, you first call `useAddSiteMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddSiteMutation` returns a tuple that includes:
+ * To run a query within a React component, call `useGetPackageQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPackageQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPackageQuery({
+ *   variables: {
+ *      packageId: // value for 'packageId'
+ *   },
+ * });
+ */
+export function useGetPackageQuery(baseOptions: Apollo.QueryHookOptions<GetPackageQuery, GetPackageQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPackageQuery, GetPackageQueryVariables>(GetPackageDocument, options);
+      }
+export function useGetPackageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPackageQuery, GetPackageQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPackageQuery, GetPackageQueryVariables>(GetPackageDocument, options);
+        }
+export type GetPackageQueryHookResult = ReturnType<typeof useGetPackageQuery>;
+export type GetPackageLazyQueryHookResult = ReturnType<typeof useGetPackageLazyQuery>;
+export type GetPackageQueryResult = Apollo.QueryResult<GetPackageQuery, GetPackageQueryVariables>;
+export const AddPackageDocument = gql`
+    mutation addPackage($data: AddPackageInputDto!) {
+  addPackage(data: $data) {
+    ...Package
+  }
+}
+    ${PackageFragmentDoc}`;
+export type AddPackageMutationFn = Apollo.MutationFunction<AddPackageMutation, AddPackageMutationVariables>;
+
+/**
+ * __useAddPackageMutation__
+ *
+ * To run a mutation, you first call `useAddPackageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddPackageMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [addSiteMutation, { data, loading, error }] = useAddSiteMutation({
+ * const [addPackageMutation, { data, loading, error }] = useAddPackageMutation({
  *   variables: {
- *      draftId: // value for 'draftId'
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useAddSiteMutation(baseOptions?: Apollo.MutationHookOptions<AddSiteMutation, AddSiteMutationVariables>) {
+export function useAddPackageMutation(baseOptions?: Apollo.MutationHookOptions<AddPackageMutation, AddPackageMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddSiteMutation, AddSiteMutationVariables>(AddSiteDocument, options);
+        return Apollo.useMutation<AddPackageMutation, AddPackageMutationVariables>(AddPackageDocument, options);
       }
-export type AddSiteMutationHookResult = ReturnType<typeof useAddSiteMutation>;
-export type AddSiteMutationResult = Apollo.MutationResult<AddSiteMutation>;
-export type AddSiteMutationOptions = Apollo.BaseMutationOptions<AddSiteMutation, AddSiteMutationVariables>;
-export const UpdateSiteDocument = gql`
-    mutation UpdateSite($draftId: String!, $siteId: String!, $data: SiteInput!) {
-  updateSite(draftId: $draftId, siteId: $siteId, data: $data) {
-    ...draft
-  }
-}
-    ${DraftFragmentDoc}`;
-export type UpdateSiteMutationFn = Apollo.MutationFunction<UpdateSiteMutation, UpdateSiteMutationVariables>;
-
-/**
- * __useUpdateSiteMutation__
- *
- * To run a mutation, you first call `useUpdateSiteMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateSiteMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateSiteMutation, { data, loading, error }] = useUpdateSiteMutation({
- *   variables: {
- *      draftId: // value for 'draftId'
- *      siteId: // value for 'siteId'
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useUpdateSiteMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSiteMutation, UpdateSiteMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateSiteMutation, UpdateSiteMutationVariables>(UpdateSiteDocument, options);
-      }
-export type UpdateSiteMutationHookResult = ReturnType<typeof useUpdateSiteMutation>;
-export type UpdateSiteMutationResult = Apollo.MutationResult<UpdateSiteMutation>;
-export type UpdateSiteMutationOptions = Apollo.BaseMutationOptions<UpdateSiteMutation, UpdateSiteMutationVariables>;
-export const UpdateLocationDocument = gql`
-    mutation UpdateLocation($draftId: String!, $locationId: String!, $data: LocationInput!) {
-  updateLocation(draftId: $draftId, locationId: $locationId, data: $data) {
-    ...location
-  }
-}
-    ${LocationFragmentDoc}`;
-export type UpdateLocationMutationFn = Apollo.MutationFunction<UpdateLocationMutation, UpdateLocationMutationVariables>;
-
-/**
- * __useUpdateLocationMutation__
- *
- * To run a mutation, you first call `useUpdateLocationMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateLocationMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateLocationMutation, { data, loading, error }] = useUpdateLocationMutation({
- *   variables: {
- *      draftId: // value for 'draftId'
- *      locationId: // value for 'locationId'
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useUpdateLocationMutation(baseOptions?: Apollo.MutationHookOptions<UpdateLocationMutation, UpdateLocationMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateLocationMutation, UpdateLocationMutationVariables>(UpdateLocationDocument, options);
-      }
-export type UpdateLocationMutationHookResult = ReturnType<typeof useUpdateLocationMutation>;
-export type UpdateLocationMutationResult = Apollo.MutationResult<UpdateLocationMutation>;
-export type UpdateLocationMutationOptions = Apollo.BaseMutationOptions<UpdateLocationMutation, UpdateLocationMutationVariables>;
-export const DeleteDraftDocument = gql`
-    mutation DeleteDraft($draftId: String!) {
-  deleteDraft(id: $draftId) {
-    id
+export type AddPackageMutationHookResult = ReturnType<typeof useAddPackageMutation>;
+export type AddPackageMutationResult = Apollo.MutationResult<AddPackageMutation>;
+export type AddPackageMutationOptions = Apollo.BaseMutationOptions<AddPackageMutation, AddPackageMutationVariables>;
+export const DeletePacakgeDocument = gql`
+    mutation deletePacakge($packageId: String!) {
+  deletePackage(packageId: $packageId) {
+    uuid
   }
 }
     `;
-export type DeleteDraftMutationFn = Apollo.MutationFunction<DeleteDraftMutation, DeleteDraftMutationVariables>;
+export type DeletePacakgeMutationFn = Apollo.MutationFunction<DeletePacakgeMutation, DeletePacakgeMutationVariables>;
 
 /**
- * __useDeleteDraftMutation__
+ * __useDeletePacakgeMutation__
  *
- * To run a mutation, you first call `useDeleteDraftMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteDraftMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useDeletePacakgeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeletePacakgeMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [deleteDraftMutation, { data, loading, error }] = useDeleteDraftMutation({
+ * const [deletePacakgeMutation, { data, loading, error }] = useDeletePacakgeMutation({
  *   variables: {
- *      draftId: // value for 'draftId'
+ *      packageId: // value for 'packageId'
  *   },
  * });
  */
-export function useDeleteDraftMutation(baseOptions?: Apollo.MutationHookOptions<DeleteDraftMutation, DeleteDraftMutationVariables>) {
+export function useDeletePacakgeMutation(baseOptions?: Apollo.MutationHookOptions<DeletePacakgeMutation, DeletePacakgeMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteDraftMutation, DeleteDraftMutationVariables>(DeleteDraftDocument, options);
+        return Apollo.useMutation<DeletePacakgeMutation, DeletePacakgeMutationVariables>(DeletePacakgeDocument, options);
       }
-export type DeleteDraftMutationHookResult = ReturnType<typeof useDeleteDraftMutation>;
-export type DeleteDraftMutationResult = Apollo.MutationResult<DeleteDraftMutation>;
-export type DeleteDraftMutationOptions = Apollo.BaseMutationOptions<DeleteDraftMutation, DeleteDraftMutationVariables>;
-export const DeleteSiteDocument = gql`
-    mutation DeleteSite($siteId: String!) {
-  deleteSite(id: $siteId) {
-    id
+export type DeletePacakgeMutationHookResult = ReturnType<typeof useDeletePacakgeMutation>;
+export type DeletePacakgeMutationResult = Apollo.MutationResult<DeletePacakgeMutation>;
+export type DeletePacakgeMutationOptions = Apollo.BaseMutationOptions<DeletePacakgeMutation, DeletePacakgeMutationVariables>;
+export const UpdatePacakgeDocument = gql`
+    mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
+  updatePackage(packageId: $packageId, data: $data) {
+    ...Package
   }
 }
-    `;
-export type DeleteSiteMutationFn = Apollo.MutationFunction<DeleteSiteMutation, DeleteSiteMutationVariables>;
+    ${PackageFragmentDoc}`;
+export type UpdatePacakgeMutationFn = Apollo.MutationFunction<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
 
 /**
- * __useDeleteSiteMutation__
+ * __useUpdatePacakgeMutation__
  *
- * To run a mutation, you first call `useDeleteSiteMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteSiteMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdatePacakgeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdatePacakgeMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [deleteSiteMutation, { data, loading, error }] = useDeleteSiteMutation({
+ * const [updatePacakgeMutation, { data, loading, error }] = useUpdatePacakgeMutation({
  *   variables: {
- *      siteId: // value for 'siteId'
- *   },
- * });
- */
-export function useDeleteSiteMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSiteMutation, DeleteSiteMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteSiteMutation, DeleteSiteMutationVariables>(DeleteSiteDocument, options);
-      }
-export type DeleteSiteMutationHookResult = ReturnType<typeof useDeleteSiteMutation>;
-export type DeleteSiteMutationResult = Apollo.MutationResult<DeleteSiteMutation>;
-export type DeleteSiteMutationOptions = Apollo.BaseMutationOptions<DeleteSiteMutation, DeleteSiteMutationVariables>;
-export const DeleteLinkDocument = gql`
-    mutation DeleteLink($lastSaved: Float!, $draftId: String!, $linkId: String!) {
-  deleteLink(lastSaved: $lastSaved, draftId: $draftId, linkId: $linkId) {
-    id
-  }
-}
-    `;
-export type DeleteLinkMutationFn = Apollo.MutationFunction<DeleteLinkMutation, DeleteLinkMutationVariables>;
-
-/**
- * __useDeleteLinkMutation__
- *
- * To run a mutation, you first call `useDeleteLinkMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteLinkMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteLinkMutation, { data, loading, error }] = useDeleteLinkMutation({
- *   variables: {
- *      lastSaved: // value for 'lastSaved'
- *      draftId: // value for 'draftId'
- *      linkId: // value for 'linkId'
- *   },
- * });
- */
-export function useDeleteLinkMutation(baseOptions?: Apollo.MutationHookOptions<DeleteLinkMutation, DeleteLinkMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteLinkMutation, DeleteLinkMutationVariables>(DeleteLinkDocument, options);
-      }
-export type DeleteLinkMutationHookResult = ReturnType<typeof useDeleteLinkMutation>;
-export type DeleteLinkMutationResult = Apollo.MutationResult<DeleteLinkMutation>;
-export type DeleteLinkMutationOptions = Apollo.BaseMutationOptions<DeleteLinkMutation, DeleteLinkMutationVariables>;
-export const AddLinkDocument = gql`
-    mutation AddLink($data: LinkInput!, $draftId: String!) {
-  addLink(data: $data, draftId: $draftId) {
-    ...draft
-  }
-}
-    ${DraftFragmentDoc}`;
-export type AddLinkMutationFn = Apollo.MutationFunction<AddLinkMutation, AddLinkMutationVariables>;
-
-/**
- * __useAddLinkMutation__
- *
- * To run a mutation, you first call `useAddLinkMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddLinkMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [addLinkMutation, { data, loading, error }] = useAddLinkMutation({
- *   variables: {
- *      data: // value for 'data'
- *      draftId: // value for 'draftId'
- *   },
- * });
- */
-export function useAddLinkMutation(baseOptions?: Apollo.MutationHookOptions<AddLinkMutation, AddLinkMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddLinkMutation, AddLinkMutationVariables>(AddLinkDocument, options);
-      }
-export type AddLinkMutationHookResult = ReturnType<typeof useAddLinkMutation>;
-export type AddLinkMutationResult = Apollo.MutationResult<AddLinkMutation>;
-export type AddLinkMutationOptions = Apollo.BaseMutationOptions<AddLinkMutation, AddLinkMutationVariables>;
-export const CoverageDocument = gql`
-    mutation Coverage($siteId: String!, $data: CoverageInput!) {
-  coverage(data: $data, siteId: $siteId) {
-    ...site
-  }
-}
-    ${SiteFragmentDoc}`;
-export type CoverageMutationFn = Apollo.MutationFunction<CoverageMutation, CoverageMutationVariables>;
-
-/**
- * __useCoverageMutation__
- *
- * To run a mutation, you first call `useCoverageMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCoverageMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [coverageMutation, { data, loading, error }] = useCoverageMutation({
- *   variables: {
- *      siteId: // value for 'siteId'
+ *      packageId: // value for 'packageId'
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useCoverageMutation(baseOptions?: Apollo.MutationHookOptions<CoverageMutation, CoverageMutationVariables>) {
+export function useUpdatePacakgeMutation(baseOptions?: Apollo.MutationHookOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CoverageMutation, CoverageMutationVariables>(CoverageDocument, options);
+        return Apollo.useMutation<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>(UpdatePacakgeDocument, options);
       }
-export type CoverageMutationHookResult = ReturnType<typeof useCoverageMutation>;
-export type CoverageMutationResult = Apollo.MutationResult<CoverageMutation>;
-export type CoverageMutationOptions = Apollo.BaseMutationOptions<CoverageMutation, CoverageMutationVariables>;
+export type UpdatePacakgeMutationHookResult = ReturnType<typeof useUpdatePacakgeMutation>;
+export type UpdatePacakgeMutationResult = Apollo.MutationResult<UpdatePacakgeMutation>;
+export type UpdatePacakgeMutationOptions = Apollo.BaseMutationOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
+export const GetSimpoolStatsDocument = gql`
+    query getSimpoolStats($type: String!) {
+  getSimPoolStats(type: $type) {
+    total
+    available
+    consumed
+    failed
+    physical
+    esim
+  }
+}
+    `;
+
+/**
+ * __useGetSimpoolStatsQuery__
+ *
+ * To run a query within a React component, call `useGetSimpoolStatsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimpoolStatsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimpoolStatsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useGetSimpoolStatsQuery(baseOptions: Apollo.QueryHookOptions<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>(GetSimpoolStatsDocument, options);
+      }
+export function useGetSimpoolStatsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>(GetSimpoolStatsDocument, options);
+        }
+export type GetSimpoolStatsQueryHookResult = ReturnType<typeof useGetSimpoolStatsQuery>;
+export type GetSimpoolStatsLazyQueryHookResult = ReturnType<typeof useGetSimpoolStatsLazyQuery>;
+export type GetSimpoolStatsQueryResult = Apollo.QueryResult<GetSimpoolStatsQuery, GetSimpoolStatsQueryVariables>;
+export const UploadSimsDocument = gql`
+    mutation uploadSims($data: UploadSimsInputDto!) {
+  uploadSims(data: $data) {
+    iccid
+  }
+}
+    `;
+export type UploadSimsMutationFn = Apollo.MutationFunction<UploadSimsMutation, UploadSimsMutationVariables>;
+
+/**
+ * __useUploadSimsMutation__
+ *
+ * To run a mutation, you first call `useUploadSimsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUploadSimsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [uploadSimsMutation, { data, loading, error }] = useUploadSimsMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUploadSimsMutation(baseOptions?: Apollo.MutationHookOptions<UploadSimsMutation, UploadSimsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UploadSimsMutation, UploadSimsMutationVariables>(UploadSimsDocument, options);
+      }
+export type UploadSimsMutationHookResult = ReturnType<typeof useUploadSimsMutation>;
+export type UploadSimsMutationResult = Apollo.MutationResult<UploadSimsMutation>;
+export type UploadSimsMutationOptions = Apollo.BaseMutationOptions<UploadSimsMutation, UploadSimsMutationVariables>;
+export const GetSimsDocument = gql`
+    query getSims($type: String!) {
+  getSims(type: $type) {
+    sim {
+      ...SimPool
+    }
+  }
+}
+    ${SimPoolFragmentDoc}`;
+
+/**
+ * __useGetSimsQuery__
+ *
+ * To run a query within a React component, call `useGetSimsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimsQuery({
+ *   variables: {
+ *      type: // value for 'type'
+ *   },
+ * });
+ */
+export function useGetSimsQuery(baseOptions: Apollo.QueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
+      }
+export function useGetSimsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
+        }
+export type GetSimsQueryHookResult = ReturnType<typeof useGetSimsQuery>;
+export type GetSimsLazyQueryHookResult = ReturnType<typeof useGetSimsLazyQuery>;
+export type GetSimsQueryResult = Apollo.QueryResult<GetSimsQuery, GetSimsQueryVariables>;
+export const AddSubscriberDocument = gql`
+    mutation addSubscriber($data: SubscriberInputDto!) {
+  addSubscriber(data: $data) {
+    ...Subscriber
+  }
+}
+    ${SubscriberFragmentDoc}`;
+export type AddSubscriberMutationFn = Apollo.MutationFunction<AddSubscriberMutation, AddSubscriberMutationVariables>;
+
+/**
+ * __useAddSubscriberMutation__
+ *
+ * To run a mutation, you first call `useAddSubscriberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddSubscriberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addSubscriberMutation, { data, loading, error }] = useAddSubscriberMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddSubscriberMutation(baseOptions?: Apollo.MutationHookOptions<AddSubscriberMutation, AddSubscriberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddSubscriberMutation, AddSubscriberMutationVariables>(AddSubscriberDocument, options);
+      }
+export type AddSubscriberMutationHookResult = ReturnType<typeof useAddSubscriberMutation>;
+export type AddSubscriberMutationResult = Apollo.MutationResult<AddSubscriberMutation>;
+export type AddSubscriberMutationOptions = Apollo.BaseMutationOptions<AddSubscriberMutation, AddSubscriberMutationVariables>;
+export const GetSubscriberDocument = gql`
+    query getSubscriber($subscriberId: String!) {
+  getSubscriber(subscriberId: $subscriberId) {
+    ...Subscriber
+  }
+}
+    ${SubscriberFragmentDoc}`;
+
+/**
+ * __useGetSubscriberQuery__
+ *
+ * To run a query within a React component, call `useGetSubscriberQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSubscriberQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSubscriberQuery({
+ *   variables: {
+ *      subscriberId: // value for 'subscriberId'
+ *   },
+ * });
+ */
+export function useGetSubscriberQuery(baseOptions: Apollo.QueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(GetSubscriberDocument, options);
+      }
+export function useGetSubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(GetSubscriberDocument, options);
+        }
+export type GetSubscriberQueryHookResult = ReturnType<typeof useGetSubscriberQuery>;
+export type GetSubscriberLazyQueryHookResult = ReturnType<typeof useGetSubscriberLazyQuery>;
+export type GetSubscriberQueryResult = Apollo.QueryResult<GetSubscriberQuery, GetSubscriberQueryVariables>;
+export const UpdateSubscriberDocument = gql`
+    mutation updateSubscriber($subscriberId: String!, $data: UpdateSubscriberInputDto!) {
+  updateSubscriber(subscriberId: $subscriberId, data: $data) {
+    success
+  }
+}
+    `;
+export type UpdateSubscriberMutationFn = Apollo.MutationFunction<UpdateSubscriberMutation, UpdateSubscriberMutationVariables>;
+
+/**
+ * __useUpdateSubscriberMutation__
+ *
+ * To run a mutation, you first call `useUpdateSubscriberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateSubscriberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateSubscriberMutation, { data, loading, error }] = useUpdateSubscriberMutation({
+ *   variables: {
+ *      subscriberId: // value for 'subscriberId'
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateSubscriberMutation(baseOptions?: Apollo.MutationHookOptions<UpdateSubscriberMutation, UpdateSubscriberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateSubscriberMutation, UpdateSubscriberMutationVariables>(UpdateSubscriberDocument, options);
+      }
+export type UpdateSubscriberMutationHookResult = ReturnType<typeof useUpdateSubscriberMutation>;
+export type UpdateSubscriberMutationResult = Apollo.MutationResult<UpdateSubscriberMutation>;
+export type UpdateSubscriberMutationOptions = Apollo.BaseMutationOptions<UpdateSubscriberMutation, UpdateSubscriberMutationVariables>;
+export const DeleteSubscriberDocument = gql`
+    mutation deleteSubscriber($subscriberId: String!) {
+  deleteSubscriber(subscriberId: $subscriberId) {
+    success
+  }
+}
+    `;
+export type DeleteSubscriberMutationFn = Apollo.MutationFunction<DeleteSubscriberMutation, DeleteSubscriberMutationVariables>;
+
+/**
+ * __useDeleteSubscriberMutation__
+ *
+ * To run a mutation, you first call `useDeleteSubscriberMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteSubscriberMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteSubscriberMutation, { data, loading, error }] = useDeleteSubscriberMutation({
+ *   variables: {
+ *      subscriberId: // value for 'subscriberId'
+ *   },
+ * });
+ */
+export function useDeleteSubscriberMutation(baseOptions?: Apollo.MutationHookOptions<DeleteSubscriberMutation, DeleteSubscriberMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteSubscriberMutation, DeleteSubscriberMutationVariables>(DeleteSubscriberDocument, options);
+      }
+export type DeleteSubscriberMutationHookResult = ReturnType<typeof useDeleteSubscriberMutation>;
+export type DeleteSubscriberMutationResult = Apollo.MutationResult<DeleteSubscriberMutation>;
+export type DeleteSubscriberMutationOptions = Apollo.BaseMutationOptions<DeleteSubscriberMutation, DeleteSubscriberMutationVariables>;
+export const GetSubscribersByNetworkDocument = gql`
+    query getSubscribersByNetwork($networkId: String!) {
+  getSubscribersByNetwork(networkId: $networkId) {
+    subscribers {
+      ...Subscriber
+    }
+  }
+}
+    ${SubscriberFragmentDoc}`;
+
+/**
+ * __useGetSubscribersByNetworkQuery__
+ *
+ * To run a query within a React component, call `useGetSubscribersByNetworkQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSubscribersByNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSubscribersByNetworkQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetSubscribersByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>(GetSubscribersByNetworkDocument, options);
+      }
+export function useGetSubscribersByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>(GetSubscribersByNetworkDocument, options);
+        }
+export type GetSubscribersByNetworkQueryHookResult = ReturnType<typeof useGetSubscribersByNetworkQuery>;
+export type GetSubscribersByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscribersByNetworkLazyQuery>;
+export type GetSubscribersByNetworkQueryResult = Apollo.QueryResult<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>;
+export const GetSubscriberMetricsByNetworkDocument = gql`
+    query getSubscriberMetricsByNetwork($networkId: String!) {
+  getSubscriberMetricsByNetwork(networkId: $networkId) {
+    total
+    active
+    inactive
+    terminated
+  }
+}
+    `;
+
+/**
+ * __useGetSubscriberMetricsByNetworkQuery__
+ *
+ * To run a query within a React component, call `useGetSubscriberMetricsByNetworkQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSubscriberMetricsByNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSubscriberMetricsByNetworkQuery({
+ *   variables: {
+ *      networkId: // value for 'networkId'
+ *   },
+ * });
+ */
+export function useGetSubscriberMetricsByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>(GetSubscriberMetricsByNetworkDocument, options);
+      }
+export function useGetSubscriberMetricsByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>(GetSubscriberMetricsByNetworkDocument, options);
+        }
+export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkQuery>;
+export type GetSubscriberMetricsByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkLazyQuery>;
+export type GetSubscriberMetricsByNetworkQueryResult = Apollo.QueryResult<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>;

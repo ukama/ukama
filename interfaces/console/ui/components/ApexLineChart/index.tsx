@@ -1,7 +1,7 @@
-import LineChart from './LineChart';
-import { GraphTitleWrapper } from '..';
-import { makeStyles } from '@mui/styles';
+import GraphTitleWrapper from '@/ui/molecules/GraphTitleWrapper';
 import { Box, Theme } from '@mui/material';
+import { makeStyles } from '@mui/styles';
+import LineChart from './LineChart';
 
 const TIME_RANGE_IN_MILLISECONDS = 100;
 
