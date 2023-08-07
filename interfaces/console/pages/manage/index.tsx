@@ -341,7 +341,7 @@ const Manage = () => {
     addMember({
       variables: {
         data: {
-          email: member.email as string,
+          userId: '',
           role: member.role as string,
         },
       },

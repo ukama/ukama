@@ -1,9 +1,9 @@
 import { BASIC_MENU_ACTIONS, NODE_IMAGES } from '@/constants';
-import { Node_Type } from '@/generated';
+
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import UsersIcon from '@mui/icons-material/PeopleAlt';
 import { Card, Divider, Grid, Typography, styled } from '@mui/material';
 import React from 'react';
-import { LoadingWrapper } from '..';
 import OptionsPopover from '../../molecules/OptionsPopover';
 
 const CpuIcon = React.lazy(() =>
@@ -35,7 +35,7 @@ const IconStyle = {
 
 type NodeCardProps = {
   id: string;
-  type: Node_Type;
+  type: string;
   title: string;
   users?: number;
   loading?: boolean;
@@ -112,7 +112,7 @@ const NodeCard = ({
 
           <Grid item xs={12} minHeight={'92px'} sx={{ ...IconStyle, py: 1 }}>
             <img
-              src={NODE_IMAGES[type]}
+              src={NODE_IMAGES[type as 'hnode' | 'anode' | 'tnode']}
               alt="node-img"
               style={{ maxWidth: '180px', maxHeight: '78px' }}
             />

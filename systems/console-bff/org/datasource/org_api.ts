@@ -65,8 +65,11 @@ class OrgApi extends RESTDataSource {
     }).then(res => dtoToOrgResDto(res));
   };
 
-  addMember = async (data: AddMemberInputDto): Promise<MemberObj> => {
-    return this.post(`/${VERSION}/orgs/${data.orgName}/members`, {
+  addMember = async (
+    data: AddMemberInputDto,
+    orgName: string
+  ): Promise<MemberObj> => {
+    return this.post(`/${VERSION}/orgs/${orgName}/members`, {
       body: { user_uuid: data.userId, role: data.role },
     }).then(res => dtoToMemberResDto(res));
   };

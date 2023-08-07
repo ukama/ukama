@@ -1664,11 +1664,12 @@ export {
 };
 
 const NODE_IMAGES = {
-  TOWER:
+  tnode:
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png',
-  AMPLIFIER:
+  anode:
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_amplifier_node.png',
-  HOME: 'https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png',
+  hnode:
+    'https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png',
 };
 
 const BILLING_PLANS = [

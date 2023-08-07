@@ -1,13 +1,12 @@
-import { Node_Type } from '@/generated';
 import colors from '@/styles/theme/colors';
 import { Chip, Grid, Link, Paper, Stack, Typography } from '@mui/material';
-import { LoadingWrapper } from '..';
 import DeviceModalView from '../DeviceModalView';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 
 interface INodeDetailsCard {
   loading: boolean;
   nodeTitle: string;
-  nodeType?: Node_Type;
+  nodeType?: string;
   isUpdateAvailable: boolean;
   handleUpdateNode: Function;
   getNodeUpdateInfos: Function;
@@ -18,7 +17,7 @@ const NodeDetailsCard = ({
   nodeTitle,
   isUpdateAvailable,
   getNodeUpdateInfos,
-  nodeType = Node_Type.Home,
+  nodeType = "hnode",
 }: INodeDetailsCard) => {
   return (
     <LoadingWrapper

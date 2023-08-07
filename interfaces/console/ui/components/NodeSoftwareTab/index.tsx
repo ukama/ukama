@@ -1,6 +1,7 @@
 import { NodeAppsColumns } from '@/constants/tableColumns';
-import { NodeAppResponse } from '@/generated';
 import { colors } from '@/styles/theme';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
+import SimpleDataTable from '@/ui/molecules/SimpleDataTable';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
   Button,
@@ -12,10 +13,9 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { LoadingWrapper, SimpleDataTable } from '..';
 interface INodeRadioTab {
   loading: boolean;
-  nodeApps: NodeAppResponse[] | undefined;
+  nodeApps: any;
   NodeLogs: any;
   getNodeAppDetails: Function;
 }
@@ -50,59 +50,51 @@ const NodeSoftwareTab = ({
           Node Apps
         </Typography>
         <Grid container spacing={3}>
-          {nodeApps?.map(
-            ({ id, title, cpu, memory, version }: NodeAppResponse) => (
-              <Grid item xs={12} md={6} lg={3} key={id}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Stack
-                      spacing={1}
-                      direction="row"
-                      sx={{ alignItems: 'center' }}
-                    >
-                      <CheckCircleIcon
-                        htmlColor={colors.green}
-                        fontSize="medium"
-                      />
-                      <Typography variant="h5" textTransform={'capitalize'}>
-                        {title}
-                      </Typography>
-                    </Stack>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
-                    >
-                      Version: {version}
+          {nodeApps?.map(({ id, title, cpu, memory, version }: any) => (
+            <Grid item xs={12} md={6} lg={3} key={id}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Stack
+                    spacing={1}
+                    direction="row"
+                    sx={{ alignItems: 'center' }}
+                  >
+                    <CheckCircleIcon
+                      htmlColor={colors.green}
+                      fontSize="medium"
+                    />
+                    <Typography variant="h5" textTransform={'capitalize'}>
+                      {title}
                     </Typography>
-                    <Stack direction="row" spacing={1 / 2} mt={'12px'}>
-                      <Typography variant="body2">CPU:</Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: colors.darkBlue }}
-                      >
-                        {parseFloat(cpu).toFixed(2)} %
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1 / 2}>
-                      <Typography variant="body2">MEMORY:</Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: colors.darkBlue }}
-                      >
-                        {parseFloat(memory).toFixed(2)} KB
-                      </Typography>
-                    </Stack>
-                  </CardContent>
-                  <CardActions sx={{ ml: 1 }}>
-                    <Button onClick={() => getNodeAppDetails(id)}>
-                      VIEW MORE
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ),
-          )}
+                  </Stack>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Version: {version}
+                  </Typography>
+                  <Stack direction="row" spacing={1 / 2} mt={'12px'}>
+                    <Typography variant="body2">CPU:</Typography>
+                    <Typography variant="body2" sx={{ color: colors.darkBlue }}>
+                      {parseFloat(cpu).toFixed(2)} %
+                    </Typography>
+                  </Stack>
+                  <Stack direction="row" spacing={1 / 2}>
+                    <Typography variant="body2">MEMORY:</Typography>
+                    <Typography variant="body2" sx={{ color: colors.darkBlue }}>
+                      {parseFloat(memory).toFixed(2)} KB
+                    </Typography>
+                  </Stack>
+                </CardContent>
+                <CardActions sx={{ ml: 1 }}>
+                  <Button onClick={() => getNodeAppDetails(id)}>
+                    VIEW MORE
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
       </Paper>
     </LoadingWrapper>

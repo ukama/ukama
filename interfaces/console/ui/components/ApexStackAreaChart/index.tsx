@@ -1,7 +1,7 @@
+import GraphTitleWrapper from '@/ui/molecules/GraphTitleWrapper';
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import React from 'react';
-import { GraphTitleWrapper } from '..';
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 const TIME_RANGE_IN_MILLISECONDS = 100;

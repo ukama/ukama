@@ -1,12 +1,11 @@
 import { NODE_IMAGES } from '@/constants';
-import { Node_Type } from '@/generated';
 import { Box } from '@mui/material';
 
 interface IDeviceModalView {
-  nodeType: Node_Type | undefined;
+  nodeType: string | undefined;
 }
 
-const DeviceModalView = ({ nodeType = Node_Type.Home }: IDeviceModalView) => {
+const DeviceModalView = ({ nodeType = 'hnode' }: IDeviceModalView) => {
   return (
     <Box
       component={'div'}
@@ -19,7 +18,7 @@ const DeviceModalView = ({ nodeType = Node_Type.Home }: IDeviceModalView) => {
       }}
     >
       <img
-        src={NODE_IMAGES[nodeType]}
+        src={NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode']}
         alt="node-img"
         style={{ maxWidth: '100%', maxHeight: '500px' }}
       />

@@ -10,7 +10,7 @@ export class AddMemberResolver {
     @Arg("data") data: AddMemberInputDto,
     @Ctx() ctx: Context
   ): Promise<MemberObj> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.addMember(data);
+    const { dataSources, headers } = ctx;
+    return dataSources.dataSource.addMember(data, headers.orgName);
   }
 }

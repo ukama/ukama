@@ -7,9 +7,7 @@ import { OrgsResDto } from "./types";
 export class GetOrgsResolver {
   @Query(() => OrgsResDto)
   async getOrgs(@Ctx() ctx: Context): Promise<OrgsResDto> {
-    const { dataSources } = ctx;
-    return dataSources.dataSource.getOrgs(
-      "08a594d7-a292-43cf-9652-54785b03f48f"
-    );
+    const { dataSources, headers } = ctx;
+    return dataSources.dataSource.getOrgs(headers.userId);
   }
 }

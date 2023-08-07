@@ -1,8 +1,8 @@
 import '@/i18n/i18n';
 import { useEffect, useState } from 'react';
-import { NetworkSetup } from '..';
 import ESimQR from '../AddUser/ESimQR';
 import Userform from '../AddUser/Userform';
+import NetworkSetup from '../NetworkSetup';
 import withOnBoardingFlowWrapperHOC from '../withOnBoardingFlowWrapperHOC';
 
 interface IOnBoardingFlow {

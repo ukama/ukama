@@ -1,5 +1,6 @@
+import ContainerHeader from '@/ui/molecules/ContainerHeader';
+import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import { Box, Card, Grid, Paper, Stack, Typography } from '@mui/material';
-import { ContainerHeader, LoadingWrapper } from '..';
 
 type ISchematicsProps = {
   schematicsSpecsData?: any;

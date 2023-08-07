@@ -13,7 +13,7 @@ import {
   useUpdateDraftNameMutation,
   useUpdateLocationMutation,
   useUpdateSiteMutation,
-} from '@/generated';
+} from '@/generated/planning';
 import styles from '@/styles/Site_Planning.module.css';
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
@@ -163,11 +163,11 @@ const Page = () => {
     onCompleted: (data) => {
       if (data.getDrafts.length > 0) {
         if (!selectedDraft) {
-          setSelectedDraft(data.getDrafts[0]);
+          // setSelectedDraft(data.getDrafts[0]);
         } else {
-          setSelectedDraft(
-            data.getDrafts.find((d) => d.id === selectedDraft?.id),
-          );
+          // setSelectedDraft(
+          //   data.getDrafts.find((d) => d.id === selectedDraft?.id),
+          // );
         }
       } else {
         setSelectedDraft(undefined);
@@ -180,7 +180,7 @@ const Page = () => {
 
   const [addDraftCall, { loading: addDraftLoading }] = useAddDraftMutation({
     onCompleted: (data) => {
-      setSelectedDraft(data.addDraft);
+      // setSelectedDraft(data.addDraft);
       refetchDrafts();
       showAlert(
         'add-drafts-success',
@@ -448,7 +448,7 @@ const Page = () => {
 
   const handleDraftSelected = (draftId: string) => {
     const d = getDraftsData?.getDrafts.find(({ id }) => id === draftId);
-    setSelectedDraft(d);
+    // setSelectedDraft(d);
   };
 
   const handleDraftUpdated = (id: string, draft: string) => {

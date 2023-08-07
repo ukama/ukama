@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import { makeStyles } from '@mui/styles';
-import { ApexLineChart } from '../..';
+import ApexLineChart from '../../ApexLineChart';
 const useStyles = makeStyles(() => ({
   basicDialogHeaderStyle: {
     padding: '0px 0px 10px 0px',

@@ -158,9 +158,6 @@ export class AddOrgInputDto {
 @InputType()
 export class AddMemberInputDto {
   @Field()
-  orgName: string;
-
-  @Field()
   userId: string;
 
   @Field()

@@ -1,4 +1,3 @@
-import { GetUsersDto } from '@/generated';
 import { colors } from '@/styles/theme';
 import { formatBytesToMB } from '@/utils';
 import EditIcon from '@mui/icons-material/Edit';
@@ -14,9 +13,9 @@ import LoadingWrapper from '../../molecules/LoadingWrapper';
 
 type UserCardProps = {
   loading: boolean;
-  user: GetUsersDto;
+  user: any;
   // eslint-disable-next-line no-unused-vars
-  handleMoreUserdetails: (user: GetUsersDto) => void;
+  handleMoreUserdetails: (user: any) => void;
 };
 
 const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
