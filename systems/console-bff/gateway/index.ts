@@ -1,4 +1,8 @@
-import { ApolloGateway, IntrospectAndCompose } from "@apollo/gateway";
+import {
+  ApolloGateway,
+  IntrospectAndCompose,
+  RemoteGraphQLDataSource,
+} from "@apollo/gateway";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
@@ -15,14 +19,26 @@ import {
   NODE_PORT,
   ORG_PORT,
   PLAYGROUND_URL,
+  USER_PORT,
 } from "../common/configs";
 import { logger } from "../common/logger";
-import { USER_PORT } from "./../common/configs/index";
+import { THeaders } from "../common/types";
+import { parseHeaders } from "../common/utils";
 import { configureExpress } from "./configureExpress";
 
 function delay(time: any) {
   return new Promise(resolve => setTimeout(resolve, time));
 }
+let headers: THeaders = {
+  auth: {
+    Authorization: "",
+    Cookie: "",
+  },
+  orgId: "",
+  userId: "",
+  orgName: "",
+};
+
 const app = configureExpress(logger);
 const httpServer = createServer(app);
 
@@ -40,6 +56,23 @@ const loadServers = async () => {
         introspection: "true",
       },
     }),
+    buildService({ name, url }) {
+      return new RemoteGraphQLDataSource({
+        url,
+        willSendRequest({ request }: any) {
+          if (request.http.headers.get("introspection") !== "true") {
+            request.http.headers.set(
+              "x-session-token",
+              headers.auth.Authorization
+            );
+            request.http.headers.set("cookie", headers.auth.Cookie);
+            request.http.headers.set("orgId", headers.orgId);
+            request.http.headers.set("userId", headers.userId);
+            request.http.headers.set("orgName", headers.orgName);
+          }
+        },
+      });
+    },
   });
   return gateway;
 };
@@ -52,6 +85,11 @@ const startServer = async () => {
     plugins: [
       ApolloServerPluginInlineTrace({}),
       ApolloServerPluginDrainHttpServer({ httpServer }),
+      {
+        async requestDidStart(requestContext: any) {
+          headers = parseHeaders(requestContext?.request.http.headers);
+        },
+      },
     ],
   });
 

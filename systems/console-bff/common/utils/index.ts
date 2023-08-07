@@ -14,37 +14,50 @@ const parseHeaders = (reqHeader: any): THeaders => {
     userId: "",
     orgName: "",
   };
-
-  if (reqHeader["introspection"] === "true") return headers;
-  if (reqHeader["org-id"]) {
-    headers.orgId = reqHeader["org-id"] as string;
+  if (reqHeader.get("introspection") === "true") return headers;
+  if (reqHeader.get("org-id")) {
+    headers.orgId = reqHeader.get("org-id") as string;
   } else {
     throw new HTTP401Error(Messages.HEADER_ERR_ORG);
   }
-  if (reqHeader["user-id"]) {
-    headers.userId = reqHeader["user-id"] as string;
+  if (reqHeader.get("user-id")) {
+    headers.userId = reqHeader.get("user-id") as string;
   } else {
     throw new HTTP401Error(Messages.HEADER_ERR_USER);
   }
-  if (reqHeader["org-name"]) {
-    headers.orgName = reqHeader["org-name"] as string;
+  if (reqHeader.get("org-name")) {
+    headers.orgName = reqHeader.get("org-name") as string;
   } else {
     throw new HTTP401Error(Messages.HEADER_ERR_ORG_NAME);
   }
 
-  if (
-    reqHeader["x-session-token"] ||
-    (reqHeader["cookie"] && reqHeader["cookie"]["ukama_session"])
-  ) {
+  if (reqHeader.get("x-session-token") || reqHeader.get("cookie")) {
     if (reqHeader["x-session-token"]) {
       headers.auth.Authorization = reqHeader["x-session-token"] as string;
     } else {
-      headers.auth.Cookie = `ukama_session=${reqHeader["cookie"]["ukama_session"]}`;
+      const cookie: string = reqHeader.get("cookie");
+      const cookies = cookie.split(";");
+      const session: string =
+        cookies.find(item => (item.includes("ukama_session") ? item : "")) ||
+        "";
+      headers.auth.Cookie = session;
     }
   } else {
     throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
   }
   return headers;
+};
+
+const parseGatewayHeaders = (reqHeader: any): THeaders => {
+  return {
+    auth: {
+      Authorization: reqHeader["x-session-token"] || "",
+      Cookie: reqHeader["cookie"] || "",
+    },
+    orgId: reqHeader["orgId"] || "",
+    userId: reqHeader["userId"] || "",
+    orgName: reqHeader["orgName"] || "",
+  };
 };
 
 const getStripeIdByUserId = (uid: string): string => {
@@ -73,5 +86,6 @@ export {
   getPaginatedOutput,
   getStripeIdByUserId,
   getTimestampCount,
+  parseGatewayHeaders,
   parseHeaders,
 };
