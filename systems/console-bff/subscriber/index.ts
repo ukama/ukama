@@ -1,7 +1,7 @@
 import { startStandaloneServer } from "@apollo/server/standalone";
 import "reflect-metadata";
 
-import { parseHeaders } from "../common/utils";
+import { parseGatewayHeaders } from "../common/utils";
 import SubGraphServer from "./../common/apollo";
 import { SUBSCRIBER_PORT } from "./../common/configs";
 import { logger } from "./../common/logger";
@@ -14,7 +14,7 @@ const runServer = async () => {
     context: async ({ req, res }) => {
       const { cache } = server;
       return {
-        headers: parseHeaders(req.headers),
+        headers: parseGatewayHeaders(req.headers),
         dataSources: {
           dataSource: new SubscriberAPI(),
         },
@@ -24,7 +24,7 @@ const runServer = async () => {
   });
 
   logger.info(
-    `🚀 Ukama Node service running at http://localhost:${SUBSCRIBER_PORT}/graphql`
+    `🚀 Ukama Subscriber service running at http://localhost:${SUBSCRIBER_PORT}/graphql`
   );
 };
 

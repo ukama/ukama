@@ -19,6 +19,76 @@ export class AllocateSimInputDto {
   @Field()
   subscriberId: string;
 }
+
+@ObjectType()
+export class SimPackageDto {
+  @Field()
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  description: string;
+
+  @Field()
+  createdAt: string;
+
+  @Field()
+  updatedAt: string;
+}
+
+@ObjectType()
+export class SimDetailsDto {
+  @Field()
+  id: string;
+
+  @Field({ nullable: true })
+  subscriberId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  orgId: string;
+
+  @Field(() => SimPackageDto)
+  Package: SimPackageDto;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  imsi: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  isPhysical: boolean;
+
+  @Field()
+  firstActivatedOn: string;
+
+  @Field()
+  lastActivatedOn: string;
+
+  @Field()
+  activationsCount: number;
+
+  @Field()
+  deactivationsCount: number;
+
+  @Field()
+  allocatedAt: string;
+}
+
 @ObjectType()
 export class SimStatusResDto {
   @Field(() => String, { nullable: true })
@@ -194,74 +264,6 @@ export class SimsAPIResDto {
 export class SimsResDto {
   @Field(() => [SimDto])
   sim: SimDto[];
-}
-@ObjectType()
-export class SimPackageDto {
-  @Field()
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  description: string;
-
-  @Field()
-  createdAt: string;
-
-  @Field()
-  updatedAt: string;
-}
-
-@ObjectType()
-export class SimDetailsDto {
-  @Field()
-  id: string;
-
-  @Field({ nullable: true })
-  subscriberId: string;
-
-  @Field()
-  networkId: string;
-
-  @Field()
-  orgId: string;
-
-  @Field(() => SimPackageDto)
-  Package: SimPackageDto;
-
-  @Field()
-  iccid: string;
-
-  @Field()
-  msisdn: string;
-
-  @Field()
-  imsi: string;
-
-  @Field()
-  type: string;
-
-  @Field()
-  status: string;
-
-  @Field()
-  isPhysical: boolean;
-
-  @Field()
-  firstActivatedOn: string;
-
-  @Field()
-  lastActivatedOn: string;
-
-  @Field()
-  activationsCount: number;
-
-  @Field()
-  deactivationsCount: number;
-
-  @Field()
-  allocatedAt: string;
 }
 
 @ObjectType()

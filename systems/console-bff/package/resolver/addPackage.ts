@@ -1,13 +1,11 @@
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { AddPackageInputDto, PackageDto } from "./types";
 
 @Resolver()
 export class AddPackageResolver {
   @Mutation(() => PackageDto)
-  @UseMiddleware(Authentication)
   async addPackage(
     @Arg("data") data: AddPackageInputDto,
     @Ctx() ctx: Context
