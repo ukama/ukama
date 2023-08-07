@@ -1,6 +1,5 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { logger } from "../../common/logger";
 import { Context } from "../context";
 import { UserResDto } from "./types";
 
@@ -11,8 +10,7 @@ export class GetUserResolver {
     @Arg("userId") userId: string,
     @Ctx() ctx: Context
   ): Promise<UserResDto | null> {
-    const { dataSources, headers } = ctx;
-    logger.info("Headers", headers);
+    const { dataSources } = ctx;
     return dataSources.dataSource.getUser(userId);
   }
 }
