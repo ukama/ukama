@@ -18,12 +18,12 @@ type MemberRegistry struct {
 	host    string
 }
 
-func NewMemberRegistry(networkHost string, timeout time.Duration) *MemberRegistry {
+func NewMemberRegistry(memberHost string, timeout time.Duration) *MemberRegistry {
 	// using same context for three connections
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, memberHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
@@ -33,7 +33,7 @@ func NewMemberRegistry(networkHost string, timeout time.Duration) *MemberRegistr
 		conn:    conn,
 		client:  client,
 		timeout: timeout,
-		host:    networkHost,
+		host:    memberHost,
 	}
 }
 
