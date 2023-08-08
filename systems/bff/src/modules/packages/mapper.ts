@@ -9,7 +9,6 @@ import {
 class PackageMapper implements IPackageMapper {
     dtoToPackagesDto(res: PackagesAPIResDto): PackagesResDto {
         const packages: PackageDto[] = [];
-        console.log("Units", res);
         res.packages.forEach(p => {
             packages.push({
                 to: p.to,

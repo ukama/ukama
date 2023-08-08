@@ -183,14 +183,6 @@ export class AddInvitationInputDto {
 }
 
 @ObjectType()
-export class InvitationDto {
-    @Field({ nullable: true })
-    mailId?: string;
-
-    @Field({ nullable: true })
-    message?: string;
-}
-@ObjectType()
 export class InvitationsByOrgDto {
     @Field()
     name: string;
@@ -211,11 +203,53 @@ export class InvitationsByOrgDto {
     org: string;
 
     @Field()
+    Role: string;
+
+    @Field()
+    id: string;
+}
+
+@ObjectType()
+export class InvitationsResDto {
+    @Field(() => [InvitationsByOrgDto])
+    invitations: InvitationsByOrgDto[];
+}
+
+@ObjectType()
+export class InvitationDto {
+    @Field()
+    name: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    link: string;
+
+    @Field()
+    expires_at: string;
+
+    @Field()
+    status: string;
+
+    @Field()
+    org: string;
+
+    @Field()
+    Role: string;
+
+    @Field()
     id: string;
 }
 
 @ObjectType()
 export class InvitationResDto {
-    @Field(() => [InvitationsByOrgDto])
-    invitations: InvitationsByOrgDto[];
+    @Field(() => InvitationDto)
+    invitation: InvitationDto;
+}
+
+@ObjectType()
+export class AddInvitationResDto {
+    @Field({ nullable: true })
+    id?: string;
 }

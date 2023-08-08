@@ -4,18 +4,18 @@ import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
 import { OrgService } from "../service";
-import { InvitationsResDto } from "../types";
+import { InvitationResDto } from "../types";
 
 @Service()
 @Resolver()
-export class GetInvitationByOrgResolver {
+export class GetInvitationByIdResolver {
     constructor(private readonly orgService: OrgService) {}
-    @Query(() => InvitationsResDto) // Update the return type to InvitationResDto[]
+    @Query(() => InvitationResDto) // Update the return type to InvitationResDto[]
     @UseMiddleware(Authentication)
-    async getInvitationsByOrg(
-        @Arg("orgName") orgName: string,
+    async getInvitationById(
+        @Arg("id") id: string,
         @Ctx() ctx: Context
-    ): Promise<InvitationsResDto> {
-        return this.orgService.getInvitationsByOrg(orgName, parseHeaders(ctx));
+    ): Promise<InvitationResDto> {
+        return this.orgService.getInvitationById(id, parseHeaders(ctx));
     }
 }

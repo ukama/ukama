@@ -3,7 +3,7 @@ import { Service } from "typedi";
 import { parseHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
-import { AddInvitationInputDto, InvitationDto } from "../types";
+import { AddInvitationInputDto, AddInvitationResDto } from "../types";
 import { OrgService } from "./../service";
 
 @Service()
@@ -11,12 +11,12 @@ import { OrgService } from "./../service";
 export class AddInvitationResolver {
     constructor(private readonly OrgService: OrgService) {}
 
-    @Mutation(() => InvitationDto)
+    @Mutation(() => AddInvitationResDto)
     @UseMiddleware(Authentication)
     async addInvitation(
         @Arg("data") data: AddInvitationInputDto,
         @Ctx() ctx: Context
-    ): Promise<InvitationDto> {
+    ): Promise<AddInvitationResDto> {
         return this.OrgService.addInvitation(data, parseHeaders(ctx));
     }
 }
