@@ -22,7 +22,7 @@ var NameRegex = regexp.MustCompile("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")
 
 const BucketNamePrefix = "artifact-hub-"
 const TarGzExtension = ".tar.gz"
-const ChunkIndexExtension = ".caidx"
+const ChunkIndexExtension = ".caibx"
 const cappsRoot = "capps/"
 
 type InvalidInputError struct {

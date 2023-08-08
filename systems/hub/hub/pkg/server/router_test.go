@@ -255,7 +255,7 @@ func TestListApps(t *testing.T) {
 				},
 			},
 			wantBodyContains: []string{CappsPath + "/test-app/1.2.4.tar.gz", "1.2.4", "1.2.3",
-				CappsPath + "/test-app/1.2.3.caidx", `"type": "chunk"`},
+				CappsPath + "/test-app/1.2.3.caibx", `"type": "chunk"`},
 			wantCode: 200,
 		},
 
@@ -321,9 +321,9 @@ func Test_parseArtifactName(t *testing.T) {
 		},
 		{
 			name:         "valid_chunkindex",
-			artifactName: "1.2.3.caidx",
+			artifactName: "1.2.3.caibx",
 			wantVer:      semver.MustParse("1.2.3"),
-			wantExt:      ".caidx",
+			wantExt:      ".caibx",
 		},
 		{
 			name:         "invalid_no_extension",
