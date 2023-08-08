@@ -24,6 +24,9 @@ jobs:
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
 
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
       - uses: actions/cache@v3
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
@@ -36,7 +39,7 @@ jobs:
 
 
       - name: Build console
-        run: yarn  build
+        run: yarn build
         working-directory: ${{ env.working-directory }}
 
       # - name: Test
