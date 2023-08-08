@@ -1,4 +1,4 @@
-import { Link, Site } from '@/generated';
+import { Link, Site } from '@/generated/planning';
 import { LatLngLiteral } from 'leaflet';
 import dynamic from 'next/dynamic';
 import { Dispatch, SetStateAction } from 'react';

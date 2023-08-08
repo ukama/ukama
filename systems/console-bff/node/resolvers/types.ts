@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
-import { NODE_STATUS } from "../../common/enums";
+import { NODE_STATUS, NODE_TYPE } from "../../common/enums";
 
 @ObjectType()
 export class NodeStatus {
@@ -22,8 +22,8 @@ export class Node {
   @Field()
   orgId: string;
 
-  @Field()
-  type: string;
+  @Field(() => NODE_TYPE)
+  type: NODE_TYPE;
 
   // @Field(() => [Node])
   // attached: Node[];

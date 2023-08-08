@@ -80,7 +80,8 @@ const NodeDropDown = ({
   };
   return (
     <Stack direction={'row'} spacing={1} alignItems="center">
-      {selectedNode && getStatusIcon(selectedNode.status.state)}
+      {selectedNode &&
+        getStatusIcon(selectedNode.status.state as NodeStatusEnum)}
 
       <LoadingWrapper
         height={'fit-content'}

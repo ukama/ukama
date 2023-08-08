@@ -1,4 +1,5 @@
-import { Link, Site } from '@/generated';
+import { Link, Site } from '@/generated/planning';
+import styles from '@/styles/Map.module.css';
 import Leaflet, { LatLngLiteral } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -6,7 +7,6 @@ import 'leaflet/dist/leaflet.css';
 import { Dispatch, SetStateAction, useEffect } from 'react';
 import * as ReactLeaflet from 'react-leaflet';
 import CustomMarker from './CustomMarker';
-import styles from '@/styles/Map.module.css'
 
 const { MapContainer } = ReactLeaflet;
 

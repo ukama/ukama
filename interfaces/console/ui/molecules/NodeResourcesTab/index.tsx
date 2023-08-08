@@ -95,6 +95,7 @@ const NodeResourcesTab = ({
           <Stack spacing={4}>
             {NodeResourcesTabConfigure[nodeType][0].show && (
               <LineChart
+                metricFrom={0}
                 loading={loading}
                 initData={metrics}
                 hasData={metrics.length > 0}
@@ -104,6 +105,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][1].show && (
               <LineChart
+                metricFrom={0}
                 loading={loading}
                 initData={metrics}
                 hasData={metrics.length > 0}
@@ -113,6 +115,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][2].show && (
               <LineChart
+                metricFrom={0}
                 loading={loading}
                 initData={metrics}
                 hasData={metrics.length > 0}
@@ -122,6 +125,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][3].show && (
               <LineChart
+                metricFrom={0}
                 loading={loading}
                 initData={metrics}
                 hasData={metrics.length > 0}
@@ -131,6 +135,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][4].show && (
               <LineChart
+                metricFrom={0}
                 loading={loading}
                 initData={metrics}
                 hasData={metrics.length > 0}
@@ -140,6 +145,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][5].show && (
               <LineChart
+                metricFrom={0}
                 loading={loading}
                 initData={metrics}
                 hasData={metrics.length > 0}
@@ -149,6 +155,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][6].show && (
               <LineChart
+                metricFrom={0}
                 loading={loading}
                 initData={metrics}
                 hasData={metrics.length > 0}

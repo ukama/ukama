@@ -64,6 +64,7 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
             <LineChart
               loading={loading}
               initData={metrics}
+              metricFrom={0}
               hasData={metrics.length > 0}
               topic={'throughputuplink'}
               title={'Throughput (U/L)'}
@@ -71,6 +72,7 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
             <LineChart
               loading={loading}
               initData={metrics}
+              metricFrom={0}
               hasData={metrics.length > 0}
               topic={'throughputdownlink'}
               title={'Throughput (D/L)'}
@@ -78,6 +80,7 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
             <LineChart
               loading={loading}
               initData={metrics}
+              metricFrom={0}
               hasData={metrics.length > 0}
               topic={'rrc'}
               title={'RRC'}
@@ -85,6 +88,7 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
             <LineChart
               loading={loading}
               initData={metrics}
+              metricFrom={0}
               hasData={metrics.length > 0}
               topic={'erab'}
               title={'ERAB'}
@@ -92,6 +96,7 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
             <LineChart
               loading={loading}
               initData={metrics}
+              metricFrom={0}
               hasData={metrics.length > 0}
               topic={'rlc'}
               title={'RLC'}

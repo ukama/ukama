@@ -20,6 +20,7 @@ fragment site on Site {
   south
   status
   height
+  draftId
   apOption
   isSetlite
   solarUptime
