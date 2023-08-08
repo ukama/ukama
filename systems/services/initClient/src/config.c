@@ -38,7 +38,7 @@ int read_config_from_env(Config **config){
 	char *initSystemAddr=NULL, *initSystemPort=NULL;
 	char *globalInitSystemEnable=NULL, *globalInitSystemAddr=NULL, *globalInitSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
-	char *systemDNS = NULL, *timePeriod = NULL, *dnsServer = NULL;
+	char *systemDNS = NULL, *timePeriod = NULL, *dnsServer = NULL, *nameServer = NULL;
 	int period = 0 ;
 
 	if ((addr = getenv(ENV_INIT_CLIENT_ADDR)) == NULL ||
@@ -75,17 +75,17 @@ int read_config_from_env(Config **config){
 		if (strcmp(dnsServer, "true") == 0) {
             /* Fetching from /etc/resolv.conf */
 		    log_info("Resolving nameserver from  /etc/resolv.conf");
-		    dnsServer = parse_resolveconf();
+		    nameServer = parse_resolveconf();
 		} else {
-			dnsServer = NULL;
+			nameServer = NULL;
 		}
-	} 
+	}
 
 	if ((systemDNS = getenv(ENV_SYSTEM_DNS)) != NULL) {
-		if (dnsServer == NULL) {
+		if (nameServer == NULL) {
 			systemAddr = nslookup(systemDNS, NULL);
 		} else {
-			systemAddr = nslookup(systemDNS, dnsServer);
+			systemAddr = nslookup(systemDNS, nameServer);
 		}
 	} else {
 		systemAddr = getenv(ENV_SYSTEM_ADDR);
@@ -131,6 +131,7 @@ int read_config_from_env(Config **config){
 	(*config)->initSystemAPIVer = strdup(apiVersion);
 	(*config)->initSystemAddr   = strdup(initSystemAddr);
 	(*config)->initSystemPort   = strdup(initSystemPort);
+    (*config)->nameServer = strdup(nameServer);
 	(*config)->timePeriod = period;
 	(*config)->dnsServer = dnsServer;
 	(*config)->globalInitSystemEnable = (strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0) ? GLOBAL_INIT_SYSTEM_ENABLE : GLOBAL_INIT_SYSTEM_DISABLE ;
@@ -149,7 +150,6 @@ int read_config_from_env(Config **config){
 		(*config)->logLevel = DEFAULT_LOG_LEVEL;
 	}
 
-	if (dnsServer ) free(dnsServer);
 	return TRUE;
 }
 
@@ -176,6 +176,7 @@ void clear_config(Config *config) {
 	if (config->globalInitSystemAddr)   free(config->globalInitSystemAddr);
 	if (config->systemDNS) free(config->systemDNS);
 	if (config->dnsServer) free(config->dnsServer);
+	if (config->nameServer) free(config->nameServer);
 	free(config);
 }
 

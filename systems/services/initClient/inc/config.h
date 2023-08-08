@@ -64,7 +64,7 @@ typedef struct {
 	char *systemAddr; /* address where system can be reached at */
 	char *systemPort; /* port where system can be reached at */
 	char *systemCert; /* Certificate for the system */
-
+    char *nameServer;
 	char *initSystemAPIVer; /* API version for init system */
 	char *initSystemAddr;   /* address for init system */
 	char *initSystemPort;   /* port for init system */
