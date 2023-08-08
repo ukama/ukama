@@ -16,8 +16,6 @@ import (
 	casync "github.com/folbricht/desync"
 )
 
-//const ChunksPath = "/v1/chunks"
-
 var (
 	stderr io.Writer = os.Stderr
 )
