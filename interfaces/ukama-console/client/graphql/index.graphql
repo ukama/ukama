@@ -688,6 +688,20 @@ fragment orgInvitations on InvitationsByOrgDto {
   org
   id
 }
+query getInvitationById($id: String!) {
+  getInvitationById(id: $id) {
+    invitation {
+      name
+      email
+      link
+      expires_at
+      status
+      org
+      id
+      Role
+    }
+  }
+}
 mutation addMember($data: AddMemberInputDto!) {
   addMember(data: $data) {
     ...Member

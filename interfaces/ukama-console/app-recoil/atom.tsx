@@ -47,10 +47,17 @@ const user = atom({
   effects_UNSTABLE: [persistAtom],
 });
 
+const invitation = atom({
+  key: 'invitation',
+  default: { linkId: '' },
+  effects_UNSTABLE: [persistAtom],
+});
+
 export {
   user,
   pageName,
   isDarkmode,
+  invitation,
   commonData,
   isFirstVisit,
   snackbarMessage,

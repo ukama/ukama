@@ -38,6 +38,11 @@ export type AddInvitationInputDto = {
   role: Scalars['String']['input'];
 };
 
+export type AddInvitationResDto = {
+  __typename?: 'AddInvitationResDto';
+  id?: Maybe<Scalars['String']['output']>;
+};
+
 export type AddMemberInputDto = {
   email: Scalars['String']['input'];
   role: Scalars['String']['input'];
@@ -435,17 +440,7 @@ export type IdResponse = {
 
 export type InvitationDto = {
   __typename?: 'InvitationDto';
-  mailId?: Maybe<Scalars['String']['output']>;
-  message?: Maybe<Scalars['String']['output']>;
-};
-
-export type InvitationResDto = {
-  __typename?: 'InvitationResDto';
-  invitations: InvitationsByOrgDto;
-};
-
-export type InvitationsByOrgDto = {
-  __typename?: 'InvitationsByOrgDto';
+  Role: Scalars['String']['output'];
   email: Scalars['String']['output'];
   expires_at: Scalars['String']['output'];
   id: Scalars['String']['output'];
@@ -453,6 +448,28 @@ export type InvitationsByOrgDto = {
   name: Scalars['String']['output'];
   org: Scalars['String']['output'];
   status: Scalars['String']['output'];
+};
+
+export type InvitationResDto = {
+  __typename?: 'InvitationResDto';
+  invitation: InvitationDto;
+};
+
+export type InvitationsByOrgDto = {
+  __typename?: 'InvitationsByOrgDto';
+  Role: Scalars['String']['output'];
+  email: Scalars['String']['output'];
+  expires_at: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  link: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  org: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+};
+
+export type InvitationsResDto = {
+  __typename?: 'InvitationsResDto';
+  invitations: Array<InvitationsByOrgDto>;
 };
 
 export type LinkNodes = {
@@ -548,7 +565,7 @@ export type MetricsInputDto = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addInvitation: InvitationDto;
+  addInvitation: AddInvitationResDto;
   addMember: MemberObj;
   addNetwork: NetworkDto;
   addNode: AddNodeResponse;
@@ -1108,7 +1125,8 @@ export type Query = {
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
   getEsimQR: ESimQrCodeRes;
   getEsims: Array<EsimDto>;
-  getInvitationsByOrg: Array<InvitationResDto>;
+  getInvitationById: InvitationResDto;
+  getInvitationsByOrg: InvitationsResDto;
   getMetricsByTab: GetMetricsRes;
   getNetwork: NetworkDto;
   getNetworkDataUsage: DataUsageNetworkResponse;
@@ -1172,6 +1190,11 @@ export type QueryGetDataUsageArgs = {
 
 export type QueryGetEsimQrArgs = {
   data: GetESimQrCodeInput;
+};
+
+
+export type QueryGetInvitationByIdArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -1880,8 +1903,6 @@ export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: 
 
 export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null };
 
-export type InvitationFragment = { __typename?: 'InvitationDto', mailId?: string | null, message?: string | null };
-
 export type GetOrgMemberQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1899,16 +1920,23 @@ export type AddInvitationMutationVariables = Exact<{
 }>;
 
 
-export type AddInvitationMutation = { __typename?: 'Mutation', addInvitation: { __typename?: 'InvitationDto', mailId?: string | null, message?: string | null } };
+export type AddInvitationMutation = { __typename?: 'Mutation', addInvitation: { __typename?: 'AddInvitationResDto', id?: string | null } };
 
 export type GetInvitationsByOrgQueryVariables = Exact<{
   orgName: Scalars['String']['input'];
 }>;
 
 
-export type GetInvitationsByOrgQuery = { __typename?: 'Query', getInvitationsByOrg: Array<{ __typename?: 'InvitationResDto', invitations: { __typename?: 'InvitationsByOrgDto', name: string, email: string, link: string, expires_at: string, status: string, org: string, id: string } }> };
+export type GetInvitationsByOrgQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationsByOrgDto', name: string, email: string, link: string, Role: string, expires_at: string, status: string, org: string, id: string }> } };
 
-export type OrgInvitationsFragment = { __typename?: 'InvitationsByOrgDto', name: string, email: string, link: string, expires_at: string, status: string, org: string, id: string };
+export type GetInvitationByIdQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type GetInvitationByIdQuery = { __typename?: 'Query', getInvitationById: { __typename?: 'InvitationResDto', invitation: { __typename?: 'InvitationDto', name: string, email: string, link: string, expires_at: string, status: string, org: string, id: string, Role: string } } };
+
+export type OrgInvitationsFragment = { __typename?: 'InvitationsByOrgDto', name: string, email: string, link: string, Role: string, expires_at: string, status: string, org: string, id: string };
 
 export type GetNodesBySiteQueryVariables = Exact<{
   siteId: Scalars['String']['input'];
@@ -2056,17 +2084,12 @@ export const MemberFragmentDoc = gql`
   memberSince
 }
     `;
-export const InvitationFragmentDoc = gql`
-    fragment invitation on InvitationDto {
-  mailId
-  message
-}
-    `;
 export const OrgInvitationsFragmentDoc = gql`
     fragment orgInvitations on InvitationsByOrgDto {
   name
   email
   link
+  Role
   expires_at
   status
   org
@@ -2903,10 +2926,10 @@ export type AddMemberMutationOptions = Apollo.BaseMutationOptions<AddMemberMutat
 export const AddInvitationDocument = gql`
     mutation addInvitation($data: AddInvitationInputDto!) {
   addInvitation(data: $data) {
-    ...invitation
+    id
   }
 }
-    ${InvitationFragmentDoc}`;
+    `;
 export type AddInvitationMutationFn = Apollo.MutationFunction<AddInvitationMutation, AddInvitationMutationVariables>;
 
 /**
@@ -2970,6 +2993,50 @@ export function useGetInvitationsByOrgLazyQuery(baseOptions?: Apollo.LazyQueryHo
 export type GetInvitationsByOrgQueryHookResult = ReturnType<typeof useGetInvitationsByOrgQuery>;
 export type GetInvitationsByOrgLazyQueryHookResult = ReturnType<typeof useGetInvitationsByOrgLazyQuery>;
 export type GetInvitationsByOrgQueryResult = Apollo.QueryResult<GetInvitationsByOrgQuery, GetInvitationsByOrgQueryVariables>;
+export const GetInvitationByIdDocument = gql`
+    query getInvitationById($id: String!) {
+  getInvitationById(id: $id) {
+    invitation {
+      name
+      email
+      link
+      expires_at
+      status
+      org
+      id
+      Role
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetInvitationByIdQuery__
+ *
+ * To run a query within a React component, call `useGetInvitationByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetInvitationByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetInvitationByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetInvitationByIdQuery(baseOptions: Apollo.QueryHookOptions<GetInvitationByIdQuery, GetInvitationByIdQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetInvitationByIdQuery, GetInvitationByIdQueryVariables>(GetInvitationByIdDocument, options);
+      }
+export function useGetInvitationByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetInvitationByIdQuery, GetInvitationByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetInvitationByIdQuery, GetInvitationByIdQueryVariables>(GetInvitationByIdDocument, options);
+        }
+export type GetInvitationByIdQueryHookResult = ReturnType<typeof useGetInvitationByIdQuery>;
+export type GetInvitationByIdLazyQueryHookResult = ReturnType<typeof useGetInvitationByIdLazyQuery>;
+export type GetInvitationByIdQueryResult = Apollo.QueryResult<GetInvitationByIdQuery, GetInvitationByIdQueryVariables>;
 export const GetNodesBySiteDocument = gql`
     query getNodesBySite($siteId: String!) {
   getNodesBySite(siteId: $siteId) {

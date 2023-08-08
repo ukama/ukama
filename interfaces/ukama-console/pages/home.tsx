@@ -1,10 +1,84 @@
 import { PageContainer } from '@/styles/global';
 import { colors } from '@/styles/theme';
+import { snackbarMessage } from '@/app-recoil';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import ConstructionSharpIcon from '@mui/icons-material/ConstructionSharp';
-import { Stack, Typography } from '@mui/material';
+import { AlertColor, Stack, Typography } from '@mui/material';
+import React, { useEffect } from 'react';
+import {
+  useGetInvitationByIdLazyQuery,
+  useAddMemberMutation,
+} from '@/generated';
+import { useSetRecoilState } from 'recoil';
+import { TSnackMessage } from '@/types';
 
 export default function Page() {
+  const setSnackbarMessage = useSetRecoilState<TSnackMessage>(snackbarMessage);
+
+  const [addMember] = useAddMemberMutation({
+    onCompleted: () => {
+      setSnackbarMessage({
+        id: 'add-member',
+        message: 'Invitation sent successfully',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'add-member-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  const [getInvitationById, { data, loading, error }] =
+    useGetInvitationByIdLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onCompleted: (data: any) => {
+        console.log('data', data.getInvitationById?.invitation);
+        addMember({
+          variables: {
+            data: {
+              email: data.getInvitationById.invitation.email as string,
+              role: data.getInvitationById.invitation.Role as string,
+              // name: data.getInvitationById.name as string,
+            },
+          },
+        });
+      },
+
+      onError: (err) => {
+        setSnackbarMessage({
+          id: 'add-member-error',
+          message: err.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
+  useEffect(() => {
+    const url = window.location.href;
+
+    const searchParams = new URLSearchParams(url.split('?')[1]);
+
+    if (searchParams.has('linkId')) {
+      const urlLinkId = searchParams.get('linkId');
+      const decodedLinkId = decodeURIComponent(urlLinkId ?? '').replace(
+        /[{}]/g,
+        '',
+      );
+
+      getInvitationById({
+        variables: {
+          id: decodedLinkId,
+        },
+      });
+    }
+  }, []);
+
   return (
     <LoadingWrapper
       radius="small"

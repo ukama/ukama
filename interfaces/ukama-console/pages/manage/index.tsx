@@ -225,26 +225,28 @@ const Manage = () => {
       },
     });
 
-  const [getInvitationsByOrg, { loading: invitationsLoading }] =
-    useGetInvitationsByOrgLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        setData((prev: any) => ({
-          ...prev,
-          invitations: data?.getInvitationsByOrg ?? [],
-        }));
-        console.log('INVITATIONS', data?.getInvitationsByOrg);
-      },
+  const [
+    getInvitationsByOrg,
+    { loading: invitationsLoading, refetch: getInvitations },
+  ] = useGetInvitationsByOrgLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      setData((prev: any) => ({
+        ...prev,
+        invitations: data?.getInvitationsByOrg ?? [],
+      }));
+      console.log('INVITATIONS', data?.getInvitationsByOrg);
+    },
 
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'invitations',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'invitations',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
   console.log('INVITATIONS', data.invitations);
 
   const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
@@ -271,6 +273,7 @@ const Manage = () => {
     useAddInvitationMutation({
       onCompleted: () => {
         refetchMembers();
+        getInvitations()
         setSnackbarMessage({
           id: 'add-member',
           message: 'Invitation sent successfully',

@@ -666,10 +666,6 @@ fragment Member on MemberObj {
   isDeactivated
   memberSince
 }
-fragment invitation on InvitationDto {
-  mailId
-  message
-}
 
 query getOrgMember {
   getOrgMembers {
@@ -689,9 +685,10 @@ mutation addMember($data: AddMemberInputDto!) {
 }
 mutation addInvitation($data: AddInvitationInputDto!) {
   addInvitation(data: $data) {
-    ...invitation
+    id
   }
 }
+
 query getInvitationsByOrg($orgName: String!) {
   getInvitationsByOrg(orgName: $orgName) {
     invitations {
@@ -699,10 +696,26 @@ query getInvitationsByOrg($orgName: String!) {
     }
   }
 }
+
+query getInvitationById($id: String!) {
+  getInvitationById(id: $id) {
+    invitation {
+      name
+      email
+      link
+      expires_at
+      status
+      org
+      id
+      Role
+    }
+  }
+}
 fragment orgInvitations on InvitationsByOrgDto {
   name
   email
   link
+  Role
   expires_at
   status
   org

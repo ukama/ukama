@@ -75,69 +75,6 @@ const MemoizedChip = React.memo(({ label }: { label: string }) => {
 });
 MemoizedChip.displayName = 'MemoizedChip';
 
-// const MemoizedTableCell = React.memo(
-//   ({
-//     column,
-//     row,
-//     handleCreateNetwork,
-//     handleDeleteElement,
-//     networkList,
-//   }: {
-//     column: ColumnsWithOptions;
-//     row: any;
-//     handleCreateNetwork: any;
-//     handleDeleteElement: any;
-//     networkList: string[] | [] | undefined;
-//   }) => {
-//     return (
-//       <TableCell
-//         sx={{
-//           padding: 1,
-//           fontSize: '0.875rem',
-//         }}
-//       >
-//         {column.id === 'role' ? (
-//           <div>
-//             <MemoizedChip label={row[column.id]} />
-//           </div>
-//         ) : column.id === 'pdf' ? (
-//           <Link target="_blank" underline="hover" href={row[column.id]}>
-//             View as PDF
-//           </Link>
-//         ) : column.id === 'network' ? (
-//           <ChipDropdown
-//             onCreateNetwork={handleCreateNetwork}
-//             menu={
-//               (networkList &&
-//                 networkList.map((network: any) => network.name)) ||
-//               []
-//             }
-//           />
-//         ) : column.id === 'edit' ? (
-//           <IconButton onClick={() => console.log(row)}>
-//             <EditIcon />
-//           </IconButton>
-//         ) : column.id === 'delete' ? (
-//           <IconButton onClick={() => handleDeleteElement(row.id)}>
-//             <DeleteIcon />
-//           </IconButton>
-//         ) : (
-//           <Typography
-//             variant={'body2'}
-//             sx={{ padding: '8px' }}
-//             color={row[column.id] === 'false' ? 'primary' : ''}
-//           >
-//             {row[column.id] === 'true'
-//               ? 'Assigned'
-//               : row[column.id] === 'false'
-//               ? 'Unassigned'
-//               : row[column.id]}
-//           </Typography>
-//         )}
-//       </TableCell>
-//     );
-//   },
-// );
 const MemoizedTableCell = React.memo(
   ({
     column,

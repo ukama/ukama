@@ -12,6 +12,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
 import { RecoilRoot, useRecoilState, useRecoilValue } from 'recoil';
 import '../styles/global.css';
+import { useEffect } from 'react';
 
 const MainApp = dynamic(() => import('@/pages/_main_app'));
 const clientSideEmotionCache = createEmotionCache();

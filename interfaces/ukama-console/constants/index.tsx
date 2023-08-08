@@ -201,7 +201,7 @@ export const MANAGE_MENU_LIST = [
 ];
 export const MANAGE_TABLE_COLUMN: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'role', label: 'Role', minWidth: 180 },
+  { id: 'Role', label: 'Role', minWidth: 180 },
   { id: 'email', label: 'Email', minWidth: 140 },
 ];
 export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
