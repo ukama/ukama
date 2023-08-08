@@ -228,15 +228,17 @@ int register_system(Config *config, int global){
 	break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_HAVE_UUID):
-					if (send_request_to_init(REQ_UPDATE, config,config->systemOrg, NULL, &response, global) != TRUE) {
-						log_error("Error updating with the init system");
-						return FALSE;
-					}
+		log_info("Sending registration request for system %s for org %s", config->systemName, config->systemOrg);
+			if (send_request_to_init(REQ_UPDATE, config,config->systemOrg, NULL, &response, global) != TRUE) {
+				log_error("Error updating with the init system");
+				return FALSE;
+			}
 	break;
 
 	case (REG_STATUS_NO_MATCH | REG_STATUS_NO_UUID):
 	case REG_STATUS_NO_MATCH:
 		/* first time registering */
+		log_info("Sending registration request for system %s for org %s", config->systemName, config->systemOrg);
 		if (send_request_to_init(REQ_REGISTER, config, config->systemOrg, NULL, &response, global)
 				!= TRUE) {
 			log_error("Error registrating with the init system");
@@ -250,6 +252,7 @@ int register_system(Config *config, int global){
 					response);
 			return FALSE;
 		}
+		log_info("Storing registration response for system %s for org %s in %s", config->systemName, config->systemOrg, config->tempFile);
 		store_cache_uuid(config->tempFile,
 				queryResponse->systemID, global);
 
