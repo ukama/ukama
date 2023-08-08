@@ -83,23 +83,23 @@ int read_config_from_env(Config **config)
 		{
 			/* Fetching from /etc/resolv.conf */
 			log_info("Resolving nameserver from  /etc/resolv.conf");
-			dnsServer = parse_resolveconf();
+			nameServer = parse_resolveconf();
 		}
 		else
 		{
-			dnsServer = NULL;
+			nameServer = NULL;
 		}
 	}
 
 	if ((systemDNS = getenv(ENV_SYSTEM_DNS)) != NULL)
 	{
-		if (dnsServer == NULL)
+		if (nameServer == NULL)
 		{
 			systemAddr = nslookup(systemDNS, NULL);
 		}
 		else
 		{
-			systemAddr = nslookup(systemDNS, dnsServer);
+			systemAddr = nslookup(systemDNS, nameServer);
 		}
 	}
 	else
@@ -153,6 +153,10 @@ int read_config_from_env(Config **config)
 	(*config)->initSystemAPIVer = strdup(apiVersion);
 	(*config)->initSystemAddr = strdup(initSystemAddr);
 	(*config)->initSystemPort = strdup(initSystemPort);
+	(*config)->nameServer = strdup(nameServer);
+	(*config)->timePeriod = period;
+	(*config)->dnsServer = dnsServer;
+	(*config)->globalInitSystemEnable = (strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0) ? GLOBAL_INIT_SYSTEM_ENABLE : GLOBAL_INIT_SYSTEM_DISABLE;
 
 	if (nameServer)
 	{
@@ -184,8 +188,6 @@ int read_config_from_env(Config **config)
 		(*config)->logLevel = DEFAULT_LOG_LEVEL;
 	}
 
-	if (dnsServer)
-		free(dnsServer);
 	return TRUE;
 }
 
