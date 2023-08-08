@@ -1,8 +1,8 @@
+import { NodeTypeEnum } from '@/generated';
 import colors from '@/styles/theme/colors';
 import { TObject } from '@/types';
 import { Typography } from '@mui/material';
 import { format, intervalToDuration } from 'date-fns';
-import { Alert_Type, Graphs_Tab, NodeDto, Node_Type } from '../generated';
 const getTitleFromPath = (path: string, id: string) => {
   switch (path) {
     case '/home':
@@ -28,11 +28,11 @@ const getTitleFromPath = (path: string, id: string) => {
   }
 };
 
-const getColorByType = (type: Alert_Type) => {
+const getColorByType = (type: string) => {
   switch (type) {
-    case Alert_Type.Error:
+    case 'Alert_Type.Error':
       return 'error';
-    case Alert_Type.Warning:
+    case 'Alert_Type.Warning':
       return 'warning';
     default:
       return 'success';
@@ -129,17 +129,17 @@ const getGraphFilterByType = (type: string) => {
 const getTabByIndex = (index: number) => {
   switch (index) {
     case 0:
-      return Graphs_Tab.Overview;
+      return 'Graphs_Tab.Overview';
     case 1:
-      return Graphs_Tab.Network;
+      return 'Graphs_Tab.Network';
     case 2:
-      return Graphs_Tab.Resources;
+      return 'Graphs_Tab.Resources';
     case 3:
-      return Graphs_Tab.Radio;
+      return 'Graphs_Tab.Radio';
     case 4:
-      return Graphs_Tab.Home;
+      return 'Graphs_Tab.Home';
     default:
-      return Graphs_Tab.Overview;
+      return 'Graphs_Tab.Overview';
   }
 };
 
@@ -147,7 +147,7 @@ const getMetricPayload = ({
   tab = 0,
   nodeId = '',
   regPolling = true,
-  nodeType = Node_Type.Home,
+  nodeType = NodeTypeEnum.Hnode,
   to = Math.floor(Date.now() / 1000),
   from = Math.floor(Date.now() / 1000),
 }: {
@@ -165,7 +165,7 @@ const getMetricPayload = ({
       regPolling: regPolling,
       to: to,
       from: from, //20sec
-      nodeType: nodeType as Node_Type,
+      nodeType: nodeType as NodeTypeEnum,
       tab: getTabByIndex(tab),
     },
   };
@@ -181,7 +181,7 @@ const isMetricData = (metric: any) => {
   return isData;
 };
 
-const isContainNodeUpdate = (list: NodeDto[] = []): boolean => {
+const isContainNodeUpdate = (list: any = []): boolean => {
   let isUpdate = false;
   for (const ele of list) {
     if (ele.isUpdateAvailable) {
@@ -367,13 +367,13 @@ const doesHttpOnlyCookieExist = (cookiename: string): boolean => {
   return document.cookie.indexOf(cookiename + '=') == -1;
 };
 
-const getTowerNodeFromNodes = (nodes: NodeDto[]): string => {
+const getTowerNodeFromNodes = (nodes: any): string => {
   if (nodes.length > 0) {
     for (const node of nodes) {
-      if (node.type === Node_Type.Tower) return node.id;
+      if (node.type === NodeTypeEnum.Tnode) return node.id;
     }
     for (const node of nodes) {
-      if (node.type === Node_Type.Home) return node.id;
+      if (node.type === NodeTypeEnum.Hnode) return node.id;
     }
   }
   return '';

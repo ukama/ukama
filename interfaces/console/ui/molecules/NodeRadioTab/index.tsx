@@ -51,6 +51,7 @@ const NodeRadioTab = ({ loading, metrics }: INodeRadioTab) => {
             <LineChart
               loading={loading}
               initData={metrics}
+              metricFrom={0}
               hasData={metrics.length > 0}
               topic={'txpower'}
               title={'TX Power'}
@@ -58,6 +59,7 @@ const NodeRadioTab = ({ loading, metrics }: INodeRadioTab) => {
             <LineChart
               loading={loading}
               initData={metrics}
+              metricFrom={0}
               hasData={metrics.length > 0}
               topic={'rxpower'}
               title={'RX Power'}
@@ -65,6 +67,7 @@ const NodeRadioTab = ({ loading, metrics }: INodeRadioTab) => {
             <LineChart
               loading={loading}
               initData={metrics}
+              metricFrom={0}
               hasData={metrics.length > 0}
               topic={'papower'}
               title={'PA Power'}
