@@ -48,9 +48,10 @@ message Invitation{
   string org = 2  ;
   string link = 3;
   string email = 4;
-  string name = 5;
-  google.protobuf.Timestamp expires_at = 6 [json_name = "expires_at"];
-  InvitationStatus status = 7;
+  RoleType Role = 5;
+  string name = 6;
+  google.protobuf.Timestamp expires_at = 7 [json_name = "expires_at"];
+  InvitationStatus status = 8;
 }
 message AddInvitationRequest{
   InvitationStatus status = 1;

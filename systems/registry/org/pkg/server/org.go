@@ -707,6 +707,7 @@ func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 		Org: 	 invitation.Org,
 		Link:      invitation.Link,
 		Email:     invitation.Email,
+		Role:      pb.RoleType(invitation.Role),
 		Name: 	invitation.Name,
 		Status:    pb.InvitationStatus(invitation.Status),
 		ExpiresAt: timestamppb.New(invitation.ExpiresAt),
