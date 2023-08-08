@@ -129,6 +129,8 @@ type AddResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Notification *Notification `protobuf:"bytes,1,opt,name=notification,proto3" json:"notification,omitempty"`
 }
 
 func (x *AddResponse) Reset() {
@@ -161,6 +163,13 @@ func (x *AddResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AddResponse.ProtoReflect.Descriptor instead.
 func (*AddResponse) Descriptor() ([]byte, []int) {
 	return file_notify_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *AddResponse) GetNotification() *Notification {
+	if x != nil {
+		return x.Notification
+	}
+	return nil
 }
 
 type GetRequest struct {
@@ -634,8 +643,13 @@ var file_notify_proto_rawDesc = []byte{
 	0x74, 0x75, 0x73, 0x12, 0x17, 0x0a, 0x09, 0x65, 0x70, 0x6f, 0x63, 0x68, 0x54, 0x69, 0x6d, 0x65,
 	0x18, 0x07, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x04, 0x74, 0x69, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07,
 	0x64, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x64,
-	0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0x0d, 0x0a, 0x0b, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x40, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x74, 0x61, 0x69, 0x6c, 0x73, 0x22, 0x5d, 0x0a, 0x0b, 0x41, 0x64, 0x64, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4e, 0x0a, 0x0c, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2a, 0x2e, 0x75, 0x6b,
+	0x61, 0x6d, 0x61, 0x2e, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f, 0x74, 0x69, 0x66,
+	0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0c, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x40, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x12, 0x32, 0x0a, 0x0e, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74,
 	0x69, 0x6f, 0x6e, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x09, 0xe2, 0xdf, 0x1f,
 	0x05, 0x58, 0x01, 0x90, 0x01, 0x04, 0x52, 0x0f, 0x6e, 0x6f, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61,
@@ -753,24 +767,25 @@ var file_notify_proto_goTypes = []interface{}{
 	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_notify_proto_depIdxs = []int32{
-	8, // 0: ukama.notification.notify.v1.GetResponse.notification:type_name -> ukama.notification.notify.v1.Notification
-	8, // 1: ukama.notification.notify.v1.ListResponse.notifications:type_name -> ukama.notification.notify.v1.Notification
-	9, // 2: ukama.notification.notify.v1.Notification.createdAt:type_name -> google.protobuf.Timestamp
-	0, // 3: ukama.notification.notify.v1.NotifyService.Add:input_type -> ukama.notification.notify.v1.AddRequest
-	2, // 4: ukama.notification.notify.v1.NotifyService.Get:input_type -> ukama.notification.notify.v1.GetRequest
-	4, // 5: ukama.notification.notify.v1.NotifyService.List:input_type -> ukama.notification.notify.v1.ListRequest
-	2, // 6: ukama.notification.notify.v1.NotifyService.Delete:input_type -> ukama.notification.notify.v1.GetRequest
-	7, // 7: ukama.notification.notify.v1.NotifyService.Purge:input_type -> ukama.notification.notify.v1.PurgeRequest
-	1, // 8: ukama.notification.notify.v1.NotifyService.Add:output_type -> ukama.notification.notify.v1.AddResponse
-	3, // 9: ukama.notification.notify.v1.NotifyService.Get:output_type -> ukama.notification.notify.v1.GetResponse
-	5, // 10: ukama.notification.notify.v1.NotifyService.List:output_type -> ukama.notification.notify.v1.ListResponse
-	6, // 11: ukama.notification.notify.v1.NotifyService.Delete:output_type -> ukama.notification.notify.v1.DeleteResponse
-	5, // 12: ukama.notification.notify.v1.NotifyService.Purge:output_type -> ukama.notification.notify.v1.ListResponse
-	8, // [8:13] is the sub-list for method output_type
-	3, // [3:8] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	8, // 0: ukama.notification.notify.v1.AddResponse.notification:type_name -> ukama.notification.notify.v1.Notification
+	8, // 1: ukama.notification.notify.v1.GetResponse.notification:type_name -> ukama.notification.notify.v1.Notification
+	8, // 2: ukama.notification.notify.v1.ListResponse.notifications:type_name -> ukama.notification.notify.v1.Notification
+	9, // 3: ukama.notification.notify.v1.Notification.createdAt:type_name -> google.protobuf.Timestamp
+	0, // 4: ukama.notification.notify.v1.NotifyService.Add:input_type -> ukama.notification.notify.v1.AddRequest
+	2, // 5: ukama.notification.notify.v1.NotifyService.Get:input_type -> ukama.notification.notify.v1.GetRequest
+	4, // 6: ukama.notification.notify.v1.NotifyService.List:input_type -> ukama.notification.notify.v1.ListRequest
+	2, // 7: ukama.notification.notify.v1.NotifyService.Delete:input_type -> ukama.notification.notify.v1.GetRequest
+	7, // 8: ukama.notification.notify.v1.NotifyService.Purge:input_type -> ukama.notification.notify.v1.PurgeRequest
+	1, // 9: ukama.notification.notify.v1.NotifyService.Add:output_type -> ukama.notification.notify.v1.AddResponse
+	3, // 10: ukama.notification.notify.v1.NotifyService.Get:output_type -> ukama.notification.notify.v1.GetResponse
+	5, // 11: ukama.notification.notify.v1.NotifyService.List:output_type -> ukama.notification.notify.v1.ListResponse
+	6, // 12: ukama.notification.notify.v1.NotifyService.Delete:output_type -> ukama.notification.notify.v1.DeleteResponse
+	5, // 13: ukama.notification.notify.v1.NotifyService.Purge:output_type -> ukama.notification.notify.v1.ListResponse
+	9, // [9:14] is the sub-list for method output_type
+	4, // [4:9] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_notify_proto_init() }

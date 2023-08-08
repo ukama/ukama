@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -22,6 +22,11 @@ func (this *AddRequest) Validate() error {
 	return nil
 }
 func (this *AddResponse) Validate() error {
+	if this.Notification != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Notification); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Notification", err)
+		}
+	}
 	return nil
 }
 

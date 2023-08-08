@@ -29,6 +29,7 @@ message AddRequest {
 }
 
 message AddResponse {
+    Notification notification = 1;
 }
 
 
