@@ -131,9 +131,16 @@ int read_config_from_env(Config **config){
 	(*config)->initSystemAPIVer = strdup(apiVersion);
 	(*config)->initSystemAddr   = strdup(initSystemAddr);
 	(*config)->initSystemPort   = strdup(initSystemPort);
-    (*config)->nameServer = strdup(nameServer);
+	
+	if (nameServer) {
+    	(*config)->nameServer = strdup(nameServer);
+	}
+	
 	(*config)->timePeriod = period;
-	(*config)->dnsServer = dnsServer;
+	
+	if (dnsServer) {
+		(*config)->dnsServer = dnsServer;
+	}
 	(*config)->globalInitSystemEnable = (strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0) ? GLOBAL_INIT_SYSTEM_ENABLE : GLOBAL_INIT_SYSTEM_DISABLE ;
 
 	if ((*config)->globalInitSystemEnable) {
