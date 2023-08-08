@@ -9,6 +9,7 @@ import (
 )
 
 const RegistryVersion = "/v1/"
+const SystemName = "registry"
 
 type RoleType int32
 
@@ -55,7 +56,7 @@ type OrgMember struct {
 
 func (r *registryProvider) GetRestyClient(org string) (*rest.RestClient, error) {
 	/* Add user to member db of the org */
-	url, err := ic.GetHostUrl(ic.CreateHostString(org, "registry"), r.icHost, &org, r.debug)
+	url, err := ic.GetHostUrl(ic.CreateHostString(org, SystemName), r.icHost, &org, r.debug)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address to update user as member: %v", err)
 		return nil, fmt.Errorf("failed to resolve org registry address. Error: %v", err)
