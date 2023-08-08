@@ -220,10 +220,10 @@ int register_system(Config *config, int global){
 	break;
 
 	case REG_STATUS_MATCH | REG_STATUS_NO_UUID:
-	log_debug("Storing UUID %s to tempFile: %s", queryResponse->systemID,
+	log_debug("Storing UUID %s to tempFile: %s", systemUUID,
 			config->tempFile);
 	store_cache_uuid(config->tempFile,
-			queryResponse->systemID, global);
+			systemUUID, global);
 
 	break;
 
@@ -241,7 +241,7 @@ int register_system(Config *config, int global){
 		log_info("Sending registration request for system %s for org %s", config->systemName, config->systemOrg);
 		if (send_request_to_init(REQ_REGISTER, config, config->systemOrg, NULL, &response, global)
 				!= TRUE) {
-			log_error("Error registrating with the init system");
+			log_error("Error registering with the init system");
 			return FALSE;
 		}
 
