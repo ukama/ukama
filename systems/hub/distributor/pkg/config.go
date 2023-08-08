@@ -70,20 +70,28 @@ type MinioConfig struct {
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Metrics           config.Metrics
+	Metrics           *config.Metrics
 	Server            rest.HttpConfig
 	Distribution      DistributionConfig
 	Storage           MinioConfig
+	Service           *config.Service
+	Queue             *config.Queue     `default:"{}"`
+	MsgClient         *config.MsgClient `default:"{}"`
 }
 
-func NewConfig() *Config {
-
+func NewConfig(name string) *Config {
 	return &Config{
 		Server: rest.HttpConfig{
 			Port: 8098,
 			Cors: cors.Config{
 				AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
 			},
+		},
+
+		Metrics: config.DefaultMetrics(),
+		Service: config.LoadServiceHostConfig(name),
+		MsgClient: &config.MsgClient{
+			Timeout: 5 * time.Second,
 		},
 
 		Distribution: DistributionConfig{
@@ -132,5 +140,4 @@ func NewConfig() *Config {
 			SkipBucketCreation: true,
 		},
 	}
-
 }

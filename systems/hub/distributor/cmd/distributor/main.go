@@ -8,6 +8,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/hub/distributor/cmd/version"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg/distribution"
@@ -15,6 +16,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 )
 
 var serviceConfig *pkg.Config
@@ -63,15 +65,31 @@ func startDistributionServer(ctx context.Context) {
 
 /* Start HTTP server for accepting chinking request from UkamaHub */
 func startChunkRequestServer(ctx context.Context) {
-	r := server.NewRouter(serviceConfig)
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		/* used on local machines */
+		instanceId = uuid.NewV4().String()
+	}
 
-	metrics.StartMetricsServer(&serviceConfig.Metrics)
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
+	r := server.NewRouter(serviceConfig, mbClient)
+
+	metrics.StartMetricsServer(serviceConfig.Metrics)
+
+	go msgBusListener(mbClient)
+
 	r.Run()
 }
 
 /* initConfig reads in config file, ENV variables, and flags if set. */
 func initConfig() {
-	serviceConfig = pkg.NewConfig()
+	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	config.LoadConfig(pkg.ServiceName, serviceConfig)
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
@@ -88,4 +106,13 @@ func handleSigterm(handleExit func()) {
 		log.Infof("Exiting distribution service.")
 		os.Exit(1)
 	}()
+}
+
+func msgBusListener(m mb.MsgBusServiceClient) {
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
 }

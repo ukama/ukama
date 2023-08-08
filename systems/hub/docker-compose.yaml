@@ -65,6 +65,10 @@ services:
       - STORAGE_ENDPOINT=minio:9000
       - STORAGE_ACCESSKEY=minioadmin
       - STORAGE_SECRETKEY=minioadmin
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-hub:9095
+      - DISTRIBUTOR_SERVICE_HOST=distr
+      - DISTRIBUTOR_SERVICE_PORT=9090
     networks:
       hub-net:
     restart: always

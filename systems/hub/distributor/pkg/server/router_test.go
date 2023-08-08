@@ -11,8 +11,10 @@ import (
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	log "github.com/sirupsen/logrus"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
 func init() {
@@ -24,9 +26,9 @@ func Test_RouterPing(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
-	defconf := pkg.NewConfig()
+	defconf := pkg.NewConfig(pkg.ServiceName)
 
-	r := NewRouter(defconf).fizz.Engine()
+	r := NewRouter(defconf, nil).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -38,15 +40,17 @@ func Test_RouterPing(t *testing.T) {
 
 func Test_RouterPut(t *testing.T) {
 	// arrange
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	w := httptest.NewRecorder()
 	f := []byte(`{ "store":"./test/data/art" }`)
 
 	req, _ := http.NewRequest("PUT", ChunksPath+"/ukamaos/1.0.1", bytes.NewBuffer(f))
 
-	defconf := pkg.NewConfig()
+	defconf := pkg.NewConfig(pkg.ServiceName)
 	defconf.Distribution.Chunk.Stores[0] = "./test/data/store"
 
-	r := NewRouter(defconf).fizz.Engine()
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	r := NewRouter(defconf, msgbusClient).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -63,9 +67,9 @@ func Test_RouterPutNoStore(t *testing.T) {
 
 	req, _ := http.NewRequest("PUT", ChunksPath+"/ukamaos/1.0.1", nil)
 
-	defconf := pkg.NewConfig()
+	defconf := pkg.NewConfig(pkg.ServiceName)
 
-	r := NewRouter(defconf).fizz.Engine()
+	r := NewRouter(defconf, nil).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)

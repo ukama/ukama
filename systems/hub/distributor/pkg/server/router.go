@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/hub/distributor/cmd/version"
 	"github.com/ukama/ukama/systems/hub/distributor/pkg"
@@ -16,15 +17,19 @@ import (
 	"github.com/wI2L/fizz"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 const ChunksPath = "/v1/chunks"
 
 type Router struct {
-	fizz  *fizz.Fizz
-	port  int
-	Store pkg.StoreConfig
-	Chunk pkg.ChunkConfig
+	fizz           *fizz.Fizz
+	port           int
+	Store          pkg.StoreConfig
+	Chunk          pkg.ChunkConfig
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
 func (r *Router) Run() {
@@ -36,13 +41,15 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *pkg.Config) *Router {
+func NewRouter(config *pkg.Config, msgBus mb.MsgBusServiceClient) *Router {
 	f := rest.NewFizzRouter(&config.Server, pkg.ServiceName, version.Version, pkg.IsDebugMode, "")
 
 	r := &Router{fizz: f,
-		port:  config.Server.Port,
-		Store: config.Distribution.StoreCfg,
-		Chunk: config.Distribution.Chunk,
+		port:           config.Server.Port,
+		Store:          config.Distribution.StoreCfg,
+		Chunk:          config.Distribution.Chunk,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 
 	chunks := f.Group(ChunksPath, "ChunksServer", "Chunks Server for content to be distributed")
@@ -86,6 +93,18 @@ func (r *Router) chunkPutHandler(c *gin.Context, req *ChunkRequest) error {
 				HttpCode: http.StatusInternalServerError,
 				Message:  err.Error(),
 			}
+		}
+
+		capp := &epb.CappCreatedEvent{
+			Name:    fname,
+			Version: ver.String(),
+		}
+
+		route := r.baseRoutingKey.SetAction("create").SetObject("capp").MustBuild()
+
+		err = r.msgbus.PublishRequest(route, capp)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", capp, route, err.Error())
 		}
 	}
 
