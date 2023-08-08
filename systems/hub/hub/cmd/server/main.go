@@ -11,6 +11,7 @@ import (
 	"github.com/ukama/ukama/systems/hub/hub/pkg"
 	"github.com/ukama/ukama/systems/hub/hub/pkg/server"
 
+	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 )
@@ -31,13 +32,12 @@ func main() {
 		instanceId = uuid.NewV4().String()
 	}
 
-	// mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
-	// 	pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-	// 	serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-	// 	serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-	// 	serviceConfig.MsgClient.RetryCount,
-	// 	serviceConfig.MsgClient.ListenerRoutes)
-	var mbClient mb.MsgBusServiceClient
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
 
 	r := server.NewRouter(&serviceConfig.Server, storage, chunker,
 		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second, mbClient)
@@ -58,10 +58,10 @@ func initConfig() {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-	/*if err := m.Register(); err != nil {
+	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
-	}*/
+	}
 }
