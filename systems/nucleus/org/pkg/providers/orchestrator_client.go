@@ -63,10 +63,12 @@ func (p *orchestratorProvider) DeployOrg(req DeployOrgRequest) (*DeployOrgRespon
 	errStatus := &rest.ErrorMessage{}
 
 	dResp := &DeployOrgResponse{}
+
+	url := fmt.Sprintf("%s%s%s%s", p.R.URL.String(), ORCH_PATH, "/deploy/org/", req.OrgId)
 	resp, err := p.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Put(p.R.URL.String() + ORCH_PATH + "/deploy/org/" + req.OrgId)
+		Put(url)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to orchestrator. Error %s", err.Error())
@@ -75,7 +77,7 @@ func (p *orchestratorProvider) DeployOrg(req DeployOrgRequest) (*DeployOrgRespon
 	}
 
 	if !resp.IsSuccess() {
-		log.Errorf("Failed to deploy org. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+		log.Errorf("Failed to deploy org. URL %s HTTP resp code %d and Error message is %s", url, resp.StatusCode(), errStatus.Message)
 
 		return nil, fmt.Errorf("orchestrator deploy org request failure %s", errStatus.Message)
 	}
