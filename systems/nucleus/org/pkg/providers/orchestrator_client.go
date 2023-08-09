@@ -42,6 +42,8 @@ type DestroyOrgRequest struct {
 type DestroyOrgResponse struct {
 }
 
+const ORCH_PATH = "/v1/orchestrator"
+
 func NewOrchestratorProvider(orchestratorHost string, debug bool) OrchestratorProvider {
 
 	f, err := rest.NewRestClient(orchestratorHost, debug)
@@ -64,7 +66,7 @@ func (p *orchestratorProvider) DeployOrg(req DeployOrgRequest) (*DeployOrgRespon
 	resp, err := p.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Put(p.R.URL.String() + "/deploy/org/" + req.OrgId)
+		Put(p.R.URL.String() + ORCH_PATH + "/deploy/org/" + req.OrgId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to orchestrator. Error %s", err.Error())
@@ -99,7 +101,7 @@ func (p *orchestratorProvider) DestroyOrg(req DestroyOrgRequest) (*DestroyOrgRes
 	resp, err := p.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Delete(p.R.URL.String() + "/org/" + req.OrgId)
+		Delete(p.R.URL.String() + ORCH_PATH + "/org/" + req.OrgId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to orchestrator. Error %s", err.Error())
