@@ -64,7 +64,7 @@ func (p *orchestratorProvider) DeployOrg(req DeployOrgRequest) (*DeployOrgRespon
 	resp, err := p.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Get(p.R.URL.String() + "/deploy/org/" + req.OrgId)
+		Put(p.R.URL.String() + "/deploy/org/" + req.OrgId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to orchestrator. Error %s", err.Error())
@@ -73,14 +73,14 @@ func (p *orchestratorProvider) DeployOrg(req DeployOrgRequest) (*DeployOrgRespon
 	}
 
 	if !resp.IsSuccess() {
-		log.Tracef("Failed to deploy org. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+		log.Errorf("Failed to deploy org. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
 
-		return nil, fmt.Errorf("Orchestrator deploy org request failure %s", errStatus.Message)
+		return nil, fmt.Errorf("orchestrator deploy org request failure %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), dResp)
 	if err != nil {
-		log.Tracef("Failed to deserialize orchestartor response. Error message is %s", err.Error())
+		log.Errorf("Failed to deserialize orchestartor response. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("orchestartor response deserialization failure: %w", err)
 	}
@@ -108,14 +108,14 @@ func (p *orchestratorProvider) DestroyOrg(req DestroyOrgRequest) (*DestroyOrgRes
 	}
 
 	if !resp.IsSuccess() {
-		log.Tracef("Failed to destroy org. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+		log.Errorf("Failed to destroy org. HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
 
-		return nil, fmt.Errorf("Orchestrator destroy org request failure %s", errStatus.Message)
+		return nil, fmt.Errorf("orchestrator destroy org request failure %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), dResp)
 	if err != nil {
-		log.Tracef("Failed to deserialize orchestartor response. Error message is %s", err.Error())
+		log.Errorf("Failed to deserialize orchestartor response. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("orchestartor response deserialization failure: %w", err)
 	}
