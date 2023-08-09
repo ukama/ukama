@@ -51,8 +51,9 @@ func NewConfig(name string) *Config {
 			TimeoutSecond: 3,
 		},
 		Chunker: ChunkerConfig{
-			Host:          "http://localhost:8098",
-			TimeoutSecond: 3,
+			Host: "http://localhost:8098",
+			// TimeoutSecond: 3,
+			TimeoutSecond: 13,
 		},
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
