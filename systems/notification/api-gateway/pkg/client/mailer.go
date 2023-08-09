@@ -9,15 +9,21 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+type Mailer interface {
+	SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, error)
+	GetEmailById(mailId string) (*pb.GetEmailByIdResponse, error)
+}
 
-type Mailer struct {
+
+
+type mailer struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration
 	client  pb.MailerServiceClient
 	host    string
 }
 
-func NewMailer(host string, timeout time.Duration) (*Mailer, error) {
+func NewMailer(host string, timeout time.Duration) (*mailer, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -29,7 +35,7 @@ func NewMailer(host string, timeout time.Duration) (*Mailer, error) {
 
 	client := pb.NewMailerServiceClient(conn)
 
-	return &Mailer{
+	return &mailer{
 		conn:    conn,
 		client:  client,
 		timeout: timeout,
@@ -37,8 +43,8 @@ func NewMailer(host string, timeout time.Duration) (*Mailer, error) {
 	}, nil
 }
 
-func NewMailerFromClient(mailerClient pb.MailerServiceClient ) *Mailer {
-	return &Mailer{
+func NewMailerFromClient(mailerClient pb.MailerServiceClient ) *mailer {
+	return &mailer{
 		host:    "localhost",
 		timeout: 10 * time.Second,
 		conn:    nil,
@@ -48,11 +54,11 @@ func NewMailerFromClient(mailerClient pb.MailerServiceClient ) *Mailer {
 
 
 
-func (m *Mailer) Close() {
+func (m *mailer) Close() {
 	m.conn.Close()
 }
 
-func (m *Mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
+func (m *mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
@@ -64,7 +70,7 @@ func (m *Mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, err
 	return res, nil
 }
 
-func (m *Mailer) GetEmailById(mailerId string) (*pb.GetEmailByIdResponse, error) {
+func (m *mailer) GetEmailById(mailerId string) (*pb.GetEmailByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
