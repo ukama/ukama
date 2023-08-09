@@ -69,16 +69,19 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 	err = o.orgRepo.Add(org, func(org *db.Org, tx *gorm.DB) error {
 		org.Id = uuid.NewV4()
-		//TODO: Enable later
-		// _, err := o.orchestratorService.DeployOrg(providers.DeployOrgRequest{
-		// 	OrgId:   org.Id.String(),
-		// 	OrgName: org.Name,
-		// 	OwnerId: org.Owner.String(),
-		// })
+		_, err := o.orchestratorService.DeployOrg(providers.DeployOrgRequest{
+			OrgId:   org.Id.String(),
+			OrgName: org.Name,
+			OwnerId: org.Owner.String(),
+		})
 
+		if err != nil {
+			log.Errorf("Failed to send deploy org request %v sent to orchestrator. Error: %s", org, err.Error())
+		} else {
+			log.Infof("Deploy org request %v sent to orchestrator", org)
+		}
 		/* Not required here:  Adding owner as member is done in member service on init */
-		// return err
-		return nil
+		return err
 	})
 
 	if err != nil {
