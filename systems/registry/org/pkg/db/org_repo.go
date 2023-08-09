@@ -37,6 +37,7 @@ type OrgRepo interface {
 	GetInvitation(id uuid.UUID) (*Invitation, error)
 	UpdateInvitation(id uuid.UUID, status InvitationStatus) error
 	GetInvitationsByOrg(org string) ([]Invitation, error)
+	GetInvitationByEmail(email string) error
 	RemoveInvitation(id uuid.UUID) error
 }
 
@@ -97,6 +98,17 @@ func (r *orgRepo) GetByName(name string) (*Org, error) {
 	return &org, nil
 }
 
+func (r *orgRepo) GetInvitationByEmail(email string ) error{
+	var invitation Invitation
+
+	result := r.Db.GetGormDb().Where(&Invitation{Email: email}).First(&invitation)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+
+}
 func (r *orgRepo) GetByOwner(uuid uuid.UUID) ([]Org, error) {
 	var orgs []Org
 

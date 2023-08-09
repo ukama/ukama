@@ -32,7 +32,6 @@ const Member: React.FC<IMember> = ({
   search,
   setSearch,
   handleButtonAction,
-  invitationTitle,
   onSearchChange,
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
@@ -92,11 +91,9 @@ const Member: React.FC<IMember> = ({
                 variant="outlined"
                 size="small"
                 placeholder="Search"
-                value={search}
+                defaultValue={search}
                 fullWidth
-                onChange={(e) =>
-                  onSearchChange && onSearchChange(e.target.value)
-                }
+                onChange={(e) => setSearch(e.target.value)}
                 InputLabelProps={{
                   shrink: false,
                 }}

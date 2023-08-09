@@ -235,7 +235,6 @@ const Manage = () => {
         ...prev,
         invitations: data?.getInvitationsByOrg ?? [],
       }));
-      console.log('INVITATIONS', data?.getInvitationsByOrg);
     },
 
     onError: (error) => {
@@ -247,7 +246,6 @@ const Manage = () => {
       });
     },
   });
-  console.log('INVITATIONS', data.invitations);
 
   const [addMember, { loading: addMemberLoading }] = useAddMemberMutation({
     onCompleted: () => {
@@ -273,7 +271,7 @@ const Manage = () => {
     useAddInvitationMutation({
       onCompleted: () => {
         refetchMembers();
-        getInvitations()
+        getInvitations();
         setSnackbarMessage({
           id: 'add-member',
           message: 'Invitation sent successfully',
@@ -379,6 +377,7 @@ const Manage = () => {
     });
 
   useEffect(() => {
+    console.log(memberSearch);
     if (memberSearch.length > 2) {
       const _members = members?.getOrgMembers.members.filter((member) => {
         const s = memberSearch.toLowerCase();
@@ -536,7 +535,6 @@ const Manage = () => {
     console.log('adding node to network');
   };
 
-  console.log('USERS', data.members);
   const isLoading =
     packagesLoading ||
     simsLoading ||

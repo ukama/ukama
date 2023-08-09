@@ -48,7 +48,7 @@ message Invitation{
   string org = 2  ;
   string link = 3;
   string email = 4;
-  RoleType Role = 5;
+  RoleType role = 5;
   string name = 6;
   google.protobuf.Timestamp expires_at = 7 [json_name = "expires_at"];
   InvitationStatus status = 8;
@@ -57,7 +57,7 @@ message AddInvitationRequest{
   InvitationStatus status = 1;
   string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
   string org = 3 ;
-  RoleType Role = 4;
+  RoleType role = 4;
   string name = 5;
 
 }

@@ -44,8 +44,8 @@ export type AddInvitationResDto = {
 };
 
 export type AddMemberInputDto = {
-  email: Scalars['String']['input'];
   role: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
 };
 
 export type AddNetworkInputDto = {
@@ -440,13 +440,13 @@ export type IdResponse = {
 
 export type InvitationDto = {
   __typename?: 'InvitationDto';
-  Role: Scalars['String']['output'];
   email: Scalars['String']['output'];
   expires_at: Scalars['String']['output'];
   id: Scalars['String']['output'];
   link: Scalars['String']['output'];
   name: Scalars['String']['output'];
   org: Scalars['String']['output'];
+  role: Scalars['String']['output'];
   status: Scalars['String']['output'];
 };
 
@@ -457,13 +457,13 @@ export type InvitationResDto = {
 
 export type InvitationsByOrgDto = {
   __typename?: 'InvitationsByOrgDto';
-  Role: Scalars['String']['output'];
   email: Scalars['String']['output'];
   expires_at: Scalars['String']['output'];
   id: Scalars['String']['output'];
   link: Scalars['String']['output'];
   name: Scalars['String']['output'];
   org: Scalars['String']['output'];
+  role: Scalars['String']['output'];
   status: Scalars['String']['output'];
 };
 
@@ -1927,16 +1927,16 @@ export type GetInvitationsByOrgQueryVariables = Exact<{
 }>;
 
 
-export type GetInvitationsByOrgQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationsByOrgDto', name: string, email: string, link: string, Role: string, expires_at: string, status: string, org: string, id: string }> } };
+export type GetInvitationsByOrgQuery = { __typename?: 'Query', getInvitationsByOrg: { __typename?: 'InvitationsResDto', invitations: Array<{ __typename?: 'InvitationsByOrgDto', name: string, email: string, link: string, role: string, expires_at: string, status: string, org: string, id: string }> } };
 
 export type GetInvitationByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetInvitationByIdQuery = { __typename?: 'Query', getInvitationById: { __typename?: 'InvitationResDto', invitation: { __typename?: 'InvitationDto', name: string, email: string, link: string, expires_at: string, status: string, org: string, id: string, Role: string } } };
+export type GetInvitationByIdQuery = { __typename?: 'Query', getInvitationById: { __typename?: 'InvitationResDto', invitation: { __typename?: 'InvitationDto', name: string, email: string, link: string, expires_at: string, status: string, org: string, id: string, role: string } } };
 
-export type OrgInvitationsFragment = { __typename?: 'InvitationsByOrgDto', name: string, email: string, link: string, Role: string, expires_at: string, status: string, org: string, id: string };
+export type OrgInvitationsFragment = { __typename?: 'InvitationsByOrgDto', name: string, email: string, link: string, role: string, expires_at: string, status: string, org: string, id: string };
 
 export type GetNodesBySiteQueryVariables = Exact<{
   siteId: Scalars['String']['input'];
@@ -2089,7 +2089,7 @@ export const OrgInvitationsFragmentDoc = gql`
   name
   email
   link
-  Role
+  role
   expires_at
   status
   org
@@ -3004,7 +3004,7 @@ export const GetInvitationByIdDocument = gql`
       status
       org
       id
-      Role
+      role
     }
   }
 }

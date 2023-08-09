@@ -707,7 +707,7 @@ query getInvitationById($id: String!) {
       status
       org
       id
-      Role
+      role
     }
   }
 }
@@ -715,7 +715,7 @@ fragment orgInvitations on InvitationsByOrgDto {
   name
   email
   link
-  Role
+  role
   expires_at
   status
   org

@@ -147,7 +147,7 @@ export class OrgService implements IOrgService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.REGISTRY_ORGS_API_URL}/${headers.orgName}/members`,
-            body: { user_uuid: headers.userId, role: data.role },
+            body: { user_uuid: data.userId, role: data.role },
             headers: getHeaders(headers),
         });
 

@@ -77,18 +77,11 @@ func (o *OrgService) GetInvitationsByOrg( ctx context.Context , req *pb.GetInvit
 func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationRequest) (*pb.AddInvitationResponse, error) {
 	log.Infof("Adding invitation %v", req)
 
-	if req.GetOrg() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Org is required")
-	}
 
-	if req.GetEmail() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Email is required")
+	if req.GetOrg() == "" || req.GetEmail() == "" || req.GetName() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Org, Email, and Name are required")
 	}
-
-	if req.GetName() == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Name is required")
-	}
-
+	
 	link, err := generateInvitationLink(o.authLoginbaseURL, uuid.NewV4().String(),
 	o.invitationExpiryTime)
 	if err != nil {
@@ -115,8 +108,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
-		// TemplateName: "member-invitation",
-		TemplateName:"test-template",
+		 TemplateName: "member-invitation",
 	    Values:  map[string]interface{}{
 			"INVITATION": invitationId.String(),
 			"LINK": link,
@@ -131,21 +123,27 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 	if err != nil {
 		return nil, err
 	}
-	err = o.orgRepo.AddInvitation(
-		&db.Invitation{
-			Id:        invitationId,
-			Org:       req.GetOrg(),
-			Name:      req.GetName(),
-			Link:      link,
-			Email:     req.GetEmail(),
-			Role:      pbRoleTypeToDb(req.GetRole()),
-			ExpiresAt: o.invitationExpiryTime,
-			Status:    db.Pending,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+
+	 err = o.orgRepo.GetInvitationByEmail(req.GetEmail())
+
+	if err != nil  {
+
+		err = o.orgRepo.AddInvitation(
+			&db.Invitation{
+				Id:        invitationId,
+				Org:       req.GetOrg(),
+				Name:      req.GetName(),
+				Link:      link,
+				Email:     req.GetEmail(),
+				Role:      pbRoleTypeToDb(req.GetRole()),
+				ExpiresAt: o.invitationExpiryTime,
+				Status:    db.Pending,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+	} 
 
 	return &pb.AddInvitationResponse{}, nil
 }

@@ -158,7 +158,7 @@ export class AddOrgInputDto {
 @InputType()
 export class AddMemberInputDto {
     @Field()
-    email: string;
+    userId: string;
 
     @Field()
     role: MEMBER_ROLES;
@@ -203,7 +203,7 @@ export class InvitationsByOrgDto {
     org: string;
 
     @Field()
-    Role: string;
+    role: string;
 
     @Field()
     id: string;
@@ -236,7 +236,7 @@ export class InvitationDto {
     org: string;
 
     @Field()
-    Role: string;
+    role: string;
 
     @Field()
     id: string;

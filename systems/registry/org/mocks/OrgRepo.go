@@ -214,6 +214,20 @@ func (_m *OrgRepo) GetInvitation(id uuid.UUID) (*db.Invitation, error) {
 	return r0, r1
 }
 
+// GetInvitationByEmail provides a mock function with given fields: email
+func (_m *OrgRepo) GetInvitationByEmail(email string) error {
+	ret := _m.Called(email)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetInvitationsByOrg provides a mock function with given fields: org
 func (_m *OrgRepo) GetInvitationsByOrg(org string) ([]db.Invitation, error) {
 	ret := _m.Called(org)

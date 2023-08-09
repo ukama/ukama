@@ -33,31 +33,28 @@ export default function Page() {
       });
     },
   });
-  const [getInvitationById, { data, loading, error }] =
-    useGetInvitationByIdLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data: any) => {
-        console.log('data', data.getInvitationById?.invitation);
-        addMember({
-          variables: {
-            data: {
-              email: data.getInvitationById.invitation.email as string,
-              role: data.getInvitationById.invitation.Role as string,
-              // name: data.getInvitationById.name as string,
-            },
+  const [getInvitationById] = useGetInvitationByIdLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data: any) => {
+      addMember({
+        variables: {
+          data: {
+            userId: data.getInvitationById.userId as string,
+            role: data.getInvitationById.role as string,
           },
-        });
-      },
+        },
+      });
+    },
 
-      onError: (err) => {
-        setSnackbarMessage({
-          id: 'add-member-error',
-          message: err.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'add-member-error',
+        message: err.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   useEffect(() => {
     const url = window.location.href;
