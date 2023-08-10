@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"os"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -17,9 +18,11 @@ import (
 
 	"github.com/ukama/ukama/systems/registry/org/cmd/version"
 
+	"github.com/ukama/ukama/systems/registry/org/pkg/client"
 	"github.com/ukama/ukama/systems/registry/org/pkg/db"
 
 	"github.com/num30/config"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 
@@ -62,7 +65,7 @@ func initDb() sql.Db {
 
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.Org{}, &db.User{}, &db.OrgUser{})
+	err := d.Init(&db.Org{}, &db.User{}, &db.OrgUser{}, &db.Invitation{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -83,12 +86,29 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
-
+	notificationClient, err := client.NewNotificationClient(svcConf.NotificationHost, pkg.IsDebugMode)
+	if err != nil {
+		logrus.Fatalf("Notification Client initilization failed. Error: %v", err.Error())
+	}
 	log.Debugf("MessageBus Client is %+v", mbClient)
+
+	var invitationExpiryTime time.Time
+	if !svcConf.InvitationExpiryTime.IsZero() {
+		invitationExpiryTime = svcConf.InvitationExpiryTime
+	} else {
+		invitationExpiryTime = time.Now().Add(3 * 24 * time.Hour)
+		log.Warnf("InvitationExpiryTime not set, using default value: %v", invitationExpiryTime)
+	}
+
+	
 	regServer := server.NewOrgServer(db.NewOrgRepo(gormdb),
 		db.NewUserRepo(gormdb),
 		svcConf.OrgName, mbClient,
-		svcConf.Pushgateway)
+		svcConf.Pushgateway, notificationClient,client.NewRegistryUsersClientProvider(svcConf.Users, svcConf.MsgClient.Timeout),
+		invitationExpiryTime,
+		svcConf.AuthLoginbaseURL,
+
+	)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)

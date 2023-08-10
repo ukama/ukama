@@ -16,6 +16,12 @@ service OrgService {
     rpc GetByOwner(GetByOwnerRequest) returns (GetByOwnerResponse);
     rpc GetByUser(GetByOwnerRequest) returns (GetByUserResponse);
 
+    //invitations
+    rpc AddInvitation(AddInvitationRequest) returns (AddInvitationResponse);
+    rpc GetInvitation(GetInvitationRequest) returns (GetInvitationResponse);
+    rpc UpdateInvitation(UpdateInvitationRequest) returns (UpdateInvitationResponse);
+    rpc RemoveInvitation(RemoveInvitationRequest) returns (RemoveInvitationResponse);
+
 
     /* Users */
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
@@ -27,6 +33,49 @@ service OrgService {
     rpc GetMembers(GetMembersRequest) returns (GetMembersResponse);
     rpc UpdateMember(UpdateMemberRequest) returns (MemberResponse);
     rpc RemoveMember(MemberRequest) returns (MemberResponse);
+}
+
+message Invitation{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+  string org = 2  ;
+  string link = 3;
+  string email = 4;
+  google.protobuf.Timestamp expires_at = 5 [json_name = "expires_at"];
+  InvitationStatus status = 6;
+}
+message AddInvitationRequest{
+  InvitationStatus status = 1;
+  string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+  string org = 3 ;
+  RoleType Role = 4;
+  string name = 5;
+
+}
+
+message AddInvitationResponse{
+  
+}
+message GetInvitationRequest{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message GetInvitationResponse{
+  Invitation invitation = 1;
+}
+message UpdateInvitationRequest{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+  InvitationStatus status = 2;
+}
+
+message UpdateInvitationResponse{
+  
+}
+message RemoveInvitationRequest{
+  string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message RemoveInvitationResponse{
+  
 }
 
 message AddRequest{
@@ -148,4 +197,11 @@ enum RoleType {
     ADMIN = 1;
     VENDOR = 2;
     MEMBER = 3;
+}
+
+enum InvitationStatus {
+    PENDING = 0;
+    ACCEPTED = 1;
+    REJECTED = 2;
+    EXPIRED = 3;
 }

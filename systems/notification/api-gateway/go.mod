@@ -20,7 +20,7 @@ require (
 )
 
 require (
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/jackc/pgx/v5 v5.3.1 // indirect
 )
 
@@ -33,7 +33,7 @@ require (
 
 require (
 	github.com/stretchr/testify v1.8.4
-	github.com/ukama/ukama/systems/common v0.0.0-20230607142027-29e90fc8430b
+	github.com/ukama/ukama/systems/common v0.0.0-20230727230806-f34ca33a62c2
 	github.com/ukama/ukama/systems/notification/notify v0.0.0-00010101000000-000000000000
 )
 

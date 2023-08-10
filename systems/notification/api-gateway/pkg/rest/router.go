@@ -13,10 +13,10 @@ import (
 	"github.com/ukama/ukama/systems/notification/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
+	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
-	emailPkg "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	npb "github.com/ukama/ukama/systems/notification/notify/pb/gen"
 )
 
@@ -137,42 +137,37 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (message emailPkg.SendEmailResponse, err error) {
-	payload := emailPkg.SendEmailRequest{
-		To:      req.To,
-		Subject: req.Subject,
-		Body:    req.Body,
-		Values:  req.Values,
+func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (*mailerpb.SendEmailResponse, error) {
+	payload := mailerpb.SendEmailRequest{
+		To:           req.To,
+		TemplateName: req.TemplateName,
+		Values:       make(map[string]string),
+	}
+
+	// Convert map[string]interface{} to map[string]string
+	for key, value := range req.Values {
+		if strValue, ok := value.(string); ok {
+			payload.Values[key] = strValue
+		}
 	}
 
 	res, err := r.clients.m.SendEmail(&payload)
 	if err != nil {
-		return emailPkg.SendEmailResponse{}, err
+		return nil, err
 	}
 
-	return emailPkg.SendEmailResponse{
-		Message: res.Message,
-		MailId:  res.MailId,
-	}, nil
+	return res, nil
 }
 
-func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (message emailPkg.GetEmailByIdResponse, err error) {
-	payload := emailPkg.GetEmailByIdRequest{
-		MailId: req.MailerId,
-	}
-
-	res, err := r.clients.m.GetEmailById(&payload)
+// getEmailByIdHandler handles the get email by ID API endpoint.
+func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (*mailerpb.GetEmailByIdResponse, error) {
+	mailerId:=req.MailerId
+	res, err := r.clients.m.GetEmailById(mailerId)
 	if err != nil {
-		return emailPkg.GetEmailByIdResponse{}, err
+		return nil, err
 	}
 
-	return emailPkg.GetEmailByIdResponse{
-		MailId:  res.MailId,
-		To:      res.To,
-		Subject: res.Subject,
-		Body:    res.Body,
-	}, nil
-
+	return res, nil
 }
 
 func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {

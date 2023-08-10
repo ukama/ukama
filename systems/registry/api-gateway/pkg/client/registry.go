@@ -252,3 +252,42 @@ func (r *Registry) GetSites(netID string) (*netpb.GetSitesByNetworkResponse, err
 
 	return res, nil
 }
+
+func (r *Registry) AddInvitation( email string , role string ,org string,name string) (*orgpb.AddInvitationResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.AddInvitation(ctx, &orgpb.AddInvitationRequest{Email: email,Org: org,Role: orgpb.RoleType(orgpb.RoleType_value[role]),Name: name})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *Registry) GetInvitation( invitationId string) (*orgpb.GetInvitationResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.GetInvitation(ctx, &orgpb.GetInvitationRequest{Id: invitationId,})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *Registry) UpdateInvitation( invitationId string, status string) (*orgpb.UpdateInvitationResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.orgClient.UpdateInvitation(ctx, &orgpb.UpdateInvitationRequest{Id: invitationId, Status: orgpb.InvitationStatus(orgpb.InvitationStatus_value[status])})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

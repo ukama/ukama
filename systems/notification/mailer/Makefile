@@ -19,7 +19,6 @@ integration.build:
 # 	mockery --all --recursive --dir ./pkg
 # 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 gen:
-	mkdir ./pb/gen -p
 
 	# generate http
 	protoc -I ./pb -I ../../common/pb/dep --grpc-gateway_out $(GOPATH)/src \

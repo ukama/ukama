@@ -5,17 +5,16 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
-	emailPkg "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
-	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 )
-
 type Mailer interface {
-	SendEmail(*emailPkg.SendEmailRequest) (*emailPkg.SendEmailResponse, error)
-	GetEmailById(*emailPkg.GetEmailByIdRequest) (*emailPkg.GetEmailByIdResponse, error)
+	SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, error)
+	GetEmailById(mailId string) (*pb.GetEmailByIdResponse, error)
 }
+
+
 
 type mailer struct {
 	conn    *grpc.ClientConn
@@ -44,7 +43,7 @@ func NewMailer(host string, timeout time.Duration) (*mailer, error) {
 	}, nil
 }
 
-func NewMailerFromClient(mailerClient pb.MailerServiceClient) *mailer {
+func NewMailerFromClient(mailerClient pb.MailerServiceClient ) *mailer {
 	return &mailer{
 		host:    "localhost",
 		timeout: 10 * time.Second,
@@ -52,6 +51,8 @@ func NewMailerFromClient(mailerClient pb.MailerServiceClient) *mailer {
 		client:  mailerClient,
 	}
 }
+
+
 
 func (m *mailer) Close() {
 	m.conn.Close()
@@ -69,11 +70,13 @@ func (m *mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, err
 	return res, nil
 }
 
-func (m *mailer) GetEmailById(req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
+func (m *mailer) GetEmailById(mailerId string) (*pb.GetEmailByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := m.client.GetEmailById(ctx, req)
+	res, err := m.client.GetEmailById(ctx, &pb.GetEmailByIdRequest{
+		MailId:mailerId,
+	})
 	if err != nil {
 		return nil, err
 	}

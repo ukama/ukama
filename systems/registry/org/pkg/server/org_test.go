@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,6 +16,7 @@ import (
 )
 
 const testOrgName = "test-org"
+
 
 func TestOrgServer_Add(t *testing.T) {
 	// Arrange
@@ -50,7 +52,7 @@ func TestOrgServer_Add(t *testing.T) {
 	orgRepo.On("GetMemberCount", mock.Anything).Return(int64(1), int64(0), nil).Once()
 	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour),"http://localhost:4455/auth/login")
 
 	t.Run("AddValidOrg", func(tt *testing.T) {
 		// Act
@@ -94,13 +96,14 @@ func TestOrgServer_Add(t *testing.T) {
 
 }
 
+
 func TestOrgServer_Get(t *testing.T) {
 	orgId := uuid.NewV4()
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour),"http://localhost:4455/auth/login")
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("Get", mock.Anything).Return(&db.Org{Id: orgId}, nil).Once()
@@ -131,7 +134,7 @@ func TestOrgServer_GetByName(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour),"http://localhost:4455/auth/login")
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
@@ -162,7 +165,7 @@ func TestOrgServer_GetByOwner(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour),"http://localhost:4455/auth/login")
 
 	t.Run("OwnerFound", func(tt *testing.T) {
 		orgRepo.On("GetByOwner", mock.Anything).
@@ -199,7 +202,7 @@ func TestOrgServer_GetByUser(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour),"http://localhost:4455/auth/login")
 
 	t.Run("UserFoundOnOwnersAndMembers", func(tt *testing.T) {
 		orgRepo.On("GetByOwner", userId).
@@ -286,7 +289,7 @@ func TestOrgServer_AddMember(t *testing.T) {
 
 	orgRepo.On("GetMemberCount", mock.Anything).Return(int64(1), int64(0), nil).Once()
 
-	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, userRepo, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour),"http://localhost:4455/auth/login")
 
 	t.Run("AddValidMember", func(tt *testing.T) {
 		orgRepo.On("GetByName", mock.Anything).Return(org, nil).Once()
@@ -357,7 +360,7 @@ func TestOrgServer_GetMember(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour),"http://localhost:4455/auth/login")
 
 	t.Run("MemberFound", func(tt *testing.T) {
 		orgRepo.On("GetMember", orgId, userId).
@@ -410,7 +413,7 @@ func TestOrgServer_GetMembers(t *testing.T) {
 
 	orgRepo := &mocks.OrgRepo{}
 
-	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "")
+	s := NewOrgServer(orgRepo, nil, "", msgclientRepo, "", nil,nil,time.Now().Add(3 * 24 * time.Hour),"http://localhost:4455/auth/login")
 
 	t.Run("MembersFound", func(tt *testing.T) {
 		orgRepo.On("GetMembers", orgId).
