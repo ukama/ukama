@@ -23,6 +23,8 @@ const getTitleFromPath = (path: string, id: string) => {
       return 'Manage';
     case '/uidev':
       return 'UIDEV';
+    case '/ping':
+      return 'Ping';
     default:
       return '404';
   }
