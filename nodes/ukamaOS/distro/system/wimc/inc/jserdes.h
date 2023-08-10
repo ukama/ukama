@@ -67,7 +67,7 @@
 #define JSON_FORMATS      "formats"
 #define JSON_CHUNKS       "chunks"
 
-int serialize_wimc_request(WimcReq *request, json_t **json);
+bool serialize_wimc_request(WimcReq *request, json_t **json);
 int deserialize_agent_request(AgentReq **request, json_t *json);
 int deserialize_provider_response(ServiceURL **urls, int *counter,
 				  json_t *json);

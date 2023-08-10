@@ -6,195 +6,87 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  */
-
-/*
- * Network related stuff based on ulfius framework.
- */
-
 #include <ulfius.h>
 #include <stdlib.h>
 
 #include "wimc.h"
-#include "log.h"
 #include "callback.h"
 #include "agent.h"
 
-/* 
- * init_frameworks -- initializa ulfius framework and register various
- *                   callbacks.
- *
- */
+#include "usys_log.h"
+#include "usys_types.h"
 
-int init_frameworks(struct _u_instance *adminInst,
-		    struct _u_instance *clientInst,
-		    int adminPort, int clientPort) {
 
-  if (ulfius_init_instance(adminInst, adminPort, NULL, NULL) != U_OK) {
-    log_error("Error initializing instance for admin port %d", adminPort);
-    return FALSE;
-  }
+static int start_framework(Config *config, UInst *instance) {
 
-  if (ulfius_init_instance(clientInst, clientPort, NULL, NULL) != U_OK) {
-    log_error("Error initializing instance for client port %d", clientPort);
-    ulfius_clean_instance(adminInst);
-    return FALSE;
-  }
+    if (ulfius_start_framework(instance) != U_OK) {
+        usys_log_error("Error starting the webservice/websocket.");
 
-  /* Set few params. */
-  adminInst->max_post_body_size = 1024;
-  clientInst->max_post_body_size = 1024;
+        ulfius_stop_framework(instance); /* don't think need this. XXX */
+        ulfius_clean_instance(instance);
 
-  return TRUE;
-}
-    
-/*
- * setup_admin_endpoints -- 
- *
- */
-
-void setup_admin_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
-
-  /* Endpoint decelrations. We have two endpoints:
-   * 1. /admin (acting on 'containers' table)
-   *     GET    - query the db.
-   *     POST   - add new entry to db.
-   *     PUT    - update an existing entry in db.
-   *     DELETE - remove existing entry in db.
-   */
-#if 0
-  ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_ADMIN, NULL, 0,
-                             &callback_get_container, cfg);
-  ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_ADMIN, NULL, 0,
-                             &callback_post_container, cfg);
-  ulfius_add_endpoint_by_val(instance, "PUT", WIMC_EP_ADMIN, NULL, 0,
-                             &callback_put_container, cfg);
-  ulfius_add_endpoint_by_val(instance, "DELETE", WIMC_EP_ADMIN, NULL, 0,
-                             &callback_delete_container, cfg);
-#endif
-  /* 2. /stats:
-   *     GET  - get various WIMC.d internal stats.
-   */
-  ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_STATS, NULL, 0,
-                             &callback_get_stats, cfg);
-  /* 3. /admin/agent:
-   *    POST - agent related stuff
-   */
-  ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_AGENT, NULL, 0,
-                             &callback_post_agent, cfg);
-
-  /* 4. /admin/agent/update:
-   *    PUT - task update from agent.
-   */
-  ulfius_add_endpoint_by_val(instance, "PUT", WIMC_EP_AGENT_UPDATE, NULL, 0,
-                             &callback_put_agent_update, cfg);
-
-  /* default endpoint. */
-  ulfius_set_default_endpoint(instance, &callback_default, cfg);
-}
-
-/*
- * setup_client_endpoints --
- *
- */
-
-void setup_client_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
-
-  /* Endpoint decelrations. 
-   * 1. /content/containers (acting on 'containers' table)
-   *     GET    - query the db.
-   */
-  ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_CLIENT, NULL, 0,
-                             &callback_not_allowed, cfg);
-  ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_CLIENT, NULL, 0,
-                             &callback_post_container, cfg);
-  ulfius_add_endpoint_by_val(instance, "PUT", WIMC_EP_CLIENT, NULL, 0,
-                             &callback_not_allowed, cfg);
-  ulfius_add_endpoint_by_val(instance, "DELETE", WIMC_EP_CLIENT, NULL, 0,
-                             &callback_not_allowed, cfg);
-
-  /* 2. /content/tasks - /content/tasks/?ID:id (id as returned by POST earlier)
-   *    GET    - Get the current status (of task)
-   *    DELETE - Delete the content request (task)
-   *    POST/PUT - Not allowed.
-   */
-  ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_TASKS, NULL, 0,
-                             &callback_get_task, cfg);
-  /* Delete is special handling in GET method implementation. */
-  ulfius_add_endpoint_by_val(instance, "DELETE", WIMC_EP_TASKS, NULL, 0,
-                             &callback_get_task, cfg);
-  ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_TASKS, NULL, 0,
-                             &callback_not_allowed, cfg);
-  ulfius_add_endpoint_by_val(instance, "PUT", WIMC_EP_TASKS, NULL, 0,
-                             &callback_not_allowed, cfg);
-  
-  /* default endpoint. */
-  ulfius_set_default_endpoint(instance, &callback_default, cfg);
-}
-
-/* 
- * start_framework --
- *
- */
-
-int start_framework(struct _u_instance *instance) {
-
-  int ret;
-  
-  /* open HTTP connection. */
-  ret = ulfius_start_framework(instance);
-
-  if (ret != U_OK) {
-    log_error("Error starting the webservice.");
-    
-    /* clean up. */
-    ulfius_stop_framework(instance); /* don't think need this. XXX */
-    ulfius_clean_instance(instance);
-    
-    return FALSE;
-  }
-
-  log_debug("Webservice succesfully started.");
-  
-  return TRUE;
-}
-
-/*
- * start_web_services -- start accepting REST clients on 127.0.0.1:port
- *
- */
-
-int start_web_services(WimcCfg *cfg, struct _u_instance *adminInst,
-		       struct _u_instance *clientInst) {
-  
-  /* Initialize the admin and client webservices framework. */
-  if (init_frameworks(adminInst, clientInst, atoi(cfg->adminPort),
-		      atoi(cfg->clientPort)) != TRUE) {
-    log_error("Error initializing webservice framework");
-    return FALSE;
-  }
-  
-  /* setup endpoints and methods callback. */
-  setup_admin_endpoints(cfg,  adminInst);
-  setup_client_endpoints(cfg, clientInst);
-  
-  /* open connection for both admin and client webservices */
-  if (start_framework(adminInst)) {
-    if (!start_framework(clientInst)) {
-
-      /* if failsure, stop admin instance. */
-      ulfius_stop_framework(adminInst); 
-      ulfius_clean_instance(adminInst);
-      
-      return FALSE;
+        return USYS_FALSE;
     }
-  } else {
-    log_error("Failed to start webservices for admin:%s and client: %s",
-	      cfg->adminPort, cfg->clientPort);
-    return FALSE;
-  }
-  
-  log_debug("Webservice on admin port %s client port: %s started.",
-	    cfg->adminPort, cfg->clientPort);
 
-  return TRUE;
+    usys_log_debug("Webservice sucessfully started.");
+    return USYS_TRUE;
+}
+
+static void setup_webservice_endpoints(Config *config,
+                                       UInst *instance) {
+
+    /* capp related end-points */
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("ping"), 0,
+                               &web_service_cb_ping, config);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("capps/:name/:tag"), 0,
+                               &web_service_cb_get_capp, config);
+
+    /* Agent related end-points */
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("agents/:id"), 0,
+                               &web_service_cb_post_agent, config);
+
+    ulfius_add_endpoint_by_val(instance, "DELETE", URL_PREFIX,
+                               API_RES_EP("agents/:id"), 0,
+                               &web_service_cb_delete_agent, config);
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("agents/update/:id/"), 0,
+                               &web_service_cb_post_agent_update, config);
+
+    /* default - 403 */
+    ulfius_set_default_endpoint(instance,
+                                &web_service_cb_default,
+                                config);
+}
+
+int start_web_service(Config *config, UInst *serviceInst) {
+
+    if (ulfius_init_instance(serviceInst,
+                             atoi(config->servicePort),
+                             NULL,
+                             NULL) != U_OK) {
+        usys_log_error("Error initializing instance for webservice port %s",
+                       config->servicePort);
+        return USYS_FALSE;
+    }
+
+    /* Set few params. */
+    u_map_put(serviceInst->default_headers, "Access-Control-Allow-Origin", "*");
+
+    /* setup endpoints and methods callback. */
+    setup_webservice_endpoints(config, serviceInst);
+
+    if (!start_framework(config, serviceInst)) {
+        usys_log_error("Failed to start webservices on port: %s",
+                       config->servicePort);
+        return USYS_FALSE;
+    }
+
+    usys_log_debug("Webservice started on port: %s", config->servicePort);
+
+    return USYS_TRUE;
 }
