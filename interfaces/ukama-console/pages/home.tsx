@@ -35,12 +35,12 @@ export default function Page() {
   });
   const [getInvitationById] = useGetInvitationByIdLazyQuery({
     fetchPolicy: 'cache-and-network',
-    onCompleted: (data: any) => {
+    onCompleted: (data) => {
       addMember({
         variables: {
           data: {
-            userId: data.getInvitationById.userId as string,
-            role: data.getInvitationById.role as string,
+            userId: data.getInvitationById.invitation.userId as string,
+            role: data.getInvitationById.invitation.role as string,
           },
         },
       });

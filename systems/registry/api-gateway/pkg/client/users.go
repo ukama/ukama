@@ -47,6 +47,13 @@ func (r *Users) Get(userId string, requesterId string) (*pbusers.GetResponse, er
 	return r.client.Get(ctx, &pbusers.GetRequest{UserId: userId})
 }
 
+func (r *Users) GetByEmail(email string, requesterId string) (*pbusers.GetResponse, error) {
+	ctx, cancel := r.getContext(requesterId)
+	defer cancel()
+
+	return r.client.GetByEmail(ctx, &pbusers.GetByEmailRequest{Email: email})
+}
+
 func (r *Users) GetByAuthId(authId string, requesterId string) (*pbusers.GetResponse, error) {
 	ctx, cancel := r.getContext(requesterId)
 	defer cancel()

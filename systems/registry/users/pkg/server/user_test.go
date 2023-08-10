@@ -107,6 +107,32 @@ func TestUserService_Get(t *testing.T) {
 		userRepo.AssertExpectations(t)
 	})
 }
+func TestUserService_GetByEmail(t *testing.T) {
+	userRepo := &mocks.UserRepo{}
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+
+	s := server.NewUserService(userRepo, nil, msgclientRepo, "")
+
+	t.Run("UserEmailFound", func(t *testing.T) {
+		userEmail:="test@ukama.com"
+
+		userRepo.On("GetByEmail", userEmail).Return(&db.User{
+			Email: userEmail,
+		}, nil)
+
+		uResp, err := s.GetByEmail(context.TODO(), &pb.GetByEmailRequest{Email: userEmail})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, uResp)
+
+		assert.NoError(t, err)
+		assert.Equal(t,userEmail , uResp.User.Email)
+		userRepo.AssertExpectations(t)
+	})
+
+	
+	
+}
 
 func TestUserService_GetByAuthId(t *testing.T) {
 	userRepo := &mocks.UserRepo{}

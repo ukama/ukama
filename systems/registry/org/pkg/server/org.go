@@ -105,6 +105,11 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 		return nil, err
 	}
 
+	userInfo,err:= userRegistrySvc.GetByEmail(ctx,&userRegpb.GetByEmailRequest{Email: req.GetEmail()})
+	if err != nil {
+		return nil, err
+	}
+
 	
 	err = o.notification.SendEmail(client.SendEmailReq{
 		To:      []string{req.GetEmail()},
@@ -138,6 +143,7 @@ func (o *OrgService) AddInvitation(ctx context.Context, req *pb.AddInvitationReq
 				Role:      pbRoleTypeToDb(req.GetRole()),
 				ExpiresAt: o.invitationExpiryTime,
 				Status:    db.Pending,
+				UserId:userInfo.User.Id,
 			},
 		)
 		if err != nil {

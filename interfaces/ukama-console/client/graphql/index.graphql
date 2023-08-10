@@ -660,6 +660,12 @@ fragment invitation on InvitationDto {
   message
 }
 
+query getUserByEmail {
+  getUserByEmail(email: $email) {
+    ...OrgUser
+  }
+}
+
 query getOrgMember {
   getOrgMembers {
     org
@@ -687,6 +693,7 @@ fragment orgInvitations on InvitationsByOrgDto {
   status
   org
   id
+  userId
 }
 query getInvitationById($id: String!) {
   getInvitationById(id: $id) {
@@ -698,7 +705,8 @@ query getInvitationById($id: String!) {
       status
       org
       id
-      Role
+      role
+      userId
     }
   }
 }

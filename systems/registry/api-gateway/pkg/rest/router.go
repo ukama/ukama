@@ -161,6 +161,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Users routes
 		const user = "/users"
 		users := auth.Group(user, "Users", "Operations on Users")
+		users.GET("/email/:email",formatDoc("Get User by Email", "Get a specific user by email"), tonic.Handler(r.getUserByEmailHandler, http.StatusOK))
 		users.POST("", formatDoc("Add User", "Add a new User to the registry"), tonic.Handler(r.postUserHandler, http.StatusCreated))
 		users.GET("/:user_id", formatDoc("Get User", "Get a specific user"), tonic.Handler(r.getUserHandler, http.StatusOK))
 		// user orgs-member
@@ -309,6 +310,9 @@ func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.G
 	return r.clients.User.Get(c.Param("user_id"), c.GetString(USER_ID_KEY))
 }
 
+func (r *Router) getUserByEmailHandler(c *gin.Context, req *GetUserByEmailRequest) (*userspb.GetResponse, error) {
+	return r.clients.User.GetByEmail(c.Param("email"), c.GetString(USER_ID_KEY))
+}
 func (r *Router) getUserByAuthIdHandler(c *gin.Context, req *GetUserByAuthIdRequest) (*userspb.GetResponse, error) {
 	return r.clients.User.GetByAuthId(c.Param("auth_id"), c.GetString(USER_ID_KEY))
 }

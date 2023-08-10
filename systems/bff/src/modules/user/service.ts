@@ -83,6 +83,21 @@ export class UserService implements IUserService {
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
         return UserMapper.dtoToUserResDto(res);
     };
+
+
+    getUserByEmail = async (
+        email: string,
+        headers: THeaders
+    ): Promise<UserResDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.REGISTRY_USERS_API_URL}/email/${email}`,
+            headers: getHeaders(headers),
+        });
+        if (checkError(res)) throw new Error(res.message);
+        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
+        return UserMapper.dtoToUserResDto(res);
+    }
     whoami = async (headers: THeaders): Promise<WhoamiDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,

@@ -48,6 +48,7 @@ type Invitation struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	UserId  string
 }
 
 type RoleType uint8

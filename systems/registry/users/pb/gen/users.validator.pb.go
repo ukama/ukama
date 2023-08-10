@@ -31,6 +31,15 @@ func (this *AddRequest) Validate() error {
 	}
 	return nil
 }
+
+var _regex_GetByEmailRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+
+func (this *GetByEmailRequest) Validate() error {
+	if !_regex_GetByEmailRequest_Email.MatchString(this.Email) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
+	}
+	return nil
+}
 func (this *AddResponse) Validate() error {
 	if this.User != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.User); err != nil {

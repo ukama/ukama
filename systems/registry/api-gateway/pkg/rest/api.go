@@ -157,6 +157,10 @@ type GetInvitationRequest struct {
 	InvitationId string `json:"invitation_id" path:"invitation_id" validate:"required"`
 }
 
+type GetUserByEmailRequest struct {
+	Email string `json:"email" path:"email" validate:"required"`
+}
+
 type UpdateInvitationRequest struct {
 	InvitationId    string `json:"invitation_id" path:"invitation_id" validate:"required"`
 	State string `json:"state" validate:"required"`

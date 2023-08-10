@@ -45,6 +45,19 @@ func NewUserService(userRepo db.UserRepo, orgService pkgP.OrgClientProvider, msg
 	}
 }
 
+func (u *UserService) GetByEmail(ctx context.Context, req *pb.GetByEmailRequest) (*pb.GetResponse, error) {
+	log.Infof("Getting user by email %v", req)
+
+	user, err := u.userRepo.GetByEmail(req.Email)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+	
+	return &pb.GetResponse{User: dbUserToPbUser(user)}, nil
+
+}
+
+
 func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	log.Infof("Adding user %v", req)
 

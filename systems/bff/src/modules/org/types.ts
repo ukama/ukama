@@ -206,6 +206,9 @@ export class InvitationsByOrgDto {
     role: string;
 
     @Field()
+    userId?: string;
+
+    @Field()
     id: string;
 }
 
@@ -231,6 +234,9 @@ export class InvitationDto {
 
     @Field()
     status: string;
+
+    @Field()
+    userId: string;
 
     @Field()
     org: string;
