@@ -95,6 +95,8 @@ func formatCappFilename(artifactName string, version *semver.Version, ext string
 // content - content of file
 // returns remote location of the file or error
 func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, version *semver.Version, ext string, content io.Reader) (string, error) {
+	log.Infof("Uploading %s-%s to storage\n", artifactName, version.String())
+
 	if !NameRegex.MatchString(artifactName) {
 		return "", InvalidInputError{Message: "artifact name should not contain dot"}
 	}

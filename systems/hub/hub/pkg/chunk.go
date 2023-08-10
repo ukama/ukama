@@ -41,9 +41,6 @@ type chunkRequest struct {
 
 // Chunk sends request to chunk server to chunk the file and uploads chunk index file to storage
 func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string) error {
-	ctx, cancel := context.WithTimeout(context.Background(),
-		time.Duration(ch.conf.TimeoutSecond)*time.Second)
-	defer cancel()
 
 	client := &http.Client{}
 	fPath := fmt.Sprintf("%s/%s/%s", name, ver.String(), TarGzExtension)
@@ -81,6 +78,10 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 
 		return fmt.Errorf("failed to chunk file")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(ch.conf.TimeoutSecond)*time.Second)
+	defer cancel()
 
 	_, err = ch.storage.PutFile(ctx, name, ver, ChunkIndexExtension, resp.Body)
 	if err != nil {
