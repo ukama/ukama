@@ -64,7 +64,7 @@ func (p *orchestratorProvider) DeployOrg(req DeployOrgRequest) (*DeployOrgRespon
 
 	dResp := &DeployOrgResponse{}
 
-	url := fmt.Sprintf("%s%s%s%s", p.R.URL.String(), ORCH_PATH, "/deploy/org/", req.OrgId)
+	url := fmt.Sprintf("%s%s%s%s", p.R.URL.String(), ORCH_PATH, "/deploy/orgs/", req.OrgId)
 	resp, err := p.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
@@ -103,7 +103,7 @@ func (p *orchestratorProvider) DestroyOrg(req DestroyOrgRequest) (*DestroyOrgRes
 	resp, err := p.R.C.R().
 		SetError(errStatus).
 		SetBody(req).
-		Delete(p.R.URL.String() + ORCH_PATH + "/org/" + req.OrgId)
+		Delete(p.R.URL.String() + ORCH_PATH + "/orgs/" + req.OrgId)
 
 	if err != nil {
 		log.Errorf("Failed to send api request to orchestrator. Error %s", err.Error())
