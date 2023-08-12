@@ -25,7 +25,6 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	orgpb "github.com/ukama/ukama/systems/registry/org/pb/gen"
 )
 
 type NodeServer struct {
@@ -71,29 +70,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id. Error %s", err.Error())
-	}
-
-	orgId, err := uuid.FromString(req.GetOrgId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of org uuid. Error %s", err.Error())
-	}
-
-	svc, err := n.orgService.GetClient()
-	if err != nil {
-		return nil, err
-	}
-
-	remoteOrg, err := svc.Get(ctx, &orgpb.GetRequest{Id: orgId.String()})
-	if err != nil {
-		return nil, err
-	}
-
-	// What should we do if the remote org exists but is deactivated?
-	// For now we simply abort.
-	if remoteOrg.Org.IsDeactivated {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"org is deactivated: cannot add node to it")
 	}
 
 	if len(req.Name) == 0 {
