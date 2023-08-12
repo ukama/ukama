@@ -38,7 +38,7 @@ int read_config_from_env(Config **config){
 	char *initSystemAddr=NULL, *initSystemPort=NULL;
 	char *globalInitSystemEnable=NULL, *globalInitSystemAddr=NULL, *globalInitSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
-	char *systemDNS = NULL, *timePeriod = NULL, *dnsServer = NULL;
+	char *systemDNS = NULL, *timePeriod = NULL, *dnsServer = NULL, *nameServer = NULL;
 	int period = 0 ;
 
 	if ((addr = getenv(ENV_INIT_CLIENT_ADDR)) == NULL ||
@@ -71,27 +71,33 @@ int read_config_from_env(Config **config){
 		}
 	}
 
+	if ((dnsServer = getenv(ENV_DNS_SERVER)) != NULL) {
+		if (strcmp(dnsServer, "true") == 0) {
+            /* Fetching from /etc/resolv.conf */
+		    log_info("Resolving nameserver from  /etc/resolv.conf");
+		    nameServer = parse_resolveconf();
+		} else {
+			nameServer = NULL;
+		}
+	}
+
 	if ((systemDNS = getenv(ENV_SYSTEM_DNS)) != NULL) {
-		systemAddr = nslookup(systemDNS, NULL);
+		if (nameServer == NULL) {
+			systemAddr = nslookup(systemDNS, NULL);
+		} else {
+			systemAddr = nslookup(systemDNS, nameServer);
+		}
 	} else {
 		systemAddr = getenv(ENV_SYSTEM_ADDR);
 	}
 
 	if (!systemAddr) {
-		log_error("Required one of env variable ENV_INIT_SYSTEM_DNS or ENV_SYSTEM_ADDR to be valid");
+		log_error("Required one of env variable ENV_SYSTEM_DNS or ENV_SYSTEM_ADDR to be valid");
 		return FALSE;
 	}
 
 	if ((timePeriod = getenv(ENV_DNS_REFRESH_TIME_PERIOD)) == NULL) {
 			period = DEFAULT_TIME_PERIOD;
-	}
-
-	if ((dnsServer = getenv(ENV_DNS_REFRESH_TIME_PERIOD)) == NULL) {
-			period = DEFAULT_TIME_PERIOD;
-		}
-
-	if ((dnsServer = getenv(ENV_DNS_SERVER)) == NULL) {
-		dnsServer = NULL; //May be check if it can be set to default
 	}
 
 	if (timePeriod) {
@@ -125,8 +131,16 @@ int read_config_from_env(Config **config){
 	(*config)->initSystemAPIVer = strdup(apiVersion);
 	(*config)->initSystemAddr   = strdup(initSystemAddr);
 	(*config)->initSystemPort   = strdup(initSystemPort);
+	
+	if (nameServer) {
+    	(*config)->nameServer = strdup(nameServer);
+	}
+	
 	(*config)->timePeriod = period;
-	(*config)->dnsServer = dnsServer;
+	
+	if (dnsServer) {
+		(*config)->dnsServer = dnsServer;
+	}
 	(*config)->globalInitSystemEnable = (strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0) ? GLOBAL_INIT_SYSTEM_ENABLE : GLOBAL_INIT_SYSTEM_DISABLE ;
 
 	if ((*config)->globalInitSystemEnable) {
@@ -169,5 +183,41 @@ void clear_config(Config *config) {
 	if (config->globalInitSystemAddr)   free(config->globalInitSystemAddr);
 	if (config->systemDNS) free(config->systemDNS);
 	if (config->dnsServer) free(config->dnsServer);
+	if (config->nameServer) free(config->nameServer);
 	free(config);
+}
+
+char* parse_resolveconf() {
+	char * nameServer = NULL;
+	FILE *resolv;
+	resolv = fopen("/etc/resolv.conf", "r");
+	if (resolv) {
+		char line[512];	/* "search" is defined to be up to 256 chars */
+		while (fgets(line, sizeof(line), resolv)) {
+			char *p, *arg;
+			p = strtok(line, " \t\n");
+			if (!p)
+				continue;
+			log_debug("resolv_key:'%s'\n", p);
+			arg = strtok(NULL, "\n");
+			log_debug("resolv_arg:'%s'\n", arg);
+			if (!arg)
+				continue;
+			/* May be parse them if required. Skipping for now */
+			if (strcmp(p, "domain") == 0) {
+				continue;
+			}
+			if (strcmp(p, "search") == 0) {
+				continue;
+			}
+
+			if (strcmp(p, "nameserver") != 0)
+				continue;
+			/* only first for now nameserver DNS. We can have upto three in file*/
+			nameServer =  strdup(arg);
+			break;
+		}
+		fclose(resolv);
+	}
+	return nameServer;
 }

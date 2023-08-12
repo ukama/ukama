@@ -9,7 +9,6 @@ import (
 
 	"github.com/ukama/ukama/systems/registry/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/rest"
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
@@ -29,7 +28,6 @@ func main() {
 	}
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
-	clientSet.Node = client.NewNode(svcConf.Services.Node, svcConf.Services.Timeout)
 	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
 	r.Run()
 }

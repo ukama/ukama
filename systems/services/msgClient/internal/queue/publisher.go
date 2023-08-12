@@ -13,6 +13,7 @@ import (
 type QueuePublisher struct {
 	q              string
 	name           string
+	exchange       string `default:"amq.topic"`
 	instanceId     string
 	pub            mb.QPub
 	baseRoutingKey mb.RoutingKeyBuilder
@@ -20,7 +21,7 @@ type QueuePublisher struct {
 
 func NewQueuePublisher(s db.Service) (*QueuePublisher, error) {
 
-	pub, err := mb.NewQPub(s.MsgBusUri, s.Name, s.InstanceId)
+	pub, err := mb.NewQPub(s.MsgBusUri, s.Name, s.Exchange, s.InstanceId)
 	if err != nil {
 		log.Errorf("Failed to create publisher. Error: %s", err.Error())
 		return nil, err
@@ -31,6 +32,7 @@ func NewQueuePublisher(s db.Service) (*QueuePublisher, error) {
 		name:           s.Name,
 		instanceId:     s.InstanceId,
 		pub:            pub,
+		exchange:       s.Exchange,
 		baseRoutingKey: mb.NewRoutingKeyBuilder().SetCloudSource().SetContainer(s.Name),
 	}
 

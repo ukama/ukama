@@ -26,3 +26,14 @@ func NewRestClient(path string, debug bool) (*RestClient, error) {
 	logrus.Tracef("Client created %+v for %s ", rc, rc.URL.String())
 	return rc, nil
 }
+
+func NewRestyClient(url *url.URL, debug bool) *RestClient {
+	c := resty.New()
+	c.SetDebug(debug)
+	rc := &RestClient{
+		C:   c,
+		URL: url,
+	}
+	logrus.Tracef("Client created %+v for %s ", rc, rc.URL.String())
+	return rc
+}
