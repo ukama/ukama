@@ -95,10 +95,13 @@ export class OrgAPIDto {
 @ObjectType()
 export class OrgsAPIResDto {
   @Field()
-  owner: string;
+  user: string;
 
   @Field(() => [OrgAPIDto])
-  orgs: OrgAPIDto[];
+  owner_of: OrgAPIDto[];
+
+  @Field(() => [OrgAPIDto])
+  member_of: OrgAPIDto[];
 }
 
 @ObjectType()
@@ -131,10 +134,13 @@ export class OrgDto {
 @ObjectType()
 export class OrgsResDto {
   @Field()
-  owner: string;
+  user: string;
 
   @Field(() => [OrgDto])
-  orgs: OrgDto[];
+  ownerOf: OrgDto[];
+
+  @Field(() => [OrgDto])
+  memberOf: OrgDto[];
 }
 
 @ObjectType()
@@ -201,6 +207,9 @@ export class UserAPIObj {
 
   @Field()
   is_deactivated: boolean;
+
+  @Field()
+  auth_id: string;
 
   @Field()
   registered_since: string;

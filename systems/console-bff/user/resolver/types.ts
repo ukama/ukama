@@ -18,6 +18,9 @@ export class UserResDto {
   isDeactivated: boolean;
 
   @Field()
+  authId: string;
+
+  @Field()
   registeredSince: string;
 }
 
@@ -76,6 +79,9 @@ export class UserAPIObj {
 
   @Field()
   is_deactivated: boolean;
+
+  @Field()
+  auth_id: string;
 
   @Field()
   registered_since: string;
