@@ -1,3 +1,4 @@
+import { OrgDto } from "../../org/resolver/types";
 import {
   UserAPIResDto,
   UserResDto,
@@ -17,11 +18,32 @@ export const dtoToUserResDto = (res: UserAPIResDto): UserResDto => {
   };
 };
 export const dtoToWhoamiResDto = (res: WhoamiAPIDto): WhoamiDto => {
+  const ownerOfOrgs: OrgDto[] = [];
+  const memberOfOrgs: OrgDto[] = [];
+  res.ownerOf.forEach(org => {
+    ownerOfOrgs.push({
+      id: org.id,
+      name: org.name,
+      owner: org.owner,
+      certificate: org.certificate,
+      isDeactivated: org.is_deactivated,
+      createdAt: org.created_at,
+    });
+  });
+  res.memberOf.forEach(org => {
+    memberOfOrgs.push({
+      id: org.id,
+      name: org.name,
+      owner: org.owner,
+      certificate: org.certificate,
+      isDeactivated: org.is_deactivated,
+      createdAt: org.created_at,
+    });
+  });
+
   return {
-    id: res.id,
-    email: res.email,
-    name: res.name,
-    role: "admin",
-    isFirstVisit: res.first_visit,
+    user: dtoToUserResDto(res),
+    ownerOf: ownerOfOrgs,
+    memberOf: memberOfOrgs,
   };
 };

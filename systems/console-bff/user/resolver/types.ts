@@ -1,5 +1,7 @@
 import { Field, InputType, ObjectType } from "type-graphql";
 
+import { OrgAPIDto, OrgDto } from "../../org/resolver/types";
+
 @ObjectType()
 export class UserResDto {
   @Field()
@@ -26,20 +28,14 @@ export class UserResDto {
 
 @ObjectType()
 export class WhoamiDto {
-  @Field()
-  id: string;
+  @Field(() => UserResDto)
+  user: UserResDto;
 
-  @Field()
-  name: string;
+  @Field(() => [OrgDto])
+  ownerOf: OrgDto[];
 
-  @Field()
-  email: string;
-
-  @Field()
-  role: string;
-
-  @Field()
-  isFirstVisit?: boolean;
+  @Field(() => [OrgDto])
+  memberOf: OrgDto[];
 }
 
 @InputType()
@@ -95,18 +91,12 @@ export class UserAPIResDto {
 
 @ObjectType()
 export class WhoamiAPIDto {
-  @Field()
-  id: string;
+  @Field(() => UserAPIObj)
+  user: UserAPIObj;
 
-  @Field()
-  name: string;
+  @Field(() => [OrgAPIDto])
+  ownerOf: OrgAPIDto[];
 
-  @Field()
-  email: string;
-
-  @Field()
-  role: string;
-
-  @Field()
-  first_visit: boolean;
+  @Field(() => [OrgAPIDto])
+  memberOf: OrgAPIDto[];
 }
