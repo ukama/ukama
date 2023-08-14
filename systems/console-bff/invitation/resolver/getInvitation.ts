@@ -1,14 +1,18 @@
 import { Ctx, Query, Resolver } from "type-graphql";
 import { Context } from "../context";
-import { GetInvitationInputDto } from "./types";
+import { InvitationDto } from "./types";
+import { Arg, UseMiddleware } from "type-graphql";
+import { Authentication } from "../../common/auth";
 
 @Resolver()
 export class GetInvitationResolver {
-  @Query(() => GetInvitationInputDto)
-  async getInvitation(@Ctx() ctx: Context): Promise<GetInvitationInputDto> {
-    const { dataSources, headers } = ctx;
-    return dataSources.dataSource.getInvitation(headers.orgName);
+  @Query(() => InvitationDto)
+  @UseMiddleware(Authentication)
+  async getInvitation(
+    @Arg("id") id: string,
+    @Ctx() ctx: Context
+  ): Promise<InvitationDto> {
+    const { dataSources } = ctx;
+    return await dataSources.dataSource.getInvitation(id);
   }
 }
-
-
