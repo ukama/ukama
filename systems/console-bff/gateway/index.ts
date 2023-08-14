@@ -25,9 +25,11 @@ import {
   SUBSCRIBER_PORT,
   USER_PORT,
 } from "../common/configs";
+import { HTTP401Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
+import UserApi from "../user/datasource/user_api";
 import { configureExpress } from "./configureExpress";
 
 function delay(time: any) {
@@ -115,9 +117,28 @@ const startServer = async () => {
   await new Promise((resolve: any) =>
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
+
+  const getWhoami = async (userId: string) => {
+    const userApi = new UserApi();
+    return await userApi.whoami(userId);
+  };
+
   app.get("/ping", (_, res) => {
     res.send("pong");
   });
+
+  app.get("/whoami", async (req, res) => {
+    const userId = req.headers["user-id"] as string;
+    if (userId) {
+      const userApi = new UserApi();
+      const whoamiRes = await userApi.whoami(userId);
+      res.send(whoamiRes);
+      return;
+    }
+    res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
+    return;
+  });
   logger.info(`🚀 Server ready at http://localhost:${GATEWAY_PORT}/graphql`);
 };
+
 startServer();
