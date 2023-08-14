@@ -30,6 +30,28 @@ export class InvitationDto{
   email: string;
 
   @Field()
+  expiresAt: string;
+
+  @Field()
+  id: string;
+
+  @Field()
+  link: string;
+
+  @Field()
+  org: string;
+
+  @Field()
+  status: string;
+
+}
+
+@ObjectType()
+export class InvitationAPIResDto{
+  @Field()
+  email: string;
+
+  @Field()
   expires_at: string;
 
   @Field()

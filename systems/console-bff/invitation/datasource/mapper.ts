@@ -1,19 +1,16 @@
-// import {
-//   SubscriberAPIResDto,
-//   InvitationDto,
-// } from "../resolver/types";
+import {
+  InvitationAPIResDto,
+  InvitationDto,
+} from "../resolver/types";
 
+export const dtoToInvitationResDto = (res: InvitationAPIResDto): InvitationDto => {
+  return {
+    email: res.email,
+    expiresAt: res.expires_at,
+    id: res.id,
+    link: res.link,
+    org: res.org,
+    status: res.status,
+  };
+};
 
-// export const dtoToSubscribersResDto = (
-//   res: SubscribersAPIResDto
-// ): SubscribersResDto => {
-//   const subscribers: SubscriberDto[] = [];
-//   for (const subscriber of res.subscribers) {
-//     const sub = dtoToSubscriberResDto({ subscriber: subscriber });
-//     subscribers.push(sub);
-//   }
-
-//   return {
-//     subscribers: subscribers,
-//   };
-// };

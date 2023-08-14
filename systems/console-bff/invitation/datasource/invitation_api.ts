@@ -11,6 +11,8 @@ import {
   UpateInvitationInputDto,
 } from "../resolver/types";
 
+import {dtoToInvitationResDto} from "./mapper";
+
 const version = "/v1/invitation";
 
 class InvitationApi extends RESTDataSource {
@@ -23,7 +25,7 @@ class InvitationApi extends RESTDataSource {
   };
 
   getInvitation = async (id: string): Promise<InvitationDto> => {
-    return this.get(`/${VERSION}/invitation/${id}`).then(res => res);
+    return this.get(`/${VERSION}/invitation/${id}`).then(res => dtoToInvitationResDto(res));
   };
 
   updateInvitation = async (id: string, req:UpateInvitationInputDto): Promise<UpdateInvitationResDto> => {
