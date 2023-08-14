@@ -1,6 +1,6 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { NUCLEUS_API_GW, VERSION } from "../../common/configs";
 import { CBooleanResponse } from "../../common/types";
 import {
   AddMemberInputDto,
@@ -20,7 +20,7 @@ import {
 } from "./mapper";
 
 class OrgApi extends RESTDataSource {
-  baseURL = REGISTRY_API_GW;
+  baseURL = NUCLEUS_API_GW;
   getOrgMembers = async (orgName: string): Promise<OrgMembersResDto> => {
     return this.get(`/${VERSION}/orgs/${orgName}/members`).then(res =>
       dtoToMembersResDto(res)
@@ -52,9 +52,8 @@ class OrgApi extends RESTDataSource {
   };
 
   getOrg = async (orgName: string): Promise<OrgDto> => {
-    return this.get(`/${VERSION}/orgs/${orgName}`).then(res =>
-      dtoToOrgResDto(res)
-    );
+    return this.get(`/${VERSION}/orgs/${orgName}`)
+      .then(res => dtoToOrgResDto(res))
   };
 
   addOrg = async (req: AddOrgInputDto): Promise<OrgDto> => {

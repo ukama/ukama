@@ -54,9 +54,9 @@ const parseGatewayHeaders = (reqHeader: any): THeaders => {
       Authorization: reqHeader["x-session-token"] || "",
       Cookie: reqHeader["cookie"] || "",
     },
-    orgId: reqHeader["orgId"] || "",
-    userId: reqHeader["userId"] || "",
-    orgName: reqHeader["orgName"] || "",
+    orgId: reqHeader["orgid"] || "",
+    userId: reqHeader["userid"] || "",
+    orgName: reqHeader["orgname"] || "",
   };
 };
 

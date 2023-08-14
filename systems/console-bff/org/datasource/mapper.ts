@@ -35,9 +35,10 @@ export const dtoToOrgResDto = (res: OrgAPIResDto): OrgDto => {
 };
 
 export const dtoToOrgsResDto = (res: OrgsAPIResDto): OrgsResDto => {
-  const orgs: OrgDto[] = [];
-  res.orgs.forEach(org => {
-    orgs.push({
+  const ownerOfOrgs: OrgDto[] = [];
+  const memberOfOrgs: OrgDto[] = [];
+  res.owner_of.forEach(org => {
+    ownerOfOrgs.push({
       id: org.id,
       name: org.name,
       owner: org.owner,
@@ -46,9 +47,21 @@ export const dtoToOrgsResDto = (res: OrgsAPIResDto): OrgsResDto => {
       createdAt: org.created_at,
     });
   });
+  res.member_of.forEach(org => {
+    memberOfOrgs.push({
+      id: org.id,
+      name: org.name,
+      owner: org.owner,
+      certificate: org.certificate,
+      isDeactivated: org.is_deactivated,
+      createdAt: org.created_at,
+    });
+  });
+
   return {
-    owner: res.owner,
-    orgs,
+    user: res.user,
+    ownerOf: ownerOfOrgs,
+    memberOf: memberOfOrgs,
   };
 };
 
@@ -77,6 +90,7 @@ export const dtoToUserResDto = (res: UserAPIResDto): UserResDto => {
   return {
     uuid: res.user.id,
     email: res.user.email,
+    authId: res.user.auth_id,
     isDeactivated: res.user.is_deactivated,
     name: res.user.name,
     phone: res.user.phone,

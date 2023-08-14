@@ -1,11 +1,11 @@
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { REGISTRY_API_GW, VERSION } from "../../common/configs";
+import { NUCLEUS_API_GW, VERSION } from "../../common/configs";
 import { UserResDto, WhoamiDto } from "../resolver/types";
 import { dtoToUserResDto, dtoToWhoamiResDto } from "./mapper";
 
 class UserApi extends RESTDataSource {
-  baseURL = REGISTRY_API_GW;
+  baseURL = NUCLEUS_API_GW;
 
   getUser = async (userId: string): Promise<UserResDto> => {
     return this.get(`/${VERSION}/users/${userId}`, {}).then(res =>
