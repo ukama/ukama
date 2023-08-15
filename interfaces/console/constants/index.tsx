@@ -201,19 +201,22 @@ export const MANAGE_MENU_LIST = [
 ];
 export const MANAGE_TABLE_COLUMN: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'role', label: 'Role', minWidth: 180 },
+  { id: 'role', label: 'role', minWidth: 180 },
   { id: 'email', label: 'Email', minWidth: 140 },
 ];
 export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'iccid', label: 'ICCID', minWidth: 160 },
   { id: 'simType', label: 'Type', minWidth: 180 },
   { id: 'qrCode', label: 'QR Code', minWidth: 140 },
+  { id: 'isAllocated', label: 'Status', minWidth: 140 },
 ];
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
-  { id: 'id', label: 'Node #', minWidth: 160 },
+  { id: 'name', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
-  { id: 'dateClaimed', label: 'Date claimed', minWidth: 140 },
+  { id: 'network', label: 'Network', minWidth: 180 },
+  { id: 'created_at', label: 'Date claimed', minWidth: 140 },
 ];
+
 const BASIC_MENU_ACTIONS: MenuItemType[] = [
   { id: 1, Icon: EditIcon, title: 'Edit', route: 'edit' },
   {
@@ -1554,12 +1557,12 @@ const NodePageTabs = [
   { id: 'node-tab-1', label: 'Network', value: 1 },
   { id: 'node-tab-2', label: 'Resources', value: 2 },
   { id: 'node-tab-3', label: 'Radio', value: 3 },
-  // { id: 'node-tab-4', label: 'Software', value: 4 },
-  // { id: 'node-tab-5', label: 'Schematic', value: 5 },
+  { id: 'node-tab-4', label: 'Software', value: 4 },
+  { id: 'node-tab-5', label: 'Schematic', value: 5 },
 ];
 
 const NodeResourcesTabConfigure: any = {
-  hnode: [
+  HOME: [
     { name: 'MEMORY-TRX', show: true, id: 'memorytrxused' },
     { name: 'none', show: false, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cputrxusage' },
@@ -1568,7 +1571,7 @@ const NodeResourcesTabConfigure: any = {
     { name: 'none', show: false, id: 'diskcomused' },
     { name: 'none', show: false, id: 'powerlevel' },
   ],
-  anode: [
+  AMPLIFIER: [
     { name: 'MEMORY-TRX', show: true, id: 'memoryctlused' },
     { name: 'none', show: false, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cpuctlused' },
@@ -1577,7 +1580,7 @@ const NodeResourcesTabConfigure: any = {
     { name: 'none', show: false, id: 'diskcomused' },
     { name: 'none', show: false, id: 'powerlevel' },
   ],
-  tnode: [
+  TOWER: [
     { name: 'MEMORY-TRX', show: true, id: 'memorytrxused' },
     { name: 'MEMORY-COM', show: true, id: 'memorycomused' },
     { name: 'CPU-TRX', show: true, id: 'cputrxusage' },
@@ -1588,19 +1591,19 @@ const NodeResourcesTabConfigure: any = {
   ],
 };
 const HealtChartsConfigure: any = {
-  hnode: [
+  HOME: [
     { name: 'Temp. (TRX)', show: true, id: 'temperaturetrx' },
     { name: 'Temp. (RFE)', show: true, id: 'temperaturerfe' },
     { name: 'none', show: false, id: '' },
     { name: 'Attached ', show: true, id: 'subscribersattached' },
     { name: 'Active ', show: true, id: 'subscribersactive' },
   ],
-  anode: [
+  AMPLIFIER: [
     { name: 'Temp. (CTL)', show: true, id: 'temperaturectl' },
     { name: 'Temp. (RFE)', show: true, id: 'temperaturerfe' },
     { name: 'none', show: false, id: '' },
   ],
-  tnode: [
+  TOWER: [
     { name: 'Temp. (TRX)', show: true, id: 'temperaturetrx' },
     { name: 'Temp. (COM)', show: true, id: 'temperaturecom' },
     { name: 'Uptime', show: true, id: 'uptimetrx' },
@@ -1610,15 +1613,15 @@ const HealtChartsConfigure: any = {
 };
 
 const MASK_BY_TYPE = {
-  hnode: '{uk- }######{ -hnode- }##{ - }####',
-  anode: '{uk- }######{ -\\anode- }##{ - }}####',
-  tnode: '{uk- }######{ -tnode- }##{ - }}####',
+  HOME: '{uk- }######{ -hnode- }##{ - }####',
+  AMPLIFIER: '{uk- }######{ -\\anode- }##{ - }}####',
+  TOWER: '{uk- }######{ -tnode- }##{ - }}####',
 };
 
 const MASK_PLACEHOLDERS = {
-  hnode: 'uk- ______ -hnode- __ - ____',
-  anode: 'uk- ______ -anode- __ - ____',
-  tnode: 'uk- ______ -tnode- __ - ____',
+  HOME: 'uk- ______ -hnode- __ - ____',
+  AMPLIFIER: 'uk- ______ -anode- __ - ____',
+  TOWER: 'uk- ______ -tnode- __ - ____',
 };
 
 const SIM_VARIANT = [
@@ -1664,12 +1667,11 @@ export {
 };
 
 const NODE_IMAGES = {
-  tnode:
+  TOWER:
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png',
-  anode:
+  AMPLIFIER:
     'https://ukama-site-assets.s3.amazonaws.com/images/ukama_amplifier_node.png',
-  hnode:
-    'https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png',
+  HOME: 'https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png',
 };
 
 const BILLING_PLANS = [
