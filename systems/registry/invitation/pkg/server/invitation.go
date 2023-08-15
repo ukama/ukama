@@ -121,7 +121,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddInvitationRequest
 			UserId:   userInfo.User.Id,
 			ExpireAt: timestamppb.New(i.invitationExpiryTime),
 		},
-
 	}, nil
 }
 func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteInvitationRequest) (*pb.DeleteInvitationResponse, error) {
