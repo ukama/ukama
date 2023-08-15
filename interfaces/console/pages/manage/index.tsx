@@ -441,12 +441,14 @@ const Manage = () => {
       >
         <>
           {menu === 'manage-members' && (
-            <Member
-              search={memberSearch}
-              setSearch={setMemberSearch}
-              data={data.members}
-              handleButtonAction={() => setIsInviteMember(true)}
-            />
+             <Member
+             search={memberSearch}
+             setSearch={setMemberSearch}
+             invitationTitle=" There is one pending invitation."
+             memberData={data.members}
+             invitationsData={data.invitations}
+             handleButtonAction={() => setIsInviteMember(true)}
+           />
           )}
           {menu === 'manage-sim' && (
             <SimPool
@@ -472,13 +474,14 @@ const Manage = () => {
       </LoadingWrapper>
       {isInviteMember && (
         <InviteMemberDialog
-          title={'Invite member'}
-          isOpen={isInviteMember}
-          labelNegativeBtn={'Cancel'}
-          labelSuccessBtn={'Invite member'}
-          handleSuccessAction={handleAddMemberAction}
-          handleCloseAction={() => setIsInviteMember(false)}
-        />
+        title={'Invite member'}
+        isOpen={isInviteMember}
+        labelNegativeBtn={'Cancel'}
+        // invitationLoading={sendInvitationLoading}
+        labelSuccessBtn={'Invite member'}
+        handleSuccessAction={handleAddMemberAction}
+        handleCloseAction={() => setIsInviteMember(false)}
+      />
       )}
       {isUploadSims && (
         <FileDropBoxDialog
