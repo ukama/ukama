@@ -112,17 +112,22 @@ func initUsersDB(usersDB *gorm.DB) {
 		if err := usersDB.First(&db.User{}).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Info("Iniiialzing users table")
 			var ownerUUID uuid.UUID
+			var authUUID uuid.UUID
 			var err error
-
 			if ownerUUID, err = uuid.FromString(svcConf.OwnerId); err != nil {
 				log.Fatalf("Database initialization failed, need valid %s envronment variable. Error: %v", "OWNERID", err)
 			}
 
+			if authUUID, err = uuid.FromString(svcConf.AuthId); err != nil {
+				log.Fatalf("Database initialization failed, need valid %s envronment variable. Error: %v", "AUTHID", err)
+			}
+
 			usersDB.Create(&db.User{
-				Id:    ownerUUID,
-				Name:  svcConf.OwnerName,
-				Email: svcConf.OwnerEmail,
-				Phone: svcConf.OwnerPhone,
+				Id:     ownerUUID,
+				Name:   svcConf.OwnerName,
+				Email:  svcConf.OwnerEmail,
+				Phone:  svcConf.OwnerPhone,
+				AuthId: authUUID,
 			})
 		}
 	}

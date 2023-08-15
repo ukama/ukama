@@ -39,12 +39,13 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout: 3 * time.Second,
+			Timeout: 20 * time.Second,
 			User:    "user:9090",
 			Org:     "org:9090",
 		},
+
 		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
+			Timeout:     20 * time.Second,
 			NodeMetrics: "http://localhost",
 		},
 
