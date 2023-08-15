@@ -24,6 +24,7 @@ type Config struct {
 	OwnerEmail        string            `default:"hello@ukama.com"`
 	OwnerPhone        string            `default:"0000000000"`
 	OwnerId           string
+	AuthId            string
 	Queue             *config.Queue `default:"{}"`
 	PushGatewayHost   string        `default:"http://localhost:9091"`
 }
