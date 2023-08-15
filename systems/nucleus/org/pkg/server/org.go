@@ -37,7 +37,7 @@ type OrgService struct {
 	debug               bool
 }
 
-func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, user providers.UserClientProvider, registry providers.RegistryProvider, defaultOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {
+func NewOrgServer(orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, user providers.UserClientProvider, registry providers.RegistryProvider, defau1ltOrgName string, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {
 	return &OrgService{
 		orgRepo:             orgRepo,
 		userRepo:            userRepo,

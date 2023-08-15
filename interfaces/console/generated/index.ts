@@ -362,8 +362,9 @@ export type OrgMembersResDto = {
 
 export type OrgsResDto = {
   __typename?: 'OrgsResDto';
-  orgs: Array<OrgDto>;
-  owner: Scalars['String']['output'];
+  memberOf: Array<OrgDto>;
+  ownerOf: Array<OrgDto>;
+  user: Scalars['String']['output'];
 };
 
 export type PackageDto = {
@@ -519,11 +520,6 @@ export type QueryGetSubscribersByNetworkArgs = {
 
 
 export type QueryGetUserArgs = {
-  userId: Scalars['String']['input'];
-};
-
-
-export type QueryWhoamiArgs = {
   userId: Scalars['String']['input'];
 };
 
@@ -713,6 +709,7 @@ export type UserFistVisitResDto = {
 
 export type UserResDto = {
   __typename?: 'UserResDto';
+  authId: Scalars['String']['output'];
   email: Scalars['String']['output'];
   isDeactivated: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
@@ -723,11 +720,9 @@ export type UserResDto = {
 
 export type WhoamiDto = {
   __typename?: 'WhoamiDto';
-  email: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  isFirstVisit: Scalars['Boolean']['output'];
-  name: Scalars['String']['output'];
-  role: Scalars['String']['output'];
+  memberOf: Array<OrgDto>;
+  ownerOf: Array<OrgDto>;
+  user: UserResDto;
 };
 
 export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
@@ -928,6 +923,15 @@ export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
 
 export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
 
+export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string };
+
+export type UserFragment = { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string };
+
+export type WhoamiQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WhoamiQuery = { __typename?: 'Query', whoami: { __typename?: 'WhoamiDto', user: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string }, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }> } };
+
 export const NodeFragmentDoc = gql`
     fragment node on Node {
   id
@@ -1065,6 +1069,27 @@ export const SubscriberFragmentDoc = gql`
   ...SubscriberSim
 }
     ${SubscriberSimFragmentDoc}`;
+export const OrgFragmentDoc = gql`
+    fragment Org on OrgDto {
+  id
+  name
+  owner
+  certificate
+  isDeactivated
+  createdAt
+}
+    `;
+export const UserFragmentDoc = gql`
+    fragment User on UserResDto {
+  name
+  uuid
+  email
+  phone
+  authId
+  isDeactivated
+  registeredSince
+}
+    `;
 export const GetNodeDocument = gql`
     query getNode($data: NodeInput!) {
   getNode(data: $data) {
@@ -1966,3 +1991,46 @@ export function useGetSubscriberMetricsByNetworkLazyQuery(baseOptions?: Apollo.L
 export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkQuery>;
 export type GetSubscriberMetricsByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkLazyQuery>;
 export type GetSubscriberMetricsByNetworkQueryResult = Apollo.QueryResult<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>;
+export const WhoamiDocument = gql`
+    query Whoami {
+  whoami {
+    user {
+      ...User
+    }
+    ownerOf {
+      ...Org
+    }
+    memberOf {
+      ...Org
+    }
+  }
+}
+    ${UserFragmentDoc}
+${OrgFragmentDoc}`;
+
+/**
+ * __useWhoamiQuery__
+ *
+ * To run a query within a React component, call `useWhoamiQuery` and pass it any options that fit your needs.
+ * When your component renders, `useWhoamiQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useWhoamiQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useWhoamiQuery(baseOptions?: Apollo.QueryHookOptions<WhoamiQuery, WhoamiQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<WhoamiQuery, WhoamiQueryVariables>(WhoamiDocument, options);
+      }
+export function useWhoamiLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<WhoamiQuery, WhoamiQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<WhoamiQuery, WhoamiQueryVariables>(WhoamiDocument, options);
+        }
+export type WhoamiQueryHookResult = ReturnType<typeof useWhoamiQuery>;
+export type WhoamiLazyQueryHookResult = ReturnType<typeof useWhoamiLazyQuery>;
+export type WhoamiQueryResult = Apollo.QueryResult<WhoamiQuery, WhoamiQueryVariables>;
