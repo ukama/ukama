@@ -18,5 +18,11 @@ class UserApi extends RESTDataSource {
       dtoToWhoamiResDto(res)
     );
   };
+
+  auth = async (authId: string): Promise<UserResDto> => {
+    return this.get(`/${VERSION}/users/auth/${authId}`).then(res =>
+      dtoToUserResDto(res)
+    );
+  };
 }
 export default UserApi;

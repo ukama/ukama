@@ -4,7 +4,7 @@ import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
 
 const client = new ApolloClient({
-  uri: process.env.NEXT_PUBLIC_REACT_APP_API,
+  uri: process.env.NEXT_PUBLIC_API_GW,
   cache: new InMemoryCache(),
   credentials: 'include',
 });

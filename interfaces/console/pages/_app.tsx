@@ -23,12 +23,13 @@ const ClientWrapper = (appProps: MyAppProps) => {
   const [_snackbarMessage, setSnackbarMessage] =
     useRecoilState<TSnackMessage>(snackbarMessage);
   const httpLink = new HttpLink({
-    uri: process.env.NEXT_PUBLIC_REACT_APP_API,
+    uri: process.env.NEXT_PUBLIC_API_GW,
     credentials: 'include',
     headers: {
       'org-id': _commonData.orgId,
       'user-id': _commonData.userId,
       'org-name': _commonData.orgName,
+      "x-session-token": "abc"
     },
   });
 

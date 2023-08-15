@@ -7,6 +7,7 @@ import {
   snackbarMessage,
   user,
 } from '@/app-recoil';
+import { useWhoamiLazyQuery } from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
 import { getTitleFromPath } from '@/utils';
 import dynamic from 'next/dynamic';
@@ -31,6 +32,10 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const [_commonData, setCommonData] = useRecoilState<TCommonData>(commonData);
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
+  const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery({
+    fetchPolicy: 'cache-first',
+    onCompleted: (data) => {console.log(data)}
+  })
   // const [getWhoami, { data, loading, error }] = useWhoamiLazyQuery({
   //   fetchPolicy: 'cache-first',
   //   onCompleted: (data) => {
@@ -82,7 +87,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
 
   useEffect(() => {
     setSkeltonLoading(true);
-    // getWhoami();
+    getWhoami();
     // getNetworks();
   }, []);
 

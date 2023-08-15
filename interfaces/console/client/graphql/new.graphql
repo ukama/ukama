@@ -319,7 +319,47 @@ query getSubscriberMetricsByNetwork($networkId: String!) {
     terminated
   }
 }
+
 ### Subscriber End ###
+
+### User Start ###
+
+fragment Org on OrgDto{
+  id
+  name
+  owner
+  certificate
+  isDeactivated
+  createdAt
+}
+
+fragment User on UserResDto{
+  name
+  uuid
+  email
+  phone
+  authId
+  isDeactivated
+  registeredSince
+}
+
+query Whoami {
+  whoami {
+    user {
+      ...User
+    }
+    ownerOf {
+      ...Org
+    }
+    memberOf {
+      ...Org
+    }
+  }
+}
+
+### User End ###
+
+## 
 
 # PLANNING TOOL GRAPH
 # fragment location on Location {

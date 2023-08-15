@@ -30,6 +30,7 @@ import { logger } from "../common/logger";
 import { THeaders } from "../common/types";
 import { parseHeaders } from "../common/utils";
 import UserApi from "../user/datasource/user_api";
+import { WhoamiDto } from "./../user/resolver/types";
 import { configureExpress } from "./configureExpress";
 
 function delay(time: any) {
@@ -118,22 +119,25 @@ const startServer = async () => {
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
 
-  const getWhoami = async (userId: string) => {
-    const userApi = new UserApi();
-    return await userApi.whoami(userId);
-  };
-
   app.get("/ping", (_, res) => {
     res.send("pong");
   });
 
-  app.get("/whoami", async (req, res) => {
-    const userId = req.headers["user-id"] as string;
-    if (userId) {
+  app.get("/get-user", async (req, res) => {
+    const kId = req.query["kid"] as string;
+    if (kId) {
       const userApi = new UserApi();
-      const whoamiRes = await userApi.whoami(userId);
-      res.send(whoamiRes);
-      return;
+      // const user: UserResDto = await userApi.auth(kId);
+      // if (user.uuid) {
+      if ("018688fa-d861-4e7b-b119-ffc5e1637ba8") {
+        const whoamiRes: WhoamiDto = await userApi.whoami(
+          "018688fa-d861-4e7b-b119-ffc5e1637ba8"
+        );
+        res.setHeader("Access-Control-Allow-Origin", "http://localhost:4455");
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.send(whoamiRes);
+        return;
+      }
     }
     res.send(new HTTP401Error(Messages.HEADER_ERR_USER));
     return;
