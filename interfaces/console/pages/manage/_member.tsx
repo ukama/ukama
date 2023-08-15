@@ -32,7 +32,6 @@ const Member: React.FC<IMember> = ({
   search,
   setSearch,
   handleButtonAction,
-  onSearchChange,
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
