@@ -348,6 +348,10 @@ const Manage = () => {
     });
   };
 
+  const handleCreateNetwork = () => {
+    console.log('adding node to network');
+  };
+  
   const handleUploadSimsAction = (
     action: string,
     value: string,
@@ -457,11 +461,13 @@ const Manage = () => {
             />
           )}
           {menu === 'manage-node' && (
-            <NodePool
-              data={data.node}
-              search={nodeSearch}
-              setSearch={setNodeSearch}
-            />
+             <NodePool
+             data={data.node}
+             search={nodeSearch}
+             setSearch={setNodeSearch}
+             networkList={data.networkList || []}
+             handleCreateNetwork={handleCreateNetwork}
+           />
           )}
           {menu === 'manage-data-plan' && (
             <DataPlan

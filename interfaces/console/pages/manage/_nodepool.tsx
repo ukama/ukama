@@ -9,9 +9,17 @@ interface INodePool {
   data: any;
   search: string;
   setSearch: (value: string) => void;
+  networkList: string[];
+  handleCreateNetwork: () => void;
 }
 
-const NodePool = ({ data, search, setSearch }: INodePool) => {
+const NodePool = ({
+  data,
+  search,
+  setSearch,
+  networkList,
+  handleCreateNetwork,
+}: INodePool) => {
   return (
     <Paper
       sx={{
@@ -34,7 +42,12 @@ const NodePool = ({ data, search, setSearch }: INodePool) => {
       {data.length === 0 ? (
         <EmptyView icon={RouterIcon} title="No node in nodes pool!" />
       ) : (
-        <SimpleDataTable dataset={data} columns={MANAGE_NODE_POOL_COLUMN} />
+        <SimpleDataTable
+          dataset={data}
+          columns={MANAGE_NODE_POOL_COLUMN}
+          networkList={networkList}
+          handleCreateNetwork={handleCreateNetwork}
+        />
       )}
     </Paper>
   );
