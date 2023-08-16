@@ -245,15 +245,15 @@ func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*invpb.GetInvitationResponse, error) {
-	return r.clients.Invitation.GetInvitation(req.Id)
+	return r.clients.Invitation.GetInvitation(req.InvitationId)
 }
 
 func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*invpb.UpdateInvitationStatusResponse, error) {
-	return r.clients.Invitation.UpdateInvitation(req.Id, req.Status)
+	return r.clients.Invitation.UpdateInvitation(req.InvitationId, req.Status)
 }
 
 func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRequest) error {
-	return r.clients.Invitation.RemoveInvitation(req.Id)
+	return r.clients.Invitation.RemoveInvitation(req.InvitationId)
 }
 
 func (r *Router) getInvitationByOrgHandler(c *gin.Context, req *GetInvitationByOrgRequest) (*invpb.GetInvitationByOrgResponse, error) {
