@@ -75,6 +75,13 @@ type member interface {
 	RemoveMember(userUUID string) error
 }
 
+type invitation interface {
+	AddInvitation(org, name, email, role string) (*invpb.AddInvitationResponse, error)
+	GetInvitation(invitationId string) (*invpb.GetInvitationResponse, error)
+	UpdateInvitation(invitationId string, status string) (*invpb.UpdateInvitationStatusResponse, error)
+	RemoveInvitation(invitationId string) error
+	GetInvitationByOrg(org string) (*invpb.GetInvitationByOrgResponse, error)
+}
 type node interface {
 	AddNode(nodeId, name, orgId, state string) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
@@ -232,6 +239,26 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 // func (r *Router) getOrgNodesHandler(c *gin.Context, req *GetOrgNodesRequest) (*nodepb.GetByOrgResponse, error) {
 // 	return r.clients.Node.GetOrgNodes(req.OrgId, req.Free)
 // }
+
+func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*invpb.AddInvitationResponse, error) {
+	return r.clients.Invitation.AddInvitation(req.Org, req.Name, req.Email, req.Role)
+}
+
+func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*invpb.GetInvitationResponse, error) {
+	return r.clients.Invitation.GetInvitation(req.Id)
+}
+
+func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*invpb.UpdateInvitationStatusResponse, error) {
+	return r.clients.Invitation.UpdateInvitation(req.Id, req.Status)
+}
+
+func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRequest) error {
+	return r.clients.Invitation.RemoveInvitation(req.Id)
+}
+
+func (r *Router) getInvitationByOrgHandler(c *gin.Context, req *GetInvitationByOrgRequest) (*invpb.GetInvitationByOrgResponse, error) {
+	return r.clients.Invitation.GetInvitationByOrg(req.Org)
+}
 
 func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
 	return r.clients.Node.GetSiteNodes(req.SiteId)
