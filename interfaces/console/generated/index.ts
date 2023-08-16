@@ -797,6 +797,8 @@ export type UpdateNodeMutationVariables = Exact<{
 
 export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
+export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string };
+
 export type OrgUserFragment = { __typename?: 'UserResDto', name: string, email: string, uuid: string, phone: string, isDeactivated: boolean, registeredSince: string };
 
 export type MemberFragment = { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null };
@@ -812,6 +814,16 @@ export type AddMemberMutationVariables = Exact<{
 
 
 export type AddMemberMutation = { __typename?: 'Mutation', addMember: { __typename?: 'MemberObj', uuid: string, userId: string, orgId: string, role: string, isDeactivated: boolean, memberSince?: string | null } };
+
+export type GetOrgsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetOrgsQuery = { __typename?: 'Query', getOrgs: { __typename?: 'OrgsResDto', user: string, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }> } };
+
+export type GetOrgQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetOrgQuery = { __typename?: 'Query', getOrg: { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string } };
 
 export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number } };
 
@@ -923,14 +935,17 @@ export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
 
 export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
 
-export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string };
-
 export type UserFragment = { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string };
 
 export type WhoamiQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type WhoamiQuery = { __typename?: 'Query', whoami: { __typename?: 'WhoamiDto', user: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string }, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }> } };
+
+export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', orgId: string, networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, orgId: string, isDeactivated: string, createdAt: string }> } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -942,6 +957,16 @@ export const NodeFragmentDoc = gql`
     connectivity
     state
   }
+}
+    `;
+export const OrgFragmentDoc = gql`
+    fragment Org on OrgDto {
+  id
+  name
+  owner
+  certificate
+  isDeactivated
+  createdAt
 }
     `;
 export const OrgUserFragmentDoc = gql`
@@ -1069,16 +1094,6 @@ export const SubscriberFragmentDoc = gql`
   ...SubscriberSim
 }
     ${SubscriberSimFragmentDoc}`;
-export const OrgFragmentDoc = gql`
-    fragment Org on OrgDto {
-  id
-  name
-  owner
-  certificate
-  isDeactivated
-  createdAt
-}
-    `;
 export const UserFragmentDoc = gql`
     fragment User on UserResDto {
   name
@@ -1500,6 +1515,80 @@ export function useAddMemberMutation(baseOptions?: Apollo.MutationHookOptions<Ad
 export type AddMemberMutationHookResult = ReturnType<typeof useAddMemberMutation>;
 export type AddMemberMutationResult = Apollo.MutationResult<AddMemberMutation>;
 export type AddMemberMutationOptions = Apollo.BaseMutationOptions<AddMemberMutation, AddMemberMutationVariables>;
+export const GetOrgsDocument = gql`
+    query getOrgs {
+  getOrgs {
+    user
+    ownerOf {
+      ...Org
+    }
+    memberOf {
+      ...Org
+    }
+  }
+}
+    ${OrgFragmentDoc}`;
+
+/**
+ * __useGetOrgsQuery__
+ *
+ * To run a query within a React component, call `useGetOrgsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOrgsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetOrgsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetOrgsQuery(baseOptions?: Apollo.QueryHookOptions<GetOrgsQuery, GetOrgsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetOrgsQuery, GetOrgsQueryVariables>(GetOrgsDocument, options);
+      }
+export function useGetOrgsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrgsQuery, GetOrgsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetOrgsQuery, GetOrgsQueryVariables>(GetOrgsDocument, options);
+        }
+export type GetOrgsQueryHookResult = ReturnType<typeof useGetOrgsQuery>;
+export type GetOrgsLazyQueryHookResult = ReturnType<typeof useGetOrgsLazyQuery>;
+export type GetOrgsQueryResult = Apollo.QueryResult<GetOrgsQuery, GetOrgsQueryVariables>;
+export const GetOrgDocument = gql`
+    query getOrg {
+  getOrg {
+    ...Org
+  }
+}
+    ${OrgFragmentDoc}`;
+
+/**
+ * __useGetOrgQuery__
+ *
+ * To run a query within a React component, call `useGetOrgQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOrgQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetOrgQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetOrgQuery(baseOptions?: Apollo.QueryHookOptions<GetOrgQuery, GetOrgQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetOrgQuery, GetOrgQueryVariables>(GetOrgDocument, options);
+      }
+export function useGetOrgLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrgQuery, GetOrgQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetOrgQuery, GetOrgQueryVariables>(GetOrgDocument, options);
+        }
+export type GetOrgQueryHookResult = ReturnType<typeof useGetOrgQuery>;
+export type GetOrgLazyQueryHookResult = ReturnType<typeof useGetOrgLazyQuery>;
+export type GetOrgQueryResult = Apollo.QueryResult<GetOrgQuery, GetOrgQueryVariables>;
 export const GetPackagesDocument = gql`
     query getPackages {
   getPackages {
@@ -2034,3 +2123,44 @@ export function useWhoamiLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Who
 export type WhoamiQueryHookResult = ReturnType<typeof useWhoamiQuery>;
 export type WhoamiLazyQueryHookResult = ReturnType<typeof useWhoamiLazyQuery>;
 export type WhoamiQueryResult = Apollo.QueryResult<WhoamiQuery, WhoamiQueryVariables>;
+export const GetNetworksDocument = gql`
+    query getNetworks {
+  getNetworks {
+    orgId
+    networks {
+      id
+      name
+      orgId
+      isDeactivated
+      createdAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetNetworksQuery__
+ *
+ * To run a query within a React component, call `useGetNetworksQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNetworksQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNetworksQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetNetworksQuery(baseOptions?: Apollo.QueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNetworksQuery, GetNetworksQueryVariables>(GetNetworksDocument, options);
+      }
+export function useGetNetworksLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNetworksQuery, GetNetworksQueryVariables>(GetNetworksDocument, options);
+        }
+export type GetNetworksQueryHookResult = ReturnType<typeof useGetNetworksQuery>;
+export type GetNetworksLazyQueryHookResult = ReturnType<typeof useGetNetworksLazyQuery>;
+export type GetNetworksQueryResult = Apollo.QueryResult<GetNetworksQuery, GetNetworksQueryVariables>;

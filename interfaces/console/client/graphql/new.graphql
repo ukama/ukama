@@ -75,6 +75,16 @@ mutation UpdateNode($data: UpdateNodeInput!) {
 ### End Node ###
 
 ### Org Start ###
+
+fragment Org on OrgDto {
+  id
+  name
+  owner
+  certificate
+  isDeactivated
+  createdAt
+}
+
 fragment OrgUser on UserResDto {
   name
   email
@@ -108,6 +118,23 @@ mutation addMember($data: AddMemberInputDto!) {
   }
 }
 
+query getOrgs {
+  getOrgs {
+    user
+    ownerOf {
+      ...Org
+    }
+    memberOf {
+      ...Org
+    }
+  }
+}
+
+query getOrg {
+  getOrg {
+    ...Org
+  }
+}
 ### Org End ###
 
 ### Package Start ###
@@ -324,16 +351,7 @@ query getSubscriberMetricsByNetwork($networkId: String!) {
 
 ### User Start ###
 
-fragment Org on OrgDto{
-  id
-  name
-  owner
-  certificate
-  isDeactivated
-  createdAt
-}
-
-fragment User on UserResDto{
+fragment User on UserResDto {
   name
   uuid
   email
@@ -357,9 +375,26 @@ query Whoami {
   }
 }
 
+
+
 ### User End ###
 
-## 
+### Networks Start ###
+
+query getNetworks {
+  getNetworks {
+    orgId
+    networks {
+      id
+      name
+      orgId
+      isDeactivated
+      createdAt
+    }
+  }
+}
+
+### Networks End ###
 
 # PLANNING TOOL GRAPH
 # fragment location on Location {
