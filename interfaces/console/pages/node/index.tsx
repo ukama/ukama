@@ -116,15 +116,17 @@ export default function Page() {
     });
     setIsShowAddNodeDialog(true);
   };
+
   const handleCloseAddNodeDialog = () => setIsShowAddNodeDialog(false);
+
   return (
     <>
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={false}
+        isLoading={nodesLoading}
         cstyle={{
-          backgroundColor: false ? colors.white : 'transparent',
+          backgroundColor: nodesLoading ? colors.white : 'transparent',
         }}
       >
         <PageContainer>
@@ -142,7 +144,7 @@ export default function Page() {
               showSearch={true}
               buttonTitle="Add Nodes"
               onSearchChange={handleSearchChange}
-              handleButtonAction={() => setIsShowAddNodeDialog(true)}
+              handleButtonAction={handleClaimNodeAction}
             />
             <DataTableWithOptions
               dataset={nodes || []}

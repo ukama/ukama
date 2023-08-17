@@ -14,7 +14,6 @@ import Sidebar from './Sidebar';
 
 interface ILayoutProps {
   page: string;
-  networkId: string;
   isLoading: boolean;
   placeholder: string;
   isDarkMode: boolean;
@@ -30,7 +29,6 @@ const Layout = ({
   children,
   networks,
   isLoading,
-  networkId,
   isDarkMode,
   placeholder,
   isFullScreen,
@@ -70,7 +68,6 @@ const Layout = ({
           <Sidebar
             page={page}
             isOpen={open}
-            networkId={networkId}
             isLoading={isLoading}
             onNavigate={onNavigate}
             isDarkMode={isDarkMode}

@@ -1,6 +1,8 @@
+import { commonData } from '@/app-recoil';
 import { NetworkDto } from '@/generated';
 import { NavList } from '@/router/config';
 import colors from '@/styles/theme/colors';
+import { TCommonData } from '@/types';
 import LoadingWrapper from '@/ui/molecules/LoadingWrapper';
 import {
   Box,
@@ -14,6 +16,7 @@ import {
   styled,
 } from '@mui/material';
 import dynamic from 'next/dynamic';
+import { useRecoilValue } from 'recoil';
 
 const BasicDropdown = dynamic(() => import('@/ui/molecules/BasicDropdown'), {
   ssr: false,
@@ -42,7 +45,6 @@ const UkamaDrawer = styled(Drawer, {
 interface ISidebarProps {
   page: string;
   isOpen: boolean;
-  networkId: string;
   isLoading: boolean;
   isDarkMode: boolean;
   placeholder: string;
@@ -55,13 +57,13 @@ const Sidebar = ({
   page,
   isOpen,
   isLoading,
-  networkId,
   onNavigate,
   isDarkMode,
   placeholder,
   networks = [],
   handleNetworkChange,
 }: ISidebarProps) => {
+  const _commonData = useRecoilValue<TCommonData>(commonData);
   const getDropDownData = () =>
     networks?.map((network) => ({
       id: network.id,
@@ -79,7 +81,7 @@ const Sidebar = ({
         <Stack direction={'column'}>
           <Box mx={{ xs: '18px', md: '28px' }} my={{ xs: 1, md: 1.7 }}>
             <BasicDropdown
-              value={networkId}
+              value={_commonData.networkId}
               isLoading={isLoading}
               list={getDropDownData()}
               placeholder={placeholder}
