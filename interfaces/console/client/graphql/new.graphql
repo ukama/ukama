@@ -375,7 +375,11 @@ query Whoami {
   }
 }
 
-
+query GetUser($userId: String!) {
+  getUser(userId: $userId) {
+    ...User
+  }
+}
 
 ### User End ###
 
@@ -388,6 +392,19 @@ query getNetworks {
       id
       name
       orgId
+      isDeactivated
+      createdAt
+    }
+  }
+}
+
+query getSites($networkId: String!) {
+  getSites(networkId: $networkId) {
+    networkId
+    sites {
+      id
+      name
+      networkId
       isDeactivated
       createdAt
     }

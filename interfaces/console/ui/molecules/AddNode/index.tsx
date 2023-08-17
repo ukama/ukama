@@ -24,7 +24,7 @@ type AddNodeDialogProps = {
   handleSuccessAction?: any;
   labelNegativeBtn?: string;
   handleNodeCheck: Function;
-  data: Record<string, string | boolean>[];
+  data: Record<string, string | boolean>[] | undefined;
 };
 
 const AddNodeDialog = ({

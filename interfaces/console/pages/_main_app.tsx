@@ -7,8 +7,13 @@ import {
   snackbarMessage,
   user,
 } from '@/app-recoil';
-import { useGetNetworksLazyQuery } from '@/generated';
+import {
+  useGetNetworksLazyQuery,
+  useGetOrgsLazyQuery,
+  useGetUserLazyQuery,
+} from '@/generated';
 import { MyAppProps, TCommonData, TSnackMessage, TUser } from '@/types';
+import { doesHttpOnlyCookieExist, getTitleFromPath } from '@/utils';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -33,14 +38,18 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
   const resetData = useResetRecoilState(user);
   const resetPageName = useResetRecoilState(pageName);
 
-  //TODO: HOOK GET MEMBER QUERY & SET USER
-  //         _setUser({
-  //           id: data.whoami.id,
-  //           name: data.whoami.name,
-  //           email: data.whoami.email,
-  //           role: data.whoami.role,
-  //           isFirstVisit: data.whoami.isFirstVisit,
-  //         });
+  const [getUser] = useGetUserLazyQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      _setUser({
+        role: '',
+        isFirstVisit: false,
+        id: data.getUser.uuid,
+        name: data.getUser.name,
+        email: data.getUser.email,
+      });
+    },
+  });
 
   const [
     getNetworks,
@@ -63,8 +72,14 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         type: 'error',
         show: true,
       });
+      setSkeltonLoading(false);
     },
   });
+
+  const [getOrgs, { data: orgsData, error: orgsError, loading: orgsLoading }] =
+    useGetOrgsLazyQuery({
+      onCompleted: (data) => {},
+    });
 
   useEffect(() => {
     const orgId = route.query['org-id'] as string;
@@ -81,13 +96,29 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       });
       route.replace(route.pathname, undefined, { shallow: true });
     } else {
+      getOrgs();
       // TODO: NO ORG FOUND AGAINST USER, Navigate to Org selection screen/ Invitation screen
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    if (route.pathname) {
+      setIsFullScreen(
+        route.pathname === '/manage' ||
+          route.pathname === '/settings' ||
+          getTitleFromPath(route.pathname, route.query['id'] as string) ===
+            '404',
+      );
+      setPage(getTitleFromPath(route.pathname, route.query['id'] as string));
+      if (getTitleFromPath(route.pathname, '') === '404') route.replace('/404');
+    }
   }, [route]);
 
   useEffect(() => {
     if (_commonData.userId) {
+      getUser({
+        variables: {
+          userId: _commonData.userId,
+        },
+      });
     }
     if (_commonData.orgId) {
       setSkeltonLoading(true);
@@ -95,51 +126,27 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     }
   }, [commonData]);
 
-  // useEffect(() => {
-  //   const { id, name, email } = _user;
-  //   const pathname =
-  //     typeof window !== 'undefined' && window.location.pathname
-  //       ? window.location.pathname
-  //       : '';
-  //   setPage(getTitleFromPath(pathname));
-  //   if (id && name && email) {
-  //     if (
-  //       !doesHttpOnlyCookieExist('id') &&
-  //       doesHttpOnlyCookieExist('ukama_session')
-  //     ) {
-  //       resetData();
-  //       resetPageName();
-  //       window.location.replace(
-  //         `${process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL}/logout`,
-  //       );
-  //     } else if (
-  //       doesHttpOnlyCookieExist('id') &&
-  //       !doesHttpOnlyCookieExist('ukama_session')
-  //     )
-  //       handleGoToLogin();
-  //   } else {
-  //     if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
-  //     handleGoToLogin();
-  //   }
-  // }, []);
+  useEffect(() => {
+    const { id, name, email } = _user;
+    const pathname =
+      typeof window !== 'undefined' && window.location.pathname
+        ? window.location.pathname
+        : '';
+    setPage(getTitleFromPath(pathname, (route.query['id'] as string) || ''));
 
-  // useEffect(() => {
-  //   if (route.pathname) {
-  //     setIsFullScreen(
-  //       route.pathname === '/manage' ||
-  //         route.pathname === '/settings' ||
-  //         getTitleFromPath(route.pathname, route.query['id'] as string) ===
-  //           '404',
-  //     );
-  //     setPage(getTitleFromPath(route.pathname, route.query['id'] as string));
-  //     if (getTitleFromPath(route.pathname, '') === '404') route.replace('/404');
-  //   }
-  // }, [route.pathname]);
+    if (id && name && email) {
+      if (!doesHttpOnlyCookieExist('ukama_session')) handleGoToLogin();
+    } else {
+      if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
+      handleGoToLogin();
+    }
+  }, [_user]);
 
   const handleGoToLogin = () => {
-    setPage('Home');
+    resetData();
+    resetPageName();
     typeof window !== 'undefined' &&
-      window.location.replace(process.env.NEXT_PUBLIC_REACT_AUTH_APP_URL || '');
+      window.location.replace(`${process.env.NEXT_PUBLIC_AUTH_APP_URL}/logout`);
   };
 
   const handlePageChange = (page: string) => setPage(page);
