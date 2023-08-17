@@ -5,6 +5,8 @@ go 1.18
 replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/notification/mailer => ../mailer
+replace github.com/ukama/ukama/systems/notification/notify => ../notify
+
 
 replace github.com/ukama/ukama/systems/notification/notify => ../notify
 
