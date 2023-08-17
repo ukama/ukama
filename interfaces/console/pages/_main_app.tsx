@@ -55,9 +55,9 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     getNetworks,
     { data: networksData, error: networksError, loading: networksLoading },
   ] = useGetNetworksLazyQuery({
-    fetchPolicy: 'cache-first',
+    fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      if (data.getNetworks.networks.length === 1) {
+      if (data.getNetworks.networks.length > 1) {
         setCommonData({
           ..._commonData,
           networkId: data.getNetworks.networks[0].id,
@@ -133,12 +133,8 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
         ? window.location.pathname
         : '';
     setPage(getTitleFromPath(pathname, (route.query['id'] as string) || ''));
-
     if (id && name && email) {
       if (!doesHttpOnlyCookieExist('ukama_session')) handleGoToLogin();
-    } else {
-      if (process.env.NEXT_PUBLIC_NODE_ENV === 'test') return;
-      handleGoToLogin();
     }
   }, [_user]);
 
@@ -146,7 +142,7 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
     resetData();
     resetPageName();
     typeof window !== 'undefined' &&
-      window.location.replace(`${process.env.NEXT_PUBLIC_AUTH_APP_URL}/logout`);
+      window.location.replace(process.env.NEXT_PUBLIC_AUTH_APP_URL || '');
   };
 
   const handlePageChange = (page: string) => setPage(page);
@@ -167,7 +163,6 @@ const MainApp = ({ Component, pageProps }: MyAppProps) => {
       isDarkMode={_isDarkMod}
       isLoading={false}
       placeholder={'Select Network'}
-      networkId={_commonData?.networkId}
       handlePageChange={handlePageChange}
       handleNetworkChange={handleNetworkChange}
       networks={networksData?.getNetworks.networks}

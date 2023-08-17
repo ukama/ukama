@@ -4,10 +4,24 @@ import { useGetSitesQuery } from '@/generated';
 import { DataBilling, DataUsage, UsersWithBG } from '@/public/svg';
 import { TCommonData } from '@/types';
 import StatusCard from '@/ui/components/StatusCard';
-import NetworkMap from '@/ui/molecules/NetworkMap';
+import EmptyView from '@/ui/molecules/EmptyView';
+import {
+  LabelOverlayUI,
+  SitesSelection,
+  SitesTree,
+} from '@/ui/molecules/NetworkMap/OverlayUI';
 import NetworkStatus from '@/ui/molecules/NetworkStatus';
+import NetworkIcon from '@mui/icons-material/Hub';
+import { Paper } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
+import dynamic from 'next/dynamic';
 import { useRecoilValue } from 'recoil';
+const DynamicMap = dynamic(
+  () => import('../ui/molecules/NetworkMap/DynamicMap'),
+  {
+    ssr: false,
+  },
+);
 
 export default function Page() {
   const _commonData = useRecoilValue<TCommonData>(commonData);
@@ -67,7 +81,30 @@ export default function Page() {
           />
         </Grid>
         <Grid xs={12}>
-          <NetworkMap />
+          <Paper
+            sx={{
+              borderRadius: '5px',
+              height: 'calc(100vh - 310px)',
+            }}
+          >
+            {_commonData.networkId ? (
+              <DynamicMap id="network-map" zoom={6} className="network-map">
+                {() => (
+                  <>
+                    <LabelOverlayUI name={_commonData.networkName}/>
+                    <SitesTree />
+                    <SitesSelection />
+                  </>
+                )}
+              </DynamicMap>
+            ) : (
+              <EmptyView
+                title="No network selected"
+                icon={NetworkIcon}
+                size="medium"
+              />
+            )}
+          </Paper>
         </Grid>
       </Grid>
     </>

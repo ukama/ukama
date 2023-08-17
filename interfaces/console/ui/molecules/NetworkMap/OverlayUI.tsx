@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 
-export const LabelOverlayUI = () => {
+export const LabelOverlayUI = ({ name }: { name: string }) => {
   return (
     <Box
       sx={{
@@ -26,7 +26,9 @@ export const LabelOverlayUI = () => {
         background: (theme) => theme.palette.background.paper,
       }}
     >
-      <Typography variant="h6">Network (4)</Typography>
+      <Typography variant="h6" fontWeight={500}>
+        {name}
+      </Typography>
     </Box>
   );
 };

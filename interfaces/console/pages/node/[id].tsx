@@ -26,15 +26,12 @@ export default function Page() {
   const [getNodes, { data: getNodesData, loading: getNodesLoading }] =
     useGetNodesLazyQuery({
       fetchPolicy: 'cache-first',
-      onCompleted: (data) => {
-        if (!selectedNode) setSelectedNode(data.getNodes.nodes[0]);
-      },
     });
+
   const { data: getNodeData, loading: getNodeLoading } = useGetNodeQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      console.log(router.asPath, router.query);
-      // if (!selectedNode) setSelectedNode(data.getNodes.nodes[0]);
+      setSelectedNode(data.getNode);
     },
   });
 
@@ -83,7 +80,7 @@ export default function Page() {
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
-        nodes={getNodeData?.getNodes.nodes || []}
+        nodes={getNodesData?.getNodes.nodes || []}
         loading={getNodeLoading}
         onAddNode={() => {}}
         selectedNode={selectedNode}
