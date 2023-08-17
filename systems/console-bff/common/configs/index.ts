@@ -24,7 +24,7 @@ export const PLANNING_BUCKET = process.env.BUCKET_NAME;
 export const STRIP_SK = process.env.STRIP_SK || "";
 
 // PORTS
-export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT || "5000");
+export const GATEWAY_PORT = parseInt(process.env.GATEWAY_PORT || "8000");
 export const PLANNING_SERVICE_PORT = parseInt(
   process.env.PLANNING_SERVICE_PORT || "5041"
 );
